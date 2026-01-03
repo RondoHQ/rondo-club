@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2024-12-19
+
+### Changed
+- Person detail page: Work History section now always visible (even when empty)
+- Person detail page: Company names now displayed instead of "View Company" link in work history
+- Person detail page: Added "Add Work History" button to Work History section
+
+### Added
+- Person detail page: Added edit button for each work history item
+- Person detail page: Added delete button for each work history item
+
 ## [1.0.6] - 2024-12-19
 
 ### Added

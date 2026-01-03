@@ -6,6 +6,8 @@ import {
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useQueries } from '@tanstack/react-query';
+import { wpApi } from '@/api/client';
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -112,6 +114,50 @@ export default function PersonDetail() {
     
     await deleteNote.mutateAsync({ noteId, personId: id });
   };
+
+  // Handle deleting a work history item
+  const handleDeleteWorkHistory = async (index) => {
+    if (!window.confirm('Are you sure you want to delete this work history item?')) {
+      return;
+    }
+    
+    const updatedWorkHistory = [...(person.acf?.work_history || [])];
+    updatedWorkHistory.splice(index, 1);
+    
+    await updatePerson.mutateAsync({
+      id,
+      data: {
+        acf: {
+          ...person.acf,
+          work_history: updatedWorkHistory,
+        },
+      },
+    });
+  };
+
+  // Fetch company names for work history entries
+  const companyIds = person?.acf?.work_history
+    ?.map(job => job.company)
+    .filter(Boolean) || [];
+  
+  const companyQueries = useQueries({
+    queries: companyIds.map(companyId => ({
+      queryKey: ['company', companyId],
+      queryFn: async () => {
+        const response = await wpApi.getCompany(companyId);
+        return response.data;
+      },
+      enabled: !!companyId,
+    })),
+  });
+
+  // Create a map of company ID to company name
+  const companyMap = {};
+  companyQueries.forEach((query, index) => {
+    if (query.data) {
+      companyMap[companyIds[index]] = query.data.title?.rendered || query.data.title || '';
+    }
+  });
   
   if (isLoading) {
     return (
@@ -335,39 +381,72 @@ export default function PersonDetail() {
           </div>
 
           {/* Work history */}
-          {acf.work_history?.length > 0 && (
-            <div className="card p-6">
-              <h2 className="font-semibold mb-4">Work History</h2>
-              <div className="space-y-4">
-                {acf.work_history.map((job, index) => (
-                  <div key={index} className="flex items-start">
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                      <Building2 className="w-5 h-5 text-gray-500" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{job.job_title}</p>
-                      {job.company && (
-                        <Link 
-                          to={`/companies/${job.company}`}
-                          className="text-sm text-primary-600 hover:underline"
-                        >
-                          View Company
-                        </Link>
-                      )}
-                      <p className="text-sm text-gray-500">
-                        {job.start_date && format(new Date(job.start_date), 'MMM yyyy')}
-                        {' - '}
-                        {job.is_current ? 'Present' : job.end_date ? format(new Date(job.end_date), 'MMM yyyy') : ''}
-                      </p>
-                      {job.description && (
-                        <p className="text-sm text-gray-600 mt-1">{job.description}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold">Work History</h2>
+              <Link
+                to={`/people/${id}/edit`}
+                className="btn-secondary text-sm"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Work History
+              </Link>
             </div>
-          )}
+            {acf.work_history?.length > 0 ? (
+              <div className="space-y-4">
+                {acf.work_history.map((job, index) => {
+                  const companyName = job.company ? companyMap[job.company] : null;
+                  
+                  return (
+                    <div key={index} className="flex items-start group">
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                        <Building2 className="w-5 h-5 text-gray-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium">{job.job_title}</p>
+                        {job.company && companyName && (
+                          <Link 
+                            to={`/companies/${job.company}`}
+                            className="text-sm text-primary-600 hover:underline"
+                          >
+                            {companyName}
+                          </Link>
+                        )}
+                        <p className="text-sm text-gray-500">
+                          {job.start_date && format(new Date(job.start_date), 'MMM yyyy')}
+                          {' - '}
+                          {job.is_current ? 'Present' : job.end_date ? format(new Date(job.end_date), 'MMM yyyy') : ''}
+                        </p>
+                        {job.description && (
+                          <p className="text-sm text-gray-600 mt-1">{job.description}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                        <Link
+                          to={`/people/${id}/edit`}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Edit work history"
+                        >
+                          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                        </Link>
+                        <button
+                          onClick={() => handleDeleteWorkHistory(index)}
+                          className="p-1 hover:bg-red-50 rounded"
+                          title="Delete work history"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">
+                No work history yet.
+              </p>
+            )}
+          </div>
           
           {/* Timeline */}
           <div className="card p-6">
