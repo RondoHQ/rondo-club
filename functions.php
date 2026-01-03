@@ -213,6 +213,16 @@ function prm_theme_add_config_to_head() {
 add_action('wp_head', 'prm_theme_add_config_to_head', 0);
 
 /**
+ * Add favicon to head
+ */
+function prm_theme_add_favicon() {
+    $favicon_url = PRM_THEME_URL . '/favicon.svg';
+    echo '<link rel="icon" type="image/svg+xml" href="' . esc_url($favicon_url) . '">';
+    echo '<link rel="alternate icon" href="' . esc_url($favicon_url) . '">';
+}
+add_action('wp_head', 'prm_theme_add_favicon', 1);
+
+/**
  * Hide admin bar on frontend - it interferes with the SPA interface
  */
 function prm_theme_remove_admin_bar() {
