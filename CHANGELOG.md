@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.30] - 2024-12-19
+
+### Added
+- Person detail: Add and remove labels directly from the person detail page
+- Person detail: Remove button (X) appears on hover for each label
+- Person detail: Dropdown selector to add new labels from available labels
+
 ## [1.0.29] - 2024-12-19
 
 ### Changed

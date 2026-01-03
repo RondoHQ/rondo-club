@@ -1,12 +1,13 @@
+import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
-  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin
+  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin, X
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 
 export default function PersonDetail() {
@@ -19,6 +20,29 @@ export default function PersonDetail() {
   const deleteNote = useDeleteNote();
   const deleteDate = useDeleteDate();
   const updatePerson = useUpdatePerson();
+  const [isAddingLabel, setIsAddingLabel] = useState(false);
+  const [selectedLabelToAdd, setSelectedLabelToAdd] = useState('');
+  
+  // Fetch available labels
+  const { data: availableLabelsData } = useQuery({
+    queryKey: ['person-labels'],
+    queryFn: async () => {
+      const response = await wpApi.getPersonLabels();
+      return response.data;
+    },
+  });
+  
+  const availableLabels = availableLabelsData || [];
+  const currentLabelNames = person?.labels || [];
+  
+  // Get current label term IDs from embedded terms
+  const currentLabelTermIds = person?._embedded?.['wp:term']?.flat()
+    ?.filter(term => term?.taxonomy === 'person_label')
+    ?.map(term => term.id) || [];
+  
+  const availableLabelsToAdd = availableLabels.filter(
+    label => !currentLabelNames.includes(label.name)
+  );
   
   // Update document title with person's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
@@ -159,6 +183,46 @@ export default function PersonDetail() {
     });
   };
 
+  // Handle removing a label
+  const handleRemoveLabel = async (labelToRemove) => {
+    // Find the term ID for the label to remove
+    const labelTerm = person?._embedded?.['wp:term']?.flat()
+      ?.find(term => term?.taxonomy === 'person_label' && term?.name === labelToRemove);
+    
+    if (!labelTerm) return;
+    
+    // Remove the term ID from current labels
+    const updatedTermIds = currentLabelTermIds.filter(termId => termId !== labelTerm.id);
+    
+    await updatePerson.mutateAsync({
+      id,
+      data: {
+        person_label: updatedTermIds,
+      },
+    });
+  };
+
+  // Handle adding a label
+  const handleAddLabel = async () => {
+    if (!selectedLabelToAdd) return;
+    
+    const labelToAdd = availableLabels.find(l => l.id.toString() === selectedLabelToAdd);
+    if (!labelToAdd) return;
+    
+    // Add the new term ID to current labels
+    const updatedTermIds = [...currentLabelTermIds, labelToAdd.id];
+    
+    await updatePerson.mutateAsync({
+      id,
+      data: {
+        person_label: updatedTermIds,
+      },
+    });
+    
+    setSelectedLabelToAdd('');
+    setIsAddingLabel(false);
+  };
+
   // Fetch company names for work history entries
   const companyIds = person?.acf?.work_history
     ?.map(job => job.company)
@@ -252,18 +316,71 @@ export default function PersonDetail() {
             {age !== null && (
               <p className="text-gray-500 text-sm mt-1">{age} years old</p>
             )}
-            {person.labels && person.labels.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {person.labels.map((label, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
-                  >
-                    {label}
-                  </span>
-                ))}
+            <div className="mt-2">
+              <div className="flex flex-wrap gap-2 items-center">
+                {person.labels && person.labels.length > 0 && (
+                  person.labels.map((label, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 group/label"
+                    >
+                      {label}
+                      <button
+                        onClick={() => handleRemoveLabel(label)}
+                        className="opacity-0 group-hover/label:opacity-100 transition-opacity hover:bg-gray-200 rounded-full p-0.5"
+                        title="Remove label"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))
+                )}
+                {!isAddingLabel ? (
+                  availableLabelsToAdd.length > 0 && (
+                    <button
+                      onClick={() => setIsAddingLabel(true)}
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Add label
+                    </button>
+                  )
+                ) : (
+                  <div className="inline-flex items-center gap-2">
+                    <select
+                      value={selectedLabelToAdd}
+                      onChange={(e) => setSelectedLabelToAdd(e.target.value)}
+                      className="text-xs border border-gray-300 rounded px-2 py-1"
+                      autoFocus
+                      disabled={availableLabelsToAdd.length === 0}
+                    >
+                      <option value="">Select a label...</option>
+                      {availableLabelsToAdd.map(label => (
+                        <option key={label.id} value={label.id}>
+                          {label.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleAddLabel}
+                      disabled={!selectedLabelToAdd}
+                      className="text-xs px-2 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsAddingLabel(false);
+                        setSelectedLabelToAdd('');
+                      }}
+                      className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
