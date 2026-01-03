@@ -120,11 +120,30 @@ class PRM_Auto_Title {
         
         $count = count($names);
         
+        // Get date type slug to check for wedding
+        $date_type_slugs = wp_get_post_terms($post_id, 'date_type', ['fields' => 'slugs']);
+        $type_slug = !empty($date_type_slugs) ? $date_type_slugs[0] : '';
+        
+        // Special handling for wedding type
+        if ($type_slug === 'wedding') {
+            if ($count >= 2) {
+                // "Wedding of Person1 & Person2"
+                return sprintf(
+                    __('Wedding of %s & %s', 'personal-crm'),
+                    $names[0],
+                    $names[1]
+                );
+            } elseif ($count === 1) {
+                // "Wedding of Person1" (fallback if only one person)
+                return sprintf(__('Wedding of %s', 'personal-crm'), $names[0]);
+            }
+        }
+        
         if ($count === 1) {
             // "Sarah's Birthday"
             return sprintf(__("%s's %s", 'personal-crm'), $names[0], $type_label);
         } elseif ($count === 2) {
-            // "Tom & Lisa's Anniversary"
+            // "Tom & Lisa's Birthday"
             return sprintf(
                 __("%s & %s's %s", 'personal-crm'),
                 $names[0],

@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 
 const typeIcons = {
   birthday: Gift,
-  anniversary: Heart,
+  wedding: Heart,
   memorial: Star,
   default: Calendar,
 };

@@ -203,7 +203,6 @@ class PRM_Taxonomies {
         $defaults = [
             // Core types
             'birthday'              => __('Birthday', 'personal-crm'),
-            'anniversary'           => __('Anniversary', 'personal-crm'),
             'memorial'              => __('Memorial', 'personal-crm'),
             'first-met'             => __('First Met', 'personal-crm'),
 

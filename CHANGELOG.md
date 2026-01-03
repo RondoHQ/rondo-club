@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.10] - 2024-12-19
+
+### Changed
+- Removed "Anniversary" date type, replaced with "Wedding" date type
+- Wedding date type now auto-generates title as "Wedding of <person 1> & <person 2>" format
+- Updated auto-title generation logic to handle wedding dates with proper format
+
 ## [1.0.9] - 2024-12-19
 
 ### Changed

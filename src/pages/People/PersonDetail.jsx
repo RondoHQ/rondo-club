@@ -336,7 +336,7 @@ export default function PersonDetail() {
                 {allDates.map((date) => {
                   const dateType = Array.isArray(date.date_type) ? date.date_type[0] : date.date_type;
                   const dateTypeLower = dateType?.toLowerCase() || '';
-                  const Icon = dateTypeLower.includes('anniversary') || dateTypeLower.includes('marriage') ? Heart :
+                  const Icon = dateTypeLower.includes('wedding') || dateTypeLower.includes('marriage') ? Heart :
                                dateTypeLower.includes('birthday') ? Gift : Calendar;
 
                   return (

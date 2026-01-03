@@ -895,8 +895,8 @@ class PRM_Monica_Import {
         // Set the date value
         update_field('date_value', $this->format_date_for_acf($event_date), $date_post_id);
 
-        // Life events like marriage/anniversary should be recurring
-        $recurring_types = ['marriage', 'anniversary', 'engagement', 'new-relationship'];
+        // Life events like marriage/wedding should be recurring
+        $recurring_types = ['marriage', 'wedding', 'engagement', 'new-relationship'];
         $is_recurring = in_array($type_slug, $recurring_types);
         update_field('is_recurring', $is_recurring, $date_post_id);
 
