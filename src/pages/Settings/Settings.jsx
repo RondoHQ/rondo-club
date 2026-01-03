@@ -83,7 +83,7 @@ export default function Settings() {
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4">About</h2>
         <p className="text-sm text-gray-600">
-          Personal CRM v1.0.0<br />
+          Oikos v1.0.0<br />
           Built with WordPress, React, and Tailwind CSS.
         </p>
       </div>

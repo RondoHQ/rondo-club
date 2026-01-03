@@ -7,7 +7,7 @@ import { useLocation } from 'react-router-dom';
 export function useDocumentTitle(title) {
   useEffect(() => {
     if (title) {
-      const siteName = window.prmConfig?.siteName || 'Personal CRM';
+      const siteName = window.prmConfig?.siteName || 'Oikos';
       document.title = `${title} - ${siteName}`;
     }
   }, [title]);
@@ -80,7 +80,7 @@ export function useRouteTitle(customTitle = null) {
       } else if (path.startsWith('/settings')) {
         title = 'Settings';
       } else {
-        title = 'Personal CRM';
+        title = 'Oikos';
       }
     }
     
