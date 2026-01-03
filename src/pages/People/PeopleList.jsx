@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Star, Filter, X, Check } from 'lucide-react';
+import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
@@ -83,6 +83,8 @@ export default function PeopleList() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedLabels, setSelectedLabels] = useState([]);
+  const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
   
@@ -137,21 +139,35 @@ export default function PeopleList() {
       });
     }
     
-    // Sort by last name alphabetically
+    // Sort by selected field and order
     return filtered.sort((a, b) => {
-      const lastNameA = (a.acf?.last_name || a.last_name || '').toLowerCase();
-      const lastNameB = (b.acf?.last_name || b.last_name || '').toLowerCase();
+      let valueA, valueB;
       
-      // If last names are equal, sort by first name
-      if (lastNameA === lastNameB) {
-        const firstNameA = (a.acf?.first_name || a.first_name || '').toLowerCase();
-        const firstNameB = (b.acf?.first_name || b.first_name || '').toLowerCase();
-        return firstNameA.localeCompare(firstNameB);
+      if (sortField === 'first_name') {
+        valueA = (a.acf?.first_name || a.first_name || '').toLowerCase();
+        valueB = (b.acf?.first_name || b.first_name || '').toLowerCase();
+      } else {
+        valueA = (a.acf?.last_name || a.last_name || '').toLowerCase();
+        valueB = (b.acf?.last_name || b.last_name || '').toLowerCase();
       }
       
-      return lastNameA.localeCompare(lastNameB);
+      // If values are equal, sort by the other field as tiebreaker
+      if (valueA === valueB) {
+        const tiebreakerA = sortField === 'first_name' 
+          ? (a.acf?.last_name || a.last_name || '').toLowerCase()
+          : (a.acf?.first_name || a.first_name || '').toLowerCase();
+        const tiebreakerB = sortField === 'first_name'
+          ? (b.acf?.last_name || b.last_name || '').toLowerCase()
+          : (b.acf?.first_name || b.first_name || '').toLowerCase();
+        
+        const tiebreakerResult = tiebreakerA.localeCompare(tiebreakerB);
+        return sortOrder === 'asc' ? tiebreakerResult : -tiebreakerResult;
+      }
+      
+      const comparison = valueA.localeCompare(valueB);
+      return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [people, showFavoritesOnly, selectedLabels]);
+  }, [people, showFavoritesOnly, selectedLabels, sortField, sortOrder]);
   
   const hasActiveFilters = showFavoritesOnly || selectedLabels.length > 0;
   
@@ -221,6 +237,30 @@ export default function PeopleList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
+          {/* Sort Controls */}
+          <div className="flex items-center gap-2 border border-gray-200 rounded-lg p-1">
+            <select
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value)}
+              className="text-sm border-0 bg-transparent focus:ring-0 focus:outline-none cursor-pointer"
+            >
+              <option value="first_name">First Name</option>
+              <option value="last_name">Last Name</option>
+            </select>
+            <div className="h-4 w-px bg-gray-300"></div>
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+            >
+              {sortOrder === 'asc' ? (
+                <ArrowUp className="w-4 h-4 text-gray-600" />
+              ) : (
+                <ArrowDown className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+          </div>
+          
           <div className="relative" ref={filterRef}>
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
