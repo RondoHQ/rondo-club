@@ -288,8 +288,16 @@ export default function DateForm() {
     }
   }, [watchedPeople, watchedDateType, allPeople, dateTypes, setValue, watchedTitle]);
 
+  // Track if we've initialized the form to prevent resetting after user input
+  const [formInitialized, setFormInitialized] = useState(false);
+
   // Set default values when editing or from URL params
   useEffect(() => {
+    // Don't reset if form has already been initialized (user might have made changes)
+    if (formInitialized && !isEditing) {
+      return;
+    }
+
     // Wait for people to be loaded before setting defaults (needed for people selector)
     // When editing, also wait for the specific related people to be fetched
     const relatedPeopleLoaded = relatedPeopleFromDate.length === 0 || relatedPeopleData.length > 0;
@@ -326,8 +334,9 @@ export default function DateForm() {
         is_recurring: dateItem.acf?.is_recurring ?? true,
         reminder_days_before: dateItem.acf?.reminder_days_before || 7,
       });
-    } else if (!isEditing && allPeople.length > 0) {
-      // Handle URL params for new dates
+      setFormInitialized(true);
+    } else if (!isEditing && allPeople.length > 0 && dateTypes.length > 0) {
+      // Handle URL params for new dates - only reset once when both people and dateTypes are loaded
       const defaults = {
         title: '',
         date_value: '',
@@ -341,7 +350,7 @@ export default function DateForm() {
         defaults.related_people = [parseInt(prefilledPersonId)];
       }
 
-      if (prefilledType && dateTypes.length > 0) {
+      if (prefilledType) {
         const matchingType = dateTypes.find(t =>
           t.slug === prefilledType || t.name.toLowerCase() === prefilledType.toLowerCase()
         );
@@ -351,8 +360,9 @@ export default function DateForm() {
       }
 
       reset(defaults);
+      setFormInitialized(true);
     }
-  }, [dateItem, reset, isEditing, prefilledPersonId, prefilledType, dateTypes, allPeople, relatedPeopleFromDate, relatedPeopleData]);
+  }, [dateItem, reset, isEditing, prefilledPersonId, prefilledType, dateTypes, allPeople, relatedPeopleFromDate, relatedPeopleData, formInitialized]);
   
   // Update document title - MUST be called before early returns
   // to ensure consistent hook calls on every render
@@ -437,21 +447,29 @@ export default function DateForm() {
               name="date_type"
               control={control}
               rules={{ required: 'Please select a date type' }}
-              render={({ field }) => (
-                <select
-                  {...field}
-                  value={field.value || ''}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  className="input"
-                >
-                  <option value="">Select a type...</option>
-                  {dateTypes.map(type => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-              )}
+              render={({ field }) => {
+                const currentValue = field.value ? String(field.value) : '';
+                return (
+                  <select
+                    value={currentValue}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      field.onChange(newValue);
+                    }}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                    className="input"
+                  >
+                    <option value="">Select a type...</option>
+                    {dateTypes.map(type => (
+                      <option key={type.id} value={String(type.id)}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                );
+              }}
             />
             {errors.date_type && (
               <p className="text-sm text-red-600 mt-1">{errors.date_type.message}</p>
