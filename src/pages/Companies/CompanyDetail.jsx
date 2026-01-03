@@ -12,7 +12,7 @@ export default function CompanyDetail() {
   const { data: company, isLoading, error } = useQuery({
     queryKey: ['company', id],
     queryFn: async () => {
-      const response = await wpApi.getCompany(id);
+      const response = await wpApi.getCompany(id, { _embed: true });
       return response.data;
     },
   });
