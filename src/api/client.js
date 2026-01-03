@@ -68,7 +68,7 @@ export const wpApi = {
   getPersonLabels: () => api.get('/wp/v2/person_label'),
   getCompanyLabels: () => api.get('/wp/v2/company_label'),
   getRelationshipTypes: () => api.get('/wp/v2/relationship_type'),
-  getDateTypes: () => api.get('/wp/v2/date_type'),
+  getDateTypes: () => api.get('/wp/v2/date_type', { params: { per_page: 100 } }),
   
   // Media
   uploadMedia: (file) => {
