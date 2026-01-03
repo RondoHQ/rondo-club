@@ -433,17 +433,26 @@ export default function DateForm() {
           {/* Date type */}
           <div>
             <label className="label">Date Type *</label>
-            <select
-              {...register('date_type', { required: 'Please select a date type' })}
-              className="input"
-            >
-              <option value="">Select a type...</option>
-              {dateTypes.map(type => (
-                <option key={type.id} value={type.id}>
-                  {type.name}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="date_type"
+              control={control}
+              rules={{ required: 'Please select a date type' }}
+              render={({ field }) => (
+                <select
+                  {...field}
+                  value={field.value || ''}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  className="input"
+                >
+                  <option value="">Select a type...</option>
+                  {dateTypes.map(type => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
             {errors.date_type && (
               <p className="text-sm text-red-600 mt-1">{errors.date_type.message}</p>
             )}
