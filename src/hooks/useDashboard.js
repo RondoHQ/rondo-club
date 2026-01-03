@@ -22,12 +22,17 @@ export function useReminders(daysAhead = 30) {
 }
 
 export function useSearch(query) {
+  const enabled = Boolean(query && typeof query === 'string' && query.length >= 2);
+  
   return useQuery({
-    queryKey: ['search', query],
+    queryKey: ['search', query || ''],
     queryFn: async () => {
+      if (!enabled) {
+        return { people: [], companies: [], dates: [] };
+      }
       const response = await prmApi.search(query);
       return response.data;
     },
-    enabled: query.length >= 2,
+    enabled,
   });
 }

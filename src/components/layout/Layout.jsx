@@ -87,8 +87,10 @@ function Header({ onMenuClick }) {
   const dropdownRef = useRef(null);
   
   // Use search hook - only search if query is 2+ characters
+  const trimmedQuery = searchQuery.trim();
+  const shouldSearch = trimmedQuery.length >= 2;
   const { data: searchResults, isLoading: isSearchLoading } = useSearch(
-    searchQuery.trim().length >= 2 ? searchQuery.trim() : ''
+    shouldSearch ? trimmedQuery : null
   );
   
   // Get page title from location
@@ -134,11 +136,12 @@ function Header({ onMenuClick }) {
     }
   };
   
-  // Check if there are any results
-  const hasResults = searchResults && (
-    (searchResults.people && searchResults.people.length > 0) ||
-    (searchResults.companies && searchResults.companies.length > 0) ||
-    (searchResults.dates && searchResults.dates.length > 0)
+  // Check if there are any results - ensure searchResults is an object
+  const safeResults = searchResults || { people: [], companies: [], dates: [] };
+  const hasResults = (
+    (safeResults.people && safeResults.people.length > 0) ||
+    (safeResults.companies && safeResults.companies.length > 0) ||
+    (safeResults.dates && safeResults.dates.length > 0)
   );
   
   const showDropdown = isSearchFocused && searchQuery.trim().length >= 2;
@@ -185,12 +188,12 @@ function Header({ onMenuClick }) {
               ) : hasResults ? (
                 <div className="py-2">
                   {/* People results */}
-                  {searchResults.people && searchResults.people.length > 0 && (
+                  {safeResults.people && safeResults.people.length > 0 && (
                     <div className="px-3 py-2">
                       <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
                         People
                       </div>
-                      {searchResults.people.map((person) => (
+                      {safeResults.people.map((person) => (
                         <button
                           key={person.id}
                           onClick={() => handleResultClick('person', person.id)}
@@ -206,12 +209,12 @@ function Header({ onMenuClick }) {
                   )}
                   
                   {/* Companies results */}
-                  {searchResults.companies && searchResults.companies.length > 0 && (
+                  {safeResults.companies && safeResults.companies.length > 0 && (
                     <div className="px-3 py-2 border-t border-gray-100">
                       <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
                         Companies
                       </div>
-                      {searchResults.companies.map((company) => (
+                      {safeResults.companies.map((company) => (
                         <button
                           key={company.id}
                           onClick={() => handleResultClick('company', company.id)}
@@ -227,12 +230,12 @@ function Header({ onMenuClick }) {
                   )}
                   
                   {/* Dates results */}
-                  {searchResults.dates && searchResults.dates.length > 0 && (
+                  {safeResults.dates && safeResults.dates.length > 0 && (
                     <div className="px-3 py-2 border-t border-gray-100">
                       <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
                         Dates
                       </div>
-                      {searchResults.dates.map((date) => (
+                      {safeResults.dates.map((date) => (
                         <button
                           key={date.id}
                           onClick={() => handleResultClick('date', date.id)}
