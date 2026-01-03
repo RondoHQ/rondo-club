@@ -57,7 +57,7 @@ function ReminderCard({ reminder }) {
 
   let urgencyClass = 'bg-gray-100 text-gray-700';
   if (daysUntil === 0) {
-    urgencyClass = 'bg-red-100 text-red-700';
+    urgencyClass = 'bg-green-100 text-green-700';
   } else if (daysUntil <= 3) {
     urgencyClass = 'bg-orange-100 text-orange-700';
   } else if (daysUntil <= 7) {
