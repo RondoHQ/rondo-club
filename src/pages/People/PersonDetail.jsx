@@ -1,7 +1,7 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
-  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil
+  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
@@ -294,6 +294,7 @@ export default function PersonDetail() {
                   // Determine if this should be a clickable link
                   const isEmail = contact.contact_type === 'email';
                   const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
+                  const isMobile = contact.contact_type === 'mobile';
                   const isWebsite = contact.contact_type === 'website' || 
                                    contact.contact_type === 'linkedin' || 
                                    contact.contact_type === 'twitter' || 
@@ -342,6 +343,15 @@ export default function PersonDetail() {
                         )}
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                        {isMobile && (
+                          <a
+                            href={`whatsapp:${formatPhoneForTel(contact.contact_value)}`}
+                            className="p-1 hover:bg-green-50 rounded"
+                            title="Open WhatsApp"
+                          >
+                            <MessageCircle className="w-4 h-4 text-gray-400 hover:text-green-600" />
+                          </a>
+                        )}
                         <Link
                           to={`/people/${id}/contact/${index}/edit`}
                           className="p-1 hover:bg-gray-100 rounded"
