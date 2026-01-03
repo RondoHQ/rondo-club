@@ -20,6 +20,7 @@ import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch } from '@/hooks/useDashboard';
 import { useQuery } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
+import { APP_NAME } from '@/constants/app';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -38,7 +39,7 @@ function Sidebar({ mobile = false, onClose }) {
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
         <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary-600">
           <Home className="w-5 h-5" />
-          Oikos
+          {APP_NAME}
         </Link>
         {mobile && (
           <button onClick={onClose} className="p-2 -mr-2">

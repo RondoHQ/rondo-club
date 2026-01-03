@@ -279,7 +279,7 @@ class PRM_Reminders {
         );
         
         $message = sprintf(
-            __("Hello %s,\n\nThis is a reminder about: %s\n\nDate: %s\nPeople: %s\n\nVisit your Oikos to see more details.\n\n%s", 'personal-crm'),
+            __("Hello %s,\n\nThis is a reminder about: %s\n\nDate: %s\nPeople: %s\n\nVisit your Koinastra to see more details.\n\n%s", 'personal-crm'),
             $user->display_name,
             $reminder['title'],
             $date_formatted,

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { APP_NAME } from '@/constants/app';
 
 /**
  * Hook to update document title based on current route
@@ -7,7 +8,7 @@ import { useLocation } from 'react-router-dom';
 export function useDocumentTitle(title) {
   useEffect(() => {
     if (title) {
-      const siteName = window.prmConfig?.siteName || 'Oikos';
+      const siteName = window.prmConfig?.siteName || APP_NAME;
       document.title = `${title} - ${siteName}`;
     }
   }, [title]);
@@ -80,11 +81,11 @@ export function useRouteTitle(customTitle = null) {
       } else if (path.startsWith('/settings')) {
         title = 'Settings';
       } else {
-        title = 'Oikos';
+        title = APP_NAME;
       }
     }
     
-    const siteName = window.prmConfig?.siteName || 'Personal CRM';
+    const siteName = window.prmConfig?.siteName || APP_NAME;
     document.title = `${title} - ${siteName}`;
   }, [location.pathname, customTitle]);
 }
