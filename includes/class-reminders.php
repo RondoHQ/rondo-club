@@ -162,6 +162,56 @@ class PRM_Reminders {
         foreach ($upcoming as $reminder) {
             $this->send_reminder_notifications($reminder);
         }
+        
+        // Check and update expired work history entries
+        $this->update_expired_work_history();
+    }
+    
+    /**
+     * Update work history entries where is_current is true but end_date has passed
+     */
+    private function update_expired_work_history() {
+        $people = get_posts([
+            'post_type'      => 'person',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+        ]);
+        
+        $today = new DateTime('today', wp_timezone());
+        $updated_count = 0;
+        
+        foreach ($people as $person) {
+            $work_history = get_field('work_history', $person->ID) ?: [];
+            
+            if (empty($work_history)) {
+                continue;
+            }
+            
+            $needs_update = false;
+            
+            foreach ($work_history as $index => $job) {
+                // Check if job is marked as current but has an end_date that has passed
+                if (!empty($job['is_current']) && !empty($job['end_date'])) {
+                    $end_date = DateTime::createFromFormat('Y-m-d', $job['end_date'], wp_timezone());
+                    
+                    if ($end_date && $end_date < $today) {
+                        // End date has passed, mark as not current
+                        $work_history[$index]['is_current'] = false;
+                        $needs_update = true;
+                    }
+                }
+            }
+            
+            if ($needs_update) {
+                update_field('work_history', $work_history, $person->ID);
+                $updated_count++;
+            }
+        }
+        
+        // Log if any updates were made (optional, for debugging)
+        if ($updated_count > 0) {
+            error_log(sprintf('PRM: Updated %d person(s) with expired work history entries', $updated_count));
+        }
     }
     
     /**

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.40] - 2024-12-19
+
+### Added
+- Work history: Can now set both "current job" and a future end date simultaneously
+- Work history: Daily cron job automatically sets is_current=false when end_date passes
+
+### Changed
+- Work history form: End date field is no longer disabled when "current job" is checked
+- Work history form: End date can be set even for current positions to schedule automatic transition
+
 ## [1.0.39] - 2024-12-19
 
 ### Fixed

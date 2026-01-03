@@ -162,15 +162,24 @@ class PRM_REST_API {
                     // Determine if person is current or former
                     $is_current = false;
                     
-                    // If is_current flag is set, they're current
+                    // If is_current flag is set, check if end_date has passed
                     if (!empty($job['is_current'])) {
-                        $is_current = true;
+                        // If there's an end_date, check if it's in the future
+                        if (!empty($job['end_date'])) {
+                            $end_date = strtotime($job['end_date']);
+                            $today = strtotime('today');
+                            // Only current if end_date is today or in the future
+                            $is_current = ($end_date >= $today);
+                        } else {
+                            // No end_date, so still current
+                            $is_current = true;
+                        }
                     } 
-                    // If no end_date, they're current
+                    // If no is_current flag but no end_date, they're current
                     elseif (empty($job['end_date'])) {
                         $is_current = true;
                     }
-                    // If end_date is in the future, they're still current
+                    // If end_date is in the future (and is_current not set), they're still current
                     elseif (!empty($job['end_date'])) {
                         $end_date = strtotime($job['end_date']);
                         $today = strtotime('today');

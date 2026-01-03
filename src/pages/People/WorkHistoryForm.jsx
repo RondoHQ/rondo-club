@@ -90,7 +90,7 @@ export default function WorkHistoryForm() {
         job_title: data.job_title || '',
         description: data.description || '',
         start_date: data.start_date || '',
-        end_date: data.is_current ? '' : (data.end_date || ''),
+        end_date: data.end_date || '',
         is_current: data.is_current || false,
       };
 
@@ -213,11 +213,10 @@ export default function WorkHistoryForm() {
                 type="date"
                 {...register('end_date')}
                 className="input"
-                disabled={isCurrent}
               />
-              {isCurrent && (
-                <p className="text-xs text-gray-500 mt-1">Leave empty for current position</p>
-              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Optional: Set a future end date to automatically mark as former when it passes
+              </p>
             </div>
           </div>
 
