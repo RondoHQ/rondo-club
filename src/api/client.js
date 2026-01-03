@@ -85,6 +85,9 @@ export const prmApi = {
   // Dashboard
   getDashboard: () => api.get('/prm/v1/dashboard'),
   
+  // Gravatar
+  sideloadGravatar: (personId, email) => api.post(`/prm/v1/people/${personId}/gravatar`, { email }),
+  
   // Search
   search: (query) => api.get('/prm/v1/search', { params: { q: query } }),
   

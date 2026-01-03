@@ -85,6 +85,26 @@ class PRM_REST_API {
             'callback'            => [$this, 'get_dashboard_summary'],
             'permission_callback' => 'is_user_logged_in',
         ]);
+        
+        // Sideload Gravatar image
+        register_rest_route('prm/v1', '/people/(?P<person_id>\d+)/gravatar', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'sideload_gravatar'],
+            'permission_callback' => [$this, 'check_person_access'],
+            'args'                => [
+                'person_id' => [
+                    'validate_callback' => function($param) {
+                        return is_numeric($param);
+                    },
+                ],
+                'email' => [
+                    'required'          => true,
+                    'validate_callback' => function($param) {
+                        return is_email($param);
+                    },
+                ],
+            ],
+        ]);
     }
     
     /**
@@ -462,5 +482,72 @@ class PRM_REST_API {
             'date_type'            => wp_get_post_terms($post->ID, 'date_type', ['fields' => 'names']),
             'related_people'       => $people_names,
         ];
+    }
+    
+    /**
+     * Sideload Gravatar image for a person
+     */
+    public function sideload_gravatar($request) {
+        $person_id = (int) $request->get_param('person_id');
+        $email = sanitize_email($request->get_param('email'));
+        
+        if (empty($email)) {
+            return new WP_Error('missing_email', __('Email address is required.', 'personal-crm'), ['status' => 400]);
+        }
+        
+        // Generate Gravatar URL
+        $email_hash = md5(strtolower(trim($email)));
+        $gravatar_url = sprintf('https://www.gravatar.com/avatar/%s?s=400&d=404', $email_hash);
+        
+        // Check if Gravatar exists (404 means no gravatar)
+        $response = wp_remote_head($gravatar_url);
+        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) === 404) {
+            return rest_ensure_response([
+                'success' => false,
+                'message' => 'No Gravatar found for this email address',
+            ]);
+        }
+        
+        // Sideload the image
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        
+        // Download the file
+        $tmp = download_url($gravatar_url);
+        
+        if (is_wp_error($tmp)) {
+            return new WP_Error('download_failed', __('Failed to download Gravatar image.', 'personal-crm'), ['status' => 500]);
+        }
+        
+        // Get person's name for filename
+        $first_name = get_field('first_name', $person_id) ?: '';
+        $last_name = get_field('last_name', $person_id) ?: '';
+        $name_slug = sanitize_title(strtolower(trim($first_name . ' ' . $last_name)));
+        $filename = !empty($name_slug) ? $name_slug . '.jpg' : 'gravatar-' . $person_id . '.jpg';
+        
+        // Get file info
+        $file_array = [
+            'name'     => $filename,
+            'tmp_name' => $tmp,
+        ];
+        
+        // Sideload the file
+        $attachment_id = media_handle_sideload($file_array, $person_id, sprintf(__('%s Gravatar', 'personal-crm'), $first_name . ' ' . $last_name));
+        
+        // Clean up temp file if sideload failed
+        if (is_wp_error($attachment_id)) {
+            @unlink($tmp);
+            return new WP_Error('sideload_failed', __('Failed to sideload Gravatar image.', 'personal-crm'), ['status' => 500]);
+        }
+        
+        // Set as featured image
+        set_post_thumbnail($person_id, $attachment_id);
+        
+        return rest_ensure_response([
+            'success' => true,
+            'attachment_id' => $attachment_id,
+            'thumbnail_url' => get_the_post_thumbnail_url($person_id, 'thumbnail'),
+        ]);
     }
 }

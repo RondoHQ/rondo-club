@@ -5,7 +5,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { usePerson, useCreatePerson, useUpdatePerson } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { wpApi } from '@/api/client';
+import { wpApi, prmApi } from '@/api/client';
 
 export default function PersonForm() {
   const { id } = useParams();
@@ -32,6 +32,7 @@ export default function PersonForm() {
       first_name: '',
       last_name: '',
       nickname: '',
+      email: '',
       how_we_met: '',
       is_favorite: false,
       birthday: '',
@@ -40,10 +41,15 @@ export default function PersonForm() {
   
   useEffect(() => {
     if (person) {
+      // Get email from contact_info if it exists
+      const emailContact = person.acf?.contact_info?.find(contact => contact.contact_type === 'email');
+      const email = emailContact?.contact_value || '';
+      
       reset({
         first_name: person.acf?.first_name || '',
         last_name: person.acf?.last_name || '',
         nickname: person.acf?.nickname || '',
+        email: email,
         how_we_met: person.acf?.how_we_met || '',
         is_favorite: person.acf?.is_favorite || false,
         birthday: '', // Birthday is stored separately as an important_date
@@ -77,6 +83,17 @@ export default function PersonForm() {
         },
       };
       
+      // Add email to contact_info if provided (only when creating)
+      if (!isEditing && data.email) {
+        payload.acf.contact_info = [
+          {
+            contact_type: 'email',
+            contact_value: data.email,
+            contact_label: '',
+          },
+        ];
+      }
+      
       if (isEditing) {
         // Update title when editing too
         payload.title = title;
@@ -85,6 +102,16 @@ export default function PersonForm() {
       } else {
         const result = await createPerson.mutateAsync(payload);
         const personId = result.data.id;
+        
+        // Try to sideload Gravatar if email is provided
+        if (data.email) {
+          try {
+            await prmApi.sideloadGravatar(personId, data.email);
+          } catch (gravatarError) {
+            console.error('Failed to load Gravatar:', gravatarError);
+            // Continue anyway - person was created successfully, just no gravatar
+          }
+        }
         
         // Create birthday if provided
         if (data.birthday && birthdayType) {
@@ -170,6 +197,21 @@ export default function PersonForm() {
               placeholder="Johnny"
             />
           </div>
+          
+          {!isEditing && (
+            <div>
+              <label className="label">Email</label>
+              <input
+                type="email"
+                {...register('email')}
+                className="input"
+                placeholder="john@example.com"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Optional: If a Gravatar is associated with this email, it will be automatically set as the profile photo
+              </p>
+            </div>
+          )}
           
           {!isEditing && (
             <div>

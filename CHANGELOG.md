@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.43] - 2024-12-19
+
+### Added
+- Person form: Email field when creating a new person
+- Person form: Automatically fetches and sets Gravatar profile photo if email has a Gravatar
+- Backend: New REST endpoint to sideload Gravatar images for people
+
 ## [1.0.42] - 2024-12-19
 
 ### Fixed
