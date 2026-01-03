@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Star, Filter } from 'lucide-react';
+import { Plus, Star, Filter, X, Check } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 
 // Helper function to get current company ID from person's work history
@@ -79,13 +79,65 @@ function PersonCard({ person, companyName }) {
 }
 
 export default function PeopleList() {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [selectedLabels, setSelectedLabels] = useState([]);
+  const filterRef = useRef(null);
+  const dropdownRef = useRef(null);
+  
   const { data: people, isLoading, error } = usePeople();
   
-  // Sort people by last name alphabetically
-  const sortedPeople = useMemo(() => {
+  // Fetch person labels
+  const { data: labelsData } = useQuery({
+    queryKey: ['person-labels'],
+    queryFn: async () => {
+      const response = await wpApi.getPersonLabels();
+      return response.data;
+    },
+  });
+  
+  const availableLabels = labelsData?.map(label => label.name) || [];
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        filterRef.current &&
+        !filterRef.current.contains(event.target)
+      ) {
+        setIsFilterOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  // Filter and sort people
+  const filteredAndSortedPeople = useMemo(() => {
     if (!people) return [];
     
-    return [...people].sort((a, b) => {
+    let filtered = [...people];
+    
+    // Apply favorites filter
+    if (showFavoritesOnly) {
+      filtered = filtered.filter(person => person.is_favorite);
+    }
+    
+    // Apply label filters
+    if (selectedLabels.length > 0) {
+      filtered = filtered.filter(person => {
+        const personLabels = person.labels || [];
+        return selectedLabels.some(label => personLabels.includes(label));
+      });
+    }
+    
+    // Sort by last name alphabetically
+    return filtered.sort((a, b) => {
       const lastNameA = (a.acf?.last_name || a.last_name || '').toLowerCase();
       const lastNameB = (b.acf?.last_name || b.last_name || '').toLowerCase();
       
@@ -98,17 +150,32 @@ export default function PeopleList() {
       
       return lastNameA.localeCompare(lastNameB);
     });
-  }, [people]);
+  }, [people, showFavoritesOnly, selectedLabels]);
+  
+  const hasActiveFilters = showFavoritesOnly || selectedLabels.length > 0;
+  
+  const handleLabelToggle = (label) => {
+    setSelectedLabels(prev => 
+      prev.includes(label)
+        ? prev.filter(l => l !== label)
+        : [...prev, label]
+    );
+  };
+  
+  const clearFilters = () => {
+    setShowFavoritesOnly(false);
+    setSelectedLabels([]);
+  };
 
   // Collect all company IDs
   const companyIds = useMemo(() => {
-    if (!sortedPeople) return [];
-    const ids = sortedPeople
+    if (!filteredAndSortedPeople) return [];
+    const ids = filteredAndSortedPeople
       .map(person => getCurrentCompanyId(person))
       .filter(Boolean);
     // Remove duplicates
     return [...new Set(ids)];
-  }, [sortedPeople]);
+  }, [filteredAndSortedPeople]);
 
   // Fetch company names
   const companyQueries = useQueries({
@@ -136,24 +203,146 @@ export default function PeopleList() {
   // Create a map of person ID to company name
   const personCompanyMap = useMemo(() => {
     const map = {};
-    sortedPeople.forEach(person => {
+    filteredAndSortedPeople.forEach(person => {
       const companyId = getCurrentCompanyId(person);
       if (companyId && companyMap[companyId]) {
         map[person.id] = companyMap[companyId];
       }
     });
     return map;
-  }, [sortedPeople, companyMap]);
+  }, [filteredAndSortedPeople, companyMap]);
   
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex gap-2">
-          <button className="btn-secondary">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative" ref={filterRef}>
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`btn-secondary ${hasActiveFilters ? 'bg-primary-50 text-primary-700 border-primary-200' : ''}`}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filter
+              {hasActiveFilters && (
+                <span className="ml-2 px-1.5 py-0.5 bg-primary-600 text-white text-xs rounded-full">
+                  {selectedLabels.length + (showFavoritesOnly ? 1 : 0)}
+                </span>
+              )}
+            </button>
+            
+            {/* Filter Dropdown */}
+            {isFilterOpen && (
+              <div
+                ref={dropdownRef}
+                className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+              >
+                <div className="p-4 space-y-4">
+                  {/* Favorites Filter */}
+                  <div>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showFavoritesOnly}
+                        onChange={(e) => setShowFavoritesOnly(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                        showFavoritesOnly 
+                          ? 'bg-primary-600 border-primary-600' 
+                          : 'border-gray-300'
+                      }`}>
+                        {showFavoritesOnly && (
+                          <Check className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                      <div className="flex items-center">
+                        <Star className="w-4 h-4 mr-2 text-yellow-400 fill-current" />
+                        <span className="text-sm font-medium text-gray-900">Favorites only</span>
+                      </div>
+                    </label>
+                  </div>
+                  
+                  {/* Labels Filter */}
+                  {availableLabels.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Labels
+                      </h3>
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
+                        {availableLabels.map(label => (
+                          <label
+                            key={label}
+                            className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedLabels.includes(label)}
+                              onChange={() => handleLabelToggle(label)}
+                              className="sr-only"
+                            />
+                            <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                              selectedLabels.includes(label)
+                                ? 'bg-primary-600 border-primary-600'
+                                : 'border-gray-300'
+                            }`}>
+                              {selectedLabels.includes(label) && (
+                                <Check className="w-3 h-3 text-white" />
+                              )}
+                            </div>
+                            <span className="text-sm text-gray-700">{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Clear Filters */}
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearFilters}
+                      className="w-full text-sm text-primary-600 hover:text-primary-700 font-medium pt-2 border-t border-gray-200"
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Active Filter Chips */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap gap-2">
+              {showFavoritesOnly && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-800 rounded-full text-xs">
+                  <Star className="w-3 h-3" />
+                  Favorites
+                  <button
+                    onClick={() => setShowFavoritesOnly(false)}
+                    className="hover:text-primary-600"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {selectedLabels.map(label => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs"
+                >
+                  {label}
+                  <button
+                    onClick={() => handleLabelToggle(label)}
+                    className="hover:text-gray-600"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          
           <Link to="/people/new" className="btn-primary">
             <Plus className="w-4 h-4 mr-2" />
             Add Person
@@ -193,15 +382,31 @@ export default function PeopleList() {
       )}
       
       {/* People grid */}
-      {!isLoading && !error && sortedPeople?.length > 0 && (
+      {!isLoading && !error && filteredAndSortedPeople?.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedPeople.map((person) => (
+          {filteredAndSortedPeople.map((person) => (
             <PersonCard 
               key={person.id} 
               person={person} 
               companyName={personCompanyMap[person.id]}
             />
           ))}
+        </div>
+      )}
+      
+      {/* No results with filters */}
+      {!isLoading && !error && people?.length > 0 && filteredAndSortedPeople?.length === 0 && (
+        <div className="card p-12 text-center">
+          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Filter className="w-6 h-6 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-1">No people match your filters</h3>
+          <p className="text-gray-500 mb-4">
+            Try adjusting your filters to see more results.
+          </p>
+          <button onClick={clearFilters} className="btn-secondary">
+            Clear filters
+          </button>
         </div>
       )}
     </div>

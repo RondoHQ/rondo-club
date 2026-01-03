@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.22] - 2024-12-19
+
+### Added
+- People list: Filter functionality with favorites toggle and label multi-select
+- People list: Active filter chips showing applied filters with quick remove options
+- People list: Filter button shows badge count when filters are active
+- People list: "No results" state when filters don't match any people
+
 ## [1.0.21] - 2024-12-19
 
 ### Removed
