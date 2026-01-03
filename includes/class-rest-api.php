@@ -117,12 +117,25 @@ class PRM_REST_API {
      */
     public function get_people_by_company($request) {
         $company_id = $request->get_param('company_id');
+        $user_id = get_current_user_id();
         
-        // Query people with this company in their work history
+        // Apply access control - get accessible person IDs
+        $access_control = new PRM_Access_Control();
+        $accessible_ids = $access_control->get_accessible_post_ids('person', $user_id);
+        
+        if (empty($accessible_ids)) {
+            return rest_ensure_response([
+                'current' => [],
+                'former'  => [],
+            ]);
+        }
+        
+        // Query only accessible people with this company in their work history
         $people = get_posts([
             'post_type'      => 'person',
             'posts_per_page' => -1,
             'post_status'    => 'publish',
+            'post__in'       => $accessible_ids,
             'meta_query'     => [
                 [
                     'key'     => 'work_history_%_company',

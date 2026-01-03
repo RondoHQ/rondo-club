@@ -123,7 +123,7 @@ class PRM_Access_Control {
     /**
      * Get all post IDs accessible by a user
      */
-    private function get_accessible_post_ids($post_type, $user_id) {
+    public function get_accessible_post_ids($post_type, $user_id) {
         global $wpdb;
         
         // Get posts authored by user

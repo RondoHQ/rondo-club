@@ -178,28 +178,31 @@ export default function PeopleList() {
     return [...new Set(ids)];
   }, [filteredAndSortedPeople]);
 
-  // Fetch company names
-  const companyQueries = useQueries({
-    queries: companyIds.map(companyId => ({
-      queryKey: ['company', companyId],
-      queryFn: async () => {
-        const response = await wpApi.getCompany(companyId);
-        return response.data;
-      },
-      enabled: !!companyId,
-    })),
+  // Batch fetch all companies at once instead of individual queries
+  const { data: companiesData } = useQuery({
+    queryKey: ['companies', 'batch', companyIds.sort().join(',')],
+    queryFn: async () => {
+      if (companyIds.length === 0) return [];
+      // Fetch all companies in one request
+      const response = await wpApi.getCompanies({ 
+        per_page: 100,
+        include: companyIds.join(','),
+      });
+      return response.data;
+    },
+    enabled: companyIds.length > 0,
   });
 
   // Create a map of company ID to company name
   const companyMap = useMemo(() => {
     const map = {};
-    companyQueries.forEach((query, index) => {
-      if (query.data) {
-        map[companyIds[index]] = query.data.title?.rendered || query.data.title || '';
-      }
-    });
+    if (companiesData) {
+      companiesData.forEach(company => {
+        map[company.id] = company.title?.rendered || company.title || '';
+      });
+    }
     return map;
-  }, [companyQueries, companyIds]);
+  }, [companiesData]);
 
   // Create a map of person ID to company name
   const personCompanyMap = useMemo(() => {
