@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { usePerson, useUpdatePerson, usePeople } from '@/hooks/usePeople';
@@ -15,23 +15,138 @@ function decodeHtml(html) {
   return txt.value;
 }
 
-function PersonSelector({ value, onChange, people, isLoading, excludePersonId }) {
-  const filteredPeople = people.filter(p => p.id !== excludePersonId);
-  
+function SearchablePersonSelector({ value, onChange, people, isLoading, excludePersonId }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  // Sort people by first name ascending, then filter out excluded person
+  const sortedAndFilteredPeople = useMemo(() => {
+    const filtered = people.filter(p => p.id !== excludePersonId);
+    return filtered.sort((a, b) => {
+      const firstNameA = (a.first_name || a.acf?.first_name || '').toLowerCase();
+      const firstNameB = (b.first_name || b.acf?.first_name || '').toLowerCase();
+      if (firstNameA < firstNameB) return -1;
+      if (firstNameA > firstNameB) return 1;
+      return 0;
+    });
+  }, [people, excludePersonId]);
+
+  // Filter by search term
+  const filteredPeople = useMemo(() => {
+    if (!searchTerm) return sortedAndFilteredPeople.slice(0, 10);
+    
+    const term = searchTerm.toLowerCase();
+    return sortedAndFilteredPeople.filter(p => {
+      const name = decodeHtml(p.title?.rendered || p.title || '').toLowerCase();
+      const firstName = (p.first_name || p.acf?.first_name || '').toLowerCase();
+      const lastName = (p.last_name || p.acf?.last_name || '').toLowerCase();
+      
+      return name.includes(term) || firstName.includes(term) || lastName.includes(term);
+    }).slice(0, 10);
+  }, [sortedAndFilteredPeople, searchTerm]);
+
+  const selectedPerson = useMemo(() => {
+    return sortedAndFilteredPeople.find(p => p.id === value);
+  }, [sortedAndFilteredPeople, value]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (personId) => {
+    onChange(personId);
+    setSearchTerm('');
+    setIsOpen(false);
+  };
+
+  const handleClear = () => {
+    onChange(null);
+    setSearchTerm('');
+    setIsOpen(false);
+  };
+
+  const displayValue = selectedPerson
+    ? decodeHtml(selectedPerson.title?.rendered || selectedPerson.title)
+    : '';
+
   return (
-    <select
-      value={value || ''}
-      onChange={(e) => onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
-      className="input"
-      disabled={isLoading}
-    >
-      <option value="">Select a person...</option>
-      {filteredPeople.map(person => (
-        <option key={person.id} value={person.id}>
-          {decodeHtml(person.title?.rendered || person.title)}
-        </option>
-      ))}
-    </select>
+    <div className="relative">
+      {/* Selected person display / Search input */}
+      <div className="relative">
+        {selectedPerson && !isOpen ? (
+          <div 
+            className="flex items-center justify-between input pr-8 cursor-text"
+            onClick={() => setIsOpen(true)}
+          >
+            <span>{displayValue}</span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
+              }}
+              className="absolute right-2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <input
+            ref={inputRef}
+            type="text"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setIsOpen(true);
+            }}
+            onFocus={() => setIsOpen(true)}
+            placeholder="Search for a person..."
+            className="input"
+            disabled={isLoading}
+          />
+        )}
+      </div>
+
+      {/* Dropdown */}
+      {isOpen && (searchTerm || !selectedPerson) && (
+        <div
+          ref={dropdownRef}
+          className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+        >
+          {filteredPeople.length > 0 ? (
+            filteredPeople.map(person => (
+              <button
+                key={person.id}
+                type="button"
+                onClick={() => handleSelect(person.id)}
+                className={`w-full text-left px-4 py-2 hover:bg-gray-50 ${
+                  value === person.id ? 'bg-primary-50' : ''
+                }`}
+              >
+                {decodeHtml(person.title?.rendered || person.title)}
+              </button>
+            ))
+          ) : (
+            <p className="px-4 py-2 text-gray-500 text-sm">No people found</p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -167,7 +282,7 @@ export default function RelationshipForm() {
               control={control}
               rules={{ required: 'Please select a person' }}
               render={({ field }) => (
-                <PersonSelector
+                <SearchablePersonSelector
                   value={field.value}
                   onChange={field.onChange}
                   people={allPeople}
