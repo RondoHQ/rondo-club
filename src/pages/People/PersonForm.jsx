@@ -28,7 +28,8 @@ export default function PersonForm() {
     }
   }, [person, reset]);
   
-  // Update document title
+  // Update document title - MUST be called before early returns
+  // to ensure consistent hook calls on every render
   useDocumentTitle(
     isEditing && person
       ? `Edit ${person.title?.rendered || person.title || 'Person'}`

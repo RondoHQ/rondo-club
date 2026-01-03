@@ -333,7 +333,8 @@ export default function DateForm() {
     }
   }, [dateItem, reset, isEditing, prefilledPersonId, prefilledType, dateTypes, allPeople, relatedPeopleFromDate, relatedPeopleData]);
   
-  // Update document title
+  // Update document title - MUST be called before early returns
+  // to ensure consistent hook calls on every render
   useDocumentTitle(
     isEditing && dateItem
       ? `Edit ${dateItem.title?.rendered || dateItem.title || 'Date'}`

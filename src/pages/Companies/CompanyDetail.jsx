@@ -33,6 +33,10 @@ export default function CompanyDetail() {
     },
   });
   
+  // Update document title with company's name - MUST be called before early returns
+  // to ensure consistent hook calls on every render
+  useDocumentTitle(company?.title?.rendered || company?.title || 'Company');
+  
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this company?')) {
       deleteCompany.mutate();
@@ -55,9 +59,6 @@ export default function CompanyDetail() {
       </div>
     );
   }
-  
-  // Update document title with company's name
-  useDocumentTitle(company.title?.rendered || company.title || 'Company');
   
   const acf = company.acf || {};
   

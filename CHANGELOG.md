@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Disabled rewrite rules for custom post types to prevent URL conflicts
 - Fixed React error #310 ("Rendered more hooks than during the previous render") by removing `useParams()` from `useRouteTitle` hook
 - `useRouteTitle` now extracts route IDs from pathname instead of using `useParams()`, ensuring consistent hook calls regardless of route context
+- Fixed React error #310 on Person Detail pages by moving `useDocumentTitle` hook calls before early returns in all detail and form components
+- All hooks are now called consistently on every render, even during loading/error states
 - Fixed "Rendered more hooks than during the previous render" error by ensuring useSearch always receives a string (never null)
 - Fixed minified React error caused by improper handling of empty search queries
 - Added safety checks for search results to prevent property access errors

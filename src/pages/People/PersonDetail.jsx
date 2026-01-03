@@ -14,6 +14,10 @@ export default function PersonDetail() {
   const { data: timeline } = usePersonTimeline(id);
   const { data: personDates } = usePersonDates(id);
   const deletePerson = useDeletePerson();
+  
+  // Update document title with person's name - MUST be called before early returns
+  // to ensure consistent hook calls on every render
+  useDocumentTitle(person?.title?.rendered || person?.title || 'Person');
 
   // Find birthday from person dates
   // date_type is an array of term names from the API
@@ -56,9 +60,6 @@ export default function PersonDetail() {
   }
   
   const acf = person.acf || {};
-  
-  // Update document title with person's name
-  useDocumentTitle(person.title?.rendered || person.title || 'Person');
   
   return (
     <div className="space-y-6">
