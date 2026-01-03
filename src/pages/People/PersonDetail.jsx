@@ -1,17 +1,34 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, Edit, Trash2, Star, Mail, Phone, 
-  MapPin, Globe, Building2, Calendar, Plus 
+import {
+  ArrowLeft, Edit, Trash2, Star, Mail, Phone,
+  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil
 } from 'lucide-react';
-import { usePerson, usePersonTimeline, useDeletePerson } from '@/hooks/usePeople';
-import { format } from 'date-fns';
+import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson } from '@/hooks/usePeople';
+import { format, differenceInYears } from 'date-fns';
 
 export default function PersonDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: person, isLoading, error } = usePerson(id);
   const { data: timeline } = usePersonTimeline(id);
+  const { data: personDates } = usePersonDates(id);
   const deletePerson = useDeletePerson();
+
+  // Find birthday from person dates
+  // date_type is an array of term names from the API
+  const birthday = personDates?.find(d => {
+    const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
+    return dateType?.toLowerCase() === 'birthday';
+  });
+  // The API returns date_value, not date
+  const birthDate = birthday?.date_value ? new Date(birthday.date_value) : null;
+  const age = birthDate ? differenceInYears(new Date(), birthDate) : null;
+
+  // Get other dates (non-birthday)
+  const otherDates = personDates?.filter(d => {
+    const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
+    return dateType?.toLowerCase() !== 'birthday';
+  }) || [];
   
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this person?')) {
@@ -62,29 +79,48 @@ export default function PersonDetail() {
       {/* Profile header */}
       <div className="card p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          {person._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
-            <img 
-              src={person._embedded['wp:featuredmedia'][0].source_url}
-              alt={person.title.rendered}
+          {person.thumbnail ? (
+            <img
+              src={person.thumbnail}
+              alt={person.name}
               className="w-24 h-24 rounded-full object-cover"
             />
           ) : (
             <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
               <span className="text-3xl font-medium text-gray-500">
-                {acf.first_name?.[0] || '?'}
+                {person.first_name?.[0] || '?'}
               </span>
             </div>
           )}
-          
+
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{person.title.rendered}</h1>
-              {acf.is_favorite && (
+              <h1 className="text-2xl font-bold">{person.name}</h1>
+              {person.is_favorite && (
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
               )}
             </div>
             {acf.nickname && (
               <p className="text-gray-500">"{acf.nickname}"</p>
+            )}
+            {birthDate ? (
+              <Link
+                to={`/dates/${birthday.id}/edit`}
+                className="text-gray-500 text-sm mt-1 inline-flex items-center hover:text-primary-600 group"
+              >
+                <Calendar className="w-4 h-4 mr-1" />
+                {format(birthDate, 'MMMM d, yyyy')}
+                {age !== null && ` (${age} years old)`}
+                <Pencil className="w-3 h-3 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
+            ) : (
+              <Link
+                to={`/dates/new?person=${id}&type=birthday`}
+                className="text-gray-400 text-sm mt-1 inline-flex items-center hover:text-primary-600"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add birthday
+              </Link>
             )}
           </div>
         </div>
@@ -103,7 +139,7 @@ export default function PersonDetail() {
                                contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
                                contact.contact_type === 'address' ? MapPin :
                                contact.contact_type === 'website' ? Globe : Globe;
-                  
+
                   return (
                     <div key={index} className="flex items-center">
                       <Icon className="w-4 h-4 text-gray-400 mr-3" />
@@ -117,7 +153,45 @@ export default function PersonDetail() {
               </div>
             </div>
           )}
-          
+
+          {/* Important Dates */}
+          {otherDates.length > 0 && (
+            <div className="card p-6">
+              <h2 className="font-semibold mb-4">Important Dates</h2>
+              <div className="space-y-3">
+                {otherDates.map((date) => {
+                  const dateType = Array.isArray(date.date_type) ? date.date_type[0] : date.date_type;
+                  const dateTypeLower = dateType?.toLowerCase() || '';
+                  const Icon = dateTypeLower.includes('anniversary') || dateTypeLower.includes('marriage') ? Heart :
+                               dateTypeLower.includes('birthday') ? Gift : Calendar;
+
+                  return (
+                    <div key={date.id} className="flex items-start group">
+                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                        <Icon className="w-4 h-4 text-gray-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{date.title}</p>
+                        <p className="text-xs text-gray-500">
+                          {date.date_value && format(new Date(date.date_value), 'MMMM d, yyyy')}
+                        </p>
+                        {dateType && (
+                          <p className="text-xs text-gray-400 capitalize">{dateType}</p>
+                        )}
+                      </div>
+                      <Link
+                        to={`/dates/${date.id}/edit`}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
+                      >
+                        <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Work history */}
           {acf.work_history?.length > 0 && (
             <div className="card p-6">
@@ -208,15 +282,27 @@ export default function PersonDetail() {
               <h2 className="font-semibold mb-3">Relationships</h2>
               <div className="space-y-2">
                 {acf.relationships.map((rel, index) => (
-                  <Link 
+                  <Link
                     key={index}
                     to={`/people/${rel.related_person}`}
                     className="flex items-center p-2 rounded hover:bg-gray-50"
                   >
-                    <div className="w-8 h-8 bg-gray-200 rounded-full mr-2"></div>
+                    {rel.person_thumbnail ? (
+                      <img
+                        src={rel.person_thumbnail}
+                        alt={rel.person_name}
+                        className="w-8 h-8 rounded-full object-cover mr-2"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                        <span className="text-xs font-medium text-gray-500">
+                          {rel.person_name?.[0] || '?'}
+                        </span>
+                      </div>
+                    )}
                     <div>
-                      <p className="text-sm font-medium">Person #{rel.related_person}</p>
-                      <p className="text-xs text-gray-500">{rel.relationship_label}</p>
+                      <p className="text-sm font-medium">{rel.person_name || `Person #${rel.related_person}`}</p>
+                      <p className="text-xs text-gray-500">{rel.relationship_name || rel.relationship_label}</p>
                     </div>
                   </Link>
                 ))}

@@ -1,0 +1,97 @@
+{
+    "key": "group_important_date_fields",
+    "title": "Important Date Fields",
+    "fields": [
+        {
+            "key": "field_date_value",
+            "label": "Date",
+            "name": "date_value",
+            "type": "date_picker",
+            "required": 1,
+            "display_format": "F j, Y",
+            "return_format": "Y-m-d",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_is_recurring",
+            "label": "Recurring",
+            "name": "is_recurring",
+            "type": "true_false",
+            "message": "This date repeats every year",
+            "default_value": 1,
+            "ui": 1,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_related_people",
+            "label": "Related People",
+            "name": "related_people",
+            "type": "post_object",
+            "post_type": ["person"],
+            "multiple": 1,
+            "return_format": "id",
+            "allow_null": 0,
+            "required": 1
+        },
+        {
+            "key": "field_reminder_days_before",
+            "label": "Remind Days Before",
+            "name": "reminder_days_before",
+            "type": "number",
+            "instructions": "Number of days before the date to send a reminder. Use 0 for same-day reminder.",
+            "default_value": 7,
+            "min": 0,
+            "max": 365,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_custom_label",
+            "label": "Custom Label",
+            "name": "custom_label",
+            "type": "text",
+            "instructions": "Override the auto-generated title with a custom label",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_date_shared_with",
+            "label": "Shared With",
+            "name": "shared_with",
+            "type": "user",
+            "role": "",
+            "multiple": 1,
+            "allow_null": 1,
+            "return_format": "id"
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "important_date"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": [
+        "excerpt",
+        "discussion",
+        "comments",
+        "slug",
+        "author"
+    ],
+    "active": true,
+    "show_in_rest": 1
+}

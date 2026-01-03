@@ -45,7 +45,7 @@ export default api;
 export const wpApi = {
   // People
   getPeople: (params) => api.get('/wp/v2/people', { params }),
-  getPerson: (id) => api.get(`/wp/v2/people/${id}`),
+  getPerson: (id, params = {}) => api.get(`/wp/v2/people/${id}`, { params }),
   createPerson: (data) => api.post('/wp/v2/people', data),
   updatePerson: (id, data) => api.put(`/wp/v2/people/${id}`, data),
   deletePerson: (id) => api.delete(`/wp/v2/people/${id}`),

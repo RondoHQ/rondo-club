@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Users, Building2, Calendar, Star, ArrowRight } from 'lucide-react';
+import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { format, formatDistanceToNow } from 'date-fns';
 
@@ -53,7 +53,7 @@ function PersonCard({ person }) {
 
 function ReminderCard({ reminder }) {
   const daysUntil = reminder.days_until;
-  
+
   let urgencyClass = 'bg-gray-100 text-gray-700';
   if (daysUntil === 0) {
     urgencyClass = 'bg-red-100 text-red-700';
@@ -62,14 +62,17 @@ function ReminderCard({ reminder }) {
   } else if (daysUntil <= 7) {
     urgencyClass = 'bg-yellow-100 text-yellow-700';
   }
-  
+
+  // Get the full name from related people if available
+  const personName = reminder.related_people?.[0]?.name || reminder.title;
+
   return (
     <div className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors">
       <div className={`px-2 py-1 rounded text-xs font-medium ${urgencyClass}`}>
         {daysUntil === 0 ? 'Today' : `${daysUntil}d`}
       </div>
       <div className="ml-3 flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">{reminder.title}</p>
+        <p className="text-sm font-medium text-gray-900">{personName}</p>
         <p className="text-xs text-gray-500">
           {format(new Date(reminder.next_occurrence), 'MMMM d, yyyy')}
         </p>
@@ -99,6 +102,38 @@ function ReminderCard({ reminder }) {
   );
 }
 
+function EmptyState() {
+  return (
+    <div className="card p-12 text-center">
+      <div className="flex justify-center mb-4">
+        <div className="p-4 bg-primary-50 rounded-full">
+          <Sparkles className="w-12 h-12 text-primary-600" />
+        </div>
+      </div>
+      <h2 className="text-2xl font-semibold text-gray-900 mb-2">Welcome to Personal CRM!</h2>
+      <p className="text-gray-600 mb-8 max-w-md mx-auto">
+        Get started by adding your first contact, company, or important date. Your dashboard will populate as you add more information.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <Link
+          to="/people/new"
+          className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Add Your First Person
+        </Link>
+        <Link
+          to="/companies/new"
+          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Add Your First Company
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { data, isLoading, error } = useDashboard();
   
@@ -111,14 +146,66 @@ export default function Dashboard() {
   }
   
   if (error) {
+    // Check if it's a network/API error vs empty state
+    const isNetworkError = error?.response?.status >= 500 || !error?.response;
+    
     return (
-      <div className="card p-6 text-center">
-        <p className="text-red-600">Failed to load dashboard data.</p>
+      <div className="card p-8 text-center">
+        <div className="text-red-600 mb-2">
+          {isNetworkError ? (
+            <>
+              <p className="font-medium mb-1">Failed to load dashboard data</p>
+              <p className="text-sm text-gray-600">
+                Please check your connection and try refreshing the page.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-medium mb-1">Unable to load dashboard</p>
+              <p className="text-sm text-gray-600">
+                {error?.response?.data?.message || 'An error occurred while loading your data.'}
+              </p>
+            </>
+          )}
+        </div>
       </div>
     );
   }
   
   const { stats, recent_people, upcoming_reminders, favorites } = data || {};
+  const totalItems = (stats?.total_people || 0) + (stats?.total_companies || 0) + (stats?.total_dates || 0);
+  const isEmpty = totalItems === 0;
+  
+  if (isEmpty) {
+    return (
+      <div className="space-y-6">
+        {/* Stats - still show them even when empty */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StatCard
+            title="Total People"
+            value={0}
+            icon={Users}
+            href="/people"
+          />
+          <StatCard
+            title="Companies"
+            value={0}
+            icon={Building2}
+            href="/companies"
+          />
+          <StatCard
+            title="Important Dates"
+            value={0}
+            icon={Calendar}
+            href="/dates"
+          />
+        </div>
+        
+        {/* Empty State */}
+        <EmptyState />
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">

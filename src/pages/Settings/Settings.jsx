@@ -1,11 +1,16 @@
 import { useAuth } from '@/hooks/useAuth';
+import MonicaImport from '@/components/import/MonicaImport';
 
 export default function Settings() {
   const { logoutUrl } = useAuth();
   const config = window.prmConfig || {};
-  
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <div className="card p-6">
+        <MonicaImport />
+      </div>
+
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4">Account</h2>
         <div className="space-y-4">

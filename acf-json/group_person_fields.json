@@ -1,0 +1,319 @@
+{
+    "key": "group_person_fields",
+    "title": "Person Fields",
+    "fields": [
+        {
+            "key": "field_person_basic_info",
+            "label": "Basic Information",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_first_name",
+            "label": "First Name",
+            "name": "first_name",
+            "type": "text",
+            "required": 1,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_last_name",
+            "label": "Last Name",
+            "name": "last_name",
+            "type": "text",
+            "required": 0,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_nickname",
+            "label": "Nickname",
+            "name": "nickname",
+            "type": "text",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_gender",
+            "label": "Gender",
+            "name": "gender",
+            "type": "text",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_photo_gallery",
+            "label": "Photo Gallery",
+            "name": "photo_gallery",
+            "type": "gallery",
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all",
+            "min": 0,
+            "max": 50
+        },
+        {
+            "key": "field_is_favorite",
+            "label": "Favorite",
+            "name": "is_favorite",
+            "type": "true_false",
+            "message": "Mark as favorite",
+            "default_value": 0,
+            "ui": 1
+        },
+        {
+            "key": "field_person_story",
+            "label": "Story",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_how_we_met",
+            "label": "How We Met",
+            "name": "how_we_met",
+            "type": "textarea",
+            "rows": 4
+        },
+        {
+            "key": "field_met_date",
+            "label": "When We Met",
+            "name": "met_date",
+            "type": "date_picker",
+            "display_format": "F j, Y",
+            "return_format": "Y-m-d"
+        },
+        {
+            "key": "field_person_contact",
+            "label": "Contact Info",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_contact_info",
+            "label": "Contact Information",
+            "name": "contact_info",
+            "type": "repeater",
+            "layout": "table",
+            "button_label": "Add Contact Method",
+            "sub_fields": [
+                {
+                    "key": "field_contact_type",
+                    "label": "Type",
+                    "name": "contact_type",
+                    "type": "select",
+                    "choices": {
+                        "email": "Email",
+                        "phone": "Phone",
+                        "mobile": "Mobile",
+                        "address": "Address",
+                        "website": "Website",
+                        "linkedin": "LinkedIn",
+                        "twitter": "Twitter",
+                        "instagram": "Instagram",
+                        "facebook": "Facebook",
+                        "other": "Other"
+                    },
+                    "wrapper": {
+                        "width": "25"
+                    }
+                },
+                {
+                    "key": "field_contact_label",
+                    "label": "Label",
+                    "name": "contact_label",
+                    "type": "text",
+                    "placeholder": "e.g., Work, Personal",
+                    "wrapper": {
+                        "width": "25"
+                    }
+                },
+                {
+                    "key": "field_contact_value",
+                    "label": "Value",
+                    "name": "contact_value",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "50"
+                    }
+                }
+            ]
+        },
+        {
+            "key": "field_person_work",
+            "label": "Work History",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_work_history",
+            "label": "Work History",
+            "name": "work_history",
+            "type": "repeater",
+            "layout": "block",
+            "button_label": "Add Position",
+            "sub_fields": [
+                {
+                    "key": "field_work_company",
+                    "label": "Company",
+                    "name": "company",
+                    "type": "post_object",
+                    "post_type": ["company"],
+                    "return_format": "id",
+                    "allow_null": 1,
+                    "wrapper": {
+                        "width": "50"
+                    }
+                },
+                {
+                    "key": "field_work_job_title",
+                    "label": "Job Title",
+                    "name": "job_title",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "50"
+                    }
+                },
+                {
+                    "key": "field_work_description",
+                    "label": "Description",
+                    "name": "description",
+                    "type": "textarea",
+                    "rows": 3
+                },
+                {
+                    "key": "field_work_start_date",
+                    "label": "Start Date",
+                    "name": "start_date",
+                    "type": "date_picker",
+                    "display_format": "F Y",
+                    "return_format": "Y-m-d",
+                    "wrapper": {
+                        "width": "33"
+                    }
+                },
+                {
+                    "key": "field_work_end_date",
+                    "label": "End Date",
+                    "name": "end_date",
+                    "type": "date_picker",
+                    "display_format": "F Y",
+                    "return_format": "Y-m-d",
+                    "wrapper": {
+                        "width": "33"
+                    }
+                },
+                {
+                    "key": "field_work_is_current",
+                    "label": "Current Position",
+                    "name": "is_current",
+                    "type": "true_false",
+                    "message": "Currently works here",
+                    "ui": 1,
+                    "wrapper": {
+                        "width": "33"
+                    }
+                }
+            ]
+        },
+        {
+            "key": "field_person_relationships",
+            "label": "Relationships",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_relationships",
+            "label": "Relationships",
+            "name": "relationships",
+            "type": "repeater",
+            "layout": "table",
+            "button_label": "Add Relationship",
+            "sub_fields": [
+                {
+                    "key": "field_related_person",
+                    "label": "Person",
+                    "name": "related_person",
+                    "type": "post_object",
+                    "post_type": ["person"],
+                    "return_format": "id",
+                    "wrapper": {
+                        "width": "40"
+                    }
+                },
+                {
+                    "key": "field_relationship_type",
+                    "label": "Type",
+                    "name": "relationship_type",
+                    "type": "taxonomy",
+                    "taxonomy": "relationship_type",
+                    "field_type": "select",
+                    "return_format": "id",
+                    "wrapper": {
+                        "width": "30"
+                    }
+                },
+                {
+                    "key": "field_relationship_label",
+                    "label": "Custom Label",
+                    "name": "relationship_label",
+                    "type": "text",
+                    "placeholder": "e.g., Brother-in-law",
+                    "wrapper": {
+                        "width": "30"
+                    }
+                }
+            ]
+        },
+        {
+            "key": "field_person_sharing",
+            "label": "Sharing",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_shared_with",
+            "label": "Shared With",
+            "name": "shared_with",
+            "type": "user",
+            "role": "",
+            "multiple": 1,
+            "allow_null": 1,
+            "return_format": "id"
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "person"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": [
+        "the_content",
+        "excerpt",
+        "discussion",
+        "comments",
+        "slug",
+        "author"
+    ],
+    "active": true,
+    "show_in_rest": 1
+}

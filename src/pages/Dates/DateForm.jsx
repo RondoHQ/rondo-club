@@ -1,16 +1,117 @@
-import { useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { ArrowLeft, Save } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
+import { ArrowLeft, Save, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 
+// Helper to decode HTML entities
+function decodeHtml(html) {
+  if (!html) return '';
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
+
+function PeopleSelector({ value = [], onChange, people = [], isLoading }) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredPeople = useMemo(() => {
+    if (!searchTerm) return people.slice(0, 10);
+    const term = searchTerm.toLowerCase();
+    return people.filter(p =>
+      decodeHtml(p.title?.rendered)?.toLowerCase().includes(term)
+    ).slice(0, 10);
+  }, [people, searchTerm]);
+
+  const selectedPeople = useMemo(() => {
+    return value.map(id => people.find(p => p.id === id)).filter(Boolean);
+  }, [value, people]);
+
+  const handleAdd = (personId) => {
+    if (!value.includes(personId)) {
+      onChange([...value, personId]);
+    }
+    setSearchTerm('');
+  };
+
+  const handleRemove = (personId) => {
+    onChange(value.filter(id => id !== personId));
+  };
+
+  return (
+    <div className="space-y-2">
+      {/* Selected people */}
+      {selectedPeople.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedPeople.map(person => (
+            <span
+              key={person.id}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm"
+            >
+              {decodeHtml(person.title?.rendered)}
+              <button
+                type="button"
+                onClick={() => handleRemove(person.id)}
+                className="hover:text-primary-600"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Search input */}
+      <div className="relative">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search for people..."
+          className="input"
+          disabled={isLoading}
+        />
+
+        {/* Dropdown */}
+        {searchTerm && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            {filteredPeople.length > 0 ? (
+              filteredPeople.map(person => (
+                <button
+                  key={person.id}
+                  type="button"
+                  onClick={() => handleAdd(person.id)}
+                  disabled={value.includes(person.id)}
+                  className={`w-full text-left px-4 py-2 hover:bg-gray-50 ${
+                    value.includes(person.id) ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {decodeHtml(person.title?.rendered)}
+                </button>
+              ))
+            ) : (
+              <p className="px-4 py-2 text-gray-500 text-sm">No people found</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DateForm() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isEditing = !!id;
-  
+
+  // Get URL params for pre-filling (for new dates)
+  const prefilledPersonId = searchParams.get('person');
+  const prefilledType = searchParams.get('type');
+
+  // Fetch the date if editing
   const { data: dateItem, isLoading } = useQuery({
     queryKey: ['important-date', id],
     queryFn: async () => {
@@ -19,60 +120,238 @@ export default function DateForm() {
     },
     enabled: isEditing,
   });
-  
+
+  // Extract related people IDs from the date being edited (for fetching specific people)
+  const relatedPeopleFromDate = useMemo(() => {
+    if (!dateItem?.acf?.related_people) return [];
+    const raw = dateItem.acf.related_people;
+    if (Array.isArray(raw)) {
+      return raw.map(p => {
+        if (typeof p === 'object' && p !== null) {
+          return parseInt(p.ID || p.id || p.post_id, 10);
+        }
+        return parseInt(p, 10);
+      }).filter(id => !isNaN(id) && id > 0);
+    }
+    return [];
+  }, [dateItem]);
+
+  // Fetch all people for the selector
+  const { data: basePeople = [], isLoading: isPeopleLoading } = useQuery({
+    queryKey: ['people', 'all'],
+    queryFn: async () => {
+      const response = await wpApi.getPeople({ per_page: 100, orderby: 'title', order: 'asc' });
+      return response.data;
+    },
+  });
+
+  // Fetch specific people that are related to this date (in case they're not in the first 100)
+  const { data: relatedPeopleData = [] } = useQuery({
+    queryKey: ['people', 'specific', relatedPeopleFromDate],
+    queryFn: async () => {
+      // Fetch each related person individually
+      const promises = relatedPeopleFromDate.map(personId =>
+        wpApi.getPerson(personId).then(res => res.data).catch(() => null)
+      );
+      const results = await Promise.all(promises);
+      return results.filter(Boolean);
+    },
+    enabled: relatedPeopleFromDate.length > 0,
+  });
+
+  // Combine base people with any specific related people (ensuring no duplicates)
+  const allPeople = useMemo(() => {
+    const peopleMap = new Map();
+    // Add base people first
+    basePeople.forEach(p => peopleMap.set(p.id, p));
+    // Add/override with specific related people
+    relatedPeopleData.forEach(p => peopleMap.set(p.id, p));
+    return Array.from(peopleMap.values());
+  }, [basePeople, relatedPeopleData]);
+
+  // Fetch date types
+  const { data: dateTypes = [] } = useQuery({
+    queryKey: ['date-types'],
+    queryFn: async () => {
+      const response = await wpApi.getDateTypes();
+      return response.data;
+    },
+  });
+
   const createDate = useMutation({
     mutationFn: (data) => wpApi.createDate(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
-      navigate('/dates');
+      // If we came from a person page, go back there
+      if (prefilledPersonId) {
+        navigate(`/people/${prefilledPersonId}`);
+      } else {
+        navigate('/dates');
+      }
     },
   });
-  
+
   const updateDate = useMutation({
     mutationFn: (data) => wpApi.updateDate(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
       queryClient.invalidateQueries({ queryKey: ['important-date', id] });
-      navigate('/dates');
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      // Navigate back to the person page if we have a related person
+      const relatedPeople = watch('related_people');
+      if (relatedPeople?.length > 0) {
+        navigate(`/people/${relatedPeople[0]}`);
+      } else {
+        navigate('/dates');
+      }
     },
   });
-  
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+
+  const { register, handleSubmit, reset, watch, setValue, control, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
+      title: '',
+      date_value: '',
+      date_type: '',
+      related_people: [],
       is_recurring: true,
       reminder_days_before: 7,
     },
   });
-  
+
+  // Watch values for auto-generating title
+  const watchedPeople = watch('related_people');
+  const watchedDateType = watch('date_type');
+  const watchedTitle = watch('title');
+
+  // Auto-generate title when people or date type changes
   useEffect(() => {
-    if (dateItem) {
+    // Only auto-generate if title is empty or matches a previous auto-generated pattern
+    const autoGeneratedPatterns = ["'s Birthday", "'s Anniversary", "Wedding of "];
+    const isAutoGenerated = !watchedTitle || autoGeneratedPatterns.some(p =>
+      watchedTitle.endsWith(p) || watchedTitle.startsWith(p)
+    );
+    if (!isAutoGenerated) {
+      return;
+    }
+
+    if (watchedPeople?.length > 0 && watchedDateType) {
+      const dateType = dateTypes.find(t => t.id === parseInt(watchedDateType));
+      const typeName = dateType?.name || '';
+      const typeSlug = dateType?.slug?.toLowerCase() || typeName.toLowerCase();
+
+      // Get first names of related people
+      const firstNames = watchedPeople.map(personId => {
+        const person = allPeople.find(p => p.id === personId);
+        if (person) {
+          return decodeHtml(person.acf?.first_name || person.title?.rendered?.split(' ')[0] || '');
+        }
+        return null;
+      }).filter(Boolean);
+
+      if (firstNames.length > 0 && typeName) {
+        let title;
+        if (typeSlug === 'wedding' || typeSlug === 'marriage') {
+          // For wedding, the title is "Wedding of X and Y"
+          // The anniversary celebration is handled by the reminder system
+          const names = firstNames.length > 1
+            ? `${firstNames.slice(0, -1).join(', ')} and ${firstNames[firstNames.length - 1]}`
+            : firstNames[0];
+          title = `Wedding of ${names}`;
+        } else {
+          // For other types, use first person's name
+          title = `${firstNames[0]}'s ${typeName}`;
+        }
+        setValue('title', title);
+      }
+    }
+  }, [watchedPeople, watchedDateType, allPeople, dateTypes, setValue, watchedTitle]);
+
+  // Set default values when editing or from URL params
+  useEffect(() => {
+    // Wait for people to be loaded before setting defaults (needed for people selector)
+    // When editing, also wait for the specific related people to be fetched
+    const relatedPeopleLoaded = relatedPeopleFromDate.length === 0 || relatedPeopleData.length > 0;
+    if (dateItem && allPeople.length > 0 && relatedPeopleLoaded) {
+      // Get related people IDs from ACF field
+      // ACF can return IDs in various formats depending on configuration
+      let relatedPeopleIds = [];
+      const rawRelatedPeople = dateItem.acf?.related_people;
+
+      if (rawRelatedPeople) {
+        if (Array.isArray(rawRelatedPeople)) {
+          relatedPeopleIds = rawRelatedPeople.map(p => {
+            if (typeof p === 'object' && p !== null) {
+              return parseInt(p.ID || p.id || p.post_id, 10);
+            }
+            return parseInt(p, 10);
+          }).filter(id => !isNaN(id) && id > 0);
+        } else if (typeof rawRelatedPeople === 'number') {
+          relatedPeopleIds = [rawRelatedPeople];
+        }
+      }
+
+      // Get date type term ID
+      let dateTypeId = '';
+      if (dateItem.date_type?.length > 0) {
+        dateTypeId = dateItem.date_type[0].toString();
+      }
+
       reset({
-        custom_label: dateItem.acf?.custom_label || '',
+        title: decodeHtml(dateItem.title?.rendered || ''),
         date_value: dateItem.acf?.date_value || '',
+        date_type: dateTypeId,
+        related_people: relatedPeopleIds,
         is_recurring: dateItem.acf?.is_recurring ?? true,
         reminder_days_before: dateItem.acf?.reminder_days_before || 7,
       });
+    } else if (!isEditing && allPeople.length > 0) {
+      // Handle URL params for new dates
+      const defaults = {
+        title: '',
+        date_value: '',
+        date_type: '',
+        related_people: [],
+        is_recurring: true,
+        reminder_days_before: 7,
+      };
+
+      if (prefilledPersonId) {
+        defaults.related_people = [parseInt(prefilledPersonId)];
+      }
+
+      if (prefilledType && dateTypes.length > 0) {
+        const matchingType = dateTypes.find(t =>
+          t.slug === prefilledType || t.name.toLowerCase() === prefilledType.toLowerCase()
+        );
+        if (matchingType) {
+          defaults.date_type = matchingType.id.toString();
+        }
+      }
+
+      reset(defaults);
     }
-  }, [dateItem, reset]);
-  
+  }, [dateItem, reset, isEditing, prefilledPersonId, prefilledType, dateTypes, allPeople, relatedPeopleFromDate, relatedPeopleData]);
+
   const onSubmit = async (data) => {
     const payload = {
+      title: data.title,
       status: 'publish',
+      date_type: data.date_type ? [parseInt(data.date_type)] : [],
       acf: {
-        custom_label: data.custom_label,
         date_value: data.date_value,
+        related_people: data.related_people,
         is_recurring: data.is_recurring,
         reminder_days_before: parseInt(data.reminder_days_before, 10),
       },
     };
-    
+
     if (isEditing) {
       updateDate.mutate(payload);
     } else {
       createDate.mutate(payload);
     }
   };
-  
+
   if (isEditing && isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -80,34 +359,80 @@ export default function DateForm() {
       </div>
     );
   }
-  
+
+  // Determine where to navigate back to
+  const currentRelatedPeople = watch('related_people');
+  const backToPersonId = isEditing && currentRelatedPeople?.length > 0
+    ? currentRelatedPeople[0]
+    : prefilledPersonId;
+  const backUrl = backToPersonId ? `/people/${backToPersonId}` : '/dates';
+  const backLabel = backToPersonId ? 'Back to Person' : 'Back to Dates';
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <Link to="/dates" className="flex items-center text-gray-600 hover:text-gray-900">
+        <Link to={backUrl} className="flex items-center text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dates
+          {backLabel}
         </Link>
       </div>
-      
+
       <div className="card p-6">
         <h1 className="text-xl font-bold mb-6">
           {isEditing ? 'Edit Date' : 'Add New Date'}
         </h1>
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* People selector */}
+          <div>
+            <label className="label">Related People</label>
+            <Controller
+              name="related_people"
+              control={control}
+              render={({ field }) => (
+                <PeopleSelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  people={allPeople}
+                  isLoading={isPeopleLoading}
+                />
+              )}
+            />
+          </div>
+
+          {/* Date type */}
+          <div>
+            <label className="label">Date Type *</label>
+            <select
+              {...register('date_type', { required: 'Please select a date type' })}
+              className="input"
+            >
+              <option value="">Select a type...</option>
+              {dateTypes.map(type => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+            {errors.date_type && (
+              <p className="text-sm text-red-600 mt-1">{errors.date_type.message}</p>
+            )}
+          </div>
+
+          {/* Label/Title */}
           <div>
             <label className="label">Label</label>
             <input
-              {...register('custom_label')}
+              {...register('title')}
               className="input"
               placeholder="e.g., Mom's Birthday, Wedding Anniversary"
             />
             <p className="text-xs text-gray-500 mt-1">
-              If left blank, a label will be generated from the linked people.
+              Auto-generated from person and date type. You can customize it.
             </p>
           </div>
-          
+
+          {/* Date value */}
           <div>
             <label className="label">Date *</label>
             <input
@@ -119,7 +444,8 @@ export default function DateForm() {
               <p className="text-sm text-red-600 mt-1">{errors.date_value.message}</p>
             )}
           </div>
-          
+
+          {/* Recurring checkbox */}
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -130,7 +456,8 @@ export default function DateForm() {
               Repeats every year
             </label>
           </div>
-          
+
+          {/* Reminder */}
           <div>
             <label className="label">Remind me</label>
             <select {...register('reminder_days_before')} className="input">
@@ -142,16 +469,9 @@ export default function DateForm() {
               <option value="30">1 month before</option>
             </select>
           </div>
-          
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-600">
-              <strong>Note:</strong> To link people to this date, save it first, then edit the date
-              in the WordPress admin to use the people selector.
-            </p>
-          </div>
-          
+
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Link to="/dates" className="btn-secondary">Cancel</Link>
+            <Link to={backUrl} className="btn-secondary">Cancel</Link>
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
               <Save className="w-4 h-4 mr-2" />
               {isEditing ? 'Save Changes' : 'Create Date'}

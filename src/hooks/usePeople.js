@@ -12,6 +12,30 @@ export const peopleKeys = {
   dates: (id) => [...peopleKeys.detail(id), 'dates'],
 };
 
+// Transform person data to include thumbnail and other computed fields
+function transformPerson(person) {
+  // Extract thumbnail from embedded featured media
+  const thumbnail = person._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
+                    person._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url ||
+                    null;
+
+  // Extract labels from embedded terms
+  const labels = person._embedded?.['wp:term']?.flat()
+    ?.filter(term => term?.taxonomy === 'person_label')
+    ?.map(term => term.name) || [];
+
+  return {
+    id: person.id,
+    name: person.title?.rendered || '',
+    first_name: person.acf?.first_name || '',
+    last_name: person.acf?.last_name || '',
+    is_favorite: person.acf?.is_favorite || false,
+    thumbnail,
+    labels,
+    ...person,
+  };
+}
+
 // Hooks
 export function usePeople(params = {}) {
   return useQuery({
@@ -22,7 +46,7 @@ export function usePeople(params = {}) {
         _embed: true,
         ...params,
       });
-      return response.data;
+      return response.data.map(transformPerson);
     },
   });
 }
@@ -31,8 +55,8 @@ export function usePerson(id) {
   return useQuery({
     queryKey: peopleKeys.detail(id),
     queryFn: async () => {
-      const response = await wpApi.getPerson(id);
-      return response.data;
+      const response = await wpApi.getPerson(id, { _embed: true });
+      return transformPerson(response.data);
     },
     enabled: !!id,
   });

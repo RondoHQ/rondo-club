@@ -1,0 +1,95 @@
+{
+    "key": "group_company_fields",
+    "title": "Company Fields",
+    "fields": [
+        {
+            "key": "field_company_website",
+            "label": "Website",
+            "name": "website",
+            "type": "url"
+        },
+        {
+            "key": "field_company_industry",
+            "label": "Industry",
+            "name": "industry",
+            "type": "text"
+        },
+        {
+            "key": "field_company_contact_info",
+            "label": "Contact Information",
+            "name": "contact_info",
+            "type": "repeater",
+            "layout": "table",
+            "button_label": "Add Contact Method",
+            "sub_fields": [
+                {
+                    "key": "field_company_contact_type",
+                    "label": "Type",
+                    "name": "contact_type",
+                    "type": "select",
+                    "choices": {
+                        "phone": "Phone",
+                        "email": "Email",
+                        "address": "Address",
+                        "other": "Other"
+                    },
+                    "wrapper": {
+                        "width": "25"
+                    }
+                },
+                {
+                    "key": "field_company_contact_label",
+                    "label": "Label",
+                    "name": "contact_label",
+                    "type": "text",
+                    "placeholder": "e.g., HQ, Support",
+                    "wrapper": {
+                        "width": "25"
+                    }
+                },
+                {
+                    "key": "field_company_contact_value",
+                    "label": "Value",
+                    "name": "contact_value",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "50"
+                    }
+                }
+            ]
+        },
+        {
+            "key": "field_company_shared_with",
+            "label": "Shared With",
+            "name": "shared_with",
+            "type": "user",
+            "role": "",
+            "multiple": 1,
+            "allow_null": 1,
+            "return_format": "id"
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "company"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": [
+        "excerpt",
+        "discussion",
+        "comments",
+        "slug",
+        "author"
+    ],
+    "active": true,
+    "show_in_rest": 1
+}

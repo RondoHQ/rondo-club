@@ -11,19 +11,76 @@ define('PRM_THEME_VERSION', '1.0.0');
 define('PRM_THEME_DIR', get_template_directory());
 define('PRM_THEME_URL', get_template_directory_uri());
 
+// Plugin constants (now part of theme)
+define('PRM_VERSION', '1.0.0');
+define('PRM_PLUGIN_DIR', PRM_THEME_DIR . '/includes');
+define('PRM_PLUGIN_URL', PRM_THEME_URL . '/includes');
+
 /**
- * Check for required plugin
+ * Check for required dependencies
  */
-function prm_theme_check_requirements() {
-    if (!is_plugin_active('personal-crm/personal-crm.php') && !defined('PRM_VERSION')) {
-        add_action('admin_notices', function() {
-            echo '<div class="notice notice-error"><p>';
-            echo esc_html__('Personal CRM Theme requires the Personal CRM plugin to be installed and activated.', 'personal-crm-theme');
-            echo '</p></div>';
-        });
+function prm_check_dependencies() {
+    $missing = [];
+    
+    // Check for ACF Pro
+    if (!class_exists('ACF')) {
+        $missing[] = 'Advanced Custom Fields Pro';
     }
+    
+    if (!empty($missing)) {
+        add_action('admin_notices', function() use ($missing) {
+            $message = sprintf(
+                __('Personal CRM requires the following plugins: %s', 'personal-crm'),
+                implode(', ', $missing)
+            );
+            echo '<div class="notice notice-error"><p>' . esc_html($message) . '</p></div>';
+        });
+        return false;
+    }
+    
+    return true;
 }
-add_action('admin_init', 'prm_theme_check_requirements');
+
+/**
+ * Initialize the CRM functionality
+ */
+function prm_init() {
+    // Prevent double initialization
+    static $initialized = false;
+    if ($initialized) {
+        return;
+    }
+    
+    if (!prm_check_dependencies()) {
+        return;
+    }
+    
+    // Load includes
+    require_once PRM_PLUGIN_DIR . '/class-post-types.php';
+    require_once PRM_PLUGIN_DIR . '/class-taxonomies.php';
+    require_once PRM_PLUGIN_DIR . '/class-auto-title.php';
+    require_once PRM_PLUGIN_DIR . '/class-access-control.php';
+    require_once PRM_PLUGIN_DIR . '/class-comment-types.php';
+    require_once PRM_PLUGIN_DIR . '/class-rest-api.php';
+    require_once PRM_PLUGIN_DIR . '/class-reminders.php';
+    require_once PRM_PLUGIN_DIR . '/class-monica-import.php';
+
+    // Initialize classes
+    new PRM_Post_Types();
+    new PRM_Taxonomies();
+    new PRM_Auto_Title();
+    new PRM_Access_Control();
+    new PRM_Comment_Types();
+    new PRM_REST_API();
+    new PRM_Reminders();
+    new PRM_Monica_Import();
+    
+    $initialized = true;
+}
+// Initialize early for REST API requests, but also check on plugins_loaded
+// in case ACF Pro isn't loaded yet (plugins load after themes)
+add_action('after_setup_theme', 'prm_init', 5);
+add_action('plugins_loaded', 'prm_init', 5);
 
 /**
  * Theme setup
@@ -56,9 +113,15 @@ function prm_theme_enqueue_assets() {
     $dist_dir = PRM_THEME_DIR . '/dist';
     $dist_url = PRM_THEME_URL . '/dist';
     
-    // Check if we have built assets
-    if (file_exists($dist_dir . '/manifest.json')) {
-        $manifest = json_decode(file_get_contents($dist_dir . '/manifest.json'), true);
+    // Check if we have built assets (Vite puts manifest in .vite subdirectory)
+    $manifest_path = $dist_dir . '/.vite/manifest.json';
+    if (!file_exists($manifest_path)) {
+        // Fallback to root dist directory
+        $manifest_path = $dist_dir . '/manifest.json';
+    }
+    
+    if (file_exists($manifest_path)) {
+        $manifest = json_decode(file_get_contents($manifest_path), true);
         
         // Enqueue the main JS file
         if (isset($manifest['src/main.jsx'])) {
@@ -83,6 +146,9 @@ function prm_theme_enqueue_assets() {
                     PRM_THEME_VERSION,
                     true
                 );
+                
+                // Localize script with WordPress data
+                wp_localize_script('prm-theme-script', 'prmConfig', prm_get_js_config());
             }
         }
     } else {
@@ -92,11 +158,13 @@ function prm_theme_enqueue_assets() {
                 echo '<script type="module" src="http://localhost:5173/@vite/client"></script>';
                 echo '<script type="module" src="http://localhost:5173/src/main.jsx"></script>';
             });
+        } else {
+            // Production mode but no build found - show error
+            add_action('wp_head', function() {
+                echo '<script>console.error("Personal CRM: Build files not found. Please run npm run build.");</script>';
+            });
         }
     }
-    
-    // Localize script with WordPress data
-    wp_localize_script('prm-theme-script', 'prmConfig', prm_get_js_config());
 }
 add_action('wp_enqueue_scripts', 'prm_theme_enqueue_assets');
 
@@ -128,12 +196,11 @@ function prm_theme_add_config_to_head() {
 add_action('wp_head', 'prm_theme_add_config_to_head', 0);
 
 /**
- * Remove admin bar for non-admins (optional)
+ * Hide admin bar on frontend - it interferes with the SPA interface
  */
 function prm_theme_remove_admin_bar() {
-    if (!current_user_can('manage_options')) {
-        // Uncomment to hide admin bar for non-admins
-        // show_admin_bar(false);
+    if (!is_admin()) {
+        show_admin_bar(false);
     }
 }
 add_action('after_setup_theme', 'prm_theme_remove_admin_bar');
@@ -169,13 +236,43 @@ function prm_theme_rewrite_rules() {
 add_action('init', 'prm_theme_rewrite_rules');
 
 /**
- * Flush rewrite rules on theme activation
+ * Theme activation - includes CRM initialization
  */
 function prm_theme_activation() {
-    prm_theme_rewrite_rules();
+    // Trigger post type registration
+    require_once PRM_PLUGIN_DIR . '/class-post-types.php';
+    require_once PRM_PLUGIN_DIR . '/class-taxonomies.php';
+    
+    $post_types = new PRM_Post_Types();
+    $post_types->register_post_types();
+    
+    $taxonomies = new PRM_Taxonomies();
+    $taxonomies->register_taxonomies();
+    
+    // Flush rewrite rules
     flush_rewrite_rules();
+    
+    // Schedule reminder cron job
+    if (!wp_next_scheduled('prm_daily_reminder_check')) {
+        wp_schedule_event(time(), 'daily', 'prm_daily_reminder_check');
+    }
+    
+    // Also handle theme-specific rewrite rules
+    prm_theme_rewrite_rules();
 }
 add_action('after_switch_theme', 'prm_theme_activation');
+
+/**
+ * Theme deactivation - cleanup CRM functionality
+ */
+function prm_theme_deactivation() {
+    // Clear scheduled hooks
+    wp_clear_scheduled_hook('prm_daily_reminder_check');
+    
+    // Flush rewrite rules
+    flush_rewrite_rules();
+}
+add_action('switch_theme', 'prm_theme_deactivation');
 
 /**
  * Add type="module" to script tags
@@ -209,3 +306,23 @@ function prm_theme_cleanup_head() {
     remove_action('wp_head', 'wp_shortlink_wp_head');
 }
 add_action('init', 'prm_theme_cleanup_head');
+
+/**
+ * Load ACF JSON from theme directory
+ */
+function prm_acf_json_load_point($paths) {
+    $paths[] = PRM_THEME_DIR . '/acf-json';
+    return $paths;
+}
+add_filter('acf/settings/load_json', 'prm_acf_json_load_point');
+
+/**
+ * Save ACF JSON to theme directory (for development)
+ */
+function prm_acf_json_save_point($path) {
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        $path = PRM_THEME_DIR . '/acf-json';
+    }
+    return $path;
+}
+add_filter('acf/settings/save_json', 'prm_acf_json_save_point');
