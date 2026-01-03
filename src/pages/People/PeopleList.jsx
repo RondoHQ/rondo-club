@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Star, Filter } from 'lucide-react';
+import { Plus, Star, Filter } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
 import { useQueries } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
@@ -79,8 +79,7 @@ function PersonCard({ person, companyName }) {
 }
 
 export default function PeopleList() {
-  const [search, setSearch] = useState('');
-  const { data: people, isLoading, error } = usePeople({ search });
+  const { data: people, isLoading, error } = usePeople();
   
   // Sort people by last name alphabetically
   const sortedPeople = useMemo(() => {
@@ -150,17 +149,6 @@ export default function PeopleList() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="search"
-            placeholder="Search people..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input pl-9"
-          />
-        </div>
-        
         <div className="flex gap-2">
           <button className="btn-secondary">
             <Filter className="w-4 h-4 mr-2" />
@@ -191,18 +179,16 @@ export default function PeopleList() {
       {!isLoading && !error && people?.length === 0 && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search className="w-6 h-6 text-gray-400" />
+            <Plus className="w-6 h-6 text-gray-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-1">No people found</h3>
           <p className="text-gray-500 mb-4">
-            {search ? 'Try a different search term.' : 'Get started by adding your first person.'}
+            Get started by adding your first person.
           </p>
-          {!search && (
-            <Link to="/people/new" className="btn-primary">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Person
-            </Link>
-          )}
+          <Link to="/people/new" className="btn-primary">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Person
+          </Link>
         </div>
       )}
       
