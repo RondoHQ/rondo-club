@@ -36,7 +36,8 @@ function Sidebar({ mobile = false, onClose }) {
     <div className="flex flex-col h-full bg-white border-r border-gray-200">
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-        <Link to="/" className="text-xl font-bold text-primary-600">
+        <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary-600">
+          <Home className="w-5 h-5" />
           Oikos
         </Link>
         {mobile && (
