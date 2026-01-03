@@ -270,11 +270,34 @@ export default function PersonDetail() {
                   // Determine if this should be a clickable link
                   const isEmail = contact.contact_type === 'email';
                   const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
-                  const linkHref = isEmail 
-                    ? `mailto:${contact.contact_value}`
-                    : isPhone 
-                    ? `tel:${formatPhoneForTel(contact.contact_value)}`
-                    : null;
+                  const isWebsite = contact.contact_type === 'website' || 
+                                   contact.contact_type === 'linkedin' || 
+                                   contact.contact_type === 'twitter' || 
+                                   contact.contact_type === 'instagram' || 
+                                   contact.contact_type === 'facebook';
+                  const isAddress = contact.contact_type === 'address';
+                  
+                  let linkHref = null;
+                  let linkTarget = null;
+                  
+                  if (isEmail) {
+                    linkHref = `mailto:${contact.contact_value}`;
+                  } else if (isPhone) {
+                    linkHref = `tel:${formatPhoneForTel(contact.contact_value)}`;
+                  } else if (isWebsite) {
+                    // Ensure URL has protocol
+                    let url = contact.contact_value;
+                    if (!url.match(/^https?:\/\//i)) {
+                      url = `https://${url}`;
+                    }
+                    linkHref = url;
+                    linkTarget = '_blank';
+                  } else if (isAddress) {
+                    // Link to Google Maps
+                    const encodedAddress = encodeURIComponent(contact.contact_value);
+                    linkHref = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+                    linkTarget = '_blank';
+                  }
 
                   return (
                     <div key={index} className="flex items-center group">
@@ -284,6 +307,8 @@ export default function PersonDetail() {
                         {linkHref ? (
                           <a
                             href={linkHref}
+                            target={linkTarget || undefined}
+                            rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
                             className="text-primary-600 hover:text-primary-700 hover:underline"
                           >
                             {contact.contact_value}
