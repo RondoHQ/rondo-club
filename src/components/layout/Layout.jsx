@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Building2, 
@@ -9,10 +9,14 @@ import {
   X,
   Home,
   LogOut,
-  Search
+  Search,
+  User,
+  Briefcase,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
+import { useSearch } from '@/hooks/useDashboard';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -76,7 +80,16 @@ function Sidebar({ mobile = false, onClose }) {
 
 function Header({ onMenuClick }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const searchRef = useRef(null);
+  const dropdownRef = useRef(null);
+  
+  // Use search hook - only search if query is 2+ characters
+  const { data: searchResults, isLoading: isSearchLoading } = useSearch(
+    searchQuery.trim().length >= 2 ? searchQuery.trim() : ''
+  );
   
   // Get page title from location
   const getPageTitle = () => {
@@ -88,6 +101,47 @@ function Header({ onMenuClick }) {
     if (path.startsWith('/settings')) return 'Settings';
     return '';
   };
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        searchRef.current &&
+        !searchRef.current.contains(event.target)
+      ) {
+        setIsSearchFocused(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  // Handle search result click
+  const handleResultClick = (type, id) => {
+    setIsSearchFocused(false);
+    setSearchQuery('');
+    if (type === 'person') {
+      navigate(`/people/${id}`);
+    } else if (type === 'company') {
+      navigate(`/companies/${id}`);
+    } else if (type === 'date') {
+      navigate(`/dates/${id}/edit`);
+    }
+  };
+  
+  // Check if there are any results
+  const hasResults = searchResults && (
+    (searchResults.people && searchResults.people.length > 0) ||
+    (searchResults.companies && searchResults.companies.length > 0) ||
+    (searchResults.dates && searchResults.dates.length > 0)
+  );
+  
+  const showDropdown = isSearchFocused && searchQuery.trim().length >= 2;
   
   return (
     <header className="sticky top-0 z-10 flex items-center h-16 px-4 bg-white border-b border-gray-200 lg:px-6">
@@ -104,22 +158,107 @@ function Header({ onMenuClick }) {
         {getPageTitle()}
       </h1>
       
-      {/* Search */}
-      <div className="flex-1 max-w-md mx-4 lg:mx-8">
-        <div className="relative">
+      {/* Search - centered */}
+      <div className="flex-1 flex justify-center max-w-2xl mx-4 lg:mx-8">
+        <div className="relative w-full" ref={searchRef}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="search"
-            placeholder="Search..."
+            placeholder="Search people, companies, dates..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="input pl-9"
+            onFocus={() => setIsSearchFocused(true)}
+            className="input pl-9 w-full"
           />
+          
+          {/* Search results dropdown */}
+          {showDropdown && (
+            <div
+              ref={dropdownRef}
+              className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50"
+            >
+              {isSearchLoading ? (
+                <div className="p-4 text-center text-gray-500">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+                  <p className="mt-2 text-sm">Searching...</p>
+                </div>
+              ) : hasResults ? (
+                <div className="py-2">
+                  {/* People results */}
+                  {searchResults.people && searchResults.people.length > 0 && (
+                    <div className="px-3 py-2">
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
+                        People
+                      </div>
+                      {searchResults.people.map((person) => (
+                        <button
+                          key={person.id}
+                          onClick={() => handleResultClick('person', person.id)}
+                          className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-900 flex-1 truncate">
+                            {person.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Companies results */}
+                  {searchResults.companies && searchResults.companies.length > 0 && (
+                    <div className="px-3 py-2 border-t border-gray-100">
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
+                        Companies
+                      </div>
+                      {searchResults.companies.map((company) => (
+                        <button
+                          key={company.id}
+                          onClick={() => handleResultClick('company', company.id)}
+                          className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <Briefcase className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-900 flex-1 truncate">
+                            {company.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Dates results */}
+                  {searchResults.dates && searchResults.dates.length > 0 && (
+                    <div className="px-3 py-2 border-t border-gray-100">
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
+                        Dates
+                      </div>
+                      {searchResults.dates.map((date) => (
+                        <button
+                          key={date.id}
+                          onClick={() => handleResultClick('date', date.id)}
+                          className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <CalendarIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-900 flex-1 truncate">
+                            {date.title}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="p-4 text-center text-gray-500">
+                  <p className="text-sm">No results found</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
       
-      {/* User menu placeholder */}
-      <div className="flex items-center">
+      {/* User menu placeholder - right aligned */}
+      <div className="flex items-center ml-auto">
         <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
           <span className="text-sm font-medium text-primary-700">U</span>
         </div>
