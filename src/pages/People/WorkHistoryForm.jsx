@@ -102,12 +102,12 @@ export default function WorkHistoryForm() {
         workHistory.push(workHistoryItem);
       }
 
-      // Ensure all repeater fields are arrays or null
+      // Ensure all repeater fields are arrays (empty array if not present)
       const acfData = {
         ...person.acf,
         work_history: workHistory,
-        contact_info: Array.isArray(person.acf?.contact_info) ? person.acf.contact_info : null,
-        relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : null,
+        contact_info: Array.isArray(person.acf?.contact_info) ? person.acf.contact_info : [],
+        relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : [],
       };
 
       await updatePerson.mutateAsync({

@@ -66,12 +66,12 @@ export default function PersonDetail() {
     const updatedContactInfo = [...(person.acf?.contact_info || [])];
     updatedContactInfo.splice(index, 1);
     
-    // Ensure all repeater fields are arrays or null
+    // Ensure all repeater fields are arrays (empty array if not present)
     const acfData = {
       ...person.acf,
       contact_info: updatedContactInfo,
-      work_history: Array.isArray(person.acf?.work_history) ? person.acf.work_history : null,
-      relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : null,
+      work_history: Array.isArray(person.acf?.work_history) ? person.acf.work_history : [],
+      relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : [],
     };
     
     await updatePerson.mutateAsync({
@@ -91,12 +91,12 @@ export default function PersonDetail() {
     const updatedRelationships = [...(person.acf?.relationships || [])];
     updatedRelationships.splice(index, 1);
     
-    // Ensure all repeater fields are arrays or null
+    // Ensure all repeater fields are arrays (empty array if not present)
     const acfData = {
       ...person.acf,
       relationships: updatedRelationships,
-      contact_info: Array.isArray(person.acf?.contact_info) ? person.acf.contact_info : null,
-      work_history: Array.isArray(person.acf?.work_history) ? person.acf.work_history : null,
+      contact_info: Array.isArray(person.acf?.contact_info) ? person.acf.contact_info : [],
+      work_history: Array.isArray(person.acf?.work_history) ? person.acf.work_history : [],
     };
     
     await updatePerson.mutateAsync({
@@ -134,12 +134,12 @@ export default function PersonDetail() {
     const updatedWorkHistory = [...(person.acf?.work_history || [])];
     updatedWorkHistory.splice(index, 1);
     
-    // Ensure all repeater fields are arrays or null
+    // Ensure all repeater fields are arrays (empty array if not present)
     const acfData = {
       ...person.acf,
       work_history: updatedWorkHistory,
-      contact_info: Array.isArray(person.acf?.contact_info) ? person.acf.contact_info : null,
-      relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : null,
+      contact_info: Array.isArray(person.acf?.contact_info) ? person.acf.contact_info : [],
+      relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : [],
     };
     
     await updatePerson.mutateAsync({

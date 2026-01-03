@@ -76,12 +76,12 @@ export default function ContactDetailForm() {
         contactInfo.push(contactItem);
       }
 
-      // Ensure all repeater fields are arrays or null
+      // Ensure all repeater fields are arrays (empty array if not present)
       const acfData = {
         ...person.acf,
         contact_info: contactInfo,
-        work_history: Array.isArray(person.acf?.work_history) ? person.acf.work_history : null,
-        relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : null,
+        work_history: Array.isArray(person.acf?.work_history) ? person.acf.work_history : [],
+        relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : [],
       };
 
       await updatePerson.mutateAsync({
