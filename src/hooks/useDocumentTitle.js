@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 /**
  * Hook to update document title based on current route
@@ -14,18 +14,27 @@ export function useDocumentTitle(title) {
 }
 
 /**
+ * Extract route ID from pathname
+ * Examples: /people/123 -> '123', /companies/456/edit -> '456'
+ */
+function extractRouteId(pathname) {
+  const match = pathname.match(/\/(?:people|companies|dates)\/(\d+)/);
+  return match ? match[1] : null;
+}
+
+/**
  * Hook to automatically set document title based on route
  * Can optionally accept a custom title override
  */
 export function useRouteTitle(customTitle = null) {
   const location = useLocation();
-  const params = useParams();
   
   useEffect(() => {
     let title = customTitle;
     
     if (!title) {
       const path = location.pathname;
+      const routeId = extractRouteId(path);
       
       // Handle specific routes
       if (path === '/') {
@@ -39,7 +48,7 @@ export function useRouteTitle(customTitle = null) {
           title = 'New Person';
         } else if (path.endsWith('/edit')) {
           title = 'Edit Person';
-        } else if (params.id) {
+        } else if (routeId) {
           // For detail pages, we'll use a generic title
           // Individual pages can override with useDocumentTitle
           title = 'Person';
@@ -53,7 +62,7 @@ export function useRouteTitle(customTitle = null) {
           title = 'New Company';
         } else if (path.endsWith('/edit')) {
           title = 'Edit Company';
-        } else if (params.id) {
+        } else if (routeId) {
           title = 'Company';
         } else {
           title = 'Companies';
@@ -77,6 +86,6 @@ export function useRouteTitle(customTitle = null) {
     
     const siteName = window.prmConfig?.siteName || 'Personal CRM';
     document.title = `${title} - ${siteName}`;
-  }, [location.pathname, params.id, customTitle]);
+  }, [location.pathname, customTitle]);
 }
 
