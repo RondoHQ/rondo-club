@@ -61,7 +61,7 @@ function DateCard({ dates }) {
   });
 
   return (
-    <div className="card p-4">
+    <div className="card p-4 break-inside-avoid mb-4">
       <div className="flex items-start gap-4">
         <div className={`w-14 h-14 rounded-lg ${urgencyClass} flex flex-col items-center justify-center flex-shrink-0`}>
           <span className="text-2xl font-bold leading-none">
@@ -147,8 +147,8 @@ export default function DatesList() {
       {/* Grouped by month */}
       {Object.entries(groupedDates).map(([month, dayGroups]) => (
         <div key={month}>
-          <h2 className="text-sm font-semibold text-gray-500 mb-3">{month}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">{month}</h2>
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-4">
             {dayGroups.map((dayDates) => (
               <DateCard key={dayDates[0].next_occurrence} dates={dayDates} />
             ))}
