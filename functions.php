@@ -240,8 +240,51 @@ function prm_theme_template_redirect() {
     if (wp_doing_ajax()) {
         return;
     }
+    
+    // Get the request URI
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : '';
+    
+    // Remove query string for matching
+    $path = trim($request_uri, '/');
+    
+    // If this is a request for our app routes, serve index.php
+    // This includes: /, /people, /people/:id, /companies, /companies/:id, /dates, /dates/:id, /settings, /login
+    $app_routes = [
+        'people',
+        'companies', 
+        'dates',
+        'settings',
+        'login'
+    ];
+    
+    $is_app_route = false;
+    
+    // Check if it's the root path
+    if (empty($path) || $path === '/') {
+        $is_app_route = true;
+    }
+    
+    // Check if it starts with any of our app route prefixes
+    foreach ($app_routes as $route) {
+        if ($path === $route || strpos($path, $route . '/') === 0) {
+            $is_app_route = true;
+            break;
+        }
+    }
+    
+    // Also handle 404s on frontend (WordPress might return 404 for our routes)
+    if ($is_app_route || (is_404() && !is_admin())) {
+        // Set status to 200 so React Router can handle it
+        status_header(200);
+        // Clear any 404 query flags
+        global $wp_query;
+        $wp_query->is_404 = false;
+        // Load index.php for React Router
+        include(get_template_directory() . '/index.php');
+        exit;
+    }
 }
-add_action('template_redirect', 'prm_theme_template_redirect');
+add_action('template_redirect', 'prm_theme_template_redirect', 1);
 
 /**
  * Handle client-side routing - return index.php for all routes

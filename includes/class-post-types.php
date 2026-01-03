@@ -49,8 +49,8 @@ class PRM_Post_Types {
             'show_in_menu'        => true,
             'show_in_rest'        => true,
             'rest_base'           => 'people',
-            'query_var'           => true,
-            'rewrite'             => ['slug' => 'person'],
+            'query_var'           => false,
+            'rewrite'             => false, // Disable rewrite rules - React Router handles routing
             'capability_type'     => 'post',
             'has_archive'         => false,
             'hierarchical'        => false,
@@ -89,8 +89,8 @@ class PRM_Post_Types {
             'show_in_menu'        => true,
             'show_in_rest'        => true,
             'rest_base'           => 'companies',
-            'query_var'           => true,
-            'rewrite'             => ['slug' => 'company'],
+            'query_var'           => false,
+            'rewrite'             => false, // Disable rewrite rules - React Router handles routing
             'capability_type'     => 'post',
             'has_archive'         => false,
             'hierarchical'        => false,
@@ -129,8 +129,8 @@ class PRM_Post_Types {
             'show_in_menu'        => true,
             'show_in_rest'        => true,
             'rest_base'           => 'important-dates',
-            'query_var'           => true,
-            'rewrite'             => ['slug' => 'important-date'],
+            'query_var'           => false,
+            'rewrite'             => false, // Disable rewrite rules - React Router handles routing
             'capability_type'     => 'post',
             'has_archive'         => false,
             'hierarchical'        => false,
