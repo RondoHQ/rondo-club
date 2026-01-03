@@ -288,18 +288,24 @@ export default function PersonDetail() {
     queries: companyIds.map(companyId => ({
       queryKey: ['company', companyId],
       queryFn: async () => {
-        const response = await wpApi.getCompany(companyId);
+        const response = await wpApi.getCompany(companyId, { _embed: true });
         return response.data;
       },
       enabled: !!companyId,
     })),
   });
 
-  // Create a map of company ID to company name
+  // Create a map of company ID to company data (name and logo)
   const companyMap = {};
   companyQueries.forEach((query, index) => {
     if (query.data) {
-      companyMap[companyIds[index]] = query.data.title?.rendered || query.data.title || '';
+      const companyId = companyIds[index];
+      companyMap[companyId] = {
+        name: query.data.title?.rendered || query.data.title || '',
+        logo: query.data._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
+              query.data._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url ||
+              null,
+      };
     }
   });
   
@@ -675,22 +681,30 @@ export default function PersonDetail() {
             {sortedWorkHistory?.length > 0 ? (
               <div className="space-y-4">
                 {sortedWorkHistory.map((job, index) => {
-                  const companyName = job.company ? companyMap[job.company] : null;
+                  const companyData = job.company ? companyMap[job.company] : null;
                   const originalIndex = job.originalIndex;
                   
                   return (
                     <div key={originalIndex} className="flex items-start group">
-                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                        <Building2 className="w-5 h-5 text-gray-500" />
-                      </div>
+                      {companyData?.logo ? (
+                        <img
+                          src={companyData.logo}
+                          alt={companyData.name}
+                          className="w-10 h-10 rounded-lg object-cover mr-3 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                          <Building2 className="w-5 h-5 text-gray-500" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium">{job.job_title}</p>
-                        {job.company && companyName && (
+                        {job.company && companyData && (
                           <Link 
                             to={`/companies/${job.company}`}
                             className="text-sm text-primary-600 hover:underline"
                           >
-                            {companyName}
+                            {companyData.name}
                           </Link>
                         )}
                         <p className="text-sm text-gray-500">
