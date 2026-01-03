@@ -10,6 +10,14 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 
+// Helper to decode HTML entities
+function decodeHtml(html) {
+  if (!html) return '';
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
+
 export default function PersonDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -711,19 +719,19 @@ export default function PersonDetail() {
                       {rel.person_thumbnail ? (
                         <img
                           src={rel.person_thumbnail}
-                          alt={rel.person_name}
+                          alt={decodeHtml(rel.person_name) || ''}
                           className="w-8 h-8 rounded-full object-cover mr-2"
                         />
                       ) : (
                         <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
                           <span className="text-xs font-medium text-gray-500">
-                            {rel.person_name?.[0] || '?'}
+                            {decodeHtml(rel.person_name)?.[0] || '?'}
                           </span>
                         </div>
                       )}
                       <div>
-                        <p className="text-sm font-medium">{rel.person_name || `Person #${rel.related_person}`}</p>
-                        <p className="text-xs text-gray-500">{rel.relationship_name || rel.relationship_label}</p>
+                        <p className="text-sm font-medium">{decodeHtml(rel.person_name) || `Person #${rel.related_person}`}</p>
+                        <p className="text-xs text-gray-500">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
                       </div>
                     </Link>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
