@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
@@ -254,6 +254,28 @@ export default function PersonDetail() {
       companyMap[companyIds[index]] = query.data.title?.rendered || query.data.title || '';
     }
   });
+  
+  // Sort work history by start date descending (most recent first)
+  // Current jobs come first, then sorted by start_date descending
+  // Preserve original index for edit/delete operations
+  const sortedWorkHistory = useMemo(() => {
+    if (!person?.acf?.work_history) return [];
+    
+    return [...person.acf.work_history]
+      .map((job, originalIndex) => ({ ...job, originalIndex }))
+      .sort((a, b) => {
+        // Current jobs come first
+        if (a.is_current && !b.is_current) return -1;
+        if (!a.is_current && b.is_current) return 1;
+        
+        // Both current or both not current - sort by start_date descending
+        const dateA = a.start_date ? new Date(a.start_date) : new Date(0);
+        const dateB = b.start_date ? new Date(b.start_date) : new Date(0);
+        
+        // Most recent first (descending)
+        return dateB - dateA;
+      });
+  }, [person?.acf?.work_history]);
   
   if (isLoading) {
     return (
@@ -582,13 +604,14 @@ export default function PersonDetail() {
                 Add Work History
               </Link>
             </div>
-            {acf.work_history?.length > 0 ? (
+            {sortedWorkHistory?.length > 0 ? (
               <div className="space-y-4">
-                {acf.work_history.map((job, index) => {
+                {sortedWorkHistory.map((job, index) => {
                   const companyName = job.company ? companyMap[job.company] : null;
+                  const originalIndex = job.originalIndex;
                   
                   return (
-                    <div key={index} className="flex items-start group">
+                    <div key={originalIndex} className="flex items-start group">
                       <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
                         <Building2 className="w-5 h-5 text-gray-500" />
                       </div>
@@ -613,14 +636,14 @@ export default function PersonDetail() {
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                         <Link
-                          to={`/people/${id}/work-history/${index}/edit`}
+                          to={`/people/${id}/work-history/${originalIndex}/edit`}
                           className="p-1 hover:bg-gray-100 rounded"
                           title="Edit work history"
                         >
                           <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                         </Link>
                         <button
-                          onClick={() => handleDeleteWorkHistory(index)}
+                          onClick={() => handleDeleteWorkHistory(originalIndex)}
                           className="p-1 hover:bg-red-50 rounded"
                           title="Delete work history"
                         >
