@@ -159,7 +159,27 @@ class PRM_REST_API {
                     $person_data['start_date'] = $job['start_date'] ?? '';
                     $person_data['end_date'] = $job['end_date'] ?? '';
                     
-                    if (empty($job['end_date']) || !empty($job['is_current'])) {
+                    // Determine if person is current or former
+                    $is_current = false;
+                    
+                    // If is_current flag is set, they're current
+                    if (!empty($job['is_current'])) {
+                        $is_current = true;
+                    } 
+                    // If no end_date, they're current
+                    elseif (empty($job['end_date'])) {
+                        $is_current = true;
+                    }
+                    // If end_date is in the future, they're still current
+                    elseif (!empty($job['end_date'])) {
+                        $end_date = strtotime($job['end_date']);
+                        $today = strtotime('today');
+                        if ($end_date >= $today) {
+                            $is_current = true;
+                        }
+                    }
+                    
+                    if ($is_current) {
                         $current[] = $person_data;
                     } else {
                         $former[] = $person_data;
