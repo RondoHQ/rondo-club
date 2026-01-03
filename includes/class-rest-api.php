@@ -119,23 +119,18 @@ class PRM_REST_API {
         $company_id = (int) $request->get_param('company_id');
         $user_id = get_current_user_id();
         
-        // Build query args
-        $query_args = [
-            'post_type'      => 'person',
-            'posts_per_page' => -1,
-            'post_status'    => 'publish',
-            'meta_query'     => [
-                [
-                    'key'     => 'work_history_%_company',
-                    'value'   => $company_id,
-                    'compare' => '=',
-                ],
-            ],
-        ];
+        // Get accessible people (don't rely on meta_query with ACF repeater fields)
+        $access_control = new PRM_Access_Control();
         
-        // Apply access control for non-admins
-        if (!current_user_can('manage_options')) {
-            $access_control = new PRM_Access_Control();
+        if (current_user_can('manage_options')) {
+            // Admins: get all people
+            $people = get_posts([
+                'post_type'      => 'person',
+                'posts_per_page' => -1,
+                'post_status'    => 'publish',
+            ]);
+        } else {
+            // Non-admins: get only accessible people
             $accessible_ids = $access_control->get_accessible_post_ids('person', $user_id);
             
             if (empty($accessible_ids)) {
@@ -145,26 +140,32 @@ class PRM_REST_API {
                 ]);
             }
             
-            $query_args['post__in'] = $accessible_ids;
+            $people = get_posts([
+                'post_type'      => 'person',
+                'posts_per_page' => -1,
+                'post_status'    => 'publish',
+                'post__in'       => $accessible_ids,
+            ]);
         }
-        
-        // Query people with this company in their work history
-        $people = get_posts($query_args);
         
         $current = [];
         $former = [];
         
+        // Loop through all people and check their work history
         foreach ($people as $person) {
             $work_history = get_field('work_history', $person->ID) ?: [];
             
-            $person_data = $this->format_person_summary($person);
+            if (empty($work_history)) {
+                continue;
+            }
             
-            // Find the relevant work history entry
+            // Find the relevant work history entry for this company
             foreach ($work_history as $job) {
                 // Ensure type consistency for comparison
                 $job_company_id = isset($job['company']) ? (int) $job['company'] : 0;
                 
                 if ($job_company_id === $company_id) {
+                    $person_data = $this->format_person_summary($person);
                     $person_data['job_title'] = $job['job_title'] ?? '';
                     $person_data['start_date'] = $job['start_date'] ?? '';
                     $person_data['end_date'] = $job['end_date'] ?? '';
@@ -174,7 +175,7 @@ class PRM_REST_API {
                     } else {
                         $former[] = $person_data;
                     }
-                    break;
+                    break; // Found the matching job, move to next person
                 }
             }
         }
