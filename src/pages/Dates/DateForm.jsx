@@ -175,7 +175,13 @@ export default function DateForm() {
     queryKey: ['date-types'],
     queryFn: async () => {
       const response = await wpApi.getDateTypes();
-      return response.data;
+      // Sort date types alphabetically by name
+      const sorted = (response.data || []).sort((a, b) => {
+        const nameA = a.name || '';
+        const nameB = b.name || '';
+        return nameA.localeCompare(nameB);
+      });
+      return sorted;
     },
   });
 
