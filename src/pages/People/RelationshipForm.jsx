@@ -59,7 +59,7 @@ export default function RelationshipForm() {
   const { register, handleSubmit, reset, control, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
       related_person: null,
-      relationship_type: null,
+      relationship_type: '',
       relationship_label: '',
     },
   });
@@ -73,7 +73,7 @@ export default function RelationshipForm() {
       if (relationshipItem) {
         reset({
           related_person: relationshipItem.related_person || null,
-          relationship_type: relationshipItem.relationship_type || null,
+          relationship_type: relationshipItem.relationship_type ? String(relationshipItem.relationship_type) : '',
           relationship_label: relationshipItem.relationship_label || '',
         });
       }

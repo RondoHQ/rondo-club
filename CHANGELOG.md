@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.33] - 2024-12-19
+
+### Fixed
+- Relationship form: Relationship type dropdown now correctly pre-selects the current relationship type when editing
+
 ## [1.0.32] - 2024-12-19
 
 ### Fixed
