@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.31] - 2024-12-19
+
+### Fixed
+- Person detail: Edit and Add Relationship buttons now navigate to dedicated relationship form instead of person edit form
+- Person detail: Relationship form allows editing individual relationships without editing the entire person
+
+### Added
+- Person detail: New RelationshipForm component for adding and editing relationships independently
+
 ## [1.0.30] - 2024-12-19
 
 ### Added
