@@ -152,3 +152,19 @@ export function useCreateActivity() {
     },
   });
 }
+
+// Date mutations
+export function useDeleteDate() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ dateId, personId }) => wpApi.deleteDate(dateId),
+    onSuccess: (_, { personId }) => {
+      if (personId) {
+        queryClient.invalidateQueries({ queryKey: peopleKeys.dates(personId) });
+        queryClient.invalidateQueries({ queryKey: peopleKeys.detail(personId) });
+      }
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+    },
+  });
+}

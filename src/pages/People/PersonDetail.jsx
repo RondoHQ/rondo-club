@@ -3,7 +3,7 @@ import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil
 } from 'lucide-react';
-import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson } from '@/hooks/usePeople';
+import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
@@ -14,6 +14,9 @@ export default function PersonDetail() {
   const { data: timeline } = usePersonTimeline(id);
   const { data: personDates } = usePersonDates(id);
   const deletePerson = useDeletePerson();
+  const deleteNote = useDeleteNote();
+  const deleteDate = useDeleteDate();
+  const updatePerson = useUpdatePerson();
   
   // Update document title with person's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
@@ -50,6 +53,64 @@ export default function PersonDetail() {
   // Helper function to format phone number for tel: link (remove spaces and dashes)
   const formatPhoneForTel = (phone) => {
     return phone.replace(/[\s-]/g, '');
+  };
+
+  // Handle deleting a contact detail
+  const handleDeleteContact = async (index) => {
+    if (!window.confirm('Are you sure you want to delete this contact detail?')) {
+      return;
+    }
+    
+    const updatedContactInfo = [...(person.acf?.contact_info || [])];
+    updatedContactInfo.splice(index, 1);
+    
+    await updatePerson.mutateAsync({
+      id,
+      data: {
+        acf: {
+          ...person.acf,
+          contact_info: updatedContactInfo,
+        },
+      },
+    });
+  };
+
+  // Handle deleting a relationship
+  const handleDeleteRelationship = async (index) => {
+    if (!window.confirm('Are you sure you want to delete this relationship?')) {
+      return;
+    }
+    
+    const updatedRelationships = [...(person.acf?.relationships || [])];
+    updatedRelationships.splice(index, 1);
+    
+    await updatePerson.mutateAsync({
+      id,
+      data: {
+        acf: {
+          ...person.acf,
+          relationships: updatedRelationships,
+        },
+      },
+    });
+  };
+
+  // Handle deleting a date
+  const handleDeleteDate = async (dateId) => {
+    if (!window.confirm('Are you sure you want to delete this important date?')) {
+      return;
+    }
+    
+    await deleteDate.mutateAsync({ dateId, personId: id });
+  };
+
+  // Handle deleting a note
+  const handleDeleteNote = async (noteId) => {
+    if (!window.confirm('Are you sure you want to delete this note?')) {
+      return;
+    }
+    
+    await deleteNote.mutateAsync({ noteId, personId: id });
   };
   
   if (isLoading) {
@@ -185,13 +246,22 @@ export default function PersonDetail() {
                           <span>{contact.contact_value}</span>
                         )}
                       </div>
-                      <Link
-                        to={`/people/${id}/edit`}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded ml-2"
-                        title="Edit contact detail"
-                      >
-                        <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                      </Link>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                        <Link
+                          to={`/people/${id}/edit`}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Edit contact detail"
+                        >
+                          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                        </Link>
+                        <button
+                          onClick={() => handleDeleteContact(index)}
+                          className="p-1 hover:bg-red-50 rounded"
+                          title="Delete contact detail"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -237,12 +307,22 @@ export default function PersonDetail() {
                           <p className="text-xs text-gray-400 capitalize">{dateType}</p>
                         )}
                       </div>
-                      <Link
-                        to={`/dates/${date.id}/edit`}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
-                      >
-                        <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                      </Link>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Link
+                          to={`/dates/${date.id}/edit`}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Edit date"
+                        >
+                          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                        </Link>
+                        <button
+                          onClick={() => handleDeleteDate(date.id)}
+                          className="p-1 hover:bg-red-50 rounded"
+                          title="Delete date"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -302,11 +382,20 @@ export default function PersonDetail() {
             {timeline?.length > 0 ? (
               <div className="space-y-4">
                 {timeline.map((item) => (
-                  <div key={item.id} className="border-l-2 border-gray-200 pl-4 pb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span className="capitalize">{item.type}</span>
-                      <span>•</span>
-                      <span>{format(new Date(item.created), 'MMM d, yyyy')}</span>
+                  <div key={item.id} className="border-l-2 border-gray-200 pl-4 pb-4 group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <span className="capitalize">{item.type}</span>
+                        <span>•</span>
+                        <span>{format(new Date(item.created), 'MMM d, yyyy')}</span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteNote(item.id)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded"
+                        title="Delete note"
+                      >
+                        <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                      </button>
                     </div>
                     <p className="mt-1">{item.content}</p>
                   </div>
@@ -353,29 +442,46 @@ export default function PersonDetail() {
             {acf.relationships?.length > 0 ? (
               <div className="space-y-2">
                 {acf.relationships.map((rel, index) => (
-                  <Link
-                    key={index}
-                    to={`/people/${rel.related_person}`}
-                    className="flex items-center p-2 rounded hover:bg-gray-50"
-                  >
-                    {rel.person_thumbnail ? (
-                      <img
-                        src={rel.person_thumbnail}
-                        alt={rel.person_name}
-                        className="w-8 h-8 rounded-full object-cover mr-2"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                        <span className="text-xs font-medium text-gray-500">
-                          {rel.person_name?.[0] || '?'}
-                        </span>
+                  <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 group">
+                    <Link
+                      to={`/people/${rel.related_person}`}
+                      className="flex items-center flex-1 min-w-0"
+                    >
+                      {rel.person_thumbnail ? (
+                        <img
+                          src={rel.person_thumbnail}
+                          alt={rel.person_name}
+                          className="w-8 h-8 rounded-full object-cover mr-2"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                          <span className="text-xs font-medium text-gray-500">
+                            {rel.person_name?.[0] || '?'}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-medium">{rel.person_name || `Person #${rel.related_person}`}</p>
+                        <p className="text-xs text-gray-500">{rel.relationship_name || rel.relationship_label}</p>
                       </div>
-                    )}
-                    <div>
-                      <p className="text-sm font-medium">{rel.person_name || `Person #${rel.related_person}`}</p>
-                      <p className="text-xs text-gray-500">{rel.relationship_name || rel.relationship_label}</p>
+                    </Link>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                      <Link
+                        to={`/people/${id}/edit`}
+                        className="p-1 hover:bg-gray-100 rounded"
+                        title="Edit relationship"
+                      >
+                        <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteRelationship(index)}
+                        className="p-1 hover:bg-red-50 rounded"
+                        title="Delete relationship"
+                      >
+                        <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                      </button>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             ) : (
