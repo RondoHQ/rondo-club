@@ -13,7 +13,8 @@ import {
   User,
   Briefcase,
   Calendar as CalendarIcon,
-  ChevronDown
+  ChevronDown,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
@@ -38,7 +39,7 @@ function Sidebar({ mobile = false, onClose }) {
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
         <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary-600">
-          <Home className="w-5 h-5" />
+          <Sparkles className="w-5 h-5" />
           {APP_NAME}
         </Link>
         {mobile && (
