@@ -1,9 +1,32 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Star, Filter } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
+import { useQueries } from '@tanstack/react-query';
+import { wpApi } from '@/api/client';
 
-function PersonCard({ person }) {
+// Helper function to get current company ID from person's work history
+function getCurrentCompanyId(person) {
+  const workHistory = person.acf?.work_history || [];
+  if (workHistory.length === 0) return null;
+  
+  // First, try to find current position
+  const currentJob = workHistory.find(job => job.is_current && job.company);
+  if (currentJob) return currentJob.company;
+  
+  // Otherwise, get the most recent (by start_date)
+  const jobsWithCompany = workHistory
+    .filter(job => job.company)
+    .sort((a, b) => {
+      const dateA = a.start_date ? new Date(a.start_date) : new Date(0);
+      const dateB = b.start_date ? new Date(b.start_date) : new Date(0);
+      return dateB - dateA; // Most recent first
+    });
+  
+  return jobsWithCompany.length > 0 ? jobsWithCompany[0].company : null;
+}
+
+function PersonCard({ person, companyName }) {
   return (
     <Link 
       to={`/people/${person.id}`}
@@ -32,6 +55,11 @@ function PersonCard({ person }) {
               <Star className="w-4 h-4 ml-1 text-yellow-400 fill-current flex-shrink-0" />
             )}
           </div>
+          {companyName && (
+            <p className="text-xs text-gray-500 mt-0.5 truncate">
+              {companyName}
+            </p>
+          )}
           {person.labels?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {person.labels.slice(0, 3).map((label) => (
@@ -53,6 +81,70 @@ function PersonCard({ person }) {
 export default function PeopleList() {
   const [search, setSearch] = useState('');
   const { data: people, isLoading, error } = usePeople({ search });
+  
+  // Sort people by last name alphabetically
+  const sortedPeople = useMemo(() => {
+    if (!people) return [];
+    
+    return [...people].sort((a, b) => {
+      const lastNameA = (a.acf?.last_name || a.last_name || '').toLowerCase();
+      const lastNameB = (b.acf?.last_name || b.last_name || '').toLowerCase();
+      
+      // If last names are equal, sort by first name
+      if (lastNameA === lastNameB) {
+        const firstNameA = (a.acf?.first_name || a.first_name || '').toLowerCase();
+        const firstNameB = (b.acf?.first_name || b.first_name || '').toLowerCase();
+        return firstNameA.localeCompare(firstNameB);
+      }
+      
+      return lastNameA.localeCompare(lastNameB);
+    });
+  }, [people]);
+
+  // Collect all company IDs
+  const companyIds = useMemo(() => {
+    if (!sortedPeople) return [];
+    const ids = sortedPeople
+      .map(person => getCurrentCompanyId(person))
+      .filter(Boolean);
+    // Remove duplicates
+    return [...new Set(ids)];
+  }, [sortedPeople]);
+
+  // Fetch company names
+  const companyQueries = useQueries({
+    queries: companyIds.map(companyId => ({
+      queryKey: ['company', companyId],
+      queryFn: async () => {
+        const response = await wpApi.getCompany(companyId);
+        return response.data;
+      },
+      enabled: !!companyId,
+    })),
+  });
+
+  // Create a map of company ID to company name
+  const companyMap = useMemo(() => {
+    const map = {};
+    companyQueries.forEach((query, index) => {
+      if (query.data) {
+        map[companyIds[index]] = query.data.title?.rendered || query.data.title || '';
+      }
+    });
+    return map;
+  }, [companyQueries, companyIds]);
+
+  // Create a map of person ID to company name
+  const personCompanyMap = useMemo(() => {
+    const map = {};
+    sortedPeople.forEach(person => {
+      const companyId = getCurrentCompanyId(person);
+      if (companyId && companyMap[companyId]) {
+        map[person.id] = companyMap[companyId];
+      }
+    });
+    return map;
+  }, [sortedPeople, companyMap]);
   
   return (
     <div className="space-y-4">
@@ -115,10 +207,14 @@ export default function PeopleList() {
       )}
       
       {/* People grid */}
-      {!isLoading && !error && people?.length > 0 && (
+      {!isLoading && !error && sortedPeople?.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {people.map((person) => (
-            <PersonCard key={person.id} person={person} />
+          {sortedPeople.map((person) => (
+            <PersonCard 
+              key={person.id} 
+              person={person} 
+              companyName={personCompanyMap[person.id]}
+            />
           ))}
         </div>
       )}
