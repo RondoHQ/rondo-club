@@ -112,6 +112,26 @@ class PRM_REST_API {
             'callback'            => [$this, 'get_current_user'],
             'permission_callback' => 'is_user_logged_in',
         ]);
+        
+        // Set company logo (featured image)
+        register_rest_route('prm/v1', '/companies/(?P<company_id>\d+)/logo', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'set_company_logo'],
+            'permission_callback' => [$this, 'check_company_edit_permission'],
+            'args'                => [
+                'company_id' => [
+                    'validate_callback' => function($param) {
+                        return is_numeric($param);
+                    },
+                ],
+                'media_id' => [
+                    'required'          => true,
+                    'validate_callback' => function($param) {
+                        return is_numeric($param);
+                    },
+                ],
+            ],
+        ]);
     }
     
     /**
@@ -594,6 +614,59 @@ class PRM_REST_API {
             'is_admin' => $is_admin,
             'profile_url' => $profile_url,
             'admin_url' => $admin_url,
+        ]);
+    }
+    
+    /**
+     * Check if user can edit a company
+     */
+    public function check_company_edit_permission($request) {
+        if (!is_user_logged_in()) {
+            return false;
+        }
+        
+        $company_id = $request->get_param('company_id');
+        $company = get_post($company_id);
+        
+        if (!$company || $company->post_type !== 'company') {
+            return false;
+        }
+        
+        // Check if user can edit this company
+        return current_user_can('edit_post', $company_id);
+    }
+    
+    /**
+     * Set company logo (featured image)
+     */
+    public function set_company_logo($request) {
+        $company_id = (int) $request->get_param('company_id');
+        $media_id = (int) $request->get_param('media_id');
+        
+        // Verify company exists
+        $company = get_post($company_id);
+        if (!$company || $company->post_type !== 'company') {
+            return new WP_Error('company_not_found', __('Company not found.', 'personal-crm'), ['status' => 404]);
+        }
+        
+        // Verify media exists
+        $media = get_post($media_id);
+        if (!$media || $media->post_type !== 'attachment') {
+            return new WP_Error('media_not_found', __('Media not found.', 'personal-crm'), ['status' => 404]);
+        }
+        
+        // Set as featured image
+        $result = set_post_thumbnail($company_id, $media_id);
+        
+        if (!$result) {
+            return new WP_Error('set_thumbnail_failed', __('Failed to set company logo.', 'personal-crm'), ['status' => 500]);
+        }
+        
+        return rest_ensure_response([
+            'success' => true,
+            'media_id' => $media_id,
+            'thumbnail_url' => get_the_post_thumbnail_url($company_id, 'thumbnail'),
+            'full_url' => get_the_post_thumbnail_url($company_id, 'full'),
         ]);
     }
 }

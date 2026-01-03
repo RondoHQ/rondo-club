@@ -118,4 +118,5 @@ export const prmApi = {
   
   // Company-specific
   getCompanyPeople: (companyId) => api.get(`/prm/v1/companies/${companyId}/people`),
+  setCompanyLogo: (companyId, mediaId) => api.post(`/prm/v1/companies/${companyId}/logo`, { media_id: mediaId }),
 };

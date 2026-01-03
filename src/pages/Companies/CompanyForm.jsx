@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Save, Camera } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { wpApi } from '@/api/client';
+import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function CompanyForm() {
@@ -65,10 +65,8 @@ export default function CompanyForm() {
       const uploadResponse = await wpApi.uploadMedia(file);
       const mediaId = uploadResponse.data.id;
 
-      // Update company with new featured media
-      await updateCompany.mutateAsync({
-        featured_media: mediaId,
-      });
+      // Set as company logo using custom endpoint
+      await prmApi.setCompanyLogo(id, mediaId);
 
       // Invalidate queries to refresh company data
       queryClient.invalidateQueries({ queryKey: ['company', id] });
