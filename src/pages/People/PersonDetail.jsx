@@ -8,7 +8,7 @@ import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDelet
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { wpApi } from '@/api/client';
+import { wpApi, prmApi } from '@/api/client';
 
 // Helper to decode HTML entities
 function decodeHtml(html) {
@@ -294,6 +294,63 @@ export default function PersonDetail() {
       enabled: !!companyId,
     })),
   });
+
+  // Fetch dates for related people to calculate ages for sorting
+  const relatedPersonIds = person?.acf?.relationships
+    ?.map(rel => rel.related_person)
+    .filter(Boolean) || [];
+  
+  const relatedPersonDatesQueries = useQueries({
+    queries: relatedPersonIds.map(personId => ({
+      queryKey: ['person-dates', personId],
+      queryFn: async () => {
+        const response = await prmApi.getPersonDates(personId);
+        return response.data;
+      },
+      enabled: !!personId,
+    })),
+  });
+
+  // Create a map of person ID to age for sorting
+  const personAgeMap = useMemo(() => {
+    const ageMap = {};
+    relatedPersonDatesQueries.forEach((query, index) => {
+      if (query.data && relatedPersonIds[index]) {
+        const personId = relatedPersonIds[index];
+        // Find birthday
+        const birthday = query.data.find(d => {
+          const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
+          return dateType?.toLowerCase() === 'birthday';
+        });
+        if (birthday?.date_value) {
+          const birthDate = new Date(birthday.date_value);
+          ageMap[personId] = differenceInYears(new Date(), birthDate);
+        } else {
+          // If no birthday, use a very large number so they appear last
+          ageMap[personId] = -1;
+        }
+      }
+    });
+    return ageMap;
+  }, [relatedPersonDatesQueries, relatedPersonIds]);
+
+  // Sort relationships by age (descending - oldest first)
+  const sortedRelationships = useMemo(() => {
+    if (!person?.acf?.relationships) return [];
+    
+    return [...person.acf.relationships].sort((a, b) => {
+      const ageA = personAgeMap[a.related_person] ?? -1;
+      const ageB = personAgeMap[b.related_person] ?? -1;
+      
+      // Sort descending (oldest first)
+      // If age is -1 (no birthday), put at the end
+      if (ageA === -1 && ageB === -1) return 0;
+      if (ageA === -1) return 1;
+      if (ageB === -1) return -1;
+      
+      return ageB - ageA;
+    });
+  }, [person?.acf?.relationships, personAgeMap]);
 
   // Create a map of company ID to company data (name and logo)
   const companyMap = {};
@@ -813,50 +870,58 @@ export default function PersonDetail() {
                 Add Relationship
               </Link>
             </div>
-            {acf.relationships?.length > 0 ? (
+            {sortedRelationships?.length > 0 ? (
               <div className="space-y-2">
-                {acf.relationships.map((rel, index) => (
-                  <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 group">
-                    <Link
-                      to={`/people/${rel.related_person}`}
-                      className="flex items-center flex-1 min-w-0"
-                    >
-                      {rel.person_thumbnail ? (
-                        <img
-                          src={rel.person_thumbnail}
-                          alt={decodeHtml(rel.person_name) || ''}
-                          className="w-8 h-8 rounded-full object-cover mr-2"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                          <span className="text-xs font-medium text-gray-500">
-                            {decodeHtml(rel.person_name)?.[0] || '?'}
-                          </span>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-sm font-medium">{decodeHtml(rel.person_name) || `Person #${rel.related_person}`}</p>
-                        <p className="text-xs text-gray-500">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
-                      </div>
-                    </Link>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                {sortedRelationships.map((rel, index) => {
+                  // Find the original index in the relationships array for edit/delete
+                  const originalIndex = person?.acf?.relationships?.findIndex(
+                    r => r.related_person === rel.related_person && 
+                         r.relationship_type === rel.relationship_type
+                  ) ?? index;
+                  
+                  return (
+                    <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 group">
                       <Link
-                        to={`/people/${id}/relationship/${index}/edit`}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="Edit relationship"
+                        to={`/people/${rel.related_person}`}
+                        className="flex items-center flex-1 min-w-0"
                       >
-                        <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                        {rel.person_thumbnail ? (
+                          <img
+                            src={rel.person_thumbnail}
+                            alt={decodeHtml(rel.person_name) || ''}
+                            className="w-8 h-8 rounded-full object-cover mr-2"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                            <span className="text-xs font-medium text-gray-500">
+                              {decodeHtml(rel.person_name)?.[0] || '?'}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">{decodeHtml(rel.person_name) || `Person #${rel.related_person}`}</p>
+                          <p className="text-xs text-gray-500">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
+                        </div>
                       </Link>
-                      <button
-                        onClick={() => handleDeleteRelationship(index)}
-                        className="p-1 hover:bg-red-50 rounded"
-                        title="Delete relationship"
-                      >
-                        <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                      </button>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                        <Link
+                          to={`/people/${id}/relationship/${originalIndex}/edit`}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Edit relationship"
+                        >
+                          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                        </Link>
+                        <button
+                          onClick={() => handleDeleteRelationship(originalIndex)}
+                          className="p-1 hover:bg-red-50 rounded"
+                          title="Delete relationship"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
