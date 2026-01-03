@@ -37,6 +37,7 @@ function PersonCard({ person, companyName }) {
           <img 
             src={person.thumbnail} 
             alt={person.name}
+            loading="lazy"
             className="w-12 h-12 rounded-full object-cover"
           />
         ) : (

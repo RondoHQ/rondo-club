@@ -18,6 +18,7 @@ function PersonDateEntry({ person, dateType }) {
           <img
             src={person.thumbnail}
             alt={person.name}
+            loading="lazy"
             className="w-10 h-10 rounded-full object-cover flex-shrink-0"
           />
         ) : (

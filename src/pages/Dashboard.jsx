@@ -29,6 +29,7 @@ function PersonCard({ person }) {
         <img 
           src={person.thumbnail} 
           alt={person.name}
+          loading="lazy"
           className="w-10 h-10 rounded-full object-cover"
         />
       ) : (
@@ -86,6 +87,7 @@ function ReminderCard({ reminder }) {
                   key={person.id}
                   src={person.thumbnail}
                   alt={person.name}
+                  loading="lazy"
                   className="w-10 h-10 rounded-full border-2 border-white object-cover"
                 />
               ) : (

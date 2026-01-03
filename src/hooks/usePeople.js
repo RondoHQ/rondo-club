@@ -52,12 +52,36 @@ export function usePeople(params = {}) {
   return useQuery({
     queryKey: peopleKeys.list(params),
     queryFn: async () => {
-      const response = await wpApi.getPeople({
-        per_page: 100,
-        _embed: true,
-        ...params,
-      });
-      return response.data.map(transformPerson);
+      const allPeople = [];
+      let page = 1;
+      const perPage = 100;
+      
+      while (true) {
+        const response = await wpApi.getPeople({
+          per_page: perPage,
+          page,
+          _embed: true,
+          ...params,
+        });
+        
+        const people = response.data.map(transformPerson);
+        allPeople.push(...people);
+        
+        // If we got fewer results than per_page, we're on the last page
+        if (people.length < perPage) {
+          break;
+        }
+        
+        // Also check x-wp-totalpages header as a safety check
+        const totalPages = parseInt(response.headers['x-wp-totalpages'] || response.headers['X-WP-TotalPages'] || '0', 10);
+        if (totalPages > 0 && page >= totalPages) {
+          break;
+        }
+        
+        page++;
+      }
+      
+      return allPeople;
     },
   });
 }

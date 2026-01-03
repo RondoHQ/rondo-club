@@ -133,7 +133,7 @@ export default function CompanyDetail() {
                     className="flex items-center p-2 rounded hover:bg-gray-50"
                   >
                     {person.thumbnail ? (
-                      <img src={person.thumbnail} alt="" className="w-8 h-8 rounded-full" />
+                      <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
                     ) : (
                       <div className="w-8 h-8 bg-gray-200 rounded-full" />
                     )}
@@ -158,7 +158,7 @@ export default function CompanyDetail() {
                     className="flex items-center p-2 rounded hover:bg-gray-50 opacity-60"
                   >
                     {person.thumbnail ? (
-                      <img src={person.thumbnail} alt="" className="w-8 h-8 rounded-full" />
+                      <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
                     ) : (
                       <div className="w-8 h-8 bg-gray-200 rounded-full" />
                     )}
