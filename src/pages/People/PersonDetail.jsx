@@ -29,17 +29,27 @@ export default function PersonDetail() {
   const birthDate = birthday?.date_value ? new Date(birthday.date_value) : null;
   const age = birthDate ? differenceInYears(new Date(), birthDate) : null;
 
-  // Get other dates (non-birthday)
-  const otherDates = personDates?.filter(d => {
-    const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
-    return dateType?.toLowerCase() !== 'birthday';
-  }) || [];
+  // Get all dates including birthday (for Important Dates card)
+  // Birthday should be first, then other dates
+  const allDates = personDates ? [...personDates].sort((a, b) => {
+    const aType = Array.isArray(a.date_type) ? a.date_type[0] : a.date_type;
+    const bType = Array.isArray(b.date_type) ? b.date_type[0] : b.date_type;
+    // Put birthday first
+    if (aType?.toLowerCase() === 'birthday') return -1;
+    if (bType?.toLowerCase() === 'birthday') return 1;
+    return 0;
+  }) : [];
   
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this person?')) {
       await deletePerson.mutateAsync(id);
       navigate('/people');
     }
+  };
+
+  // Helper function to format phone number for tel: link (remove spaces and dashes)
+  const formatPhoneForTel = (phone) => {
+    return phone.replace(/[\s-]/g, '');
   };
   
   if (isLoading) {
@@ -108,24 +118,20 @@ export default function PersonDetail() {
             {acf.nickname && (
               <p className="text-gray-500">"{acf.nickname}"</p>
             )}
-            {birthDate ? (
-              <Link
-                to={`/dates/${birthday.id}/edit`}
-                className="text-gray-500 text-sm mt-1 inline-flex items-center hover:text-primary-600 group"
-              >
-                <Calendar className="w-4 h-4 mr-1" />
-                {format(birthDate, 'MMMM d, yyyy')}
-                {age !== null && ` (${age} years old)`}
-                <Pencil className="w-3 h-3 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Link>
-            ) : (
-              <Link
-                to={`/dates/new?person=${id}&type=birthday`}
-                className="text-gray-400 text-sm mt-1 inline-flex items-center hover:text-primary-600"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add birthday
-              </Link>
+            {age !== null && (
+              <p className="text-gray-500 text-sm mt-1">{age} years old</p>
+            )}
+            {person.labels && person.labels.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {person.labels.map((label, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         </div>
@@ -135,9 +141,18 @@ export default function PersonDetail() {
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Contact info */}
-          {acf.contact_info?.length > 0 && (
-            <div className="card p-6">
-              <h2 className="font-semibold mb-4">Contact Information</h2>
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold">Contact Information</h2>
+              <Link
+                to={`/people/${id}/edit`}
+                className="btn-secondary text-sm"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add contact detail
+              </Link>
+            </div>
+            {acf.contact_info?.length > 0 ? (
               <div className="space-y-3">
                 {acf.contact_info.map((contact, index) => {
                   const Icon = contact.contact_type === 'email' ? Mail :
@@ -145,26 +160,64 @@ export default function PersonDetail() {
                                contact.contact_type === 'address' ? MapPin :
                                contact.contact_type === 'website' ? Globe : Globe;
 
+                  // Determine if this should be a clickable link
+                  const isEmail = contact.contact_type === 'email';
+                  const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
+                  const linkHref = isEmail 
+                    ? `mailto:${contact.contact_value}`
+                    : isPhone 
+                    ? `tel:${formatPhoneForTel(contact.contact_value)}`
+                    : null;
+
                   return (
-                    <div key={index} className="flex items-center">
-                      <Icon className="w-4 h-4 text-gray-400 mr-3" />
-                      <div>
+                    <div key={index} className="flex items-center group">
+                      <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
                         <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
-                        <span>{contact.contact_value}</span>
+                        {linkHref ? (
+                          <a
+                            href={linkHref}
+                            className="text-primary-600 hover:text-primary-700 hover:underline"
+                          >
+                            {contact.contact_value}
+                          </a>
+                        ) : (
+                          <span>{contact.contact_value}</span>
+                        )}
                       </div>
+                      <Link
+                        to={`/people/${id}/edit`}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded ml-2"
+                        title="Edit contact detail"
+                      >
+                        <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                      </Link>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">
+                No contact information yet.
+              </p>
+            )}
+          </div>
 
           {/* Important Dates */}
-          {otherDates.length > 0 && (
-            <div className="card p-6">
-              <h2 className="font-semibold mb-4">Important Dates</h2>
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold">Important Dates</h2>
+              <Link
+                to={`/dates/new?person=${id}`}
+                className="btn-secondary text-sm"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Important Date
+              </Link>
+            </div>
+            {allDates.length > 0 ? (
               <div className="space-y-3">
-                {otherDates.map((date) => {
+                {allDates.map((date) => {
                   const dateType = Array.isArray(date.date_type) ? date.date_type[0] : date.date_type;
                   const dateTypeLower = dateType?.toLowerCase() || '';
                   const Icon = dateTypeLower.includes('anniversary') || dateTypeLower.includes('marriage') ? Heart :
@@ -194,8 +247,12 @@ export default function PersonDetail() {
                   );
                 })}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">
+                No important dates yet.
+              </p>
+            )}
+          </div>
 
           {/* Work history */}
           {acf.work_history?.length > 0 && (
@@ -282,9 +339,18 @@ export default function PersonDetail() {
           )}
           
           {/* Relationships */}
-          {acf.relationships?.length > 0 && (
-            <div className="card p-6">
-              <h2 className="font-semibold mb-3">Relationships</h2>
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Relationships</h2>
+              <Link
+                to={`/people/${id}/edit`}
+                className="btn-secondary text-sm"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Relationship
+              </Link>
+            </div>
+            {acf.relationships?.length > 0 ? (
               <div className="space-y-2">
                 {acf.relationships.map((rel, index) => (
                   <Link
@@ -312,8 +378,12 @@ export default function PersonDetail() {
                   </Link>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">
+                No relationships yet.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

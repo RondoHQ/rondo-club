@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2024-12-19
+
+### Changed
+- Person detail page: Show person labels underneath age in the main card
+- Person detail page: Removed birthday from main card, now appears as first date in Important Dates card
+- Person detail page: Contact Information card now always visible with "Add contact detail" button
+- Person detail page: Email fields are now clickable mailto: links
+- Person detail page: Phone numbers are now clickable tel: links (spaces and dashes removed)
+- Person detail page: Added edit button for each contact field
+- Person detail page: Important Dates card now always visible with "Add Important Date" button
+- Person detail page: Relationships card now always visible with "Add Relationship" button
+
 ## [1.0.4] - 2024-12-19
 
 ### Fixed
