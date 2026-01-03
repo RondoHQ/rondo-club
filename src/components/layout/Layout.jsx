@@ -12,6 +12,7 @@ import {
   Search
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouteTitle } from '@/hooks/useDocumentTitle';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -129,6 +130,9 @@ function Header({ onMenuClick }) {
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Update document title based on route
+  useRouteTitle();
   
   return (
     <div className="flex h-screen bg-gray-50">

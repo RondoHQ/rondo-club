@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouteTitle } from '@/hooks/useDocumentTitle';
 
 export default function Login() {
   const { loginUrl, isLoggedIn } = useAuth();
+  useRouteTitle();
   
   useEffect(() => {
     // If not logged in, redirect to WordPress login

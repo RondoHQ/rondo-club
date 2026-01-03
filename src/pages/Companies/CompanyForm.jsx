@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function CompanyForm() {
   const { id } = useParams();
@@ -48,6 +49,13 @@ export default function CompanyForm() {
       });
     }
   }, [company, reset]);
+  
+  // Update document title
+  useDocumentTitle(
+    isEditing && company
+      ? `Edit ${company.title?.rendered || company.title || 'Company'}`
+      : 'New Company'
+  );
   
   const onSubmit = async (data) => {
     const payload = {

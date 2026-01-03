@@ -2,6 +2,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, Building2, Globe, Users } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function CompanyDetail() {
   const { id } = useParams();
@@ -54,6 +55,9 @@ export default function CompanyDetail() {
       </div>
     );
   }
+  
+  // Update document title with company's name
+  useDocumentTitle(company.title?.rendered || company.title || 'Company');
   
   const acf = company.acf || {};
   

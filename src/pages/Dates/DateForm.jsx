@@ -4,6 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 // Helper to decode HTML entities
 function decodeHtml(html) {
@@ -331,6 +332,13 @@ export default function DateForm() {
       reset(defaults);
     }
   }, [dateItem, reset, isEditing, prefilledPersonId, prefilledType, dateTypes, allPeople, relatedPeopleFromDate, relatedPeopleData]);
+  
+  // Update document title
+  useDocumentTitle(
+    isEditing && dateItem
+      ? `Edit ${dateItem.title?.rendered || dateItem.title || 'Date'}`
+      : 'New Date'
+  );
 
   const onSubmit = async (data) => {
     const payload = {

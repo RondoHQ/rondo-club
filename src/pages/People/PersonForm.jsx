@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Save } from 'lucide-react';
 import { usePerson, useCreatePerson, useUpdatePerson } from '@/hooks/usePeople';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function PersonForm() {
   const { id } = useParams();
@@ -26,6 +27,13 @@ export default function PersonForm() {
       });
     }
   }, [person, reset]);
+  
+  // Update document title
+  useDocumentTitle(
+    isEditing && person
+      ? `Edit ${person.title?.rendered || person.title || 'Person'}`
+      : 'New Person'
+  );
   
   const onSubmit = async (data) => {
     try {

@@ -107,6 +107,23 @@ function prm_theme_setup() {
 add_action('after_setup_theme', 'prm_theme_setup');
 
 /**
+ * Set default page title for SPA (React will update it dynamically)
+ */
+function prm_theme_document_title_parts($title) {
+    // Only modify title on frontend (not admin)
+    if (is_admin()) {
+        return $title;
+    }
+    
+    // Set a default title - React will update it when routes change
+    $title['title'] = 'Personal CRM';
+    $title['site'] = '';
+    
+    return $title;
+}
+add_filter('document_title_parts', 'prm_theme_document_title_parts', 20);
+
+/**
  * Enqueue scripts and styles
  */
 function prm_theme_enqueue_assets() {

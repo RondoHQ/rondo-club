@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -55,6 +56,9 @@ export default function PersonDetail() {
   }
   
   const acf = person.acf || {};
+  
+  // Update document title with person's name
+  useDocumentTitle(person.title?.rendered || person.title || 'Person');
   
   return (
     <div className="space-y-6">
