@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.26] - 2024-12-19
+
+### Fixed
+- Company detail: Fixed bug where employees weren't showing due to missing admin check in access control filtering
+- Company detail: Fixed type comparison issue between company IDs (string vs integer) that prevented matching work history entries
+
 ## [1.0.25] - 2024-12-19
 
 ### Changed

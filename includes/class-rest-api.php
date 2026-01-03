@@ -116,26 +116,14 @@ class PRM_REST_API {
      * Get people who work/worked at a company
      */
     public function get_people_by_company($request) {
-        $company_id = $request->get_param('company_id');
+        $company_id = (int) $request->get_param('company_id');
         $user_id = get_current_user_id();
         
-        // Apply access control - get accessible person IDs
-        $access_control = new PRM_Access_Control();
-        $accessible_ids = $access_control->get_accessible_post_ids('person', $user_id);
-        
-        if (empty($accessible_ids)) {
-            return rest_ensure_response([
-                'current' => [],
-                'former'  => [],
-            ]);
-        }
-        
-        // Query only accessible people with this company in their work history
-        $people = get_posts([
+        // Build query args
+        $query_args = [
             'post_type'      => 'person',
             'posts_per_page' => -1,
             'post_status'    => 'publish',
-            'post__in'       => $accessible_ids,
             'meta_query'     => [
                 [
                     'key'     => 'work_history_%_company',
@@ -143,7 +131,25 @@ class PRM_REST_API {
                     'compare' => '=',
                 ],
             ],
-        ]);
+        ];
+        
+        // Apply access control for non-admins
+        if (!current_user_can('manage_options')) {
+            $access_control = new PRM_Access_Control();
+            $accessible_ids = $access_control->get_accessible_post_ids('person', $user_id);
+            
+            if (empty($accessible_ids)) {
+                return rest_ensure_response([
+                    'current' => [],
+                    'former'  => [],
+                ]);
+            }
+            
+            $query_args['post__in'] = $accessible_ids;
+        }
+        
+        // Query people with this company in their work history
+        $people = get_posts($query_args);
         
         $current = [];
         $former = [];
@@ -155,7 +161,10 @@ class PRM_REST_API {
             
             // Find the relevant work history entry
             foreach ($work_history as $job) {
-                if (isset($job['company']) && $job['company'] == $company_id) {
+                // Ensure type consistency for comparison
+                $job_company_id = isset($job['company']) ? (int) $job['company'] : 0;
+                
+                if ($job_company_id === $company_id) {
                     $person_data['job_title'] = $job['job_title'] ?? '';
                     $person_data['start_date'] = $job['start_date'] ?? '';
                     $person_data['end_date'] = $job['end_date'] ?? '';
