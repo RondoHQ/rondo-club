@@ -88,6 +88,9 @@ export const prmApi = {
   // Gravatar
   sideloadGravatar: (personId, email) => api.post(`/prm/v1/people/${personId}/gravatar`, { email }),
   
+  // Current user
+  getCurrentUser: () => api.get('/prm/v1/user/me'),
+  
   // Search
   search: (query) => api.get('/prm/v1/search', { params: { q: query } }),
   

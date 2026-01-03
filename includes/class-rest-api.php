@@ -105,6 +105,13 @@ class PRM_REST_API {
                 ],
             ],
         ]);
+        
+        // Current user info
+        register_rest_route('prm/v1', '/user/me', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_current_user'],
+            'permission_callback' => 'is_user_logged_in',
+        ]);
     }
     
     /**
@@ -548,6 +555,45 @@ class PRM_REST_API {
             'success' => true,
             'attachment_id' => $attachment_id,
             'thumbnail_url' => get_the_post_thumbnail_url($person_id, 'thumbnail'),
+        ]);
+    }
+    
+    /**
+     * Get current user information
+     */
+    public function get_current_user($request) {
+        $user_id = get_current_user_id();
+        
+        if (!$user_id) {
+            return new WP_Error('not_logged_in', __('User is not logged in.', 'personal-crm'), ['status' => 401]);
+        }
+        
+        $user = get_userdata($user_id);
+        
+        if (!$user) {
+            return new WP_Error('user_not_found', __('User not found.', 'personal-crm'), ['status' => 404]);
+        }
+        
+        // Get avatar URL
+        $avatar_url = get_avatar_url($user_id, ['size' => 96]);
+        
+        // Check if user is admin
+        $is_admin = current_user_can('manage_options');
+        
+        // Get profile edit URL
+        $profile_url = admin_url('profile.php');
+        
+        // Get admin URL
+        $admin_url = admin_url();
+        
+        return rest_ensure_response([
+            'id' => $user_id,
+            'name' => $user->display_name,
+            'email' => $user->user_email,
+            'avatar_url' => $avatar_url,
+            'is_admin' => $is_admin,
+            'profile_url' => $profile_url,
+            'admin_url' => $admin_url,
         ]);
     }
 }
