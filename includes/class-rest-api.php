@@ -119,34 +119,23 @@ class PRM_REST_API {
         $company_id = (int) $request->get_param('company_id');
         $user_id = get_current_user_id();
         
-        // Get accessible people (don't rely on meta_query with ACF repeater fields)
+        // Check if user can access this company
         $access_control = new PRM_Access_Control();
-        
-        if (current_user_can('manage_options')) {
-            // Admins: get all people
-            $people = get_posts([
-                'post_type'      => 'person',
-                'posts_per_page' => -1,
-                'post_status'    => 'publish',
-            ]);
-        } else {
-            // Non-admins: get only accessible people
-            $accessible_ids = $access_control->get_accessible_post_ids('person', $user_id);
-            
-            if (empty($accessible_ids)) {
-                return rest_ensure_response([
-                    'current' => [],
-                    'former'  => [],
-                ]);
-            }
-            
-            $people = get_posts([
-                'post_type'      => 'person',
-                'posts_per_page' => -1,
-                'post_status'    => 'publish',
-                'post__in'       => $accessible_ids,
-            ]);
+        if (!current_user_can('manage_options') && !$access_control->user_can_access_post($company_id, $user_id)) {
+            return new WP_Error(
+                'rest_forbidden',
+                __('You do not have permission to access this company.', 'personal-crm'),
+                ['status' => 403]
+            );
         }
+        
+        // Get all people (if you can see the company, you can see who works there)
+        // Don't rely on meta_query with ACF repeater fields - filter in PHP instead
+        $people = get_posts([
+            'post_type'      => 'person',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+        ]);
         
         $current = [];
         $former = [];
