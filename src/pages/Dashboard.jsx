@@ -65,9 +65,11 @@ function ReminderCard({ reminder }) {
 
   // Get the full name from related people if available
   const personName = reminder.related_people?.[0]?.name || reminder.title;
+  const firstPersonId = reminder.related_people?.[0]?.id;
+  const hasRelatedPeople = reminder.related_people?.length > 0;
 
-  return (
-    <div className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors">
+  const cardContent = (
+    <>
       <div className={`px-2 py-1 rounded text-xs font-medium ${urgencyClass}`}>
         {daysUntil === 0 ? 'Today' : `${daysUntil}d`}
       </div>
@@ -76,7 +78,7 @@ function ReminderCard({ reminder }) {
         <p className="text-xs text-gray-500">
           {format(new Date(reminder.next_occurrence), 'MMMM d, yyyy')}
         </p>
-        {reminder.related_people?.length > 0 && (
+        {hasRelatedPeople && (
           <div className="flex -space-x-2 mt-1">
             {reminder.related_people.slice(0, 3).map((person) => (
               person.thumbnail ? (
@@ -84,20 +86,38 @@ function ReminderCard({ reminder }) {
                   key={person.id}
                   src={person.thumbnail}
                   alt={person.name}
-                  className="w-6 h-6 rounded-full border-2 border-white object-cover"
+                  className="w-10 h-10 rounded-full border-2 border-white object-cover"
                 />
               ) : (
                 <div
                   key={person.id}
-                  className="w-6 h-6 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center"
+                  className="w-10 h-10 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center"
                 >
-                  <span className="text-xs">{person.name?.[0]}</span>
+                  <span className="text-sm">{person.name?.[0]}</span>
                 </div>
               )
             ))}
           </div>
         )}
       </div>
+    </>
+  );
+
+  // Wrap in Link if there are related people, otherwise just a div
+  if (hasRelatedPeople && firstPersonId) {
+    return (
+      <Link
+        to={`/people/${firstPersonId}`}
+        className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors">
+      {cardContent}
     </div>
   );
 }
