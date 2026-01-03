@@ -12,6 +12,14 @@ export const peopleKeys = {
   dates: (id) => [...peopleKeys.detail(id), 'dates'],
 };
 
+// Helper to decode HTML entities
+function decodeHtml(html) {
+  if (!html) return '';
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
+
 // Transform person data to include thumbnail and other computed fields
 function transformPerson(person) {
   // Extract thumbnail from embedded featured media
@@ -24,15 +32,18 @@ function transformPerson(person) {
     ?.filter(term => term?.taxonomy === 'person_label')
     ?.map(term => term.name) || [];
 
+  // Decode HTML entities in the person's name
+  const decodedName = decodeHtml(person.title?.rendered || '');
+
   return {
+    ...person,
     id: person.id,
-    name: person.title?.rendered || '',
+    name: decodedName,
     first_name: person.acf?.first_name || '',
     last_name: person.acf?.last_name || '',
     is_favorite: person.acf?.is_favorite || false,
     thumbnail,
     labels,
-    ...person,
   };
 }
 
