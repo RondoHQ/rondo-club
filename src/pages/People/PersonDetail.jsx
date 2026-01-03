@@ -1,7 +1,7 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
-  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle
+  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
@@ -289,6 +289,7 @@ export default function PersonDetail() {
                   const Icon = contact.contact_type === 'email' ? Mail :
                                contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
                                contact.contact_type === 'address' ? MapPin :
+                               contact.contact_type === 'linkedin' ? Linkedin :
                                contact.contact_type === 'website' ? Globe : Globe;
 
                   // Determine if this should be a clickable link
@@ -301,6 +302,7 @@ export default function PersonDetail() {
                                    contact.contact_type === 'instagram' || 
                                    contact.contact_type === 'facebook';
                   const isAddress = contact.contact_type === 'address';
+                  const isLinkedIn = contact.contact_type === 'linkedin';
                   
                   let linkHref = null;
                   let linkTarget = null;
@@ -326,9 +328,13 @@ export default function PersonDetail() {
 
                   return (
                     <div key={index} className="flex items-center group">
-                      <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
+                      {!isLinkedIn && <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />}
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
+                        {isLinkedIn ? (
+                          <Linkedin className="w-4 h-4 text-blue-600 inline-block mr-2 align-middle" />
+                        ) : (
+                          <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
+                        )}
                         {linkHref ? (
                           <a
                             href={linkHref}
