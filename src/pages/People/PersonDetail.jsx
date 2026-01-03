@@ -70,14 +70,12 @@ export default function PersonDetail() {
   const age = birthDate ? differenceInYears(new Date(), birthDate) : null;
 
   // Get all dates including birthday (for Important Dates card)
-  // Birthday should be first, then other dates
+  // Sort by date ascending
   const allDates = personDates ? [...personDates].sort((a, b) => {
-    const aType = Array.isArray(a.date_type) ? a.date_type[0] : a.date_type;
-    const bType = Array.isArray(b.date_type) ? b.date_type[0] : b.date_type;
-    // Put birthday first
-    if (aType?.toLowerCase() === 'birthday') return -1;
-    if (bType?.toLowerCase() === 'birthday') return 1;
-    return 0;
+    const dateA = a.date_value ? new Date(a.date_value) : new Date(0);
+    const dateB = b.date_value ? new Date(b.date_value) : new Date(0);
+    // Sort by date ascending (earliest first)
+    return dateA - dateB;
   }) : [];
   
   const handleDelete = async () => {
