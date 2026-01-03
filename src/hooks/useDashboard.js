@@ -22,15 +22,17 @@ export function useReminders(daysAhead = 30) {
 }
 
 export function useSearch(query) {
-  const enabled = Boolean(query && typeof query === 'string' && query.length >= 2);
+  // Ensure query is always a string to maintain consistent hook calls
+  const searchQuery = typeof query === 'string' ? query : '';
+  const enabled = searchQuery.length >= 2;
   
   return useQuery({
-    queryKey: ['search', query || ''],
+    queryKey: ['search', searchQuery],
     queryFn: async () => {
       if (!enabled) {
         return { people: [], companies: [], dates: [] };
       }
-      const response = await prmApi.search(query);
+      const response = await prmApi.search(searchQuery);
       return response.data;
     },
     enabled,

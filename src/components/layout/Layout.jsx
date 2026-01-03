@@ -87,11 +87,9 @@ function Header({ onMenuClick }) {
   const dropdownRef = useRef(null);
   
   // Use search hook - only search if query is 2+ characters
+  // Always pass a string to maintain consistent hook calls
   const trimmedQuery = searchQuery.trim();
-  const shouldSearch = trimmedQuery.length >= 2;
-  const { data: searchResults, isLoading: isSearchLoading } = useSearch(
-    shouldSearch ? trimmedQuery : null
-  );
+  const { data: searchResults, isLoading: isSearchLoading } = useSearch(trimmedQuery);
   
   // Get page title from location
   const getPageTitle = () => {
