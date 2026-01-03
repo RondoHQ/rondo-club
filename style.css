@@ -1,0 +1,36 @@
+/*
+Theme Name: Personal CRM
+Theme URI: https://github.com/yourusername/personal-crm-theme
+Author: Your Name
+Author URI: https://yoursite.com
+Description: A React-powered theme for Personal CRM. Requires the Personal CRM plugin.
+Version: 1.0.0
+Requires at least: 6.0
+Requires PHP: 8.0
+License: GNU General Public License v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: personal-crm-theme
+*/
+
+/* Base styles - the React app handles most styling via Tailwind */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+/* WordPress admin bar spacing */
+body.admin-bar #root {
+    margin-top: 32px;
+}
+
+@media screen and (max-width: 782px) {
+    body.admin-bar #root {
+        margin-top: 46px;
+    }
+}

@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output (uncomment to include in releases)
+# dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Vite
+*.local
+
+# Testing
+coverage/
+
+# Misc
+*.tgz
