@@ -68,10 +68,15 @@ export default function CompanyForm() {
       // Set as company logo using custom endpoint
       await prmApi.setCompanyLogo(id, mediaId);
 
-      // Invalidate queries to refresh company data
+      // Invalidate and refetch queries to refresh company data with embedded media
       queryClient.invalidateQueries({ queryKey: ['company', id] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
+      
+      // Explicitly refetch to ensure embedded data is loaded
+      queryClient.refetchQueries({ queryKey: ['company', id] });
+      queryClient.refetchQueries({ queryKey: ['companies'] });
+      queryClient.refetchQueries({ queryKey: ['people'] });
     } catch (error) {
       console.error('Failed to upload logo:', error);
       alert('Failed to upload logo. Please try again.');

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.60] - 2024-12-19
+
+### Fixed
+- Company form: Fixed `getCompany` API method to accept params (including `_embed`), ensuring logos display on company list and in work history
+- Company form: Added explicit query refetching after logo upload to ensure embedded media data is refreshed
+
 ## [1.0.59] - 2024-12-19
 
 ### Fixed

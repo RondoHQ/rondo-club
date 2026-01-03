@@ -52,7 +52,7 @@ export const wpApi = {
   
   // Companies
   getCompanies: (params) => api.get('/wp/v2/companies', { params }),
-  getCompany: (id) => api.get(`/wp/v2/companies/${id}`),
+  getCompany: (id, params = {}) => api.get(`/wp/v2/companies/${id}`, { params }),
   createCompany: (data) => api.post('/wp/v2/companies', data),
   updateCompany: (id, data) => api.put(`/wp/v2/companies/${id}`, data),
   deleteCompany: (id) => api.delete(`/wp/v2/companies/${id}`),
