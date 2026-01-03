@@ -38,11 +38,8 @@ function DateCard({ dates }) {
   const firstDate = dates[0];
   const daysUntil = firstDate.days_until;
 
-  let urgencyClass = 'bg-gray-100 text-gray-600';
-  if (daysUntil === 0) urgencyClass = 'bg-red-100 text-red-700';
-  else if (daysUntil <= 3) urgencyClass = 'bg-orange-100 text-orange-700';
-  else if (daysUntil <= 7) urgencyClass = 'bg-yellow-100 text-yellow-700';
-  else if (daysUntil <= 14) urgencyClass = 'bg-blue-100 text-blue-700';
+  // Only show green for today, gray for all other dates
+  const urgencyClass = daysUntil === 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600';
 
   // Collect all people from all dates on this day
   const allPeople = [];
@@ -64,12 +61,9 @@ function DateCard({ dates }) {
   return (
     <div className="card p-4 break-inside-avoid mb-4">
       <div className="flex items-start gap-4">
-        <div className={`w-14 h-14 rounded-lg ${urgencyClass} flex flex-col items-center justify-center flex-shrink-0`}>
+        <div className={`w-14 h-14 rounded-lg ${urgencyClass} flex items-center justify-center flex-shrink-0`}>
           <span className="text-2xl font-bold leading-none">
             {format(new Date(firstDate.next_occurrence), 'd')}
-          </span>
-          <span className={`text-xs px-2 py-0.5 rounded-full mt-1`}>
-            {daysUntil === 0 ? 'Today!' : `${daysUntil}d`}
           </span>
         </div>
         <div className="flex-1 min-w-0 divide-y divide-gray-100">
