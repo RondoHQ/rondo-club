@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.38] - 2024-12-19
+
+### Fixed
+- Person form: Now properly sets post title when creating or updating a person
+- Person form: Data storage now works correctly
+
+### Added
+- Person form: Birthday field when creating a new person
+- Person form: Automatically creates an important_date post for birthday when provided
+
 ## [1.0.37] - 2024-12-19
 
 ### Added

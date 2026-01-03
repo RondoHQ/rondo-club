@@ -2,8 +2,10 @@ import { useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Save } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { usePerson, useCreatePerson, useUpdatePerson } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { wpApi } from '@/api/client';
 
 export default function PersonForm() {
   const { id } = useParams();
@@ -14,7 +16,27 @@ export default function PersonForm() {
   const createPerson = useCreatePerson();
   const updatePerson = useUpdatePerson();
   
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
+  // Fetch date types to get birthday term ID
+  const { data: dateTypes = [] } = useQuery({
+    queryKey: ['date-types'],
+    queryFn: async () => {
+      const response = await wpApi.getDateTypes();
+      return response.data;
+    },
+  });
+  
+  const birthdayType = dateTypes.find(type => type.slug === 'birthday' || type.name.toLowerCase() === 'birthday');
+  
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      nickname: '',
+      how_we_met: '',
+      is_favorite: false,
+      birthday: '',
+    },
+  });
   
   useEffect(() => {
     if (person) {
@@ -24,6 +46,7 @@ export default function PersonForm() {
         nickname: person.acf?.nickname || '',
         how_we_met: person.acf?.how_we_met || '',
         is_favorite: person.acf?.is_favorite || false,
+        birthday: '', // Birthday is stored separately as an important_date
       });
     }
   }, [person, reset]);
@@ -38,7 +61,12 @@ export default function PersonForm() {
   
   const onSubmit = async (data) => {
     try {
+      // Generate title from first and last name
+      const fullName = `${data.first_name || ''} ${data.last_name || ''}`.trim();
+      const title = fullName || 'Unnamed Person';
+      
       const payload = {
+        title: title,
         status: 'publish',
         acf: {
           first_name: data.first_name,
@@ -50,11 +78,36 @@ export default function PersonForm() {
       };
       
       if (isEditing) {
+        // Update title when editing too
+        payload.title = title;
         await updatePerson.mutateAsync({ id, data: payload });
         navigate(`/people/${id}`);
       } else {
         const result = await createPerson.mutateAsync(payload);
-        navigate(`/people/${result.data.id}`);
+        const personId = result.data.id;
+        
+        // Create birthday if provided
+        if (data.birthday && birthdayType) {
+          try {
+            const firstName = data.first_name || 'Person';
+            await wpApi.createDate({
+              title: `${firstName}'s Birthday`,
+              status: 'publish',
+              date_type: [birthdayType.id],
+              acf: {
+                date_value: data.birthday,
+                is_recurring: true,
+                related_people: [personId],
+                reminder_days_before: 7,
+              },
+            });
+          } catch (dateError) {
+            console.error('Failed to create birthday:', dateError);
+            // Continue anyway - person was created successfully
+          }
+        }
+        
+        navigate(`/people/${personId}`);
       }
     } catch (error) {
       console.error('Failed to save person:', error);
@@ -117,6 +170,20 @@ export default function PersonForm() {
               placeholder="Johnny"
             />
           </div>
+          
+          {!isEditing && (
+            <div>
+              <label className="label">Birthday</label>
+              <input
+                type="date"
+                {...register('birthday')}
+                className="input"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Optional: Set their birthday when creating a new person
+              </p>
+            </div>
+          )}
           
           <div>
             <label className="label">How We Met</label>
