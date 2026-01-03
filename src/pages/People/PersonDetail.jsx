@@ -1,13 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
-  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin, X
+  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin, X, Camera
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 
 // Helper to decode HTML entities
@@ -21,6 +21,7 @@ function decodeHtml(html) {
 export default function PersonDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: person, isLoading, error } = usePerson(id);
   const { data: timeline } = usePersonTimeline(id);
   const { data: personDates } = usePersonDates(id);
@@ -30,6 +31,8 @@ export default function PersonDetail() {
   const updatePerson = useUpdatePerson();
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [selectedLabelToAdd, setSelectedLabelToAdd] = useState('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = useRef(null);
   
   // Fetch available labels
   const { data: availableLabelsData } = useQuery({
@@ -231,6 +234,53 @@ export default function PersonDetail() {
     setIsAddingLabel(false);
   };
 
+  // Handle photo upload
+  const handlePhotoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB');
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+
+    try {
+      // Upload the file
+      const uploadResponse = await wpApi.uploadMedia(file);
+      const mediaId = uploadResponse.data.id;
+
+      // Update person with new featured media
+      await updatePerson.mutateAsync({
+        id,
+        data: {
+          featured_media: mediaId,
+        },
+      });
+
+      // Invalidate queries to refresh person data
+      queryClient.invalidateQueries({ queryKey: ['person', id] });
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+    } catch (error) {
+      console.error('Failed to upload photo:', error);
+      alert('Failed to upload photo. Please try again.');
+    } finally {
+      setIsUploadingPhoto(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   // Fetch company names for work history entries
   const companyIds = person?.acf?.work_history
     ?.map(job => job.company)
@@ -319,19 +369,39 @@ export default function PersonDetail() {
       {/* Profile header */}
       <div className="card p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          {person.thumbnail ? (
-            <img
-              src={person.thumbnail}
-              alt={person.name}
-              className="w-24 h-24 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-3xl font-medium text-gray-500">
-                {person.first_name?.[0] || '?'}
-              </span>
+          <div className="relative group">
+            {person.thumbnail ? (
+              <img
+                src={person.thumbnail}
+                alt={person.name}
+                className="w-24 h-24 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+                <span className="text-3xl font-medium text-gray-500">
+                  {person.first_name?.[0] || '?'}
+                </span>
+              </div>
+            )}
+            {/* Upload overlay */}
+            <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center cursor-pointer"
+                 onClick={() => fileInputRef.current?.click()}
+            >
+              {isUploadingPhoto ? (
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              ) : (
+                <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              )}
             </div>
-          )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              className="hidden"
+              disabled={isUploadingPhoto}
+            />
+          </div>
 
           <div className="flex-1">
             <div className="flex items-center gap-2">
