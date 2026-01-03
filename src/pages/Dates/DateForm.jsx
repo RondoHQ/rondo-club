@@ -5,6 +5,7 @@ import { ArrowLeft, Save, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { usePeople } from '@/hooks/usePeople';
 
 // Helper to decode HTML entities
 function decodeHtml(html) {
@@ -137,22 +138,19 @@ export default function DateForm() {
     return [];
   }, [dateItem]);
 
-  // Fetch all people for the selector
-  const { data: basePeople = [], isLoading: isPeopleLoading } = useQuery({
-    queryKey: ['people', 'all'],
-    queryFn: async () => {
-      const response = await wpApi.getPeople({ per_page: 100, orderby: 'title', order: 'asc' });
-      return response.data;
-    },
+  // Fetch all people for the selector (usePeople hook handles pagination automatically)
+  const { data: basePeople = [], isLoading: isPeopleLoading } = usePeople({ 
+    orderby: 'title', 
+    order: 'asc' 
   });
 
-  // Fetch specific people that are related to this date (in case they're not in the first 100)
+  // Fetch specific people that are related to this date (in case they're not in the paginated results)
   const { data: relatedPeopleData = [] } = useQuery({
     queryKey: ['people', 'specific', relatedPeopleFromDate],
     queryFn: async () => {
       // Fetch each related person individually
       const promises = relatedPeopleFromDate.map(personId =>
-        wpApi.getPerson(personId).then(res => res.data).catch(() => null)
+        wpApi.getPerson(personId, { _embed: true }).then(res => res.data).catch(() => null)
       );
       const results = await Promise.all(promises);
       return results.filter(Boolean);
@@ -165,8 +163,25 @@ export default function DateForm() {
     const peopleMap = new Map();
     // Add base people first
     basePeople.forEach(p => peopleMap.set(p.id, p));
-    // Add/override with specific related people
-    relatedPeopleData.forEach(p => peopleMap.set(p.id, p));
+    // Add/override with specific related people (transform them to match format)
+    relatedPeopleData.forEach(p => {
+      // Transform related people data to match the format from usePeople
+      const transformed = {
+        ...p,
+        id: p.id,
+        name: decodeHtml(p.title?.rendered || p.title || ''),
+        first_name: p.acf?.first_name || '',
+        last_name: p.acf?.last_name || '',
+        is_favorite: p.acf?.is_favorite || false,
+        thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
+                   p._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url ||
+                   null,
+        labels: p._embedded?.['wp:term']?.flat()
+          ?.filter(term => term?.taxonomy === 'person_label')
+          ?.map(term => term.name) || [],
+      };
+      peopleMap.set(transformed.id, transformed);
+    });
     return Array.from(peopleMap.values());
   }, [basePeople, relatedPeopleData]);
 
