@@ -52,9 +52,18 @@ export default function PersonDetail() {
     }
   };
 
-  // Helper function to format phone number for tel: link (remove spaces and dashes)
+  // Helper function to format phone number for tel: link
+  // Removes all non-digit characters except + at the start, and removes Unicode marks
   const formatPhoneForTel = (phone) => {
-    return phone.replace(/[\s-]/g, '');
+    if (!phone) return '';
+    // Remove all Unicode marks and invisible characters
+    let cleaned = phone.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E]/g, '');
+    // Extract + if present at the start
+    const hasPlus = cleaned.startsWith('+');
+    // Remove all non-digit characters
+    cleaned = cleaned.replace(/\D/g, '');
+    // Prepend + if it was at the start
+    return hasPlus ? `+${cleaned}` : cleaned;
   };
 
   // Handle deleting a contact detail
