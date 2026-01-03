@@ -115,85 +115,95 @@ export default function CompanyDetail() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Employees */}
+        {/* Current Employees */}
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2" />
-            People at {company.title.rendered}
+            Current Employees
           </h2>
           
-          {employees?.current?.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Current</h3>
-              <div className="space-y-2">
-                {employees.current.map((person) => (
-                  <Link
-                    key={person.id}
-                    to={`/people/${person.id}`}
-                    className="flex items-center p-2 rounded hover:bg-gray-50"
-                  >
-                    {person.thumbnail ? (
-                      <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-200 rounded-full" />
-                    )}
-                    <div className="ml-2">
-                      <p className="text-sm font-medium">{person.name}</p>
-                      <p className="text-xs text-gray-500">{person.job_title}</p>
+          {employees?.current?.length > 0 ? (
+            <div className="space-y-2">
+              {employees.current.map((person) => (
+                <Link
+                  key={person.id}
+                  to={`/people/${person.id}`}
+                  className="flex items-center p-2 rounded hover:bg-gray-50"
+                >
+                  {person.thumbnail ? (
+                    <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                      <span className="text-xs text-gray-500">{person.name?.[0] || '?'}</span>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {employees?.former?.length > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Former</h3>
-              <div className="space-y-2">
-                {employees.former.map((person) => (
-                  <Link
-                    key={person.id}
-                    to={`/people/${person.id}`}
-                    className="flex items-center p-2 rounded hover:bg-gray-50 opacity-60"
-                  >
-                    {person.thumbnail ? (
-                      <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-200 rounded-full" />
-                    )}
-                    <div className="ml-2">
-                      <p className="text-sm font-medium">{person.name}</p>
+                  )}
+                  <div className="ml-2">
+                    <p className="text-sm font-medium">{person.name}</p>
+                    {person.job_title && (
                       <p className="text-xs text-gray-500">{person.job_title}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
             </div>
-          )}
-          
-          {!employees?.current?.length && !employees?.former?.length && (
-            <p className="text-sm text-gray-500">No people linked to this company yet.</p>
+          ) : (
+            <p className="text-sm text-gray-500">No current employees.</p>
           )}
         </div>
         
-        {/* Contact info */}
-        {acf.contact_info?.length > 0 && (
-          <div className="card p-6">
-            <h2 className="font-semibold mb-4">Contact Information</h2>
-            <div className="space-y-3">
-              {acf.contact_info.map((contact, index) => (
-                <div key={index}>
-                  <span className="text-sm text-gray-500">
-                    {contact.contact_label || contact.contact_type}:
-                  </span>
-                  <span className="ml-2">{contact.contact_value}</span>
-                </div>
+        {/* Former Employees */}
+        <div className="card p-6">
+          <h2 className="font-semibold mb-4 flex items-center">
+            <Users className="w-5 h-5 mr-2" />
+            Former Employees
+          </h2>
+          
+          {employees?.former?.length > 0 ? (
+            <div className="space-y-2">
+              {employees.former.map((person) => (
+                <Link
+                  key={person.id}
+                  to={`/people/${person.id}`}
+                  className="flex items-center p-2 rounded hover:bg-gray-50"
+                >
+                  {person.thumbnail ? (
+                    <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full opacity-75" />
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center opacity-75">
+                      <span className="text-xs text-gray-500">{person.name?.[0] || '?'}</span>
+                    </div>
+                  )}
+                  <div className="ml-2">
+                    <p className="text-sm font-medium text-gray-700">{person.name}</p>
+                    {person.job_title && (
+                      <p className="text-xs text-gray-500">{person.job_title}</p>
+                    )}
+                  </div>
+                </Link>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-gray-500">No former employees.</p>
+          )}
+        </div>
       </div>
+      
+      {/* Contact info */}
+      {acf.contact_info?.length > 0 && (
+        <div className="card p-6">
+          <h2 className="font-semibold mb-4">Contact Information</h2>
+          <div className="space-y-3">
+            {acf.contact_info.map((contact, index) => (
+              <div key={index}>
+                <span className="text-sm text-gray-500">
+                  {contact.contact_label || contact.contact_type}:
+                </span>
+                <span className="ml-2">{contact.contact_value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
