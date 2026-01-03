@@ -67,7 +67,7 @@ export const wpApi = {
   // Taxonomies
   getPersonLabels: () => api.get('/wp/v2/person_label'),
   getCompanyLabels: () => api.get('/wp/v2/company_label'),
-  getRelationshipTypes: () => api.get('/wp/v2/relationship_type'),
+  getRelationshipTypes: () => api.get('/wp/v2/relationship_type', { params: { per_page: 100 } }),
   getDateTypes: () => api.get('/wp/v2/date_type', { params: { per_page: 100 } }),
   
   // Media
