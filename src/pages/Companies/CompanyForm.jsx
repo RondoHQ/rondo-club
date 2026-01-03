@@ -67,9 +67,7 @@ export default function CompanyForm() {
 
       // Update company with new featured media
       await updateCompany.mutateAsync({
-        data: {
-          featured_media: mediaId,
-        },
+        featured_media: mediaId,
       });
 
       // Invalidate queries to refresh company data
