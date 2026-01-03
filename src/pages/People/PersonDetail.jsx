@@ -252,7 +252,7 @@ export default function PersonDetail() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">Contact Information</h2>
               <Link
-                to={`/people/${id}/edit`}
+                to={`/people/${id}/contact/new`}
                 className="btn-secondary text-sm"
               >
                 <Plus className="w-4 h-4 mr-1" />
@@ -294,7 +294,7 @@ export default function PersonDetail() {
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                         <Link
-                          to={`/people/${id}/edit`}
+                          to={`/people/${id}/contact/${index}/edit`}
                           className="p-1 hover:bg-gray-100 rounded"
                           title="Edit contact detail"
                         >

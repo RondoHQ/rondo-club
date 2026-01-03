@@ -6,6 +6,7 @@ import PeopleList from '@/pages/People/PeopleList';
 import PersonDetail from '@/pages/People/PersonDetail';
 import PersonForm from '@/pages/People/PersonForm';
 import WorkHistoryForm from '@/pages/People/WorkHistoryForm';
+import ContactDetailForm from '@/pages/People/ContactDetailForm';
 import CompaniesList from '@/pages/Companies/CompaniesList';
 import CompanyDetail from '@/pages/Companies/CompanyDetail';
 import CompanyForm from '@/pages/Companies/CompanyForm';
@@ -50,6 +51,8 @@ function App() {
                 {/* People routes */}
                 <Route path="/people" element={<PeopleList />} />
                 <Route path="/people/new" element={<PersonForm />} />
+                <Route path="/people/:personId/contact/new" element={<ContactDetailForm />} />
+                <Route path="/people/:personId/contact/:index/edit" element={<ContactDetailForm />} />
                 <Route path="/people/:personId/work-history/new" element={<WorkHistoryForm />} />
                 <Route path="/people/:personId/work-history/:index/edit" element={<WorkHistoryForm />} />
                 <Route path="/people/:id/edit" element={<PersonForm />} />
