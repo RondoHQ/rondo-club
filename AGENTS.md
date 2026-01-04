@@ -139,7 +139,11 @@ Always add a changelog entry in in [Keep a Changelog](https://keepachangelog.com
 
 You will find the changelog in /CHANGELOG.md
 
-### Rule 3: Git Commit & Push
+### Rule 3: Update documentation
+
+Update the documentation in /docs with all relevant information from the change. If the (sub-)system you made changes to is not documented yet, document that too.
+
+### Rule 4: Git Commit & Push
 
 #### What is it?
 
@@ -162,7 +166,7 @@ git commit -m "<git commit summary>"
 git push
 ```
 
-### Rule 4: 95% sure rule
+### Rule 5: 95% sure rule
 
 If you're less than 95% sure about the changes you're going to make: *ASK QUESTIONS!*
 
@@ -177,6 +181,6 @@ If you're less than 95% sure about the changes you're going to make: *ASK QUESTI
 * Select your recommended option and tell me why
 * Wait for approval before implementing
 
-### Rule 5: Self testing
+### Rule 6: Self testing
 
 Test your changes as much as you can before claiming something works.

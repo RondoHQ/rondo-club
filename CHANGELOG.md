@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.72] - 2024-12-19
+
+### Added
+- Gender-dependent relationship types: Support for gender-aware inverse relationship resolution
+- ACF fields: Added `is_gender_dependent` and `gender_dependent_group` fields to relationship types
+- Automatic gender resolution: System automatically resolves gender-dependent types (e.g., aunt/uncle → niece/nephew) based on related person's gender
+- Helper functions: `resolve_gender_dependent_inverse()`, `get_types_in_gender_group()`, `infer_gender_type_from_group()`
+
+### Changed
+- Inverse relationship sync: Now checks for gender-dependent types and resolves to correct specific type
+- Relationship type configuration: Can now mark types as gender-dependent and assign them to groups
+
 ## [1.0.71] - 2024-12-19
 
 ### Added
