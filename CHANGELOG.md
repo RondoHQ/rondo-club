@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2026-01-04
+
+### Fixed
+- Google Contacts import now supports both old and new Google CSV export formats
+- Added support for "First Name"/"Last Name" columns (new format) alongside "Given Name"/"Family Name" (old format)
+- Added support for "Organization Name"/"Organization Title" columns (new format) alongside "Organization 1 - Name"/"Organization 1 - Title" (old format)
+- Added support for "E-mail X - Label"/"Phone X - Label" columns (new format) alongside "E-mail X - Type"/"Phone X - Type" (old format)
+- Added support for `--MM-DD` birthday format (dates without year)
+- Added Organization Department import (appended to job title)
+- Improved label formatting to handle Google's special prefixes (e.g., "* Other", "* Work")
+
 ## [1.1.4] - 2026-01-04
 
 ### Fixed
