@@ -355,6 +355,22 @@ export default function PersonDetail() {
     return ageMap;
   }, [relatedPersonDatesQueries, relatedPersonIds]);
 
+  // Create a map of person ID to deceased status
+  const personDeceasedMap = useMemo(() => {
+    const map = {};
+    relatedPersonDatesQueries.forEach((query, index) => {
+      if (query.data && relatedPersonIds[index]) {
+        const personId = relatedPersonIds[index];
+        const hasDiedDate = query.data.some(d => {
+          const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
+          return dateType?.toLowerCase() === 'died';
+        });
+        map[personId] = hasDiedDate;
+      }
+    });
+    return map;
+  }, [relatedPersonDatesQueries, relatedPersonIds]);
+
   // Sort relationships by age (descending - oldest first)
   const sortedRelationships = useMemo(() => {
     if (!person?.acf?.relationships) return [];
@@ -947,7 +963,12 @@ export default function PersonDetail() {
                           </div>
                         )}
                         <div>
-                          <p className="text-sm font-medium">{decodeHtml(rel.person_name) || `Person #${rel.related_person}`}</p>
+                          <p className="text-sm font-medium">
+                            {decodeHtml(rel.person_name) || `Person #${rel.related_person}`}
+                            {personDeceasedMap[rel.related_person] && (
+                              <span className="text-gray-400 ml-1" title="Deceased">†</span>
+                            )}
+                          </p>
                           <p className="text-xs text-gray-500">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
                         </div>
                       </Link>

@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { usePerson, usePeople } from '@/hooks/usePeople';
-import { wpApi } from '@/api/client';
+import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import TreeVisualization from '@/components/family-tree/TreeVisualization';
 import {
@@ -28,6 +28,40 @@ export default function FamilyTree() {
       return response.data;
     },
   });
+
+  // Get all person IDs for fetching dates
+  const allPersonIds = useMemo(() => {
+    return allPeople.map(p => p.id).filter(Boolean);
+  }, [allPeople]);
+
+  // Fetch dates for all people to check deceased status
+  const personDatesQueries = useQueries({
+    queries: allPersonIds.map(pid => ({
+      queryKey: ['person-dates', pid],
+      queryFn: async () => {
+        const response = await prmApi.getPersonDates(pid);
+        return response.data;
+      },
+      enabled: !!pid,
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    })),
+  });
+
+  // Create a map of person ID to deceased status
+  const personDeceasedMap = useMemo(() => {
+    const map = {};
+    personDatesQueries.forEach((query, index) => {
+      if (query.data && allPersonIds[index]) {
+        const pid = allPersonIds[index];
+        const hasDiedDate = query.data.some(d => {
+          const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
+          return dateType?.toLowerCase() === 'died';
+        });
+        map[pid] = hasDiedDate;
+      }
+    });
+    return map;
+  }, [personDatesQueries, allPersonIds]);
   
   useDocumentTitle(
     person ? `Family Tree - ${person.name || person.title?.rendered || person.title || 'Person'}` : 'Family Tree'
@@ -56,14 +90,14 @@ export default function FamilyTree() {
       }
       
       // Convert to vis.js format with hierarchical levels
-      const visData = graphToVisFormat(graph, personId);
+      const visData = graphToVisFormat(graph, personId, personDeceasedMap);
       
       return visData;
     } catch (error) {
       console.error('Error building family tree:', error);
       return null;
     }
-  }, [person, allPeople, relationshipTypes, personId]);
+  }, [person, allPeople, relationshipTypes, personId, personDeceasedMap]);
   
   const handleNodeClick = (nodeId) => {
     navigate(`/people/${nodeId}`);

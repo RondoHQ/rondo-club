@@ -167,8 +167,11 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
  * - Grandparents = generation -2
  * - Children = generation +1 (below)
  * - Spouses share the same level as their partner
+ * @param {Object} graph - The graph object with nodes and edges
+ * @param {number} startPersonId - The ID of the person to start from
+ * @param {Object} deceasedMap - Map of person ID to deceased status (optional)
  */
-export function graphToVisFormat(graph, startPersonId) {
+export function graphToVisFormat(graph, startPersonId, deceasedMap = {}) {
   const { nodes, edges } = graph;
   
   if (nodes.length === 0) return { nodes: [], edges: [] };
@@ -250,10 +253,22 @@ export function graphToVisFormat(graph, startPersonId) {
   });
   
   // Generate placeholder image for people without photos
-  function generatePlaceholderImage(name, isStartPerson) {
+  function generatePlaceholderImage(name, isStartPerson, isDeceased = false) {
     const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
-    const bgColor = isStartPerson ? '%23fef3c7' : '%23e5e7eb';
-    const textColor = isStartPerson ? '%23b45309' : '%23374151';
+    let bgColor, textColor;
+    
+    if (isDeceased) {
+      // Muted gray for deceased people
+      bgColor = '%23d1d5db';
+      textColor = '%236b7280';
+    } else if (isStartPerson) {
+      bgColor = '%23fef3c7';
+      textColor = '%23b45309';
+    } else {
+      bgColor = '%23e5e7eb';
+      textColor = '%23374151';
+    }
+    
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 90 90">
       <circle cx="45" cy="45" r="45" fill="${bgColor}"/>
       <text x="45" y="55" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="500" fill="${textColor}">${initials}</text>
@@ -265,15 +280,30 @@ export function graphToVisFormat(graph, startPersonId) {
   const visNodes = nodes.map(node => {
     const level = levels.get(node.id) || 0;
     const isStartPerson = node.id === startPersonId;
+    const isDeceased = deceasedMap[node.id] || false;
     
-    let labelLines = [node.name];
+    // Add † to name if deceased
+    let displayName = node.name;
+    if (isDeceased) {
+      displayName = node.name + ' †';
+    }
+    
+    let labelLines = [displayName];
     let infoLine = '';
     if (node.genderSymbol) infoLine += node.genderSymbol + ' ';
     if (node.age !== null) infoLine += node.age + ' ';
     if (node.formattedBirthDate) infoLine += node.formattedBirthDate;
     if (infoLine.trim()) labelLines.push(infoLine.trim());
     
-    const image = node.photo || generatePlaceholderImage(node.name, isStartPerson);
+    const image = node.photo || generatePlaceholderImage(node.name, isStartPerson, isDeceased);
+    
+    // Determine border color based on status
+    let borderColor = '#d1d5db'; // default gray
+    if (isStartPerson) {
+      borderColor = '#f59e0b'; // amber for start person
+    } else if (isDeceased) {
+      borderColor = '#9ca3af'; // darker gray for deceased
+    }
     
     return {
       id: node.id,
@@ -286,9 +316,10 @@ export function graphToVisFormat(graph, startPersonId) {
         size: 14,
         face: 'system-ui, -apple-system, sans-serif',
         vadjust: 8,
+        color: isDeceased ? '#6b7280' : '#1f2937', // Muted text for deceased
       },
       color: {
-        border: isStartPerson ? '#f59e0b' : '#d1d5db',
+        border: borderColor,
         background: '#ffffff',
         highlight: {
           border: '#f59e0b',
@@ -296,7 +327,7 @@ export function graphToVisFormat(graph, startPersonId) {
         },
       },
       borderWidth: isStartPerson ? 3 : 2,
-      data: node,
+      data: { ...node, isDeceased },
     };
   });
   
