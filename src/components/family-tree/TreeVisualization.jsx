@@ -112,9 +112,9 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
             dimensions={dimensions}
             renderCustomNodeElement={renderCustomNode}
             pathClassFunc={() => 'tree-link'}
-            nodeSize={{ x: 220, y: 140 }}
+            nodeSize={{ x: 240, y: 140 }}
             separation={{ siblings: 1.2, nonSiblings: 1.5 }}
-            initialDepth={3}
+            initialDepth={5}
             depthFactor={140}
             styles={{
               links: {
