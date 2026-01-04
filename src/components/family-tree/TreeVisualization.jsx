@@ -1,84 +1,216 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Network } from 'vis-network';
+import { DataSet } from 'vis-data';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
-import Tree from 'react-d3-tree';
-import PersonNode from './PersonNode';
-
-const NODE_SIZE = { x: 200, y: 140 }; // Spacing between nodes
-const NODE_WIDTH = 160;
-const NODE_HEIGHT = 100;
 
 /**
  * Tree Visualization Component
- * Renders a family tree using react-d3-tree
+ * Renders a family tree using vis.js Network
+ * Supports multiple parents per child (proper family tree structure)
  */
-export default function TreeVisualization({ treeData, onNodeClick }) {
-  const [zoom, setZoom] = useState(0.8);
-  const [translate, setTranslate] = useState({ x: 0, y: 0 });
+export default function TreeVisualization({ graphData, startPersonId, onNodeClick }) {
   const containerRef = useRef(null);
-  const treeWrapperRef = useRef(null);
+  const networkRef = useRef(null);
+  const navigate = useNavigate();
 
-  // Ensure treeData is properly formatted
-  const formattedTreeData = useMemo(() => {
-    if (!treeData) return null;
-    
-    // react-d3-tree expects the tree structure directly
-    // Our treeData already has the correct format from familyTreeBuilder
-    return treeData;
-  }, [treeData]);
+  const handleNodeClick = useCallback((nodeId) => {
+    if (onNodeClick) {
+      onNodeClick(nodeId);
+    } else {
+      navigate(`/people/${nodeId}`);
+    }
+  }, [onNodeClick, navigate]);
+
+  useEffect(() => {
+    if (!containerRef.current || !graphData || !graphData.nodes || graphData.nodes.length === 0) {
+      return;
+    }
+
+    // Create DataSets
+    const nodesDataSet = new DataSet(graphData.nodes);
+    const edgesDataSet = new DataSet(graphData.edges);
+
+    // Network options
+    const options = {
+      layout: {
+        hierarchical: {
+          enabled: true,
+          direction: 'UD', // Up-Down (parents above children)
+          sortMethod: 'directed',
+          levelSeparation: 120,
+          nodeSpacing: 150,
+          treeSpacing: 200,
+          blockShifting: true,
+          edgeMinimization: true,
+          parentCentralization: true,
+        },
+      },
+      nodes: {
+        shape: 'box',
+        margin: 10,
+        font: {
+          size: 14,
+          face: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          color: '#1f2937',
+        },
+        color: {
+          border: '#d1d5db',
+          background: '#ffffff',
+          highlight: {
+            border: '#f59e0b',
+            background: '#fef3c7',
+          },
+          hover: {
+            border: '#9ca3af',
+            background: '#f9fafb',
+          },
+        },
+        borderWidth: 2,
+        borderWidthSelected: 3,
+        shadow: {
+          enabled: true,
+          color: 'rgba(0,0,0,0.1)',
+          size: 5,
+          x: 0,
+          y: 2,
+        },
+      },
+      edges: {
+        color: {
+          color: '#9ca3af',
+          highlight: '#6b7280',
+          hover: '#6b7280',
+        },
+        width: 2,
+        smooth: {
+          enabled: true,
+          type: 'cubicBezier',
+          forceDirection: 'vertical',
+          roundness: 0.4,
+        },
+        arrows: {
+          to: {
+            enabled: false,
+          },
+        },
+      },
+      physics: {
+        enabled: false, // Disable physics for hierarchical layout
+      },
+      interaction: {
+        hover: true,
+        tooltipDelay: 200,
+        zoomView: true,
+        dragView: true,
+        dragNodes: false, // Keep nodes in place
+        navigationButtons: false,
+        keyboard: {
+          enabled: true,
+          bindToWindow: false,
+        },
+      },
+    };
+
+    // Create network
+    const network = new Network(
+      containerRef.current,
+      { nodes: nodesDataSet, edges: edgesDataSet },
+      options
+    );
+
+    networkRef.current = network;
+
+    // Handle click events
+    network.on('click', (params) => {
+      if (params.nodes.length > 0) {
+        const nodeId = params.nodes[0];
+        handleNodeClick(nodeId);
+      }
+    });
+
+    // Handle double-click for centering
+    network.on('doubleClick', (params) => {
+      if (params.nodes.length > 0) {
+        network.focus(params.nodes[0], {
+          scale: 1,
+          animation: {
+            duration: 500,
+            easingFunction: 'easeInOutQuad',
+          },
+        });
+      }
+    });
+
+    // Fit the network after stabilization
+    network.once('stabilized', () => {
+      network.fit({
+        animation: {
+          duration: 500,
+          easingFunction: 'easeInOutQuad',
+        },
+      });
+    });
+
+    // Focus on start person after initial render
+    setTimeout(() => {
+      if (startPersonId && network) {
+        network.focus(startPersonId, {
+          scale: 0.8,
+          animation: {
+            duration: 500,
+            easingFunction: 'easeInOutQuad',
+          },
+        });
+      }
+    }, 100);
+
+    // Cleanup
+    return () => {
+      if (network) {
+        network.destroy();
+      }
+    };
+  }, [graphData, startPersonId, handleNodeClick]);
 
   const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 0.2, 2));
+    if (networkRef.current) {
+      const scale = networkRef.current.getScale();
+      networkRef.current.moveTo({
+        scale: scale * 1.3,
+        animation: { duration: 300, easingFunction: 'easeInOutQuad' },
+      });
+    }
   };
 
   const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 0.2, 0.5));
+    if (networkRef.current) {
+      const scale = networkRef.current.getScale();
+      networkRef.current.moveTo({
+        scale: scale / 1.3,
+        animation: { duration: 300, easingFunction: 'easeInOutQuad' },
+      });
+    }
   };
 
   const handleReset = () => {
-    setZoom(1);
-    if (containerRef.current) {
-      const dimensions = containerRef.current.getBoundingClientRect();
-      setTranslate({
-        x: dimensions.width / 2,
-        y: 80, // Top padding
+    if (networkRef.current) {
+      networkRef.current.fit({
+        animation: { duration: 500, easingFunction: 'easeInOutQuad' },
       });
     }
   };
 
-  // Auto-center and auto-zoom on mount and when treeData changes
-  useEffect(() => {
-    if (containerRef.current && treeData) {
-      const dimensions = containerRef.current.getBoundingClientRect();
-      // Center horizontally
-      setTranslate({
-        x: dimensions.width / 2,
-        y: 80, // Top padding
+  const handleFocusStart = () => {
+    if (networkRef.current && startPersonId) {
+      networkRef.current.focus(startPersonId, {
+        scale: 1,
+        animation: { duration: 500, easingFunction: 'easeInOutQuad' },
       });
-      
-      // Auto-zoom to fit the tree
-      // Estimate tree width based on depth (rough calculation)
-      const estimateTreeWidth = (node, depth = 0) => {
-        if (!node || !node.children || node.children.length === 0) {
-          return NODE_SIZE.x;
-        }
-        const maxChildWidth = Math.max(...node.children.map(child => estimateTreeWidth(child, depth + 1)));
-        return Math.max(NODE_SIZE.x, maxChildWidth * node.children.length);
-      };
-      
-      const estimatedWidth = estimateTreeWidth(treeData);
-      const containerWidth = dimensions.width - 40; // Account for padding
-      const suggestedZoom = Math.min(0.8, containerWidth / estimatedWidth);
-      setZoom(Math.max(0.4, suggestedZoom)); // Don't zoom out too much
-    }
-  }, [treeData]);
-
-  const handleNodeClick = (nodeData) => {
-    if (onNodeClick && nodeData?.attributes?.id) {
-      onNodeClick({ attributes: { id: parseInt(nodeData.attributes.id, 10) } });
     }
   };
 
-  if (!formattedTreeData) {
+  if (!graphData || !graphData.nodes || graphData.nodes.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <p className="text-gray-500">No family tree data available</p>
@@ -107,74 +239,23 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
         <button
           onClick={handleReset}
           className="p-2 hover:bg-gray-100 rounded"
-          title="Reset View"
+          title="Fit All"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Tree Container */}
+      {/* Info text */}
+      <div className="absolute bottom-4 left-4 z-10 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
+        Click a person to view details • Double-click to center • Scroll to zoom
+      </div>
+
+      {/* Network Container */}
       <div
         ref={containerRef}
-        className="w-full h-full min-h-[600px] relative overflow-auto"
-        style={{ padding: '20px' }}
-      >
-        <Tree
-          data={formattedTreeData}
-          orientation="vertical"
-          translate={translate}
-          zoom={zoom}
-          nodeSize={NODE_SIZE}
-          separation={{ siblings: 1.2, nonSiblings: 1.5 }}
-          pathFunc="straight"
-          renderCustomNodeElement={(rd3tProps) => {
-            const { nodeDatum } = rd3tProps;
-            
-            const nodeData = {
-              id: nodeDatum.attributes?.id,
-              _name: nodeDatum.name,
-              gender: nodeDatum.attributes?.gender,
-              _photo: nodeDatum.attributes?.photo,
-              _age: nodeDatum.attributes?.age,
-              _birthDate: nodeDatum.attributes?.birthDate,
-            };
-
-            return (
-              <g>
-                <foreignObject
-                  x={-NODE_WIDTH / 2}
-                  y={-NODE_HEIGHT / 2}
-                  width={NODE_WIDTH}
-                  height={NODE_HEIGHT}
-                  onClick={() => handleNodeClick(nodeDatum)}
-                  style={{ cursor: 'pointer', overflow: 'visible' }}
-                >
-                  <PersonNode
-                    node={nodeData}
-                    onClick={() => handleNodeClick(nodeDatum)}
-                  />
-                </foreignObject>
-              </g>
-            );
-          }}
-          styles={{
-            links: {
-              stroke: '#3b82f6',
-              strokeWidth: 2,
-            },
-            nodes: {
-              node: {
-                fill: 'transparent',
-                stroke: 'transparent',
-              },
-              leafNode: {
-                fill: 'transparent',
-                stroke: 'transparent',
-              },
-            },
-          }}
-        />
-      </div>
+        className="w-full h-full min-h-[600px]"
+        style={{ background: '#fafafa' }}
+      />
     </div>
   );
 }

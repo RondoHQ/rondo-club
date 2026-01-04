@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.102] - 2024-12-19
+
+### Changed
+- Family Tree: Switched from react-d3-tree to vis.js (vis-network) for visualization
+- Family Tree: Now properly supports multiple parents per child (true family tree structure)
+- Family Tree: Hierarchical layout with parents above children
+- Family Tree: Interactive zoom, pan, and click-to-navigate functionality
+- Family Tree: Nodes show name, gender symbol, age, and birth date
+
+### Added
+- vis-network and vis-data packages for graph visualization
+
+### Removed
+- react-d3-tree package (replaced by vis.js)
+- PersonNode component (vis.js handles node rendering)
+
 ## [1.0.101] - 2024-12-19
 
 ### Changed
