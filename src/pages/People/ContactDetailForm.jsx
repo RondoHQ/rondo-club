@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { ArrowLeft, Save } from 'lucide-react';
 import { usePerson, useUpdatePerson } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { sanitizePersonAcf } from '@/utils/formatters';
 
 const CONTACT_TYPES = [
   { value: 'email', label: 'Email' },
@@ -76,13 +77,10 @@ export default function ContactDetailForm() {
         contactInfo.push(contactItem);
       }
 
-      // Ensure all repeater fields are arrays (empty array if not present)
-      const acfData = {
-        ...person.acf,
+      // Sanitize ACF data and set the updated contact_info
+      const acfData = sanitizePersonAcf(person.acf, {
         contact_info: contactInfo,
-        work_history: Array.isArray(person.acf?.work_history) ? person.acf.work_history : [],
-        relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : [],
-      };
+      });
 
       await updatePerson.mutateAsync({
         id: personId,

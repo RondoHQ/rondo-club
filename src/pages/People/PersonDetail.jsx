@@ -9,7 +9,7 @@ import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, getCompanyName } from '@/utils/formatters';
+import { decodeHtml, getCompanyName, sanitizePersonAcf } from '@/utils/formatters';
 
 // Helper to get gender symbol
 function getGenderSymbol(gender) {
@@ -131,13 +131,9 @@ export default function PersonDetail() {
     const updatedContactInfo = [...(person.acf?.contact_info || [])];
     updatedContactInfo.splice(index, 1);
     
-    // Ensure all repeater fields are arrays (empty array if not present)
-    const acfData = {
-      ...person.acf,
+    const acfData = sanitizePersonAcf(person.acf, {
       contact_info: updatedContactInfo,
-      work_history: Array.isArray(person.acf?.work_history) ? person.acf.work_history : [],
-      relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : [],
-    };
+    });
     
     await updatePerson.mutateAsync({
       id,
@@ -156,13 +152,9 @@ export default function PersonDetail() {
     const updatedRelationships = [...(person.acf?.relationships || [])];
     updatedRelationships.splice(index, 1);
     
-    // Ensure all repeater fields are arrays (empty array if not present)
-    const acfData = {
-      ...person.acf,
+    const acfData = sanitizePersonAcf(person.acf, {
       relationships: updatedRelationships,
-      contact_info: Array.isArray(person.acf?.contact_info) ? person.acf.contact_info : [],
-      work_history: Array.isArray(person.acf?.work_history) ? person.acf.work_history : [],
-    };
+    });
     
     await updatePerson.mutateAsync({
       id,
@@ -199,13 +191,9 @@ export default function PersonDetail() {
     const updatedWorkHistory = [...(person.acf?.work_history || [])];
     updatedWorkHistory.splice(index, 1);
     
-    // Ensure all repeater fields are arrays (empty array if not present)
-    const acfData = {
-      ...person.acf,
+    const acfData = sanitizePersonAcf(person.acf, {
       work_history: updatedWorkHistory,
-      contact_info: Array.isArray(person.acf?.contact_info) ? person.acf.contact_info : [],
-      relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : [],
-    };
+    });
     
     await updatePerson.mutateAsync({
       id,

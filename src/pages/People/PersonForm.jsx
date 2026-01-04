@@ -80,7 +80,7 @@ export default function PersonForm() {
           first_name: data.first_name,
           last_name: data.last_name,
           nickname: data.nickname,
-          gender: data.gender || '',
+          gender: data.gender || null, // null instead of '' for ACF enum validation
           how_we_met: data.how_we_met,
           is_favorite: data.is_favorite,
         },

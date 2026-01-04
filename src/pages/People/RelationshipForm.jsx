@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { usePerson, useUpdatePerson, usePeople } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { getPersonName } from '@/utils/formatters';
+import { getPersonName, sanitizePersonAcf } from '@/utils/formatters';
 
 function SearchablePersonSelector({ value, onChange, people, isLoading, excludePersonId }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -213,13 +213,10 @@ export default function RelationshipForm() {
         relationships.push(relationshipItem);
       }
 
-      // Ensure all repeater fields are arrays (empty array if not present)
-      const acfData = {
-        ...person.acf,
+      // Sanitize ACF data and set the updated relationships
+      const acfData = sanitizePersonAcf(person.acf, {
         relationships: relationships,
-        contact_info: Array.isArray(person.acf?.contact_info) ? person.acf.contact_info : [],
-        work_history: Array.isArray(person.acf?.work_history) ? person.acf.work_history : [],
-      };
+      });
 
       await updatePerson.mutateAsync({
         id: personId,

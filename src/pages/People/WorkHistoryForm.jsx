@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { usePerson, useUpdatePerson } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { sanitizePersonAcf } from '@/utils/formatters';
 
 function CompanySelector({ value, onChange, companies, isLoading }) {
   return (
@@ -102,13 +103,10 @@ export default function WorkHistoryForm() {
         workHistory.push(workHistoryItem);
       }
 
-      // Ensure all repeater fields are arrays (empty array if not present)
-      const acfData = {
-        ...person.acf,
+      // Sanitize ACF data and set the updated work_history
+      const acfData = sanitizePersonAcf(person.acf, {
         work_history: workHistory,
-        contact_info: Array.isArray(person.acf?.contact_info) ? person.acf.contact_info : [],
-        relationships: Array.isArray(person.acf?.relationships) ? person.acf.relationships : [],
-      };
+      });
 
       await updatePerson.mutateAsync({
         id: personId,

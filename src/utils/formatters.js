@@ -69,3 +69,41 @@ export function getPersonInitial(person) {
   return name[0] || '?';
 }
 
+/**
+ * Sanitize ACF data for person updates via REST API
+ * - Converts empty strings to null for enum fields (gender)
+ * - Ensures repeater fields are always arrays
+ * 
+ * @param {Object} acfData - The ACF data to sanitize
+ * @param {Object} overrides - Fields to override in the sanitized data
+ * @returns {Object} Sanitized ACF data ready for API submission
+ */
+export function sanitizePersonAcf(acfData, overrides = {}) {
+  // Fields that are select/enum and should be null instead of empty string
+  const enumFields = ['gender'];
+  
+  // Fields that are repeaters and should always be arrays
+  const repeaterFields = ['contact_info', 'work_history', 'relationships', 'photo_gallery'];
+  
+  const sanitized = { ...acfData };
+  
+  // Convert empty strings to null for enum fields
+  enumFields.forEach(field => {
+    if (sanitized[field] === '') {
+      sanitized[field] = null;
+    }
+  });
+  
+  // Ensure repeater fields are arrays
+  repeaterFields.forEach(field => {
+    if (!Array.isArray(sanitized[field])) {
+      sanitized[field] = [];
+    }
+  });
+  
+  // Apply overrides
+  Object.assign(sanitized, overrides);
+  
+  return sanitized;
+}
+
