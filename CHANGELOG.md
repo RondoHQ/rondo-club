@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.93] - 2024-12-19
+
+### Changed
+- Family Tree: Switched back to react-d3-tree from react-family-tree
+- Family Tree: Rewrote TreeVisualization component to use react-d3-tree
+- Family Tree: Updated PersonNode to work with foreignObject rendering
+- Family Tree: Configured vertical orientation with proper spacing
+- Family Tree: Added zoom and pan controls
+
 ## [1.0.92] - 2024-12-19
 
 ### Fixed
