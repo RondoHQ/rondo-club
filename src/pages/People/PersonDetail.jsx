@@ -395,7 +395,7 @@ export default function PersonDetail() {
     if (query.data) {
       const companyId = companyIds[index];
       companyMap[companyId] = {
-        name: query.data.title?.rendered || query.data.title || '',
+        name: decodeHtml(query.data.title?.rendered || query.data.title || ''),
         logo: query.data._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
               query.data._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url ||
               null,

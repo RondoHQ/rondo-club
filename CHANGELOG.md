@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-01-04
+
+### Fixed
+- Company names now properly decode HTML entities (e.g., "Twynstra &amp; Gudde" now displays as "Twynstra & Gudde")
+- Fixed on People list, Companies list, Company detail page, and Person detail work history
+
 ## [1.1.0] - 2026-01-04
 
 ### Added
