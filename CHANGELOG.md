@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.87] - 2024-12-19
+
+### Fixed
+- Family Tree: Filter relations to only include IDs that exist in nodes array
+- Family Tree: Prevent library errors from referencing non-existent node IDs
+- Family Tree: Added validation to ensure all relation IDs are valid
+- Family Tree: Added debugging logs to help diagnose issues
+
 ## [1.0.86] - 2024-12-19
 
 ### Fixed
