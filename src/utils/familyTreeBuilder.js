@@ -99,12 +99,36 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
       if (!nodes.has(relatedPersonId)) {
         const relatedPerson = peopleMap.get(relatedPersonId);
         if (relatedPerson) {
+          // Get person name - handle various formats
+          let personName = relatedPerson.name;
+          if (!personName) {
+            personName = relatedPerson.title?.rendered || relatedPerson.title;
+          }
+    // Decode HTML entities if needed (only in browser environment)
+    if (personName && typeof personName === 'string' && typeof document !== 'undefined') {
+      const txt = document.createElement('textarea');
+      txt.innerHTML = personName;
+      personName = txt.value;
+    }
+          if (!personName) {
+            personName = `Person ${relatedPersonId}`;
+          }
+          
+          // Calculate age if we have birth date
+          let age = null;
+          if (relatedPerson.acf?.birth_date) {
+            const birthDate = new Date(relatedPerson.acf.birth_date);
+            if (!isNaN(birthDate.getTime())) {
+              age = Math.floor((new Date() - birthDate) / (365.25 * 24 * 60 * 60 * 1000));
+            }
+          }
+          
           nodes.set(relatedPersonId, {
             id: relatedPersonId,
-            name: relatedPerson.name || relatedPerson.title?.rendered || relatedPerson.title || `Person ${relatedPersonId}`,
+            name: personName,
             gender: relatedPerson.acf?.gender || '',
             photo: relatedPerson.thumbnail || null,
-            age: relatedPerson.age || null,
+            age: age,
             person: relatedPerson,
           });
         }
@@ -231,26 +255,37 @@ export function buildRelationshipMap(people) {
     const relationships = person.acf?.relationships || [];
     const personRelationships = relationships.map(rel => {
       // Get relationship type slug
+      // The REST API expands relationships and may include relationship_slug directly
       let typeSlug = '';
-      if (typeof rel.relationship_type === 'object' && rel.relationship_type?.slug) {
+      
+      // Check for expanded relationship_slug field (from REST API expansion)
+      if (rel.relationship_slug) {
+        typeSlug = rel.relationship_slug;
+      } else if (typeof rel.relationship_type === 'object' && rel.relationship_type?.slug) {
         typeSlug = rel.relationship_type.slug;
       } else if (typeof rel.relationship_type === 'string') {
-        typeSlug = rel.relationship_type;
+        typeSlug = rel.relationship_type.toLowerCase();
       } else if (typeof rel.relationship_type === 'number') {
-        // Need to look up the type - this will be handled by the caller
+        // Need to look up the type - this will be handled by enrichRelationshipsWithTypes
         typeSlug = '';
       }
       
+      // Get related person ID - handle various formats
+      let relatedPersonId = null;
+      if (typeof rel.related_person === 'object') {
+        relatedPersonId = rel.related_person?.ID || rel.related_person?.id || rel.related_person?.term_id;
+      } else if (typeof rel.related_person === 'number' || typeof rel.related_person === 'string') {
+        relatedPersonId = parseInt(rel.related_person, 10);
+      }
+      
       return {
-        related_person: typeof rel.related_person === 'object' 
-          ? rel.related_person?.ID || rel.related_person?.id 
-          : rel.related_person,
+        related_person: relatedPersonId,
         relationship_type: rel.relationship_type,
         relationship_type_slug: typeSlug,
         relationship_name: rel.relationship_name || '',
         relationship_label: rel.relationship_label || '',
       };
-    });
+    }).filter(rel => rel.related_person); // Filter out invalid relationships
     
     relationshipMap.set(person.id, personRelationships);
   });

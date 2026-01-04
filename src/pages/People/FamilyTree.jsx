@@ -38,21 +38,32 @@ export default function FamilyTree() {
       return null;
     }
     
-    // Build relationship map
-    const relationshipMap = buildRelationshipMap(allPeople);
-    
-    // Enrich with relationship type slugs if we have relationship types
-    if (relationshipTypes.length > 0) {
-      enrichRelationshipsWithTypes(relationshipMap, relationshipTypes);
+    try {
+      // Build relationship map
+      const relationshipMap = buildRelationshipMap(allPeople);
+      
+      // Enrich with relationship type slugs if we have relationship types
+      if (relationshipTypes.length > 0) {
+        enrichRelationshipsWithTypes(relationshipMap, relationshipTypes);
+      }
+      
+      // Build graph
+      const graph = buildFamilyGraph(parseInt(id, 10), allPeople, relationshipMap);
+      
+      // Debug: log graph structure
+      console.log('Family tree graph:', graph);
+      
+      // Convert to tree structure
+      const tree = graphToTree(graph, parseInt(id, 10));
+      
+      // Debug: log tree structure
+      console.log('Family tree structure:', tree);
+      
+      return tree;
+    } catch (error) {
+      console.error('Error building family tree:', error);
+      return null;
     }
-    
-    // Build graph
-    const graph = buildFamilyGraph(parseInt(id, 10), allPeople, relationshipMap);
-    
-    // Convert to tree structure
-    const tree = graphToTree(graph, parseInt(id, 10));
-    
-    return tree;
   }, [person, allPeople, relationshipTypes, id]);
   
   const handleNodeClick = (nodeData) => {
