@@ -59,11 +59,10 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
   };
   
   // Custom node renderer
+  // react-d3-tree passes: { nodeDatum, toggleNode, onNodeClick, foreignObjectWrapper }
   const renderCustomNode = ({ nodeDatum, toggleNode }) => {
     return (
-      <g>
-        <PersonNode nodeData={nodeDatum} onClick={handleNodeClick} />
-      </g>
+      <PersonNode nodeDatum={nodeDatum} onClick={handleNodeClick} />
     );
   };
   
