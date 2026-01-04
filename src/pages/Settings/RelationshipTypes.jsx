@@ -1,8 +1,148 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, Plus, Trash2, Edit2, X } from 'lucide-react';
 import { wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+
+// Searchable Relationship Type Selector Component
+function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes, currentTypeId = null }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  // Include all types (including current type itself)
+  const availableTypes = useMemo(() => {
+    return relationshipTypes.sort((a, b) => {
+      const nameA = (a.name || '').toLowerCase();
+      const nameB = (b.name || '').toLowerCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
+  }, [relationshipTypes]);
+
+  // Filter by search term
+  const filteredTypes = useMemo(() => {
+    if (!searchTerm) return availableTypes.slice(0, 10);
+    
+    const term = searchTerm.toLowerCase();
+    return availableTypes.filter(t => {
+      const name = (t.name || '').toLowerCase();
+      return name.includes(term);
+    }).slice(0, 10);
+  }, [availableTypes, searchTerm]);
+
+  const selectedType = useMemo(() => {
+    return availableTypes.find(t => t.id === parseInt(value, 10));
+  }, [availableTypes, value]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (typeId) => {
+    onChange(typeId ? typeId.toString() : '');
+    setSearchTerm('');
+    setIsOpen(false);
+  };
+
+  const handleClear = () => {
+    onChange('');
+    setSearchTerm('');
+    setIsOpen(false);
+  };
+
+  const displayValue = selectedType ? selectedType.name : '';
+
+  return (
+    <div className="relative">
+      {/* Selected type display / Search input */}
+      <div className="relative">
+        {selectedType && !isOpen ? (
+          <div 
+            className="flex items-center justify-between input pr-8 cursor-text"
+            onClick={() => setIsOpen(true)}
+          >
+            <span>{displayValue}</span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
+              }}
+              className="absolute right-2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <input
+            ref={inputRef}
+            type="text"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setIsOpen(true);
+            }}
+            onFocus={() => setIsOpen(true)}
+            placeholder="Search for a relationship type..."
+            className="input"
+          />
+        )}
+      </div>
+
+      {/* Dropdown */}
+      {isOpen && (searchTerm || !selectedType) && (
+        <div
+          ref={dropdownRef}
+          className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+        >
+          {filteredTypes.length > 0 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => handleSelect(null)}
+                className={`w-full text-left px-4 py-2 hover:bg-gray-50 ${
+                  !value ? 'bg-primary-50' : ''
+                }`}
+              >
+                <span className="text-gray-500 italic">None (no inverse)</span>
+              </button>
+              {filteredTypes.map(type => (
+                <button
+                  key={type.id}
+                  type="button"
+                  onClick={() => handleSelect(type.id)}
+                  className={`w-full text-left px-4 py-2 hover:bg-gray-50 ${
+                    value === type.id.toString() ? 'bg-primary-50' : ''
+                  }`}
+                >
+                  {type.name}
+                </button>
+              ))}
+            </>
+          ) : (
+            <p className="px-4 py-2 text-gray-500 text-sm">No relationship types found</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function RelationshipTypes() {
   useDocumentTitle('Relationship Types - Settings');
@@ -172,21 +312,14 @@ export default function RelationshipTypes() {
               </div>
               <div>
                 <label className="label">Inverse Relationship Type</label>
-                <select
+                <SearchableRelationshipTypeSelector
                   value={newInverse}
-                  onChange={(e) => setNewInverse(e.target.value)}
-                  className="input"
-                >
-                  <option value="">None (no inverse)</option>
-                  {relationshipTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setNewInverse}
+                  relationshipTypes={relationshipTypes}
+                />
                 <p className="text-xs text-gray-500 mt-1">
                   Select the inverse relationship type. For example, if this is "Parent", select "Child".
-                  If this is "Spouse", select "Spouse" (same type).
+                  If this is "Spouse" or "Acquaintance", select the same type (e.g., "Spouse" → "Spouse").
                 </p>
               </div>
               <div className="flex gap-2">
@@ -253,22 +386,15 @@ export default function RelationshipTypes() {
                       </div>
                       <div>
                         <label className="label">Inverse Relationship Type</label>
-                        <select
+                        <SearchableRelationshipTypeSelector
                           value={editingInverse}
-                          onChange={(e) => setEditingInverse(e.target.value)}
-                          className="input"
-                        >
-                          <option value="">None (no inverse)</option>
-                          {relationshipTypes
-                            .filter(t => t.id !== type.id)
-                            .map((t) => (
-                              <option key={t.id} value={t.id}>
-                                {t.name}
-                              </option>
-                            ))}
-                        </select>
+                          onChange={setEditingInverse}
+                          relationshipTypes={relationshipTypes}
+                          currentTypeId={type.id}
+                        />
                         <p className="text-xs text-gray-500 mt-1">
                           Select the inverse relationship type. For example, if this is "Parent", select "Child".
+                          If this is "Spouse" or "Acquaintance", select the same type (e.g., "Spouse" → "Spouse").
                         </p>
                       </div>
                       <div className="flex gap-2">
