@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import Tree from 'react-d3-tree';
 import PersonNode from './PersonNode';
@@ -12,9 +12,10 @@ const NODE_HEIGHT = 100;
  * Renders a family tree using react-d3-tree
  */
 export default function TreeVisualization({ treeData, onNodeClick }) {
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.8);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const containerRef = useRef(null);
+  const treeWrapperRef = useRef(null);
 
   // Ensure treeData is properly formatted
   const formattedTreeData = useMemo(() => {
@@ -44,16 +45,32 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
     }
   };
 
-  // Initialize translate on mount
-  useMemo(() => {
-    if (containerRef.current) {
+  // Auto-center and auto-zoom on mount and when treeData changes
+  useEffect(() => {
+    if (containerRef.current && treeData) {
       const dimensions = containerRef.current.getBoundingClientRect();
+      // Center horizontally
       setTranslate({
         x: dimensions.width / 2,
         y: 80, // Top padding
       });
+      
+      // Auto-zoom to fit the tree
+      // Estimate tree width based on depth (rough calculation)
+      const estimateTreeWidth = (node, depth = 0) => {
+        if (!node || !node.children || node.children.length === 0) {
+          return NODE_SIZE.x;
+        }
+        const maxChildWidth = Math.max(...node.children.map(child => estimateTreeWidth(child, depth + 1)));
+        return Math.max(NODE_SIZE.x, maxChildWidth * node.children.length);
+      };
+      
+      const estimatedWidth = estimateTreeWidth(treeData);
+      const containerWidth = dimensions.width - 40; // Account for padding
+      const suggestedZoom = Math.min(0.8, containerWidth / estimatedWidth);
+      setZoom(Math.max(0.4, suggestedZoom)); // Don't zoom out too much
     }
-  }, []);
+  }, [treeData]);
 
   const handleNodeClick = (nodeData) => {
     if (onNodeClick && nodeData?.attributes?.id) {
@@ -111,7 +128,7 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
           separation={{ siblings: 1.2, nonSiblings: 1.5 }}
           pathFunc="straight"
           renderCustomNodeElement={(rd3tProps) => {
-            const { nodeDatum, toggleNode } = rd3tProps;
+            const { nodeDatum } = rd3tProps;
             const nodeData = {
               id: nodeDatum.attributes?.id,
               _name: nodeDatum.name,
@@ -123,19 +140,11 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
 
             return (
               <g>
-                {/* Node circle/connector point */}
-                <circle
-                  r={4}
-                  fill="#3b82f6"
-                  stroke="#1e40af"
-                  strokeWidth={2}
-                  onClick={() => handleNodeClick(nodeDatum)}
-                  style={{ cursor: 'pointer' }}
-                />
                 {/* Custom node content using foreignObject */}
+                {/* Positioned so the top of the card aligns with the connector point */}
                 <foreignObject
                   x={-NODE_WIDTH / 2}
-                  y={20}
+                  y={-NODE_HEIGHT / 2}
                   width={NODE_WIDTH}
                   height={NODE_HEIGHT}
                   onClick={() => handleNodeClick(nodeDatum)}
