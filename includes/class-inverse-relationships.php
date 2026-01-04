@@ -343,9 +343,29 @@ class PRM_Inverse_Relationships {
             return;
         }
         
-        // Check if inverse is gender-dependent and resolve if needed
-        // For removal, we need to check the to_person_id's gender (the person we're removing from)
-        $inverse_type_id = $this->resolve_gender_dependent_inverse($inverse_type_id, $to_person_id);
+        // Check if the SOURCE relationship type is gender-dependent
+        // If so, we need to resolve the inverse based on the related person's gender
+        $source_is_gender_dependent = get_field('is_gender_dependent', 'relationship_type_' . $relationship_type_id);
+        $source_gender_group = get_field('gender_dependent_group', 'relationship_type_' . $relationship_type_id);
+        
+        // Determine target group for inverse resolution
+        // aunt_uncle -> niece_nephew, niece_nephew -> aunt_uncle
+        $target_group = null;
+        if ($source_gender_group === 'aunt_uncle') {
+            $target_group = 'niece_nephew';
+        } elseif ($source_gender_group === 'niece_nephew') {
+            $target_group = 'aunt_uncle';
+        }
+        
+        if ($source_is_gender_dependent && !empty($target_group)) {
+            // The source type is gender-dependent, so the inverse needs to be resolved
+            // based on the related person's gender ($to_person_id)
+            $inverse_type_id = $this->resolve_gender_dependent_inverse($inverse_type_id, $to_person_id, $target_group);
+        } else {
+            // Check if inverse is gender-dependent and resolve if needed
+            // For removal, we need to check the to_person_id's gender (the person we're removing from)
+            $inverse_type_id = $this->resolve_gender_dependent_inverse($inverse_type_id, $to_person_id);
+        }
         
         if (!$inverse_type_id) {
             return;
