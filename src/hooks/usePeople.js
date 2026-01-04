@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
+import { decodeHtml } from '@/utils/formatters';
 
 // Query keys
 export const peopleKeys = {
@@ -11,14 +12,6 @@ export const peopleKeys = {
   timeline: (id) => [...peopleKeys.detail(id), 'timeline'],
   dates: (id) => [...peopleKeys.detail(id), 'dates'],
 };
-
-// Helper to decode HTML entities
-function decodeHtml(html) {
-  if (!html) return '';
-  const txt = document.createElement('textarea');
-  txt.innerHTML = html;
-  return txt.value;
-}
 
 // Transform person data to include thumbnail and other computed fields
 function transformPerson(person) {

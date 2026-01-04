@@ -9,14 +9,7 @@ import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
-
-// Helper to decode HTML entities
-function decodeHtml(html) {
-  if (!html) return '';
-  const txt = document.createElement('textarea');
-  txt.innerHTML = html;
-  return txt.value;
-}
+import { decodeHtml, getCompanyName } from '@/utils/formatters';
 
 // Helper to get gender symbol
 function getGenderSymbol(gender) {
@@ -395,7 +388,7 @@ export default function PersonDetail() {
     if (query.data) {
       const companyId = companyIds[index];
       companyMap[companyId] = {
-        name: decodeHtml(query.data.title?.rendered || query.data.title || ''),
+        name: getCompanyName(query.data),
         logo: query.data._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
               query.data._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url ||
               null,

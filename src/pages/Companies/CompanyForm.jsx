@@ -5,6 +5,7 @@ import { ArrowLeft, Save, Camera } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { getCompanyName, decodeHtml } from '@/utils/formatters';
 
 export default function CompanyForm() {
   const { id } = useParams();
@@ -90,7 +91,7 @@ export default function CompanyForm() {
   useEffect(() => {
     if (company) {
       reset({
-        title: company.title.rendered || '',
+        title: decodeHtml(company.title?.rendered || ''),
         website: company.acf?.website || '',
         industry: company.acf?.industry || '',
       });
@@ -100,7 +101,7 @@ export default function CompanyForm() {
   // Update document title
   useDocumentTitle(
     isEditing && company
-      ? `Edit ${company.title?.rendered || company.title || 'Company'}`
+      ? `Edit ${getCompanyName(company) || 'Company'}`
       : 'New Company'
   );
   
@@ -153,7 +154,7 @@ export default function CompanyForm() {
                   <div className="relative group">
                     <img
                       src={company._embedded['wp:featuredmedia'][0].source_url}
-                      alt={company.title?.rendered || 'Company logo'}
+                      alt={getCompanyName(company) || 'Company logo'}
                       className="w-20 h-20 rounded-lg object-cover"
                     />
                     <div className="absolute inset-0 rounded-lg bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center cursor-pointer"
