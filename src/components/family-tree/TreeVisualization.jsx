@@ -93,19 +93,29 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
             // Ensure arrays exist before pushing
             if (!Array.isArray(nodeData.children)) nodeData.children = [];
             
-            nodeData.children.push({
-              id: childId,
-              type: 'blood', // Default relationship type
-            });
+            // Check if child relation already exists to avoid duplicates
+            const childExists = nodeData.children.some(c => c.id === childId);
+            if (!childExists) {
+              nodeData.children.push({
+                id: childId,
+                type: 'blood', // Default relationship type
+              });
+            }
             
-            // Also add parent relationship to child
+            // Also add parent relationship to child (bidirectional)
             const childData = nodeMap.get(childId);
             if (childData) {
               if (!Array.isArray(childData.parents)) childData.parents = [];
-              childData.parents.push({
-                id: nodeId,
-                type: 'blood',
-              });
+              // Check if parent relation already exists to avoid duplicates
+              const parentExists = childData.parents.some(p => p.id === nodeId);
+              if (!parentExists) {
+                childData.parents.push({
+                  id: nodeId,
+                  type: 'blood',
+                });
+              }
+            } else {
+              console.warn(`Child node ${childId} not found in nodeMap when building relationships`);
             }
           }
         });
