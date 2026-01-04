@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.78] - 2024-12-19
+
+### Fixed
+- Family Tree: Fixed hierarchy display - parents now appear above root, children below
+- Family Tree: Fixed name truncation by increasing node width and using break-words
+- Family Tree: Fixed relationship direction logic (child relationship means parent of root)
+- Family Tree: Improved tree structure to show proper up/down hierarchy
+
 ## [1.0.77] - 2024-12-19
 
 ### Changed
