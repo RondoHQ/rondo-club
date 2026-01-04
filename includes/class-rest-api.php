@@ -138,10 +138,33 @@ class PRM_REST_API {
      * Register ACF fields to REST API
      */
     public function register_acf_fields() {
-        // Expose ACF fields in REST API
-        if (function_exists('acf_get_field_groups')) {
-            // ACF Pro automatically exposes fields to REST if show_in_rest is enabled on CPT
-            // This function can be extended for custom handling
+        // Expose ACF fields in REST API for taxonomy terms
+        add_filter('rest_prepare_relationship_type', [$this, 'add_acf_to_relationship_type'], 10, 3);
+        
+        // Allow updating ACF fields via REST API
+        add_action('rest_insert_relationship_type', [$this, 'update_relationship_type_acf'], 10, 3);
+    }
+    
+    /**
+     * Add ACF fields to relationship_type REST response
+     */
+    public function add_acf_to_relationship_type($response, $term, $request) {
+        $acf_data = get_fields('relationship_type_' . $term->term_id);
+        if ($acf_data) {
+            $response->data['acf'] = $acf_data;
+        }
+        return $response;
+    }
+    
+    /**
+     * Update ACF fields when relationship_type is updated via REST API
+     */
+    public function update_relationship_type_acf($term, $request, $creating) {
+        $acf_data = $request->get_param('acf');
+        if (is_array($acf_data)) {
+            foreach ($acf_data as $field_name => $value) {
+                update_field($field_name, $value, 'relationship_type_' . $term->term_id);
+            }
         }
     }
     
