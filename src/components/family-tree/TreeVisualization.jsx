@@ -365,12 +365,47 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
               );
             }
             
-            // Ensure nodes is a proper array (not undefined)
-            const safeNodes = Array.isArray(nodes) ? [...nodes] : [];
+            // Ensure nodes is a proper array (not undefined) and create a deep copy
+            const safeNodes = Array.isArray(nodes) ? JSON.parse(JSON.stringify(nodes)) : [];
+            
+            // Final validation: ensure all nodes are valid
+            const finalNodes = safeNodes.filter(node => {
+              const isValid = node && 
+                             node.id && 
+                             node.gender && 
+                             Array.isArray(node.parents) && 
+                             Array.isArray(node.children) && 
+                             Array.isArray(node.siblings);
+              if (!isValid) {
+                console.warn('Filtering out invalid node:', node);
+              }
+              return isValid;
+            });
+            
+            if (finalNodes.length === 0) {
+              return (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-red-500">No valid nodes after filtering</p>
+                </div>
+              );
+            }
+            
+            // Verify root still exists after filtering
+            const rootStillExists = finalNodes.some(n => n.id === rootId);
+            if (!rootStillExists) {
+              console.error('Root node filtered out:', rootId);
+              return (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-red-500">Root node was filtered out</p>
+                </div>
+              );
+            }
+            
+            console.log('Final nodes being passed to ReactFamilyTree:', finalNodes.length);
             
             return (
               <ReactFamilyTree
-                nodes={safeNodes}
+                nodes={finalNodes}
                 rootId={rootId}
                 width={NODE_WIDTH}
                 height={NODE_HEIGHT}
