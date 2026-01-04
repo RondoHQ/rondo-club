@@ -141,14 +141,32 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
       const edgeKey = `${personId}-${relatedPersonId}`;
       const reverseEdgeKey = `${relatedPersonId}-${personId}`;
       
-      if (!edges.some(e => 
+      // Check if edge already exists (in either direction)
+      const edgeExists = edges.some(e => 
         (e.from === personId && e.to === relatedPersonId) ||
         (e.from === relatedPersonId && e.to === personId)
-      )) {
+      );
+      
+      if (!edgeExists) {
+        // The relationship type represents: personId has relationship type "rel.relationship_type_slug" to relatedPersonId
+        // For family tree purposes, we want to ensure correct hierarchy:
+        // - If personId has "parent" to relatedPersonId, we want to invert this to "child" 
+        //   so that personId is shown as child of relatedPersonId (correct hierarchy)
+        // - If personId has "child" to relatedPersonId, we keep it as-is
+        let edgeType = rel.relationship_type_slug;
+        const relTypeLower = edgeType?.toLowerCase();
+        
+        // Invert parent relationships to child relationships for correct tree hierarchy
+        if (isParentType(relTypeLower)) {
+          edgeType = 'child';
+        }
+        // Keep child relationships as-is (they represent correct hierarchy)
+        // Other relationship types are kept as-is
+        
         edges.push({
           from: personId,
           to: relatedPersonId,
-          type: rel.relationship_type_slug,
+          type: edgeType,
           label: rel.relationship_name || rel.relationship_label || '',
         });
       }
@@ -213,13 +231,13 @@ function findUltimateAncestor(startPersonId, adjacencyList, nodes) {
     visited.add(currentId);
     
     const neighbors = adjacencyList.get(currentId) || [];
-    // Find parents: if current person has "child" relationship to someone, that someone is current's parent
-    // OR if someone has "parent" relationship to current person, that someone is current's parent
+    // Find parents: neighbors where current person has "child" relationship to them
+    // The relationship type in the adjacency list represents current's role in the relationship
+    // So if current has "child" relationship to neighbor, that means current IS a child of neighbor
+    // Therefore, neighbor IS a parent of current
     const parents = neighbors.filter(neighbor => {
       const relType = neighbor.type?.toLowerCase();
       // If current has "child" relationship to neighbor, neighbor is parent
-      // OR if neighbor has "parent" relationship to current (stored as edge from neighbor to current)
-      // We need to check the edge direction - if edge is FROM neighbor TO current with type "parent", neighbor is parent
       return isChildType(relType);
     });
     
@@ -284,9 +302,7 @@ export function graphToTree(graph, startPersonId) {
   // Build adjacency list with correct relationship types
   // IMPORTANT: The edge type represents the relationship FROM the "from" person TO the "to" person
   // So if edge is A -> B with type "parent", it means: A is parent of B
-  // Therefore:
-  // - A's neighbors include B with type "parent" (A is parent of B) ✓
-  // - B's neighbors include A with type "child" (B is child of A) ✓
+  // But we need to store it from B's perspective too: B is child of A
   
   // Debug: log edges to understand the structure
   if (process.env.NODE_ENV === 'development') {
@@ -300,34 +316,42 @@ export function graphToTree(graph, startPersonId) {
   edges.forEach(edge => {
     const relType = edge.type?.toLowerCase();
     
-    // Add edge from -> to with the original type
-    // This represents: edge.from has relationship type "relType" to edge.to
+    // IMPORTANT: The edge type represents the relationship FROM edge.from TO edge.to
+    // So if edge is {from: 31, to: 5, type: 'parent'}, it means:
+    // Person 31 has "parent" relationship to Person 5 → Person 31 IS a parent of Person 5
+    
+    // But we need to check: if this is a parent/child relationship, we need to ensure
+    // the tree structure is correct. If edge.from has "parent" to edge.to, then:
+    // - edge.from is parent of edge.to (edge.from should be ABOVE edge.to in tree)
+    // - edge.to is child of edge.from (edge.to should be BELOW edge.from in tree)
+    
+    // Store relationship from edge.from's perspective
     adjacencyList.get(edge.from)?.push({
       nodeId: edge.to,
-      type: edge.type,
+      type: edge.type, // edge.from's role in relationship to edge.to
       label: edge.label,
     });
     
-    // Add reverse edge with inverse type
-    // If edge.from has "parent" relationship to edge.to, then edge.to has "child" relationship to edge.from
+    // Store inverse relationship from edge.to's perspective
+    // If edge.from has "parent" to edge.to, then edge.to has "child" to edge.from
     let inverseType = edge.type;
     if (isParentType(relType)) {
-      inverseType = 'child';
+      inverseType = 'child'; // edge.to is child of edge.from
     } else if (isChildType(relType)) {
-      inverseType = 'parent';
+      inverseType = 'parent'; // edge.to is parent of edge.from
     }
     // For other relationship types, keep the same type (symmetric relationships)
     
     adjacencyList.get(edge.to)?.push({
       nodeId: edge.from,
-      type: inverseType,
+      type: inverseType, // edge.to's role in relationship to edge.from (inverse)
       label: edge.label,
     });
   });
   
   // Debug: log adjacency list for a few nodes
   if (process.env.NODE_ENV === 'development') {
-    console.log('Sample adjacency list entries:', Array.from(adjacencyList.entries()).slice(0, 3).map(([id, neighbors]) => ({
+    console.log('Sample adjacency list entries:', Array.from(adjacencyList.entries()).slice(0, 5).map(([id, neighbors]) => ({
       personId: id,
       neighbors: neighbors.map(n => ({ id: n.nodeId, type: n.type })),
     })));
@@ -354,6 +378,9 @@ export function graphToTree(graph, startPersonId) {
     const neighbors = adjacencyList.get(nodeId) || [];
     
     // First, find all children (people this node is a parent of)
+    // The relationship type in the adjacency list represents current node's role in the relationship
+    // So if current node has "parent" relationship to neighbor, that means current IS a parent of neighbor
+    // Therefore, neighbor IS a child of current
     const childRelations = [];
     for (const neighbor of neighbors) {
       // Skip the parent to avoid going back up the tree
@@ -361,7 +388,7 @@ export function graphToTree(graph, startPersonId) {
       
       const relType = neighbor.type?.toLowerCase();
       if (isParentType(relType)) {
-        // Current node has "parent" relationship to neighbor → neighbor is child of current
+        // Current node has "parent" relationship to neighbor → current is parent of neighbor → neighbor is child
         childRelations.push(neighbor);
       }
     }
