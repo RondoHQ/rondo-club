@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.86] - 2024-12-19
+
+### Fixed
+- Family Tree: Added comprehensive validation and normalization of node structure
+- Family Tree: Ensure all relation objects have valid id and type properties
+- Family Tree: Filter out any invalid nodes before passing to library
+- Family Tree: Normalize all IDs to strings in relations
+
 ## [1.0.85] - 2024-12-19
 
 ### Fixed
