@@ -250,6 +250,32 @@ export function graphToVisFormat(graph, startPersonId) {
     }
   });
   
+  // Ensure spouses are on the same level
+  // Find spouse pairs and adjust levels
+  const spouseEdges = edges.filter(e => e.type === 'spouse');
+  for (const edge of spouseEdges) {
+    const level1 = levels.get(edge.from);
+    const level2 = levels.get(edge.to);
+    if (level1 !== undefined && level2 !== undefined && level1 !== level2) {
+      // Put both on the higher level (smaller number = higher in tree)
+      const minLevel = Math.min(level1, level2);
+      levels.set(edge.from, minLevel);
+      levels.set(edge.to, minLevel);
+    }
+  }
+  
+  // Generate placeholder image for people without photos
+  function generatePlaceholderImage(name, isStartPerson) {
+    const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
+    const bgColor = isStartPerson ? '%23fef3c7' : '%23e5e7eb';
+    const textColor = isStartPerson ? '%23b45309' : '%23374151';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">
+      <circle cx="30" cy="30" r="30" fill="${bgColor}"/>
+      <text x="30" y="38" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" font-weight="500" fill="${textColor}">${initials}</text>
+    </svg>`;
+    return 'data:image/svg+xml,' + encodeURIComponent(svg);
+  }
+  
   // Create vis.js nodes with levels and styling
   const visNodes = nodes.map(node => {
     const level = levels.get(node.id) || 0;
@@ -263,29 +289,30 @@ export function graphToVisFormat(graph, startPersonId) {
     if (node.formattedBirthDate) infoLine += node.formattedBirthDate;
     if (infoLine.trim()) labelLines.push(infoLine.trim());
     
+    // Use circularImage for all nodes (consistent size)
+    const image = node.photo || generatePlaceholderImage(node.name, isStartPerson);
+    
     return {
       id: node.id,
       label: labelLines.join('\n'),
       level,
-      shape: node.photo ? 'circularImage' : 'circle',
-      image: node.photo || undefined,
+      shape: 'circularImage',
+      image: image,
       size: 30,
       font: {
         size: 12,
         face: 'system-ui, -apple-system, sans-serif',
-        multi: 'html',
-        bold: isStartPerson ? '700' : '400',
+        vadjust: 5, // Push label down a bit
       },
       color: {
         border: isStartPerson ? '#f59e0b' : '#d1d5db',
-        background: isStartPerson ? '#fef3c7' : '#ffffff',
+        background: '#ffffff',
         highlight: {
           border: '#f59e0b',
           background: '#fef3c7',
         },
       },
       borderWidth: isStartPerson ? 3 : 2,
-      // Store original data for click handling
       data: node,
     };
   });
@@ -305,20 +332,9 @@ export function graphToVisFormat(graph, startPersonId) {
         color: isSpouse ? '#ec4899' : '#9ca3af', // Pink for spouse, gray for parent-child
         highlight: isSpouse ? '#db2777' : '#6b7280',
       },
-      width: isSpouse ? 2 : 2,
+      width: 2,
       dashes: isSpouse ? [5, 5] : false, // Dashed line for spouse
-      smooth: isSpouse 
-        ? {
-            enabled: true,
-            type: 'curvedCW',
-            roundness: 0.2,
-          }
-        : {
-            enabled: true,
-            type: 'cubicBezier',
-            forceDirection: 'vertical',
-            roundness: 0.4,
-          },
+      smooth: false, // Straight lines
     };
   });
   
