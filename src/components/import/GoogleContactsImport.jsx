@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Upload, CheckCircle, AlertCircle, Loader2, FileSpreadsheet, Users, Building2, Cake, StickyNote } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, Loader2, FileSpreadsheet, Users, Building2, Cake, StickyNote, Image } from 'lucide-react';
 import api from '@/api/client';
 
 export default function GoogleContactsImport() {
@@ -126,6 +126,7 @@ export default function GoogleContactsImport() {
                 <p>Companies created: {importMutation.data.stats.companies_created}</p>
                 <p>Birthdays created: {importMutation.data.stats.dates_created}</p>
                 <p>Notes created: {importMutation.data.stats.notes_created}</p>
+                <p>Photos imported: {importMutation.data.stats.photos_imported}</p>
                 {importMutation.data.stats.errors?.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-green-200">
                     <p className="font-medium">Errors:</p>
@@ -228,6 +229,12 @@ export default function GoogleContactsImport() {
                         <div className="flex items-center gap-2 text-sm text-green-800">
                           <StickyNote className="h-4 w-4" />
                           <span>{validationResult.summary.notes} notes</span>
+                        </div>
+                      )}
+                      {validationResult.summary.photos > 0 && (
+                        <div className="flex items-center gap-2 text-sm text-green-800">
+                          <Image className="h-4 w-4" />
+                          <span>{validationResult.summary.photos} photos</span>
                         </div>
                       )}
                     </div>

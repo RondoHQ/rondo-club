@@ -21,6 +21,7 @@ class PRM_Google_Contacts_Import {
         'companies_created'     => 0,
         'dates_created'         => 0,
         'notes_created'         => 0,
+        'photos_imported'       => 0,
         'errors'                => [],
     ];
 
@@ -124,6 +125,7 @@ class PRM_Google_Contacts_Import {
         $companies = [];
         $birthdays = 0;
         $notes = 0;
+        $photos = 0;
 
         foreach ($contacts as $contact) {
             // Support both old format (Given Name/Family Name) and new format (First Name/Last Name)
@@ -148,6 +150,10 @@ class PRM_Google_Contacts_Import {
             if (!empty($contact['Notes'])) {
                 $notes++;
             }
+
+            if (!empty($contact['Photo'])) {
+                $photos++;
+            }
         }
 
         return [
@@ -155,6 +161,7 @@ class PRM_Google_Contacts_Import {
             'companies_count' => count($companies),
             'birthdays'       => $birthdays,
             'notes'           => $notes,
+            'photos'          => $photos,
         ];
     }
 
@@ -349,6 +356,12 @@ class PRM_Google_Contacts_Import {
         $notes = trim($contact['Notes'] ?? '');
         if (!empty($notes)) {
             $this->import_note($post_id, $notes);
+        }
+
+        // Import photo
+        $photo_url = trim($contact['Photo'] ?? '');
+        if (!empty($photo_url) && filter_var($photo_url, FILTER_VALIDATE_URL) && !has_post_thumbnail($post_id)) {
+            $this->import_photo($post_id, $photo_url, $first_name, $last_name);
         }
     }
 
@@ -601,6 +614,59 @@ class PRM_Google_Contacts_Import {
         if ($comment_id) {
             $this->stats['notes_created']++;
         }
+    }
+
+    /**
+     * Import photo from URL
+     */
+    private function import_photo(int $post_id, string $url, string $first_name, string $last_name): void {
+        $attachment_id = $this->sideload_image($url, $post_id, "{$first_name} {$last_name}");
+
+        if ($attachment_id) {
+            set_post_thumbnail($post_id, $attachment_id);
+            $this->stats['photos_imported']++;
+        }
+    }
+
+    /**
+     * Sideload image from URL
+     */
+    private function sideload_image(string $url, int $post_id, string $description): ?int {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+
+        $tmp = download_url($url);
+
+        if (is_wp_error($tmp)) {
+            return null;
+        }
+
+        // Create filename from person name
+        $filename = sanitize_title(strtolower($description)) . '.jpg';
+
+        // Try to get extension from URL
+        $path = parse_url($url, PHP_URL_PATH);
+        if ($path) {
+            $ext = pathinfo($path, PATHINFO_EXTENSION);
+            if (in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                $filename = sanitize_title(strtolower($description)) . '.' . strtolower($ext);
+            }
+        }
+
+        $file_array = [
+            'name'     => $filename,
+            'tmp_name' => $tmp,
+        ];
+
+        $attachment_id = media_handle_sideload($file_array, $post_id, $description);
+
+        if (is_wp_error($attachment_id)) {
+            @unlink($tmp);
+            return null;
+        }
+
+        return $attachment_id;
     }
 
     /**
