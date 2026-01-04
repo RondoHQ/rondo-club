@@ -477,9 +477,9 @@ function prm_login_styles() {
         
         /* Submit button container */
         .login .submit {
-            margin-top: 20px;
+            margin-top: 20px 0 !important;
         }
-        
+
         /* Submit button */
         .login .button-primary,
         .login #wp-submit,
@@ -562,6 +562,16 @@ function prm_login_styles() {
     <?php
 }
 add_action('login_enqueue_scripts', 'prm_login_styles');
+
+/**
+ * Add favicon to login page
+ */
+function prm_login_favicon() {
+    $favicon_url = PRM_THEME_URL . '/favicon.svg';
+    echo '<link rel="icon" type="image/svg+xml" href="' . esc_url($favicon_url) . '">';
+    echo '<link rel="alternate icon" href="' . esc_url($favicon_url) . '">';
+}
+add_action('login_head', 'prm_login_favicon');
 
 /**
  * Change login logo URL to homepage
