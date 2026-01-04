@@ -3,16 +3,15 @@ import { useNavigate } from 'react-router-dom';
 /**
  * Person Node Component for Family Tree
  * Displays a person card in the tree visualization
- * Compatible with react-d3-tree's renderCustomNodeElement API
+ * Compatible with react-family-tree's renderNode API
  */
-export default function PersonNode({ nodeDatum, onClick }) {
+export default function PersonNode({ node, onClick, style }) {
   const navigate = useNavigate();
-  const { name, attributes } = nodeDatum || {};
-  const { id, gender, photo, age, birthDate } = attributes || {};
+  const { id, name, gender, photo, age, birthDate } = node || {};
   
   const handleClick = () => {
     if (onClick) {
-      onClick(nodeDatum);
+      onClick(node);
     } else if (id) {
       navigate(`/people/${id}`);
     }
@@ -72,52 +71,41 @@ export default function PersonNode({ nodeDatum, onClick }) {
   const formattedBirthDate = birthDate ? formatDate(birthDate) : null;
   
   return (
-    <g>
-      <foreignObject
-        x={-80}
-        y={-50}
-        width={160}
-        height={100}
-        className="person-node"
-      >
-        <div
-          onClick={handleClick}
-          className="bg-white border-2 border-gray-300 rounded-lg shadow-md p-2 cursor-pointer hover:border-primary-500 hover:shadow-lg transition-all"
-          style={{ width: '100%', height: '100%', boxSizing: 'border-box' }}
-        >
-          {/* Photo or Initials */}
-          <div className="flex justify-center mb-1">
-            {photo ? (
-              <img
-                src={photo}
-                alt={displayName}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-xs font-medium text-gray-600">
-                  {initials}
-                </span>
-              </div>
-            )}
+    <div
+      onClick={handleClick}
+      style={style}
+      className="bg-white border-2 border-gray-300 rounded-lg shadow-md p-2 cursor-pointer hover:border-primary-500 hover:shadow-lg transition-all"
+    >
+      {/* Photo or Initials */}
+      <div className="flex justify-center mb-1">
+        {photo ? (
+          <img
+            src={photo}
+            alt={displayName}
+            className="w-10 h-10 rounded-full object-cover"
+          />
+        ) : (
+          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+            <span className="text-xs font-medium text-gray-600">
+              {initials}
+            </span>
           </div>
-          
-          {/* Name */}
-          <div className="text-center">
-            <p className="text-xs font-semibold text-gray-900 break-words" title={displayName}>
-              {displayName}
-            </p>
-            {(genderSymbol || (age !== null && age !== undefined) || formattedBirthDate) && (
-              <p className="text-xs text-gray-500 mt-0.5 leading-tight">
-                {genderSymbol && <span className="mr-1">{genderSymbol}</span>}
-                {age !== null && age !== undefined && <span className="mr-1">{age}</span>}
-                {formattedBirthDate && <span>{formattedBirthDate}</span>}
-              </p>
-            )}
-          </div>
-        </div>
-      </foreignObject>
-    </g>
+        )}
+      </div>
+      
+      {/* Name */}
+      <div className="text-center">
+        <p className="text-xs font-semibold text-gray-900 break-words" title={displayName}>
+          {displayName}
+        </p>
+        {(genderSymbol || (age !== null && age !== undefined) || formattedBirthDate) && (
+          <p className="text-xs text-gray-500 mt-0.5 leading-tight">
+            {genderSymbol && <span className="mr-1">{genderSymbol}</span>}
+            {age !== null && age !== undefined && <span className="mr-1">{age}</span>}
+            {formattedBirthDate && <span>{formattedBirthDate}</span>}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
-

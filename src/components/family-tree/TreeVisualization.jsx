@@ -1,40 +1,53 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, Maximize2 } from 'lucide-react';
-import Tree from 'react-d3-tree';
+import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import ReactFamilyTree from 'react-family-tree';
 import PersonNode from './PersonNode';
+
+const NODE_WIDTH = 160;
+const NODE_HEIGHT = 100;
 
 /**
  * Tree Visualization Component
- * Renders a family tree using react-d3-tree
+ * Renders a family tree using react-family-tree
  */
 export default function TreeVisualization({ treeData, onNodeClick }) {
-  const [translate, setTranslate] = useState({ x: 0, y: 0 });
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [zoom, setZoom] = useState(1);
   const containerRef = useRef(null);
   
-  // Calculate dimensions and center the tree
-  useEffect(() => {
-    if (containerRef.current) {
-      const { width, height } = containerRef.current.getBoundingClientRect();
-      setDimensions({ width, height });
-      setTranslate({ x: width / 2, y: 80 });
-    }
-  }, []);
-  
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (containerRef.current) {
-        const { width, height } = containerRef.current.getBoundingClientRect();
-        setDimensions({ width, height });
-        setTranslate({ x: width / 2, y: 80 });
-      }
-    };
+  // Convert tree structure to flat nodes array with parentId
+  const nodes = useMemo(() => {
+    if (!treeData) return [];
     
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    const flatNodes = [];
+    
+    function traverse(node, parentId = null) {
+      const nodeData = {
+        id: node.attributes.id,
+        parentId: parentId,
+        name: node.name,
+        gender: node.attributes.gender,
+        photo: node.attributes.photo,
+        age: node.attributes.age,
+        birthDate: node.attributes.birthDate,
+      };
+      
+      flatNodes.push(nodeData);
+      
+      if (node.children && node.children.length > 0) {
+        node.children.forEach(child => {
+          traverse(child, node.attributes.id);
+        });
+      }
+    }
+    
+    traverse(treeData);
+    return flatNodes;
+  }, [treeData]);
+  
+  const rootId = useMemo(() => {
+    if (!treeData) return null;
+    return treeData.attributes.id;
+  }, [treeData]);
   
   const handleZoomIn = () => {
     setZoom(prev => Math.min(prev + 0.2, 2));
@@ -46,27 +59,15 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
   
   const handleReset = () => {
     setZoom(1);
-    if (containerRef.current) {
-      const { width, height } = containerRef.current.getBoundingClientRect();
-      setTranslate({ x: width / 2, y: 80 });
-    }
   };
   
-  const handleNodeClick = (nodeData) => {
+  const handleNodeClick = (node) => {
     if (onNodeClick) {
-      onNodeClick(nodeData);
+      onNodeClick({ attributes: node });
     }
   };
   
-  // Custom node renderer
-  // react-d3-tree passes: { nodeDatum, toggleNode, onNodeClick, foreignObjectWrapper }
-  const renderCustomNode = ({ nodeDatum, toggleNode }) => {
-    return (
-      <PersonNode nodeDatum={nodeDatum} onClick={handleNodeClick} />
-    );
-  };
-  
-  if (!treeData) {
+  if (!treeData || nodes.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <p className="text-gray-500">No family tree data available</p>
@@ -102,41 +103,34 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
       </div>
       
       {/* Tree Container */}
-      <div ref={containerRef} className="w-full h-full min-h-[600px]">
-        {dimensions.width > 0 && (
-          <Tree
-            data={treeData}
-            orientation="vertical"
-            translate={translate}
-            zoom={zoom}
-            dimensions={dimensions}
-            renderCustomNodeElement={renderCustomNode}
-            pathClassFunc={() => 'tree-link'}
-            nodeSize={{ x: 240, y: 140 }}
-            separation={{ siblings: 1.2, nonSiblings: 1.5 }}
-            initialDepth={5}
-            depthFactor={140}
-            styles={{
-              links: {
-                stroke: '#b2b2b2',
-                strokeWidth: 2,
-              },
-            }}
+      <div 
+        ref={containerRef} 
+        className="w-full h-full min-h-[600px] relative overflow-auto"
+        style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
+      >
+        {nodes.length > 0 && rootId && (
+          <ReactFamilyTree
+            nodes={nodes}
+            rootId={rootId}
+            width={NODE_WIDTH}
+            height={NODE_HEIGHT}
+            renderNode={(node) => (
+              <PersonNode
+                key={node.id}
+                node={node}
+                onClick={handleNodeClick}
+                style={{
+                  position: 'absolute',
+                  left: `${node.left}px`,
+                  top: `${node.top}px`,
+                  width: `${NODE_WIDTH}px`,
+                  height: `${NODE_HEIGHT}px`,
+                }}
+              />
+            )}
           />
         )}
       </div>
-      
-      <style>{`
-        .tree-link {
-          stroke: #b2b2b2;
-          stroke-width: 2;
-          fill: none;
-        }
-        .person-node {
-          pointer-events: all;
-        }
-      `}</style>
     </div>
   );
 }
-
