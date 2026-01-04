@@ -310,6 +310,16 @@ export function graphToTree(graph, startPersonId) {
       }
     }
     
+    // Sort children by birth date (oldest first) to ensure correct order in tree
+    const sortedChildren = children.slice().sort((a, b) => {
+      const dateA = a.attributes?.birthDate || a.attributes?.birth_date;
+      const dateB = b.attributes?.birthDate || b.attributes?.birth_date;
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1; // No date goes to end
+      if (!dateB) return -1; // No date goes to end
+      return new Date(dateA) - new Date(dateB); // Oldest first
+    });
+    
     const treeNode = {
       name: node.name || `Person ${node.id}`,
       attributes: {
@@ -322,7 +332,8 @@ export function graphToTree(graph, startPersonId) {
     };
     
     // Always include children array, even if empty (react-family-tree expects it)
-    treeNode.children = children.length > 0 ? children : [];
+    // Use sorted children to ensure oldest appears first
+    treeNode.children = sortedChildren.length > 0 ? sortedChildren : [];
     
     return treeNode;
   }

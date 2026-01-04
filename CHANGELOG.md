@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.90] - 2024-12-19
+
+### Fixed
+- Family Tree: Sort children by birth date (oldest first) in tree builder
+- Family Tree: Increase node dimensions (180x120) for better spacing and visibility
+- Family Tree: Sort children when building relationships to ensure correct order
+
+## [1.0.89] - 2024-12-19
+
+### Fixed
+- Family Tree: Fix node positioning using transform translate instead of absolute positioning
+- Family Tree: Library calculates positions using left/top multiplied by half dimensions
+- Family Tree: Add absolute positioning class to PersonNode for proper rendering
+
 ## [1.0.88] - 2024-12-19
 
 ### Fixed

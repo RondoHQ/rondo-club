@@ -3,8 +3,8 @@ import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import ReactFamilyTree from 'react-family-tree';
 import PersonNode from './PersonNode';
 
-const NODE_WIDTH = 160;
-const NODE_HEIGHT = 100;
+const NODE_WIDTH = 180;
+const NODE_HEIGHT = 120;
 
 /**
  * Tree Visualization Component
@@ -457,8 +457,10 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
                       return null;
                     }
                     // react-family-tree uses transform: translate() with left/top multiplied by half dimensions
-                    const left = node.left !== undefined ? node.left * (NODE_WIDTH / 2) : 0;
-                    const top = node.top !== undefined ? node.top * (NODE_HEIGHT / 2) : 0;
+                    // The library calculates positions, we just need to apply them correctly
+                    const left = node.left !== undefined && node.left !== null ? node.left * (NODE_WIDTH / 2) : 0;
+                    const top = node.top !== undefined && node.top !== null ? node.top * (NODE_HEIGHT / 2) : 0;
+                    
                     return (
                       <PersonNode
                         key={node.id}
