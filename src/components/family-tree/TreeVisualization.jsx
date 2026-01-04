@@ -16,26 +16,36 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
   
   // Convert tree structure to flat nodes array with parentId
   const nodes = useMemo(() => {
-    if (!treeData) return [];
+    if (!treeData || !treeData.attributes || !treeData.attributes.id) {
+      return [];
+    }
     
     const flatNodes = [];
     
     function traverse(node, parentId = null) {
+      // Validate node structure
+      if (!node || !node.attributes || !node.attributes.id) {
+        return;
+      }
+      
       const nodeData = {
         id: node.attributes.id,
         parentId: parentId,
-        name: node.name,
-        gender: node.attributes.gender,
-        photo: node.attributes.photo,
-        age: node.attributes.age,
-        birthDate: node.attributes.birthDate,
+        name: node.name || `Person ${node.attributes.id}`,
+        gender: node.attributes.gender || '',
+        photo: node.attributes.photo || null,
+        age: node.attributes.age !== null && node.attributes.age !== undefined ? node.attributes.age : null,
+        birthDate: node.attributes.birthDate || null,
       };
       
       flatNodes.push(nodeData);
       
-      if (node.children && node.children.length > 0) {
+      // Safely handle children array
+      if (Array.isArray(node.children) && node.children.length > 0) {
         node.children.forEach(child => {
-          traverse(child, node.attributes.id);
+          if (child && child.attributes && child.attributes.id) {
+            traverse(child, node.attributes.id);
+          }
         });
       }
     }
@@ -114,20 +124,23 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
             rootId={rootId}
             width={NODE_WIDTH}
             height={NODE_HEIGHT}
-            renderNode={(node) => (
-              <PersonNode
-                key={node.id}
-                node={node}
-                onClick={handleNodeClick}
-                style={{
-                  position: 'absolute',
-                  left: `${node.left}px`,
-                  top: `${node.top}px`,
-                  width: `${NODE_WIDTH}px`,
-                  height: `${NODE_HEIGHT}px`,
-                }}
-              />
-            )}
+            renderNode={(node) => {
+              if (!node || !node.id) return null;
+              return (
+                <PersonNode
+                  key={node.id}
+                  node={node}
+                  onClick={handleNodeClick}
+                  style={{
+                    position: 'absolute',
+                    left: `${node.left || 0}px`,
+                    top: `${node.top || 0}px`,
+                    width: `${NODE_WIDTH}px`,
+                    height: `${NODE_HEIGHT}px`,
+                  }}
+                />
+              );
+            }}
           />
         )}
       </div>

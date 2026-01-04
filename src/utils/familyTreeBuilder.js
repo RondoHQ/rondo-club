@@ -321,9 +321,8 @@ export function graphToTree(graph, startPersonId) {
       },
     };
     
-    if (children.length > 0) {
-      treeNode.children = children;
-    }
+    // Always include children array, even if empty (react-family-tree expects it)
+    treeNode.children = children.length > 0 ? children : [];
     
     return treeNode;
   }
