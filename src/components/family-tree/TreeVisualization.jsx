@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import ReactFamilyTree from 'react-family-tree';
 import PersonNode from './PersonNode';
@@ -14,58 +14,132 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
   const [zoom, setZoom] = useState(1);
   const containerRef = useRef(null);
   
-  // Convert tree structure to flat nodes array with parentId
+  // Convert tree structure to nodes array expected by react-family-tree
+  // react-family-tree expects: { id: string, gender: Gender, parents: Relation[], children: Relation[], siblings: Relation[] }
   const nodes = useMemo(() => {
     if (!treeData || !treeData.attributes || !treeData.attributes.id) {
       return [];
     }
     
-    const flatNodes = [];
+    const nodeMap = new Map(); // Map to store all nodes by ID
+    const allNodes = [];
     
-    function traverse(node, parentId = null) {
-      // Validate node structure
+    // First pass: collect all nodes
+    function collectNodes(node) {
       if (!node || !node.attributes || !node.attributes.id) {
-        console.warn('Invalid node in tree:', node);
         return;
       }
       
-      const nodeId = node.attributes.id;
+      const nodeId = String(node.attributes.id);
+      if (nodeMap.has(nodeId)) {
+        return; // Already collected
+      }
       
-      // Check if node already exists (prevent duplicates)
-      if (flatNodes.find(n => n.id === nodeId)) {
-        console.warn('Duplicate node found:', nodeId);
-        return;
+      // Map gender to library's Gender enum
+      let gender = 'male'; // default
+      if (node.attributes.gender === 'female') {
+        gender = 'female';
       }
       
       const nodeData = {
-        id: String(nodeId), // react-family-tree expects string IDs
-        parentId: parentId !== null ? String(parentId) : null,
-        name: node.name || `Person ${nodeId}`,
-        gender: node.attributes.gender || '',
-        photo: node.attributes.photo || null,
-        age: node.attributes.age !== null && node.attributes.age !== undefined ? node.attributes.age : null,
-        birthDate: node.attributes.birthDate || null,
+        id: nodeId,
+        gender: gender,
+        parents: [],
+        children: [],
+        siblings: [],
+        // Store additional data for our use
+        _name: node.name || `Person ${nodeId}`,
+        _photo: node.attributes.photo || null,
+        _age: node.attributes.age !== null && node.attributes.age !== undefined ? node.attributes.age : null,
+        _birthDate: node.attributes.birthDate || null,
       };
       
-      flatNodes.push(nodeData);
+      nodeMap.set(nodeId, nodeData);
+      allNodes.push(nodeData);
       
-      // Safely handle children array
+      // Recursively collect children
       const children = node.children || [];
       if (Array.isArray(children) && children.length > 0) {
         children.forEach(child => {
           if (child && child.attributes && child.attributes.id) {
-            traverse(child, nodeId);
-          } else {
-            console.warn('Invalid child node:', child);
+            collectNodes(child);
           }
         });
       }
     }
     
+    // Second pass: build relationships
+    function buildRelationships(node) {
+      if (!node || !node.attributes || !node.attributes.id) {
+        return;
+      }
+      
+      const nodeId = String(node.attributes.id);
+      const nodeData = nodeMap.get(nodeId);
+      if (!nodeData) return;
+      
+      // Build children relationships
+      const children = node.children || [];
+      if (Array.isArray(children) && children.length > 0) {
+        children.forEach(child => {
+          if (child && child.attributes && child.attributes.id) {
+            const childId = String(child.attributes.id);
+            nodeData.children.push({
+              id: childId,
+              type: 'blood', // Default relationship type
+            });
+            
+            // Also add parent relationship to child
+            const childData = nodeMap.get(childId);
+            if (childData) {
+              childData.parents.push({
+                id: nodeId,
+                type: 'blood',
+              });
+            }
+          }
+        });
+      }
+      
+      // Recursively process children
+      children.forEach(child => {
+        if (child && child.attributes && child.attributes.id) {
+          buildRelationships(child);
+        }
+      });
+    }
+    
     try {
-      traverse(treeData);
-      console.log('Converted nodes:', flatNodes);
-      return flatNodes;
+      collectNodes(treeData);
+      buildRelationships(treeData);
+      
+      // Build siblings relationships (children of same parents are siblings)
+      allNodes.forEach(node => {
+        if (node.parents.length > 0) {
+          // Find all nodes with same parents
+          const siblingIds = new Set();
+          node.parents.forEach(parent => {
+            const parentNode = nodeMap.get(parent.id);
+            if (parentNode) {
+              parentNode.children.forEach(child => {
+                if (child.id !== node.id) {
+                  siblingIds.add(child.id);
+                }
+              });
+            }
+          });
+          
+          siblingIds.forEach(siblingId => {
+            node.siblings.push({
+              id: siblingId,
+              type: 'blood',
+            });
+          });
+        }
+      });
+      
+      console.log('Converted nodes for react-family-tree:', allNodes);
+      return allNodes;
     } catch (error) {
       console.error('Error converting tree to nodes:', error);
       return [];
@@ -91,7 +165,7 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
   
   const handleNodeClick = (node) => {
     if (onNodeClick) {
-      onNodeClick({ attributes: node });
+      onNodeClick({ attributes: { id: parseInt(node.id, 10) } });
     }
   };
   
