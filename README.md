@@ -192,6 +192,14 @@ Global styles and component classes are in `src/index.css`:
 - Make sure Vite dev server is running on port 5173
 - Check `WP_DEBUG` is set to `true`
 
+## Documentation
+
+Comprehensive documentation is available in the `docs/` folder:
+
+- **[Relationships](docs/relationships.md)** - How the bidirectional relationship system works
+- **[Relationship Types](docs/relationship-types.md)** - Guide to configuring relationship types and inverse mappings
+- **[Architecture](docs/architecture.md)** - Technical architecture and extension points
+
 ## License
 
 GPL v2 or later
