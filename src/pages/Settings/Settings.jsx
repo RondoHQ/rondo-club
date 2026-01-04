@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import MonicaImport from '@/components/import/MonicaImport';
 import { APP_NAME } from '@/constants/app';
@@ -29,6 +30,19 @@ export default function Settings() {
               Edit Profile in WordPress
             </a>
           </div>
+        </div>
+      </div>
+      
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4">Configuration</h2>
+        <div className="space-y-3">
+          <Link
+            to="/settings/relationship-types"
+            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+          >
+            <p className="font-medium">Relationship Types</p>
+            <p className="text-sm text-gray-500">Manage relationship types and their inverse mappings</p>
+          </Link>
         </div>
       </div>
       

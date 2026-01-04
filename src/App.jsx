@@ -14,6 +14,7 @@ import CompanyForm from '@/pages/Companies/CompanyForm';
 import DatesList from '@/pages/Dates/DatesList';
 import DateForm from '@/pages/Dates/DateForm';
 import Settings from '@/pages/Settings/Settings';
+import RelationshipTypes from '@/pages/Settings/RelationshipTypes';
 import Login from '@/pages/Login';
 
 function ProtectedRoute({ children }) {
@@ -74,6 +75,7 @@ function App() {
                 
                 {/* Settings */}
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/settings/relationship-types" element={<RelationshipTypes />} />
                 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />
