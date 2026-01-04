@@ -794,13 +794,27 @@ class PRM_Google_Contacts_Import {
 
     /**
      * Find an existing person by name
+     * 
+     * Note: We only search within posts the current user can access (their own + shared)
+     * to avoid matching people from other users' contact lists.
      */
     private function find_existing_person(string $first_name, string $last_name): ?int {
+        $user_id = get_current_user_id();
+        
+        // Get accessible post IDs for this user (bypass pre_get_posts filter)
+        $accessible_ids = $this->get_user_accessible_person_ids($user_id);
+        
+        if (empty($accessible_ids)) {
+            return null;
+        }
+        
         $query = new WP_Query([
-            'post_type'      => 'person',
-            'posts_per_page' => 1,
-            'post_status'    => 'any',
-            'meta_query'     => [
+            'post_type'        => 'person',
+            'posts_per_page'   => 1,
+            'post_status'      => 'publish',
+            'post__in'         => $accessible_ids,
+            'suppress_filters' => true, // Bypass access control filter
+            'meta_query'       => [
                 'relation' => 'AND',
                 [
                     'key'     => 'first_name',
@@ -820,6 +834,45 @@ class PRM_Google_Contacts_Import {
         }
 
         return null;
+    }
+
+    /**
+     * Get person IDs accessible by a user
+     */
+    private function get_user_accessible_person_ids(int $user_id): array {
+        global $wpdb;
+        
+        // Skip access control for admins - return all people
+        if (user_can($user_id, 'manage_options')) {
+            return $wpdb->get_col(
+                "SELECT ID FROM {$wpdb->posts} 
+                 WHERE post_type = 'person' 
+                 AND post_status = 'publish'"
+            );
+        }
+        
+        // Get posts authored by user
+        $authored = $wpdb->get_col($wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} 
+             WHERE post_type = 'person' 
+             AND post_status = 'publish' 
+             AND post_author = %d",
+            $user_id
+        ));
+        
+        // Get posts shared with user
+        $shared = $wpdb->get_col($wpdb->prepare(
+            "SELECT post_id FROM {$wpdb->postmeta} pm
+             JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+             WHERE p.post_type = 'person'
+             AND p.post_status = 'publish'
+             AND pm.meta_key = 'shared_with' 
+             AND (pm.meta_value LIKE %s OR pm.meta_value LIKE %s)",
+            '%"' . $user_id . '"%',
+            '%i:' . $user_id . ';%'
+        ));
+        
+        return array_unique(array_merge($authored, $shared));
     }
 
     /**
