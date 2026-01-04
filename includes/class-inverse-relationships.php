@@ -234,10 +234,21 @@ class PRM_Inverse_Relationships {
             return;
         }
         
-        // Check if inverse is gender-dependent and resolve if needed
-        // $to_person_id is the person who will have the inverse relationship created
-        // Their gender determines which specific type to use
-        $inverse_type_id = $this->resolve_gender_dependent_inverse($inverse_type_id, $to_person_id);
+        // Check if the SOURCE relationship type is gender-dependent
+        // If so, we need to resolve the inverse based on the related person's gender
+        $source_is_gender_dependent = get_field('is_gender_dependent', 'relationship_type_' . $relationship_type_id);
+        $source_gender_group = get_field('gender_dependent_group', 'relationship_type_' . $relationship_type_id);
+        
+        if ($source_is_gender_dependent && !empty($source_gender_group)) {
+            // The source type is gender-dependent, so the inverse needs to be resolved
+            // based on the related person's gender ($to_person_id)
+            $inverse_type_id = $this->resolve_gender_dependent_inverse($inverse_type_id, $to_person_id, $source_gender_group);
+        } else {
+            // Check if inverse is gender-dependent and resolve if needed
+            // $to_person_id is the person who will have the inverse relationship created
+            // Their gender determines which specific type to use
+            $inverse_type_id = $this->resolve_gender_dependent_inverse($inverse_type_id, $to_person_id);
+        }
         
         if (!$inverse_type_id) {
             return;
@@ -400,9 +411,26 @@ class PRM_Inverse_Relationships {
      * 
      * @param int $inverse_type_id The inverse relationship type ID from ACF mapping
      * @param int $related_person_id The person whose gender determines the resolution
+     * @param string|null $target_group Optional target group to resolve to (if source is gender-dependent)
      * @return int|null Resolved relationship type ID, or original if not gender-dependent
      */
-    private function resolve_gender_dependent_inverse($inverse_type_id, $related_person_id) {
+    private function resolve_gender_dependent_inverse($inverse_type_id, $related_person_id, $target_group = null) {
+        // If target_group is provided, resolve directly to that group
+        if ($target_group) {
+            $group_types = $this->get_types_in_gender_group($target_group);
+            if (!empty($group_types)) {
+                $related_person_gender = get_field('gender', $related_person_id);
+                if (!empty($related_person_gender)) {
+                    $resolved_type_id = $this->infer_gender_type_from_group($target_group, $related_person_gender, $group_types);
+                    if ($resolved_type_id) {
+                        return $resolved_type_id;
+                    }
+                }
+            }
+            // Fallback to original if resolution fails
+            return $inverse_type_id;
+        }
+        
         // Check if inverse type is gender-dependent
         $is_gender_dependent = get_field('is_gender_dependent', 'relationship_type_' . $inverse_type_id);
         $gender_group = get_field('gender_dependent_group', 'relationship_type_' . $inverse_type_id);
