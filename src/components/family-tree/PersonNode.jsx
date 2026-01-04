@@ -60,9 +60,9 @@ export default function PersonNode({ nodeDatum, onClick }) {
   return (
     <g>
       <foreignObject
-        x={-70}
+        x={-80}
         y={-50}
-        width={140}
+        width={160}
         height={100}
         className="person-node"
       >
@@ -90,7 +90,7 @@ export default function PersonNode({ nodeDatum, onClick }) {
           
           {/* Name */}
           <div className="text-center">
-            <p className="text-xs font-semibold text-gray-900 truncate" title={displayName}>
+            <p className="text-xs font-semibold text-gray-900 break-words" title={displayName}>
               {displayName}
             </p>
             {(genderSymbol || (age !== null && age !== undefined) || formattedBirthDate) && (
