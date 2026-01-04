@@ -701,10 +701,12 @@ class PRM_Monica_Import {
      * Import special dates (birthdays, etc.)
      */
     private function import_special_dates(int $post_id, string $monica_id, string $first_name, string $last_name, array $contact): void {
+        $full_name = trim($first_name . ' ' . $last_name);
+        
         // Import birthday from contacts table
         $birthday_date_id = $contact['birthday_special_date_id'] ?? '';
         if (!empty($birthday_date_id)) {
-            $this->import_birthday($post_id, $birthday_date_id, $first_name);
+            $this->import_birthday($post_id, $birthday_date_id, $full_name);
         }
 
         // Import other special dates linked to this contact
@@ -724,14 +726,14 @@ class PRM_Monica_Import {
             }
 
             // These are miscellaneous special dates - import as "other" type
-            $this->import_special_date($post_id, $date, $first_name);
+            $this->import_special_date($post_id, $date, $full_name);
         }
     }
 
     /**
      * Import birthday
      */
-    private function import_birthday(int $post_id, string $date_id, string $first_name): void {
+    private function import_birthday(int $post_id, string $date_id, string $full_name): void {
         // Find the special date
         $date_entry = null;
         foreach ($this->tables['special_dates'] ?? [] as $d) {
@@ -769,7 +771,7 @@ class PRM_Monica_Import {
             return;
         }
 
-        $title = sprintf(__("%s's Birthday", 'personal-crm'), $first_name);
+        $title = sprintf(__("%s's Birthday", 'personal-crm'), $full_name);
 
         $date_post_id = wp_insert_post([
             'post_type'   => 'important_date',
@@ -803,13 +805,13 @@ class PRM_Monica_Import {
     /**
      * Import a special date
      */
-    private function import_special_date(int $post_id, array $date, string $first_name): void {
+    private function import_special_date(int $post_id, array $date, string $full_name): void {
         $date_value = $date['date'] ?? '';
         if (empty($date_value)) {
             return;
         }
 
-        $title = sprintf(__("%s - Special Date", 'personal-crm'), $first_name);
+        $title = sprintf(__("%s - Special Date", 'personal-crm'), $full_name);
 
         $date_post_id = wp_insert_post([
             'post_type'   => 'important_date',
@@ -844,19 +846,21 @@ class PRM_Monica_Import {
      * Import life events for a contact
      */
     private function import_life_events(int $post_id, string $monica_id, string $first_name, string $last_name): void {
+        $full_name = trim($first_name . ' ' . $last_name);
+        
         $life_events = array_filter($this->tables['life_events'] ?? [], function($event) use ($monica_id) {
             return $event['contact_id'] === $monica_id;
         });
 
         foreach ($life_events as $event) {
-            $this->import_life_event($post_id, $event, $first_name, $last_name);
+            $this->import_life_event($post_id, $event, $full_name);
         }
     }
 
     /**
      * Import a single life event
      */
-    private function import_life_event(int $post_id, array $event, string $first_name, string $last_name): void {
+    private function import_life_event(int $post_id, array $event, string $full_name): void {
         $event_date = $event['happened_at'] ?? '';
         if (empty($event_date)) {
             return;
@@ -876,7 +880,7 @@ class PRM_Monica_Import {
         } else {
             // Generate title from type
             $type_label = ucwords(str_replace(['-', '_'], ' ', $type_key));
-            $title = sprintf(__("%s's %s", 'personal-crm'), $first_name, $type_label);
+            $title = sprintf(__("%s's %s", 'personal-crm'), $full_name, $type_label);
         }
 
         // Check if this exact life event already exists (avoid duplicates)

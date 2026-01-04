@@ -104,13 +104,13 @@ class PRM_Auto_Title {
             return sprintf(__('Unnamed %s', 'personal-crm'), $type_label);
         }
         
-        // Get first names of related people
+        // Get full names of related people
         $names = [];
         foreach ($people as $person) {
             $person_id = is_object($person) ? $person->ID : $person;
-            $first_name = get_field('first_name', $person_id);
-            if ($first_name) {
-                $names[] = $first_name;
+            $full_name = html_entity_decode(get_the_title($person_id), ENT_QUOTES, 'UTF-8');
+            if ($full_name && $full_name !== __('Unnamed Person', 'personal-crm')) {
+                $names[] = $full_name;
             }
         }
         
