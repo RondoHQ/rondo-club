@@ -65,12 +65,36 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
   // Add start person to nodes
   const startPerson = peopleMap.get(startPersonId);
   if (startPerson) {
+    // Get person name - handle various formats
+    let personName = startPerson.name;
+    if (!personName) {
+      personName = startPerson.title?.rendered || startPerson.title;
+    }
+    // Decode HTML entities if needed (only in browser environment)
+    if (personName && typeof personName === 'string' && typeof document !== 'undefined') {
+      const txt = document.createElement('textarea');
+      txt.innerHTML = personName;
+      personName = txt.value;
+    }
+    if (!personName) {
+      personName = `Person ${startPersonId}`;
+    }
+    
+    // Calculate age if we have birth date
+    let age = null;
+    if (startPerson.acf?.birth_date) {
+      const birthDate = new Date(startPerson.acf.birth_date);
+      if (!isNaN(birthDate.getTime())) {
+        age = Math.floor((new Date() - birthDate) / (365.25 * 24 * 60 * 60 * 1000));
+      }
+    }
+    
     nodes.set(startPersonId, {
       id: startPersonId,
-      name: startPerson.name || startPerson.title?.rendered || startPerson.title || `Person ${startPersonId}`,
+      name: personName,
       gender: startPerson.acf?.gender || '',
       photo: startPerson.thumbnail || null,
-      age: startPerson.age || null,
+      age: age,
       person: startPerson,
     });
   }
