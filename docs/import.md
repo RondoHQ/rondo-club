@@ -52,22 +52,33 @@ Export from Google Contacts using the "Google CSV" format.
 3. Select "Google CSV" format
 4. Click "Export"
 
+**Features**:
+- Interactive duplicate detection with user choice
+- Photo sideloading from Google profile URLs
+- Supports both old and new Google CSV column formats
+
 **Field Mapping**:
 
 | Google Field | Caelis Field |
 |--------------|--------------|
-| `Given Name` | `first_name` |
-| `Family Name` | `last_name` |
+| `Given Name` or `First Name` | `first_name` |
+| `Family Name` or `Last Name` | `last_name` |
 | `Name` | Fallback for name parsing |
 | `Nickname` | `nickname` |
 | `E-mail 1 - Value` (through 5) | `contact_info` (email) |
 | `Phone 1 - Value` (through 5) | `contact_info` (phone/mobile) |
 | `Address 1 - Formatted` (through 3) | `contact_info` (address) |
 | `Website 1 - Value` (through 3) | `contact_info` (website/social) |
-| `Organization 1 - Name` | Creates Company |
-| `Organization 1 - Title` | `work_history.job_title` |
+| `Organization 1 - Name` or `Organization Name` | Creates Company |
+| `Organization 1 - Title` or `Organization Title` | `work_history.job_title` |
 | `Birthday` | Creates `important_date` (birthday) |
+| `Photo` | Profile photo (sideloaded from URL) |
 | `Notes` | Creates note (comment) |
+
+**Photo Import**:
+- Photos are downloaded from Google's `lh3.googleusercontent.com` URLs
+- Only imported if the contact doesn't already have a profile photo
+- Filename is generated from the person's name (e.g., `john-doe.jpg`)
 
 ### Monica CRM Import
 
@@ -137,12 +148,58 @@ Content-Type: multipart/form-data
 file: <CSV file>
 ```
 
+**Response** (includes duplicates):
+```json
+{
+  "valid": true,
+  "version": "google-contacts",
+  "summary": {
+    "contacts": 25,
+    "companies_count": 8,
+    "birthdays": 15,
+    "photos": 12,
+    "notes": 10
+  },
+  "duplicates": [
+    {
+      "index": 3,
+      "csv_name": "John Doe",
+      "csv_org": "Acme Corp",
+      "csv_email": "john@acme.com",
+      "existing_id": 123,
+      "existing_name": "John Doe",
+      "existing_org": "Acme Corporation",
+      "existing_email": "john@example.com",
+      "existing_photo": "https://..."
+    }
+  ]
+}
+```
+
 **Import File**:
 ```
 POST /wp-json/prm/v1/import/google-contacts
 Content-Type: multipart/form-data
 
 file: <CSV file>
+decisions: {"3": "merge", "7": "new", "12": "skip"}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "stats": {
+    "contacts_imported": 18,
+    "contacts_updated": 5,
+    "contacts_skipped": 2,
+    "companies_created": 8,
+    "dates_created": 15,
+    "notes_created": 10,
+    "photos_imported": 10,
+    "errors": []
+  }
+}
 ```
 
 ## Architecture
@@ -171,12 +228,17 @@ flowchart TD
     User[User uploads file]
     Validate[Validate endpoint parses file]
     Preview[Show import preview]
+    Duplicates{Has duplicates?}
+    DecisionUI[Show duplicate resolution UI]
+    UserDecides[User chooses: merge/new/skip]
     Confirm[User confirms import]
     Import[Import endpoint processes file]
     
     subgraph "For each contact"
+        CheckDecision{User decision?}
+        Skip[Skip contact]
         FindExisting[Find existing person by name]
-        CreateUpdate{Exists?}
+        CreateUpdate{Exists & merge?}
         Create[Create new person]
         Update[Update existing person]
         Company[Create/link company]
@@ -188,9 +250,16 @@ flowchart TD
     
     User --> Validate
     Validate --> Preview
-    Preview --> Confirm
+    Preview --> Duplicates
+    Duplicates -->|Yes| DecisionUI
+    Duplicates -->|No| Confirm
+    DecisionUI --> UserDecides
+    UserDecides --> Confirm
     Confirm --> Import
-    Import --> FindExisting
+    Import --> CheckDecision
+    CheckDecision -->|skip| Skip
+    CheckDecision -->|new| Create
+    CheckDecision -->|merge or auto| FindExisting
     FindExisting --> CreateUpdate
     CreateUpdate -->|No| Create
     CreateUpdate -->|Yes| Update
@@ -206,12 +275,89 @@ flowchart TD
 
 All import methods detect duplicates by matching on first name AND last name (case-sensitive exact match).
 
+### Google Contacts Import (Interactive)
+
+Google Contacts import provides **user-controlled duplicate handling**:
+
+1. **Validation Phase**: When you upload a file, the system identifies potential duplicates
+2. **Decision Phase**: You see a list of matches with side-by-side comparison
+3. **Import Phase**: Your decisions are applied during import
+
+**Duplicate Resolution Options:**
+
+| Option | Behavior |
+|--------|----------|
+| **Update existing** | Merge CSV data into the existing contact (default) |
+| **Create new** | Create a new person, even with matching name |
+| **Skip** | Don't import this contact at all |
+
+**What gets updated in "Update existing" mode:**
+- Contact info is replaced (not merged)
+- Work history is replaced
+- Photos are imported only if no existing photo
+- Notes are always added (not deduplicated)
+
+**API: Validation Response with Duplicates:**
+
+```json
+{
+  "valid": true,
+  "version": "google-contacts",
+  "summary": {
+    "contacts": 25,
+    "companies_count": 8,
+    "birthdays": 15,
+    "photos": 20,
+    "notes": 10
+  },
+  "duplicates": [
+    {
+      "index": 3,
+      "csv_name": "John Doe",
+      "csv_org": "Acme Corp",
+      "csv_email": "john@acme.com",
+      "existing_id": 123,
+      "existing_name": "John Doe",
+      "existing_org": "Acme Corporation",
+      "existing_email": "john@example.com",
+      "existing_photo": "https://..."
+    }
+  ]
+}
+```
+
+**API: Import Request with Decisions:**
+
+```json
+POST /wp-json/prm/v1/import/google-contacts
+Content-Type: multipart/form-data
+
+file: <CSV file>
+decisions: {"3": "merge", "7": "new", "12": "skip"}
+```
+
+The `decisions` object maps CSV row indices to actions:
+- `merge` - Update existing contact
+- `new` - Create new contact
+- `skip` - Don't import
+
+### vCard and Monica Import (Automatic)
+
+For vCard and Monica imports, duplicate handling is automatic:
+
 When a duplicate is found:
 - The existing person record is updated
 - Contact info is replaced (not merged)
 - Work history is replaced
 - Photos are only imported if the person has no existing photo
 - Notes are always created (not deduplicated)
+
+### Access Control and Duplicates
+
+Duplicate detection respects access control boundaries:
+- Only contacts **you can access** are considered for duplicate matching
+- Contacts from other users (not shared with you) are invisible to duplicate detection
+- This prevents accidentally merging your contacts with someone else's private data
 
 ## Extension Points
 

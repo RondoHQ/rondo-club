@@ -4,6 +4,8 @@
 
 This document describes the technical architecture of the bidirectional relationship system, including how it works under the hood and how to extend it.
 
+> **Note:** This document focuses specifically on the relationship sync system. For broader system documentation, see the [Documentation Index](#related-documentation) at the end of this file.
+
 ## System Components
 
 ### Backend Components
@@ -299,4 +301,42 @@ Potential improvements to the system:
 3. **Relationship validation**: Prevent invalid relationship combinations
 4. **Relationship history**: Track when relationships were created/modified
 5. **Import/export**: Tools for exporting relationship data
+
+---
+
+## Related Documentation
+
+### Core System Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Data Model](./data-model.md) | Post types, taxonomies, and ACF field definitions |
+| [Access Control](./access-control.md) | Row-level security and user permissions |
+| [REST API](./rest-api.md) | All API endpoints (WordPress + custom) |
+| [PHP Autoloading](./php-autoloading.md) | Conditional class loading system |
+
+### Feature Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Relationships](./relationships.md) | How bidirectional relationships work |
+| [Relationship Types](./relationship-types.md) | Configuring relationship type mappings |
+| [Import](./import.md) | Contact import from vCard, Google, Monica |
+| [iCal Feed](./ical-feed.md) | Calendar subscription system |
+| [Reminders](./reminders.md) | Email notification system |
+| [Family Tree](./family-tree.md) | Family tree visualization |
+
+### Frontend Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Frontend Architecture](./frontend-architecture.md) | React SPA structure and patterns |
+
+### Project Documentation
+
+| Document | Description |
+|----------|-------------|
+| [README](../README.md) | Project overview and quick start |
+| [AGENTS.md](../AGENTS.md) | AI agent guidance and development rules |
+| [CHANGELOG](../CHANGELOG.md) | Version history |
 
