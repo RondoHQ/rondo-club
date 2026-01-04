@@ -6,14 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { usePerson, useUpdatePerson, usePeople } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-
-// Helper to decode HTML entities
-function decodeHtml(html) {
-  if (!html) return '';
-  const txt = document.createElement('textarea');
-  txt.innerHTML = html;
-  return txt.value;
-}
+import { getPersonName } from '@/utils/formatters';
 
 function SearchablePersonSelector({ value, onChange, people, isLoading, excludePersonId }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,7 +32,7 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
     
     const term = searchTerm.toLowerCase();
     return sortedAndFilteredPeople.filter(p => {
-      const name = decodeHtml(p.title?.rendered || p.title || '').toLowerCase();
+      const name = getPersonName(p).toLowerCase();
       const firstName = (p.first_name || p.acf?.first_name || '').toLowerCase();
       const lastName = (p.last_name || p.acf?.last_name || '').toLowerCase();
       
@@ -81,7 +74,7 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
   };
 
   const displayValue = selectedPerson
-    ? decodeHtml(selectedPerson.title?.rendered || selectedPerson.title)
+    ? getPersonName(selectedPerson)
     : '';
 
   return (
@@ -138,7 +131,7 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
                   value === person.id ? 'bg-primary-50' : ''
                 }`}
               >
-                {decodeHtml(person.title?.rendered || person.title)}
+                {getPersonName(person)}
               </button>
             ))
           ) : (

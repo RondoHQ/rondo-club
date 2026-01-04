@@ -3,14 +3,7 @@ import { ArrowLeft, Edit, Trash2, Building2, Globe, Users } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-
-// Helper to decode HTML entities
-function decodeHtml(html) {
-  if (!html) return '';
-  const txt = document.createElement('textarea');
-  txt.innerHTML = html;
-  return txt.value;
-}
+import { getCompanyName } from '@/utils/formatters';
 
 export default function CompanyDetail() {
   const { id } = useParams();
@@ -43,7 +36,7 @@ export default function CompanyDetail() {
   
   // Update document title with company's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
-  useDocumentTitle(decodeHtml(company?.title?.rendered || company?.title || 'Company'));
+  useDocumentTitle(getCompanyName(company) || 'Company');
   
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this company?')) {
@@ -96,7 +89,7 @@ export default function CompanyDetail() {
           {company._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
             <img 
               src={company._embedded['wp:featuredmedia'][0].source_url}
-              alt={decodeHtml(company.title.rendered)}
+              alt={getCompanyName(company)}
               className="w-16 h-16 rounded-lg object-cover"
             />
           ) : (
@@ -105,7 +98,7 @@ export default function CompanyDetail() {
             </div>
           )}
           <div>
-            <h1 className="text-2xl font-bold">{decodeHtml(company.title.rendered)}</h1>
+            <h1 className="text-2xl font-bold">{getCompanyName(company)}</h1>
             {acf.industry && <p className="text-gray-500">{acf.industry}</p>}
             {acf.website && (
               <a 

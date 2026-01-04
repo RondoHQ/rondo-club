@@ -4,14 +4,7 @@ import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
-
-// Helper to decode HTML entities
-function decodeHtml(html) {
-  if (!html) return '';
-  const txt = document.createElement('textarea');
-  txt.innerHTML = html;
-  return txt.value;
-}
+import { getCompanyName } from '@/utils/formatters';
 
 // Helper function to get current company ID from person's work history
 function getCurrentCompanyId(person) {
@@ -223,7 +216,7 @@ export default function PeopleList() {
     const map = {};
     if (companiesData) {
       companiesData.forEach(company => {
-        map[company.id] = decodeHtml(company.title?.rendered || company.title || '');
+        map[company.id] = getCompanyName(company);
       });
     }
     return map;

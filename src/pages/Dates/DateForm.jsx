@@ -6,14 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePeople } from '@/hooks/usePeople';
-
-// Helper to decode HTML entities
-function decodeHtml(html) {
-  if (!html) return '';
-  const txt = document.createElement('textarea');
-  txt.innerHTML = html;
-  return txt.value;
-}
+import { decodeHtml, getPersonName } from '@/utils/formatters';
 
 function PeopleSelector({ value = [], onChange, people = [], isLoading }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,7 +15,7 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading }) {
     if (!searchTerm) return people.slice(0, 10);
     const term = searchTerm.toLowerCase();
     return people.filter(p =>
-      decodeHtml(p.title?.rendered)?.toLowerCase().includes(term)
+      getPersonName(p).toLowerCase().includes(term)
     ).slice(0, 10);
   }, [people, searchTerm]);
 
@@ -51,7 +44,7 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading }) {
               key={person.id}
               className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm"
             >
-              {decodeHtml(person.title?.rendered)}
+              {getPersonName(person)}
               <button
                 type="button"
                 onClick={() => handleRemove(person.id)}
@@ -89,7 +82,7 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading }) {
                     value.includes(person.id) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
-                  {decodeHtml(person.title?.rendered)}
+                  {getPersonName(person)}
                 </button>
               ))
             ) : (
@@ -169,7 +162,7 @@ export default function DateForm() {
       const transformed = {
         ...p,
         id: p.id,
-        name: decodeHtml(p.title?.rendered || p.title || ''),
+        name: getPersonName(p),
         first_name: p.acf?.first_name || '',
         last_name: p.acf?.last_name || '',
         is_favorite: p.acf?.is_favorite || false,
