@@ -4,6 +4,14 @@ import { Plus, Search, Building2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 
+// Helper to decode HTML entities
+function decodeHtml(html) {
+  if (!html) return '';
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
+
 function CompanyCard({ company }) {
   return (
     <Link 
@@ -14,7 +22,7 @@ function CompanyCard({ company }) {
         {company._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
           <img 
             src={company._embedded['wp:featuredmedia'][0].source_url}
-            alt={company.title.rendered}
+            alt={decodeHtml(company.title.rendered)}
             className="w-12 h-12 rounded-lg object-cover"
           />
         ) : (
@@ -24,7 +32,7 @@ function CompanyCard({ company }) {
         )}
         <div className="ml-3 flex-1 min-w-0">
           <h3 className="text-sm font-medium text-gray-900 truncate">
-            {company.title.rendered}
+            {decodeHtml(company.title.rendered)}
           </h3>
           {company.acf?.industry && (
             <p className="text-sm text-gray-500">{company.acf.industry}</p>

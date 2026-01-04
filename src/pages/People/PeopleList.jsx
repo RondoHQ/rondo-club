@@ -5,6 +5,14 @@ import { usePeople } from '@/hooks/usePeople';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 
+// Helper to decode HTML entities
+function decodeHtml(html) {
+  if (!html) return '';
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
+
 // Helper function to get current company ID from person's work history
 function getCurrentCompanyId(person) {
   const workHistory = person.acf?.work_history || [];
@@ -215,7 +223,7 @@ export default function PeopleList() {
     const map = {};
     if (companiesData) {
       companiesData.forEach(company => {
-        map[company.id] = company.title?.rendered || company.title || '';
+        map[company.id] = decodeHtml(company.title?.rendered || company.title || '');
       });
     }
     return map;
