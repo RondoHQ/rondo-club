@@ -274,38 +274,84 @@ export function graphToTree(graph, startPersonId) {
     const children = [];
     const neighbors = adjacencyList.get(nodeId) || [];
     
+    // First, find all children (people this node is a parent of)
+    const childRelations = [];
     for (const neighbor of neighbors) {
       // Skip the parent to avoid going back up the tree
       if (neighbor.nodeId === parentId) continue;
       
-      // Only process parent/child relationships
       const relType = neighbor.type?.toLowerCase();
-      if (!isParentType(relType) && !isChildType(relType)) {
-        continue; // Skip non-parent/child relationships
-      }
-      
-      // Determine if this neighbor should be a child in the tree
-      // If current node has "parent" relationship to neighbor → neighbor is child
-      // If current node has "child" relationship to neighbor → neighbor is parent (skip, already traversed up)
-      let shouldAddAsChild = false;
-      
       if (isParentType(relType)) {
         // Current node has "parent" relationship to neighbor → neighbor is child of current
-        shouldAddAsChild = true;
-      } else if (isChildType(relType)) {
-        // Current node has "child" relationship to neighbor → neighbor is parent of current
-        // We're building downward, so we skip parents (they're already above)
-        shouldAddAsChild = false;
+        childRelations.push(neighbor);
+      }
+    }
+    
+    // Sort children by birth date (oldest first)
+    childRelations.sort((a, b) => {
+      const nodeA = nodes.find(n => n.id === a.nodeId);
+      const nodeB = nodes.find(n => n.id === b.nodeId);
+      const dateA = nodeA?.birthDate;
+      const dateB = nodeB?.birthDate;
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1; // No date goes to end
+      if (!dateB) return -1; // No date goes to end
+      return new Date(dateA) - new Date(dateB); // Oldest first
+    });
+    
+    // Build child nodes
+    for (const neighbor of childRelations) {
+      const childNode = buildNode(neighbor.nodeId, nodeId);
+      if (childNode) {
+        children.push({
+          ...childNode,
+          relationshipType: neighbor.type,
+          relationshipLabel: neighbor.label,
+        });
+      }
+    }
+    
+    // Now find siblings (people who share the same parents)
+    // If we have a parent, find other children of that parent
+    if (parentId) {
+      const parentNeighbors = adjacencyList.get(parentId) || [];
+      const siblingRelations = [];
+      
+      for (const neighbor of parentNeighbors) {
+        // Skip self and parent
+        if (neighbor.nodeId === nodeId || neighbor.nodeId === parentId) continue;
+        
+        const relType = neighbor.type?.toLowerCase();
+        // If parent has "parent" relationship to neighbor, that neighbor is a sibling
+        if (isParentType(relType)) {
+          siblingRelations.push(neighbor);
+        }
       }
       
-      if (shouldAddAsChild) {
-        const childNode = buildNode(neighbor.nodeId, nodeId);
-        if (childNode) {
-          children.push({
-            ...childNode,
-            relationshipType: neighbor.type,
-            relationshipLabel: neighbor.label,
-          });
+      // Sort siblings by birth date (oldest first)
+      siblingRelations.sort((a, b) => {
+        const nodeA = nodes.find(n => n.id === a.nodeId);
+        const nodeB = nodes.find(n => n.id === b.nodeId);
+        const dateA = nodeA?.birthDate;
+        const dateB = nodeB?.birthDate;
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return new Date(dateA) - new Date(dateB);
+      });
+      
+      // Add siblings as children (they'll be rendered at the same level)
+      // Only add siblings that haven't been visited yet
+      for (const sibling of siblingRelations) {
+        if (!visited.has(sibling.nodeId)) {
+          const siblingNode = buildNode(sibling.nodeId, parentId);
+          if (siblingNode) {
+            children.push({
+              ...siblingNode,
+              relationshipType: 'sibling',
+              relationshipLabel: 'Sibling',
+            });
+          }
         }
       }
     }

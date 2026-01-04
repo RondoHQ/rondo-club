@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.95] - 2024-12-19
+
+### Fixed
+- Family Tree: Find oldest ancestor by birth date when multiple people have no parents
+- Family Tree: Include siblings in tree visualization (children of same parents)
+- Family Tree: Sort siblings by birth date (oldest first)
+- Family Tree: Ensure tree flows from oldest (top) to youngest (bottom)
+
 ## [1.0.94] - 2024-12-19
 
 ### Fixed
