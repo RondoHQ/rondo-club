@@ -8,6 +8,7 @@ import apiClient from '@/api/client';
 export default function Settings() {
   const { logoutUrl } = useAuth();
   const config = window.prmConfig || {};
+  const isAdmin = config.isAdmin || false;
   
   const [icalUrl, setIcalUrl] = useState('');
   const [webcalUrl, setWebcalUrl] = useState('');
@@ -161,60 +162,64 @@ export default function Settings() {
         )}
       </div>
       
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Configuration</h2>
-        <div className="space-y-3">
-          <Link
-            to="/settings/relationship-types"
-            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-          >
-            <p className="font-medium">Relationship Types</p>
-            <p className="text-sm text-gray-500">Manage relationship types and their inverse mappings</p>
-          </Link>
+      {isAdmin && (
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold mb-4">Configuration</h2>
+          <div className="space-y-3">
+            <Link
+              to="/settings/relationship-types"
+              className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+            >
+              <p className="font-medium">Relationship Types</p>
+              <p className="text-sm text-gray-500">Manage relationship types and their inverse mappings</p>
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
       
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Administration</h2>
-        <div className="space-y-3">
-          <a
-            href={config.adminUrl}
-            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <p className="font-medium">WordPress Admin</p>
-            <p className="text-sm text-gray-500">Manage all settings, users, and content</p>
-          </a>
-          <a
-            href={config.adminUrl + 'edit.php?post_type=person'}
-            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <p className="font-medium">Manage People</p>
-            <p className="text-sm text-gray-500">Edit people with all ACF fields</p>
-          </a>
-          <a
-            href={config.adminUrl + 'edit.php?post_type=company'}
-            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <p className="font-medium">Manage Companies</p>
-            <p className="text-sm text-gray-500">Edit companies with all ACF fields</p>
-          </a>
-          <a
-            href={config.adminUrl + 'edit.php?post_type=important_date'}
-            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <p className="font-medium">Manage Important Dates</p>
-            <p className="text-sm text-gray-500">Edit dates and link people</p>
-          </a>
+      {isAdmin && (
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold mb-4">Administration</h2>
+          <div className="space-y-3">
+            <a
+              href={config.adminUrl}
+              className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <p className="font-medium">WordPress Admin</p>
+              <p className="text-sm text-gray-500">Manage all settings, users, and content</p>
+            </a>
+            <a
+              href={config.adminUrl + 'edit.php?post_type=person'}
+              className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <p className="font-medium">Manage People</p>
+              <p className="text-sm text-gray-500">Edit people with all ACF fields</p>
+            </a>
+            <a
+              href={config.adminUrl + 'edit.php?post_type=company'}
+              className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <p className="font-medium">Manage Companies</p>
+              <p className="text-sm text-gray-500">Edit companies with all ACF fields</p>
+            </a>
+            <a
+              href={config.adminUrl + 'edit.php?post_type=important_date'}
+              className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <p className="font-medium">Manage Important Dates</p>
+              <p className="text-sm text-gray-500">Edit dates and link people</p>
+            </a>
+          </div>
         </div>
-      </div>
+      )}
       
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4">Session</h2>
@@ -226,7 +231,7 @@ export default function Settings() {
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4">About</h2>
         <p className="text-sm text-gray-600">
-          {APP_NAME} v1.0.0<br />
+          {APP_NAME} v{config.version || '1.0.0'}<br />
           Built with WordPress, React, and Tailwind CSS.
         </p>
       </div>

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.122] - 2026-01-04
+
+### Changed
+- Settings page: Administration and Configuration sections now only visible to administrators
+- Relationship Types page: Non-admin users now see "Access Denied" message instead of the management interface
+- About section: Now displays the actual theme version from style.css
+
+### Added
+- Disabled WordPress admin color scheme picker for all users
+- Disabled application passwords for improved security
+
 ## [1.0.121] - 2026-01-04
 
 ### Fixed

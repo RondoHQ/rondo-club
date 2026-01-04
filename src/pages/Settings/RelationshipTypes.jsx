@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Save, Plus, Trash2, Edit2, X, RotateCcw } from 'lucide-react';
+import { Save, Plus, Trash2, Edit2, X, RotateCcw, ShieldAlert } from 'lucide-react';
 import { wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { Link } from 'react-router-dom';
 
 // Searchable Relationship Type Selector Component
 function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes, currentTypeId = null }) {
@@ -147,6 +148,26 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
 export default function RelationshipTypes() {
   useDocumentTitle('Relationship Types - Settings');
   const queryClient = useQueryClient();
+  const config = window.prmConfig || {};
+  const isAdmin = config.isAdmin || false;
+  
+  // Check if user is admin
+  if (!isAdmin) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="card p-8 text-center">
+          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+          <p className="text-gray-600 mb-6">
+            You don't have permission to manage relationship types. This feature is only available to administrators.
+          </p>
+          <Link to="/settings" className="btn-primary">
+            Back to Settings
+          </Link>
+        </div>
+      </div>
+    );
+  }
   
   // Fetch relationship types
   const { data: relationshipTypes = [], isLoading } = useQuery({
