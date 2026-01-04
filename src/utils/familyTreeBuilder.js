@@ -4,33 +4,10 @@
  * Builds tree structures from relationship data for family tree visualization
  */
 
-// Family relationship type slugs
+// Family relationship type slugs - simplified to only parent/child for tree
 const FAMILY_RELATIONSHIP_TYPES = [
-  // Immediate family
   'parent',
   'child',
-  'sibling',
-  'spouse',
-  'partner',
-  
-  // Extended family
-  'grandparent',
-  'grandchild',
-  'uncle',
-  'aunt',
-  'nephew',
-  'niece',
-  'cousin',
-  
-  // Step/in-law
-  'stepparent',
-  'stepchild',
-  'stepsibling',
-  'inlaw',
-  
-  // Other
-  'godparent',
-  'godchild',
 ];
 
 /**
@@ -194,16 +171,14 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
  * Check if relationship type indicates parent (should be above)
  */
 function isParentType(typeSlug) {
-  const parentTypes = ['parent', 'grandparent', 'stepparent', 'godparent'];
-  return parentTypes.includes(typeSlug?.toLowerCase());
+  return typeSlug?.toLowerCase() === 'parent';
 }
 
 /**
  * Check if relationship type indicates child (should be below)
  */
 function isChildType(typeSlug) {
-  const childTypes = ['child', 'grandchild', 'stepchild', 'godchild'];
-  return childTypes.includes(typeSlug?.toLowerCase());
+  return typeSlug?.toLowerCase() === 'child';
 }
 
 /**
@@ -254,27 +229,20 @@ export function graphToTree(graph, rootNodeId) {
   // - If root has "parent" relationship to X → root is parent of X → X is child of root → should be BELOW
   const rootParents = [];  // People who are parents of root (should be above)
   const rootChildren = []; // People who are children of root (should be below)
-  const rootSiblings = []; // Siblings, spouses, etc. (same level)
-  const rootOthers = [];
   
   const rootNeighbors = adjacencyList.get(rootNodeId) || [];
   rootNeighbors.forEach(neighbor => {
     const relType = neighbor.type?.toLowerCase();
     
-    // Check the relationship from root's perspective
-    // If root has "child" relationship to someone, that person IS root's parent (should be above)
-    // If root has "parent" relationship to someone, that person IS root's child (should be below)
+    // Only process parent/child relationships
     if (isChildType(relType)) {
-      // Root is child of this person → this person is root's parent
+      // Root has "child" relationship to this person → this person IS root's parent → should be ABOVE
       rootParents.push(neighbor);
     } else if (isParentType(relType)) {
-      // Root is parent of this person → this person is root's child
+      // Root has "parent" relationship to this person → this person IS root's child → should be BELOW
       rootChildren.push(neighbor);
-    } else if (['sibling', 'spouse', 'partner', 'cousin', 'stepsibling'].includes(relType)) {
-      rootSiblings.push(neighbor);
-    } else {
-      rootOthers.push(neighbor);
     }
+    // Ignore all other relationship types (sibling, spouse, etc.)
   });
   
   // Build tree recursively
@@ -329,29 +297,48 @@ export function graphToTree(graph, rootNodeId) {
   // react-d3-tree renders top-down, so parents need to be ancestors in the tree
   
   if (rootParents.length > 0) {
-    // Restructure: make first parent the root, with current root as child
-    const firstParent = rootParents[0];
-    const parentNode = nodes.find(n => n.id === firstParent.nodeId);
+    // Restructure: create a virtual root that contains all parents, with current root as child
+    // If there are multiple parents, they should be siblings at the top level
     
-    if (parentNode) {
-      // Build tree starting from parent
+    // Build all parent nodes
+    const parentNodes = rootParents.map(rel => {
       visited.clear();
-      const parentTree = buildNode(firstParent.nodeId);
+      const parentTree = buildNode(rel.nodeId);
+      return parentTree ? {
+        ...parentTree,
+        relationshipType: rel.type,
+        relationshipLabel: rel.label,
+      } : null;
+    }).filter(Boolean);
+    
+    if (parentNodes.length > 0) {
+      // Create a virtual root node that groups all parents together
+      // The first parent will be the main root, with other parents as siblings
+      const mainParentTree = parentNodes[0];
       
-      // Add current root as a child of parent
+      // Add other parents as siblings of the main parent
+      if (parentNodes.length > 1) {
+        mainParentTree.children = [
+          ...(mainParentTree.children || []),
+          ...parentNodes.slice(1),
+        ];
+      }
+      
+      // Now add the current root as a child of the main parent
       visited.clear();
-      visited.add(firstParent.nodeId);
-      const rootAsChild = buildNode(rootNodeId, firstParent.nodeId);
+      // Mark all parents as visited to prevent cycles
+      rootParents.forEach(rel => visited.add(rel.nodeId));
+      
+      const rootAsChild = buildNode(rootNodeId, mainParentTree.attributes.id);
       
       if (rootAsChild) {
-        // Add root's children, siblings, and others to rootAsChild
+        // Add root's children to rootAsChild
         const allRootChildren = [];
         
-        // Add siblings and others as children of root
-        [...rootSiblings, ...rootOthers, ...rootChildren].forEach(rel => {
+        rootChildren.forEach(rel => {
           visited.clear();
+          rootParents.forEach(p => visited.add(p.nodeId));
           visited.add(rootNodeId);
-          visited.add(firstParent.nodeId);
           const childNode = buildNode(rel.nodeId, rootNodeId, rel.type);
           if (childNode) {
             allRootChildren.push({
@@ -362,31 +349,17 @@ export function graphToTree(graph, rootNodeId) {
           }
         });
         
-        // Add other parents as siblings of first parent
-        const otherParents = rootParents.slice(1).map(rel => {
-          visited.clear();
-          visited.add(firstParent.nodeId);
-          visited.add(rootNodeId);
-          const parentNode = buildNode(rel.nodeId, firstParent.nodeId, rel.type);
-          return parentNode ? {
-            ...parentNode,
-            relationshipType: rel.type,
-            relationshipLabel: rel.label,
-          } : null;
-        }).filter(Boolean);
-        
         if (allRootChildren.length > 0) {
           rootAsChild.children = [...(rootAsChild.children || []), ...allRootChildren];
         }
         
-        // Add root as child of parent, and other parents as siblings
-        parentTree.children = [
-          ...(parentTree.children || []),
+        // Add root as child of main parent
+        mainParentTree.children = [
+          ...(mainParentTree.children || []),
           rootAsChild,
-          ...otherParents,
         ];
         
-        return parentTree;
+        return mainParentTree;
       }
     }
   }
@@ -395,28 +368,25 @@ export function graphToTree(graph, rootNodeId) {
   visited.clear();
   const tree = buildNode(rootNodeId);
   
-  // Organize children: parents first (if any), then siblings, then children
+  // Organize children: only parent/child relationships
   if (tree && tree.children) {
-    const organizedChildren = [];
     const parentChildren = [];
-    const siblingChildren = [];
     const childChildren = [];
-    const otherChildren = [];
     
     tree.children.forEach(child => {
       const relType = child.relationshipType?.toLowerCase();
-      if (isParentType(relType)) {
+      if (isChildType(relType)) {
+        // This is a parent of root (root has "child" relationship to them)
         parentChildren.push(child);
-      } else if (isChildType(relType)) {
+      } else if (isParentType(relType)) {
+        // This is a child of root (root has "parent" relationship to them)
         childChildren.push(child);
-      } else if (['sibling', 'spouse', 'partner'].includes(relType)) {
-        siblingChildren.push(child);
-      } else {
-        otherChildren.push(child);
       }
+      // Ignore all other relationship types
     });
     
-    tree.children = [...parentChildren, ...siblingChildren, ...childChildren, ...otherChildren];
+    // Parents first (above), then children (below)
+    tree.children = [...parentChildren, ...childChildren];
   }
   
   return tree;

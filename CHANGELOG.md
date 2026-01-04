@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.79] - 2024-12-19
+
+### Fixed
+- Family Tree: Simplified to only show parent/child relationships (ignores niece/nephew/aunt/uncle)
+- Family Tree: Fixed hierarchy - parents now correctly appear above root person
+- Family Tree: Fixed multiple parents display - all parents now show as siblings at top level
+- Family Tree: Corrected relationship direction logic
+
 ## [1.0.78] - 2024-12-19
 
 ### Fixed
