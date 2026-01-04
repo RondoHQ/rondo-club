@@ -5,7 +5,7 @@
  * vis.js supports proper graph structures where children can have multiple parents.
  */
 
-const FAMILY_RELATIONSHIP_TYPES = ['parent', 'child', 'spouse', 'lover'];
+const FAMILY_RELATIONSHIP_TYPES = ['parent', 'child', 'spouse', 'lover', 'partner'];
 
 export function isFamilyRelationshipType(typeSlug) {
   return FAMILY_RELATIONSHIP_TYPES.includes(typeSlug?.toLowerCase());
@@ -21,7 +21,7 @@ function isChildType(typeSlug) {
 
 function isSpouseType(typeSlug) {
   const slug = typeSlug?.toLowerCase();
-  return slug === 'spouse' || slug === 'lover';
+  return slug === 'spouse' || slug === 'lover' || slug === 'partner';
 }
 
 /**
