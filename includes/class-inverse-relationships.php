@@ -234,6 +234,15 @@ class PRM_Inverse_Relationships {
             return;
         }
         
+        // Check if inverse is gender-dependent and resolve if needed
+        // $to_person_id is the person who will have the inverse relationship created
+        // Their gender determines which specific type to use
+        $inverse_type_id = $this->resolve_gender_dependent_inverse($inverse_type_id, $to_person_id);
+        
+        if (!$inverse_type_id) {
+            return;
+        }
+        
         // Get existing relationships for the related person
         $related_person_relationships = get_field('relationships', $to_person_id);
         if (!is_array($related_person_relationships)) {
@@ -323,6 +332,14 @@ class PRM_Inverse_Relationships {
             return;
         }
         
+        // Check if inverse is gender-dependent and resolve if needed
+        // For removal, we need to check the to_person_id's gender (the person we're removing from)
+        $inverse_type_id = $this->resolve_gender_dependent_inverse($inverse_type_id, $to_person_id);
+        
+        if (!$inverse_type_id) {
+            return;
+        }
+        
         // Get existing relationships for the related person
         $related_person_relationships = get_field('relationships', $from_person_id);
         if (!is_array($related_person_relationships)) {
@@ -373,6 +390,132 @@ class PRM_Inverse_Relationships {
             // Unmark as processing
             unset($this->processing[$from_person_id]);
         }
+    }
+    
+    /**
+     * Resolve gender-dependent inverse relationship type
+     * 
+     * If the inverse type is gender-dependent, resolves to the correct specific type
+     * based on the related person's gender.
+     * 
+     * @param int $inverse_type_id The inverse relationship type ID from ACF mapping
+     * @param int $related_person_id The person whose gender determines the resolution
+     * @return int|null Resolved relationship type ID, or original if not gender-dependent
+     */
+    private function resolve_gender_dependent_inverse($inverse_type_id, $related_person_id) {
+        // Check if inverse type is gender-dependent
+        $is_gender_dependent = get_field('is_gender_dependent', 'relationship_type_' . $inverse_type_id);
+        $gender_group = get_field('gender_dependent_group', 'relationship_type_' . $inverse_type_id);
+        
+        if (!$is_gender_dependent || empty($gender_group)) {
+            // Not gender-dependent, return as-is
+            return $inverse_type_id;
+        }
+        
+        // Get related person's gender
+        $related_person_gender = get_field('gender', $related_person_id);
+        
+        if (empty($related_person_gender)) {
+            // No gender set - return original (could be improved with fallback logic)
+            return $inverse_type_id;
+        }
+        
+        // Find all relationship types in the same gender-dependent group
+        $group_types = $this->get_types_in_gender_group($gender_group);
+        
+        if (empty($group_types)) {
+            // No types found in group - return original
+            return $inverse_type_id;
+        }
+        
+        // Resolve based on gender and group
+        $resolved_type_id = $this->infer_gender_type_from_group($gender_group, $related_person_gender, $group_types);
+        
+        // Return resolved type or fallback to original
+        return $resolved_type_id ?: $inverse_type_id;
+    }
+    
+    /**
+     * Get all relationship types in a gender-dependent group
+     * 
+     * @param string $group_name The gender-dependent group name
+     * @return array Array of type_id => slug
+     */
+    private function get_types_in_gender_group($group_name) {
+        $types = [];
+        
+        // Get all relationship types
+        $all_types = get_terms([
+            'taxonomy' => 'relationship_type',
+            'hide_empty' => false,
+        ]);
+        
+        if (is_wp_error($all_types) || empty($all_types)) {
+            return $types;
+        }
+        
+        foreach ($all_types as $term) {
+            $term_group = get_field('gender_dependent_group', 'relationship_type_' . $term->term_id);
+            if ($term_group === $group_name) {
+                $types[$term->term_id] = $term->slug;
+            }
+        }
+        
+        return $types;
+    }
+    
+    /**
+     * Infer the correct gender-specific type from a group based on gender
+     * 
+     * @param string $group_name The gender-dependent group name
+     * @param string $gender The person's gender
+     * @param array $group_types Array of type_id => slug in the group
+     * @return int|null Resolved type ID
+     */
+    private function infer_gender_type_from_group($group_name, $gender, $group_types) {
+        // Known gender-dependent group mappings
+        // Maps group name → gender → expected slug
+        $group_mappings = [
+            'aunt_uncle' => [
+                'female' => 'aunt',
+                'male' => 'uncle',
+            ],
+            'niece_nephew' => [
+                'female' => 'niece',
+                'male' => 'nephew',
+            ],
+        ];
+        
+        // If we have a mapping for this group, use it
+        if (isset($group_mappings[$group_name]) && isset($group_mappings[$group_name][$gender])) {
+            $expected_slug = $group_mappings[$group_name][$gender];
+            
+            // Find the type with the expected slug
+            foreach ($group_types as $type_id => $type_slug) {
+                if ($type_slug === $expected_slug) {
+                    return $type_id;
+                }
+            }
+        }
+        
+        // Fallback: try to infer from slug patterns
+        // Female variants typically: aunt, niece
+        // Male variants typically: uncle, nephew
+        if ($gender === 'female') {
+            foreach ($group_types as $type_id => $type_slug) {
+                if (in_array($type_slug, ['aunt', 'niece'])) {
+                    return $type_id;
+                }
+            }
+        } elseif ($gender === 'male') {
+            foreach ($group_types as $type_id => $type_slug) {
+                if (in_array($type_slug, ['uncle', 'nephew'])) {
+                    return $type_id;
+                }
+            }
+        }
+        
+        return null;
     }
 }
 
