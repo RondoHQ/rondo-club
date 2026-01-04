@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.88] - 2024-12-19
+
+### Fixed
+- Family Tree: Prevent duplicate relations in parents/children/siblings arrays
+- Family Tree: Added comprehensive validation before rendering
+- Family Tree: Create deep copy of nodes array for immutability
+- Family Tree: Added detailed logging of node structure for debugging
+- Family Tree: Better error handling when root node not found
+
 ## [1.0.87] - 2024-12-19
 
 ### Fixed

@@ -146,10 +146,14 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
           });
           
           siblingIds.forEach(siblingId => {
-            node.siblings.push({
-              id: siblingId,
-              type: 'blood',
-            });
+            // Check if sibling relation already exists to avoid duplicates
+            const siblingExists = node.siblings.some(s => s.id === siblingId);
+            if (!siblingExists) {
+              node.siblings.push({
+                id: siblingId,
+                type: 'blood',
+              });
+            }
           });
         }
       });
@@ -210,9 +214,29 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
         };
       }).filter(node => node !== null); // Remove any invalid nodes
       
+      // Log detailed structure for debugging
       console.log('Converted nodes for react-family-tree:', validatedNodes);
       console.log('Number of nodes:', validatedNodes.length);
       console.log('Node IDs:', validatedNodes.map(n => n.id));
+      
+      // Log first node structure to verify format
+      if (validatedNodes.length > 0) {
+        console.log('First node structure:', JSON.stringify(validatedNodes[0], null, 2));
+      }
+      
+      // Verify all nodes have required structure
+      const invalidNodes = validatedNodes.filter(n => {
+        return !n.id || 
+               !n.gender || 
+               !Array.isArray(n.parents) || 
+               !Array.isArray(n.children) || 
+               !Array.isArray(n.siblings);
+      });
+      
+      if (invalidNodes.length > 0) {
+        console.error('Invalid nodes found:', invalidNodes);
+      }
+      
       return validatedNodes;
     } catch (error) {
       console.error('Error converting tree to nodes:', error);
