@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.71] - 2024-12-19
+
+### Added
+- Documentation: Created comprehensive docs/ folder with relationship system documentation
+- docs/relationships.md: Complete guide to how bidirectional relationships work
+- docs/relationship-types.md: Configuration guide for relationship types and inverse mappings
+- docs/architecture.md: Technical architecture documentation with extension points
+- README.md: Added links to documentation
+
 ## [1.0.70] - 2024-12-19
 
 ### Changed
