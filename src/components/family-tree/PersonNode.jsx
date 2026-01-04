@@ -7,7 +7,12 @@ import { useNavigate } from 'react-router-dom';
  */
 export default function PersonNode({ node, onClick, style }) {
   const navigate = useNavigate();
-  const { id, name, gender, photo, age, birthDate } = node || {};
+  // react-family-tree provides node with _name, _photo, etc. from our custom fields
+  const { id, _name, gender, _photo, _age, _birthDate } = node || {};
+  const name = _name || `Person ${id}`;
+  const photo = _photo;
+  const age = _age;
+  const birthDate = _birthDate;
   
   const handleClick = () => {
     if (onClick) {
