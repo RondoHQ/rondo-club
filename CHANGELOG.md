@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.91] - 2024-12-19
+
+### Fixed
+- Family Tree: Separate node display size from spacing (160x100 display, 220x140 spacing)
+- Family Tree: Increase spacing between nodes for visible connecting lines
+- Family Tree: Reverse children order to compensate for library's rendering order
+- Family Tree: Ensure oldest person appears at top of tree
+
 ## [1.0.90] - 2024-12-19
 
 ### Fixed
