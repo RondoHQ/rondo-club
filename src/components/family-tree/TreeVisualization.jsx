@@ -451,26 +451,27 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
                 rootId={rootId}
                 width={NODE_WIDTH}
                 height={NODE_HEIGHT}
-                renderNode={(node) => {
-                  if (!node || node.id === undefined || node.id === null) {
-                    console.warn('Invalid node in renderNode:', node);
-                    return null;
-                  }
-                  return (
-                    <PersonNode
-                      key={node.id}
-                      node={node}
-                      onClick={handleNodeClick}
-                      style={{
-                        position: 'absolute',
-                        left: `${node.left || 0}px`,
-                        top: `${node.top || 0}px`,
-                        width: `${NODE_WIDTH}px`,
-                        height: `${NODE_HEIGHT}px`,
-                      }}
-                    />
-                  );
-                }}
+                  renderNode={(node) => {
+                    if (!node || node.id === undefined || node.id === null) {
+                      console.warn('Invalid node in renderNode:', node);
+                      return null;
+                    }
+                    // react-family-tree uses transform: translate() with left/top multiplied by half dimensions
+                    const left = node.left !== undefined ? node.left * (NODE_WIDTH / 2) : 0;
+                    const top = node.top !== undefined ? node.top * (NODE_HEIGHT / 2) : 0;
+                    return (
+                      <PersonNode
+                        key={node.id}
+                        node={node}
+                        onClick={handleNodeClick}
+                        style={{
+                          width: `${NODE_WIDTH}px`,
+                          height: `${NODE_HEIGHT}px`,
+                          transform: `translate(${left}px, ${top}px)`,
+                        }}
+                      />
+                    );
+                  }}
               />
             );
           } catch (error) {
