@@ -189,17 +189,26 @@ function isChildType(typeSlug) {
  * @param {Array} nodes - Array of all nodes
  * @returns {number} ID of the ultimate ancestor (oldest person with no parents)
  */
+/**
+ * Find the eldest ancestor by traversing UP from current person
+ * Collects ALL ancestors (not just those with no parents) and returns the eldest by birth date
+ * @param {number} startPersonId - Person to start from (current person)
+ * @param {Map} adjacencyList - Adjacency list of relationships
+ * @param {Array} nodes - Array of all nodes
+ * @returns {number} ID of the eldest ancestor (oldest by birth date among all ancestors)
+ */
 function findUltimateAncestor(startPersonId, adjacencyList, nodes) {
   const visited = new Set();
-  let currentId = startPersonId;
-  const ancestorsWithNoParents = [];
+  const allAncestors = new Set();
+  const queue = [startPersonId];
   
-  // Traverse UP until we find someone with no parents
-  // Collect all people with no parents
-  while (true) {
+  // Traverse UP from current person to collect ALL ancestors
+  // Use BFS to traverse all parent relationships
+  while (queue.length > 0) {
+    const currentId = queue.shift();
+    
     if (visited.has(currentId)) {
-      // Cycle detected, break
-      break;
+      continue; // Skip if already visited (cycle prevention)
     }
     visited.add(currentId);
     
@@ -210,34 +219,40 @@ function findUltimateAncestor(startPersonId, adjacencyList, nodes) {
       return isChildType(relType);
     });
     
-    if (parents.length === 0) {
-      // No parents found - this is an ultimate ancestor
-      ancestorsWithNoParents.push(currentId);
-      break;
+    // Add all parents to ancestors set and queue for further traversal
+    for (const parent of parents) {
+      allAncestors.add(parent.nodeId);
+      if (!visited.has(parent.nodeId)) {
+        queue.push(parent.nodeId);
+      }
     }
-    
-    // Move UP to first parent and continue traversing upward
-    currentId = parents[0].nodeId;
   }
   
-  // If we found ancestors with no parents, return the oldest by birth date
-  if (ancestorsWithNoParents.length > 0) {
-    // Sort by birth date (oldest first)
-    ancestorsWithNoParents.sort((a, b) => {
-      const nodeA = nodes.find(n => n.id === a);
-      const nodeB = nodes.find(n => n.id === b);
-      const dateA = nodeA?.birthDate;
-      const dateB = nodeB?.birthDate;
-      if (!dateA && !dateB) return 0;
-      if (!dateA) return 1; // No date goes to end
-      if (!dateB) return -1; // No date goes to end
-      return new Date(dateA) - new Date(dateB); // Oldest first
-    });
-    return ancestorsWithNoParents[0];
+  // Also include the starting person in the set of ancestors to consider
+  allAncestors.add(startPersonId);
+  
+  // Convert to array and find the eldest by birth date
+  const ancestorsArray = Array.from(allAncestors);
+  
+  if (ancestorsArray.length === 0) {
+    // No ancestors found, return starting person
+    return startPersonId;
   }
   
-  // Fallback: return the starting person if no ancestors found
-  return startPersonId;
+  // Sort by birth date (oldest first)
+  ancestorsArray.sort((a, b) => {
+    const nodeA = nodes.find(n => n.id === a);
+    const nodeB = nodes.find(n => n.id === b);
+    const dateA = nodeA?.birthDate;
+    const dateB = nodeB?.birthDate;
+    if (!dateA && !dateB) return 0;
+    if (!dateA) return 1; // No date goes to end
+    if (!dateB) return -1; // No date goes to end
+    return new Date(dateA) - new Date(dateB); // Oldest first (earliest date first)
+  });
+  
+  // Return the eldest ancestor (first in sorted array)
+  return ancestorsArray[0];
 }
 
 /**
@@ -405,9 +420,33 @@ export function graphToTree(graph, startPersonId) {
     return treeNode;
   }
   
-  // Build tree from ultimate ancestor
+  // Build tree from eldest ancestor
+  // This will include the current person and all siblings along the path
   visited.clear();
-  const tree = buildNode(ultimateAncestorId);
+  const tree = buildNode(eldestAncestorId);
+  
+  // Verify that the current person is included in the tree
+  // If not, it means there's a disconnect in the relationships
+  // (shouldn't happen if relationships are properly defined)
+  if (tree) {
+    // Helper function to check if a person ID exists in the tree
+    function personInTree(node, personId) {
+      if (!node) return false;
+      if (node.attributes?.id === personId) return true;
+      if (node.children) {
+        for (const child of node.children) {
+          if (personInTree(child, personId)) return true;
+        }
+      }
+      return false;
+    }
+    
+    // If current person is not in tree, log a warning
+    // This shouldn't happen if relationships are correct
+    if (!personInTree(tree, startPersonId)) {
+      console.warn(`Current person ${startPersonId} not found in tree built from eldest ancestor ${eldestAncestorId}. This may indicate missing parent-child relationships.`);
+    }
+  }
   
   return tree;
 }
