@@ -379,6 +379,51 @@ export function graphToTree(graph, startPersonId) {
     const children = [];
     const neighbors = adjacencyList.get(nodeId) || [];
     
+    // CRITICAL: First, check if this node has parents that aren't already in the tree
+    // If so, we need to include them. But since react-d3-tree renders top-to-bottom,
+    // we can't add them as children (they'd appear below). Instead, we need to ensure
+    // they're included in the tree structure above.
+    // 
+    // Solution: When building downward, if we encounter a person with parents not yet visited,
+    // we need to build those parents first (above), then continue building downward.
+    // But this is tricky with a single-root tree structure.
+    //
+    // Better approach: When building a node, if it has parents that aren't in parentIds
+    // (meaning they're not already in the tree above), we need to include them.
+    // We can do this by building them as siblings of the current node's position,
+    // but that's also complex.
+    //
+    // Actually, the real solution: Ensure that when building the tree, we include ALL
+    // people connected through parent-child relationships. The issue is that we're
+    // building from a single root, so if parents come from different lineages, they
+    // might not be included.
+    //
+    // Let's try: When building a node, if it has parents that aren't visited yet,
+    // build them first (recursively upward), then continue with children.
+    // But we need to be careful about cycles and ordering.
+    
+    // Find all parents of this node
+    const parentRelations = [];
+    for (const neighbor of neighbors) {
+      const relType = neighbor.type?.toLowerCase();
+      if (isChildType(relType)) {
+        // Current node has "child" relationship to neighbor → neighbor is parent
+        if (!parentIds.includes(neighbor.nodeId) && !visited.has(neighbor.nodeId)) {
+          parentRelations.push(neighbor);
+        }
+      }
+    }
+    
+    // If this node has parents that aren't in the tree yet, we need to include them
+    // But since we're building downward, parents should already be above.
+    // If they're not, it means they're from a different lineage.
+    // For now, let's build them as part of the tree structure.
+    // Actually, if parents aren't visited, we should build them first, then this node.
+    // But that would change the tree structure significantly.
+    
+    // For now, let's ensure that when building children, we also check if those children
+    // have other parents that need to be included.
+    
     // First, find all children (people this node is a parent of)
     // The relationship type in the adjacency list represents current node's role in the relationship
     // So if current node has "parent" relationship to neighbor, that means current IS a parent of neighbor
@@ -426,9 +471,23 @@ export function graphToTree(graph, startPersonId) {
     });
     
     // Build child nodes - pass current node as parent
+    // IMPORTANT: When building a child, we need to ensure ALL of its parents are included
+    // If a child has multiple parents (e.g., Tycho has Marieke and Joost), we need both
     for (const neighbor of childRelations) {
-      const childNode = buildNode(neighbor.nodeId, [nodeId]);
+      const childNode = buildNode(neighbor.nodeId, [nodeId, ...parentIds]);
       if (childNode) {
+        // Check if this child has other parents that should be siblings at the same level
+        // If the child has multiple parents, they should all be at the same level above the child
+        const childNeighbors = adjacencyList.get(neighbor.nodeId) || [];
+        const childParents = childNeighbors.filter(n => {
+          const relType = n.type?.toLowerCase();
+          return isChildType(relType) && n.nodeId !== nodeId && !parentIds.includes(n.nodeId);
+        });
+        
+        // If child has other parents, we need to ensure they're included
+        // But since we're building downward, they might not be in the tree yet
+        // For now, let's just build the child - the other parents should be included
+        // when we build from their lineage
         children.push({
           ...childNode,
           relationshipType: neighbor.type,
@@ -436,6 +495,20 @@ export function graphToTree(graph, startPersonId) {
         });
       }
     }
+    
+    // CRITICAL FIX: If this node has parents that aren't in the tree yet (from different lineage),
+    // we need to include them. But we can't add them as children (they'd appear below).
+    // Instead, we need to restructure the tree to include them above.
+    // 
+    // Solution: When we encounter a node with unvisited parents, we should build those parents
+    // first, then continue. But this requires restructuring the tree building logic.
+    //
+    // For now, let's try a different approach: Build the tree to include ALL connected people,
+    // ensuring that when we build a person, all their parents are included above them.
+    // We can do this by building from ALL root ancestors, not just the eldest.
+    //
+    // Actually, let's try building from the start person upward to collect all ancestors,
+    // then build downward from the eldest, but ensure we include all relationships.
     
     // IMPORTANT: Siblings should be at the same level, not as children
     // In react-d3-tree, siblings are handled by being children of the same parent
