@@ -259,10 +259,12 @@ export function buildRelationshipMap(people) {
       let typeSlug = '';
       
       // Check for expanded relationship_slug field (from REST API expansion)
+      // This is set by expand_person_relationships in class-rest-api.php
       if (rel.relationship_slug) {
-        typeSlug = rel.relationship_slug;
-      } else if (typeof rel.relationship_type === 'object' && rel.relationship_type?.slug) {
-        typeSlug = rel.relationship_type.slug;
+        typeSlug = rel.relationship_slug.toLowerCase();
+      } else if (typeof rel.relationship_type === 'object') {
+        // Could be term object with slug property
+        typeSlug = rel.relationship_type?.slug || rel.relationship_type?.name?.toLowerCase() || '';
       } else if (typeof rel.relationship_type === 'string') {
         typeSlug = rel.relationship_type.toLowerCase();
       } else if (typeof rel.relationship_type === 'number') {
