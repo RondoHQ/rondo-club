@@ -5,7 +5,7 @@
  * 
  * Approach:
  * 1. Collect all relevant family members (ancestors, siblings, descendants)
- * 2. Build tree from root ancestors downward
+ * 2. Build tree from root ancestors downward, pairing couples together
  */
 
 // Family relationship type slugs - only parent/child for tree
@@ -128,39 +128,26 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
 
 /**
  * Get parents of a person from adjacency list
- * Relationship type describes WHO the neighbor is:
- * - If person has "parent" relationship to neighbor, neighbor IS their parent
- * @param {number} personId 
- * @param {Map} adjacencyList 
- * @returns {number[]} Array of parent IDs
  */
 function getParents(personId, adjacencyList) {
   const neighbors = adjacencyList.get(personId) || [];
   return neighbors
-    .filter(n => isParentType(n.type)) // Neighbor IS a parent of this person
+    .filter(n => isParentType(n.type))
     .map(n => n.nodeId);
 }
 
 /**
  * Get children of a person from adjacency list
- * Relationship type describes WHO the neighbor is:
- * - If person has "child" relationship to neighbor, neighbor IS their child
- * @param {number} personId 
- * @param {Map} adjacencyList 
- * @returns {number[]} Array of child IDs
  */
 function getChildren(personId, adjacencyList) {
   const neighbors = adjacencyList.get(personId) || [];
   return neighbors
-    .filter(n => isChildType(n.type)) // Neighbor IS a child of this person
+    .filter(n => isChildType(n.type))
     .map(n => n.nodeId);
 }
 
 /**
  * Get siblings of a person (other children of their parents)
- * @param {number} personId 
- * @param {Map} adjacencyList 
- * @returns {number[]} Array of sibling IDs
  */
 function getSiblings(personId, adjacencyList) {
   const parents = getParents(personId, adjacencyList);
@@ -179,22 +166,60 @@ function getSiblings(personId, adjacencyList) {
 }
 
 /**
- * Find root ancestors (people with no parents) in a set of family members
- * @param {Set} familySet 
- * @param {Map} adjacencyList 
- * @returns {number[]} Array of root ancestor IDs
+ * Find the partner/spouse of a person based on shared children
  */
-function findRoots(familySet, adjacencyList) {
+function getPartner(personId, adjacencyList, familySet) {
+  const myChildren = getChildren(personId, adjacencyList).filter(id => familySet.has(id));
+  if (myChildren.length === 0) return null;
+  
+  // Find someone who shares children with this person
+  for (const childId of myChildren) {
+    const childParents = getParents(childId, adjacencyList).filter(id => familySet.has(id));
+    const partner = childParents.find(id => id !== personId);
+    if (partner) return partner;
+  }
+  
+  return null;
+}
+
+/**
+ * Find root ancestors - people with no parents in the family set
+ * For couples, returns only one person (they'll be paired later)
+ */
+function findRoots(familySet, adjacencyList, nodes) {
   const roots = [];
+  const processed = new Set();
   
   for (const personId of familySet) {
+    if (processed.has(personId)) continue;
+    
     const parents = getParents(personId, adjacencyList);
-    // Check if any parent is in the family set
     const hasParentInFamily = parents.some(p => familySet.has(p));
+    
     if (!hasParentInFamily) {
+      // This person is a root (no parents in family set)
       roots.push(personId);
+      processed.add(personId);
+      
+      // Also mark their partner as processed so we don't add them separately
+      const partner = getPartner(personId, adjacencyList, familySet);
+      if (partner && !hasParentInFamily) {
+        processed.add(partner);
+      }
     }
   }
+  
+  // Sort roots by birth date (oldest first)
+  roots.sort((a, b) => {
+    const nodeA = nodes.find(n => n.id === a);
+    const nodeB = nodes.find(n => n.id === b);
+    const dateA = nodeA?.birthDate;
+    const dateB = nodeB?.birthDate;
+    if (!dateA && !dateB) return 0;
+    if (!dateA) return 1;
+    if (!dateB) return -1;
+    return new Date(dateA) - new Date(dateB);
+  });
   
   return roots;
 }
@@ -205,13 +230,6 @@ function findRoots(familySet, adjacencyList) {
 
 /**
  * Collect all relevant family members starting from a person
- * - Traverse UP: ancestors and their siblings
- * - Current person's siblings
- * - Traverse DOWN: descendants
- * 
- * @param {number} startPersonId 
- * @param {Map} adjacencyList 
- * @returns {Set} Set of person IDs in the family tree
  */
 function collectFamilyMembers(startPersonId, adjacencyList) {
   const familySet = new Set();
@@ -231,11 +249,7 @@ function collectFamilyMembers(startPersonId, adjacencyList) {
     const parents = getParents(personId, adjacencyList);
     for (const parentId of parents) {
       familySet.add(parentId);
-      
-      // Add parent's siblings (aunts/uncles)
       getSiblings(parentId, adjacencyList).forEach(id => familySet.add(id));
-      
-      // Continue up
       traverseUp(parentId);
     }
   }
@@ -267,10 +281,7 @@ function collectFamilyMembers(startPersonId, adjacencyList) {
 
 /**
  * Convert graph to hierarchical tree structure for react-d3-tree
- * 
- * @param {Object} graph - Graph with nodes and edges
- * @param {number} startPersonId - ID of the person to start from
- * @returns {Object} Tree structure compatible with react-d3-tree
+ * Couples are shown together as a single node with combined name
  */
 export function graphToTree(graph, startPersonId) {
   const { nodes, edges } = graph;
@@ -286,14 +297,12 @@ export function graphToTree(graph, startPersonId) {
   edges.forEach(edge => {
     const relType = edge.type?.toLowerCase();
     
-    // Store edge in both directions with correct relationship types
     adjacencyList.get(edge.from)?.push({
       nodeId: edge.to,
       type: edge.type,
       label: edge.label,
     });
     
-    // Inverse relationship
     let inverseType = edge.type;
     if (isParentType(relType)) {
       inverseType = 'child';
@@ -312,34 +321,50 @@ export function graphToTree(graph, startPersonId) {
   const familySet = collectFamilyMembers(startPersonId, adjacencyList);
   
   // Phase 2: Find roots and build tree
-  const roots = findRoots(familySet, adjacencyList);
+  const roots = findRoots(familySet, adjacencyList, nodes);
   
-  // Sort roots by birth date (oldest first)
-  roots.sort((a, b) => {
-    const nodeA = nodes.find(n => n.id === a);
-    const nodeB = nodes.find(n => n.id === b);
-    const dateA = nodeA?.birthDate;
-    const dateB = nodeB?.birthDate;
-    if (!dateA && !dateB) return 0;
-    if (!dateA) return 1;
-    if (!dateB) return -1;
-    return new Date(dateA) - new Date(dateB);
-  });
-  
-  // Build tree recursively
+  // Build tree recursively with couple pairing
   const visited = new Set();
   
   function buildNode(personId) {
     if (visited.has(personId) || !familySet.has(personId)) {
       return null;
     }
-    visited.add(personId);
     
     const node = nodes.find(n => n.id === personId);
     if (!node) return null;
     
-    // Find children that are in our family set
-    const childIds = getChildren(personId, adjacencyList)
+    // Check if this person has a partner (shares children with someone)
+    const partnerId = getPartner(personId, adjacencyList, familySet);
+    const partnerNode = partnerId ? nodes.find(n => n.id === partnerId) : null;
+    
+    // Mark both as visited
+    visited.add(personId);
+    if (partnerId) visited.add(partnerId);
+    
+    // Determine the display name
+    let displayName = node.name;
+    let displayPhoto = node.photo;
+    let coupleIds = [personId];
+    
+    if (partnerNode && !visited.has(partnerId)) {
+      // This shouldn't happen since we marked partner as visited above
+    }
+    
+    if (partnerNode) {
+      // Show as couple: "Person & Partner"
+      displayName = `${node.name} & ${partnerNode.name}`;
+      coupleIds = [personId, partnerId];
+    }
+    
+    // Get all children of this person (and partner if exists)
+    const myChildren = new Set(getChildren(personId, adjacencyList));
+    if (partnerId) {
+      getChildren(partnerId, adjacencyList).forEach(id => myChildren.add(id));
+    }
+    
+    // Filter to only children in family set and not yet visited
+    const childIds = Array.from(myChildren)
       .filter(id => familySet.has(id) && !visited.has(id));
     
     // Sort children by birth date (oldest first)
@@ -360,40 +385,62 @@ export function graphToTree(graph, startPersonId) {
       .filter(Boolean);
     
     return {
-      name: node.name || `Person ${node.id}`,
+      name: displayName,
       attributes: {
-        id: node.id,
+        id: personId,
+        coupleIds,
         gender: node.gender || '',
-        photo: node.photo || null,
+        photo: displayPhoto,
+        partnerPhoto: partnerNode?.photo || null,
         age: node.age,
         birthDate: node.birthDate || null,
+        isCouple: !!partnerNode,
       },
       children,
     };
   }
   
-  // Build tree(s) from root(s)
+  // Build tree from roots
   let tree;
   
   if (roots.length === 0) {
-    // No roots found, use start person
     tree = buildNode(startPersonId);
   } else if (roots.length === 1) {
-    // Single root
     tree = buildNode(roots[0]);
   } else {
-    // Multiple roots - create hidden virtual root
-    const rootTrees = roots.map(id => buildNode(id)).filter(Boolean);
+    // Multiple roots - build each and combine
+    // First, group roots that are couples
+    const rootTrees = [];
+    const processedRoots = new Set();
     
-    tree = {
-      name: '',
-      attributes: {
-        id: 'virtual-root',
-        isVirtualRoot: true,
-        hidden: true,
-      },
-      children: rootTrees,
-    };
+    for (const rootId of roots) {
+      if (processedRoots.has(rootId)) continue;
+      
+      const tree = buildNode(rootId);
+      if (tree) {
+        rootTrees.push(tree);
+        processedRoots.add(rootId);
+        
+        // If this root has a partner, they're already processed via buildNode
+        const partner = getPartner(rootId, adjacencyList, familySet);
+        if (partner) processedRoots.add(partner);
+      }
+    }
+    
+    if (rootTrees.length === 1) {
+      tree = rootTrees[0];
+    } else if (rootTrees.length > 1) {
+      // Still have multiple separate lineages
+      // Create a minimal connector - but we need to make it invisible
+      tree = {
+        name: '',
+        attributes: {
+          id: 'family-tree-root',
+          isVirtualRoot: true,
+        },
+        children: rootTrees,
+      };
+    }
   }
   
   return tree;
