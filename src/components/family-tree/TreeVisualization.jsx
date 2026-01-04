@@ -25,13 +25,22 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
     function traverse(node, parentId = null) {
       // Validate node structure
       if (!node || !node.attributes || !node.attributes.id) {
+        console.warn('Invalid node in tree:', node);
+        return;
+      }
+      
+      const nodeId = node.attributes.id;
+      
+      // Check if node already exists (prevent duplicates)
+      if (flatNodes.find(n => n.id === nodeId)) {
+        console.warn('Duplicate node found:', nodeId);
         return;
       }
       
       const nodeData = {
-        id: node.attributes.id,
-        parentId: parentId,
-        name: node.name || `Person ${node.attributes.id}`,
+        id: String(nodeId), // react-family-tree expects string IDs
+        parentId: parentId !== null ? String(parentId) : null,
+        name: node.name || `Person ${nodeId}`,
         gender: node.attributes.gender || '',
         photo: node.attributes.photo || null,
         age: node.attributes.age !== null && node.attributes.age !== undefined ? node.attributes.age : null,
@@ -41,22 +50,31 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
       flatNodes.push(nodeData);
       
       // Safely handle children array
-      if (Array.isArray(node.children) && node.children.length > 0) {
-        node.children.forEach(child => {
+      const children = node.children || [];
+      if (Array.isArray(children) && children.length > 0) {
+        children.forEach(child => {
           if (child && child.attributes && child.attributes.id) {
-            traverse(child, node.attributes.id);
+            traverse(child, nodeId);
+          } else {
+            console.warn('Invalid child node:', child);
           }
         });
       }
     }
     
-    traverse(treeData);
-    return flatNodes;
+    try {
+      traverse(treeData);
+      console.log('Converted nodes:', flatNodes);
+      return flatNodes;
+    } catch (error) {
+      console.error('Error converting tree to nodes:', error);
+      return [];
+    }
   }, [treeData]);
   
   const rootId = useMemo(() => {
-    if (!treeData) return null;
-    return treeData.attributes.id;
+    if (!treeData || !treeData.attributes || !treeData.attributes.id) return null;
+    return String(treeData.attributes.id); // react-family-tree expects string ID
   }, [treeData]);
   
   const handleZoomIn = () => {
@@ -118,14 +136,17 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
         className="w-full h-full min-h-[600px] relative overflow-auto"
         style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
       >
-        {nodes.length > 0 && rootId && (
+        {nodes.length > 0 && rootId ? (
           <ReactFamilyTree
             nodes={nodes}
             rootId={rootId}
             width={NODE_WIDTH}
             height={NODE_HEIGHT}
             renderNode={(node) => {
-              if (!node || !node.id) return null;
+              if (!node || node.id === undefined || node.id === null) {
+                console.warn('Invalid node in renderNode:', node);
+                return null;
+              }
               return (
                 <PersonNode
                   key={node.id}
@@ -142,6 +163,12 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
               );
             }}
           />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">
+              {nodes.length === 0 ? 'No nodes to display' : 'No root node found'}
+            </p>
+          </div>
         )}
       </div>
     </div>
