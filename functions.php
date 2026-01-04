@@ -1,6 +1,6 @@
 <?php
 /**
- * Personal CRM Theme Functions
+ * Caelis Theme Functions
  */
 
 if (!defined('ABSPATH')) {
@@ -30,7 +30,7 @@ function prm_check_dependencies() {
     if (!empty($missing)) {
         add_action('admin_notices', function() use ($missing) {
             $message = sprintf(
-                __('Personal CRM requires the following plugins: %s', 'personal-crm'),
+                __('Caelis requires the following plugins: %s', 'personal-crm'),
                 implode(', ', $missing)
             );
             echo '<div class="notice notice-error"><p>' . esc_html($message) . '</p></div>';
@@ -120,7 +120,7 @@ function prm_theme_document_title_parts($title) {
     }
     
     // Set a default title - React will update it when routes change
-    $title['title'] = 'Personal CRM';
+    $title['title'] = 'Caelis';
     $title['site'] = '';
     
     return $title;
@@ -182,7 +182,7 @@ function prm_theme_enqueue_assets() {
         } else {
             // Production mode but no build found - show error
             add_action('wp_head', function() {
-                echo '<script>console.error("Personal CRM: Build files not found. Please run npm run build.");</script>';
+                echo '<script>console.error("Caelis: Build files not found. Please run npm run build.");</script>';
             });
         }
     }

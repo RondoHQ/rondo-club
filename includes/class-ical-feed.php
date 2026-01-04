@@ -249,7 +249,7 @@ class PRM_ICal_Feed {
         // Calendar header
         $lines[] = 'BEGIN:VCALENDAR';
         $lines[] = 'VERSION:2.0';
-        $lines[] = 'PRODID:-//Personal CRM//' . $site_name . '//EN';
+        $lines[] = 'PRODID:-//Caelis//' . $site_name . '//EN';
         $lines[] = 'CALSCALE:GREGORIAN';
         $lines[] = 'METHOD:PUBLISH';
         $lines[] = 'X-WR-CALNAME:' . $this->escape_ical_text($site_name . ' - Important Dates');
