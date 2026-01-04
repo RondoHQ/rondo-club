@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.85] - 2024-12-19
+
+### Fixed
+- Family Tree: Fixed "Cannot read properties of undefined (reading 'find')" error
+- Family Tree: Ensure all arrays (parents, children, siblings) are always initialized
+- Family Tree: Added defensive checks to prevent undefined array access
+- Family Tree: Final validation pass to ensure all nodes have required arrays
+
 ## [1.0.84] - 2024-12-19
 
 ### Fixed
