@@ -14,6 +14,12 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
   const [zoom, setZoom] = useState(1);
   const containerRef = useRef(null);
   
+  // Ensure we always have a valid nodes array, even if empty
+  const safeNodes = useMemo(() => {
+    // This will be set by the nodes useMemo below
+    return [];
+  }, []);
+  
   // Convert tree structure to nodes array expected by react-family-tree
   // react-family-tree expects: { id: string, gender: Gender, parents: Relation[], children: Relation[], siblings: Relation[] }
   const nodes = useMemo(() => {
@@ -274,9 +280,20 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
     if (!treeData || !treeData.attributes || !treeData.attributes.id) return null;
     const root = String(treeData.attributes.id);
     console.log('Root ID:', root);
-    console.log('Root ID exists in nodes:', nodes.some(n => n.id === root));
+    if (nodes && Array.isArray(nodes)) {
+      console.log('Root ID exists in nodes:', nodes.some(n => n && n.id === root));
+    }
     return root; // react-family-tree expects string ID
   }, [treeData, nodes]);
+  
+  // Ensure nodes is always an array (never undefined)
+  const validatedNodes = useMemo(() => {
+    if (!nodes || !Array.isArray(nodes)) {
+      console.warn('Nodes is not a valid array:', nodes);
+      return [];
+    }
+    return nodes;
+  }, [nodes]);
   
   const handleZoomIn = () => {
     setZoom(prev => Math.min(prev + 0.2, 2));
@@ -296,7 +313,7 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
     }
   };
   
-  if (!treeData || nodes.length === 0) {
+  if (!treeData || !validatedNodes || validatedNodes.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <p className="text-gray-500">No family tree data available</p>
@@ -339,7 +356,10 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
       >
         {(() => {
           try {
-            if (!nodes || nodes.length === 0) {
+            // Use validatedNodes which is guaranteed to be an array
+            const nodesToUse = validatedNodes || [];
+            
+            if (!nodesToUse || nodesToUse.length === 0) {
               return (
                 <div className="flex items-center justify-center h-full">
                   <p className="text-gray-500">No nodes to display</p>
@@ -355,9 +375,9 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
               );
             }
             
-            const rootExists = nodes.some(n => n && n.id === rootId);
+            const rootExists = nodesToUse.some(n => n && n.id === rootId);
             if (!rootExists) {
-              console.error('Root ID not found in nodes:', { rootId, nodeIds: nodes.map(n => n?.id) });
+              console.error('Root ID not found in nodes:', { rootId, nodeIds: nodesToUse.map(n => n?.id) });
               return (
                 <div className="flex items-center justify-center h-full">
                   <p className="text-gray-500">Root node not found in nodes array</p>
@@ -365,8 +385,8 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
               );
             }
             
-            // Ensure nodes is a proper array (not undefined) and create a deep copy
-            const safeNodes = Array.isArray(nodes) ? JSON.parse(JSON.stringify(nodes)) : [];
+            // Create a deep copy to ensure immutability
+            const safeNodes = JSON.parse(JSON.stringify(nodesToUse));
             
             // Final validation: ensure all nodes are valid
             const finalNodes = safeNodes.filter(node => {
