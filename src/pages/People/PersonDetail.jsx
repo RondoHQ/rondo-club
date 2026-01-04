@@ -664,28 +664,29 @@ export default function PersonDetail() {
                   }
 
                   return (
-                    <div key={index} className="flex items-center group rounded-md px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
-                      {!isLinkedIn && <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />}
-                      <div className="flex-1 min-w-0">
-                        {isLinkedIn ? (
-                          <Linkedin className="w-4 h-4 text-blue-600 inline-block mr-2 align-middle" />
-                        ) : (
-                          <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
-                        )}
-                        {linkHref ? (
-                          <a
-                            href={linkHref}
-                            target={linkTarget || undefined}
-                            rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
-                            className="text-primary-600 hover:text-primary-700 hover:underline"
-                          >
-                            {contact.contact_value}
-                          </a>
-                        ) : (
-                          <span>{contact.contact_value}</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                    <div key={index} className="group">
+                      <div className="flex items-center rounded-md -mx-2 px-2 group-hover:bg-gray-50 transition-colors">
+                        {!isLinkedIn && <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          {isLinkedIn ? (
+                            <Linkedin className="w-4 h-4 text-blue-600 inline-block mr-2 align-middle" />
+                          ) : (
+                            <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
+                          )}
+                          {linkHref ? (
+                            <a
+                              href={linkHref}
+                              target={linkTarget || undefined}
+                              rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
+                              className="text-primary-600 hover:text-primary-700 hover:underline"
+                            >
+                              {contact.contact_value}
+                            </a>
+                          ) : (
+                            <span>{contact.contact_value}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                         {isMobile && (
                           <a
                             href={`whatsapp:${formatPhoneForTel(contact.contact_value)}`}
@@ -709,6 +710,7 @@ export default function PersonDetail() {
                         >
                           <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
                         </button>
+                        </div>
                       </div>
                     </div>
                   );
