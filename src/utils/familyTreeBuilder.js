@@ -282,14 +282,26 @@ export function graphToTree(graph, startPersonId) {
   });
   
   // Build adjacency list with correct relationship types
-  // When we have edge A -> B with type "parent", it means A is parent of B
-  // So in the adjacency list:
-  // - A's neighbors include B with type "parent" (A is parent of B)
-  // - B's neighbors include A with type "child" (B is child of A)
+  // IMPORTANT: The edge type represents the relationship FROM the "from" person TO the "to" person
+  // So if edge is A -> B with type "parent", it means: A is parent of B
+  // Therefore:
+  // - A's neighbors include B with type "parent" (A is parent of B) ✓
+  // - B's neighbors include A with type "child" (B is child of A) ✓
+  
+  // Debug: log edges to understand the structure
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Edges in graph:', edges.map(e => ({
+      from: e.from,
+      to: e.to,
+      type: e.type,
+    })));
+  }
+  
   edges.forEach(edge => {
     const relType = edge.type?.toLowerCase();
     
     // Add edge from -> to with the original type
+    // This represents: edge.from has relationship type "relType" to edge.to
     adjacencyList.get(edge.from)?.push({
       nodeId: edge.to,
       type: edge.type,
@@ -297,8 +309,7 @@ export function graphToTree(graph, startPersonId) {
     });
     
     // Add reverse edge with inverse type
-    // If edge is "parent", reverse is "child"
-    // If edge is "child", reverse is "parent"
+    // If edge.from has "parent" relationship to edge.to, then edge.to has "child" relationship to edge.from
     let inverseType = edge.type;
     if (isParentType(relType)) {
       inverseType = 'child';
@@ -313,6 +324,14 @@ export function graphToTree(graph, startPersonId) {
       label: edge.label,
     });
   });
+  
+  // Debug: log adjacency list for a few nodes
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Sample adjacency list entries:', Array.from(adjacencyList.entries()).slice(0, 3).map(([id, neighbors]) => ({
+      personId: id,
+      neighbors: neighbors.map(n => ({ id: n.nodeId, type: n.type })),
+    })));
+  }
   
   // Find the eldest ancestor (oldest by birth date among all ancestors)
   const eldestAncestorId = findUltimateAncestor(startPersonId, adjacencyList, nodes);
