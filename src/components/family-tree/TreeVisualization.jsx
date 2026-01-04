@@ -96,7 +96,21 @@ export default function TreeVisualization({ graphData, startPersonId, onNodeClic
         },
       },
       physics: {
-        enabled: false, // Disable physics for hierarchical layout
+        enabled: true,
+        hierarchicalRepulsion: {
+          centralGravity: 0.0,
+          springLength: 150,
+          springConstant: 0.01,
+          nodeDistance: 180,
+          damping: 0.09,
+          avoidOverlap: 1,
+        },
+        stabilization: {
+          enabled: true,
+          iterations: 100,
+          updateInterval: 25,
+          fit: true,
+        },
       },
       interaction: {
         hover: true,
