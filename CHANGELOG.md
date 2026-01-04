@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.110] - 2024-12-19
+
+### Changed
+- Family Tree: Disabled physics, manually reposition spouses after layout
+- Family Tree: Spouses are now placed 120px apart (60px from center each)
+- Family Tree: More reliable spouse positioning that doesn't conflict with hierarchical layout
+
 ## [1.0.109] - 2024-12-19
 
 ### Changed
