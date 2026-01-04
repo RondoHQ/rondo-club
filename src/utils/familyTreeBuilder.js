@@ -5,7 +5,7 @@
  * vis.js supports proper graph structures where children can have multiple parents.
  */
 
-const FAMILY_RELATIONSHIP_TYPES = ['parent', 'child'];
+const FAMILY_RELATIONSHIP_TYPES = ['parent', 'child', 'spouse', 'lover'];
 
 export function isFamilyRelationshipType(typeSlug) {
   return FAMILY_RELATIONSHIP_TYPES.includes(typeSlug?.toLowerCase());
@@ -17,6 +17,11 @@ function isParentType(typeSlug) {
 
 function isChildType(typeSlug) {
   return typeSlug?.toLowerCase() === 'child';
+}
+
+function isSpouseType(typeSlug) {
+  const slug = typeSlug?.toLowerCase();
+  return slug === 'spouse' || slug === 'lover';
 }
 
 /**
@@ -132,6 +137,7 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
           edges.push({
             from: relatedPersonId,
             to: personId,
+            type: 'parent-child',
           });
         } else if (isChildType(relType)) {
           // personId has relatedPersonId as child
@@ -139,6 +145,18 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
           edges.push({
             from: personId,
             to: relatedPersonId,
+            type: 'parent-child',
+          });
+        } else if (isSpouseType(relType)) {
+          // Spouse/lover relationship - horizontal connection
+          // Use consistent ordering to avoid duplicates
+          const [first, second] = personId < relatedPersonId 
+            ? [personId, relatedPersonId] 
+            : [relatedPersonId, personId];
+          edges.push({
+            from: first,
+            to: second,
+            type: 'spouse',
           });
         }
       }
@@ -272,27 +290,37 @@ export function graphToVisFormat(graph, startPersonId) {
     };
   });
   
-  // Create vis.js edges
-  const visEdges = edges.map((edge, index) => ({
-    id: `edge-${index}`,
-    from: edge.from,
-    to: edge.to,
-    arrows: {
-      to: {
-        enabled: false, // No arrows for family tree
+  // Create vis.js edges with different styles for parent-child vs spouse
+  const visEdges = edges.map((edge, index) => {
+    const isSpouse = edge.type === 'spouse';
+    
+    return {
+      id: `edge-${index}`,
+      from: edge.from,
+      to: edge.to,
+      arrows: {
+        to: { enabled: false },
       },
-    },
-    color: {
-      color: '#9ca3af',
-      highlight: '#6b7280',
-    },
-    width: 2,
-    smooth: {
-      type: 'cubicBezier',
-      forceDirection: 'vertical',
-      roundness: 0.4,
-    },
-  }));
+      color: {
+        color: isSpouse ? '#ec4899' : '#9ca3af', // Pink for spouse, gray for parent-child
+        highlight: isSpouse ? '#db2777' : '#6b7280',
+      },
+      width: isSpouse ? 2 : 2,
+      dashes: isSpouse ? [5, 5] : false, // Dashed line for spouse
+      smooth: isSpouse 
+        ? {
+            enabled: true,
+            type: 'curvedCW',
+            roundness: 0.2,
+          }
+        : {
+            enabled: true,
+            type: 'cubicBezier',
+            forceDirection: 'vertical',
+            roundness: 0.4,
+          },
+    };
+  });
   
   return { nodes: visNodes, edges: visEdges };
 }
