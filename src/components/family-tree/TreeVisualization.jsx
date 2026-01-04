@@ -44,15 +44,20 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
       const nodeData = {
         id: nodeId,
         gender: gender,
-        parents: [],
-        children: [],
-        siblings: [],
+        parents: [], // Always initialize as empty array
+        children: [], // Always initialize as empty array
+        siblings: [], // Always initialize as empty array
         // Store additional data for our use
         _name: node.name || `Person ${nodeId}`,
         _photo: node.attributes.photo || null,
         _age: node.attributes.age !== null && node.attributes.age !== undefined ? node.attributes.age : null,
         _birthDate: node.attributes.birthDate || null,
       };
+      
+      // Ensure arrays are always defined (defensive programming)
+      if (!Array.isArray(nodeData.parents)) nodeData.parents = [];
+      if (!Array.isArray(nodeData.children)) nodeData.children = [];
+      if (!Array.isArray(nodeData.siblings)) nodeData.siblings = [];
       
       nodeMap.set(nodeId, nodeData);
       allNodes.push(nodeData);
@@ -84,6 +89,10 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
         children.forEach(child => {
           if (child && child.attributes && child.attributes.id) {
             const childId = String(child.attributes.id);
+            
+            // Ensure arrays exist before pushing
+            if (!Array.isArray(nodeData.children)) nodeData.children = [];
+            
             nodeData.children.push({
               id: childId,
               type: 'blood', // Default relationship type
@@ -92,6 +101,7 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
             // Also add parent relationship to child
             const childData = nodeMap.get(childId);
             if (childData) {
+              if (!Array.isArray(childData.parents)) childData.parents = [];
               childData.parents.push({
                 id: nodeId,
                 type: 'blood',
@@ -115,17 +125,23 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
       
       // Build siblings relationships (children of same parents are siblings)
       allNodes.forEach(node => {
+        // Ensure arrays exist
+        if (!Array.isArray(node.parents)) node.parents = [];
+        if (!Array.isArray(node.siblings)) node.siblings = [];
+        
         if (node.parents.length > 0) {
           // Find all nodes with same parents
           const siblingIds = new Set();
           node.parents.forEach(parent => {
-            const parentNode = nodeMap.get(parent.id);
-            if (parentNode) {
-              parentNode.children.forEach(child => {
-                if (child.id !== node.id) {
-                  siblingIds.add(child.id);
-                }
-              });
+            if (parent && parent.id) {
+              const parentNode = nodeMap.get(parent.id);
+              if (parentNode && Array.isArray(parentNode.children)) {
+                parentNode.children.forEach(child => {
+                  if (child && child.id && child.id !== node.id) {
+                    siblingIds.add(child.id);
+                  }
+                });
+              }
             }
           });
           
@@ -136,6 +152,13 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
             });
           });
         }
+      });
+      
+      // Final validation: ensure all nodes have all required arrays
+      allNodes.forEach(node => {
+        if (!Array.isArray(node.parents)) node.parents = [];
+        if (!Array.isArray(node.children)) node.children = [];
+        if (!Array.isArray(node.siblings)) node.siblings = [];
       });
       
       console.log('Converted nodes for react-family-tree:', allNodes);
