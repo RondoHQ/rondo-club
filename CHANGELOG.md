@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.92] - 2024-12-19
+
+### Fixed
+- Family Tree: Center nodes on connector points by offsetting by half node size
+- Family Tree: Add padding to container so connectors above nodes are visible
+- Family Tree: Ensure connecting lines align with center of person blocks
+
 ## [1.0.91] - 2024-12-19
 
 ### Fixed

@@ -369,7 +369,11 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
       <div 
         ref={containerRef} 
         className="w-full h-full min-h-[600px] relative overflow-auto"
-        style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
+        style={{ 
+          transform: `scale(${zoom})`, 
+          transformOrigin: 'top left',
+          padding: '20px', // Add padding so connectors above nodes are visible
+        }}
       >
         {(() => {
           try {
@@ -462,8 +466,13 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
                     }
                     // react-family-tree uses transform: translate() with left/top multiplied by half dimensions
                     // The library calculates positions based on spacing width/height
+                    // We need to center the node on the connector point
                     const left = node.left !== undefined && node.left !== null ? node.left * (NODE_SPACING_WIDTH / 2) : 0;
                     const top = node.top !== undefined && node.top !== null ? node.top * (NODE_SPACING_HEIGHT / 2) : 0;
+                    
+                    // Center the node on the connector point by offsetting by half the node size
+                    const offsetX = -NODE_DISPLAY_WIDTH / 2;
+                    const offsetY = -NODE_DISPLAY_HEIGHT / 2;
                     
                     return (
                       <PersonNode
@@ -473,7 +482,7 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
                         style={{
                           width: `${NODE_DISPLAY_WIDTH}px`,
                           height: `${NODE_DISPLAY_HEIGHT}px`,
-                          transform: `translate(${left}px, ${top}px)`,
+                          transform: `translate(${left + offsetX}px, ${top + offsetY}px)`,
                         }}
                       />
                     );
