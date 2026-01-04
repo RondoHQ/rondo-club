@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.68] - 2024-12-19
+
+### Changed
+- Inverse relationships: Moved inverse relationship mappings from hardcoded PHP array to ACF taxonomy field
+- Relationship types now have an "Inverse Relationship Type" field that can be configured in WordPress admin
+- Removed hardcoded `$inverse_mappings` array from `PRM_Inverse_Relationships` class
+
 ## [1.0.67] - 2024-12-19
 
 ### Fixed
