@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
-  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin, X, Camera
+  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin, X, Camera, Download
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
@@ -10,6 +10,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { decodeHtml, getCompanyName, sanitizePersonAcf } from '@/utils/formatters';
+import { downloadVCard } from '@/utils/vcard';
 
 // Helper to get gender symbol
 function getGenderSymbol(gender) {
@@ -281,6 +282,21 @@ export default function PersonDetail() {
     }
   };
 
+  // Handle vCard export
+  const handleExportVCard = () => {
+    if (!person) return;
+    
+    try {
+      downloadVCard(person, {
+        companyMap,
+        personDates: personDates || [],
+      });
+    } catch (error) {
+      console.error('Failed to export vCard:', error);
+      alert('Failed to export vCard. Please try again.');
+    }
+  };
+
   // Fetch company names for work history entries
   const companyIds = person?.acf?.work_history
     ?.map(job => job.company)
@@ -434,6 +450,10 @@ export default function PersonDetail() {
           Back to People
         </Link>
         <div className="flex gap-2">
+          <button onClick={handleExportVCard} className="btn-secondary">
+            <Download className="w-4 h-4 mr-2" />
+            Export vCard
+          </button>
           <Link to={`/people/${id}/edit`} className="btn-secondary">
             <Edit className="w-4 h-4 mr-2" />
             Edit
