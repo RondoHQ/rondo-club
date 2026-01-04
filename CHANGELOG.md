@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2026-01-04
+
+### Changed
+- Performance: Implemented conditional class loading - PHP classes are now only loaded when needed
+- Added SPL autoloader for on-demand class file loading
+- Core classes (Post Types, Taxonomies, Access Control) load on every request
+- REST API and Import classes only load for REST requests
+- Reminders class only loads for admin and cron contexts
+- iCal Feed class loads early for feed requests with optimized early return
+
 ## [1.1.2] - 2026-01-04
 
 ### Changed
