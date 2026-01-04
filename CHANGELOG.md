@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.101] - 2024-12-19
+
+### Changed
+- Family Tree: Reverted to individual person nodes (removed couple merging)
+- Family Tree: Simplified tree building - shows primary lineage from eldest ancestor
+- Family Tree: Removed virtual root - single tree from eldest ancestor down
+
+### Fixed
+- Family Tree: No more empty node at top of tree
+- Family Tree: Each person shown as individual node (no incorrect parent-child relationships)
+
+### Known Limitations
+- Due to react-d3-tree's single-parent hierarchy, children connect to only one parent
+- The tree shows the primary lineage; other parents appear but children only connect once
+
 ## [1.0.100] - 2024-12-19
 
 ### Changed
