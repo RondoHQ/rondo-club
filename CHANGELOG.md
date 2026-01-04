@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.97] - 2024-12-19
+
+### Fixed
+- Family Tree: Fix adjacency list to use correct inverse relationship types
+- Family Tree: When edge is "parent", reverse edge should be "child" (and vice versa)
+- Family Tree: Fix tree hierarchy so parents appear above children (not inverted)
+- Family Tree: Ensure siblings are correctly identified as children of same parent
+
 ## [1.0.96] - 2024-12-19
 
 ### Fixed

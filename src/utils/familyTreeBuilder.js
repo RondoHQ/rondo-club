@@ -214,8 +214,12 @@ function findUltimateAncestor(startPersonId, adjacencyList, nodes) {
     
     const neighbors = adjacencyList.get(currentId) || [];
     // Find parents: if current person has "child" relationship to someone, that someone is current's parent
+    // OR if someone has "parent" relationship to current person, that someone is current's parent
     const parents = neighbors.filter(neighbor => {
       const relType = neighbor.type?.toLowerCase();
+      // If current has "child" relationship to neighbor, neighbor is parent
+      // OR if neighbor has "parent" relationship to current (stored as edge from neighbor to current)
+      // We need to check the edge direction - if edge is FROM neighbor TO current with type "parent", neighbor is parent
       return isChildType(relType);
     });
     
@@ -277,15 +281,35 @@ export function graphToTree(graph, startPersonId) {
     adjacencyList.set(node.id, []);
   });
   
+  // Build adjacency list with correct relationship types
+  // When we have edge A -> B with type "parent", it means A is parent of B
+  // So in the adjacency list:
+  // - A's neighbors include B with type "parent" (A is parent of B)
+  // - B's neighbors include A with type "child" (B is child of A)
   edges.forEach(edge => {
+    const relType = edge.type?.toLowerCase();
+    
+    // Add edge from -> to with the original type
     adjacencyList.get(edge.from)?.push({
       nodeId: edge.to,
       type: edge.type,
       label: edge.label,
     });
+    
+    // Add reverse edge with inverse type
+    // If edge is "parent", reverse is "child"
+    // If edge is "child", reverse is "parent"
+    let inverseType = edge.type;
+    if (isParentType(relType)) {
+      inverseType = 'child';
+    } else if (isChildType(relType)) {
+      inverseType = 'parent';
+    }
+    // For other relationship types, keep the same type (symmetric relationships)
+    
     adjacencyList.get(edge.to)?.push({
       nodeId: edge.from,
-      type: edge.type,
+      type: inverseType,
       label: edge.label,
     });
   });
@@ -358,9 +382,13 @@ export function graphToTree(graph, startPersonId) {
         if (neighbor.nodeId === nodeId || neighbor.nodeId === parentId) continue;
         
         const relType = neighbor.type?.toLowerCase();
-        // If parent has "parent" relationship to neighbor, that neighbor is a sibling
+        // If parent has "parent" relationship to neighbor, that neighbor is a sibling (child of same parent)
         if (isParentType(relType)) {
-          siblingRelations.push(neighbor);
+          siblingRelations.push({
+            nodeId: neighbor.nodeId,
+            type: 'sibling',
+            label: 'Sibling',
+          });
         }
       }
       
