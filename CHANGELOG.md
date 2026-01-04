@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.96] - 2024-12-19
+
+### Fixed
+- Family Tree: Refactor findUltimateAncestor to collect ALL ancestors and find eldest by birth date
+- Family Tree: Use BFS traversal to find all ancestors (not just those with no parents)
+- Family Tree: Ensure current person is included in tree and verify inclusion
+- Family Tree: Tree now flows from eldest ancestor (top) down to current person and all descendants
+
 ## [1.0.95] - 2024-12-19
 
 ### Fixed
