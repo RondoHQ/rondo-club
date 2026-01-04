@@ -316,8 +316,9 @@ export function graphToVisFormat(graph, startPersonId) {
       width: 2,
       dashes: isSpouse ? [5, 5] : false,
       smooth: false,
-      // Spouse edges have higher spring strength to pull partners together
-      length: isSpouse ? 100 : undefined,
+      // Spouse edges are short to pull partners together
+      // Parent-child edges are longer to allow horizontal spreading
+      length: isSpouse ? 80 : 200,
     };
   });
   
