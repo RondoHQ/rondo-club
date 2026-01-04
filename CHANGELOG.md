@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-01-04
+
+### Added
+- Comprehensive documentation covering all system components:
+  - `docs/data-model.md` - Post types, taxonomies, and ACF field definitions
+  - `docs/access-control.md` - Row-level security system documentation
+  - `docs/rest-api.md` - Complete API endpoint reference
+  - `docs/frontend-architecture.md` - React SPA structure and patterns
+  - `docs/ical-feed.md` - Calendar subscription system
+  - `docs/reminders.md` - Email notification system
+  - `docs/family-tree.md` - Family tree visualization feature
+
+### Changed
+- Updated `docs/import.md` with Google Contacts duplicate detection feature
+- Updated `docs/architecture.md` with documentation index linking to all docs
+
 ## [1.2.1] - 2026-01-04
 
 ### Fixed
