@@ -475,29 +475,42 @@ function prm_login_styles() {
             font-size: 14px;
         }
         
+        /* Submit button container */
+        .login .submit {
+            margin-top: 20px;
+        }
+        
         /* Submit button */
-        .login .button-primary {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
-            color: #ffffff;
-            font-weight: 600;
-            font-size: 15px;
-            padding: 10px 20px;
-            text-shadow: none;
-            transition: all 0.2s;
+        .login .button-primary,
+        .login #wp-submit,
+        .wp-core-ui .button-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+            border: none !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3) !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+            padding: 10px 20px !important;
+            text-shadow: none !important;
+            transition: all 0.2s !important;
             width: 100%;
-            height: auto;
+            height: auto !important;
         }
         
         .login .button-primary:hover,
-        .login .button-primary:focus {
-            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-            box-shadow: 0 6px 16px rgba(180, 83, 9, 0.4);
+        .login .button-primary:focus,
+        .login #wp-submit:hover,
+        .login #wp-submit:focus,
+        .wp-core-ui .button-primary:hover,
+        .wp-core-ui .button-primary:focus {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+            box-shadow: 0 6px 16px rgba(180, 83, 9, 0.4) !important;
+            border-color: transparent !important;
         }
         
-        .login .button-primary:active {
+        .login .button-primary:active,
+        .login #wp-submit:active {
             transform: translateY(1px);
         }
         
