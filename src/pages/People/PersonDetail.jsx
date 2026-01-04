@@ -570,18 +570,19 @@ export default function PersonDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Contact info */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Contact Information</h2>
-              <Link
-                to={`/people/${id}/contact/new`}
-                className="btn-secondary text-sm"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add contact detail
-              </Link>
-            </div>
+          {/* Contact info - only show for living people */}
+          {!isDeceased && (
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold">Contact Information</h2>
+                <Link
+                  to={`/people/${id}/contact/new`}
+                  className="btn-secondary text-sm"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add contact detail
+                </Link>
+              </div>
             {acf.contact_info?.length > 0 ? (
               <div className="space-y-3">
                 {acf.contact_info.map((contact, index) => {
@@ -681,7 +682,8 @@ export default function PersonDetail() {
                 No contact information yet.
               </p>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Important Dates */}
           <div className="card p-6">
