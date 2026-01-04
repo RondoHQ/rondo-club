@@ -664,7 +664,7 @@ export default function PersonDetail() {
                   }
 
                   return (
-                    <div key={index} className="flex items-center group rounded-md px-2 py-1 -mx-2 -my-1 group-hover:bg-gray-50 transition-colors">
+                    <div key={index} className="flex items-center group rounded-md px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
                       {!isLinkedIn && <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />}
                       <div className="flex-1 min-w-0">
                         {isLinkedIn ? (
