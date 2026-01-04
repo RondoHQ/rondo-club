@@ -53,6 +53,7 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
         parents: [], // Always initialize as empty array
         children: [], // Always initialize as empty array
         siblings: [], // Always initialize as empty array
+        spouses: [], // Library expects spouses array
         // Store additional data for our use
         _name: node.name || `Person ${nodeId}`,
         _photo: node.attributes.photo || null,
@@ -64,6 +65,7 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
       if (!Array.isArray(nodeData.parents)) nodeData.parents = [];
       if (!Array.isArray(nodeData.children)) nodeData.children = [];
       if (!Array.isArray(nodeData.siblings)) nodeData.siblings = [];
+      if (!Array.isArray(nodeData.spouses)) nodeData.spouses = [];
       
       nodeMap.set(nodeId, nodeData);
       allNodes.push(nodeData);
@@ -216,12 +218,23 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
               .filter(s => validNodeIds.has(s.id))
           : [];
         
+        // Ensure spouses array exists (library requirement)
+        const validSpouses = Array.isArray(node.spouses)
+          ? node.spouses
+              .map(s => ({
+                id: String(s.id || s),
+                type: s.type || 'married',
+              }))
+              .filter(s => validNodeIds.has(s.id))
+          : [];
+        
         return {
           id: nodeId,
           gender: node.gender || 'male',
           parents: validParents,
           children: validChildren,
           siblings: validSiblings,
+          spouses: validSpouses, // Library expects spouses array
           // Preserve custom fields
           _name: node._name,
           _photo: node._photo,
@@ -388,14 +401,23 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
             // Create a deep copy to ensure immutability
             const safeNodes = JSON.parse(JSON.stringify(nodesToUse));
             
-            // Final validation: ensure all nodes are valid
-            const finalNodes = safeNodes.filter(node => {
+            // Final validation: ensure all nodes are valid and have all required arrays
+            const finalNodes = safeNodes.map(node => {
+              // Ensure all required arrays exist
+              if (!Array.isArray(node.parents)) node.parents = [];
+              if (!Array.isArray(node.children)) node.children = [];
+              if (!Array.isArray(node.siblings)) node.siblings = [];
+              if (!Array.isArray(node.spouses)) node.spouses = [];
+              
+              return node;
+            }).filter(node => {
               const isValid = node && 
                              node.id && 
                              node.gender && 
                              Array.isArray(node.parents) && 
                              Array.isArray(node.children) && 
-                             Array.isArray(node.siblings);
+                             Array.isArray(node.siblings) &&
+                             Array.isArray(node.spouses);
               if (!isValid) {
                 console.warn('Filtering out invalid node:', node);
               }
