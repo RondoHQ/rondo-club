@@ -154,7 +154,11 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
         }
       });
       
+      // Create a Set of all valid node IDs for quick lookup
+      const validNodeIds = new Set(allNodes.map(n => String(n.id)));
+      
       // Final validation: ensure all nodes have all required arrays and valid structure
+      // Also ensure all relation IDs reference nodes that actually exist
       const validatedNodes = allNodes.map(node => {
         // Ensure node has all required properties
         if (!node.id) {
@@ -162,21 +166,42 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
           return null;
         }
         
+        const nodeId = String(node.id);
+        
+        // Filter relations to only include IDs that exist in the nodes array
+        const validParents = Array.isArray(node.parents) 
+          ? node.parents
+              .map(p => ({
+                id: String(p.id || p),
+                type: p.type || 'blood',
+              }))
+              .filter(p => validNodeIds.has(p.id))
+          : [];
+        
+        const validChildren = Array.isArray(node.children)
+          ? node.children
+              .map(c => ({
+                id: String(c.id || c),
+                type: c.type || 'blood',
+              }))
+              .filter(c => validNodeIds.has(c.id))
+          : [];
+        
+        const validSiblings = Array.isArray(node.siblings)
+          ? node.siblings
+              .map(s => ({
+                id: String(s.id || s),
+                type: s.type || 'blood',
+              }))
+              .filter(s => validNodeIds.has(s.id))
+          : [];
+        
         return {
-          id: String(node.id),
+          id: nodeId,
           gender: node.gender || 'male',
-          parents: Array.isArray(node.parents) ? node.parents.map(p => ({
-            id: String(p.id || p),
-            type: p.type || 'blood',
-          })) : [],
-          children: Array.isArray(node.children) ? node.children.map(c => ({
-            id: String(c.id || c),
-            type: c.type || 'blood',
-          })) : [],
-          siblings: Array.isArray(node.siblings) ? node.siblings.map(s => ({
-            id: String(s.id || s),
-            type: s.type || 'blood',
-          })) : [],
+          parents: validParents,
+          children: validChildren,
+          siblings: validSiblings,
           // Preserve custom fields
           _name: node._name,
           _photo: node._photo,
@@ -186,6 +211,8 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
       }).filter(node => node !== null); // Remove any invalid nodes
       
       console.log('Converted nodes for react-family-tree:', validatedNodes);
+      console.log('Number of nodes:', validatedNodes.length);
+      console.log('Node IDs:', validatedNodes.map(n => n.id));
       return validatedNodes;
     } catch (error) {
       console.error('Error converting tree to nodes:', error);
@@ -195,8 +222,11 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
   
   const rootId = useMemo(() => {
     if (!treeData || !treeData.attributes || !treeData.attributes.id) return null;
-    return String(treeData.attributes.id); // react-family-tree expects string ID
-  }, [treeData]);
+    const root = String(treeData.attributes.id);
+    console.log('Root ID:', root);
+    console.log('Root ID exists in nodes:', nodes.some(n => n.id === root));
+    return root; // react-family-tree expects string ID
+  }, [treeData, nodes]);
   
   const handleZoomIn = () => {
     setZoom(prev => Math.min(prev + 0.2, 2));
