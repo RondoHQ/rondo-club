@@ -316,6 +316,8 @@ export function graphToVisFormat(graph, startPersonId) {
       width: 2,
       dashes: isSpouse ? [5, 5] : false,
       smooth: false,
+      // Spouse edges have higher spring strength to pull partners together
+      length: isSpouse ? 100 : undefined,
     };
   });
   
