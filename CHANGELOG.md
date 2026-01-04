@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2026-01-04
+
+### Fixed
+- Fixed "acf[gender] is not one of..." validation error when editing contact details, work history, or relationships for people without a gender set
+- Added `sanitizePersonAcf()` utility function to properly handle empty enum fields and ensure repeater arrays
+
 ## [1.1.3] - 2026-01-04
 
 ### Changed
