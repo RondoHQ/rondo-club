@@ -67,7 +67,20 @@ export default function PersonDetail() {
   });
   // The API returns date_value, not date
   const birthDate = birthday?.date_value ? new Date(birthday.date_value) : null;
-  const age = birthDate ? differenceInYears(new Date(), birthDate) : null;
+
+  // Find death date from person dates
+  const deathDate = personDates?.find(d => {
+    const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
+    return dateType?.toLowerCase() === 'died';
+  });
+  const deathDateValue = deathDate?.date_value ? new Date(deathDate.date_value) : null;
+  
+  // Calculate age - if died, show age at death, otherwise current age
+  const isDeceased = !!deathDateValue;
+  const age = birthDate ? (isDeceased 
+    ? differenceInYears(deathDateValue, birthDate)
+    : differenceInYears(new Date(), birthDate)
+  ) : null;
 
   // Get all dates including birthday (for Important Dates card)
   // Sort by date ascending
@@ -466,7 +479,10 @@ export default function PersonDetail() {
 
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{person.name}</h1>
+              <h1 className="text-2xl font-bold">
+                {person.name}
+                {isDeceased && <span className="ml-1 text-gray-500">†</span>}
+              </h1>
               {person.is_favorite && (
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
               )}
@@ -474,7 +490,12 @@ export default function PersonDetail() {
             {acf.nickname && (
               <p className="text-gray-500">"{acf.nickname}"</p>
             )}
-            {age !== null && (
+            {isDeceased && deathDateValue && age !== null && (
+              <p className="text-gray-500 text-sm mt-1">
+                Died {format(deathDateValue, 'MMMM d, yyyy')} at age {age}
+              </p>
+            )}
+            {!isDeceased && age !== null && (
               <p className="text-gray-500 text-sm mt-1">{age} years old</p>
             )}
             <div className="mt-2">
@@ -679,13 +700,18 @@ export default function PersonDetail() {
                 {allDates.map((date) => {
                   const dateType = Array.isArray(date.date_type) ? date.date_type[0] : date.date_type;
                   const dateTypeLower = dateType?.toLowerCase() || '';
+                  const isDied = dateTypeLower.includes('died');
                   const Icon = dateTypeLower.includes('wedding') || dateTypeLower.includes('marriage') ? Heart :
                                dateTypeLower.includes('birthday') ? Gift : Calendar;
 
                   return (
                     <div key={date.id} className="flex items-start group">
                       <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
-                        <Icon className="w-4 h-4 text-gray-500" />
+                        {isDied ? (
+                          <span className="text-gray-500 text-lg font-semibold">†</span>
+                        ) : (
+                          <Icon className="w-4 h-4 text-gray-500" />
+                        )}
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">{date.title}</p>
