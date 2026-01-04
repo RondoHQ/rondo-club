@@ -20,6 +20,7 @@ class PRM_Monica_Import {
     private array $relationship_types = [];
     private array $contact_field_types = [];
     private array $life_event_types = [];
+    private array $genders = [];
 
     /**
      * Monica instance URL for photo sideloading
@@ -200,6 +201,7 @@ class PRM_Monica_Import {
             'contact_tag',
             'life_events',
             'life_event_types',
+            'genders',
         ];
 
         foreach ($tables_to_parse as $table) {
@@ -348,6 +350,11 @@ class PRM_Monica_Import {
         foreach ($this->tables['life_event_types'] ?? [] as $type) {
             $this->life_event_types[$type['id']] = $type['default_life_event_type_key'] ?? 'other';
         }
+
+        // Build genders map (id => type)
+        foreach ($this->tables['genders'] ?? [] as $gender) {
+            $this->genders[$gender['id']] = $gender['type'] ?? '';
+        }
     }
 
     /**
@@ -419,6 +426,29 @@ class PRM_Monica_Import {
 
         if (!empty($contact['nickname'])) {
             update_field('nickname', $contact['nickname'], $post_id);
+        }
+
+        // Import gender
+        $gender_id = $contact['gender_id'] ?? null;
+        if ($gender_id && isset($this->genders[$gender_id])) {
+            $monica_gender_type = $this->genders[$gender_id];
+            // Map Monica gender types to our gender values
+            // M -> male, F -> female, O -> prefer_not_to_say
+            $gender_value = '';
+            switch ($monica_gender_type) {
+                case 'M':
+                    $gender_value = 'male';
+                    break;
+                case 'F':
+                    $gender_value = 'female';
+                    break;
+                case 'O':
+                    $gender_value = 'prefer_not_to_say';
+                    break;
+            }
+            if ($gender_value) {
+                update_field('gender', $gender_value, $post_id);
+            }
         }
 
         if (!empty($contact['is_starred']) && $contact['is_starred'] != '0') {
