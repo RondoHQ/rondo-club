@@ -39,7 +39,20 @@ export default function PersonNode({ nodeDatum, onClick }) {
   function formatDate(dateString) {
     if (!dateString) return null;
     try {
-      const date = new Date(dateString);
+      // Handle different date formats
+      let date;
+      if (typeof dateString === 'string') {
+        // Try parsing as ISO date first
+        date = new Date(dateString);
+        // If that fails, try YYYY-MM-DD format
+        if (isNaN(date.getTime()) && dateString.match(/^\d{4}-\d{2}-\d{2}/)) {
+          const parts = dateString.split('T')[0].split('-');
+          date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        }
+      } else {
+        date = new Date(dateString);
+      }
+      
       if (isNaN(date.getTime())) return null;
       
       const day = String(date.getDate()).padStart(2, '0');
@@ -48,6 +61,7 @@ export default function PersonNode({ nodeDatum, onClick }) {
       
       return `${day}-${month}-${year}`;
     } catch (e) {
+      console.warn('Error formatting date:', dateString, e);
       return null;
     }
   }
