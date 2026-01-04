@@ -99,15 +99,15 @@ export default function TreeVisualization({ graphData, startPersonId, onNodeClic
         enabled: true,
         hierarchicalRepulsion: {
           centralGravity: 0.0,
-          springLength: 150,
-          springConstant: 0.01,
-          nodeDistance: 180,
+          springLength: 120,
+          springConstant: 0.05, // Stronger springs
+          nodeDistance: 150,
           damping: 0.09,
           avoidOverlap: 1,
         },
         stabilization: {
           enabled: true,
-          iterations: 100,
+          iterations: 200, // More iterations for better settling
           updateInterval: 25,
           fit: true,
         },
