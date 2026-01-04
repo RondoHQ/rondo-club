@@ -3,8 +3,12 @@ import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import ReactFamilyTree from 'react-family-tree';
 import PersonNode from './PersonNode';
 
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 120;
+// Actual node display dimensions
+const NODE_DISPLAY_WIDTH = 160;
+const NODE_DISPLAY_HEIGHT = 100;
+// Spacing between nodes (library uses this for layout calculations)
+const NODE_SPACING_WIDTH = 220;
+const NODE_SPACING_HEIGHT = 140;
 
 /**
  * Tree Visualization Component
@@ -445,21 +449,21 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
             
             console.log('Final nodes being passed to ReactFamilyTree:', finalNodes.length);
             
-            return (
-              <ReactFamilyTree
-                nodes={finalNodes}
-                rootId={rootId}
-                width={NODE_WIDTH}
-                height={NODE_HEIGHT}
+              return (
+                <ReactFamilyTree
+                  nodes={finalNodes}
+                  rootId={rootId}
+                  width={NODE_SPACING_WIDTH}
+                  height={NODE_SPACING_HEIGHT}
                   renderNode={(node) => {
                     if (!node || node.id === undefined || node.id === null) {
                       console.warn('Invalid node in renderNode:', node);
                       return null;
                     }
                     // react-family-tree uses transform: translate() with left/top multiplied by half dimensions
-                    // The library calculates positions, we just need to apply them correctly
-                    const left = node.left !== undefined && node.left !== null ? node.left * (NODE_WIDTH / 2) : 0;
-                    const top = node.top !== undefined && node.top !== null ? node.top * (NODE_HEIGHT / 2) : 0;
+                    // The library calculates positions based on spacing width/height
+                    const left = node.left !== undefined && node.left !== null ? node.left * (NODE_SPACING_WIDTH / 2) : 0;
+                    const top = node.top !== undefined && node.top !== null ? node.top * (NODE_SPACING_HEIGHT / 2) : 0;
                     
                     return (
                       <PersonNode
@@ -467,15 +471,15 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
                         node={node}
                         onClick={handleNodeClick}
                         style={{
-                          width: `${NODE_WIDTH}px`,
-                          height: `${NODE_HEIGHT}px`,
+                          width: `${NODE_DISPLAY_WIDTH}px`,
+                          height: `${NODE_DISPLAY_HEIGHT}px`,
                           transform: `translate(${left}px, ${top}px)`,
                         }}
                       />
                     );
                   }}
-              />
-            );
+                />
+              );
           } catch (error) {
             console.error('Error rendering ReactFamilyTree:', error);
             return (

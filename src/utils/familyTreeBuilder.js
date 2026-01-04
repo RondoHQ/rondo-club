@@ -310,7 +310,8 @@ export function graphToTree(graph, startPersonId) {
       }
     }
     
-    // Sort children by birth date (oldest first) to ensure correct order in tree
+    // Sort children by birth date (oldest first), then reverse for library rendering
+    // The library might render in reverse order, so we reverse here to compensate
     const sortedChildren = children.slice().sort((a, b) => {
       const dateA = a.attributes?.birthDate || a.attributes?.birth_date;
       const dateB = b.attributes?.birthDate || b.attributes?.birth_date;
@@ -319,6 +320,8 @@ export function graphToTree(graph, startPersonId) {
       if (!dateB) return -1; // No date goes to end
       return new Date(dateA) - new Date(dateB); // Oldest first
     });
+    // Reverse so oldest appears first when library renders (library might reverse)
+    sortedChildren.reverse();
     
     const treeNode = {
       name: node.name || `Person ${node.id}`,
