@@ -1,12 +1,11 @@
-# Personal CRM Theme
+# Caelis
 
-A React-powered WordPress theme for the Personal CRM system. This theme provides a modern, single-page application interface for managing contacts, companies, and important dates.
+A React-powered WordPress theme for personal relationship management. This theme provides a modern, single-page application interface for managing contacts, companies, and important dates.
 
 ## Requirements
 
 - WordPress 6.0+
 - PHP 8.0+
-- [Personal CRM Plugin](https://github.com/yourusername/personal-crm-plugin)
 - [Advanced Custom Fields Pro](https://www.advancedcustomfields.com/pro/)
 - Node.js 18+ (for development only)
 
@@ -15,16 +14,16 @@ A React-powered WordPress theme for the Personal CRM system. This theme provides
 ### For Users (Pre-built)
 
 1. Download the latest release (includes pre-built `/dist` folder)
-2. Upload to `/wp-content/themes/personal-crm-theme/`
+2. Upload to `/wp-content/themes/caelis-theme/`
 3. Activate the theme in WordPress
-4. Make sure the Personal CRM plugin is installed and activated
+4. Make sure ACF Pro is installed and activated
 
 ### For Developers
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/personal-crm-theme.git
-cd personal-crm-theme
+git clone https://github.com/yourusername/caelis-theme.git
+cd caelis-theme
 
 # Install dependencies
 npm install
@@ -41,7 +40,7 @@ npm run build
 ### File Structure
 
 ```
-personal-crm-theme/
+caelis-theme/
 ├── style.css           # Theme metadata (required by WordPress)
 ├── functions.php       # Theme functions and asset loading
 ├── index.php           # Single template that loads React
@@ -120,7 +119,7 @@ window.prmConfig = {
   loginUrl: '/wp-login.php',
   logoutUrl: '/wp-login.php?action=logout',
   adminUrl: '/wp-admin/',
-  themeUrl: '/wp-content/themes/personal-crm-theme/',
+  themeUrl: '/wp-content/themes/caelis-theme/',
 };
 ```
 
@@ -185,7 +184,7 @@ Global styles and component classes are in `src/index.css`:
 
 ### API errors
 - Ensure you're logged into WordPress
-- Check that the Personal CRM plugin is active
+- Check that ACF Pro is active
 - Verify REST API is accessible at `/wp-json/`
 
 ### CORS issues in development
