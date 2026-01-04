@@ -4,7 +4,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 ## Project Overview
 
-Personal CRM system built as a WordPress theme with integrated backend functionality and a modern React SPA frontend. Tracks contacts, companies, important dates, and interactions with user-specific access control.
+**Caelis** is a personal CRM system built as a WordPress theme with integrated backend functionality and a modern React SPA frontend. Tracks contacts, companies, important dates, and interactions with user-specific access control.
 
 **Tech Stack:**
 - Backend: WordPress 6.0+, PHP 8.0+, ACF Pro (required)
@@ -166,7 +166,27 @@ git commit -m "<git commit summary>"
 git push
 ```
 
-### Rule 5: 95% sure rule
+### Rule 5: Deploy to Production
+
+After every commit & push, deploy the changes to the production server:
+
+```bash
+# Sync theme files to production (excludes .git and node_modules)
+rsync -avz --exclude='.git' --exclude='node_modules' -e "ssh -p 18765" /Users/joostdevalk/Code/joost-crm/personal-crm-theme/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
+
+# Clear caches on production
+ssh u25-eninwxjgiulh@c1130624.sgvps.net -p 18765 "cd ~/www/cael.is/public_html && wp cache flush && wp sg purge"
+```
+
+**Production server details:**
+- Host: `c1130624.sgvps.net`
+- Port: `18765`
+- User: `u25-eninwxjgiulh`
+- WordPress path: `~/www/cael.is/public_html/`
+- Theme path: `~/www/cael.is/public_html/wp-content/themes/caelis/`
+- Production URL: `https://cael.is/`
+
+### Rule 6: 95% sure rule
 
 If you're less than 95% sure about the changes you're going to make: *ASK QUESTIONS!*
 
@@ -181,6 +201,6 @@ If you're less than 95% sure about the changes you're going to make: *ASK QUESTI
 * Select your recommended option and tell me why
 * Wait for approval before implementing
 
-### Rule 6: Self testing
+### Rule 7: Self testing
 
 Test your changes as much as you can before claiming something works.
