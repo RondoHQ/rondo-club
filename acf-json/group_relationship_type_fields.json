@@ -1,0 +1,37 @@
+{
+    "key": "group_relationship_type_fields",
+    "title": "Relationship Type Fields",
+    "fields": [
+        {
+            "key": "field_inverse_relationship_type",
+            "label": "Inverse Relationship Type",
+            "name": "inverse_relationship_type",
+            "type": "taxonomy",
+            "taxonomy": "relationship_type",
+            "field_type": "select",
+            "return_format": "id",
+            "allow_null": 1,
+            "multiple": 0,
+            "instructions": "Select the inverse relationship type. For example, if this is 'Parent', select 'Child'. If this is 'Spouse', select 'Spouse' (same type). Leave empty if this relationship type has no inverse.",
+            "required": 0
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "taxonomy",
+                "operator": "==",
+                "value": "relationship_type"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "show_in_rest": 1
+}
+

@@ -12,46 +12,6 @@ if (!defined('ABSPATH')) {
 class PRM_Inverse_Relationships {
     
     /**
-     * Mapping of relationship type slugs to their inverse types
-     * Key = relationship type slug, Value = inverse relationship type slug
-     */
-    private $inverse_mappings = [
-        // Symmetric relationships (same type both ways)
-        'spouse'        => 'spouse',
-        'friend'        => 'friend',
-        'colleague'     => 'colleague',
-        'acquaintance'  => 'acquaintance',
-        'sibling'      => 'sibling',
-        'cousin'        => 'cousin',
-        'stepsibling'   => 'stepsibling',
-        'inlaw'         => 'inlaw',
-        'partner'       => 'partner',
-        'ex'            => 'ex',
-        
-        // Parent ↔ Child relationships
-        'parent'        => 'child',
-        'child'         => 'parent',
-        'grandparent'   => 'grandchild',
-        'grandchild'    => 'grandparent',
-        'stepparent'    => 'stepchild',
-        'stepchild'     => 'stepparent',
-        'godparent'     => 'godchild',
-        'godchild'      => 'godparent',
-        
-        // Uncle/Aunt ↔ Nephew/Niece
-        'uncle'         => 'nephew',
-        'nephew'        => 'uncle',
-        'aunt'          => 'niece',
-        'niece'         => 'aunt',
-        
-        // Professional relationships
-        'boss'          => 'subordinate',
-        'subordinate'   => 'boss',
-        'mentor'        => 'mentee',
-        'mentee'        => 'mentor',
-    ];
-    
-    /**
      * Track which posts are currently being processed to prevent infinite loops
      */
     private $processing = [];
@@ -251,28 +211,28 @@ class PRM_Inverse_Relationships {
             return;
         }
         
-        // Get relationship type slug
+        // Get relationship type term
         $term = get_term($relationship_type_id, 'relationship_type');
         if (!$term || is_wp_error($term)) {
             return;
         }
         
-        $relationship_slug = $term->slug;
+        // Get inverse relationship type from ACF field
+        $inverse_type_id = get_field('inverse_relationship_type', 'relationship_type_' . $relationship_type_id);
         
-        // Get inverse relationship type slug
-        $inverse_slug = $this->inverse_mappings[$relationship_slug] ?? null;
-        if (!$inverse_slug) {
+        if (!$inverse_type_id) {
             // No inverse mapping defined - skip
             return;
         }
         
-        // Get inverse relationship type term
-        $inverse_term = get_term_by('slug', $inverse_slug, 'relationship_type');
-        if (!$inverse_term) {
+        // Ensure it's an integer
+        $inverse_type_id = (int) $inverse_type_id;
+        
+        // Validate inverse term exists
+        $inverse_term = get_term($inverse_type_id, 'relationship_type');
+        if (!$inverse_term || is_wp_error($inverse_term)) {
             return;
         }
-        
-        $inverse_type_id = $inverse_term->term_id;
         
         // Get existing relationships for the related person
         $related_person_relationships = get_field('relationships', $to_person_id);
@@ -340,28 +300,28 @@ class PRM_Inverse_Relationships {
             return;
         }
         
-        // Get relationship type slug
+        // Get relationship type term
         $term = get_term($relationship_type_id, 'relationship_type');
         if (!$term || is_wp_error($term)) {
             return;
         }
         
-        $relationship_slug = $term->slug;
+        // Get inverse relationship type from ACF field
+        $inverse_type_id = get_field('inverse_relationship_type', 'relationship_type_' . $relationship_type_id);
         
-        // Get inverse relationship type slug
-        $inverse_slug = $this->inverse_mappings[$relationship_slug] ?? null;
-        if (!$inverse_slug) {
+        if (!$inverse_type_id) {
             // No inverse mapping defined - skip
             return;
         }
         
-        // Get inverse relationship type term
-        $inverse_term = get_term_by('slug', $inverse_slug, 'relationship_type');
-        if (!$inverse_term) {
+        // Ensure it's an integer
+        $inverse_type_id = (int) $inverse_type_id;
+        
+        // Validate inverse term exists
+        $inverse_term = get_term($inverse_type_id, 'relationship_type');
+        if (!$inverse_term || is_wp_error($inverse_term)) {
             return;
         }
-        
-        $inverse_type_id = $inverse_term->term_id;
         
         // Get existing relationships for the related person
         $related_person_relationships = get_field('relationships', $from_person_id);
