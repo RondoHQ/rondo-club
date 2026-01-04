@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-01-04
+
+### Added
+- vCard export: Export individual person contacts as vCard (.vcf) files
+- Export button in PersonDetail page to download contact as vCard
+- vCard export includes: name, nickname, email, phone, mobile, address, website, social media links, organization, job title, and birthday
+- Compatible with Apple Contacts, Outlook, Android, and other vCard-compatible applications
+
 ## [1.2.2] - 2026-01-04
 
 ### Added
