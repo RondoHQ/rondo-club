@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.106] - 2024-12-19
+
+### Changed
+- Family Tree: Nodes are now 1.5x bigger (size 45 instead of 30)
+- Family Tree: Generation levels now calculated relative to the start person
+- Family Tree: Parents at level -1, grandparents -2, children +1, etc.
+- Family Tree: Spouses/partners correctly placed on same level via BFS traversal
+- Family Tree: Increased spacing between nodes and levels for cleaner layout
+- Family Tree: Changed sort method to 'hubsize' for better spouse positioning
+
 ## [1.0.105] - 2024-12-19
 
 ### Changed
