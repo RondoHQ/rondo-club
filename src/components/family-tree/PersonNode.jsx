@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom';
 /**
  * Person Node Component for Family Tree
  * Displays a person card in the tree visualization
- * Compatible with react-family-tree's renderNode API
+ * Compatible with react-d3-tree's foreignObject
  */
-export default function PersonNode({ node, onClick, style }) {
+export default function PersonNode({ node, onClick }) {
   const navigate = useNavigate();
-  // react-family-tree provides node with _name, _photo, etc. from our custom fields
   const { id, _name, gender, _photo, _age, _birthDate } = node || {};
   const name = _name || `Person ${id}`;
   const photo = _photo;
@@ -78,8 +77,8 @@ export default function PersonNode({ node, onClick, style }) {
   return (
     <div
       onClick={handleClick}
-      style={style}
-      className="bg-white border-2 border-gray-300 rounded-lg shadow-md p-2 cursor-pointer hover:border-primary-500 hover:shadow-lg transition-all absolute"
+      className="bg-white border-2 border-gray-300 rounded-lg shadow-md p-2 cursor-pointer hover:border-primary-500 hover:shadow-lg transition-all"
+      style={{ width: '100%', height: '100%' }}
     >
       {/* Photo or Initials */}
       <div className="flex justify-center mb-1">

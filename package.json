@@ -1,6 +1,6 @@
 {
   "name": "personal-crm-theme",
-  "version": "1.0.92",
+  "version": "1.0.93",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,8 +16,8 @@
     "date-fns": "^3.2.0",
     "lucide-react": "^0.309.0",
     "react": "^18.2.0",
+    "react-d3-tree": "^3.6.6",
     "react-dom": "^18.2.0",
-    "react-family-tree": "^3.2.0",
     "react-hook-form": "^7.49.0",
     "react-router-dom": "^6.21.0",
     "zustand": "^4.4.0"
