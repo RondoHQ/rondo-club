@@ -200,10 +200,12 @@ function prm_get_js_config() {
         'siteName'    => get_bloginfo('name'),
         'userId'      => get_current_user_id(),
         'isLoggedIn'  => is_user_logged_in(),
+        'isAdmin'     => current_user_can('manage_options'),
         'loginUrl'    => wp_login_url(),
         'logoutUrl'   => wp_logout_url(home_url()),
         'adminUrl'    => admin_url(),
         'themeUrl'    => PRM_THEME_URL,
+        'version'     => wp_get_theme()->get('Version'),
     ];
 }
 
@@ -602,3 +604,13 @@ function prm_login_redirect($redirect_to, $request, $user) {
     return home_url('/');
 }
 add_filter('login_redirect', 'prm_login_redirect', 10, 3);
+
+/**
+ * Disable admin color scheme picker for all users
+ */
+remove_action('admin_color_scheme_picker', 'admin_color_scheme_picker');
+
+/**
+ * Disable application passwords for security
+ */
+add_filter('wp_is_application_passwords_available', '__return_false');
