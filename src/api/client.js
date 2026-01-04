@@ -71,6 +71,7 @@ export const wpApi = {
   createRelationshipType: (data) => api.post('/wp/v2/relationship_type', data),
   updateRelationshipType: (id, data) => api.post(`/wp/v2/relationship_type/${id}`, data),
   deleteRelationshipType: (id) => api.delete(`/wp/v2/relationship_type/${id}?force=true`),
+  restoreRelationshipTypeDefaults: () => api.post('/prm/v1/relationship-types/restore-defaults'),
   getDateTypes: () => api.get('/wp/v2/date_type', { params: { per_page: 100 } }),
   
   // Media
