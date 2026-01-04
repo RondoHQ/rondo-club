@@ -192,13 +192,14 @@ function isChildType(typeSlug) {
 function findUltimateAncestor(startPersonId, adjacencyList, nodes) {
   const visited = new Set();
   let currentId = startPersonId;
+  const ancestorsWithNoParents = [];
   
   // Traverse UP until we find someone with no parents
-  // This person will be the oldest ancestor and will be at the top of the tree
+  // Collect all people with no parents
   while (true) {
     if (visited.has(currentId)) {
-      // Cycle detected, return current to prevent infinite loop
-      return currentId;
+      // Cycle detected, break
+      break;
     }
     visited.add(currentId);
     
@@ -210,14 +211,33 @@ function findUltimateAncestor(startPersonId, adjacencyList, nodes) {
     });
     
     if (parents.length === 0) {
-      // No parents found - this is the ultimate ancestor (oldest person)
-      // This person will be at the top of the tree
-      return currentId;
+      // No parents found - this is an ultimate ancestor
+      ancestorsWithNoParents.push(currentId);
+      break;
     }
     
     // Move UP to first parent and continue traversing upward
     currentId = parents[0].nodeId;
   }
+  
+  // If we found ancestors with no parents, return the oldest by birth date
+  if (ancestorsWithNoParents.length > 0) {
+    // Sort by birth date (oldest first)
+    ancestorsWithNoParents.sort((a, b) => {
+      const nodeA = nodes.find(n => n.id === a);
+      const nodeB = nodes.find(n => n.id === b);
+      const dateA = nodeA?.birthDate;
+      const dateB = nodeB?.birthDate;
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1; // No date goes to end
+      if (!dateB) return -1; // No date goes to end
+      return new Date(dateA) - new Date(dateB); // Oldest first
+    });
+    return ancestorsWithNoParents[0];
+  }
+  
+  // Fallback: return the starting person if no ancestors found
+  return startPersonId;
 }
 
 /**
