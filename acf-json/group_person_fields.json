@@ -42,7 +42,21 @@
             "key": "field_gender",
             "label": "Gender",
             "name": "gender",
-            "type": "text",
+            "type": "select",
+            "choices": {
+                "male": "Male",
+                "female": "Female",
+                "non_binary": "Non-binary",
+                "other": "Other",
+                "prefer_not_to_say": "Prefer not to say"
+            },
+            "default_value": "",
+            "allow_null": 1,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "value",
+            "ajax": 0,
+            "placeholder": "",
             "wrapper": {
                 "width": "50"
             }

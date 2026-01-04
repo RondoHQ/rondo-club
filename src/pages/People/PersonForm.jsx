@@ -32,6 +32,7 @@ export default function PersonForm() {
       first_name: '',
       last_name: '',
       nickname: '',
+      gender: '',
       email: '',
       how_we_met: '',
       is_favorite: false,
@@ -49,6 +50,7 @@ export default function PersonForm() {
         first_name: person.acf?.first_name || '',
         last_name: person.acf?.last_name || '',
         nickname: person.acf?.nickname || '',
+        gender: person.acf?.gender || '',
         email: email,
         how_we_met: person.acf?.how_we_met || '',
         is_favorite: person.acf?.is_favorite || false,
@@ -78,6 +80,7 @@ export default function PersonForm() {
           first_name: data.first_name,
           last_name: data.last_name,
           nickname: data.nickname,
+          gender: data.gender || '',
           how_we_met: data.how_we_met,
           is_favorite: data.is_favorite,
         },
@@ -196,6 +199,21 @@ export default function PersonForm() {
               className="input"
               placeholder="Johnny"
             />
+          </div>
+          
+          <div>
+            <label className="label">Gender</label>
+            <select
+              {...register('gender')}
+              className="input"
+            >
+              <option value="">Select gender...</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non_binary">Non-binary</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
           </div>
           
           {!isEditing && (

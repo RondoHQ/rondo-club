@@ -64,6 +64,7 @@ function prm_init() {
     require_once PRM_PLUGIN_DIR . '/class-rest-api.php';
     require_once PRM_PLUGIN_DIR . '/class-reminders.php';
     require_once PRM_PLUGIN_DIR . '/class-monica-import.php';
+    require_once PRM_PLUGIN_DIR . '/class-inverse-relationships.php';
 
     // Initialize classes
     new PRM_Post_Types();
@@ -74,6 +75,7 @@ function prm_init() {
     new PRM_REST_API();
     new PRM_Reminders();
     new PRM_Monica_Import();
+    new PRM_Inverse_Relationships();
     
     $initialized = true;
 }

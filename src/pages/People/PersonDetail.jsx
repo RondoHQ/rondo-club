@@ -18,6 +18,23 @@ function decodeHtml(html) {
   return txt.value;
 }
 
+// Helper to get gender symbol
+function getGenderSymbol(gender) {
+  if (!gender) return null;
+  switch (gender) {
+    case 'male':
+      return '♂';
+    case 'female':
+      return '♀';
+    case 'non_binary':
+    case 'other':
+    case 'prefer_not_to_say':
+      return '⚧';
+    default:
+      return null;
+  }
+}
+
 export default function PersonDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -492,11 +509,15 @@ export default function PersonDetail() {
             )}
             {isDeceased && deathDateValue && age !== null && (
               <p className="text-gray-500 text-sm mt-1">
+                {getGenderSymbol(acf.gender) && <span className="mr-1">{getGenderSymbol(acf.gender)}</span>}
                 Died {format(deathDateValue, 'MMMM d, yyyy')} at age {age}
               </p>
             )}
             {!isDeceased && age !== null && (
-              <p className="text-gray-500 text-sm mt-1">{age} years old</p>
+              <p className="text-gray-500 text-sm mt-1">
+                {getGenderSymbol(acf.gender) && <span className="mr-1">{getGenderSymbol(acf.gender)}</span>}
+                {age} years old
+              </p>
             )}
             <div className="mt-2">
               <div className="flex flex-wrap gap-2 items-center">

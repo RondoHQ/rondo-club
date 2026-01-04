@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.66] - 2024-12-19
+
+### Added
+- Person form: Added gender field with dropdown selection (Male, Female, Non-binary, Other, Prefer not to say)
+- Person detail: Gender symbol (♂/♀/⚧) now displays left of age
+- Relationships: Automatic bidirectional relationship synchronization - when a relationship is created/updated/deleted from person A to person B, the inverse relationship is automatically created/updated/deleted from B to A
+- Inverse relationship mappings for all relationship types (e.g., Parent ↔ Child, Boss ↔ Subordinate, Spouse ↔ Spouse)
+
+### Changed
+- Person form: Gender field changed from text input to select dropdown
+- Cache invalidation: Related person cache is now invalidated when relationships are updated, ensuring UI reflects inverse relationships immediately
+
 ## [1.0.65] - 2024-12-19
 
 ### Changed
