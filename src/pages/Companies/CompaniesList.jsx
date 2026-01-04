@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Building2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -48,6 +48,17 @@ export default function CompaniesList() {
       return response.data;
     },
   });
+
+  // Sort companies alphabetically by name
+  const sortedCompanies = useMemo(() => {
+    if (!companies) return [];
+    
+    return [...companies].sort((a, b) => {
+      const nameA = (a.title?.rendered || a.title || '').toLowerCase();
+      const nameB = (b.title?.rendered || b.title || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  }, [companies]);
   
   return (
     <div className="space-y-4">
@@ -85,7 +96,7 @@ export default function CompaniesList() {
       )}
       
       {/* Empty */}
-      {!isLoading && !error && companies?.length === 0 && (
+      {!isLoading && !error && sortedCompanies?.length === 0 && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-6 h-6 text-gray-400" />
@@ -104,9 +115,9 @@ export default function CompaniesList() {
       )}
       
       {/* Grid */}
-      {!isLoading && !error && companies?.length > 0 && (
+      {!isLoading && !error && sortedCompanies?.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {companies.map((company) => (
+          {sortedCompanies.map((company) => (
             <CompanyCard key={company.id} company={company} />
           ))}
         </div>
