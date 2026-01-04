@@ -254,16 +254,22 @@ export function graphToTree(graph, rootNodeId) {
       }
     }
     
-    return {
-      name: node.name,
+    const treeNode = {
+      name: node.name || `Person ${node.id}`,
       attributes: {
         id: node.id,
-        gender: node.gender,
-        photo: node.photo,
-        age: node.age,
+        gender: node.gender || '',
+        photo: node.photo || null,
+        age: node.age !== null && node.age !== undefined ? node.age : null,
+        birthDate: node.birthDate || null,
       },
-      children: children.length > 0 ? children : undefined,
     };
+    
+    if (children.length > 0) {
+      treeNode.children = children;
+    }
+    
+    return treeNode;
   }
   
   return buildNode(rootNodeId);
