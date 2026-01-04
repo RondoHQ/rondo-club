@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { wpApi } from '@/api/client';
+import { wpApi, prmApi } from '@/api/client';
 
 // Helper function to get current company ID from person's work history
 function getCurrentCompanyId(person) {
@@ -26,7 +26,7 @@ function getCurrentCompanyId(person) {
   return jobsWithCompany.length > 0 ? jobsWithCompany[0].company : null;
 }
 
-function PersonCard({ person, companyName }) {
+function PersonCard({ person, companyName, isDeceased }) {
   return (
     <Link 
       to={`/people/${person.id}`}
@@ -51,6 +51,7 @@ function PersonCard({ person, companyName }) {
           <div className="flex items-center">
             <h3 className="text-sm font-medium text-gray-900 truncate">
               {person.name}
+              {isDeceased && <span className="ml-1 text-gray-500">†</span>}
             </h3>
             {person.is_favorite && (
               <Star className="w-4 h-4 ml-1 text-yellow-400 fill-current flex-shrink-0" />
@@ -231,6 +232,39 @@ export default function PeopleList() {
     });
     return map;
   }, [filteredAndSortedPeople, companyMap]);
+
+  // Fetch dates for all people to check if they're deceased
+  const personIds = useMemo(() => {
+    return filteredAndSortedPeople.map(p => p.id).filter(Boolean);
+  }, [filteredAndSortedPeople]);
+
+  const personDatesQueries = useQueries({
+    queries: personIds.map(personId => ({
+      queryKey: ['person-dates', personId],
+      queryFn: async () => {
+        const response = await prmApi.getPersonDates(personId);
+        return response.data;
+      },
+      enabled: !!personId,
+    })),
+  });
+
+  // Create a map of person ID to deceased status
+  const personDeceasedMap = useMemo(() => {
+    const map = {};
+    personDatesQueries.forEach((query, index) => {
+      if (query.data && personIds[index]) {
+        const personId = personIds[index];
+        // Check if person has a "Died" date
+        const hasDiedDate = query.data.some(d => {
+          const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
+          return dateType?.toLowerCase() === 'died';
+        });
+        map[personId] = hasDiedDate;
+      }
+    });
+    return map;
+  }, [personDatesQueries, personIds]);
   
   return (
     <div className="space-y-4">
@@ -433,6 +467,7 @@ export default function PeopleList() {
               key={person.id} 
               person={person} 
               companyName={personCompanyMap[person.id]}
+              isDeceased={personDeceasedMap[person.id] || false}
             />
           ))}
         </div>
