@@ -183,36 +183,39 @@ function isChildType(typeSlug) {
 
 /**
  * Find the ultimate ancestor (person with no parents) by traversing up
+ * Traverses upward following parent relationships until finding someone with no parents
  * @param {number} startPersonId - Person to start from
  * @param {Map} adjacencyList - Adjacency list of relationships
  * @param {Array} nodes - Array of all nodes
- * @returns {number} ID of the ultimate ancestor, or startPersonId if no parents found
+ * @returns {number} ID of the ultimate ancestor (oldest person with no parents)
  */
 function findUltimateAncestor(startPersonId, adjacencyList, nodes) {
   const visited = new Set();
   let currentId = startPersonId;
   
-  // Traverse up until we find someone with no parents
+  // Traverse UP until we find someone with no parents
+  // This person will be the oldest ancestor and will be at the top of the tree
   while (true) {
     if (visited.has(currentId)) {
-      // Cycle detected, return current
+      // Cycle detected, return current to prevent infinite loop
       return currentId;
     }
     visited.add(currentId);
     
     const neighbors = adjacencyList.get(currentId) || [];
+    // Find parents: if current person has "child" relationship to someone, that someone is current's parent
     const parents = neighbors.filter(neighbor => {
       const relType = neighbor.type?.toLowerCase();
-      // If current person has "child" relationship to someone, that person is current's parent
       return isChildType(relType);
     });
     
     if (parents.length === 0) {
-      // No parents found, this is the ultimate ancestor
+      // No parents found - this is the ultimate ancestor (oldest person)
+      // This person will be at the top of the tree
       return currentId;
     }
     
-    // Move up to first parent (we'll handle multiple parents in tree building)
+    // Move UP to first parent and continue traversing upward
     currentId = parents[0].nodeId;
   }
 }
