@@ -15,6 +15,7 @@ import DatesList from '@/pages/Dates/DatesList';
 import DateForm from '@/pages/Dates/DateForm';
 import Settings from '@/pages/Settings/Settings';
 import RelationshipTypes from '@/pages/Settings/RelationshipTypes';
+import Import from '@/pages/Settings/Import';
 import FamilyTree from '@/pages/People/FamilyTree';
 import Login from '@/pages/Login';
 
@@ -78,6 +79,7 @@ function App() {
                 {/* Settings */}
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/settings/relationship-types" element={<RelationshipTypes />} />
+                <Route path="/settings/import" element={<Import />} />
                 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />

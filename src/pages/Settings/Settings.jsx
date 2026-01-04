@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import MonicaImport from '@/components/import/MonicaImport';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
 
 export default function Settings() {
-  const { logoutUrl } = useAuth();
   const config = window.prmConfig || {};
   const isAdmin = config.isAdmin || false;
   
@@ -61,30 +58,6 @@ export default function Settings() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="card p-6">
-        <MonicaImport />
-      </div>
-
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Account</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="label">User ID</label>
-            <p className="text-gray-600">{config.userId || 'N/A'}</p>
-          </div>
-          <div>
-            <a
-              href={config.adminUrl + 'profile.php'}
-              className="btn-secondary"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Edit Profile in WordPress
-            </a>
-          </div>
-        </div>
-      </div>
-      
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4">Calendar Subscription</h2>
         <p className="text-sm text-gray-600 mb-4">
@@ -162,6 +135,19 @@ export default function Settings() {
         )}
       </div>
       
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4">Data</h2>
+        <div className="space-y-3">
+          <Link
+            to="/settings/import"
+            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+          >
+            <p className="font-medium">Import Data</p>
+            <p className="text-sm text-gray-500">Import contacts from Monica CRM or other sources</p>
+          </Link>
+        </div>
+      </div>
+      
       {isAdmin && (
         <div className="card p-6">
           <h2 className="text-lg font-semibold mb-4">Configuration</h2>
@@ -220,13 +206,6 @@ export default function Settings() {
           </div>
         </div>
       )}
-      
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Session</h2>
-        <a href={logoutUrl} className="btn-danger">
-          Log Out
-        </a>
-      </div>
       
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4">About</h2>

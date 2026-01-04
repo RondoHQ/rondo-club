@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.123] - 2026-01-04
+
+### Changed
+- Settings page: Moved Import functionality to a dedicated submenu page at `/settings/import`
+- Settings page: Added "Data" section with link to Import page
+
+### Removed
+- Settings page: Removed "Account" section (profile link already in user menu)
+- Settings page: Removed "Session" section with Log Out button (already in sidebar)
+
 ## [1.0.122] - 2026-01-04
 
 ### Changed
