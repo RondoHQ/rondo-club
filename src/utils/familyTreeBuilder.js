@@ -290,10 +290,11 @@ export function graphToTree(graph, startPersonId) {
     });
   });
   
-  // Find the ultimate ancestor (person with no parents)
-  const ultimateAncestorId = findUltimateAncestor(startPersonId, adjacencyList, nodes);
+  // Find the eldest ancestor (oldest by birth date among all ancestors)
+  const eldestAncestorId = findUltimateAncestor(startPersonId, adjacencyList, nodes);
   
-  // Build tree recursively from ultimate ancestor downward
+  // Build tree recursively from eldest ancestor downward
+  // This ensures the tree flows from oldest (top) to youngest (bottom)
   const visited = new Set();
   
   function buildNode(nodeId, parentId = null) {
