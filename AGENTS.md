@@ -147,11 +147,34 @@ Always add a changelog entry in in [Keep a Changelog](https://keepachangelog.com
 
 You will find the changelog in /CHANGELOG.md
 
-### Rule 3: Update documentation
+### Rule 3: Don't Repeat Yourself (DRY)
+
+Apply DRY principles to all coding. If you see multiple changes you're doing are the same code, make sure you properly apply DRY principles and clean up the code where possible.
+
+### Rule 4: 95% sure rule
+
+If you're less than 95% sure about the changes you're going to make: *ASK QUESTIONS!*
+
+*When you should ask:*
+* Before making big changes
+* For architectural decisions
+* When you have unclear requirements
+* When there are trade-offs between options
+
+*How you should ask:*
+* ⁠Present up to 3 options with pros and cons
+* Select your recommended option and tell me why
+* Wait for approval before implementing
+
+### Rule 5: Self testing
+
+Test your changes as much as you can before claiming something works.
+
+### Rule 6: Update documentation
 
 Update the documentation in the /docs folder with all relevant information from the change. If the (sub-)system you made changes to is not documented yet, document that system too.
 
-### Rule 4: Git Commit & Push
+### Rule 7: Git Commit & Push
 
 #### What is it?
 
@@ -174,14 +197,27 @@ git commit -m "<git commit summary>"
 git push
 ```
 
-### Rule 5: Deploy to Production
+### Rule 8: Deploy to Production
 
 After every commit & push, deploy the changes to the production server:
+
+If you did not update, add or remove any node modules, do this:
 
 ```bash
 # Sync theme files to production (excludes .git and node_modules)
 rsync -avz --exclude='.git' --exclude='node_modules' -e "ssh -p 18765" /Users/joostdevalk/Code/joost-crm/personal-crm-theme/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
+```
 
+If you _did_ update, add or remove node modules, do this:
+
+```bash
+# Sync theme files to production (excludes .git and node_modules)
+rsync -avz --exclude='.git' -e "ssh -p 18765" /Users/joostdevalk/Code/joost-crm/personal-crm-theme/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
+```
+
+Then, in both cases, do this:
+
+```bash
 # Clear caches on production
 ssh u25-eninwxjgiulh@c1130624.sgvps.net -p 18765 "cd ~/www/cael.is/public_html && wp cache flush && wp sg purge"
 ```
@@ -194,21 +230,3 @@ ssh u25-eninwxjgiulh@c1130624.sgvps.net -p 18765 "cd ~/www/cael.is/public_html &
 - Theme path: `~/www/cael.is/public_html/wp-content/themes/caelis/`
 - Production URL: `https://cael.is/`
 
-### Rule 6: 95% sure rule
-
-If you're less than 95% sure about the changes you're going to make: *ASK QUESTIONS!*
-
-*When you should ask:*
-* Before making big changes
-* For architectural decisions
-* When you have unclear requirements
-* When there are trade-offs between options
-
-*How you should ask:*
-* ⁠Present up to 3 options with pros and cons
-* Select your recommended option and tell me why
-* Wait for approval before implementing
-
-### Rule 7: Self testing
-
-Test your changes as much as you can before claiming something works.

@@ -42,7 +42,62 @@ function prm_check_dependencies() {
 }
 
 /**
- * Initialize the CRM functionality
+ * PSR-4 style autoloader for PRM classes
+ * Classes are only loaded when first used
+ */
+function prm_autoloader($class_name) {
+    // Only handle PRM_ prefixed classes
+    if (strpos($class_name, 'PRM_') !== 0) {
+        return;
+    }
+    
+    // Map class names to file names
+    $class_map = [
+        'PRM_Post_Types'             => 'class-post-types.php',
+        'PRM_Taxonomies'             => 'class-taxonomies.php',
+        'PRM_Auto_Title'             => 'class-auto-title.php',
+        'PRM_Access_Control'         => 'class-access-control.php',
+        'PRM_Comment_Types'          => 'class-comment-types.php',
+        'PRM_REST_API'               => 'class-rest-api.php',
+        'PRM_Reminders'              => 'class-reminders.php',
+        'PRM_Monica_Import'          => 'class-monica-import.php',
+        'PRM_VCard_Import'           => 'class-vcard-import.php',
+        'PRM_Google_Contacts_Import' => 'class-google-contacts-import.php',
+        'PRM_Inverse_Relationships'  => 'class-inverse-relationships.php',
+        'PRM_ICal_Feed'              => 'class-ical-feed.php',
+    ];
+    
+    if (isset($class_map[$class_name])) {
+        require_once PRM_PLUGIN_DIR . '/' . $class_map[$class_name];
+    }
+}
+spl_autoload_register('prm_autoloader');
+
+/**
+ * Check if current request is a REST API request
+ */
+function prm_is_rest_request() {
+    if (defined('REST_REQUEST') && REST_REQUEST) {
+        return true;
+    }
+    
+    // Check for REST API URL pattern before REST_REQUEST is defined
+    $rest_prefix = rest_get_url_prefix();
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    
+    return strpos($request_uri, '/' . $rest_prefix . '/') !== false;
+}
+
+/**
+ * Check if current request is for the iCal feed
+ */
+function prm_is_ical_request() {
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    return strpos($request_uri, '/prm-ical/') !== false || strpos($request_uri, 'prm-ical') !== false;
+}
+
+/**
+ * Initialize the CRM functionality with conditional class loading
  */
 function prm_init() {
     // Prevent double initialization
@@ -55,33 +110,48 @@ function prm_init() {
         return;
     }
     
-    // Load includes
-    require_once PRM_PLUGIN_DIR . '/class-post-types.php';
-    require_once PRM_PLUGIN_DIR . '/class-taxonomies.php';
-    require_once PRM_PLUGIN_DIR . '/class-auto-title.php';
-    require_once PRM_PLUGIN_DIR . '/class-access-control.php';
-    require_once PRM_PLUGIN_DIR . '/class-comment-types.php';
-    require_once PRM_PLUGIN_DIR . '/class-rest-api.php';
-    require_once PRM_PLUGIN_DIR . '/class-reminders.php';
-    require_once PRM_PLUGIN_DIR . '/class-monica-import.php';
-    require_once PRM_PLUGIN_DIR . '/class-vcard-import.php';
-    require_once PRM_PLUGIN_DIR . '/class-google-contacts-import.php';
-    require_once PRM_PLUGIN_DIR . '/class-inverse-relationships.php';
-    require_once PRM_PLUGIN_DIR . '/class-ical-feed.php';
-
-    // Initialize classes
+    // Core classes - always needed for WordPress integration
     new PRM_Post_Types();
     new PRM_Taxonomies();
-    new PRM_Auto_Title();
     new PRM_Access_Control();
-    new PRM_Comment_Types();
-    new PRM_REST_API();
-    new PRM_Reminders();
-    new PRM_Monica_Import();
-    new PRM_VCard_Import();
-    new PRM_Google_Contacts_Import();
-    new PRM_Inverse_Relationships();
-    new PRM_ICal_Feed();
+    
+    // iCal feed - only load for iCal requests
+    if (prm_is_ical_request()) {
+        new PRM_ICal_Feed();
+        $initialized = true;
+        return; // iCal requests don't need other functionality
+    }
+    
+    // Skip loading heavy classes for non-relevant requests
+    $is_admin = is_admin();
+    $is_rest = prm_is_rest_request();
+    $is_cron = defined('DOING_CRON') && DOING_CRON;
+    
+    // Classes needed for content creation/editing (admin, REST, or cron)
+    if ($is_admin || $is_rest || $is_cron) {
+        new PRM_Auto_Title();
+        new PRM_Inverse_Relationships();
+        new PRM_Comment_Types();
+    }
+    
+    // REST API classes - only for REST requests
+    if ($is_rest) {
+        new PRM_REST_API();
+        new PRM_Monica_Import();
+        new PRM_VCard_Import();
+        new PRM_Google_Contacts_Import();
+    }
+    
+    // Reminders - only for admin or cron
+    if ($is_admin || $is_cron) {
+        new PRM_Reminders();
+    }
+    
+    // iCal feed - also initialize on non-iCal requests for hook registration
+    // but we check for its specific request above for early return optimization
+    if (!prm_is_ical_request()) {
+        new PRM_ICal_Feed();
+    }
     
     $initialized = true;
 }
@@ -319,10 +389,7 @@ add_action('init', 'prm_theme_rewrite_rules');
  * Theme activation - includes CRM initialization
  */
 function prm_theme_activation() {
-    // Trigger post type registration
-    require_once PRM_PLUGIN_DIR . '/class-post-types.php';
-    require_once PRM_PLUGIN_DIR . '/class-taxonomies.php';
-    
+    // Trigger post type registration (autoloader handles class loading)
     $post_types = new PRM_Post_Types();
     $post_types->register_post_types();
     
