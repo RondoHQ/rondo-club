@@ -177,7 +177,7 @@ class PRM_ICal_Feed {
         
         // Set headers
         header('Content-Type: text/calendar; charset=utf-8');
-        header('Content-Disposition: attachment; filename="personal-crm-dates.ics"');
+        header('Content-Disposition: attachment; filename="caelis.ics"');
         header('Cache-Control: no-cache, must-revalidate');
         header('Pragma: no-cache');
         

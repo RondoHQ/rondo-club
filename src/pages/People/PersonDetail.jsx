@@ -282,17 +282,8 @@ export default function PersonDetail() {
     setIsUploadingPhoto(true);
 
     try {
-      // Upload the file
-      const uploadResponse = await wpApi.uploadMedia(file);
-      const mediaId = uploadResponse.data.id;
-
-      // Update person with new featured media
-      await updatePerson.mutateAsync({
-        id,
-        data: {
-          featured_media: mediaId,
-        },
-      });
+      // Upload the file using the new endpoint that properly names files
+      await prmApi.uploadPersonPhoto(id, file);
 
       // Invalidate queries to refresh person data
       queryClient.invalidateQueries({ queryKey: ['person', id] });

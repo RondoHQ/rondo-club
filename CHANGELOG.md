@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.114] - 2026-01-04
+
+### Fixed
+- Photo uploads now use properly named files based on person/company name instead of original filename
+- New REST API endpoints: `/prm/v1/people/{id}/photo` and `/prm/v1/companies/{id}/logo/upload`
+- Files are saved as `{sanitized-name}.{ext}` (e.g., `john-doe.jpg`) for consistent file paths
+
 ## [1.0.113] - 2026-01-04
 
 ### Changed
