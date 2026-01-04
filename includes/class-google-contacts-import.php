@@ -109,12 +109,110 @@ class PRM_Google_Contacts_Import {
         }
 
         $summary = $this->get_import_summary($contacts);
+        $duplicates = $this->find_potential_duplicates($contacts);
 
         return rest_ensure_response([
-            'valid'   => true,
-            'version' => 'google-contacts-csv',
-            'summary' => $summary,
+            'valid'      => true,
+            'version'    => 'google-contacts-csv',
+            'summary'    => $summary,
+            'duplicates' => $duplicates,
         ]);
+    }
+
+    /**
+     * Find potential duplicates for contacts in the CSV
+     */
+    private function find_potential_duplicates(array $contacts): array {
+        $duplicates = [];
+
+        foreach ($contacts as $index => $contact) {
+            $first_name = $this->get_field($contact, ['Given Name', 'First Name']);
+            $last_name = $this->get_field($contact, ['Family Name', 'Last Name']);
+
+            // Fallback to Name field
+            if (empty($first_name) && empty($last_name) && !empty($contact['Name'])) {
+                $name_parts = explode(' ', trim($contact['Name']), 2);
+                $first_name = $name_parts[0] ?? '';
+                $last_name = $name_parts[1] ?? '';
+            }
+
+            if (empty($first_name) && empty($last_name)) {
+                continue;
+            }
+
+            $full_name = trim($first_name . ' ' . $last_name);
+            $existing_id = $this->find_existing_person($first_name, $last_name);
+
+            if ($existing_id) {
+                // Get existing person details for display
+                $existing_person = $this->get_person_details($existing_id);
+                
+                // Get CSV contact preview
+                $csv_org = $this->get_field($contact, ['Organization 1 - Name', 'Organization Name']);
+                $csv_email = trim($contact['E-mail 1 - Value'] ?? '');
+
+                $duplicates[] = [
+                    'index'           => $index,
+                    'csv_name'        => $full_name,
+                    'csv_org'         => $csv_org,
+                    'csv_email'       => $csv_email,
+                    'existing_id'     => $existing_id,
+                    'existing_name'   => $existing_person['name'],
+                    'existing_org'    => $existing_person['organization'],
+                    'existing_email'  => $existing_person['email'],
+                    'existing_photo'  => $existing_person['photo'],
+                ];
+            }
+        }
+
+        return $duplicates;
+    }
+
+    /**
+     * Get person details for duplicate display
+     */
+    private function get_person_details(int $post_id): array {
+        $first_name = get_field('first_name', $post_id) ?: '';
+        $last_name = get_field('last_name', $post_id) ?: '';
+        $name = trim($first_name . ' ' . $last_name);
+
+        // Get organization from work history
+        $organization = '';
+        $work_history = get_field('work_history', $post_id);
+        if (!empty($work_history)) {
+            foreach ($work_history as $job) {
+                if (!empty($job['is_current']) && !empty($job['company'])) {
+                    $organization = get_the_title($job['company']);
+                    break;
+                }
+            }
+        }
+
+        // Get primary email
+        $email = '';
+        $contact_info = get_field('contact_info', $post_id);
+        if (!empty($contact_info)) {
+            foreach ($contact_info as $info) {
+                if ($info['contact_type'] === 'email') {
+                    $email = $info['contact_value'];
+                    break;
+                }
+            }
+        }
+
+        // Get photo URL
+        $photo = '';
+        $thumbnail_id = get_post_thumbnail_id($post_id);
+        if ($thumbnail_id) {
+            $photo = wp_get_attachment_image_url($thumbnail_id, 'thumbnail');
+        }
+
+        return [
+            'name'         => $name,
+            'organization' => $organization,
+            'email'        => $email,
+            'photo'        => $photo,
+        ];
     }
 
     /**
@@ -178,6 +276,12 @@ class PRM_Google_Contacts_Import {
     }
 
     /**
+     * User decisions for duplicate handling
+     * Key: CSV index, Value: 'merge', 'new', or 'skip'
+     */
+    private array $decisions = [];
+
+    /**
      * Handle the import request
      */
     public function handle_import($request) {
@@ -195,6 +299,12 @@ class PRM_Google_Contacts_Import {
 
         if (empty($csv_content)) {
             return new WP_Error('empty_file', __('File is empty.', 'personal-crm'), ['status' => 400]);
+        }
+
+        // Get user decisions for duplicates (passed as JSON string in 'decisions' field)
+        $decisions_json = $request->get_param('decisions');
+        if (!empty($decisions_json)) {
+            $this->decisions = json_decode($decisions_json, true) ?: [];
         }
 
         // Parse and import contacts
@@ -250,15 +360,15 @@ class PRM_Google_Contacts_Import {
      * Import parsed contacts
      */
     private function import_contacts(array $contacts): void {
-        foreach ($contacts as $contact) {
-            $this->import_single_contact($contact);
+        foreach ($contacts as $index => $contact) {
+            $this->import_single_contact($contact, $index);
         }
     }
 
     /**
      * Import a single contact
      */
-    private function import_single_contact(array $contact): void {
+    private function import_single_contact(array $contact, int $index = 0): void {
         // Extract name - support both old format (Given Name/Family Name) and new format (First Name/Last Name)
         $first_name = $this->get_field($contact, ['Given Name', 'First Name']);
         $last_name = $this->get_field($contact, ['Family Name', 'Last Name']);
@@ -277,11 +387,24 @@ class PRM_Google_Contacts_Import {
 
         // Check if contact already exists
         $existing = $this->find_existing_person($first_name, $last_name);
-        $is_update = false;
+
+        // Check user decision for this contact
+        $decision = $this->decisions[$index] ?? null;
+
+        // Handle based on decision
+        if ($existing) {
+            if ($decision === 'skip') {
+                $this->stats['contacts_skipped']++;
+                return;
+            } elseif ($decision === 'new') {
+                // Force create new even though duplicate exists
+                $existing = null;
+            }
+            // 'merge' or no decision (default): use existing
+        }
 
         if ($existing) {
             $post_id = $existing;
-            $is_update = true;
             $this->stats['contacts_updated']++;
         } else {
             $post_id = wp_insert_post([

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-01-04
+
+### Added
+- Google Contacts import: Duplicate detection with user choice for each match
+- When a contact in the CSV matches an existing person by name, users can choose to:
+  - **Update existing**: Merge the CSV data into the existing person (default)
+  - **Create new**: Import as a new person (for different people with the same name)
+  - **Skip**: Don't import this contact at all
+- Duplicate resolution UI shows both CSV data and existing contact details including photo
+- Backend returns potential duplicates during validation with existing person details
+
 ## [1.1.6] - 2026-01-04
 
 ### Added

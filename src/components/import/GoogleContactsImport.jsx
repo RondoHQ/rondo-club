@@ -1,12 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Upload, CheckCircle, AlertCircle, Loader2, FileSpreadsheet, Users, Building2, Cake, StickyNote, Image } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, Loader2, FileSpreadsheet, Users, Building2, Cake, StickyNote, Image, AlertTriangle, UserPlus, RefreshCw, SkipForward } from 'lucide-react';
 import api from '@/api/client';
 
 export default function GoogleContactsImport() {
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [validationResult, setValidationResult] = useState(null);
+  const [decisions, setDecisions] = useState({}); // { index: 'merge' | 'new' | 'skip' }
   const queryClient = useQueryClient();
 
   const validateMutation = useMutation({
@@ -20,6 +21,14 @@ export default function GoogleContactsImport() {
     },
     onSuccess: (data) => {
       setValidationResult(data);
+      // Initialize decisions for all duplicates to 'merge' (default)
+      if (data.duplicates?.length > 0) {
+        const initialDecisions = {};
+        data.duplicates.forEach(dup => {
+          initialDecisions[dup.index] = 'merge';
+        });
+        setDecisions(initialDecisions);
+      }
     },
     onError: (error) => {
       setValidationResult({
@@ -30,9 +39,10 @@ export default function GoogleContactsImport() {
   });
 
   const importMutation = useMutation({
-    mutationFn: async (file) => {
+    mutationFn: async ({ file, decisions }) => {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('decisions', JSON.stringify(decisions));
       const response = await api.post('/prm/v1/import/google-contacts', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -84,22 +94,34 @@ export default function GoogleContactsImport() {
 
     setFile(selectedFile);
     setValidationResult(null);
+    setDecisions({});
     importMutation.reset();
     validateMutation.mutate(selectedFile);
   };
 
+  const handleDecision = (index, decision) => {
+    setDecisions(prev => ({
+      ...prev,
+      [index]: decision,
+    }));
+  };
+
   const handleImport = () => {
     if (file && validationResult?.valid) {
-      importMutation.mutate(file);
+      importMutation.mutate({ file, decisions });
     }
   };
 
   const reset = () => {
     setFile(null);
     setValidationResult(null);
+    setDecisions({});
     validateMutation.reset();
     importMutation.reset();
   };
+
+  const duplicates = validationResult?.duplicates || [];
+  const hasDuplicates = duplicates.length > 0;
 
   return (
     <div className="space-y-4">
@@ -252,6 +274,34 @@ export default function GoogleContactsImport() {
             </div>
           )}
 
+          {/* Duplicate resolution UI */}
+          {validationResult?.valid && hasDuplicates && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-medium text-amber-900">
+                    {duplicates.length} contact{duplicates.length > 1 ? 's' : ''} may already exist
+                  </h3>
+                  <p className="text-sm text-amber-700 mt-1">
+                    Choose how to handle each potential duplicate:
+                  </p>
+                  
+                  <div className="mt-4 space-y-4">
+                    {duplicates.map((dup) => (
+                      <DuplicateCard
+                        key={dup.index}
+                        duplicate={dup}
+                        decision={decisions[dup.index] || 'merge'}
+                        onDecision={(decision) => handleDecision(dup.index, decision)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Import button */}
           {validationResult?.valid && (
             <div className="flex gap-3">
@@ -302,3 +352,99 @@ export default function GoogleContactsImport() {
   );
 }
 
+/**
+ * Card for resolving a single duplicate
+ */
+function DuplicateCard({ duplicate, decision, onDecision }) {
+  return (
+    <div className="bg-white rounded-lg border border-amber-200 p-4">
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* CSV contact info */}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">From CSV</p>
+          <p className="font-medium text-gray-900 truncate">{duplicate.csv_name}</p>
+          {duplicate.csv_org && (
+            <p className="text-sm text-gray-600 truncate">{duplicate.csv_org}</p>
+          )}
+          {duplicate.csv_email && (
+            <p className="text-sm text-gray-500 truncate">{duplicate.csv_email}</p>
+          )}
+        </div>
+
+        {/* Arrow */}
+        <div className="hidden sm:flex items-center text-gray-400">
+          <span className="text-lg">→</span>
+        </div>
+
+        {/* Existing contact info */}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Existing Contact</p>
+          <div className="flex items-start gap-3">
+            {duplicate.existing_photo ? (
+              <img
+                src={duplicate.existing_photo}
+                alt=""
+                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                <span className="text-gray-500 text-sm font-medium">
+                  {duplicate.existing_name?.charAt(0)?.toUpperCase() || '?'}
+                </span>
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="font-medium text-gray-900 truncate">{duplicate.existing_name}</p>
+              {duplicate.existing_org && (
+                <p className="text-sm text-gray-600 truncate">{duplicate.existing_org}</p>
+              )}
+              {duplicate.existing_email && (
+                <p className="text-sm text-gray-500 truncate">{duplicate.existing_email}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onDecision('merge')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            decision === 'merge'
+              ? 'bg-primary-100 text-primary-800 ring-2 ring-primary-500'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <RefreshCw className="h-4 w-4" />
+          Update existing
+        </button>
+        <button
+          type="button"
+          onClick={() => onDecision('new')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            decision === 'new'
+              ? 'bg-green-100 text-green-800 ring-2 ring-green-500'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <UserPlus className="h-4 w-4" />
+          Create new
+        </button>
+        <button
+          type="button"
+          onClick={() => onDecision('skip')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            decision === 'skip'
+              ? 'bg-gray-200 text-gray-800 ring-2 ring-gray-500'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <SkipForward className="h-4 w-4" />
+          Skip
+        </button>
+      </div>
+    </div>
+  );
+}
