@@ -232,6 +232,9 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
       // Log first node structure to verify format
       if (validatedNodes.length > 0) {
         console.log('First node structure:', JSON.stringify(validatedNodes[0], null, 2));
+        console.log('First node parents:', validatedNodes[0].parents);
+        console.log('First node children:', validatedNodes[0].children);
+        console.log('First node siblings:', validatedNodes[0].siblings);
       }
       
       // Verify all nodes have required structure
@@ -246,6 +249,19 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
       if (invalidNodes.length > 0) {
         console.error('Invalid nodes found:', invalidNodes);
       }
+      
+      // Verify all relation IDs exist in nodes
+      validatedNodes.forEach(node => {
+        const allRelationIds = [
+          ...node.parents.map(p => p.id),
+          ...node.children.map(c => c.id),
+          ...node.siblings.map(s => s.id),
+        ];
+        const missingIds = allRelationIds.filter(id => !validNodeIds.has(id));
+        if (missingIds.length > 0) {
+          console.warn(`Node ${node.id} has relations to non-existent nodes:`, missingIds);
+        }
+      });
       
       return validatedNodes;
     } catch (error) {
@@ -321,34 +337,74 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
         className="w-full h-full min-h-[600px] relative overflow-auto"
         style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
       >
-        {nodes.length > 0 && rootId ? (
-          <ReactFamilyTree
-            nodes={nodes}
-            rootId={rootId}
-            width={NODE_WIDTH}
-            height={NODE_HEIGHT}
-            renderNode={(node) => {
-              if (!node || node.id === undefined || node.id === null) {
-                console.warn('Invalid node in renderNode:', node);
-                return null;
-              }
+        {(() => {
+          try {
+            if (!nodes || nodes.length === 0) {
               return (
-                <PersonNode
-                  key={node.id}
-                  node={node}
-                  onClick={handleNodeClick}
-                  style={{
-                    position: 'absolute',
-                    left: `${node.left || 0}px`,
-                    top: `${node.top || 0}px`,
-                    width: `${NODE_WIDTH}px`,
-                    height: `${NODE_HEIGHT}px`,
-                  }}
-                />
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-500">No nodes to display</p>
+                </div>
               );
-            }}
-          />
-        ) : (
+            }
+            
+            if (!rootId) {
+              return (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-500">No root node found</p>
+                </div>
+              );
+            }
+            
+            const rootExists = nodes.some(n => n && n.id === rootId);
+            if (!rootExists) {
+              console.error('Root ID not found in nodes:', { rootId, nodeIds: nodes.map(n => n?.id) });
+              return (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-500">Root node not found in nodes array</p>
+                </div>
+              );
+            }
+            
+            // Ensure nodes is a proper array (not undefined)
+            const safeNodes = Array.isArray(nodes) ? [...nodes] : [];
+            
+            return (
+              <ReactFamilyTree
+                nodes={safeNodes}
+                rootId={rootId}
+                width={NODE_WIDTH}
+                height={NODE_HEIGHT}
+                renderNode={(node) => {
+                  if (!node || node.id === undefined || node.id === null) {
+                    console.warn('Invalid node in renderNode:', node);
+                    return null;
+                  }
+                  return (
+                    <PersonNode
+                      key={node.id}
+                      node={node}
+                      onClick={handleNodeClick}
+                      style={{
+                        position: 'absolute',
+                        left: `${node.left || 0}px`,
+                        top: `${node.top || 0}px`,
+                        width: `${NODE_WIDTH}px`,
+                        height: `${NODE_HEIGHT}px`,
+                      }}
+                    />
+                  );
+                }}
+              />
+            );
+          } catch (error) {
+            console.error('Error rendering ReactFamilyTree:', error);
+            return (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-red-500">Error rendering family tree: {error.message}</p>
+              </div>
+            );
+          }
+        })()}
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500">
               {nodes.length === 0 ? 'No nodes to display' : 'No root node found'}
