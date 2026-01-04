@@ -400,3 +400,182 @@ function prm_acf_json_save_point($path) {
     return $path;
 }
 add_filter('acf/settings/save_json', 'prm_acf_json_save_point');
+
+/**
+ * Custom login page styling
+ */
+function prm_login_styles() {
+    $favicon_url = PRM_THEME_URL . '/favicon.svg';
+    ?>
+    <style type="text/css">
+        /* Background */
+        body.login {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        /* Login form container */
+        #login {
+            padding: 8% 0 0;
+        }
+        
+        /* Logo */
+        #login h1 a {
+            background-image: url('<?php echo esc_url($favicon_url); ?>');
+            background-size: contain;
+            background-position: center center;
+            background-repeat: no-repeat;
+            width: 84px;
+            height: 84px;
+            margin-bottom: 20px;
+        }
+        
+        /* App name below logo */
+        #login h1::after {
+            content: 'Caelis';
+            display: block;
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+            color: #92400e;
+            margin-top: 10px;
+            letter-spacing: -0.5px;
+        }
+        
+        /* Form box */
+        .login form {
+            background: #ffffff;
+            border: 1px solid #fde68a;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(180, 83, 9, 0.1);
+            padding: 26px 24px;
+        }
+        
+        /* Input fields */
+        .login input[type="text"],
+        .login input[type="password"] {
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 15px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .login input[type="text"]:focus,
+        .login input[type="password"]:focus {
+            border-color: #d97706;
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+            outline: none;
+        }
+        
+        /* Labels */
+        .login label {
+            color: #78350f;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        /* Submit button */
+        .login .button-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 10px 20px;
+            text-shadow: none;
+            transition: all 0.2s;
+            width: 100%;
+            height: auto;
+        }
+        
+        .login .button-primary:hover,
+        .login .button-primary:focus {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            box-shadow: 0 6px 16px rgba(180, 83, 9, 0.4);
+        }
+        
+        .login .button-primary:active {
+            transform: translateY(1px);
+        }
+        
+        /* Remember me checkbox */
+        .login .forgetmenot {
+            margin-top: 10px;
+        }
+        
+        .login input[type="checkbox"] {
+            accent-color: #d97706;
+        }
+        
+        /* Links */
+        .login #nav a,
+        .login #backtoblog a {
+            color: #b45309;
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.2s;
+        }
+        
+        .login #nav a:hover,
+        .login #backtoblog a:hover {
+            color: #92400e;
+            text-decoration: underline;
+        }
+        
+        /* Error/message boxes */
+        .login .message,
+        .login .success {
+            border-left-color: #d97706;
+            background: #fffbeb;
+        }
+        
+        .login #login_error {
+            border-left-color: #dc2626;
+        }
+        
+        /* Privacy policy link */
+        .login .privacy-policy-page-link a {
+            color: #b45309;
+        }
+        
+        /* Hide "Go to site" for cleaner look */
+        #backtoblog {
+            display: none;
+        }
+    </style>
+    <?php
+}
+add_action('login_enqueue_scripts', 'prm_login_styles');
+
+/**
+ * Change login logo URL to homepage
+ */
+function prm_login_logo_url() {
+    return home_url('/');
+}
+add_filter('login_headerurl', 'prm_login_logo_url');
+
+/**
+ * Change login logo title
+ */
+function prm_login_logo_title() {
+    return 'Caelis';
+}
+add_filter('login_headertext', 'prm_login_logo_title');
+
+/**
+ * Redirect users to homepage after login
+ */
+function prm_login_redirect($redirect_to, $request, $user) {
+    // Only redirect if no specific redirect was requested
+    if (isset($_GET['redirect_to']) && !empty($_GET['redirect_to'])) {
+        return $redirect_to;
+    }
+    
+    // Redirect all users to the homepage
+    return home_url('/');
+}
+add_filter('login_redirect', 'prm_login_redirect', 10, 3);
