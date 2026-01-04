@@ -7,11 +7,16 @@ import { useNavigate } from 'react-router-dom';
  */
 export default function PersonNode({ node, onClick }) {
   const navigate = useNavigate();
-  const { id, _name, gender, _photo, _age, _birthDate } = node || {};
+  const { id, _name, gender, _photo, _age, _birthDate, isVirtualRoot, hidden } = node || {};
   const name = _name || `Person ${id}`;
   const photo = _photo;
   const age = _age;
   const birthDate = _birthDate;
+  
+  // Hide virtual root nodes
+  if (isVirtualRoot || hidden || id === 'virtual-root') {
+    return null;
+  }
   
   const handleClick = () => {
     if (onClick) {

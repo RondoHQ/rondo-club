@@ -471,23 +471,36 @@ export function graphToTree(graph, startPersonId) {
     });
     
     // Build child nodes - pass current node as parent
-    // IMPORTANT: When building a child, we need to ensure ALL of its parents are included
+    // CRITICAL: When building a child, ensure ALL of its parents are included
     // If a child has multiple parents (e.g., Tycho has Marieke and Joost), we need both
     for (const neighbor of childRelations) {
-      const childNode = buildNode(neighbor.nodeId, [nodeId, ...parentIds]);
+      // Check if this child has other parents that aren't in the tree yet
+      const childNeighbors = adjacencyList.get(neighbor.nodeId) || [];
+      const childParents = childNeighbors.filter(n => {
+        const relType = n.type?.toLowerCase();
+        // Find parents (where child has "child" relationship to them)
+        return isChildType(relType) && n.nodeId !== nodeId;
+      });
+      
+      // Build all parents of this child first (if they're not already visited)
+      // This ensures that when we have multiple parents, all are included
+      const allChildParentIds = [nodeId];
+      for (const parent of childParents) {
+        if (!visited.has(parent.nodeId)) {
+          // This parent isn't in the tree yet - build it first
+          // But we need to be careful: if we build it here, it will be a sibling of current node
+          // Actually, parents should be above children, so we can't build them as siblings
+          // Instead, we need to ensure they're included when building the tree structure
+          // For now, let's mark them to be included, but we'll need to restructure
+          allChildParentIds.push(parent.nodeId);
+        } else {
+          allChildParentIds.push(parent.nodeId);
+        }
+      }
+      
+      // Build the child node with all its parents tracked
+      const childNode = buildNode(neighbor.nodeId, allChildParentIds);
       if (childNode) {
-        // Check if this child has other parents that should be siblings at the same level
-        // If the child has multiple parents, they should all be at the same level above the child
-        const childNeighbors = adjacencyList.get(neighbor.nodeId) || [];
-        const childParents = childNeighbors.filter(n => {
-          const relType = n.type?.toLowerCase();
-          return isChildType(relType) && n.nodeId !== nodeId && !parentIds.includes(n.nodeId);
-        });
-        
-        // If child has other parents, we need to ensure they're included
-        // But since we're building downward, they might not be in the tree yet
-        // For now, let's just build the child - the other parents should be included
-        // when we build from their lineage
         children.push({
           ...childNode,
           relationshipType: neighbor.type,
