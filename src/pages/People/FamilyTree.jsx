@@ -112,7 +112,16 @@ export default function FamilyTree() {
       <div className="card p-6">
         <div className="w-full" style={{ height: '800px' }}>
           {treeData ? (
-            <TreeVisualization treeData={treeData} onNodeClick={handleNodeClick} />
+            <>
+              {/* Debug info - remove in production */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
+                  <strong>Debug:</strong> Tree has {JSON.stringify(treeData).length} chars. 
+                  Root name: {treeData?.name || 'N/A'}
+                </div>
+              )}
+              <TreeVisualization treeData={treeData} onNodeClick={handleNodeClick} />
+            </>
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -120,6 +129,14 @@ export default function FamilyTree() {
                 <p className="text-sm text-gray-400">
                   Add family relationships to see the family tree.
                 </p>
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-left">
+                    <strong>Debug:</strong><br />
+                    Person loaded: {person ? 'Yes' : 'No'}<br />
+                    People count: {allPeople.length}<br />
+                    Relationship types: {relationshipTypes.length}
+                  </div>
+                )}
               </div>
             </div>
           )}

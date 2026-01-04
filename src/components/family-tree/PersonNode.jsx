@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 export default function PersonNode({ nodeDatum, onClick }) {
   const navigate = useNavigate();
   const { name, attributes } = nodeDatum || {};
-  const { id, gender, photo, age } = attributes || {};
+  const { id, gender, photo, age, birthDate } = attributes || {};
   
   const handleClick = () => {
     if (onClick) {
@@ -35,17 +35,35 @@ export default function PersonNode({ nodeDatum, onClick }) {
     }
   }
   
+  // Format date as dd-mm-yyyy
+  function formatDate(dateString) {
+    if (!dateString) return null;
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return null;
+      
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}-${month}-${year}`;
+    } catch (e) {
+      return null;
+    }
+  }
+  
   const genderSymbol = getGenderSymbol(gender);
   const displayName = name || 'Unknown';
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
+  const formattedBirthDate = birthDate ? formatDate(birthDate) : null;
   
   return (
     <g>
       <foreignObject
-        x={-60}
-        y={-40}
-        width={120}
-        height={80}
+        x={-70}
+        y={-50}
+        width={140}
+        height={100}
         className="person-node"
       >
         <div
@@ -75,10 +93,11 @@ export default function PersonNode({ nodeDatum, onClick }) {
             <p className="text-xs font-semibold text-gray-900 truncate" title={displayName}>
               {displayName}
             </p>
-            {(genderSymbol || (age !== null && age !== undefined)) && (
-              <p className="text-xs text-gray-500 mt-0.5">
+            {(genderSymbol || (age !== null && age !== undefined) || formattedBirthDate) && (
+              <p className="text-xs text-gray-500 mt-0.5 leading-tight">
                 {genderSymbol && <span className="mr-1">{genderSymbol}</span>}
-                {age !== null && age !== undefined && <span>{age}</span>}
+                {age !== null && age !== undefined && <span className="mr-1">{age}</span>}
+                {formattedBirthDate && <span>{formattedBirthDate}</span>}
               </p>
             )}
           </div>

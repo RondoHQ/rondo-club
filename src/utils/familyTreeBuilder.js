@@ -95,6 +95,7 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
       gender: startPerson.acf?.gender || '',
       photo: startPerson.thumbnail || null,
       age: age,
+      birthDate: startPerson.acf?.birth_date || null,
       person: startPerson,
     });
   }
@@ -153,6 +154,7 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
             gender: relatedPerson.acf?.gender || '',
             photo: relatedPerson.thumbnail || null,
             age: age,
+            birthDate: relatedPerson.acf?.birth_date || null,
             person: relatedPerson,
           });
         }
