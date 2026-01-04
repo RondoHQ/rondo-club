@@ -357,66 +357,9 @@ export function graphToTree(graph, startPersonId) {
     })));
   }
   
-  // Find ALL root ancestors (people with no parents) connected to start person
-  // We need to build from ALL roots, not just the eldest, to include all lineages
-  function findAllRootAncestors(startPersonId, adjacencyList, nodes) {
-    const visited = new Set();
-    const allPeople = new Set();
-    const queue = [startPersonId];
-    
-    // Traverse ALL relationships (both up and down) to collect all connected people
-    while (queue.length > 0) {
-      const currentId = queue.shift();
-      
-      if (visited.has(currentId)) continue;
-      visited.add(currentId);
-      allPeople.add(currentId);
-      
-      const neighbors = adjacencyList.get(currentId) || [];
-      for (const neighbor of neighbors) {
-        if (!visited.has(neighbor.nodeId)) {
-          queue.push(neighbor.nodeId);
-        }
-      }
-    }
-    
-    // Find all root ancestors (people with no parents) among connected people
-    const rootAncestors = [];
-    for (const personId of allPeople) {
-      const neighbors = adjacencyList.get(personId) || [];
-      const hasParents = neighbors.some(n => {
-        const relType = n.type?.toLowerCase();
-        return isChildType(relType);
-      });
-      
-      if (!hasParents) {
-        rootAncestors.push(personId);
-      }
-    }
-    
-    // Sort by birth date (oldest first)
-    rootAncestors.sort((a, b) => {
-      const nodeA = nodes.find(n => n.id === a);
-      const nodeB = nodes.find(n => n.id === b);
-      const dateA = nodeA?.birthDate;
-      const dateB = nodeB?.birthDate;
-      if (!dateA && !dateB) return 0;
-      if (!dateA) return 1;
-      if (!dateB) return -1;
-      return new Date(dateA) - new Date(dateB);
-    });
-    
-    return rootAncestors;
-  }
-  
-  // Find all root ancestors
-  const rootAncestors = findAllRootAncestors(startPersonId, adjacencyList, nodes);
-  
-  // If we have multiple roots, create a virtual root that contains them all
-  // Otherwise, use the single root (or eldest ancestor as fallback)
-  const eldestAncestorId = rootAncestors.length > 0 
-    ? rootAncestors[0] 
-    : findUltimateAncestor(startPersonId, adjacencyList, nodes);
+  // Find the eldest ancestor (oldest by birth date among all ancestors)
+  // This will be our root for the tree
+  const eldestAncestorId = findUltimateAncestor(startPersonId, adjacencyList, nodes);
   
   // Build tree recursively from root(s) downward
   // This ensures the tree flows from oldest (top) to youngest (bottom)
@@ -494,61 +437,10 @@ export function graphToTree(graph, startPersonId) {
       }
     }
     
-    // Now find siblings (people who share the same parents)
-    // If we have parents, find other children of those parents
-    if (parentIds.length > 0) {
-      const siblingRelations = [];
-      
-      // Check all parents for siblings
-      for (const parentId of parentIds) {
-        const parentNeighbors = adjacencyList.get(parentId) || [];
-        
-        for (const neighbor of parentNeighbors) {
-          // Skip self and parents
-          if (neighbor.nodeId === nodeId || parentIds.includes(neighbor.nodeId)) continue;
-          
-          const relType = neighbor.type?.toLowerCase();
-          // If parent has "parent" relationship to neighbor, that neighbor is a sibling (child of same parent)
-          if (isParentType(relType)) {
-            // Check if this sibling is already in the list
-            if (!siblingRelations.some(s => s.nodeId === neighbor.nodeId)) {
-              siblingRelations.push({
-                nodeId: neighbor.nodeId,
-                type: 'sibling',
-                label: 'Sibling',
-              });
-            }
-          }
-        }
-      }
-      
-      // Sort siblings by birth date (oldest first)
-      siblingRelations.sort((a, b) => {
-        const nodeA = nodes.find(n => n.id === a.nodeId);
-        const nodeB = nodes.find(n => n.id === b.nodeId);
-        const dateA = nodeA?.birthDate;
-        const dateB = nodeB?.birthDate;
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-        return new Date(dateA) - new Date(dateB);
-      });
-      
-      // Add siblings as children (they'll be rendered at the same level)
-      // Only add siblings that haven't been visited yet
-      for (const sibling of siblingRelations) {
-        if (!visited.has(sibling.nodeId)) {
-          const siblingNode = buildNode(sibling.nodeId, parentIds);
-          if (siblingNode) {
-            children.push({
-              ...siblingNode,
-              relationshipType: 'sibling',
-              relationshipLabel: 'Sibling',
-            });
-          }
-        }
-      }
-    }
+    // IMPORTANT: Siblings should be at the same level, not as children
+    // In react-d3-tree, siblings are handled by being children of the same parent
+    // So we don't need to add them here - they'll be added when we build the parent's children
+    // The parent will have multiple children, and those children will be siblings at the same level
     
     // CRITICAL: We need to include ALL parents, but react-d3-tree renders top-to-bottom
     // The issue: When building downward from eldest ancestor, we might miss parents from other lineages
@@ -605,31 +497,10 @@ export function graphToTree(graph, startPersonId) {
     return treeNode;
   }
   
-  // Build tree from root ancestor(s)
-  // If we have multiple root ancestors, create a virtual root that contains them all
+  // Build tree from eldest ancestor downward
+  // This will include the current person and all siblings along the path
   visited.clear();
-  let tree;
-  
-  if (rootAncestors.length > 1) {
-    // Multiple root ancestors - create a virtual root
-    const rootChildren = rootAncestors.map(rootId => {
-      const rootNode = buildNode(rootId);
-      return rootNode;
-    }).filter(Boolean);
-    
-    // Create virtual root node
-    tree = {
-      name: 'Family Tree',
-      attributes: {
-        id: 'virtual-root',
-        isVirtualRoot: true,
-      },
-      children: rootChildren,
-    };
-  } else {
-    // Single root - build directly from it
-    tree = buildNode(eldestAncestorId);
-  }
+  const tree = buildNode(eldestAncestorId);
   
   // Verify that the current person is included in the tree
   // If not, it means there's a disconnect in the relationships
