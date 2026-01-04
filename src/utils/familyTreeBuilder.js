@@ -182,18 +182,54 @@ function isChildType(typeSlug) {
 }
 
 /**
+ * Find the ultimate ancestor (person with no parents) by traversing up
+ * @param {number} startPersonId - Person to start from
+ * @param {Map} adjacencyList - Adjacency list of relationships
+ * @param {Array} nodes - Array of all nodes
+ * @returns {number} ID of the ultimate ancestor, or startPersonId if no parents found
+ */
+function findUltimateAncestor(startPersonId, adjacencyList, nodes) {
+  const visited = new Set();
+  let currentId = startPersonId;
+  
+  // Traverse up until we find someone with no parents
+  while (true) {
+    if (visited.has(currentId)) {
+      // Cycle detected, return current
+      return currentId;
+    }
+    visited.add(currentId);
+    
+    const neighbors = adjacencyList.get(currentId) || [];
+    const parents = neighbors.filter(neighbor => {
+      const relType = neighbor.type?.toLowerCase();
+      // If current person has "child" relationship to someone, that person is current's parent
+      return isChildType(relType);
+    });
+    
+    if (parents.length === 0) {
+      // No parents found, this is the ultimate ancestor
+      return currentId;
+    }
+    
+    // Move up to first parent (we'll handle multiple parents in tree building)
+    currentId = parents[0].nodeId;
+  }
+}
+
+/**
  * Convert graph to hierarchical tree structure for react-d3-tree
- * Parents go above, children go below, siblings on same level
+ * Traverses up to find ultimate ancestor, then builds tree downward
  * @param {Object} graph - Graph with nodes and edges
- * @param {number} rootNodeId - ID of the root node
+ * @param {number} startPersonId - ID of the person to start from
  * @returns {Object} Tree structure compatible with react-d3-tree
  */
-export function graphToTree(graph, rootNodeId) {
+export function graphToTree(graph, startPersonId) {
   const { nodes, edges } = graph;
   
-  // Find root node
-  const rootNode = nodes.find(n => n.id === rootNodeId);
-  if (!rootNode) {
+  // Find start node
+  const startNode = nodes.find(n => n.id === startPersonId);
+  if (!startNode) {
     return null;
   }
   
@@ -203,14 +239,7 @@ export function graphToTree(graph, rootNodeId) {
     adjacencyList.set(node.id, []);
   });
   
-  // Map to track which edge connects which nodes with what relationship
-  const edgeMap = new Map();
   edges.forEach(edge => {
-    const key1 = `${edge.from}-${edge.to}`;
-    const key2 = `${edge.to}-${edge.from}`;
-    edgeMap.set(key1, edge);
-    edgeMap.set(key2, edge);
-    
     adjacencyList.get(edge.from)?.push({
       nodeId: edge.to,
       type: edge.type,
@@ -223,34 +252,16 @@ export function graphToTree(graph, rootNodeId) {
     });
   });
   
-  // Find parents of root and organize relationships
-  // From root's perspective:
-  // - If root has "child" relationship to X → root is child of X → X is parent of root → should be ABOVE
-  // - If root has "parent" relationship to X → root is parent of X → X is child of root → should be BELOW
-  const rootParents = [];  // People who are parents of root (should be above)
-  const rootChildren = []; // People who are children of root (should be below)
+  // Find the ultimate ancestor (person with no parents)
+  const ultimateAncestorId = findUltimateAncestor(startPersonId, adjacencyList, nodes);
   
-  const rootNeighbors = adjacencyList.get(rootNodeId) || [];
-  rootNeighbors.forEach(neighbor => {
-    const relType = neighbor.type?.toLowerCase();
-    
-    // Only process parent/child relationships
-    if (isChildType(relType)) {
-      // Root has "child" relationship to this person → this person IS root's parent → should be ABOVE
-      rootParents.push(neighbor);
-    } else if (isParentType(relType)) {
-      // Root has "parent" relationship to this person → this person IS root's child → should be BELOW
-      rootChildren.push(neighbor);
-    }
-    // Ignore all other relationship types (sibling, spouse, etc.)
-  });
-  
-  // Build tree recursively
+  // Build tree recursively from ultimate ancestor downward
   const visited = new Set();
   
-  function buildNode(nodeId, parentId = null, relationshipType = null) {
+  function buildNode(nodeId, parentId = null) {
+    // Prevent cycles
     if (visited.has(nodeId)) {
-      return null; // Prevent cycles
+      return null;
     }
     visited.add(nodeId);
     
@@ -270,13 +281,29 @@ export function graphToTree(graph, rootNodeId) {
         continue; // Skip non-parent/child relationships
       }
       
-      const childNode = buildNode(neighbor.nodeId, nodeId, neighbor.type);
-      if (childNode) {
-        children.push({
-          ...childNode,
-          relationshipType: neighbor.type,
-          relationshipLabel: neighbor.label,
-        });
+      // Determine if this neighbor should be a child in the tree
+      // If current node has "parent" relationship to neighbor → neighbor is child
+      // If current node has "child" relationship to neighbor → neighbor is parent (skip, already traversed up)
+      let shouldAddAsChild = false;
+      
+      if (isParentType(relType)) {
+        // Current node has "parent" relationship to neighbor → neighbor is child of current
+        shouldAddAsChild = true;
+      } else if (isChildType(relType)) {
+        // Current node has "child" relationship to neighbor → neighbor is parent of current
+        // We're building downward, so we skip parents (they're already above)
+        shouldAddAsChild = false;
+      }
+      
+      if (shouldAddAsChild) {
+        const childNode = buildNode(neighbor.nodeId, nodeId);
+        if (childNode) {
+          children.push({
+            ...childNode,
+            relationshipType: neighbor.type,
+            relationshipLabel: neighbor.label,
+          });
+        }
       }
     }
     
@@ -298,102 +325,9 @@ export function graphToTree(graph, rootNodeId) {
     return treeNode;
   }
   
-  // Build the tree structure
-  // If root has parents, we need to restructure so parents appear above
-  // react-d3-tree renders top-down, so parents need to be ancestors in the tree
-  
-  if (rootParents.length > 0) {
-    // Restructure: create a virtual root that contains all parents, with current root as child
-    // If there are multiple parents, they should be siblings at the top level
-    
-    // Build all parent nodes
-    const parentNodes = rootParents.map(rel => {
-      visited.clear();
-      const parentTree = buildNode(rel.nodeId);
-      return parentTree ? {
-        ...parentTree,
-        relationshipType: rel.type,
-        relationshipLabel: rel.label,
-      } : null;
-    }).filter(Boolean);
-    
-    if (parentNodes.length > 0) {
-      // Create a virtual root node that groups all parents together
-      // The first parent will be the main root, with other parents as siblings
-      const mainParentTree = parentNodes[0];
-      
-      // Add other parents as siblings of the main parent
-      if (parentNodes.length > 1) {
-        mainParentTree.children = [
-          ...(mainParentTree.children || []),
-          ...parentNodes.slice(1),
-        ];
-      }
-      
-      // Now add the current root as a child of the main parent
-      visited.clear();
-      // Mark all parents as visited to prevent cycles
-      rootParents.forEach(rel => visited.add(rel.nodeId));
-      
-      const rootAsChild = buildNode(rootNodeId, mainParentTree.attributes.id);
-      
-      if (rootAsChild) {
-        // Add root's children to rootAsChild
-        const allRootChildren = [];
-        
-        rootChildren.forEach(rel => {
-          visited.clear();
-          rootParents.forEach(p => visited.add(p.nodeId));
-          visited.add(rootNodeId);
-          const childNode = buildNode(rel.nodeId, rootNodeId, rel.type);
-          if (childNode) {
-            allRootChildren.push({
-              ...childNode,
-              relationshipType: rel.type,
-              relationshipLabel: rel.label,
-            });
-          }
-        });
-        
-        if (allRootChildren.length > 0) {
-          rootAsChild.children = [...(rootAsChild.children || []), ...allRootChildren];
-        }
-        
-        // Add root as child of main parent
-        mainParentTree.children = [
-          ...(mainParentTree.children || []),
-          rootAsChild,
-        ];
-        
-        return mainParentTree;
-      }
-    }
-  }
-  
-  // No parents, build normally from root
+  // Build tree from ultimate ancestor
   visited.clear();
-  const tree = buildNode(rootNodeId);
-  
-  // Organize children: only parent/child relationships
-  if (tree && tree.children) {
-    const parentChildren = [];
-    const childChildren = [];
-    
-    tree.children.forEach(child => {
-      const relType = child.relationshipType?.toLowerCase();
-      if (isChildType(relType)) {
-        // This is a parent of root (root has "child" relationship to them)
-        parentChildren.push(child);
-      } else if (isParentType(relType)) {
-        // This is a child of root (root has "parent" relationship to them)
-        childChildren.push(child);
-      }
-      // Ignore all other relationship types
-    });
-    
-    // Parents first (above), then children (below)
-    tree.children = [...parentChildren, ...childChildren];
-  }
+  const tree = buildNode(ultimateAncestorId);
   
   return tree;
 }
