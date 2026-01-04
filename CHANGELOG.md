@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.75] - 2024-12-19
+
+### Added
+- Family Tree visualization: New family tree feature to visualize family relationships
+- Family Tree page: Accessible from person detail page, shows hierarchical family tree
+- Tree visualization component: Interactive tree with zoom, pan, and node navigation
+- Person nodes: Display person photos, names, ages, and gender symbols in tree
+- Tree builder utilities: Builds family tree structure from relationship data
+- Family relationship filtering: Automatically filters to show only family relationships (parent, child, sibling, etc.)
+
+### Changed
+- Person Detail page: Added "View Family Tree" button in Relationships section
+
 ## [1.0.74] - 2024-12-19
 
 ### Fixed
