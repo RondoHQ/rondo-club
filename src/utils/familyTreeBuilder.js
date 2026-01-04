@@ -264,6 +264,12 @@ export function graphToTree(graph, rootNodeId) {
       // Skip the parent to avoid going back up the tree
       if (neighbor.nodeId === parentId) continue;
       
+      // Only process parent/child relationships
+      const relType = neighbor.type?.toLowerCase();
+      if (!isParentType(relType) && !isChildType(relType)) {
+        continue; // Skip non-parent/child relationships
+      }
+      
       const childNode = buildNode(neighbor.nodeId, nodeId, neighbor.type);
       if (childNode) {
         children.push({
