@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.84] - 2024-12-19
+
+### Fixed
+- Family Tree: Convert IDs to strings (react-family-tree expects string IDs, not numbers)
+- Family Tree: Added better error handling and logging for debugging
+- Family Tree: Prevent duplicate nodes in flat nodes array
+- Family Tree: Improved validation of node structure before processing
+
 ## [1.0.83] - 2024-12-19
 
 ### Fixed
