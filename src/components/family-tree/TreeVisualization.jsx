@@ -37,10 +37,10 @@ export default function TreeVisualization({ graphData, startPersonId, onNodeClic
         hierarchical: {
           enabled: true,
           direction: 'UD', // Up-Down (parents above children)
-          sortMethod: 'directed',
-          levelSeparation: 120,
-          nodeSpacing: 150,
-          treeSpacing: 200,
+          sortMethod: 'hubsize', // Better for keeping spouses together
+          levelSeparation: 180, // More space between generations
+          nodeSpacing: 180, // More space between nodes on same level
+          treeSpacing: 250, // More space between disconnected trees
           blockShifting: true,
           edgeMinimization: true,
           parentCentralization: true,
