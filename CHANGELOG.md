@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.80] - 2024-12-19
+
+### Fixed
+- Family Tree: Fixed duplicate people appearing in tree
+- Family Tree: Changed logic to traverse up to find ultimate ancestor, then build tree downward
+- Family Tree: Prevents cycles and ensures each person appears only once
+
 ## [1.0.79] - 2024-12-19
 
 ### Fixed
