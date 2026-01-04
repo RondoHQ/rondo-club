@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.112] - 2026-01-04
+
+### Added
+- iCal calendar feed: Subscribe to important dates from any calendar app (Apple Calendar, Google Calendar, Outlook)
+- iCal feed authentication: Secure token-based URLs for private calendar subscriptions
+- Settings: Calendar subscription section with feed URL, copy button, and regenerate token option
+- REST API endpoints: `/prm/v1/user/ical-url` and `/prm/v1/user/regenerate-ical-token`
+- Clickable events: Calendar events link directly to the related person's detail page
+- Recurring dates: Dates marked as recurring automatically repeat yearly in the feed
+
 ## [1.0.111] - 2024-12-19
 
 ### Changed
