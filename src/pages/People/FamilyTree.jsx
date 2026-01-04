@@ -10,12 +10,13 @@ import {
   buildFamilyGraph,
   buildRelationshipMap,
   enrichRelationshipsWithTypes,
-  graphToTree,
+  graphToVisFormat,
 } from '@/utils/familyTreeBuilder';
 
 export default function FamilyTree() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const personId = parseInt(id, 10);
   const { data: person, isLoading: isLoadingPerson } = usePerson(id);
   const { data: allPeople = [], isLoading: isLoadingPeople } = usePeople();
   
@@ -32,8 +33,8 @@ export default function FamilyTree() {
     person ? `Family Tree - ${person.name || person.title?.rendered || person.title || 'Person'}` : 'Family Tree'
   );
   
-  // Build tree data
-  const treeData = useMemo(() => {
+  // Build graph data for vis.js
+  const graphData = useMemo(() => {
     if (!person || !allPeople.length) {
       return null;
     }
@@ -48,29 +49,24 @@ export default function FamilyTree() {
       }
       
       // Build graph
-      const graph = buildFamilyGraph(parseInt(id, 10), allPeople, relationshipMap);
+      const graph = buildFamilyGraph(personId, allPeople, relationshipMap);
       
-      // Debug: log graph structure
-      console.log('Family tree graph:', graph);
+      if (!graph || graph.nodes.length === 0) {
+        return null;
+      }
       
-      // Convert to tree structure
-      const tree = graphToTree(graph, parseInt(id, 10));
+      // Convert to vis.js format with hierarchical levels
+      const visData = graphToVisFormat(graph, personId);
       
-      // Debug: log tree structure
-      console.log('Family tree structure:', tree);
-      
-      return tree;
+      return visData;
     } catch (error) {
       console.error('Error building family tree:', error);
       return null;
     }
-  }, [person, allPeople, relationshipTypes, id]);
+  }, [person, allPeople, relationshipTypes, personId]);
   
-  const handleNodeClick = (nodeData) => {
-    const personId = nodeData.attributes?.id;
-    if (personId) {
-      navigate(`/people/${personId}`);
-    }
+  const handleNodeClick = (nodeId) => {
+    navigate(`/people/${nodeId}`);
   };
   
   if (isLoadingPerson || isLoadingPeople) {
@@ -111,32 +107,19 @@ export default function FamilyTree() {
       {/* Tree Visualization */}
       <div className="card p-6">
         <div className="w-full" style={{ height: '800px' }}>
-          {treeData ? (
-            <>
-              {/* Debug info - remove in production */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
-                  <strong>Debug:</strong> Tree has {JSON.stringify(treeData).length} chars. 
-                  Root name: {treeData?.name || 'N/A'}
-                </div>
-              )}
-              <TreeVisualization treeData={treeData} onNodeClick={handleNodeClick} />
-            </>
+          {graphData && graphData.nodes && graphData.nodes.length > 0 ? (
+            <TreeVisualization 
+              graphData={graphData} 
+              startPersonId={personId}
+              onNodeClick={handleNodeClick} 
+            />
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <p className="text-gray-500 mb-2">No family relationships found.</p>
                 <p className="text-sm text-gray-400">
-                  Add family relationships to see the family tree.
+                  Add parent or child relationships to see the family tree.
                 </p>
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-left">
-                    <strong>Debug:</strong><br />
-                    Person loaded: {person ? 'Yes' : 'No'}<br />
-                    People count: {allPeople.length}<br />
-                    Relationship types: {relationshipTypes.length}
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -145,4 +128,3 @@ export default function FamilyTree() {
     </div>
   );
 }
-

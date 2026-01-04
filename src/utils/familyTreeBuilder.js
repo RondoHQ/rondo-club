@@ -1,11 +1,8 @@
 /**
  * Family Tree Builder Utilities
  * 
- * Builds tree structures from relationship data for family tree visualization.
- * 
- * Note: react-d3-tree only supports single-parent hierarchies. In family trees,
- * children have two parents. This implementation shows one lineage path; the
- * other parent appears in the tree but children only connect to one parent.
+ * Builds graph structures from relationship data for vis.js family tree visualization.
+ * vis.js supports proper graph structures where children can have multiple parents.
  */
 
 const FAMILY_RELATIONSHIP_TYPES = ['parent', 'child'];
@@ -23,10 +20,11 @@ function isChildType(typeSlug) {
 }
 
 /**
- * Build a graph structure from relationships
+ * Build a graph structure from relationships for vis.js
+ * Returns nodes and edges arrays compatible with vis-network
  */
 export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
-  const nodes = new Map();
+  const nodesMap = new Map();
   const edges = [];
   const visited = new Set();
   
@@ -45,28 +43,57 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
     }
     
     let age = null;
-    if (person.acf?.birth_date) {
-      const birthDate = new Date(person.acf.birth_date);
-      if (!isNaN(birthDate.getTime())) {
-        age = Math.floor((new Date() - birthDate) / (365.25 * 24 * 60 * 60 * 1000));
+    let birthDate = person.acf?.birth_date || null;
+    if (birthDate) {
+      const bd = new Date(birthDate);
+      if (!isNaN(bd.getTime())) {
+        age = Math.floor((new Date() - bd) / (365.25 * 24 * 60 * 60 * 1000));
       }
+    }
+    
+    // Get gender symbol
+    let genderSymbol = '';
+    switch (person.acf?.gender) {
+      case 'male': genderSymbol = '♂'; break;
+      case 'female': genderSymbol = '♀'; break;
+      case 'non_binary':
+      case 'other':
+      case 'prefer_not_to_say':
+        genderSymbol = '⚧'; break;
+    }
+    
+    // Format birth date
+    let formattedBirthDate = '';
+    if (birthDate) {
+      try {
+        const bd = new Date(birthDate);
+        if (!isNaN(bd.getTime())) {
+          const day = String(bd.getDate()).padStart(2, '0');
+          const month = String(bd.getMonth() + 1).padStart(2, '0');
+          const year = bd.getFullYear();
+          formattedBirthDate = `${day}-${month}-${year}`;
+        }
+      } catch (e) {}
     }
     
     return {
       id: personId,
       name: personName,
       gender: person.acf?.gender || '',
+      genderSymbol,
       photo: person.thumbnail || null,
       age,
-      birthDate: person.acf?.birth_date || null,
+      birthDate,
+      formattedBirthDate,
     };
   }
   
   const startPerson = peopleMap.get(startPersonId);
   if (startPerson) {
-    nodes.set(startPersonId, extractPersonData(startPerson, startPersonId));
+    nodesMap.set(startPersonId, extractPersonData(startPerson, startPersonId));
   }
   
+  // BFS to collect all connected family members
   while (queue.length > 0) {
     const { personId, depth } = queue.shift();
     const relationships = relationshipMap.get(personId) || [];
@@ -79,23 +106,41 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
       const relatedPersonId = rel.related_person;
       if (!relatedPersonId || !peopleMap.has(relatedPersonId)) continue;
       
-      if (!nodes.has(relatedPersonId)) {
+      if (!nodesMap.has(relatedPersonId)) {
         const relatedPerson = peopleMap.get(relatedPersonId);
-        nodes.set(relatedPersonId, extractPersonData(relatedPerson, relatedPersonId));
+        nodesMap.set(relatedPersonId, extractPersonData(relatedPerson, relatedPersonId));
       }
       
+      // Add edge: parent -> child (arrow points from parent to child)
+      // If rel.type is 'parent', then personId's parent is relatedPersonId
+      // So the edge should be: relatedPersonId -> personId
+      // If rel.type is 'child', then personId's child is relatedPersonId
+      // So the edge should be: personId -> relatedPersonId
+      
+      const edgeKey1 = `${personId}-${relatedPersonId}`;
+      const edgeKey2 = `${relatedPersonId}-${personId}`;
       const edgeExists = edges.some(e => 
-        (e.from === personId && e.to === relatedPersonId) ||
-        (e.from === relatedPersonId && e.to === personId)
+        `${e.from}-${e.to}` === edgeKey1 || `${e.from}-${e.to}` === edgeKey2
       );
       
       if (!edgeExists) {
-        edges.push({
-          from: personId,
-          to: relatedPersonId,
-          type: rel.relationship_type_slug,
-          label: rel.relationship_name || rel.relationship_label || '',
-        });
+        const relType = rel.relationship_type_slug?.toLowerCase();
+        
+        if (isParentType(relType)) {
+          // personId has relatedPersonId as parent
+          // Edge: parent (relatedPersonId) -> child (personId)
+          edges.push({
+            from: relatedPersonId,
+            to: personId,
+          });
+        } else if (isChildType(relType)) {
+          // personId has relatedPersonId as child
+          // Edge: parent (personId) -> child (relatedPersonId)
+          edges.push({
+            from: personId,
+            to: relatedPersonId,
+          });
+        }
       }
       
       if (!visited.has(relatedPersonId)) {
@@ -105,241 +150,151 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
     }
   }
   
-  return { nodes: Array.from(nodes.values()), edges };
+  return {
+    nodes: Array.from(nodesMap.values()),
+    edges,
+  };
 }
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-function getParents(personId, adjacencyList) {
-  const neighbors = adjacencyList.get(personId) || [];
-  return neighbors.filter(n => isParentType(n.type)).map(n => n.nodeId);
-}
-
-function getChildren(personId, adjacencyList) {
-  const neighbors = adjacencyList.get(personId) || [];
-  return neighbors.filter(n => isChildType(n.type)).map(n => n.nodeId);
-}
-
-function getSiblings(personId, adjacencyList) {
-  const parents = getParents(personId, adjacencyList);
-  const siblings = new Set();
-  
-  for (const parentId of parents) {
-    const children = getChildren(parentId, adjacencyList);
-    children.forEach(childId => {
-      if (childId !== personId) siblings.add(childId);
-    });
-  }
-  
-  return Array.from(siblings);
-}
-
-// ============================================================================
-// COLLECT FAMILY MEMBERS
-// ============================================================================
-
-function collectFamilyMembers(startPersonId, adjacencyList) {
-  const familySet = new Set();
-  const visitedUp = new Set();
-  
-  familySet.add(startPersonId);
-  getSiblings(startPersonId, adjacencyList).forEach(id => familySet.add(id));
-  
-  function traverseUp(personId) {
-    if (visitedUp.has(personId)) return;
-    visitedUp.add(personId);
-    
-    const parents = getParents(personId, adjacencyList);
-    for (const parentId of parents) {
-      familySet.add(parentId);
-      getSiblings(parentId, adjacencyList).forEach(id => familySet.add(id));
-      traverseUp(parentId);
-    }
-  }
-  
-  traverseUp(startPersonId);
-  
-  const visitedDown = new Set();
-  
-  function traverseDown(personId) {
-    if (visitedDown.has(personId)) return;
-    visitedDown.add(personId);
-    
-    const children = getChildren(personId, adjacencyList);
-    for (const childId of children) {
-      familySet.add(childId);
-      traverseDown(childId);
-    }
-  }
-  
-  traverseDown(startPersonId);
-  
-  return familySet;
-}
-
-// ============================================================================
-// BUILD TREE - Direct lineage from start person upward, then downward
-// ============================================================================
 
 /**
- * Build tree showing ancestors above and descendants below the start person.
- * Due to tree structure limitations, each child connects to only one parent.
+ * Convert graph to vis.js format with hierarchical levels
+ * Assigns levels based on generation (parents above children)
  */
-export function graphToTree(graph, startPersonId) {
+export function graphToVisFormat(graph, startPersonId) {
   const { nodes, edges } = graph;
   
-  if (!nodes.find(n => n.id === startPersonId)) {
-    return null;
-  }
+  if (nodes.length === 0) return { nodes: [], edges: [] };
   
-  // Build adjacency list
-  const adjacencyList = new Map();
-  nodes.forEach(node => adjacencyList.set(node.id, []));
+  // Build adjacency lists for traversal
+  const childToParents = new Map(); // child -> [parent IDs]
+  const parentToChildren = new Map(); // parent -> [child IDs]
+  
+  nodes.forEach(node => {
+    childToParents.set(node.id, []);
+    parentToChildren.set(node.id, []);
+  });
   
   edges.forEach(edge => {
-    const relType = edge.type?.toLowerCase();
-    
-    adjacencyList.get(edge.from)?.push({
-      nodeId: edge.to,
-      type: edge.type,
-      label: edge.label,
-    });
-    
-    let inverseType = edge.type;
-    if (isParentType(relType)) inverseType = 'child';
-    else if (isChildType(relType)) inverseType = 'parent';
-    
-    adjacencyList.get(edge.to)?.push({
-      nodeId: edge.from,
-      type: inverseType,
-      label: edge.label,
-    });
+    // edge.from = parent, edge.to = child
+    childToParents.get(edge.to)?.push(edge.from);
+    parentToChildren.get(edge.from)?.push(edge.to);
   });
   
-  // Collect relevant family members
-  const familySet = collectFamilyMembers(startPersonId, adjacencyList);
+  // Calculate levels using BFS from roots (people with no parents)
+  const levels = new Map();
+  const roots = nodes.filter(n => childToParents.get(n.id)?.length === 0);
   
-  // Find the eldest ancestor by traversing up from start person
-  function findEldestAncestor(personId, visited = new Set()) {
-    if (visited.has(personId)) return null;
-    visited.add(personId);
-    
-    const parents = getParents(personId, adjacencyList).filter(id => familySet.has(id));
-    
-    if (parents.length === 0) {
-      // This person has no parents - they're a root
-      return personId;
+  // If no roots found, start from oldest person
+  if (roots.length === 0) {
+    const sorted = [...nodes].sort((a, b) => {
+      if (!a.birthDate && !b.birthDate) return 0;
+      if (!a.birthDate) return 1;
+      if (!b.birthDate) return -1;
+      return new Date(a.birthDate) - new Date(b.birthDate);
+    });
+    if (sorted.length > 0) {
+      roots.push(sorted[0]);
     }
-    
-    // Find eldest among all ancestor paths
-    let eldest = null;
-    let eldestDate = null;
-    
-    for (const parentId of parents) {
-      const ancestor = findEldestAncestor(parentId, visited);
-      if (ancestor) {
-        const ancestorNode = nodes.find(n => n.id === ancestor);
-        const birthDate = ancestorNode?.birthDate ? new Date(ancestorNode.birthDate) : null;
-        
-        if (!eldest || (birthDate && (!eldestDate || birthDate < eldestDate))) {
-          eldest = ancestor;
-          eldestDate = birthDate;
-        }
-      }
-    }
-    
-    return eldest || personId;
   }
   
-  const rootId = findEldestAncestor(startPersonId);
+  // Sort roots by birth date (oldest first)
+  roots.sort((a, b) => {
+    if (!a.birthDate && !b.birthDate) return 0;
+    if (!a.birthDate) return 1;
+    if (!b.birthDate) return -1;
+    return new Date(a.birthDate) - new Date(b.birthDate);
+  });
   
-  // Build tree from root downward
-  const visited = new Set();
+  // BFS to assign levels
+  const queue = roots.map(r => ({ id: r.id, level: 0 }));
+  roots.forEach(r => levels.set(r.id, 0));
   
-  function buildNode(personId) {
-    if (visited.has(personId) || !familySet.has(personId)) {
-      return null;
+  while (queue.length > 0) {
+    const { id, level } = queue.shift();
+    
+    const children = parentToChildren.get(id) || [];
+    for (const childId of children) {
+      const existingLevel = levels.get(childId);
+      const newLevel = level + 1;
+      
+      // Use the maximum level (furthest from root)
+      if (existingLevel === undefined || newLevel > existingLevel) {
+        levels.set(childId, newLevel);
+        queue.push({ id: childId, level: newLevel });
+      }
     }
-    visited.add(personId);
+  }
+  
+  // Handle any unvisited nodes (disconnected)
+  nodes.forEach(node => {
+    if (!levels.has(node.id)) {
+      levels.set(node.id, 0);
+    }
+  });
+  
+  // Create vis.js nodes with levels and styling
+  const visNodes = nodes.map(node => {
+    const level = levels.get(node.id) || 0;
+    const isStartPerson = node.id === startPersonId;
     
-    const node = nodes.find(n => n.id === personId);
-    if (!node) return null;
-    
-    // Get children in family set
-    const childIds = getChildren(personId, adjacencyList)
-      .filter(id => familySet.has(id) && !visited.has(id));
-    
-    // Sort by birth date
-    childIds.sort((a, b) => {
-      const nodeA = nodes.find(n => n.id === a);
-      const nodeB = nodes.find(n => n.id === b);
-      const dateA = nodeA?.birthDate;
-      const dateB = nodeB?.birthDate;
-      if (!dateA && !dateB) return 0;
-      if (!dateA) return 1;
-      if (!dateB) return -1;
-      return new Date(dateA) - new Date(dateB);
-    });
-    
-    const children = childIds.map(id => buildNode(id)).filter(Boolean);
+    // Build label with name, gender symbol, age, birth date
+    let labelLines = [node.name];
+    let infoLine = '';
+    if (node.genderSymbol) infoLine += node.genderSymbol + ' ';
+    if (node.age !== null) infoLine += node.age + ' ';
+    if (node.formattedBirthDate) infoLine += node.formattedBirthDate;
+    if (infoLine.trim()) labelLines.push(infoLine.trim());
     
     return {
-      name: node.name || `Person ${node.id}`,
-      attributes: {
-        id: node.id,
-        gender: node.gender || '',
-        photo: node.photo || null,
-        age: node.age,
-        birthDate: node.birthDate || null,
+      id: node.id,
+      label: labelLines.join('\n'),
+      level,
+      shape: node.photo ? 'circularImage' : 'circle',
+      image: node.photo || undefined,
+      size: 30,
+      font: {
+        size: 12,
+        face: 'system-ui, -apple-system, sans-serif',
+        multi: 'html',
+        bold: isStartPerson ? '700' : '400',
       },
-      children,
+      color: {
+        border: isStartPerson ? '#f59e0b' : '#d1d5db',
+        background: isStartPerson ? '#fef3c7' : '#ffffff',
+        highlight: {
+          border: '#f59e0b',
+          background: '#fef3c7',
+        },
+      },
+      borderWidth: isStartPerson ? 3 : 2,
+      // Store original data for click handling
+      data: node,
     };
-  }
-  
-  // Build from the eldest ancestor
-  const tree = buildNode(rootId);
-  
-  // If there are unvisited family members (from other lineages), we need to include them
-  // Build additional trees for unvisited roots
-  const unvisitedRoots = [];
-  for (const personId of familySet) {
-    if (!visited.has(personId)) {
-      const parents = getParents(personId, adjacencyList).filter(id => familySet.has(id));
-      const hasUnvisitedParent = parents.some(p => !visited.has(p));
-      if (!hasUnvisitedParent) {
-        // This is a root of an unvisited lineage
-        unvisitedRoots.push(personId);
-      }
-    }
-  }
-  
-  // Sort unvisited roots by birth date
-  unvisitedRoots.sort((a, b) => {
-    const nodeA = nodes.find(n => n.id === a);
-    const nodeB = nodes.find(n => n.id === b);
-    const dateA = nodeA?.birthDate;
-    const dateB = nodeB?.birthDate;
-    if (!dateA && !dateB) return 0;
-    if (!dateA) return 1;
-    if (!dateB) return -1;
-    return new Date(dateA) - new Date(dateB);
   });
   
-  // Build trees for other lineages
-  const additionalTrees = unvisitedRoots.map(id => buildNode(id)).filter(Boolean);
+  // Create vis.js edges
+  const visEdges = edges.map((edge, index) => ({
+    id: `edge-${index}`,
+    from: edge.from,
+    to: edge.to,
+    arrows: {
+      to: {
+        enabled: false, // No arrows for family tree
+      },
+    },
+    color: {
+      color: '#9ca3af',
+      highlight: '#6b7280',
+    },
+    width: 2,
+    smooth: {
+      type: 'cubicBezier',
+      forceDirection: 'vertical',
+      roundness: 0.4,
+    },
+  }));
   
-  if (additionalTrees.length === 0) {
-    return tree;
-  }
-  
-  // Combine all trees - the main tree plus additional lineages
-  // Since we can't have a true multi-root tree, we need to structure this carefully
-  // Return just the main tree for now - the other lineages will be separate
-  // TODO: Consider alternative visualization for multiple lineages
-  
-  return tree;
+  return { nodes: visNodes, edges: visEdges };
 }
 
 // ============================================================================
