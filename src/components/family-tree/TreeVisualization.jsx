@@ -37,10 +37,10 @@ export default function TreeVisualization({ graphData, startPersonId, onNodeClic
         hierarchical: {
           enabled: true,
           direction: 'UD', // Up-Down (parents above children)
-          sortMethod: 'hubsize', // Better for keeping spouses together
-          levelSeparation: 180, // More space between generations
-          nodeSpacing: 180, // More space between nodes on same level
-          treeSpacing: 250, // More space between disconnected trees
+          sortMethod: 'directed',
+          levelSeparation: 180, // Space between generations
+          nodeSpacing: 200, // Space between nodes (we'll adjust spouses manually)
+          treeSpacing: 250,
           blockShifting: true,
           edgeMinimization: true,
           parentCentralization: true,
@@ -96,21 +96,7 @@ export default function TreeVisualization({ graphData, startPersonId, onNodeClic
         },
       },
       physics: {
-        enabled: true,
-        hierarchicalRepulsion: {
-          centralGravity: 0.0,
-          springLength: 100,
-          springConstant: 0.2, // Much stronger springs
-          nodeDistance: 100, // Allow nodes closer together
-          damping: 0.09,
-          avoidOverlap: 0.5,
-        },
-        stabilization: {
-          enabled: true,
-          iterations: 300, // More iterations for better settling
-          updateInterval: 25,
-          fit: true,
-        },
+        enabled: false, // Disable physics, we'll manually position spouses
       },
       interaction: {
         hover: true,
@@ -156,14 +142,51 @@ export default function TreeVisualization({ graphData, startPersonId, onNodeClic
       }
     });
 
-    // Fit the network after stabilization
+    // After initial layout, reposition spouses to be next to each other
     network.once('stabilized', () => {
-      network.fit({
-        animation: {
-          duration: 500,
-          easingFunction: 'easeInOutQuad',
-        },
-      });
+      // Find spouse pairs from edges
+      const spousePairs = graphData.edges
+        .filter(e => e.dashes) // Spouse edges have dashes
+        .map(e => [e.from, e.to]);
+      
+      if (spousePairs.length > 0) {
+        const positions = network.getPositions();
+        const newPositions = {};
+        const processed = new Set();
+        
+        spousePairs.forEach(([id1, id2]) => {
+          if (processed.has(id1) || processed.has(id2)) return;
+          
+          const pos1 = positions[id1];
+          const pos2 = positions[id2];
+          if (!pos1 || !pos2) return;
+          
+          // Calculate center point between spouses
+          const centerX = (pos1.x + pos2.x) / 2;
+          
+          // Position them close together (100px apart)
+          newPositions[id1] = { x: centerX - 60, y: pos1.y };
+          newPositions[id2] = { x: centerX + 60, y: pos2.y };
+          
+          processed.add(id1);
+          processed.add(id2);
+        });
+        
+        // Apply new positions
+        Object.entries(newPositions).forEach(([nodeId, pos]) => {
+          network.moveNode(nodeId, pos.x, pos.y);
+        });
+      }
+      
+      // Fit after repositioning
+      setTimeout(() => {
+        network.fit({
+          animation: {
+            duration: 500,
+            easingFunction: 'easeInOutQuad',
+          },
+        });
+      }, 50);
     });
 
     // Focus on start person after initial render
