@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.98] - 2024-12-19
+
+### Changed
+- Family Tree: Complete rewrite of tree building algorithm with clear two-phase approach
+- Family Tree: Phase 1 collects all relevant family members (ancestors + their siblings, descendants)
+- Family Tree: Phase 2 builds tree from root ancestors downward
+- Family Tree: Clean helper functions (getParents, getChildren, getSiblings, findRoots)
+- Family Tree: Properly handles multiple lineages with virtual root
+- Family Tree: Each person included only once in tree
+- Family Tree: Removed complex legacy logic and excessive comments
+
 ## [1.0.97] - 2024-12-19
 
 ### Fixed
