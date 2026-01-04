@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.100] - 2024-12-19
+
+### Changed
+- Family Tree: Parents who share children are now shown as couples ("Person & Partner")
+- Family Tree: Couple nodes show both photos side-by-side
+- Family Tree: Properly hides virtual root node when multiple lineages exist
+- Family Tree: Children branch from the couple instead of individual parents
+
+### Fixed
+- Family Tree: Both parents now appear in the tree (as a couple unit)
+- Family Tree: Virtual root no longer shows as empty node
+
 ## [1.0.99] - 2024-12-19
 
 ### Fixed

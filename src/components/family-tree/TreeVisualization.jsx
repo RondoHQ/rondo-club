@@ -130,24 +130,28 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
           renderCustomNodeElement={(rd3tProps) => {
             const { nodeDatum } = rd3tProps;
             
-            // Skip rendering virtual root nodes
-            if (nodeDatum.attributes?.isVirtualRoot || nodeDatum.attributes?.hidden || nodeDatum.attributes?.id === 'virtual-root') {
-              return null;
+            // Skip rendering virtual root nodes entirely
+            if (nodeDatum.attributes?.isVirtualRoot || 
+                nodeDatum.attributes?.id === 'virtual-root' || 
+                nodeDatum.attributes?.id === 'family-tree-root') {
+              // Return an invisible placeholder so connectors still work
+              return <g />;
             }
             
             const nodeData = {
               id: nodeDatum.attributes?.id,
+              coupleIds: nodeDatum.attributes?.coupleIds,
               _name: nodeDatum.name,
               gender: nodeDatum.attributes?.gender,
               _photo: nodeDatum.attributes?.photo,
+              _partnerPhoto: nodeDatum.attributes?.partnerPhoto,
               _age: nodeDatum.attributes?.age,
               _birthDate: nodeDatum.attributes?.birthDate,
+              _isCouple: nodeDatum.attributes?.isCouple,
             };
 
             return (
               <g>
-                {/* Custom node content using foreignObject */}
-                {/* Positioned so the top of the card aligns with the connector point */}
                 <foreignObject
                   x={-NODE_WIDTH / 2}
                   y={-NODE_HEIGHT / 2}
