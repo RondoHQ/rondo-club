@@ -61,12 +61,8 @@ export default function CompanyForm() {
     setIsUploadingLogo(true);
 
     try {
-      // Upload the file
-      const uploadResponse = await wpApi.uploadMedia(file);
-      const mediaId = uploadResponse.data.id;
-
-      // Set as company logo using custom endpoint
-      await prmApi.setCompanyLogo(id, mediaId);
+      // Upload the file using the new endpoint that properly names files
+      await prmApi.uploadCompanyLogo(id, file);
 
       // Invalidate and refetch queries to refresh company data with embedded media
       queryClient.invalidateQueries({ queryKey: ['company', id] });

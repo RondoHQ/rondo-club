@@ -120,7 +120,7 @@ class PRM_REST_API {
             'permission_callback' => 'is_user_logged_in',
         ]);
         
-        // Set company logo (featured image)
+        // Set company logo (featured image) - by media ID
         register_rest_route('prm/v1', '/companies/(?P<company_id>\d+)/logo', [
             'methods'             => WP_REST_Server::CREATABLE,
             'callback'            => [$this, 'set_company_logo'],
@@ -133,6 +133,34 @@ class PRM_REST_API {
                 ],
                 'media_id' => [
                     'required'          => true,
+                    'validate_callback' => function($param) {
+                        return is_numeric($param);
+                    },
+                ],
+            ],
+        ]);
+        
+        // Upload person photo with proper filename
+        register_rest_route('prm/v1', '/people/(?P<person_id>\d+)/photo', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'upload_person_photo'],
+            'permission_callback' => [$this, 'check_person_edit_permission'],
+            'args'                => [
+                'person_id' => [
+                    'validate_callback' => function($param) {
+                        return is_numeric($param);
+                    },
+                ],
+            ],
+        ]);
+        
+        // Upload company logo with proper filename
+        register_rest_route('prm/v1', '/companies/(?P<company_id>\d+)/logo/upload', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'upload_company_logo'],
+            'permission_callback' => [$this, 'check_company_edit_permission'],
+            'args'                => [
+                'company_id' => [
                     'validate_callback' => function($param) {
                         return is_numeric($param);
                     },
@@ -691,6 +719,25 @@ class PRM_REST_API {
     }
     
     /**
+     * Check if user can edit a person
+     */
+    public function check_person_edit_permission($request) {
+        if (!is_user_logged_in()) {
+            return false;
+        }
+        
+        $person_id = $request->get_param('person_id');
+        $person = get_post($person_id);
+        
+        if (!$person || $person->post_type !== 'person') {
+            return false;
+        }
+        
+        // Check if user can edit this person
+        return current_user_can('edit_post', $person_id);
+    }
+    
+    /**
      * Set company logo (featured image)
      */
     public function set_company_logo($request) {
@@ -721,6 +768,151 @@ class PRM_REST_API {
             'media_id' => $media_id,
             'thumbnail_url' => get_the_post_thumbnail_url($company_id, 'thumbnail'),
             'full_url' => get_the_post_thumbnail_url($company_id, 'full'),
+        ]);
+    }
+    
+    /**
+     * Upload person photo with proper filename based on person's name
+     */
+    public function upload_person_photo($request) {
+        $person_id = (int) $request->get_param('person_id');
+        
+        // Verify person exists
+        $person = get_post($person_id);
+        if (!$person || $person->post_type !== 'person') {
+            return new WP_Error('person_not_found', __('Person not found.', 'personal-crm'), ['status' => 404]);
+        }
+        
+        // Check for uploaded file
+        $files = $request->get_file_params();
+        if (empty($files['file'])) {
+            return new WP_Error('no_file', __('No file uploaded.', 'personal-crm'), ['status' => 400]);
+        }
+        
+        $file = $files['file'];
+        
+        // Validate file type
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($file['type'], $allowed_types)) {
+            return new WP_Error('invalid_type', __('Invalid file type. Please upload an image.', 'personal-crm'), ['status' => 400]);
+        }
+        
+        // Get person's name for filename
+        $first_name = get_field('first_name', $person_id) ?: '';
+        $last_name = get_field('last_name', $person_id) ?: '';
+        $name_slug = sanitize_title(strtolower(trim($first_name . ' ' . $last_name)));
+        
+        // Get file extension
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if ($extension === 'jpeg') {
+            $extension = 'jpg';
+        }
+        
+        // Generate filename
+        $filename = !empty($name_slug) ? $name_slug . '.' . $extension : 'person-' . $person_id . '.' . $extension;
+        
+        // Load required files
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        
+        // Prepare file array with new filename
+        $file_array = [
+            'name'     => $filename,
+            'type'     => $file['type'],
+            'tmp_name' => $file['tmp_name'],
+            'error'    => $file['error'],
+            'size'     => $file['size'],
+        ];
+        
+        // Handle the upload
+        $attachment_id = media_handle_sideload($file_array, $person_id, sprintf('%s %s', $first_name, $last_name));
+        
+        if (is_wp_error($attachment_id)) {
+            return new WP_Error('upload_failed', $attachment_id->get_error_message(), ['status' => 500]);
+        }
+        
+        // Set as featured image
+        set_post_thumbnail($person_id, $attachment_id);
+        
+        return rest_ensure_response([
+            'success'       => true,
+            'attachment_id' => $attachment_id,
+            'filename'      => $filename,
+            'thumbnail_url' => get_the_post_thumbnail_url($person_id, 'thumbnail'),
+            'full_url'      => get_the_post_thumbnail_url($person_id, 'full'),
+        ]);
+    }
+    
+    /**
+     * Upload company logo with proper filename based on company name
+     */
+    public function upload_company_logo($request) {
+        $company_id = (int) $request->get_param('company_id');
+        
+        // Verify company exists
+        $company = get_post($company_id);
+        if (!$company || $company->post_type !== 'company') {
+            return new WP_Error('company_not_found', __('Company not found.', 'personal-crm'), ['status' => 404]);
+        }
+        
+        // Check for uploaded file
+        $files = $request->get_file_params();
+        if (empty($files['file'])) {
+            return new WP_Error('no_file', __('No file uploaded.', 'personal-crm'), ['status' => 400]);
+        }
+        
+        $file = $files['file'];
+        
+        // Validate file type
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+        if (!in_array($file['type'], $allowed_types)) {
+            return new WP_Error('invalid_type', __('Invalid file type. Please upload an image.', 'personal-crm'), ['status' => 400]);
+        }
+        
+        // Get company name for filename
+        $company_name = $company->post_title;
+        $name_slug = sanitize_title(strtolower(trim($company_name)));
+        
+        // Get file extension
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if ($extension === 'jpeg') {
+            $extension = 'jpg';
+        }
+        
+        // Generate filename
+        $filename = !empty($name_slug) ? $name_slug . '-logo.' . $extension : 'company-' . $company_id . '.' . $extension;
+        
+        // Load required files
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        
+        // Prepare file array with new filename
+        $file_array = [
+            'name'     => $filename,
+            'type'     => $file['type'],
+            'tmp_name' => $file['tmp_name'],
+            'error'    => $file['error'],
+            'size'     => $file['size'],
+        ];
+        
+        // Handle the upload
+        $attachment_id = media_handle_sideload($file_array, $company_id, sprintf('%s Logo', $company_name));
+        
+        if (is_wp_error($attachment_id)) {
+            return new WP_Error('upload_failed', $attachment_id->get_error_message(), ['status' => 500]);
+        }
+        
+        // Set as featured image
+        set_post_thumbnail($company_id, $attachment_id);
+        
+        return rest_ensure_response([
+            'success'       => true,
+            'attachment_id' => $attachment_id,
+            'filename'      => $filename,
+            'thumbnail_url' => get_the_post_thumbnail_url($company_id, 'thumbnail'),
+            'full_url'      => get_the_post_thumbnail_url($company_id, 'full'),
         ]);
     }
 }

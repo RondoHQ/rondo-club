@@ -123,4 +123,20 @@ export const prmApi = {
   // Company-specific
   getCompanyPeople: (companyId) => api.get(`/prm/v1/companies/${companyId}/people`),
   setCompanyLogo: (companyId, mediaId) => api.post(`/prm/v1/companies/${companyId}/logo`, { media_id: mediaId }),
+  
+  // Photo uploads with proper naming
+  uploadPersonPhoto: (personId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/prm/v1/people/${personId}/photo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  uploadCompanyLogo: (companyId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/prm/v1/companies/${companyId}/logo/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
