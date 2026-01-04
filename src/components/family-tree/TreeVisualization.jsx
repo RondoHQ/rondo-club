@@ -405,12 +405,6 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
             );
           }
         })()}
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500">
-              {nodes.length === 0 ? 'No nodes to display' : 'No root node found'}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
