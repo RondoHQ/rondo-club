@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.74] - 2024-12-19
+
+### Fixed
+- JavaScript error: Fixed "data is not defined" error when saving relationships
+- Gender-dependent inverse resolution: Fixed logic to correctly resolve aunt/uncle → niece/nephew based on related person's gender
+- Inverse mapping: Aunt can now correctly map to either Niece or Nephew depending on the related person's gender
+
+### Changed
+- Gender resolution: When source type is gender-dependent (aunt/uncle), inverse is resolved to target group (niece/nephew) based on related person's gender
+
 ## [1.0.73] - 2024-12-19
 
 ### Added

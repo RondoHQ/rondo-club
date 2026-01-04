@@ -135,12 +135,12 @@ export function useUpdatePerson() {
   
   return useMutation({
     mutationFn: ({ id, data }) => wpApi.updatePerson(id, data),
-    onSuccess: (_, { id }) => {
+    onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
       
       // If relationships were updated, invalidate cache for related people
-      if (data.acf?.relationships) {
+      if (data?.acf?.relationships) {
         const relationships = Array.isArray(data.acf.relationships) ? data.acf.relationships : [];
         relationships.forEach(rel => {
           const relatedPersonId = rel.related_person;
