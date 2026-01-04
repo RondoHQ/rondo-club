@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.109] - 2024-12-19
+
+### Changed
+- Family Tree: Much stronger spouse attraction - spouse edges 50px, parent-child 300px
+- Family Tree: Spring constant increased to 0.2 (4x stronger)
+- Family Tree: Node distance reduced to 100px to allow closer positioning
+- Family Tree: 300 stabilization iterations for better settling
+
 ## [1.0.108] - 2024-12-19
 
 ### Changed
