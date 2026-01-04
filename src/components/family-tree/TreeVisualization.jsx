@@ -154,15 +154,39 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
         }
       });
       
-      // Final validation: ensure all nodes have all required arrays
-      allNodes.forEach(node => {
-        if (!Array.isArray(node.parents)) node.parents = [];
-        if (!Array.isArray(node.children)) node.children = [];
-        if (!Array.isArray(node.siblings)) node.siblings = [];
-      });
+      // Final validation: ensure all nodes have all required arrays and valid structure
+      const validatedNodes = allNodes.map(node => {
+        // Ensure node has all required properties
+        if (!node.id) {
+          console.warn('Node missing id:', node);
+          return null;
+        }
+        
+        return {
+          id: String(node.id),
+          gender: node.gender || 'male',
+          parents: Array.isArray(node.parents) ? node.parents.map(p => ({
+            id: String(p.id || p),
+            type: p.type || 'blood',
+          })) : [],
+          children: Array.isArray(node.children) ? node.children.map(c => ({
+            id: String(c.id || c),
+            type: c.type || 'blood',
+          })) : [],
+          siblings: Array.isArray(node.siblings) ? node.siblings.map(s => ({
+            id: String(s.id || s),
+            type: s.type || 'blood',
+          })) : [],
+          // Preserve custom fields
+          _name: node._name,
+          _photo: node._photo,
+          _age: node._age,
+          _birthDate: node._birthDate,
+        };
+      }).filter(node => node !== null); // Remove any invalid nodes
       
-      console.log('Converted nodes for react-family-tree:', allNodes);
-      return allNodes;
+      console.log('Converted nodes for react-family-tree:', validatedNodes);
+      return validatedNodes;
     } catch (error) {
       console.error('Error converting tree to nodes:', error);
       return [];
