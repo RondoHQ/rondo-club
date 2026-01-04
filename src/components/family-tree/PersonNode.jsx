@@ -79,7 +79,7 @@ export default function PersonNode({ node, onClick, style }) {
     <div
       onClick={handleClick}
       style={style}
-      className="bg-white border-2 border-gray-300 rounded-lg shadow-md p-2 cursor-pointer hover:border-primary-500 hover:shadow-lg transition-all"
+      className="bg-white border-2 border-gray-300 rounded-lg shadow-md p-2 cursor-pointer hover:border-primary-500 hover:shadow-lg transition-all absolute"
     >
       {/* Photo or Initials */}
       <div className="flex justify-center mb-1">
