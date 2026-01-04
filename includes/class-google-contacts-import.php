@@ -85,13 +85,21 @@ class PRM_Google_Contacts_Import {
             return new WP_Error('invalid_format', __('No valid contacts found in CSV. Make sure you exported from Google Contacts.', 'personal-crm'), ['status' => 400]);
         }
 
-        // Check for required Google Contacts columns
-        $required_columns = ['Given Name', 'Family Name'];
+        // Check for required Google Contacts columns (supports both old and new format)
+        // Old format: "Given Name", "Family Name"
+        // New format: "First Name", "Last Name"
+        $name_column_sets = [
+            ['Given Name', 'Family Name'],
+            ['First Name', 'Last Name'],
+        ];
+        
         $has_name_columns = false;
-        foreach ($required_columns as $col) {
-            if (in_array($col, $this->headers)) {
-                $has_name_columns = true;
-                break;
+        foreach ($name_column_sets as $columns) {
+            foreach ($columns as $col) {
+                if (in_array($col, $this->headers)) {
+                    $has_name_columns = true;
+                    break 2;
+                }
             }
         }
 
@@ -118,15 +126,17 @@ class PRM_Google_Contacts_Import {
         $notes = 0;
 
         foreach ($contacts as $contact) {
-            $first = $contact['Given Name'] ?? '';
-            $last = $contact['Family Name'] ?? '';
+            // Support both old format (Given Name/Family Name) and new format (First Name/Last Name)
+            $first = $this->get_field($contact, ['Given Name', 'First Name']);
+            $last = $this->get_field($contact, ['Family Name', 'Last Name']);
             $name = $contact['Name'] ?? '';
 
             if (!empty($first) || !empty($last) || !empty($name)) {
                 $valid_contacts++;
             }
 
-            $org = $contact['Organization 1 - Name'] ?? '';
+            // Support both old format (Organization 1 - Name) and new format (Organization Name)
+            $org = $this->get_field($contact, ['Organization 1 - Name', 'Organization Name']);
             if (!empty($org)) {
                 $companies[$org] = true;
             }
@@ -146,6 +156,18 @@ class PRM_Google_Contacts_Import {
             'birthdays'       => $birthdays,
             'notes'           => $notes,
         ];
+    }
+
+    /**
+     * Get a field value trying multiple possible column names
+     */
+    private function get_field(array $contact, array $possible_names): string {
+        foreach ($possible_names as $name) {
+            if (!empty($contact[$name])) {
+                return trim($contact[$name]);
+            }
+        }
+        return '';
     }
 
     /**
@@ -230,11 +252,11 @@ class PRM_Google_Contacts_Import {
      * Import a single contact
      */
     private function import_single_contact(array $contact): void {
-        // Extract name
-        $first_name = trim($contact['Given Name'] ?? '');
-        $last_name = trim($contact['Family Name'] ?? '');
+        // Extract name - support both old format (Given Name/Family Name) and new format (First Name/Last Name)
+        $first_name = $this->get_field($contact, ['Given Name', 'First Name']);
+        $last_name = $this->get_field($contact, ['Family Name', 'Last Name']);
         
-        // Fallback to Name field if Given/Family Name are empty
+        // Fallback to Name field if first/last name are empty
         if (empty($first_name) && empty($last_name) && !empty($contact['Name'])) {
             $name_parts = explode(' ', trim($contact['Name']), 2);
             $first_name = $name_parts[0] ?? '';
@@ -280,9 +302,10 @@ class PRM_Google_Contacts_Import {
             update_field('nickname', $nickname, $post_id);
         }
 
-        // Handle company/work history
-        $org_name = trim($contact['Organization 1 - Name'] ?? '');
-        $job_title = trim($contact['Organization 1 - Title'] ?? '');
+        // Handle company/work history - support both old format (Organization 1 - Name) and new format (Organization Name)
+        $org_name = $this->get_field($contact, ['Organization 1 - Name', 'Organization Name']);
+        $job_title = $this->get_field($contact, ['Organization 1 - Title', 'Organization Title']);
+        $department = $this->get_field($contact, ['Organization 1 - Department', 'Organization Department']);
 
         if (!empty($org_name) || !empty($job_title)) {
             $company_id = null;
@@ -291,10 +314,18 @@ class PRM_Google_Contacts_Import {
             }
 
             if ($company_id || $job_title) {
+                // Combine job title and department if both exist
+                $full_title = $job_title;
+                if (!empty($department) && !empty($job_title)) {
+                    $full_title = $job_title . ' (' . $department . ')';
+                } elseif (!empty($department)) {
+                    $full_title = $department;
+                }
+                
                 $work_history = [
                     [
                         'company'    => $company_id,
-                        'job_title'  => $job_title,
+                        'job_title'  => $full_title,
                         'is_current' => true,
                     ],
                 ];
@@ -328,9 +359,10 @@ class PRM_Google_Contacts_Import {
         $contact_info = [];
 
         // Import emails (Google uses E-mail 1 - Value, E-mail 2 - Value, etc.)
+        // Type/Label field can be "E-mail X - Type" (old) or "E-mail X - Label" (new)
         for ($i = 1; $i <= 5; $i++) {
             $email = trim($contact["E-mail {$i} - Value"] ?? '');
-            $type = trim($contact["E-mail {$i} - Type"] ?? '');
+            $type = $this->get_field($contact, ["E-mail {$i} - Type", "E-mail {$i} - Label"]);
             
             if (!empty($email)) {
                 $contact_info[] = [
@@ -342,9 +374,10 @@ class PRM_Google_Contacts_Import {
         }
 
         // Import phones (Google uses Phone 1 - Value, Phone 2 - Value, etc.)
+        // Type/Label field can be "Phone X - Type" (old) or "Phone X - Label" (new)
         for ($i = 1; $i <= 5; $i++) {
             $phone = trim($contact["Phone {$i} - Value"] ?? '');
-            $type = strtolower(trim($contact["Phone {$i} - Type"] ?? ''));
+            $type = strtolower($this->get_field($contact, ["Phone {$i} - Type", "Phone {$i} - Label"]));
             
             if (!empty($phone)) {
                 $contact_type = 'phone';
@@ -361,9 +394,10 @@ class PRM_Google_Contacts_Import {
         }
 
         // Import addresses (Google uses Address 1 - Formatted, Address 2 - Formatted, etc.)
+        // Type/Label field can be "Address X - Type" (old) or "Address X - Label" (new)
         for ($i = 1; $i <= 3; $i++) {
             $address = trim($contact["Address {$i} - Formatted"] ?? '');
-            $type = trim($contact["Address {$i} - Type"] ?? '');
+            $type = $this->get_field($contact, ["Address {$i} - Type", "Address {$i} - Label"]);
             
             // If no formatted address, try to build from components
             if (empty($address)) {
@@ -387,9 +421,10 @@ class PRM_Google_Contacts_Import {
         }
 
         // Import websites (Google uses Website 1 - Value, etc.)
+        // Type/Label field can be "Website X - Type" (old) or "Website X - Label" (new)
         for ($i = 1; $i <= 3; $i++) {
             $url = trim($contact["Website {$i} - Value"] ?? '');
-            $type = trim($contact["Website {$i} - Type"] ?? '');
+            $type = $this->get_field($contact, ["Website {$i} - Type", "Website {$i} - Label"]);
             
             if (!empty($url)) {
                 $contact_info[] = [
@@ -411,11 +446,12 @@ class PRM_Google_Contacts_Import {
     private function format_label(string $type): string {
         $type = strtolower(trim($type));
         
-        // Remove common prefixes
-        $type = str_replace(['* ', ':: '], '', $type);
+        // Remove common prefixes used by Google (e.g., "* Other", "* Work", "* myContacts")
+        $type = preg_replace('/^\*\s*/', '', $type);
+        $type = str_replace([':: ', '::: '], '', $type);
         
         // Skip generic labels
-        if (in_array($type, ['', 'other', 'custom'])) {
+        if (in_array($type, ['', 'other', 'custom', 'mycontacts'])) {
             return '';
         }
         
@@ -451,22 +487,34 @@ class PRM_Google_Contacts_Import {
         $date = trim($date);
         
         // Try various formats Google might use
-        // YYYY-MM-DD
+        // YYYY-MM-DD (full date)
         if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date, $match)) {
             return $date;
         }
         
-        // MM/DD/YYYY or M/D/YYYY
+        // --MM-DD (Google format for date without year, e.g., --10-31)
+        if (preg_match('/^--(\d{2})-(\d{2})$/', $date, $match)) {
+            // Use a placeholder year (0000) to indicate year is unknown
+            // The system will treat this as a recurring date
+            return sprintf('0000-%s-%s', $match[1], $match[2]);
+        }
+        
+        // MM/DD/YYYY or M/D/YYYY (US format)
         if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date, $match)) {
             return sprintf('%s-%02d-%02d', $match[3], $match[1], $match[2]);
         }
         
-        // DD/MM/YYYY (alternative)
+        // DD/MM/YYYY (European format with dots)
         if (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/', $date, $match)) {
             return sprintf('%s-%02d-%02d', $match[3], $match[2], $match[1]);
         }
         
-        // Try strtotime
+        // DD-MM-YYYY (European format with dashes)
+        if (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{4})$/', $date, $match)) {
+            return sprintf('%s-%02d-%02d', $match[3], $match[2], $match[1]);
+        }
+        
+        // Try strtotime as fallback
         $timestamp = strtotime($date);
         if ($timestamp) {
             return date('Y-m-d', $timestamp);
