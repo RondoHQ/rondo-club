@@ -426,8 +426,20 @@ class PRM_REST_API {
     public function get_dashboard_summary($request) {
         $user_id = get_current_user_id();
         
-        // Count accessible posts
+        // Get accessible post counts (respects access control)
         $access_control = new PRM_Access_Control();
+        
+        // For admins, use wp_count_posts for efficiency
+        // For regular users, count only their accessible posts
+        if (current_user_can('manage_options')) {
+            $total_people = wp_count_posts('person')->publish;
+            $total_companies = wp_count_posts('company')->publish;
+            $total_dates = wp_count_posts('important_date')->publish;
+        } else {
+            $total_people = count($access_control->get_accessible_post_ids('person', $user_id));
+            $total_companies = count($access_control->get_accessible_post_ids('company', $user_id));
+            $total_dates = count($access_control->get_accessible_post_ids('important_date', $user_id));
+        }
         
         // Recent people
         $recent_people = get_posts([
@@ -457,9 +469,9 @@ class PRM_REST_API {
         
         return rest_ensure_response([
             'stats' => [
-                'total_people'    => wp_count_posts('person')->publish,
-                'total_companies' => wp_count_posts('company')->publish,
-                'total_dates'     => wp_count_posts('important_date')->publish,
+                'total_people'    => $total_people,
+                'total_companies' => $total_companies,
+                'total_dates'     => $total_dates,
             ],
             'recent_people'     => array_map([$this, 'format_person_summary'], $recent_people),
             'upcoming_reminders' => array_slice($upcoming_reminders, 0, 5),

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.121] - 2026-01-04
+
+### Fixed
+- Dashboard statistics now respect access control: new users see only their own people/companies/dates counts, not totals from all users
+- Fixed `wp_count_posts()` bypassing access control by using `get_accessible_post_ids()` for non-admin users
+
 ## [1.0.120] - 2026-01-04
 
 ### Added
