@@ -621,7 +621,7 @@ export default function PersonDetail() {
                 </Link>
               </div>
             {acf.contact_info?.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {acf.contact_info.map((contact, index) => {
                   const Icon = contact.contact_type === 'email' ? Mail :
                                contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
@@ -665,7 +665,7 @@ export default function PersonDetail() {
 
                   return (
                     <div key={index} className="group">
-                      <div className="flex items-center rounded-md -mx-2 px-2 group-hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
                         {!isLinkedIn && <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />}
                         <div className="flex-1 min-w-0">
                           {isLinkedIn ? (
