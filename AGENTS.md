@@ -126,6 +126,14 @@ This is a single repository containing both backend (PHP) and frontend (React) c
 
 ### Rule 1: Semantic Versioning
 
+### What is it?
+
+*Semantic Versioning* follows the format: ⁠ MAJOR.MINOR.PATCH ⁠ (bijv. ⁠ 1.10.7 ⁠)
+
+* ⁠*MAJOR* (x.0.0): Breaking changes which break existing functionality
+* ⁠*MINOR* (0.x.0): New features that are backward compatible
+* ⁠*PATCH* (0.0.x): Bug fixes and small improvements
+
 Update the version of the theme in style.css and package.json with every change, following the semantic versioning system.
 
 ## Rule 2: Update the Changelog
@@ -141,7 +149,7 @@ You will find the changelog in /CHANGELOG.md
 
 ### Rule 3: Update documentation
 
-Update the documentation in /docs with all relevant information from the change. If the (sub-)system you made changes to is not documented yet, document that too.
+Update the documentation in the /docs folder with all relevant information from the change. If the (sub-)system you made changes to is not documented yet, document that system too.
 
 ### Rule 4: Git Commit & Push
 

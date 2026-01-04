@@ -64,6 +64,8 @@ function prm_init() {
     require_once PRM_PLUGIN_DIR . '/class-rest-api.php';
     require_once PRM_PLUGIN_DIR . '/class-reminders.php';
     require_once PRM_PLUGIN_DIR . '/class-monica-import.php';
+    require_once PRM_PLUGIN_DIR . '/class-vcard-import.php';
+    require_once PRM_PLUGIN_DIR . '/class-google-contacts-import.php';
     require_once PRM_PLUGIN_DIR . '/class-inverse-relationships.php';
     require_once PRM_PLUGIN_DIR . '/class-ical-feed.php';
 
@@ -76,6 +78,8 @@ function prm_init() {
     new PRM_REST_API();
     new PRM_Reminders();
     new PRM_Monica_Import();
+    new PRM_VCard_Import();
+    new PRM_Google_Contacts_Import();
     new PRM_Inverse_Relationships();
     new PRM_ICal_Feed();
     

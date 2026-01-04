@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-01-04
+
+### Added
+- vCard import: Import contacts from vCard (.vcf) files exported from Apple Contacts, Outlook, Android, or any vCard-compatible app
+- Google Contacts import: Import contacts from Google Contacts CSV export files
+- Import page: New tabbed interface for selecting between vCard, Google Contacts, and Monica CRM import methods
+- Both imports support: names, nicknames, phone numbers, emails, addresses, websites/social media, organizations with job titles, birthdays, notes, and photos (vCard only)
+- Duplicate detection: Contacts with matching names are updated instead of duplicated
+- Multi-contact support: vCard files containing multiple contacts are fully supported
+
+### Changed
+- Import settings page now has a tabbed interface to switch between import methods
+- Import page shows helpful instructions for Google Contacts export
+
 ## [1.0.123] - 2026-01-04
 
 ### Changed
