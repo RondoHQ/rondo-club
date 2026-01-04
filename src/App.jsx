@@ -15,6 +15,7 @@ import DatesList from '@/pages/Dates/DatesList';
 import DateForm from '@/pages/Dates/DateForm';
 import Settings from '@/pages/Settings/Settings';
 import RelationshipTypes from '@/pages/Settings/RelationshipTypes';
+import FamilyTree from '@/pages/People/FamilyTree';
 import Login from '@/pages/Login';
 
 function ProtectedRoute({ children }) {
@@ -59,6 +60,7 @@ function App() {
                 <Route path="/people/:personId/work-history/:index/edit" element={<WorkHistoryForm />} />
                 <Route path="/people/:personId/relationship/new" element={<RelationshipForm />} />
                 <Route path="/people/:personId/relationship/:index/edit" element={<RelationshipForm />} />
+                <Route path="/people/:id/family-tree" element={<FamilyTree />} />
                 <Route path="/people/:id/edit" element={<PersonForm />} />
                 <Route path="/people/:id" element={<PersonDetail />} />
                 

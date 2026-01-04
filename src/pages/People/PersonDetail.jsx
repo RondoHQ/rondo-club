@@ -911,13 +911,21 @@ export default function PersonDetail() {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold">Relationships</h2>
-              <Link
-                to={`/people/${id}/relationship/new`}
-                className="btn-secondary text-sm"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Relationship
-              </Link>
+              <div className="flex gap-2">
+                <Link
+                  to={`/people/${id}/family-tree`}
+                  className="btn-secondary text-sm"
+                >
+                  View Family Tree
+                </Link>
+                <Link
+                  to={`/people/${id}/relationship/new`}
+                  className="btn-secondary text-sm"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Relationship
+                </Link>
+              </div>
             </div>
             {sortedRelationships?.length > 0 ? (
               <div className="space-y-2">
