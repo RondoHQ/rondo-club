@@ -129,6 +129,12 @@ export default function TreeVisualization({ treeData, onNodeClick }) {
           pathFunc="straight"
           renderCustomNodeElement={(rd3tProps) => {
             const { nodeDatum } = rd3tProps;
+            
+            // Skip rendering virtual root nodes
+            if (nodeDatum.attributes?.isVirtualRoot || nodeDatum.attributes?.hidden || nodeDatum.attributes?.id === 'virtual-root') {
+              return null;
+            }
+            
             const nodeData = {
               id: nodeDatum.attributes?.id,
               _name: nodeDatum.name,
