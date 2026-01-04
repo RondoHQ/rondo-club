@@ -128,6 +128,8 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
 
 /**
  * Get parents of a person from adjacency list
+ * Relationship type describes WHO the neighbor is:
+ * - If person has "parent" relationship to neighbor, neighbor IS their parent
  * @param {number} personId 
  * @param {Map} adjacencyList 
  * @returns {number[]} Array of parent IDs
@@ -135,12 +137,14 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
 function getParents(personId, adjacencyList) {
   const neighbors = adjacencyList.get(personId) || [];
   return neighbors
-    .filter(n => isChildType(n.type)) // Person has "child" relationship = neighbor is parent
+    .filter(n => isParentType(n.type)) // Neighbor IS a parent of this person
     .map(n => n.nodeId);
 }
 
 /**
  * Get children of a person from adjacency list
+ * Relationship type describes WHO the neighbor is:
+ * - If person has "child" relationship to neighbor, neighbor IS their child
  * @param {number} personId 
  * @param {Map} adjacencyList 
  * @returns {number[]} Array of child IDs
@@ -148,7 +152,7 @@ function getParents(personId, adjacencyList) {
 function getChildren(personId, adjacencyList) {
   const neighbors = adjacencyList.get(personId) || [];
   return neighbors
-    .filter(n => isParentType(n.type)) // Person has "parent" relationship = neighbor is child
+    .filter(n => isChildType(n.type)) // Neighbor IS a child of this person
     .map(n => n.nodeId);
 }
 
