@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.73] - 2024-12-19
+
+### Added
+- Default relationship configurations: System now ships with pre-configured inverse mappings and gender-dependent settings
+- Restore defaults button: Added "Restore Defaults" button in Relationship Types settings page
+- REST API endpoint: `/prm/v1/relationship-types/restore-defaults` to restore default configurations
+- Automatic setup: Default configurations are applied when relationship types are first created
+
+### Changed
+- Relationship type initialization: Now automatically sets up inverse mappings and gender-dependent groups on first run
+
 ## [1.0.72] - 2024-12-19
 
 ### Added

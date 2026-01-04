@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Save, Plus, Trash2, Edit2, X } from 'lucide-react';
+import { Save, Plus, Trash2, Edit2, X, RotateCcw } from 'lucide-react';
 import { wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
@@ -220,6 +220,41 @@ export default function RelationshipTypes() {
     },
   });
   
+  // Restore defaults mutation
+  const restoreDefaultsMutation = useMutation({
+    mutationFn: () => wpApi.restoreRelationshipTypeDefaults(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['relationship-types'] });
+      alert('Default relationship type configurations have been restored.');
+    },
+    onError: () => {
+      alert('Failed to restore defaults. Please try again.');
+    },
+  });
+  
+  // Restore defaults button component
+  function RestoreDefaultsButton() {
+    return (
+      <button
+        onClick={() => {
+          if (window.confirm('This will restore all default inverse mappings and gender-dependent settings. Continue?')) {
+            restoreDefaultsMutation.mutate();
+          }
+        }}
+        disabled={restoreDefaultsMutation.isPending}
+        className="btn-secondary flex items-center gap-2"
+        title="Restore default inverse mappings and gender-dependent settings"
+      >
+        {restoreDefaultsMutation.isPending ? (
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+        ) : (
+          <RotateCcw className="w-4 h-4" />
+        )}
+        Restore Defaults
+      </button>
+    );
+  }
+  
   const handleEdit = (type) => {
     setEditingId(type.id);
     setEditingName(type.name);
@@ -284,15 +319,20 @@ export default function RelationshipTypes() {
       <div className="card p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Relationship Types</h1>
-          {!isAdding && (
-            <button
-              onClick={() => setIsAdding(true)}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Relationship Type
-            </button>
-          )}
+          <div className="flex gap-2">
+            {!isAdding && (
+              <>
+                <RestoreDefaultsButton />
+                <button
+                  onClick={() => setIsAdding(true)}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Relationship Type
+                </button>
+              </>
+            )}
+          </div>
         </div>
         
         {/* Add new form */}

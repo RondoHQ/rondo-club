@@ -86,6 +86,13 @@ class PRM_REST_API {
             'permission_callback' => 'is_user_logged_in',
         ]);
         
+        // Restore default relationship type configurations
+        register_rest_route('prm/v1', '/relationship-types/restore-defaults', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'restore_relationship_type_defaults'],
+            'permission_callback' => 'is_user_logged_in',
+        ]);
+        
         // Sideload Gravatar image
         register_rest_route('prm/v1', '/people/(?P<person_id>\d+)/gravatar', [
             'methods'             => WP_REST_Server::CREATABLE,
@@ -166,6 +173,30 @@ class PRM_REST_API {
                 update_field($field_name, $value, 'relationship_type_' . $term->term_id);
             }
         }
+    }
+    
+    /**
+     * Restore default relationship type configurations
+     */
+    public function restore_relationship_type_defaults($request) {
+        // Get the taxonomies class instance
+        $taxonomies = new PRM_Taxonomies();
+        
+        // Call the setup method (make it public or add a public wrapper)
+        if (method_exists($taxonomies, 'setup_default_relationship_configurations')) {
+            $taxonomies->setup_default_relationship_configurations();
+            
+            return new WP_REST_Response([
+                'success' => true,
+                'message' => __('Default relationship type configurations have been restored.', 'personal-crm'),
+            ], 200);
+        }
+        
+        return new WP_Error(
+            'restore_failed',
+            __('Failed to restore defaults.', 'personal-crm'),
+            ['status' => 500]
+        );
     }
     
     /**

@@ -194,6 +194,121 @@ class PRM_Taxonomies {
                 wp_insert_term($name, 'relationship_type', ['slug' => $slug]);
             }
         }
+        
+        // Set up default configurations (inverse mappings and gender-dependent settings)
+        $this->setup_default_relationship_configurations();
+    }
+    
+    /**
+     * Set up default relationship type configurations
+     * Includes inverse mappings and gender-dependent settings
+     */
+    public function setup_default_relationship_configurations() {
+        // Get all relationship type terms by slug
+        $types = [];
+        $all_terms = get_terms([
+            'taxonomy' => 'relationship_type',
+            'hide_empty' => false,
+        ]);
+        
+        if (!is_wp_error($all_terms)) {
+            foreach ($all_terms as $term) {
+                $types[$term->slug] = $term->term_id;
+            }
+        }
+        
+        // Symmetric relationships (same type as inverse)
+        $symmetric = ['spouse', 'friend', 'colleague', 'acquaintance', 'sibling', 'cousin', 'partner'];
+        foreach ($symmetric as $slug) {
+            if (isset($types[$slug])) {
+                $inverse = get_field('inverse_relationship_type', 'relationship_type_' . $types[$slug]);
+                if (!$inverse) {
+                    update_field('inverse_relationship_type', $types[$slug], 'relationship_type_' . $types[$slug]);
+                }
+            }
+        }
+        
+        // Asymmetric parent-child relationships
+        $asymmetric = [
+            'parent' => 'child',
+            'child' => 'parent',
+            'grandparent' => 'grandchild',
+            'grandchild' => 'grandparent',
+            'stepparent' => 'stepchild',
+            'stepchild' => 'stepparent',
+            'godparent' => 'godchild',
+            'godchild' => 'godparent',
+            'boss' => 'subordinate',
+            'subordinate' => 'boss',
+            'mentor' => 'mentee',
+            'mentee' => 'mentor',
+        ];
+        
+        foreach ($asymmetric as $from_slug => $to_slug) {
+            if (isset($types[$from_slug]) && isset($types[$to_slug])) {
+                $inverse = get_field('inverse_relationship_type', 'relationship_type_' . $types[$from_slug]);
+                if (!$inverse) {
+                    update_field('inverse_relationship_type', $types[$to_slug], 'relationship_type_' . $types[$from_slug]);
+                }
+            }
+        }
+        
+        // Gender-dependent relationships
+        // Aunt/Uncle group
+        $aunt_uncle_group = ['aunt', 'uncle'];
+        foreach ($aunt_uncle_group as $slug) {
+            if (isset($types[$slug])) {
+                $term_id = $types[$slug];
+                $is_gender_dependent = get_field('is_gender_dependent', 'relationship_type_' . $term_id);
+                if (!$is_gender_dependent) {
+                    update_field('is_gender_dependent', true, 'relationship_type_' . $term_id);
+                    update_field('gender_dependent_group', 'aunt_uncle', 'relationship_type_' . $term_id);
+                }
+                
+                // Set inverse to niece/nephew (will be resolved based on gender)
+                if ($slug === 'aunt' && isset($types['niece'])) {
+                    $inverse = get_field('inverse_relationship_type', 'relationship_type_' . $term_id);
+                    if (!$inverse) {
+                        // Use niece as default, will be resolved to nephew if needed
+                        update_field('inverse_relationship_type', $types['niece'], 'relationship_type_' . $term_id);
+                    }
+                } elseif ($slug === 'uncle' && isset($types['nephew'])) {
+                    $inverse = get_field('inverse_relationship_type', 'relationship_type_' . $term_id);
+                    if (!$inverse) {
+                        // Use nephew as default, will be resolved to niece if needed
+                        update_field('inverse_relationship_type', $types['nephew'], 'relationship_type_' . $term_id);
+                    }
+                }
+            }
+        }
+        
+        // Niece/Nephew group
+        $niece_nephew_group = ['niece', 'nephew'];
+        foreach ($niece_nephew_group as $slug) {
+            if (isset($types[$slug])) {
+                $term_id = $types[$slug];
+                $is_gender_dependent = get_field('is_gender_dependent', 'relationship_type_' . $term_id);
+                if (!$is_gender_dependent) {
+                    update_field('is_gender_dependent', true, 'relationship_type_' . $term_id);
+                    update_field('gender_dependent_group', 'niece_nephew', 'relationship_type_' . $term_id);
+                }
+                
+                // Set inverse to aunt/uncle (will be resolved based on gender)
+                if ($slug === 'niece' && isset($types['aunt'])) {
+                    $inverse = get_field('inverse_relationship_type', 'relationship_type_' . $term_id);
+                    if (!$inverse) {
+                        // Use aunt as default, will be resolved to uncle if needed
+                        update_field('inverse_relationship_type', $types['aunt'], 'relationship_type_' . $term_id);
+                    }
+                } elseif ($slug === 'nephew' && isset($types['uncle'])) {
+                    $inverse = get_field('inverse_relationship_type', 'relationship_type_' . $term_id);
+                    if (!$inverse) {
+                        // Use uncle as default, will be resolved to aunt if needed
+                        update_field('inverse_relationship_type', $types['uncle'], 'relationship_type_' . $term_id);
+                    }
+                }
+            }
+        }
     }
     
     /**
