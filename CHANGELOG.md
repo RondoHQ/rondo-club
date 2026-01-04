@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.76] - 2024-12-19
+
+### Fixed
+- Family Tree: Fixed "Unknown" node names by properly extracting person names from various data formats
+- Family Tree: Fixed relationship parsing to handle REST API expanded relationship format (relationship_slug field)
+- Family Tree: Improved age calculation from birth_date field
+- Family Tree: Added better error handling and debugging
+
 ## [1.0.75] - 2024-12-19
 
 ### Added
