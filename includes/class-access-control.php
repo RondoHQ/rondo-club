@@ -49,6 +49,13 @@ class PRM_Access_Control {
             $user_id = get_current_user_id();
         }
         
+        // Check if user is approved (admins are always approved)
+        if (!user_can($user_id, 'manage_options')) {
+            if (!PRM_User_Roles::is_user_approved($user_id)) {
+                return false;
+            }
+        }
+        
         // Admins can access everything in admin area, but are restricted on frontend
         if (user_can($user_id, 'manage_options')) {
             // On frontend, admins are restricted like regular users
@@ -107,6 +114,15 @@ class PRM_Access_Control {
             return;
         }
         
+        // Check if user is approved (admins are always approved)
+        if (!current_user_can('manage_options')) {
+            if (!PRM_User_Roles::is_user_approved($user_id)) {
+                // Unapproved user - show nothing
+                $query->set('post__in', [0]);
+                return;
+            }
+        }
+        
         // On frontend, admins are also restricted
         // Only skip filtering for admins in admin area
         if (current_user_can('manage_options') && is_admin()) {
@@ -151,6 +167,15 @@ class PRM_Access_Control {
         if (!$user_id) {
             $args['post__in'] = [0];
             return $args;
+        }
+        
+        // Check if user is approved (admins are always approved)
+        if (!user_can($user_id, 'manage_options')) {
+            if (!PRM_User_Roles::is_user_approved($user_id)) {
+                // Unapproved user - show nothing
+                $args['post__in'] = [0];
+                return $args;
+            }
         }
         
         // REST API calls are typically from the frontend React app
@@ -206,6 +231,17 @@ class PRM_Access_Control {
      */
     public function filter_rest_single_access($response, $post, $request) {
         $user_id = get_current_user_id();
+        
+        // Check if user is approved (admins are always approved)
+        if (!user_can($user_id, 'manage_options')) {
+            if (!PRM_User_Roles::is_user_approved($user_id)) {
+                return new WP_Error(
+                    'rest_forbidden',
+                    __('Your account is pending approval. Please contact an administrator.', 'personal-crm'),
+                    ['status' => 403]
+                );
+            }
+        }
         
         // Don't allow access to trashed posts
         if ($post->post_status === 'trash') {

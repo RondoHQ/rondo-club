@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-01-04
+
+### Added
+- User approval system - new users default to "Caelis User" role but require admin approval before accessing the system
+- Admin interface for approving/denying users:
+  - Approval status column in users list
+  - Bulk approve/deny actions
+  - Individual approve/deny actions in user row
+  - Email notification sent when user is approved
+- Frontend approval check - unapproved users see a message instead of accessing the app
+- Approval status included in user API response
+
+### Changed
+- Default role for new registrations is now "Caelis User" instead of Subscriber
+- All REST API endpoints now check approval status before allowing access
+- Access control system blocks unapproved users from viewing any data
+- Users are marked as unapproved by default when registered
+
 ## [1.3.1] - 2026-01-04
 
 ### Added
