@@ -5,10 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-01-04
+
+### Removed
+- Removed sharing functionality - the `shared_with` ACF field has been removed from all post types (person, company, important_date)
+- Users can now only see posts they created themselves
+- Removed sharing tab from person fields in ACF
+- Removed all sharing-related logic from access control, reminders, and import classes
+- Updated documentation to reflect removal of sharing functionality
+
+### Changed
+- Access control simplified - users can only access posts they authored
+- Reminder notifications now only go to post authors (no longer includes shared users)
+
 ## [1.2.7] - 2026-01-04
 
 ### Changed
-- Administrators are now restricted on the frontend - they can only see and access people/companies/dates they created themselves or that are shared with them
+- Administrators are now restricted on the frontend - they can only see and access people/companies/dates they created themselves
 - Administrators still have full access in the WordPress admin area for system management
 - This ensures data privacy is maintained even for administrators when using the frontend React SPA
 

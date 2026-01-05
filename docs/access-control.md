@@ -1,14 +1,12 @@
 # Access Control
 
-This document describes the row-level security system that ensures users can only see their own data or data explicitly shared with them.
+This document describes the row-level security system that ensures users can only see their own data.
 
 ## Overview
 
-Caelis implements **row-level access control** - each user can only see posts (contacts, companies, dates) they either:
-1. Created themselves (are the `post_author`)
-2. Have been explicitly shared via the `shared_with` ACF field
+Caelis implements **row-level access control** - each user can only see posts (contacts, companies, dates) they created themselves (are the `post_author`).
 
-**Administrators are restricted on the frontend** - they can only see their own posts or posts shared with them, just like regular users. However, in the WordPress admin area, administrators have full access to manage all posts.
+**Administrators are restricted on the frontend** - they can only see their own posts, just like regular users. However, in the WordPress admin area, administrators have full access to manage all posts.
 
 ## Implementation
 
@@ -57,21 +55,12 @@ $query->set('post__in', $accessible_ids);
 The `get_accessible_post_ids()` method uses direct database queries for performance:
 
 ```php
-// 1. Get posts authored by user
+// Get posts authored by user
 SELECT ID FROM wp_posts 
 WHERE post_type = %s 
 AND post_status = 'publish' 
 AND post_author = %d
-
-// 2. Get posts shared with user (ACF serialized format)
-SELECT post_id FROM wp_postmeta 
-WHERE meta_key = 'shared_with' 
-AND (meta_value LIKE '%"123"%' OR meta_value LIKE '%i:123;%')
 ```
-
-The `shared_with` field stores user IDs in PHP serialized format, requiring `LIKE` queries to match both array formats:
-- `%"123"%` - matches string format
-- `%i:123;%` - matches integer format
 
 ### Single Post Access Check
 
@@ -85,8 +74,7 @@ $can_access = PRM_Access_Control::user_can_access_post($post_id, $user_id);
 // 1. Is user an admin AND in admin area? → true (admin area only)
 // 2. Is post a controlled type? → if not, true
 // 3. Is post trashed? → false
-// 4. Is user the author? → true  
-// 5. Is user in shared_with array? → true/false
+// 4. Is user the author? → true/false
 ```
 
 ### REST API Filtering
@@ -105,21 +93,6 @@ return new WP_Error(
 );
 ```
 
-## The `shared_with` Field
-
-Each controlled post type has a `shared_with` ACF field that allows sharing with other users:
-
-| Post Type | Field Key |
-|-----------|-----------|
-| person | `field_shared_with` |
-| company | `field_company_shared_with` |
-| important_date | `field_date_shared_with` |
-
-**Field Configuration:**
-- Type: `user`
-- Multiple: Yes (allows selecting multiple users)
-- Return Format: `id` (stores user IDs)
-
 ## Administrator Access Control
 
 Administrators (users with `manage_options` capability) have different access levels depending on context:
@@ -130,7 +103,7 @@ Administrators (users with `manage_options` capability) have different access le
 
 **On Frontend (React SPA):**
 - Restricted like regular users
-- Can only see posts they created or that are shared with them
+- Can only see posts they created themselves
 - REST API calls from the frontend are filtered
 
 This ensures that:
@@ -175,13 +148,12 @@ if ($query->have_posts()) {
 1. **Never trust client-side access checks** - All access control is enforced server-side
 2. **REST API is protected** - Both list and single-item endpoints verify access
 3. **Direct database queries** bypass WordPress filters - Use `user_can_access_post()` when accessing posts outside normal query flow
-4. **Shared access is explicit** - Posts are private by default; sharing must be intentional
+4. **Posts are private by default** - Users can only see posts they created themselves
 
 ## Performance Notes
 
 - `get_accessible_post_ids()` uses direct SQL for speed
 - Results are not cached; consider caching for high-traffic scenarios
-- The `LIKE` queries on `postmeta` may be slow with very large datasets
 
 ## Related Documentation
 
