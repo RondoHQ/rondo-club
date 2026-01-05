@@ -2,8 +2,9 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
-  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin, X, Camera, Download, Facebook, Instagram, Twitter
+  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin, X, Camera, Download
 } from 'lucide-react';
+import { FaFacebook, FaLinkedin, FaInstagram, FaTwitter, FaGlobe } from 'react-icons/fa';
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -565,12 +566,12 @@ export default function PersonDetail() {
   // Helper to get social icon
   const getSocialIcon = (type) => {
     switch (type) {
-      case 'facebook': return Facebook;
-      case 'linkedin': return Linkedin;
-      case 'instagram': return Instagram;
-      case 'twitter': return Twitter;
-      case 'website': return Globe;
-      default: return Globe;
+      case 'facebook': return FaFacebook;
+      case 'linkedin': return FaLinkedin;
+      case 'instagram': return FaInstagram;
+      case 'twitter': return FaTwitter;
+      case 'website': return FaGlobe;
+      default: return FaGlobe;
     }
   };
   
@@ -765,7 +766,7 @@ export default function PersonDetail() {
                         className={`flex-shrink-0 hover:opacity-80 transition-opacity ${iconColor}`}
                         title={`${contact.contact_type.charAt(0).toUpperCase() + contact.contact_type.slice(1)}: ${contact.contact_value}`}
                       >
-                        <SocialIcon className="w-5 h-5 fill-current" />
+                        <SocialIcon className="w-5 h-5" />
                       </a>
                     );
                   })}
