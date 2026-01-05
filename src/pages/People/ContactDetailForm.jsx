@@ -5,6 +5,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { usePerson, useUpdatePerson } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { sanitizePersonAcf } from '@/utils/formatters';
+import { prmApi } from '@/api/client';
 
 const CONTACT_TYPES = [
   { value: 'email', label: 'Email' },
@@ -22,6 +23,7 @@ const CONTACT_TYPES = [
 export default function ContactDetailForm() {
   const { personId, index } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const contactIndex = parseInt(index, 10);
   const isEditing = !isNaN(contactIndex);
   
@@ -88,6 +90,25 @@ export default function ContactDetailForm() {
           acf: acfData,
         },
       });
+      
+      // If adding a new email and person doesn't have an image, try to load Gravatar
+      if (!isEditing && data.contact_type === 'email' && data.contact_value) {
+        // Check if person has a featured image/thumbnail
+        const hasImage = person.featured_media > 0 || 
+                        person._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
+                        person.thumbnail;
+        
+        if (!hasImage) {
+          try {
+            await prmApi.sideloadGravatar(personId, data.contact_value);
+            // Invalidate queries to refresh the person data with new image
+            queryClient.invalidateQueries({ queryKey: ['person', personId] });
+          } catch (gravatarError) {
+            // Silently fail - Gravatar is optional
+            console.log('No Gravatar found or failed to load:', gravatarError);
+          }
+        }
+      }
       
       navigate(`/people/${personId}`);
     } catch (error) {
