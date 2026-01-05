@@ -111,7 +111,7 @@ export default function CompanyDetail() {
             <img 
               src={company._embedded['wp:featuredmedia'][0].source_url}
               alt={getCompanyName(company)}
-              className="w-16 h-16 rounded-lg object-cover"
+              className="w-16 h-16 rounded-lg object-contain bg-gray-50"
             />
           ) : (
             <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
