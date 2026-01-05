@@ -334,8 +334,17 @@ class PRM_Inverse_Relationships {
             return;
         }
         
-        // Ensure it's an integer
-        $inverse_type_id = (int) $inverse_type_id;
+        // Normalize to integer (handle ACF return formats: id, array, object)
+        if (is_array($inverse_type_id) && isset($inverse_type_id['term_id'])) {
+            $inverse_type_id = (int) $inverse_type_id['term_id'];
+        } elseif (is_object($inverse_type_id) && isset($inverse_type_id->term_id)) {
+            $inverse_type_id = (int) $inverse_type_id->term_id;
+        } elseif (is_numeric($inverse_type_id)) {
+            $inverse_type_id = (int) $inverse_type_id;
+        } else {
+            // Invalid format - skip
+            return;
+        }
         
         // Validate inverse term exists
         $inverse_term = get_term($inverse_type_id, 'relationship_type');
