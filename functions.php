@@ -627,6 +627,12 @@ function prm_login_styles() {
             background: #fffbeb;
         }
         
+        /* Notice info message styling */
+        .login .notice.notice-info.message {
+            border-left-color: #d97706 !important;
+            margin-top: 20px !important;
+        }
+        
         .login #login_error {
             border-left-color: #dc2626;
         }
@@ -725,17 +731,73 @@ function prm_hide_register_notice() {
 add_action('login_head', 'prm_hide_register_notice');
 
 /**
- * Also hide via JavaScript as fallback
+ * Change login page titles
  */
-add_action('login_footer', function() {
+function prm_login_page_titles() {
     ?>
     <script>
         (function() {
-            var notice = document.querySelector('.notice.notice-info.message.register');
-            if (notice) {
-                notice.style.display = 'none';
+            // Hide register notice
+            var registerNotice = document.querySelector('.notice.notice-info.message.register');
+            if (registerNotice) {
+                registerNotice.style.display = 'none';
+            }
+            
+            // Change page titles based on action
+            var urlParams = new URLSearchParams(window.location.search);
+            var action = urlParams.get('action');
+            
+            // Get the main heading (h1 or form title)
+            var heading = document.querySelector('#login h1, .login form h1, .login h1');
+            if (!heading) {
+                // Try to find any heading in the login form
+                heading = document.querySelector('.login form label, .login form .title');
+            }
+            
+            // Change title based on page
+            if (action === 'register') {
+                // Registration page
+                var title = document.querySelector('.login form h1, .login h1, #login h1');
+                if (title) {
+                    title.textContent = 'Register for Caelis';
+                }
+                // Also check for any other title elements
+                var formTitle = document.querySelector('.login form .title, .login .title');
+                if (formTitle) {
+                    formTitle.textContent = 'Register for Caelis';
+                }
+            } else if (action === 'lostpassword' || action === 'retrievepassword') {
+                // Lost password page
+                var title = document.querySelector('.login form h1, .login h1, #login h1');
+                if (title) {
+                    title.textContent = 'Lost your password for Caelis?';
+                }
+                var formTitle = document.querySelector('.login form .title, .login .title');
+                if (formTitle) {
+                    formTitle.textContent = 'Lost your password for Caelis?';
+                }
+            } else {
+                // Login page (default)
+                var title = document.querySelector('.login form h1, .login h1, #login h1');
+                if (title && !title.textContent.includes('Register') && !title.textContent.includes('Lost')) {
+                    title.textContent = 'Log in to Caelis';
+                }
+                var formTitle = document.querySelector('.login form .title, .login .title');
+                if (formTitle && !formTitle.textContent.includes('Register') && !formTitle.textContent.includes('Lost')) {
+                    formTitle.textContent = 'Log in to Caelis';
+                }
+            }
+            
+            // Also check for page title in document title
+            if (action === 'register') {
+                document.title = 'Register for Caelis';
+            } else if (action === 'lostpassword' || action === 'retrievepassword') {
+                document.title = 'Lost your password for Caelis?';
+            } else {
+                document.title = 'Log in to Caelis';
             }
         })();
     </script>
     <?php
-});
+}
+add_action('login_footer', 'prm_login_page_titles');
