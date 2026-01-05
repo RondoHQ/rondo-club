@@ -155,7 +155,7 @@ export default function CompanyForm() {
                     <img
                       src={company._embedded['wp:featuredmedia'][0].source_url}
                       alt={getCompanyName(company) || 'Company logo'}
-                      className="w-20 h-20 rounded-lg object-contain bg-gray-50"
+                      className="w-20 h-20 rounded-lg object-contain bg-white"
                     />
                     <div className="absolute inset-0 rounded-lg bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center cursor-pointer"
                          onClick={() => fileInputRef.current?.click()}
