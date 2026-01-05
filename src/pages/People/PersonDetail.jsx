@@ -558,6 +558,34 @@ export default function PersonDetail() {
   
   const acf = person.acf || {};
   
+  // Extract social links for header display
+  const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'website'];
+  const socialLinks = acf.contact_info?.filter(contact => socialTypes.includes(contact.contact_type)) || [];
+  
+  // Helper to get social icon
+  const getSocialIcon = (type) => {
+    switch (type) {
+      case 'facebook': return Facebook;
+      case 'linkedin': return Linkedin;
+      case 'instagram': return Instagram;
+      case 'twitter': return Twitter;
+      case 'website': return Globe;
+      default: return Globe;
+    }
+  };
+  
+  // Helper to get social icon color
+  const getSocialIconColor = (type) => {
+    switch (type) {
+      case 'facebook': return 'text-[#1877F2]';
+      case 'linkedin': return 'text-[#0077B5]';
+      case 'instagram': return 'text-[#E4405F]';
+      case 'twitter': return 'text-[#1DA1F2]';
+      case 'website': return 'text-gray-600';
+      default: return 'text-gray-600';
+    }
+  };
+  
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -652,6 +680,33 @@ export default function PersonDetail() {
                 {age} years old
               </p>
             )}
+            {socialLinks.length > 0 && (
+              <div className="flex items-center gap-3 mt-2">
+                {socialLinks.map((contact, index) => {
+                  const SocialIcon = getSocialIcon(contact.contact_type);
+                  const iconColor = getSocialIconColor(contact.contact_type);
+                  
+                  // Ensure URL has protocol
+                  let url = contact.contact_value;
+                  if (!url.match(/^https?:\/\//i)) {
+                    url = `https://${url}`;
+                  }
+                  
+                  return (
+                    <a
+                      key={index}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`flex-shrink-0 hover:opacity-80 transition-opacity ${iconColor}`}
+                      title={`${contact.contact_type.charAt(0).toUpperCase() + contact.contact_type.slice(1)}: ${contact.contact_value}`}
+                    >
+                      <SocialIcon className="w-5 h-5" />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
             <div className="mt-2">
               <div className="flex flex-wrap gap-2 items-center">
                 {person.labels && person.labels.length > 0 && (
@@ -737,42 +792,11 @@ export default function PersonDetail() {
                   <span className="hidden md:inline">Add contact detail</span>
                 </Link>
               </div>
-            {acf.contact_info?.length > 0 ? (
+            {acf.contact_info?.filter(contact => !socialTypes.includes(contact.contact_type)).length > 0 ? (
               <div className="space-y-2">
-                {(() => {
-                  // Separate social links from other contact info
-                  const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'website'];
-                  const socialLinks = acf.contact_info.filter(contact => socialTypes.includes(contact.contact_type));
-                  const otherContacts = acf.contact_info.filter(contact => !socialTypes.includes(contact.contact_type));
-                  
-                  // Helper to get social icon
-                  const getSocialIcon = (type) => {
-                    switch (type) {
-                      case 'facebook': return Facebook;
-                      case 'linkedin': return Linkedin;
-                      case 'instagram': return Instagram;
-                      case 'twitter': return Twitter;
-                      case 'website': return Globe;
-                      default: return Globe;
-                    }
-                  };
-                  
-                  // Helper to get social icon color
-                  const getSocialIconColor = (type) => {
-                    switch (type) {
-                      case 'facebook': return 'text-[#1877F2]';
-                      case 'linkedin': return 'text-[#0077B5]';
-                      case 'instagram': return 'text-[#E4405F]';
-                      case 'twitter': return 'text-[#1DA1F2]';
-                      case 'website': return 'text-gray-600';
-                      default: return 'text-gray-600';
-                    }
-                  };
-                  
-                  return (
-                    <>
-                      {/* Regular contact info (email, phone, address, etc.) */}
-                      {otherContacts.map((contact, index) => {
+                {acf.contact_info
+                  .filter(contact => !socialTypes.includes(contact.contact_type))
+                  .map((contact, index) => {
                         const originalIndex = acf.contact_info.indexOf(contact);
                         const Icon = contact.contact_type === 'email' ? Mail :
                                      contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
@@ -797,110 +821,55 @@ export default function PersonDetail() {
                         }
 
                         return (
-                          <div key={originalIndex} className="group">
-                            <div className="flex items-center rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
-                              <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
-                              <div className="flex-1 min-w-0 flex items-center gap-2">
-                                <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
-                                {linkHref ? (
-                                  <a
-                                    href={linkHref}
-                                    target={linkTarget || undefined}
-                                    rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
-                                    className="text-primary-600 hover:text-primary-700 hover:underline"
-                                  >
-                                    {contact.contact_value}
-                                  </a>
-                                ) : (
-                                  <span>{contact.contact_value}</span>
-                                )}
-                                {isMobile && (
-                                  <a
-                                    href={`https://wa.me/${formatPhoneForTel(contact.contact_value)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-shrink-0 hover:opacity-80 transition-opacity"
-                                    title="Open WhatsApp"
-                                  >
-                                    <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                                  </a>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                                <Link
-                                  to={`/people/${id}/contact/${originalIndex}/edit`}
-                                  className="p-1 hover:bg-gray-100 rounded"
-                                  title="Edit contact detail"
-                                >
-                                  <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                                </Link>
-                                <button
-                                  onClick={() => handleDeleteContact(originalIndex)}
-                                  className="p-1 hover:bg-red-50 rounded"
-                                  title="Delete contact detail"
-                                >
-                                  <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                                </button>
-                              </div>
-                            </div>
+                      <div key={originalIndex} className="group">
+                        <div className="flex items-center rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
+                          <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
+                          <div className="flex-1 min-w-0 flex items-center gap-2">
+                            <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
+                            {linkHref ? (
+                              <a
+                                href={linkHref}
+                                target={linkTarget || undefined}
+                                rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
+                                className="text-primary-600 hover:text-primary-700 hover:underline"
+                              >
+                                {contact.contact_value}
+                              </a>
+                            ) : (
+                              <span>{contact.contact_value}</span>
+                            )}
+                            {isMobile && (
+                              <a
+                                href={`https://wa.me/${formatPhoneForTel(contact.contact_value)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                                title="Open WhatsApp"
+                              >
+                                <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                              </a>
+                            )}
                           </div>
-                        );
-                      })}
-                      
-                      {/* Social links grouped together */}
-                      {socialLinks.length > 0 && (
-                        <div className="group">
-                          <div className="flex items-start rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
-                            <Globe className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
-                            <div className="flex-1 min-w-0">
-                              <span className="text-sm text-gray-500 block mb-2">Social Links:</span>
-                              <div className="flex items-center gap-3 flex-wrap">
-                                {socialLinks.map((contact, index) => {
-                                  const originalIndex = acf.contact_info.indexOf(contact);
-                                  const SocialIcon = getSocialIcon(contact.contact_type);
-                                  const iconColor = getSocialIconColor(contact.contact_type);
-                                  
-                                  // Ensure URL has protocol
-                                  let url = contact.contact_value;
-                                  if (!url.match(/^https?:\/\//i)) {
-                                    url = `https://${url}`;
-                                  }
-                                  
-                                  return (
-                                    <a
-                                      key={originalIndex}
-                                      href={url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className={`flex-shrink-0 hover:opacity-80 transition-opacity ${iconColor}`}
-                                      title={`${contact.contact_type.charAt(0).toUpperCase() + contact.contact_type.slice(1)}: ${contact.contact_value}`}
-                                    >
-                                      <SocialIcon className="w-5 h-5" />
-                                    </a>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                              {/* Edit/Delete buttons for social links - show first social link's index */}
-                              {socialLinks.length > 0 && (
-                                <>
-                                  <Link
-                                    to={`/people/${id}/contact/${acf.contact_info.indexOf(socialLinks[0])}/edit`}
-                                    className="p-1 hover:bg-gray-100 rounded"
-                                    title="Edit social links"
-                                  >
-                                    <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                                  </Link>
-                                </>
-                              )}
-                            </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                            <Link
+                              to={`/people/${id}/contact/${originalIndex}/edit`}
+                              className="p-1 hover:bg-gray-100 rounded"
+                              title="Edit contact detail"
+                            >
+                              <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteContact(originalIndex)}
+                              className="p-1 hover:bg-red-50 rounded"
+                              title="Delete contact detail"
+                            >
+                              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                            </button>
                           </div>
                         </div>
-                      )}
-                    </>
-                  );
-                })()}
+                      </div>
+                    );
+                  })}
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
