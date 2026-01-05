@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.8] - 2026-01-04
+
+### Fixed
+- Fixed bug where sibling relationships weren't creating inverse relationships automatically
+- Improved normalization of inverse relationship type IDs to handle different ACF return formats
+
 ## [1.4.7] - 2026-01-04
 
 ### Changed
