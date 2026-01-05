@@ -182,30 +182,7 @@ Test your changes as much as you can before claiming something works.
 
 Update the documentation in the /docs folder with all relevant information from the change. If the (sub-)system you made changes to is not documented yet, document that system too.
 
-### Rule 7: Git Commit & Push
-
-#### What is it?
-
-*ALWAYS* commit & push after every change, with clear commit messages:
-
-*Format*: ⁠ type: Description ⁠
-* ⁠⁠ feat: ⁠ - New feature
-* ⁠⁠ fix: ⁠ - Bug fix
-* ⁠⁠ chore: ⁠ - Maintenance (version updates, config changes)
-* ⁠⁠ docs: ⁠ - Documentation
-* ⁠⁠ refactor: ⁠ - Code refactoring
-* ⁠⁠ perf: ⁠ - Performance improvement
-* ⁠⁠ style: ⁠ - Code formatting
-
-*Workflow:*
-```⁠ bash
-cd "<project directory>"
-git add -A
-git commit -m "<git commit summary>"
-git push
-```
-
-### Rule 8: Deploy to Production
+### Rule 7: Deploy to Production
 
 After every commit & push, deploy the changes to the production server:
 
@@ -238,3 +215,25 @@ ssh u25-eninwxjgiulh@c1130624.sgvps.net -p 18765 "cd ~/www/cael.is/public_html &
 - Theme path: `~/www/cael.is/public_html/wp-content/themes/caelis/`
 - Production URL: `https://cael.is/`
 
+### Rule 8: Git Commit & Push
+
+#### What is it?
+
+*ALWAYS* commit & push after every change, with clear commit messages:
+
+*Format*: ⁠ type: Description ⁠
+* ⁠⁠ feat: ⁠ - New feature
+* ⁠⁠ fix: ⁠ - Bug fix
+* ⁠⁠ chore: ⁠ - Maintenance (version updates, config changes)
+* ⁠⁠ docs: ⁠ - Documentation
+* ⁠⁠ refactor: ⁠ - Code refactoring
+* ⁠⁠ perf: ⁠ - Performance improvement
+* ⁠⁠ style: ⁠ - Code formatting
+
+*Workflow:*
+```⁠ bash
+cd "<project directory>"
+git add -A
+git commit -m "<git commit summary>"
+git push
+```
