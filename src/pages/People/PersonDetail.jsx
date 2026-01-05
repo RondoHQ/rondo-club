@@ -837,9 +837,31 @@ export default function PersonDetail() {
               </div>
             {acf.contact_info?.filter(contact => !socialTypes.includes(contact.contact_type)).length > 0 ? (
               <div className="space-y-2">
-                {acf.contact_info
-                  .filter(contact => !socialTypes.includes(contact.contact_type))
-                  .map((contact, index) => {
+                {(() => {
+                  // Define display order for contact information
+                  const contactOrder = {
+                    'email': 1,
+                    'phone': 2,
+                    'mobile': 2, // Phone numbers grouped together
+                    'address': 3,
+                    'other': 4,
+                  };
+                  
+                  // Filter and sort contact information
+                  const nonSocialContacts = acf.contact_info
+                    .filter(contact => !socialTypes.includes(contact.contact_type))
+                    .map((contact, originalIndex) => ({ ...contact, originalIndex }))
+                    .sort((a, b) => {
+                      const orderA = contactOrder[a.contact_type] || 99;
+                      const orderB = contactOrder[b.contact_type] || 99;
+                      if (orderA !== orderB) {
+                        return orderA - orderB;
+                      }
+                      // If same order (e.g., multiple phone numbers), maintain original order
+                      return a.originalIndex - b.originalIndex;
+                    });
+                  
+                  return nonSocialContacts.map((contact, index) => {
                         const originalIndex = acf.contact_info.indexOf(contact);
                         const Icon = contact.contact_type === 'email' ? Mail :
                                      contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
@@ -864,7 +886,7 @@ export default function PersonDetail() {
                         }
 
                         return (
-                      <div key={originalIndex} className="group">
+                      <div key={contact.originalIndex} className="group">
                         <div className="flex items-center rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
                           <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
                           <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -895,14 +917,14 @@ export default function PersonDetail() {
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                             <Link
-                              to={`/people/${id}/contact/${originalIndex}/edit`}
+                              to={`/people/${id}/contact/${contact.originalIndex}/edit`}
                               className="p-1 hover:bg-gray-100 rounded"
                               title="Edit contact detail"
                             >
                               <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                             </Link>
                             <button
-                              onClick={() => handleDeleteContact(originalIndex)}
+                              onClick={() => handleDeleteContact(contact.originalIndex)}
                               className="p-1 hover:bg-red-50 rounded"
                               title="Delete contact detail"
                             >
@@ -912,7 +934,7 @@ export default function PersonDetail() {
                         </div>
                       </div>
                     );
-                  })}
+                  })})()}
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
