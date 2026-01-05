@@ -806,7 +806,9 @@ export default function PersonDetail() {
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                         {isMobile && (
                           <a
-                            href={`whatsapp:${formatPhoneForTel(contact.contact_value)}`}
+                            href={`https://wa.me/${formatPhoneForTel(contact.contact_value)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="p-1 hover:bg-green-50 rounded"
                             title="Open WhatsApp"
                           >
