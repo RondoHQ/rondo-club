@@ -155,6 +155,29 @@ if ($query->have_posts()) {
 - `get_accessible_post_ids()` uses direct SQL for speed
 - Results are not cached; consider caching for high-traffic scenarios
 
+## User Roles
+
+Caelis automatically creates a custom user role called **"Caelis User"** (`caelis_user`) when the theme is activated. This role has minimal permissions:
+
+**Capabilities:**
+- `read` - Required for WordPress access
+- `edit_posts` - Create and edit their own posts
+- `publish_posts` - Publish their own posts
+- `delete_posts` - Delete their own posts
+- `edit_published_posts` - Edit their own published posts
+- `delete_published_posts` - Delete their own published posts
+- `upload_files` - Upload files (photos, logos)
+
+**What Caelis Users cannot do:**
+- Edit other users' posts
+- Manage other users
+- Access WordPress admin settings
+- Install plugins or themes
+- Edit themes or plugins
+- Access any WordPress admin areas outside of People, Companies, and Dates
+
+The role is automatically registered on theme activation and removed on theme deactivation (users are reassigned to Subscriber role).
+
 ## Related Documentation
 
 - [Data Model](./data-model.md) - Post types and field definitions

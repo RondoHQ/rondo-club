@@ -65,6 +65,7 @@ function prm_autoloader($class_name) {
         'PRM_Google_Contacts_Import' => 'class-google-contacts-import.php',
         'PRM_Inverse_Relationships'  => 'class-inverse-relationships.php',
         'PRM_ICal_Feed'              => 'class-ical-feed.php',
+        'PRM_User_Roles'             => 'class-user-roles.php',
     ];
     
     if (isset($class_map[$class_name])) {
@@ -114,6 +115,7 @@ function prm_init() {
     new PRM_Post_Types();
     new PRM_Taxonomies();
     new PRM_Access_Control();
+    new PRM_User_Roles();
     
     // iCal feed - only load for iCal requests
     if (prm_is_ical_request()) {
@@ -396,6 +398,9 @@ function prm_theme_activation() {
     $taxonomies = new PRM_Taxonomies();
     $taxonomies->register_taxonomies();
     
+    // Register custom user role (class constructor handles registration via hook)
+    new PRM_User_Roles();
+    
     // Flush rewrite rules
     flush_rewrite_rules();
     
@@ -415,6 +420,9 @@ add_action('after_switch_theme', 'prm_theme_activation');
 function prm_theme_deactivation() {
     // Clear scheduled hooks
     wp_clear_scheduled_hook('prm_daily_reminder_check');
+    
+    // Remove custom user role (class constructor handles removal via hook)
+    new PRM_User_Roles();
     
     // Flush rewrite rules
     flush_rewrite_rules();
