@@ -19,7 +19,7 @@ function CompanyCard({ company }) {
             className="w-12 h-12 rounded-lg object-contain bg-white"
           />
         ) : (
-          <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200">
             <Building2 className="w-6 h-6 text-gray-400" />
           </div>
         )}
