@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.6] - 2026-01-04
+
+### Changed
+- Replaced social icons with Simple Icons from @icons-pack/react-simple-icons
+- Using Simple Icons for Facebook, Instagram, and Twitter/X
+- LinkedIn and Website icons remain from Lucide React (Simple Icons doesn't include LinkedIn in this package version)
+
 ## [1.6.5] - 2026-01-04
 
 ### Fixed

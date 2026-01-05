@@ -1,6 +1,6 @@
 {
   "name": "caelis-theme",
-  "version": "1.6.5",
+  "version": "1.6.6",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,6 +10,7 @@
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@icons-pack/react-simple-icons": "^13.8.0",
     "@tanstack/react-query": "^5.17.0",
     "axios": "^1.6.0",
     "clsx": "^2.1.0",
@@ -18,7 +19,6 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.49.0",
-    "react-icons": "^5.5.0",
     "react-router-dom": "^6.21.0",
     "vis-data": "^8.0.3",
     "vis-network": "^10.0.2",

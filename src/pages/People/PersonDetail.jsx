@@ -4,7 +4,7 @@ import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin, X, Camera, Download
 } from 'lucide-react';
-import { FaFacebook, FaLinkedin, FaInstagram, FaTwitter, FaGlobe } from 'react-icons/fa';
+import { SiFacebook, SiInstagram, SiX } from '@icons-pack/react-simple-icons';
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -566,12 +566,12 @@ export default function PersonDetail() {
   // Helper to get social icon
   const getSocialIcon = (type) => {
     switch (type) {
-      case 'facebook': return FaFacebook;
-      case 'linkedin': return FaLinkedin;
-      case 'instagram': return FaInstagram;
-      case 'twitter': return FaTwitter;
-      case 'website': return FaGlobe;
-      default: return FaGlobe;
+      case 'facebook': return SiFacebook;
+      case 'linkedin': return Linkedin; // Use Lucide Linkedin as Simple Icons doesn't have it
+      case 'instagram': return SiInstagram;
+      case 'twitter': return SiX; // Twitter/X uses SiX in Simple Icons
+      case 'website': return Globe; // Use Lucide Globe for website
+      default: return Globe;
     }
   };
   
