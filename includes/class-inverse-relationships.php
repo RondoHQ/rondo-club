@@ -344,8 +344,17 @@ class PRM_Inverse_Relationships {
         $inverse_type_id = get_field('inverse_relationship_type', 'relationship_type_' . $relationship_type_id, false);
         
         if (!$inverse_type_id) {
-            // No inverse mapping defined - skip
-            return;
+            // No inverse mapping defined - try to set it up for symmetric relationships
+            $term_slug = $term->slug ?? '';
+            $symmetric_types = ['spouse', 'friend', 'colleague', 'acquaintance', 'sibling', 'cousin', 'partner'];
+            
+            if (in_array($term_slug, $symmetric_types)) {
+                // For symmetric relationships, inverse is the same type
+                $inverse_type_id = $relationship_type_id;
+            } else {
+                // No inverse mapping defined - skip
+                return;
+            }
         }
         
         // Normalize to integer (handle ACF return formats: id, array, object)
