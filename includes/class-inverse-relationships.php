@@ -49,6 +49,18 @@ class PRM_Inverse_Relationships {
      * Sync inverse relationships when relationships field is saved
      */
     public function sync_inverse_relationships($post_id) {
+        // Handle WP_Post object from REST API hooks
+        if (is_object($post_id) && isset($post_id->ID)) {
+            $post_id = $post_id->ID;
+        }
+        
+        // Ensure we have a valid integer post ID
+        if (!is_numeric($post_id)) {
+            return;
+        }
+        
+        $post_id = (int) $post_id;
+        
         // Only process person post types
         if (get_post_type($post_id) !== 'person') {
             return;
