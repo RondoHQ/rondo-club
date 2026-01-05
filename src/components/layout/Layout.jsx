@@ -26,7 +26,7 @@ import { APP_NAME } from '@/constants/app';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'People', href: '/people', icon: Users },
-  { name: 'Companies', href: '/companies', icon: Building2 },
+  { name: 'Organizations', href: '/companies', icon: Building2 },
   { name: 'Dates', href: '/dates', icon: Calendar },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
@@ -198,7 +198,7 @@ function Header({ onMenuClick }) {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people')) return 'People';
-    if (path.startsWith('/companies')) return 'Companies';
+    if (path.startsWith('/companies')) return 'Organizations';
     if (path.startsWith('/dates')) return 'Important Dates';
     if (path.startsWith('/settings')) return 'Settings';
     return '';
@@ -267,7 +267,7 @@ function Header({ onMenuClick }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="search"
-            placeholder="Search people, companies, dates..."
+            placeholder="Search people, organizations, dates..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
@@ -308,11 +308,11 @@ function Header({ onMenuClick }) {
                     </div>
                   )}
                   
-                  {/* Companies results */}
+                  {/* Organizations results */}
                   {safeResults.companies && safeResults.companies.length > 0 && (
                     <div className="px-3 py-2 border-t border-gray-100">
                       <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
-                        Companies
+                        Organizations
                       </div>
                       {safeResults.companies.map((company) => (
                         <button

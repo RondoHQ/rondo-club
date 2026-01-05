@@ -121,7 +121,7 @@ export default function VCardImport() {
                 <p>Contacts updated: {importMutation.data.stats.contacts_updated}</p>
                 <p>Contacts skipped: {importMutation.data.stats.contacts_skipped}</p>
                 <p>Photos imported: {importMutation.data.stats.photos_imported}</p>
-                <p>Companies created: {importMutation.data.stats.companies_created}</p>
+                <p>Organizations created: {importMutation.data.stats.companies_created}</p>
                 <p>Birthdays created: {importMutation.data.stats.dates_created}</p>
                 <p>Notes created: {importMutation.data.stats.notes_created}</p>
                 {importMutation.data.stats.errors?.length > 0 && (
@@ -213,7 +213,7 @@ export default function VCardImport() {
                       {validationResult.summary.companies_count > 0 && (
                         <div className="flex items-center gap-2 text-sm text-green-800">
                           <Building2 className="h-4 w-4" />
-                          <span>{validationResult.summary.companies_count} companies</span>
+                          <span>{validationResult.summary.companies_count} organizations</span>
                         </div>
                       )}
                       {validationResult.summary.birthdays > 0 && (

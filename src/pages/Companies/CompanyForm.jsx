@@ -101,8 +101,8 @@ export default function CompanyForm() {
   // Update document title
   useDocumentTitle(
     isEditing && company
-      ? `Edit ${getCompanyName(company) || 'Company'}`
-      : 'New Company'
+      ? `Edit ${getCompanyName(company) || 'Organization'}`
+      : 'New Organization'
   );
   
   const onSubmit = async (data) => {
@@ -135,13 +135,13 @@ export default function CompanyForm() {
       <div className="flex items-center justify-between">
         <Link to="/companies" className="flex items-center text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to Companies</span>
+          <span className="hidden md:inline">Back to Organizations</span>
         </Link>
       </div>
       
       <div className="card p-6">
         <h1 className="text-xl font-bold mb-6">
-          {isEditing ? 'Edit Company' : 'Add New Company'}
+          {isEditing ? 'Edit Organization' : 'Add New Organization'}
         </h1>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -154,7 +154,7 @@ export default function CompanyForm() {
                   <div className="relative group">
                     <img
                       src={company._embedded['wp:featuredmedia'][0].source_url}
-                      alt={getCompanyName(company) || 'Company logo'}
+                      alt={getCompanyName(company) || 'Organization logo'}
                       className="w-20 h-20 rounded-lg object-contain bg-white"
                     />
                     <div className="absolute inset-0 rounded-lg bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center cursor-pointer"
@@ -209,9 +209,9 @@ export default function CompanyForm() {
           )}
           
           <div>
-            <label className="label">Company Name *</label>
+            <label className="label">Organization Name *</label>
             <input
-              {...register('title', { required: 'Company name is required' })}
+              {...register('title', { required: 'Organization name is required' })}
               className="input"
               placeholder="Acme Inc."
             />
@@ -243,7 +243,7 @@ export default function CompanyForm() {
             <Link to="/companies" className="btn-secondary">Cancel</Link>
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
               <Save className="w-4 h-4 mr-2" />
-              {isEditing ? 'Save Changes' : 'Create Company'}
+              {isEditing ? 'Save Changes' : 'Create Organization'}
             </button>
           </div>
         </form>

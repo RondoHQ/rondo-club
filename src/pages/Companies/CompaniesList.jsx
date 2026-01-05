@@ -69,7 +69,7 @@ export default function CompaniesList() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="search"
-            placeholder="Search companies..."
+            placeholder="Search organizations..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input pl-9"
@@ -78,7 +78,7 @@ export default function CompaniesList() {
         
         <Link to="/companies/new" className="btn-primary">
           <Plus className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Add Company</span>
+          <span className="hidden md:inline">Add Organization</span>
         </Link>
       </div>
       
@@ -92,7 +92,7 @@ export default function CompaniesList() {
       {/* Error */}
       {error && (
         <div className="card p-6 text-center">
-          <p className="text-red-600">Failed to load companies.</p>
+          <p className="text-red-600">Failed to load organizations.</p>
         </div>
       )}
       
@@ -102,14 +102,14 @@ export default function CompaniesList() {
           <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-6 h-6 text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-1">No companies found</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-1">No organizations found</h3>
           <p className="text-gray-500 mb-4">
-            {search ? 'Try a different search.' : 'Add your first company.'}
+            {search ? 'Try a different search.' : 'Add your first organization.'}
           </p>
           {!search && (
             <Link to="/companies/new" className="btn-primary">
               <Plus className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Add Company</span>
+              <span className="hidden md:inline">Add Organization</span>
             </Link>
           )}
         </div>

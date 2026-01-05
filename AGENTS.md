@@ -4,7 +4,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 ## Project Overview
 
-**Caelis** is a personal CRM system built as a WordPress theme with integrated backend functionality and a modern React SPA frontend. Tracks contacts, companies, important dates, and interactions with user-specific access control.
+**Caelis** is a personal CRM system built as a WordPress theme with integrated backend functionality and a modern React SPA frontend. Tracks contacts, organizations, important dates, and interactions with user-specific access control.
 
 **Tech Stack:**
 - Backend: WordPress 6.0+, PHP 8.0+, ACF Pro (required)
@@ -42,7 +42,7 @@ Entry point: `functions.php`
 - Registers activation/deactivation hooks for rewrites and cron via theme activation hooks
 
 **Key classes:**
-- `PRM_Post_Types` - Registers Person, Company, Important Date CPTs
+- `PRM_Post_Types` - Registers Person, Organization, Important Date CPTs
 - `PRM_Taxonomies` - Registers labels and relationship types
 - `PRM_Auto_Title` - Auto-generates post titles
 - `PRM_Access_Control` - Row-level user data filtering at query and REST levels
@@ -62,7 +62,7 @@ Entry point: `src/main.jsx`
 - `App.jsx` - Routing with ProtectedRoute wrapper
 - `api/client.js` - Axios client with WordPress nonce injection
 - `hooks/` - Custom hooks (useAuth, usePeople, useDashboard)
-- `pages/` - Route components for People, Companies, Dates, Settings
+- `pages/` - Route components for People, Organizations, Dates, Settings
 
 **State management:**
 - TanStack Query for server state/caching
@@ -70,14 +70,14 @@ Entry point: `src/main.jsx`
 - Zustand available for client state
 
 **API client uses two namespaces:**
-- `/wp/v2/` - Standard WordPress REST (people, companies, important-dates)
+- `/wp/v2/` - Standard WordPress REST (people, organizations, important-dates)
 - `/prm/v1/` - Custom endpoints (dashboard, search, timeline)
 
 ## Data Model
 
 **Custom Post Types:**
 - `person` - Contact records with relationships, work history, photo gallery
-- `company` - Organizations with logo, industry, contact info
+- `company` - Organizations with logo, industry, contact info (post type slug remains `company` for backward compatibility)
 - `important_date` - Recurring dates with reminder configuration, linked to people
 
 **Taxonomies:**
@@ -95,7 +95,7 @@ Entry point: `src/main.jsx`
 ## User Roles
 
 - **Caelis User** - Custom role created automatically on theme activation
-  - Minimal permissions: can create/edit/delete their own people and companies, upload files
+  - Minimal permissions: can create/edit/delete their own people and organizations, upload files
   - Cannot access WordPress admin settings, manage other users, or install plugins/themes
   - Role is automatically removed on theme deactivation (users reassigned to Subscriber)
 

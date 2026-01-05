@@ -37,7 +37,7 @@ export default function CompanyDetail() {
   
   // Update document title with company's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
-  useDocumentTitle(getCompanyName(company) || 'Company');
+  useDocumentTitle(getCompanyName(company) || 'Organization');
   
   // Redirect if company is trashed
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function CompanyDetail() {
   }, [company, navigate]);
   
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this company?')) {
+    if (!window.confirm('Are you sure you want to delete this organization?')) {
       return;
     }
     
@@ -56,7 +56,7 @@ export default function CompanyDetail() {
       // Navigation will happen in onSuccess callback
     } catch (error) {
       console.error('Failed to delete company:', error);
-      alert('Failed to delete company. Please try again.');
+      alert('Failed to delete organization. Please try again.');
     }
   };
   
@@ -71,8 +71,8 @@ export default function CompanyDetail() {
   if (error || !company) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-red-600">Failed to load company.</p>
-        <Link to="/companies" className="btn-secondary mt-4">Back to Companies</Link>
+        <p className="text-red-600">Failed to load organization.</p>
+        <Link to="/companies" className="btn-secondary mt-4">Back to Organizations</Link>
       </div>
     );
   }
@@ -90,7 +90,7 @@ export default function CompanyDetail() {
       <div className="flex items-center justify-between">
         <Link to="/companies" className="flex items-center text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to Companies</span>
+          <span className="hidden md:inline">Back to Organizations</span>
         </Link>
         <div className="flex gap-2">
           <Link to={`/companies/${id}/edit`} className="btn-secondary">
