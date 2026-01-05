@@ -157,8 +157,8 @@ export default function PersonForm() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <Link to="/people" className="flex items-center text-gray-600 hover:text-gray-900">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to People
+          <ArrowLeft className="w-4 h-4 md:mr-2" />
+          <span className="hidden md:inline">Back to People</span>
         </Link>
       </div>
       

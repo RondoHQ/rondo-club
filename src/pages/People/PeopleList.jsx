@@ -301,8 +301,8 @@ export default function PeopleList() {
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className={`btn-secondary ${hasActiveFilters ? 'bg-primary-50 text-primary-700 border-primary-200' : ''}`}
             >
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
+              <Filter className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
                 <span className="ml-2 px-1.5 py-0.5 bg-primary-600 text-white text-xs rounded-full">
                   {selectedLabels.length + (showFavoritesOnly ? 1 : 0)}
@@ -423,8 +423,8 @@ export default function PeopleList() {
           )}
           
           <Link to="/people/new" className="btn-primary">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Person
+            <Plus className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Add Person</span>
           </Link>
         </div>
       </div>
@@ -454,8 +454,8 @@ export default function PeopleList() {
             Get started by adding your first person.
           </p>
           <Link to="/people/new" className="btn-primary">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Person
+            <Plus className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Add Person</span>
           </Link>
         </div>
       )}

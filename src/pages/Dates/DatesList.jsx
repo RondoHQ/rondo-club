@@ -107,8 +107,8 @@ export default function DatesList() {
           {dates?.length || 0} upcoming dates
         </p>
         <Link to="/dates/new" className="btn-primary">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Date
+          <Plus className="w-4 h-4 md:mr-2" />
+          <span className="hidden md:inline">Add Date</span>
         </Link>
       </div>
       
@@ -133,8 +133,8 @@ export default function DatesList() {
           <h3 className="text-lg font-medium mb-1">No important dates</h3>
           <p className="text-gray-500 mb-4">Add birthdays, anniversaries, and more.</p>
           <Link to="/dates/new" className="btn-primary">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Date
+            <Plus className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Add Date</span>
           </Link>
         </div>
       )}
