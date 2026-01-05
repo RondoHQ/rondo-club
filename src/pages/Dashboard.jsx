@@ -135,7 +135,7 @@ function EmptyState() {
       </div>
       <h2 className="text-2xl font-semibold text-gray-900 mb-2">Welcome to {APP_NAME}!</h2>
       <p className="text-gray-600 mb-8 max-w-md mx-auto">
-        Get started by adding your first contact, company, or important date. Your dashboard will populate as you add more information.
+        Get started by adding your first contact, organization, or important date. Your dashboard will populate as you add more information.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
@@ -150,7 +150,7 @@ function EmptyState() {
           className="inline-flex items-center px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
-          Add Your First Company
+          Add Your First Organization
         </Link>
       </div>
     </div>
@@ -211,7 +211,7 @@ export default function Dashboard() {
             href="/people"
           />
           <StatCard
-            title="Companies"
+            title="Organizations"
             value={0}
             icon={Building2}
             href="/companies"

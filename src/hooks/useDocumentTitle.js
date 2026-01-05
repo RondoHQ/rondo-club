@@ -58,15 +58,15 @@ export function useRouteTitle(customTitle = null) {
         }
       } else if (path.startsWith('/companies')) {
         if (path === '/companies' || path === '/companies/') {
-          title = 'Companies';
+          title = 'Organizations';
         } else if (path === '/companies/new') {
-          title = 'New Company';
+          title = 'New Organization';
         } else if (path.endsWith('/edit')) {
-          title = 'Edit Company';
+          title = 'Edit Organization';
         } else if (routeId) {
-          title = 'Company';
+          title = 'Organization';
         } else {
-          title = 'Companies';
+          title = 'Organizations';
         }
       } else if (path.startsWith('/dates')) {
         if (path === '/dates' || path === '/dates/') {

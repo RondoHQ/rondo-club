@@ -16,7 +16,7 @@ function CompanySelector({ value, onChange, companies, isLoading }) {
       className="input"
       disabled={isLoading}
     >
-      <option value="">Select a company...</option>
+      <option value="">Select an organization...</option>
       {companies.map(company => (
         <option key={company.id} value={company.id}>
           {company.title?.rendered || company.title}
@@ -158,7 +158,7 @@ export default function WorkHistoryForm() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Company */}
           <div>
-            <label className="label">Company</label>
+            <label className="label">Organization</label>
             <Controller
               name="company"
               control={control}

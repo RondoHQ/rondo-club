@@ -45,7 +45,7 @@ Represents individual contacts in the CRM.
 
 | Field | Key | Type | Description |
 |-------|-----|------|-------------|
-| Company | `company` | post_object | Link to Company post |
+| Organization | `company` | post_object | Link to Organization post |
 | Job Title | `job_title` | text | Position title |
 | Description | `description` | textarea | Role description |
 | Start Date | `start_date` | date_picker | Employment start (Y-m-d) |
@@ -62,9 +62,9 @@ Represents individual contacts in the CRM.
 
 ---
 
-### Company (`company`)
+### Organization (`company`)
 
-Represents organizations where contacts work.
+Represents organizations where contacts work. Note: The post type slug remains `company` for backward compatibility, but the user-facing label is "Organization".
 
 | Property | Value |
 |----------|-------|
@@ -77,9 +77,9 @@ Represents organizations where contacts work.
 
 | Field | Key | Type | Description |
 |-------|-----|------|-------------|
-| Website | `website` | url | Company website URL |
+| Website | `website` | url | Organization website URL |
 | Industry | `industry` | text | Industry or sector |
-| Contact Info | `contact_info` | repeater | Company contact methods |
+| Contact Info | `contact_info` | repeater | Organization contact methods |
 
 **Contact Info Sub-fields:**
 
@@ -132,9 +132,9 @@ Tags for categorizing people.
 
 ---
 
-### Company Label (`company_label`)
+### Organization Label (`company_label`)
 
-Tags for categorizing companies.
+Tags for categorizing organizations.
 
 | Property | Value |
 |----------|-------|
@@ -218,7 +218,7 @@ ACF field groups are version-controlled in `acf-json/`:
 | File | Purpose |
 |------|---------|
 | `group_person_fields.json` | Person post type fields |
-| `group_company_fields.json` | Company post type fields |
+| `group_company_fields.json` | Organization post type fields |
 | `group_important_date_fields.json` | Important date post type fields |
 | `group_relationship_type_fields.json` | Relationship type taxonomy fields |
 

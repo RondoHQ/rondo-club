@@ -131,7 +131,7 @@ export default function MonicaImport() {
                 <p>Contacts updated: {importMutation.data.stats.contacts_updated}</p>
                 <p>Contacts skipped (partial): {importMutation.data.stats.contacts_skipped}</p>
                 <p>Photos imported: {importMutation.data.stats.photos_imported}</p>
-                <p>Companies created: {importMutation.data.stats.companies_created}</p>
+                <p>Organizations created: {importMutation.data.stats.companies_created}</p>
                 <p>Relationships created: {importMutation.data.stats.relationships_created}</p>
                 <p>Important dates created: {importMutation.data.stats.dates_created}</p>
                 <p>Notes created: {importMutation.data.stats.notes_created}</p>
@@ -223,7 +223,7 @@ export default function MonicaImport() {
                       <p>Notes: {validationResult.summary.notes}</p>
                       <p>Dates: {validationResult.summary.reminders}</p>
                       <p>Photos: {validationResult.summary.photos}</p>
-                      <p>Companies: {validationResult.summary.companies_count}</p>
+                      <p>Organizations: {validationResult.summary.companies_count}</p>
                     </div>
                   </div>
                 </div>

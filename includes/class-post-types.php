@@ -67,18 +67,18 @@ class PRM_Post_Types {
      */
     private function register_company_post_type() {
         $labels = [
-            'name'                  => _x('Companies', 'Post type general name', 'personal-crm'),
-            'singular_name'         => _x('Company', 'Post type singular name', 'personal-crm'),
-            'menu_name'             => _x('Companies', 'Admin Menu text', 'personal-crm'),
+            'name'                  => _x('Organizations', 'Post type general name', 'personal-crm'),
+            'singular_name'         => _x('Organization', 'Post type singular name', 'personal-crm'),
+            'menu_name'             => _x('Organizations', 'Admin Menu text', 'personal-crm'),
             'add_new'               => __('Add New', 'personal-crm'),
-            'add_new_item'          => __('Add New Company', 'personal-crm'),
-            'edit_item'             => __('Edit Company', 'personal-crm'),
-            'new_item'              => __('New Company', 'personal-crm'),
-            'view_item'             => __('View Company', 'personal-crm'),
-            'search_items'          => __('Search Companies', 'personal-crm'),
-            'not_found'             => __('No companies found', 'personal-crm'),
-            'not_found_in_trash'    => __('No companies found in Trash', 'personal-crm'),
-            'all_items'             => __('All Companies', 'personal-crm'),
+            'add_new_item'          => __('Add New Organization', 'personal-crm'),
+            'edit_item'             => __('Edit Organization', 'personal-crm'),
+            'new_item'              => __('New Organization', 'personal-crm'),
+            'view_item'             => __('View Organization', 'personal-crm'),
+            'search_items'          => __('Search Organizations', 'personal-crm'),
+            'not_found'             => __('No organizations found', 'personal-crm'),
+            'not_found_in_trash'    => __('No organizations found in Trash', 'personal-crm'),
+            'all_items'             => __('All Organizations', 'personal-crm'),
         ];
         
         $args = [
