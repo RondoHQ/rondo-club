@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.5] - 2026-01-04
+
+### Fixed
+- Replaced Lucide React social icons with Font Awesome solid icons from react-icons for proper solid/filled appearance
+- Added react-icons package dependency
+
 ## [1.6.4] - 2026-01-04
 
 ### Changed
