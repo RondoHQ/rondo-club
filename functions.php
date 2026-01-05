@@ -421,8 +421,9 @@ function prm_theme_deactivation() {
     // Clear scheduled hooks
     wp_clear_scheduled_hook('prm_daily_reminder_check');
     
-    // Remove custom user role (class constructor handles removal via hook)
-    new PRM_User_Roles();
+    // Remove custom user role (must call directly since switch_theme hook already fired)
+    $user_roles = new PRM_User_Roles();
+    $user_roles->remove_role();
     
     // Flush rewrite rules
     flush_rewrite_rules();
