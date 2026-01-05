@@ -626,10 +626,10 @@ export default function PersonDetail() {
               <img
                 src={person.thumbnail}
                 alt={person.name}
-                className="w-24 h-24 rounded-full object-cover"
+                className="w-28 h-28 rounded-full object-cover"
               />
             ) : (
-              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+              <div className="w-28 h-28 bg-gray-200 rounded-full flex items-center justify-center">
                 <span className="text-3xl font-medium text-gray-500">
                   {person.first_name?.[0] || '?'}
                 </span>
@@ -655,7 +655,7 @@ export default function PersonDetail() {
             />
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">
                 {person.name}
@@ -669,45 +669,18 @@ export default function PersonDetail() {
               <p className="text-gray-500">"{acf.nickname}"</p>
             )}
             {isDeceased && deathDateValue && age !== null && (
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 text-sm">
                 {getGenderSymbol(acf.gender) && <span className="mr-1">{getGenderSymbol(acf.gender)}</span>}
                 Died {format(deathDateValue, 'MMMM d, yyyy')} at age {age}
               </p>
             )}
             {!isDeceased && age !== null && (
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 text-sm">
                 {getGenderSymbol(acf.gender) && <span className="mr-1">{getGenderSymbol(acf.gender)}</span>}
                 {age} years old
               </p>
             )}
-            {socialLinks.length > 0 && (
-              <div className="flex items-center gap-3 mt-2">
-                {socialLinks.map((contact, index) => {
-                  const SocialIcon = getSocialIcon(contact.contact_type);
-                  const iconColor = getSocialIconColor(contact.contact_type);
-                  
-                  // Ensure URL has protocol
-                  let url = contact.contact_value;
-                  if (!url.match(/^https?:\/\//i)) {
-                    url = `https://${url}`;
-                  }
-                  
-                  return (
-                    <a
-                      key={index}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex-shrink-0 hover:opacity-80 transition-opacity ${iconColor}`}
-                      title={`${contact.contact_type.charAt(0).toUpperCase() + contact.contact_type.slice(1)}: ${contact.contact_value}`}
-                    >
-                      <SocialIcon className="w-5 h-5" />
-                    </a>
-                  );
-                })}
-              </div>
-            )}
-            <div className="mt-2">
+            <div>
               <div className="flex flex-wrap gap-2 items-center">
                 {person.labels && person.labels.length > 0 && (
                   person.labels.map((label, index) => (
@@ -771,6 +744,33 @@ export default function PersonDetail() {
                   </div>
                 )}
               </div>
+              {socialLinks.length > 0 && (
+                <div className="flex items-center gap-3">
+                  {socialLinks.map((contact, index) => {
+                    const SocialIcon = getSocialIcon(contact.contact_type);
+                    const iconColor = getSocialIconColor(contact.contact_type);
+                    
+                    // Ensure URL has protocol
+                    let url = contact.contact_value;
+                    if (!url.match(/^https?:\/\//i)) {
+                      url = `https://${url}`;
+                    }
+                    
+                    return (
+                      <a
+                        key={index}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex-shrink-0 hover:opacity-80 transition-opacity ${iconColor}`}
+                        title={`${contact.contact_type.charAt(0).toUpperCase() + contact.contact_type.slice(1)}: ${contact.contact_value}`}
+                      >
+                        <SocialIcon className="w-5 h-5" />
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
