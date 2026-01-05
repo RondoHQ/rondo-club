@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.6] - 2026-01-04
+
+### Changed
+- Increased company logo size in work history from 10x10 to 20x20 (2x bigger)
+- Increased company logo size on company detail page from 16x16 to 24x24 (1.5x bigger)
+
 ## [1.4.5] - 2026-01-04
 
 ### Changed
