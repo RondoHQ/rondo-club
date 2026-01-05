@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.3] - 2026-01-04
+
+### Changed
+- WhatsApp icon is now always visible (not just on hover) and displayed in WhatsApp green after phone numbers
+
 ## [1.5.2] - 2026-01-04
 
 ### Fixed

@@ -784,7 +784,7 @@ export default function PersonDetail() {
                     <div key={index} className="group">
                       <div className="flex items-center rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
                         {!isLinkedIn && <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />}
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 flex items-center gap-2">
                           {isLinkedIn ? (
                             <Linkedin className="w-4 h-4 text-blue-600 inline-block mr-2 align-middle" />
                           ) : (
@@ -802,19 +802,19 @@ export default function PersonDetail() {
                           ) : (
                             <span>{contact.contact_value}</span>
                           )}
+                          {isMobile && (
+                            <a
+                              href={`https://wa.me/${formatPhoneForTel(contact.contact_value)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                              title="Open WhatsApp"
+                            >
+                              <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                            </a>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                        {isMobile && (
-                          <a
-                            href={`https://wa.me/${formatPhoneForTel(contact.contact_value)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1 hover:bg-green-50 rounded"
-                            title="Open WhatsApp"
-                          >
-                            <MessageCircle className="w-4 h-4 text-gray-400 hover:text-green-600" />
-                          </a>
-                        )}
                         <Link
                           to={`/people/${id}/contact/${index}/edit`}
                           className="p-1 hover:bg-gray-100 rounded"
