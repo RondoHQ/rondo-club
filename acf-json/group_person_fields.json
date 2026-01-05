@@ -287,23 +287,6 @@
                     }
                 }
             ]
-        },
-        {
-            "key": "field_person_sharing",
-            "label": "Sharing",
-            "name": "",
-            "type": "tab",
-            "placement": "top"
-        },
-        {
-            "key": "field_shared_with",
-            "label": "Shared With",
-            "name": "shared_with",
-            "type": "user",
-            "role": "",
-            "multiple": 1,
-            "allow_null": 1,
-            "return_format": "id"
         }
     ],
     "location": [

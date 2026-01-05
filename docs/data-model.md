@@ -32,7 +32,6 @@ Represents individual contacts in the CRM.
 | Contact Info | `contact_info` | repeater | Contact methods (see below) |
 | Work History | `work_history` | repeater | Employment history (see below) |
 | Relationships | `relationships` | repeater | Connections to other people (see below) |
-| Shared With | `shared_with` | user | Users who can access this contact |
 
 **Contact Info Sub-fields:**
 
@@ -81,7 +80,6 @@ Represents organizations where contacts work.
 | Website | `website` | url | Company website URL |
 | Industry | `industry` | text | Industry or sector |
 | Contact Info | `contact_info` | repeater | Company contact methods |
-| Shared With | `shared_with` | user | Users who can access this company |
 
 **Contact Info Sub-fields:**
 
@@ -113,7 +111,6 @@ Represents significant dates to remember (birthdays, anniversaries, etc.).
 | Related People | `related_people` | post_object | Required. People linked to this date |
 | Remind Days Before | `reminder_days_before` | number | Days before to send reminder (0-365, default: 7) |
 | Custom Label | `custom_label` | text | Override auto-generated title |
-| Shared With | `shared_with` | user | Users who can access this date |
 
 ---
 
@@ -237,8 +234,8 @@ ACF field groups are version-controlled in `acf-json/`:
 
 All data is subject to row-level access control:
 
-- Users can only see posts they created OR posts shared with them via the `shared_with` field
-- Administrators bypass all access restrictions
+- Users can only see posts they created themselves
+- Administrators are restricted on the frontend but have full access in WordPress admin area
 - Access filtering is applied at both `WP_Query` level and REST API responses
 
 For details, see [Access Control](./access-control.md).

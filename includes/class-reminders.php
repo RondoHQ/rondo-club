@@ -237,14 +237,6 @@ class PRM_Reminders {
             
             if ($post) {
                 $user_ids[] = (int) $post->post_author;
-                
-                // Also check shared_with
-                $shared_with = get_field('shared_with', $person['id']) ?: [];
-                
-                foreach ($shared_with as $user) {
-                    $shared_user_id = is_object($user) ? $user->ID : $user;
-                    $user_ids[] = (int) $shared_user_id;
-                }
             }
         }
         

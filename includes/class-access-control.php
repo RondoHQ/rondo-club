@@ -2,7 +2,7 @@
 /**
  * Access Control for Personal CRM
  * 
- * Users can only see posts they created or that have been shared with them.
+ * Users can only see posts they created themselves.
  */
 
 if (!defined('ABSPATH')) {
@@ -80,18 +80,6 @@ class PRM_Access_Control {
             return true;
         }
         
-        // Check if post is shared with user
-        $shared_with = get_field('shared_with', $post_id);
-        
-        if (is_array($shared_with)) {
-            foreach ($shared_with as $shared_user) {
-                $shared_user_id = is_object($shared_user) ? $shared_user->ID : $shared_user;
-                if ((int) $shared_user_id === (int) $user_id) {
-                    return true;
-                }
-            }
-        }
-        
         return false;
     }
     
@@ -125,15 +113,7 @@ class PRM_Access_Control {
             return;
         }
         
-        // Build meta query for shared_with
-        $meta_query = $query->get('meta_query') ?: [];
-        
         // Get IDs of posts authored by user
-        $author_query = [
-            'author' => $user_id,
-        ];
-        
-        // We need to use a custom approach: get all accessible post IDs
         $accessible_ids = $this->get_accessible_post_ids($post_type, $user_id);
         
         if (empty($accessible_ids)) {
@@ -159,19 +139,7 @@ class PRM_Access_Control {
             $user_id
         ));
         
-        // Get posts shared with user (ACF stores user IDs in serialized format)
-        $shared = $wpdb->get_col($wpdb->prepare(
-            "SELECT post_id FROM {$wpdb->postmeta} 
-             WHERE meta_key = 'shared_with' 
-             AND (meta_value LIKE %s OR meta_value LIKE %s)",
-            '%"' . $user_id . '"%',
-            '%i:' . $user_id . ';%'
-        ));
-        
-        // Merge and deduplicate
-        $all_ids = array_unique(array_merge($authored, $shared));
-        
-        return $all_ids;
+        return $authored;
     }
     
     /**

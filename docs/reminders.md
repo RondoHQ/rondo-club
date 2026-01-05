@@ -136,14 +136,15 @@ https://your-site.com
 For each reminder, notifications go to:
 
 1. **Post authors** - Creators of the related people posts
-2. **Shared users** - Anyone in the `shared_with` field of related people
 
 ```php
 // Collect user IDs
 $user_ids = [];
 foreach ($related_people as $person) {
-    $user_ids[] = $post->post_author;
-    $user_ids = array_merge($user_ids, get_field('shared_with', $person['id']));
+    $post = get_post($person['id']);
+    if ($post) {
+        $user_ids[] = (int) $post->post_author;
+    }
 }
 ```
 

@@ -860,19 +860,7 @@ class PRM_Google_Contacts_Import {
             $user_id
         ));
         
-        // Get posts shared with user
-        $shared = $wpdb->get_col($wpdb->prepare(
-            "SELECT post_id FROM {$wpdb->postmeta} pm
-             JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-             WHERE p.post_type = 'person'
-             AND p.post_status = 'publish'
-             AND pm.meta_key = 'shared_with' 
-             AND (pm.meta_value LIKE %s OR pm.meta_value LIKE %s)",
-            '%"' . $user_id . '"%',
-            '%i:' . $user_id . ';%'
-        ));
-        
-        return array_unique(array_merge($authored, $shared));
+        return $authored;
     }
 
     /**
