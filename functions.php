@@ -717,18 +717,15 @@ function prm_registration_message_filter($translated_text, $text, $domain) {
 add_filter('gettext', 'prm_registration_message_filter', 20, 3);
 
 /**
- * Hide "Register For This Site" notice on registration page
+ * Change "Register For This Site" to "Register for Caelis"
  */
-function prm_hide_register_notice() {
-    ?>
-    <style>
-        .notice.notice-info.message.register {
-            display: none !important;
-        }
-    </style>
-    <?php
+function prm_change_register_notice_text($translated_text, $text, $domain) {
+    if ($text === 'Register For This Site') {
+        return 'Register for Caelis';
+    }
+    return $translated_text;
 }
-add_action('login_head', 'prm_hide_register_notice');
+add_filter('gettext', 'prm_change_register_notice_text', 20, 3);
 
 /**
  * Change login page titles
@@ -737,12 +734,6 @@ function prm_login_page_titles() {
     ?>
     <script>
         (function() {
-            // Hide register notice
-            var registerNotice = document.querySelector('.notice.notice-info.message.register');
-            if (registerNotice) {
-                registerNotice.style.display = 'none';
-            }
-            
             // Change page titles based on action
             var urlParams = new URLSearchParams(window.location.search);
             var action = urlParams.get('action');
