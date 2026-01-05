@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FileCode, FileSpreadsheet, Database } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, FileCode, FileSpreadsheet, Database } from 'lucide-react';
 import MonicaImport from '@/components/import/MonicaImport';
 import VCardImport from '@/components/import/VCardImport';
 import GoogleContactsImport from '@/components/import/GoogleContactsImport';
@@ -36,9 +37,19 @@ export default function Import() {
   const ActiveComponent = importTypes.find(t => t.id === activeTab)?.component;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="flex items-center gap-4">
+        <Link
+          to="/settings"
+          className="btn-secondary flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden md:inline">Back to Settings</span>
+        </Link>
+        <h1 className="text-2xl font-semibold">Import Contacts</h1>
+      </div>
+      
       <div className="card p-6">
-        <h1 className="text-xl font-semibold mb-4">Import Contacts</h1>
         <p className="text-sm text-gray-600 mb-6">
           Import your contacts from various sources. Existing contacts with matching names will be updated instead of duplicated.
         </p>

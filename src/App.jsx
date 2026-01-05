@@ -18,6 +18,8 @@ import DateForm from '@/pages/Dates/DateForm';
 import Settings from '@/pages/Settings/Settings';
 import RelationshipTypes from '@/pages/Settings/RelationshipTypes';
 import Import from '@/pages/Settings/Import';
+import Export from '@/pages/Settings/Export';
+import UserApproval from '@/pages/Settings/UserApproval';
 import FamilyTree from '@/pages/People/FamilyTree';
 import Login from '@/pages/Login';
 import { AlertCircle } from 'lucide-react';
@@ -134,6 +136,8 @@ function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/settings/relationship-types" element={<RelationshipTypes />} />
                 <Route path="/settings/import" element={<Import />} />
+                <Route path="/settings/export" element={<Export />} />
+                <Route path="/settings/user-approval" element={<UserApproval />} />
                 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />

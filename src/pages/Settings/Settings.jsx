@@ -145,12 +145,19 @@ export default function Settings() {
             <p className="font-medium">Import Data</p>
             <p className="text-sm text-gray-500">Import contacts from Monica CRM or other sources</p>
           </Link>
+          <Link
+            to="/settings/export"
+            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+          >
+            <p className="font-medium">Export Data</p>
+            <p className="text-sm text-gray-500">Export all contacts as vCard or Google Contacts CSV</p>
+          </Link>
         </div>
       </div>
       
       {isAdmin && (
         <div className="card p-6">
-          <h2 className="text-lg font-semibold mb-4">Configuration</h2>
+          <h2 className="text-lg font-semibold mb-4">Administration</h2>
           <div className="space-y-3">
             <Link
               to="/settings/relationship-types"
@@ -159,50 +166,13 @@ export default function Settings() {
               <p className="font-medium">Relationship Types</p>
               <p className="text-sm text-gray-500">Manage relationship types and their inverse mappings</p>
             </Link>
-          </div>
-        </div>
-      )}
-      
-      {isAdmin && (
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold mb-4">Administration</h2>
-          <div className="space-y-3">
-            <a
-              href={config.adminUrl}
+            <Link
+              to="/settings/user-approval"
               className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-              target="_blank"
-              rel="noopener noreferrer"
             >
-              <p className="font-medium">WordPress Admin</p>
-              <p className="text-sm text-gray-500">Manage all settings, users, and content</p>
-            </a>
-            <a
-              href={config.adminUrl + 'edit.php?post_type=person'}
-              className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <p className="font-medium">Manage People</p>
-              <p className="text-sm text-gray-500">Edit people with all ACF fields</p>
-            </a>
-            <a
-              href={config.adminUrl + 'edit.php?post_type=company'}
-              className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <p className="font-medium">Manage Companies</p>
-              <p className="text-sm text-gray-500">Edit companies with all ACF fields</p>
-            </a>
-            <a
-              href={config.adminUrl + 'edit.php?post_type=important_date'}
-              className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <p className="font-medium">Manage Important Dates</p>
-              <p className="text-sm text-gray-500">Edit dates and link people</p>
-            </a>
+              <p className="font-medium">User Approval</p>
+              <p className="text-sm text-gray-500">Approve or deny access for new users</p>
+            </Link>
           </div>
         </div>
       )}
