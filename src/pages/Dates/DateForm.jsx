@@ -405,8 +405,8 @@ export default function DateForm() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <Link to={backUrl} className="flex items-center text-gray-600 hover:text-gray-900">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          {backLabel}
+          <ArrowLeft className="w-4 h-4 md:mr-2" />
+          <span className="hidden md:inline">{backLabel}</span>
         </Link>
       </div>
 

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2026-01-04
+
+### Changed
+- Hide button label text on mobile devices for buttons with icons and labels to improve mobile UI space efficiency
+- Button labels are now visible on medium screens and larger (768px+)
+- Affects all action buttons, navigation links, and form buttons throughout the interface
+
 ## [1.2.4] - 2026-01-04
 
 ### Changed

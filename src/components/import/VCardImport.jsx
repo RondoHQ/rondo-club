@@ -260,12 +260,12 @@ export default function VCardImport() {
                 {importMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Importing...
+                    <span className="hidden md:inline">Importing...</span>
                   </>
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    Start Import
+                    <span className="hidden md:inline">Start Import</span>
                   </>
                 )}
               </button>

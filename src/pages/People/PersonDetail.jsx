@@ -446,21 +446,21 @@ export default function PersonDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <Link to="/people" className="flex items-center text-gray-600 hover:text-gray-900">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to People
+          <ArrowLeft className="w-4 h-4 md:mr-2" />
+          <span className="hidden md:inline">Back to People</span>
         </Link>
         <div className="flex gap-2">
           <button onClick={handleExportVCard} className="btn-secondary">
-            <Download className="w-4 h-4 mr-2" />
-            Export vCard
+            <Download className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Export vCard</span>
           </button>
           <Link to={`/people/${id}/edit`} className="btn-secondary">
-            <Edit className="w-4 h-4 mr-2" />
-            Edit
+            <Edit className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Edit</span>
           </Link>
           <button onClick={handleDelete} className="btn-danger">
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
+            <Trash2 className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Delete</span>
           </button>
         </div>
       </div>
@@ -616,8 +616,8 @@ export default function PersonDetail() {
                   to={`/people/${id}/contact/new`}
                   className="btn-secondary text-sm"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add contact detail
+                  <Plus className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Add contact detail</span>
                 </Link>
               </div>
             {acf.contact_info?.length > 0 ? (
@@ -732,8 +732,8 @@ export default function PersonDetail() {
                 to={`/dates/new?person=${id}`}
                 className="btn-secondary text-sm"
               >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Important Date
+                <Plus className="w-4 h-4 md:mr-1" />
+                <span className="hidden md:inline">Add Important Date</span>
               </Link>
             </div>
             {allDates.length > 0 ? (
@@ -798,8 +798,8 @@ export default function PersonDetail() {
                 to={`/people/${id}/work-history/new`}
                 className="btn-secondary text-sm"
               >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Work History
+                <Plus className="w-4 h-4 md:mr-1" />
+                <span className="hidden md:inline">Add Work History</span>
               </Link>
             </div>
             {sortedWorkHistory?.length > 0 ? (
@@ -872,8 +872,8 @@ export default function PersonDetail() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">Timeline</h2>
               <button className="btn-secondary text-sm">
-                <Plus className="w-4 h-4 mr-1" />
-                Add Note
+                <Plus className="w-4 h-4 md:mr-1" />
+                <span className="hidden md:inline">Add Note</span>
               </button>
             </div>
             
@@ -933,8 +933,8 @@ export default function PersonDetail() {
                 to={`/people/${id}/relationship/new`}
                 className="btn-secondary text-sm"
               >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Relationship
+                <Plus className="w-4 h-4 md:mr-1" />
+                <span className="hidden md:inline">Add Relationship</span>
               </Link>
             </div>
             {sortedRelationships?.length > 0 ? (

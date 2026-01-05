@@ -271,7 +271,7 @@ export default function RelationshipTypes() {
         ) : (
           <RotateCcw className="w-4 h-4" />
         )}
-        Restore Defaults
+        <span className="hidden md:inline">Restore Defaults</span>
       </button>
     );
   }
@@ -349,7 +349,7 @@ export default function RelationshipTypes() {
                   className="btn-primary flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Relationship Type
+                  <span className="hidden md:inline">Add Relationship Type</span>
                 </button>
               </>
             )}
@@ -394,7 +394,7 @@ export default function RelationshipTypes() {
                   ) : (
                     <Save className="w-4 h-4" />
                   )}
-                  Save
+                  <span className="hidden md:inline">Save</span>
                 </button>
                 <button
                   onClick={() => {
@@ -469,14 +469,14 @@ export default function RelationshipTypes() {
                           ) : (
                             <Save className="w-4 h-4" />
                           )}
-                          Save
+                          <span className="hidden md:inline">Save</span>
                         </button>
                         <button
                           onClick={handleCancelEdit}
                           className="btn-secondary flex items-center gap-2"
                         >
                           <X className="w-4 h-4" />
-                          Cancel
+                          <span className="hidden md:inline">Cancel</span>
                         </button>
                       </div>
                     </div>

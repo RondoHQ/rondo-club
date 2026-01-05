@@ -77,8 +77,8 @@ export default function CompaniesList() {
         </div>
         
         <Link to="/companies/new" className="btn-primary">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Company
+          <Plus className="w-4 h-4 md:mr-2" />
+          <span className="hidden md:inline">Add Company</span>
         </Link>
       </div>
       
@@ -108,8 +108,8 @@ export default function CompaniesList() {
           </p>
           {!search && (
             <Link to="/companies/new" className="btn-primary">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Company
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Add Company</span>
             </Link>
           )}
         </div>

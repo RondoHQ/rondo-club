@@ -129,8 +129,8 @@ export default function FamilyTree() {
             to={`/people/${id}`}
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Person
+            <ArrowLeft className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Back to Person</span>
           </Link>
           <h1 className="text-2xl font-bold">
             Family Tree: {person.name || person.title?.rendered || person.title || `Person ${id}`}

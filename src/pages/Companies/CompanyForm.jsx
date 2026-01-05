@@ -134,8 +134,8 @@ export default function CompanyForm() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <Link to="/companies" className="flex items-center text-gray-600 hover:text-gray-900">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Companies
+          <ArrowLeft className="w-4 h-4 md:mr-2" />
+          <span className="hidden md:inline">Back to Companies</span>
         </Link>
       </div>
       
