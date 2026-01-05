@@ -745,7 +745,7 @@ export default function PersonDetail() {
                 )}
               </div>
               {socialLinks.length > 0 && (
-                <div className="flex items-center gap-3 mt-2">
+                <div className="flex items-center gap-3 mt-4">
                   {socialLinks.map((contact, index) => {
                     const SocialIcon = getSocialIcon(contact.contact_type);
                     const iconColor = getSocialIconColor(contact.contact_type);
@@ -765,7 +765,7 @@ export default function PersonDetail() {
                         className={`flex-shrink-0 hover:opacity-80 transition-opacity ${iconColor}`}
                         title={`${contact.contact_type.charAt(0).toUpperCase() + contact.contact_type.slice(1)}: ${contact.contact_value}`}
                       >
-                        <SocialIcon className="w-5 h-5" />
+                        <SocialIcon className="w-5 h-5 fill-current" />
                       </a>
                     );
                   })}
