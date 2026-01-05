@@ -27,6 +27,10 @@ class PRM_Inverse_Relationships {
         
         // Sync inverse relationships after relationships field is saved
         add_action('acf/save_post', [$this, 'sync_inverse_relationships'], 20);
+        
+        // Also hook into REST API updates to ensure sync happens
+        add_action('rest_after_insert_person', [$this, 'sync_inverse_relationships'], 20, 1);
+        add_action('rest_after_update_person', [$this, 'sync_inverse_relationships'], 20, 1);
     }
     
     /**
@@ -336,7 +340,8 @@ class PRM_Inverse_Relationships {
         }
         
         // Get inverse relationship type from ACF field
-        $inverse_type_id = get_field('inverse_relationship_type', 'relationship_type_' . $relationship_type_id);
+        // Use false parameter to get raw value (ID) instead of formatted value
+        $inverse_type_id = get_field('inverse_relationship_type', 'relationship_type_' . $relationship_type_id, false);
         
         if (!$inverse_type_id) {
             // No inverse mapping defined - skip
@@ -344,10 +349,23 @@ class PRM_Inverse_Relationships {
         }
         
         // Normalize to integer (handle ACF return formats: id, array, object)
-        if (is_array($inverse_type_id) && isset($inverse_type_id['term_id'])) {
-            $inverse_type_id = (int) $inverse_type_id['term_id'];
-        } elseif (is_object($inverse_type_id) && isset($inverse_type_id->term_id)) {
-            $inverse_type_id = (int) $inverse_type_id->term_id;
+        if (is_array($inverse_type_id)) {
+            // Could be array with term_id or array of IDs
+            if (isset($inverse_type_id['term_id'])) {
+                $inverse_type_id = (int) $inverse_type_id['term_id'];
+            } elseif (isset($inverse_type_id[0]) && is_numeric($inverse_type_id[0])) {
+                $inverse_type_id = (int) $inverse_type_id[0];
+            } else {
+                return;
+            }
+        } elseif (is_object($inverse_type_id)) {
+            if (isset($inverse_type_id->term_id)) {
+                $inverse_type_id = (int) $inverse_type_id->term_id;
+            } elseif (isset($inverse_type_id->ID)) {
+                $inverse_type_id = (int) $inverse_type_id->ID;
+            } else {
+                return;
+            }
         } elseif (is_numeric($inverse_type_id)) {
             $inverse_type_id = (int) $inverse_type_id;
         } else {
