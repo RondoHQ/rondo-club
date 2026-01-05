@@ -834,11 +834,11 @@ export default function PersonDetail() {
                         <img
                           src={companyData.logo}
                           alt={companyData.name}
-                          className="w-10 h-10 rounded-lg object-contain bg-gray-50 mr-3 flex-shrink-0"
+                          className="w-20 h-20 rounded-lg object-contain bg-gray-50 mr-3 flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                          <Building2 className="w-5 h-5 text-gray-500" />
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                          <Building2 className="w-10 h-10 text-gray-500" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
