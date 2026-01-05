@@ -16,6 +16,8 @@ const CONTACT_TYPES = [
   { value: 'website', label: 'Website' },
   { value: 'linkedin', label: 'LinkedIn' },
   { value: 'twitter', label: 'Twitter' },
+  { value: 'bluesky', label: 'Bluesky' },
+  { value: 'threads', label: 'Threads' },
   { value: 'instagram', label: 'Instagram' },
   { value: 'facebook', label: 'Facebook' },
   { value: 'other', label: 'Other' },

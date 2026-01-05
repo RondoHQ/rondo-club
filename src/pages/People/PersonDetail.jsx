@@ -4,7 +4,7 @@ import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download
 } from 'lucide-react';
-import { SiFacebook, SiInstagram, SiX } from '@icons-pack/react-simple-icons';
+import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads } from '@icons-pack/react-simple-icons';
 
 // Custom LinkedIn SVG component
 const LinkedInIcon = ({ className }) => (
@@ -580,16 +580,18 @@ export default function PersonDetail() {
   const acf = person.acf || {};
   
   // Extract social links for header display
-  const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'website'];
+  const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'bluesky', 'threads', 'website'];
   const socialLinks = acf.contact_info?.filter(contact => socialTypes.includes(contact.contact_type)) || [];
   
   // Define display order for social icons
   const socialIconOrder = {
     'linkedin': 1,
     'twitter': 2,
-    'instagram': 3,
-    'facebook': 4,
-    'website': 5,
+    'bluesky': 3,
+    'threads': 4,
+    'instagram': 5,
+    'facebook': 6,
+    'website': 7,
   };
   
   // Sort social links by display order
@@ -606,6 +608,8 @@ export default function PersonDetail() {
       case 'linkedin': return LinkedInIcon;
       case 'instagram': return SiInstagram;
       case 'twitter': return SiX; // Twitter/X uses SiX in Simple Icons
+      case 'bluesky': return SiBluesky;
+      case 'threads': return SiThreads;
       case 'website': return Globe; // Use Lucide Globe for website
       default: return Globe;
     }
@@ -618,6 +622,8 @@ export default function PersonDetail() {
       case 'linkedin': return 'text-[#0077B7]'; // LinkedIn brand color
       case 'instagram': return 'text-[#E4405F]';
       case 'twitter': return 'text-[#1DA1F2]';
+      case 'bluesky': return 'text-[#00A8E8]'; // Bluesky brand color
+      case 'threads': return 'text-[#000000]'; // Threads brand color (black)
       case 'website': return 'text-gray-600';
       default: return 'text-gray-600';
     }
