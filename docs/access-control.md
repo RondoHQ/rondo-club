@@ -8,7 +8,7 @@ Caelis implements **row-level access control** - each user can only see posts (c
 1. Created themselves (are the `post_author`)
 2. Have been explicitly shared via the `shared_with` ACF field
 
-**Administrators bypass all restrictions** and can see everything.
+**Administrators are restricted on the frontend** - they can only see their own posts or posts shared with them, just like regular users. However, in the WordPress admin area, administrators have full access to manage all posts.
 
 ## Implementation
 
@@ -41,9 +41,10 @@ The class intercepts data access at multiple levels:
 
 When a WP_Query runs for a controlled post type:
 
-1. Check if user is an administrator → allow all
-2. Get list of accessible post IDs via `get_accessible_post_ids()`
-3. Set `post__in` query argument to limit results
+1. Check if user is an administrator AND in admin area → allow all (admin area only)
+2. On frontend, even administrators are restricted
+3. Get list of accessible post IDs via `get_accessible_post_ids()`
+4. Set `post__in` query argument to limit results
 
 ```php
 // Posts accessible to a user
@@ -81,10 +82,11 @@ The `user_can_access_post()` method provides a simple boolean check:
 $can_access = PRM_Access_Control::user_can_access_post($post_id, $user_id);
 
 // Checks in order:
-// 1. Is user an admin? → true
+// 1. Is user an admin AND in admin area? → true (admin area only)
 // 2. Is post a controlled type? → if not, true
-// 3. Is user the author? → true  
-// 4. Is user in shared_with array? → true/false
+// 3. Is post trashed? → false
+// 4. Is user the author? → true  
+// 5. Is user in shared_with array? → true/false
 ```
 
 ### REST API Filtering
@@ -118,20 +120,31 @@ Each controlled post type has a `shared_with` ACF field that allows sharing with
 - Multiple: Yes (allows selecting multiple users)
 - Return Format: `id` (stores user IDs)
 
-## Administrator Bypass
+## Administrator Access Control
 
-Administrators (users with `manage_options` capability) bypass all access control:
+Administrators (users with `manage_options` capability) have different access levels depending on context:
+
+**In WordPress Admin Area (`is_admin() === true`):**
+- Full access to all posts
+- Can manage any post regardless of author or sharing
+
+**On Frontend (React SPA):**
+- Restricted like regular users
+- Can only see posts they created or that are shared with them
+- REST API calls from the frontend are filtered
+
+This ensures that:
+- Administrators can manage the system via WordPress admin
+- Frontend users (including admins) only see their own data
+- Data privacy is maintained even for administrators on the frontend
 
 ```php
-if (user_can($user_id, 'manage_options')) {
-    return true; // Full access
+// Admin bypass only applies in admin area
+if (user_can($user_id, 'manage_options') && !is_frontend()) {
+    return true; // Full access in admin area
 }
+// On frontend, admins are restricted like regular users
 ```
-
-This applies to:
-- WP_Query filtering
-- REST API queries
-- Single post access checks
 
 ## Bypassing Access Control
 
