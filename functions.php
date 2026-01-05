@@ -697,43 +697,18 @@ add_filter('wp_is_application_passwords_available', '__return_false');
 
 /**
  * Modify registration confirmation message to include approval notice
+ * Uses gettext filter to intercept WordPress core translation string
  */
-function prm_registration_message($message, $redirect_to = '') {
-    if (is_string($message) && strpos($message, 'Registration confirmation will be emailed to you.') !== false) {
-        $message = str_replace(
-            'Registration confirmation will be emailed to you.',
-            'Registration confirmation will be emailed to you. Your account is then subject to approval.',
-            $message
-        );
-    }
-    return $message;
-}
-add_filter('login_message', 'prm_registration_message', 20, 2);
-
-/**
- * Modify registration errors/messages
- */
-function prm_registration_errors($errors, $redirect_to, $username) {
-    if (!is_wp_error($errors)) {
-        return $errors;
-    }
-    
-    // Check if there's a registration success message
-    $messages = $errors->get_error_messages();
-    foreach ($messages as $key => $message) {
-        if (strpos($message, 'Registration confirmation will be emailed to you.') !== false) {
-            $errors->remove($errors->get_error_code());
-            $errors->add(
-                'registration_success',
-                'Registration confirmation will be emailed to you. Your account is then subject to approval.',
-                'message'
-            );
+function prm_registration_message_filter($translated_text, $text, $domain) {
+    // Only filter on login/registration pages
+    if (!is_admin() && (isset($_GET['action']) && $_GET['action'] === 'register') || (isset($_GET['checkemail']) && $_GET['checkemail'] === 'registered')) {
+        if ($text === 'Registration confirmation will be emailed to you.') {
+            return 'Registration confirmation will be emailed to you. Your account is then subject to approval.';
         }
     }
-    
-    return $errors;
+    return $translated_text;
 }
-add_filter('registration_errors', 'prm_registration_errors', 20, 3);
+add_filter('gettext', 'prm_registration_message_filter', 20, 3);
 
 /**
  * Hide "Register For This Site" notice on registration page
