@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { prmApi } from '@/api/client';
 import Layout from '@/components/layout/Layout';
 import Dashboard from '@/pages/Dashboard';
 import PeopleList from '@/pages/People/PeopleList';
@@ -18,6 +20,58 @@ import RelationshipTypes from '@/pages/Settings/RelationshipTypes';
 import Import from '@/pages/Settings/Import';
 import FamilyTree from '@/pages/People/FamilyTree';
 import Login from '@/pages/Login';
+import { AlertCircle } from 'lucide-react';
+
+function ApprovalCheck({ children }) {
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const response = await prmApi.getCurrentUser();
+      return response.data;
+    },
+  });
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+  
+  // Admins are always approved
+  if (user?.is_admin) {
+    return children;
+  }
+  
+  // Check approval status
+  if (user && !user.is_approved) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="max-w-md w-full mx-4">
+          <div className="card p-8 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-yellow-100 rounded-full">
+                <AlertCircle className="w-8 h-8 text-yellow-600" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              Account Pending Approval
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Your account is pending approval by an administrator. You will receive an email notification once your account has been approved.
+            </p>
+            <p className="text-sm text-gray-500">
+              If you have any questions, please contact your administrator.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  return children;
+}
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, isLoading } = useAuth();
@@ -34,7 +88,7 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
   
-  return children;
+  return <ApprovalCheck>{children}</ApprovalCheck>;
 }
 
 function App() {

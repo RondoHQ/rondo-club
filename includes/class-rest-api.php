@@ -53,7 +53,7 @@ class PRM_REST_API {
         register_rest_route('prm/v1', '/reminders', [
             'methods'             => WP_REST_Server::READABLE,
             'callback'            => [$this, 'get_upcoming_reminders'],
-            'permission_callback' => 'is_user_logged_in',
+            'permission_callback' => [$this, 'check_user_approved'],
             'args'                => [
                 'days_ahead' => [
                     'default'           => 30,
@@ -68,7 +68,7 @@ class PRM_REST_API {
         register_rest_route('prm/v1', '/search', [
             'methods'             => WP_REST_Server::READABLE,
             'callback'            => [$this, 'global_search'],
-            'permission_callback' => 'is_user_logged_in',
+            'permission_callback' => [$this, 'check_user_approved'],
             'args'                => [
                 'q' => [
                     'required'          => true,
@@ -83,14 +83,14 @@ class PRM_REST_API {
         register_rest_route('prm/v1', '/dashboard', [
             'methods'             => WP_REST_Server::READABLE,
             'callback'            => [$this, 'get_dashboard_summary'],
-            'permission_callback' => 'is_user_logged_in',
+            'permission_callback' => [$this, 'check_user_approved'],
         ]);
         
         // Restore default relationship type configurations
         register_rest_route('prm/v1', '/relationship-types/restore-defaults', [
             'methods'             => WP_REST_Server::CREATABLE,
             'callback'            => [$this, 'restore_relationship_type_defaults'],
-            'permission_callback' => 'is_user_logged_in',
+            'permission_callback' => [$this, 'check_user_approved'],
         ]);
         
         // Sideload Gravatar image
@@ -117,7 +117,7 @@ class PRM_REST_API {
         register_rest_route('prm/v1', '/user/me', [
             'methods'             => WP_REST_Server::READABLE,
             'callback'            => [$this, 'get_current_user'],
-            'permission_callback' => 'is_user_logged_in',
+            'permission_callback' => [$this, 'check_user_approved'],
         ]);
         
         // Set company logo (featured image) - by media ID
@@ -228,10 +228,34 @@ class PRM_REST_API {
     }
     
     /**
+     * Check if user is logged in and approved
+     */
+    public function check_user_approved() {
+        if (!is_user_logged_in()) {
+            return false;
+        }
+        
+        $user_id = get_current_user_id();
+        
+        // Admins are always approved
+        if (user_can($user_id, 'manage_options')) {
+            return true;
+        }
+        
+        // Check if user is approved
+        return PRM_User_Roles::is_user_approved($user_id);
+    }
+    
+    /**
      * Check if user can access a person
      */
     public function check_person_access($request) {
         if (!is_user_logged_in()) {
+            return false;
+        }
+        
+        // Check approval first
+        if (!$this->check_user_approved()) {
             return false;
         }
         
@@ -700,12 +724,16 @@ class PRM_REST_API {
         // Get admin URL
         $admin_url = admin_url();
         
+        // Check approval status
+        $is_approved = PRM_User_Roles::is_user_approved($user_id);
+        
         return rest_ensure_response([
             'id' => $user_id,
             'name' => $user->display_name,
             'email' => $user->user_email,
             'avatar_url' => $avatar_url,
             'is_admin' => $is_admin,
+            'is_approved' => $is_approved,
             'profile_url' => $profile_url,
             'admin_url' => $admin_url,
         ]);
@@ -716,6 +744,11 @@ class PRM_REST_API {
      */
     public function check_company_edit_permission($request) {
         if (!is_user_logged_in()) {
+            return false;
+        }
+        
+        // Check approval first
+        if (!$this->check_user_approved()) {
             return false;
         }
         
@@ -735,6 +768,11 @@ class PRM_REST_API {
      */
     public function check_person_edit_permission($request) {
         if (!is_user_logged_in()) {
+            return false;
+        }
+        
+        // Check approval first
+        if (!$this->check_user_approved()) {
             return false;
         }
         
