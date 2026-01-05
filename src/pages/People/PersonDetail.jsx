@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
-  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin, X, Camera, Download
+  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, Linkedin, X, Camera, Download, Facebook, Instagram, Twitter
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
 import { format, differenceInYears } from 'date-fns';
@@ -739,101 +739,168 @@ export default function PersonDetail() {
               </div>
             {acf.contact_info?.length > 0 ? (
               <div className="space-y-2">
-                {acf.contact_info.map((contact, index) => {
-                  const Icon = contact.contact_type === 'email' ? Mail :
-                               contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
-                               contact.contact_type === 'address' ? MapPin :
-                               contact.contact_type === 'linkedin' ? Linkedin :
-                               contact.contact_type === 'website' ? Globe : Globe;
-
-                  // Determine if this should be a clickable link
-                  const isEmail = contact.contact_type === 'email';
-                  const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
-                  const isMobile = contact.contact_type === 'mobile';
-                  const isWebsite = contact.contact_type === 'website' || 
-                                   contact.contact_type === 'linkedin' || 
-                                   contact.contact_type === 'twitter' || 
-                                   contact.contact_type === 'instagram' || 
-                                   contact.contact_type === 'facebook';
-                  const isAddress = contact.contact_type === 'address';
-                  const isLinkedIn = contact.contact_type === 'linkedin';
+                {(() => {
+                  // Separate social links from other contact info
+                  const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'website'];
+                  const socialLinks = acf.contact_info.filter(contact => socialTypes.includes(contact.contact_type));
+                  const otherContacts = acf.contact_info.filter(contact => !socialTypes.includes(contact.contact_type));
                   
-                  let linkHref = null;
-                  let linkTarget = null;
-                  
-                  if (isEmail) {
-                    linkHref = `mailto:${contact.contact_value}`;
-                  } else if (isPhone) {
-                    linkHref = `tel:${formatPhoneForTel(contact.contact_value)}`;
-                  } else if (isWebsite) {
-                    // Ensure URL has protocol
-                    let url = contact.contact_value;
-                    if (!url.match(/^https?:\/\//i)) {
-                      url = `https://${url}`;
+                  // Helper to get social icon
+                  const getSocialIcon = (type) => {
+                    switch (type) {
+                      case 'facebook': return Facebook;
+                      case 'linkedin': return Linkedin;
+                      case 'instagram': return Instagram;
+                      case 'twitter': return Twitter;
+                      case 'website': return Globe;
+                      default: return Globe;
                     }
-                    linkHref = url;
-                    linkTarget = '_blank';
-                  } else if (isAddress) {
-                    // Link to Google Maps
-                    const encodedAddress = encodeURIComponent(contact.contact_value);
-                    linkHref = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
-                    linkTarget = '_blank';
-                  }
-
+                  };
+                  
+                  // Helper to get social icon color
+                  const getSocialIconColor = (type) => {
+                    switch (type) {
+                      case 'facebook': return 'text-[#1877F2]';
+                      case 'linkedin': return 'text-[#0077B5]';
+                      case 'instagram': return 'text-[#E4405F]';
+                      case 'twitter': return 'text-[#1DA1F2]';
+                      case 'website': return 'text-gray-600';
+                      default: return 'text-gray-600';
+                    }
+                  };
+                  
                   return (
-                    <div key={index} className="group">
-                      <div className="flex items-center rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
-                        {!isLinkedIn && <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />}
-                        <div className="flex-1 min-w-0 flex items-center gap-2">
-                          {isLinkedIn ? (
-                            <Linkedin className="w-4 h-4 text-blue-600 inline-block mr-2 align-middle" />
-                          ) : (
-                            <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
-                          )}
-                          {linkHref ? (
-                            <a
-                              href={linkHref}
-                              target={linkTarget || undefined}
-                              rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
-                              className="text-primary-600 hover:text-primary-700 hover:underline"
-                            >
-                              {contact.contact_value}
-                            </a>
-                          ) : (
-                            <span>{contact.contact_value}</span>
-                          )}
-                          {isMobile && (
-                            <a
-                              href={`https://wa.me/${formatPhoneForTel(contact.contact_value)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-shrink-0 hover:opacity-80 transition-opacity"
-                              title="Open WhatsApp"
-                            >
-                              <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                            </a>
-                          )}
+                    <>
+                      {/* Regular contact info (email, phone, address, etc.) */}
+                      {otherContacts.map((contact, index) => {
+                        const originalIndex = acf.contact_info.indexOf(contact);
+                        const Icon = contact.contact_type === 'email' ? Mail :
+                                     contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
+                                     contact.contact_type === 'address' ? MapPin : Globe;
+
+                        const isEmail = contact.contact_type === 'email';
+                        const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
+                        const isMobile = contact.contact_type === 'mobile';
+                        const isAddress = contact.contact_type === 'address';
+                        
+                        let linkHref = null;
+                        let linkTarget = null;
+                        
+                        if (isEmail) {
+                          linkHref = `mailto:${contact.contact_value}`;
+                        } else if (isPhone) {
+                          linkHref = `tel:${formatPhoneForTel(contact.contact_value)}`;
+                        } else if (isAddress) {
+                          const encodedAddress = encodeURIComponent(contact.contact_value);
+                          linkHref = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+                          linkTarget = '_blank';
+                        }
+
+                        return (
+                          <div key={originalIndex} className="group">
+                            <div className="flex items-center rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
+                              <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
+                              <div className="flex-1 min-w-0 flex items-center gap-2">
+                                <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
+                                {linkHref ? (
+                                  <a
+                                    href={linkHref}
+                                    target={linkTarget || undefined}
+                                    rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
+                                    className="text-primary-600 hover:text-primary-700 hover:underline"
+                                  >
+                                    {contact.contact_value}
+                                  </a>
+                                ) : (
+                                  <span>{contact.contact_value}</span>
+                                )}
+                                {isMobile && (
+                                  <a
+                                    href={`https://wa.me/${formatPhoneForTel(contact.contact_value)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                                    title="Open WhatsApp"
+                                  >
+                                    <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                                  </a>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                                <Link
+                                  to={`/people/${id}/contact/${originalIndex}/edit`}
+                                  className="p-1 hover:bg-gray-100 rounded"
+                                  title="Edit contact detail"
+                                >
+                                  <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                                </Link>
+                                <button
+                                  onClick={() => handleDeleteContact(originalIndex)}
+                                  className="p-1 hover:bg-red-50 rounded"
+                                  title="Delete contact detail"
+                                >
+                                  <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Social links grouped together */}
+                      {socialLinks.length > 0 && (
+                        <div className="group">
+                          <div className="flex items-start rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
+                            <Globe className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <span className="text-sm text-gray-500 block mb-2">Social Links:</span>
+                              <div className="flex items-center gap-3 flex-wrap">
+                                {socialLinks.map((contact, index) => {
+                                  const originalIndex = acf.contact_info.indexOf(contact);
+                                  const SocialIcon = getSocialIcon(contact.contact_type);
+                                  const iconColor = getSocialIconColor(contact.contact_type);
+                                  
+                                  // Ensure URL has protocol
+                                  let url = contact.contact_value;
+                                  if (!url.match(/^https?:\/\//i)) {
+                                    url = `https://${url}`;
+                                  }
+                                  
+                                  return (
+                                    <a
+                                      key={originalIndex}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`flex-shrink-0 hover:opacity-80 transition-opacity ${iconColor}`}
+                                      title={`${contact.contact_type.charAt(0).toUpperCase() + contact.contact_type.slice(1)}: ${contact.contact_value}`}
+                                    >
+                                      <SocialIcon className="w-5 h-5" />
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                              {/* Edit/Delete buttons for social links - show first social link's index */}
+                              {socialLinks.length > 0 && (
+                                <>
+                                  <Link
+                                    to={`/people/${id}/contact/${acf.contact_info.indexOf(socialLinks[0])}/edit`}
+                                    className="p-1 hover:bg-gray-100 rounded"
+                                    title="Edit social links"
+                                  >
+                                    <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                                  </Link>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                        <Link
-                          to={`/people/${id}/contact/${index}/edit`}
-                          className="p-1 hover:bg-gray-100 rounded"
-                          title="Edit contact detail"
-                        >
-                          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteContact(index)}
-                          className="p-1 hover:bg-red-50 rounded"
-                          title="Delete contact detail"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                        </button>
-                        </div>
-                      </div>
-                    </div>
+                      )}
+                    </>
                   );
-                })}
+                })()}
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
