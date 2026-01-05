@@ -87,7 +87,7 @@ Entry point: `src/main.jsx`
 ## Access Control
 
 - Users only see posts they created or are explicitly shared with via ACF "shared_with" field
-- Admins bypass all restrictions
+- Admins are restricted on the frontend (like regular users) but have full access in WordPress admin area
 - Filtering applied at WP_Query level and REST API response level
 - Authentication via WordPress session with REST nonce (`X-WP-Nonce` header)
 

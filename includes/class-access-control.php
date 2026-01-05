@@ -16,6 +16,13 @@ class PRM_Access_Control {
      */
     private $controlled_post_types = ['person', 'company', 'important_date'];
     
+    /**
+     * Check if we're on the frontend (not admin area)
+     */
+    private function is_frontend() {
+        return !is_admin();
+    }
+    
     public function __construct() {
         // Filter queries to only show accessible posts
         add_action('pre_get_posts', [$this, 'filter_queries']);
@@ -42,14 +49,19 @@ class PRM_Access_Control {
             $user_id = get_current_user_id();
         }
         
-        // Admins can access everything (except trashed posts)
+        // Admins can access everything in admin area, but are restricted on frontend
         if (user_can($user_id, 'manage_options')) {
-            $post = get_post($post_id);
-            // Even admins shouldn't access trashed posts via the frontend
-            if ($post && $post->post_status === 'trash') {
-                return false;
+            // On frontend, admins are restricted like regular users
+            if ($this->is_frontend()) {
+                // Continue with normal access checks below
+            } else {
+                // In admin area, admins have full access (except trashed posts)
+                $post = get_post($post_id);
+                if ($post && $post->post_status === 'trash') {
+                    return false;
+                }
+                return true;
             }
-            return true;
         }
         
         $post = get_post($post_id);
@@ -107,8 +119,9 @@ class PRM_Access_Control {
             return;
         }
         
-        // Skip for admins
-        if (current_user_can('manage_options')) {
+        // On frontend, admins are also restricted
+        // Only skip filtering for admins in admin area
+        if (current_user_can('manage_options') && is_admin()) {
             return;
         }
         
@@ -172,9 +185,9 @@ class PRM_Access_Control {
             return $args;
         }
         
-        if (current_user_can('manage_options')) {
-            return $args;
-        }
+        // REST API calls are typically from the frontend React app
+        // Admins should be restricted on the frontend, so we filter REST API calls for admins too
+        // The admin area uses WP_Query directly, not REST API
         
         $post_type = $args['post_type'] ?? '';
         $accessible_ids = $this->get_accessible_post_ids($post_type, $user_id);
@@ -198,8 +211,9 @@ class PRM_Access_Control {
         
         $user_id = get_current_user_id();
         
-        // Skip for admins
-        if (current_user_can('manage_options')) {
+        // On frontend, admins are also restricted
+        // Only skip filtering for admins in admin area
+        if (current_user_can('manage_options') && is_admin()) {
             return $posts;
         }
         
