@@ -95,6 +95,11 @@ export const prmApi = {
   // Current user
   getCurrentUser: () => api.get('/prm/v1/user/me'),
   
+  // User management (admin only)
+  getUsers: () => api.get('/prm/v1/users'),
+  approveUser: (userId) => api.post(`/prm/v1/users/${userId}/approve`),
+  denyUser: (userId) => api.post(`/prm/v1/users/${userId}/deny`),
+  
   // Search
   search: (query) => api.get('/prm/v1/search', { params: { q: query } }),
   
