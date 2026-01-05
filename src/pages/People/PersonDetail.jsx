@@ -583,6 +583,22 @@ export default function PersonDetail() {
   const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'website'];
   const socialLinks = acf.contact_info?.filter(contact => socialTypes.includes(contact.contact_type)) || [];
   
+  // Define display order for social icons
+  const socialIconOrder = {
+    'linkedin': 1,
+    'twitter': 2,
+    'instagram': 3,
+    'facebook': 4,
+    'website': 5,
+  };
+  
+  // Sort social links by display order
+  const sortedSocialLinks = [...socialLinks].sort((a, b) => {
+    const orderA = socialIconOrder[a.contact_type] || 99;
+    const orderB = socialIconOrder[b.contact_type] || 99;
+    return orderA - orderB;
+  });
+  
   // Helper to get social icon
   const getSocialIcon = (type) => {
     switch (type) {
@@ -765,9 +781,9 @@ export default function PersonDetail() {
                   </div>
                 )}
               </div>
-              {socialLinks.length > 0 && (
+              {sortedSocialLinks.length > 0 && (
                 <div className="flex items-center gap-3 mt-4">
-                  {socialLinks.map((contact, index) => {
+                  {sortedSocialLinks.map((contact, index) => {
                     const SocialIcon = getSocialIcon(contact.contact_type);
                     const iconColor = getSocialIconColor(contact.contact_type);
                     
