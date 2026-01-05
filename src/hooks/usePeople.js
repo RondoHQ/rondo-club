@@ -150,9 +150,10 @@ export function useDeletePerson() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (id) => wpApi.deletePerson(id),
+    mutationFn: (id) => wpApi.deletePerson(id, { force: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.details() });
     },
   });
 }

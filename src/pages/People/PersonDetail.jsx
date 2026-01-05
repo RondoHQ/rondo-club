@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
@@ -103,9 +103,17 @@ export default function PersonDetail() {
   }) : [];
   
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this person?')) {
+    if (!window.confirm('Are you sure you want to delete this person?')) {
+      return;
+    }
+    
+    try {
       await deletePerson.mutateAsync(id);
+      // Navigation will happen in onSuccess callback
       navigate('/people');
+    } catch (error) {
+      console.error('Failed to delete person:', error);
+      alert('Failed to delete person. Please try again.');
     }
   };
 
@@ -422,6 +430,13 @@ export default function PersonDetail() {
       });
   }, [person?.acf?.work_history]);
   
+  // Redirect if person is trashed
+  useEffect(() => {
+    if (person?.status === 'trash') {
+      navigate('/people', { replace: true });
+    }
+  }, [person, navigate]);
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -437,6 +452,11 @@ export default function PersonDetail() {
         <Link to="/people" className="btn-secondary mt-4">Back to People</Link>
       </div>
     );
+  }
+  
+  // Don't render if person is trashed (redirect will happen)
+  if (person.status === 'trash') {
+    return null;
   }
   
   const acf = person.acf || {};

@@ -42,8 +42,13 @@ class PRM_Access_Control {
             $user_id = get_current_user_id();
         }
         
-        // Admins can access everything
+        // Admins can access everything (except trashed posts)
         if (user_can($user_id, 'manage_options')) {
+            $post = get_post($post_id);
+            // Even admins shouldn't access trashed posts via the frontend
+            if ($post && $post->post_status === 'trash') {
+                return false;
+            }
             return true;
         }
         
@@ -51,6 +56,11 @@ class PRM_Access_Control {
         
         if (!$post || !in_array($post->post_type, $this->controlled_post_types)) {
             return true; // Not a controlled post type
+        }
+        
+        // Don't allow access to trashed posts
+        if ($post->post_status === 'trash') {
+            return false;
         }
         
         // Check if user is the author
@@ -214,6 +224,15 @@ class PRM_Access_Control {
      */
     public function filter_rest_single_access($response, $post, $request) {
         $user_id = get_current_user_id();
+        
+        // Don't allow access to trashed posts
+        if ($post->post_status === 'trash') {
+            return new WP_Error(
+                'rest_forbidden',
+                __('This item has been deleted.', 'personal-crm'),
+                ['status' => 404]
+            );
+        }
         
         if (!$this->user_can_access_post($post->ID, $user_id)) {
             return new WP_Error(
