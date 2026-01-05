@@ -694,3 +694,73 @@ remove_action('admin_color_scheme_picker', 'admin_color_scheme_picker');
  * Disable application passwords for security
  */
 add_filter('wp_is_application_passwords_available', '__return_false');
+
+/**
+ * Modify registration confirmation message to include approval notice
+ */
+function prm_registration_message($message, $redirect_to = '') {
+    if (is_string($message) && strpos($message, 'Registration confirmation will be emailed to you.') !== false) {
+        $message = str_replace(
+            'Registration confirmation will be emailed to you.',
+            'Registration confirmation will be emailed to you. Your account is then subject to approval.',
+            $message
+        );
+    }
+    return $message;
+}
+add_filter('login_message', 'prm_registration_message', 20, 2);
+
+/**
+ * Modify registration errors/messages
+ */
+function prm_registration_errors($errors, $redirect_to, $username) {
+    if (!is_wp_error($errors)) {
+        return $errors;
+    }
+    
+    // Check if there's a registration success message
+    $messages = $errors->get_error_messages();
+    foreach ($messages as $key => $message) {
+        if (strpos($message, 'Registration confirmation will be emailed to you.') !== false) {
+            $errors->remove($errors->get_error_code());
+            $errors->add(
+                'registration_success',
+                'Registration confirmation will be emailed to you. Your account is then subject to approval.',
+                'message'
+            );
+        }
+    }
+    
+    return $errors;
+}
+add_filter('registration_errors', 'prm_registration_errors', 20, 3);
+
+/**
+ * Hide "Register For This Site" notice on registration page
+ */
+function prm_hide_register_notice() {
+    ?>
+    <style>
+        .notice.notice-info.message.register {
+            display: none !important;
+        }
+    </style>
+    <?php
+}
+add_action('login_head', 'prm_hide_register_notice');
+
+/**
+ * Also hide via JavaScript as fallback
+ */
+add_action('login_footer', function() {
+    ?>
+    <script>
+        (function() {
+            var notice = document.querySelector('.notice.notice-info.message.register');
+            if (notice) {
+                notice.style.display = 'none';
+            }
+        })();
+    </script>
+    <?php
+});
