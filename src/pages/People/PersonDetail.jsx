@@ -158,6 +158,62 @@ export default function PersonDetail() {
       return;
     }
     
+    const relationshipToDelete = person.acf?.relationships?.[index];
+    if (!relationshipToDelete) {
+      return;
+    }
+    
+    const relatedPersonId = relationshipToDelete.related_person;
+    const relationshipTypeId = relationshipToDelete.relationship_type;
+    
+    // Ask if inverse should be deleted
+    let deleteInverse = true; // Default to true since backend automatically deletes it
+    if (relatedPersonId && relationshipTypeId) {
+      deleteInverse = window.confirm('Do you also want to delete the inverse relationship from the other person?');
+    }
+    
+    // If user doesn't want to delete inverse, we need to save it and re-add it after deletion
+    let inverseToRestore = null;
+    if (!deleteInverse && relatedPersonId && relationshipTypeId) {
+      try {
+        // Fetch the related person and relationship types to find the inverse
+        const [relatedPerson, relationshipTypes] = await Promise.all([
+          wpApi.getPerson(relatedPersonId, { _embed: true }),
+          wpApi.getRelationshipTypes(),
+        ]);
+        
+        const typeMap = {};
+        relationshipTypes.data.forEach(type => {
+          typeMap[type.id] = type;
+        });
+        
+        const currentType = typeMap[relationshipTypeId];
+        const inverseTypeId = currentType?.acf?.inverse_relationship_type;
+        
+        if (inverseTypeId) {
+          // Find the inverse relationship to save it
+          const relatedPersonRelationships = relatedPerson.data.acf?.relationships || [];
+          const inverseRel = relatedPersonRelationships.find(rel => {
+            const relPersonId = typeof rel.related_person === 'object' ? rel.related_person?.ID : rel.related_person;
+            const relTypeId = typeof rel.relationship_type === 'object' ? rel.relationship_type?.term_id : rel.relationship_type;
+            return relPersonId === parseInt(id) && relTypeId === inverseTypeId;
+          });
+          
+          if (inverseRel) {
+            inverseToRestore = {
+              related_person: parseInt(id),
+              relationship_type: inverseTypeId,
+              relationship_label: inverseRel.relationship_label || '',
+            };
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch inverse relationship:', error);
+        // Continue with deletion anyway
+      }
+    }
+    
+    // Delete the relationship from current person
     const updatedRelationships = [...(person.acf?.relationships || [])];
     updatedRelationships.splice(index, 1);
     
@@ -171,6 +227,47 @@ export default function PersonDetail() {
         acf: acfData,
       },
     });
+    
+    // If user doesn't want to delete inverse, re-add it after backend sync
+    if (!deleteInverse && inverseToRestore && relatedPersonId) {
+      // Wait a bit for backend sync to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      try {
+        // Fetch the related person again to get current state
+        const relatedPerson = await wpApi.getPerson(relatedPersonId, { _embed: true });
+        const relatedPersonRelationships = relatedPerson.data.acf?.relationships || [];
+        
+        // Check if inverse was already deleted (it should be)
+        const inverseExists = relatedPersonRelationships.some(rel => {
+          const relPersonId = typeof rel.related_person === 'object' ? rel.related_person?.ID : rel.related_person;
+          const relTypeId = typeof rel.relationship_type === 'object' ? rel.relationship_type?.term_id : rel.relationship_type;
+          return relPersonId === inverseToRestore.related_person && relTypeId === inverseToRestore.relationship_type;
+        });
+        
+        // If inverse doesn't exist, re-add it
+        if (!inverseExists) {
+          const updatedRelatedRelationships = [...relatedPersonRelationships, inverseToRestore];
+          const relatedPersonAcfData = sanitizePersonAcf(relatedPerson.data.acf, {
+            relationships: updatedRelatedRelationships,
+          });
+          
+          await wpApi.updatePerson(relatedPersonId, {
+            acf: relatedPersonAcfData,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to restore inverse relationship:', error);
+        // Don't show error to user - the main relationship was deleted successfully
+      }
+    }
+    
+    // Invalidate queries to refresh the UI
+    queryClient.invalidateQueries({ queryKey: ['person', id] });
+    if (relatedPersonId) {
+      queryClient.invalidateQueries({ queryKey: ['person', relatedPersonId] });
+    }
+    queryClient.invalidateQueries({ queryKey: ['people'] });
   };
 
   // Handle deleting a date
