@@ -46,6 +46,7 @@ Entry point: `functions.php`
 - `PRM_Taxonomies` - Registers labels and relationship types
 - `PRM_Auto_Title` - Auto-generates post titles
 - `PRM_Access_Control` - Row-level user data filtering at query and REST levels
+- `PRM_User_Roles` - Registers custom "Caelis User" role with minimal permissions
 - `PRM_REST_API` - Custom `/prm/v1/` endpoints (dashboard, search, timeline, reminders)
 - `PRM_Comment_Types` - Notes and Activities system using comments
 - `PRM_Reminders` - Daily cron job for upcoming date notifications
@@ -90,6 +91,13 @@ Entry point: `src/main.jsx`
 - Admins are restricted on the frontend (like regular users) but have full access in WordPress admin area
 - Filtering applied at WP_Query level and REST API response level
 - Authentication via WordPress session with REST nonce (`X-WP-Nonce` header)
+
+## User Roles
+
+- **Caelis User** - Custom role created automatically on theme activation
+  - Minimal permissions: can create/edit/delete their own people and companies, upload files
+  - Cannot access WordPress admin settings, manage other users, or install plugins/themes
+  - Role is automatically removed on theme deactivation (users reassigned to Subscriber)
 
 ## Key Files
 
