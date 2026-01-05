@@ -48,14 +48,14 @@ export const wpApi = {
   getPerson: (id, params = {}) => api.get(`/wp/v2/people/${id}`, { params }),
   createPerson: (data) => api.post('/wp/v2/people', data),
   updatePerson: (id, data) => api.put(`/wp/v2/people/${id}`, data),
-  deletePerson: (id) => api.delete(`/wp/v2/people/${id}`),
+  deletePerson: (id, params = {}) => api.delete(`/wp/v2/people/${id}`, { params }),
   
   // Companies
   getCompanies: (params) => api.get('/wp/v2/companies', { params }),
   getCompany: (id, params = {}) => api.get(`/wp/v2/companies/${id}`, { params }),
   createCompany: (data) => api.post('/wp/v2/companies', data),
   updateCompany: (id, data) => api.put(`/wp/v2/companies/${id}`, data),
-  deleteCompany: (id) => api.delete(`/wp/v2/companies/${id}`),
+  deleteCompany: (id, params = {}) => api.delete(`/wp/v2/companies/${id}`, { params }),
   
   // Important Dates
   getDates: (params) => api.get('/wp/v2/important-dates', { params }),

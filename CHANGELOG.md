@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.6] - 2026-01-04
+
+### Fixed
+- Person and company deletion now properly redirects to list page after successful deletion
+- Added error handling for deletion operations with user feedback
+- Trashed people and companies can no longer be accessed - users are automatically redirected to the list page
+- Access control now filters out trashed posts in REST API responses
+- Deletion now uses force delete to permanently remove items instead of moving to trash
+
 ## [1.2.5] - 2026-01-04
 
 ### Changed

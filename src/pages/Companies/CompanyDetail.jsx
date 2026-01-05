@@ -1,4 +1,5 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { ArrowLeft, Edit, Trash2, Building2, Globe, Users } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
@@ -27,7 +28,7 @@ export default function CompanyDetail() {
   });
   
   const deleteCompany = useMutation({
-    mutationFn: () => wpApi.deleteCompany(id),
+    mutationFn: () => wpApi.deleteCompany(id, { force: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       navigate('/companies');
@@ -38,9 +39,24 @@ export default function CompanyDetail() {
   // to ensure consistent hook calls on every render
   useDocumentTitle(getCompanyName(company) || 'Company');
   
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this company?')) {
-      deleteCompany.mutate();
+  // Redirect if company is trashed
+  useEffect(() => {
+    if (company?.status === 'trash') {
+      navigate('/companies', { replace: true });
+    }
+  }, [company, navigate]);
+  
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this company?')) {
+      return;
+    }
+    
+    try {
+      await deleteCompany.mutateAsync();
+      // Navigation will happen in onSuccess callback
+    } catch (error) {
+      console.error('Failed to delete company:', error);
+      alert('Failed to delete company. Please try again.');
     }
   };
   
@@ -59,6 +75,11 @@ export default function CompanyDetail() {
         <Link to="/companies" className="btn-secondary mt-4">Back to Companies</Link>
       </div>
     );
+  }
+  
+  // Don't render if company is trashed (redirect will happen)
+  if (company.status === 'trash') {
+    return null;
   }
   
   const acf = company.acf || {};
