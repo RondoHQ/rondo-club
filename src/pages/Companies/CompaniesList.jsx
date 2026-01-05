@@ -16,7 +16,7 @@ function CompanyCard({ company }) {
           <img 
             src={company._embedded['wp:featuredmedia'][0].source_url}
             alt={getCompanyName(company)}
-            className="w-12 h-12 rounded-lg object-contain bg-gray-50"
+            className="w-12 h-12 rounded-lg object-contain bg-white"
           />
         ) : (
           <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
