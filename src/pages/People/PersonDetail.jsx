@@ -745,7 +745,7 @@ export default function PersonDetail() {
                 )}
               </div>
               {socialLinks.length > 0 && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 mt-2">
                   {socialLinks.map((contact, index) => {
                     const SocialIcon = getSocialIcon(contact.contact_type);
                     const iconColor = getSocialIconColor(contact.contact_type);
