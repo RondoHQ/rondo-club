@@ -99,6 +99,7 @@ export const prmApi = {
   getUsers: () => api.get('/prm/v1/users'),
   approveUser: (userId) => api.post(`/prm/v1/users/${userId}/approve`),
   denyUser: (userId) => api.post(`/prm/v1/users/${userId}/deny`),
+  deleteUser: (userId) => api.delete(`/prm/v1/users/${userId}`),
   
   // Search
   search: (query) => api.get('/prm/v1/search', { params: { q: query } }),
