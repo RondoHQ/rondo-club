@@ -673,6 +673,18 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
     }
     
     /**
+     * Replace person name in title with a clickable link (for Slack)
+     */
+    private function replace_name_in_title_slack($title, $person, $site_url) {
+        $person_name = $person['name'];
+        $person_url = $site_url . '/people/' . $person['id'];
+        $person_link = sprintf('<%s|%s>', $person_url, $person_name);
+        
+        // Replace the name in the title (case-insensitive)
+        return preg_replace('/' . preg_quote($person_name, '/') . '/i', $person_link, $title, 1);
+    }
+    
+    /**
      * Get logo URL for Slack messages
      * 
      * Note: Slack prefers PNG/JPG images. SVG may not display correctly.
