@@ -54,6 +54,26 @@ export default function Settings() {
     fetchIcalUrl();
   }, []);
   
+  // Fetch Slack channels, users, and targets
+  const fetchSlackData = async () => {
+    setLoadingSlackData(true);
+    try {
+      const [channelsResponse, targetsResponse] = await Promise.all([
+        prmApi.getSlackChannels(),
+        prmApi.getSlackTargets(),
+      ]);
+      
+      setSlackChannels(channelsResponse.data.channels || []);
+      setSlackUsers(channelsResponse.data.users || []);
+      setSlackTargets(targetsResponse.data.targets || []);
+    } catch (error) {
+      console.error('Failed to fetch Slack data:', error);
+      setWebhookTestMessage('Failed to load Slack channels and users. Please try refreshing the page.');
+    } finally {
+      setLoadingSlackData(false);
+    }
+  };
+  
   // Fetch notification channels on mount
   useEffect(() => {
     const fetchNotificationChannels = async () => {
@@ -65,8 +85,14 @@ export default function Settings() {
         
         // Check Slack OAuth status
         const slackStatus = await prmApi.getSlackStatus();
-        setSlackConnected(slackStatus.data.connected || false);
+        const isConnected = slackStatus.data.connected || false;
+        setSlackConnected(isConnected);
         setSlackWorkspaceName(slackStatus.data.workspace_name || '');
+        
+        // If connected, fetch channels/users and targets
+        if (isConnected) {
+          await fetchSlackData();
+        }
       } catch (error) {
         console.error('Failed to fetch notification channels:', error);
       } finally {
@@ -76,6 +102,13 @@ export default function Settings() {
     fetchNotificationChannels();
   }, []);
   
+  // Fetch Slack data when connection status changes
+  useEffect(() => {
+    if (slackConnected) {
+      fetchSlackData();
+    }
+  }, [slackConnected]);
+  
   // Handle OAuth callback messages from URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -84,25 +117,10 @@ export default function Settings() {
     
     if (slackConnected === '1') {
       setWebhookTestMessage('Slack connected successfully!');
-      // Refresh Slack status and fetch data
-      prmApi.getSlackStatus().then(async response => {
-        const isConnected = response.data.connected || false;
-        setSlackConnected(isConnected);
+      // Refresh Slack status - fetchSlackData will be called by the useEffect when slackConnected changes
+      prmApi.getSlackStatus().then(response => {
+        setSlackConnected(response.data.connected || false);
         setSlackWorkspaceName(response.data.workspace_name || '');
-        if (isConnected) {
-          // Fetch channels, users, and targets
-          try {
-            const [channelsResponse, targetsResponse] = await Promise.all([
-              prmApi.getSlackChannels(),
-              prmApi.getSlackTargets(),
-            ]);
-            setSlackChannels(channelsResponse.data.channels || []);
-            setSlackUsers(channelsResponse.data.users || []);
-            setSlackTargets(targetsResponse.data.targets || []);
-          } catch (error) {
-            console.error('Failed to fetch Slack data:', error);
-          }
-        }
       });
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
@@ -491,7 +509,7 @@ export default function Settings() {
                                       type="checkbox"
                                       checked={slackTargets.includes(channel.id)}
                                       onChange={() => handleToggleSlackTarget(channel.id)}
-                                      className="mr-2"
+                                      className="mr-2 cursor-pointer"
                                     />
                                     <span className="text-sm">{channel.name}</span>
                                   </label>
@@ -514,7 +532,7 @@ export default function Settings() {
                                       type="checkbox"
                                       checked={slackTargets.includes(user.id)}
                                       onChange={() => handleToggleSlackTarget(user.id)}
-                                      className="mr-2"
+                                      className="mr-2 cursor-pointer"
                                     />
                                     <span className="text-sm">
                                       {user.name}
@@ -526,10 +544,16 @@ export default function Settings() {
                             </div>
                           )}
                           
+                          {slackChannels.length === 0 && slackUsers.length === 0 && !loadingSlackData && (
+                            <p className="text-sm text-gray-500 mb-4">
+                              No channels or users found. Make sure the Slack app has the necessary permissions.
+                            </p>
+                          )}
+                          
                           <button
                             onClick={handleSaveSlackTargets}
                             disabled={savingSlackTargets}
-                            className="btn-primary text-sm"
+                            className="btn-primary text-sm mt-4"
                           >
                             {savingSlackTargets ? 'Saving...' : 'Save targets'}
                           </button>

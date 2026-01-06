@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed Slack API calls to use POST instead of GET for conversations.list and users.list
+- Fixed Slack data loading when Slack is already connected on page load
+- Fixed checkbox interaction by adding proper cursor styling
 
 ## [1.12.1] - 2026-01-04
 
