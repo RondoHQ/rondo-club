@@ -279,8 +279,8 @@ export default function PeopleList() {
               onChange={(e) => setSortField(e.target.value)}
               className="text-sm border-0 bg-transparent focus:ring-0 focus:outline-none cursor-pointer"
             >
-              <option value="first_name">First Name</option>
-              <option value="last_name">Last Name</option>
+              <option value="first_name">First name</option>
+              <option value="last_name">Last name</option>
             </select>
             <div className="h-4 w-px bg-gray-300"></div>
             <button
@@ -424,7 +424,7 @@ export default function PeopleList() {
           
           <Link to="/people/new" className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Add Person</span>
+            <span className="hidden md:inline">Add person</span>
           </Link>
         </div>
       </div>
@@ -455,7 +455,7 @@ export default function PeopleList() {
           </p>
           <Link to="/people/new" className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Add Person</span>
+            <span className="hidden md:inline">Add person</span>
           </Link>
         </div>
       )}

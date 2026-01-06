@@ -68,8 +68,8 @@ export default function PersonForm() {
   // to ensure consistent hook calls on every render
   useDocumentTitle(
     isEditing && person
-      ? `Edit ${person.title?.rendered || person.title || 'Person'}`
-      : 'New Person'
+      ? `Edit ${person.title?.rendered || person.title || 'person'}`
+      : 'New person'
   );
   
   const onSubmit = async (data) => {
@@ -169,26 +169,26 @@ export default function PersonForm() {
         {returnTo === 'relationship' && sourcePersonId ? (
           <Link to={`/people/${sourcePersonId}/relationship/new`} className="flex items-center text-gray-600 hover:text-gray-900">
             <ArrowLeft className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Back to Add Relationship</span>
+            <span className="hidden md:inline">Back to add relationship</span>
           </Link>
         ) : (
           <Link to="/people" className="flex items-center text-gray-600 hover:text-gray-900">
             <ArrowLeft className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Back to People</span>
+            <span className="hidden md:inline">Back to people</span>
           </Link>
         )}
       </div>
       
       <div className="card p-6">
         <h1 className="text-xl font-bold mb-6">
-          {isEditing ? 'Edit Person' : 'Add New Person'}
+          {isEditing ? 'Edit person' : 'Add new person'}
         </h1>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Basic info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label">First Name *</label>
+              <label className="label">First name *</label>
               <input
                 {...register('first_name', { required: 'First name is required' })}
                 className="input"
@@ -200,7 +200,7 @@ export default function PersonForm() {
             </div>
             
             <div>
-              <label className="label">Last Name</label>
+              <label className="label">Last name</label>
               <input
                 {...register('last_name')}
                 className="input"
@@ -263,7 +263,7 @@ export default function PersonForm() {
           )}
           
           <div>
-            <label className="label">How We Met</label>
+            <label className="label">How we met</label>
             <textarea
               {...register('how_we_met')}
               className="input"
@@ -302,7 +302,7 @@ export default function PersonForm() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              {isEditing ? 'Save Changes' : 'Create Person'}
+              {isEditing ? 'Save changes' : 'Create person'}
             </button>
           </div>
         </form>

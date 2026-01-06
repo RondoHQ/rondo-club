@@ -254,8 +254,8 @@ export default function RelationshipForm() {
   // Update document title
   useDocumentTitle(
     isEditing
-      ? `Edit Relationship - ${person?.title?.rendered || person?.title || 'Person'}`
-      : `Add Relationship - ${person?.title?.rendered || person?.title || 'Person'}`
+      ? `Edit relationship - ${person?.title?.rendered || person?.title || 'person'}`
+      : `Add relationship - ${person?.title?.rendered || person?.title || 'person'}`
   );
 
   const onSubmit = async (data) => {
@@ -306,7 +306,7 @@ export default function RelationshipForm() {
     return (
       <div className="card p-6 text-center">
         <p className="text-red-600">Failed to load person.</p>
-        <Link to="/people" className="btn-secondary mt-4">Back to People</Link>
+        <Link to="/people" className="btn-secondary mt-4">Back to people</Link>
       </div>
     );
   }
@@ -317,19 +317,19 @@ export default function RelationshipForm() {
       <div className="flex items-center justify-between">
         <Link to={`/people/${personId}`} className="flex items-center text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to Person</span>
+          <span className="hidden md:inline">Back to person</span>
         </Link>
       </div>
       
       <div className="card p-6">
         <h1 className="text-xl font-bold mb-6">
-          {isEditing ? 'Edit Relationship' : 'Add Relationship'}
+          {isEditing ? 'Edit relationship' : 'Add relationship'}
         </h1>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Related Person */}
           <div>
-            <label className="label">Related Person *</label>
+            <label className="label">Related person *</label>
             <Controller
               name="related_person"
               control={control}
@@ -354,7 +354,7 @@ export default function RelationshipForm() {
                   className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
                 >
                   <Plus className="w-4 h-4" />
-                  Add New Person
+                  Add new person
                 </Link>
               </div>
             )}
@@ -362,7 +362,7 @@ export default function RelationshipForm() {
 
           {/* Relationship Type */}
           <div>
-            <label className="label">Relationship Type</label>
+            <label className="label">Relationship type</label>
             <select
               {...register('relationship_type', { 
                 setValueAs: (v) => v ? parseInt(v, 10) : null 
@@ -381,7 +381,7 @@ export default function RelationshipForm() {
 
           {/* Custom Label */}
           <div>
-            <label className="label">Custom Label</label>
+            <label className="label">Custom label</label>
             <input
               {...register('relationship_label')}
               className="input"
@@ -407,7 +407,7 @@ export default function RelationshipForm() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              {isEditing ? 'Save Changes' : 'Add Relationship'}
+              {isEditing ? 'Save changes' : 'Add relationship'}
             </button>
           </div>
         </form>

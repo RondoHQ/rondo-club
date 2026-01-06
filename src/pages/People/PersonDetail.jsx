@@ -567,7 +567,7 @@ export default function PersonDetail() {
     return (
       <div className="card p-6 text-center">
         <p className="text-red-600">Failed to load person.</p>
-        <Link to="/people" className="btn-secondary mt-4">Back to People</Link>
+        <Link to="/people" className="btn-secondary mt-4">Back to people</Link>
       </div>
     );
   }
@@ -635,7 +635,7 @@ export default function PersonDetail() {
       <div className="flex items-center justify-between">
         <Link to="/people" className="flex items-center text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to People</span>
+          <span className="hidden md:inline">Back to people</span>
         </Link>
         <div className="flex gap-2">
           <button onClick={handleExportVCard} className="btn-secondary">
@@ -660,7 +660,7 @@ export default function PersonDetail() {
             to={`/people/${id}/family-tree`}
             className="btn-secondary text-sm"
           >
-            View Family Tree
+            View family tree
           </Link>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -826,7 +826,7 @@ export default function PersonDetail() {
           {!isDeceased && (
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Contact Information</h2>
+                <h2 className="font-semibold">Contact information</h2>
                 <Link
                   to={`/people/${id}/contact/new`}
                   className="btn-secondary text-sm"
@@ -947,7 +947,7 @@ export default function PersonDetail() {
           {/* Important Dates */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Important Dates</h2>
+              <h2 className="font-semibold">Events</h2>
               <Link
                 to={`/dates/new?person=${id}`}
                 className="btn-secondary text-sm"
@@ -1013,13 +1013,13 @@ export default function PersonDetail() {
           {/* Work history */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Work History</h2>
+              <h2 className="font-semibold">Work history</h2>
               <Link
                 to={`/people/${id}/work-history/new`}
                 className="btn-secondary text-sm"
               >
                 <Plus className="w-4 h-4 md:mr-1" />
-                <span className="hidden md:inline">Add Work History</span>
+                <span className="hidden md:inline">Add work history</span>
               </Link>
             </div>
             {sortedWorkHistory?.length > 0 ? (
@@ -1132,7 +1132,7 @@ export default function PersonDetail() {
           {/* How we met */}
           {(acf.how_we_met || acf.met_date) && (
             <div className="card p-6">
-              <h2 className="font-semibold mb-3">How We Met</h2>
+              <h2 className="font-semibold mb-3">How we met</h2>
               {acf.met_date && (
                 <p className="text-sm text-gray-500 mb-2">
                   <Calendar className="w-4 h-4 inline mr-1" />
@@ -1154,7 +1154,7 @@ export default function PersonDetail() {
                 className="btn-secondary text-sm"
               >
                 <Plus className="w-4 h-4 md:mr-1" />
-                <span className="hidden md:inline">Add Relationship</span>
+                <span className="hidden md:inline">Add relationship</span>
               </Link>
             </div>
             {sortedRelationships?.length > 0 ? (

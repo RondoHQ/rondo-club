@@ -72,7 +72,7 @@ export default function CompanyDetail() {
     return (
       <div className="card p-6 text-center">
         <p className="text-red-600">Failed to load organization.</p>
-        <Link to="/companies" className="btn-secondary mt-4">Back to Organizations</Link>
+        <Link to="/companies" className="btn-secondary mt-4">Back to organizations</Link>
       </div>
     );
   }
@@ -90,7 +90,7 @@ export default function CompanyDetail() {
       <div className="flex items-center justify-between">
         <Link to="/companies" className="flex items-center text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to Organizations</span>
+          <span className="hidden md:inline">Back to organizations</span>
         </Link>
         <div className="flex gap-2">
           <Link to={`/companies/${id}/edit`} className="btn-secondary">
@@ -141,7 +141,7 @@ export default function CompanyDetail() {
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2" />
-            Current Employees
+            Current employees
           </h2>
           
           {employees?.current?.length > 0 ? (
@@ -177,7 +177,7 @@ export default function CompanyDetail() {
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2" />
-            Former Employees
+            Former employees
           </h2>
           
           {employees?.former?.length > 0 ? (
@@ -213,7 +213,7 @@ export default function CompanyDetail() {
       {/* Contact info */}
       {acf.contact_info?.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4">Contact Information</h2>
+          <h2 className="font-semibold mb-4">Contact information</h2>
           <div className="space-y-3">
             {acf.contact_info.map((contact, index) => (
               <div key={index}>

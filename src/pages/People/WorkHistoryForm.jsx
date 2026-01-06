@@ -78,8 +78,8 @@ export default function WorkHistoryForm() {
   // Update document title
   useDocumentTitle(
     isEditing
-      ? `Edit Work History - ${person?.title?.rendered || person?.title || 'Person'}`
-      : `Add Work History - ${person?.title?.rendered || person?.title || 'Person'}`
+      ? `Edit work history - ${person?.title?.rendered || person?.title || 'person'}`
+      : `Add work history - ${person?.title?.rendered || person?.title || 'person'}`
   );
 
   const onSubmit = async (data) => {
@@ -135,7 +135,7 @@ export default function WorkHistoryForm() {
     return (
       <div className="card p-6 text-center">
         <p className="text-red-600">Failed to load person.</p>
-        <Link to="/people" className="btn-secondary mt-4">Back to People</Link>
+        <Link to="/people" className="btn-secondary mt-4">Back to people</Link>
       </div>
     );
   }
@@ -146,13 +146,13 @@ export default function WorkHistoryForm() {
       <div className="flex items-center justify-between">
         <Link to={`/people/${personId}`} className="flex items-center text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to Person</span>
+          <span className="hidden md:inline">Back to person</span>
         </Link>
       </div>
       
       <div className="card p-6">
         <h1 className="text-xl font-bold mb-6">
-          {isEditing ? 'Edit Work History' : 'Add Work History'}
+          {isEditing ? 'Edit work history' : 'Add work history'}
         </h1>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -175,7 +175,7 @@ export default function WorkHistoryForm() {
 
           {/* Job Title */}
           <div>
-            <label className="label">Job Title</label>
+            <label className="label">Job title</label>
             <input
               {...register('job_title')}
               className="input"
@@ -197,7 +197,7 @@ export default function WorkHistoryForm() {
           {/* Dates */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label">Start Date</label>
+              <label className="label">Start date</label>
               <input
                 type="date"
                 {...register('start_date')}
@@ -206,7 +206,7 @@ export default function WorkHistoryForm() {
             </div>
             
             <div>
-              <label className="label">End Date</label>
+              <label className="label">End date</label>
               <input
                 type="date"
                 {...register('end_date')}
@@ -243,7 +243,7 @@ export default function WorkHistoryForm() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              {isEditing ? 'Save Changes' : 'Add Work History'}
+              {isEditing ? 'Save changes' : 'Add work history'}
             </button>
           </div>
         </form>
