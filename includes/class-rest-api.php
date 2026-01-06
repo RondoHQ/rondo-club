@@ -770,7 +770,6 @@ class PRM_REST_API {
         $results = [
             'people'    => [],
             'companies' => [],
-            'dates'     => [],
         ];
         
         // Search people
@@ -795,18 +794,6 @@ class PRM_REST_API {
         
         foreach ($companies as $company) {
             $results['companies'][] = $this->format_company_summary($company);
-        }
-        
-        // Search dates
-        $dates = get_posts([
-            'post_type'      => 'important_date',
-            's'              => $query,
-            'posts_per_page' => 10,
-            'post_status'    => 'publish',
-        ]);
-        
-        foreach ($dates as $date) {
-            $results['dates'][] = $this->format_date($date);
         }
         
         return rest_ensure_response($results);
