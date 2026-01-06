@@ -1910,13 +1910,14 @@ class PRM_REST_API {
         $redirect_uri = rest_url('prm/v1/slack/oauth/callback');
         $scopes = 'chat:write,chat:write.public,channels:read,users:read,users:read.email,commands';
         
-        $oauth_url = add_query_arg([
+        $params = [
             'client_id'    => CAELIS_SLACK_CLIENT_ID,
             'scope'        => $scopes,
-            'redirect_uri' => urlencode($redirect_uri),
+            'redirect_uri' => $redirect_uri,
             'state'        => $state,
-            'user_scope'   => '', // We don't need user scopes
-        ], 'https://slack.com/oauth/v2/authorize');
+        ];
+        
+        $oauth_url = 'https://slack.com/oauth/v2/authorize?' . http_build_query($params);
         
         // Redirect to Slack
         wp_redirect($oauth_url);
