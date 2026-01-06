@@ -114,10 +114,13 @@ class PRM_REST_API {
         ]);
         
         // Current user info
+        // Allow logged-in users (not just approved) so we can check approval status
         register_rest_route('prm/v1', '/user/me', [
             'methods'             => WP_REST_Server::READABLE,
             'callback'            => [$this, 'get_current_user'],
-            'permission_callback' => [$this, 'check_user_approved'],
+            'permission_callback' => function() {
+                return is_user_logged_in();
+            },
         ]);
         
         // Set company logo (featured image) - by media ID
