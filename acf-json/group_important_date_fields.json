@@ -38,19 +38,6 @@
             "required": 1
         },
         {
-            "key": "field_reminder_days_before",
-            "label": "Remind Days Before",
-            "name": "reminder_days_before",
-            "type": "number",
-            "instructions": "Number of days before the date to send a reminder. Use 0 for same-day reminder.",
-            "default_value": 7,
-            "min": 0,
-            "max": 365,
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
             "key": "field_custom_label",
             "label": "Custom Label",
             "name": "custom_label",

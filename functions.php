@@ -66,6 +66,9 @@ function prm_autoloader($class_name) {
         'PRM_Inverse_Relationships'  => 'class-inverse-relationships.php',
         'PRM_ICal_Feed'              => 'class-ical-feed.php',
         'PRM_User_Roles'             => 'class-user-roles.php',
+        'PRM_Notification_Channel'   => 'class-notification-channels.php',
+        'PRM_Email_Channel'          => 'class-notification-channels.php',
+        'PRM_Slack_Channel'          => 'class-notification-channels.php',
     ];
     
     if (isset($class_map[$class_name])) {

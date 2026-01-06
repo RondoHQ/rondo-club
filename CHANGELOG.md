@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-01-04
+
+### Added
+- Daily digest reminder system - users receive one notification per day with dates for today, tomorrow, and rest of week
+- Multi-channel notification support (Email and Slack)
+- User preferences for enabling/disabling notification channels in Settings
+- Slack webhook configuration with automatic testing
+- Manual trigger button for reminders (admin only) in Settings → Administration
+- REST API endpoints for notification channel management and manual triggering
+
+### Changed
+- Removed `reminder_days_before` field from important dates - all dates are now included in daily digest if they occur within 7 days
+- Reminder emails now use daily digest format instead of individual per-date reminders
+- Notification system refactored to use channel-based architecture for extensibility
+
+### Removed
+- `reminder_days_before` ACF field from important date post type
+- Per-date reminder timing configuration
+
 ## [1.10.1] - 2026-01-04
 
 ### Fixed

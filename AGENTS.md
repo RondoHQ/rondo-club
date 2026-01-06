@@ -49,7 +49,10 @@ Entry point: `functions.php`
 - `PRM_User_Roles` - Registers custom "Caelis User" role with minimal permissions
 - `PRM_REST_API` - Custom `/prm/v1/` endpoints (dashboard, search, timeline, reminders)
 - `PRM_Comment_Types` - Notes and Activities system using comments
-- `PRM_Reminders` - Daily cron job for upcoming date notifications
+- `PRM_Reminders` - Daily digest reminder system with multi-channel support (Email, Slack)
+- `PRM_Notification_Channel` - Abstract base class for notification channels
+- `PRM_Email_Channel` - Email notification implementation
+- `PRM_Slack_Channel` - Slack webhook notification implementation
 - `PRM_Monica_Import` - Monica CRM import functionality
 
 **ACF field groups** are stored as JSON in `acf-json/` for version control.
@@ -78,7 +81,7 @@ Entry point: `src/main.jsx`
 **Custom Post Types:**
 - `person` - Contact records with relationships, work history, photo gallery
 - `company` - Organizations with logo, industry, contact info (post type slug remains `company` for backward compatibility)
-- `important_date` - Recurring dates with reminder configuration, linked to people
+- `important_date` - Recurring dates linked to people (reminders sent via daily digest)
 
 **Taxonomies:**
 - `person_label`, `company_label` - Tags

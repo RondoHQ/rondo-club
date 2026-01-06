@@ -705,7 +705,6 @@ class PRM_Google_Contacts_Import {
         update_field('date_value', $date, $date_post_id);
         update_field('is_recurring', true, $date_post_id);
         update_field('related_people', [$post_id], $date_post_id);
-        update_field('reminder_days_before', 7, $date_post_id);
 
         // Ensure the birthday term exists
         $term = term_exists('birthday', 'date_type');
