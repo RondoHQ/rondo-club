@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
-import { ArrowLeft, Save, X } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, Save, X, Plus } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { usePerson, useUpdatePerson, usePeople } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -146,6 +146,8 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
 export default function RelationshipForm() {
   const { personId, index } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const relationshipIndex = parseInt(index, 10);
   const isEditing = !isNaN(relationshipIndex);
   
@@ -164,13 +166,36 @@ export default function RelationshipForm() {
     },
   });
 
-  const { register, handleSubmit, reset, control, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, reset, control, setValue, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
       related_person: null,
       relationship_type: '',
       relationship_label: '',
     },
   });
+  
+  // Handle pre-selecting newly created person
+  useEffect(() => {
+    const newPersonId = searchParams.get('newPersonId');
+    if (newPersonId && !isEditing) {
+      const personIdNum = parseInt(newPersonId, 10);
+      if (!isNaN(personIdNum)) {
+        // Invalidate people query to ensure new person is loaded
+        queryClient.invalidateQueries({ queryKey: ['people'] });
+        
+        // Set the related person value
+        setValue('related_person', personIdNum);
+        
+        // Remove query parameter from URL
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete('newPersonId');
+        navigate(
+          { search: newSearchParams.toString() },
+          { replace: true }
+        );
+      }
+    }
+  }, [searchParams, isEditing, setValue, navigate, queryClient]);
 
   // Load relationship item when editing
   useEffect(() => {
@@ -283,6 +308,17 @@ export default function RelationshipForm() {
             />
             {errors.related_person && (
               <p className="text-sm text-red-600 mt-1">{errors.related_person.message}</p>
+            )}
+            {!isEditing && (
+              <div className="mt-2">
+                <Link
+                  to={`/people/new?returnTo=relationship&sourcePersonId=${personId}`}
+                  className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New Person
+                </Link>
+              </div>
             )}
           </div>
 
