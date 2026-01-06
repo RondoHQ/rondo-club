@@ -205,7 +205,7 @@ export default function Dashboard() {
         {/* Stats - still show them even when empty */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard
-            title="Total People"
+            title="Total people"
             value={0}
             icon={Users}
             href="/people"
@@ -217,7 +217,7 @@ export default function Dashboard() {
             href="/companies"
           />
           <StatCard
-            title="Important Dates"
+            title="Events"
             value={0}
             icon={Calendar}
             href="/dates"
@@ -235,7 +235,7 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
-          title="Total People"
+          title="Total people"
           value={stats?.total_people || 0}
           icon={Users}
           href="/people"
@@ -247,7 +247,7 @@ export default function Dashboard() {
           href="/companies"
         />
         <StatCard
-          title="Important Dates"
+          title="Events"
           value={stats?.total_dates || 0}
           icon={Calendar}
           href="/dates"
@@ -260,13 +260,13 @@ export default function Dashboard() {
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <h2 className="font-semibold flex items-center">
               <Calendar className="w-5 h-5 mr-2 text-gray-500" />
-              Upcoming Reminders
+              Upcoming reminders
             </h2>
             <Link 
               to="/dates" 
               className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
             >
-              View all
+              View all reminders
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
@@ -288,13 +288,13 @@ export default function Dashboard() {
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <h2 className="font-semibold flex items-center">
               <Users className="w-5 h-5 mr-2 text-gray-500" />
-              Recent People
+              Recently edited people
             </h2>
             <Link 
               to="/people" 
               className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
             >
-              View all
+              View all people
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
