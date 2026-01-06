@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Simplified notification format: if a person's name appears in the date title (e.g., "Eva Douma's Birthday"), that name becomes the clickable link and the duplicate name below is removed
+- Removed header "Your Important Dates - <date>" from Slack notifications
 
 ### Fixed
 - Fixed Slack API calls to use POST instead of GET for conversations.list and users.list
