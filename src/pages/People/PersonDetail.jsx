@@ -25,7 +25,11 @@ const LinkedInIcon = ({ className }) => (
       L341.91,330.654L341.91,330.654z"/>
   </svg>
 );
-import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson } from '@/hooks/usePeople';
+import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
+import TimelineView from '@/components/Timeline/TimelineView';
+import NoteModal from '@/components/Timeline/NoteModal';
+import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
+import TodoModal from '@/components/Timeline/TodoModal';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -61,10 +65,24 @@ export default function PersonDetail() {
   const deleteNote = useDeleteNote();
   const deleteDate = useDeleteDate();
   const updatePerson = useUpdatePerson();
+  const createNote = useCreateNote();
+  const createActivity = useCreateActivity();
+  const createTodo = useCreateTodo();
+  const updateTodo = useUpdateTodo();
+  const deleteActivity = useDeleteActivity();
+  const deleteTodo = useDeleteTodo();
+  const { data: allPeople } = usePeople();
+  
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [selectedLabelToAdd, setSelectedLabelToAdd] = useState('');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const fileInputRef = useRef(null);
+  
+  // Modal states
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [showTodoModal, setShowTodoModal] = useState(false);
+  const [editingTodo, setEditingTodo] = useState(null);
   
   // Fetch available labels
   const { data: availableLabelsData } = useQuery({
@@ -307,6 +325,110 @@ export default function PersonDetail() {
     }
     
     await deleteNote.mutateAsync({ noteId, personId: id });
+  };
+
+  // Handle creating a note
+  const handleCreateNote = async (content) => {
+    try {
+      await createNote.mutateAsync({ personId: id, content });
+      setShowNoteModal(false);
+    } catch (error) {
+      console.error('Failed to create note:', error);
+      alert('Failed to create note. Please try again.');
+    }
+  };
+
+  // Handle creating an activity
+  const handleCreateActivity = async (data) => {
+    try {
+      await createActivity.mutateAsync({ personId: id, data });
+      setShowActivityModal(false);
+    } catch (error) {
+      console.error('Failed to create activity:', error);
+      alert('Failed to create activity. Please try again.');
+    }
+  };
+
+  // Handle creating a todo
+  const handleCreateTodo = async (data) => {
+    try {
+      await createTodo.mutateAsync({ personId: id, data });
+      setShowTodoModal(false);
+      setEditingTodo(null);
+    } catch (error) {
+      console.error('Failed to create todo:', error);
+      alert('Failed to create todo. Please try again.');
+    }
+  };
+
+  // Handle updating a todo
+  const handleUpdateTodo = async (data) => {
+    if (!editingTodo) return;
+    
+    try {
+      await updateTodo.mutateAsync({ todoId: editingTodo.id, data, personId: id });
+      setShowTodoModal(false);
+      setEditingTodo(null);
+    } catch (error) {
+      console.error('Failed to update todo:', error);
+      alert('Failed to update todo. Please try again.');
+    }
+  };
+
+  // Handle toggling todo completion
+  const handleToggleTodo = async (todo) => {
+    try {
+      await updateTodo.mutateAsync({
+        todoId: todo.id,
+        data: {
+          content: todo.content,
+          due_date: todo.due_date,
+          is_completed: !todo.is_completed,
+        },
+        personId: id,
+      });
+    } catch (error) {
+      console.error('Failed to toggle todo:', error);
+      alert('Failed to update todo. Please try again.');
+    }
+  };
+
+  // Handle deleting an activity
+  const handleDeleteActivity = async (activityId) => {
+    if (!window.confirm('Are you sure you want to delete this activity?')) {
+      return;
+    }
+    
+    await deleteActivity.mutateAsync({ activityId, personId: id });
+  };
+
+  // Handle deleting a todo
+  const handleDeleteTodo = async (todoId) => {
+    if (!window.confirm('Are you sure you want to delete this todo?')) {
+      return;
+    }
+    
+    await deleteTodo.mutateAsync({ todoId, personId: id });
+  };
+
+  // Handle editing timeline item
+  const handleEditTimelineItem = (item) => {
+    if (item.type === 'todo') {
+      setEditingTodo(item);
+      setShowTodoModal(true);
+    }
+    // Notes and activities editing can be added later if needed
+  };
+
+  // Handle deleting timeline item
+  const handleDeleteTimelineItem = (item) => {
+    if (item.type === 'note') {
+      handleDeleteNote(item.id);
+    } else if (item.type === 'activity') {
+      handleDeleteActivity(item.id);
+    } else if (item.type === 'todo') {
+      handleDeleteTodo(item.id);
+    }
   };
 
   // Handle deleting a work history item
@@ -1091,40 +1213,70 @@ export default function PersonDetail() {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">Timeline</h2>
-              <button className="btn-secondary text-sm">
-                <Plus className="w-4 h-4 md:mr-1" />
-                <span className="hidden md:inline">Add Note</span>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowNoteModal(true)}
+                  className="btn-secondary text-sm"
+                >
+                  <Plus className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Note</span>
+                </button>
+                <button
+                  onClick={() => setShowActivityModal(true)}
+                  className="btn-secondary text-sm"
+                >
+                  <Plus className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Activity</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingTodo(null);
+                    setShowTodoModal(true);
+                  }}
+                  className="btn-secondary text-sm"
+                >
+                  <Plus className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Todo</span>
+                </button>
+              </div>
             </div>
             
-            {timeline?.length > 0 ? (
-              <div className="space-y-4">
-                {timeline.map((item) => (
-                  <div key={item.id} className="border-l-2 border-gray-200 pl-4 pb-4 group">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <span className="capitalize">{item.type}</span>
-                        <span>•</span>
-                        <span>{format(new Date(item.created), 'MMM d, yyyy')}</span>
-                      </div>
-                      <button
-                        onClick={() => handleDeleteNote(item.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded"
-                        title="Delete note"
-                      >
-                        <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                      </button>
-                    </div>
-                    <p className="mt-1">{item.content}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
-                No notes or activities yet.
-              </p>
-            )}
+            <TimelineView
+              timeline={timeline || []}
+              onEdit={handleEditTimelineItem}
+              onDelete={handleDeleteTimelineItem}
+              onToggleTodo={handleToggleTodo}
+              personId={id}
+              allPeople={allPeople || []}
+            />
           </div>
+
+          {/* Modals */}
+          <NoteModal
+            isOpen={showNoteModal}
+            onClose={() => setShowNoteModal(false)}
+            onSubmit={handleCreateNote}
+            isLoading={createNote.isPending}
+          />
+          
+          <QuickActivityModal
+            isOpen={showActivityModal}
+            onClose={() => setShowActivityModal(false)}
+            onSubmit={handleCreateActivity}
+            isLoading={createActivity.isPending}
+            personId={id}
+          />
+          
+          <TodoModal
+            isOpen={showTodoModal}
+            onClose={() => {
+              setShowTodoModal(false);
+              setEditingTodo(null);
+            }}
+            onSubmit={editingTodo ? handleUpdateTodo : handleCreateTodo}
+            isLoading={editingTodo ? updateTodo.isPending : createTodo.isPending}
+            todo={editingTodo}
+          />
         </div>
         
         {/* Sidebar */}

@@ -193,6 +193,70 @@ export function useCreateActivity() {
   });
 }
 
+export function useUpdateActivity() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ activityId, data, personId }) => prmApi.updateActivity(activityId, data),
+    onSuccess: (_, { personId }) => {
+      if (personId) {
+        queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
+      }
+    },
+  });
+}
+
+export function useDeleteActivity() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ activityId, personId }) => prmApi.deleteActivity(activityId),
+    onSuccess: (_, { personId }) => {
+      if (personId) {
+        queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
+      }
+    },
+  });
+}
+
+// Todo mutations
+export function useCreateTodo() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ personId, data }) => prmApi.createTodo(personId, data),
+    onSuccess: (_, { personId }) => {
+      queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
+    },
+  });
+}
+
+export function useUpdateTodo() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ todoId, data, personId }) => prmApi.updateTodo(todoId, data),
+    onSuccess: (_, { personId }) => {
+      if (personId) {
+        queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
+      }
+    },
+  });
+}
+
+export function useDeleteTodo() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ todoId, personId }) => prmApi.deleteTodo(todoId),
+    onSuccess: (_, { personId }) => {
+      if (personId) {
+        queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
+      }
+    },
+  });
+}
+
 // Date mutations
 export function useDeleteDate() {
   const queryClient = useQueryClient();
