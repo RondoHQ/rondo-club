@@ -60,8 +60,8 @@ export default function ContactDetailForm() {
   // Update document title
   useDocumentTitle(
     isEditing
-      ? `Edit Contact Detail - ${person?.title?.rendered || person?.title || 'Person'}`
-      : `Add Contact Detail - ${person?.title?.rendered || person?.title || 'Person'}`
+      ? `Edit contact detail - ${person?.title?.rendered || person?.title || 'person'}`
+      : `Add contact detail - ${person?.title?.rendered || person?.title || 'person'}`
   );
 
   const onSubmit = async (data) => {
@@ -131,7 +131,7 @@ export default function ContactDetailForm() {
     return (
       <div className="card p-6 text-center">
         <p className="text-red-600">Failed to load person.</p>
-        <Link to="/people" className="btn-secondary mt-4">Back to People</Link>
+        <Link to="/people" className="btn-secondary mt-4">Back to people</Link>
       </div>
     );
   }
@@ -142,19 +142,19 @@ export default function ContactDetailForm() {
       <div className="flex items-center justify-between">
         <Link to={`/people/${personId}`} className="flex items-center text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to Person</span>
+          <span className="hidden md:inline">Back to person</span>
         </Link>
       </div>
       
       <div className="card p-6">
         <h1 className="text-xl font-bold mb-6">
-          {isEditing ? 'Edit Contact Detail' : 'Add Contact Detail'}
+          {isEditing ? 'Edit contact detail' : 'Add contact detail'}
         </h1>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Contact Type */}
           <div>
-            <label className="label">Contact Type *</label>
+            <label className="label">Contact type *</label>
             <select
               {...register('contact_type', { required: 'Please select a contact type' })}
               className="input"
@@ -210,7 +210,7 @@ export default function ContactDetailForm() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              {isEditing ? 'Save Changes' : 'Add Contact Detail'}
+              {isEditing ? 'Save changes' : 'Add contact detail'}
             </button>
           </div>
         </form>

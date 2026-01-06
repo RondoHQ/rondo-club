@@ -108,7 +108,7 @@ export default function DatesList() {
         </p>
         <Link to="/dates/new" className="btn-primary">
           <Plus className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Add Date</span>
+          <span className="hidden md:inline">Add date</span>
         </Link>
       </div>
       
@@ -134,7 +134,7 @@ export default function DatesList() {
           <p className="text-gray-500 mb-4">Add birthdays, anniversaries, and more.</p>
           <Link to="/dates/new" className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Add Date</span>
+            <span className="hidden md:inline">Add date</span>
           </Link>
         </div>
       )}

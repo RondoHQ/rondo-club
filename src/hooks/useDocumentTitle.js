@@ -46,9 +46,9 @@ export function useRouteTitle(customTitle = null) {
         if (path === '/people' || path === '/people/') {
           title = 'People';
         } else if (path === '/people/new') {
-          title = 'New Person';
+          title = 'New person';
         } else if (path.endsWith('/edit')) {
-          title = 'Edit Person';
+          title = 'Edit person';
         } else if (routeId) {
           // For detail pages, we'll use a generic title
           // Individual pages can override with useDocumentTitle
@@ -60,9 +60,9 @@ export function useRouteTitle(customTitle = null) {
         if (path === '/companies' || path === '/companies/') {
           title = 'Organizations';
         } else if (path === '/companies/new') {
-          title = 'New Organization';
+          title = 'New organization';
         } else if (path.endsWith('/edit')) {
-          title = 'Edit Organization';
+          title = 'Edit organization';
         } else if (routeId) {
           title = 'Organization';
         } else {
@@ -70,13 +70,13 @@ export function useRouteTitle(customTitle = null) {
         }
       } else if (path.startsWith('/dates')) {
         if (path === '/dates' || path === '/dates/') {
-          title = 'Important Dates';
+          title = 'Events';
         } else if (path === '/dates/new') {
-          title = 'New Date';
+          title = 'New date';
         } else if (path.endsWith('/edit')) {
-          title = 'Edit Date';
+          title = 'Edit date';
         } else {
-          title = 'Important Dates';
+          title = 'Events';
         }
       } else if (path.startsWith('/settings')) {
         title = 'Settings';

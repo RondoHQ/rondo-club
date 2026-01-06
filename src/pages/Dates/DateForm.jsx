@@ -358,8 +358,8 @@ export default function DateForm() {
   // to ensure consistent hook calls on every render
   useDocumentTitle(
     isEditing && dateItem
-      ? `Edit ${dateItem.title?.rendered || dateItem.title || 'Date'}`
-      : 'New Date'
+      ? `Edit ${dateItem.title?.rendered || dateItem.title || 'date'}`
+      : 'New date'
   );
 
   const onSubmit = async (data) => {
@@ -395,7 +395,7 @@ export default function DateForm() {
     ? currentRelatedPeople[0]
     : prefilledPersonId;
   const backUrl = backToPersonId ? `/people/${backToPersonId}` : '/dates';
-  const backLabel = backToPersonId ? 'Back to Person' : 'Back to Dates';
+  const backLabel = backToPersonId ? 'Back to person' : 'Back to dates';
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -408,13 +408,13 @@ export default function DateForm() {
 
       <div className="card p-6">
         <h1 className="text-xl font-bold mb-6">
-          {isEditing ? 'Edit Date' : 'Add New Date'}
+          {isEditing ? 'Edit date' : 'Add new date'}
         </h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* People selector */}
           <div>
-            <label className="label">Related People</label>
+            <label className="label">Related people</label>
             <Controller
               name="related_people"
               control={control}
@@ -431,7 +431,7 @@ export default function DateForm() {
 
           {/* Date type */}
           <div>
-            <label className="label">Date Type *</label>
+            <label className="label">Date type *</label>
             <Controller
               name="date_type"
               control={control}
@@ -508,7 +508,7 @@ export default function DateForm() {
             <Link to={backUrl} className="btn-secondary">Cancel</Link>
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
               <Save className="w-4 h-4 mr-2" />
-              {isEditing ? 'Save Changes' : 'Create Date'}
+              {isEditing ? 'Save changes' : 'Create date'}
             </button>
           </div>
         </form>

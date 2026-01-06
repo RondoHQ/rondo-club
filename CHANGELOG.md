@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.4] - 2026-01-04
+
+### Changed
+- Changed all Title Case text to Sentence case across the entire app for consistency (e.g., "First Name" → "First name", "Add Person" → "Add person", "Save Changes" → "Save changes")
+
 ## [1.11.3] - 2026-01-04
 
 ### Changed
