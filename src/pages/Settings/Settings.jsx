@@ -27,6 +27,13 @@ export default function Settings() {
   const [webhookTestMessage, setWebhookTestMessage] = useState('');
   const [disconnectingSlack, setDisconnectingSlack] = useState(false);
   
+  // Slack notification targets state
+  const [slackChannels, setSlackChannels] = useState([]);
+  const [slackUsers, setSlackUsers] = useState([]);
+  const [slackTargets, setSlackTargets] = useState([]);
+  const [loadingSlackData, setLoadingSlackData] = useState(false);
+  const [savingSlackTargets, setSavingSlackTargets] = useState(false);
+  
   // Manual trigger state (admin only)
   const [triggeringReminders, setTriggeringReminders] = useState(false);
   const [reminderMessage, setReminderMessage] = useState('');
@@ -77,10 +84,25 @@ export default function Settings() {
     
     if (slackConnected === '1') {
       setWebhookTestMessage('Slack connected successfully!');
-      // Refresh Slack status
-      prmApi.getSlackStatus().then(response => {
-        setSlackConnected(response.data.connected || false);
+      // Refresh Slack status and fetch data
+      prmApi.getSlackStatus().then(async response => {
+        const isConnected = response.data.connected || false;
+        setSlackConnected(isConnected);
         setSlackWorkspaceName(response.data.workspace_name || '');
+        if (isConnected) {
+          // Fetch channels, users, and targets
+          try {
+            const [channelsResponse, targetsResponse] = await Promise.all([
+              prmApi.getSlackChannels(),
+              prmApi.getSlackTargets(),
+            ]);
+            setSlackChannels(channelsResponse.data.channels || []);
+            setSlackUsers(channelsResponse.data.users || []);
+            setSlackTargets(targetsResponse.data.targets || []);
+          } catch (error) {
+            console.error('Failed to fetch Slack data:', error);
+          }
+        }
       });
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
@@ -113,6 +135,9 @@ export default function Settings() {
       await prmApi.disconnectSlack();
       setSlackConnected(false);
       setSlackWorkspaceName('');
+      setSlackChannels([]);
+      setSlackUsers([]);
+      setSlackTargets([]);
       setWebhookTestMessage('Slack disconnected successfully');
       // Also disable Slack channel if enabled
       if (notificationChannels.includes('slack')) {
@@ -123,6 +148,29 @@ export default function Settings() {
       alert(error.response?.data?.message || 'Failed to disconnect Slack');
     } finally {
       setDisconnectingSlack(false);
+    }
+  };
+  
+  // Handle Slack target selection
+  const handleToggleSlackTarget = (targetId) => {
+    const newTargets = slackTargets.includes(targetId)
+      ? slackTargets.filter(id => id !== targetId)
+      : [...slackTargets, targetId];
+    setSlackTargets(newTargets);
+  };
+  
+  // Save Slack targets
+  const handleSaveSlackTargets = async () => {
+    setSavingSlackTargets(true);
+    try {
+      await prmApi.updateSlackTargets(slackTargets);
+      setWebhookTestMessage('Notification targets saved successfully');
+      setTimeout(() => setWebhookTestMessage(''), 3000);
+    } catch (error) {
+      console.error('Failed to save Slack targets:', error);
+      alert(error.response?.data?.message || 'Failed to save notification targets');
+    } finally {
+      setSavingSlackTargets(false);
     }
   };
   
@@ -415,6 +463,79 @@ export default function Settings() {
                     <p className={`text-sm ${webhookTestMessage.includes('successfully') || webhookTestMessage.includes('disconnected') ? 'text-green-600' : 'text-red-600'}`}>
                       {webhookTestMessage}
                     </p>
+                  )}
+                  
+                  {/* Notification targets configuration */}
+                  {notificationChannels.includes('slack') && (
+                    <div className="mt-4 p-4 border border-gray-200 rounded-lg">
+                      <h3 className="font-medium mb-3">Notification targets</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Choose where to send Slack notifications. You can select multiple channels and users.
+                      </p>
+                      
+                      {loadingSlackData ? (
+                        <p className="text-sm text-gray-500">Loading channels and users...</p>
+                      ) : (
+                        <>
+                          {/* Channels */}
+                          {slackChannels.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium mb-2">Channels</h4>
+                              <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {slackChannels.map((channel) => (
+                                  <label
+                                    key={channel.id}
+                                    className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={slackTargets.includes(channel.id)}
+                                      onChange={() => handleToggleSlackTarget(channel.id)}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">{channel.name}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Users */}
+                          {slackUsers.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium mb-2">Direct messages</h4>
+                              <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {slackUsers.map((user) => (
+                                  <label
+                                    key={user.id}
+                                    className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={slackTargets.includes(user.id)}
+                                      onChange={() => handleToggleSlackTarget(user.id)}
+                                      className="mr-2"
+                                    />
+                                    <span className="text-sm">
+                                      {user.name}
+                                      {user.is_me && <span className="text-gray-500 ml-1">(you)</span>}
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          <button
+                            onClick={handleSaveSlackTargets}
+                            disabled={savingSlackTargets}
+                            className="btn-primary text-sm"
+                          >
+                            {savingSlackTargets ? 'Saving...' : 'Save targets'}
+                          </button>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               ) : (

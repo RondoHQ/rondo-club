@@ -195,6 +195,27 @@ class PRM_REST_API {
             'permission_callback' => '__return_true', // Public endpoint, we verify signature
         ]);
         
+        // Slack - Get channels and users
+        register_rest_route('prm/v1', '/slack/channels', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_slack_channels'],
+            'permission_callback' => 'is_user_logged_in',
+        ]);
+        
+        // Slack - Get notification targets
+        register_rest_route('prm/v1', '/slack/targets', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_slack_targets'],
+            'permission_callback' => 'is_user_logged_in',
+        ]);
+        
+        // Slack - Update notification targets
+        register_rest_route('prm/v1', '/slack/targets', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'update_slack_targets'],
+            'permission_callback' => 'is_user_logged_in',
+        ]);
+        
         // Sideload Gravatar image
         register_rest_route('prm/v1', '/people/(?P<person_id>\d+)/gravatar', [
             'methods'             => WP_REST_Server::CREATABLE,
@@ -2218,5 +2239,134 @@ class PRM_REST_API {
         // For other events, just acknowledge receipt
         // We're not subscribing to any events, so this shouldn't be called
         return rest_ensure_response(['ok' => true]);
+    }
+    
+    /**
+     * Slack - Get channels and users for notification targets
+     */
+    public function get_slack_channels($request) {
+        $user_id = get_current_user_id();
+        $bot_token = get_user_meta($user_id, 'caelis_slack_bot_token', true);
+        
+        if (empty($bot_token)) {
+            return new WP_Error(
+                'slack_not_connected',
+                __('Slack is not connected.', 'personal-crm'),
+                ['status' => 400]
+            );
+        }
+        
+        $bot_token = base64_decode($bot_token);
+        $channels = [];
+        $users = [];
+        
+        // Fetch public channels
+        $channels_response = wp_remote_post('https://slack.com/api/conversations.list', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $bot_token,
+                'Content-Type'  => 'application/json',
+            ],
+            'body' => json_encode([
+                'types' => 'public_channel,private_channel',
+                'exclude_archived' => true,
+            ]),
+            'timeout' => 10,
+        ]);
+        
+        if (!is_wp_error($channels_response)) {
+            $channels_body = json_decode(wp_remote_retrieve_body($channels_response), true);
+            if (!empty($channels_body['ok']) && !empty($channels_body['channels'])) {
+                foreach ($channels_body['channels'] as $channel) {
+                    $channels[] = [
+                        'id'   => $channel['id'],
+                        'name' => '#' . $channel['name'],
+                        'type' => 'channel',
+                    ];
+                }
+            }
+        }
+        
+        // Fetch users
+        $users_response = wp_remote_post('https://slack.com/api/users.list', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $bot_token,
+                'Content-Type'  => 'application/json',
+            ],
+            'timeout' => 10,
+        ]);
+        
+        if (!is_wp_error($users_response)) {
+            $users_body = json_decode(wp_remote_retrieve_body($users_response), true);
+            if (!empty($users_body['ok']) && !empty($users_body['members'])) {
+                $slack_user_id = get_user_meta($user_id, 'caelis_slack_user_id', true);
+                foreach ($users_body['members'] as $user) {
+                    // Skip bots and deleted users
+                    if (!empty($user['deleted']) || (!empty($user['is_bot']) && $user['id'] !== 'USLACKBOT')) {
+                        continue;
+                    }
+                    $users[] = [
+                        'id'   => $user['id'],
+                        'name' => $user['real_name'] ?: $user['name'],
+                        'type' => 'user',
+                        'is_me' => ($user['id'] === $slack_user_id),
+                    ];
+                }
+            }
+        }
+        
+        return rest_ensure_response([
+            'channels' => $channels,
+            'users'    => $users,
+        ]);
+    }
+    
+    /**
+     * Slack - Get current notification targets
+     */
+    public function get_slack_targets($request) {
+        $user_id = get_current_user_id();
+        $targets = get_user_meta($user_id, 'caelis_slack_targets', true);
+        
+        if (!is_array($targets)) {
+            // Default to user's own Slack user ID (DM)
+            $slack_user_id = get_user_meta($user_id, 'caelis_slack_user_id', true);
+            $targets = $slack_user_id ? [$slack_user_id] : [];
+        }
+        
+        return rest_ensure_response([
+            'targets' => $targets,
+        ]);
+    }
+    
+    /**
+     * Slack - Update notification targets
+     */
+    public function update_slack_targets($request) {
+        $user_id = get_current_user_id();
+        $targets = $request->get_param('targets');
+        
+        if (!is_array($targets)) {
+            return new WP_Error(
+                'invalid_targets',
+                __('Targets must be an array.', 'personal-crm'),
+                ['status' => 400]
+            );
+        }
+        
+        // Validate targets are strings (channel/user IDs)
+        $targets = array_filter(array_map('sanitize_text_field', $targets));
+        
+        // If empty, default to user's Slack user ID
+        if (empty($targets)) {
+            $slack_user_id = get_user_meta($user_id, 'caelis_slack_user_id', true);
+            $targets = $slack_user_id ? [$slack_user_id] : [];
+        }
+        
+        update_user_meta($user_id, 'caelis_slack_targets', $targets);
+        
+        return rest_ensure_response([
+            'success' => true,
+            'targets' => $targets,
+        ]);
     }
 }
