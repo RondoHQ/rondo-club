@@ -350,7 +350,7 @@ export default function Settings() {
             
             {/* Notification time */}
             <div>
-              <label className="label mb-1">Notification Time</label>
+              <label className="label mb-1">Notification Time (UTC)</label>
               <input
                 type="time"
                 value={notificationTime}
@@ -358,8 +358,34 @@ export default function Settings() {
                 className="input"
                 disabled={savingTime}
               />
+              {notificationTime && (
+                <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                  <p className="text-gray-700">
+                    <span className="font-medium">UTC:</span> {notificationTime}
+                  </p>
+                  <p className="text-gray-700 mt-1">
+                    <span className="font-medium">Your time ({Intl.DateTimeFormat().resolvedOptions().timeZone}):</span>{' '}
+                    {(() => {
+                      try {
+                        // Parse UTC time and convert to local timezone
+                        const [hours, minutes] = notificationTime.split(':');
+                        const utcDate = new Date();
+                        utcDate.setUTCHours(parseInt(hours), parseInt(minutes), 0, 0);
+                        const localTime = utcDate.toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          hour12: false 
+                        });
+                        return localTime;
+                      } catch (e) {
+                        return notificationTime;
+                      }
+                    })()}
+                  </p>
+                </div>
+              )}
               <p className="text-xs text-gray-500 mt-1">
-                Choose the time when you want to receive your daily reminder digest. Reminders are sent within a 1-hour window of your selected time.
+                Choose the UTC time when you want to receive your daily reminder digest. Reminders are sent within a 1-hour window of your selected time.
               </p>
             </div>
           </div>
