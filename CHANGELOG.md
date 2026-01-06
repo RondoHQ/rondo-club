@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed Slack OAuth URL construction to properly pass client_id parameter
+- Fixed Slack OAuth authorize endpoint to return JSON instead of redirect (REST API endpoints cannot use wp_redirect)
 
 ## [1.12.0] - 2026-01-04
 
