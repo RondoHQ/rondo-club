@@ -1919,9 +1919,10 @@ class PRM_REST_API {
         
         $oauth_url = 'https://slack.com/oauth/v2/authorize?' . http_build_query($params);
         
-        // Redirect to Slack
-        wp_redirect($oauth_url);
-        exit;
+        // Return OAuth URL - frontend will handle redirect
+        return rest_ensure_response([
+            'oauth_url' => $oauth_url,
+        ]);
     }
     
     /**

@@ -91,9 +91,16 @@ export default function Settings() {
     }
   }, []);
   
-  const handleConnectSlack = () => {
-    // Redirect to OAuth authorize endpoint
-    window.location.href = `${config.apiUrl}prm/v1/slack/oauth/authorize`;
+  const handleConnectSlack = async () => {
+    try {
+      // Get OAuth URL from backend
+      const response = await apiClient.get('/prm/v1/slack/oauth/authorize');
+      // Redirect to Slack OAuth URL
+      window.location.href = response.data.oauth_url;
+    } catch (error) {
+      console.error('Failed to get Slack OAuth URL:', error);
+      alert(error.response?.data?.message || 'Failed to connect Slack');
+    }
   };
   
   const handleDisconnectSlack = async () => {
@@ -415,6 +422,7 @@ export default function Settings() {
                   <button
                     onClick={handleConnectSlack}
                     className="btn-primary w-full"
+                    disabled={disconnectingSlack}
                   >
                     Connect Slack
                   </button>
