@@ -560,8 +560,8 @@ class PRM_VCard_Import {
             $this->import_note($post_id, $vcard['note']);
         }
 
-        // Import photo
-        if (!empty($vcard['photo']) && !has_post_thumbnail($post_id)) {
+        // Import photo (always import, even if person already has a photo)
+        if (!empty($vcard['photo'])) {
             $this->import_photo($post_id, $vcard['photo'], $vcard['photo_type'], $first_name, $last_name);
         }
     }
@@ -700,6 +700,12 @@ class PRM_VCard_Import {
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/media.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
+
+        // Delete existing thumbnail if present
+        $existing_thumbnail_id = get_post_thumbnail_id($post_id);
+        if ($existing_thumbnail_id) {
+            wp_delete_attachment($existing_thumbnail_id, true); // Force delete
+        }
 
         $attachment_id = null;
 
