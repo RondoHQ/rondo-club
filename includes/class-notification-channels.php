@@ -512,15 +512,6 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         $blocks = [];
         $today_formatted = date_i18n(get_option('date_format'));
         
-        // Header
-        $blocks[] = [
-            'type' => 'header',
-            'text' => [
-                'type' => 'plain_text',
-                'text' => sprintf(__('Your Important Dates - %s', 'personal-crm'), $today_formatted),
-            ],
-        ];
-        
         // Today section
         if (!empty($digest_data['today'])) {
             $blocks[] = [
