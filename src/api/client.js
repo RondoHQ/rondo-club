@@ -113,6 +113,7 @@ export const prmApi = {
   getNotificationChannels: () => api.get('/prm/v1/user/notification-channels'),
   updateNotificationChannels: (channels) => api.post('/prm/v1/user/notification-channels', { channels }),
   updateSlackWebhook: (webhook) => api.post('/prm/v1/user/slack-webhook', { webhook }),
+  updateNotificationTime: (time) => api.post('/prm/v1/user/notification-time', { time }),
   
   // Person-specific
   getPersonDates: (personId) => api.get(`/prm/v1/people/${personId}/dates`),
