@@ -20,7 +20,7 @@ function StatCard({ title, value, icon: Icon, href }) {
   );
 }
 
-function PersonCard({ person }) {
+function PersonCard({ person, hideStar = false }) {
   return (
     <Link 
       to={`/people/${person.id}`}
@@ -46,7 +46,7 @@ function PersonCard({ person }) {
           <p className="text-xs text-gray-500 truncate">{person.labels.join(', ')}</p>
         )}
       </div>
-      {person.is_favorite && (
+      {person.is_favorite && !hideStar && (
         <Star className="w-4 h-4 text-yellow-400 fill-current" />
       )}
     </Link>
@@ -258,7 +258,10 @@ export default function Dashboard() {
         {/* Upcoming Reminders */}
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold">Upcoming Reminders</h2>
+            <h2 className="font-semibold flex items-center">
+              <Calendar className="w-5 h-5 mr-2 text-gray-500" />
+              Upcoming Reminders
+            </h2>
             <Link 
               to="/dates" 
               className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
@@ -283,7 +286,10 @@ export default function Dashboard() {
         {/* Recent People */}
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold">Recent People</h2>
+            <h2 className="font-semibold flex items-center">
+              <Users className="w-5 h-5 mr-2 text-gray-500" />
+              Recent People
+            </h2>
             <Link 
               to="/people" 
               className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
@@ -310,11 +316,14 @@ export default function Dashboard() {
       {favorites?.length > 0 && (
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold">Favorites</h2>
+            <h2 className="font-semibold flex items-center">
+              <Star className="w-5 h-5 mr-2 text-yellow-500 fill-current" />
+              Favorites
+            </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 p-2">
             {favorites.map((person) => (
-              <PersonCard key={person.id} person={person} />
+              <PersonCard key={person.id} person={person} hideStar={true} />
             ))}
           </div>
         </div>
