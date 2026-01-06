@@ -206,6 +206,20 @@ class PRM_REST_API {
             ],
         ]);
         
+        register_rest_route('prm/v1', '/users/(?P<user_id>\d+)', [
+            'methods'             => WP_REST_Server::DELETABLE,
+            'callback'            => [$this, 'delete_user'],
+            'permission_callback' => [$this, 'check_admin_permission'],
+            'args'                => [
+                'user_id' => [
+                    'required'          => true,
+                    'validate_callback' => function($param) {
+                        return is_numeric($param);
+                    },
+                ],
+            ],
+        ]);
+        
         // Export contacts
         register_rest_route('prm/v1', '/export/vcard', [
             'methods'             => WP_REST_Server::READABLE,
@@ -1070,6 +1084,72 @@ class PRM_REST_API {
             'success' => true,
             'message' => __('User denied.', 'personal-crm'),
         ]);
+    }
+    
+    /**
+     * Delete a user and all their related data (admin only)
+     */
+    public function delete_user($request) {
+        $user_id = (int) $request->get_param('user_id');
+        
+        // Prevent deleting yourself
+        if ($user_id === get_current_user_id()) {
+            return new WP_Error(
+                'cannot_delete_self',
+                __('You cannot delete your own account.', 'personal-crm'),
+                ['status' => 400]
+            );
+        }
+        
+        // Check if user exists
+        $user = get_userdata($user_id);
+        if (!$user) {
+            return new WP_Error(
+                'user_not_found',
+                __('User not found.', 'personal-crm'),
+                ['status' => 404]
+            );
+        }
+        
+        // Delete all user's posts (people, organizations, dates)
+        $this->delete_user_posts($user_id);
+        
+        // Delete the user
+        require_once(ABSPATH . 'wp-admin/includes/user.php');
+        $result = wp_delete_user($user_id);
+        
+        if (!$result) {
+            return new WP_Error(
+                'delete_failed',
+                __('Failed to delete user.', 'personal-crm'),
+                ['status' => 500]
+            );
+        }
+        
+        return rest_ensure_response([
+            'success' => true,
+            'message' => __('User and all related data deleted.', 'personal-crm'),
+        ]);
+    }
+    
+    /**
+     * Delete all posts belonging to a user
+     */
+    private function delete_user_posts($user_id) {
+        $post_types = ['person', 'company', 'important_date'];
+        
+        foreach ($post_types as $post_type) {
+            $posts = get_posts([
+                'post_type'      => $post_type,
+                'author'         => $user_id,
+                'posts_per_page' => -1,
+                'post_status'    => 'any',
+            ]);
+            
+            foreach ($posts as $post) {
+                wp_delete_post($post->ID, true); // Force delete (bypass trash)
+            }
+        }
     }
     
     /**

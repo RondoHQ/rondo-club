@@ -44,6 +44,9 @@ class PRM_User_Roles {
         
         // Handle approve/deny actions
         add_action('admin_init', [$this, 'handle_approval_action']);
+        
+        // Delete user's posts when user is deleted
+        add_action('delete_user', [$this, 'delete_user_posts'], 10, 1);
     }
     
     /**
@@ -326,6 +329,27 @@ Caelis Team', 'personal-crm'),
                      sprintf(_n('User denied.', '%d users denied.', $count, 'personal-crm'), $count) . 
                      '</p></div>';
             });
+        }
+    }
+    
+    /**
+     * Delete all posts belonging to a user when user is deleted
+     * This is called by WordPress before the user is actually deleted
+     */
+    public function delete_user_posts($user_id) {
+        $post_types = ['person', 'company', 'important_date'];
+        
+        foreach ($post_types as $post_type) {
+            $posts = get_posts([
+                'post_type'      => $post_type,
+                'author'         => $user_id,
+                'posts_per_page' => -1,
+                'post_status'    => 'any',
+            ]);
+            
+            foreach ($posts as $post) {
+                wp_delete_post($post->ID, true); // Force delete (bypass trash)
+            }
         }
     }
 }

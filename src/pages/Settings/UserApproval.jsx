@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { CheckCircle2, XCircle, Loader2, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, ArrowLeft, ShieldAlert, Trash2 } from 'lucide-react';
 
 export default function UserApproval() {
   useDocumentTitle('User Approval - Settings');
@@ -50,6 +50,13 @@ export default function UserApproval() {
     },
   });
   
+  const deleteMutation = useMutation({
+    mutationFn: (userId) => prmApi.deleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+  
   const handleApprove = (userId) => {
     if (window.confirm('Are you sure you want to approve this user?')) {
       approveMutation.mutate(userId);
@@ -59,6 +66,12 @@ export default function UserApproval() {
   const handleDeny = (userId) => {
     if (window.confirm('Are you sure you want to deny this user? They will not be able to access the system.')) {
       denyMutation.mutate(userId);
+    }
+  };
+  
+  const handleDelete = (userId, userName) => {
+    if (window.confirm(`Are you sure you want to delete ${userName}? This will permanently delete their account and all their related data (people, organizations, dates). This action cannot be undone.`)) {
+      deleteMutation.mutate(userId);
     }
   };
   
@@ -106,7 +119,7 @@ export default function UserApproval() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleApprove(user.id)}
-                    disabled={approveMutation.isPending}
+                    disabled={approveMutation.isPending || deleteMutation.isPending}
                     className="btn-primary flex items-center gap-2"
                   >
                     <CheckCircle2 className="w-4 h-4" />
@@ -114,11 +127,19 @@ export default function UserApproval() {
                   </button>
                   <button
                     onClick={() => handleDeny(user.id)}
-                    disabled={denyMutation.isPending}
+                    disabled={denyMutation.isPending || deleteMutation.isPending}
                     className="btn-secondary flex items-center gap-2"
                   >
                     <XCircle className="w-4 h-4" />
                     Deny
+                  </button>
+                  <button
+                    onClick={() => handleDelete(user.id, user.name)}
+                    disabled={approveMutation.isPending || denyMutation.isPending || deleteMutation.isPending}
+                    className="btn-danger flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
                   </button>
                 </div>
               </div>
@@ -143,14 +164,24 @@ export default function UserApproval() {
                   </p>
                   <p className="text-sm text-gray-500">{user.email}</p>
                 </div>
-                <button
-                  onClick={() => handleDeny(user.id)}
-                  disabled={denyMutation.isPending}
-                  className="btn-secondary flex items-center gap-2"
-                >
-                  <XCircle className="w-4 h-4" />
-                  Revoke Access
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleDeny(user.id)}
+                    disabled={denyMutation.isPending || deleteMutation.isPending}
+                    className="btn-secondary flex items-center gap-2"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Revoke Access
+                  </button>
+                  <button
+                    onClick={() => handleDelete(user.id, user.name)}
+                    disabled={denyMutation.isPending || deleteMutation.isPending}
+                    className="btn-danger flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>
