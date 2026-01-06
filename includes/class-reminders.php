@@ -161,7 +161,15 @@ class PRM_Reminders {
         // Get all users who should receive reminders
         $users_to_notify = $this->get_all_users_to_notify();
         
+        $current_time = new DateTime('now', wp_timezone());
+        $current_hour = (int) $current_time->format('H');
+        
         foreach ($users_to_notify as $user_id) {
+            // Check if it's the right time for this user
+            if (!$this->should_send_now($user_id, $current_hour)) {
+                continue;
+            }
+            
             // Get weekly digest for this user
             $digest_data = $this->get_weekly_digest($user_id);
             
@@ -175,6 +183,30 @@ class PRM_Reminders {
         
         // Check and update expired work history entries
         $this->update_expired_work_history();
+    }
+    
+    /**
+     * Check if reminders should be sent now for a user
+     * 
+     * @param int $user_id User ID
+     * @param int $current_hour Current hour (0-23)
+     * @return bool
+     */
+    private function should_send_now($user_id, $current_hour) {
+        $preferred_time = get_user_meta($user_id, 'caelis_notification_time', true);
+        
+        // If no preference set, default to 9:00 AM
+        if (empty($preferred_time)) {
+            $preferred_time = '09:00';
+        }
+        
+        // Parse preferred time
+        list($preferred_hour, $preferred_minute) = explode(':', $preferred_time);
+        $preferred_hour = (int) $preferred_hour;
+        
+        // Send if current hour matches preferred hour
+        // This allows for a 1-hour window (e.g., if cron runs at 9:15, it will still send for 9:00 preference)
+        return $current_hour === $preferred_hour;
     }
     
     /**

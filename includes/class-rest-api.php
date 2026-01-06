@@ -108,6 +108,22 @@ class PRM_REST_API {
             ],
         ]);
         
+        // Update notification time
+        register_rest_route('prm/v1', '/user/notification-time', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'update_notification_time'],
+            'permission_callback' => 'is_user_logged_in',
+            'args'                => [
+                'time' => [
+                    'required'          => true,
+                    'validate_callback' => function($param) {
+                        // Validate HH:MM format
+                        return preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $param);
+                    },
+                ],
+            ],
+        ]);
+        
         // Search across all content
         register_rest_route('prm/v1', '/search', [
             'methods'             => WP_REST_Server::READABLE,
@@ -604,9 +620,16 @@ class PRM_REST_API {
         
         $slack_webhook = get_user_meta($user_id, 'caelis_slack_webhook', true);
         
+        $notification_time = get_user_meta($user_id, 'caelis_notification_time', true);
+        if (empty($notification_time)) {
+            // Default to 9:00 AM
+            $notification_time = '09:00';
+        }
+        
         return rest_ensure_response([
             'channels' => $channels,
             'slack_webhook' => $slack_webhook ?: '',
+            'notification_time' => $notification_time,
         ]);
     }
     
@@ -710,6 +733,31 @@ class PRM_REST_API {
         return rest_ensure_response([
             'success' => true,
             'message' => __('Slack webhook configured successfully.', 'personal-crm'),
+        ]);
+    }
+    
+    /**
+     * Update user's notification time preference
+     */
+    public function update_notification_time($request) {
+        $user_id = get_current_user_id();
+        $time = $request->get_param('time');
+        
+        // Validate time format (HH:MM)
+        if (!preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $time)) {
+            return new WP_Error(
+                'invalid_time',
+                __('Invalid time format. Please use HH:MM format (e.g., 09:00).', 'personal-crm'),
+                ['status' => 400]
+            );
+        }
+        
+        update_user_meta($user_id, 'caelis_notification_time', $time);
+        
+        return rest_ensure_response([
+            'success' => true,
+            'notification_time' => $time,
+            'message' => __('Notification time updated successfully.', 'personal-crm'),
         ]);
     }
     

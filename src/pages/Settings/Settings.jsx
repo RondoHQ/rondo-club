@@ -17,9 +17,11 @@ export default function Settings() {
   // Notification channels state
   const [notificationChannels, setNotificationChannels] = useState([]);
   const [slackWebhook, setSlackWebhook] = useState('');
+  const [notificationTime, setNotificationTime] = useState('09:00');
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [savingChannels, setSavingChannels] = useState(false);
   const [savingWebhook, setSavingWebhook] = useState(false);
+  const [savingTime, setSavingTime] = useState(false);
   const [webhookTestMessage, setWebhookTestMessage] = useState('');
   
   // Manual trigger state (admin only)
@@ -49,6 +51,7 @@ export default function Settings() {
         const response = await prmApi.getNotificationChannels();
         setNotificationChannels(response.data.channels || ['email']);
         setSlackWebhook(response.data.slack_webhook || '');
+        setNotificationTime(response.data.notification_time || '09:00');
       } catch (error) {
         console.error('Failed to fetch notification channels:', error);
       } finally {
@@ -99,6 +102,23 @@ export default function Settings() {
       alert(error.response?.data?.message || 'Failed to update notification channels');
     } finally {
       setSavingChannels(false);
+    }
+  };
+  
+  const handleNotificationTimeChange = async (time) => {
+    setNotificationTime(time);
+    setSavingTime(true);
+    
+    try {
+      await prmApi.updateNotificationTime(time);
+    } catch (error) {
+      console.error('Failed to update notification time:', error);
+      alert(error.response?.data?.message || 'Failed to update notification time');
+      // Revert on error
+      const response = await prmApi.getNotificationChannels();
+      setNotificationTime(response.data.notification_time || '09:00');
+    } finally {
+      setSavingTime(false);
     }
   };
   
@@ -325,6 +345,21 @@ export default function Settings() {
               )}
               <p className="text-xs text-gray-500 mt-1">
                 Go to your Slack Admin, Browse Apps → Custom Integrations → Incoming WebHooks and click "Add to Slack". Copy the incoming webhook URL here. The webhook will be tested when you save it.
+              </p>
+            </div>
+            
+            {/* Notification time */}
+            <div>
+              <label className="label mb-1">Notification Time</label>
+              <input
+                type="time"
+                value={notificationTime}
+                onChange={(e) => handleNotificationTimeChange(e.target.value)}
+                className="input"
+                disabled={savingTime}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Choose the time when you want to receive your daily reminder digest. Reminders are sent within a 1-hour window of your selected time.
               </p>
             </div>
           </div>
