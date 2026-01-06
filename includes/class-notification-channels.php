@@ -52,6 +52,25 @@ abstract class PRM_Notification_Channel {
      * @return string
      */
     abstract public function get_channel_name();
+    
+    /**
+     * Check if a person's name appears in a title and return the person if found
+     * Returns the first person whose name appears in the title, or null
+     * 
+     * @param string $title The date title
+     * @param array  $people Array of person data
+     * @return array|null Person data if found, null otherwise
+     */
+    protected function find_person_in_title($title, $people) {
+        foreach ($people as $person) {
+            $person_name = $person['name'];
+            // Check if the person's name appears in the title (case-insensitive)
+            if (stripos($title, $person_name) !== false) {
+                return $person;
+            }
+        }
+        return null;
+    }
 }
 
 /**
@@ -149,14 +168,28 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_links = $this->format_people_links($date['related_people'], $site_url);
-                $html .= sprintf(
-                    '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
-                    esc_html($date['title']),
-                    esc_html($date_formatted)
-                );
-                if (!empty($people_links)) {
-                    $html .= sprintf('<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links);
+                
+                // Check if person name is in title
+                $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
+                if ($person_in_title) {
+                    // Replace name in title with link
+                    $title_with_link = $this->replace_name_in_title_email($date['title'], $person_in_title, $site_url);
+                    $html .= sprintf(
+                        '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+                        $title_with_link,
+                        esc_html($date_formatted)
+                    );
+                } else {
+                    // Show title normally and add people links below
+                    $html .= sprintf(
+                        '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+                        esc_html($date['title']),
+                        esc_html($date_formatted)
+                    );
+                    $people_links = $this->format_people_links($date['related_people'], $site_url);
+                    if (!empty($people_links)) {
+                        $html .= sprintf('<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links);
+                    }
                 }
             }
         }
@@ -169,14 +202,28 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_links = $this->format_people_links($date['related_people'], $site_url);
-                $html .= sprintf(
-                    '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
-                    esc_html($date['title']),
-                    esc_html($date_formatted)
-                );
-                if (!empty($people_links)) {
-                    $html .= sprintf('<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links);
+                
+                // Check if person name is in title
+                $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
+                if ($person_in_title) {
+                    // Replace name in title with link
+                    $title_with_link = $this->replace_name_in_title_email($date['title'], $person_in_title, $site_url);
+                    $html .= sprintf(
+                        '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+                        $title_with_link,
+                        esc_html($date_formatted)
+                    );
+                } else {
+                    // Show title normally and add people links below
+                    $html .= sprintf(
+                        '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+                        esc_html($date['title']),
+                        esc_html($date_formatted)
+                    );
+                    $people_links = $this->format_people_links($date['related_people'], $site_url);
+                    if (!empty($people_links)) {
+                        $html .= sprintf('<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links);
+                    }
                 }
             }
         }
@@ -189,14 +236,28 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_links = $this->format_people_links($date['related_people'], $site_url);
-                $html .= sprintf(
-                    '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
-                    esc_html($date['title']),
-                    esc_html($date_formatted)
-                );
-                if (!empty($people_links)) {
-                    $html .= sprintf('<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links);
+                
+                // Check if person name is in title
+                $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
+                if ($person_in_title) {
+                    // Replace name in title with link
+                    $title_with_link = $this->replace_name_in_title_email($date['title'], $person_in_title, $site_url);
+                    $html .= sprintf(
+                        '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+                        $title_with_link,
+                        esc_html($date_formatted)
+                    );
+                } else {
+                    // Show title normally and add people links below
+                    $html .= sprintf(
+                        '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+                        esc_html($date['title']),
+                        esc_html($date_formatted)
+                    );
+                    $people_links = $this->format_people_links($date['related_people'], $site_url);
+                    if (!empty($people_links)) {
+                        $html .= sprintf('<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links);
+                    }
                 }
             }
         }
@@ -237,6 +298,30 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
             $links[] = sprintf('<a href="%s">%s</a>', $person_url, $person_name);
         }
         return implode(', ', $links);
+    }
+    
+    /**
+     * Replace person name in title with a clickable link (for email)
+     */
+    private function replace_name_in_title_email($title, $person, $site_url) {
+        $person_name = esc_html($person['name']);
+        $person_url = esc_url($site_url . '/people/' . $person['id']);
+        $person_link = sprintf('<a href="%s">%s</a>', $person_url, $person_name);
+        
+        // Replace the name in the title (case-insensitive)
+        return preg_replace('/' . preg_quote($person_name, '/') . '/i', $person_link, $title, 1);
+    }
+    
+    /**
+     * Replace person name in title with a clickable link (for Slack)
+     */
+    private function replace_name_in_title_slack($title, $person, $site_url) {
+        $person_name = $person['name'];
+        $person_url = $site_url . '/people/' . $person['id'];
+        $person_link = sprintf('<%s|%s>', $person_url, $person_name);
+        
+        // Replace the name in the title (case-insensitive)
+        return preg_replace('/' . preg_quote($person_name, '/') . '/i', $person_link, $title, 1);
     }
 }
 
@@ -451,10 +536,21 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_links = $this->format_slack_people_links($date['related_people']);
-                $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
-                if (!empty($people_links)) {
-                    $text .= "\n  " . $people_links;
+                
+                $site_url = home_url();
+                // Check if person name is in title
+                $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
+                if ($person_in_title) {
+                    // Replace name in title with link
+                    $title_with_link = $this->replace_name_in_title_slack($date['title'], $person_in_title, $site_url);
+                    $text = sprintf("• *%s* - %s", $title_with_link, $date_formatted);
+                } else {
+                    // Show title normally and add people links below
+                    $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
+                    $people_links = $this->format_slack_people_links($date['related_people']);
+                    if (!empty($people_links)) {
+                        $text .= "\n  " . $people_links;
+                    }
                 }
                 $blocks[] = [
                     'type' => 'section',
@@ -481,10 +577,21 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_links = $this->format_slack_people_links($date['related_people']);
-                $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
-                if (!empty($people_links)) {
-                    $text .= "\n  " . $people_links;
+                
+                $site_url = home_url();
+                // Check if person name is in title
+                $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
+                if ($person_in_title) {
+                    // Replace name in title with link
+                    $title_with_link = $this->replace_name_in_title_slack($date['title'], $person_in_title, $site_url);
+                    $text = sprintf("• *%s* - %s", $title_with_link, $date_formatted);
+                } else {
+                    // Show title normally and add people links below
+                    $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
+                    $people_links = $this->format_slack_people_links($date['related_people']);
+                    if (!empty($people_links)) {
+                        $text .= "\n  " . $people_links;
+                    }
                 }
                 $blocks[] = [
                     'type' => 'section',
@@ -511,10 +618,21 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_links = $this->format_slack_people_links($date['related_people']);
-                $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
-                if (!empty($people_links)) {
-                    $text .= "\n  " . $people_links;
+                
+                $site_url = home_url();
+                // Check if person name is in title
+                $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
+                if ($person_in_title) {
+                    // Replace name in title with link
+                    $title_with_link = $this->replace_name_in_title_slack($date['title'], $person_in_title, $site_url);
+                    $text = sprintf("• *%s* - %s", $title_with_link, $date_formatted);
+                } else {
+                    // Show title normally and add people links below
+                    $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
+                    $people_links = $this->format_slack_people_links($date['related_people']);
+                    if (!empty($people_links)) {
+                        $text .= "\n  " . $people_links;
+                    }
                 }
                 $blocks[] = [
                     'type' => 'section',

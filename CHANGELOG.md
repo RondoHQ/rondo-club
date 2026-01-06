@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - REST API endpoints to fetch Slack channels/users and manage notification targets
 - Support for sending notifications to multiple targets simultaneously
 
+### Changed
+- Simplified notification format: if a person's name appears in the date title (e.g., "Eva Douma's Birthday"), that name becomes the clickable link and the duplicate name below is removed
+
 ### Fixed
 - Fixed Slack API calls to use POST instead of GET for conversations.list and users.list
 - Fixed Slack data loading when Slack is already connected on page load
