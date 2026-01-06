@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.2] - 2026-01-04
+
+### Added
+- Slack notification target configuration interface in Settings
+- Ability to select multiple Slack channels and users for notifications
+- REST API endpoints to fetch Slack channels/users and manage notification targets
+- Support for sending notifications to multiple targets simultaneously
+
+### Fixed
+- Fixed Slack API calls to use POST instead of GET for conversations.list and users.list
+
 ## [1.12.1] - 2026-01-04
 
 ### Fixed

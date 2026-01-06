@@ -118,6 +118,9 @@ export const prmApi = {
   // Slack OAuth
   getSlackStatus: () => api.get('/prm/v1/user/slack-status'),
   disconnectSlack: () => api.post('/prm/v1/slack/disconnect'),
+  getSlackChannels: () => api.get('/prm/v1/slack/channels'),
+  getSlackTargets: () => api.get('/prm/v1/slack/targets'),
+  updateSlackTargets: (targets) => api.post('/prm/v1/slack/targets', { targets }),
   
   // Person-specific
   getPersonDates: (personId) => api.get(`/prm/v1/people/${personId}/dates`),

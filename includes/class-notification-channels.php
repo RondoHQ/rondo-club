@@ -308,20 +308,38 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         
         // Use OAuth bot token if available
         if (isset($config['bot_token']) && !empty($config['bot_token'])) {
-            // Default to user's Slack user ID (DM) if no target specified
-            if (empty($target)) {
-                $target = get_user_meta($user_id, 'caelis_slack_user_id', true);
+            // Get targets - use parameter if provided, otherwise use configured targets
+            $targets = [];
+            if (!empty($target)) {
+                // Single target passed as parameter (for backward compatibility)
+                $targets = [$target];
+            } else {
+                // Get configured targets from user meta
+                $targets = get_user_meta($user_id, 'caelis_slack_targets', true);
+                if (!is_array($targets) || empty($targets)) {
+                    // Fallback to user's Slack user ID (DM) if no targets configured
+                    $slack_user_id = get_user_meta($user_id, 'caelis_slack_user_id', true);
+                    if (!empty($slack_user_id)) {
+                        $targets = [$slack_user_id];
+                    }
+                }
             }
-            // Use configured target if still no target
-            if (empty($target)) {
-                $target = $config['target'];
-            }
-            // If still no target, can't send
-            if (empty($target)) {
-                error_log('PRM Slack: No target specified for user ' . $user_id);
+            
+            // If still no targets, can't send
+            if (empty($targets)) {
+                error_log('PRM Slack: No targets specified for user ' . $user_id);
                 return false;
             }
-            return $this->send_via_web_api($config['bot_token'], $blocks, $target);
+            
+            // Send to all targets
+            $success = true;
+            foreach ($targets as $target_id) {
+                $result = $this->send_via_web_api($config['bot_token'], $blocks, $target_id);
+                if (!$result) {
+                    $success = false;
+                }
+            }
+            return $success;
         }
         
         // Fallback to webhook for legacy support
