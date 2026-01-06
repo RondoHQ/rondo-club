@@ -25,18 +25,46 @@ import Login from '@/pages/Login';
 import { AlertCircle } from 'lucide-react';
 
 function ApprovalCheck({ children }) {
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, error } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
       const response = await prmApi.getCurrentUser();
       return response.data;
     },
+    retry: false, // Don't retry on error
   });
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+  
+  // If there's an error or no user data, show approval screen as fallback
+  // This handles cases where the API call fails
+  if (error || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="max-w-md w-full mx-4">
+          <div className="card p-8 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-yellow-100 rounded-full">
+                <AlertCircle className="w-8 h-8 text-yellow-600" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              Account Pending Approval
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Your account is pending approval by an administrator. You will receive an email notification once your account has been approved.
+            </p>
+            <p className="text-sm text-gray-500">
+              If you have any questions, please contact your administrator.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -47,7 +75,7 @@ function ApprovalCheck({ children }) {
   }
   
   // Check approval status
-  if (user && !user.is_approved) {
+  if (!user.is_approved) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="max-w-md w-full mx-4">
