@@ -30,7 +30,7 @@ export function useSearch(query) {
     queryKey: ['search', searchQuery],
     queryFn: async () => {
       if (!enabled) {
-        return { people: [], companies: [], dates: [] };
+        return { people: [], companies: [] };
       }
       const response = await prmApi.search(searchQuery);
       return response.data;

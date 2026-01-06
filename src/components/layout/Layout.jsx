@@ -12,7 +12,6 @@ import {
   Search,
   User,
   Briefcase,
-  Calendar as CalendarIcon,
   ChevronDown,
   Sparkles
 } from 'lucide-react';
@@ -231,17 +230,14 @@ function Header({ onMenuClick }) {
       navigate(`/people/${id}`);
     } else if (type === 'company') {
       navigate(`/companies/${id}`);
-    } else if (type === 'date') {
-      navigate(`/dates/${id}/edit`);
     }
   };
   
   // Check if there are any results - ensure searchResults is an object
-  const safeResults = searchResults || { people: [], companies: [], dates: [] };
+  const safeResults = searchResults || { people: [], companies: [] };
   const hasResults = (
     (safeResults.people && safeResults.people.length > 0) ||
-    (safeResults.companies && safeResults.companies.length > 0) ||
-    (safeResults.dates && safeResults.dates.length > 0)
+    (safeResults.companies && safeResults.companies.length > 0)
   );
   
   const showDropdown = isSearchFocused && searchQuery.trim().length >= 2;
@@ -267,7 +263,7 @@ function Header({ onMenuClick }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="search"
-            placeholder="Search people, organizations, dates..."
+            placeholder="Search people & organizations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
@@ -323,27 +319,6 @@ function Header({ onMenuClick }) {
                           <Briefcase className="w-4 h-4 text-gray-400 flex-shrink-0" />
                           <span className="text-sm font-medium text-gray-900 flex-1 truncate">
                             {company.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Dates results */}
-                  {safeResults.dates && safeResults.dates.length > 0 && (
-                    <div className="px-3 py-2 border-t border-gray-100">
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
-                        Dates
-                      </div>
-                      {safeResults.dates.map((date) => (
-                        <button
-                          key={date.id}
-                          onClick={() => handleResultClick('date', date.id)}
-                          className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                        >
-                          <CalendarIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm font-medium text-gray-900 flex-1 truncate">
-                            {date.title}
                           </span>
                         </button>
                       ))}
