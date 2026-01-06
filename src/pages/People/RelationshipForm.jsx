@@ -177,25 +177,63 @@ export default function RelationshipForm() {
   // Handle pre-selecting newly created person
   useEffect(() => {
     const newPersonId = searchParams.get('newPersonId');
-    if (newPersonId && !isEditing) {
+    if (newPersonId && !isEditing && !isPeopleLoading) {
       const personIdNum = parseInt(newPersonId, 10);
       if (!isNaN(personIdNum)) {
-        // Invalidate people query to ensure new person is loaded
-        queryClient.invalidateQueries({ queryKey: ['people'] });
+        // Check if person is already in the list
+        const personExists = allPeople.some(p => p.id === personIdNum);
         
-        // Set the related person value
-        setValue('related_person', personIdNum);
-        
-        // Remove query parameter from URL
-        const newSearchParams = new URLSearchParams(searchParams);
-        newSearchParams.delete('newPersonId');
-        navigate(
-          { search: newSearchParams.toString() },
-          { replace: true }
-        );
+        if (personExists) {
+          // Person is in the list, set the value immediately
+          setValue('related_person', personIdNum);
+          
+          // Remove query parameter from URL
+          const newSearchParams = new URLSearchParams(searchParams);
+          newSearchParams.delete('newPersonId');
+          navigate(
+            { search: newSearchParams.toString() },
+            { replace: true }
+          );
+        } else {
+          // Person not in list yet, refetch and wait
+          const fetchAndSelectPerson = async () => {
+            try {
+              // Invalidate and refetch people query
+              await queryClient.invalidateQueries({ queryKey: ['people'] });
+              const { data: refetchedPeople = [] } = await queryClient.refetchQueries({ queryKey: ['people'] });
+              
+              // Check if person is now in the list
+              const personNowExists = refetchedPeople.some(p => p.id === personIdNum);
+              
+              if (personNowExists) {
+                // Set the related person value
+                setValue('related_person', personIdNum);
+              }
+              
+              // Remove query parameter from URL
+              const newSearchParams = new URLSearchParams(searchParams);
+              newSearchParams.delete('newPersonId');
+              navigate(
+                { search: newSearchParams.toString() },
+                { replace: true }
+              );
+            } catch (error) {
+              console.error('Failed to load new person:', error);
+              // Still remove query param even if fetch fails
+              const newSearchParams = new URLSearchParams(searchParams);
+              newSearchParams.delete('newPersonId');
+              navigate(
+                { search: newSearchParams.toString() },
+                { replace: true }
+              );
+            }
+          };
+          
+          fetchAndSelectPerson();
+        }
       }
     }
-  }, [searchParams, isEditing, setValue, navigate, queryClient]);
+  }, [searchParams, isEditing, isPeopleLoading, allPeople, setValue, navigate, queryClient]);
 
   // Load relationship item when editing
   useEffect(() => {
