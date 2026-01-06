@@ -1,0 +1,220 @@
+import { useMemo } from 'react';
+import { format } from 'date-fns';
+import {
+  Phone, Mail, Users, Coffee, Utensils, FileText, Circle,
+  CheckSquare2, Square, Pencil, Trash2, Link as LinkIcon
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import {
+  groupTimelineByDate,
+  formatTimelineDate,
+  getActivityTypeIcon,
+  getActivityTypeLabel,
+  isTodoOverdue,
+  getTodoStatusClass,
+} from '@/utils/timeline';
+
+const ICON_MAP = {
+  Phone,
+  Mail,
+  Users,
+  Coffee,
+  Utensils,
+  FileText,
+  Circle,
+};
+
+export default function TimelineView({
+  timeline,
+  onEdit,
+  onDelete,
+  onToggleTodo,
+  personId,
+  allPeople = [],
+}) {
+  const groupedTimeline = useMemo(() => {
+    return groupTimelineByDate(timeline || []);
+  }, [timeline]);
+
+  const getPersonById = (id) => {
+    return allPeople.find(p => p.id.toString() === id.toString());
+  };
+
+  const getIconForItem = (item) => {
+    if (item.type === 'todo') {
+      return item.is_completed ? CheckSquare2 : Square;
+    }
+    if (item.type === 'activity' && item.activity_type) {
+      const iconName = getActivityTypeIcon(item.activity_type);
+      return ICON_MAP[iconName] || Circle;
+    }
+    if (item.type === 'note') {
+      return FileText;
+    }
+    return Circle;
+  };
+
+  const renderTimelineItem = (item) => {
+    const Icon = getIconForItem(item);
+    const isTodo = item.type === 'todo';
+    const isActivity = item.type === 'activity';
+    const isNote = item.type === 'note';
+    
+    const displayDate = item.activity_date || item.created;
+    const formattedDate = formatTimelineDate(displayDate);
+    
+    const todoClasses = getTodoStatusClass(item);
+    const isOverdue = isTodo && isTodoOverdue(item);
+
+    return (
+      <div key={item.id} className={`relative ${isTodo ? 'pl-0' : 'pl-8'} pb-6 group`}>
+        {/* Timeline dot */}
+        {!isTodo && (
+          <div className="absolute left-0 top-1">
+            <div className={`w-4 h-4 rounded-full border-2 ${
+              isActivity
+                ? 'bg-blue-500 border-blue-500'
+                : 'bg-gray-400 border-gray-400'
+            }`} />
+          </div>
+        )}
+
+        {/* Content */}
+        <div className={`${todoClasses}`}>
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                {!isTodo && (
+                  <Icon className={`w-4 h-4 flex-shrink-0 ${
+                    isActivity
+                      ? 'text-blue-600'
+                      : 'text-gray-500'
+                  }`} />
+                )}
+                {isActivity && item.activity_type && (
+                  <span className="text-xs font-medium text-gray-600">
+                    {getActivityTypeLabel(item.activity_type)}
+                  </span>
+                )}
+                <span className="text-xs text-gray-400">•</span>
+                <span className="text-xs text-gray-500">{formattedDate}</span>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                {isTodo && (
+                  <button
+                    onClick={() => onToggleTodo && onToggleTodo(item)}
+                    className="mt-0.5 flex-shrink-0"
+                    title={item.is_completed ? 'Mark as incomplete' : 'Mark as complete'}
+                  >
+                    {item.is_completed ? (
+                      <CheckSquare2 className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-primary-600'}`} />
+                    ) : (
+                      <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
+                    )}
+                  </button>
+                )}
+                <p className={`text-sm flex-1 ${item.is_completed ? 'line-through opacity-60' : ''}`}>
+                  {item.content}
+                </p>
+              </div>
+
+              {/* Activity participants */}
+              {isActivity && item.participants && item.participants.length > 0 && (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-gray-500">With:</span>
+                  {item.participants.map((participantId) => {
+                    const participant = getPersonById(participantId);
+                    if (!participant) return null;
+                    return (
+                      <Link
+                        key={participantId}
+                        to={`/people/${participantId}`}
+                        className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline"
+                      >
+                        <LinkIcon className="w-3 h-3" />
+                        {participant.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Todo due date */}
+              {isTodo && item.due_date && (
+                <div className="mt-2">
+                  <span className={`text-xs ${
+                    isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'
+                  }`}>
+                    Due: {format(new Date(item.due_date), 'MMM d, yyyy')}
+                    {isOverdue && ' (overdue)'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(item)}
+                  className="p-1 hover:bg-gray-100 rounded"
+                  title="Edit"
+                >
+                  <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={() => onDelete(item)}
+                  className="p-1 hover:bg-red-50 rounded"
+                  title="Delete"
+                >
+                  <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderGroup = (title, items) => {
+    if (!items || items.length === 0) return null;
+
+    return (
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+          {title}
+        </h3>
+        <div className="relative pl-4 border-l-2 border-gray-200">
+          {items.map(renderTimelineItem)}
+        </div>
+      </div>
+    );
+  };
+
+  const hasAnyItems = groupedTimeline.today.length > 0 ||
+                      groupedTimeline.yesterday.length > 0 ||
+                      groupedTimeline.thisWeek.length > 0 ||
+                      groupedTimeline.older.length > 0;
+
+  if (!hasAnyItems) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-sm text-gray-500">No timeline items yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {renderGroup('Today', groupedTimeline.today)}
+      {renderGroup('Yesterday', groupedTimeline.yesterday)}
+      {renderGroup('This week', groupedTimeline.thisWeek)}
+      {renderGroup('Older', groupedTimeline.older)}
+    </div>
+  );
+}
+

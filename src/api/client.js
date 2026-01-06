@@ -140,6 +140,14 @@ export const prmApi = {
     api.put(`/prm/v1/activities/${activityId}`, data),
   deleteActivity: (activityId) => api.delete(`/prm/v1/activities/${activityId}`),
   
+  // Todos
+  getPersonTodos: (personId) => api.get(`/prm/v1/people/${personId}/todos`),
+  createTodo: (personId, data) => 
+    api.post(`/prm/v1/people/${personId}/todos`, data),
+  updateTodo: (todoId, data) => 
+    api.put(`/prm/v1/todos/${todoId}`, data),
+  deleteTodo: (todoId) => api.delete(`/prm/v1/todos/${todoId}`),
+  
   // Company-specific
   getCompanyPeople: (companyId) => api.get(`/prm/v1/companies/${companyId}/people`),
   setCompanyLogo: (companyId, mediaId) => api.post(`/prm/v1/companies/${companyId}/logo`, { media_id: mediaId }),

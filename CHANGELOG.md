@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-01-04
+
+### Added
+- Enhanced timeline view with visual timeline design, date grouping, and icons
+- Quick activity logging modal with activity type selector, date picker, and participant selection
+- Todo system: person-specific todos with completion status and optional due dates
+- Todo creation and editing modals
+- Note creation modal
+- Timeline utilities for date formatting, grouping, and activity type icons
+- REST API endpoints for todos: GET, POST, PUT, DELETE `/prm/v1/people/{id}/todos` and `/prm/v1/todos/{id}`
+- Todo comment type (`prm_todo`) with meta fields: `is_completed` (boolean) and `due_date` (string)
+
+### Changed
+- Timeline section now displays notes, activities, and todos in a unified view
+- Timeline items are grouped by date (Today, Yesterday, This Week, Older)
+- Activity types show appropriate icons (call, email, meeting, coffee, lunch, note)
+- Completed todos are visually distinct with strikethrough and muted colors
+- Overdue todos are highlighted in red
+- Timeline endpoint now includes todos alongside notes and activities
+
 ## [1.12.2] - 2026-01-04
 
 ### Added
