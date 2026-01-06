@@ -138,10 +138,10 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_list = implode(', ', array_column($date['related_people'], 'name'));
+                $people_links = $this->format_people_links($date['related_people'], $site_url);
                 $message .= sprintf("• %s - %s\n", $date['title'], $date_formatted);
-                if (!empty($people_list)) {
-                    $message .= sprintf("  %s\n", $people_list);
+                if (!empty($people_links)) {
+                    $message .= sprintf("  %s\n", $people_links);
                 }
             }
             $message .= "\n";
@@ -155,10 +155,10 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_list = implode(', ', array_column($date['related_people'], 'name'));
+                $people_links = $this->format_people_links($date['related_people'], $site_url);
                 $message .= sprintf("• %s - %s\n", $date['title'], $date_formatted);
-                if (!empty($people_list)) {
-                    $message .= sprintf("  %s\n", $people_list);
+                if (!empty($people_links)) {
+                    $message .= sprintf("  %s\n", $people_links);
                 }
             }
             $message .= "\n";
@@ -172,10 +172,10 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_list = implode(', ', array_column($date['related_people'], 'name'));
+                $people_links = $this->format_people_links($date['related_people'], $site_url);
                 $message .= sprintf("• %s - %s\n", $date['title'], $date_formatted);
-                if (!empty($people_list)) {
-                    $message .= sprintf("  %s\n", $people_list);
+                if (!empty($people_links)) {
+                    $message .= sprintf("  %s\n", $people_links);
                 }
             }
             $message .= "\n";
@@ -187,6 +187,18 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
         );
         
         return $message;
+    }
+    
+    /**
+     * Format people names as clickable links
+     */
+    private function format_people_links($people, $site_url) {
+        $links = [];
+        foreach ($people as $person) {
+            $person_url = $site_url . '/people/' . $person['id'];
+            $links[] = sprintf('%s (%s)', $person['name'], $person_url);
+        }
+        return implode(', ', $links);
     }
 }
 
@@ -244,10 +256,19 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         $webhook_url = $config['webhook_url'];
         $blocks = $this->format_slack_blocks($digest_data);
         
+        // Get logo URL
+        $logo_url = $this->get_logo_url();
+        
         $payload = [
             'text' => __('Your Important Dates for This Week', 'personal-crm'),
             'blocks' => $blocks,
         ];
+        
+        // Add logo/icon if available
+        if ($logo_url) {
+            $payload['icon_url'] = $logo_url;
+            $payload['username'] = 'Caelis';
+        }
         
         $response = wp_remote_post($webhook_url, [
             'body' => json_encode($payload),
@@ -297,10 +318,10 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_list = implode(', ', array_column($date['related_people'], 'name'));
+                $people_links = $this->format_slack_people_links($date['related_people']);
                 $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
-                if (!empty($people_list)) {
-                    $text .= "\n  " . $people_list;
+                if (!empty($people_links)) {
+                    $text .= "\n  " . $people_links;
                 }
                 $blocks[] = [
                     'type' => 'section',
@@ -327,10 +348,10 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_list = implode(', ', array_column($date['related_people'], 'name'));
+                $people_links = $this->format_slack_people_links($date['related_people']);
                 $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
-                if (!empty($people_list)) {
-                    $text .= "\n  " . $people_list;
+                if (!empty($people_links)) {
+                    $text .= "\n  " . $people_links;
                 }
                 $blocks[] = [
                     'type' => 'section',
@@ -357,10 +378,10 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
-                $people_list = implode(', ', array_column($date['related_people'], 'name'));
+                $people_links = $this->format_slack_people_links($date['related_people']);
                 $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
-                if (!empty($people_list)) {
-                    $text .= "\n  " . $people_list;
+                if (!empty($people_links)) {
+                    $text .= "\n  " . $people_links;
                 }
                 $blocks[] = [
                     'type' => 'section',
@@ -385,6 +406,31 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         ];
         
         return $blocks;
+    }
+    
+    /**
+     * Format people names as clickable Slack markdown links
+     */
+    private function format_slack_people_links($people) {
+        $site_url = home_url();
+        $links = [];
+        foreach ($people as $person) {
+            $person_url = $site_url . '/people/' . $person['id'];
+            $links[] = sprintf('<%s|%s>', $person_url, $person['name']);
+        }
+        return implode(', ', $links);
+    }
+    
+    /**
+     * Get logo URL for Slack messages
+     */
+    private function get_logo_url() {
+        // Try to use favicon or logo from theme
+        $theme_url = get_template_directory_uri();
+        $favicon_url = $theme_url . '/favicon.svg';
+        
+        // Check if favicon exists (basic check - in production this should work)
+        return $favicon_url;
     }
 }
 

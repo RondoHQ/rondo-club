@@ -324,7 +324,7 @@ export default function Settings() {
                 </p>
               )}
               <p className="text-xs text-gray-500 mt-1">
-                Create a Slack webhook URL in your Slack workspace settings. The webhook will be tested when you save it.
+                Go to your Slack Admin, Browse Apps → Custom Integrations → Incoming WebHooks and click "Add to Slack". Copy the incoming webhook URL here. The webhook will be tested when you save it.
               </p>
             </div>
           </div>
@@ -354,9 +354,9 @@ export default function Settings() {
               disabled={triggeringReminders}
               className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <p className="font-medium">Trigger Reminder Emails</p>
+              <p className="font-medium">Trigger reminders</p>
               <p className="text-sm text-gray-500">
-                {triggeringReminders ? 'Sending...' : 'Manually send reminder emails for today'}
+                {triggeringReminders ? 'Sending...' : 'Manually send reminders for today'}
               </p>
               {reminderMessage && (
                 <p className="text-sm text-green-600 mt-1">{reminderMessage}</p>
