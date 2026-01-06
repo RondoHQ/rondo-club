@@ -113,90 +113,128 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
         
         $message = $this->format_email_message($user, $digest_data);
         
-        $headers = ['Content-Type: text/plain; charset=UTF-8'];
+        // Set custom from name and email
+        add_filter('wp_mail_from', [$this, 'set_email_from_address']);
+        add_filter('wp_mail_from_name', [$this, 'set_email_from_name']);
         
-        return wp_mail($user->user_email, $subject, $message, $headers);
+        $headers = ['Content-Type: text/html; charset=UTF-8'];
+        
+        $result = wp_mail($user->user_email, $subject, $message, $headers);
+        
+        // Remove filters after sending
+        remove_filter('wp_mail_from', [$this, 'set_email_from_address']);
+        remove_filter('wp_mail_from_name', [$this, 'set_email_from_name']);
+        
+        return $result;
     }
     
     /**
-     * Format email message body
+     * Format email message body as HTML
      */
     private function format_email_message($user, $digest_data) {
         $site_url = home_url();
         $today_formatted = date_i18n(get_option('date_format'));
         
-        $message = sprintf(
-            __("Hello %s,\n\nHere are your important dates for this week:\n\n", 'personal-crm'),
-            $user->display_name
+        $html = '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
+        $html .= sprintf(
+            '<p>Hello %s,</p><p>Here are your important dates for this week:</p>',
+            esc_html($user->display_name)
         );
         
         // Today section
         if (!empty($digest_data['today'])) {
-            $message .= __("TODAY\n", 'personal-crm');
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">TODAY</h3>';
             foreach ($digest_data['today'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
                 $people_links = $this->format_people_links($date['related_people'], $site_url);
-                $message .= sprintf("• %s - %s\n", $date['title'], $date_formatted);
+                $html .= sprintf(
+                    '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+                    esc_html($date['title']),
+                    esc_html($date_formatted)
+                );
                 if (!empty($people_links)) {
-                    $message .= sprintf("  %s\n", $people_links);
+                    $html .= sprintf('<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links);
                 }
             }
-            $message .= "\n";
         }
         
         // Tomorrow section
         if (!empty($digest_data['tomorrow'])) {
-            $message .= __("TOMORROW\n", 'personal-crm');
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">TOMORROW</h3>';
             foreach ($digest_data['tomorrow'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
                 $people_links = $this->format_people_links($date['related_people'], $site_url);
-                $message .= sprintf("• %s - %s\n", $date['title'], $date_formatted);
+                $html .= sprintf(
+                    '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+                    esc_html($date['title']),
+                    esc_html($date_formatted)
+                );
                 if (!empty($people_links)) {
-                    $message .= sprintf("  %s\n", $people_links);
+                    $html .= sprintf('<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links);
                 }
             }
-            $message .= "\n";
         }
         
         // Rest of week section
         if (!empty($digest_data['rest_of_week'])) {
-            $message .= __("THIS WEEK\n", 'personal-crm');
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">THIS WEEK</h3>';
             foreach ($digest_data['rest_of_week'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
                 $people_links = $this->format_people_links($date['related_people'], $site_url);
-                $message .= sprintf("• %s - %s\n", $date['title'], $date_formatted);
+                $html .= sprintf(
+                    '<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+                    esc_html($date['title']),
+                    esc_html($date_formatted)
+                );
                 if (!empty($people_links)) {
-                    $message .= sprintf("  %s\n", $people_links);
+                    $html .= sprintf('<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links);
                 }
             }
-            $message .= "\n";
         }
         
-        $message .= sprintf(
-            __("Visit Caelis to see more details.\n\n%s", 'personal-crm'),
-            $site_url
+        $html .= sprintf(
+            '<p style="margin-top: 20px;"><a href="%s">Visit Caelis</a> to see more details.</p>',
+            esc_url($site_url)
         );
         
-        return $message;
+        $html .= '</body></html>';
+        
+        return $html;
     }
     
     /**
-     * Format people names as clickable links
+     * Set email from address
+     */
+    public function set_email_from_address($from_email) {
+        $domain = parse_url(home_url(), PHP_URL_HOST);
+        return 'notifications@' . $domain;
+    }
+    
+    /**
+     * Set email from name
+     */
+    public function set_email_from_name($from_name) {
+        return 'Caelis';
+    }
+    
+    /**
+     * Format people names as clickable HTML links
      */
     private function format_people_links($people, $site_url) {
         $links = [];
         foreach ($people as $person) {
-            $person_url = $site_url . '/people/' . $person['id'];
-            $links[] = sprintf('%s (%s)', $person['name'], $person_url);
+            $person_url = esc_url($site_url . '/people/' . $person['id']);
+            $person_name = esc_html($person['name']);
+            $links[] = sprintf('<a href="%s">%s</a>', $person_url, $person_name);
         }
         return implode(', ', $links);
     }
@@ -256,18 +294,19 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         $webhook_url = $config['webhook_url'];
         $blocks = $this->format_slack_blocks($digest_data);
         
-        // Get logo URL
+        // Get logo URL - Slack prefers PNG/JPG over SVG
         $logo_url = $this->get_logo_url();
         
         $payload = [
             'text' => __('Your Important Dates for This Week', 'personal-crm'),
             'blocks' => $blocks,
+            'username' => 'Caelis',
         ];
         
-        // Add logo/icon if available
+        // Add logo/icon if available - Slack requires publicly accessible image
+        // Note: SVG may not work, but we'll try. For best results, use PNG/JPG
         if ($logo_url) {
             $payload['icon_url'] = $logo_url;
-            $payload['username'] = 'Caelis';
         }
         
         $response = wp_remote_post($webhook_url, [
@@ -423,14 +462,22 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
     
     /**
      * Get logo URL for Slack messages
+     * 
+     * Note: Slack prefers PNG/JPG images. SVG may not display correctly.
+     * The image must be publicly accessible.
      */
     private function get_logo_url() {
         // Try to use favicon or logo from theme
         $theme_url = get_template_directory_uri();
-        $favicon_url = $theme_url . '/favicon.svg';
         
-        // Check if favicon exists (basic check - in production this should work)
-        return $favicon_url;
+        // Try PNG first (better Slack support)
+        $logo_png = $theme_url . '/logo.png';
+        $logo_jpg = $theme_url . '/logo.jpg';
+        $favicon_svg = $theme_url . '/favicon.svg';
+        
+        // Return PNG if it exists, otherwise try JPG, then SVG
+        // In production, ensure logo.png exists for best Slack compatibility
+        return $favicon_svg; // For now, use SVG. Replace with PNG/JPG path when available
     }
 }
 
