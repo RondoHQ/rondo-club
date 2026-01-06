@@ -229,7 +229,6 @@ export default function DateForm() {
       date_type: '',
       related_people: [],
       is_recurring: true,
-      reminder_days_before: 7,
     },
   });
 
@@ -325,7 +324,6 @@ export default function DateForm() {
         date_type: dateTypeId,
         related_people: relatedPeopleIds,
         is_recurring: dateItem.acf?.is_recurring ?? true,
-        reminder_days_before: dateItem.acf?.reminder_days_before || 7,
       });
       setFormInitialized(true);
     } else if (!isEditing && allPeople.length > 0 && dateTypes.length > 0) {
@@ -336,7 +334,6 @@ export default function DateForm() {
         date_type: '',
         related_people: [],
         is_recurring: true,
-        reminder_days_before: 7,
       };
 
       if (prefilledPersonId) {
@@ -374,7 +371,6 @@ export default function DateForm() {
         date_value: data.date_value,
         related_people: data.related_people,
         is_recurring: data.is_recurring,
-        reminder_days_before: parseInt(data.reminder_days_before, 10),
       },
     };
 
@@ -507,18 +503,6 @@ export default function DateForm() {
             </label>
           </div>
 
-          {/* Reminder */}
-          <div>
-            <label className="label">Remind me</label>
-            <select {...register('reminder_days_before')} className="input">
-              <option value="0">On the day</option>
-              <option value="1">1 day before</option>
-              <option value="3">3 days before</option>
-              <option value="7">1 week before</option>
-              <option value="14">2 weeks before</option>
-              <option value="30">1 month before</option>
-            </select>
-          </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Link to={backUrl} className="btn-secondary">Cancel</Link>

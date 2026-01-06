@@ -11,12 +11,23 @@ if (!defined('ABSPATH')) {
 
 class PRM_Reminders {
     
+    /**
+     * Available notification channels
+     */
+    private $channels = [];
+    
     public function __construct() {
         // Register cron hook
         add_action('prm_daily_reminder_check', [$this, 'process_daily_reminders']);
         
         // Add custom cron schedule if needed
         add_filter('cron_schedules', [$this, 'add_cron_schedules']);
+        
+        // Initialize notification channels
+        $this->channels = [
+            new PRM_Email_Channel(),
+            new PRM_Slack_Channel(),
+        ];
     }
     
     /**
@@ -48,7 +59,6 @@ class PRM_Reminders {
         foreach ($dates as $date_post) {
             $date_value = get_field('date_value', $date_post->ID);
             $is_recurring = get_field('is_recurring', $date_post->ID);
-            $reminder_days = (int) get_field('reminder_days_before', $date_post->ID);
             
             if (!$date_value) {
                 continue;
@@ -65,17 +75,9 @@ class PRM_Reminders {
                 continue;
             }
             
-            // Calculate when to remind
-            $remind_on = (clone $next_occurrence)->modify("-{$reminder_days} days");
-            
-            // Only include if remind_on is today or in the future
-            if ($remind_on < $today) {
-                // But the date itself might still be relevant
-                if ($next_occurrence >= $today) {
-                    $remind_on = $today;
-                } else {
-                    continue;
-                }
+            // Only include if next occurrence is today or in the future
+            if ($next_occurrence < $today) {
+                continue;
             }
             
             $related_people = get_field('related_people', $date_post->ID) ?: [];
@@ -95,7 +97,6 @@ class PRM_Reminders {
                 'title'           => html_entity_decode($date_post->post_title, ENT_QUOTES, 'UTF-8'),
                 'date_value'      => $date_value,
                 'next_occurrence' => $next_occurrence->format('Y-m-d'),
-                'remind_on'       => $remind_on->format('Y-m-d'),
                 'days_until'      => (int) $today->diff($next_occurrence)->days,
                 'is_recurring'    => (bool) $is_recurring,
                 'date_type'       => wp_get_post_terms($date_post->ID, 'date_type', ['fields' => 'names']),
@@ -157,14 +158,170 @@ class PRM_Reminders {
      * Process daily reminders (cron job)
      */
     public function process_daily_reminders() {
-        $upcoming = $this->get_upcoming_reminders(0); // Due today
+        // Get all users who should receive reminders
+        $users_to_notify = $this->get_all_users_to_notify();
         
-        foreach ($upcoming as $reminder) {
-            $this->send_reminder_notifications($reminder);
+        foreach ($users_to_notify as $user_id) {
+            // Get weekly digest for this user
+            $digest_data = $this->get_weekly_digest($user_id);
+            
+            // Send via all enabled channels
+            foreach ($this->channels as $channel) {
+                if ($channel->is_enabled_for_user($user_id)) {
+                    $channel->send($user_id, $digest_data);
+                }
+            }
         }
         
         // Check and update expired work history entries
         $this->update_expired_work_history();
+    }
+    
+    /**
+     * Get weekly digest for a user (today, tomorrow, rest of week)
+     * 
+     * @param int $user_id User ID
+     * @return array Digest data with today, tomorrow, rest_of_week keys
+     */
+    public function get_weekly_digest($user_id) {
+        $access_control = new PRM_Access_Control();
+        $today = new DateTime('today', wp_timezone());
+        $tomorrow = (clone $today)->modify('+1 day');
+        $end_of_week = (clone $today)->modify('+7 days');
+        
+        // Get all dates
+        $dates = get_posts([
+            'post_type'      => 'important_date',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+        ]);
+        
+        $digest = [
+            'today' => [],
+            'tomorrow' => [],
+            'rest_of_week' => [],
+        ];
+        
+        foreach ($dates as $date_post) {
+            $date_value = get_field('date_value', $date_post->ID);
+            $is_recurring = get_field('is_recurring', $date_post->ID);
+            
+            if (!$date_value) {
+                continue;
+            }
+            
+            $next_occurrence = $this->calculate_next_occurrence($date_value, $is_recurring);
+            
+            if (!$next_occurrence) {
+                continue;
+            }
+            
+            // Check if date is within the week
+            if ($next_occurrence > $end_of_week) {
+                continue;
+            }
+            
+            // Get related people and check access
+            $related_people = get_field('related_people', $date_post->ID) ?: [];
+            $people_data = [];
+            $user_has_access = false;
+            
+            foreach ($related_people as $person) {
+                $person_id = is_object($person) ? $person->ID : $person;
+                
+                // Only include if user can access this person
+                if ($access_control->user_can_access_post($person_id, $user_id)) {
+                    $user_has_access = true;
+                    $people_data[] = [
+                        'id'        => $person_id,
+                        'name'      => html_entity_decode(get_the_title($person_id), ENT_QUOTES, 'UTF-8'),
+                        'thumbnail' => get_the_post_thumbnail_url($person_id, 'thumbnail'),
+                    ];
+                }
+            }
+            
+            // Skip if user doesn't have access to any related people
+            if (!$user_has_access || empty($people_data)) {
+                continue;
+            }
+            
+            $date_item = [
+                'id'              => $date_post->ID,
+                'title'           => html_entity_decode($date_post->post_title, ENT_QUOTES, 'UTF-8'),
+                'date_value'      => $date_value,
+                'next_occurrence' => $next_occurrence->format('Y-m-d'),
+                'days_until'      => (int) $today->diff($next_occurrence)->days,
+                'is_recurring'    => (bool) $is_recurring,
+                'date_type'       => wp_get_post_terms($date_post->ID, 'date_type', ['fields' => 'names']),
+                'related_people'  => $people_data,
+            ];
+            
+            // Categorize by when it occurs
+            $occurrence_date = $next_occurrence->format('Y-m-d');
+            $today_date = $today->format('Y-m-d');
+            $tomorrow_date = $tomorrow->format('Y-m-d');
+            
+            if ($occurrence_date === $today_date) {
+                $digest['today'][] = $date_item;
+            } elseif ($occurrence_date === $tomorrow_date) {
+                $digest['tomorrow'][] = $date_item;
+            } elseif ($next_occurrence <= $end_of_week) {
+                $digest['rest_of_week'][] = $date_item;
+            }
+        }
+        
+        // Sort each section by next occurrence
+        foreach ($digest as $key => $items) {
+            usort($digest[$key], function($a, $b) {
+                return strcmp($a['next_occurrence'], $b['next_occurrence']);
+            });
+        }
+        
+        return $digest;
+    }
+    
+    /**
+     * Get all users who should receive reminders
+     * (users who have created people with important dates)
+     * 
+     * @return array User IDs
+     */
+    private function get_all_users_to_notify() {
+        // Get all people posts
+        $people = get_posts([
+            'post_type'      => 'person',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'fields'         => 'ids',
+        ]);
+        
+        $user_ids = [];
+        
+        foreach ($people as $person_id) {
+            // Check if this person has related dates
+            $related_dates = get_posts([
+                'post_type'      => 'important_date',
+                'posts_per_page' => -1,
+                'post_status'    => 'publish',
+                'meta_query'     => [
+                    [
+                        'key'     => 'related_people',
+                        'value'   => '"' . $person_id . '"',
+                        'compare' => 'LIKE',
+                    ],
+                ],
+                'fields' => 'ids',
+            ]);
+            
+            if (!empty($related_dates)) {
+                $post = get_post($person_id);
+                if ($post) {
+                    $user_ids[] = (int) $post->post_author;
+                }
+            }
+        }
+        
+        return array_unique($user_ids);
     }
     
     /**
@@ -214,75 +371,6 @@ class PRM_Reminders {
         }
     }
     
-    /**
-     * Send reminder notifications
-     */
-    private function send_reminder_notifications($reminder) {
-        // Get users to notify (authors of related people posts)
-        $users_to_notify = $this->get_users_to_notify($reminder['related_people']);
-        
-        foreach ($users_to_notify as $user_id) {
-            $this->send_reminder_email($user_id, $reminder);
-        }
-    }
-    
-    /**
-     * Get users who should be notified about a reminder
-     */
-    private function get_users_to_notify($people_data) {
-        $user_ids = [];
-        
-        foreach ($people_data as $person) {
-            $post = get_post($person['id']);
-            
-            if ($post) {
-                $user_ids[] = (int) $post->post_author;
-            }
-        }
-        
-        return array_unique($user_ids);
-    }
-    
-    /**
-     * Send reminder email to a user
-     */
-    private function send_reminder_email($user_id, $reminder) {
-        $user = get_userdata($user_id);
-        
-        if (!$user || !$user->user_email) {
-            return false;
-        }
-        
-        // Check if user has reminders enabled (could add a user meta check here)
-        
-        $site_name = get_bloginfo('name');
-        $subject = sprintf(
-            __('[%s] Reminder: %s', 'personal-crm'),
-            $site_name,
-            $reminder['title']
-        );
-        
-        $people_names = array_column($reminder['related_people'], 'name');
-        $people_list = implode(', ', $people_names);
-        
-        $date_formatted = date_i18n(
-            get_option('date_format'),
-            strtotime($reminder['next_occurrence'])
-        );
-        
-        $message = sprintf(
-            __("Hello %s,\n\nThis is a reminder about: %s\n\nDate: %s\nPeople: %s\n\nVisit Caelis to see more details.\n\n%s", 'personal-crm'),
-            $user->display_name,
-            $reminder['title'],
-            $date_formatted,
-            $people_list,
-            home_url()
-        );
-        
-        $headers = ['Content-Type: text/plain; charset=UTF-8'];
-        
-        return wp_mail($user->user_email, $subject, $message, $headers);
-    }
     
     /**
      * Get reminders for a specific user

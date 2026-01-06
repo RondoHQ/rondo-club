@@ -64,6 +64,50 @@ class PRM_REST_API {
             ],
         ]);
         
+        // Trigger reminders manually (admin only)
+        register_rest_route('prm/v1', '/reminders/trigger', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'trigger_reminders'],
+            'permission_callback' => [$this, 'check_admin_permission'],
+        ]);
+        
+        // Get user notification channels
+        register_rest_route('prm/v1', '/user/notification-channels', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_notification_channels'],
+            'permission_callback' => 'is_user_logged_in',
+        ]);
+        
+        // Update user notification channels
+        register_rest_route('prm/v1', '/user/notification-channels', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'update_notification_channels'],
+            'permission_callback' => 'is_user_logged_in',
+            'args'                => [
+                'channels' => [
+                    'required'          => true,
+                    'validate_callback' => function($param) {
+                        return is_array($param);
+                    },
+                ],
+            ],
+        ]);
+        
+        // Update Slack webhook URL
+        register_rest_route('prm/v1', '/user/slack-webhook', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'update_slack_webhook'],
+            'permission_callback' => 'is_user_logged_in',
+            'args'                => [
+                'webhook' => [
+                    'required'          => false,
+                    'validate_callback' => function($param) {
+                        return empty($param) || filter_var($param, FILTER_VALIDATE_URL);
+                    },
+                ],
+            ],
+        ]);
+        
         // Search across all content
         register_rest_route('prm/v1', '/search', [
             'methods'             => WP_REST_Server::READABLE,
@@ -459,6 +503,217 @@ class PRM_REST_API {
     }
     
     /**
+     * Manually trigger reminder emails for today (admin only)
+     */
+    public function trigger_reminders($request) {
+        $reminders_handler = new PRM_Reminders();
+        
+        // Get all users who should receive reminders
+        $users_to_notify = $this->get_all_users_to_notify_for_trigger();
+        
+        $users_processed = 0;
+        $notifications_sent = 0;
+        
+        foreach ($users_to_notify as $user_id) {
+            // Get weekly digest for this user
+            $digest_data = $reminders_handler->get_weekly_digest($user_id);
+            
+            // Send via all enabled channels
+            $email_channel = new PRM_Email_Channel();
+            $slack_channel = new PRM_Slack_Channel();
+            
+            if ($email_channel->is_enabled_for_user($user_id)) {
+                if ($email_channel->send($user_id, $digest_data)) {
+                    $notifications_sent++;
+                }
+            }
+            
+            if ($slack_channel->is_enabled_for_user($user_id)) {
+                if ($slack_channel->send($user_id, $digest_data)) {
+                    $notifications_sent++;
+                }
+            }
+            
+            $users_processed++;
+        }
+        
+        return rest_ensure_response([
+            'success' => true,
+            'message' => sprintf(
+                __('Processed %d user(s), sent %d notification(s).', 'personal-crm'),
+                $users_processed,
+                $notifications_sent
+            ),
+            'users_processed' => $users_processed,
+            'notifications_sent' => $notifications_sent,
+        ]);
+    }
+    
+    /**
+     * Get all users who should receive reminders (for trigger endpoint)
+     */
+    private function get_all_users_to_notify_for_trigger() {
+        // Get all people posts
+        $people = get_posts([
+            'post_type'      => 'person',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'fields'         => 'ids',
+        ]);
+        
+        $user_ids = [];
+        
+        foreach ($people as $person_id) {
+            // Check if this person has related dates
+            $related_dates = get_posts([
+                'post_type'      => 'important_date',
+                'posts_per_page' => -1,
+                'post_status'    => 'publish',
+                'meta_query'     => [
+                    [
+                        'key'     => 'related_people',
+                        'value'   => '"' . $person_id . '"',
+                        'compare' => 'LIKE',
+                    ],
+                ],
+                'fields' => 'ids',
+            ]);
+            
+            if (!empty($related_dates)) {
+                $post = get_post($person_id);
+                if ($post) {
+                    $user_ids[] = (int) $post->post_author;
+                }
+            }
+        }
+        
+        return array_unique($user_ids);
+    }
+    
+    /**
+     * Get user's notification channel preferences
+     */
+    public function get_notification_channels($request) {
+        $user_id = get_current_user_id();
+        
+        $channels = get_user_meta($user_id, 'caelis_notification_channels', true);
+        if (!is_array($channels)) {
+            // Default to email only
+            $channels = ['email'];
+        }
+        
+        $slack_webhook = get_user_meta($user_id, 'caelis_slack_webhook', true);
+        
+        return rest_ensure_response([
+            'channels' => $channels,
+            'slack_webhook' => $slack_webhook ?: '',
+        ]);
+    }
+    
+    /**
+     * Update user's notification channel preferences
+     */
+    public function update_notification_channels($request) {
+        $user_id = get_current_user_id();
+        $channels = $request->get_param('channels');
+        
+        // Validate channels
+        $valid_channels = ['email', 'slack'];
+        $channels = array_intersect($channels, $valid_channels);
+        
+        // If Slack is enabled, check if webhook is configured
+        if (in_array('slack', $channels)) {
+            $webhook = get_user_meta($user_id, 'caelis_slack_webhook', true);
+            if (empty($webhook)) {
+                return new WP_Error(
+                    'slack_webhook_required',
+                    __('Slack webhook URL must be configured before enabling Slack notifications.', 'personal-crm'),
+                    ['status' => 400]
+                );
+            }
+        }
+        
+        update_user_meta($user_id, 'caelis_notification_channels', $channels);
+        
+        return rest_ensure_response([
+            'success' => true,
+            'channels' => $channels,
+        ]);
+    }
+    
+    /**
+     * Update user's Slack webhook URL
+     */
+    public function update_slack_webhook($request) {
+        $user_id = get_current_user_id();
+        $webhook = $request->get_param('webhook');
+        
+        if (empty($webhook)) {
+            // Remove webhook
+            delete_user_meta($user_id, 'caelis_slack_webhook');
+            
+            // Also disable Slack channel if it's enabled
+            $channels = get_user_meta($user_id, 'caelis_notification_channels', true);
+            if (is_array($channels)) {
+                $channels = array_diff($channels, ['slack']);
+                update_user_meta($user_id, 'caelis_notification_channels', $channels);
+            }
+            
+            return rest_ensure_response([
+                'success' => true,
+                'message' => __('Slack webhook removed.', 'personal-crm'),
+            ]);
+        }
+        
+        // Validate webhook URL
+        if (!filter_var($webhook, FILTER_VALIDATE_URL)) {
+            return new WP_Error(
+                'invalid_webhook',
+                __('Invalid webhook URL.', 'personal-crm'),
+                ['status' => 400]
+            );
+        }
+        
+        // Test webhook with a simple message
+        $test_payload = [
+            'text' => __('Caelis notification test', 'personal-crm'),
+        ];
+        
+        $response = wp_remote_post($webhook, [
+            'body' => json_encode($test_payload),
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'timeout' => 10,
+        ]);
+        
+        if (is_wp_error($response)) {
+            return new WP_Error(
+                'webhook_test_failed',
+                sprintf(__('Webhook test failed: %s', 'personal-crm'), $response->get_error_message()),
+                ['status' => 400]
+            );
+        }
+        
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code < 200 || $status_code >= 300) {
+            return new WP_Error(
+                'webhook_test_failed',
+                sprintf(__('Webhook test failed with status code: %d', 'personal-crm'), $status_code),
+                ['status' => 400]
+            );
+        }
+        
+        // Save webhook
+        update_user_meta($user_id, 'caelis_slack_webhook', $webhook);
+        
+        return rest_ensure_response([
+            'success' => true,
+            'message' => __('Slack webhook configured successfully.', 'personal-crm'),
+        ]);
+    }
+    
+    /**
      * Global search across people, companies, and dates
      */
     public function global_search($request) {
@@ -688,7 +943,6 @@ class PRM_REST_API {
             'title'                => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
             'date_value'           => get_field('date_value', $post->ID),
             'is_recurring'         => (bool) get_field('is_recurring', $post->ID),
-            'reminder_days_before' => (int) get_field('reminder_days_before', $post->ID),
             'date_type'            => wp_get_post_terms($post->ID, 'date_type', ['fields' => 'names']),
             'related_people'       => $people_names,
         ];

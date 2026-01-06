@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
+import { prmApi } from '@/api/client';
 
 export default function Settings() {
   const config = window.prmConfig || {};
@@ -12,6 +13,18 @@ export default function Settings() {
   const [icalLoading, setIcalLoading] = useState(true);
   const [icalCopied, setIcalCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  
+  // Notification channels state
+  const [notificationChannels, setNotificationChannels] = useState([]);
+  const [slackWebhook, setSlackWebhook] = useState('');
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [savingChannels, setSavingChannels] = useState(false);
+  const [savingWebhook, setSavingWebhook] = useState(false);
+  const [webhookTestMessage, setWebhookTestMessage] = useState('');
+  
+  // Manual trigger state (admin only)
+  const [triggeringReminders, setTriggeringReminders] = useState(false);
+  const [reminderMessage, setReminderMessage] = useState('');
   
   // Fetch iCal URL on mount
   useEffect(() => {
@@ -27,6 +40,22 @@ export default function Settings() {
       }
     };
     fetchIcalUrl();
+  }, []);
+  
+  // Fetch notification channels on mount
+  useEffect(() => {
+    const fetchNotificationChannels = async () => {
+      try {
+        const response = await prmApi.getNotificationChannels();
+        setNotificationChannels(response.data.channels || ['email']);
+        setSlackWebhook(response.data.slack_webhook || '');
+      } catch (error) {
+        console.error('Failed to fetch notification channels:', error);
+      } finally {
+        setNotificationsLoading(false);
+      }
+    };
+    fetchNotificationChannels();
   }, []);
   
   const copyIcalUrl = async () => {
@@ -53,6 +82,78 @@ export default function Settings() {
       console.error('Failed to regenerate token:', error);
     } finally {
       setRegenerating(false);
+    }
+  };
+  
+  const toggleChannel = async (channelId) => {
+    const newChannels = notificationChannels.includes(channelId)
+      ? notificationChannels.filter(c => c !== channelId)
+      : [...notificationChannels, channelId];
+    
+    setSavingChannels(true);
+    try {
+      await prmApi.updateNotificationChannels(newChannels);
+      setNotificationChannels(newChannels);
+    } catch (error) {
+      console.error('Failed to update notification channels:', error);
+      alert(error.response?.data?.message || 'Failed to update notification channels');
+    } finally {
+      setSavingChannels(false);
+    }
+  };
+  
+  const handleSlackWebhookChange = async (webhook) => {
+    setSlackWebhook(webhook);
+    setWebhookTestMessage('');
+    
+    if (!webhook) {
+      // Remove webhook if empty
+      setSavingWebhook(true);
+      try {
+        await prmApi.updateSlackWebhook('');
+        setWebhookTestMessage('Webhook removed');
+        // Also disable Slack channel if enabled
+        if (notificationChannels.includes('slack')) {
+          await toggleChannel('slack');
+        }
+      } catch (error) {
+        console.error('Failed to remove webhook:', error);
+        alert(error.response?.data?.message || 'Failed to remove webhook');
+      } finally {
+        setSavingWebhook(false);
+      }
+      return;
+    }
+    
+    // Validate and save webhook
+    setSavingWebhook(true);
+    try {
+      const response = await prmApi.updateSlackWebhook(webhook);
+      setWebhookTestMessage(response.data.message || 'Webhook configured successfully');
+    } catch (error) {
+      console.error('Failed to update webhook:', error);
+      setWebhookTestMessage(error.response?.data?.message || 'Failed to configure webhook');
+    } finally {
+      setSavingWebhook(false);
+    }
+  };
+  
+  const handleTriggerReminders = async () => {
+    if (!confirm('This will send reminder emails for all reminders due today. Continue?')) {
+      return;
+    }
+    
+    setTriggeringReminders(true);
+    setReminderMessage('');
+    
+    try {
+      const response = await prmApi.triggerReminders();
+      setReminderMessage(response.data.message || 'Reminders triggered successfully.');
+    } catch (error) {
+      console.error('Failed to trigger reminders:', error);
+      setReminderMessage(error.response?.data?.message || 'Failed to trigger reminders. Please check server logs.');
+    } finally {
+      setTriggeringReminders(false);
     }
   };
 
@@ -155,6 +256,81 @@ export default function Settings() {
         </div>
       </div>
       
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4">Notifications</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Choose how you want to receive daily reminders about your important dates.
+        </p>
+        
+        {notificationsLoading ? (
+          <div className="animate-pulse">
+            <div className="h-10 bg-gray-200 rounded mb-3"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Email channel */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
+              <div>
+                <p className="font-medium">Email</p>
+                <p className="text-sm text-gray-500">Receive daily digest emails</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationChannels.includes('email')}
+                  onChange={() => toggleChannel('email')}
+                  disabled={savingChannels}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+            
+            {/* Slack channel */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
+              <div>
+                <p className="font-medium">Slack</p>
+                <p className="text-sm text-gray-500">Receive notifications in Slack</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationChannels.includes('slack')}
+                  onChange={() => toggleChannel('slack')}
+                  disabled={savingChannels || !slackWebhook}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+            
+            {/* Slack webhook input */}
+            <div>
+              <label className="label mb-1">Slack Webhook URL</label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={slackWebhook}
+                  onChange={(e) => handleSlackWebhookChange(e.target.value)}
+                  placeholder="https://hooks.slack.com/services/..."
+                  className="input flex-1"
+                  disabled={savingWebhook}
+                />
+              </div>
+              {webhookTestMessage && (
+                <p className={`text-sm mt-1 ${webhookTestMessage.includes('successfully') || webhookTestMessage.includes('removed') ? 'text-green-600' : 'text-red-600'}`}>
+                  {webhookTestMessage}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Create a Slack webhook URL in your Slack workspace settings. The webhook will be tested when you save it.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+      
       {isAdmin && (
         <div className="card p-6">
           <h2 className="text-lg font-semibold mb-4">Administration</h2>
@@ -173,6 +349,19 @@ export default function Settings() {
               <p className="font-medium">User Approval</p>
               <p className="text-sm text-gray-500">Approve or deny access for new users</p>
             </Link>
+            <button
+              onClick={handleTriggerReminders}
+              disabled={triggeringReminders}
+              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <p className="font-medium">Trigger Reminder Emails</p>
+              <p className="text-sm text-gray-500">
+                {triggeringReminders ? 'Sending...' : 'Manually send reminder emails for today'}
+              </p>
+              {reminderMessage && (
+                <p className="text-sm text-green-600 mt-1">{reminderMessage}</p>
+              )}
+            </button>
           </div>
         </div>
       )}

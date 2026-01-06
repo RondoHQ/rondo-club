@@ -787,7 +787,6 @@ class PRM_Monica_Import {
         update_field('date_value', $this->format_date_for_acf($date_entry['date']), $date_post_id);
         update_field('is_recurring', true, $date_post_id);
         update_field('related_people', [$post_id], $date_post_id);
-        update_field('reminder_days_before', 7, $date_post_id);
 
         // Ensure the birthday term exists, create if needed
         $term = term_exists('birthday', 'date_type');
@@ -827,7 +826,6 @@ class PRM_Monica_Import {
         update_field('date_value', $this->format_date_for_acf($date_value), $date_post_id);
         update_field('is_recurring', true, $date_post_id);
         update_field('related_people', [$post_id], $date_post_id);
-        update_field('reminder_days_before', 7, $date_post_id);
 
         // Ensure the other term exists, create if needed
         $term = term_exists('other', 'date_type');
@@ -935,7 +933,6 @@ class PRM_Monica_Import {
         update_field('is_recurring', $is_recurring, $date_post_id);
 
         update_field('related_people', [$post_id], $date_post_id);
-        update_field('reminder_days_before', $is_recurring ? 7 : 0, $date_post_id);
 
         // Add notes if present
         $notes = $event['note'] ?? '';

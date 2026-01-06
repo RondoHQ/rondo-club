@@ -107,6 +107,12 @@ export const prmApi = {
   // Reminders
   getReminders: (daysAhead = 30) => 
     api.get('/prm/v1/reminders', { params: { days_ahead: daysAhead } }),
+  triggerReminders: () => api.post('/prm/v1/reminders/trigger'),
+  
+  // Notification channels
+  getNotificationChannels: () => api.get('/prm/v1/user/notification-channels'),
+  updateNotificationChannels: (channels) => api.post('/prm/v1/user/notification-channels', { channels }),
+  updateSlackWebhook: (webhook) => api.post('/prm/v1/user/slack-webhook', { webhook }),
   
   // Person-specific
   getPersonDates: (personId) => api.get(`/prm/v1/people/${personId}/dates`),
