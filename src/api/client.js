@@ -115,6 +115,10 @@ export const prmApi = {
   updateSlackWebhook: (webhook) => api.post('/prm/v1/user/slack-webhook', { webhook }),
   updateNotificationTime: (time) => api.post('/prm/v1/user/notification-time', { time }),
   
+  // Slack OAuth
+  getSlackStatus: () => api.get('/prm/v1/user/slack-status'),
+  disconnectSlack: () => api.post('/prm/v1/slack/disconnect'),
+  
   // Person-specific
   getPersonDates: (personId) => api.get(`/prm/v1/people/${personId}/dates`),
   getPersonTimeline: (personId) => api.get(`/prm/v1/people/${personId}/timeline`),

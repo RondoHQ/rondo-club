@@ -261,22 +261,35 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         if (!in_array('slack', $channels)) {
             return false;
         }
-        // Also check if webhook is configured
+        // Check if bot token is configured (OAuth) or webhook (legacy)
+        $bot_token = get_user_meta($user_id, 'caelis_slack_bot_token', true);
         $webhook = get_user_meta($user_id, 'caelis_slack_webhook', true);
-        return !empty($webhook);
+        return !empty($bot_token) || !empty($webhook);
     }
     
     public function get_user_config($user_id) {
-        $webhook = get_user_meta($user_id, 'caelis_slack_webhook', true);
-        if (empty($webhook)) {
-            return false;
+        // Prefer OAuth bot token over webhook
+        $bot_token = get_user_meta($user_id, 'caelis_slack_bot_token', true);
+        if (!empty($bot_token)) {
+            return [
+                'bot_token' => base64_decode($bot_token),
+                'workspace_id' => get_user_meta($user_id, 'caelis_slack_workspace_id', true),
+                'target' => get_user_meta($user_id, 'caelis_slack_target', true), // Channel or user ID
+            ];
         }
-        return [
-            'webhook_url' => $webhook,
-        ];
+        
+        // Fallback to webhook for legacy support
+        $webhook = get_user_meta($user_id, 'caelis_slack_webhook', true);
+        if (!empty($webhook)) {
+            return [
+                'webhook_url' => $webhook,
+            ];
+        }
+        
+        return false;
     }
     
-    public function send($user_id, $digest_data) {
+    public function send($user_id, $digest_data, $target = null) {
         $config = $this->get_user_config($user_id);
         if (!$config) {
             return false;
@@ -291,26 +304,88 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
             return false;
         }
         
-        $webhook_url = $config['webhook_url'];
         $blocks = $this->format_slack_blocks($digest_data);
         
-        // Get logo URL - Slack prefers PNG/JPG over SVG
+        // Use OAuth bot token if available
+        if (isset($config['bot_token']) && !empty($config['bot_token'])) {
+            // Default to user's Slack user ID (DM) if no target specified
+            if (empty($target)) {
+                $target = get_user_meta($user_id, 'caelis_slack_user_id', true);
+            }
+            // Use configured target if still no target
+            if (empty($target)) {
+                $target = $config['target'];
+            }
+            // If still no target, can't send
+            if (empty($target)) {
+                error_log('PRM Slack: No target specified for user ' . $user_id);
+                return false;
+            }
+            return $this->send_via_web_api($config['bot_token'], $blocks, $target);
+        }
+        
+        // Fallback to webhook for legacy support
+        if (isset($config['webhook_url']) && !empty($config['webhook_url'])) {
+            return $this->send_via_webhook($config['webhook_url'], $blocks);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Send message via Slack Web API (OAuth)
+     */
+    private function send_via_web_api($bot_token, $blocks, $target) {
+        
+        $payload = [
+            'channel' => $target,
+            'text'    => __('Your Important Dates for This Week', 'personal-crm'),
+            'blocks'  => $blocks,
+        ];
+        
+        $response = wp_remote_post('https://slack.com/api/chat.postMessage', [
+            'body'    => json_encode($payload),
+            'headers' => [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $bot_token,
+            ],
+            'timeout' => 10,
+        ]);
+        
+        if (is_wp_error($response)) {
+            error_log('PRM Slack Web API error: ' . $response->get_error_message());
+            return false;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $status_code = wp_remote_retrieve_response_code($response);
+        
+        if ($status_code >= 200 && $status_code < 300 && !empty($body['ok'])) {
+            return true;
+        }
+        
+        error_log('PRM Slack Web API error: ' . (isset($body['error']) ? $body['error'] : 'Unknown error'));
+        return false;
+    }
+    
+    /**
+     * Send message via webhook (legacy support)
+     */
+    private function send_via_webhook($webhook_url, $blocks) {
         $logo_url = $this->get_logo_url();
         
         $payload = [
-            'text' => __('Your Important Dates for This Week', 'personal-crm'),
-            'blocks' => $blocks,
+            'text'     => __('Your Important Dates for This Week', 'personal-crm'),
+            'blocks'   => $blocks,
             'username' => 'Caelis',
         ];
         
-        // Add logo/icon if available - Slack requires publicly accessible image
-        // Note: SVG may not work, but we'll try. For best results, use PNG/JPG
         if ($logo_url) {
             $payload['icon_url'] = $logo_url;
         }
         
         $response = wp_remote_post($webhook_url, [
-            'body' => json_encode($payload),
+            'body'    => json_encode($payload),
             'headers' => [
                 'Content-Type' => 'application/json',
             ],
@@ -328,8 +403,9 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
     
     /**
      * Format Slack message blocks
+     * Made public so it can be called from REST API for slash commands
      */
-    private function format_slack_blocks($digest_data) {
+    public function format_slack_blocks($digest_data) {
         $blocks = [];
         $today_formatted = date_i18n(get_option('date_format'));
         
