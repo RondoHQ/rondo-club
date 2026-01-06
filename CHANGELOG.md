@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.3] - 2026-01-04
+
+### Changed
+- Updated dashboard text labels for consistency: "Upcoming Reminders" → "Upcoming reminders", "Recent People" → "Recently edited people", "Total People" → "Total people", "Important Dates" → "Events"
+- Updated "View all" links to be more descriptive: "View all reminders" and "View all people"
+
 ## [1.11.2] - 2026-01-04
 
 ### Changed
