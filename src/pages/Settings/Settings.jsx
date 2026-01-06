@@ -17,12 +17,15 @@ export default function Settings() {
   // Notification channels state
   const [notificationChannels, setNotificationChannels] = useState([]);
   const [slackWebhook, setSlackWebhook] = useState('');
+  const [slackConnected, setSlackConnected] = useState(false);
+  const [slackWorkspaceName, setSlackWorkspaceName] = useState('');
   const [notificationTime, setNotificationTime] = useState('09:00');
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [savingChannels, setSavingChannels] = useState(false);
   const [savingWebhook, setSavingWebhook] = useState(false);
   const [savingTime, setSavingTime] = useState(false);
   const [webhookTestMessage, setWebhookTestMessage] = useState('');
+  const [disconnectingSlack, setDisconnectingSlack] = useState(false);
   
   // Manual trigger state (admin only)
   const [triggeringReminders, setTriggeringReminders] = useState(false);
@@ -52,6 +55,11 @@ export default function Settings() {
         setNotificationChannels(response.data.channels || ['email']);
         setSlackWebhook(response.data.slack_webhook || '');
         setNotificationTime(response.data.notification_time || '09:00');
+        
+        // Check Slack OAuth status
+        const slackStatus = await prmApi.getSlackStatus();
+        setSlackConnected(slackStatus.data.connected || false);
+        setSlackWorkspaceName(slackStatus.data.workspace_name || '');
       } catch (error) {
         console.error('Failed to fetch notification channels:', error);
       } finally {
@@ -60,6 +68,56 @@ export default function Settings() {
     };
     fetchNotificationChannels();
   }, []);
+  
+  // Handle OAuth callback messages from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const slackConnected = params.get('slack_connected');
+    const slackError = params.get('slack_error');
+    
+    if (slackConnected === '1') {
+      setWebhookTestMessage('Slack connected successfully!');
+      // Refresh Slack status
+      prmApi.getSlackStatus().then(response => {
+        setSlackConnected(response.data.connected || false);
+        setSlackWorkspaceName(response.data.workspace_name || '');
+      });
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (slackError) {
+      setWebhookTestMessage(`Slack connection failed: ${slackError}`);
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+  
+  const handleConnectSlack = () => {
+    // Redirect to OAuth authorize endpoint
+    window.location.href = `${config.apiUrl}prm/v1/slack/oauth/authorize`;
+  };
+  
+  const handleDisconnectSlack = async () => {
+    if (!confirm('Are you sure you want to disconnect Slack? You will stop receiving Slack notifications.')) {
+      return;
+    }
+    
+    setDisconnectingSlack(true);
+    try {
+      await prmApi.disconnectSlack();
+      setSlackConnected(false);
+      setSlackWorkspaceName('');
+      setWebhookTestMessage('Slack disconnected successfully');
+      // Also disable Slack channel if enabled
+      if (notificationChannels.includes('slack')) {
+        await toggleChannel('slack');
+      }
+    } catch (error) {
+      console.error('Failed to disconnect Slack:', error);
+      alert(error.response?.data?.message || 'Failed to disconnect Slack');
+    } finally {
+      setDisconnectingSlack(false);
+    }
+  };
   
   const copyIcalUrl = async () => {
     try {
@@ -318,35 +376,68 @@ export default function Settings() {
                   type="checkbox"
                   checked={notificationChannels.includes('slack')}
                   onChange={() => toggleChannel('slack')}
-                  disabled={savingChannels || !slackWebhook}
+                  disabled={savingChannels || !slackConnected}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
             
-            {/* Slack webhook input */}
+            {/* Slack OAuth connection */}
             <div>
-              <label className="label mb-1">Slack Webhook URL</label>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={slackWebhook}
-                  onChange={(e) => handleSlackWebhookChange(e.target.value)}
-                  placeholder="https://hooks.slack.com/services/..."
-                  className="input flex-1"
-                  disabled={savingWebhook}
-                />
-              </div>
-              {webhookTestMessage && (
-                <p className={`text-sm mt-1 ${webhookTestMessage.includes('successfully') || webhookTestMessage.includes('removed') ? 'text-green-600' : 'text-red-600'}`}>
-                  {webhookTestMessage}
-                </p>
+              {slackConnected ? (
+                <div className="space-y-3">
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-green-900">Connected to Slack</p>
+                        {slackWorkspaceName && (
+                          <p className="text-sm text-green-700">Workspace: {slackWorkspaceName}</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={handleDisconnectSlack}
+                        disabled={disconnectingSlack}
+                        className="btn-secondary text-sm"
+                      >
+                        {disconnectingSlack ? 'Disconnecting...' : 'Disconnect'}
+                      </button>
+                    </div>
+                  </div>
+                  {webhookTestMessage && (
+                    <p className={`text-sm ${webhookTestMessage.includes('successfully') || webhookTestMessage.includes('disconnected') ? 'text-green-600' : 'text-red-600'}`}>
+                      {webhookTestMessage}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <button
+                    onClick={handleConnectSlack}
+                    className="btn-primary w-full"
+                  >
+                    Connect Slack
+                  </button>
+                  {webhookTestMessage && (
+                    <p className={`text-sm ${webhookTestMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>
+                      {webhookTestMessage}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    Connect your Slack workspace to receive daily reminder notifications. You'll be able to message channels or receive direct messages.
+                  </p>
+                </div>
               )}
-              <p className="text-xs text-gray-500 mt-1">
-                Go to your Slack Admin, Browse Apps → Custom Integrations → Incoming WebHooks and click "Add to Slack". Copy the incoming webhook URL here. The webhook will be tested when you save it.
-              </p>
             </div>
+            
+            {/* Legacy webhook support (hidden but kept for backward compatibility) */}
+            {slackWebhook && !slackConnected && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>Legacy webhook detected.</strong> Please connect via OAuth for better functionality. Your webhook will continue to work until you connect via OAuth.
+                </p>
+              </div>
+            )}
             
             {/* Notification time */}
             <div>

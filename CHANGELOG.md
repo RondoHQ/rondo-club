@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2026-01-04
+
+### Added
+- Slack OAuth 2.0 integration replacing webhook-based integration
+- OAuth flow with "Connect Slack" button in Settings
+- Slack Web API support for messaging channels and users directly
+- Slash command `/caelis` to view recent reminders in Slack
+- Automatic Slack user ID mapping for direct messaging
+- Slack workspace name display in Settings
+- Event subscription endpoint for Slack URL verification
+
+### Changed
+- Slack notifications now use Web API (`chat.postMessage`) instead of incoming webhooks
+- Slack connection status shown in Settings instead of webhook URL input
+- Legacy webhook support maintained for backward compatibility during migration
+
+### Technical Details
+- New REST API endpoints: `/prm/v1/slack/oauth/authorize`, `/prm/v1/slack/oauth/callback`, `/prm/v1/slack/disconnect`, `/prm/v1/slack/commands`, `/prm/v1/slack/events`
+- User meta keys: `caelis_slack_bot_token`, `caelis_slack_workspace_id`, `caelis_slack_workspace_name`, `caelis_slack_user_id`
+- Requires WordPress constants: `CAELIS_SLACK_CLIENT_ID`, `CAELIS_SLACK_CLIENT_SECRET`, `CAELIS_SLACK_SIGNING_SECRET`
+
 ## [1.11.4] - 2026-01-04
 
 ### Changed
