@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +10,12 @@ import { wpApi, prmApi } from '@/api/client';
 export default function PersonForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isEditing = !!id;
+  
+  // Get return navigation parameters
+  const returnTo = searchParams.get('returnTo');
+  const sourcePersonId = searchParams.get('sourcePersonId');
   
   const { data: person, isLoading: isLoadingPerson } = usePerson(id);
   const createPerson = useCreatePerson();
@@ -137,7 +142,12 @@ export default function PersonForm() {
           }
         }
         
-        navigate(`/people/${personId}`);
+        // Handle return navigation if coming from relationship form
+        if (returnTo === 'relationship' && sourcePersonId) {
+          navigate(`/people/${sourcePersonId}/relationship/new?newPersonId=${personId}`);
+        } else {
+          navigate(`/people/${personId}`);
+        }
       }
     } catch (error) {
       console.error('Failed to save person:', error);
@@ -156,10 +166,17 @@ export default function PersonForm() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link to="/people" className="flex items-center text-gray-600 hover:text-gray-900">
-          <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to People</span>
-        </Link>
+        {returnTo === 'relationship' && sourcePersonId ? (
+          <Link to={`/people/${sourcePersonId}/relationship/new`} className="flex items-center text-gray-600 hover:text-gray-900">
+            <ArrowLeft className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Back to Add Relationship</span>
+          </Link>
+        ) : (
+          <Link to="/people" className="flex items-center text-gray-600 hover:text-gray-900">
+            <ArrowLeft className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Back to People</span>
+          </Link>
+        )}
       </div>
       
       <div className="card p-6">
@@ -266,9 +283,15 @@ export default function PersonForm() {
           
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Link to="/people" className="btn-secondary">
-              Cancel
-            </Link>
+            {returnTo === 'relationship' && sourcePersonId ? (
+              <Link to={`/people/${sourcePersonId}/relationship/new`} className="btn-secondary">
+                Cancel
+              </Link>
+            ) : (
+              <Link to="/people" className="btn-secondary">
+                Cancel
+              </Link>
+            )}
             <button 
               type="submit" 
               className="btn-primary"
