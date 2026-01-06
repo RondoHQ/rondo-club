@@ -520,15 +520,19 @@ class PRM_VCard_Import {
             $this->stats['contacts_imported']++;
         }
 
-        // Set basic ACF fields
-        update_field('first_name', $first_name, $post_id);
-        update_field('last_name', $last_name, $post_id);
+        // Set basic ACF fields (only update if empty or different)
+        if (!empty($first_name)) {
+            update_field('first_name', $first_name, $post_id);
+        }
+        if (!empty($last_name)) {
+            update_field('last_name', $last_name, $post_id);
+        }
 
         if (!empty($vcard['nickname'])) {
             update_field('nickname', $vcard['nickname'], $post_id);
         }
 
-        // Handle company/work history
+        // Handle company/work history (add to existing, don't replace)
         if (!empty($vcard['org']) || !empty($vcard['title'])) {
             $company_id = null;
             if (!empty($vcard['org'])) {
@@ -536,19 +540,36 @@ class PRM_VCard_Import {
             }
 
             if ($company_id || $vcard['title']) {
-                $work_history = [
-                    [
-                        'company'    => $company_id,
-                        'job_title'  => $vcard['title'],
-                        'is_current' => true,
-                    ],
-                ];
-                update_field('work_history', $work_history, $post_id);
+                $existing_work_history = [];
+                if ($is_update) {
+                    $existing_work_history = get_field('work_history', $post_id) ?: [];
+                }
+                
+                // Check if this work history entry already exists
+                $work_exists = false;
+                foreach ($existing_work_history as $existing_job) {
+                    if ($existing_job['company'] == $company_id && 
+                        $existing_job['job_title'] == $vcard['title']) {
+                        $work_exists = true;
+                        break;
+                    }
+                }
+                
+                if (!$work_exists) {
+                    $work_history = array_merge($existing_work_history, [
+                        [
+                            'company'    => $company_id,
+                            'job_title'  => $vcard['title'],
+                            'is_current' => true,
+                        ],
+                    ]);
+                    update_field('work_history', $work_history, $post_id);
+                }
             }
         }
 
         // Import contact info
-        $this->import_contact_info($post_id, $vcard);
+        $this->import_contact_info($post_id, $vcard, $is_update);
 
         // Import birthday
         if (!empty($vcard['bday'])) {
@@ -569,43 +590,72 @@ class PRM_VCard_Import {
     /**
      * Import contact information (emails, phones, addresses, URLs)
      */
-    private function import_contact_info(int $post_id, array $vcard): void {
-        $contact_info = [];
+    private function import_contact_info(int $post_id, array $vcard, bool $is_update = false): void {
+        // Get existing contact info if updating
+        $existing_contact_info = [];
+        if ($is_update) {
+            $existing_contact_info = get_field('contact_info', $post_id) ?: [];
+        }
+
+        // Create array to track existing entries (to avoid duplicates)
+        $existing_keys = [];
+        foreach ($existing_contact_info as $existing) {
+            $key = strtolower(trim($existing['contact_type'] . '|' . $existing['contact_value']));
+            $existing_keys[$key] = true;
+        }
+
+        $contact_info = $existing_contact_info;
 
         // Emails
         foreach ($vcard['emails'] as $email) {
-            $contact_info[] = [
-                'contact_type'  => 'email',
-                'contact_label' => ucfirst($email['type']),
-                'contact_value' => $email['value'],
-            ];
+            $key = 'email|' . strtolower(trim($email['value']));
+            if (!isset($existing_keys[$key])) {
+                $contact_info[] = [
+                    'contact_type'  => 'email',
+                    'contact_label' => ucfirst($email['type']),
+                    'contact_value' => $email['value'],
+                ];
+                $existing_keys[$key] = true;
+            }
         }
 
         // Phones
         foreach ($vcard['phones'] as $phone) {
-            $contact_info[] = [
-                'contact_type'  => $phone['type'],
-                'contact_label' => '',
-                'contact_value' => $phone['value'],
-            ];
+            $key = strtolower(trim($phone['type'] . '|' . $phone['value']));
+            if (!isset($existing_keys[$key])) {
+                $contact_info[] = [
+                    'contact_type'  => $phone['type'],
+                    'contact_label' => '',
+                    'contact_value' => $phone['value'],
+                ];
+                $existing_keys[$key] = true;
+            }
         }
 
         // Addresses
         foreach ($vcard['addresses'] as $address) {
-            $contact_info[] = [
-                'contact_type'  => 'address',
-                'contact_label' => ucfirst($address['type']),
-                'contact_value' => $address['value'],
-            ];
+            $key = 'address|' . strtolower(trim($address['value']));
+            if (!isset($existing_keys[$key])) {
+                $contact_info[] = [
+                    'contact_type'  => 'address',
+                    'contact_label' => ucfirst($address['type']),
+                    'contact_value' => $address['value'],
+                ];
+                $existing_keys[$key] = true;
+            }
         }
 
         // URLs
         foreach ($vcard['urls'] as $url) {
-            $contact_info[] = [
-                'contact_type'  => $url['type'],
-                'contact_label' => '',
-                'contact_value' => $url['value'],
-            ];
+            $key = strtolower(trim($url['type'] . '|' . $url['value']));
+            if (!isset($existing_keys[$key])) {
+                $contact_info[] = [
+                    'contact_type'  => $url['type'],
+                    'contact_label' => '',
+                    'contact_value' => $url['value'],
+                ];
+                $existing_keys[$key] = true;
+            }
         }
 
         if (!empty($contact_info)) {
