@@ -319,36 +319,39 @@ class PRM_Reminders {
      * @return array User IDs
      */
     private function get_all_users_to_notify() {
-        // Get all people posts
-        $people = get_posts([
-            'post_type'      => 'person',
+        // Get all important dates
+        $dates = get_posts([
+            'post_type'      => 'important_date',
             'posts_per_page' => -1,
             'post_status'    => 'publish',
-            'fields'         => 'ids',
         ]);
         
         $user_ids = [];
         
-        foreach ($people as $person_id) {
-            // Check if this person has related dates
-            $related_dates = get_posts([
-                'post_type'      => 'important_date',
-                'posts_per_page' => -1,
-                'post_status'    => 'publish',
-                'meta_query'     => [
-                    [
-                        'key'     => 'related_people',
-                        'value'   => '"' . $person_id . '"',
-                        'compare' => 'LIKE',
-                    ],
-                ],
-                'fields' => 'ids',
-            ]);
+        foreach ($dates as $date_post) {
+            // Get related people using ACF (handles repeater fields correctly)
+            $related_people = get_field('related_people', $date_post->ID);
             
-            if (!empty($related_dates)) {
-                $post = get_post($person_id);
-                if ($post) {
-                    $user_ids[] = (int) $post->post_author;
+            if (empty($related_people)) {
+                continue;
+            }
+            
+            // Ensure it's an array
+            if (!is_array($related_people)) {
+                $related_people = [$related_people];
+            }
+            
+            // Get user IDs from people post authors
+            foreach ($related_people as $person) {
+                $person_id = is_object($person) ? $person->ID : (is_array($person) ? $person['ID'] : $person);
+                
+                if (!$person_id) {
+                    continue;
+                }
+                
+                $person_post = get_post($person_id);
+                if ($person_post) {
+                    $user_ids[] = (int) $person_post->post_author;
                 }
             }
         }
