@@ -276,8 +276,30 @@ class PRM_Reminders {
             $people_data = [];
             $user_has_access = false;
             
+            // Skip dates with no related people
+            if (empty($related_people)) {
+                continue;
+            }
+            
+            // Ensure it's an array
+            if (!is_array($related_people)) {
+                $related_people = [$related_people];
+            }
+            
             foreach ($related_people as $person) {
-                $person_id = is_object($person) ? $person->ID : $person;
+                // Extract person ID - handle different ACF return formats
+                $person_id = null;
+                if (is_object($person)) {
+                    $person_id = $person->ID;
+                } elseif (is_array($person)) {
+                    $person_id = isset($person['ID']) ? $person['ID'] : (isset($person['id']) ? $person['id'] : $person);
+                } else {
+                    $person_id = $person;
+                }
+                
+                if (!$person_id) {
+                    continue;
+                }
                 
                 // Only include if user can access this person
                 if ($access_control->user_can_access_post($person_id, $user_id)) {
