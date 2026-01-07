@@ -6,6 +6,12 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
   const [dueDate, setDueDate] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
 
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
   useEffect(() => {
     if (todo) {
       setContent(todo.content || '');
@@ -13,7 +19,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       setIsCompleted(todo.is_completed || false);
     } else {
       setContent('');
-      setDueDate('');
+      setDueDate(getTodayDate());
       setIsCompleted(false);
     }
   }, [todo, isOpen]);
@@ -32,7 +38,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     
     if (!todo) {
       setContent('');
-      setDueDate('');
+      setDueDate(getTodayDate());
       setIsCompleted(false);
     }
   };
@@ -40,7 +46,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
   const handleClose = () => {
     if (!todo) {
       setContent('');
-      setDueDate('');
+      setDueDate(getTodayDate());
       setIsCompleted(false);
     }
     onClose();
