@@ -34,6 +34,13 @@ if (defined('WP_CLI') && WP_CLI) {
             
             if (empty($users_to_notify)) {
                 WP_CLI::warning('No users found to notify.');
+                WP_CLI::log('');
+                WP_CLI::log('This could mean:');
+                WP_CLI::log('1. No important dates exist in the system');
+                WP_CLI::log('2. Important dates exist but have no related people');
+                WP_CLI::log('3. People exist but are not linked to any dates');
+                WP_CLI::log('');
+                WP_CLI::log('Run with --debug flag for more details: wp prm reminders trigger --debug');
                 return;
             }
             
@@ -158,6 +165,8 @@ if (defined('WP_CLI') && WP_CLI) {
                 'post_status'    => 'publish',
             ]);
             
+            WP_CLI::log(sprintf('Found %d important date(s) in system.', count($dates)));
+            
             $user_ids = [];
             
             foreach ($dates as $date_post) {
@@ -165,6 +174,7 @@ if (defined('WP_CLI') && WP_CLI) {
                 $related_people = get_field('related_people', $date_post->ID);
                 
                 if (empty($related_people)) {
+                    WP_CLI::debug(sprintf('Date "%s" (ID: %d) has no related people.', $date_post->post_title, $date_post->ID));
                     continue;
                 }
                 
@@ -173,22 +183,35 @@ if (defined('WP_CLI') && WP_CLI) {
                     $related_people = [$related_people];
                 }
                 
+                WP_CLI::debug(sprintf('Date "%s" (ID: %d) has %d related people.', $date_post->post_title, $date_post->ID, count($related_people)));
+                
                 // Get user IDs from people post authors
                 foreach ($related_people as $person) {
                     $person_id = is_object($person) ? $person->ID : (is_array($person) ? $person['ID'] : $person);
                     
                     if (!$person_id) {
+                        WP_CLI::debug('  Skipping invalid person ID.');
                         continue;
                     }
                     
                     $person_post = get_post($person_id);
-                    if ($person_post) {
-                        $user_ids[] = (int) $person_post->post_author;
+                    if (!$person_post) {
+                        WP_CLI::debug(sprintf('  Person ID %d not found.', $person_id));
+                        continue;
+                    }
+                    
+                    $author_id = (int) $person_post->post_author;
+                    if ($author_id > 0) {
+                        $user_ids[] = $author_id;
+                        WP_CLI::debug(sprintf('  Added user ID %d (author of person "%s")', $author_id, $person_post->post_title));
                     }
                 }
             }
             
-            return array_unique($user_ids);
+            $unique_user_ids = array_unique($user_ids);
+            WP_CLI::log(sprintf('Found %d unique user(s) to notify.', count($unique_user_ids)));
+            
+            return $unique_user_ids;
         }
     }
     
