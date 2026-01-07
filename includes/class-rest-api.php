@@ -15,6 +15,9 @@ class PRM_REST_API {
 
         // Expand relationship data in person REST responses
         add_filter('rest_prepare_person', [$this, 'expand_person_relationships'], 10, 3);
+        
+        // Add computed fields (is_deceased) to person REST responses
+        add_filter('rest_prepare_person', [$this, 'add_person_computed_fields'], 20, 3);
     }
     
     /**
@@ -1330,6 +1333,39 @@ class PRM_REST_API {
         $data['acf']['relationships'] = $expanded_relationships;
         $response->set_data($data);
 
+        return $response;
+    }
+
+    /**
+     * Add computed fields to person REST response
+     * This includes is_deceased which checks for a "Died" date type
+     */
+    public function add_person_computed_fields($response, $post, $request) {
+        $data = $response->get_data();
+        
+        // Check if person is deceased (has a "Died" date)
+        $dates = get_posts([
+            'post_type'      => 'important_date',
+            'posts_per_page' => 1,
+            'meta_query'     => [
+                [
+                    'key'     => 'related_people',
+                    'value'   => '"' . $post->ID . '"',
+                    'compare' => 'LIKE',
+                ],
+            ],
+            'tax_query'      => [
+                [
+                    'taxonomy' => 'date_type',
+                    'field'    => 'slug',
+                    'terms'    => 'died',
+                ],
+            ],
+        ]);
+        
+        $data['is_deceased'] = !empty($dates);
+        $response->set_data($data);
+        
         return $response;
     }
 
