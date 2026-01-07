@@ -168,13 +168,13 @@ function TodoCard({ todo, onToggle }) {
           )}
           <span className="text-xs text-gray-500 truncate">{todo.person_name}</span>
         </div>
-        {todo.due_date && (
-          <p className={`text-xs mt-1 ${isOverdue && !todo.is_completed ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
-            Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
-            {isOverdue && !todo.is_completed && ' (overdue)'}
-          </p>
-        )}
       </div>
+      {todo.due_date && (
+        <div className={`ml-3 text-xs text-right flex-shrink-0 ${isOverdue && !todo.is_completed ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+          <div>{format(new Date(todo.due_date), 'MMM d')}</div>
+          {isOverdue && !todo.is_completed && <div className="text-red-600">overdue</div>}
+        </div>
+      )}
     </Link>
   );
 }
