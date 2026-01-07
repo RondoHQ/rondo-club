@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.1] - 2026-01-07
+
+### Changed
+- Todos page now always shows recently completed todos (last 3 days) in a separate "Recently completed" section
+- "Show all completed" button only appears when there are older completed todos
+- Improved UI: recent completions always visible, older completions hidden by default
+
 ## [1.22.0] - 2026-01-07
 
 ### Added
