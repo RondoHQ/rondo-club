@@ -158,14 +158,25 @@ if (defined('WP_CLI') && WP_CLI) {
          * @return array User IDs
          */
         private function get_all_users_to_notify() {
-            // Get all important dates
-            $dates = get_posts([
-                'post_type'      => 'important_date',
-                'posts_per_page' => -1,
-                'post_status'    => 'publish',
-            ]);
+            // Use direct database query to bypass access control filters
+            // WP-CLI runs without a logged-in user, so get_posts() would return nothing
+            global $wpdb;
             
-            WP_CLI::log(sprintf('Found %d important date(s) in system.', count($dates)));
+            $date_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts} 
+                 WHERE post_type = %s 
+                 AND post_status = 'publish'",
+                'important_date'
+            ));
+            
+            WP_CLI::log(sprintf('Found %d important date(s) in system.', count($date_ids)));
+            
+            if (empty($date_ids)) {
+                return [];
+            }
+            
+            // Get full post objects
+            $dates = array_map('get_post', $date_ids);
             
             $user_ids = [];
             

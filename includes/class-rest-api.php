@@ -639,12 +639,23 @@ class PRM_REST_API {
      * Get all users who should receive reminders (for trigger endpoint)
      */
     private function get_all_users_to_notify_for_trigger() {
-        // Get all important dates
-        $dates = get_posts([
-            'post_type'      => 'important_date',
-            'posts_per_page' => -1,
-            'post_status'    => 'publish',
-        ]);
+        // Use direct database query to bypass access control filters
+        // Admin trigger endpoint needs to see all dates regardless of user
+        global $wpdb;
+        
+        $date_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} 
+             WHERE post_type = %s 
+             AND post_status = 'publish'",
+            'important_date'
+        ));
+        
+        if (empty($date_ids)) {
+            return [];
+        }
+        
+        // Get full post objects
+        $dates = array_map('get_post', $date_ids);
         
         $user_ids = [];
         
