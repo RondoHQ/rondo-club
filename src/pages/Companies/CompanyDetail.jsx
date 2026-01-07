@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useMemo } from 'react';
-import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch, TrendingUp, User } from 'lucide-react';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch, TrendingUp, User, Camera } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -10,6 +10,8 @@ export default function CompanyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   
   const { data: company, isLoading, error } = useQuery({
     queryKey: ['company', id],
@@ -123,6 +125,43 @@ export default function CompanyDetail() {
     }
   };
   
+  // Handle logo upload
+  const handleLogoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB');
+      return;
+    }
+
+    setIsUploadingLogo(true);
+
+    try {
+      await prmApi.uploadCompanyLogo(id, file);
+
+      // Invalidate queries to refresh company data
+      queryClient.invalidateQueries({ queryKey: ['company', id] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+    } catch (error) {
+      console.error('Failed to upload logo:', error);
+      alert('Failed to upload logo. Please try again.');
+    } finally {
+      setIsUploadingLogo(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -170,17 +209,38 @@ export default function CompanyDetail() {
       {/* Company header */}
       <div className="card p-6">
         <div className="flex items-center gap-4">
-          {company._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
-            <img 
-              src={company._embedded['wp:featuredmedia'][0].source_url}
-              alt={getCompanyName(company)}
-              className="w-24 h-24 rounded-lg object-contain bg-white"
-            />
-          ) : (
-            <div className="w-24 h-24 bg-white rounded-lg flex items-center justify-center border border-gray-200">
-              <Building2 className="w-12 h-12 text-gray-400" />
+          <div className="relative group">
+            {company._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
+              <img 
+                src={company._embedded['wp:featuredmedia'][0].source_url}
+                alt={getCompanyName(company)}
+                className="w-24 h-24 rounded-lg object-contain bg-white"
+              />
+            ) : (
+              <div className="w-24 h-24 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                <Building2 className="w-12 h-12 text-gray-400" />
+              </div>
+            )}
+            {/* Upload overlay */}
+            <div 
+              className="absolute inset-0 rounded-lg bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {isUploadingLogo ? (
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              ) : (
+                <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              )}
             </div>
-          )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="hidden"
+              disabled={isUploadingLogo}
+            />
+          </div>
           <div>
             {/* Parent company link */}
             {parentCompany && (
