@@ -2,8 +2,8 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { wpApi, prmApi } from '@/api/client';
+import { useQuery } from '@tanstack/react-query';
+import { wpApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
 
 // Helper function to get current company ID from person's work history
@@ -233,39 +233,6 @@ export default function PeopleList() {
     });
     return map;
   }, [filteredAndSortedPeople, companyMap]);
-
-  // Fetch dates for all people to check if they're deceased
-  const personIds = useMemo(() => {
-    return filteredAndSortedPeople.map(p => p.id).filter(Boolean);
-  }, [filteredAndSortedPeople]);
-
-  const personDatesQueries = useQueries({
-    queries: personIds.map(personId => ({
-      queryKey: ['person-dates', personId],
-      queryFn: async () => {
-        const response = await prmApi.getPersonDates(personId);
-        return response.data;
-      },
-      enabled: !!personId,
-    })),
-  });
-
-  // Create a map of person ID to deceased status
-  const personDeceasedMap = useMemo(() => {
-    const map = {};
-    personDatesQueries.forEach((query, index) => {
-      if (query.data && personIds[index]) {
-        const personId = personIds[index];
-        // Check if person has a "Died" date
-        const hasDiedDate = query.data.some(d => {
-          const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
-          return dateType?.toLowerCase() === 'died';
-        });
-        map[personId] = hasDiedDate;
-      }
-    });
-    return map;
-  }, [personDatesQueries, personIds]);
   
   return (
     <div className="space-y-4">
@@ -468,7 +435,7 @@ export default function PeopleList() {
               key={person.id} 
               person={person} 
               companyName={personCompanyMap[person.id]}
-              isDeceased={personDeceasedMap[person.id] || false}
+              isDeceased={person.is_deceased}
             />
           ))}
         </div>
