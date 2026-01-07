@@ -1211,88 +1211,6 @@ export default function PersonDetail() {
             </div>
           )}
 
-          {/* Addresses - only show for living people */}
-          {!isDeceased && (
-            <div className="card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Addresses</h2>
-                <Link
-                  to={`/people/${id}/address/new`}
-                  className="btn-secondary text-sm"
-                >
-                  <Plus className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Add address</span>
-                </Link>
-              </div>
-              {acf.addresses?.length > 0 ? (
-                <div className="space-y-4">
-                  {acf.addresses.map((address, index) => {
-                    // Format address for display
-                    const addressLines = [];
-                    if (address.street) addressLines.push(address.street);
-                    const cityLine = [address.postal_code, address.city].filter(Boolean).join(' ');
-                    if (cityLine) addressLines.push(cityLine);
-                    const stateLine = [address.state, address.country].filter(Boolean).join(', ');
-                    if (stateLine) addressLines.push(stateLine);
-                    
-                    // Format address for Google Maps link
-                    const fullAddress = [
-                      address.street,
-                      address.postal_code,
-                      address.city,
-                      address.state,
-                      address.country
-                    ].filter(Boolean).join(', ');
-                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
-
-                    return (
-                      <div key={index} className="group">
-                        <div className="flex items-start rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
-                          <MapPin className="w-4 h-4 text-gray-400 mr-3 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            {address.address_label && (
-                              <span className="text-sm text-gray-500 block mb-1">{address.address_label}</span>
-                            )}
-                            <a
-                              href={mapsUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary-600 hover:text-primary-700 hover:underline text-sm"
-                            >
-                              {addressLines.map((line, i) => (
-                                <span key={i} className="block">{line}</span>
-                              ))}
-                            </a>
-                          </div>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                            <Link
-                              to={`/people/${id}/address/${index}/edit`}
-                              className="p-1 hover:bg-gray-100 rounded"
-                              title="Edit address"
-                            >
-                              <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                            </Link>
-                            <button
-                              onClick={() => handleDeleteAddress(index)}
-                              className="p-1 hover:bg-red-50 rounded"
-                              title="Delete address"
-                            >
-                              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  No addresses yet.
-                </p>
-              )}
-            </div>
-          )}
-
           {/* Important Dates */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
@@ -1357,6 +1275,38 @@ export default function PersonDetail() {
                 No important dates yet.
               </p>
             )}
+          </div>
+
+          {/* Timeline */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold">Timeline</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowNoteModal(true)}
+                  className="btn-secondary text-sm"
+                >
+                  <Plus className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Note</span>
+                </button>
+                <button
+                  onClick={() => setShowActivityModal(true)}
+                  className="btn-secondary text-sm"
+                >
+                  <Plus className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Activity</span>
+                </button>
+              </div>
+            </div>
+            
+            <TimelineView
+              timeline={timeline || []}
+              onEdit={handleEditTimelineItem}
+              onDelete={handleDeleteTimelineItem}
+              onToggleTodo={handleToggleTodo}
+              personId={id}
+              allPeople={allPeople || []}
+            />
           </div>
 
           {/* Work history */}
@@ -1472,38 +1422,6 @@ export default function PersonDetail() {
               </div>
             </div>
           )}
-          
-          {/* Timeline */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Timeline</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowNoteModal(true)}
-                  className="btn-secondary text-sm"
-                >
-                  <Plus className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Note</span>
-                </button>
-                <button
-                  onClick={() => setShowActivityModal(true)}
-                  className="btn-secondary text-sm"
-                >
-                  <Plus className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Activity</span>
-                </button>
-              </div>
-            </div>
-            
-            <TimelineView
-              timeline={timeline || []}
-              onEdit={handleEditTimelineItem}
-              onDelete={handleDeleteTimelineItem}
-              onToggleTodo={handleToggleTodo}
-              personId={id}
-              allPeople={allPeople || []}
-            />
-          </div>
 
           {/* Modals */}
           <NoteModal
@@ -1718,6 +1636,88 @@ export default function PersonDetail() {
               </p>
             )}
           </div>
+          
+          {/* Addresses - only show for living people */}
+          {!isDeceased && (
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold">Addresses</h2>
+                <Link
+                  to={`/people/${id}/address/new`}
+                  className="btn-secondary text-sm"
+                >
+                  <Plus className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Add address</span>
+                </Link>
+              </div>
+              {acf.addresses?.length > 0 ? (
+                <div className="space-y-4">
+                  {acf.addresses.map((address, index) => {
+                    // Format address for display
+                    const addressLines = [];
+                    if (address.street) addressLines.push(address.street);
+                    const cityLine = [address.postal_code, address.city].filter(Boolean).join(' ');
+                    if (cityLine) addressLines.push(cityLine);
+                    const stateLine = [address.state, address.country].filter(Boolean).join(', ');
+                    if (stateLine) addressLines.push(stateLine);
+                    
+                    // Format address for Google Maps link
+                    const fullAddress = [
+                      address.street,
+                      address.postal_code,
+                      address.city,
+                      address.state,
+                      address.country
+                    ].filter(Boolean).join(', ');
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+
+                    return (
+                      <div key={index} className="group">
+                        <div className="flex items-start rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
+                          <MapPin className="w-4 h-4 text-gray-400 mr-3 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            {address.address_label && (
+                              <span className="text-sm text-gray-500 block mb-1">{address.address_label}</span>
+                            )}
+                            <a
+                              href={mapsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary-600 hover:text-primary-700 hover:underline text-sm"
+                            >
+                              {addressLines.map((line, i) => (
+                                <span key={i} className="block">{line}</span>
+                              ))}
+                            </a>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                            <Link
+                              to={`/people/${id}/address/${index}/edit`}
+                              className="p-1 hover:bg-gray-100 rounded"
+                              title="Edit address"
+                            >
+                              <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteAddress(index)}
+                              className="p-1 hover:bg-red-50 rounded"
+                              title="Delete address"
+                            >
+                              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No addresses yet.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
