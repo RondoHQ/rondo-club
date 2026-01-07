@@ -175,6 +175,20 @@ class PRM_REST_API {
             ],
         ]);
         
+        // Get companies where a person or company is an investor
+        register_rest_route('prm/v1', '/investments/(?P<investor_id>\d+)', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_investments'],
+            'permission_callback' => [$this, 'check_user_approved'],
+            'args'                => [
+                'investor_id' => [
+                    'validate_callback' => function($param) {
+                        return is_numeric($param);
+                    },
+                ],
+            ],
+        ]);
+        
         // Restore default relationship type configurations
         register_rest_route('prm/v1', '/relationship-types/restore-defaults', [
             'methods'             => WP_REST_Server::CREATABLE,
@@ -1166,6 +1180,85 @@ class PRM_REST_API {
         });
         
         return rest_ensure_response($todos);
+    }
+    
+    /**
+     * Get companies where a person or company is listed as an investor
+     */
+    public function get_investments($request) {
+        $investor_id = (int) $request->get_param('investor_id');
+        $user_id = get_current_user_id();
+        
+        // Get all companies accessible by this user
+        $access_control = new PRM_Access_Control();
+        $accessible_companies = $access_control->get_accessible_post_ids('company', $user_id);
+        
+        if (empty($accessible_companies)) {
+            return rest_ensure_response([]);
+        }
+        
+        // Query companies where this ID appears in the investors field
+        $companies = get_posts([
+            'post_type'      => 'company',
+            'post__in'       => $accessible_companies,
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => [
+                [
+                    'key'     => 'investors',
+                    'value'   => sprintf('"%d"', $investor_id),
+                    'compare' => 'LIKE',
+                ],
+            ],
+        ]);
+        
+        // Also check with serialized format (ACF stores as serialized array)
+        $companies_serialized = get_posts([
+            'post_type'      => 'company',
+            'post__in'       => $accessible_companies,
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => [
+                [
+                    'key'     => 'investors',
+                    'value'   => serialize(strval($investor_id)),
+                    'compare' => 'LIKE',
+                ],
+            ],
+        ]);
+        
+        // Merge and dedupe
+        $all_companies = array_merge($companies, $companies_serialized);
+        $seen_ids = [];
+        $unique_companies = [];
+        foreach ($all_companies as $company) {
+            if (!in_array($company->ID, $seen_ids)) {
+                $seen_ids[] = $company->ID;
+                $unique_companies[] = $company;
+            }
+        }
+        
+        // Format response
+        $investments = [];
+        foreach ($unique_companies as $company) {
+            $thumbnail_id = get_post_thumbnail_id($company->ID);
+            $thumbnail_url = $thumbnail_id ? wp_get_attachment_image_url($thumbnail_id, 'thumbnail') : '';
+            
+            $investments[] = [
+                'id'        => $company->ID,
+                'name'      => html_entity_decode($company->post_title, ENT_QUOTES, 'UTF-8'),
+                'industry'  => get_field('industry', $company->ID) ?: '',
+                'website'   => get_field('website', $company->ID) ?: '',
+                'thumbnail' => $thumbnail_url,
+            ];
+        }
+        
+        // Sort alphabetically by name
+        usort($investments, function($a, $b) {
+            return strcasecmp($a['name'], $b['name']);
+        });
+        
+        return rest_ensure_response($investments);
     }
     
     /**

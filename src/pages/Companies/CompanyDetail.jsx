@@ -80,6 +80,16 @@ export default function CompanyDetail() {
     enabled: investorIds.length > 0,
   });
   
+  // Fetch companies that this company has invested in
+  const { data: investments = [] } = useQuery({
+    queryKey: ['investments', id],
+    queryFn: async () => {
+      const response = await prmApi.getInvestments(id);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+  
   const deleteCompany = useMutation({
     mutationFn: () => wpApi.deleteCompany(id, { force: true }),
     onSuccess: () => {
@@ -355,6 +365,44 @@ export default function CompanyDetail() {
                 </Link>
               );
             })}
+          </div>
+        </div>
+      )}
+      
+      {/* Invested in (companies this organization has invested in) */}
+      {investments.length > 0 && (
+        <div className="card p-6">
+          <h2 className="font-semibold mb-4 flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2" />
+            Invested in
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {investments.map((company) => (
+              <Link
+                key={company.id}
+                to={`/companies/${company.id}`}
+                className="flex items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200"
+              >
+                {company.thumbnail ? (
+                  <img 
+                    src={company.thumbnail}
+                    alt={company.name}
+                    loading="lazy"
+                    className="w-10 h-10 object-contain rounded"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gray-100 flex items-center justify-center rounded">
+                    <Building2 className="w-5 h-5 text-gray-400" />
+                  </div>
+                )}
+                <div className="ml-3">
+                  <p className="text-sm font-medium">{company.name}</p>
+                  {company.industry && (
+                    <p className="text-xs text-gray-500">{company.industry}</p>
+                  )}
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       )}

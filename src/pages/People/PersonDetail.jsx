@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, Square
+  CheckSquare2, Square, TrendingUp
 } from 'lucide-react';
 import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads } from '@icons-pack/react-simple-icons';
 
@@ -74,6 +74,16 @@ export default function PersonDetail() {
   const deleteActivity = useDeleteActivity();
   const deleteTodo = useDeleteTodo();
   const { data: allPeople } = usePeople();
+  
+  // Fetch companies where this person is an investor
+  const { data: investments = [] } = useQuery({
+    queryKey: ['investments', id],
+    queryFn: async () => {
+      const response = await prmApi.getInvestments(id);
+      return response.data;
+    },
+    enabled: !!id,
+  });
   
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [selectedLabelToAdd, setSelectedLabelToAdd] = useState('');
@@ -1237,6 +1247,43 @@ export default function PersonDetail() {
               </p>
             )}
           </div>
+          
+          {/* Investments */}
+          {investments.length > 0 && (
+            <div className="card p-6">
+              <h2 className="font-semibold mb-4 flex items-center">
+                <TrendingUp className="w-5 h-5 mr-2" />
+                Investments
+              </h2>
+              <div className="space-y-3">
+                {investments.map((company) => (
+                  <Link
+                    key={company.id}
+                    to={`/companies/${company.id}`}
+                    className="flex items-center p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                  >
+                    {company.thumbnail ? (
+                      <img
+                        src={company.thumbnail}
+                        alt={company.name}
+                        className="w-12 h-12 rounded-lg object-contain bg-white border border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                        <Building2 className="w-6 h-6 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="ml-3">
+                      <p className="text-sm font-medium group-hover:text-primary-600">{company.name}</p>
+                      {company.industry && (
+                        <p className="text-xs text-gray-500">{company.industry}</p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
           
           {/* Timeline */}
           <div className="card p-6">
