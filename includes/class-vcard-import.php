@@ -50,6 +50,12 @@ class PRM_VCard_Import {
             'callback'            => [$this, 'validate_import'],
             'permission_callback' => [$this, 'check_import_permission'],
         ]);
+
+        register_rest_route('prm/v1', '/import/vcard/parse', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'parse_single_contact'],
+            'permission_callback' => [$this, 'check_import_permission'],
+        ]);
     }
 
     /**
@@ -88,6 +94,65 @@ class PRM_VCard_Import {
             'valid'   => true,
             'version' => 'vcard',
             'summary' => $summary,
+        ]);
+    }
+
+    /**
+     * Parse a single contact from a vCard file and return the data
+     * Used for pre-filling the person form
+     */
+    public function parse_single_contact($request) {
+        $file = $request->get_file_params()['file'] ?? null;
+
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            return new WP_Error('upload_error', __('File upload failed.', 'personal-crm'), ['status' => 400]);
+        }
+
+        $vcf_content = file_get_contents($file['tmp_name']);
+
+        if (empty($vcf_content)) {
+            return new WP_Error('empty_file', __('File is empty.', 'personal-crm'), ['status' => 400]);
+        }
+
+        // Check if it's a valid vCard file
+        if (strpos($vcf_content, 'BEGIN:VCARD') === false) {
+            return new WP_Error('invalid_format', __('Invalid vCard format. File must contain BEGIN:VCARD.', 'personal-crm'), ['status' => 400]);
+        }
+
+        // Parse vCards and get the first one
+        $vcards = $this->parse_vcards($vcf_content);
+
+        if (empty($vcards)) {
+            return new WP_Error('no_contacts', __('No contacts found in file.', 'personal-crm'), ['status' => 400]);
+        }
+
+        // Get the first contact
+        $vcard = $vcards[0];
+
+        // Get primary email
+        $email = '';
+        if (!empty($vcard['emails'])) {
+            $email = $vcard['emails'][0]['value'] ?? '';
+        }
+
+        // Get primary phone
+        $phone = '';
+        if (!empty($vcard['phones'])) {
+            $phone = $vcard['phones'][0]['value'] ?? '';
+        }
+
+        return rest_ensure_response([
+            'first_name'  => $vcard['first_name'] ?? '',
+            'last_name'   => $vcard['last_name'] ?? '',
+            'nickname'    => $vcard['nickname'] ?? '',
+            'email'       => $email,
+            'phone'       => $phone,
+            'birthday'    => $vcard['bday'] ?? '',
+            'organization'=> $vcard['org'] ?? '',
+            'job_title'   => $vcard['title'] ?? '',
+            'note'        => $vcard['note'] ?? '',
+            'has_photo'   => !empty($vcard['photo']),
+            'contact_count' => count($vcards),
         ]);
     }
 

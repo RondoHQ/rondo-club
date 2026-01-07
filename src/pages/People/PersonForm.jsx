@@ -1,11 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Save } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, Save, Upload, FileCode, X, AlertCircle } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { usePerson, useCreatePerson, useUpdatePerson } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { wpApi, prmApi } from '@/api/client';
+import api from '@/api/client';
 
 export default function PersonForm() {
   const { id } = useParams();
@@ -31,6 +32,23 @@ export default function PersonForm() {
   });
   
   const birthdayType = dateTypes.find(type => type.slug === 'birthday' || type.name.toLowerCase() === 'birthday');
+  
+  // vCard import state
+  const [dragActive, setDragActive] = useState(false);
+  const [vcardFile, setVcardFile] = useState(null);
+  const [vcardError, setVcardError] = useState(null);
+  
+  // Parse vCard mutation
+  const parseVcardMutation = useMutation({
+    mutationFn: async (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await api.post('/prm/v1/import/vcard/parse', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    },
+  });
   
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
@@ -71,6 +89,75 @@ export default function PersonForm() {
       ? `Edit ${person.title?.rendered || person.title || 'person'}`
       : 'New person'
   );
+  
+  // Handle vCard drag and drop
+  const handleDrag = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  }, []);
+  
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    setVcardError(null);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleVcardFile(e.dataTransfer.files[0]);
+    }
+  }, []);
+  
+  const handleVcardFile = (file) => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext !== 'vcf' && ext !== 'vcard') {
+      setVcardError('Please select a vCard file (.vcf)');
+      return;
+    }
+    
+    setVcardFile(file);
+    parseVcardMutation.mutate(file, {
+      onSuccess: (data) => {
+        // Pre-fill the form with vCard data
+        reset({
+          first_name: data.first_name || '',
+          last_name: data.last_name || '',
+          nickname: data.nickname || '',
+          gender: '',
+          email: data.email || '',
+          how_we_met: data.note || '',
+          is_favorite: false,
+          birthday: data.birthday || '',
+        });
+        
+        // Show notice if multiple contacts in file
+        if (data.contact_count > 1) {
+          setVcardError(`Note: File contains ${data.contact_count} contacts. Only the first contact was loaded.`);
+        }
+      },
+      onError: (error) => {
+        setVcardError(error.response?.data?.message || 'Failed to parse vCard file');
+        setVcardFile(null);
+      },
+    });
+  };
+  
+  const handleVcardInput = (e) => {
+    setVcardError(null);
+    if (e.target.files && e.target.files[0]) {
+      handleVcardFile(e.target.files[0]);
+    }
+  };
+  
+  const clearVcard = () => {
+    setVcardFile(null);
+    setVcardError(null);
+    parseVcardMutation.reset();
+  };
   
   const onSubmit = async (data) => {
     try {
@@ -183,6 +270,69 @@ export default function PersonForm() {
         <h1 className="text-xl font-bold mb-6">
           {isEditing ? 'Edit person' : 'Add new person'}
         </h1>
+        
+        {/* vCard Import Drop Zone - only show when creating */}
+        {!isEditing && (
+          <div className="mb-6">
+            <div
+              className={`relative rounded-lg border-2 border-dashed p-4 text-center transition-colors ${
+                dragActive
+                  ? 'border-primary-500 bg-primary-50'
+                  : vcardFile && !vcardError
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <input
+                type="file"
+                accept=".vcf,.vcard"
+                onChange={handleVcardInput}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              
+              {parseVcardMutation.isPending ? (
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
+                  <span className="text-sm text-gray-600">Parsing vCard...</span>
+                </div>
+              ) : vcardFile && !vcardError ? (
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <FileCode className="h-5 w-5 text-green-600" />
+                  <span className="text-sm text-green-700">Loaded from {vcardFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      clearVcard();
+                    }}
+                    className="ml-2 p-1 hover:bg-green-100 rounded"
+                  >
+                    <X className="h-4 w-4 text-green-600" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <Upload className="h-5 w-5 text-gray-400" />
+                  <span className="text-sm text-gray-600">
+                    Drop a vCard file here to import, or <span className="text-primary-600">browse</span>
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {vcardError && (
+              <div className="mt-2 flex items-start gap-2 text-sm text-amber-700 bg-amber-50 rounded-lg p-2">
+                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <span>{vcardError}</span>
+              </div>
+            )}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Basic info */}
