@@ -112,12 +112,17 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
             return false;
         }
         
-        // Don't send if there are no dates
+        // Don't send if there are no dates or todos
         $has_dates = !empty($digest_data['today']) || 
                      !empty($digest_data['tomorrow']) || 
                      !empty($digest_data['rest_of_week']);
         
-        if (!$has_dates) {
+        $has_todos = isset($digest_data['todos']) && (
+                     !empty($digest_data['todos']['today']) || 
+                     !empty($digest_data['todos']['tomorrow']) || 
+                     !empty($digest_data['todos']['rest_of_week']));
+        
+        if (!$has_dates && !$has_todos) {
             return false;
         }
         
@@ -125,7 +130,7 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
         $today_formatted = date_i18n(get_option('date_format'));
         
         $subject = sprintf(
-            __('[%s] Your Important Dates - %s', 'personal-crm'),
+            __('[%s] Your Reminders & Todos - %s', 'personal-crm'),
             $site_name,
             $today_formatted
         );
@@ -154,15 +159,19 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
         $site_url = home_url();
         $today_formatted = date_i18n(get_option('date_format'));
         
+        $todos = isset($digest_data['todos']) ? $digest_data['todos'] : ['today' => [], 'tomorrow' => [], 'rest_of_week' => []];
+        
         $html = '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
         $html .= sprintf(
-            '<p>Hello %s,</p><p>Here are your important dates for this week:</p>',
+            '<p>Hello %s,</p><p>Here are your important dates and to-dos for this week:</p>',
             esc_html($user->display_name)
         );
         
         // Today section
-        if (!empty($digest_data['today'])) {
-            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">TODAY</h3>';
+        if (!empty($digest_data['today']) || !empty($todos['today'])) {
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">📅 TODAY</h3>';
+            
+            // Dates
             foreach ($digest_data['today'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
@@ -192,11 +201,29 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
                     }
                 }
             }
+            
+            // Todos
+            foreach ($todos['today'] as $todo) {
+                $overdue_text = !empty($todo['is_overdue']) ? ' <span style="color: #dc2626;">(overdue)</span>' : '';
+                $person_link = sprintf(
+                    '<a href="%s">%s</a>',
+                    esc_url($site_url . '/people/' . $todo['person_id']),
+                    esc_html($todo['person_name'])
+                );
+                $html .= sprintf(
+                    '<p style="margin: 5px 0;">☐ %s%s<br><span style="font-size: 0.9em; color: #666; margin-left: 20px;">→ %s</span></p>',
+                    esc_html($todo['content']),
+                    $overdue_text,
+                    $person_link
+                );
+            }
         }
         
         // Tomorrow section
-        if (!empty($digest_data['tomorrow'])) {
-            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">TOMORROW</h3>';
+        if (!empty($digest_data['tomorrow']) || !empty($todos['tomorrow'])) {
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">📅 TOMORROW</h3>';
+            
+            // Dates
             foreach ($digest_data['tomorrow'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
@@ -226,11 +253,27 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
                     }
                 }
             }
+            
+            // Todos
+            foreach ($todos['tomorrow'] as $todo) {
+                $person_link = sprintf(
+                    '<a href="%s">%s</a>',
+                    esc_url($site_url . '/people/' . $todo['person_id']),
+                    esc_html($todo['person_name'])
+                );
+                $html .= sprintf(
+                    '<p style="margin: 5px 0;">☐ %s<br><span style="font-size: 0.9em; color: #666; margin-left: 20px;">→ %s</span></p>',
+                    esc_html($todo['content']),
+                    $person_link
+                );
+            }
         }
         
         // Rest of week section
-        if (!empty($digest_data['rest_of_week'])) {
-            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">THIS WEEK</h3>';
+        if (!empty($digest_data['rest_of_week']) || !empty($todos['rest_of_week'])) {
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">📅 THIS WEEK</h3>';
+            
+            // Dates
             foreach ($digest_data['rest_of_week'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
@@ -259,6 +302,22 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
                         $html .= sprintf('<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links);
                     }
                 }
+            }
+            
+            // Todos
+            foreach ($todos['rest_of_week'] as $todo) {
+                $due_date_formatted = date_i18n(get_option('date_format'), strtotime($todo['due_date']));
+                $person_link = sprintf(
+                    '<a href="%s">%s</a>',
+                    esc_url($site_url . '/people/' . $todo['person_id']),
+                    esc_html($todo['person_name'])
+                );
+                $html .= sprintf(
+                    '<p style="margin: 5px 0;">☐ %s <span style="color: #666;">(%s)</span><br><span style="font-size: 0.9em; color: #666; margin-left: 20px;">→ %s</span></p>',
+                    esc_html($todo['content']),
+                    esc_html($due_date_formatted),
+                    $person_link
+                );
             }
         }
         
@@ -380,12 +439,17 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
             return false;
         }
         
-        // Don't send if there are no dates
+        // Don't send if there are no dates or todos
         $has_dates = !empty($digest_data['today']) || 
                      !empty($digest_data['tomorrow']) || 
                      !empty($digest_data['rest_of_week']);
         
-        if (!$has_dates) {
+        $has_todos = isset($digest_data['todos']) && (
+                     !empty($digest_data['todos']['today']) || 
+                     !empty($digest_data['todos']['tomorrow']) || 
+                     !empty($digest_data['todos']['rest_of_week']));
+        
+        if (!$has_dates && !$has_todos) {
             return false;
         }
         
@@ -442,7 +506,7 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         
         $payload = [
             'channel' => $target,
-            'text'    => __('Your Important Dates for This Week', 'personal-crm'),
+            'text'    => __('Your Reminders & Todos for This Week', 'personal-crm'),
             'blocks'  => $blocks,
         ];
         
@@ -512,6 +576,8 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         $blocks = [];
         $site_url = home_url();
         
+        $todos = isset($digest_data['todos']) ? $digest_data['todos'] : ['today' => [], 'tomorrow' => [], 'rest_of_week' => []];
+        
         // Build text content for all sections
         $text_parts = [];
         
@@ -519,7 +585,10 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         $text_parts[] = sprintf('*<%s|%s> %s*', home_url(), 'Caelis', __('Today', 'personal-crm'));
         $text_parts[] = ''; // Empty line
         
+        $has_today_items = false;
+        
         if (!empty($digest_data['today'])) {
+            $has_today_items = true;
             foreach ($digest_data['today'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
@@ -537,8 +606,19 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                     $text_parts[] = sprintf("• %s - %s", $date['title'], $date_formatted);
                 }
             }
-        } else {
-            $text_parts[] = "• " . __('No reminders', 'personal-crm');
+        }
+        
+        if (!empty($todos['today'])) {
+            $has_today_items = true;
+            foreach ($todos['today'] as $todo) {
+                $person_link = sprintf('<%s|%s>', $site_url . '/people/' . $todo['person_id'], $todo['person_name']);
+                $overdue_text = !empty($todo['is_overdue']) ? ' _(overdue)_' : '';
+                $text_parts[] = sprintf("☐ %s%s → %s", $todo['content'], $overdue_text, $person_link);
+            }
+        }
+        
+        if (!$has_today_items) {
+            $text_parts[] = "• " . __('No reminders or todos', 'personal-crm');
         }
         
         $text_parts[] = ''; // Empty line
@@ -547,7 +627,10 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         $text_parts[] = '*' . __('Tomorrow', 'personal-crm') . '*';
         $text_parts[] = ''; // Empty line
         
+        $has_tomorrow_items = false;
+        
         if (!empty($digest_data['tomorrow'])) {
+            $has_tomorrow_items = true;
             foreach ($digest_data['tomorrow'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
@@ -562,8 +645,18 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                     $text_parts[] = sprintf("• %s - %s", $date['title'], $date_formatted);
                 }
             }
-        } else {
-            $text_parts[] = "• " . __('No reminders', 'personal-crm');
+        }
+        
+        if (!empty($todos['tomorrow'])) {
+            $has_tomorrow_items = true;
+            foreach ($todos['tomorrow'] as $todo) {
+                $person_link = sprintf('<%s|%s>', $site_url . '/people/' . $todo['person_id'], $todo['person_name']);
+                $text_parts[] = sprintf("☐ %s → %s", $todo['content'], $person_link);
+            }
+        }
+        
+        if (!$has_tomorrow_items) {
+            $text_parts[] = "• " . __('No reminders or todos', 'personal-crm');
         }
         
         $text_parts[] = ''; // Empty line
@@ -572,7 +665,10 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         $text_parts[] = '*' . __('Rest of the week', 'personal-crm') . '*';
         $text_parts[] = ''; // Empty line
         
+        $has_week_items = false;
+        
         if (!empty($digest_data['rest_of_week'])) {
+            $has_week_items = true;
             foreach ($digest_data['rest_of_week'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
@@ -587,8 +683,19 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                     $text_parts[] = sprintf("• %s - %s", $date['title'], $date_formatted);
                 }
             }
-        } else {
-            $text_parts[] = "• " . __('No reminders', 'personal-crm');
+        }
+        
+        if (!empty($todos['rest_of_week'])) {
+            $has_week_items = true;
+            foreach ($todos['rest_of_week'] as $todo) {
+                $person_link = sprintf('<%s|%s>', $site_url . '/people/' . $todo['person_id'], $todo['person_name']);
+                $due_date_formatted = date_i18n('M j', strtotime($todo['due_date']));
+                $text_parts[] = sprintf("☐ %s (%s) → %s", $todo['content'], $due_date_formatted, $person_link);
+            }
+        }
+        
+        if (!$has_week_items) {
+            $text_parts[] = "• " . __('No reminders or todos', 'personal-crm');
         }
         
         // Combine all text parts into a single block

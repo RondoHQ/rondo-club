@@ -132,12 +132,16 @@ class PRM_Reminders {
         // Get weekly digest for this user
         $digest_data = $this->get_weekly_digest($user_id);
         
-        // Check if there are any dates to notify about
+        // Check if there are any dates or todos to notify about
         $has_dates = !empty($digest_data['today']) ||
                      !empty($digest_data['tomorrow']) ||
                      !empty($digest_data['rest_of_week']);
         
-        if (!$has_dates) {
+        $has_todos = !empty($digest_data['todos']['today']) ||
+                     !empty($digest_data['todos']['tomorrow']) ||
+                     !empty($digest_data['todos']['rest_of_week']);
+        
+        if (!$has_dates && !$has_todos) {
             return;
         }
         
@@ -300,7 +304,7 @@ class PRM_Reminders {
      * Get weekly digest for a user (today, tomorrow, rest of week)
      * 
      * @param int $user_id User ID
-     * @return array Digest data with today, tomorrow, rest_of_week keys
+     * @return array Digest data with today, tomorrow, rest_of_week, and todos keys
      */
     public function get_weekly_digest($user_id) {
         $access_control = new PRM_Access_Control();
@@ -319,11 +323,15 @@ class PRM_Reminders {
             'important_date'
         ));
         
+        // Get todos for the user
+        $todos = $this->get_user_todos_for_digest($user_id, $today, $end_of_week);
+        
         if (empty($date_ids)) {
             return [
                 'today' => [],
                 'tomorrow' => [],
                 'rest_of_week' => [],
+                'todos' => $todos,
             ];
         }
         
@@ -334,6 +342,7 @@ class PRM_Reminders {
             'today' => [],
             'tomorrow' => [],
             'rest_of_week' => [],
+            'todos' => $todos,
         ];
         
         foreach ($dates as $date_post) {
@@ -429,14 +438,132 @@ class PRM_Reminders {
             }
         }
         
-        // Sort each section by next occurrence
-        foreach ($digest as $key => $items) {
-            usort($digest[$key], function($a, $b) {
-                return strcmp($a['next_occurrence'], $b['next_occurrence']);
-            });
+        // Sort each section by next occurrence (only for date sections)
+        foreach (['today', 'tomorrow', 'rest_of_week'] as $key) {
+            if (!empty($digest[$key])) {
+                usort($digest[$key], function($a, $b) {
+                    return strcmp($a['next_occurrence'], $b['next_occurrence']);
+                });
+            }
         }
         
         return $digest;
+    }
+    
+    /**
+     * Get user todos for digest (today, tomorrow, rest of week)
+     * 
+     * @param int $user_id User ID
+     * @param DateTime $today Today's date
+     * @param DateTime $end_of_week End of week date
+     * @return array Todos grouped by today, tomorrow, rest_of_week
+     */
+    private function get_user_todos_for_digest($user_id, $today, $end_of_week) {
+        $access_control = new PRM_Access_Control();
+        $tomorrow = (clone $today)->modify('+1 day');
+        
+        $todos = [
+            'today' => [],
+            'tomorrow' => [],
+            'rest_of_week' => [],
+        ];
+        
+        // Get person IDs that the user can access
+        global $wpdb;
+        
+        $person_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} 
+             WHERE post_type = 'person' 
+             AND post_status = 'publish'
+             AND post_author = %d",
+            $user_id
+        ));
+        
+        if (empty($person_ids)) {
+            return $todos;
+        }
+        
+        // Get incomplete todos with due dates in the week
+        $todo_comments = get_comments([
+            'post__in'    => $person_ids,
+            'type'        => 'prm_todo',
+            'status'      => 'approve',
+            'meta_query'  => [
+                'relation' => 'AND',
+                [
+                    'key'     => 'is_completed',
+                    'value'   => '0',
+                    'compare' => '=',
+                ],
+                [
+                    'key'     => 'due_date',
+                    'value'   => '',
+                    'compare' => '!=',
+                ],
+            ],
+        ]);
+        
+        foreach ($todo_comments as $comment) {
+            $due_date_str = get_comment_meta($comment->comment_ID, 'due_date', true);
+            
+            if (empty($due_date_str)) {
+                continue;
+            }
+            
+            try {
+                $due_date = DateTime::createFromFormat('Y-m-d', $due_date_str, wp_timezone());
+                
+                if (!$due_date) {
+                    continue;
+                }
+                
+                // Skip if due date is after end of week
+                if ($due_date > $end_of_week) {
+                    continue;
+                }
+                
+                // Get person info
+                $person_post = get_post($comment->comment_post_ID);
+                if (!$person_post) {
+                    continue;
+                }
+                
+                $todo_item = [
+                    'id'          => $comment->comment_ID,
+                    'content'     => $comment->comment_content,
+                    'due_date'    => $due_date_str,
+                    'person_id'   => $comment->comment_post_ID,
+                    'person_name' => html_entity_decode(get_the_title($comment->comment_post_ID), ENT_QUOTES, 'UTF-8'),
+                    'person_thumbnail' => get_the_post_thumbnail_url($comment->comment_post_ID, 'thumbnail'),
+                    'is_overdue'  => $due_date < $today,
+                ];
+                
+                // Categorize by when it's due
+                $due_date_formatted = $due_date->format('Y-m-d');
+                $today_formatted = $today->format('Y-m-d');
+                $tomorrow_formatted = $tomorrow->format('Y-m-d');
+                
+                if ($due_date_formatted <= $today_formatted) {
+                    // Include overdue todos in today
+                    $todos['today'][] = $todo_item;
+                } elseif ($due_date_formatted === $tomorrow_formatted) {
+                    $todos['tomorrow'][] = $todo_item;
+                } else {
+                    $todos['rest_of_week'][] = $todo_item;
+                }
+            } catch (Exception $e) {
+                continue;
+            }
+        }
+        
+        // Sort each section by due date
+        foreach ($todos as $key => $items) {
+            usort($todos[$key], function($a, $b) {
+                return strcmp($a['due_date'], $b['due_date']);
+            });
+        }
+        
+        return $todos;
     }
     
     /**

@@ -7,9 +7,9 @@ This document describes the daily digest reminder system that notifies users abo
 Caelis includes an automated reminder system that:
 - Runs via **per-user WordPress cron jobs** at each user's preferred notification time
 - Sends a **daily digest** email/notification listing:
-  - Important dates **today**
-  - Important dates **tomorrow**
-  - Important dates for the **rest of the week** (days 3-7)
+  - Important dates **today** + todos due today (including overdue)
+  - Important dates **tomorrow** + todos due tomorrow
+  - Important dates for the **rest of the week** (days 3-7) + todos due in that period
 - Supports multiple notification channels (Email, Slack)
 - Respects user preferences for which channels to use
 - Notifies all users who have access to the related people
@@ -50,14 +50,14 @@ Cron jobs are unscheduled when:
 
 Each user receives one notification per day containing:
 
-- **TODAY** - Dates occurring today
-- **TOMORROW** - Dates occurring tomorrow
-- **THIS WEEK** - Dates occurring in the next 5 days (days 3-7)
+- **TODAY** - Dates occurring today + todos due today (including overdue)
+- **TOMORROW** - Dates occurring tomorrow + todos due tomorrow
+- **THIS WEEK** - Dates occurring in the next 5 days (days 3-7) + todos due in that period
 
 **Example:** If today is Monday, June 15th:
-- **TODAY**: John's Birthday (June 15)
-- **TOMORROW**: Mom's Birthday (June 16)
-- **THIS WEEK**: Friend's Birthday (June 18), Wedding Anniversary (June 20)
+- **TODAY**: John's Birthday (June 15), ☐ Call about project → John Doe
+- **TOMORROW**: Mom's Birthday (June 16), ☐ Send gift → Mom
+- **THIS WEEK**: Friend's Birthday (June 18), ☐ Schedule meeting (Jun 18) → Friend
 
 ## Implementation
 
@@ -152,12 +152,12 @@ This method is kept for backward compatibility. When called, it:
 
 ### `get_weekly_digest($user_id)`
 
-Returns weekly digest for a specific user.
+Returns weekly digest for a specific user, including both important dates and todos.
 
 **Parameters:**
 - `$user_id` - User ID
 
-**Returns:** Array with three keys:
+**Returns:** Array with four keys:
 ```php
 [
     'today' => [
@@ -171,6 +171,20 @@ Returns weekly digest for a specific user.
     ],
     'tomorrow' => [...],
     'rest_of_week' => [...],
+    'todos' => [
+        'today' => [
+            [
+                'id' => 456,
+                'content' => 'Call about project',
+                'due_date' => '2025-06-15',
+                'person_id' => 789,
+                'person_name' => 'John Doe',
+                'is_overdue' => false,
+            ],
+        ],
+        'tomorrow' => [...],
+        'rest_of_week' => [...],
+    ],
 ]
 ```
 
@@ -215,27 +229,31 @@ Background maintenance task that runs with reminders:
 
 **Email Format:**
 ```
-Subject: [Caelis] Your Important Dates - June 15, 2025
+Subject: [Caelis] Your Reminders & Todos - June 15, 2025
 
 Hello User,
 
-Here are your important dates for this week:
+Here are your important dates and to-dos for this week:
 
-TODAY
+📅 TODAY
 • John's Birthday - June 15, 2025
   John Doe
 • Wedding Anniversary - June 15, 2025
   Jane Doe, John Doe
+☐ Call about project (overdue)
+  → John Doe
 
-TOMORROW
+📅 TOMORROW
 • Mom's Birthday - June 16, 2025
   Mom
+☐ Send gift
+  → Mom
 
-THIS WEEK
+📅 THIS WEEK
 • Friend's Birthday - June 18, 2025
   Friend
-• Another Date - June 20, 2025
-  Person
+☐ Schedule meeting (June 18, 2025)
+  → Friend
 
 Visit Caelis to see more details.
 
