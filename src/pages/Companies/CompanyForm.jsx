@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Save, Camera } from 'lucide-react';
+import { ArrowLeft, Save, Camera, ChevronDown, Building2, Search } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -22,8 +22,64 @@ export default function CompanyForm() {
     enabled: isEditing,
   });
   
+  // Fetch all companies for parent selection
+  const { data: allCompanies = [], isLoading: isLoadingCompanies } = useQuery({
+    queryKey: ['companies', 'all'],
+    queryFn: async () => {
+      const response = await wpApi.getCompanies({ per_page: 100, _embed: true });
+      return response.data;
+    },
+  });
+  
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isParentDropdownOpen, setIsParentDropdownOpen] = useState(false);
+  const [parentSearchQuery, setParentSearchQuery] = useState('');
+  const [selectedParentId, setSelectedParentId] = useState('');
   const fileInputRef = useRef(null);
+  const parentDropdownRef = useRef(null);
+  
+  // Filter companies for parent dropdown (exclude self and children)
+  const availableParentCompanies = useMemo(() => {
+    const query = parentSearchQuery.toLowerCase().trim();
+    let filtered = allCompanies.filter(c => {
+      // Exclude self
+      if (isEditing && c.id === parseInt(id)) return false;
+      // Exclude companies that have this company as parent (prevents circular references)
+      if (isEditing && c.parent === parseInt(id)) return false;
+      return true;
+    });
+    
+    if (query) {
+      filtered = filtered.filter(c => 
+        getCompanyName(c)?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Sort alphabetically
+    return [...filtered].sort((a, b) => 
+      (getCompanyName(a) || '').localeCompare(getCompanyName(b) || '')
+    );
+  }, [allCompanies, parentSearchQuery, id, isEditing]);
+  
+  // Get selected parent company details
+  const selectedParent = useMemo(() => 
+    allCompanies.find(c => c.id === parseInt(selectedParentId)),
+    [allCompanies, selectedParentId]
+  );
+  
+  // Close parent dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (parentDropdownRef.current && !parentDropdownRef.current.contains(event.target)) {
+        setIsParentDropdownOpen(false);
+      }
+    };
+    
+    if (isParentDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isParentDropdownOpen]);
   
   const createCompany = useMutation({
     mutationFn: (data) => wpApi.createCompany(data),
@@ -95,6 +151,10 @@ export default function CompanyForm() {
         website: company.acf?.website || '',
         industry: company.acf?.industry || '',
       });
+      // Set parent company if exists
+      if (company.parent) {
+        setSelectedParentId(String(company.parent));
+      }
     }
   }, [company, reset]);
   
@@ -109,6 +169,7 @@ export default function CompanyForm() {
     const payload = {
       title: data.title,
       status: 'publish',
+      parent: selectedParentId ? parseInt(selectedParentId) : 0,
       acf: {
         website: data.website,
         industry: data.industry,
@@ -237,6 +298,117 @@ export default function CompanyForm() {
               className="input"
               placeholder="Technology"
             />
+          </div>
+          
+          {/* Parent company selection */}
+          <div>
+            <label className="label">Parent organization</label>
+            <div className="relative" ref={parentDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                disabled={isLoadingCompanies}
+              >
+                {selectedParent ? (
+                  <div className="flex items-center gap-2">
+                    {selectedParent._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
+                      <img
+                        src={selectedParent._embedded['wp:featuredmedia'][0].source_url}
+                        alt={getCompanyName(selectedParent)}
+                        className="w-6 h-6 rounded object-contain bg-white"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
+                        <Building2 className="w-4 h-4 text-gray-500" />
+                      </div>
+                    )}
+                    <span className="text-gray-900">{getCompanyName(selectedParent)}</span>
+                  </div>
+                ) : (
+                  <span className="text-gray-400">No parent organization</span>
+                )}
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {isParentDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                  {/* Search input */}
+                  <div className="p-2 border-b border-gray-100">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={parentSearchQuery}
+                        onChange={(e) => setParentSearchQuery(e.target.value)}
+                        placeholder="Search organizations..."
+                        className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* "None" option */}
+                  <div className="overflow-y-auto max-h-48">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedParentId('');
+                        setIsParentDropdownOpen(false);
+                        setParentSearchQuery('');
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
+                        !selectedParentId ? 'bg-primary-50' : ''
+                      }`}
+                    >
+                      <span className="text-sm text-gray-500 italic">No parent organization</span>
+                    </button>
+                    
+                    {/* Companies list */}
+                    {isLoadingCompanies ? (
+                      <div className="p-3 text-center text-gray-500 text-sm">
+                        Loading...
+                      </div>
+                    ) : availableParentCompanies.length > 0 ? (
+                      availableParentCompanies.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedParentId(String(c.id));
+                            setIsParentDropdownOpen(false);
+                            setParentSearchQuery('');
+                          }}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
+                            selectedParentId === String(c.id) ? 'bg-primary-50' : ''
+                          }`}
+                        >
+                          {c._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
+                            <img
+                              src={c._embedded['wp:featuredmedia'][0].source_url}
+                              alt={getCompanyName(c)}
+                              className="w-6 h-6 rounded object-contain bg-white"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
+                              <Building2 className="w-4 h-4 text-gray-500" />
+                            </div>
+                          )}
+                          <span className="text-sm text-gray-900 truncate">{getCompanyName(c)}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-3 text-center text-gray-500 text-sm">
+                        No organizations found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Select if this organization is a subsidiary or division of another
+            </p>
           </div>
           
           <div className="flex justify-end gap-3 pt-4 border-t">

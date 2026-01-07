@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { ArrowLeft, Edit, Trash2, Building2, Globe, Users } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
+import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -23,6 +23,25 @@ export default function CompanyDetail() {
     queryKey: ['company-people', id],
     queryFn: async () => {
       const response = await prmApi.getCompanyPeople(id);
+      return response.data;
+    },
+  });
+  
+  // Fetch parent company if exists
+  const { data: parentCompany } = useQuery({
+    queryKey: ['company', company?.parent],
+    queryFn: async () => {
+      const response = await wpApi.getCompany(company.parent, { _embed: true });
+      return response.data;
+    },
+    enabled: !!company?.parent,
+  });
+  
+  // Fetch child companies (subsidiaries)
+  const { data: childCompanies = [] } = useQuery({
+    queryKey: ['company-children', id],
+    queryFn: async () => {
+      const response = await wpApi.getCompanies({ parent: id, per_page: 100, _embed: true });
       return response.data;
     },
   });
@@ -119,6 +138,16 @@ export default function CompanyDetail() {
             </div>
           )}
           <div>
+            {/* Parent company link */}
+            {parentCompany && (
+              <Link 
+                to={`/companies/${parentCompany.id}`}
+                className="text-sm text-primary-600 hover:underline flex items-center mb-1"
+              >
+                <GitBranch className="w-3 h-3 mr-1" />
+                Subsidiary of {getCompanyName(parentCompany)}
+              </Link>
+            )}
             <h1 className="text-2xl font-bold">{getCompanyName(company)}</h1>
             {acf.industry && <p className="text-gray-500">{acf.industry}</p>}
             {acf.website && (
@@ -135,6 +164,43 @@ export default function CompanyDetail() {
           </div>
         </div>
       </div>
+      
+      {/* Subsidiaries */}
+      {childCompanies.length > 0 && (
+        <div className="card p-6">
+          <h2 className="font-semibold mb-4 flex items-center">
+            <GitBranch className="w-5 h-5 mr-2" />
+            Subsidiaries
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {childCompanies.map((child) => (
+              <Link
+                key={child.id}
+                to={`/companies/${child.id}`}
+                className="flex items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200"
+              >
+                {child._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
+                  <img 
+                    src={child._embedded['wp:featuredmedia'][0].source_url}
+                    alt={getCompanyName(child)}
+                    className="w-10 h-10 rounded object-contain bg-white"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-gray-400" />
+                  </div>
+                )}
+                <div className="ml-3">
+                  <p className="text-sm font-medium">{getCompanyName(child)}</p>
+                  {child.acf?.industry && (
+                    <p className="text-xs text-gray-500">{child.acf.industry}</p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Current Employees */}
