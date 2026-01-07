@@ -62,18 +62,15 @@
             "key": "field_company_investors",
             "label": "Investors",
             "name": "investors",
-            "type": "relationship",
+            "type": "post_object",
             "instructions": "Select people or companies that have invested in this company",
             "post_type": [
                 "person",
                 "company"
             ],
-            "filters": [
-                "search"
-            ],
-            "return_format": "object",
-            "min": 0,
-            "max": ""
+            "multiple": 1,
+            "return_format": "id",
+            "allow_null": 1
         }
     ],
     "location": [

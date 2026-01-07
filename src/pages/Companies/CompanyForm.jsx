@@ -221,18 +221,40 @@ export default function CompanyForm() {
       if (company.parent) {
         setSelectedParentId(String(company.parent));
       }
-      // Set investors if exist
-      if (company.acf?.investors?.length > 0) {
-        const investors = company.acf.investors.map(inv => ({
-          id: inv.ID,
-          type: inv.post_type,
-          name: inv.post_type === 'person' ? inv.post_title : getCompanyName(inv),
-          thumbnail: inv.thumbnail,
-        }));
-        setSelectedInvestors(investors);
-      }
     }
   }, [company, reset]);
+  
+  // Load existing investors when company and all data is available
+  useEffect(() => {
+    if (company?.acf?.investors?.length > 0 && allPeople.length > 0 && allCompanies.length > 0) {
+      const investorIds = company.acf.investors;
+      const investors = investorIds.map(investorId => {
+        // Check if it's a person
+        const person = allPeople.find(p => p.id === investorId);
+        if (person) {
+          return {
+            id: person.id,
+            type: 'person',
+            name: decodeHtml(person.title?.rendered || ''),
+            thumbnail: person._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+          };
+        }
+        // Check if it's a company
+        const comp = allCompanies.find(c => c.id === investorId);
+        if (comp) {
+          return {
+            id: comp.id,
+            type: 'company',
+            name: getCompanyName(comp),
+            thumbnail: comp._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+          };
+        }
+        return null;
+      }).filter(Boolean);
+      
+      setSelectedInvestors(investors);
+    }
+  }, [company, allPeople, allCompanies]);
   
   // Update document title
   useDocumentTitle(
