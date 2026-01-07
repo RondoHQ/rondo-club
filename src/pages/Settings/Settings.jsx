@@ -622,6 +622,7 @@ export default function Settings() {
                 onChange={(e) => handleNotificationTimeChange(e.target.value)}
                 className="input"
                 disabled={savingTime}
+                step="300"
               />
               {notificationTime && (
                 <div className="mt-2 p-2 bg-gray-50 rounded text-sm">

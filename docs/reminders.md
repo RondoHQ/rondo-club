@@ -271,7 +271,7 @@ Users can enable/disable notification channels in Settings:
 
 **User Meta Keys:**
 - `caelis_notification_channels` - Array of enabled channels: `['email', 'slack']`
-- `caelis_notification_time` - Preferred notification time in HH:MM format (default: `09:00`)
+- `caelis_notification_time` - Preferred notification time in HH:MM format, 5-minute increments (default: `09:00`)
 - `caelis_slack_bot_token` - Slack bot token (from OAuth)
 - `caelis_slack_targets` - Array of Slack channel/user IDs for notifications
 
