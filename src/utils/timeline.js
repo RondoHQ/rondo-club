@@ -105,6 +105,7 @@ export function getActivityTypeIcon(type) {
   const iconMap = {
     call: 'Phone',
     email: 'Mail',
+    chat: 'MessageCircle',
     meeting: 'Users',
     coffee: 'Coffee',
     lunch: 'Utensils',
@@ -123,6 +124,7 @@ export function getActivityTypeLabel(type) {
   const labelMap = {
     call: 'Phone call',
     email: 'Email',
+    chat: 'Chat',
     meeting: 'Meeting',
     coffee: 'Coffee',
     lunch: 'Lunch',

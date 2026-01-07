@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { X, Phone, Mail, Users, Coffee, Utensils, FileText, Circle } from 'lucide-react';
+import { X, Phone, Mail, Users, Coffee, Utensils, FileText, Circle, MessageCircle } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
 
 const ACTIVITY_TYPES = [
   { id: 'call', label: 'Phone call', icon: Phone },
   { id: 'email', label: 'Email', icon: Mail },
+  { id: 'chat', label: 'Chat', icon: MessageCircle },
   { id: 'meeting', label: 'Meeting', icon: Users },
   { id: 'coffee', label: 'Coffee', icon: Coffee },
   { id: 'lunch', label: 'Lunch', icon: Utensils },
