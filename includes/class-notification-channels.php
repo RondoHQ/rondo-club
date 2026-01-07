@@ -516,7 +516,7 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         $text_parts = [];
         
         // Today section
-        $text_parts[] = '*' . __('Today', 'personal-crm') . '*';
+        $text_parts[] = sprintf('*<%s|%s> %s*', home_url(), 'Caelis', __('Today', 'personal-crm'));
         $text_parts[] = ''; // Empty line
         
         if (!empty($digest_data['today'])) {
