@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.6] - 2026-01-07
+
+### Fixed
+- Fixed "Failed to update todo" error when updating todo metadata (due date, completion status) without changing content
+- Fixed same issue in note updates
+- `wp_update_comment` returns 0 when content is unchanged, which was incorrectly treated as an error
+
 ## [1.14.5] - 2026-01-07
 
 ### Changed
