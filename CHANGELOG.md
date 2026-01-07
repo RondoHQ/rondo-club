@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.1] - 2026-01-04
+
+### Added
+- WP-CLI command `wp prm reminders trigger` to manually trigger daily reminders
+- REST API endpoint `/prm/v1/reminders/cron-status` to check cron job status
+
 ## [1.13.0] - 2026-01-04
 
 ### Added
@@ -16,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Timeline utilities for date formatting, grouping, and activity type icons
 - REST API endpoints for todos: GET, POST, PUT, DELETE `/prm/v1/people/{id}/todos` and `/prm/v1/todos/{id}`
 - Todo comment type (`prm_todo`) with meta fields: `is_completed` (boolean) and `due_date` (string)
+- WP-CLI command `wp prm reminders trigger` to manually trigger daily reminders
+- REST API endpoint `/prm/v1/reminders/cron-status` to check cron job status
 
 ### Changed
 - Timeline section now displays notes, activities, and todos in a unified view
