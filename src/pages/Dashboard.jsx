@@ -70,8 +70,6 @@ function ReminderCard({ reminder }) {
     urgencyClass = 'bg-yellow-100 text-yellow-700';
   }
 
-  // Get the full name from related people if available
-  const personName = reminder.related_people?.[0]?.name || reminder.title;
   const firstPersonId = reminder.related_people?.[0]?.id;
   const hasRelatedPeople = reminder.related_people?.length > 0;
 
@@ -81,33 +79,33 @@ function ReminderCard({ reminder }) {
         {daysUntil === 0 ? 'Today' : `${daysUntil}d`}
       </div>
       <div className="ml-3 flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">{personName}</p>
+        <p className="text-sm font-medium text-gray-900">{reminder.title}</p>
         <p className="text-xs text-gray-500">
           {format(new Date(reminder.next_occurrence), 'MMMM d, yyyy')}
         </p>
-        {hasRelatedPeople && (
-          <div className="flex -space-x-2 mt-1">
-            {reminder.related_people.slice(0, 3).map((person) => (
-              person.thumbnail ? (
-                <img
-                  key={person.id}
-                  src={person.thumbnail}
-                  alt={person.name}
-                  loading="lazy"
-                  className="w-10 h-10 rounded-full border-2 border-white object-cover"
-                />
-              ) : (
-                <div
-                  key={person.id}
-                  className="w-10 h-10 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center"
-                >
-                  <span className="text-sm">{person.name?.[0]}</span>
-                </div>
-              )
-            ))}
-          </div>
-        )}
       </div>
+      {hasRelatedPeople && (
+        <div className="flex -space-x-2 ml-3 flex-shrink-0">
+          {reminder.related_people.slice(0, 3).map((person) => (
+            person.thumbnail ? (
+              <img
+                key={person.id}
+                src={person.thumbnail}
+                alt={person.name}
+                loading="lazy"
+                className="w-8 h-8 rounded-full border-2 border-white object-cover"
+              />
+            ) : (
+              <div
+                key={person.id}
+                className="w-8 h-8 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center"
+              >
+                <span className="text-xs">{person.name?.[0]}</span>
+              </div>
+            )
+          ))}
+        </div>
+      )}
     </>
   );
 
@@ -116,7 +114,7 @@ function ReminderCard({ reminder }) {
     return (
       <Link
         to={`/people/${firstPersonId}`}
-        className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
       >
         {cardContent}
       </Link>
@@ -124,7 +122,7 @@ function ReminderCard({ reminder }) {
   }
 
   return (
-    <div className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors">
+    <div className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
       {cardContent}
     </div>
   );
