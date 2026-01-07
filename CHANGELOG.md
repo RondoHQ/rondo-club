@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.0] - 2026-01-07
+
+### Added
+- New "Calendar link" contact type for Calendly, Cal.com, and similar scheduling links
+- Calendar links display with a calendar icon and open in a new tab when clicked
+
 ## [1.22.5] - 2026-01-07
 
 ### Fixed

@@ -1091,7 +1091,8 @@ export default function PersonDetail() {
                     'phone': 2,
                     'mobile': 2, // Phone numbers grouped together
                     'address': 3,
-                    'other': 4,
+                    'calendar': 4,
+                    'other': 5,
                   };
                   
                   // Filter and sort contact information
@@ -1112,12 +1113,14 @@ export default function PersonDetail() {
                         const originalIndex = acf.contact_info.indexOf(contact);
                         const Icon = contact.contact_type === 'email' ? Mail :
                                      contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
-                                     contact.contact_type === 'address' ? MapPin : Globe;
+                                     contact.contact_type === 'address' ? MapPin :
+                                     contact.contact_type === 'calendar' ? Calendar : Globe;
 
                         const isEmail = contact.contact_type === 'email';
                         const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
                         const isMobile = contact.contact_type === 'mobile';
                         const isAddress = contact.contact_type === 'address';
+                        const isCalendar = contact.contact_type === 'calendar';
                         
                         let linkHref = null;
                         let linkTarget = null;
@@ -1129,6 +1132,9 @@ export default function PersonDetail() {
                         } else if (isAddress) {
                           const encodedAddress = encodeURIComponent(contact.contact_value);
                           linkHref = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+                          linkTarget = '_blank';
+                        } else if (isCalendar) {
+                          linkHref = contact.contact_value;
                           linkTarget = '_blank';
                         }
 
