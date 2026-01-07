@@ -31,6 +31,7 @@ import TimelineView from '@/components/Timeline/TimelineView';
 import NoteModal from '@/components/Timeline/NoteModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import TodoModal from '@/components/Timeline/TodoModal';
+import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -95,6 +96,11 @@ export default function PersonDetail() {
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
+  
+  // Complete todo flow states
+  const [todoToComplete, setTodoToComplete] = useState(null);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [activityInitialData, setActivityInitialData] = useState(null);
   
   // Fetch available labels
   const { data: availableLabelsData } = useQuery({
@@ -354,6 +360,22 @@ export default function PersonDetail() {
   const handleCreateActivity = async (data) => {
     try {
       await createActivity.mutateAsync({ personId: id, data });
+      
+      // If we're completing a todo as activity, also mark the todo as complete
+      if (todoToComplete) {
+        await updateTodo.mutateAsync({
+          todoId: todoToComplete.id,
+          data: {
+            content: todoToComplete.content,
+            due_date: todoToComplete.due_date,
+            is_completed: true,
+          },
+          personId: id,
+        });
+        setTodoToComplete(null);
+        setActivityInitialData(null);
+      }
+      
       setShowActivityModal(false);
     } catch (error) {
       console.error('Failed to create activity:', error);
@@ -389,13 +411,21 @@ export default function PersonDetail() {
 
   // Handle toggling todo completion
   const handleToggleTodo = async (todo) => {
+    // If completing a todo, show the complete modal
+    if (!todo.is_completed) {
+      setTodoToComplete(todo);
+      setShowCompleteModal(true);
+      return;
+    }
+    
+    // If uncompleting, just update directly
     try {
       await updateTodo.mutateAsync({
         todoId: todo.id,
         data: {
           content: todo.content,
           due_date: todo.due_date,
-          is_completed: !todo.is_completed,
+          is_completed: false,
         },
         personId: id,
       });
@@ -403,6 +433,46 @@ export default function PersonDetail() {
       console.error('Failed to toggle todo:', error);
       alert('Failed to update todo. Please try again.');
     }
+  };
+  
+  // Handle just completing a todo (no activity)
+  const handleJustComplete = async () => {
+    if (!todoToComplete) return;
+    
+    try {
+      await updateTodo.mutateAsync({
+        todoId: todoToComplete.id,
+        data: {
+          content: todoToComplete.content,
+          due_date: todoToComplete.due_date,
+          is_completed: true,
+        },
+        personId: id,
+      });
+      
+      setShowCompleteModal(false);
+      setTodoToComplete(null);
+    } catch (error) {
+      console.error('Failed to complete todo:', error);
+      alert('Failed to complete todo. Please try again.');
+    }
+  };
+  
+  // Handle completing todo as activity
+  const handleCompleteAsActivity = () => {
+    if (!todoToComplete) return;
+    
+    // Prepare initial data for activity modal
+    const today = new Date().toISOString().split('T')[0];
+    setActivityInitialData({
+      content: todoToComplete.content,
+      activity_date: today,
+      activity_type: 'note',
+      participants: [],
+    });
+    
+    setShowCompleteModal(false);
+    setShowActivityModal(true);
   };
 
   // Handle deleting an activity
@@ -1327,10 +1397,26 @@ export default function PersonDetail() {
           
           <QuickActivityModal
             isOpen={showActivityModal}
-            onClose={() => setShowActivityModal(false)}
+            onClose={() => {
+              setShowActivityModal(false);
+              setTodoToComplete(null);
+              setActivityInitialData(null);
+            }}
             onSubmit={handleCreateActivity}
             isLoading={createActivity.isPending}
             personId={id}
+            initialData={activityInitialData}
+          />
+          
+          <CompleteTodoModal
+            isOpen={showCompleteModal}
+            onClose={() => {
+              setShowCompleteModal(false);
+              setTodoToComplete(null);
+            }}
+            todo={todoToComplete}
+            onComplete={handleJustComplete}
+            onCompleteAsActivity={handleCompleteAsActivity}
           />
           
           <TodoModal

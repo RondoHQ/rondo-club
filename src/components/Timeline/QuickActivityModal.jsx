@@ -12,7 +12,7 @@ const ACTIVITY_TYPES = [
   { id: 'note', label: 'Other', icon: FileText },
 ];
 
-export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoading, personId }) {
+export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoading, personId, initialData = null }) {
   const [activityType, setActivityType] = useState('call');
   const [activityDate, setActivityDate] = useState('');
   const [content, setContent] = useState('');
@@ -26,12 +26,21 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
     if (isOpen) {
       // Set default date to today
       const today = new Date().toISOString().split('T')[0];
-      setActivityDate(today);
-      setContent('');
-      setSelectedParticipants([]);
-      setActivityType('call');
+      
+      // If initial data is provided, use it to prefill the form
+      if (initialData) {
+        setActivityDate(initialData.activity_date || today);
+        setContent(initialData.content || '');
+        setSelectedParticipants(initialData.participants || []);
+        setActivityType(initialData.activity_type || 'note');
+      } else {
+        setActivityDate(today);
+        setContent('');
+        setSelectedParticipants([]);
+        setActivityType('call');
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 

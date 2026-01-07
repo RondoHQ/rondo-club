@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.0] - 2026-01-07
+
+### Added
+- "Complete & log activity" option when completing todos - converts the todo into a timeline activity
+- New CompleteTodoModal component that offers choice between just completing or logging as activity
+- QuickActivityModal now accepts initialData prop to prefill form fields
+
+### Changed
+- When completing a todo, users are now prompted with options: "Just complete" or "Complete & log activity"
+- The activity modal is prefilled with the todo content when converting to activity
+- After logging the activity, the todo is automatically marked as complete
+
 ## [1.21.0] - 2026-01-07
 
 ### Added
