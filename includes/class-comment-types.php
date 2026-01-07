@@ -564,7 +564,10 @@ class PRM_Comment_Types {
      */
     public function exclude_from_regular_queries($query) {
         // Only modify frontend queries and queries without explicit type
-        if (is_admin() || !empty($query->query_vars['type'])) {
+        // Check for 'type', 'type__in', and 'type__not_in' to avoid affecting our own queries
+        if (is_admin() || 
+            !empty($query->query_vars['type']) || 
+            !empty($query->query_vars['type__in'])) {
             return;
         }
         

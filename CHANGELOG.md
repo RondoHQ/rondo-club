@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.4] - 2026-01-07
+
+### Fixed
+- Todos now correctly display on person timeline (was being excluded by comment filter)
+- Fixed `exclude_from_regular_queries` filter to check for `type__in` in addition to `type` to prevent excluding our custom comment types from timeline queries
+
 ## [1.14.3] - 2026-01-07
 
 ### Added
