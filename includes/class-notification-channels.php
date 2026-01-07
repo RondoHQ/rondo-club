@@ -531,14 +531,14 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                 if ($person_in_title) {
                     // Replace name in title with link
                     $title_with_link = $this->replace_name_in_title_slack($date['title'], $person_in_title, $site_url);
-                    $text_parts[] = sprintf("- %s - %s", $title_with_link, $date_formatted);
+                    $text_parts[] = sprintf("• %s - %s", $title_with_link, $date_formatted);
                 } else {
                     // Show title normally
-                    $text_parts[] = sprintf("- %s - %s", $date['title'], $date_formatted);
+                    $text_parts[] = sprintf("• %s - %s", $date['title'], $date_formatted);
                 }
             }
         } else {
-            $text_parts[] = "- " . __('No reminders', 'personal-crm');
+            $text_parts[] = "• " . __('No reminders', 'personal-crm');
         }
         
         $text_parts[] = ''; // Empty line
@@ -557,13 +557,13 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                 $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
                 if ($person_in_title) {
                     $title_with_link = $this->replace_name_in_title_slack($date['title'], $person_in_title, $site_url);
-                    $text_parts[] = sprintf("- %s - %s", $title_with_link, $date_formatted);
+                    $text_parts[] = sprintf("• %s - %s", $title_with_link, $date_formatted);
                 } else {
-                    $text_parts[] = sprintf("- %s - %s", $date['title'], $date_formatted);
+                    $text_parts[] = sprintf("• %s - %s", $date['title'], $date_formatted);
                 }
             }
         } else {
-            $text_parts[] = "- " . __('No reminders', 'personal-crm');
+            $text_parts[] = "• " . __('No reminders', 'personal-crm');
         }
         
         $text_parts[] = ''; // Empty line
@@ -582,13 +582,13 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                 $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
                 if ($person_in_title) {
                     $title_with_link = $this->replace_name_in_title_slack($date['title'], $person_in_title, $site_url);
-                    $text_parts[] = sprintf("- %s - %s", $title_with_link, $date_formatted);
+                    $text_parts[] = sprintf("• %s - %s", $title_with_link, $date_formatted);
                 } else {
-                    $text_parts[] = sprintf("- %s - %s", $date['title'], $date_formatted);
+                    $text_parts[] = sprintf("• %s - %s", $date['title'], $date_formatted);
                 }
             }
         } else {
-            $text_parts[] = "- " . __('No reminders', 'personal-crm');
+            $text_parts[] = "• " . __('No reminders', 'personal-crm');
         }
         
         // Combine all text parts into a single block
