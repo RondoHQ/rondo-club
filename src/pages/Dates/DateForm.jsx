@@ -495,10 +495,11 @@ export default function DateForm() {
           <div className="flex items-center">
             <input
               type="checkbox"
+              id="is_recurring"
               {...register('is_recurring')}
               className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
-            <label className="ml-2 text-sm text-gray-700">
+            <label htmlFor="is_recurring" className="ml-2 text-sm text-gray-700 cursor-pointer">
               Repeats every year
             </label>
           </div>
