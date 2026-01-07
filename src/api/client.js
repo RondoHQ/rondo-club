@@ -144,6 +144,9 @@ export const prmApi = {
   // Todos
   getAllTodos: (includeCompleted = false) => 
     api.get('/prm/v1/todos', { params: { completed: includeCompleted } }),
+  
+  // Investments (companies where entity is an investor)
+  getInvestments: (investorId) => api.get(`/prm/v1/investments/${investorId}`),
   getPersonTodos: (personId) => api.get(`/prm/v1/people/${personId}/todos`),
   createTodo: (personId, data) => 
     api.post(`/prm/v1/people/${personId}/todos`, data),
