@@ -83,22 +83,23 @@ export default function TimelineView({
         <div className={`${todoClasses}`}>
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                {!isTodo && (
+              {/* Date line - only for notes and activities, not todos */}
+              {!isTodo && (
+                <div className="flex items-center gap-2 mb-1">
                   <Icon className={`w-4 h-4 flex-shrink-0 ${
                     isActivity
                       ? 'text-blue-600'
                       : 'text-gray-500'
                   }`} />
-                )}
-                {isActivity && item.activity_type && (
-                  <span className="text-xs font-medium text-gray-600">
-                    {getActivityTypeLabel(item.activity_type)}
-                  </span>
-                )}
-                <span className="text-xs text-gray-400">•</span>
-                <span className="text-xs text-gray-500">{formattedDate}</span>
-              </div>
+                  {isActivity && item.activity_type && (
+                    <span className="text-xs font-medium text-gray-600">
+                      {getActivityTypeLabel(item.activity_type)}
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-400">•</span>
+                  <span className="text-xs text-gray-500">{formattedDate}</span>
+                </div>
+              )}
               
               <div className="flex items-start gap-2">
                 {isTodo && (
