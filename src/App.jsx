@@ -15,6 +15,7 @@ import CompanyDetail from '@/pages/Companies/CompanyDetail';
 import CompanyForm from '@/pages/Companies/CompanyForm';
 import DatesList from '@/pages/Dates/DatesList';
 import DateForm from '@/pages/Dates/DateForm';
+import TodosList from '@/pages/Todos/TodosList';
 import Settings from '@/pages/Settings/Settings';
 import RelationshipTypes from '@/pages/Settings/RelationshipTypes';
 import Import from '@/pages/Settings/Import';
@@ -159,6 +160,9 @@ function App() {
                 <Route path="/dates" element={<DatesList />} />
                 <Route path="/dates/new" element={<DateForm />} />
                 <Route path="/dates/:id/edit" element={<DateForm />} />
+                
+                {/* Todos routes */}
+                <Route path="/todos" element={<TodosList />} />
                 
                 {/* Settings */}
                 <Route path="/settings" element={<Settings />} />

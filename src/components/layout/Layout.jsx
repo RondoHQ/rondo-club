@@ -13,7 +13,8 @@ import {
   User,
   Briefcase,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  CheckSquare
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
@@ -27,6 +28,7 @@ const navigation = [
   { name: 'People', href: '/people', icon: Users },
   { name: 'Organizations', href: '/companies', icon: Building2 },
   { name: 'Dates', href: '/dates', icon: Calendar },
+  { name: 'Todos', href: '/todos', icon: CheckSquare },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
