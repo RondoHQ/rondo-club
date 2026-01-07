@@ -5,7 +5,7 @@ This document describes the daily digest reminder system that notifies users abo
 ## Overview
 
 Caelis includes an automated reminder system that:
-- Runs daily via WordPress cron
+- Runs via **per-user WordPress cron jobs** at each user's preferred notification time
 - Sends a **daily digest** email/notification listing:
   - Important dates **today**
   - Important dates **tomorrow**
@@ -16,12 +16,35 @@ Caelis includes an automated reminder system that:
 
 ## How It Works
 
+### Per-User Cron Scheduling
+
+**Assumption:** A real server cron job triggers WordPress cron every 5 minutes:
+```bash
+*/5 * * * * wget -q -O - https://cael.is/wp-cron.php?doing_wp_cron
+```
+
+Each user has an individual cron job scheduled at their preferred notification time:
+- **Cron Hook:** `prm_user_reminder` (with user ID as argument)
+- **Schedule:** Daily recurring at user's preferred time (default: 09:00 UTC)
+- **Arguments:** `[$user_id]`
+
+### Scheduling Events
+
+Cron jobs are scheduled when:
+- Theme is activated (for all existing users with dates)
+- User updates their notification time preference in Settings
+
+Cron jobs are unscheduled when:
+- User changes their notification time (old time is replaced with new)
+- User account is deleted (via WordPress `delete_user` hook)
+- Theme is deactivated (all user cron jobs cleared)
+
 ### Daily Digest Flow
 
-1. **Daily cron job** runs `process_daily_reminders()`
-2. Gets all users who should receive reminders (users with dates they can access)
-3. For each user, generates a weekly digest (today/tomorrow/rest of week)
-4. Sends digest via all enabled notification channels for that user
+1. **Per-user cron job** triggers `process_user_reminders($user_id)` at user's preferred time
+2. Generates weekly digest for that user (today/tomorrow/rest of week)
+3. Sends digest via all enabled notification channels for that user
+4. Work history update runs once per day (via transient check)
 
 ### Digest Format
 
@@ -59,16 +82,73 @@ Each user receives one notification per day containing:
 
 ### Cron Configuration
 
-**Cron Hook:** `prm_daily_reminder_check`
+**Per-User Cron Hook:** `prm_user_reminder` (with user ID argument)
 
-**Scheduling** (in `functions.php` during theme activation):
+**Scheduling** (in `PRM_Reminders` class):
 ```php
-if (!wp_next_scheduled('prm_daily_reminder_check')) {
-    wp_schedule_event(time(), 'daily', 'prm_daily_reminder_check');
-}
+// Schedule individual user's cron at their preferred time
+$reminders->schedule_user_reminder($user_id);
+
+// Schedule all users during theme activation
+$reminders->schedule_all_user_reminders();
 ```
 
+**Legacy Cron Hook:** `prm_daily_reminder_check` (deprecated, kept for backward compatibility)
+
 ## Key Methods
+
+### `schedule_user_reminder($user_id)`
+
+Schedules a cron job for a specific user at their preferred notification time.
+
+**Parameters:**
+- `$user_id` - User ID
+
+**Returns:** `true` on success, `WP_Error` on failure
+
+**Behavior:**
+- Gets user's preferred time from `caelis_notification_time` user meta (default: `09:00`)
+- Calculates next occurrence (if time passed today, schedules for tomorrow)
+- Unschedules any existing cron for this user
+- Schedules new daily recurring cron with `prm_user_reminder` hook
+
+### `unschedule_user_reminder($user_id)`
+
+Unschedules a user's reminder cron job.
+
+**Parameters:**
+- `$user_id` - User ID
+
+**Returns:** `true` on success
+
+### `schedule_all_user_reminders()`
+
+Schedules reminder cron jobs for all users who should receive reminders.
+
+**Returns:** Number of users scheduled
+
+**Usage:** Called during theme activation and by admin "Reschedule cron jobs" button.
+
+### `process_user_reminders($user_id)`
+
+Processes reminders for a specific user (called by per-user cron).
+
+**Parameters:**
+- `$user_id` - User ID
+
+**Behavior:**
+1. Verifies user exists
+2. Gets weekly digest for user
+3. Sends via all enabled notification channels
+4. Runs `update_expired_work_history()` once per day (via transient check)
+
+### `process_daily_reminders()` [DEPRECATED]
+
+**DEPRECATED:** Use `process_user_reminders()` with per-user cron jobs instead.
+
+This method is kept for backward compatibility. When called, it:
+- Calls `schedule_all_user_reminders()` to reschedule per-user cron jobs
+- Runs `update_expired_work_history()`
 
 ### `get_weekly_digest($user_id)`
 
@@ -94,13 +174,11 @@ Returns weekly digest for a specific user.
 ]
 ```
 
-### `process_daily_reminders()`
+### `get_all_users_to_notify()`
 
-Main cron handler:
-1. Gets all users who should receive reminders
-2. For each user, generates weekly digest
-3. Sends digest via all enabled channels
-4. Also runs `update_expired_work_history()`
+Gets all users who should receive reminders (users who have created people with important dates).
+
+**Returns:** Array of user IDs
 
 ### `get_upcoming_reminders($days_ahead)`
 
@@ -127,6 +205,7 @@ Background maintenance task that runs with reminders:
 - Finds people with `is_current = true` work history entries
 - Checks if `end_date` has passed
 - Automatically sets `is_current = false`
+- Uses transient to ensure it only runs once per day across all users
 
 ## Notification Channels
 
@@ -167,29 +246,34 @@ https://your-site.com
 
 **User Meta:**
 - `caelis_notification_channels` (array containing `'slack'`)
-- `caelis_slack_webhook` (Slack webhook URL)
+- `caelis_slack_bot_token` (Bot token from OAuth)
+- `caelis_slack_workspace_id` (Workspace ID)
+- `caelis_slack_workspace_name` (Workspace name)
+- `caelis_slack_user_id` (User's Slack ID for DMs)
+- `caelis_slack_targets` (Array of channel/user IDs to send to)
 
 **Slack Format:**
-- Uses Slack Block Kit format
-- Header block with date
-- Section blocks for each date category
-- Footer with link to Caelis
+- Uses Slack Block Kit format with `chat.postMessage` API
+- Section blocks for each date category (Today, Tomorrow, Rest of the week)
+- Links person names to their Caelis profile
 
-**Webhook Configuration:**
-- Users configure their own Slack webhook URL in Settings
-- Webhook is tested when saved
-- If webhook is removed, Slack channel is automatically disabled
+**OAuth Configuration:**
+- Users connect Slack via OAuth flow in Settings
+- Bot token stored for API calls
+- User can select which channels/users to receive notifications
 
 ## User Preferences
 
 Users can enable/disable notification channels in Settings:
 
 1. **Email** - Always available (default enabled)
-2. **Slack** - Requires webhook URL configuration
+2. **Slack** - Requires OAuth connection
 
 **User Meta Keys:**
 - `caelis_notification_channels` - Array of enabled channels: `['email', 'slack']`
-- `caelis_slack_webhook` - Slack webhook URL (optional)
+- `caelis_notification_time` - Preferred notification time in HH:MM format (default: `09:00`)
+- `caelis_slack_bot_token` - Slack bot token (from OAuth)
+- `caelis_slack_targets` - Array of Slack channel/user IDs for notifications
 
 ## REST API Integration
 
@@ -232,6 +316,47 @@ Users can enable/disable notification channels in Settings:
 }
 ```
 
+### Reschedule All Cron Jobs (Admin Only)
+
+**POST** `/prm/v1/reminders/reschedule-cron`
+
+Reschedules all user reminder cron jobs based on their notification time preferences.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Successfully rescheduled reminder cron jobs for 5 user(s).",
+  "users_scheduled": 5
+}
+```
+
+### Get Cron Status (Admin Only)
+
+**GET** `/prm/v1/reminders/cron-status`
+
+Returns status of all user reminder cron jobs.
+
+**Response:**
+```json
+{
+  "total_users": 5,
+  "scheduled_users": 5,
+  "users": [
+    {
+      "user_id": 1,
+      "display_name": "Admin User",
+      "next_run": "2026-01-08 09:00:00",
+      "next_run_timestamp": 1736326800
+    }
+  ],
+  "current_time": "2026-01-07 15:30:00",
+  "current_timestamp": 1736263800,
+  "legacy_cron_scheduled": false,
+  "legacy_next_run": null
+}
+```
+
 ### Get Notification Channels
 
 **GET** `/prm/v1/user/notification-channels`
@@ -255,18 +380,18 @@ Users can enable/disable notification channels in Settings:
 }
 ```
 
-### Update Slack Webhook
+### Update Notification Time
 
-**POST** `/prm/v1/user/slack-webhook`
+**POST** `/prm/v1/user/notification-time`
 
 **Body:**
 ```json
 {
-  "webhook": "https://hooks.slack.com/services/..."
+  "time": "09:00"
 }
 ```
 
-**Note:** Webhook is tested when saved. If test fails, webhook is not saved.
+**Note:** When notification time is updated, the user's cron job is automatically rescheduled to the new time.
 
 ## Configuration
 
@@ -302,7 +427,18 @@ This sends reminders for all users who have dates occurring today.
 wp cron event list
 ```
 
-Look for `prm_daily_reminder_check` in the output.
+Look for `prm_user_reminder` events in the output. Each user should have their own scheduled event.
+
+**Check specific user's cron (PHP):**
+```php
+$user_id = 123;
+$next_run = wp_next_scheduled('prm_user_reminder', [$user_id]);
+if ($next_run) {
+    echo "User $user_id next reminder: " . date('Y-m-d H:i:s', $next_run);
+} else {
+    echo "No cron scheduled for user $user_id";
+}
+```
 
 ### Verify Email
 
@@ -312,15 +448,12 @@ Test that `wp_mail()` works:
 wp_mail('test@example.com', 'Test Subject', 'Test message');
 ```
 
-### Test Slack Webhook
+### Test Slack Connection
 
-When configuring a Slack webhook in Settings, it's automatically tested. You can also test manually:
-
-```bash
-curl -X POST https://hooks.slack.com/services/YOUR/WEBHOOK/URL \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"Test message"}'
-```
+Slack connection is established via OAuth in Settings. After connecting:
+1. Enable the Slack channel toggle
+2. Select notification targets (channels/users)
+3. Use "Trigger reminders" button to test
 
 ## Troubleshooting
 
@@ -334,10 +467,10 @@ curl -X POST https://hooks.slack.com/services/YOUR/WEBHOOK/URL \
 
 ### Slack Notifications Not Sending
 
-1. **Check webhook URL** - Must be valid Slack webhook URL
-2. **Check webhook test** - Webhook is tested when saved
-3. **Check user preferences** - User must have Slack channel enabled
-4. **Check Slack workspace** - Webhook must be active in Slack
+1. **Check OAuth connection** - User must have connected Slack via OAuth
+2. **Check user preferences** - User must have Slack channel enabled
+3. **Check notification targets** - User must have selected channels/users to receive notifications
+4. **Check bot permissions** - Slack app needs `chat:write` and `chat:write.public` scopes
 
 ### Wrong Reminder Dates
 
@@ -347,16 +480,29 @@ curl -X POST https://hooks.slack.com/services/YOUR/WEBHOOK/URL \
 
 ### Cron Not Running
 
-Set up a real server cron job:
+**Server cron requirement:** Caelis requires a real server cron job that triggers WordPress cron every 5 minutes for precise notification timing:
 
 ```bash
 # crontab -e
-*/15 * * * * wget -q -O - https://your-site.com/wp-cron.php?doing_wp_cron
+*/5 * * * * wget -q -O - https://cael.is/wp-cron.php?doing_wp_cron
 ```
 
 Disable WordPress's pseudo-cron in `wp-config.php`:
 ```php
 define('DISABLE_WP_CRON', true);
+```
+
+### Reschedule User Cron Jobs
+
+If cron jobs are not running for users, admins can reschedule all user cron jobs from Settings → Administration → "Reschedule cron jobs" button.
+
+**Via WP-CLI:**
+```bash
+# Process reminders for all users (ignores timing)
+wp prm reminders trigger --force
+
+# Process reminders for specific user
+wp prm reminders trigger --user=123
 ```
 
 ## Adding New Notification Channels

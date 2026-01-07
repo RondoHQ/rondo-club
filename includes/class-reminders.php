@@ -17,7 +17,10 @@ class PRM_Reminders {
     private $channels = [];
     
     public function __construct() {
-        // Register cron hook
+        // Register per-user cron hook (new system)
+        add_action('prm_user_reminder', [$this, 'process_user_reminders']);
+        
+        // Register legacy cron hook (deprecated, kept for backward compatibility)
         add_action('prm_daily_reminder_check', [$this, 'process_daily_reminders']);
         
         // Add custom cron schedule if needed
@@ -28,6 +31,130 @@ class PRM_Reminders {
             new PRM_Email_Channel(),
             new PRM_Slack_Channel(),
         ];
+    }
+    
+    /**
+     * Schedule reminder cron job for a specific user
+     * 
+     * @param int $user_id User ID
+     * @return bool|WP_Error True on success, WP_Error on failure
+     */
+    public function schedule_user_reminder($user_id) {
+        // Get user's preferred notification time
+        $preferred_time = get_user_meta($user_id, 'caelis_notification_time', true);
+        if (empty($preferred_time)) {
+            $preferred_time = '09:00';
+        }
+        
+        // Parse time
+        list($hour, $minute) = explode(':', $preferred_time);
+        $hour = (int) $hour;
+        $minute = (int) $minute;
+        
+        // Calculate next occurrence in WordPress timezone
+        $now = new DateTime('now', wp_timezone());
+        $next_run = clone $now;
+        $next_run->setTime($hour, $minute, 0);
+        
+        // If time has passed today, schedule for tomorrow
+        if ($next_run <= $now) {
+            $next_run->modify('+1 day');
+        }
+        
+        // Unschedule existing cron for this user (if any)
+        $this->unschedule_user_reminder($user_id);
+        
+        // Schedule the cron job (recurring daily)
+        $scheduled = wp_schedule_event(
+            $next_run->getTimestamp(),
+            'daily',
+            'prm_user_reminder',
+            [$user_id]
+        );
+        
+        if ($scheduled === false) {
+            return new WP_Error(
+                'cron_schedule_failed',
+                sprintf(__('Failed to schedule reminder cron for user %d.', 'personal-crm'), $user_id)
+            );
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Unschedule reminder cron job for a specific user
+     * 
+     * @param int $user_id User ID
+     * @return bool True on success
+     */
+    public function unschedule_user_reminder($user_id) {
+        $timestamp = wp_next_scheduled('prm_user_reminder', [$user_id]);
+        
+        if ($timestamp !== false) {
+            wp_unschedule_event($timestamp, 'prm_user_reminder', [$user_id]);
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Schedule reminder cron jobs for all users who should receive reminders
+     * 
+     * @return int Number of users scheduled
+     */
+    public function schedule_all_user_reminders() {
+        $users_to_notify = $this->get_all_users_to_notify();
+        $scheduled_count = 0;
+        
+        foreach ($users_to_notify as $user_id) {
+            $result = $this->schedule_user_reminder($user_id);
+            if ($result === true) {
+                $scheduled_count++;
+            }
+        }
+        
+        return $scheduled_count;
+    }
+    
+    /**
+     * Process reminders for a specific user (called by per-user cron)
+     * 
+     * @param int $user_id User ID
+     */
+    public function process_user_reminders($user_id) {
+        // Verify user exists
+        $user = get_userdata($user_id);
+        if (!$user) {
+            return;
+        }
+        
+        // Get weekly digest for this user
+        $digest_data = $this->get_weekly_digest($user_id);
+        
+        // Check if there are any dates to notify about
+        $has_dates = !empty($digest_data['today']) ||
+                     !empty($digest_data['tomorrow']) ||
+                     !empty($digest_data['rest_of_week']);
+        
+        if (!$has_dates) {
+            return;
+        }
+        
+        // Send via all enabled channels
+        foreach ($this->channels as $channel) {
+            if ($channel->is_enabled_for_user($user_id)) {
+                $channel->send($user_id, $digest_data);
+            }
+        }
+        
+        // Update expired work history (only once per day, not per user)
+        // Use a transient to ensure this only runs once per day
+        $transient_key = 'prm_work_history_updated_' . date('Y-m-d');
+        if (get_transient($transient_key) === false) {
+            $this->update_expired_work_history();
+            set_transient($transient_key, true, DAY_IN_SECONDS);
+        }
     }
     
     /**
@@ -156,57 +283,17 @@ class PRM_Reminders {
     
     /**
      * Process daily reminders (cron job)
+     * 
+     * @deprecated Use process_user_reminders() with per-user cron jobs instead.
+     *             This method is kept for backward compatibility and will reschedule
+     *             all user cron jobs when called.
      */
     public function process_daily_reminders() {
-        // Get all users who should receive reminders
-        $users_to_notify = $this->get_all_users_to_notify();
+        // Legacy method - reschedule all user cron jobs for per-user timing
+        $this->schedule_all_user_reminders();
         
-        $current_time = new DateTime('now', wp_timezone());
-        $current_hour = (int) $current_time->format('H');
-        
-        foreach ($users_to_notify as $user_id) {
-            // Check if it's the right time for this user
-            if (!$this->should_send_now($user_id, $current_hour)) {
-                continue;
-            }
-            
-            // Get weekly digest for this user
-            $digest_data = $this->get_weekly_digest($user_id);
-            
-            // Send via all enabled channels
-            foreach ($this->channels as $channel) {
-                if ($channel->is_enabled_for_user($user_id)) {
-                    $channel->send($user_id, $digest_data);
-                }
-            }
-        }
-        
-        // Check and update expired work history entries
+        // Also run work history update
         $this->update_expired_work_history();
-    }
-    
-    /**
-     * Check if reminders should be sent now for a user
-     * 
-     * @param int $user_id User ID
-     * @param int $current_hour Current hour (0-23)
-     * @return bool
-     */
-    private function should_send_now($user_id, $current_hour) {
-        $preferred_time = get_user_meta($user_id, 'caelis_notification_time', true);
-        
-        // If no preference set, default to 9:00 AM
-        if (empty($preferred_time)) {
-            $preferred_time = '09:00';
-        }
-        
-        // Parse preferred time
-        list($preferred_hour, $preferred_minute) = explode(':', $preferred_time);
-        $preferred_hour = (int) $preferred_hour;
-        
-        // Send if current hour matches preferred hour
-        // This allows for a 1-hour window (e.g., if cron runs at 9:15, it will still send for 9:00 preference)
-        return $current_hour === $preferred_hour;
     }
     
     /**
@@ -358,7 +445,7 @@ class PRM_Reminders {
      * 
      * @return array User IDs
      */
-    private function get_all_users_to_notify() {
+    public function get_all_users_to_notify() {
         // Use direct database query to bypass access control filters
         // Cron jobs need to see all dates regardless of user
         global $wpdb;

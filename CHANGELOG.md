@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-01-07
+
+### Added
+- Per-user cron jobs for precise notification timing at each user's preferred time
+- Admin button to reschedule all user reminder cron jobs in Settings
+- REST API endpoint `POST /prm/v1/reminders/reschedule-cron` to reschedule all cron jobs
+- User cron job cleanup when user is deleted via `delete_user` hook
+
+### Changed
+- Notification timing now uses individual cron jobs per user instead of single daily cron
+- `update_notification_time` API endpoint now reschedules user's cron job automatically
+- `get_cron_status` API endpoint now returns per-user cron status information
+- Updated reminders documentation to reflect per-user cron architecture
+
+### Deprecated
+- `process_daily_reminders()` method - use `process_user_reminders($user_id)` instead
+
 ## [1.13.1] - 2026-01-04
 
 ### Added
