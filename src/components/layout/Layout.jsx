@@ -14,7 +14,8 @@ import {
   Briefcase,
   ChevronDown,
   Sparkles,
-  CheckSquare
+  CheckSquare,
+  Plus
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
@@ -22,6 +23,7 @@ import { useSearch } from '@/hooks/useDashboard';
 import { useQuery } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { APP_NAME } from '@/constants/app';
+import GlobalTodoModal from '@/components/Timeline/GlobalTodoModal';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -181,13 +183,95 @@ function UserMenu() {
   );
 }
 
-function Header({ onMenuClick }) {
+function QuickAddMenu({ onAddTodo }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+  const navigate = useNavigate();
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isOpen]);
+  
+  const handleNavigation = (path) => {
+    setIsOpen(false);
+    navigate(path);
+  };
+  
+  const handleAddTodo = () => {
+    setIsOpen(false);
+    onAddTodo();
+  };
+  
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary-600 hover:bg-primary-700 text-white transition-colors"
+        aria-label="Quick add"
+        title="Quick add"
+      >
+        <Plus className="w-5 h-5" />
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          <div className="py-1">
+            <button
+              onClick={() => handleNavigation('/people/new')}
+              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+            >
+              <User className="w-4 h-4 mr-3 text-gray-400" />
+              New Person
+            </button>
+            <button
+              onClick={() => handleNavigation('/companies/new')}
+              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+            >
+              <Building2 className="w-4 h-4 mr-3 text-gray-400" />
+              New Organization
+            </button>
+            <button
+              onClick={handleAddTodo}
+              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+            >
+              <CheckSquare className="w-4 h-4 mr-3 text-gray-400" />
+              New Todo
+            </button>
+            <button
+              onClick={() => handleNavigation('/dates/new')}
+              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+            >
+              <Calendar className="w-4 h-4 mr-3 text-gray-400" />
+              New Date
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Header({ onMenuClick, onAddTodo }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const searchRef = useRef(null);
   const dropdownRef = useRef(null);
+  const inputRef = useRef(null);
   
   // Use search hook - only search if query is 2+ characters
   // Always pass a string to maintain consistent hook calls
@@ -201,20 +285,30 @@ function Header({ onMenuClick }) {
     if (path.startsWith('/people')) return 'People';
     if (path.startsWith('/companies')) return 'Organizations';
     if (path.startsWith('/dates')) return 'Important Dates';
+    if (path.startsWith('/todos')) return 'Todos';
     if (path.startsWith('/settings')) return 'Settings';
     return '';
   };
+  
+  // Focus input when search opens
+  useEffect(() => {
+    if (isSearchOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isSearchOpen]);
   
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
         searchRef.current &&
         !searchRef.current.contains(event.target)
       ) {
         setIsSearchFocused(false);
+        // Close search if query is empty
+        if (!searchQuery.trim()) {
+          setIsSearchOpen(false);
+        }
       }
     };
     
@@ -222,12 +316,13 @@ function Header({ onMenuClick }) {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [searchQuery]);
   
   // Handle search result click
   const handleResultClick = (type, id) => {
     setIsSearchFocused(false);
     setSearchQuery('');
+    setIsSearchOpen(false);
     if (type === 'person') {
       navigate(`/people/${id}`);
     } else if (type === 'company') {
@@ -259,92 +354,135 @@ function Header({ onMenuClick }) {
         {getPageTitle()}
       </h1>
       
-      {/* Search - centered */}
-      <div className="flex-1 flex justify-center max-w-2xl mx-4 lg:mx-8">
-        <div className="relative w-full" ref={searchRef}>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="search"
-            placeholder="Search people & organizations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setIsSearchFocused(true)}
-            className="input pl-9 w-full"
-          />
-          
-          {/* Search results dropdown */}
-          {showDropdown && (
-            <div
-              ref={dropdownRef}
-              className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50"
-            >
-              {isSearchLoading ? (
-                <div className="p-4 text-center text-gray-500">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
-                  <p className="mt-2 text-sm">Searching...</p>
-                </div>
-              ) : hasResults ? (
-                <div className="py-2">
-                  {/* People results */}
-                  {safeResults.people && safeResults.people.length > 0 && (
-                    <div className="px-3 py-2">
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
-                        People
-                      </div>
-                      {safeResults.people.map((person) => (
-                        <button
-                          key={person.id}
-                          onClick={() => handleResultClick('person', person.id)}
-                          className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                        >
-                          <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm font-medium text-gray-900 flex-1 truncate">
-                            {person.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Organizations results */}
-                  {safeResults.companies && safeResults.companies.length > 0 && (
-                    <div className="px-3 py-2 border-t border-gray-100">
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
-                        Organizations
-                      </div>
-                      {safeResults.companies.map((company) => (
-                        <button
-                          key={company.id}
-                          onClick={() => handleResultClick('company', company.id)}
-                          className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                        >
-                          <Briefcase className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm font-medium text-gray-900 flex-1 truncate">
-                            {company.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="p-4 text-center text-gray-500">
-                  <p className="text-sm">No results found</p>
-                </div>
-              )}
+      {/* Spacer */}
+      <div className="flex-1" />
+      
+      {/* Search - collapsible */}
+      <div className="relative" ref={searchRef}>
+        {isSearchOpen ? (
+          <div className="flex items-center">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                ref={inputRef}
+                type="search"
+                placeholder="Search people & organizations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setSearchQuery('');
+                    setIsSearchOpen(false);
+                    setIsSearchFocused(false);
+                  }
+                }}
+                className="input pl-9 w-64 lg:w-80"
+              />
             </div>
-          )}
-        </div>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setIsSearchOpen(false);
+                setIsSearchFocused(false);
+              }}
+              className="p-2 ml-1 text-gray-400 hover:text-gray-600"
+              aria-label="Close search"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+            aria-label="Search"
+            title="Search"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+        )}
+        
+        {/* Search results dropdown */}
+        {showDropdown && (
+          <div
+            ref={dropdownRef}
+            className="absolute top-full right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50"
+          >
+            {isSearchLoading ? (
+              <div className="p-4 text-center text-gray-500">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+                <p className="mt-2 text-sm">Searching...</p>
+              </div>
+            ) : hasResults ? (
+              <div className="py-2">
+                {/* People results */}
+                {safeResults.people && safeResults.people.length > 0 && (
+                  <div className="px-3 py-2">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
+                      People
+                    </div>
+                    {safeResults.people.map((person) => (
+                      <button
+                        key={person.id}
+                        onClick={() => handleResultClick('person', person.id)}
+                        className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                      >
+                        <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-900 flex-1 truncate">
+                          {person.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Organizations results */}
+                {safeResults.companies && safeResults.companies.length > 0 && (
+                  <div className="px-3 py-2 border-t border-gray-100">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
+                      Organizations
+                    </div>
+                    {safeResults.companies.map((company) => (
+                      <button
+                        key={company.id}
+                        onClick={() => handleResultClick('company', company.id)}
+                        className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                      >
+                        <Briefcase className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-900 flex-1 truncate">
+                          {company.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 text-center text-gray-500">
+                <p className="text-sm">No results found</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* Quick Add menu */}
+      <div className="ml-2">
+        <QuickAddMenu onAddTodo={onAddTodo} />
       </div>
       
       {/* User menu - right aligned */}
-      <UserMenu />
+      <div className="ml-2">
+        <UserMenu />
+      </div>
     </header>
   );
 }
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showTodoModal, setShowTodoModal] = useState(false);
   
   // Update document title based on route
   useRouteTitle();
@@ -374,12 +512,21 @@ export default function Layout({ children }) {
       
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
+        <Header 
+          onMenuClick={() => setSidebarOpen(true)} 
+          onAddTodo={() => setShowTodoModal(true)}
+        />
         
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
         </main>
       </div>
+      
+      {/* Global Todo Modal */}
+      <GlobalTodoModal
+        isOpen={showTodoModal}
+        onClose={() => setShowTodoModal(false)}
+      />
     </div>
   );
 }
