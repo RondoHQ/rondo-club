@@ -2,7 +2,8 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
-  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download
+  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
+  CheckSquare2, Square
 } from 'lucide-react';
 import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads } from '@icons-pack/react-simple-icons';
 
@@ -36,6 +37,7 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { decodeHtml, getCompanyName, sanitizePersonAcf } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
+import { isTodoOverdue } from '@/utils/timeline';
 
 // Helper to get gender symbol
 function getGenderSymbol(gender) {
@@ -669,6 +671,33 @@ export default function PersonDetail() {
         return dateB - dateA;
       });
   }, [person?.acf?.work_history]);
+
+  // Extract and sort todos from timeline
+  // Incomplete todos first (by due date), then completed
+  const sortedTodos = useMemo(() => {
+    if (!timeline) return [];
+    
+    const todos = timeline.filter(item => item.type === 'todo');
+    
+    return todos.sort((a, b) => {
+      // Completed todos go to the bottom
+      if (a.is_completed && !b.is_completed) return 1;
+      if (!a.is_completed && b.is_completed) return -1;
+
+      // For incomplete todos, sort by due date (earliest first)
+      // Todos without due date go after those with due dates
+      if (!a.is_completed && !b.is_completed) {
+        if (a.due_date && b.due_date) {
+          return new Date(a.due_date) - new Date(b.due_date);
+        }
+        if (a.due_date && !b.due_date) return -1;
+        if (!a.due_date && b.due_date) return 1;
+      }
+
+      // For completed todos, sort by most recently completed (newest first)
+      return new Date(b.created) - new Date(a.created);
+    });
+  }, [timeline]);
   
   // Redirect if person is trashed
   useEffect(() => {
@@ -1228,16 +1257,6 @@ export default function PersonDetail() {
                   <Plus className="w-4 h-4 md:mr-1" />
                   <span className="hidden md:inline">Activity</span>
                 </button>
-                <button
-                  onClick={() => {
-                    setEditingTodo(null);
-                    setShowTodoModal(true);
-                  }}
-                  className="btn-secondary text-sm"
-                >
-                  <Plus className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Todo</span>
-                </button>
               </div>
             </div>
             
@@ -1296,6 +1315,79 @@ export default function PersonDetail() {
               )}
             </div>
           )}
+
+          {/* Todos */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Todos</h2>
+              <button
+                onClick={() => {
+                  setEditingTodo(null);
+                  setShowTodoModal(true);
+                }}
+                className="btn-secondary text-sm"
+              >
+                <Plus className="w-4 h-4 md:mr-1" />
+                <span className="hidden md:inline">Add todo</span>
+              </button>
+            </div>
+            {sortedTodos.length > 0 ? (
+              <div className="space-y-2">
+                {sortedTodos.map((todo) => {
+                  const isOverdue = isTodoOverdue(todo);
+                  return (
+                    <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 group">
+                      <button
+                        onClick={() => handleToggleTodo(todo)}
+                        className="mt-0.5 mr-2 flex-shrink-0"
+                        title={todo.is_completed ? 'Mark as incomplete' : 'Mark as complete'}
+                      >
+                        {todo.is_completed ? (
+                          <CheckSquare2 className="w-5 h-5 text-primary-600" />
+                        ) : (
+                          <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
+                        )}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm ${todo.is_completed ? 'line-through text-gray-400' : isOverdue ? 'text-red-600' : ''}`}>
+                          {todo.content}
+                        </p>
+                        {todo.due_date && (
+                          <p className={`text-xs mt-0.5 ${isOverdue && !todo.is_completed ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                            Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
+                            {isOverdue && !todo.is_completed && ' (overdue)'}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                        <button
+                          onClick={() => {
+                            setEditingTodo(todo);
+                            setShowTodoModal(true);
+                          }}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Edit todo"
+                        >
+                          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTodo(todo.id)}
+                          className="p-1 hover:bg-red-50 rounded"
+                          title="Delete todo"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">
+                No todos yet.
+              </p>
+            )}
+          </div>
           
           {/* Relationships */}
           <div className="card p-6">
