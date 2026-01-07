@@ -18,9 +18,19 @@ if (defined('WP_CLI') && WP_CLI) {
         /**
          * Trigger daily reminders manually
          * 
+         * ## OPTIONS
+         * 
+         * [--user=<user_id>]
+         * : User ID to send reminders to (if not specified, processes all users)
+         * 
+         * [--force]
+         * : Force send regardless of preferred notification time
+         * 
          * ## EXAMPLES
          * 
          *     wp prm reminders trigger
+         *     wp prm reminders trigger --user=1
+         *     wp prm reminders trigger --user=1 --force
          * 
          * @when after_wp_load
          */
@@ -29,22 +39,48 @@ if (defined('WP_CLI') && WP_CLI) {
             
             $reminders = new PRM_Reminders();
             
-            // Get all users who should receive reminders
-            $users_to_notify = $this->get_all_users_to_notify();
+            // Check if specific user ID is provided
+            $specific_user_id = isset($assoc_args['user']) ? (int) $assoc_args['user'] : null;
             
-            if (empty($users_to_notify)) {
-                WP_CLI::warning('No users found to notify.');
-                WP_CLI::log('');
-                WP_CLI::log('This could mean:');
-                WP_CLI::log('1. No important dates exist in the system');
-                WP_CLI::log('2. Important dates exist but have no related people');
-                WP_CLI::log('3. People exist but are not linked to any dates');
-                WP_CLI::log('');
-                WP_CLI::log('Run with --debug flag for more details: wp prm reminders trigger --debug');
-                return;
+            if ($specific_user_id) {
+                $user = get_userdata($specific_user_id);
+                if (!$user) {
+                    WP_CLI::error(sprintf('User with ID %d not found.', $specific_user_id));
+                    return;
+                }
+                
+                // Verify user has dates they can access
+                $digest_data = $reminders->get_weekly_digest($specific_user_id);
+                $has_dates = !empty($digest_data['today']) ||
+                             !empty($digest_data['tomorrow']) ||
+                             !empty($digest_data['rest_of_week']);
+                
+                if (!$has_dates) {
+                    WP_CLI::warning(sprintf('User %s (ID: %d) has no upcoming dates.', $user->display_name, $specific_user_id));
+                    return;
+                }
+                
+                WP_CLI::log(sprintf('Processing reminders for user: %s (ID: %d)', $user->display_name, $specific_user_id));
+                $users_to_notify = [$specific_user_id];
+            } else {
+                // Get all users who should receive reminders
+                $users_to_notify = $this->get_all_users_to_notify();
+                
+                if (empty($users_to_notify)) {
+                    WP_CLI::warning('No users found to notify.');
+                    WP_CLI::log('');
+                    WP_CLI::log('This could mean:');
+                    WP_CLI::log('1. No important dates exist in the system');
+                    WP_CLI::log('2. Important dates exist but have no related people');
+                    WP_CLI::log('3. People exist but are not linked to any dates');
+                    WP_CLI::log('');
+                    WP_CLI::log('Run with --debug flag for more details: wp prm reminders trigger --debug');
+                    WP_CLI::log('Or specify a user: wp prm reminders trigger --user=1');
+                    return;
+                }
+                
+                WP_CLI::log(sprintf('Found %d user(s) to notify.', count($users_to_notify)));
             }
-            
-            WP_CLI::log(sprintf('Found %d user(s) to notify.', count($users_to_notify)));
             
             $current_time = new DateTime('now', wp_timezone());
             $current_hour = (int) $current_time->format('H');
@@ -59,8 +95,8 @@ if (defined('WP_CLI') && WP_CLI) {
                     continue;
                 }
                 
-                // Check if it's the right time for this user (unless --force flag is set)
-                if (!isset($assoc_args['force'])) {
+                // Check if it's the right time for this user (unless --force flag is set or specific user)
+                if (!isset($assoc_args['force']) && !$specific_user_id) {
                     $preferred_time = get_user_meta($user_id, 'caelis_notification_time', true);
                     if (empty($preferred_time)) {
                         $preferred_time = '09:00';
