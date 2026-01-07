@@ -135,10 +135,12 @@ class PRM_VCard_Import {
             $email = $vcard['emails'][0]['value'] ?? '';
         }
 
-        // Get primary phone
+        // Get primary phone with type
         $phone = '';
+        $phone_type = 'phone';
         if (!empty($vcard['phones'])) {
             $phone = $vcard['phones'][0]['value'] ?? '';
+            $phone_type = $vcard['phones'][0]['type'] ?? 'phone';
         }
 
         return rest_ensure_response([
@@ -147,6 +149,7 @@ class PRM_VCard_Import {
             'nickname'    => $vcard['nickname'] ?? '',
             'email'       => $email,
             'phone'       => $phone,
+            'phone_type'  => $phone_type,
             'birthday'    => $vcard['bday'] ?? '',
             'organization'=> $vcard['org'] ?? '',
             'job_title'   => $vcard['title'] ?? '',
