@@ -37,7 +37,7 @@ Represents individual contacts in the CRM.
 
 | Field | Key | Type | Options |
 |-------|-----|------|---------|
-| Type | `contact_type` | select | email, phone, mobile, address, website, linkedin, twitter, instagram, facebook, other |
+| Type | `contact_type` | select | email, phone, mobile, address, website, calendar, linkedin, twitter, instagram, facebook, other |
 | Label | `contact_label` | text | e.g., "Work", "Personal" |
 | Value | `contact_value` | text | The actual contact value |
 

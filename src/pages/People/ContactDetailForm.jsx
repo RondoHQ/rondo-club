@@ -14,6 +14,7 @@ const CONTACT_TYPES = [
   { value: 'mobile', label: 'Mobile' },
   { value: 'address', label: 'Address' },
   { value: 'website', label: 'Website' },
+  { value: 'calendar', label: 'Calendar link' },
   { value: 'linkedin', label: 'LinkedIn' },
   { value: 'twitter', label: 'Twitter' },
   { value: 'bluesky', label: 'Bluesky' },
