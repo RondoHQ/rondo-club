@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-01-07
+
+### Added
+- New Todos page accessible from the main navigation menu
+- Dashboard now shows "Open todos" stat card (4th card in the stats row)
+- Dashboard now displays open todos alongside upcoming reminders
+- REST API endpoint `GET /prm/v1/todos` to fetch all todos across all people
+- Dashboard API now returns `open_todos_count` in stats
+
+### Changed
+- Dashboard layout reorganized: Row 1 has Upcoming reminders + Open todos, Row 2 has Favorites + Recently edited people
+- Stats row now shows 4 cards (People, Organizations, Events, Open todos)
+- Todos page shows all open todos with ability to toggle completion, edit, and delete
+- Todos are sorted by due date (earliest first), with completed todos at the bottom
+
 ## [1.14.8] - 2026-01-07
 
 ### Changed

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 
 export function useDashboard() {
@@ -17,6 +17,40 @@ export function useReminders(daysAhead = 30) {
     queryFn: async () => {
       const response = await prmApi.getReminders(daysAhead);
       return response.data;
+    },
+  });
+}
+
+export function useTodos(includeCompleted = false) {
+  return useQuery({
+    queryKey: ['todos', includeCompleted],
+    queryFn: async () => {
+      const response = await prmApi.getAllTodos(includeCompleted);
+      return response.data;
+    },
+  });
+}
+
+export function useUpdateTodo() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ todoId, data }) => prmApi.updateTodo(todoId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export function useDeleteTodo() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (todoId) => prmApi.deleteTodo(todoId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }

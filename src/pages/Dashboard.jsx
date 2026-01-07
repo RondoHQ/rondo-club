@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles } from 'lucide-react';
-import { useDashboard } from '@/hooks/useDashboard';
+import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square } from 'lucide-react';
+import { useDashboard, useTodos, useUpdateTodo } from '@/hooks/useDashboard';
 import { format, formatDistanceToNow } from 'date-fns';
 import { APP_NAME } from '@/constants/app';
+import { isTodoOverdue } from '@/utils/timeline';
 
 function StatCard({ title, value, icon: Icon, href }) {
   return (
@@ -125,6 +126,59 @@ function ReminderCard({ reminder }) {
   );
 }
 
+function TodoCard({ todo, onToggle }) {
+  const isOverdue = isTodoOverdue(todo);
+
+  return (
+    <Link
+      to={`/people/${todo.person_id}`}
+      className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+    >
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggle(todo);
+        }}
+        className="mt-0.5 mr-3 flex-shrink-0"
+        title={todo.is_completed ? 'Mark as incomplete' : 'Mark as complete'}
+      >
+        {todo.is_completed ? (
+          <CheckSquare className="w-5 h-5 text-primary-600" />
+        ) : (
+          <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
+        )}
+      </button>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium ${todo.is_completed ? 'line-through text-gray-400' : isOverdue ? 'text-red-600' : 'text-gray-900'}`}>
+          {todo.content}
+        </p>
+        <div className="flex items-center gap-2 mt-1">
+          {todo.person_thumbnail ? (
+            <img
+              src={todo.person_thumbnail}
+              alt={todo.person_name}
+              loading="lazy"
+              className="w-5 h-5 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+              <span className="text-xs text-gray-500">{todo.person_name?.[0]}</span>
+            </div>
+          )}
+          <span className="text-xs text-gray-500 truncate">{todo.person_name}</span>
+        </div>
+        {todo.due_date && (
+          <p className={`text-xs mt-1 ${isOverdue && !todo.is_completed ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+            Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
+            {isOverdue && !todo.is_completed && ' (overdue)'}
+          </p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="card p-12 text-center">
@@ -159,6 +213,19 @@ function EmptyState() {
 
 export default function Dashboard() {
   const { data, isLoading, error } = useDashboard();
+  const { data: todos } = useTodos(false); // Only incomplete todos
+  const updateTodo = useUpdateTodo();
+  
+  const handleToggleTodo = (todo) => {
+    updateTodo.mutate({
+      todoId: todo.id,
+      data: {
+        content: todo.content,
+        due_date: todo.due_date,
+        is_completed: !todo.is_completed,
+      },
+    });
+  };
   
   if (isLoading) {
     return (
@@ -203,7 +270,7 @@ export default function Dashboard() {
     return (
       <div className="space-y-6">
         {/* Stats - still show them even when empty */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Total people"
             value={0}
@@ -222,6 +289,12 @@ export default function Dashboard() {
             icon={Calendar}
             href="/dates"
           />
+          <StatCard
+            title="Open todos"
+            value={0}
+            icon={CheckSquare}
+            href="/todos"
+          />
         </div>
         
         {/* Empty State */}
@@ -230,10 +303,13 @@ export default function Dashboard() {
     );
   }
   
+  // Limit todos to 5 for dashboard
+  const dashboardTodos = todos?.slice(0, 5) || [];
+  
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total people"
           value={stats?.total_people || 0}
@@ -241,7 +317,7 @@ export default function Dashboard() {
           href="/people"
         />
         <StatCard
-          title="Companies"
+          title="Organizations"
           value={stats?.total_companies || 0}
           icon={Building2}
           href="/companies"
@@ -252,8 +328,15 @@ export default function Dashboard() {
           icon={Calendar}
           href="/dates"
         />
+        <StatCard
+          title="Open todos"
+          value={stats?.open_todos_count || 0}
+          icon={CheckSquare}
+          href="/todos"
+        />
       </div>
       
+      {/* Row 1: Upcoming Reminders + Open Todos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upcoming Reminders */}
         <div className="card">
@@ -281,6 +364,58 @@ export default function Dashboard() {
               </p>
             )}
           </div>
+        </div>
+        
+        {/* Open Todos */}
+        <div className="card">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <h2 className="font-semibold flex items-center">
+              <CheckSquare className="w-5 h-5 mr-2 text-gray-500" />
+              Open todos
+            </h2>
+            <Link 
+              to="/todos" 
+              className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+            >
+              View all todos
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Link>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {dashboardTodos.length > 0 ? (
+              dashboardTodos.map((todo) => (
+                <TodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} />
+              ))
+            ) : (
+              <p className="p-4 text-sm text-gray-500 text-center">
+                No open todos
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Row 2: Favorites + Recent People */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Favorites */}
+        <div className="card">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <h2 className="font-semibold flex items-center">
+              <Star className="w-5 h-5 mr-2 text-yellow-500 fill-current" />
+              Favorites
+            </h2>
+          </div>
+          {favorites?.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {favorites.slice(0, 5).map((person) => (
+                <PersonCard key={person.id} person={person} hideStar={true} />
+              ))}
+            </div>
+          ) : (
+            <p className="p-4 text-sm text-gray-500 text-center">
+              No favorites yet
+            </p>
+          )}
         </div>
         
         {/* Recent People */}
@@ -311,23 +446,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      
-      {/* Favorites */}
-      {favorites?.length > 0 && (
-        <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold flex items-center">
-              <Star className="w-5 h-5 mr-2 text-yellow-500 fill-current" />
-              Favorites
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 p-2">
-            {favorites.map((person) => (
-              <PersonCard key={person.id} person={person} hideStar={true} />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
