@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.5] - 2026-01-07
+
+### Changed
+- Todos now display in their own section at the top of the timeline, separate from notes and activities
+- Todos are ordered by due date (earliest first) instead of creation date
+- Completed todos are shown at the bottom of the todos section
+- Todos without due dates appear after those with due dates
+
 ## [1.14.4] - 2026-01-07
 
 ### Fixed

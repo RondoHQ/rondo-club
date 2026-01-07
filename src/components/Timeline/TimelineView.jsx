@@ -195,7 +195,8 @@ export default function TimelineView({
     );
   };
 
-  const hasAnyItems = groupedTimeline.today.length > 0 ||
+  const hasAnyItems = groupedTimeline.todos.length > 0 ||
+                      groupedTimeline.today.length > 0 ||
                       groupedTimeline.yesterday.length > 0 ||
                       groupedTimeline.thisWeek.length > 0 ||
                       groupedTimeline.older.length > 0;
@@ -208,12 +209,38 @@ export default function TimelineView({
     );
   }
 
+  // Render todos section separately (not inside the timeline vertical line)
+  const renderTodosSection = () => {
+    if (!groupedTimeline.todos || groupedTimeline.todos.length === 0) return null;
+
+    return (
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+          Todos
+        </h3>
+        <div className="space-y-2">
+          {groupedTimeline.todos.map(renderTimelineItem)}
+        </div>
+      </div>
+    );
+  };
+
+  const hasTimelineItems = groupedTimeline.today.length > 0 ||
+                           groupedTimeline.yesterday.length > 0 ||
+                           groupedTimeline.thisWeek.length > 0 ||
+                           groupedTimeline.older.length > 0;
+
   return (
     <div className="space-y-6">
-      {renderGroup('Today', groupedTimeline.today)}
-      {renderGroup('Yesterday', groupedTimeline.yesterday)}
-      {renderGroup('This week', groupedTimeline.thisWeek)}
-      {renderGroup('Older', groupedTimeline.older)}
+      {renderTodosSection()}
+      {hasTimelineItems && (
+        <>
+          {renderGroup('Today', groupedTimeline.today)}
+          {renderGroup('Yesterday', groupedTimeline.yesterday)}
+          {renderGroup('This week', groupedTimeline.thisWeek)}
+          {renderGroup('Older', groupedTimeline.older)}
+        </>
+      )}
     </div>
   );
 }

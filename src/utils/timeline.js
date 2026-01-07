@@ -2,12 +2,14 @@ import { format, formatDistanceToNow, isToday, isYesterday, isThisWeek, parseISO
 
 /**
  * Group timeline items by date buckets
+ * Todos are separated and sorted by due date
  * @param {Array} timeline - Array of timeline items
- * @returns {Object} Grouped timeline items
+ * @returns {Object} Grouped timeline items with separate todos section
  */
 export function groupTimelineByDate(timeline) {
   if (!timeline || timeline.length === 0) {
     return {
+      todos: [],
       today: [],
       yesterday: [],
       thisWeek: [],
@@ -16,6 +18,7 @@ export function groupTimelineByDate(timeline) {
   }
 
   const groups = {
+    todos: [],
     today: [],
     yesterday: [],
     thisWeek: [],
@@ -23,6 +26,12 @@ export function groupTimelineByDate(timeline) {
   };
 
   timeline.forEach((item) => {
+    // Todos go into their own section
+    if (item.type === 'todo') {
+      groups.todos.push(item);
+      return;
+    }
+
     const itemDate = parseISO(item.created);
     const displayDate = item.activity_date ? parseISO(item.activity_date) : itemDate;
 
@@ -35,6 +44,26 @@ export function groupTimelineByDate(timeline) {
     } else {
       groups.older.push(item);
     }
+  });
+
+  // Sort todos: incomplete first (by due date), then completed
+  groups.todos.sort((a, b) => {
+    // Completed todos go to the bottom
+    if (a.is_completed && !b.is_completed) return 1;
+    if (!a.is_completed && b.is_completed) return -1;
+
+    // For incomplete todos, sort by due date (earliest first)
+    // Todos without due date go after those with due dates
+    if (!a.is_completed && !b.is_completed) {
+      if (a.due_date && b.due_date) {
+        return new Date(a.due_date) - new Date(b.due_date);
+      }
+      if (a.due_date && !b.due_date) return -1;
+      if (!a.due_date && b.due_date) return 1;
+    }
+
+    // For completed todos, sort by most recently completed (newest first)
+    return new Date(b.created) - new Date(a.created);
   });
 
   return groups;
