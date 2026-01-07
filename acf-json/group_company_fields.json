@@ -57,6 +57,23 @@
                     }
                 }
             ]
+        },
+        {
+            "key": "field_company_investors",
+            "label": "Investors",
+            "name": "investors",
+            "type": "relationship",
+            "instructions": "Select people or companies that have invested in this company",
+            "post_type": [
+                "person",
+                "company"
+            ],
+            "filters": [
+                "search"
+            ],
+            "return_format": "object",
+            "min": 0,
+            "max": ""
         }
     ],
     "location": [

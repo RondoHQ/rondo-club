@@ -80,6 +80,7 @@ Represents organizations where contacts work. Note: The post type slug remains `
 | Website | `website` | url | Organization website URL |
 | Industry | `industry` | text | Industry or sector |
 | Contact Info | `contact_info` | repeater | Organization contact methods |
+| Investors | `investors` | relationship | People or organizations that have invested in this company |
 
 **Contact Info Sub-fields:**
 

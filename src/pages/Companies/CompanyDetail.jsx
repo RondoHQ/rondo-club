@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch, TrendingUp, User } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -275,6 +275,59 @@ export default function CompanyDetail() {
           )}
         </div>
       </div>
+      
+      {/* Investors */}
+      {acf.investors?.length > 0 && (
+        <div className="card p-6">
+          <h2 className="font-semibold mb-4 flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2" />
+            Investors
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {acf.investors.map((investor) => {
+              const isPerson = investor.post_type === 'person';
+              const name = isPerson 
+                ? investor.post_title 
+                : getCompanyName(investor);
+              const linkPath = isPerson 
+                ? `/people/${investor.ID}` 
+                : `/companies/${investor.ID}`;
+              const thumbnail = investor.thumbnail || investor._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+              
+              return (
+                <Link
+                  key={`${investor.post_type}-${investor.ID}`}
+                  to={linkPath}
+                  className="flex items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200"
+                >
+                  {thumbnail ? (
+                    <img 
+                      src={thumbnail}
+                      alt={name}
+                      loading="lazy"
+                      className={`w-10 h-10 object-cover ${isPerson ? 'rounded-full' : 'rounded'}`}
+                    />
+                  ) : (
+                    <div className={`w-10 h-10 bg-gray-100 flex items-center justify-center ${isPerson ? 'rounded-full' : 'rounded'}`}>
+                      {isPerson ? (
+                        <User className="w-5 h-5 text-gray-400" />
+                      ) : (
+                        <Building2 className="w-5 h-5 text-gray-400" />
+                      )}
+                    </div>
+                  )}
+                  <div className="ml-3">
+                    <p className="text-sm font-medium">{name}</p>
+                    <p className="text-xs text-gray-500">
+                      {isPerson ? 'Person' : 'Organization'}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
       
       {/* Contact info */}
       {acf.contact_info?.length > 0 && (
