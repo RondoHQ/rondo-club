@@ -529,33 +529,6 @@ class PRM_Google_Contacts_Import {
             }
         }
 
-        // Import addresses (Google uses Address 1 - Formatted, Address 2 - Formatted, etc.)
-        // Type/Label field can be "Address X - Type" (old) or "Address X - Label" (new)
-        for ($i = 1; $i <= 3; $i++) {
-            $address = trim($contact["Address {$i} - Formatted"] ?? '');
-            $type = $this->get_field($contact, ["Address {$i} - Type", "Address {$i} - Label"]);
-            
-            // If no formatted address, try to build from components
-            if (empty($address)) {
-                $parts = array_filter([
-                    $contact["Address {$i} - Street"] ?? '',
-                    $contact["Address {$i} - City"] ?? '',
-                    $contact["Address {$i} - Region"] ?? '',
-                    $contact["Address {$i} - Postal Code"] ?? '',
-                    $contact["Address {$i} - Country"] ?? '',
-                ]);
-                $address = implode(', ', $parts);
-            }
-            
-            if (!empty($address)) {
-                $contact_info[] = [
-                    'contact_type'  => 'address',
-                    'contact_label' => $this->format_label($type),
-                    'contact_value' => $address,
-                ];
-            }
-        }
-
         // Import websites (Google uses Website 1 - Value, etc.)
         // Type/Label field can be "Website X - Type" (old) or "Website X - Label" (new)
         for ($i = 1; $i <= 3; $i++) {
@@ -573,6 +546,34 @@ class PRM_Google_Contacts_Import {
 
         if (!empty($contact_info)) {
             update_field('contact_info', $contact_info, $post_id);
+        }
+
+        // Import addresses to the dedicated addresses field
+        // Google uses Address X - Street, City, Region (state), Postal Code, Country
+        $addresses = [];
+        for ($i = 1; $i <= 3; $i++) {
+            $street = trim($contact["Address {$i} - Street"] ?? '');
+            $city = trim($contact["Address {$i} - City"] ?? '');
+            $state = trim($contact["Address {$i} - Region"] ?? '');
+            $postal_code = trim($contact["Address {$i} - Postal Code"] ?? '');
+            $country = trim($contact["Address {$i} - Country"] ?? '');
+            $type = $this->get_field($contact, ["Address {$i} - Type", "Address {$i} - Label"]);
+            
+            // Only add if there's at least some address data
+            if (!empty($street) || !empty($city) || !empty($state) || !empty($postal_code) || !empty($country)) {
+                $addresses[] = [
+                    'address_label' => $this->format_label($type),
+                    'street'        => $street,
+                    'postal_code'   => $postal_code,
+                    'city'          => $city,
+                    'state'         => $state,
+                    'country'       => $country,
+                ];
+            }
+        }
+
+        if (!empty($addresses)) {
+            update_field('addresses', $addresses, $post_id);
         }
     }
 

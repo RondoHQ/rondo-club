@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.24.0] - 2026-01-07
+
+### Added
+- Structured address fields: addresses now have separate fields for Street, Postal code, City, State/Province, and Country
+- Dedicated Addresses section on person detail page with multi-line display format
+- AddressForm component for adding and editing addresses with structured fields
+- WP-CLI migration command `wp prm migrate addresses` to migrate existing single-line addresses to new format
+- vCard import/export now uses structured address format (ADR property with all components)
+- Google Contacts import now maps address components to structured fields
+- Monica import now uses structured address fields
+
+### Changed
+- Removed "Address" option from contact detail types (addresses now have their own dedicated section)
+- Addresses display format: Street / Postal code City / State, Country (each on own line)
+
 ## [1.23.0] - 2026-01-07
 
 ### Added

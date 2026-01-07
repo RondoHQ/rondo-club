@@ -127,7 +127,6 @@
                         "email": "Email",
                         "phone": "Phone",
                         "mobile": "Mobile",
-                        "address": "Address",
                         "website": "Website",
                         "calendar": "Calendar link",
                         "linkedin": "LinkedIn",
@@ -157,6 +156,71 @@
                     "type": "text",
                     "wrapper": {
                         "width": "50"
+                    }
+                }
+            ]
+        },
+        {
+            "key": "field_addresses",
+            "label": "Addresses",
+            "name": "addresses",
+            "type": "repeater",
+            "layout": "block",
+            "button_label": "Add Address",
+            "sub_fields": [
+                {
+                    "key": "field_address_label",
+                    "label": "Label",
+                    "name": "address_label",
+                    "type": "text",
+                    "placeholder": "e.g., Home, Work",
+                    "wrapper": {
+                        "width": "100"
+                    }
+                },
+                {
+                    "key": "field_address_street",
+                    "label": "Street",
+                    "name": "street",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "100"
+                    }
+                },
+                {
+                    "key": "field_address_postal_code",
+                    "label": "Postal code",
+                    "name": "postal_code",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "25"
+                    }
+                },
+                {
+                    "key": "field_address_city",
+                    "label": "City",
+                    "name": "city",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "25"
+                    }
+                },
+                {
+                    "key": "field_address_state",
+                    "label": "State/Province",
+                    "name": "state",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "25"
+                    }
+                },
+                {
+                    "key": "field_address_country",
+                    "label": "Country",
+                    "name": "country",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "25"
                     }
                 }
             ]

@@ -337,18 +337,22 @@ class PRM_VCard_Import {
                 case 'ADR':
                     // Address: PO Box;Extended;Street;City;State;Postal;Country
                     $parts = explode(';', $value);
-                    $address_parts = array_filter([
-                        $this->decode_vcard_value($parts[2] ?? ''), // Street
-                        $this->decode_vcard_value($parts[3] ?? ''), // City
-                        $this->decode_vcard_value($parts[4] ?? ''), // State
-                        $this->decode_vcard_value($parts[5] ?? ''), // Postal
-                        $this->decode_vcard_value($parts[6] ?? ''), // Country
-                    ]);
-                    if (!empty($address_parts)) {
+                    $street = $this->decode_vcard_value($parts[2] ?? '');
+                    $city = $this->decode_vcard_value($parts[3] ?? '');
+                    $state = $this->decode_vcard_value($parts[4] ?? '');
+                    $postal_code = $this->decode_vcard_value($parts[5] ?? '');
+                    $country = $this->decode_vcard_value($parts[6] ?? '');
+                    
+                    // Only add if there's at least some address data
+                    if (!empty($street) || !empty($city) || !empty($state) || !empty($postal_code) || !empty($country)) {
                         $type = $this->get_type_param($params);
                         $vcard['addresses'][] = [
-                            'value' => implode(', ', $address_parts),
-                            'type'  => $type,
+                            'street'      => $street,
+                            'city'        => $city,
+                            'state'       => $state,
+                            'postal_code' => $postal_code,
+                            'country'     => $country,
+                            'type'        => $type,
                         ];
                     }
                     break;
@@ -697,19 +701,6 @@ class PRM_VCard_Import {
             }
         }
 
-        // Addresses
-        foreach ($vcard['addresses'] as $address) {
-            $key = 'address|' . strtolower(trim($address['value']));
-            if (!isset($existing_keys[$key])) {
-                $contact_info[] = [
-                    'contact_type'  => 'address',
-                    'contact_label' => ucfirst($address['type']),
-                    'contact_value' => $address['value'],
-                ];
-                $existing_keys[$key] = true;
-            }
-        }
-
         // URLs
         foreach ($vcard['urls'] as $url) {
             $key = strtolower(trim($url['type'] . '|' . $url['value']));
@@ -725,6 +716,42 @@ class PRM_VCard_Import {
 
         if (!empty($contact_info)) {
             update_field('contact_info', $contact_info, $post_id);
+        }
+
+        // Import addresses to the dedicated addresses field
+        if (!empty($vcard['addresses'])) {
+            $existing_addresses = [];
+            if ($is_update) {
+                $existing_addresses = get_field('addresses', $post_id) ?: [];
+            }
+
+            // Create array to track existing entries (to avoid duplicates)
+            $existing_address_keys = [];
+            foreach ($existing_addresses as $existing) {
+                $key = strtolower(trim($existing['street'] . '|' . $existing['city'] . '|' . $existing['postal_code']));
+                $existing_address_keys[$key] = true;
+            }
+
+            $addresses = $existing_addresses;
+
+            foreach ($vcard['addresses'] as $address) {
+                $key = strtolower(trim($address['street'] . '|' . $address['city'] . '|' . $address['postal_code']));
+                if (!isset($existing_address_keys[$key])) {
+                    $addresses[] = [
+                        'address_label' => ucfirst($address['type'] ?: ''),
+                        'street'        => $address['street'],
+                        'postal_code'   => $address['postal_code'],
+                        'city'          => $address['city'],
+                        'state'         => $address['state'],
+                        'country'       => $address['country'],
+                    ];
+                    $existing_address_keys[$key] = true;
+                }
+            }
+
+            if (!empty($addresses)) {
+                update_field('addresses', $addresses, $post_id);
+            }
         }
     }
 

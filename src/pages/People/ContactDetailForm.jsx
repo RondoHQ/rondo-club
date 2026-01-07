@@ -12,7 +12,6 @@ const CONTACT_TYPES = [
   { value: 'email', label: 'Email' },
   { value: 'phone', label: 'Phone' },
   { value: 'mobile', label: 'Mobile' },
-  { value: 'address', label: 'Address' },
   { value: 'website', label: 'Website' },
   { value: 'calendar', label: 'Calendar link' },
   { value: 'linkedin', label: 'LinkedIn' },

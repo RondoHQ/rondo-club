@@ -263,8 +263,128 @@ if (defined('WP_CLI') && WP_CLI) {
     }
     
     /**
+     * Migration WP-CLI Commands
+     */
+    class PRM_Migration_CLI_Command {
+        
+        /**
+         * Migrate addresses from contact_info to dedicated addresses field
+         * 
+         * This command moves all address-type entries from the contact_info repeater
+         * to the new structured addresses field.
+         * 
+         * ## OPTIONS
+         * 
+         * [--dry-run]
+         * : Preview changes without making them
+         * 
+         * ## EXAMPLES
+         * 
+         *     wp prm migrate addresses
+         *     wp prm migrate addresses --dry-run
+         * 
+         * @when after_wp_load
+         */
+        public function addresses($args, $assoc_args) {
+            $dry_run = isset($assoc_args['dry-run']);
+            
+            if ($dry_run) {
+                WP_CLI::log('DRY RUN MODE - No changes will be made');
+            }
+            
+            WP_CLI::log('Migrating addresses from contact_info to addresses field...');
+            
+            // Get all people
+            global $wpdb;
+            $person_ids = $wpdb->get_col(
+                "SELECT ID FROM {$wpdb->posts} 
+                 WHERE post_type = 'person' 
+                 AND post_status = 'publish'"
+            );
+            
+            if (empty($person_ids)) {
+                WP_CLI::warning('No people found in the system.');
+                return;
+            }
+            
+            WP_CLI::log(sprintf('Found %d person(s) to check.', count($person_ids)));
+            
+            $migrated_count = 0;
+            $addresses_migrated = 0;
+            $people_with_addresses = 0;
+            
+            foreach ($person_ids as $post_id) {
+                $contact_info = get_field('contact_info', $post_id) ?: [];
+                $existing_addresses = get_field('addresses', $post_id) ?: [];
+                
+                // Find address entries in contact_info
+                $address_entries = array_filter($contact_info, function($item) {
+                    return isset($item['contact_type']) && $item['contact_type'] === 'address';
+                });
+                
+                if (empty($address_entries)) {
+                    continue;
+                }
+                
+                $people_with_addresses++;
+                $person_title = get_the_title($post_id);
+                WP_CLI::log(sprintf('Processing: %s (ID: %d) - Found %d address(es)', 
+                    $person_title, $post_id, count($address_entries)));
+                
+                // Build new addresses array from address entries
+                $new_addresses = $existing_addresses;
+                $updated_contact_info = [];
+                
+                foreach ($contact_info as $item) {
+                    if (isset($item['contact_type']) && $item['contact_type'] === 'address') {
+                        // Migrate to addresses field
+                        $new_addresses[] = [
+                            'address_label' => $item['contact_label'] ?? '',
+                            'street'        => $item['contact_value'] ?? '', // Put full address in street
+                            'postal_code'   => '',
+                            'city'          => '',
+                            'state'         => '',
+                            'country'       => '',
+                        ];
+                        $addresses_migrated++;
+                        WP_CLI::log(sprintf('  → Moving: "%s" to addresses field', $item['contact_value'] ?? ''));
+                    } else {
+                        // Keep non-address entries
+                        $updated_contact_info[] = $item;
+                    }
+                }
+                
+                if (!$dry_run) {
+                    // Save updated addresses
+                    update_field('addresses', $new_addresses, $post_id);
+                    
+                    // Save updated contact_info (without addresses)
+                    update_field('contact_info', $updated_contact_info, $post_id);
+                    
+                    $migrated_count++;
+                }
+            }
+            
+            if ($dry_run) {
+                WP_CLI::success(sprintf(
+                    'DRY RUN: Would migrate %d address(es) from %d person(s)',
+                    $addresses_migrated,
+                    $people_with_addresses
+                ));
+            } else {
+                WP_CLI::success(sprintf(
+                    'Migration complete: Migrated %d address(es) from %d person(s)',
+                    $addresses_migrated,
+                    $migrated_count
+                ));
+            }
+        }
+    }
+    
+    /**
      * Register WP-CLI commands
      */
     WP_CLI::add_command('prm reminders', 'PRM_Reminders_CLI_Command');
+    WP_CLI::add_command('prm migrate', 'PRM_Migration_CLI_Command');
 }
 

@@ -148,12 +148,6 @@ export function generateVCard(person, options = {}) {
           }
           break;
           
-        case 'address':
-          // ADR;TYPE=HOME:;;street;city;state;zip;country
-          // vCard addresses are complex, we'll use a simple format
-          lines.push(`ADR;TYPE=HOME:;;${value};;;;`);
-          break;
-          
         case 'website':
         case 'linkedin':
         case 'twitter':
@@ -168,6 +162,24 @@ export function generateVCard(person, options = {}) {
           const urlLabel = label ? `URL;TYPE=${urlType},${label.toUpperCase()}` : `URL;TYPE=${urlType}`;
           lines.push(`${urlLabel}:${escapeVCardValue(url)}`);
           break;
+      }
+    });
+  }
+  
+  // Addresses (structured format)
+  if (acf.addresses && Array.isArray(acf.addresses)) {
+    acf.addresses.forEach(address => {
+      // ADR;TYPE=HOME:POBox;Extended;Street;City;State;PostalCode;Country
+      const addrType = address.address_label ? `ADR;TYPE=${address.address_label.toUpperCase()}` : 'ADR;TYPE=HOME';
+      const street = escapeVCardValue(address.street || '');
+      const city = escapeVCardValue(address.city || '');
+      const state = escapeVCardValue(address.state || '');
+      const postalCode = escapeVCardValue(address.postal_code || '');
+      const country = escapeVCardValue(address.country || '');
+      
+      // Only add if there's at least some address data
+      if (street || city || state || postalCode || country) {
+        lines.push(`${addrType}:;;${street};${city};${state};${postalCode};${country}`);
       }
     });
   }
