@@ -46,6 +46,40 @@ export default function CompanyDetail() {
     },
   });
   
+  // Fetch investor details (investors is now array of IDs)
+  const investorIds = company?.acf?.investors || [];
+  const { data: investorDetails = [] } = useQuery({
+    queryKey: ['company-investors', id, investorIds],
+    queryFn: async () => {
+      if (!investorIds.length) return [];
+      
+      // Fetch all people and companies, then filter by IDs
+      const [peopleRes, companiesRes] = await Promise.all([
+        wpApi.getPeople({ per_page: 100, include: investorIds.join(','), _embed: true }),
+        wpApi.getCompanies({ per_page: 100, include: investorIds.join(','), _embed: true }),
+      ]);
+      
+      const people = (peopleRes.data || []).map(p => ({
+        id: p.id,
+        type: 'person',
+        name: decodeHtml(p.title?.rendered || ''),
+        thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+      }));
+      
+      const companies = (companiesRes.data || []).map(c => ({
+        id: c.id,
+        type: 'company',
+        name: getCompanyName(c),
+        thumbnail: c._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+      }));
+      
+      // Combine and sort by original order
+      const all = [...people, ...companies];
+      return investorIds.map(iid => all.find(i => i.id === iid)).filter(Boolean);
+    },
+    enabled: investorIds.length > 0,
+  });
+  
   const deleteCompany = useMutation({
     mutationFn: () => wpApi.deleteCompany(id, { force: true }),
     onSuccess: () => {
@@ -277,32 +311,29 @@ export default function CompanyDetail() {
       </div>
       
       {/* Investors */}
-      {acf.investors?.length > 0 && (
+      {investorDetails.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" />
             Investors
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {acf.investors.map((investor) => {
-              const isPerson = investor.post_type === 'person';
-              // ACF relationship returns post_title for all post types
-              const name = decodeHtml(investor.post_title || '');
+            {investorDetails.map((investor) => {
+              const isPerson = investor.type === 'person';
               const linkPath = isPerson 
-                ? `/people/${investor.ID}` 
-                : `/companies/${investor.ID}`;
-              const thumbnail = investor.thumbnail || investor._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+                ? `/people/${investor.id}` 
+                : `/companies/${investor.id}`;
               
               return (
                 <Link
-                  key={`${investor.post_type}-${investor.ID}`}
+                  key={`${investor.type}-${investor.id}`}
                   to={linkPath}
                   className="flex items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200"
                 >
-                  {thumbnail ? (
+                  {investor.thumbnail ? (
                     <img 
-                      src={thumbnail}
-                      alt={name}
+                      src={investor.thumbnail}
+                      alt={investor.name}
                       loading="lazy"
                       className={`w-10 h-10 object-cover ${isPerson ? 'rounded-full' : 'rounded'}`}
                     />
@@ -316,7 +347,7 @@ export default function CompanyDetail() {
                     </div>
                   )}
                   <div className="ml-3">
-                    <p className="text-sm font-medium">{name}</p>
+                    <p className="text-sm font-medium">{investor.name}</p>
                     <p className="text-xs text-gray-500">
                       {isPerson ? 'Person' : 'Organization'}
                     </p>
