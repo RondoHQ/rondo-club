@@ -169,7 +169,7 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
         
         // Today section
         if (!empty($digest_data['today']) || !empty($todos['today'])) {
-            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">📅 TODAY</h3>';
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">Today</h3>';
             
             // Dates
             foreach ($digest_data['today'] as $date) {
@@ -221,7 +221,7 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
         
         // Tomorrow section
         if (!empty($digest_data['tomorrow']) || !empty($todos['tomorrow'])) {
-            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">📅 TOMORROW</h3>';
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">Tomorrow</h3>';
             
             // Dates
             foreach ($digest_data['tomorrow'] as $date) {
@@ -271,7 +271,7 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
         
         // Rest of week section
         if (!empty($digest_data['rest_of_week']) || !empty($todos['rest_of_week'])) {
-            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">📅 THIS WEEK</h3>';
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">This week</h3>';
             
             // Dates
             foreach ($digest_data['rest_of_week'] as $date) {
