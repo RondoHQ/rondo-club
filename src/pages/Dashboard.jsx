@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square } from 'lucide-react';
 import { useDashboard, useTodos, useUpdateTodo } from '@/hooks/useDashboard';
+import { useCreateActivity } from '@/hooks/usePeople';
 import { format, formatDistanceToNow } from 'date-fns';
 import { APP_NAME } from '@/constants/app';
 import { isTodoOverdue } from '@/utils/timeline';
+import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
+import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 
 function StatCard({ title, value, icon: Icon, href }) {
   return (
@@ -215,16 +219,92 @@ export default function Dashboard() {
   const { data, isLoading, error } = useDashboard();
   const { data: todos } = useTodos(false); // Only incomplete todos
   const updateTodo = useUpdateTodo();
+  const createActivity = useCreateActivity();
+  
+  // State for complete todo flow
+  const [todoToComplete, setTodoToComplete] = useState(null);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [activityInitialData, setActivityInitialData] = useState(null);
   
   const handleToggleTodo = (todo) => {
+    // If completing a todo, show the complete modal
+    if (!todo.is_completed) {
+      setTodoToComplete(todo);
+      setShowCompleteModal(true);
+      return;
+    }
+    
+    // If uncompleting, just update directly
     updateTodo.mutate({
       todoId: todo.id,
       data: {
         content: todo.content,
         due_date: todo.due_date,
-        is_completed: !todo.is_completed,
+        is_completed: false,
       },
     });
+  };
+  
+  const handleJustComplete = () => {
+    if (!todoToComplete) return;
+    
+    updateTodo.mutate({
+      todoId: todoToComplete.id,
+      data: {
+        content: todoToComplete.content,
+        due_date: todoToComplete.due_date,
+        is_completed: true,
+      },
+    });
+    
+    setShowCompleteModal(false);
+    setTodoToComplete(null);
+  };
+  
+  const handleCompleteAsActivity = () => {
+    if (!todoToComplete) return;
+    
+    // Prepare initial data for activity modal
+    const today = new Date().toISOString().split('T')[0];
+    setActivityInitialData({
+      content: todoToComplete.content,
+      activity_date: today,
+      activity_type: 'note',
+      participants: [],
+    });
+    
+    setShowCompleteModal(false);
+    setShowActivityModal(true);
+  };
+  
+  const handleCreateActivity = async (data) => {
+    if (!todoToComplete) return;
+    
+    try {
+      // Create the activity
+      await createActivity.mutateAsync({ 
+        personId: todoToComplete.person_id, 
+        data 
+      });
+      
+      // Mark the todo as complete
+      await updateTodo.mutateAsync({
+        todoId: todoToComplete.id,
+        data: {
+          content: todoToComplete.content,
+          due_date: todoToComplete.due_date,
+          is_completed: true,
+        },
+      });
+      
+      setShowActivityModal(false);
+      setTodoToComplete(null);
+      setActivityInitialData(null);
+    } catch (error) {
+      console.error('Failed to create activity:', error);
+      alert('Failed to create activity. Please try again.');
+    }
   };
   
   if (isLoading) {
@@ -446,6 +526,32 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      
+      {/* Complete Todo Modal */}
+      <CompleteTodoModal
+        isOpen={showCompleteModal}
+        onClose={() => {
+          setShowCompleteModal(false);
+          setTodoToComplete(null);
+        }}
+        todo={todoToComplete}
+        onComplete={handleJustComplete}
+        onCompleteAsActivity={handleCompleteAsActivity}
+      />
+      
+      {/* Activity Modal (for converting todo to activity) */}
+      <QuickActivityModal
+        isOpen={showActivityModal}
+        onClose={() => {
+          setShowActivityModal(false);
+          setTodoToComplete(null);
+          setActivityInitialData(null);
+        }}
+        onSubmit={handleCreateActivity}
+        isLoading={createActivity.isPending}
+        personId={todoToComplete?.person_id}
+        initialData={activityInitialData}
+      />
     </div>
   );
 }
