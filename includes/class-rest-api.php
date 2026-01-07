@@ -71,6 +71,13 @@ class PRM_REST_API {
             'permission_callback' => [$this, 'check_admin_permission'],
         ]);
         
+        // Check cron status (admin only)
+        register_rest_route('prm/v1', '/reminders/cron-status', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_cron_status'],
+            'permission_callback' => [$this, 'check_admin_permission'],
+        ]);
+        
         // Get user notification channels
         register_rest_route('prm/v1', '/user/notification-channels', [
             'methods'             => WP_REST_Server::READABLE,
@@ -667,6 +674,22 @@ class PRM_REST_API {
         }
         
         return array_unique($user_ids);
+    }
+    
+    /**
+     * Get cron job status for reminders
+     */
+    public function get_cron_status($request) {
+        $next_scheduled = wp_next_scheduled('prm_daily_reminder_check');
+        
+        return rest_ensure_response([
+            'is_scheduled' => $next_scheduled !== false,
+            'next_run' => $next_scheduled ? date('Y-m-d H:i:s', $next_scheduled) : null,
+            'next_run_timestamp' => $next_scheduled,
+            'current_time' => date('Y-m-d H:i:s', time()),
+            'current_timestamp' => time(),
+            'time_until_next' => $next_scheduled ? human_time_diff(time(), $next_scheduled) : null,
+        ]);
     }
     
     /**

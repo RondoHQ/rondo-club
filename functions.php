@@ -165,6 +165,11 @@ function prm_init() {
 add_action('after_setup_theme', 'prm_init', 5);
 add_action('plugins_loaded', 'prm_init', 5);
 
+// Load WP-CLI commands if WP-CLI is available
+if (defined('WP_CLI') && WP_CLI) {
+    require_once PRM_PLUGIN_DIR . '/class-wp-cli.php';
+}
+
 /**
  * Theme setup
  */
