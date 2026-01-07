@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Save, Camera, ChevronDown, Building2, Search } from 'lucide-react';
+import { ArrowLeft, Save, Camera, ChevronDown, Building2, Search, X, User, TrendingUp } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -22,7 +22,7 @@ export default function CompanyForm() {
     enabled: isEditing,
   });
   
-  // Fetch all companies for parent selection
+  // Fetch all companies for parent selection and investors
   const { data: allCompanies = [], isLoading: isLoadingCompanies } = useQuery({
     queryKey: ['companies', 'all'],
     queryFn: async () => {
@@ -31,12 +31,25 @@ export default function CompanyForm() {
     },
   });
   
+  // Fetch all people for investors
+  const { data: allPeople = [], isLoading: isLoadingPeople } = useQuery({
+    queryKey: ['people', 'all'],
+    queryFn: async () => {
+      const response = await wpApi.getPeople({ per_page: 100, _embed: true });
+      return response.data;
+    },
+  });
+  
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isParentDropdownOpen, setIsParentDropdownOpen] = useState(false);
   const [parentSearchQuery, setParentSearchQuery] = useState('');
   const [selectedParentId, setSelectedParentId] = useState('');
+  const [isInvestorsDropdownOpen, setIsInvestorsDropdownOpen] = useState(false);
+  const [investorsSearchQuery, setInvestorsSearchQuery] = useState('');
+  const [selectedInvestors, setSelectedInvestors] = useState([]);
   const fileInputRef = useRef(null);
   const parentDropdownRef = useRef(null);
+  const investorsDropdownRef = useRef(null);
   
   // Filter companies for parent dropdown (exclude self and children)
   const availableParentCompanies = useMemo(() => {
@@ -67,6 +80,45 @@ export default function CompanyForm() {
     [allCompanies, selectedParentId]
   );
   
+  // Combined list of people and companies for investor selection (excluding self)
+  const availableInvestors = useMemo(() => {
+    const query = investorsSearchQuery.toLowerCase().trim();
+    
+    // Map people to a common format
+    const people = allPeople.map(p => ({
+      id: p.id,
+      type: 'person',
+      name: decodeHtml(p.title?.rendered || ''),
+      thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+    }));
+    
+    // Map companies to a common format (exclude self)
+    const companies = allCompanies
+      .filter(c => !isEditing || c.id !== parseInt(id))
+      .map(c => ({
+        id: c.id,
+        type: 'company',
+        name: getCompanyName(c),
+        thumbnail: c._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+      }));
+    
+    // Combine and filter by search query
+    let combined = [...people, ...companies];
+    
+    if (query) {
+      combined = combined.filter(item => 
+        item.name?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Filter out already selected investors
+    const selectedKeys = selectedInvestors.map(inv => `${inv.type}-${inv.id}`);
+    combined = combined.filter(item => !selectedKeys.includes(`${item.type}-${item.id}`));
+    
+    // Sort alphabetically
+    return combined.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }, [allPeople, allCompanies, investorsSearchQuery, selectedInvestors, id, isEditing]);
+  
   // Close parent dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -80,6 +132,20 @@ export default function CompanyForm() {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [isParentDropdownOpen]);
+  
+  // Close investors dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (investorsDropdownRef.current && !investorsDropdownRef.current.contains(event.target)) {
+        setIsInvestorsDropdownOpen(false);
+      }
+    };
+    
+    if (isInvestorsDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isInvestorsDropdownOpen]);
   
   const createCompany = useMutation({
     mutationFn: (data) => wpApi.createCompany(data),
@@ -155,6 +221,16 @@ export default function CompanyForm() {
       if (company.parent) {
         setSelectedParentId(String(company.parent));
       }
+      // Set investors if exist
+      if (company.acf?.investors?.length > 0) {
+        const investors = company.acf.investors.map(inv => ({
+          id: inv.ID,
+          type: inv.post_type,
+          name: inv.post_type === 'person' ? inv.post_title : getCompanyName(inv),
+          thumbnail: inv.thumbnail,
+        }));
+        setSelectedInvestors(investors);
+      }
     }
   }, [company, reset]);
   
@@ -166,6 +242,9 @@ export default function CompanyForm() {
   );
   
   const onSubmit = async (data) => {
+    // Format investors as array of post IDs for ACF relationship field
+    const investorIds = selectedInvestors.map(inv => inv.id);
+    
     const payload = {
       title: data.title,
       status: 'publish',
@@ -173,6 +252,7 @@ export default function CompanyForm() {
       acf: {
         website: data.website,
         industry: data.industry,
+        investors: investorIds,
       },
     };
     
@@ -408,6 +488,132 @@ export default function CompanyForm() {
             </div>
             <p className="text-xs text-gray-500 mt-1">
               Select if this organization is a subsidiary or division of another
+            </p>
+          </div>
+          
+          {/* Investors selection */}
+          <div>
+            <label className="label flex items-center">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Investors
+            </label>
+            
+            {/* Selected investors */}
+            {selectedInvestors.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {selectedInvestors.map((investor) => (
+                  <div
+                    key={`${investor.type}-${investor.id}`}
+                    className="flex items-center gap-1.5 bg-gray-100 rounded-full pl-1 pr-2 py-1"
+                  >
+                    {investor.thumbnail ? (
+                      <img
+                        src={investor.thumbnail}
+                        alt={investor.name}
+                        className={`w-5 h-5 object-cover ${investor.type === 'person' ? 'rounded-full' : 'rounded'}`}
+                      />
+                    ) : (
+                      <div className={`w-5 h-5 bg-gray-300 flex items-center justify-center ${investor.type === 'person' ? 'rounded-full' : 'rounded'}`}>
+                        {investor.type === 'person' ? (
+                          <User className="w-3 h-3 text-gray-500" />
+                        ) : (
+                          <Building2 className="w-3 h-3 text-gray-500" />
+                        )}
+                      </div>
+                    )}
+                    <span className="text-sm text-gray-700">{investor.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedInvestors(prev => 
+                        prev.filter(inv => !(inv.id === investor.id && inv.type === investor.type))
+                      )}
+                      className="ml-1 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="relative" ref={investorsDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsInvestorsDropdownOpen(!isInvestorsDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                disabled={isLoadingCompanies || isLoadingPeople}
+              >
+                <span className="text-gray-400">Add investor...</span>
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isInvestorsDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {isInvestorsDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                  {/* Search input */}
+                  <div className="p-2 border-b border-gray-100">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={investorsSearchQuery}
+                        onChange={(e) => setInvestorsSearchQuery(e.target.value)}
+                        placeholder="Search people and organizations..."
+                        className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="overflow-y-auto max-h-48">
+                    {(isLoadingCompanies || isLoadingPeople) ? (
+                      <div className="p-3 text-center text-gray-500 text-sm">
+                        Loading...
+                      </div>
+                    ) : availableInvestors.length > 0 ? (
+                      availableInvestors.map((item) => (
+                        <button
+                          key={`${item.type}-${item.id}`}
+                          type="button"
+                          onClick={() => {
+                            setSelectedInvestors(prev => [...prev, item]);
+                            setInvestorsSearchQuery('');
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors"
+                        >
+                          {item.thumbnail ? (
+                            <img
+                              src={item.thumbnail}
+                              alt={item.name}
+                              className={`w-6 h-6 object-cover ${item.type === 'person' ? 'rounded-full' : 'rounded'}`}
+                            />
+                          ) : (
+                            <div className={`w-6 h-6 bg-gray-200 flex items-center justify-center ${item.type === 'person' ? 'rounded-full' : 'rounded'}`}>
+                              {item.type === 'person' ? (
+                                <User className="w-4 h-4 text-gray-500" />
+                              ) : (
+                                <Building2 className="w-4 h-4 text-gray-500" />
+                              )}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm text-gray-900 truncate block">{item.name}</span>
+                            <span className="text-xs text-gray-500">
+                              {item.type === 'person' ? 'Person' : 'Organization'}
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-3 text-center text-gray-500 text-sm">
+                        {investorsSearchQuery ? 'No results found' : 'No people or organizations available'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Select people or organizations that have invested in this company
             </p>
           </div>
           
