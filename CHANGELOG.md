@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] - 2026-01-07
+
+### Added
+- Collapsible search bar in header - opens on click for cleaner UI
+- Quick Add menu (+) in header for creating new Person, Organization, Todo, or Date
+- Global Todo creation with person dropdown - accessible from header and Todos page
+- "Add todo" button on Todos list page
+
+### Changed
+- Search results dropdown now positioned to the right for better UX
+
 ## [1.15.1] - 2026-01-07
 
 ### Fixed

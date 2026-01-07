@@ -6,6 +6,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from 'date-fns';
 import { isTodoOverdue } from '@/utils/timeline';
 import TodoModal from '@/components/Timeline/TodoModal';
+import GlobalTodoModal from '@/components/Timeline/GlobalTodoModal';
 
 export default function TodosList() {
   useDocumentTitle('Todos');
@@ -13,6 +14,7 @@ export default function TodosList() {
   const [showCompleted, setShowCompleted] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   const [showTodoModal, setShowTodoModal] = useState(false);
+  const [showGlobalTodoModal, setShowGlobalTodoModal] = useState(false);
   
   const { data: todos, isLoading } = useTodos(showCompleted);
   const updateTodo = useUpdateTodo();
@@ -73,6 +75,13 @@ export default function TodosList() {
           >
             <Filter className="w-4 h-4" />
             {showCompleted ? 'Hide completed' : 'Show completed'}
+          </button>
+          <button
+            onClick={() => setShowGlobalTodoModal(true)}
+            className="btn-primary text-sm flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add todo
           </button>
         </div>
       </div>
@@ -147,6 +156,12 @@ export default function TodosList() {
         onSubmit={handleUpdateTodo}
         isLoading={updateTodo.isPending}
         todo={editingTodo}
+      />
+      
+      {/* Global Todo Modal (for creating new todos) */}
+      <GlobalTodoModal
+        isOpen={showGlobalTodoModal}
+        onClose={() => setShowGlobalTodoModal(false)}
       />
     </div>
   );
