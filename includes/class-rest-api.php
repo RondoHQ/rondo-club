@@ -78,6 +78,13 @@ class PRM_REST_API {
             'permission_callback' => [$this, 'check_admin_permission'],
         ]);
         
+        // Reschedule all user reminder cron jobs (admin only)
+        register_rest_route('prm/v1', '/reminders/reschedule-cron', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'reschedule_all_cron_jobs'],
+            'permission_callback' => [$this, 'check_admin_permission'],
+        ]);
+        
         // Get user notification channels
         register_rest_route('prm/v1', '/user/notification-channels', [
             'methods'             => WP_REST_Server::READABLE,
@@ -694,15 +701,54 @@ class PRM_REST_API {
      * Get cron job status for reminders
      */
     public function get_cron_status($request) {
-        $next_scheduled = wp_next_scheduled('prm_daily_reminder_check');
+        $reminders = new PRM_Reminders();
+        $users_to_notify = $reminders->get_all_users_to_notify();
+        
+        // Count users with scheduled cron jobs
+        $scheduled_users = [];
+        foreach ($users_to_notify as $user_id) {
+            $next_run = wp_next_scheduled('prm_user_reminder', [$user_id]);
+            if ($next_run !== false) {
+                $user = get_userdata($user_id);
+                $scheduled_users[] = [
+                    'user_id' => $user_id,
+                    'display_name' => $user ? $user->display_name : "User $user_id",
+                    'next_run' => date('Y-m-d H:i:s', $next_run),
+                    'next_run_timestamp' => $next_run,
+                ];
+            }
+        }
+        
+        // Check legacy cron (deprecated)
+        $legacy_scheduled = wp_next_scheduled('prm_daily_reminder_check');
         
         return rest_ensure_response([
-            'is_scheduled' => $next_scheduled !== false,
-            'next_run' => $next_scheduled ? date('Y-m-d H:i:s', $next_scheduled) : null,
-            'next_run_timestamp' => $next_scheduled,
+            'total_users' => count($users_to_notify),
+            'scheduled_users' => count($scheduled_users),
+            'users' => $scheduled_users,
             'current_time' => date('Y-m-d H:i:s', time()),
             'current_timestamp' => time(),
-            'time_until_next' => $next_scheduled ? human_time_diff(time(), $next_scheduled) : null,
+            'legacy_cron_scheduled' => $legacy_scheduled !== false,
+            'legacy_next_run' => $legacy_scheduled ? date('Y-m-d H:i:s', $legacy_scheduled) : null,
+        ]);
+    }
+    
+    /**
+     * Reschedule all user reminder cron jobs (admin only)
+     */
+    public function reschedule_all_cron_jobs($request) {
+        $reminders = new PRM_Reminders();
+        
+        // Reschedule all user cron jobs
+        $scheduled_count = $reminders->schedule_all_user_reminders();
+        
+        return rest_ensure_response([
+            'success' => true,
+            'message' => sprintf(
+                __('Successfully rescheduled reminder cron jobs for %d user(s).', 'personal-crm'),
+                $scheduled_count
+            ),
+            'users_scheduled' => $scheduled_count,
         ]);
     }
     
@@ -854,10 +900,23 @@ class PRM_REST_API {
         
         update_user_meta($user_id, 'caelis_notification_time', $time);
         
+        // Reschedule user's reminder cron job at the new time
+        $reminders = new PRM_Reminders();
+        $schedule_result = $reminders->schedule_user_reminder($user_id);
+        
+        if (is_wp_error($schedule_result)) {
+            return rest_ensure_response([
+                'success' => true,
+                'notification_time' => $time,
+                'message' => __('Notification time updated, but failed to reschedule cron job.', 'personal-crm'),
+                'cron_error' => $schedule_result->get_error_message(),
+            ]);
+        }
+        
         return rest_ensure_response([
             'success' => true,
             'notification_time' => $time,
-            'message' => __('Notification time updated successfully.', 'personal-crm'),
+            'message' => __('Notification time updated and cron job rescheduled successfully.', 'personal-crm'),
         ]);
     }
     

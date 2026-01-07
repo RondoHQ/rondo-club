@@ -412,10 +412,9 @@ function prm_theme_activation() {
     // Flush rewrite rules
     flush_rewrite_rules();
     
-    // Schedule reminder cron job
-    if (!wp_next_scheduled('prm_daily_reminder_check')) {
-        wp_schedule_event(time(), 'daily', 'prm_daily_reminder_check');
-    }
+    // Schedule per-user reminder cron jobs
+    $reminders = new PRM_Reminders();
+    $reminders->schedule_all_user_reminders();
     
     // Also handle theme-specific rewrite rules
     prm_theme_rewrite_rules();
@@ -426,7 +425,10 @@ add_action('after_switch_theme', 'prm_theme_activation');
  * Theme deactivation - cleanup CRM functionality
  */
 function prm_theme_deactivation() {
-    // Clear scheduled hooks
+    // Clear all per-user reminder cron jobs
+    wp_clear_scheduled_hook('prm_user_reminder');
+    
+    // Clear legacy scheduled hook (for backward compatibility)
     wp_clear_scheduled_hook('prm_daily_reminder_check');
     
     // Remove custom user role (must call directly since switch_theme hook already fired)
@@ -437,6 +439,15 @@ function prm_theme_deactivation() {
     flush_rewrite_rules();
 }
 add_action('switch_theme', 'prm_theme_deactivation');
+
+/**
+ * Unschedule user reminder cron when user is deleted
+ */
+function prm_user_deleted($user_id) {
+    $reminders = new PRM_Reminders();
+    $reminders->unschedule_user_reminder($user_id);
+}
+add_action('delete_user', 'prm_user_deleted');
 
 /**
  * Add type="module" to script tags

@@ -108,6 +108,7 @@ export const prmApi = {
   getReminders: (daysAhead = 30) => 
     api.get('/prm/v1/reminders', { params: { days_ahead: daysAhead } }),
   triggerReminders: () => api.post('/prm/v1/reminders/trigger'),
+  rescheduleCronJobs: () => api.post('/prm/v1/reminders/reschedule-cron'),
   
   // Notification channels
   getNotificationChannels: () => api.get('/prm/v1/user/notification-channels'),

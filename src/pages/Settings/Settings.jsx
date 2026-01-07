@@ -37,6 +37,8 @@ export default function Settings() {
   // Manual trigger state (admin only)
   const [triggeringReminders, setTriggeringReminders] = useState(false);
   const [reminderMessage, setReminderMessage] = useState('');
+  const [reschedulingCron, setReschedulingCron] = useState(false);
+  const [cronMessage, setCronMessage] = useState('');
   
   // Fetch iCal URL on mount
   useEffect(() => {
@@ -305,6 +307,25 @@ export default function Settings() {
       setReminderMessage(error.response?.data?.message || 'Failed to trigger reminders. Please check server logs.');
     } finally {
       setTriggeringReminders(false);
+    }
+  };
+  
+  const handleRescheduleCron = async () => {
+    if (!confirm('This will reschedule all user reminder cron jobs based on their notification time preferences. Continue?')) {
+      return;
+    }
+    
+    setReschedulingCron(true);
+    setCronMessage('');
+    
+    try {
+      const response = await prmApi.rescheduleCronJobs();
+      setCronMessage(response.data.message || 'Cron jobs rescheduled successfully.');
+    } catch (error) {
+      console.error('Failed to reschedule cron jobs:', error);
+      setCronMessage(error.response?.data?.message || 'Failed to reschedule cron jobs. Please check server logs.');
+    } finally {
+      setReschedulingCron(false);
     }
   };
 
@@ -665,6 +686,19 @@ export default function Settings() {
               </p>
               {reminderMessage && (
                 <p className="text-sm text-green-600 mt-1">{reminderMessage}</p>
+              )}
+            </button>
+            <button
+              onClick={handleRescheduleCron}
+              disabled={reschedulingCron}
+              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <p className="font-medium">Reschedule cron jobs</p>
+              <p className="text-sm text-gray-500">
+                {reschedulingCron ? 'Rescheduling...' : 'Reschedule all user reminder cron jobs'}
+              </p>
+              {cronMessage && (
+                <p className="text-sm text-green-600 mt-1">{cronMessage}</p>
               )}
             </button>
           </div>
