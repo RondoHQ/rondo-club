@@ -273,7 +273,8 @@ class PRM_Comment_Types {
             'comment_content' => $content,
         ]);
         
-        if (!$result) {
+        // wp_update_comment returns false on failure, 0 if no changes, 1 if updated
+        if ($result === false || is_wp_error($result)) {
             return new WP_Error('update_failed', __('Failed to update note.', 'personal-crm'), ['status' => 500]);
         }
         
@@ -461,7 +462,8 @@ class PRM_Comment_Types {
             'comment_content' => $content,
         ]);
         
-        if (!$result) {
+        // wp_update_comment returns false on failure, 0 if no changes, 1 if updated
+        if ($result === false || is_wp_error($result)) {
             return new WP_Error('update_failed', __('Failed to update todo.', 'personal-crm'), ['status' => 500]);
         }
         
