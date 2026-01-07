@@ -407,7 +407,13 @@ class PRM_VCard_Import {
             foreach ($param_parts as $param) {
                 if (strpos($param, '=') !== false) {
                     [$key, $val] = explode('=', $param, 2);
-                    $params[strtoupper($key)] = $val;
+                    $key = strtoupper($key);
+                    // Append multiple TYPE values with comma (e.g., type=CELL;type=VOICE)
+                    if ($key === 'TYPE' && isset($params['TYPE'])) {
+                        $params['TYPE'] .= ',' . $val;
+                    } else {
+                        $params[$key] = $val;
+                    }
                 } else {
                     // vCard 2.1 style: type without key
                     $params['TYPE'] = ($params['TYPE'] ?? '') . ',' . $param;
@@ -424,16 +430,36 @@ class PRM_VCard_Import {
 
     /**
      * Get TYPE parameter from params array
+     * Prioritizes meaningful types (like CELL) over generic ones (like VOICE, pref)
      */
     private function get_type_param(array $params): string {
         $type = $params['TYPE'] ?? '';
         // Remove surrounding quotes if present
         $type = trim($type, '"\'');
-        // Take first type if multiple
+        
+        // If multiple types, find the most meaningful one
         if (strpos($type, ',') !== false) {
             $types = array_map('trim', explode(',', $type));
-            $type = $types[0];
+            $types = array_map('strtolower', $types);
+            
+            // Priority types for phone numbers
+            $priority_types = ['cell', 'mobile', 'iphone', 'home', 'work', 'fax'];
+            foreach ($priority_types as $priority) {
+                if (in_array($priority, $types)) {
+                    return $priority;
+                }
+            }
+            
+            // Filter out generic types that don't indicate the actual type
+            $generic_types = ['voice', 'pref', 'text', 'msg'];
+            $meaningful_types = array_filter($types, function($t) use ($generic_types) {
+                return !in_array($t, $generic_types) && !empty($t);
+            });
+            
+            // Return first meaningful type, or first type if all are generic
+            return !empty($meaningful_types) ? reset($meaningful_types) : ($types[0] ?? '');
         }
+        
         return strtolower($type);
     }
 
