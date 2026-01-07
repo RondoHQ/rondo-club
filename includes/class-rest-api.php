@@ -2243,6 +2243,15 @@ class PRM_REST_API {
         $reminders = new PRM_Reminders();
         $digest_data = $reminders->get_weekly_digest($wp_user_id);
         
+        // Debug: Log what we found
+        error_log(sprintf(
+            'Slack command for user %d: Found %d today, %d tomorrow, %d rest_of_week',
+            $wp_user_id,
+            count($digest_data['today'] ?? []),
+            count($digest_data['tomorrow'] ?? []),
+            count($digest_data['rest_of_week'] ?? [])
+        ));
+        
         if (empty($digest_data['today']) && empty($digest_data['tomorrow']) && empty($digest_data['rest_of_week'])) {
             return rest_ensure_response([
                 'response_type' => 'ephemeral',
