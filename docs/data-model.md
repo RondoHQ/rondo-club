@@ -30,6 +30,7 @@ Represents individual contacts in the CRM.
 | How We Met | `how_we_met` | textarea | Story of how you met |
 | When We Met | `met_date` | date_picker | Date you first met (Y-m-d) |
 | Contact Info | `contact_info` | repeater | Contact methods (see below) |
+| Addresses | `addresses` | repeater | Physical addresses (see below) |
 | Work History | `work_history` | repeater | Employment history (see below) |
 | Relationships | `relationships` | repeater | Connections to other people (see below) |
 
@@ -37,9 +38,20 @@ Represents individual contacts in the CRM.
 
 | Field | Key | Type | Options |
 |-------|-----|------|---------|
-| Type | `contact_type` | select | email, phone, mobile, address, website, calendar, linkedin, twitter, instagram, facebook, other |
+| Type | `contact_type` | select | email, phone, mobile, website, calendar, linkedin, twitter, instagram, facebook, other |
 | Label | `contact_label` | text | e.g., "Work", "Personal" |
 | Value | `contact_value` | text | The actual contact value |
+
+**Addresses Sub-fields:**
+
+| Field | Key | Type | Description |
+|-------|-----|------|-------------|
+| Label | `address_label` | text | e.g., "Home", "Work" |
+| Street | `street` | text | Street address |
+| Postal Code | `postal_code` | text | ZIP or postal code |
+| City | `city` | text | City name |
+| State/Province | `state` | text | State or province |
+| Country | `country` | text | Country name |
 
 **Work History Sub-fields:**
 

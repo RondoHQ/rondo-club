@@ -211,6 +211,27 @@ export default function PersonDetail() {
     });
   };
 
+  // Handle deleting an address
+  const handleDeleteAddress = async (index) => {
+    if (!window.confirm('Are you sure you want to delete this address?')) {
+      return;
+    }
+    
+    const updatedAddresses = [...(person.acf?.addresses || [])];
+    updatedAddresses.splice(index, 1);
+    
+    const acfData = sanitizePersonAcf(person.acf, {
+      addresses: updatedAddresses,
+    });
+    
+    await updatePerson.mutateAsync({
+      id,
+      data: {
+        acf: acfData,
+      },
+    });
+  };
+
   // Handle deleting a relationship
   const handleDeleteRelationship = async (index) => {
     if (!window.confirm('Are you sure you want to delete this relationship?')) {
@@ -1090,9 +1111,8 @@ export default function PersonDetail() {
                     'email': 1,
                     'phone': 2,
                     'mobile': 2, // Phone numbers grouped together
-                    'address': 3,
-                    'calendar': 4,
-                    'other': 5,
+                    'calendar': 3,
+                    'other': 4,
                   };
                   
                   // Filter and sort contact information
@@ -1113,13 +1133,11 @@ export default function PersonDetail() {
                         const originalIndex = acf.contact_info.indexOf(contact);
                         const Icon = contact.contact_type === 'email' ? Mail :
                                      contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
-                                     contact.contact_type === 'address' ? MapPin :
                                      contact.contact_type === 'calendar' ? Calendar : Globe;
 
                         const isEmail = contact.contact_type === 'email';
                         const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
                         const isMobile = contact.contact_type === 'mobile';
-                        const isAddress = contact.contact_type === 'address';
                         const isCalendar = contact.contact_type === 'calendar';
                         
                         let linkHref = null;
@@ -1129,10 +1147,6 @@ export default function PersonDetail() {
                           linkHref = `mailto:${contact.contact_value}`;
                         } else if (isPhone) {
                           linkHref = `tel:${formatPhoneForTel(contact.contact_value)}`;
-                        } else if (isAddress) {
-                          const encodedAddress = encodeURIComponent(contact.contact_value);
-                          linkHref = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
-                          linkTarget = '_blank';
                         } else if (isCalendar) {
                           linkHref = contact.contact_value;
                           linkTarget = '_blank';
@@ -1194,6 +1208,88 @@ export default function PersonDetail() {
                 No contact information yet.
               </p>
             )}
+            </div>
+          )}
+
+          {/* Addresses - only show for living people */}
+          {!isDeceased && (
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold">Addresses</h2>
+                <Link
+                  to={`/people/${id}/address/new`}
+                  className="btn-secondary text-sm"
+                >
+                  <Plus className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Add address</span>
+                </Link>
+              </div>
+              {acf.addresses?.length > 0 ? (
+                <div className="space-y-4">
+                  {acf.addresses.map((address, index) => {
+                    // Format address for display
+                    const addressLines = [];
+                    if (address.street) addressLines.push(address.street);
+                    const cityLine = [address.postal_code, address.city].filter(Boolean).join(' ');
+                    if (cityLine) addressLines.push(cityLine);
+                    const stateLine = [address.state, address.country].filter(Boolean).join(', ');
+                    if (stateLine) addressLines.push(stateLine);
+                    
+                    // Format address for Google Maps link
+                    const fullAddress = [
+                      address.street,
+                      address.postal_code,
+                      address.city,
+                      address.state,
+                      address.country
+                    ].filter(Boolean).join(', ');
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+
+                    return (
+                      <div key={index} className="group">
+                        <div className="flex items-start rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
+                          <MapPin className="w-4 h-4 text-gray-400 mr-3 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            {address.address_label && (
+                              <span className="text-sm text-gray-500 block mb-1">{address.address_label}</span>
+                            )}
+                            <a
+                              href={mapsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary-600 hover:text-primary-700 hover:underline text-sm"
+                            >
+                              {addressLines.map((line, i) => (
+                                <span key={i} className="block">{line}</span>
+                              ))}
+                            </a>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                            <Link
+                              to={`/people/${id}/address/${index}/edit`}
+                              className="p-1 hover:bg-gray-100 rounded"
+                              title="Edit address"
+                            >
+                              <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteAddress(index)}
+                              className="p-1 hover:bg-red-50 rounded"
+                              title="Delete address"
+                            >
+                              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No addresses yet.
+                </p>
+              )}
             </div>
           )}
 

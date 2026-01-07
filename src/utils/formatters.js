@@ -83,7 +83,7 @@ export function sanitizePersonAcf(acfData, overrides = {}) {
   const enumFields = ['gender'];
   
   // Fields that are repeaters and should always be arrays
-  const repeaterFields = ['contact_info', 'work_history', 'relationships', 'photo_gallery'];
+  const repeaterFields = ['contact_info', 'addresses', 'work_history', 'relationships', 'photo_gallery'];
   
   const sanitized = { ...acfData };
   

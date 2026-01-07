@@ -637,31 +637,33 @@ class PRM_Monica_Import {
             $places[$place['id']] = $place;
         }
 
-        $existing_info = get_field('contact_info', $post_id) ?: [];
+        $structured_addresses = [];
 
         foreach ($addresses as $address) {
             $place_id = $address['place_id'] ?? '';
             $place = $places[$place_id] ?? [];
 
-            $parts = array_filter([
-                $place['street'] ?? '',
-                $place['city'] ?? '',
-                $place['province'] ?? '',
-                $place['postal_code'] ?? '',
-                $place['country'] ?? '',
-            ]);
+            $street = trim($place['street'] ?? '');
+            $city = trim($place['city'] ?? '');
+            $state = trim($place['province'] ?? '');
+            $postal_code = trim($place['postal_code'] ?? '');
+            $country = trim($place['country'] ?? '');
 
-            if (!empty($parts)) {
-                $existing_info[] = [
-                    'contact_type'  => 'address',
-                    'contact_label' => $address['name'] ?? '',
-                    'contact_value' => implode(', ', $parts),
+            // Only add if there's at least some address data
+            if (!empty($street) || !empty($city) || !empty($state) || !empty($postal_code) || !empty($country)) {
+                $structured_addresses[] = [
+                    'address_label' => $address['name'] ?? '',
+                    'street'        => $street,
+                    'postal_code'   => $postal_code,
+                    'city'          => $city,
+                    'state'         => $state,
+                    'country'       => $country,
                 ];
             }
         }
 
-        if (!empty($existing_info)) {
-            update_field('contact_info', $existing_info, $post_id);
+        if (!empty($structured_addresses)) {
+            update_field('addresses', $structured_addresses, $post_id);
         }
     }
 
