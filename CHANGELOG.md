@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.4] - 2026-01-07
+
+### Changed
+- Email notifications: Removed calendar emoji from section headings (Today, Tomorrow, This week)
+- Email notifications: Changed section headings from ALL CAPS to sentence case
+
 ## [1.22.3] - 2026-01-07
 
 ### Fixed
