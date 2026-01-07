@@ -222,10 +222,11 @@ export default function WorkHistoryForm() {
           <div className="flex items-center">
             <input
               type="checkbox"
+              id="is_current"
               {...register('is_current')}
               className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
-            <label className="ml-2 text-sm text-gray-700">Currently works here</label>
+            <label htmlFor="is_current" className="ml-2 text-sm text-gray-700 cursor-pointer">Currently works here</label>
           </div>
           
           {/* Actions */}
