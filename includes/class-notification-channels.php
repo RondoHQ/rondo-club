@@ -510,140 +510,93 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
      */
     public function format_slack_blocks($digest_data) {
         $blocks = [];
-        $today_formatted = date_i18n(get_option('date_format'));
+        $site_url = home_url();
+        
+        // Build text content for all sections
+        $text_parts = [];
         
         // Today section
+        $text_parts[] = '**' . __('Today', 'personal-crm') . '**';
+        $text_parts[] = ''; // Empty line
+        
         if (!empty($digest_data['today'])) {
-            $blocks[] = [
-                'type' => 'section',
-                'text' => [
-                    'type' => 'mrkdwn',
-                    'text' => '*' . __('TODAY', 'personal-crm') . '*',
-                ],
-            ];
-            
             foreach ($digest_data['today'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
                 
-                $site_url = home_url();
                 // Check if person name is in title
                 $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
                 if ($person_in_title) {
                     // Replace name in title with link
                     $title_with_link = $this->replace_name_in_title_slack($date['title'], $person_in_title, $site_url);
-                    $text = sprintf("• *%s* - %s", $title_with_link, $date_formatted);
+                    $text_parts[] = sprintf("* %s - %s", $title_with_link, $date_formatted);
                 } else {
-                    // Show title normally and add people links below
-                    $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
-                    $people_links = $this->format_slack_people_links($date['related_people']);
-                    if (!empty($people_links)) {
-                        $text .= "\n  " . $people_links;
-                    }
+                    // Show title normally
+                    $text_parts[] = sprintf("* %s - %s", $date['title'], $date_formatted);
                 }
-                $blocks[] = [
-                    'type' => 'section',
-                    'text' => [
-                        'type' => 'mrkdwn',
-                        'text' => $text,
-                    ],
-                ];
             }
+        } else {
+            $text_parts[] = "* " . __('No reminders', 'personal-crm');
         }
         
+        $text_parts[] = ''; // Empty line
+        
         // Tomorrow section
+        $text_parts[] = '**' . __('Tomorrow', 'personal-crm') . '**';
+        $text_parts[] = ''; // Empty line
+        
         if (!empty($digest_data['tomorrow'])) {
-            $blocks[] = [
-                'type' => 'section',
-                'text' => [
-                    'type' => 'mrkdwn',
-                    'text' => '*' . __('TOMORROW', 'personal-crm') . '*',
-                ],
-            ];
-            
             foreach ($digest_data['tomorrow'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
                 
-                $site_url = home_url();
-                // Check if person name is in title
                 $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
                 if ($person_in_title) {
-                    // Replace name in title with link
                     $title_with_link = $this->replace_name_in_title_slack($date['title'], $person_in_title, $site_url);
-                    $text = sprintf("• *%s* - %s", $title_with_link, $date_formatted);
+                    $text_parts[] = sprintf("* %s - %s", $title_with_link, $date_formatted);
                 } else {
-                    // Show title normally and add people links below
-                    $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
-                    $people_links = $this->format_slack_people_links($date['related_people']);
-                    if (!empty($people_links)) {
-                        $text .= "\n  " . $people_links;
-                    }
+                    $text_parts[] = sprintf("* %s - %s", $date['title'], $date_formatted);
                 }
-                $blocks[] = [
-                    'type' => 'section',
-                    'text' => [
-                        'type' => 'mrkdwn',
-                        'text' => $text,
-                    ],
-                ];
             }
+        } else {
+            $text_parts[] = "* " . __('No reminders', 'personal-crm');
         }
         
+        $text_parts[] = ''; // Empty line
+        
         // Rest of week section
+        $text_parts[] = '**' . __('Rest of the week', 'personal-crm') . '**';
+        $text_parts[] = ''; // Empty line
+        
         if (!empty($digest_data['rest_of_week'])) {
-            $blocks[] = [
-                'type' => 'section',
-                'text' => [
-                    'type' => 'mrkdwn',
-                    'text' => '*' . __('THIS WEEK', 'personal-crm') . '*',
-                ],
-            ];
-            
             foreach ($digest_data['rest_of_week'] as $date) {
                 $date_formatted = date_i18n(
                     get_option('date_format'),
                     strtotime($date['next_occurrence'])
                 );
                 
-                $site_url = home_url();
-                // Check if person name is in title
                 $person_in_title = $this->find_person_in_title($date['title'], $date['related_people']);
                 if ($person_in_title) {
-                    // Replace name in title with link
                     $title_with_link = $this->replace_name_in_title_slack($date['title'], $person_in_title, $site_url);
-                    $text = sprintf("• *%s* - %s", $title_with_link, $date_formatted);
+                    $text_parts[] = sprintf("* %s - %s", $title_with_link, $date_formatted);
                 } else {
-                    // Show title normally and add people links below
-                    $text = sprintf("• *%s* - %s", $date['title'], $date_formatted);
-                    $people_links = $this->format_slack_people_links($date['related_people']);
-                    if (!empty($people_links)) {
-                        $text .= "\n  " . $people_links;
-                    }
+                    $text_parts[] = sprintf("* %s - %s", $date['title'], $date_formatted);
                 }
-                $blocks[] = [
-                    'type' => 'section',
-                    'text' => [
-                        'type' => 'mrkdwn',
-                        'text' => $text,
-                    ],
-                ];
             }
+        } else {
+            $text_parts[] = "* " . __('No reminders', 'personal-crm');
         }
         
-        // Footer
+        // Combine all text parts into a single block
         $blocks[] = [
             'type' => 'section',
             'text' => [
                 'type' => 'mrkdwn',
-                'text' => sprintf(
-                    __('<%s|Visit Caelis> to see more details.', 'personal-crm'),
-                    home_url()
-                ),
+                'text' => implode("\n", $text_parts),
             ],
         ];
         
