@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.24.4] - 2026-01-07
+
+### Added
+- Phone number field on Add Person form with type selector (Mobile/Phone)
+- vCard import on Add Person screen now properly imports phone numbers with correct type
+
+### Fixed
+- vCard parse endpoint now returns phone_type for proper mobile/phone distinction
+
 ## [1.24.3] - 2026-01-07
 
 ### Fixed

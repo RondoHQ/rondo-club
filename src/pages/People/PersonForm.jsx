@@ -50,18 +50,22 @@ export default function PersonForm() {
     },
   });
   
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
       first_name: '',
       last_name: '',
       nickname: '',
       gender: '',
       email: '',
+      phone: '',
+      phone_type: 'mobile',
       how_we_met: '',
       is_favorite: false,
       birthday: '',
     },
   });
+  
+  const phoneValue = watch('phone');
   
   useEffect(() => {
     if (person) {
@@ -69,12 +73,21 @@ export default function PersonForm() {
       const emailContact = person.acf?.contact_info?.find(contact => contact.contact_type === 'email');
       const email = emailContact?.contact_value || '';
       
+      // Get phone from contact_info if it exists
+      const phoneContact = person.acf?.contact_info?.find(contact => 
+        contact.contact_type === 'phone' || contact.contact_type === 'mobile'
+      );
+      const phone = phoneContact?.contact_value || '';
+      const phone_type = phoneContact?.contact_type || 'mobile';
+      
       reset({
         first_name: person.acf?.first_name || '',
         last_name: person.acf?.last_name || '',
         nickname: person.acf?.nickname || '',
         gender: person.acf?.gender || '',
         email: email,
+        phone: phone,
+        phone_type: phone_type,
         how_we_met: person.acf?.how_we_met || '',
         is_favorite: person.acf?.is_favorite || false,
         birthday: '', // Birthday is stored separately as an important_date
@@ -129,6 +142,8 @@ export default function PersonForm() {
           nickname: data.nickname || '',
           gender: '',
           email: data.email || '',
+          phone: data.phone || '',
+          phone_type: data.phone_type || 'mobile',
           how_we_met: data.note || '',
           is_favorite: false,
           birthday: data.birthday || '',
@@ -178,15 +193,24 @@ export default function PersonForm() {
         },
       };
       
-      // Add email to contact_info if provided (only when creating)
-      if (!isEditing && data.email) {
-        payload.acf.contact_info = [
-          {
+      // Add email and phone to contact_info if provided (only when creating)
+      if (!isEditing && (data.email || data.phone)) {
+        const contactInfo = [];
+        if (data.email) {
+          contactInfo.push({
             contact_type: 'email',
             contact_value: data.email,
             contact_label: '',
-          },
-        ];
+          });
+        }
+        if (data.phone) {
+          contactInfo.push({
+            contact_type: data.phone_type || 'mobile',
+            contact_value: data.phone,
+            contact_label: '',
+          });
+        }
+        payload.acf.contact_info = contactInfo;
       }
       
       if (isEditing) {
@@ -395,6 +419,27 @@ export default function PersonForm() {
               <p className="text-xs text-gray-500 mt-1">
                 Optional: If a Gravatar is associated with this email, it will be automatically set as the profile photo
               </p>
+            </div>
+          )}
+          
+          {!isEditing && (
+            <div>
+              <label className="label">Phone</label>
+              <div className="flex gap-2">
+                <select
+                  {...register('phone_type')}
+                  className="input w-28"
+                >
+                  <option value="mobile">Mobile</option>
+                  <option value="phone">Phone</option>
+                </select>
+                <input
+                  type="tel"
+                  {...register('phone')}
+                  className="input flex-1"
+                  placeholder="+1 555 123 4567"
+                />
+              </div>
             </div>
           )}
           
