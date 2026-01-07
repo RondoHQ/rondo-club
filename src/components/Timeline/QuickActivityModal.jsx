@@ -12,7 +12,7 @@ const ACTIVITY_TYPES = [
   { id: 'note', label: 'Other', icon: FileText },
 ];
 
-export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoading, personId, initialData = null }) {
+export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoading, personId, initialData = null, activity = null }) {
   const [activityType, setActivityType] = useState('call');
   const [activityDate, setActivityDate] = useState('');
   const [content, setContent] = useState('');
@@ -21,14 +21,24 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
   const [participantSearch, setParticipantSearch] = useState('');
 
   const { data: allPeople } = usePeople();
+  
+  // Determine if we're in edit mode
+  const isEditing = !!activity;
 
   useEffect(() => {
     if (isOpen) {
       // Set default date to today
       const today = new Date().toISOString().split('T')[0];
       
-      // If initial data is provided, use it to prefill the form
-      if (initialData) {
+      // If editing an existing activity, use its data
+      if (activity) {
+        setActivityDate(activity.activity_date || today);
+        setContent(activity.content || '');
+        setSelectedParticipants(activity.participants || []);
+        setActivityType(activity.activity_type || 'note');
+      }
+      // If initial data is provided (e.g., from todo conversion), use it to prefill the form
+      else if (initialData) {
         setActivityDate(initialData.activity_date || today);
         setContent(initialData.content || '');
         setSelectedParticipants(initialData.participants || []);
@@ -40,7 +50,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
         setActivityType('call');
       }
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, activity]);
 
   if (!isOpen) return null;
 
@@ -111,7 +121,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-semibold">Add activity</h2>
+          <h2 className="text-lg font-semibold">{isEditing ? 'Edit activity' : 'Add activity'}</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600"
@@ -295,7 +305,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
               className="btn-primary"
               disabled={isLoading || !content.trim()}
             >
-              {isLoading ? 'Adding...' : 'Add activity'}
+              {isLoading ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save' : 'Add activity')}
             </button>
           </div>
         </form>

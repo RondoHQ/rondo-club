@@ -26,7 +26,7 @@ const LinkedInIcon = ({ className }) => (
       L341.91,330.654L341.91,330.654z"/>
   </svg>
 );
-import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
+import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import NoteModal from '@/components/Timeline/NoteModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
@@ -70,6 +70,7 @@ export default function PersonDetail() {
   const updatePerson = useUpdatePerson();
   const createNote = useCreateNote();
   const createActivity = useCreateActivity();
+  const updateActivity = useUpdateActivity();
   const createTodo = useCreateTodo();
   const updateTodo = useUpdateTodo();
   const deleteActivity = useDeleteActivity();
@@ -96,6 +97,7 @@ export default function PersonDetail() {
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
+  const [editingActivity, setEditingActivity] = useState(null);
   
   // Complete todo flow states
   const [todoToComplete, setTodoToComplete] = useState(null);
@@ -356,30 +358,41 @@ export default function PersonDetail() {
     }
   };
 
-  // Handle creating an activity
+  // Handle creating or updating an activity
   const handleCreateActivity = async (data) => {
     try {
-      await createActivity.mutateAsync({ personId: id, data });
-      
-      // If we're completing a todo as activity, also mark the todo as complete
-      if (todoToComplete) {
-        await updateTodo.mutateAsync({
-          todoId: todoToComplete.id,
-          data: {
-            content: todoToComplete.content,
-            due_date: todoToComplete.due_date,
-            is_completed: true,
-          },
-          personId: id,
+      if (editingActivity) {
+        // Update existing activity
+        await updateActivity.mutateAsync({ 
+          activityId: editingActivity.id, 
+          data, 
+          personId: id 
         });
-        setTodoToComplete(null);
-        setActivityInitialData(null);
+        setEditingActivity(null);
+      } else {
+        // Create new activity
+        await createActivity.mutateAsync({ personId: id, data });
+        
+        // If we're completing a todo as activity, also mark the todo as complete
+        if (todoToComplete) {
+          await updateTodo.mutateAsync({
+            todoId: todoToComplete.id,
+            data: {
+              content: todoToComplete.content,
+              due_date: todoToComplete.due_date,
+              is_completed: true,
+            },
+            personId: id,
+          });
+          setTodoToComplete(null);
+          setActivityInitialData(null);
+        }
       }
       
       setShowActivityModal(false);
     } catch (error) {
-      console.error('Failed to create activity:', error);
-      alert('Failed to create activity. Please try again.');
+      console.error('Failed to save activity:', error);
+      alert('Failed to save activity. Please try again.');
     }
   };
 
@@ -498,8 +511,11 @@ export default function PersonDetail() {
     if (item.type === 'todo') {
       setEditingTodo(item);
       setShowTodoModal(true);
+    } else if (item.type === 'activity') {
+      setEditingActivity(item);
+      setShowActivityModal(true);
     }
-    // Notes and activities editing can be added later if needed
+    // Note editing can be added later if needed
   };
 
   // Handle deleting timeline item
@@ -1399,13 +1415,15 @@ export default function PersonDetail() {
             isOpen={showActivityModal}
             onClose={() => {
               setShowActivityModal(false);
+              setEditingActivity(null);
               setTodoToComplete(null);
               setActivityInitialData(null);
             }}
             onSubmit={handleCreateActivity}
-            isLoading={createActivity.isPending}
+            isLoading={editingActivity ? updateActivity.isPending : createActivity.isPending}
             personId={id}
             initialData={activityInitialData}
+            activity={editingActivity}
           />
           
           <CompleteTodoModal
