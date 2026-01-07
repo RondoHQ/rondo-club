@@ -39,11 +39,17 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
     [people, selectedPersonId]
   );
   
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+  
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setContent('');
-      setDueDate('');
+      setDueDate(getTodayDate());
       setSelectedPersonId('');
       setPersonSearchQuery('');
       setIsPersonDropdownOpen(false);
