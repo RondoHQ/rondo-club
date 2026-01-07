@@ -93,14 +93,14 @@ function ReminderCard({ reminder }) {
                 src={person.thumbnail}
                 alt={person.name}
                 loading="lazy"
-                className="w-8 h-8 rounded-full border-2 border-white object-cover"
+                className="w-10 h-10 rounded-full border-2 border-white object-cover"
               />
             ) : (
               <div
                 key={person.id}
-                className="w-8 h-8 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center"
+                className="w-10 h-10 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center"
               >
-                <span className="text-xs">{person.name?.[0]}</span>
+                <span className="text-sm">{person.name?.[0]}</span>
               </div>
             )
           ))}
