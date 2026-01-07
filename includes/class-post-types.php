@@ -93,10 +93,10 @@ class PRM_Post_Types {
             'rewrite'             => false, // Disable rewrite rules - React Router handles routing
             'capability_type'     => 'post',
             'has_archive'         => false,
-            'hierarchical'        => false,
+            'hierarchical'        => true, // Enable parent-child relationships
             'menu_position'       => 6,
             'menu_icon'           => 'dashicons-building',
-            'supports'            => ['title', 'editor', 'thumbnail', 'author'],
+            'supports'            => ['title', 'editor', 'thumbnail', 'author', 'page-attributes'],
         ];
         
         register_post_type('company', $args);

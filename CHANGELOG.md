@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] - 2026-01-07
+
+### Added
+- Organizations can now have parent organizations (hierarchical structure)
+- Parent organization selector in organization form with searchable dropdown
+- Subsidiaries section on organization detail page showing child organizations
+- "Subsidiary of" link displayed on organization header when organization has a parent
+
 ## [1.16.1] - 2026-01-07
 
 ### Changed
