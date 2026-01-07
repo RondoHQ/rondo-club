@@ -239,11 +239,18 @@ export default function Settings() {
   };
   
   const handleNotificationTimeChange = async (time) => {
-    setNotificationTime(time);
+    // Round to nearest 5 minutes
+    const [hours, minutes] = time.split(':').map(Number);
+    const roundedMinutes = Math.round(minutes / 5) * 5;
+    const adjustedHours = roundedMinutes === 60 ? (hours + 1) % 24 : hours;
+    const adjustedMinutes = roundedMinutes === 60 ? 0 : roundedMinutes;
+    const roundedTime = `${String(adjustedHours).padStart(2, '0')}:${String(adjustedMinutes).padStart(2, '0')}`;
+    
+    setNotificationTime(roundedTime);
     setSavingTime(true);
     
     try {
-      await prmApi.updateNotificationTime(time);
+      await prmApi.updateNotificationTime(roundedTime);
     } catch (error) {
       console.error('Failed to update notification time:', error);
       alert(error.response?.data?.message || 'Failed to update notification time');
