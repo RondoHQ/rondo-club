@@ -4,7 +4,7 @@ import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch, TrendingUp
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { getCompanyName } from '@/utils/formatters';
+import { getCompanyName, decodeHtml } from '@/utils/formatters';
 
 export default function CompanyDetail() {
   const { id } = useParams();
@@ -286,9 +286,8 @@ export default function CompanyDetail() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {acf.investors.map((investor) => {
               const isPerson = investor.post_type === 'person';
-              const name = isPerson 
-                ? investor.post_title 
-                : getCompanyName(investor);
+              // ACF relationship returns post_title for all post types
+              const name = decodeHtml(investor.post_title || '');
               const linkPath = isPerson 
                 ? `/people/${investor.ID}` 
                 : `/companies/${investor.ID}`;
