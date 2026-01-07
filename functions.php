@@ -323,6 +323,46 @@ function prm_theme_remove_admin_bar() {
 add_action('after_setup_theme', 'prm_theme_remove_admin_bar');
 
 /**
+ * Redirect WordPress backend URLs to SPA frontend routes
+ * 
+ * Handles URLs like ?post_type=person&p=123 → /people/123
+ */
+function prm_redirect_backend_urls() {
+    // Don't redirect admin, login, or API requests
+    if (is_admin() || $GLOBALS['pagenow'] === 'wp-login.php') {
+        return;
+    }
+    
+    // Check for post_type and p query parameters (WordPress backend URL format)
+    $post_type = isset($_GET['post_type']) ? sanitize_key($_GET['post_type']) : '';
+    $post_id = isset($_GET['p']) ? absint($_GET['p']) : 0;
+    
+    if (!$post_type || !$post_id) {
+        return;
+    }
+    
+    // Map post types to frontend routes
+    $route_map = [
+        'person'         => 'people',
+        'company'        => 'companies',
+        'important_date' => 'dates',
+    ];
+    
+    if (!isset($route_map[$post_type])) {
+        return;
+    }
+    
+    // Build the SPA URL
+    $spa_path = '/' . $route_map[$post_type] . '/' . $post_id;
+    $redirect_url = home_url($spa_path);
+    
+    // Perform the redirect (301 permanent)
+    wp_redirect($redirect_url, 301);
+    exit;
+}
+add_action('template_redirect', 'prm_redirect_backend_urls', 0); // Priority 0 to run before other redirects
+
+/**
  * Redirect all frontend requests to index.php (SPA)
  */
 function prm_theme_template_redirect() {
