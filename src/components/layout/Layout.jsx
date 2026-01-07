@@ -11,11 +11,11 @@ import {
   LogOut,
   Search,
   User,
-  Briefcase,
   ChevronDown,
   Sparkles,
   CheckSquare,
-  Plus
+  Plus,
+  Command
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
@@ -183,6 +183,227 @@ function UserMenu() {
   );
 }
 
+function SearchModal({ isOpen, onClose }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const navigate = useNavigate();
+  const inputRef = useRef(null);
+  
+  // Use search hook
+  const trimmedQuery = searchQuery.trim();
+  const { data: searchResults, isLoading: isSearchLoading } = useSearch(trimmedQuery);
+  
+  // Safe results
+  const safeResults = searchResults || { people: [], companies: [] };
+  const allResults = [
+    ...(safeResults.people || []).map(p => ({ ...p, type: 'person' })),
+    ...(safeResults.companies || []).map(c => ({ ...c, type: 'company' })),
+  ];
+  const hasResults = allResults.length > 0;
+  const showResults = searchQuery.trim().length >= 2;
+  
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setSearchQuery('');
+      setSelectedIndex(0);
+      // Focus input after a short delay to ensure modal is rendered
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [isOpen]);
+  
+  // Reset selection when results change
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [searchResults]);
+  
+  // Handle keyboard navigation
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      onClose();
+      return;
+    }
+    
+    if (!showResults || !hasResults) return;
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => Math.min(prev + 1, allResults.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const selected = allResults[selectedIndex];
+      if (selected) {
+        handleResultClick(selected.type, selected.id);
+      }
+    }
+  };
+  
+  // Handle result click
+  const handleResultClick = (type, id) => {
+    onClose();
+    if (type === 'person') {
+      navigate(`/people/${id}`);
+    } else if (type === 'company') {
+      navigate(`/companies/${id}`);
+    }
+  };
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative min-h-screen flex items-start justify-center pt-[15vh] px-4">
+        <div className="relative w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden">
+          {/* Search input */}
+          <div className="flex items-center px-4 border-b border-gray-200">
+            <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Search people & organizations..."
+              className="flex-1 px-4 py-4 text-lg outline-none placeholder:text-gray-400"
+              autoComplete="off"
+            />
+            <div className="flex items-center gap-1 text-xs text-gray-400">
+              <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 font-mono">esc</kbd>
+              <span>to close</span>
+            </div>
+          </div>
+          
+          {/* Results */}
+          <div className="max-h-96 overflow-y-auto">
+            {!showResults ? (
+              <div className="px-4 py-8 text-center text-gray-500">
+                <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="text-sm">Type at least 2 characters to search</p>
+              </div>
+            ) : isSearchLoading ? (
+              <div className="px-4 py-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                <p className="mt-3 text-sm text-gray-500">Searching...</p>
+              </div>
+            ) : hasResults ? (
+              <div className="py-2">
+                {/* People results */}
+                {safeResults.people && safeResults.people.length > 0 && (
+                  <div className="px-2">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      People
+                    </div>
+                    {safeResults.people.map((person, index) => {
+                      const globalIndex = index;
+                      const isSelected = selectedIndex === globalIndex;
+                      return (
+                        <button
+                          key={person.id}
+                          onClick={() => handleResultClick('person', person.id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                            isSelected ? 'bg-primary-50 text-primary-900' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          {person.thumbnail ? (
+                            <img
+                              src={person.thumbnail}
+                              alt={person.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                              <User className="w-4 h-4 text-gray-500" />
+                            </div>
+                          )}
+                          <span className="text-sm font-medium flex-1 truncate">
+                            {person.name}
+                          </span>
+                          {isSelected && (
+                            <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono">↵</kbd>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {/* Organizations results */}
+                {safeResults.companies && safeResults.companies.length > 0 && (
+                  <div className="px-2 mt-2">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Organizations
+                    </div>
+                    {safeResults.companies.map((company, index) => {
+                      const globalIndex = (safeResults.people?.length || 0) + index;
+                      const isSelected = selectedIndex === globalIndex;
+                      return (
+                        <button
+                          key={company.id}
+                          onClick={() => handleResultClick('company', company.id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                            isSelected ? 'bg-primary-50 text-primary-900' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          {company.thumbnail ? (
+                            <img
+                              src={company.thumbnail}
+                              alt={company.name}
+                              className="w-8 h-8 rounded object-contain bg-white"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                              <Building2 className="w-4 h-4 text-gray-500" />
+                            </div>
+                          )}
+                          <span className="text-sm font-medium flex-1 truncate">
+                            {company.name}
+                          </span>
+                          {isSelected && (
+                            <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono">↵</kbd>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="px-4 py-8 text-center text-gray-500">
+                <p className="text-sm">No results found for "{searchQuery}"</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Footer */}
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded font-mono">↑</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded font-mono">↓</kbd>
+                <span>to navigate</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded font-mono">↵</kbd>
+                <span>to select</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function QuickAddMenu({ onAddTodo }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
@@ -263,20 +484,8 @@ function QuickAddMenu({ onAddTodo }) {
   );
 }
 
-function Header({ onMenuClick, onAddTodo }) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+function Header({ onMenuClick, onAddTodo, onOpenSearch }) {
   const location = useLocation();
-  const navigate = useNavigate();
-  const searchRef = useRef(null);
-  const dropdownRef = useRef(null);
-  const inputRef = useRef(null);
-  
-  // Use search hook - only search if query is 2+ characters
-  // Always pass a string to maintain consistent hook calls
-  const trimmedQuery = searchQuery.trim();
-  const { data: searchResults, isLoading: isSearchLoading } = useSearch(trimmedQuery);
   
   // Get page title from location
   const getPageTitle = () => {
@@ -289,55 +498,6 @@ function Header({ onMenuClick, onAddTodo }) {
     if (path.startsWith('/settings')) return 'Settings';
     return '';
   };
-  
-  // Focus input when search opens
-  useEffect(() => {
-    if (isSearchOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isSearchOpen]);
-  
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        searchRef.current &&
-        !searchRef.current.contains(event.target)
-      ) {
-        setIsSearchFocused(false);
-        // Close search if query is empty
-        if (!searchQuery.trim()) {
-          setIsSearchOpen(false);
-        }
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [searchQuery]);
-  
-  // Handle search result click
-  const handleResultClick = (type, id) => {
-    setIsSearchFocused(false);
-    setSearchQuery('');
-    setIsSearchOpen(false);
-    if (type === 'person') {
-      navigate(`/people/${id}`);
-    } else if (type === 'company') {
-      navigate(`/companies/${id}`);
-    }
-  };
-  
-  // Check if there are any results - ensure searchResults is an object
-  const safeResults = searchResults || { people: [], companies: [] };
-  const hasResults = (
-    (safeResults.people && safeResults.people.length > 0) ||
-    (safeResults.companies && safeResults.companies.length > 0)
-  );
-  
-  const showDropdown = isSearchFocused && searchQuery.trim().length >= 2;
   
   return (
     <header className="sticky top-0 z-10 flex items-center h-16 px-4 bg-white border-b border-gray-200 lg:px-6">
@@ -357,115 +517,19 @@ function Header({ onMenuClick, onAddTodo }) {
       {/* Spacer */}
       <div className="flex-1" />
       
-      {/* Search - collapsible */}
-      <div className="relative" ref={searchRef}>
-        {isSearchOpen ? (
-          <div className="flex items-center">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                ref={inputRef}
-                type="search"
-                placeholder="Search people & organizations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    setSearchQuery('');
-                    setIsSearchOpen(false);
-                    setIsSearchFocused(false);
-                  }
-                }}
-                className="input pl-9 w-64 lg:w-80"
-              />
-            </div>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setIsSearchOpen(false);
-                setIsSearchFocused(false);
-              }}
-              className="p-2 ml-1 text-gray-400 hover:text-gray-600"
-              aria-label="Close search"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-            aria-label="Search"
-            title="Search"
-          >
-            <Search className="w-5 h-5" />
-          </button>
-        )}
-        
-        {/* Search results dropdown */}
-        {showDropdown && (
-          <div
-            ref={dropdownRef}
-            className="absolute top-full right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50"
-          >
-            {isSearchLoading ? (
-              <div className="p-4 text-center text-gray-500">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
-                <p className="mt-2 text-sm">Searching...</p>
-              </div>
-            ) : hasResults ? (
-              <div className="py-2">
-                {/* People results */}
-                {safeResults.people && safeResults.people.length > 0 && (
-                  <div className="px-3 py-2">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
-                      People
-                    </div>
-                    {safeResults.people.map((person) => (
-                      <button
-                        key={person.id}
-                        onClick={() => handleResultClick('person', person.id)}
-                        className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                      >
-                        <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-sm font-medium text-gray-900 flex-1 truncate">
-                          {person.name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                
-                {/* Organizations results */}
-                {safeResults.companies && safeResults.companies.length > 0 && (
-                  <div className="px-3 py-2 border-t border-gray-100">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-2">
-                      Organizations
-                    </div>
-                    {safeResults.companies.map((company) => (
-                      <button
-                        key={company.id}
-                        onClick={() => handleResultClick('company', company.id)}
-                        className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                      >
-                        <Briefcase className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-sm font-medium text-gray-900 flex-1 truncate">
-                          {company.name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="p-4 text-center text-gray-500">
-                <p className="text-sm">No results found</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Search button */}
+      <button
+        onClick={onOpenSearch}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
+        aria-label="Search"
+        title="Search (⌘K)"
+      >
+        <Search className="w-4 h-4" />
+        <span className="hidden sm:inline text-sm">Search...</span>
+        <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono">
+          <Command className="w-3 h-3" />K
+        </kbd>
+      </button>
       
       {/* Quick Add menu */}
       <div className="ml-2">
@@ -483,9 +547,24 @@ function Header({ onMenuClick, onAddTodo }) {
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showTodoModal, setShowTodoModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
   
   // Update document title based on route
   useRouteTitle();
+  
+  // Handle Cmd+K keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearchModal(true);
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
   
   return (
     <div className="flex h-screen bg-gray-50">
@@ -515,12 +594,19 @@ export default function Layout({ children }) {
         <Header 
           onMenuClick={() => setSidebarOpen(true)} 
           onAddTodo={() => setShowTodoModal(true)}
+          onOpenSearch={() => setShowSearchModal(true)}
         />
         
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
         </main>
       </div>
+      
+      {/* Search Modal */}
+      <SearchModal
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+      />
       
       {/* Global Todo Modal */}
       <GlobalTodoModal

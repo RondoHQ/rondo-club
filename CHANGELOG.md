@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0] - 2026-01-07
+
+### Changed
+- Search is now a lightbox/modal instead of inline in the header
+- Press ⌘K (Mac) or Ctrl+K (Windows/Linux) to open search from anywhere
+- Search modal supports keyboard navigation (arrow keys and Enter to select)
+- Search button in header shows keyboard shortcut hint
+
 ## [1.17.0] - 2026-01-07
 
 ### Added
