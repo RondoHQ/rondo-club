@@ -221,12 +221,27 @@ class PRM_Reminders {
         $tomorrow = (clone $today)->modify('+1 day');
         $end_of_week = (clone $today)->modify('+7 days');
         
-        // Get all dates
-        $dates = get_posts([
-            'post_type'      => 'important_date',
-            'posts_per_page' => -1,
-            'post_status'    => 'publish',
-        ]);
+        // Use direct database query to bypass access control filters
+        // This is needed for cron jobs and Slack commands that run without logged-in user
+        global $wpdb;
+        
+        $date_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} 
+             WHERE post_type = %s 
+             AND post_status = 'publish'",
+            'important_date'
+        ));
+        
+        if (empty($date_ids)) {
+            return [
+                'today' => [],
+                'tomorrow' => [],
+                'rest_of_week' => [],
+            ];
+        }
+        
+        // Get full post objects
+        $dates = array_map('get_post', $date_ids);
         
         $digest = [
             'today' => [],
@@ -235,6 +250,9 @@ class PRM_Reminders {
         ];
         
         foreach ($dates as $date_post) {
+            if (!$date_post) {
+                continue;
+            }
             $date_value = get_field('date_value', $date_post->ID);
             $is_recurring = get_field('is_recurring', $date_post->ID);
             
