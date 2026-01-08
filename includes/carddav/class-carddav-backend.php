@@ -37,13 +37,18 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      * @return array Array of address books
      */
     public function getAddressBooksForUser($principalUri) {
+        error_log("CardDAV: getAddressBooksForUser called for principal: {$principalUri}");
+        
         $parts = explode('/', $principalUri);
         $username = end($parts);
         $user = get_user_by('login', $username);
         
         if (!$user) {
+            error_log("CardDAV: getAddressBooksForUser - user not found for: {$username}");
             return [];
         }
+        
+        error_log("CardDAV: Returning address book for user ID {$user->ID}");
         
         // Each user has one address book containing their contacts
         return [
@@ -99,6 +104,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      * @return array Array of card data
      */
     public function getCards($addressBookId) {
+        error_log("CardDAV: getCards called for address book (user) ID: {$addressBookId}");
+        
         $cards = [];
         
         // Set current user for access control
@@ -125,6 +132,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
             ];
         }
         
+        error_log("CardDAV: getCards returning " . count($cards) . " cards");
+        
         return $cards;
     }
     
@@ -137,6 +146,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      */
     public function getCard($addressBookId, $cardUri) {
         $person_id = $this->getPersonIdFromUri($cardUri);
+        
+        error_log("CardDAV: getCard called for user {$addressBookId}, URI: {$cardUri}, Person ID: " . ($person_id ?: 'null'));
         
         if (!$person_id) {
             return null;
@@ -395,6 +406,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      * @return array Changes since the token
      */
     public function getChangesForAddressBook($addressBookId, $syncToken, $syncLevel, $limit = null) {
+        error_log("CardDAV: getChangesForAddressBook called for user {$addressBookId}, syncToken: " . ($syncToken ?: 'none'));
+        
         $result = [
             'syncToken' => $this->getCurrentSyncToken($addressBookId),
             'added' => [],
@@ -404,6 +417,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         
         // If no sync token provided, return all contacts as added
         if (empty($syncToken)) {
+            error_log("CardDAV: No sync token - returning all contacts as added (initial sync)");
             wp_set_current_user($addressBookId);
             
             $persons = get_posts([
@@ -417,6 +431,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
                 $result['added'][] = $person->ID . '.vcf';
             }
             
+            error_log("CardDAV: Initial sync returning " . count($result['added']) . " contacts");
             return $result;
         }
         
@@ -451,6 +466,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
                 $count++;
             }
         }
+        
+        error_log("CardDAV: getChangesForAddressBook returning - added: " . count($result['added']) . ", modified: " . count($result['modified']) . ", deleted: " . count($result['deleted']));
         
         return $result;
     }
