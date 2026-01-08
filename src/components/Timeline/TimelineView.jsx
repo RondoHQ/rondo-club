@@ -62,6 +62,7 @@ export default function TimelineView({
     
     const displayDate = item.activity_date || item.created;
     const formattedDate = formatTimelineDate(displayDate);
+    const displayTime = item.activity_time || null;
     
     const todoClasses = getTodoStatusClass(item);
     const isOverdue = isTodo && isTodoOverdue(item);
@@ -97,7 +98,10 @@ export default function TimelineView({
                     </span>
                   )}
                   <span className="text-xs text-gray-400">•</span>
-                  <span className="text-xs text-gray-500">{formattedDate}</span>
+                  <span className="text-xs text-gray-500">
+                    {formattedDate}
+                    {displayTime && ` at ${displayTime}`}
+                  </span>
                 </div>
               )}
               
