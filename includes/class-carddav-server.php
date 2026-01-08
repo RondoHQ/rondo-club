@@ -24,6 +24,7 @@ class PRM_CardDAV_Server {
     public function __construct() {
         add_action('init', [$this, 'register_rewrite_rules']);
         add_action('template_redirect', [$this, 'handle_request'], 0);
+        add_action('template_redirect', [$this, 'handle_well_known'], 1);
         add_filter('query_vars', [$this, 'add_query_vars']);
     }
     
@@ -37,6 +38,26 @@ class PRM_CardDAV_Server {
             'index.php?carddav_request=$matches[1]',
             'top'
         );
+        
+        // Match .well-known/carddav for auto-discovery
+        add_rewrite_rule(
+            '^\.well-known/carddav/?$',
+            'index.php?well_known_carddav=1',
+            'top'
+        );
+    }
+    
+    /**
+     * Handle .well-known/carddav redirect for auto-discovery
+     */
+    public function handle_well_known() {
+        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+        
+        if (strpos($request_uri, '/.well-known/carddav') === 0) {
+            // Return 301 redirect to the CardDAV root
+            header('Location: ' . home_url(self::BASE_URI), true, 301);
+            exit;
+        }
     }
     
     /**
@@ -47,6 +68,7 @@ class PRM_CardDAV_Server {
      */
     public function add_query_vars($vars) {
         $vars[] = 'carddav_request';
+        $vars[] = 'well_known_carddav';
         return $vars;
     }
     
