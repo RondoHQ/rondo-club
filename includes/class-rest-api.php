@@ -408,6 +408,42 @@ class PRM_REST_API {
             'callback'            => [$this, 'get_carddav_urls'],
             'permission_callback' => 'is_user_logged_in',
         ]);
+        
+        // CardDAV passwords - list
+        register_rest_route('prm/v1', '/carddav/passwords', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_carddav_passwords'],
+            'permission_callback' => 'is_user_logged_in',
+        ]);
+        
+        // CardDAV passwords - create
+        register_rest_route('prm/v1', '/carddav/passwords', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'create_carddav_password'],
+            'permission_callback' => 'is_user_logged_in',
+            'args'                => [
+                'name' => [
+                    'required'          => true,
+                    'validate_callback' => function($param) {
+                        return is_string($param) && strlen($param) > 0;
+                    },
+                ],
+            ],
+        ]);
+        
+        // CardDAV passwords - delete
+        register_rest_route('prm/v1', '/carddav/passwords/(?P<uuid>[a-f0-9-]+)', [
+            'methods'             => WP_REST_Server::DELETABLE,
+            'callback'            => [$this, 'delete_carddav_password'],
+            'permission_callback' => 'is_user_logged_in',
+            'args'                => [
+                'uuid' => [
+                    'validate_callback' => function($param) {
+                        return preg_match('/^[a-f0-9-]{36}$/', $param);
+                    },
+                ],
+            ],
+        ]);
     }
     
     /**
@@ -2783,6 +2819,103 @@ class PRM_REST_API {
             'principal' => $base_url . 'principals/' . $user->user_login . '/',
             'addressbook' => $base_url . 'addressbooks/' . $user->user_login . '/contacts/',
             'username' => $user->user_login,
+        ]);
+    }
+    
+    /**
+     * Get CardDAV passwords for the current user
+     */
+    public function get_carddav_passwords($request) {
+        $user = wp_get_current_user();
+        
+        if (!$user || !$user->ID) {
+            return new WP_Error(
+                'not_logged_in',
+                __('You must be logged in.', 'personal-crm'),
+                ['status' => 401]
+            );
+        }
+        
+        // Require the auth backend class
+        require_once PRM_PLUGIN_DIR . '/carddav/class-auth-backend.php';
+        
+        $passwords = \Caelis\CardDAV\AuthBackend::get_passwords($user->ID);
+        
+        // Format for response (exclude hashes)
+        $formatted = [];
+        foreach ($passwords as $uuid => $password) {
+            $formatted[] = [
+                'uuid'      => $uuid,
+                'name'      => $password['name'],
+                'created'   => date('c', $password['created']),
+                'last_used' => $password['last_used'] ? date('c', $password['last_used']) : null,
+            ];
+        }
+        
+        return rest_ensure_response($formatted);
+    }
+    
+    /**
+     * Create a new CardDAV password
+     */
+    public function create_carddav_password($request) {
+        $user = wp_get_current_user();
+        
+        if (!$user || !$user->ID) {
+            return new WP_Error(
+                'not_logged_in',
+                __('You must be logged in.', 'personal-crm'),
+                ['status' => 401]
+            );
+        }
+        
+        $name = $request->get_param('name');
+        
+        // Require the auth backend class
+        require_once PRM_PLUGIN_DIR . '/carddav/class-auth-backend.php';
+        
+        $result = \Caelis\CardDAV\AuthBackend::create_password($user->ID, $name);
+        
+        return rest_ensure_response([
+            'uuid'     => $result['uuid'],
+            'name'     => $result['name'],
+            'password' => $result['password'],
+            'created'  => date('c', $result['created']),
+        ]);
+    }
+    
+    /**
+     * Delete a CardDAV password
+     */
+    public function delete_carddav_password($request) {
+        $user = wp_get_current_user();
+        
+        if (!$user || !$user->ID) {
+            return new WP_Error(
+                'not_logged_in',
+                __('You must be logged in.', 'personal-crm'),
+                ['status' => 401]
+            );
+        }
+        
+        $uuid = $request->get_param('uuid');
+        
+        // Require the auth backend class
+        require_once PRM_PLUGIN_DIR . '/carddav/class-auth-backend.php';
+        
+        $deleted = \Caelis\CardDAV\AuthBackend::delete_password($user->ID, $uuid);
+        
+        if (!$deleted) {
+            return new WP_Error(
+                'not_found',
+                __('Password not found.', 'personal-crm'),
+                ['status' => 404]
+            );
+        }
+        
+        return rest_ensure_response([
+            'deleted' => true,
+            'uuid'    => $uuid,
         ]);
     }
 }
