@@ -33,7 +33,12 @@ export function groupTimelineByDate(timeline) {
     }
 
     const itemDate = parseISO(item.created);
-    const displayDate = item.activity_date ? parseISO(item.activity_date) : itemDate;
+    // Combine activity_date and activity_time if both exist
+    let displayDateStr = item.activity_date || item.created;
+    if (item.activity_date && item.activity_time) {
+      displayDateStr = `${item.activity_date}T${item.activity_time}`;
+    }
+    const displayDate = parseISO(displayDateStr);
 
     if (isToday(displayDate)) {
       groups.today.push(item);
@@ -71,7 +76,7 @@ export function groupTimelineByDate(timeline) {
 
 /**
  * Format timeline date (relative + absolute)
- * @param {string} dateString - ISO date string
+ * @param {string} dateString - ISO date string (can include time as YYYY-MM-DDTHH:MM)
  * @returns {string} Formatted date string
  */
 export function formatTimelineDate(dateString) {
@@ -79,18 +84,21 @@ export function formatTimelineDate(dateString) {
 
   try {
     const date = parseISO(dateString);
-    const relative = formatDistanceToNow(date, { addSuffix: true });
+    const hasTime = dateString.includes('T') && dateString.length > 10;
+    const timeFormat = hasTime ? ' at HH:mm' : '';
 
-    // If it's today or yesterday, show relative time
+    // If it's today, show relative time
     if (isToday(date)) {
-      return relative;
+      return formatDistanceToNow(date, { addSuffix: true });
     }
+    
+    // If it's yesterday, show "Yesterday" with optional time
     if (isYesterday(date)) {
-      return 'Yesterday';
+      return hasTime ? format(date, `'Yesterday' 'at' HH:mm`) : 'Yesterday';
     }
 
-    // Otherwise show formatted date
-    return format(date, 'MMM d, yyyy');
+    // Otherwise show formatted date with optional time
+    return format(date, hasTime ? `MMM d, yyyy 'at' HH:mm` : 'MMM d, yyyy');
   } catch (error) {
     return dateString;
   }

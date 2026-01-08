@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Time field for activities - activities now support recording both date and time
 - Activity form defaults to current date and time
-- Timeline displays activity time alongside date (e.g., "Today at 14:30")
+- Timeline displays activity time alongside date (e.g., "Yesterday at 14:30", "Jan 5, 2026 at 09:00")
+- Relative time display now correctly uses combined date+time (e.g., "30 minutes ago" instead of "about 10 hours ago")
 
 ## [1.25.0] - 2026-01-08
 
