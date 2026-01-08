@@ -174,11 +174,9 @@ export const prmApi = {
     });
   },
   
-  // Application Passwords
-  getAppPasswords: (userId) => api.get(`/wp/v2/users/${userId}/application-passwords`),
-  createAppPassword: (userId, name) => api.post(`/wp/v2/users/${userId}/application-passwords`, { name }),
-  deleteAppPassword: (userId, uuid) => api.delete(`/wp/v2/users/${userId}/application-passwords/${uuid}`),
-  
-  // CardDAV URLs
+  // CardDAV
   getCardDAVUrls: () => api.get('/prm/v1/carddav/urls'),
+  getCardDAVPasswords: () => api.get('/prm/v1/carddav/passwords'),
+  createCardDAVPassword: (name) => api.post('/prm/v1/carddav/passwords', { name }),
+  deleteCardDAVPassword: (uuid) => api.delete(`/prm/v1/carddav/passwords/${uuid}`),
 };
