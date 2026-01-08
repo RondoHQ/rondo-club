@@ -176,7 +176,7 @@ export const prmApi = {
   
   // Application Passwords
   getAppPasswords: (userId) => api.get(`/wp/v2/users/${userId}/application-passwords`),
-  createAppPassword: (userId, name) => api.post(`/wp/v2/users/${userId}/application-passwords`, { name, app_id: 'caelis-carddav' }),
+  createAppPassword: (userId, name) => api.post(`/wp/v2/users/${userId}/application-passwords`, { name }),
   deleteAppPassword: (userId, uuid) => api.delete(`/wp/v2/users/${userId}/application-passwords/${uuid}`),
   
   // CardDAV URLs
