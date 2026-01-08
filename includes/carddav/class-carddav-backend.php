@@ -143,7 +143,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
             
             $cards[] = [
                 'id' => $person->ID,
-                'uri' => $person->ID . '.vcf',
+                'uri' => $this->getUriForPerson($person->ID),
                 'lastmodified' => strtotime($person->post_modified_gmt),
                 'etag' => $etag,
                 'size' => strlen($vcard),
@@ -279,10 +279,13 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
             update_field('addresses', $parsed['addresses'], $post_id);
         }
         
+        // Store the client's URI for future lookups
+        update_post_meta($post_id, '_carddav_uri', $cardUri);
+        
         // Log the change for sync
         $this->logChange($addressBookId, $post_id, 'added');
         
-        error_log("CardDAV: Created new person ID {$post_id} - {$first_name} {$last_name}");
+        error_log("CardDAV: Created new person ID {$post_id} - {$first_name} {$last_name} (URI: {$cardUri})");
         
         // Return the etag
         $person = get_post($post_id);
@@ -397,8 +400,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
             return false;
         }
         
-        // Log the change before deletion
-        $this->logChange($addressBookId, $person_id, 'deleted');
+        // Log the change before deletion (store URI since post will be gone)
+        $this->logChange($addressBookId, $person_id, 'deleted', $cardUri);
         
         // Delete the post (move to trash)
         $result = wp_trash_post($person_id);
@@ -446,7 +449,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
             ]);
             
             foreach ($persons as $person) {
-                $result['added'][] = $person->ID . '.vcf';
+                $result['added'][] = $this->getUriForPerson($person->ID);
             }
             
             error_log("CardDAV: Initial sync returning " . count($result['added']) . " contacts");
@@ -467,7 +470,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
             }
             
             if ($change['timestamp'] > $token_timestamp) {
-                $uri = $person_id . '.vcf';
+                // Use stored URI if available (especially important for deleted cards)
+                $uri = $change['uri'] ?? $this->getUriForPerson($person_id);
                 
                 switch ($change['type']) {
                     case 'added':
@@ -540,16 +544,20 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      * @param string $type Change type (added, modified, deleted)
      * @return void
      */
-    private function logChange($addressBookId, $personId, $type) {
+    private function logChange($addressBookId, $personId, $type, $uri = null) {
         $changes = get_option(self::CHANGE_LOG_OPTION, []);
         
         if (!isset($changes[$addressBookId])) {
             $changes[$addressBookId] = [];
         }
         
+        // Store the URI for deleted cards (since the post won't exist later)
+        $stored_uri = $uri ?: $this->getUriForPerson($personId);
+        
         $changes[$addressBookId][$personId] = [
             'type' => $type,
             'timestamp' => time(),
+            'uri' => $stored_uri,
         ];
         
         update_option(self::CHANGE_LOG_OPTION, $changes);
@@ -600,11 +608,47 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      * @param string $cardUri Card URI (e.g., '123.vcf')
      * @return int|null Person ID or null
      */
+    /**
+     * Get person ID from card URI
+     * 
+     * Supports both numeric URIs (123.vcf) and custom client URIs (stored in meta)
+     *
+     * @param string $cardUri Card URI
+     * @return int|null Person ID or null if not found
+     */
     private function getPersonIdFromUri($cardUri) {
+        // First try numeric format (123.vcf)
         if (preg_match('/^(\d+)\.vcf$/', $cardUri, $matches)) {
             return (int) $matches[1];
         }
+        
+        // Try looking up by stored URI in post meta
+        $posts = get_posts([
+            'post_type' => 'person',
+            'posts_per_page' => 1,
+            'post_status' => 'publish',
+            'meta_key' => '_carddav_uri',
+            'meta_value' => $cardUri,
+        ]);
+        
+        if (!empty($posts)) {
+            return $posts[0]->ID;
+        }
+        
         return null;
+    }
+    
+    /**
+     * Get the URI for a person
+     * 
+     * Returns stored custom URI if available, otherwise uses post ID
+     *
+     * @param int $person_id Person post ID
+     * @return string Card URI
+     */
+    private function getUriForPerson($person_id) {
+        $stored_uri = get_post_meta($person_id, '_carddav_uri', true);
+        return $stored_uri ?: $person_id . '.vcf';
     }
 }
 
