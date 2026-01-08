@@ -32,26 +32,43 @@ class AuthBackend extends AbstractBasic {
      * @return bool True if valid
      */
     protected function validateUserPass($username, $password) {
-        // Use wp_authenticate which handles both regular and application passwords
-        $user = wp_authenticate($username, $password);
+        // Get the user by login
+        $user = get_user_by('login', $username);
         
-        if (is_wp_error($user)) {
-            error_log('CardDAV Auth Failed for user: ' . $username . ' - ' . $user->get_error_message());
+        if (!$user) {
+            error_log('CardDAV Auth Failed: User not found - ' . $username);
             return false;
         }
         
-        if (!$user || !($user instanceof \WP_User)) {
-            error_log('CardDAV Auth Failed for user: ' . $username . ' - Invalid user object');
+        // Normalize the password (remove spaces that WordPress adds for display)
+        $password = preg_replace('/\s+/', '', $password);
+        
+        // Get the user's application passwords
+        $app_passwords = \WP_Application_Passwords::get_user_application_passwords($user->ID);
+        
+        if (empty($app_passwords)) {
+            error_log('CardDAV Auth Failed for user: ' . $username . ' - No application passwords found');
             return false;
         }
         
-        // Store the authenticated user for later use
-        $this->current_user = $user;
+        // Check each application password
+        foreach ($app_passwords as $app_password) {
+            if (wp_check_password($password, $app_password['password'], $user->ID)) {
+                // Store the authenticated user for later use
+                $this->current_user = $user;
+                
+                // Set WordPress current user
+                wp_set_current_user($user->ID);
+                
+                // Record the usage (optional but good for tracking)
+                \WP_Application_Passwords::record_application_password_usage($user->ID, $app_password['uuid']);
+                
+                return true;
+            }
+        }
         
-        // Set WordPress current user
-        wp_set_current_user($user->ID);
-        
-        return true;
+        error_log('CardDAV Auth Failed for user: ' . $username . ' - Invalid application password');
+        return false;
     }
     
     /**
