@@ -61,8 +61,12 @@ class PRM_CardDAV_Server {
             return;
         }
         
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN';
+        error_log("CardDAV Server: {$method} request to {$request_uri}");
+        
         // Check if Composer autoloader is available
         if (!class_exists('Sabre\DAV\Server')) {
+            error_log("CardDAV Server: Sabre\DAV\Server not available");
             http_response_code(500);
             echo 'CardDAV server not available. Please run composer install.';
             exit;
@@ -73,31 +77,38 @@ class PRM_CardDAV_Server {
         require_once PRM_PLUGIN_DIR . '/carddav/class-principal-backend.php';
         require_once PRM_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
         
-        // Create backends
-        $authBackend = new \Caelis\CardDAV\AuthBackend();
-        $principalBackend = new \Caelis\CardDAV\PrincipalBackend();
-        $carddavBackend = new \Caelis\CardDAV\CardDAVBackend();
-        
-        // Create directory tree
-        $tree = [
-            new \Sabre\DAVACL\PrincipalCollection($principalBackend),
-            new \Sabre\CardDAV\AddressBookRoot($principalBackend, $carddavBackend),
-        ];
-        
-        // Create server
-        $server = new \Sabre\DAV\Server($tree);
-        $server->setBaseUri(self::BASE_URI);
-        
-        // Add plugins
-        $server->addPlugin(new \Sabre\DAV\Auth\Plugin($authBackend, 'Caelis'));
-        $server->addPlugin(new \Sabre\DAV\Browser\Plugin());
-        $server->addPlugin(new \Sabre\CardDAV\Plugin());
-        $server->addPlugin(new \Sabre\DAVACL\Plugin());
-        $server->addPlugin(new \Sabre\DAV\Sync\Plugin());
-        $server->addPlugin(new \Sabre\CardDAV\VCFExportPlugin());
-        
-        // Run the server
-        $server->exec();
+        try {
+            // Create backends
+            $authBackend = new \Caelis\CardDAV\AuthBackend();
+            $principalBackend = new \Caelis\CardDAV\PrincipalBackend();
+            $carddavBackend = new \Caelis\CardDAV\CardDAVBackend();
+            
+            // Create directory tree
+            $tree = [
+                new \Sabre\DAVACL\PrincipalCollection($principalBackend),
+                new \Sabre\CardDAV\AddressBookRoot($principalBackend, $carddavBackend),
+            ];
+            
+            // Create server
+            $server = new \Sabre\DAV\Server($tree);
+            $server->setBaseUri(self::BASE_URI);
+            
+            // Add plugins
+            $server->addPlugin(new \Sabre\DAV\Auth\Plugin($authBackend, 'Caelis'));
+            $server->addPlugin(new \Sabre\DAV\Browser\Plugin());
+            $server->addPlugin(new \Sabre\CardDAV\Plugin());
+            $server->addPlugin(new \Sabre\DAVACL\Plugin());
+            $server->addPlugin(new \Sabre\DAV\Sync\Plugin());
+            $server->addPlugin(new \Sabre\CardDAV\VCFExportPlugin());
+            
+            // Run the server
+            $server->exec();
+        } catch (\Exception $e) {
+            error_log("CardDAV Server Exception: " . $e->getMessage());
+            error_log("CardDAV Server Stack trace: " . $e->getTraceAsString());
+            http_response_code(500);
+            echo 'CardDAV server error: ' . $e->getMessage();
+        }
         exit;
     }
     
