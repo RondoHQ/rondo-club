@@ -171,11 +171,13 @@ If you're less than 95% sure about the changes you're going to make: *ASK QUESTI
 * For architectural decisions
 * When you have unclear requirements
 * When there are trade-offs between options
+* Before making big architectural changes
 
 *How you should ask:*
 * ⁠Present up to 3 options with pros and cons
 * Select your recommended option and tell me why
 * Wait for approval before implementing
+* When making big architectural changes, explain what you're going to do and ask for confirmation.
 
 ### Rule 5: Self testing
 

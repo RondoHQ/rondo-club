@@ -8,14 +8,14 @@ CardDAV is an address book client/server protocol designed to allow users to acc
 
 ## Setting Up CardDAV Sync
 
-### Step 1: Create a CardDAV Password
+### Step 1: Create an App Password
 
-For security reasons, CardDAV uses separate passwords instead of your main account password.
+For security reasons, CardDAV uses WordPress Application Passwords instead of your main account password.
 
 1. Log in to Caelis
 2. Go to **Settings**
 3. Find the **CardDAV Sync** section
-4. Enter a name for your password (e.g., "iPhone Contacts")
+4. Enter a name for your app password (e.g., "iPhone Contacts")
 5. Click **Create Password**
 6. **Copy the generated password immediately** - it will only be shown once
 
@@ -90,7 +90,7 @@ In the CardDAV Sync section of Settings, you'll find:
 
 - **Method**: HTTP Basic Authentication
 - **Username**: Your Caelis username
-- **Password**: A CardDAV password created in Settings (not your main account password)
+- **Password**: A WordPress Application Password (not your main account password)
 
 ### Sync Features
 
@@ -119,19 +119,19 @@ The following contact fields are synced:
 
 ## Security Best Practices
 
-1. **Use unique passwords**: Create a separate CardDAV password for each device
-2. **Revoke unused passwords**: Remove passwords for devices you no longer use
+1. **Use unique app passwords**: Create a separate app password for each device
+2. **Revoke unused passwords**: Remove app passwords for devices you no longer use
 3. **Use HTTPS**: CardDAV connections should always use HTTPS (enforced by default)
-4. **Monitor usage**: Check the "Last used" date to identify inactive passwords
+4. **Monitor usage**: Check the "Last used" date to identify inactive app passwords
 
 ## Troubleshooting
 
 ### "Authentication failed"
 
-- Verify you're using a CardDAV password from Settings, not your main account password
+- Verify you're using an app password from Settings, not your main account password
 - Check that the username matches your Caelis username exactly (case-sensitive)
 - Ensure the server URL is correct and includes the full path
-- Try creating a new CardDAV password if you've recently set up the sync
+- WordPress 6.8+ uses BLAKE2b hashing for app passwords - ensure your site is updated
 
 ### "Connection refused" or "Server not found"
 
@@ -154,7 +154,7 @@ The following contact fields are synced:
 
 The CardDAV server uses [sabre/dav](https://sabre.io/dav/), a popular open-source WebDAV/CardDAV/CalDAV library. Key components:
 
-- **Authentication**: Custom CardDAV passwords stored with standard WordPress phpass hashing
+- **Authentication**: WordPress Application Passwords verified via `wp_verify_fast_hash()` (WordPress 6.8+ BLAKE2b) with fallback to `wp_check_password()` for older versions
 - **Principal Backend**: Maps WordPress users to DAV principals
 - **CardDAV Backend**: CRUD operations on Person custom post type
 - **Sync Support**: Change tracking with sync tokens for efficient updates
