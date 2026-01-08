@@ -173,4 +173,12 @@ export const prmApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  
+  // Application Passwords
+  getAppPasswords: (userId) => api.get(`/wp/v2/users/${userId}/application-passwords`),
+  createAppPassword: (userId, name) => api.post(`/wp/v2/users/${userId}/application-passwords`, { name, app_id: 'caelis-carddav' }),
+  deleteAppPassword: (userId, uuid) => api.delete(`/wp/v2/users/${userId}/application-passwords/${uuid}`),
+  
+  // CardDAV URLs
+  getCardDAVUrls: () => api.get('/prm/v1/carddav/urls'),
 };

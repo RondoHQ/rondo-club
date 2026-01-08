@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.25.0] - 2026-01-08
+
+### Added
+- CardDAV server for bidirectional contact sync with Apple Contacts, Android (DAVx5), Thunderbird, and other CardDAV clients
+- App Passwords management UI in Settings for secure CardDAV authentication
+- PHP vCard export class for server-side vCard generation
+- Sabre/DAV integration with custom backends for authentication, principals, and contacts
+- Sync token support for efficient incremental synchronization
+- CardDAV documentation with setup guides for all major platforms
+- Composer dependency management with sabre/dav 4.7.0
+
+### Technical Details
+- CardDAV endpoint at `/carddav/` with full RFC 6352 compliance
+- Uses WordPress native Application Passwords for authentication
+- Sync tokens track changes per-user for efficient delta sync
+- Respects existing access control (users only see their own contacts)
+
 ## [1.24.8] - 2026-01-07
 
 ### Changed
