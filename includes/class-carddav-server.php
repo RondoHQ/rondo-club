@@ -101,6 +101,24 @@ class PRM_CardDAV_Server {
             $server->addPlugin(new \Sabre\DAV\Sync\Plugin());
             $server->addPlugin(new \Sabre\CardDAV\VCFExportPlugin());
             
+            // Add event listener to log responses
+            $server->on('afterMethod:*', function($request, $response) {
+                $status = $response->getStatus();
+                $uri = $request->getPath();
+                $method = $request->getMethod();
+                error_log("CardDAV Server Response: {$method} {$uri} -> HTTP {$status}");
+                
+                // Log response body for PROPFIND (truncated)
+                if ($method === 'PROPFIND' && $status >= 200 && $status < 300) {
+                    $body = $response->getBodyAsString();
+                    if (strlen($body) > 500) {
+                        error_log("CardDAV Response body (truncated): " . substr($body, 0, 500) . "...");
+                    } else {
+                        error_log("CardDAV Response body: " . $body);
+                    }
+                }
+            });
+            
             // Run the server
             $server->exec();
         } catch (\Exception $e) {
