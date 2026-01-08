@@ -51,6 +51,13 @@ class PRM_Comment_Types {
             'show_in_rest' => true,
         ]);
         
+        register_comment_meta('comment', 'activity_time', [
+            'type'         => 'string',
+            'description'  => 'Time of the activity',
+            'single'       => true,
+            'show_in_rest' => true,
+        ]);
+        
         register_comment_meta('comment', 'participants', [
             'type'         => 'array',
             'description'  => 'IDs of other people involved',
@@ -323,6 +330,7 @@ class PRM_Comment_Types {
         $content = sanitize_textarea_field($request->get_param('content'));
         $activity_type = sanitize_text_field($request->get_param('activity_type'));
         $activity_date = sanitize_text_field($request->get_param('activity_date'));
+        $activity_time = sanitize_text_field($request->get_param('activity_time'));
         $participants = $request->get_param('participants') ?: [];
         
         if (empty($content)) {
@@ -348,6 +356,9 @@ class PRM_Comment_Types {
         if ($activity_date) {
             update_comment_meta($comment_id, 'activity_date', $activity_date);
         }
+        if ($activity_time) {
+            update_comment_meta($comment_id, 'activity_time', $activity_time);
+        }
         if (!empty($participants)) {
             update_comment_meta($comment_id, 'participants', array_map('intval', $participants));
         }
@@ -365,6 +376,7 @@ class PRM_Comment_Types {
         $content = sanitize_textarea_field($request->get_param('content'));
         $activity_type = sanitize_text_field($request->get_param('activity_type'));
         $activity_date = sanitize_text_field($request->get_param('activity_date'));
+        $activity_time = sanitize_text_field($request->get_param('activity_time'));
         $participants = $request->get_param('participants');
         
         $result = wp_update_comment([
@@ -378,6 +390,9 @@ class PRM_Comment_Types {
         }
         if ($activity_date !== null) {
             update_comment_meta($comment_id, 'activity_date', $activity_date);
+        }
+        if ($activity_time !== null) {
+            update_comment_meta($comment_id, 'activity_time', $activity_time);
         }
         if ($participants !== null) {
             update_comment_meta($comment_id, 'participants', array_map('intval', $participants));
@@ -548,6 +563,7 @@ class PRM_Comment_Types {
         if ($type === 'activity') {
             $data['activity_type'] = get_comment_meta($comment->comment_ID, 'activity_type', true);
             $data['activity_date'] = get_comment_meta($comment->comment_ID, 'activity_date', true);
+            $data['activity_time'] = get_comment_meta($comment->comment_ID, 'activity_time', true);
             $data['participants'] = get_comment_meta($comment->comment_ID, 'participants', true) ?: [];
         }
         

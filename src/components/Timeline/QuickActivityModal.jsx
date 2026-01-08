@@ -15,6 +15,7 @@ const ACTIVITY_TYPES = [
 export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoading, personId, initialData = null, activity = null }) {
   const [activityType, setActivityType] = useState('call');
   const [activityDate, setActivityDate] = useState('');
+  const [activityTime, setActivityTime] = useState('');
   const [content, setContent] = useState('');
   const [selectedParticipants, setSelectedParticipants] = useState([]);
   const [showParticipantSelect, setShowParticipantSelect] = useState(false);
@@ -27,12 +28,15 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
 
   useEffect(() => {
     if (isOpen) {
-      // Set default date to today
-      const today = new Date().toISOString().split('T')[0];
+      // Set default date to today and current time
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
       
       // If editing an existing activity, use its data
       if (activity) {
         setActivityDate(activity.activity_date || today);
+        setActivityTime(activity.activity_time || '');
         setContent(activity.content || '');
         setSelectedParticipants(activity.participants || []);
         setActivityType(activity.activity_type || 'note');
@@ -40,11 +44,13 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
       // If initial data is provided (e.g., from todo conversion), use it to prefill the form
       else if (initialData) {
         setActivityDate(initialData.activity_date || today);
+        setActivityTime(initialData.activity_time || currentTime);
         setContent(initialData.content || '');
         setSelectedParticipants(initialData.participants || []);
         setActivityType(initialData.activity_type || 'note');
       } else {
         setActivityDate(today);
+        setActivityTime(currentTime);
         setContent('');
         setSelectedParticipants([]);
         setActivityType('call');
@@ -70,6 +76,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
     onSubmit({
       activity_type: activityType,
       activity_date: activityDate || null,
+      activity_time: activityTime || null,
       content: content.trim(),
       participants: selectedParticipants,
     });
@@ -77,12 +84,14 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
     setContent('');
     setSelectedParticipants([]);
     setActivityDate(new Date().toISOString().split('T')[0]);
+    setActivityTime(new Date().toTimeString().slice(0, 5));
   };
 
   const handleClose = () => {
     setContent('');
     setSelectedParticipants([]);
     setActivityDate('');
+    setActivityTime('');
     setShowParticipantSelect(false);
     setParticipantSearch('');
     onClose();
@@ -161,19 +170,34 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
             </div>
           </div>
 
-          {/* Date picker */}
-          <div className="mb-4">
-            <label htmlFor="activity-date" className="block text-sm font-medium text-gray-700 mb-2">
-              Date
-            </label>
-            <input
-              id="activity-date"
-              type="date"
-              value={formatDateForInput(activityDate)}
-              onChange={(e) => setActivityDate(e.target.value || '')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              disabled={isLoading}
-            />
+          {/* Date and time picker */}
+          <div className="mb-4 grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="activity-date" className="block text-sm font-medium text-gray-700 mb-2">
+                Date
+              </label>
+              <input
+                id="activity-date"
+                type="date"
+                value={formatDateForInput(activityDate)}
+                onChange={(e) => setActivityDate(e.target.value || '')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="activity-time" className="block text-sm font-medium text-gray-700 mb-2">
+                Time
+              </label>
+              <input
+                id="activity-time"
+                type="time"
+                value={activityTime}
+                onChange={(e) => setActivityTime(e.target.value || '')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
           {/* Description */}
