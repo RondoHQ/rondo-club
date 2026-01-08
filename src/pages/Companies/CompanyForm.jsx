@@ -151,6 +151,7 @@ export default function CompanyForm() {
     mutationFn: (data) => wpApi.createCompany(data),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       navigate(`/companies/${result.data.id}`);
     },
   });
@@ -161,6 +162,7 @@ export default function CompanyForm() {
       queryClient.invalidateQueries({ queryKey: ['company', id] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       navigate(`/companies/${id}`);
     },
   });

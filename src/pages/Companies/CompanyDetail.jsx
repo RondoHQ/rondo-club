@@ -96,6 +96,7 @@ export default function CompanyDetail() {
     mutationFn: () => wpApi.deleteCompany(id, { force: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       navigate('/companies');
     },
   });

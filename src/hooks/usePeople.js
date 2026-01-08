@@ -120,6 +120,7 @@ export function useCreatePerson() {
     mutationFn: (data) => wpApi.createPerson(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
@@ -132,6 +133,7 @@ export function useUpdatePerson() {
     onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       
       // If relationships were updated, invalidate cache for related people
       if (data?.acf?.relationships) {
@@ -155,6 +157,7 @@ export function useDeletePerson() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: peopleKeys.details() });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
