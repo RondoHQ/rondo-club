@@ -138,6 +138,56 @@ class PRM_User_Roles {
         
         // Mark as unapproved by default
         update_user_meta($user_id, self::APPROVAL_META_KEY, '0');
+        
+        // Notify admins about the new user pending approval
+        $this->notify_admins_of_pending_user($user);
+    }
+    
+    /**
+     * Notify all administrators about a new user pending approval
+     */
+    private function notify_admins_of_pending_user($user) {
+        // Get all users with manage_options capability (administrators)
+        $admins = get_users([
+            'capability' => 'manage_options',
+            'fields'     => ['user_email', 'display_name'],
+        ]);
+        
+        if (empty($admins)) {
+            return;
+        }
+        
+        // Build the email
+        $subject = __('New Caelis user awaiting approval', 'personal-crm');
+        $approval_url = admin_url('users.php');
+        $frontend_approval_url = home_url('/settings/user-approval');
+        
+        $message = sprintf(
+            __('Hello,
+
+A new user has registered for Caelis and is awaiting your approval:
+
+Name: %s
+Email: %s
+Registered: %s
+
+You can approve or deny this user from:
+- WordPress Admin: %s
+- Caelis Settings: %s
+
+Best regards,
+Caelis', 'personal-crm'),
+            $user->display_name ?: $user->user_login,
+            $user->user_email,
+            wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($user->user_registered)),
+            $approval_url,
+            $frontend_approval_url
+        );
+        
+        // Send email to each admin
+        foreach ($admins as $admin) {
+            wp_mail($admin->user_email, $subject, $message);
+        }
     }
     
     /**
