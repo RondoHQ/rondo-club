@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.25.4] - 2026-01-08
+
+### Fixed
+- CardDAV authentication - directly validate against WP_Application_Passwords instead of wp_authenticate() which restricts app passwords to REST/XML-RPC requests
+
 ## [1.25.3] - 2026-01-08
 
 ### Fixed
