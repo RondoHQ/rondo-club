@@ -48,7 +48,25 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
             return [];
         }
         
-        error_log("CardDAV: Returning address book for user ID {$user->ID}");
+        // Get count of contacts for this user
+        wp_set_current_user($user->ID);
+        $contact_count = wp_count_posts('person');
+        $published_count = isset($contact_count->publish) ? $contact_count->publish : 0;
+        
+        // Get user's own contacts count
+        $own_contacts = get_posts([
+            'post_type' => 'person',
+            'posts_per_page' => -1,
+            'post_status' => 'publish',
+            'author' => $user->ID,
+            'fields' => 'ids',
+        ]);
+        $own_count = count($own_contacts);
+        
+        $ctag = $this->getCtag($user->ID);
+        $sync_token = $this->getCurrentSyncToken($user->ID);
+        
+        error_log("CardDAV: Returning address book for user ID {$user->ID} - {$own_count} contacts, ctag: {$ctag}, sync-token: {$sync_token}");
         
         // Each user has one address book containing their contacts
         return [
@@ -58,8 +76,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
                 'principaluri' => $principalUri,
                 '{DAV:}displayname' => 'Caelis Contacts',
                 '{' . Plugin::NS_CARDDAV . '}addressbook-description' => 'Contacts from Caelis CRM',
-                '{http://calendarserver.org/ns/}getctag' => $this->getCtag($user->ID),
-                '{http://sabredav.org/ns}sync-token' => $this->getCurrentSyncToken($user->ID),
+                '{http://calendarserver.org/ns/}getctag' => $ctag,
+                '{http://sabredav.org/ns}sync-token' => $sync_token,
             ],
         ];
     }
