@@ -32,8 +32,8 @@ class AuthBackend extends AbstractBasic {
      * @return bool True if valid
      */
     protected function validateUserPass($username, $password) {
-        // Try to authenticate using WordPress Application Passwords
-        $user = wp_authenticate_application_password(null, $username, $password);
+        // Use wp_authenticate which handles both regular and application passwords
+        $user = wp_authenticate($username, $password);
         
         if (is_wp_error($user)) {
             error_log('CardDAV Auth Failed for user: ' . $username . ' - ' . $user->get_error_message());
