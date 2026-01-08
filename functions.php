@@ -69,6 +69,8 @@ function prm_autoloader($class_name) {
         'PRM_Notification_Channel'   => 'class-notification-channels.php',
         'PRM_Email_Channel'          => 'class-notification-channels.php',
         'PRM_Slack_Channel'          => 'class-notification-channels.php',
+        'PRM_VCard_Export'           => 'class-vcard-export.php',
+        'PRM_CardDAV_Server'         => 'class-carddav-server.php',
     ];
     
     if (isset($class_map[$class_name])) {
@@ -76,6 +78,14 @@ function prm_autoloader($class_name) {
     }
 }
 spl_autoload_register('prm_autoloader');
+
+/**
+ * Check if current request is a CardDAV request
+ */
+function prm_is_carddav_request() {
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    return strpos($request_uri, '/carddav') === 0;
+}
 
 /**
  * Check if current request is a REST API request
@@ -127,6 +137,13 @@ function prm_init() {
         return; // iCal requests don't need other functionality
     }
     
+    // CardDAV server - only load for CardDAV requests
+    if (prm_is_carddav_request()) {
+        new PRM_CardDAV_Server();
+        $initialized = true;
+        return; // CardDAV requests don't need other functionality
+    }
+    
     // Skip loading heavy classes for non-relevant requests
     $is_admin = is_admin();
     $is_rest = prm_is_rest_request();
@@ -156,6 +173,11 @@ function prm_init() {
     // but we check for its specific request above for early return optimization
     if (!prm_is_ical_request()) {
         new PRM_ICal_Feed();
+    }
+    
+    // CardDAV server - initialize for rewrite rule registration
+    if (!prm_is_carddav_request()) {
+        new PRM_CardDAV_Server();
     }
     
     $initialized = true;
@@ -277,12 +299,14 @@ add_action('wp_enqueue_scripts', 'prm_theme_enqueue_assets');
  * Get JavaScript configuration
  */
 function prm_get_js_config() {
+    $user = wp_get_current_user();
     return [
         'apiUrl'      => rest_url(),
         'nonce'       => wp_create_nonce('wp_rest'),
         'siteUrl'     => home_url(),
         'siteName'    => get_bloginfo('name'),
         'userId'      => get_current_user_id(),
+        'userLogin'   => $user ? $user->user_login : '',
         'isLoggedIn'  => is_user_logged_in(),
         'isAdmin'     => current_user_can('manage_options'),
         'loginUrl'    => wp_login_url(),
@@ -458,6 +482,10 @@ function prm_theme_activation() {
     
     // Also handle theme-specific rewrite rules
     prm_theme_rewrite_rules();
+    
+    // Initialize CardDAV server rewrite rules
+    $carddav = new PRM_CardDAV_Server();
+    $carddav->register_rewrite_rules();
 }
 add_action('after_switch_theme', 'prm_theme_activation');
 
@@ -756,9 +784,11 @@ add_filter('login_redirect', 'prm_login_redirect', 10, 3);
 remove_action('admin_color_scheme_picker', 'admin_color_scheme_picker');
 
 /**
- * Disable application passwords for security
+ * Load Composer autoloader for CardDAV support
  */
-add_filter('wp_is_application_passwords_available', '__return_false');
+if (file_exists(PRM_THEME_DIR . '/vendor/autoload.php')) {
+    require_once PRM_THEME_DIR . '/vendor/autoload.php';
+}
 
 /**
  * Modify registration confirmation message to include approval notice

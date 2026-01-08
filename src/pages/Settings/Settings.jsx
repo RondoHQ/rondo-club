@@ -7,12 +7,22 @@ import { prmApi } from '@/api/client';
 export default function Settings() {
   const config = window.prmConfig || {};
   const isAdmin = config.isAdmin || false;
+  const userId = config.userId;
   
   const [icalUrl, setIcalUrl] = useState('');
   const [webcalUrl, setWebcalUrl] = useState('');
   const [icalLoading, setIcalLoading] = useState(true);
   const [icalCopied, setIcalCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  
+  // App Passwords state
+  const [appPasswords, setAppPasswords] = useState([]);
+  const [appPasswordsLoading, setAppPasswordsLoading] = useState(true);
+  const [newPasswordName, setNewPasswordName] = useState('');
+  const [creatingPassword, setCreatingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState(null);
+  const [passwordCopied, setPasswordCopied] = useState(false);
+  const [carddavUrls, setCarddavUrls] = useState(null);
   
   // Notification channels state
   const [notificationChannels, setNotificationChannels] = useState([]);
@@ -55,6 +65,27 @@ export default function Settings() {
     };
     fetchIcalUrl();
   }, []);
+  
+  // Fetch App Passwords and CardDAV URLs on mount
+  useEffect(() => {
+    const fetchAppPasswords = async () => {
+      try {
+        const [passwordsResponse, urlsResponse] = await Promise.all([
+          prmApi.getAppPasswords(userId),
+          prmApi.getCardDAVUrls(),
+        ]);
+        setAppPasswords(passwordsResponse.data || []);
+        setCarddavUrls(urlsResponse.data);
+      } catch (error) {
+        console.error('Failed to fetch app passwords:', error);
+      } finally {
+        setAppPasswordsLoading(false);
+      }
+    };
+    if (userId) {
+      fetchAppPasswords();
+    }
+  }, [userId]);
   
   // Fetch Slack channels, users, and targets
   const fetchSlackData = async () => {
@@ -202,6 +233,66 @@ export default function Settings() {
     } catch (error) {
       console.error('Failed to copy:', error);
     }
+  };
+  
+  const handleCreateAppPassword = async (e) => {
+    e.preventDefault();
+    if (!newPasswordName.trim()) return;
+    
+    setCreatingPassword(true);
+    try {
+      const response = await prmApi.createAppPassword(userId, newPasswordName.trim());
+      setNewPassword(response.data.password);
+      setAppPasswords([...appPasswords, response.data]);
+      setNewPasswordName('');
+    } catch (error) {
+      console.error('Failed to create app password:', error);
+      alert(error.response?.data?.message || 'Failed to create app password');
+    } finally {
+      setCreatingPassword(false);
+    }
+  };
+  
+  const handleDeleteAppPassword = async (uuid, name) => {
+    if (!confirm(`Are you sure you want to revoke the app password "${name}"? Any devices using this password will no longer be able to sync.`)) {
+      return;
+    }
+    
+    try {
+      await prmApi.deleteAppPassword(userId, uuid);
+      setAppPasswords(appPasswords.filter(p => p.uuid !== uuid));
+    } catch (error) {
+      console.error('Failed to delete app password:', error);
+      alert(error.response?.data?.message || 'Failed to revoke app password');
+    }
+  };
+  
+  const copyNewPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(newPassword);
+      setPasswordCopied(true);
+      setTimeout(() => setPasswordCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+  
+  const copyCarddavUrl = async (url) => {
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+  
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Never';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
   };
   
   const regenerateIcalToken = async () => {
@@ -411,6 +502,153 @@ export default function Settings() {
               Keep this URL private. Anyone with access to it can see your important dates.
               If you think it has been compromised, click "Regenerate URL" to get a new one.
             </p>
+          </div>
+        )}
+      </div>
+      
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4">CardDAV Sync</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Sync your contacts with apps like Apple Contacts, Android Contacts, or Thunderbird using CardDAV.
+        </p>
+        
+        {appPasswordsLoading ? (
+          <div className="animate-pulse">
+            <div className="h-10 bg-gray-200 rounded mb-3"></div>
+            <div className="h-24 bg-gray-200 rounded"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* CardDAV URLs */}
+            {carddavUrls && (
+              <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+                <h3 className="font-medium text-sm">Connection Details</h3>
+                <div>
+                  <label className="text-xs text-gray-500">Server URL (for most apps)</label>
+                  <div className="flex gap-2 mt-1">
+                    <input
+                      type="text"
+                      readOnly
+                      value={carddavUrls.addressbook}
+                      className="input flex-1 text-xs font-mono bg-white"
+                      onClick={(e) => e.target.select()}
+                    />
+                    <button
+                      onClick={() => copyCarddavUrl(carddavUrls.addressbook)}
+                      className="btn-secondary text-xs px-2"
+                      title="Copy URL"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Username</label>
+                  <div className="flex gap-2 mt-1">
+                    <input
+                      type="text"
+                      readOnly
+                      value={config.userLogin || ''}
+                      className="input flex-1 text-xs font-mono bg-white"
+                      onClick={(e) => e.target.select()}
+                    />
+                    <button
+                      onClick={() => copyCarddavUrl(config.userLogin)}
+                      className="btn-secondary text-xs px-2"
+                      title="Copy username"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Use one of the app passwords below instead of your regular password.
+                </p>
+              </div>
+            )}
+            
+            {/* New password form */}
+            <form onSubmit={handleCreateAppPassword} className="flex gap-2">
+              <input
+                type="text"
+                value={newPasswordName}
+                onChange={(e) => setNewPasswordName(e.target.value)}
+                placeholder="Password name (e.g., iPhone Contacts)"
+                className="input flex-1"
+                disabled={creatingPassword}
+              />
+              <button
+                type="submit"
+                disabled={creatingPassword || !newPasswordName.trim()}
+                className="btn-primary whitespace-nowrap"
+              >
+                {creatingPassword ? 'Creating...' : 'Create Password'}
+              </button>
+            </form>
+            
+            {/* Newly created password */}
+            {newPassword && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800 font-medium mb-2">
+                  Your new app password (copy it now, it won&apos;t be shown again):
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={newPassword}
+                    className="input flex-1 font-mono text-sm bg-white"
+                    onClick={(e) => e.target.select()}
+                  />
+                  <button
+                    onClick={copyNewPassword}
+                    className="btn-primary whitespace-nowrap"
+                  >
+                    {passwordCopied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <button
+                  onClick={() => setNewPassword(null)}
+                  className="text-xs text-green-700 mt-2 hover:underline"
+                >
+                  I&apos;ve saved this password, hide it
+                </button>
+              </div>
+            )}
+            
+            {/* Existing passwords */}
+            {appPasswords.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Your App Passwords</h3>
+                <div className="space-y-2">
+                  {appPasswords.map((password) => (
+                    <div
+                      key={password.uuid}
+                      className="flex items-center justify-between p-3 rounded-lg border border-gray-200"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">{password.name}</p>
+                        <p className="text-xs text-gray-500">
+                          Created {formatDate(password.created)} · Last used {formatDate(password.last_used)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteAppPassword(password.uuid, password.name)}
+                        className="text-red-600 hover:text-red-700 text-sm font-medium"
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {appPasswords.length === 0 && !newPassword && (
+              <p className="text-sm text-gray-500">
+                No app passwords yet. Create one to start syncing your contacts.
+              </p>
+            )}
           </div>
         )}
       </div>

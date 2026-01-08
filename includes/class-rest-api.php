@@ -401,6 +401,13 @@ class PRM_REST_API {
             'callback'            => [$this, 'export_google_csv'],
             'permission_callback' => 'is_user_logged_in',
         ]);
+        
+        // CardDAV URLs
+        register_rest_route('prm/v1', '/carddav/urls', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_carddav_urls'],
+            'permission_callback' => 'is_user_logged_in',
+        ]);
     }
     
     /**
@@ -2752,6 +2759,30 @@ class PRM_REST_API {
         return rest_ensure_response([
             'success' => true,
             'targets' => $targets,
+        ]);
+    }
+    
+    /**
+     * Get CardDAV URLs for the current user
+     */
+    public function get_carddav_urls($request) {
+        $user = wp_get_current_user();
+        
+        if (!$user || !$user->ID) {
+            return new WP_Error(
+                'not_logged_in',
+                __('You must be logged in.', 'personal-crm'),
+                ['status' => 401]
+            );
+        }
+        
+        $base_url = home_url('/carddav/');
+        
+        return rest_ensure_response([
+            'server' => $base_url,
+            'principal' => $base_url . 'principals/' . $user->user_login . '/',
+            'addressbook' => $base_url . 'addressbooks/' . $user->user_login . '/contacts/',
+            'username' => $user->user_login,
         ]);
     }
 }
