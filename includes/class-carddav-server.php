@@ -101,18 +101,37 @@ class PRM_CardDAV_Server {
             $server->addPlugin(new \Sabre\DAV\Sync\Plugin());
             $server->addPlugin(new \Sabre\CardDAV\VCFExportPlugin());
             
-            // Add event listener to log responses
+            // Add event listener to log requests and responses
+            $server->on('beforeMethod:*', function($request) {
+                $method = $request->getMethod();
+                $uri = $request->getPath();
+                $depth = $request->getHeader('Depth') ?? 'not set';
+                error_log("CardDAV Request: {$method} {$uri} (Depth: {$depth})");
+                
+                // Log request body for PROPFIND/REPORT
+                if (in_array($method, ['PROPFIND', 'REPORT'])) {
+                    $body = $request->getBodyAsString();
+                    if ($body) {
+                        error_log("CardDAV Request body: " . substr($body, 0, 1000));
+                    }
+                    // Reset body stream for actual processing
+                    $request->setBody($body);
+                }
+            });
+            
             $server->on('afterMethod:*', function($request, $response) {
                 $status = $response->getStatus();
                 $uri = $request->getPath();
                 $method = $request->getMethod();
-                error_log("CardDAV Server Response: {$method} {$uri} -> HTTP {$status}");
+                error_log("CardDAV Response: {$method} {$uri} -> HTTP {$status}");
                 
-                // Log response body for PROPFIND (truncated)
+                // Log full response body for PROPFIND to see sync-token support
                 if ($method === 'PROPFIND' && $status >= 200 && $status < 300) {
                     $body = $response->getBodyAsString();
-                    if (strlen($body) > 500) {
-                        error_log("CardDAV Response body (truncated): " . substr($body, 0, 500) . "...");
+                    // Log in chunks if too large
+                    if (strlen($body) > 2000) {
+                        error_log("CardDAV Response body part 1: " . substr($body, 0, 2000));
+                        error_log("CardDAV Response body part 2: " . substr($body, 2000, 2000));
                     } else {
                         error_log("CardDAV Response body: " . $body);
                     }
