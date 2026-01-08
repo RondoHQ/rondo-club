@@ -2,8 +2,8 @@
 /**
  * CardDAV Authentication Backend
  * 
- * Uses custom CardDAV passwords stored with standard WordPress hashing.
- * This bypasses SiteGround's custom $generic$ password format.
+ * Uses WordPress Application Passwords for authentication.
+ * WordPress 6.8+ uses BLAKE2b hashing ($generic$ prefix) for app passwords.
  * 
  * @package Caelis
  */
@@ -19,11 +19,6 @@ if (!defined('ABSPATH')) {
 class AuthBackend extends AbstractBasic {
     
     /**
-     * User meta key for CardDAV passwords
-     */
-    const META_KEY = '_caelis_carddav_passwords';
-    
-    /**
      * Current authenticated user
      *
      * @var \WP_User|null
@@ -31,10 +26,10 @@ class AuthBackend extends AbstractBasic {
     protected $current_user = null;
     
     /**
-     * Validate user credentials against CardDAV passwords
+     * Validate user credentials against WordPress Application Passwords
      *
      * @param string $username Username
-     * @param string $password CardDAV password
+     * @param string $password Application password
      * @return bool True if valid
      */
     protected function validateUserPass($username, $password) {
@@ -46,138 +41,56 @@ class AuthBackend extends AbstractBasic {
             return false;
         }
         
-        // Normalize the password (remove spaces)
+        // Normalize the password (remove spaces that WordPress adds for display)
         $password = preg_replace('/\s+/', '', $password);
         
-        // Get the user's CardDAV passwords
-        $carddav_passwords = self::get_passwords($user->ID);
+        // Get the user's application passwords
+        $app_passwords = \WP_Application_Passwords::get_user_application_passwords($user->ID);
         
-        if (empty($carddav_passwords)) {
-            error_log('CardDAV Auth Failed for user: ' . $username . ' - No CardDAV passwords found');
+        if (empty($app_passwords)) {
+            error_log('CardDAV Auth Failed for user: ' . $username . ' - No application passwords found');
             return false;
         }
         
-        // Check each CardDAV password
-        foreach ($carddav_passwords as $uuid => $stored_password) {
-            // Use standard WordPress password check (phpass)
-            if (wp_check_password($password, $stored_password['hash'])) {
-                // Store the authenticated user for later use
-                $this->current_user = $user;
-                
-                // Set WordPress current user
-                wp_set_current_user($user->ID);
-                
-                // Record the usage
-                self::record_usage($user->ID, $uuid);
-                
-                error_log('CardDAV Auth: Success for user ' . $username . ' with password "' . $stored_password['name'] . '"');
-                return true;
+        // Check each application password using wp_verify_fast_hash (WordPress 6.8+)
+        foreach ($app_passwords as $app_password) {
+            // WordPress 6.8+ uses wp_verify_fast_hash for application passwords
+            // It handles both $generic$ (BLAKE2b) and legacy $P$ (phpass) hashes
+            if (function_exists('wp_verify_fast_hash')) {
+                if (wp_verify_fast_hash($password, $app_password['password'])) {
+                    return $this->authenticate_user($user, $app_password);
+                }
+            } else {
+                // Fallback for WordPress < 6.8
+                if (wp_check_password($password, $app_password['password'], $user->ID)) {
+                    return $this->authenticate_user($user, $app_password);
+                }
             }
         }
         
-        error_log('CardDAV Auth Failed for user: ' . $username . ' - Invalid password');
+        error_log('CardDAV Auth Failed for user: ' . $username . ' - Invalid application password');
         return false;
     }
     
     /**
-     * Get all CardDAV passwords for a user
+     * Complete authentication for a user
      *
-     * @param int $user_id User ID
-     * @return array Array of passwords
+     * @param \WP_User $user The user object
+     * @param array $app_password The matched application password
+     * @return bool True on success
      */
-    public static function get_passwords($user_id) {
-        $passwords = get_user_meta($user_id, self::META_KEY, true);
-        return is_array($passwords) ? $passwords : [];
-    }
-    
-    /**
-     * Create a new CardDAV password
-     *
-     * @param int    $user_id User ID
-     * @param string $name    Password name/label
-     * @return array Array with 'password' (plaintext) and 'uuid'
-     */
-    public static function create_password($user_id, $name) {
-        // Generate a random 24-character password (same as WordPress app passwords)
-        $password = wp_generate_password(24, false);
+    private function authenticate_user($user, $app_password) {
+        // Store the authenticated user for later use
+        $this->current_user = $user;
         
-        // Hash using standard WordPress phpass (will produce $P$ hash)
-        $hash = wp_hash_password($password);
+        // Set WordPress current user
+        wp_set_current_user($user->ID);
         
-        // Generate a UUID for this password
-        $uuid = wp_generate_uuid4();
+        // Record the usage
+        \WP_Application_Passwords::record_application_password_usage($user->ID, $app_password['uuid']);
         
-        // Get existing passwords
-        $passwords = self::get_passwords($user_id);
-        
-        // Add new password
-        $passwords[$uuid] = [
-            'name'      => sanitize_text_field($name),
-            'hash'      => $hash,
-            'created'   => time(),
-            'last_used' => null,
-            'last_ip'   => null,
-        ];
-        
-        // Save
-        update_user_meta($user_id, self::META_KEY, $passwords);
-        
-        // Return the plaintext password (only shown once) and UUID
-        return [
-            'password' => self::chunk_password($password),
-            'uuid'     => $uuid,
-            'name'     => $name,
-            'created'  => $passwords[$uuid]['created'],
-        ];
-    }
-    
-    /**
-     * Delete a CardDAV password
-     *
-     * @param int    $user_id User ID
-     * @param string $uuid    Password UUID
-     * @return bool True if deleted
-     */
-    public static function delete_password($user_id, $uuid) {
-        $passwords = self::get_passwords($user_id);
-        
-        if (!isset($passwords[$uuid])) {
-            return false;
-        }
-        
-        unset($passwords[$uuid]);
-        update_user_meta($user_id, self::META_KEY, $passwords);
-        
+        error_log('CardDAV Auth: Success for user ' . $user->user_login . ' with app password "' . $app_password['name'] . '"');
         return true;
-    }
-    
-    /**
-     * Record password usage
-     *
-     * @param int    $user_id User ID
-     * @param string $uuid    Password UUID
-     */
-    public static function record_usage($user_id, $uuid) {
-        $passwords = self::get_passwords($user_id);
-        
-        if (!isset($passwords[$uuid])) {
-            return;
-        }
-        
-        $passwords[$uuid]['last_used'] = time();
-        $passwords[$uuid]['last_ip'] = $_SERVER['REMOTE_ADDR'] ?? null;
-        
-        update_user_meta($user_id, self::META_KEY, $passwords);
-    }
-    
-    /**
-     * Format password with spaces for display
-     *
-     * @param string $password Raw password
-     * @return string Chunked password
-     */
-    public static function chunk_password($password) {
-        return trim(chunk_split($password, 4, ' '));
     }
     
     /**

@@ -66,24 +66,26 @@ export default function Settings() {
     fetchIcalUrl();
   }, []);
   
-  // Fetch CardDAV Passwords and URLs on mount
+  // Fetch Application Passwords and CardDAV URLs on mount
   useEffect(() => {
-    const fetchCardDAVData = async () => {
+    const fetchAppPasswords = async () => {
       try {
         const [passwordsResponse, urlsResponse] = await Promise.all([
-          prmApi.getCardDAVPasswords(),
+          prmApi.getAppPasswords(userId),
           prmApi.getCardDAVUrls(),
         ]);
         setAppPasswords(passwordsResponse.data || []);
         setCarddavUrls(urlsResponse.data);
       } catch (error) {
-        console.error('Failed to fetch CardDAV data:', error);
+        console.error('Failed to fetch app passwords:', error);
       } finally {
         setAppPasswordsLoading(false);
       }
     };
-    fetchCardDAVData();
-  }, []);
+    if (userId) {
+      fetchAppPasswords();
+    }
+  }, [userId]);
   
   // Fetch Slack channels, users, and targets
   const fetchSlackData = async () => {
@@ -239,29 +241,29 @@ export default function Settings() {
     
     setCreatingPassword(true);
     try {
-      const response = await prmApi.createCardDAVPassword(newPasswordName.trim());
+      const response = await prmApi.createAppPassword(userId, newPasswordName.trim());
       setNewPassword(response.data.password);
       setAppPasswords([...appPasswords, response.data]);
       setNewPasswordName('');
     } catch (error) {
-      console.error('Failed to create CardDAV password:', error);
-      alert(error.response?.data?.message || 'Failed to create password');
+      console.error('Failed to create app password:', error);
+      alert(error.response?.data?.message || 'Failed to create app password');
     } finally {
       setCreatingPassword(false);
     }
   };
   
   const handleDeleteAppPassword = async (uuid, name) => {
-    if (!confirm(`Are you sure you want to revoke the password "${name}"? Any devices using this password will no longer be able to sync.`)) {
+    if (!confirm(`Are you sure you want to revoke the app password "${name}"? Any devices using this password will no longer be able to sync.`)) {
       return;
     }
     
     try {
-      await prmApi.deleteCardDAVPassword(uuid);
+      await prmApi.deleteAppPassword(userId, uuid);
       setAppPasswords(appPasswords.filter(p => p.uuid !== uuid));
     } catch (error) {
-      console.error('Failed to delete CardDAV password:', error);
-      alert(error.response?.data?.message || 'Failed to revoke password');
+      console.error('Failed to delete app password:', error);
+      alert(error.response?.data?.message || 'Failed to revoke app password');
     }
   };
   
