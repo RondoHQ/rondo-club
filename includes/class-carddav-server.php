@@ -23,8 +23,9 @@ class PRM_CardDAV_Server {
      */
     public function __construct() {
         add_action('init', [$this, 'register_rewrite_rules']);
+        // Handle .well-known early (before WordPress routing kicks in)
+        add_action('init', [$this, 'handle_well_known'], 1);
         add_action('template_redirect', [$this, 'handle_request'], 0);
-        add_action('template_redirect', [$this, 'handle_well_known'], 1);
         add_filter('query_vars', [$this, 'add_query_vars']);
     }
     
