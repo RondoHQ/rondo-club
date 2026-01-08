@@ -52,12 +52,20 @@ class AuthBackend extends AbstractBasic {
             return false;
         }
         
+        // Log password details for debugging
+        $password_length = strlen($password);
+        $password_preview = substr($password, 0, 4) . '...' . substr($password, -4);
+        error_log("CardDAV Auth: Checking user {$username}, password length: {$password_length}, preview: {$password_preview}, found " . count($app_passwords) . " app password(s)");
+        
         // Check each application password using wp_verify_fast_hash (WordPress 6.8+)
         foreach ($app_passwords as $app_password) {
+            $hash_prefix = substr($app_password['password'], 0, 10);
+            
             // WordPress 6.8+ uses wp_verify_fast_hash for application passwords
             // It handles both $generic$ (BLAKE2b) and legacy $P$ (phpass) hashes
             if (function_exists('wp_verify_fast_hash')) {
-                if (wp_verify_fast_hash($password, $app_password['password'])) {
+                $result = wp_verify_fast_hash($password, $app_password['password']);
+                if ($result) {
                     return $this->authenticate_user($user, $app_password);
                 }
             } else {
@@ -68,7 +76,7 @@ class AuthBackend extends AbstractBasic {
             }
         }
         
-        error_log('CardDAV Auth Failed for user: ' . $username . ' - Invalid application password');
+        error_log('CardDAV Auth Failed for user: ' . $username . ' - Invalid application password (tried ' . count($app_passwords) . ' passwords)');
         return false;
     }
     

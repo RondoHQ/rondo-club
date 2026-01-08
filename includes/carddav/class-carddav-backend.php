@@ -198,10 +198,13 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      * @return string|null ETag of the new card
      */
     public function createCard($addressBookId, $cardUri, $cardData) {
+        error_log("CardDAV: Creating new card for user {$addressBookId}, URI: {$cardUri}");
+        
         // Parse the vCard data
         $parsed = \PRM_VCard_Export::parse($cardData);
         
         if (empty($parsed['first_name']) && empty($parsed['last_name']) && empty($parsed['full_name'])) {
+            error_log("CardDAV: Create failed - no name found in vCard data");
             return null;
         }
         
@@ -250,6 +253,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         // Log the change for sync
         $this->logChange($addressBookId, $post_id, 'added');
         
+        error_log("CardDAV: Created new person ID {$post_id} - {$first_name} {$last_name}");
+        
         // Return the etag
         $person = get_post($post_id);
         return $this->generateEtag($person);
@@ -266,7 +271,10 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
     public function updateCard($addressBookId, $cardUri, $cardData) {
         $person_id = $this->getPersonIdFromUri($cardUri);
         
+        error_log("CardDAV: Updating card for user {$addressBookId}, URI: {$cardUri}, Person ID: " . ($person_id ?: 'null'));
+        
         if (!$person_id) {
+            error_log("CardDAV: Update failed - could not parse person ID from URI");
             return null;
         }
         
@@ -322,6 +330,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         // Log the change for sync
         $this->logChange($addressBookId, $person_id, 'modified');
         
+        error_log("CardDAV: Updated person ID {$person_id} - {$first_name} {$last_name}");
+        
         // Return new etag
         $person = get_post($person_id);
         return $this->generateEtag($person);
@@ -337,7 +347,10 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
     public function deleteCard($addressBookId, $cardUri) {
         $person_id = $this->getPersonIdFromUri($cardUri);
         
+        error_log("CardDAV: Deleting card for user {$addressBookId}, URI: {$cardUri}, Person ID: " . ($person_id ?: 'null'));
+        
         if (!$person_id) {
+            error_log("CardDAV: Delete failed - could not parse person ID from URI");
             return false;
         }
         
@@ -360,6 +373,12 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         
         // Delete the post (move to trash)
         $result = wp_trash_post($person_id);
+        
+        if ($result !== false) {
+            error_log("CardDAV: Deleted (trashed) person ID {$person_id}");
+        } else {
+            error_log("CardDAV: Delete failed for person ID {$person_id}");
+        }
         
         return $result !== false;
     }
