@@ -245,7 +245,8 @@ class PRM_Comment_Types {
      */
     public function create_note($request) {
         $person_id = $request->get_param('person_id');
-        $content = sanitize_textarea_field($request->get_param('content'));
+        // Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
+        $content = wp_kses_post($request->get_param('content'));
         
         if (empty($content)) {
             return new WP_Error('empty_content', __('Note content is required.', 'personal-crm'), ['status' => 400]);
@@ -273,7 +274,8 @@ class PRM_Comment_Types {
      */
     public function update_note($request) {
         $comment_id = $request->get_param('id');
-        $content = sanitize_textarea_field($request->get_param('content'));
+        // Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
+        $content = wp_kses_post($request->get_param('content'));
         
         $result = wp_update_comment([
             'comment_ID'      => $comment_id,
@@ -327,7 +329,8 @@ class PRM_Comment_Types {
      */
     public function create_activity($request) {
         $person_id = $request->get_param('person_id');
-        $content = sanitize_textarea_field($request->get_param('content'));
+        // Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
+        $content = wp_kses_post($request->get_param('content'));
         $activity_type = sanitize_text_field($request->get_param('activity_type'));
         $activity_date = sanitize_text_field($request->get_param('activity_date'));
         $activity_time = sanitize_text_field($request->get_param('activity_time'));
@@ -373,7 +376,8 @@ class PRM_Comment_Types {
      */
     public function update_activity($request) {
         $comment_id = $request->get_param('id');
-        $content = sanitize_textarea_field($request->get_param('content'));
+        // Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
+        $content = wp_kses_post($request->get_param('content'));
         $activity_type = sanitize_text_field($request->get_param('activity_type'));
         $activity_date = sanitize_text_field($request->get_param('activity_date'));
         $activity_time = sanitize_text_field($request->get_param('activity_time'));
