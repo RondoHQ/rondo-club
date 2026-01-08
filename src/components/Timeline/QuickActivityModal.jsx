@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Phone, Mail, Users, Coffee, Utensils, FileText, Circle, MessageCircle } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
+import RichTextEditor, { isRichTextEmpty } from '@/components/RichTextEditor';
 
 const ACTIVITY_TYPES = [
   { id: 'call', label: 'Phone call', icon: Phone },
@@ -71,13 +72,13 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (isRichTextEmpty(content)) return;
     
     onSubmit({
       activity_type: activityType,
       activity_date: activityDate || null,
       activity_time: activityTime || null,
-      content: content.trim(),
+      content: content,
       participants: selectedParticipants,
     });
     
@@ -202,18 +203,15 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
 
           {/* Description */}
           <div className="mb-4">
-            <label htmlFor="activity-content" className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Description
             </label>
-            <textarea
-              id="activity-content"
+            <RichTextEditor
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              onChange={setContent}
               placeholder="What happened?"
               disabled={isLoading}
-              autoFocus
+              minHeight="100px"
             />
           </div>
 
@@ -327,7 +325,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
             <button
               type="submit"
               className="btn-primary"
-              disabled={isLoading || !content.trim()}
+              disabled={isLoading || isRichTextEmpty(content)}
             >
               {isLoading ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save' : 'Add activity')}
             </button>

@@ -105,7 +105,7 @@ export default function TimelineView({
                 </div>
               )}
               
-              <div className="flex items-start gap-2">
+                <div className="flex items-start gap-2">
                 {isTodo && (
                   <button
                     onClick={() => onToggleTodo && onToggleTodo(item)}
@@ -119,9 +119,17 @@ export default function TimelineView({
                     )}
                   </button>
                 )}
-                <p className={`text-sm flex-1 ${item.is_completed ? 'line-through opacity-60' : ''}`}>
-                  {item.content}
-                </p>
+                {/* Render rich text content for notes/activities, plain text for todos */}
+                {(isNote || isActivity) && item.content?.includes('<') ? (
+                  <div 
+                    className={`text-sm flex-1 prose prose-sm max-w-none ${item.is_completed ? 'line-through opacity-60' : ''}`}
+                    dangerouslySetInnerHTML={{ __html: item.content }}
+                  />
+                ) : (
+                  <p className={`text-sm flex-1 ${item.is_completed ? 'line-through opacity-60' : ''}`}>
+                    {item.content}
+                  </p>
+                )}
               </div>
 
               {/* Activity participants */}

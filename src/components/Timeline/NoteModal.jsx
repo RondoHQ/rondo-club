@@ -1,14 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import RichTextEditor, { isRichTextEmpty } from '@/components/RichTextEditor';
 
-export default function NoteModal({ isOpen, onClose, onSubmit, isLoading }) {
+export default function NoteModal({ isOpen, onClose, onSubmit, isLoading, initialContent = '' }) {
   const [content, setContent] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setContent(initialContent || '');
+    }
+  }, [isOpen, initialContent]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (isRichTextEmpty(content)) return;
     
     onSubmit(content);
     setContent('');
@@ -21,7 +28,7 @@ export default function NoteModal({ isOpen, onClose, onSubmit, isLoading }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">Add note</h2>
           <button
@@ -35,18 +42,16 @@ export default function NoteModal({ isOpen, onClose, onSubmit, isLoading }) {
         
         <form onSubmit={handleSubmit} className="p-4">
           <div className="mb-4">
-            <label htmlFor="note-content" className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Note
             </label>
-            <textarea
-              id="note-content"
+            <RichTextEditor
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              onChange={setContent}
               placeholder="Enter your note..."
               disabled={isLoading}
               autoFocus
+              minHeight="150px"
             />
           </div>
           
@@ -62,7 +67,7 @@ export default function NoteModal({ isOpen, onClose, onSubmit, isLoading }) {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isLoading || !content.trim()}
+              disabled={isLoading || isRichTextEmpty(content)}
             >
               {isLoading ? 'Adding...' : 'Add note'}
             </button>
@@ -72,4 +77,3 @@ export default function NoteModal({ isOpen, onClose, onSubmit, isLoading }) {
     </div>
   );
 }
-
