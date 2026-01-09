@@ -129,7 +129,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
           <h2 className="text-lg font-semibold">{isEditing ? 'Edit activity' : 'Add activity'}</h2>
           <button
@@ -142,178 +142,185 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
         </div>
         
         <form onSubmit={handleSubmit} className="p-4">
-          {/* Quick activity type buttons */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Activity type
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {ACTIVITY_TYPES.map((type) => {
-                const Icon = type.icon;
-                const isSelected = activityType === type.id;
-                return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left column */}
+            <div className="space-y-4">
+              {/* Quick activity type buttons */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Activity type
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {ACTIVITY_TYPES.map((type) => {
+                    const Icon = type.icon;
+                    const isSelected = activityType === type.id;
+                    return (
+                      <button
+                        key={type.id}
+                        type="button"
+                        onClick={() => setActivityType(type.id)}
+                        className={`flex flex-col items-center justify-center p-3 border-2 rounded-lg transition-colors ${
+                          isSelected
+                            ? 'border-primary-600 bg-primary-50 text-primary-700'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                        }`}
+                        disabled={isLoading}
+                      >
+                        <Icon className="w-5 h-5 mb-1" />
+                        <span className="text-xs">{type.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Date and time picker */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="activity-date" className="block text-sm font-medium text-gray-700 mb-2">
+                    Date
+                  </label>
+                  <input
+                    id="activity-date"
+                    type="date"
+                    value={formatDateForInput(activityDate)}
+                    onChange={(e) => setActivityDate(e.target.value || '')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="activity-time" className="block text-sm font-medium text-gray-700 mb-2">
+                    Time
+                  </label>
+                  <input
+                    id="activity-time"
+                    type="time"
+                    value={activityTime}
+                    onChange={(e) => setActivityTime(e.target.value || '')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Participants */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Participants (optional)
+                </label>
+                
+                {/* Selected participants */}
+                {getSelectedPeople().length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {getSelectedPeople().map((person) => (
+                      <span
+                        key={person.id}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-sm"
+                      >
+                        {person.name}
+                        <button
+                          type="button"
+                          onClick={() => removeParticipant(person.id)}
+                          className="hover:text-primary-900"
+                          disabled={isLoading}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Participant selector */}
+                <div className="relative">
                   <button
-                    key={type.id}
                     type="button"
-                    onClick={() => setActivityType(type.id)}
-                    className={`flex flex-col items-center justify-center p-3 border-2 rounded-lg transition-colors ${
-                      isSelected
-                        ? 'border-primary-600 bg-primary-50 text-primary-700'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                    }`}
+                    onClick={() => setShowParticipantSelect(!showParticipantSelect)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-left text-sm text-gray-500 hover:border-gray-400"
                     disabled={isLoading}
                   >
-                    <Icon className="w-5 h-5 mb-1" />
-                    <span className="text-xs">{type.label}</span>
+                    {selectedParticipants.length === 0 ? 'Add participants...' : 'Add more participants...'}
                   </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Date and time picker */}
-          <div className="mb-4 grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="activity-date" className="block text-sm font-medium text-gray-700 mb-2">
-                Date
-              </label>
-              <input
-                id="activity-date"
-                type="date"
-                value={formatDateForInput(activityDate)}
-                onChange={(e) => setActivityDate(e.target.value || '')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <label htmlFor="activity-time" className="block text-sm font-medium text-gray-700 mb-2">
-                Time
-              </label>
-              <input
-                id="activity-time"
-                type="time"
-                value={activityTime}
-                onChange={(e) => setActivityTime(e.target.value || '')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <RichTextEditor
-              value={content}
-              onChange={setContent}
-              placeholder="What happened?"
-              disabled={isLoading}
-              minHeight="100px"
-            />
-          </div>
-
-          {/* Participants */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Participants (optional)
-            </label>
-            
-            {/* Selected participants */}
-            {getSelectedPeople().length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                {getSelectedPeople().map((person) => (
-                  <span
-                    key={person.id}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-sm"
-                  >
-                    {person.name}
-                    <button
-                      type="button"
-                      onClick={() => removeParticipant(person.id)}
-                      className="hover:text-primary-900"
-                      disabled={isLoading}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Participant selector */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowParticipantSelect(!showParticipantSelect)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-left text-sm text-gray-500 hover:border-gray-400"
-                disabled={isLoading}
-              >
-                {selectedParticipants.length === 0 ? 'Add participants...' : 'Add more participants...'}
-              </button>
-              
-              {showParticipantSelect && (
-                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                  <div className="p-2 border-b">
-                    <input
-                      type="text"
-                      placeholder="Search people..."
-                      value={participantSearch}
-                      onChange={(e) => setParticipantSearch(e.target.value)}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                      autoFocus
-                    />
-                  </div>
-                  <div className="max-h-48 overflow-y-auto">
-                    {filteredPeople.length === 0 ? (
-                      <div className="p-3 text-sm text-gray-500 text-center">
-                        No people found
+                  
+                  {showParticipantSelect && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      <div className="p-2 border-b">
+                        <input
+                          type="text"
+                          placeholder="Search people..."
+                          value={participantSearch}
+                          onChange={(e) => setParticipantSearch(e.target.value)}
+                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                          autoFocus
+                        />
                       </div>
-                    ) : (
-                      filteredPeople.map((person) => {
-                        const isSelected = selectedParticipants.includes(person.id);
-                        return (
-                          <button
-                            key={person.id}
-                            type="button"
-                            onClick={() => toggleParticipant(person.id)}
-                            className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                              isSelected ? 'bg-primary-50' : ''
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => {}}
-                              className="mr-1"
-                            />
-                            {person.thumbnail ? (
-                              <img
-                                src={person.thumbnail}
-                                alt={person.name}
-                                className="w-6 h-6 rounded-full"
-                              />
-                            ) : (
-                              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                                <span className="text-xs text-gray-500">
-                                  {person.first_name?.[0] || '?'}
-                                </span>
-                              </div>
-                            )}
-                            <span>{person.name}</span>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredPeople.length === 0 ? (
+                          <div className="p-3 text-sm text-gray-500 text-center">
+                            No people found
+                          </div>
+                        ) : (
+                          filteredPeople.map((person) => {
+                            const isSelected = selectedParticipants.includes(person.id);
+                            return (
+                              <button
+                                key={person.id}
+                                type="button"
+                                onClick={() => toggleParticipant(person.id)}
+                                className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${
+                                  isSelected ? 'bg-primary-50' : ''
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => {}}
+                                  className="mr-1"
+                                />
+                                {person.thumbnail ? (
+                                  <img
+                                    src={person.thumbnail}
+                                    alt={person.name}
+                                    className="w-6 h-6 rounded-full"
+                                  />
+                                ) : (
+                                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-gray-500">
+                                      {person.first_name?.[0] || '?'}
+                                    </span>
+                                  </div>
+                                )}
+                                <span>{person.name}</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+            </div>
+
+            {/* Right column - Description */}
+            <div className="flex flex-col">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Description
+              </label>
+              <div className="flex-1">
+                <RichTextEditor
+                  value={content}
+                  onChange={setContent}
+                  placeholder="What happened? Add your call notes, chat summary, meeting notes..."
+                  disabled={isLoading}
+                  minHeight="200px"
+                />
+              </div>
             </div>
           </div>
           
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
             <button
               type="button"
               onClick={handleClose}
