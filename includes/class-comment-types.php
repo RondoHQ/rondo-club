@@ -552,10 +552,16 @@ class PRM_Comment_Types {
      * Format a single comment for REST response
      */
     private function format_comment($comment, $type) {
+        // Make URLs in content clickable for activities and notes
+        $content = $comment->comment_content;
+        if ($type === 'activity' || $type === 'note') {
+            $content = make_clickable($content);
+        }
+        
         $data = [
             'id'        => (int) $comment->comment_ID,
             'type'      => $type,
-            'content'   => $comment->comment_content,
+            'content'   => $content,
             'person_id' => (int) $comment->comment_post_ID,
             'author_id' => (int) $comment->user_id,
             'author'    => get_the_author_meta('display_name', $comment->user_id),

@@ -5,7 +5,7 @@ import {
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, Square, TrendingUp
 } from 'lucide-react';
-import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack } from '@icons-pack/react-simple-icons';
+import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack, SiWhatsapp } from '@icons-pack/react-simple-icons';
 
 // Custom LinkedIn SVG component
 const LinkedInIcon = ({ className }) => (
@@ -1078,9 +1078,12 @@ export default function PersonDetail() {
   
   const acf = person.acf || {};
   
-  // Extract social links for header display
-  const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'bluesky', 'threads', 'slack', 'website'];
+  // Extract social links for header display (slack is now in contact details, not social)
+  const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'bluesky', 'threads', 'website'];
   const socialLinks = acf.contact_info?.filter(contact => socialTypes.includes(contact.contact_type)) || [];
+  
+  // Check if there's a mobile number for WhatsApp
+  const mobileContact = acf.contact_info?.find(contact => contact.contact_type === 'mobile');
   
   // Define display order for social icons
   const socialIconOrder = {
@@ -1090,16 +1093,28 @@ export default function PersonDetail() {
     'threads': 4,
     'instagram': 5,
     'facebook': 6,
-    'slack': 7,
+    'whatsapp': 7,
     'website': 8,
   };
   
-  // Sort social links by display order
-  const sortedSocialLinks = [...socialLinks].sort((a, b) => {
-    const orderA = socialIconOrder[a.contact_type] || 99;
-    const orderB = socialIconOrder[b.contact_type] || 99;
-    return orderA - orderB;
-  });
+  // Sort social links by display order, and add WhatsApp if mobile exists
+  const sortedSocialLinks = useMemo(() => {
+    const links = [...socialLinks];
+    
+    // Add WhatsApp if there's a mobile number
+    if (mobileContact) {
+      links.push({
+        contact_type: 'whatsapp',
+        contact_value: `https://wa.me/${mobileContact.contact_value.replace(/[^0-9+]/g, '')}`,
+      });
+    }
+    
+    return links.sort((a, b) => {
+      const orderA = socialIconOrder[a.contact_type] || 99;
+      const orderB = socialIconOrder[b.contact_type] || 99;
+      return orderA - orderB;
+    });
+  }, [socialLinks, mobileContact]);
   
   // Helper to get social icon
   const getSocialIcon = (type) => {
@@ -1110,7 +1125,7 @@ export default function PersonDetail() {
       case 'twitter': return SiX; // Twitter/X uses SiX in Simple Icons
       case 'bluesky': return SiBluesky;
       case 'threads': return SiThreads;
-      case 'slack': return SiSlack;
+      case 'whatsapp': return SiWhatsapp;
       case 'website': return Globe; // Use Lucide Globe for website
       default: return Globe;
     }
@@ -1125,7 +1140,7 @@ export default function PersonDetail() {
       case 'twitter': return 'text-[#1DA1F2]';
       case 'bluesky': return 'text-[#00A8E8]'; // Bluesky brand color
       case 'threads': return 'text-[#000000]'; // Threads brand color (black)
-      case 'slack': return 'text-[#4A154B]'; // Slack brand color (aubergine)
+      case 'whatsapp': return 'text-[#25D366]'; // WhatsApp brand color
       case 'website': return 'text-gray-600';
       default: return 'text-gray-600';
     }
@@ -1345,8 +1360,9 @@ export default function PersonDetail() {
                     'email': 1,
                     'phone': 2,
                     'mobile': 2, // Phone numbers grouped together
-                    'calendar': 3,
-                    'other': 4,
+                    'slack': 3,
+                    'calendar': 4,
+                    'other': 5,
                   };
                   
                   // Filter and sort contact information
@@ -1366,11 +1382,12 @@ export default function PersonDetail() {
                   return nonSocialContacts.map((contact) => {
                         const Icon = contact.contact_type === 'email' ? Mail :
                                      contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
+                                     contact.contact_type === 'slack' ? SiSlack :
                                      contact.contact_type === 'calendar' ? Calendar : Globe;
 
                         const isEmail = contact.contact_type === 'email';
                         const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
-                        const isMobile = contact.contact_type === 'mobile';
+                        const isSlack = contact.contact_type === 'slack';
                         const isCalendar = contact.contact_type === 'calendar';
                         
                         let linkHref = null;
@@ -1380,7 +1397,7 @@ export default function PersonDetail() {
                           linkHref = `mailto:${contact.contact_value}`;
                         } else if (isPhone) {
                           linkHref = `tel:${formatPhoneForTel(contact.contact_value)}`;
-                        } else if (isCalendar) {
+                        } else if (isSlack || isCalendar) {
                           linkHref = contact.contact_value;
                           linkTarget = '_blank';
                         }
@@ -1402,17 +1419,6 @@ export default function PersonDetail() {
                               </a>
                             ) : (
                               <span>{contact.contact_value}</span>
-                            )}
-                            {isMobile && (
-                              <a
-                                href={`https://wa.me/${formatPhoneForTel(contact.contact_value)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex-shrink-0 hover:opacity-80 transition-opacity"
-                                title="Open WhatsApp"
-                              >
-                                <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                              </a>
                             )}
                           </div>
                         </div>
