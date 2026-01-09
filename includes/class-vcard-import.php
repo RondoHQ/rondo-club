@@ -143,6 +143,10 @@ class PRM_VCard_Import {
             $phone_type = $vcard['phones'][0]['type'] ?? 'phone';
         }
 
+        // Get notes - return all notes and first one for backward compatibility
+        $notes = $vcard['notes'] ?? [];
+        $note = !empty($notes) ? $notes[0] : '';
+        
         return rest_ensure_response([
             'first_name'  => $vcard['first_name'] ?? '',
             'last_name'   => $vcard['last_name'] ?? '',
@@ -153,7 +157,8 @@ class PRM_VCard_Import {
             'birthday'    => $vcard['bday'] ?? '',
             'organization'=> $vcard['org'] ?? '',
             'job_title'   => $vcard['title'] ?? '',
-            'note'        => $vcard['note'] ?? '',
+            'note'        => $note,  // First note for backward compatibility (populates how_we_met)
+            'notes'       => $notes, // All notes for timeline import
             'has_photo'   => !empty($vcard['photo']),
             'contact_count' => count($vcards),
         ]);
@@ -182,8 +187,8 @@ class PRM_VCard_Import {
             if (!empty($vcard['photo'])) {
                 $photos++;
             }
-            if (!empty($vcard['note'])) {
-                $notes++;
+            if (!empty($vcard['notes'])) {
+                $notes += count($vcard['notes']);
             }
         }
 
@@ -266,7 +271,7 @@ class PRM_VCard_Import {
             'addresses'    => [],
             'urls'         => [],
             'bday'         => '',
-            'note'         => '',
+            'notes'        => [],
             'photo'        => null,
             'photo_type'   => '',
         ];
@@ -330,10 +335,11 @@ class PRM_VCard_Import {
                     break;
                     
                 case 'TEL':
-                    $type = $this->get_type_param($params);
+                    $raw_type = $this->get_type_param($params);
                     $vcard['phones'][] = [
-                        'value' => $this->decode_vcard_value($value),
-                        'type'  => $this->normalize_phone_type($type),
+                        'value'    => $this->decode_vcard_value($value),
+                        'type'     => $this->normalize_phone_type($raw_type),
+                        'raw_type' => $raw_type, // Preserve for label extraction
                     ];
                     break;
                     
@@ -374,7 +380,10 @@ class PRM_VCard_Import {
                     break;
                     
                 case 'NOTE':
-                    $vcard['note'] = $this->decode_vcard_value($value);
+                    $note_content = trim($this->decode_vcard_value($value));
+                    if (!empty($note_content)) {
+                        $vcard['notes'][] = $note_content;
+                    }
                     break;
                     
                 case 'PHOTO':
@@ -674,9 +683,11 @@ class PRM_VCard_Import {
             $this->import_birthday($post_id, $vcard['bday'], $first_name, $last_name);
         }
 
-        // Import note
-        if (!empty($vcard['note'])) {
-            $this->import_note($post_id, $vcard['note']);
+        // Import notes
+        if (!empty($vcard['notes'])) {
+            foreach ($vcard['notes'] as $note_content) {
+                $this->import_note($post_id, $note_content);
+            }
         }
 
         // Import photo (always import, even if person already has a photo)
@@ -721,9 +732,18 @@ class PRM_VCard_Import {
         foreach ($vcard['phones'] as $phone) {
             $key = strtolower(trim($phone['type'] . '|' . $phone['value']));
             if (!isset($existing_keys[$key])) {
+                // Determine label from raw_type (home/work)
+                $label = '';
+                $raw_type = strtolower($phone['raw_type'] ?? '');
+                if ($raw_type === 'home') {
+                    $label = 'Home';
+                } elseif ($raw_type === 'work') {
+                    $label = 'Work';
+                }
+                
                 $contact_info[] = [
                     'contact_type'  => $phone['type'],
-                    'contact_label' => '',
+                    'contact_label' => $label,
                     'contact_value' => $phone['value'],
                 ];
                 $existing_keys[$key] = true;

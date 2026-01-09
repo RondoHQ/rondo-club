@@ -282,6 +282,19 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         // Store the client's URI for future lookups
         update_post_meta($post_id, '_carddav_uri', $cardUri);
         
+        // Import notes as timeline notes
+        if (!empty($parsed['notes'])) {
+            foreach ($parsed['notes'] as $note_content) {
+                wp_insert_comment([
+                    'comment_post_ID'  => $post_id,
+                    'comment_content'  => wp_kses_post($note_content),
+                    'comment_type'     => \PRM_Comment_Types::TYPE_NOTE,
+                    'user_id'          => $addressBookId,
+                    'comment_approved' => 1,
+                ]);
+            }
+        }
+        
         // Log the change for sync
         $this->logChange($addressBookId, $post_id, 'added');
         
@@ -357,6 +370,30 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         
         if (isset($parsed['addresses'])) {
             update_field('addresses', $parsed['addresses'], $person_id);
+        }
+        
+        // Import new notes as timeline notes
+        // Note: We only add new notes, we don't sync/delete existing notes
+        if (!empty($parsed['notes'])) {
+            foreach ($parsed['notes'] as $note_content) {
+                // Check if this exact note already exists to avoid duplicates
+                $existing = get_comments([
+                    'post_id' => $person_id,
+                    'type'    => \PRM_Comment_Types::TYPE_NOTE,
+                    'search'  => $note_content,
+                    'number'  => 1,
+                ]);
+                
+                if (empty($existing)) {
+                    wp_insert_comment([
+                        'comment_post_ID'  => $person_id,
+                        'comment_content'  => wp_kses_post($note_content),
+                        'comment_type'     => \PRM_Comment_Types::TYPE_NOTE,
+                        'user_id'          => $addressBookId,
+                        'comment_approved' => 1,
+                    ]);
+                }
+            }
         }
         
         // Log the change for sync
