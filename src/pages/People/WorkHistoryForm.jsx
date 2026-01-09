@@ -37,13 +37,22 @@ export default function WorkHistoryForm() {
   const updatePerson = useUpdatePerson();
   
   // Fetch companies for the selector
-  const { data: companies = [], isLoading: isCompaniesLoading } = useQuery({
+  const { data: companiesData = [], isLoading: isCompaniesLoading } = useQuery({
     queryKey: ['companies', 'all'],
     queryFn: async () => {
-      const response = await wpApi.getCompanies({ per_page: 100, orderby: 'title', order: 'asc' });
+      const response = await wpApi.getCompanies({ per_page: 100 });
       return response.data;
     },
   });
+  
+  // Sort companies alphabetically by title
+  const companies = useMemo(() => {
+    return [...companiesData].sort((a, b) => {
+      const titleA = (a.title?.rendered || a.title || '').toLowerCase();
+      const titleB = (b.title?.rendered || b.title || '').toLowerCase();
+      return titleA.localeCompare(titleB);
+    });
+  }, [companiesData]);
 
   const { register, handleSubmit, reset, watch, control, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
