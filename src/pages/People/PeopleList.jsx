@@ -1,10 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
+import PersonEditModal from '@/components/PersonEditModal';
 
 // Helper function to get current company ID from person's work history
 function getCurrentCompanyId(person) {
@@ -89,10 +90,65 @@ export default function PeopleList() {
   const [lastModifiedFilter, setLastModifiedFilter] = useState('');
   const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
+  const [showPersonModal, setShowPersonModal] = useState(false);
+  const [isCreatingPerson, setIsCreatingPerson] = useState(false);
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   const { data: people, isLoading, error } = usePeople();
+  
+  // Create person mutation
+  const createPersonMutation = useMutation({
+    mutationFn: async (data) => {
+      const contactInfo = [];
+      if (data.email) {
+        contactInfo.push({
+          contact_type: 'email',
+          contact_value: data.email,
+          contact_label: 'Email',
+        });
+      }
+      if (data.phone) {
+        contactInfo.push({
+          contact_type: data.phone_type || 'mobile',
+          contact_value: data.phone,
+          contact_label: data.phone_type === 'mobile' ? 'Mobile' : 'Phone',
+        });
+      }
+      
+      const payload = {
+        title: `${data.first_name} ${data.last_name}`.trim(),
+        status: 'publish',
+        acf: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          nickname: data.nickname,
+          gender: data.gender,
+          contact_info: contactInfo,
+        },
+      };
+      
+      const response = await wpApi.createPerson(payload);
+      return response.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setShowPersonModal(false);
+      navigate(`/people/${result.id}`);
+    },
+  });
+  
+  const handleCreatePerson = async (data) => {
+    setIsCreatingPerson(true);
+    try {
+      await createPersonMutation.mutateAsync(data);
+    } finally {
+      setIsCreatingPerson(false);
+    }
+  };
   
   // Fetch person labels
   const { data: labelsData } = useQuery({
@@ -510,10 +566,10 @@ export default function PeopleList() {
             </div>
           )}
           
-          <Link to="/people/new" className="btn-primary">
+          <button onClick={() => setShowPersonModal(true)} className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Add person</span>
-          </Link>
+          </button>
         </div>
       </div>
       
@@ -541,10 +597,10 @@ export default function PeopleList() {
           <p className="text-gray-500 mb-4">
             Get started by adding your first person.
           </p>
-          <Link to="/people/new" className="btn-primary">
+          <button onClick={() => setShowPersonModal(true)} className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Add person</span>
-          </Link>
+          </button>
         </div>
       )}
       
@@ -577,6 +633,14 @@ export default function PeopleList() {
           </button>
         </div>
       )}
+      
+      {/* Person Modal */}
+      <PersonEditModal
+        isOpen={showPersonModal}
+        onClose={() => setShowPersonModal(false)}
+        onSubmit={handleCreatePerson}
+        isLoading={isCreatingPerson}
+      />
     </div>
   );
 }

@@ -20,10 +20,14 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch } from '@/hooks/useDashboard';
-import { useQuery } from '@tanstack/react-query';
-import { prmApi } from '@/api/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { prmApi, wpApi } from '@/api/client';
 import { APP_NAME } from '@/constants/app';
 import GlobalTodoModal from '@/components/Timeline/GlobalTodoModal';
+import PersonEditModal from '@/components/PersonEditModal';
+import CompanyEditModal from '@/components/CompanyEditModal';
+import ImportantDateModal from '@/components/ImportantDateModal';
+import { usePeople } from '@/hooks/usePeople';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -404,10 +408,9 @@ function SearchModal({ isOpen, onClose }) {
   );
 }
 
-function QuickAddMenu({ onAddTodo }) {
+function QuickAddMenu({ onAddTodo, onAddPerson, onAddCompany, onAddDate }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
-  const navigate = useNavigate();
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -425,14 +428,24 @@ function QuickAddMenu({ onAddTodo }) {
     }
   }, [isOpen]);
   
-  const handleNavigation = (path) => {
-    setIsOpen(false);
-    navigate(path);
-  };
-  
   const handleAddTodo = () => {
     setIsOpen(false);
     onAddTodo();
+  };
+  
+  const handleAddPerson = () => {
+    setIsOpen(false);
+    onAddPerson();
+  };
+  
+  const handleAddCompany = () => {
+    setIsOpen(false);
+    onAddCompany();
+  };
+  
+  const handleAddDate = () => {
+    setIsOpen(false);
+    onAddDate();
   };
   
   return (
@@ -450,14 +463,14 @@ function QuickAddMenu({ onAddTodo }) {
         <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
           <div className="py-1">
             <button
-              onClick={() => handleNavigation('/people/new')}
+              onClick={handleAddPerson}
               className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
             >
               <User className="w-4 h-4 mr-3 text-gray-400" />
               New Person
             </button>
             <button
-              onClick={() => handleNavigation('/companies/new')}
+              onClick={handleAddCompany}
               className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
             >
               <Building2 className="w-4 h-4 mr-3 text-gray-400" />
@@ -471,7 +484,7 @@ function QuickAddMenu({ onAddTodo }) {
               New Todo
             </button>
             <button
-              onClick={() => handleNavigation('/dates/new')}
+              onClick={handleAddDate}
               className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
             >
               <Calendar className="w-4 h-4 mr-3 text-gray-400" />
@@ -484,7 +497,7 @@ function QuickAddMenu({ onAddTodo }) {
   );
 }
 
-function Header({ onMenuClick, onAddTodo, onOpenSearch }) {
+function Header({ onMenuClick, onAddTodo, onAddPerson, onAddCompany, onAddDate, onOpenSearch }) {
   const location = useLocation();
   
   // Get page title from location
@@ -533,7 +546,12 @@ function Header({ onMenuClick, onAddTodo, onOpenSearch }) {
       
       {/* Quick Add menu */}
       <div className="ml-2">
-        <QuickAddMenu onAddTodo={onAddTodo} />
+        <QuickAddMenu 
+          onAddTodo={onAddTodo} 
+          onAddPerson={onAddPerson}
+          onAddCompany={onAddCompany}
+          onAddDate={onAddDate}
+        />
       </div>
       
       {/* User menu - right aligned */}
@@ -548,9 +566,141 @@ export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showPersonModal, setShowPersonModal] = useState(false);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [isCreatingPerson, setIsCreatingPerson] = useState(false);
+  const [isCreatingCompany, setIsCreatingCompany] = useState(false);
+  const [isCreatingDate, setIsCreatingDate] = useState(false);
+  
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
+  // Fetch people for date modal
+  const { data: allPeople = [], isLoading: isPeopleLoading } = usePeople();
   
   // Update document title based on route
   useRouteTitle();
+  
+  // Create person mutation
+  const createPersonMutation = useMutation({
+    mutationFn: async (data) => {
+      // Build contact_info array
+      const contactInfo = [];
+      if (data.email) {
+        contactInfo.push({
+          contact_type: 'email',
+          contact_value: data.email,
+          contact_label: 'Email',
+        });
+      }
+      if (data.phone) {
+        contactInfo.push({
+          contact_type: data.phone_type || 'mobile',
+          contact_value: data.phone,
+          contact_label: data.phone_type === 'mobile' ? 'Mobile' : 'Phone',
+        });
+      }
+      
+      const payload = {
+        title: `${data.first_name} ${data.last_name}`.trim(),
+        status: 'publish',
+        acf: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          nickname: data.nickname,
+          gender: data.gender,
+          contact_info: contactInfo,
+        },
+      };
+      
+      const response = await wpApi.createPerson(payload);
+      return response.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setShowPersonModal(false);
+      navigate(`/people/${result.id}`);
+    },
+  });
+  
+  // Create company mutation
+  const createCompanyMutation = useMutation({
+    mutationFn: async (data) => {
+      const payload = {
+        title: data.title,
+        status: 'publish',
+        acf: {
+          website: data.website,
+          industry: data.industry,
+        },
+      };
+      
+      const response = await wpApi.createCompany(payload);
+      return response.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setShowCompanyModal(false);
+      navigate(`/companies/${result.id}`);
+    },
+  });
+  
+  // Create date mutation
+  const createDateMutation = useMutation({
+    mutationFn: async (data) => {
+      const payload = {
+        title: data.title,
+        status: 'publish',
+        date_type: data.date_type,
+        acf: {
+          date_value: data.date_value,
+          related_people: data.related_people,
+          is_recurring: data.is_recurring,
+          year_unknown: data.year_unknown,
+        },
+      };
+      
+      const response = await wpApi.createDate(payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      setShowDateModal(false);
+    },
+  });
+  
+  // Handle creating person
+  const handleCreatePerson = async (data) => {
+    setIsCreatingPerson(true);
+    try {
+      await createPersonMutation.mutateAsync(data);
+    } finally {
+      setIsCreatingPerson(false);
+    }
+  };
+  
+  // Handle creating company
+  const handleCreateCompany = async (data) => {
+    setIsCreatingCompany(true);
+    try {
+      await createCompanyMutation.mutateAsync(data);
+    } finally {
+      setIsCreatingCompany(false);
+    }
+  };
+  
+  // Handle creating date
+  const handleCreateDate = async (data) => {
+    setIsCreatingDate(true);
+    try {
+      await createDateMutation.mutateAsync(data);
+    } finally {
+      setIsCreatingDate(false);
+    }
+  };
   
   // Handle Cmd+K keyboard shortcut
   useEffect(() => {
@@ -594,6 +744,9 @@ export default function Layout({ children }) {
         <Header 
           onMenuClick={() => setSidebarOpen(true)} 
           onAddTodo={() => setShowTodoModal(true)}
+          onAddPerson={() => setShowPersonModal(true)}
+          onAddCompany={() => setShowCompanyModal(true)}
+          onAddDate={() => setShowDateModal(true)}
           onOpenSearch={() => setShowSearchModal(true)}
         />
         
@@ -612,6 +765,32 @@ export default function Layout({ children }) {
       <GlobalTodoModal
         isOpen={showTodoModal}
         onClose={() => setShowTodoModal(false)}
+      />
+      
+      {/* Person Modal */}
+      <PersonEditModal
+        isOpen={showPersonModal}
+        onClose={() => setShowPersonModal(false)}
+        onSubmit={handleCreatePerson}
+        isLoading={isCreatingPerson}
+      />
+      
+      {/* Company Modal */}
+      <CompanyEditModal
+        isOpen={showCompanyModal}
+        onClose={() => setShowCompanyModal(false)}
+        onSubmit={handleCreateCompany}
+        isLoading={isCreatingCompany}
+      />
+      
+      {/* Date Modal */}
+      <ImportantDateModal
+        isOpen={showDateModal}
+        onClose={() => setShowDateModal(false)}
+        onSubmit={handleCreateDate}
+        isLoading={isCreatingDate}
+        allPeople={allPeople}
+        isPeopleLoading={isPeopleLoading}
       />
     </div>
   );

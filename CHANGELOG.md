@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.34.0] - 2026-01-09
+
+### Added
+- PersonEditModal: Quick add person from header + button, People list, and empty states
+- CompanyEditModal: Quick add organization from header + button, Organizations list, and empty states
+- All "Add" buttons throughout the app now open modals instead of navigating to separate pages
+
+### Changed
+- Header + button now opens modals for Person, Organization, Todo, and Date creation
+- People list "Add person" button now opens modal
+- Organizations list "Add organization" button now opens modal
+- Dates list "Add date" button now opens modal
+
 ## [1.33.0] - 2026-01-09
 
 ### Added
