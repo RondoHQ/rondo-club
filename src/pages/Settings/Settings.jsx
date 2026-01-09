@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Calendar, Share2, Bell, Database, Shield, Info } from 'lucide-react';
+import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
 import { prmApi } from '@/api/client';
+import MonicaImport from '@/components/import/MonicaImport';
+import VCardImport from '@/components/import/VCardImport';
+import GoogleContactsImport from '@/components/import/GoogleContactsImport';
 
 // Tab configuration
 const TABS = [
@@ -522,7 +525,7 @@ function SyncTab({
     <>
       {/* Calendar Subscription */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Calendar Subscription</h2>
+        <h2 className="text-lg font-semibold mb-4">Calendar subscription</h2>
         <p className="text-sm text-gray-600 mb-4">
           Subscribe to your important dates in any calendar app (Apple Calendar, Google Calendar, Outlook, etc.)
         </p>
@@ -535,7 +538,7 @@ function SyncTab({
         ) : (
           <div className="space-y-4">
             <div>
-              <label className="label mb-1">Your Calendar Feed URL</label>
+              <label className="label mb-1">Your calendar feed URL</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -574,7 +577,7 @@ function SyncTab({
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  Subscribe in Calendar App
+                  Subscribe in calendar app
                 </span>
               </a>
               
@@ -597,7 +600,7 @@ function SyncTab({
       
       {/* CardDAV Sync */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">CardDAV Sync</h2>
+        <h2 className="text-lg font-semibold mb-4">CardDAV sync</h2>
         <p className="text-sm text-gray-600 mb-4">
           Sync your contacts with apps like Apple Contacts, Android Contacts, or Thunderbird using CardDAV.
         </p>
@@ -611,7 +614,7 @@ function SyncTab({
           <div className="space-y-4">
             {carddavUrls && (
               <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-                <h3 className="font-medium text-sm">Connection Details</h3>
+                <h3 className="font-medium text-sm">Connection details</h3>
                 <div>
                   <label className="text-xs text-gray-500">Server URL (for most apps)</label>
                   <div className="flex gap-2 mt-1">
@@ -670,7 +673,7 @@ function SyncTab({
                 disabled={creatingPassword || !newPasswordName.trim()}
                 className="btn-primary whitespace-nowrap"
               >
-                {creatingPassword ? 'Creating...' : 'Create Password'}
+                {creatingPassword ? 'Creating...' : 'Create password'}
               </button>
             </form>
             
@@ -702,7 +705,7 @@ function SyncTab({
             
             {appPasswords.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium mb-2">Your App Passwords</h3>
+                <h3 className="text-sm font-medium mb-2">Your app passwords</h3>
                 <div className="space-y-2">
                   {appPasswords.map((password) => (
                     <div
@@ -933,7 +936,7 @@ function NotificationsTab({
           
           {/* Notification time */}
           <div>
-            <label className="label mb-1">Notification Time (UTC)</label>
+            <label className="label mb-1">Notification time (UTC)</label>
             <input
               type="time"
               value={notificationTime}
@@ -977,29 +980,132 @@ function NotificationsTab({
   );
 }
 
-// Data Tab Component
+// Data Tab Component - Import types configuration
+const importTypes = [
+  {
+    id: 'vcard',
+    name: 'vCard',
+    description: 'Apple Contacts, Outlook, Android',
+    icon: FileCode,
+    component: VCardImport,
+  },
+  {
+    id: 'google',
+    name: 'Google Contacts',
+    description: 'CSV export from Google',
+    icon: FileSpreadsheet,
+    component: GoogleContactsImport,
+  },
+  {
+    id: 'monica',
+    name: 'Monica CRM',
+    description: 'SQL export from Monica',
+    icon: Database,
+    component: MonicaImport,
+  },
+];
+
 function DataTab() {
+  const [activeImportType, setActiveImportType] = useState('vcard');
+  
+  const handleExport = (format) => {
+    if (format === 'vcard') {
+      window.location.href = '/wp-json/prm/v1/export/vcard';
+    } else if (format === 'google-csv') {
+      window.location.href = '/wp-json/prm/v1/export/google-csv';
+    }
+  };
+  
+  const ActiveImportComponent = importTypes.find(t => t.id === activeImportType)?.component;
+
   return (
-    <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4">Data Management</h2>
-      <p className="text-sm text-gray-600 mb-4">
-        Import contacts from other sources or export your data for backup.
-      </p>
-      <div className="space-y-3">
-        <Link
-          to="/settings/import"
-          className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-        >
-          <p className="font-medium">Import Data</p>
-          <p className="text-sm text-gray-500">Import contacts from Monica CRM, vCard, or Google Contacts</p>
-        </Link>
-        <Link
-          to="/settings/export"
-          className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-        >
-          <p className="font-medium">Export Data</p>
-          <p className="text-sm text-gray-500">Export all contacts as vCard or Google Contacts CSV</p>
-        </Link>
+    <div className="space-y-6">
+      {/* Import Section */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4">Import data</h2>
+        <p className="text-sm text-gray-600 mb-6">
+          Import your contacts from various sources. Existing contacts with matching names will be updated instead of duplicated.
+        </p>
+
+        {/* Import type tabs */}
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="-mb-px flex space-x-6" aria-label="Import types">
+            {importTypes.map((type) => {
+              const Icon = type.icon;
+              const isActive = activeImportType === type.id;
+              return (
+                <button
+                  key={type.id}
+                  onClick={() => setActiveImportType(type.id)}
+                  className={`group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    isActive
+                      ? 'border-primary-500 text-primary-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Icon
+                    className={`mr-2 h-5 w-5 ${
+                      isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
+                    }`}
+                  />
+                  <div className="text-left">
+                    <span className="block">{type.name}</span>
+                    <span className={`block text-xs font-normal ${
+                      isActive ? 'text-primary-400' : 'text-gray-400'
+                    }`}>
+                      {type.description}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Active import component */}
+        {ActiveImportComponent && <ActiveImportComponent />}
+      </div>
+      
+      {/* Export Section */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4">Export data</h2>
+        <p className="text-sm text-gray-600 mb-6">
+          Export all your contacts in a format compatible with other contact management systems.
+        </p>
+        
+        <div className="space-y-4">
+          <button
+            onClick={() => handleExport('vcard')}
+            className="w-full p-4 rounded-lg border border-gray-200 hover:bg-gray-50 text-left flex items-center gap-4"
+          >
+            <div className="p-3 bg-primary-50 rounded-lg">
+              <FileCode className="w-6 h-6 text-primary-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium">Export as vCard (.vcf)</p>
+              <p className="text-sm text-gray-500">
+                Compatible with Apple Contacts, Outlook, Android, and most contact apps
+              </p>
+            </div>
+            <Download className="w-5 h-5 text-gray-400" />
+          </button>
+          
+          <button
+            onClick={() => handleExport('google-csv')}
+            className="w-full p-4 rounded-lg border border-gray-200 hover:bg-gray-50 text-left flex items-center gap-4"
+          >
+            <div className="p-3 bg-primary-50 rounded-lg">
+              <FileSpreadsheet className="w-6 h-6 text-primary-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium">Export as Google Contacts CSV</p>
+              <p className="text-sm text-gray-500">
+                Import directly into Google Contacts or other CSV-compatible systems
+              </p>
+            </div>
+            <Download className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1013,13 +1119,13 @@ function AdminTab({
   return (
     <div className="space-y-6">
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">User Management</h2>
+        <h2 className="text-lg font-semibold mb-4">User management</h2>
         <div className="space-y-3">
           <Link
             to="/settings/user-approval"
             className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
-            <p className="font-medium">User Approval</p>
+            <p className="font-medium">User approval</p>
             <p className="text-sm text-gray-500">Approve or deny access for new users</p>
           </Link>
         </div>
@@ -1032,21 +1138,21 @@ function AdminTab({
             to="/settings/relationship-types"
             className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
-            <p className="font-medium">Relationship Types</p>
+            <p className="font-medium">Relationship types</p>
             <p className="text-sm text-gray-500">Manage relationship types and their inverse mappings</p>
           </Link>
         </div>
       </div>
       
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">System Actions</h2>
+        <h2 className="text-lg font-semibold mb-4">System actions</h2>
         <div className="space-y-3">
           <button
             onClick={handleTriggerReminders}
             disabled={triggeringReminders}
             className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <p className="font-medium">Trigger Reminders</p>
+            <p className="font-medium">Trigger reminders</p>
             <p className="text-sm text-gray-500">
               {triggeringReminders ? 'Sending...' : 'Manually send reminders for today'}
             </p>
@@ -1059,7 +1165,7 @@ function AdminTab({
             disabled={reschedulingCron}
             className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <p className="font-medium">Reschedule Cron Jobs</p>
+            <p className="font-medium">Reschedule cron jobs</p>
             <p className="text-sm text-gray-500">
               {reschedulingCron ? 'Rescheduling...' : 'Reschedule all user reminder cron jobs'}
             </p>
