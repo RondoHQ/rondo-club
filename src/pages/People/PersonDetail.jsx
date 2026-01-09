@@ -1098,7 +1098,7 @@ export default function PersonDetail() {
   };
   
   // Sort social links by display order, and add WhatsApp if mobile exists
-  const sortedSocialLinks = useMemo(() => {
+  const sortedSocialLinks = (() => {
     const links = [...socialLinks];
     
     // Add WhatsApp if there's a mobile number
@@ -1114,7 +1114,7 @@ export default function PersonDetail() {
       const orderB = socialIconOrder[b.contact_type] || 99;
       return orderA - orderB;
     });
-  }, [socialLinks, mobileContact]);
+  })();
   
   // Helper to get social icon
   const getSocialIcon = (type) => {
