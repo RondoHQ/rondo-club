@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.39.4] - 2026-01-09
+
+### Added
+- WP-CLI command `wp prm vcard get <person_id>` to export vCard for a person
+- WP-CLI command `wp prm vcard parse <file>` to preview what a vCard import would contain
+
 ## [1.39.3] - 2026-01-09
 
 ### Changed

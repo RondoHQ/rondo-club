@@ -382,9 +382,164 @@ if (defined('WP_CLI') && WP_CLI) {
     }
     
     /**
+     * VCard WP-CLI Commands
+     */
+    class PRM_VCard_CLI_Command {
+        
+        /**
+         * Get the vCard for a person (as CardDAV would serve it)
+         * 
+         * ## OPTIONS
+         * 
+         * <person_id>
+         * : The ID of the person to export
+         * 
+         * [--output=<file>]
+         * : Optional file path to save the vCard (otherwise outputs to stdout)
+         * 
+         * ## EXAMPLES
+         * 
+         *     wp prm vcard get 123
+         *     wp prm vcard get 123 --output=/tmp/contact.vcf
+         * 
+         * @when after_wp_load
+         */
+        public function get($args, $assoc_args) {
+            $person_id = (int) $args[0];
+            
+            if (!$person_id) {
+                WP_CLI::error('Please provide a valid person ID.');
+                return;
+            }
+            
+            $person = get_post($person_id);
+            
+            if (!$person) {
+                WP_CLI::error(sprintf('Person with ID %d not found.', $person_id));
+                return;
+            }
+            
+            if ($person->post_type !== 'person') {
+                WP_CLI::error(sprintf('Post ID %d is not a person (it is a %s).', $person_id, $person->post_type));
+                return;
+            }
+            
+            // Generate vCard using the same method CardDAV uses
+            $vcard = PRM_VCard_Export::generate($person);
+            
+            if (empty($vcard)) {
+                WP_CLI::error('Failed to generate vCard.');
+                return;
+            }
+            
+            // Output to file or stdout
+            if (isset($assoc_args['output'])) {
+                $file_path = $assoc_args['output'];
+                $result = file_put_contents($file_path, $vcard);
+                
+                if ($result === false) {
+                    WP_CLI::error(sprintf('Failed to write to file: %s', $file_path));
+                    return;
+                }
+                
+                WP_CLI::success(sprintf('vCard saved to: %s (%d bytes)', $file_path, $result));
+            } else {
+                // Output to stdout
+                WP_CLI::log($vcard);
+            }
+        }
+        
+        /**
+         * Parse a vCard file and show what would be imported
+         * 
+         * ## OPTIONS
+         * 
+         * <file>
+         * : Path to the vCard file to parse
+         * 
+         * ## EXAMPLES
+         * 
+         *     wp prm vcard parse /tmp/contact.vcf
+         * 
+         * @when after_wp_load
+         */
+        public function parse($args, $assoc_args) {
+            $file_path = $args[0];
+            
+            if (!file_exists($file_path)) {
+                WP_CLI::error(sprintf('File not found: %s', $file_path));
+                return;
+            }
+            
+            $vcard_data = file_get_contents($file_path);
+            
+            if (empty($vcard_data)) {
+                WP_CLI::error('File is empty or could not be read.');
+                return;
+            }
+            
+            // Parse the vCard
+            $parsed = PRM_VCard_Export::parse($vcard_data);
+            
+            if (empty($parsed)) {
+                WP_CLI::error('Failed to parse vCard.');
+                return;
+            }
+            
+            WP_CLI::log('Parsed vCard data:');
+            WP_CLI::log('');
+            
+            if (!empty($parsed['first_name'])) {
+                WP_CLI::log(sprintf('First Name: %s', $parsed['first_name']));
+            }
+            if (!empty($parsed['last_name'])) {
+                WP_CLI::log(sprintf('Last Name: %s', $parsed['last_name']));
+            }
+            if (!empty($parsed['full_name'])) {
+                WP_CLI::log(sprintf('Full Name: %s', $parsed['full_name']));
+            }
+            if (!empty($parsed['nickname'])) {
+                WP_CLI::log(sprintf('Nickname: %s', $parsed['nickname']));
+            }
+            
+            if (!empty($parsed['contact_info'])) {
+                WP_CLI::log('');
+                WP_CLI::log('Contact Info:');
+                foreach ($parsed['contact_info'] as $contact) {
+                    $type = $contact['contact_type'] ?? 'unknown';
+                    $value = $contact['contact_value'] ?? '';
+                    $label = $contact['contact_label'] ?? '';
+                    $display = $label ? "{$type} ({$label})" : $type;
+                    WP_CLI::log(sprintf('  %s: %s', $display, $value));
+                }
+            }
+            
+            if (!empty($parsed['addresses'])) {
+                WP_CLI::log('');
+                WP_CLI::log('Addresses:');
+                foreach ($parsed['addresses'] as $addr) {
+                    $parts = array_filter([
+                        $addr['street'] ?? '',
+                        $addr['city'] ?? '',
+                        $addr['state'] ?? '',
+                        $addr['postal_code'] ?? '',
+                        $addr['country'] ?? '',
+                    ]);
+                    $label = $addr['address_label'] ?? 'Address';
+                    WP_CLI::log(sprintf('  %s: %s', $label, implode(', ', $parts)));
+                }
+            }
+            
+            WP_CLI::log('');
+            WP_CLI::success('vCard parsed successfully.');
+        }
+    }
+    
+    /**
      * Register WP-CLI commands
      */
     WP_CLI::add_command('prm reminders', 'PRM_Reminders_CLI_Command');
     WP_CLI::add_command('prm migrate', 'PRM_Migration_CLI_Command');
+    WP_CLI::add_command('prm vcard', 'PRM_VCard_CLI_Command');
 }
 
