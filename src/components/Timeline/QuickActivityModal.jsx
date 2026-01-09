@@ -129,7 +129,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
           <h2 className="text-lg font-semibold">{isEditing ? 'Edit activity' : 'Add activity'}</h2>
           <button
@@ -142,9 +142,9 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
         </div>
         
         <form onSubmit={handleSubmit} className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left column */}
-            <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left column - 1/3 width on desktop */}
+            <div className="space-y-4 md:col-span-1">
               {/* Quick activity type buttons */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -303,8 +303,8 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
               </div>
             </div>
 
-            {/* Right column - Description */}
-            <div className="flex flex-col">
+            {/* Right column - Description - 2/3 width on desktop */}
+            <div className="flex flex-col md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Description
               </label>
@@ -314,7 +314,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                   onChange={setContent}
                   placeholder="What happened? Add your call notes, chat summary, meeting notes..."
                   disabled={isLoading}
-                  minHeight="200px"
+                  minHeight="280px"
                 />
               </div>
             </div>
