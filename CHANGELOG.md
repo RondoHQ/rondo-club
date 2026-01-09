@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.0] - 2026-01-09
+
+### Added
+- CompanyEditModal now supports full editing with all fields (parent company, investors)
+- Parent company selector with searchable dropdown in CompanyEditModal
+- Investors multi-select (people and organizations) in CompanyEditModal
+
+### Changed
+- CompanyDetail "Edit" button now opens CompanyEditModal instead of navigating to separate page
+- Logo upload remains on CompanyDetail page (hover over logo to upload)
+
+### Removed
+- CompanyForm.jsx removed - all organization creation/editing now via CompanyEditModal
+- Routes `/companies/new` and `/companies/:id/edit` removed
+
 ## [1.35.0] - 2026-01-09
 
 ### Added
