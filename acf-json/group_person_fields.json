@@ -62,6 +62,16 @@
             }
         },
         {
+            "key": "field_pronouns",
+            "label": "Pronouns",
+            "name": "pronouns",
+            "type": "text",
+            "placeholder": "e.g., they/them, she/her, he/him",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
             "key": "field_photo_gallery",
             "label": "Photo Gallery",
             "name": "photo_gallery",

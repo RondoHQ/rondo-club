@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.41.0] - 2026-01-09
+
+### Added
+- Pronouns field added to person records
+- vCard export: Pronouns exported as both PRONOUNS (RFC 9554) and X-PRONOUNS (Apple)
+- vCard import: Pronouns parsed from PRONOUNS and X-PRONOUNS properties
+- CardDAV: Full pronouns sync support
+- PersonEditModal: Pronouns field added alongside gender
+
 ## [1.40.1] - 2026-01-09
 
 ### Added

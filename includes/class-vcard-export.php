@@ -259,6 +259,13 @@ class PRM_VCard_Export {
             }
         }
         
+        // Pronouns (RFC 9554 + Apple X- extension for compatibility)
+        if (!empty($acf['pronouns'])) {
+            $pronouns = self::escape_value($acf['pronouns']);
+            $lines[] = "X-PRONOUNS:{$pronouns}";  // Apple compatibility
+            $lines[] = "PRONOUNS:{$pronouns}";     // RFC 9554 standard
+        }
+        
         // Contact information
         if (!empty($acf['contact_info']) && is_array($acf['contact_info'])) {
             foreach ($acf['contact_info'] as $contact) {
@@ -433,6 +440,13 @@ class PRM_VCard_Export {
             }
         }
         
+        // Pronouns
+        if (!empty($data['pronouns'])) {
+            $pronouns = self::escape_value($data['pronouns']);
+            $lines[] = "X-PRONOUNS:{$pronouns}";
+            $lines[] = "PRONOUNS:{$pronouns}";
+        }
+        
         // Contact info
         if (!empty($data['contact_info']) && is_array($data['contact_info'])) {
             foreach ($data['contact_info'] as $contact) {
@@ -566,6 +580,7 @@ class PRM_VCard_Export {
             'full_name' => '',
             'nickname' => '',
             'gender' => '',
+            'pronouns' => '',
             'contact_info' => [],
             'addresses' => [],
             'org' => '',
@@ -773,6 +788,15 @@ class PRM_VCard_Export {
             $data['gender'] = $gender_map[$gender_code] ?? '';
         }
         
+        // Pronouns (check both RFC 9554 standard and Apple X- extension)
+        $pronouns_key = 'X-PRONOUNS';
+        if (isset($vcard->{$pronouns_key})) {
+            $data['pronouns'] = trim((string) $vcard->{$pronouns_key});
+        }
+        if (empty($data['pronouns']) && isset($vcard->PRONOUNS)) {
+            $data['pronouns'] = trim((string) $vcard->PRONOUNS);
+        }
+        
         // X-SOCIALPROFILE (social networks)
         $social_profile_key = 'X-SOCIALPROFILE';
         if (isset($vcard->{$social_profile_key})) {
@@ -858,6 +882,7 @@ class PRM_VCard_Export {
             'full_name' => '',
             'nickname' => '',
             'gender' => '',
+            'pronouns' => '',
             'contact_info' => [],
             'addresses' => [],
             'org' => '',
@@ -982,6 +1007,13 @@ class PRM_VCard_Export {
                         'N' => 'prefer_not_to_say',
                     ];
                     $data['gender'] = $gender_map[$gender_code] ?? '';
+                    break;
+                    
+                case 'PRONOUNS':
+                case 'X-PRONOUNS':
+                    if (empty($data['pronouns'])) {
+                        $data['pronouns'] = trim(self::unescape_value($value));
+                    }
                     break;
                     
                 case 'X-SOCIALPROFILE':

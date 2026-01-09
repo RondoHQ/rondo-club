@@ -49,6 +49,7 @@ export default function PersonEditModal({
       last_name: '',
       nickname: '',
       gender: '',
+      pronouns: '',
       email: '',
       phone: '',
       phone_type: 'mobile',
@@ -78,6 +79,7 @@ export default function PersonEditModal({
           last_name: person.acf?.last_name || '',
           nickname: person.acf?.nickname || '',
           gender: person.acf?.gender || '',
+          pronouns: person.acf?.pronouns || '',
           email: emailContact?.contact_value || '',
           phone: phoneContact?.contact_value || '',
           phone_type: phoneContact?.contact_type || 'mobile',
@@ -92,6 +94,7 @@ export default function PersonEditModal({
           last_name: '',
           nickname: '',
           gender: '',
+          pronouns: '',
           email: '',
           phone: '',
           phone_type: 'mobile',
@@ -141,6 +144,7 @@ export default function PersonEditModal({
           last_name: data.last_name || '',
           nickname: data.nickname || '',
           gender: data.gender || '',
+          pronouns: data.pronouns || '',
           email: data.email || '',
           phone: data.phone || '',
           phone_type: data.phone_type || 'mobile',
@@ -301,21 +305,33 @@ export default function PersonEditModal({
               />
             </div>
 
-            {/* Gender */}
-            <div>
-              <label className="label">Gender</label>
-              <select
-                {...register('gender')}
-                className="input"
-                disabled={isLoading}
-              >
-                <option value="">Select...</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="non_binary">Non-binary</option>
-                <option value="other">Other</option>
-                <option value="prefer_not_to_say">Prefer not to say</option>
-              </select>
+            {/* Gender and Pronouns */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Gender</label>
+                <select
+                  {...register('gender')}
+                  className="input"
+                  disabled={isLoading}
+                >
+                  <option value="">Select...</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="non_binary">Non-binary</option>
+                  <option value="other">Other</option>
+                  <option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Pronouns</label>
+                <input
+                  {...register('pronouns')}
+                  type="text"
+                  className="input"
+                  placeholder="e.g., they/them"
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
             {/* Email - only editable when creating */}
