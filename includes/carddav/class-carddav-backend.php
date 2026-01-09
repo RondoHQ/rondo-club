@@ -271,6 +271,14 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
             update_field('nickname', $parsed['nickname'], $post_id);
         }
         
+        if (!empty($parsed['gender'])) {
+            update_field('gender', $parsed['gender'], $post_id);
+        }
+        
+        if (!empty($parsed['pronouns'])) {
+            update_field('pronouns', $parsed['pronouns'], $post_id);
+        }
+        
         if (!empty($parsed['contact_info'])) {
             update_field('contact_info', $parsed['contact_info'], $post_id);
         }
@@ -367,6 +375,14 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         
         if (isset($parsed['nickname'])) {
             update_field('nickname', $parsed['nickname'], $person_id);
+        }
+        
+        if (isset($parsed['gender'])) {
+            update_field('gender', $parsed['gender'], $person_id);
+        }
+        
+        if (isset($parsed['pronouns'])) {
+            update_field('pronouns', $parsed['pronouns'], $person_id);
         }
         
         if (isset($parsed['contact_info'])) {

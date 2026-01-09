@@ -152,6 +152,7 @@ class PRM_VCard_Import {
             'last_name'   => $vcard['last_name'] ?? '',
             'nickname'    => $vcard['nickname'] ?? '',
             'gender'      => $vcard['gender'] ?? '',
+            'pronouns'    => $vcard['pronouns'] ?? '',
             'email'       => $email,
             'phone'       => $phone,
             'phone_type'  => $phone_type,
@@ -266,6 +267,7 @@ class PRM_VCard_Import {
             'last_name'       => '',
             'nickname'        => '',
             'gender'          => '',
+            'pronouns'        => '',
             'org'             => '',
             'title'           => '',
             'emails'          => [],
@@ -413,6 +415,13 @@ class PRM_VCard_Import {
                         'U' => '', // Unknown/unspecified
                     ];
                     $vcard['gender'] = $gender_map[$gender_code] ?? '';
+                    break;
+                    
+                case 'PRONOUNS':
+                case 'X-PRONOUNS':
+                    if (empty($vcard['pronouns'])) {
+                        $vcard['pronouns'] = trim($this->decode_vcard_value($value));
+                    }
                     break;
                     
                 case 'X-SOCIALPROFILE':
@@ -722,6 +731,10 @@ class PRM_VCard_Import {
         
         if (!empty($vcard['gender'])) {
             update_field('gender', $vcard['gender'], $post_id);
+        }
+        
+        if (!empty($vcard['pronouns'])) {
+            update_field('pronouns', $vcard['pronouns'], $post_id);
         }
 
         // Handle company/work history (add to existing, don't replace)
