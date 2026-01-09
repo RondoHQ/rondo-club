@@ -1,13 +1,34 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Calendar, Share2, Bell, Database, Shield, Info } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
 import { prmApi } from '@/api/client';
 
+// Tab configuration
+const TABS = [
+  { id: 'sync', label: 'Sync', icon: Share2 },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'data', label: 'Data', icon: Database },
+  { id: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
+  { id: 'about', label: 'About', icon: Info },
+];
+
 export default function Settings() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const config = window.prmConfig || {};
   const isAdmin = config.isAdmin || false;
   const userId = config.userId;
+  
+  // Get active tab from URL or default to 'sync'
+  const activeTab = searchParams.get('tab') || 'sync';
+  
+  const setActiveTab = (tab) => {
+    setSearchParams({ tab });
+  };
+  
+  // Filter tabs based on admin status
+  const visibleTabs = TABS.filter(tab => !tab.adminOnly || isAdmin);
   
   const [icalUrl, setIcalUrl] = useState('');
   const [webcalUrl, setWebcalUrl] = useState('');
@@ -32,7 +53,6 @@ export default function Settings() {
   const [notificationTime, setNotificationTime] = useState('09:00');
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [savingChannels, setSavingChannels] = useState(false);
-  const [savingWebhook, setSavingWebhook] = useState(false);
   const [savingTime, setSavingTime] = useState(false);
   const [webhookTestMessage, setWebhookTestMessage] = useState('');
   const [disconnectingSlack, setDisconnectingSlack] = useState(false);
@@ -145,30 +165,29 @@ export default function Settings() {
   // Handle OAuth callback messages from URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const slackConnected = params.get('slack_connected');
+    const slackConnectedParam = params.get('slack_connected');
     const slackError = params.get('slack_error');
     
-    if (slackConnected === '1') {
+    if (slackConnectedParam === '1') {
       setWebhookTestMessage('Slack connected successfully!');
-      // Refresh Slack status - fetchSlackData will be called by the useEffect when slackConnected changes
+      setActiveTab('notifications');
+      // Refresh Slack status
       prmApi.getSlackStatus().then(response => {
         setSlackConnected(response.data.connected || false);
         setSlackWorkspaceName(response.data.workspace_name || '');
       });
-      // Clean URL
-      window.history.replaceState({}, '', window.location.pathname);
+      // Clean URL but keep tab
+      setSearchParams({ tab: 'notifications' });
     } else if (slackError) {
       setWebhookTestMessage(`Slack connection failed: ${slackError}`);
-      // Clean URL
-      window.history.replaceState({}, '', window.location.pathname);
+      setActiveTab('notifications');
+      setSearchParams({ tab: 'notifications' });
     }
   }, []);
   
   const handleConnectSlack = async () => {
     try {
-      // Get OAuth URL from backend
       const response = await apiClient.get('/prm/v1/slack/oauth/authorize');
-      // Redirect to Slack OAuth URL
       window.location.href = response.data.oauth_url;
     } catch (error) {
       console.error('Failed to get Slack OAuth URL:', error);
@@ -190,7 +209,6 @@ export default function Settings() {
       setSlackUsers([]);
       setSlackTargets([]);
       setWebhookTestMessage('Slack disconnected successfully');
-      // Also disable Slack channel if enabled
       if (notificationChannels.includes('slack')) {
         await toggleChannel('slack');
       }
@@ -202,7 +220,6 @@ export default function Settings() {
     }
   };
   
-  // Handle Slack target selection
   const handleToggleSlackTarget = (targetId) => {
     const newTargets = slackTargets.includes(targetId)
       ? slackTargets.filter(id => id !== targetId)
@@ -210,7 +227,6 @@ export default function Settings() {
     setSlackTargets(newTargets);
   };
   
-  // Save Slack targets
   const handleSaveSlackTargets = async () => {
     setSavingSlackTargets(true);
     try {
@@ -330,7 +346,6 @@ export default function Settings() {
   };
   
   const handleNotificationTimeChange = async (time) => {
-    // Round to nearest 5 minutes
     const [hours, minutes] = time.split(':').map(Number);
     const roundedMinutes = Math.round(minutes / 5) * 5;
     const adjustedHours = roundedMinutes === 60 ? (hours + 1) % 24 : hours;
@@ -345,47 +360,10 @@ export default function Settings() {
     } catch (error) {
       console.error('Failed to update notification time:', error);
       alert(error.response?.data?.message || 'Failed to update notification time');
-      // Revert on error
       const response = await prmApi.getNotificationChannels();
       setNotificationTime(response.data.notification_time || '09:00');
     } finally {
       setSavingTime(false);
-    }
-  };
-  
-  const handleSlackWebhookChange = async (webhook) => {
-    setSlackWebhook(webhook);
-    setWebhookTestMessage('');
-    
-    if (!webhook) {
-      // Remove webhook if empty
-      setSavingWebhook(true);
-      try {
-        await prmApi.updateSlackWebhook('');
-        setWebhookTestMessage('Webhook removed');
-        // Also disable Slack channel if enabled
-        if (notificationChannels.includes('slack')) {
-          await toggleChannel('slack');
-        }
-      } catch (error) {
-        console.error('Failed to remove webhook:', error);
-        alert(error.response?.data?.message || 'Failed to remove webhook');
-      } finally {
-        setSavingWebhook(false);
-      }
-      return;
-    }
-    
-    // Validate and save webhook
-    setSavingWebhook(true);
-    try {
-      const response = await prmApi.updateSlackWebhook(webhook);
-      setWebhookTestMessage(response.data.message || 'Webhook configured successfully');
-    } catch (error) {
-      console.error('Failed to update webhook:', error);
-      setWebhookTestMessage(error.response?.data?.message || 'Failed to configure webhook');
-    } finally {
-      setSavingWebhook(false);
     }
   };
   
@@ -427,8 +405,122 @@ export default function Settings() {
     }
   };
 
+  // Render tab content
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'sync':
+        return <SyncTab 
+          icalUrl={icalUrl}
+          webcalUrl={webcalUrl}
+          icalLoading={icalLoading}
+          icalCopied={icalCopied}
+          copyIcalUrl={copyIcalUrl}
+          regenerateIcalToken={regenerateIcalToken}
+          regenerating={regenerating}
+          appPasswords={appPasswords}
+          appPasswordsLoading={appPasswordsLoading}
+          carddavUrls={carddavUrls}
+          config={config}
+          newPasswordName={newPasswordName}
+          setNewPasswordName={setNewPasswordName}
+          handleCreateAppPassword={handleCreateAppPassword}
+          creatingPassword={creatingPassword}
+          newPassword={newPassword}
+          setNewPassword={setNewPassword}
+          copyNewPassword={copyNewPassword}
+          passwordCopied={passwordCopied}
+          handleDeleteAppPassword={handleDeleteAppPassword}
+          formatDate={formatDate}
+          copyCarddavUrl={copyCarddavUrl}
+        />;
+      case 'notifications':
+        return <NotificationsTab
+          notificationsLoading={notificationsLoading}
+          notificationChannels={notificationChannels}
+          toggleChannel={toggleChannel}
+          savingChannels={savingChannels}
+          slackConnected={slackConnected}
+          slackWorkspaceName={slackWorkspaceName}
+          handleConnectSlack={handleConnectSlack}
+          handleDisconnectSlack={handleDisconnectSlack}
+          disconnectingSlack={disconnectingSlack}
+          webhookTestMessage={webhookTestMessage}
+          slackChannels={slackChannels}
+          slackUsers={slackUsers}
+          slackTargets={slackTargets}
+          loadingSlackData={loadingSlackData}
+          handleToggleSlackTarget={handleToggleSlackTarget}
+          handleSaveSlackTargets={handleSaveSlackTargets}
+          savingSlackTargets={savingSlackTargets}
+          slackWebhook={slackWebhook}
+          notificationTime={notificationTime}
+          handleNotificationTimeChange={handleNotificationTimeChange}
+          savingTime={savingTime}
+        />;
+      case 'data':
+        return <DataTab />;
+      case 'admin':
+        return isAdmin ? <AdminTab
+          handleTriggerReminders={handleTriggerReminders}
+          triggeringReminders={triggeringReminders}
+          reminderMessage={reminderMessage}
+          handleRescheduleCron={handleRescheduleCron}
+          reschedulingCron={reschedulingCron}
+          cronMessage={cronMessage}
+        /> : null;
+      case 'about':
+        return <AboutTab config={config} />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto">
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          {visibleTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
+                  ${isActive 
+                    ? 'border-primary-500 text-primary-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
+                `}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+      
+      {/* Tab Content */}
+      <div className="space-y-6">
+        {renderTabContent()}
+      </div>
+    </div>
+  );
+}
+
+// Sync Tab Component
+function SyncTab({ 
+  icalUrl, webcalUrl, icalLoading, icalCopied, copyIcalUrl, 
+  regenerateIcalToken, regenerating, appPasswords, appPasswordsLoading,
+  carddavUrls, config, newPasswordName, setNewPasswordName,
+  handleCreateAppPassword, creatingPassword, newPassword, setNewPassword,
+  copyNewPassword, passwordCopied, handleDeleteAppPassword, formatDate, copyCarddavUrl
+}) {
+  return (
+    <>
+      {/* Calendar Subscription */}
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4">Calendar Subscription</h2>
         <p className="text-sm text-gray-600 mb-4">
@@ -477,10 +569,7 @@ export default function Settings() {
             </div>
             
             <div className="flex flex-wrap gap-2">
-              <a
-                href={webcalUrl}
-                className="btn-primary"
-              >
+              <a href={webcalUrl} className="btn-primary">
                 <span className="flex items-center gap-1">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -506,6 +595,7 @@ export default function Settings() {
         )}
       </div>
       
+      {/* CardDAV Sync */}
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4">CardDAV Sync</h2>
         <p className="text-sm text-gray-600 mb-4">
@@ -519,7 +609,6 @@ export default function Settings() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* CardDAV URLs */}
             {carddavUrls && (
               <div className="p-4 bg-gray-50 rounded-lg space-y-3">
                 <h3 className="font-medium text-sm">Connection Details</h3>
@@ -567,7 +656,6 @@ export default function Settings() {
               </div>
             )}
             
-            {/* New password form */}
             <form onSubmit={handleCreateAppPassword} className="flex gap-2">
               <input
                 type="text"
@@ -586,7 +674,6 @@ export default function Settings() {
               </button>
             </form>
             
-            {/* Newly created password */}
             {newPassword && (
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800 font-medium mb-2">
@@ -600,10 +687,7 @@ export default function Settings() {
                     className="input flex-1 font-mono text-sm bg-white"
                     onClick={(e) => e.target.select()}
                   />
-                  <button
-                    onClick={copyNewPassword}
-                    className="btn-primary whitespace-nowrap"
-                  >
+                  <button onClick={copyNewPassword} className="btn-primary whitespace-nowrap">
                     {passwordCopied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
@@ -616,7 +700,6 @@ export default function Settings() {
               </div>
             )}
             
-            {/* Existing passwords */}
             {appPasswords.length > 0 && (
               <div>
                 <h3 className="text-sm font-medium mb-2">Your App Passwords</h3>
@@ -652,311 +735,366 @@ export default function Settings() {
           </div>
         )}
       </div>
+    </>
+  );
+}
+
+// Notifications Tab Component
+function NotificationsTab({
+  notificationsLoading, notificationChannels, toggleChannel, savingChannels,
+  slackConnected, slackWorkspaceName, handleConnectSlack, handleDisconnectSlack,
+  disconnectingSlack, webhookTestMessage, slackChannels, slackUsers, slackTargets,
+  loadingSlackData, handleToggleSlackTarget, handleSaveSlackTargets, savingSlackTargets,
+  slackWebhook, notificationTime, handleNotificationTimeChange, savingTime
+}) {
+  return (
+    <div className="card p-6">
+      <h2 className="text-lg font-semibold mb-4">Notifications</h2>
+      <p className="text-sm text-gray-600 mb-4">
+        Choose how you want to receive daily reminders about your important dates.
+      </p>
       
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Data</h2>
-        <div className="space-y-3">
-          <Link
-            to="/settings/import"
-            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-          >
-            <p className="font-medium">Import Data</p>
-            <p className="text-sm text-gray-500">Import contacts from Monica CRM or other sources</p>
-          </Link>
-          <Link
-            to="/settings/export"
-            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-          >
-            <p className="font-medium">Export Data</p>
-            <p className="text-sm text-gray-500">Export all contacts as vCard or Google Contacts CSV</p>
-          </Link>
+      {notificationsLoading ? (
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-200 rounded mb-3"></div>
+          <div className="h-10 bg-gray-200 rounded"></div>
         </div>
-      </div>
-      
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Notifications</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Choose how you want to receive daily reminders about your important dates.
-        </p>
-        
-        {notificationsLoading ? (
-          <div className="animate-pulse">
-            <div className="h-10 bg-gray-200 rounded mb-3"></div>
-            <div className="h-10 bg-gray-200 rounded"></div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Email channel */}
-            <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
-              <div>
-                <p className="font-medium">Email</p>
-                <p className="text-sm text-gray-500">Receive daily digest emails</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notificationChannels.includes('email')}
-                  onChange={() => toggleChannel('email')}
-                  disabled={savingChannels}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-              </label>
-            </div>
-            
-            {/* Slack channel */}
-            <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
-              <div>
-                <p className="font-medium">Slack</p>
-                <p className="text-sm text-gray-500">Receive notifications in Slack</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notificationChannels.includes('slack')}
-                  onChange={() => toggleChannel('slack')}
-                  disabled={savingChannels || !slackConnected}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-              </label>
-            </div>
-            
-            {/* Slack OAuth connection */}
+      ) : (
+        <div className="space-y-4">
+          {/* Email channel */}
+          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
             <div>
-              {slackConnected ? (
-                <div className="space-y-3">
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-green-900">Connected to Slack</p>
-                        {slackWorkspaceName && (
-                          <p className="text-sm text-green-700">Workspace: {slackWorkspaceName}</p>
-                        )}
-                      </div>
-                      <button
-                        onClick={handleDisconnectSlack}
-                        disabled={disconnectingSlack}
-                        className="btn-secondary text-sm"
-                      >
-                        {disconnectingSlack ? 'Disconnecting...' : 'Disconnect'}
-                      </button>
-                    </div>
-                  </div>
-                  {webhookTestMessage && (
-                    <p className={`text-sm ${webhookTestMessage.includes('successfully') || webhookTestMessage.includes('disconnected') ? 'text-green-600' : 'text-red-600'}`}>
-                      {webhookTestMessage}
-                    </p>
-                  )}
-                  
-                  {/* Notification targets configuration */}
-                  {notificationChannels.includes('slack') && (
-                    <div className="mt-4 p-4 border border-gray-200 rounded-lg">
-                      <h3 className="font-medium mb-3">Notification targets</h3>
-                      <p className="text-sm text-gray-600 mb-4">
-                        Choose where to send Slack notifications. You can select multiple channels and users.
-                      </p>
-                      
-                      {loadingSlackData ? (
-                        <p className="text-sm text-gray-500">Loading channels and users...</p>
-                      ) : (
-                        <>
-                          {/* Channels */}
-                          {slackChannels.length > 0 && (
-                            <div className="mb-4">
-                              <h4 className="text-sm font-medium mb-2">Channels</h4>
-                              <div className="space-y-2 max-h-48 overflow-y-auto">
-                                {slackChannels.map((channel) => (
-                                  <label
-                                    key={channel.id}
-                                    className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={slackTargets.includes(channel.id)}
-                                      onChange={() => handleToggleSlackTarget(channel.id)}
-                                      className="mr-2 cursor-pointer"
-                                    />
-                                    <span className="text-sm">{channel.name}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Users */}
-                          {slackUsers.length > 0 && (
-                            <div className="mb-4">
-                              <h4 className="text-sm font-medium mb-2">Direct messages</h4>
-                              <div className="space-y-2 max-h-48 overflow-y-auto">
-                                {slackUsers.map((user) => (
-                                  <label
-                                    key={user.id}
-                                    className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={slackTargets.includes(user.id)}
-                                      onChange={() => handleToggleSlackTarget(user.id)}
-                                      className="mr-2 cursor-pointer"
-                                    />
-                                    <span className="text-sm">
-                                      {user.name}
-                                      {user.is_me && <span className="text-gray-500 ml-1">(you)</span>}
-                                    </span>
-                                  </label>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {slackChannels.length === 0 && slackUsers.length === 0 && !loadingSlackData && (
-                            <p className="text-sm text-gray-500 mb-4">
-                              No channels or users found. Make sure the Slack app has the necessary permissions.
-                            </p>
-                          )}
-                          
-                          <button
-                            onClick={handleSaveSlackTargets}
-                            disabled={savingSlackTargets}
-                            className="btn-primary text-sm mt-4"
-                          >
-                            {savingSlackTargets ? 'Saving...' : 'Save targets'}
-                          </button>
-                        </>
+              <p className="font-medium">Email</p>
+              <p className="text-sm text-gray-500">Receive daily digest emails</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={notificationChannels.includes('email')}
+                onChange={() => toggleChannel('email')}
+                disabled={savingChannels}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            </label>
+          </div>
+          
+          {/* Slack channel */}
+          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
+            <div>
+              <p className="font-medium">Slack</p>
+              <p className="text-sm text-gray-500">Receive notifications in Slack</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={notificationChannels.includes('slack')}
+                onChange={() => toggleChannel('slack')}
+                disabled={savingChannels || !slackConnected}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            </label>
+          </div>
+          
+          {/* Slack OAuth connection */}
+          <div>
+            {slackConnected ? (
+              <div className="space-y-3">
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-green-900">Connected to Slack</p>
+                      {slackWorkspaceName && (
+                        <p className="text-sm text-green-700">Workspace: {slackWorkspaceName}</p>
                       )}
                     </div>
-                  )}
+                    <button
+                      onClick={handleDisconnectSlack}
+                      disabled={disconnectingSlack}
+                      className="btn-secondary text-sm"
+                    >
+                      {disconnectingSlack ? 'Disconnecting...' : 'Disconnect'}
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <button
-                    onClick={handleConnectSlack}
-                    className="btn-primary w-full"
-                    disabled={disconnectingSlack}
-                  >
-                    Connect Slack
-                  </button>
-                  {webhookTestMessage && (
-                    <p className={`text-sm ${webhookTestMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>
-                      {webhookTestMessage}
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500">
-                    Connect your Slack workspace to receive daily reminder notifications. You'll be able to message channels or receive direct messages.
+                {webhookTestMessage && (
+                  <p className={`text-sm ${webhookTestMessage.includes('successfully') || webhookTestMessage.includes('disconnected') ? 'text-green-600' : 'text-red-600'}`}>
+                    {webhookTestMessage}
                   </p>
-                </div>
-              )}
-            </div>
-            
-            {/* Legacy webhook support (hidden but kept for backward compatibility) */}
-            {slackWebhook && !slackConnected && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  <strong>Legacy webhook detected.</strong> Please connect via OAuth for better functionality. Your webhook will continue to work until you connect via OAuth.
+                )}
+                
+                {/* Notification targets configuration */}
+                {notificationChannels.includes('slack') && (
+                  <div className="mt-4 p-4 border border-gray-200 rounded-lg">
+                    <h3 className="font-medium mb-3">Notification targets</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Choose where to send Slack notifications. You can select multiple channels and users.
+                    </p>
+                    
+                    {loadingSlackData ? (
+                      <p className="text-sm text-gray-500">Loading channels and users...</p>
+                    ) : (
+                      <>
+                        {slackChannels.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium mb-2">Channels</h4>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                              {slackChannels.map((channel) => (
+                                <label
+                                  key={channel.id}
+                                  className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={slackTargets.includes(channel.id)}
+                                    onChange={() => handleToggleSlackTarget(channel.id)}
+                                    className="mr-2 cursor-pointer"
+                                  />
+                                  <span className="text-sm">{channel.name}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {slackUsers.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium mb-2">Direct messages</h4>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                              {slackUsers.map((user) => (
+                                <label
+                                  key={user.id}
+                                  className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={slackTargets.includes(user.id)}
+                                    onChange={() => handleToggleSlackTarget(user.id)}
+                                    className="mr-2 cursor-pointer"
+                                  />
+                                  <span className="text-sm">
+                                    {user.name}
+                                    {user.is_me && <span className="text-gray-500 ml-1">(you)</span>}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {slackChannels.length === 0 && slackUsers.length === 0 && !loadingSlackData && (
+                          <p className="text-sm text-gray-500 mb-4">
+                            No channels or users found. Make sure the Slack app has the necessary permissions.
+                          </p>
+                        )}
+                        
+                        <button
+                          onClick={handleSaveSlackTargets}
+                          disabled={savingSlackTargets}
+                          className="btn-primary text-sm mt-4"
+                        >
+                          {savingSlackTargets ? 'Saving...' : 'Save targets'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <button
+                  onClick={handleConnectSlack}
+                  className="btn-primary w-full"
+                  disabled={disconnectingSlack}
+                >
+                  Connect Slack
+                </button>
+                {webhookTestMessage && (
+                  <p className={`text-sm ${webhookTestMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>
+                    {webhookTestMessage}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500">
+                  Connect your Slack workspace to receive daily reminder notifications. You'll be able to message channels or receive direct messages.
                 </p>
               </div>
             )}
-            
-            {/* Notification time */}
-            <div>
-              <label className="label mb-1">Notification Time (UTC)</label>
-              <input
-                type="time"
-                value={notificationTime}
-                onChange={(e) => handleNotificationTimeChange(e.target.value)}
-                className="input"
-                disabled={savingTime}
-                step="300"
-              />
-              {notificationTime && (
-                <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
-                  <p className="text-gray-700">
-                    <span className="font-medium">UTC:</span> {notificationTime}
-                  </p>
-                  <p className="text-gray-700 mt-1">
-                    <span className="font-medium">Your time ({Intl.DateTimeFormat().resolvedOptions().timeZone}):</span>{' '}
-                    {(() => {
-                      try {
-                        // Parse UTC time and convert to local timezone
-                        const [hours, minutes] = notificationTime.split(':');
-                        const utcDate = new Date();
-                        utcDate.setUTCHours(parseInt(hours), parseInt(minutes), 0, 0);
-                        const localTime = utcDate.toLocaleTimeString('en-US', { 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          hour12: false 
-                        });
-                        return localTime;
-                      } catch (e) {
-                        return notificationTime;
-                      }
-                    })()}
-                  </p>
-                </div>
-              )}
-              <p className="text-xs text-gray-500 mt-1">
-                Choose the UTC time when you want to receive your daily reminder digest. Reminders are sent within a 1-hour window of your selected time.
+          </div>
+          
+          {/* Legacy webhook support */}
+          {slackWebhook && !slackConnected && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Legacy webhook detected.</strong> Please connect via OAuth for better functionality. Your webhook will continue to work until you connect via OAuth.
               </p>
             </div>
-          </div>
-        )}
-      </div>
-      
-      {isAdmin && (
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold mb-4">Administration</h2>
-          <div className="space-y-3">
-            <Link
-              to="/settings/relationship-types"
-              className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-            >
-              <p className="font-medium">Relationship Types</p>
-              <p className="text-sm text-gray-500">Manage relationship types and their inverse mappings</p>
-            </Link>
-            <Link
-              to="/settings/user-approval"
-              className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50"
-            >
-              <p className="font-medium">User Approval</p>
-              <p className="text-sm text-gray-500">Approve or deny access for new users</p>
-            </Link>
-            <button
-              onClick={handleTriggerReminders}
-              disabled={triggeringReminders}
-              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <p className="font-medium">Trigger reminders</p>
-              <p className="text-sm text-gray-500">
-                {triggeringReminders ? 'Sending...' : 'Manually send reminders for today'}
-              </p>
-              {reminderMessage && (
-                <p className="text-sm text-green-600 mt-1">{reminderMessage}</p>
-              )}
-            </button>
-            <button
-              onClick={handleRescheduleCron}
-              disabled={reschedulingCron}
-              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <p className="font-medium">Reschedule cron jobs</p>
-              <p className="text-sm text-gray-500">
-                {reschedulingCron ? 'Rescheduling...' : 'Reschedule all user reminder cron jobs'}
-              </p>
-              {cronMessage && (
-                <p className="text-sm text-green-600 mt-1">{cronMessage}</p>
-              )}
-            </button>
+          )}
+          
+          {/* Notification time */}
+          <div>
+            <label className="label mb-1">Notification Time (UTC)</label>
+            <input
+              type="time"
+              value={notificationTime}
+              onChange={(e) => handleNotificationTimeChange(e.target.value)}
+              className="input"
+              disabled={savingTime}
+              step="300"
+            />
+            {notificationTime && (
+              <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                <p className="text-gray-700">
+                  <span className="font-medium">UTC:</span> {notificationTime}
+                </p>
+                <p className="text-gray-700 mt-1">
+                  <span className="font-medium">Your time ({Intl.DateTimeFormat().resolvedOptions().timeZone}):</span>{' '}
+                  {(() => {
+                    try {
+                      const [hours, minutes] = notificationTime.split(':');
+                      const utcDate = new Date();
+                      utcDate.setUTCHours(parseInt(hours), parseInt(minutes), 0, 0);
+                      const localTime = utcDate.toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: false 
+                      });
+                      return localTime;
+                    } catch (e) {
+                      return notificationTime;
+                    }
+                  })()}
+                </p>
+              </div>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Choose the UTC time when you want to receive your daily reminder digest. Reminders are sent within a 1-hour window of your selected time.
+            </p>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Data Tab Component
+function DataTab() {
+  return (
+    <div className="card p-6">
+      <h2 className="text-lg font-semibold mb-4">Data Management</h2>
+      <p className="text-sm text-gray-600 mb-4">
+        Import contacts from other sources or export your data for backup.
+      </p>
+      <div className="space-y-3">
+        <Link
+          to="/settings/import"
+          className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+        >
+          <p className="font-medium">Import Data</p>
+          <p className="text-sm text-gray-500">Import contacts from Monica CRM, vCard, or Google Contacts</p>
+        </Link>
+        <Link
+          to="/settings/export"
+          className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+        >
+          <p className="font-medium">Export Data</p>
+          <p className="text-sm text-gray-500">Export all contacts as vCard or Google Contacts CSV</p>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// Admin Tab Component
+function AdminTab({ 
+  handleTriggerReminders, triggeringReminders, reminderMessage,
+  handleRescheduleCron, reschedulingCron, cronMessage
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4">User Management</h2>
+        <div className="space-y-3">
+          <Link
+            to="/settings/user-approval"
+            className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          >
+            <p className="font-medium">User Approval</p>
+            <p className="text-sm text-gray-500">Approve or deny access for new users</p>
+          </Link>
+        </div>
+      </div>
       
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">About</h2>
-        <p className="text-sm text-gray-600">
-          {APP_NAME} v{config.version || '1.0.0'}<br />
-          Built with WordPress, React, and Tailwind CSS.
-        </p>
+        <h2 className="text-lg font-semibold mb-4">Configuration</h2>
+        <div className="space-y-3">
+          <Link
+            to="/settings/relationship-types"
+            className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          >
+            <p className="font-medium">Relationship Types</p>
+            <p className="text-sm text-gray-500">Manage relationship types and their inverse mappings</p>
+          </Link>
+        </div>
+      </div>
+      
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4">System Actions</h2>
+        <div className="space-y-3">
+          <button
+            onClick={handleTriggerReminders}
+            disabled={triggeringReminders}
+            className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <p className="font-medium">Trigger Reminders</p>
+            <p className="text-sm text-gray-500">
+              {triggeringReminders ? 'Sending...' : 'Manually send reminders for today'}
+            </p>
+            {reminderMessage && (
+              <p className="text-sm text-green-600 mt-1">{reminderMessage}</p>
+            )}
+          </button>
+          <button
+            onClick={handleRescheduleCron}
+            disabled={reschedulingCron}
+            className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <p className="font-medium">Reschedule Cron Jobs</p>
+            <p className="text-sm text-gray-500">
+              {reschedulingCron ? 'Rescheduling...' : 'Reschedule all user reminder cron jobs'}
+            </p>
+            {cronMessage && (
+              <p className="text-sm text-green-600 mt-1">{cronMessage}</p>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// About Tab Component
+function AboutTab({ config }) {
+  return (
+    <div className="card p-6">
+      <h2 className="text-lg font-semibold mb-4">About {APP_NAME}</h2>
+      <div className="space-y-4">
+        <div>
+          <p className="text-sm text-gray-600">
+            Version {config.version || '1.0.0'}
+          </p>
+        </div>
+        <div className="pt-4 border-t border-gray-200">
+          <p className="text-sm text-gray-600">
+            {APP_NAME} is a personal CRM system that helps you manage your contacts, 
+            track important dates, and maintain meaningful relationships.
+          </p>
+        </div>
+        <div className="pt-4 border-t border-gray-200">
+          <p className="text-sm text-gray-500">
+            Built with WordPress, React, and Tailwind CSS.
+          </p>
+        </div>
       </div>
     </div>
   );
