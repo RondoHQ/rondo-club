@@ -1275,20 +1275,20 @@ export default function PersonDetail() {
               <p className="text-gray-500">"{acf.nickname}"</p>
             )}
             {isDeceased && deathDateValue && (
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-500 text-sm inline-flex items-center flex-wrap">
                 {getGenderSymbol(acf.gender) && <span>{getGenderSymbol(acf.gender)}</span>}
-                {getGenderSymbol(acf.gender) && acf.pronouns && <span> — </span>}
+                {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
                 {acf.pronouns && <span>{acf.pronouns}</span>}
-                {(getGenderSymbol(acf.gender) || acf.pronouns) && <span> — </span>}
-                Died {format(deathDateValue, deathYearUnknown ? 'MMMM d' : 'MMMM d, yyyy')}{age !== null && ` at age ${age}`}
+                {(getGenderSymbol(acf.gender) || acf.pronouns) && <span>&nbsp;—&nbsp;</span>}
+                <span>Died {format(deathDateValue, deathYearUnknown ? 'MMMM d' : 'MMMM d, yyyy')}{age !== null && ` at age ${age}`}</span>
               </p>
             )}
             {!isDeceased && (getGenderSymbol(acf.gender) || acf.pronouns || age !== null) && (
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-500 text-sm inline-flex items-center flex-wrap">
                 {getGenderSymbol(acf.gender) && <span>{getGenderSymbol(acf.gender)}</span>}
-                {getGenderSymbol(acf.gender) && acf.pronouns && <span> — </span>}
+                {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
                 {acf.pronouns && <span>{acf.pronouns}</span>}
-                {(getGenderSymbol(acf.gender) || acf.pronouns) && age !== null && <span> — </span>}
+                {(getGenderSymbol(acf.gender) || acf.pronouns) && age !== null && <span>&nbsp;—&nbsp;</span>}
                 {age !== null && <span>{age} years old</span>}
               </p>
             )}
