@@ -93,6 +93,7 @@ export default function PersonDetail() {
     enabled: !!id,
   });
   
+  const [activeTab, setActiveTab] = useState('profile');
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [selectedLabelToAdd, setSelectedLabelToAdd] = useState('');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -1388,10 +1389,48 @@ export default function PersonDetail() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Contact info - only show for living people */}
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-8">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'profile'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Profile
+          </button>
+          <button
+            onClick={() => setActiveTab('timeline')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'timeline'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Timeline
+          </button>
+          <button
+            onClick={() => setActiveTab('work')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'work'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Work
+          </button>
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      <div className="space-y-6">
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Contact info - only show for living people */}
           {!isDeceased && (
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
@@ -1489,7 +1528,7 @@ export default function PersonDetail() {
           {/* Important Dates */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Events</h2>
+              <h2 className="font-semibold">Important dates</h2>
               <button
                 onClick={() => {
                   setEditingDate(null);
@@ -1560,39 +1599,301 @@ export default function PersonDetail() {
             )}
           </div>
 
-          {/* Timeline */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Timeline</h2>
-              <div className="flex gap-2">
+            {/* Addresses - only show for living people */}
+            {!isDeceased && (
+              <div className="card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold">Addresses</h2>
+                  <button
+                    onClick={() => {
+                      setEditingAddress(null);
+                      setEditingAddressIndex(null);
+                      setShowAddressModal(true);
+                    }}
+                    className="btn-secondary text-sm"
+                  >
+                    <Plus className="w-4 h-4 md:mr-1" />
+                    <span className="hidden md:inline">Add address</span>
+                  </button>
+                </div>
+                {acf.addresses?.length > 0 ? (
+                  <div className="space-y-3">
+                    {acf.addresses.map((address, index) => {
+                      const addressLines = [
+                        address.street,
+                        [address.city, address.state, address.postal_code].filter(Boolean).join(', '),
+                        address.country
+                      ].filter(Boolean);
+                      
+                      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressLines.join(', '))}`;
+                      
+                      return (
+                        <div key={index} className="flex items-start group">
+                          <MapPin className="w-4 h-4 text-gray-400 mt-1 mr-3 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            {address.address_label && (
+                              <p className="text-xs text-gray-500 mb-1">{address.address_label}</p>
+                            )}
+                            <a
+                              href={googleMapsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary-600 hover:text-primary-700 hover:underline text-sm"
+                            >
+                              {addressLines.map((line, i) => (
+                                <span key={i} className="block">{line}</span>
+                              ))}
+                            </a>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                            <button
+                              onClick={() => {
+                                setEditingAddress(address);
+                                setEditingAddressIndex(index);
+                                setShowAddressModal(true);
+                              }}
+                              className="p-1 hover:bg-gray-100 rounded"
+                              title="Edit address"
+                            >
+                              <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAddress(index)}
+                              className="p-1 hover:bg-red-50 rounded"
+                              title="Delete address"
+                            >
+                              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No addresses yet. <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-primary-600 hover:underline">Add one</button>
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* How we met */}
+            {(acf.how_we_met || acf.met_date) && (
+              <div className="card p-6">
+                <h2 className="font-semibold mb-3">How we met</h2>
+                {acf.met_date && (
+                  <p className="text-sm text-gray-500 mb-2">
+                    <Calendar className="w-4 h-4 inline mr-1" />
+                    {format(new Date(acf.met_date), 'MMMM d, yyyy')}
+                  </p>
+                )}
+                {acf.how_we_met && (
+                  <p className="text-sm">{acf.how_we_met}</p>
+                )}
+              </div>
+            )}
+
+            {/* Relationships */}
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold">Relationships</h2>
                 <button
-                  onClick={() => setShowNoteModal(true)}
+                  onClick={() => {
+                    setEditingRelationship(null);
+                    setEditingRelationshipIndex(null);
+                    setShowRelationshipModal(true);
+                  }}
                   className="btn-secondary text-sm"
                 >
                   <Plus className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Note</span>
-                </button>
-                <button
-                  onClick={() => setShowActivityModal(true)}
-                  className="btn-secondary text-sm"
-                >
-                  <Plus className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Activity</span>
+                  <span className="hidden md:inline">Add relationship</span>
                 </button>
               </div>
+              {sortedRelationships?.length > 0 ? (
+                <div className="space-y-2">
+                  {sortedRelationships.map((rel, index) => {
+                    const originalIndex = person?.acf?.relationships?.findIndex(
+                      r => r.related_person === rel.related_person && 
+                           r.relationship_type === rel.relationship_type
+                    ) ?? index;
+                    
+                    return (
+                      <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 group">
+                        <Link
+                          to={`/people/${rel.related_person}`}
+                          className="flex items-center flex-1 min-w-0"
+                        >
+                          {rel.person_thumbnail ? (
+                            <img
+                              src={rel.person_thumbnail}
+                              alt={decodeHtml(rel.person_name) || ''}
+                              className="w-8 h-8 rounded-full object-cover mr-2"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                              <span className="text-xs font-medium text-gray-500">
+                                {decodeHtml(rel.person_name)?.[0] || '?'}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-medium">
+                              {decodeHtml(rel.person_name) || `Person #${rel.related_person}`}
+                              {personDeceasedMap[rel.related_person] && (
+                                <span className="text-gray-400 ml-1" title="Deceased">†</span>
+                              )}
+                            </p>
+                            <p className="text-xs text-gray-500">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
+                          </div>
+                        </Link>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                          <button
+                            onClick={() => {
+                              const relData = person?.acf?.relationships?.[originalIndex];
+                              setEditingRelationship(relData);
+                              setEditingRelationshipIndex(originalIndex);
+                              setShowRelationshipModal(true);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Edit relationship"
+                          >
+                            <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRelationship(originalIndex)}
+                            className="p-1 hover:bg-red-50 rounded"
+                            title="Delete relationship"
+                          >
+                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No relationships yet. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-primary-600 hover:underline">Add one</button>
+                </p>
+              )}
             </div>
-            
-            <TimelineView
-              timeline={timeline || []}
-              onEdit={handleEditTimelineItem}
-              onDelete={handleDeleteTimelineItem}
-              onToggleTodo={handleToggleTodo}
-              personId={id}
-              allPeople={allPeople || []}
-            />
           </div>
+        )}
 
-          {/* Work history */}
+        {/* Timeline Tab */}
+        {activeTab === 'timeline' && (
+          <div className="space-y-6">
+            {/* Todos */}
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold">Todos</h2>
+                <button
+                  onClick={() => {
+                    setEditingTodo(null);
+                    setShowTodoModal(true);
+                  }}
+                  className="btn-secondary text-sm"
+                >
+                  <Plus className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Add todo</span>
+                </button>
+              </div>
+              {sortedTodos.length > 0 ? (
+                <div className="space-y-2">
+                  {sortedTodos.map((todo) => {
+                    const isOverdue = isTodoOverdue(todo);
+                    return (
+                      <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 group">
+                        <button
+                          onClick={() => handleToggleTodo(todo)}
+                          className="mt-0.5 mr-2 flex-shrink-0"
+                          title={todo.is_completed ? 'Mark as incomplete' : 'Mark as complete'}
+                        >
+                          {todo.is_completed ? (
+                            <CheckSquare2 className="w-5 h-5 text-primary-600" />
+                          ) : (
+                            <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
+                          )}
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm ${todo.is_completed ? 'line-through text-gray-400' : isOverdue ? 'text-red-600' : ''}`}>
+                            {todo.content}
+                          </p>
+                          {todo.due_date && (
+                            <p className={`text-xs mt-0.5 ${isOverdue && !todo.is_completed ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                              Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
+                              {isOverdue && !todo.is_completed && ' (overdue)'}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                          <button
+                            onClick={() => {
+                              setEditingTodo(todo);
+                              setShowTodoModal(true);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Edit todo"
+                          >
+                            <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTodo(todo.id)}
+                            className="p-1 hover:bg-red-50 rounded"
+                            title="Delete todo"
+                          >
+                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No todos yet.
+                </p>
+              )}
+            </div>
+
+            {/* Timeline */}
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold">Timeline</h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowNoteModal(true)}
+                    className="btn-secondary text-sm"
+                  >
+                    <Plus className="w-4 h-4 md:mr-1" />
+                    <span className="hidden md:inline">Note</span>
+                  </button>
+                  <button
+                    onClick={() => setShowActivityModal(true)}
+                    className="btn-secondary text-sm"
+                  >
+                    <Plus className="w-4 h-4 md:mr-1" />
+                    <span className="hidden md:inline">Activity</span>
+                  </button>
+                </div>
+              </div>
+              
+              <TimelineView
+                timeline={timeline || []}
+                onEdit={handleEditTimelineItem}
+                onDelete={handleDeleteTimelineItem}
+                onToggleTodo={handleToggleTodo}
+                personId={id}
+                allPeople={allPeople || []}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Work Tab */}
+        {activeTab === 'work' && (
+          <div className="space-y-6">
+            {/* Work history */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">Work history</h2>
@@ -1715,8 +2016,50 @@ export default function PersonDetail() {
             </div>
           )}
 
-          {/* Modals */}
-          <NoteModal
+          {/* Colleagues - only show if person has current job(s) */}
+          {colleagues.length > 0 && (
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold">Colleagues</h2>
+                <span className="text-xs text-gray-500">{colleagues.length} {colleagues.length === 1 ? 'colleague' : 'colleagues'}</span>
+              </div>
+              <div className="space-y-2">
+                {colleagues.map((colleague) => (
+                  <Link
+                    key={colleague.id}
+                    to={`/people/${colleague.id}`}
+                    className="flex items-center p-2 rounded hover:bg-gray-50"
+                  >
+                    {colleague.thumbnail ? (
+                      <img
+                        src={colleague.thumbnail}
+                        alt={colleague.name || ''}
+                        className="w-8 h-8 rounded-full object-cover mr-2"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                        <span className="text-xs font-medium text-gray-500">
+                          {colleague.name?.[0] || '?'}
+                        </span>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{colleague.name}</p>
+                      {colleague.job_title && (
+                        <p className="text-xs text-gray-500 truncate">{colleague.job_title}</p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          </div>
+        )}
+      </div>
+
+      {/* Modals */}
+      <NoteModal
             isOpen={showNoteModal}
             onClose={() => setShowNoteModal(false)}
             onSubmit={handleCreateNote}
@@ -1821,323 +2164,13 @@ export default function PersonDetail() {
             workHistoryItem={editingWorkHistory}
           />
           
-          <PersonEditModal
-            isOpen={showPersonEditModal}
-            onClose={() => setShowPersonEditModal(false)}
-            onSubmit={handleSavePerson}
-            isLoading={isSavingPerson}
-            person={person}
-          />
-        </div>
-        
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* How we met */}
-          {(acf.how_we_met || acf.met_date) && (
-            <div className="card p-6">
-              <h2 className="font-semibold mb-3">How we met</h2>
-              {acf.met_date && (
-                <p className="text-sm text-gray-500 mb-2">
-                  <Calendar className="w-4 h-4 inline mr-1" />
-                  {format(new Date(acf.met_date), 'MMMM d, yyyy')}
-                </p>
-              )}
-              {acf.how_we_met && (
-                <p className="text-sm">{acf.how_we_met}</p>
-              )}
-            </div>
-          )}
-
-          {/* Todos */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">Todos</h2>
-              <button
-                onClick={() => {
-                  setEditingTodo(null);
-                  setShowTodoModal(true);
-                }}
-                className="btn-secondary text-sm"
-              >
-                <Plus className="w-4 h-4 md:mr-1" />
-                <span className="hidden md:inline">Add todo</span>
-              </button>
-            </div>
-            {sortedTodos.length > 0 ? (
-              <div className="space-y-2">
-                {sortedTodos.map((todo) => {
-                  const isOverdue = isTodoOverdue(todo);
-                  return (
-                    <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 group">
-                      <button
-                        onClick={() => handleToggleTodo(todo)}
-                        className="mt-0.5 mr-2 flex-shrink-0"
-                        title={todo.is_completed ? 'Mark as incomplete' : 'Mark as complete'}
-                      >
-                        {todo.is_completed ? (
-                          <CheckSquare2 className="w-5 h-5 text-primary-600" />
-                        ) : (
-                          <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
-                        )}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${todo.is_completed ? 'line-through text-gray-400' : isOverdue ? 'text-red-600' : ''}`}>
-                          {todo.content}
-                        </p>
-                        {todo.due_date && (
-                          <p className={`text-xs mt-0.5 ${isOverdue && !todo.is_completed ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
-                            Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
-                            {isOverdue && !todo.is_completed && ' (overdue)'}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                        <button
-                          onClick={() => {
-                            setEditingTodo(todo);
-                            setShowTodoModal(true);
-                          }}
-                          className="p-1 hover:bg-gray-100 rounded"
-                          title="Edit todo"
-                        >
-                          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteTodo(todo.id)}
-                          className="p-1 hover:bg-red-50 rounded"
-                          title="Delete todo"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
-                No todos yet.
-              </p>
-            )}
-          </div>
-          
-          {/* Relationships */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">Relationships</h2>
-              <button
-                onClick={() => {
-                  setEditingRelationship(null);
-                  setEditingRelationshipIndex(null);
-                  setShowRelationshipModal(true);
-                }}
-                className="btn-secondary text-sm"
-              >
-                <Plus className="w-4 h-4 md:mr-1" />
-                <span className="hidden md:inline">Add relationship</span>
-              </button>
-            </div>
-            {sortedRelationships?.length > 0 ? (
-              <div className="space-y-2">
-                {sortedRelationships.map((rel, index) => {
-                  // Find the original index in the relationships array for edit/delete
-                  const originalIndex = person?.acf?.relationships?.findIndex(
-                    r => r.related_person === rel.related_person && 
-                         r.relationship_type === rel.relationship_type
-                  ) ?? index;
-                  
-                  return (
-                    <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 group">
-                      <Link
-                        to={`/people/${rel.related_person}`}
-                        className="flex items-center flex-1 min-w-0"
-                      >
-                        {rel.person_thumbnail ? (
-                          <img
-                            src={rel.person_thumbnail}
-                            alt={decodeHtml(rel.person_name) || ''}
-                            className="w-8 h-8 rounded-full object-cover mr-2"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                            <span className="text-xs font-medium text-gray-500">
-                              {decodeHtml(rel.person_name)?.[0] || '?'}
-                            </span>
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm font-medium">
-                            {decodeHtml(rel.person_name) || `Person #${rel.related_person}`}
-                            {personDeceasedMap[rel.related_person] && (
-                              <span className="text-gray-400 ml-1" title="Deceased">†</span>
-                            )}
-                          </p>
-                          <p className="text-xs text-gray-500">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
-                        </div>
-                      </Link>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                        <button
-                          onClick={() => {
-                            // Get the actual relationship data for editing
-                            const relData = person?.acf?.relationships?.[originalIndex];
-                            setEditingRelationship(relData);
-                            setEditingRelationshipIndex(originalIndex);
-                            setShowRelationshipModal(true);
-                          }}
-                          className="p-1 hover:bg-gray-100 rounded"
-                          title="Edit relationship"
-                        >
-                          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteRelationship(originalIndex)}
-                          className="p-1 hover:bg-red-50 rounded"
-                          title="Delete relationship"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
-                No relationships yet. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-primary-600 hover:underline">Add one</button>
-              </p>
-            )}
-          </div>
-          
-          {/* Colleagues - only show if person has current job(s) */}
-          {colleagues.length > 0 && (
-            <div className="card p-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Colleagues</h2>
-                <span className="text-xs text-gray-500">{colleagues.length} {colleagues.length === 1 ? 'colleague' : 'colleagues'}</span>
-              </div>
-              <div className="space-y-2">
-                {colleagues.map((colleague) => (
-                  <Link
-                    key={colleague.id}
-                    to={`/people/${colleague.id}`}
-                    className="flex items-center p-2 rounded hover:bg-gray-50"
-                  >
-                    {colleague.thumbnail ? (
-                      <img
-                        src={colleague.thumbnail}
-                        alt={colleague.name || ''}
-                        className="w-8 h-8 rounded-full object-cover mr-2"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                        <span className="text-xs font-medium text-gray-500">
-                          {colleague.name?.[0] || '?'}
-                        </span>
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{colleague.name}</p>
-                      {colleague.job_title && (
-                        <p className="text-xs text-gray-500 truncate">{colleague.job_title}</p>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Addresses - only show for living people */}
-          {!isDeceased && (
-            <div className="card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Addresses</h2>
-                <button
-                  onClick={() => {
-                    setEditingAddress(null);
-                    setEditingAddressIndex(null);
-                    setShowAddressModal(true);
-                  }}
-                  className="btn-secondary text-sm"
-                >
-                  <Plus className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Add address</span>
-                </button>
-              </div>
-              {acf.addresses?.length > 0 ? (
-                <div className="space-y-4">
-                  {acf.addresses.map((address, index) => {
-                    // Format address for display
-                    const addressLines = [];
-                    if (address.street) addressLines.push(address.street);
-                    const cityLine = [address.postal_code, address.city].filter(Boolean).join(' ');
-                    if (cityLine) addressLines.push(cityLine);
-                    const stateLine = [address.state, address.country].filter(Boolean).join(', ');
-                    if (stateLine) addressLines.push(stateLine);
-                    
-                    // Format address for Google Maps link
-                    const fullAddress = [
-                      address.street,
-                      address.postal_code,
-                      address.city,
-                      address.state,
-                      address.country
-                    ].filter(Boolean).join(', ');
-                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
-
-                    return (
-                      <div key={index} className="group">
-                        <div className="flex items-start rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
-                          <MapPin className="w-4 h-4 text-gray-400 mr-3 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            {address.address_label && (
-                              <span className="text-sm text-gray-500 block mb-1">{address.address_label}</span>
-                            )}
-                            <a
-                              href={mapsUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary-600 hover:text-primary-700 hover:underline text-sm"
-                            >
-                              {addressLines.map((line, i) => (
-                                <span key={i} className="block">{line}</span>
-                              ))}
-                            </a>
-                          </div>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                            <button
-                              onClick={() => {
-                                setEditingAddress(address);
-                                setEditingAddressIndex(index);
-                                setShowAddressModal(true);
-                              }}
-                              className="p-1 hover:bg-gray-100 rounded"
-                              title="Edit address"
-                            >
-                              <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteAddress(index)}
-                              className="p-1 hover:bg-red-50 rounded"
-                              title="Delete address"
-                            >
-                              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  No addresses yet. <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-primary-600 hover:underline">Add one</button>
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <PersonEditModal
+        isOpen={showPersonEditModal}
+        onClose={() => setShowPersonEditModal(false)}
+        onSubmit={handleSavePerson}
+        isLoading={isSavingPerson}
+        person={person}
+      />
     </div>
   );
 }

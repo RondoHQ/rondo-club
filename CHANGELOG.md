@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.39.0] - 2026-01-09
+
+### Changed
+- PersonDetail page now uses tab-based interface with three tabs: Profile, Timeline, and Work
+- Profile tab contains: Contact information, Addresses, Important dates, How we met, Relationships
+- Timeline tab contains: Todos, Timeline (activities/notes)
+- Work tab contains: Work history, Investments, Colleagues
+- "Events" section renamed to "Important dates"
+- Removed three-column grid layout in favor of cleaner tab-based organization
+
 ## [1.38.1] - 2026-01-09
 
 ### Fixed
