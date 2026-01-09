@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, Square, TrendingUp
+  CheckSquare2, Square, TrendingUp, StickyNote
 } from 'lucide-react';
 import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack, SiWhatsapp } from '@icons-pack/react-simple-icons';
 
@@ -1864,15 +1864,17 @@ export default function PersonDetail() {
                   <button
                     onClick={() => setShowNoteModal(true)}
                     className="btn-secondary text-sm"
+                    title="Add note"
                   >
-                    <Plus className="w-4 h-4 md:mr-1" />
+                    <StickyNote className="w-4 h-4 md:mr-1" />
                     <span className="hidden md:inline">Note</span>
                   </button>
                   <button
                     onClick={() => setShowActivityModal(true)}
                     className="btn-secondary text-sm"
+                    title="Add activity"
                   >
-                    <Plus className="w-4 h-4 md:mr-1" />
+                    <MessageCircle className="w-4 h-4 md:mr-1" />
                     <span className="hidden md:inline">Activity</span>
                   </button>
                 </div>
