@@ -61,9 +61,11 @@ export default function CompaniesList() {
       const payload = {
         title: data.title,
         status: 'publish',
+        parent: data.parentId || 0,
         acf: {
           website: data.website,
           industry: data.industry,
+          investors: data.investors || [],
         },
       };
       

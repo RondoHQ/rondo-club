@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { getCompanyName, decodeHtml } from '@/utils/formatters';
+import CompanyEditModal from '@/components/CompanyEditModal';
 
 export default function CompanyDetail() {
   const { id } = useParams();
@@ -12,6 +13,8 @@ export default function CompanyDetail() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const { data: company, isLoading, error } = useQuery({
     queryKey: ['company', id],
@@ -101,6 +104,16 @@ export default function CompanyDetail() {
     },
   });
   
+  const updateCompany = useMutation({
+    mutationFn: (data) => wpApi.updateCompany(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company', id] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['company-investors', id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+  
   // Update document title with company's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
   useDocumentTitle(getCompanyName(company) || 'Organization');
@@ -123,6 +136,29 @@ export default function CompanyDetail() {
     } catch (error) {
       console.error('Failed to delete company:', error);
       alert('Failed to delete organization. Please try again.');
+    }
+  };
+  
+  const handleSaveCompany = async (data) => {
+    setIsSaving(true);
+    try {
+      const payload = {
+        title: data.title,
+        parent: data.parentId || 0,
+        acf: {
+          website: data.website,
+          industry: data.industry,
+          investors: data.investors || [],
+        },
+      };
+      
+      await updateCompany.mutateAsync(payload);
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Failed to save company:', error);
+      alert('Failed to save organization. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
   
@@ -196,10 +232,10 @@ export default function CompanyDetail() {
           <span className="hidden md:inline">Back to organizations</span>
         </Link>
         <div className="flex gap-2">
-          <Link to={`/companies/${id}/edit`} className="btn-secondary">
+          <button onClick={() => setShowEditModal(true)} className="btn-secondary">
             <Edit className="w-4 h-4 mr-2" />
             Edit
-          </Link>
+          </button>
           <button onClick={handleDelete} className="btn-danger">
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
@@ -484,6 +520,14 @@ export default function CompanyDetail() {
           </div>
         </div>
       )}
+      
+      <CompanyEditModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleSaveCompany}
+        isLoading={isSaving}
+        company={company}
+      />
     </div>
   );
 }

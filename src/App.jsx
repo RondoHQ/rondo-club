@@ -8,7 +8,6 @@ import PeopleList from '@/pages/People/PeopleList';
 import PersonDetail from '@/pages/People/PersonDetail';
 import CompaniesList from '@/pages/Companies/CompaniesList';
 import CompanyDetail from '@/pages/Companies/CompanyDetail';
-import CompanyForm from '@/pages/Companies/CompanyForm';
 import DatesList from '@/pages/Dates/DatesList';
 import TodosList from '@/pages/Todos/TodosList';
 import Settings from '@/pages/Settings/Settings';
@@ -137,9 +136,7 @@ function App() {
                 
                 {/* Companies routes */}
                 <Route path="/companies" element={<CompaniesList />} />
-                <Route path="/companies/new" element={<CompanyForm />} />
                 <Route path="/companies/:id" element={<CompanyDetail />} />
-                <Route path="/companies/:id/edit" element={<CompanyForm />} />
                 
                 {/* Dates routes */}
                 <Route path="/dates" element={<DatesList />} />
