@@ -15,6 +15,18 @@
             }
         },
         {
+            "key": "field_year_unknown",
+            "label": "Year unknown",
+            "name": "year_unknown",
+            "type": "true_false",
+            "message": "I don't know the year for this date",
+            "default_value": 0,
+            "ui": 1,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
             "key": "field_is_recurring",
             "label": "Recurring",
             "name": "is_recurring",

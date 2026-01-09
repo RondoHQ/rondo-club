@@ -1424,6 +1424,7 @@ class PRM_REST_API {
             'title'                => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
             'date_value'           => get_field('date_value', $post->ID),
             'is_recurring'         => (bool) get_field('is_recurring', $post->ID),
+            'year_unknown'         => (bool) get_field('year_unknown', $post->ID),
             'date_type'            => wp_get_post_terms($post->ID, 'date_type', ['fields' => 'names']),
             'related_people'       => $people_names,
         ];

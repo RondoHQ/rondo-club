@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.28.0] - 2026-01-09
+
+### Added
+- "Year unknown" option for important dates (birthdays, etc.) when you don't know the year
+- Dates with unknown year display without year and skip age calculation
+
 ## [1.27.2] - 2026-01-09
 
 ### Changed

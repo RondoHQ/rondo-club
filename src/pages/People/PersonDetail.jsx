@@ -137,6 +137,7 @@ export default function PersonDetail() {
   });
   // The API returns date_value, not date
   const birthDate = birthday?.date_value ? new Date(birthday.date_value) : null;
+  const birthdayYearUnknown = birthday?.year_unknown ?? false;
 
   // Find death date from person dates
   const deathDate = personDates?.find(d => {
@@ -144,10 +145,12 @@ export default function PersonDetail() {
     return dateType?.toLowerCase() === 'died';
   });
   const deathDateValue = deathDate?.date_value ? new Date(deathDate.date_value) : null;
+  const deathYearUnknown = deathDate?.year_unknown ?? false;
   
   // Calculate age - if died, show age at death, otherwise current age
+  // Skip age calculation if birthday year is unknown
   const isDeceased = !!deathDateValue;
-  const age = birthDate ? (isDeceased 
+  const age = (birthDate && !birthdayYearUnknown) ? (isDeceased 
     ? differenceInYears(deathDateValue, birthDate)
     : differenceInYears(new Date(), birthDate)
   ) : null;
@@ -979,10 +982,10 @@ export default function PersonDetail() {
             {acf.nickname && (
               <p className="text-gray-500">"{acf.nickname}"</p>
             )}
-            {isDeceased && deathDateValue && age !== null && (
+            {isDeceased && deathDateValue && (
               <p className="text-gray-500 text-sm">
                 {getGenderSymbol(acf.gender) && <span className="mr-1">{getGenderSymbol(acf.gender)}</span>}
-                Died {format(deathDateValue, 'MMMM d, yyyy')} at age {age}
+                Died {format(deathDateValue, deathYearUnknown ? 'MMMM d' : 'MMMM d, yyyy')}{age !== null && ` at age ${age}`}
               </p>
             )}
             {!isDeceased && age !== null && (
@@ -1232,6 +1235,8 @@ export default function PersonDetail() {
                   const Icon = dateTypeLower.includes('wedding') || dateTypeLower.includes('marriage') ? Heart :
                                dateTypeLower.includes('birthday') ? Gift : Calendar;
 
+                  const dateFormat = date.year_unknown ? 'MMMM d' : 'MMMM d, yyyy';
+
                   return (
                     <div key={date.id} className="flex items-start group">
                       <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
@@ -1244,7 +1249,7 @@ export default function PersonDetail() {
                       <div className="flex-1">
                         <p className="text-sm font-medium">{date.title}</p>
                         <p className="text-xs text-gray-500">
-                          {date.date_value && format(new Date(date.date_value), 'MMMM d, yyyy')}
+                          {date.date_value && format(new Date(date.date_value), dateFormat)}
                         </p>
                         {dateType && (
                           <p className="text-xs text-gray-400 capitalize">{dateType}</p>

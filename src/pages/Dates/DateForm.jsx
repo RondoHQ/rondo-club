@@ -229,6 +229,7 @@ export default function DateForm() {
       date_type: '',
       related_people: [],
       is_recurring: true,
+      year_unknown: false,
     },
   });
 
@@ -324,6 +325,7 @@ export default function DateForm() {
         date_type: dateTypeId,
         related_people: relatedPeopleIds,
         is_recurring: dateItem.acf?.is_recurring ?? true,
+        year_unknown: dateItem.acf?.year_unknown ?? false,
       });
       setFormInitialized(true);
     } else if (!isEditing && allPeople.length > 0 && dateTypes.length > 0) {
@@ -334,6 +336,7 @@ export default function DateForm() {
         date_type: '',
         related_people: [],
         is_recurring: true,
+        year_unknown: false,
       };
 
       if (prefilledPersonId) {
@@ -371,6 +374,7 @@ export default function DateForm() {
         date_value: data.date_value,
         related_people: data.related_people,
         is_recurring: data.is_recurring,
+        year_unknown: data.year_unknown,
       },
     };
 
@@ -489,6 +493,19 @@ export default function DateForm() {
             {errors.date_value && (
               <p className="text-sm text-red-600 mt-1">{errors.date_value.message}</p>
             )}
+          </div>
+
+          {/* Year unknown checkbox */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="year_unknown"
+              {...register('year_unknown')}
+              className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+            <label htmlFor="year_unknown" className="ml-2 text-sm text-gray-700 cursor-pointer">
+              Year unknown
+            </label>
           </div>
 
           {/* Recurring checkbox */}
