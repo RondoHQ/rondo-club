@@ -513,6 +513,7 @@ class PRM_VCard_Export {
             'birthday' => '',
             'photo_url' => '',
             'uid' => '',
+            'notes' => [],
         ];
         
         // UID
@@ -668,6 +669,16 @@ class PRM_VCard_Export {
             }
         }
         
+        // Notes
+        if (isset($vcard->NOTE)) {
+            foreach ($vcard->NOTE as $note) {
+                $note_content = trim((string) $note);
+                if (!empty($note_content)) {
+                    $data['notes'][] = $note_content;
+                }
+            }
+        }
+        
         return $data;
     }
     
@@ -690,6 +701,7 @@ class PRM_VCard_Export {
             'birthday' => '',
             'photo_url' => '',
             'uid' => '',
+            'notes' => [],
         ];
         
         $lines = preg_split('/\r\n|\r|\n/', $vcard_data);
@@ -783,6 +795,13 @@ class PRM_VCard_Export {
                     
                 case 'UID':
                     $data['uid'] = self::unescape_value($value);
+                    break;
+                    
+                case 'NOTE':
+                    $note_content = trim(self::unescape_value($value));
+                    if (!empty($note_content)) {
+                        $data['notes'][] = $note_content;
+                    }
                     break;
             }
         }
