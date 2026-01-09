@@ -93,7 +93,6 @@ export default function PersonDetail() {
     enabled: !!id,
   });
   
-  const [activeTab, setActiveTab] = useState('profile');
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [selectedLabelToAdd, setSelectedLabelToAdd] = useState('');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -1389,50 +1388,11 @@ export default function PersonDetail() {
         </div>
       </div>
       
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-8">
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'profile'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Profile
-          </button>
-          <button
-            onClick={() => setActiveTab('timeline')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'timeline'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Timeline
-          </button>
-          <button
-            onClick={() => setActiveTab('work')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'work'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Work
-          </button>
-        </nav>
-      </div>
-
-      {/* Tab Content */}
-      <div className="space-y-6">
-        {/* Profile Tab */}
-        {activeTab === 'profile' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Contact info - only show for living people */}
-          {!isDeceased && (
-            <div className="card p-6">
+      {/* Masonry Layout */}
+      <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+        {/* Contact info - only show for living people */}
+        {!isDeceased && (
+          <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold">Contact information</h2>
                 <button
@@ -1525,10 +1485,10 @@ export default function PersonDetail() {
             </div>
           )}
 
-          {/* Important Dates */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Important dates</h2>
+        {/* Important Dates */}
+        <div className="card p-6 break-inside-avoid mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold">Important dates</h2>
               <button
                 onClick={() => {
                   setEditingDate(null);
@@ -1599,9 +1559,9 @@ export default function PersonDetail() {
             )}
           </div>
 
-            {/* Addresses - only show for living people */}
-            {!isDeceased && (
-              <div className="card p-6">
+        {/* Addresses - only show for living people */}
+        {!isDeceased && (
+          <div className="card p-6 break-inside-avoid mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold">Addresses</h2>
                   <button
@@ -1673,28 +1633,28 @@ export default function PersonDetail() {
                   <p className="text-sm text-gray-500 text-center py-4">
                     No addresses yet. <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-primary-600 hover:underline">Add one</button>
                   </p>
-                )}
-              </div>
-            )}
+              )}
+            </div>
+          )}
 
-            {/* How we met */}
-            {(acf.how_we_met || acf.met_date) && (
-              <div className="card p-6">
-                <h2 className="font-semibold mb-3">How we met</h2>
-                {acf.met_date && (
-                  <p className="text-sm text-gray-500 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-1" />
-                    {format(new Date(acf.met_date), 'MMMM d, yyyy')}
-                  </p>
-                )}
-                {acf.how_we_met && (
-                  <p className="text-sm">{acf.how_we_met}</p>
-                )}
-              </div>
+        {/* How we met */}
+        {(acf.how_we_met || acf.met_date) && (
+          <div className="card p-6 break-inside-avoid mb-6">
+            <h2 className="font-semibold mb-3">How we met</h2>
+            {acf.met_date && (
+              <p className="text-sm text-gray-500 mb-2">
+                <Calendar className="w-4 h-4 inline mr-1" />
+                {format(new Date(acf.met_date), 'MMMM d, yyyy')}
+              </p>
             )}
+            {acf.how_we_met && (
+              <p className="text-sm">{acf.how_we_met}</p>
+            )}
+          </div>
+        )}
 
-            {/* Relationships */}
-            <div className="card p-6">
+        {/* Relationships */}
+        <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold">Relationships</h2>
                 <button
@@ -1775,16 +1735,11 @@ export default function PersonDetail() {
                 <p className="text-sm text-gray-500 text-center py-4">
                   No relationships yet. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-primary-600 hover:underline">Add one</button>
                 </p>
-              )}
-            </div>
+            )}
           </div>
-        )}
 
-        {/* Timeline Tab */}
-        {activeTab === 'timeline' && (
-          <div className="space-y-6">
-            {/* Todos */}
-            <div className="card p-6">
+        {/* Todos */}
+        <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold">Todos</h2>
                 <button
@@ -1853,48 +1808,43 @@ export default function PersonDetail() {
                 <p className="text-sm text-gray-500 text-center py-4">
                   No todos yet.
                 </p>
-              )}
-            </div>
+            )}
+          </div>
 
-            {/* Timeline */}
-            <div className="card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Timeline</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowNoteModal(true)}
-                    className="btn-secondary text-sm"
-                  >
-                    <Plus className="w-4 h-4 md:mr-1" />
-                    <span className="hidden md:inline">Note</span>
-                  </button>
-                  <button
-                    onClick={() => setShowActivityModal(true)}
-                    className="btn-secondary text-sm"
-                  >
-                    <Plus className="w-4 h-4 md:mr-1" />
-                    <span className="hidden md:inline">Activity</span>
-                  </button>
-                </div>
-              </div>
-              
-              <TimelineView
-                timeline={timeline || []}
-                onEdit={handleEditTimelineItem}
-                onDelete={handleDeleteTimelineItem}
-                onToggleTodo={handleToggleTodo}
-                personId={id}
-                allPeople={allPeople || []}
-              />
+        {/* Timeline */}
+        <div className="card p-6 break-inside-avoid mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold">Timeline</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowNoteModal(true)}
+                className="btn-secondary text-sm"
+              >
+                <Plus className="w-4 h-4 md:mr-1" />
+                <span className="hidden md:inline">Note</span>
+              </button>
+              <button
+                onClick={() => setShowActivityModal(true)}
+                className="btn-secondary text-sm"
+              >
+                <Plus className="w-4 h-4 md:mr-1" />
+                <span className="hidden md:inline">Activity</span>
+              </button>
             </div>
           </div>
-        )}
+          
+          <TimelineView
+            timeline={timeline || []}
+            onEdit={handleEditTimelineItem}
+            onDelete={handleDeleteTimelineItem}
+            onToggleTodo={handleToggleTodo}
+            personId={id}
+            allPeople={allPeople || []}
+          />
+        </div>
 
-        {/* Work Tab */}
-        {activeTab === 'work' && (
-          <div className="space-y-6">
-            {/* Work history */}
-          <div className="card p-6">
+        {/* Work history */}
+        <div className="card p-6 break-inside-avoid mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">Work history</h2>
               <button
@@ -1979,81 +1929,79 @@ export default function PersonDetail() {
             )}
           </div>
           
-          {/* Investments */}
-          {investments.length > 0 && (
-            <div className="card p-6">
-              <h2 className="font-semibold mb-4 flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2" />
-                Investments
-              </h2>
-              <div className="space-y-3">
-                {investments.map((company) => (
-                  <Link
-                    key={company.id}
-                    to={`/companies/${company.id}`}
-                    className="flex items-center p-2 rounded-lg hover:bg-gray-50 transition-colors group"
-                  >
-                    {company.thumbnail ? (
-                      <img
-                        src={company.thumbnail}
-                        alt={company.name}
-                        className="w-12 h-12 rounded-lg object-contain bg-white border border-gray-200"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200">
-                        <Building2 className="w-6 h-6 text-gray-400" />
-                      </div>
-                    )}
-                    <div className="ml-3">
-                      <p className="text-sm font-medium group-hover:text-primary-600">{company.name}</p>
-                      {company.industry && (
-                        <p className="text-xs text-gray-500">{company.industry}</p>
-                      )}
+        {/* Investments */}
+        {investments.length > 0 && (
+          <div className="card p-6 break-inside-avoid mb-6">
+            <h2 className="font-semibold mb-4 flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2" />
+              Investments
+            </h2>
+            <div className="space-y-3">
+              {investments.map((company) => (
+                <Link
+                  key={company.id}
+                  to={`/companies/${company.id}`}
+                  className="flex items-center p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                >
+                  {company.thumbnail ? (
+                    <img
+                      src={company.thumbnail}
+                      alt={company.name}
+                      className="w-12 h-12 rounded-lg object-contain bg-white border border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                      <Building2 className="w-6 h-6 text-gray-400" />
                     </div>
-                  </Link>
-                ))}
-              </div>
+                  )}
+                  <div className="ml-3">
+                    <p className="text-sm font-medium group-hover:text-primary-600">{company.name}</p>
+                    {company.industry && (
+                      <p className="text-xs text-gray-500">{company.industry}</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Colleagues - only show if person has current job(s) */}
-          {colleagues.length > 0 && (
-            <div className="card p-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Colleagues</h2>
-                <span className="text-xs text-gray-500">{colleagues.length} {colleagues.length === 1 ? 'colleague' : 'colleagues'}</span>
-              </div>
-              <div className="space-y-2">
-                {colleagues.map((colleague) => (
-                  <Link
-                    key={colleague.id}
-                    to={`/people/${colleague.id}`}
-                    className="flex items-center p-2 rounded hover:bg-gray-50"
-                  >
-                    {colleague.thumbnail ? (
-                      <img
-                        src={colleague.thumbnail}
-                        alt={colleague.name || ''}
-                        className="w-8 h-8 rounded-full object-cover mr-2"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
-                        <span className="text-xs font-medium text-gray-500">
-                          {colleague.name?.[0] || '?'}
-                        </span>
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{colleague.name}</p>
-                      {colleague.job_title && (
-                        <p className="text-xs text-gray-500 truncate">{colleague.job_title}</p>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
+        {/* Colleagues - only show if person has current job(s) */}
+        {colleagues.length > 0 && (
+          <div className="card p-6 break-inside-avoid mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Colleagues</h2>
+              <span className="text-xs text-gray-500">{colleagues.length} {colleagues.length === 1 ? 'colleague' : 'colleagues'}</span>
             </div>
-          )}
+            <div className="space-y-2">
+              {colleagues.map((colleague) => (
+                <Link
+                  key={colleague.id}
+                  to={`/people/${colleague.id}`}
+                  className="flex items-center p-2 rounded hover:bg-gray-50"
+                >
+                  {colleague.thumbnail ? (
+                    <img
+                      src={colleague.thumbnail}
+                      alt={colleague.name || ''}
+                      className="w-8 h-8 rounded-full object-cover mr-2"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                      <span className="text-xs font-medium text-gray-500">
+                        {colleague.name?.[0] || '?'}
+                      </span>
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{colleague.name}</p>
+                    {colleague.job_title && (
+                      <p className="text-xs text-gray-500 truncate">{colleague.job_title}</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </div>
