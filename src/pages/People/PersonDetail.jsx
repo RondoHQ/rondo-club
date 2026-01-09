@@ -1224,15 +1224,7 @@ export default function PersonDetail() {
       </div>
       
       {/* Profile header */}
-      <div className="card p-6 relative">
-        <div className="absolute top-4 right-4">
-          <Link
-            to={`/people/${id}/family-tree`}
-            className="btn-secondary text-sm"
-          >
-            View family tree
-          </Link>
-        </div>
+      <div className="card p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="relative group">
             {person.thumbnail ? (
@@ -1535,9 +1527,9 @@ export default function PersonDetail() {
                   setShowDateModal(true);
                 }}
                 className="btn-secondary text-sm"
+                title="Add important date"
               >
-                <Plus className="w-4 h-4 md:mr-1" />
-                <span className="hidden md:inline">Add Important Date</span>
+                <Plus className="w-4 h-4" />
               </button>
             </div>
             {allDates.length > 0 ? (
@@ -1611,9 +1603,9 @@ export default function PersonDetail() {
                       setShowAddressModal(true);
                     }}
                     className="btn-secondary text-sm"
+                    title="Add address"
                   >
-                    <Plus className="w-4 h-4 md:mr-1" />
-                    <span className="hidden md:inline">Add address</span>
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 {acf.addresses?.length > 0 ? (
@@ -1697,17 +1689,25 @@ export default function PersonDetail() {
             <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold">Relationships</h2>
-                <button
-                  onClick={() => {
-                    setEditingRelationship(null);
-                    setEditingRelationshipIndex(null);
-                    setShowRelationshipModal(true);
-                  }}
-                  className="btn-secondary text-sm"
-                >
-                  <Plus className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Add relationship</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={`/people/${id}/family-tree`}
+                    className="btn-secondary text-sm"
+                  >
+                    View family tree
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setEditingRelationship(null);
+                      setEditingRelationshipIndex(null);
+                      setShowRelationshipModal(true);
+                    }}
+                    className="btn-secondary text-sm"
+                    title="Add relationship"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               {sortedRelationships?.length > 0 ? (
                 <div className="space-y-2">
@@ -1793,9 +1793,9 @@ export default function PersonDetail() {
                     setShowTodoModal(true);
                   }}
                   className="btn-secondary text-sm"
+                  title="Add todo"
                 >
-                  <Plus className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Add todo</span>
+                  <Plus className="w-4 h-4" />
                 </button>
               </div>
               {sortedTodos.length > 0 ? (
@@ -1904,9 +1904,9 @@ export default function PersonDetail() {
                   setShowWorkHistoryModal(true);
                 }}
                 className="btn-secondary text-sm"
+                title="Add work history"
               >
-                <Plus className="w-4 h-4 md:mr-1" />
-                <span className="hidden md:inline">Add work history</span>
+                <Plus className="w-4 h-4" />
               </button>
             </div>
             {sortedWorkHistory?.length > 0 ? (
