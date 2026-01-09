@@ -230,6 +230,7 @@ class PRM_Reminders {
                 'next_occurrence' => $next_occurrence->format('Y-m-d'),
                 'days_until'      => (int) $today->diff($next_occurrence)->days,
                 'is_recurring'    => (bool) $is_recurring,
+                'year_unknown'    => (bool) get_field('year_unknown', $date_post->ID),
                 'date_type'       => wp_get_post_terms($date_post->ID, 'date_type', ['fields' => 'names']),
                 'related_people'  => $people_data,
             ];
@@ -420,6 +421,7 @@ class PRM_Reminders {
                 'next_occurrence' => $next_occurrence->format('Y-m-d'),
                 'days_until'      => (int) $today->diff($next_occurrence)->days,
                 'is_recurring'    => (bool) $is_recurring,
+                'year_unknown'    => (bool) get_field('year_unknown', $date_post->ID),
                 'date_type'       => wp_get_post_terms($date_post->ID, 'date_type', ['fields' => 'names']),
                 'related_people'  => $people_data,
             ];

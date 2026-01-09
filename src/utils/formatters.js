@@ -70,6 +70,30 @@ export function getPersonInitial(person) {
 }
 
 /**
+ * Format a date value, optionally hiding the year
+ * 
+ * @param {string} dateString - Date string in Y-m-d format
+ * @param {boolean} yearUnknown - Whether to hide the year
+ * @param {Function} formatFn - date-fns format function
+ * @returns {string} Formatted date string
+ */
+export function formatDateValue(dateString, yearUnknown = false, formatFn) {
+  if (!dateString || !formatFn) return '';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    if (yearUnknown) {
+      return formatFn(date, 'MMMM d');
+    }
+    return formatFn(date, 'MMMM d, yyyy');
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Sanitize ACF data for person updates via REST API
  * - Converts empty strings to null for enum fields (gender)
  * - Ensures repeater fields are always arrays
