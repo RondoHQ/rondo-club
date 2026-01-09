@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { wpApi } from '@/api/client';
+import { wpApi, prmApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
 import PersonEditModal from '@/components/PersonEditModal';
 
@@ -125,17 +125,49 @@ export default function PeopleList() {
           first_name: data.first_name,
           last_name: data.last_name,
           nickname: data.nickname,
-          gender: data.gender,
+          gender: data.gender || null,
+          how_we_met: data.how_we_met,
+          is_favorite: data.is_favorite,
           contact_info: contactInfo,
         },
       };
       
       const response = await wpApi.createPerson(payload);
+      const personId = response.data.id;
+      
+      // Try to sideload Gravatar if email is provided
+      if (data.email) {
+        try {
+          await prmApi.sideloadGravatar(personId, data.email);
+        } catch (gravatarError) {
+          console.error('Failed to load Gravatar:', gravatarError);
+        }
+      }
+      
+      // Create birthday if provided
+      if (data.birthday && data.birthdayType) {
+        try {
+          await wpApi.createDate({
+            title: `${data.first_name}'s Birthday`,
+            status: 'publish',
+            date_type: [data.birthdayType.id],
+            acf: {
+              date_value: data.birthday,
+              is_recurring: true,
+              related_people: [personId],
+            },
+          });
+        } catch (dateError) {
+          console.error('Failed to create birthday:', dateError);
+        }
+      }
+      
       return response.data;
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
       setShowPersonModal(false);
       navigate(`/people/${result.id}`);
     },
