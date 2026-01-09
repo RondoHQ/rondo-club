@@ -7,14 +7,10 @@ import Dashboard from '@/pages/Dashboard';
 import PeopleList from '@/pages/People/PeopleList';
 import PersonDetail from '@/pages/People/PersonDetail';
 import PersonForm from '@/pages/People/PersonForm';
-import WorkHistoryForm from '@/pages/People/WorkHistoryForm';
-import RelationshipForm from '@/pages/People/RelationshipForm';
-import AddressForm from '@/pages/People/AddressForm';
 import CompaniesList from '@/pages/Companies/CompaniesList';
 import CompanyDetail from '@/pages/Companies/CompanyDetail';
 import CompanyForm from '@/pages/Companies/CompanyForm';
 import DatesList from '@/pages/Dates/DatesList';
-import DateForm from '@/pages/Dates/DateForm';
 import TodosList from '@/pages/Todos/TodosList';
 import Settings from '@/pages/Settings/Settings';
 import RelationshipTypes from '@/pages/Settings/RelationshipTypes';
@@ -138,12 +134,6 @@ function App() {
                 {/* People routes */}
                 <Route path="/people" element={<PeopleList />} />
                 <Route path="/people/new" element={<PersonForm />} />
-                <Route path="/people/:personId/address/new" element={<AddressForm />} />
-                <Route path="/people/:personId/address/:index/edit" element={<AddressForm />} />
-                <Route path="/people/:personId/work-history/new" element={<WorkHistoryForm />} />
-                <Route path="/people/:personId/work-history/:index/edit" element={<WorkHistoryForm />} />
-                <Route path="/people/:personId/relationship/new" element={<RelationshipForm />} />
-                <Route path="/people/:personId/relationship/:index/edit" element={<RelationshipForm />} />
                 <Route path="/people/:id/family-tree" element={<FamilyTree />} />
                 <Route path="/people/:id/edit" element={<PersonForm />} />
                 <Route path="/people/:id" element={<PersonDetail />} />
@@ -156,8 +146,6 @@ function App() {
                 
                 {/* Dates routes */}
                 <Route path="/dates" element={<DatesList />} />
-                <Route path="/dates/new" element={<DateForm />} />
-                <Route path="/dates/:id/edit" element={<DateForm />} />
                 
                 {/* Todos routes */}
                 <Route path="/todos" element={<TodosList />} />

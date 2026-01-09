@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.33.0] - 2026-01-09
+
+### Added
+- ImportantDateModal: Add/edit important dates directly from person detail page via modal
+- RelationshipEditModal: Add/edit relationships directly from person detail page via modal
+- AddressEditModal: Add/edit addresses directly from person detail page via modal
+- WorkHistoryEditModal: Add/edit work history directly from person detail page via modal
+
+### Changed
+- All person-related forms now open as modals instead of navigating to separate pages
+- Improved UX with "Add one" links when sections are empty
+
+### Removed
+- Standalone page routes for dates, relationships, addresses, and work history forms
+- Old form components (DateForm, RelationshipForm, AddressForm, WorkHistoryForm)
+
 ## [1.32.0] - 2026-01-09
 
 ### Added
