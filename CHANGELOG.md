@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.27.1] - 2026-01-09
+
+### Changed
+- Import and Export functionality now integrated directly into Settings Data tab (removed separate pages)
+- Updated labels to use sentence case throughout Settings page
+
+### Removed
+- Separate Import and Export pages (`/settings/import`, `/settings/export`)
+
 ## [1.27.0] - 2026-01-09
 
 ### Changed
