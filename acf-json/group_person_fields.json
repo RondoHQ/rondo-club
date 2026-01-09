@@ -131,8 +131,11 @@
                         "calendar": "Calendar link",
                         "linkedin": "LinkedIn",
                         "twitter": "Twitter",
+                        "bluesky": "Bluesky",
+                        "threads": "Threads",
                         "instagram": "Instagram",
                         "facebook": "Facebook",
+                        "slack": "Slack",
                         "other": "Other"
                     },
                     "wrapper": {
