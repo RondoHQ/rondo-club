@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.0] - 2026-01-09
+
+### Added
+- Contact Edit Modal: Edit all contact details (email, phone, social links) in a single modal dialog
+- Ability to add, edit, and remove multiple contact entries at once
+
+### Changed
+- Replaced individual contact detail edit pages with unified modal editor
+- "Add contact detail" button changed to "Edit" button on Contact information card
+
+### Removed
+- Individual contact detail edit routes (`/people/:id/contact/new`, `/people/:id/contact/:index/edit`)
+
 ## [1.31.0] - 2026-01-09
 
 ### Added

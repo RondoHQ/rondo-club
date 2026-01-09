@@ -32,6 +32,7 @@ import NoteModal from '@/components/Timeline/NoteModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import TodoModal from '@/components/Timeline/TodoModal';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
+import ContactEditModal from '@/components/ContactEditModal';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -96,6 +97,8 @@ export default function PersonDetail() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showTodoModal, setShowTodoModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [isSavingContacts, setIsSavingContacts] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   
@@ -193,25 +196,28 @@ export default function PersonDetail() {
     return hasPlus ? `+${cleaned}` : cleaned;
   };
 
-  // Handle deleting a contact detail
-  const handleDeleteContact = async (index) => {
-    if (!window.confirm('Are you sure you want to delete this contact detail?')) {
-      return;
+  // Handle saving all contacts from modal
+  const handleSaveContacts = async (contacts) => {
+    setIsSavingContacts(true);
+    try {
+      const acfData = sanitizePersonAcf(person.acf, {
+        contact_info: contacts,
+      });
+      
+      await updatePerson.mutateAsync({
+        id,
+        data: {
+          acf: acfData,
+        },
+      });
+      
+      setShowContactModal(false);
+    } catch (error) {
+      console.error('Failed to save contacts:', error);
+      alert('Failed to save contacts. Please try again.');
+    } finally {
+      setIsSavingContacts(false);
     }
-    
-    const updatedContactInfo = [...(person.acf?.contact_info || [])];
-    updatedContactInfo.splice(index, 1);
-    
-    const acfData = sanitizePersonAcf(person.acf, {
-      contact_info: updatedContactInfo,
-    });
-    
-    await updatePerson.mutateAsync({
-      id,
-      data: {
-        acf: acfData,
-      },
-    });
   };
 
   // Handle deleting an address
@@ -1101,13 +1107,13 @@ export default function PersonDetail() {
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold">Contact information</h2>
-                <Link
-                  to={`/people/${id}/contact/new`}
+                <button
+                  onClick={() => setShowContactModal(true)}
                   className="btn-secondary text-sm"
                 >
-                  <Plus className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Add contact detail</span>
-                </Link>
+                  <Pencil className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Edit</span>
+                </button>
               </div>
             {acf.contact_info?.filter(contact => !socialTypes.includes(contact.contact_type)).length > 0 ? (
               <div className="space-y-2">
@@ -1135,8 +1141,7 @@ export default function PersonDetail() {
                       return a.originalIndex - b.originalIndex;
                     });
                   
-                  return nonSocialContacts.map((contact, index) => {
-                        const originalIndex = acf.contact_info.indexOf(contact);
+                  return nonSocialContacts.map((contact) => {
                         const Icon = contact.contact_type === 'email' ? Mail :
                                      contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
                                      contact.contact_type === 'calendar' ? Calendar : Globe;
@@ -1159,8 +1164,8 @@ export default function PersonDetail() {
                         }
 
                         return (
-                      <div key={contact.originalIndex} className="group">
-                        <div className="flex items-center rounded-md -mx-2 px-2 py-1.5 group-hover:bg-gray-50 transition-colors">
+                      <div key={contact.originalIndex}>
+                        <div className="flex items-center rounded-md -mx-2 px-2 py-1.5">
                           <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
                           <div className="flex-1 min-w-0 flex items-center gap-2">
                             <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
@@ -1188,22 +1193,6 @@ export default function PersonDetail() {
                               </a>
                             )}
                           </div>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                            <Link
-                              to={`/people/${id}/contact/${contact.originalIndex}/edit`}
-                              className="p-1 hover:bg-gray-100 rounded"
-                              title="Edit contact detail"
-                            >
-                              <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                            </Link>
-                            <button
-                              onClick={() => handleDeleteContact(contact.originalIndex)}
-                              className="p-1 hover:bg-red-50 rounded"
-                              title="Delete contact detail"
-                            >
-                              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                            </button>
-                          </div>
                         </div>
                       </div>
                     );
@@ -1211,7 +1200,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No contact information yet.
+                No contact information yet. <button onClick={() => setShowContactModal(true)} className="text-primary-600 hover:underline">Add some</button>
               </p>
             )}
             </div>
@@ -1474,6 +1463,14 @@ export default function PersonDetail() {
             onSubmit={editingTodo ? handleUpdateTodo : handleCreateTodo}
             isLoading={editingTodo ? updateTodo.isPending : createTodo.isPending}
             todo={editingTodo}
+          />
+          
+          <ContactEditModal
+            isOpen={showContactModal}
+            onClose={() => setShowContactModal(false)}
+            onSubmit={handleSaveContacts}
+            isLoading={isSavingContacts}
+            contactInfo={acf.contact_info || []}
           />
         </div>
         
