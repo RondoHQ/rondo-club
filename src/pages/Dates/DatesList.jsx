@@ -1,7 +1,12 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Calendar, Gift, Heart, Star } from 'lucide-react';
 import { useReminders } from '@/hooks/useDashboard';
+import { usePeople } from '@/hooks/usePeople';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { wpApi } from '@/api/client';
 import { format } from 'date-fns';
+import ImportantDateModal from '@/components/ImportantDateModal';
 
 const typeIcons = {
   birthday: Gift,
@@ -81,7 +86,45 @@ function DateCard({ dates }) {
 }
 
 export default function DatesList() {
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [isCreatingDate, setIsCreatingDate] = useState(false);
+  const queryClient = useQueryClient();
+  
   const { data: dates, isLoading, error } = useReminders(365);
+  const { data: allPeople = [], isLoading: isPeopleLoading } = usePeople();
+  
+  // Create date mutation
+  const createDateMutation = useMutation({
+    mutationFn: async (data) => {
+      const payload = {
+        title: data.title,
+        status: 'publish',
+        date_type: data.date_type,
+        acf: {
+          date_value: data.date_value,
+          related_people: data.related_people,
+          is_recurring: data.is_recurring,
+          year_unknown: data.year_unknown,
+        },
+      };
+      
+      const response = await wpApi.createDate(payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      setShowDateModal(false);
+    },
+  });
+  
+  const handleCreateDate = async (data) => {
+    setIsCreatingDate(true);
+    try {
+      await createDateMutation.mutateAsync(data);
+    } finally {
+      setIsCreatingDate(false);
+    }
+  };
 
   // First group by exact date (day), then by month for display
   const groupedByDay = dates?.reduce((acc, date) => {
@@ -106,10 +149,10 @@ export default function DatesList() {
         <p className="text-gray-600">
           {dates?.length || 0} upcoming dates
         </p>
-        <Link to="/dates/new" className="btn-primary">
+        <button onClick={() => setShowDateModal(true)} className="btn-primary">
           <Plus className="w-4 h-4 md:mr-2" />
           <span className="hidden md:inline">Add date</span>
-        </Link>
+        </button>
       </div>
       
       {/* Loading */}
@@ -132,10 +175,10 @@ export default function DatesList() {
           <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium mb-1">No important dates</h3>
           <p className="text-gray-500 mb-4">Add birthdays, anniversaries, and more.</p>
-          <Link to="/dates/new" className="btn-primary">
+          <button onClick={() => setShowDateModal(true)} className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Add date</span>
-          </Link>
+          </button>
         </div>
       )}
       
@@ -150,6 +193,16 @@ export default function DatesList() {
           </div>
         </div>
       ))}
+      
+      {/* Date Modal */}
+      <ImportantDateModal
+        isOpen={showDateModal}
+        onClose={() => setShowDateModal(false)}
+        onSubmit={handleCreateDate}
+        isLoading={isCreatingDate}
+        allPeople={allPeople}
+        isPeopleLoading={isPeopleLoading}
+      />
     </div>
   );
 }

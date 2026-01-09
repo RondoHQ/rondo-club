@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Building2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
+import CompanyEditModal from '@/components/CompanyEditModal';
 
 function CompanyCard({ company }) {
   return (
@@ -41,6 +42,10 @@ function CompanyCard({ company }) {
 
 export default function CompaniesList() {
   const [search, setSearch] = useState('');
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [isCreatingCompany, setIsCreatingCompany] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   const { data: companies, isLoading, error } = useQuery({
     queryKey: ['companies', search],
@@ -49,6 +54,38 @@ export default function CompaniesList() {
       return response.data;
     },
   });
+  
+  // Create company mutation
+  const createCompanyMutation = useMutation({
+    mutationFn: async (data) => {
+      const payload = {
+        title: data.title,
+        status: 'publish',
+        acf: {
+          website: data.website,
+          industry: data.industry,
+        },
+      };
+      
+      const response = await wpApi.createCompany(payload);
+      return response.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setShowCompanyModal(false);
+      navigate(`/companies/${result.id}`);
+    },
+  });
+  
+  const handleCreateCompany = async (data) => {
+    setIsCreatingCompany(true);
+    try {
+      await createCompanyMutation.mutateAsync(data);
+    } finally {
+      setIsCreatingCompany(false);
+    }
+  };
 
   // Sort companies alphabetically by name
   const sortedCompanies = useMemo(() => {
@@ -76,10 +113,10 @@ export default function CompaniesList() {
           />
         </div>
         
-        <Link to="/companies/new" className="btn-primary">
+        <button onClick={() => setShowCompanyModal(true)} className="btn-primary">
           <Plus className="w-4 h-4 md:mr-2" />
           <span className="hidden md:inline">Add organization</span>
-        </Link>
+        </button>
       </div>
       
       {/* Loading */}
@@ -107,10 +144,10 @@ export default function CompaniesList() {
             {search ? 'Try a different search.' : 'Add your first organization.'}
           </p>
           {!search && (
-            <Link to="/companies/new" className="btn-primary">
+            <button onClick={() => setShowCompanyModal(true)} className="btn-primary">
               <Plus className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Add organization</span>
-            </Link>
+            </button>
           )}
         </div>
       )}
@@ -123,6 +160,14 @@ export default function CompaniesList() {
           ))}
         </div>
       )}
+      
+      {/* Company Modal */}
+      <CompanyEditModal
+        isOpen={showCompanyModal}
+        onClose={() => setShowCompanyModal(false)}
+        onSubmit={handleCreateCompany}
+        isLoading={isCreatingCompany}
+      />
     </div>
   );
 }
