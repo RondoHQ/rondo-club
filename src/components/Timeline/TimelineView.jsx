@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { format } from 'date-fns';
 import {
-  Phone, Mail, Users, Coffee, Utensils, FileText, Circle,
+  Phone, Mail, Users, Coffee, Utensils, FileText, Circle, MessageCircle,
   CheckSquare2, Square, Pencil, Trash2, Link as LinkIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -22,6 +22,7 @@ const ICON_MAP = {
   Utensils,
   FileText,
   Circle,
+  MessageCircle,
 };
 
 export default function TimelineView({
