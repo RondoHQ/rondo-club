@@ -1345,15 +1345,15 @@ class PRM_REST_API {
 
     /**
      * Add computed fields to person REST response
-     * This includes is_deceased which checks for a "Died" date type
+     * This includes is_deceased and birth_year
      */
     public function add_person_computed_fields($response, $post, $request) {
         $data = $response->get_data();
         
-        // Check if person is deceased (has a "Died" date)
-        $dates = get_posts([
+        // Get all dates for this person to compute deceased status and birth year
+        $person_dates = get_posts([
             'post_type'      => 'important_date',
-            'posts_per_page' => 1,
+            'posts_per_page' => -1,
             'meta_query'     => [
                 [
                     'key'     => 'related_people',
@@ -1361,16 +1361,34 @@ class PRM_REST_API {
                     'compare' => 'LIKE',
                 ],
             ],
-            'tax_query'      => [
-                [
-                    'taxonomy' => 'date_type',
-                    'field'    => 'slug',
-                    'terms'    => 'died',
-                ],
-            ],
         ]);
         
-        $data['is_deceased'] = !empty($dates);
+        $data['is_deceased'] = false;
+        $data['birth_year'] = null;
+        
+        foreach ($person_dates as $date_post) {
+            $date_types = wp_get_post_terms($date_post->ID, 'date_type', ['fields' => 'slugs']);
+            
+            // Check for deceased status
+            if (in_array('died', $date_types)) {
+                $data['is_deceased'] = true;
+            }
+            
+            // Check for birthday and extract year (only if year is known)
+            if (in_array('birthday', $date_types)) {
+                $year_unknown = get_field('year_unknown', $date_post->ID);
+                if (!$year_unknown) {
+                    $date_value = get_field('date_value', $date_post->ID);
+                    if ($date_value) {
+                        $year = (int) date('Y', strtotime($date_value));
+                        if ($year > 0) {
+                            $data['birth_year'] = $year;
+                        }
+                    }
+                }
+            }
+        }
+        
         $response->set_data($data);
         
         return $response;

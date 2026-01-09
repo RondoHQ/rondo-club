@@ -85,6 +85,8 @@ export default function PeopleList() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedLabels, setSelectedLabels] = useState([]);
+  const [selectedBirthYear, setSelectedBirthYear] = useState('');
+  const [lastModifiedFilter, setLastModifiedFilter] = useState('');
   const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
   const filterRef = useRef(null);
@@ -102,6 +104,16 @@ export default function PeopleList() {
   });
   
   const availableLabels = labelsData?.map(label => label.name) || [];
+  
+  // Get available birth years from people data
+  const availableBirthYears = useMemo(() => {
+    if (!people) return [];
+    const years = people
+      .map(p => p.birth_year)
+      .filter(year => year !== null && year !== undefined);
+    // Sort descending (most recent first)
+    return [...new Set(years)].sort((a, b) => b - a);
+  }, [people]);
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -141,6 +153,43 @@ export default function PeopleList() {
       });
     }
     
+    // Apply birth year filter
+    if (selectedBirthYear) {
+      const year = parseInt(selectedBirthYear, 10);
+      filtered = filtered.filter(person => person.birth_year === year);
+    }
+    
+    // Apply last modified filter
+    if (lastModifiedFilter) {
+      const now = new Date();
+      let cutoffDate;
+      
+      switch (lastModifiedFilter) {
+        case '7':
+          cutoffDate = new Date(now.setDate(now.getDate() - 7));
+          break;
+        case '30':
+          cutoffDate = new Date(now.setDate(now.getDate() - 30));
+          break;
+        case '90':
+          cutoffDate = new Date(now.setDate(now.getDate() - 90));
+          break;
+        case '365':
+          cutoffDate = new Date(now.setDate(now.getDate() - 365));
+          break;
+        default:
+          cutoffDate = null;
+      }
+      
+      if (cutoffDate) {
+        filtered = filtered.filter(person => {
+          if (!person.modified) return false;
+          const modifiedDate = new Date(person.modified);
+          return modifiedDate >= cutoffDate;
+        });
+      }
+    }
+    
     // Sort by selected field and order
     return filtered.sort((a, b) => {
       let valueA, valueB;
@@ -169,9 +218,9 @@ export default function PeopleList() {
       const comparison = valueA.localeCompare(valueB);
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [people, showFavoritesOnly, selectedLabels, sortField, sortOrder]);
+  }, [people, showFavoritesOnly, selectedLabels, selectedBirthYear, lastModifiedFilter, sortField, sortOrder]);
   
-  const hasActiveFilters = showFavoritesOnly || selectedLabels.length > 0;
+  const hasActiveFilters = showFavoritesOnly || selectedLabels.length > 0 || selectedBirthYear || lastModifiedFilter;
   
   const handleLabelToggle = (label) => {
     setSelectedLabels(prev => 
@@ -184,6 +233,8 @@ export default function PeopleList() {
   const clearFilters = () => {
     setShowFavoritesOnly(false);
     setSelectedLabels([]);
+    setSelectedBirthYear('');
+    setLastModifiedFilter('');
   };
 
   // Collect all company IDs
@@ -272,7 +323,7 @@ export default function PeopleList() {
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
                 <span className="ml-2 px-1.5 py-0.5 bg-primary-600 text-white text-xs rounded-full">
-                  {selectedLabels.length + (showFavoritesOnly ? 1 : 0)}
+                  {selectedLabels.length + (showFavoritesOnly ? 1 : 0) + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -343,6 +394,43 @@ export default function PeopleList() {
                     </div>
                   )}
                   
+                  {/* Birth Year Filter */}
+                  {availableBirthYears.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Birth year
+                      </h3>
+                      <select
+                        value={selectedBirthYear}
+                        onChange={(e) => setSelectedBirthYear(e.target.value)}
+                        className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+                      >
+                        <option value="">All years</option>
+                        {availableBirthYears.map(year => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  
+                  {/* Last Modified Filter */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Last modified
+                    </h3>
+                    <select
+                      value={lastModifiedFilter}
+                      onChange={(e) => setLastModifiedFilter(e.target.value)}
+                      className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value="">Any time</option>
+                      <option value="7">Last 7 days</option>
+                      <option value="30">Last 30 days</option>
+                      <option value="90">Last 90 days</option>
+                      <option value="365">Last year</option>
+                    </select>
+                  </div>
+                  
                   {/* Clear Filters */}
                   {hasActiveFilters && (
                     <button
@@ -386,6 +474,30 @@ export default function PeopleList() {
                   </button>
                 </span>
               ))}
+              {selectedBirthYear && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                  Born {selectedBirthYear}
+                  <button
+                    onClick={() => setSelectedBirthYear('')}
+                    className="hover:text-gray-600"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {lastModifiedFilter && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                  Modified: {lastModifiedFilter === '7' ? 'Last 7 days' : 
+                             lastModifiedFilter === '30' ? 'Last 30 days' : 
+                             lastModifiedFilter === '90' ? 'Last 90 days' : 'Last year'}
+                  <button
+                    onClick={() => setLastModifiedFilter('')}
+                    className="hover:text-gray-600"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
             </div>
           )}
           
