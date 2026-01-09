@@ -340,7 +340,7 @@ export default function Dashboard() {
     );
   }
   
-  const { stats, recent_people, upcoming_reminders, favorites } = data || {};
+  const { stats, recent_people, upcoming_reminders, favorites, recently_contacted } = data || {};
   const totalItems = (stats?.total_people || 0) + (stats?.total_companies || 0) + (stats?.total_dates || 0);
   const isEmpty = totalItems === 0;
   
@@ -473,8 +473,8 @@ export default function Dashboard() {
         </div>
       </div>
       
-      {/* Row 2: Favorites + Recent People */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Row 2: Favorites + Recently Contacted + Recently Edited */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Favorites */}
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -496,18 +496,39 @@ export default function Dashboard() {
           )}
         </div>
         
-        {/* Recent People */}
+        {/* Recently Contacted */}
+        <div className="card">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <h2 className="font-semibold flex items-center">
+              <MessageCircle className="w-5 h-5 mr-2 text-gray-500" />
+              Recently contacted
+            </h2>
+          </div>
+          {recently_contacted?.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {recently_contacted.map((person) => (
+                <PersonCard key={person.id} person={person} />
+              ))}
+            </div>
+          ) : (
+            <p className="p-4 text-sm text-gray-500 text-center">
+              No recent activities yet
+            </p>
+          )}
+        </div>
+        
+        {/* Recently Edited People */}
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <h2 className="font-semibold flex items-center">
               <Users className="w-5 h-5 mr-2 text-gray-500" />
-              Recently edited people
+              Recently edited
             </h2>
             <Link 
               to="/people" 
               className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
             >
-              View all people
+              View all
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>

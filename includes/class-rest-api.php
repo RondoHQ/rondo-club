@@ -1047,6 +1047,9 @@ class PRM_REST_API {
         // Get open todos count
         $open_todos_count = $this->count_open_todos();
         
+        // Recently contacted (people with most recent activities)
+        $recently_contacted = $this->get_recently_contacted_people(5);
+        
         return rest_ensure_response([
             'stats' => [
                 'total_people'     => $total_people,
@@ -1054,9 +1057,10 @@ class PRM_REST_API {
                 'total_dates'      => $total_dates,
                 'open_todos_count' => $open_todos_count,
             ],
-            'recent_people'     => array_map([$this, 'format_person_summary'], $recent_people),
-            'upcoming_reminders' => array_slice($upcoming_reminders, 0, 5),
-            'favorites'         => array_map([$this, 'format_person_summary'], $favorites),
+            'recent_people'       => array_map([$this, 'format_person_summary'], $recent_people),
+            'upcoming_reminders'  => array_slice($upcoming_reminders, 0, 5),
+            'favorites'           => array_map([$this, 'format_person_summary'], $favorites),
+            'recently_contacted'  => $recently_contacted,
         ]);
     }
     
@@ -1095,6 +1099,59 @@ class PRM_REST_API {
         ]);
         
         return (int) $comments;
+    }
+    
+    /**
+     * Get people with most recent activities
+     *
+     * @param int $limit Number of people to return
+     * @return array Array of person summaries with last activity info
+     */
+    private function get_recently_contacted_people($limit = 5) {
+        global $wpdb;
+        
+        $user_id = get_current_user_id();
+        $access_control = new PRM_Access_Control();
+        $accessible_people = $access_control->get_accessible_post_ids('person', $user_id);
+        
+        if (empty($accessible_people)) {
+            return [];
+        }
+        
+        // Get the most recent activity for each person
+        $placeholders = implode(',', array_fill(0, count($accessible_people), '%d'));
+        
+        // Query to get people with their most recent activity date
+        $query = $wpdb->prepare(
+            "SELECT c.comment_post_ID as person_id, MAX(cm.meta_value) as last_activity_date
+             FROM {$wpdb->comments} c
+             INNER JOIN {$wpdb->commentmeta} cm ON c.comment_ID = cm.comment_id AND cm.meta_key = 'activity_date'
+             WHERE c.comment_type = 'prm_activity'
+             AND c.comment_approved = '1'
+             AND c.comment_post_ID IN ($placeholders)
+             GROUP BY c.comment_post_ID
+             ORDER BY last_activity_date DESC
+             LIMIT %d",
+            ...array_merge($accessible_people, [$limit])
+        );
+        
+        $results = $wpdb->get_results($query);
+        
+        if (empty($results)) {
+            return [];
+        }
+        
+        $recently_contacted = [];
+        foreach ($results as $row) {
+            $person = get_post($row->person_id);
+            if ($person && $person->post_status === 'publish') {
+                $summary = $this->format_person_summary($person);
+                $summary['last_activity_date'] = $row->last_activity_date;
+                $recently_contacted[] = $summary;
+            }
+        }
+        
+        return $recently_contacted;
     }
     
     /**
