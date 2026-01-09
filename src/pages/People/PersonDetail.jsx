@@ -33,6 +33,10 @@ import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import TodoModal from '@/components/Timeline/TodoModal';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import ContactEditModal from '@/components/ContactEditModal';
+import ImportantDateModal from '@/components/ImportantDateModal';
+import RelationshipEditModal from '@/components/RelationshipEditModal';
+import AddressEditModal from '@/components/AddressEditModal';
+import WorkHistoryEditModal from '@/components/WorkHistoryEditModal';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -76,7 +80,7 @@ export default function PersonDetail() {
   const updateTodo = useUpdateTodo();
   const deleteActivity = useDeleteActivity();
   const deleteTodo = useDeleteTodo();
-  const { data: allPeople } = usePeople();
+  const { data: allPeople, isLoading: isPeopleLoading } = usePeople();
   
   // Fetch companies where this person is an investor
   const { data: investments = [] } = useQuery({
@@ -98,9 +102,24 @@ export default function PersonDetail() {
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [showRelationshipModal, setShowRelationshipModal] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showWorkHistoryModal, setShowWorkHistoryModal] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
+  const [isSavingDate, setIsSavingDate] = useState(false);
+  const [isSavingRelationship, setIsSavingRelationship] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [isSavingWorkHistory, setIsSavingWorkHistory] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
+  const [editingDate, setEditingDate] = useState(null);
+  const [editingRelationship, setEditingRelationship] = useState(null);
+  const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [editingAddressIndex, setEditingAddressIndex] = useState(null);
+  const [editingWorkHistory, setEditingWorkHistory] = useState(null);
+  const [editingWorkHistoryIndex, setEditingWorkHistoryIndex] = useState(null);
   
   // Complete todo flow states
   const [todoToComplete, setTodoToComplete] = useState(null);
@@ -217,6 +236,176 @@ export default function PersonDetail() {
       alert('Failed to save contacts. Please try again.');
     } finally {
       setIsSavingContacts(false);
+    }
+  };
+
+  // Handle saving an important date from modal
+  const handleSaveDate = async (data) => {
+    setIsSavingDate(true);
+    try {
+      if (editingDate) {
+        // Update existing date
+        await wpApi.updateDate(editingDate.id, {
+          title: data.title,
+          date_type: data.date_type,
+          acf: {
+            date_value: data.date_value,
+            related_people: data.related_people,
+            is_recurring: data.is_recurring,
+            year_unknown: data.year_unknown,
+          },
+        });
+      } else {
+        // Create new date
+        await wpApi.createDate({
+          title: data.title,
+          status: 'publish',
+          date_type: data.date_type,
+          acf: {
+            date_value: data.date_value,
+            related_people: data.related_people,
+            is_recurring: data.is_recurring,
+            year_unknown: data.year_unknown,
+          },
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['person-dates', id] });
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      setShowDateModal(false);
+      setEditingDate(null);
+    } catch (error) {
+      console.error('Failed to save date:', error);
+      alert('Failed to save date. Please try again.');
+    } finally {
+      setIsSavingDate(false);
+    }
+  };
+
+  // Handle saving a relationship from modal
+  const handleSaveRelationship = async (data) => {
+    setIsSavingRelationship(true);
+    try {
+      const relationships = [...(person.acf?.relationships || [])];
+      
+      const relationshipItem = {
+        related_person: data.related_person || null,
+        relationship_type: data.relationship_type || null,
+        relationship_label: data.relationship_label || '',
+      };
+
+      if (editingRelationshipIndex !== null) {
+        relationships[editingRelationshipIndex] = relationshipItem;
+      } else {
+        relationships.push(relationshipItem);
+      }
+
+      const acfData = sanitizePersonAcf(person.acf, {
+        relationships: relationships,
+      });
+
+      await updatePerson.mutateAsync({
+        id,
+        data: {
+          acf: acfData,
+        },
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['person', id] });
+      setShowRelationshipModal(false);
+      setEditingRelationship(null);
+      setEditingRelationshipIndex(null);
+    } catch (error) {
+      console.error('Failed to save relationship:', error);
+      alert('Failed to save relationship. Please try again.');
+    } finally {
+      setIsSavingRelationship(false);
+    }
+  };
+
+  // Handle saving an address from modal
+  const handleSaveAddress = async (data) => {
+    setIsSavingAddress(true);
+    try {
+      const addresses = [...(person.acf?.addresses || [])];
+      
+      const addressItem = {
+        address_label: data.address_label || '',
+        street: data.street || '',
+        postal_code: data.postal_code || '',
+        city: data.city || '',
+        state: data.state || '',
+        country: data.country || '',
+      };
+
+      if (editingAddressIndex !== null) {
+        addresses[editingAddressIndex] = addressItem;
+      } else {
+        addresses.push(addressItem);
+      }
+
+      const acfData = sanitizePersonAcf(person.acf, {
+        addresses: addresses,
+      });
+
+      await updatePerson.mutateAsync({
+        id,
+        data: {
+          acf: acfData,
+        },
+      });
+      
+      setShowAddressModal(false);
+      setEditingAddress(null);
+      setEditingAddressIndex(null);
+    } catch (error) {
+      console.error('Failed to save address:', error);
+      alert('Failed to save address. Please try again.');
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
+  // Handle saving work history from modal
+  const handleSaveWorkHistory = async (data) => {
+    setIsSavingWorkHistory(true);
+    try {
+      const workHistory = [...(person.acf?.work_history || [])];
+      
+      const workHistoryItem = {
+        company: data.company || null,
+        job_title: data.job_title || '',
+        description: data.description || '',
+        start_date: data.start_date || '',
+        end_date: data.end_date || '',
+        is_current: data.is_current || false,
+      };
+
+      if (editingWorkHistoryIndex !== null) {
+        workHistory[editingWorkHistoryIndex] = workHistoryItem;
+      } else {
+        workHistory.push(workHistoryItem);
+      }
+
+      const acfData = sanitizePersonAcf(person.acf, {
+        work_history: workHistory,
+      });
+
+      await updatePerson.mutateAsync({
+        id,
+        data: {
+          acf: acfData,
+        },
+      });
+      
+      setShowWorkHistoryModal(false);
+      setEditingWorkHistory(null);
+      setEditingWorkHistoryIndex(null);
+    } catch (error) {
+      console.error('Failed to save work history:', error);
+      alert('Failed to save work history. Please try again.');
+    } finally {
+      setIsSavingWorkHistory(false);
     }
   };
 
@@ -1210,13 +1399,16 @@ export default function PersonDetail() {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">Events</h2>
-              <Link
-                to={`/dates/new?person=${id}`}
+              <button
+                onClick={() => {
+                  setEditingDate(null);
+                  setShowDateModal(true);
+                }}
                 className="btn-secondary text-sm"
               >
                 <Plus className="w-4 h-4 md:mr-1" />
                 <span className="hidden md:inline">Add Important Date</span>
-              </Link>
+              </button>
             </div>
             {allDates.length > 0 ? (
               <div className="space-y-3">
@@ -1248,13 +1440,16 @@ export default function PersonDetail() {
                         )}
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Link
-                          to={`/dates/${date.id}/edit`}
+                        <button
+                          onClick={() => {
+                            setEditingDate(date);
+                            setShowDateModal(true);
+                          }}
                           className="p-1 hover:bg-gray-100 rounded"
                           title="Edit date"
                         >
                           <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                        </Link>
+                        </button>
                         <button
                           onClick={() => handleDeleteDate(date.id)}
                           className="p-1 hover:bg-red-50 rounded"
@@ -1269,7 +1464,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No important dates yet.
+                No important dates yet. <button onClick={() => { setEditingDate(null); setShowDateModal(true); }} className="text-primary-600 hover:underline">Add one</button>
               </p>
             )}
           </div>
@@ -1310,13 +1505,17 @@ export default function PersonDetail() {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">Work history</h2>
-              <Link
-                to={`/people/${id}/work-history/new`}
+              <button
+                onClick={() => {
+                  setEditingWorkHistory(null);
+                  setEditingWorkHistoryIndex(null);
+                  setShowWorkHistoryModal(true);
+                }}
                 className="btn-secondary text-sm"
               >
                 <Plus className="w-4 h-4 md:mr-1" />
                 <span className="hidden md:inline">Add work history</span>
-              </Link>
+              </button>
             </div>
             {sortedWorkHistory?.length > 0 ? (
               <div className="space-y-4">
@@ -1357,13 +1556,18 @@ export default function PersonDetail() {
                         )}
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                        <Link
-                          to={`/people/${id}/work-history/${originalIndex}/edit`}
+                        <button
+                          onClick={() => {
+                            const jobData = person?.acf?.work_history?.[originalIndex];
+                            setEditingWorkHistory(jobData);
+                            setEditingWorkHistoryIndex(originalIndex);
+                            setShowWorkHistoryModal(true);
+                          }}
                           className="p-1 hover:bg-gray-100 rounded"
                           title="Edit work history"
                         >
                           <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                        </Link>
+                        </button>
                         <button
                           onClick={() => handleDeleteWorkHistory(originalIndex)}
                           className="p-1 hover:bg-red-50 rounded"
@@ -1378,7 +1582,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No work history yet.
+                No work history yet. <button onClick={() => { setEditingWorkHistory(null); setEditingWorkHistoryIndex(null); setShowWorkHistoryModal(true); }} className="text-primary-600 hover:underline">Add one</button>
               </p>
             )}
           </div>
@@ -1471,6 +1675,59 @@ export default function PersonDetail() {
             onSubmit={handleSaveContacts}
             isLoading={isSavingContacts}
             contactInfo={acf.contact_info || []}
+          />
+          
+          <ImportantDateModal
+            isOpen={showDateModal}
+            onClose={() => {
+              setShowDateModal(false);
+              setEditingDate(null);
+            }}
+            onSubmit={handleSaveDate}
+            isLoading={isSavingDate}
+            dateItem={editingDate}
+            personId={id}
+            allPeople={allPeople || []}
+            isPeopleLoading={isPeopleLoading}
+          />
+          
+          <RelationshipEditModal
+            isOpen={showRelationshipModal}
+            onClose={() => {
+              setShowRelationshipModal(false);
+              setEditingRelationship(null);
+              setEditingRelationshipIndex(null);
+            }}
+            onSubmit={handleSaveRelationship}
+            isLoading={isSavingRelationship}
+            relationship={editingRelationship}
+            personId={id}
+            allPeople={allPeople || []}
+            isPeopleLoading={isPeopleLoading}
+          />
+          
+          <AddressEditModal
+            isOpen={showAddressModal}
+            onClose={() => {
+              setShowAddressModal(false);
+              setEditingAddress(null);
+              setEditingAddressIndex(null);
+            }}
+            onSubmit={handleSaveAddress}
+            isLoading={isSavingAddress}
+            address={editingAddress}
+          />
+          
+          <WorkHistoryEditModal
+            isOpen={showWorkHistoryModal}
+            onClose={() => {
+              setShowWorkHistoryModal(false);
+              setEditingWorkHistory(null);
+              setEditingWorkHistoryIndex(null);
+            }}
+            onSubmit={handleSaveWorkHistory}
+            isLoading={isSavingWorkHistory}
+            workHistoryItem={editingWorkHistory}
           />
         </div>
         
@@ -1569,13 +1826,17 @@ export default function PersonDetail() {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold">Relationships</h2>
-              <Link
-                to={`/people/${id}/relationship/new`}
+              <button
+                onClick={() => {
+                  setEditingRelationship(null);
+                  setEditingRelationshipIndex(null);
+                  setShowRelationshipModal(true);
+                }}
                 className="btn-secondary text-sm"
               >
                 <Plus className="w-4 h-4 md:mr-1" />
                 <span className="hidden md:inline">Add relationship</span>
-              </Link>
+              </button>
             </div>
             {sortedRelationships?.length > 0 ? (
               <div className="space-y-2">
@@ -1616,13 +1877,19 @@ export default function PersonDetail() {
                         </div>
                       </Link>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                        <Link
-                          to={`/people/${id}/relationship/${originalIndex}/edit`}
+                        <button
+                          onClick={() => {
+                            // Get the actual relationship data for editing
+                            const relData = person?.acf?.relationships?.[originalIndex];
+                            setEditingRelationship(relData);
+                            setEditingRelationshipIndex(originalIndex);
+                            setShowRelationshipModal(true);
+                          }}
                           className="p-1 hover:bg-gray-100 rounded"
                           title="Edit relationship"
                         >
                           <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                        </Link>
+                        </button>
                         <button
                           onClick={() => handleDeleteRelationship(originalIndex)}
                           className="p-1 hover:bg-red-50 rounded"
@@ -1637,7 +1904,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No relationships yet.
+                No relationships yet. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-primary-600 hover:underline">Add one</button>
               </p>
             )}
           </div>
@@ -1647,13 +1914,17 @@ export default function PersonDetail() {
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold">Addresses</h2>
-                <Link
-                  to={`/people/${id}/address/new`}
+                <button
+                  onClick={() => {
+                    setEditingAddress(null);
+                    setEditingAddressIndex(null);
+                    setShowAddressModal(true);
+                  }}
                   className="btn-secondary text-sm"
                 >
                   <Plus className="w-4 h-4 md:mr-1" />
                   <span className="hidden md:inline">Add address</span>
-                </Link>
+                </button>
               </div>
               {acf.addresses?.length > 0 ? (
                 <div className="space-y-4">
@@ -1696,13 +1967,17 @@ export default function PersonDetail() {
                             </a>
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                            <Link
-                              to={`/people/${id}/address/${index}/edit`}
+                            <button
+                              onClick={() => {
+                                setEditingAddress(address);
+                                setEditingAddressIndex(index);
+                                setShowAddressModal(true);
+                              }}
                               className="p-1 hover:bg-gray-100 rounded"
                               title="Edit address"
                             >
                               <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                            </Link>
+                            </button>
                             <button
                               onClick={() => handleDeleteAddress(index)}
                               className="p-1 hover:bg-red-50 rounded"
@@ -1718,7 +1993,7 @@ export default function PersonDetail() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  No addresses yet.
+                  No addresses yet. <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-primary-600 hover:underline">Add one</button>
                 </p>
               )}
             </div>
