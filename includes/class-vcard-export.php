@@ -245,6 +245,20 @@ class PRM_VCard_Export {
             $lines[] = 'NICKNAME:' . self::escape_value($acf['nickname']);
         }
         
+        // Gender (vCard 4.0 style, but widely supported)
+        if (!empty($acf['gender'])) {
+            $gender_map = [
+                'male' => 'M',
+                'female' => 'F',
+                'other' => 'O',
+                'prefer_not_to_say' => 'N',
+            ];
+            $gender_code = $gender_map[$acf['gender']] ?? '';
+            if ($gender_code) {
+                $lines[] = "GENDER:{$gender_code}";
+            }
+        }
+        
         // Contact information
         if (!empty($acf['contact_info']) && is_array($acf['contact_info'])) {
             foreach ($acf['contact_info'] as $contact) {
@@ -272,18 +286,39 @@ class PRM_VCard_Export {
                         break;
                         
                     case 'website':
+                        $url = $contact['contact_value'];
+                        if (!preg_match('/^https?:\/\//i', $url)) {
+                            $url = 'https://' . $url;
+                        }
+                        $url_label = $label ? "URL;TYPE=WORK,{$label}" : 'URL;TYPE=WORK';
+                        $lines[] = "{$url_label}:" . self::escape_value($url);
+                        break;
+                        
                     case 'linkedin':
                     case 'twitter':
                     case 'instagram':
                     case 'facebook':
+                        // Use X-SOCIALPROFILE for better client compatibility
+                        $url = $contact['contact_value'];
+                        if (!preg_match('/^https?:\/\//i', $url)) {
+                            $url = 'https://' . $url;
+                        }
+                        $social_type = $contact['contact_type'];
+                        $lines[] = "X-SOCIALPROFILE;TYPE={$social_type}:" . self::escape_value($url);
+                        break;
+                        
+                    case 'slack':
+                        // Use IMPP for instant messaging
+                        $slack_url = $contact['contact_value'];
+                        $lines[] = "IMPP;X-SERVICE-TYPE=Slack:" . self::escape_value($slack_url);
+                        break;
+                        
                     case 'calendar':
                         $url = $contact['contact_value'];
                         if (!preg_match('/^https?:\/\//i', $url)) {
                             $url = 'https://' . $url;
                         }
-                        $url_type = $contact['contact_type'] === 'linkedin' ? 'PROFILE' : 'WORK';
-                        $url_label = $label ? "URL;TYPE={$url_type},{$label}" : "URL;TYPE={$url_type}";
-                        $lines[] = "{$url_label}:" . self::escape_value($url);
+                        $lines[] = "URL;TYPE=WORK:" . self::escape_value($url);
                         break;
                 }
             }
@@ -384,6 +419,20 @@ class PRM_VCard_Export {
             $lines[] = 'NICKNAME:' . self::escape_value($data['nickname']);
         }
         
+        // Gender
+        if (!empty($data['gender'])) {
+            $gender_map = [
+                'male' => 'M',
+                'female' => 'F',
+                'other' => 'O',
+                'prefer_not_to_say' => 'N',
+            ];
+            $gender_code = $gender_map[$data['gender']] ?? '';
+            if ($gender_code) {
+                $lines[] = "GENDER:{$gender_code}";
+            }
+        }
+        
         // Contact info
         if (!empty($data['contact_info']) && is_array($data['contact_info'])) {
             foreach ($data['contact_info'] as $contact) {
@@ -404,16 +453,26 @@ class PRM_VCard_Export {
                         $lines[] = "TEL;TYPE=CELL:" . self::format_phone($contact['contact_value']);
                         break;
                     case 'website':
-                    case 'linkedin':
-                    case 'twitter':
-                    case 'instagram':
-                    case 'facebook':
                     case 'calendar':
                         $url = $contact['contact_value'];
                         if (!preg_match('/^https?:\/\//i', $url)) {
                             $url = 'https://' . $url;
                         }
                         $lines[] = "URL:" . self::escape_value($url);
+                        break;
+                    case 'linkedin':
+                    case 'twitter':
+                    case 'instagram':
+                    case 'facebook':
+                        $url = $contact['contact_value'];
+                        if (!preg_match('/^https?:\/\//i', $url)) {
+                            $url = 'https://' . $url;
+                        }
+                        $social_type = $contact['contact_type'];
+                        $lines[] = "X-SOCIALPROFILE;TYPE={$social_type}:" . self::escape_value($url);
+                        break;
+                    case 'slack':
+                        $lines[] = "IMPP;X-SERVICE-TYPE=Slack:" . self::escape_value($contact['contact_value']);
                         break;
                 }
             }
@@ -506,6 +565,7 @@ class PRM_VCard_Export {
             'last_name' => '',
             'full_name' => '',
             'nickname' => '',
+            'gender' => '',
             'contact_info' => [],
             'addresses' => [],
             'org' => '',
@@ -679,7 +739,93 @@ class PRM_VCard_Export {
             }
         }
         
+        // Gender
+        if (isset($vcard->GENDER)) {
+            $gender_value = (string) $vcard->GENDER;
+            // Handle full gender value (e.g., "M;Male" - only use first component)
+            if (strpos($gender_value, ';') !== false) {
+                $gender_value = explode(';', $gender_value)[0];
+            }
+            $gender_code = strtoupper(trim($gender_value));
+            $gender_map = [
+                'M' => 'male',
+                'F' => 'female',
+                'O' => 'other',
+                'N' => 'prefer_not_to_say',
+            ];
+            $data['gender'] = $gender_map[$gender_code] ?? '';
+        }
+        
+        // X-SOCIALPROFILE (social networks)
+        $social_profile_key = 'X-SOCIALPROFILE';
+        if (isset($vcard->{$social_profile_key})) {
+            foreach ($vcard->{$social_profile_key} as $social) {
+                $url = (string) $social;
+                $type_param = $social['TYPE'];
+                $type = '';
+                if ($type_param) {
+                    $type = strtolower(is_object($type_param) ? (string) $type_param : $type_param);
+                }
+                // Map type or detect from URL
+                $type_map = [
+                    'linkedin' => 'linkedin',
+                    'twitter' => 'twitter',
+                    'x' => 'twitter',
+                    'instagram' => 'instagram',
+                    'facebook' => 'facebook',
+                ];
+                $normalized_type = $type_map[$type] ?? self::detect_social_type($url);
+                if ($normalized_type) {
+                    $data['contact_info'][] = [
+                        'contact_type' => $normalized_type,
+                        'contact_value' => $url,
+                        'contact_label' => '',
+                    ];
+                }
+            }
+        }
+        
+        // IMPP (Instant messaging)
+        if (isset($vcard->IMPP)) {
+            foreach ($vcard->IMPP as $impp) {
+                $value = (string) $impp;
+                $service_param = $impp['X-SERVICE-TYPE'];
+                $service = $service_param ? strtolower((string) $service_param) : '';
+                
+                // Check for Slack
+                if ($service === 'slack' || strpos(strtolower($value), 'slack') !== false) {
+                    $data['contact_info'][] = [
+                        'contact_type' => 'slack',
+                        'contact_value' => $value,
+                        'contact_label' => '',
+                    ];
+                }
+            }
+        }
+        
         return $data;
+    }
+    
+    /**
+     * Detect social network type from URL
+     */
+    private static function detect_social_type($url) {
+        $url_lower = strtolower($url);
+        
+        if (strpos($url_lower, 'linkedin.com') !== false) {
+            return 'linkedin';
+        }
+        if (strpos($url_lower, 'twitter.com') !== false || strpos($url_lower, 'x.com') !== false) {
+            return 'twitter';
+        }
+        if (strpos($url_lower, 'instagram.com') !== false) {
+            return 'instagram';
+        }
+        if (strpos($url_lower, 'facebook.com') !== false) {
+            return 'facebook';
+        }
+        
+        return '';
     }
     
     /**
@@ -694,6 +840,7 @@ class PRM_VCard_Export {
             'last_name' => '',
             'full_name' => '',
             'nickname' => '',
+            'gender' => '',
             'contact_info' => [],
             'addresses' => [],
             'org' => '',
@@ -801,6 +948,66 @@ class PRM_VCard_Export {
                     $note_content = trim(self::unescape_value($value));
                     if (!empty($note_content)) {
                         $data['notes'][] = $note_content;
+                    }
+                    break;
+                    
+                case 'GENDER':
+                    $gender_value = self::unescape_value($value);
+                    // Handle full gender value (e.g., "M;Male" - only use first component)
+                    if (strpos($gender_value, ';') !== false) {
+                        $gender_value = explode(';', $gender_value)[0];
+                    }
+                    $gender_code = strtoupper(trim($gender_value));
+                    $gender_map = [
+                        'M' => 'male',
+                        'F' => 'female',
+                        'O' => 'other',
+                        'N' => 'prefer_not_to_say',
+                    ];
+                    $data['gender'] = $gender_map[$gender_code] ?? '';
+                    break;
+                    
+                case 'X-SOCIALPROFILE':
+                    $url = self::unescape_value($value);
+                    // Try to get type from property string
+                    $type = '';
+                    if (stripos($property, 'TYPE=') !== false) {
+                        preg_match('/TYPE=([^;:]+)/i', $property, $matches);
+                        $type = strtolower($matches[1] ?? '');
+                    }
+                    // Map type or detect from URL
+                    $type_map = [
+                        'linkedin' => 'linkedin',
+                        'twitter' => 'twitter',
+                        'x' => 'twitter',
+                        'instagram' => 'instagram',
+                        'facebook' => 'facebook',
+                    ];
+                    $normalized_type = $type_map[$type] ?? self::detect_social_type($url);
+                    if ($normalized_type) {
+                        $data['contact_info'][] = [
+                            'contact_type' => $normalized_type,
+                            'contact_value' => $url,
+                            'contact_label' => '',
+                        ];
+                    }
+                    break;
+                    
+                case 'IMPP':
+                    $impp_value = self::unescape_value($value);
+                    // Check for X-SERVICE-TYPE in property string
+                    $service = '';
+                    if (stripos($property, 'X-SERVICE-TYPE=') !== false) {
+                        preg_match('/X-SERVICE-TYPE=([^;:]+)/i', $property, $matches);
+                        $service = strtolower($matches[1] ?? '');
+                    }
+                    // Check for Slack
+                    if ($service === 'slack' || stripos($impp_value, 'slack') !== false) {
+                        $data['contact_info'][] = [
+                            'contact_type' => 'slack',
+                            'contact_value' => $impp_value,
+                            'contact_label' => '',
+                        ];
                     }
                     break;
             }

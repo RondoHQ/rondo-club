@@ -151,6 +151,7 @@ class PRM_VCard_Import {
             'first_name'  => $vcard['first_name'] ?? '',
             'last_name'   => $vcard['last_name'] ?? '',
             'nickname'    => $vcard['nickname'] ?? '',
+            'gender'      => $vcard['gender'] ?? '',
             'email'       => $email,
             'phone'       => $phone,
             'phone_type'  => $phone_type,
@@ -261,19 +262,22 @@ class PRM_VCard_Import {
      */
     private function parse_single_vcard(string $content): array {
         $vcard = [
-            'first_name'   => '',
-            'last_name'    => '',
-            'nickname'     => '',
-            'org'          => '',
-            'title'        => '',
-            'emails'       => [],
-            'phones'       => [],
-            'addresses'    => [],
-            'urls'         => [],
-            'bday'         => '',
-            'notes'        => [],
-            'photo'        => null,
-            'photo_type'   => '',
+            'first_name'      => '',
+            'last_name'       => '',
+            'nickname'        => '',
+            'gender'          => '',
+            'org'             => '',
+            'title'           => '',
+            'emails'          => [],
+            'phones'          => [],
+            'addresses'       => [],
+            'urls'            => [],
+            'social_profiles' => [],
+            'impp'            => [],
+            'bday'            => '',
+            'notes'           => [],
+            'photo'           => null,
+            'photo_type'      => '',
         ];
         
         $lines = explode("\n", $content);
@@ -393,10 +397,87 @@ class PRM_VCard_Import {
                         $vcard['photo_type'] = $photo_data['type'];
                     }
                     break;
+                    
+                case 'GENDER':
+                    // Map vCard gender codes to our system
+                    $gender_code = strtoupper(trim($this->decode_vcard_value($value)));
+                    // Handle full gender value (e.g., "M;Male" - only use first component)
+                    if (strpos($gender_code, ';') !== false) {
+                        $gender_code = explode(';', $gender_code)[0];
+                    }
+                    $gender_map = [
+                        'M' => 'male',
+                        'F' => 'female',
+                        'O' => 'other',
+                        'N' => 'prefer_not_to_say',
+                        'U' => '', // Unknown/unspecified
+                    ];
+                    $vcard['gender'] = $gender_map[$gender_code] ?? '';
+                    break;
+                    
+                case 'X-SOCIALPROFILE':
+                    $url = $this->decode_vcard_value($value);
+                    $type = strtolower($this->get_type_param($params));
+                    // Map common type variations
+                    $type_map = [
+                        'linkedin' => 'linkedin',
+                        'twitter' => 'twitter',
+                        'x' => 'twitter',
+                        'instagram' => 'instagram',
+                        'facebook' => 'facebook',
+                        'fb' => 'facebook',
+                    ];
+                    $normalized_type = $type_map[$type] ?? $this->detect_social_type_from_url($url);
+                    if ($normalized_type) {
+                        $vcard['social_profiles'][] = [
+                            'type' => $normalized_type,
+                            'value' => $url,
+                        ];
+                    }
+                    break;
+                    
+                case 'IMPP':
+                    $impp_value = $this->decode_vcard_value($value);
+                    $service_type = '';
+                    // Check for X-SERVICE-TYPE parameter
+                    if (!empty($params['X-SERVICE-TYPE'])) {
+                        $service_type = strtolower($params['X-SERVICE-TYPE']);
+                    }
+                    // Also check the scheme of the URI
+                    if (empty($service_type) && preg_match('/^([a-z]+):/i', $impp_value, $matches)) {
+                        $service_type = strtolower($matches[1]);
+                    }
+                    $vcard['impp'][] = [
+                        'service' => $service_type,
+                        'value' => $impp_value,
+                    ];
+                    break;
             }
         }
         
         return $vcard;
+    }
+    
+    /**
+     * Detect social network type from URL
+     */
+    private function detect_social_type_from_url(string $url): string {
+        $url_lower = strtolower($url);
+        
+        if (strpos($url_lower, 'linkedin.com') !== false) {
+            return 'linkedin';
+        }
+        if (strpos($url_lower, 'twitter.com') !== false || strpos($url_lower, 'x.com') !== false) {
+            return 'twitter';
+        }
+        if (strpos($url_lower, 'instagram.com') !== false) {
+            return 'instagram';
+        }
+        if (strpos($url_lower, 'facebook.com') !== false || strpos($url_lower, 'fb.com') !== false) {
+            return 'facebook';
+        }
+        
+        return '';
     }
 
     /**
@@ -638,6 +719,10 @@ class PRM_VCard_Import {
         if (!empty($vcard['nickname'])) {
             update_field('nickname', $vcard['nickname'], $post_id);
         }
+        
+        if (!empty($vcard['gender'])) {
+            update_field('gender', $vcard['gender'], $post_id);
+        }
 
         // Handle company/work history (add to existing, don't replace)
         if (!empty($vcard['org']) || !empty($vcard['title'])) {
@@ -761,6 +846,36 @@ class PRM_VCard_Import {
                 ];
                 $existing_keys[$key] = true;
             }
+        }
+        
+        // Social profiles (from X-SOCIALPROFILE)
+        foreach ($vcard['social_profiles'] ?? [] as $social) {
+            $key = strtolower(trim($social['type'] . '|' . $social['value']));
+            if (!isset($existing_keys[$key])) {
+                $contact_info[] = [
+                    'contact_type'  => $social['type'],
+                    'contact_label' => '',
+                    'contact_value' => $social['value'],
+                ];
+                $existing_keys[$key] = true;
+            }
+        }
+        
+        // IMPP (Instant messaging - Slack, etc.)
+        foreach ($vcard['impp'] ?? [] as $impp) {
+            // Handle Slack specifically
+            if ($impp['service'] === 'slack') {
+                $key = 'slack|' . strtolower(trim($impp['value']));
+                if (!isset($existing_keys[$key])) {
+                    $contact_info[] = [
+                        'contact_type'  => 'slack',
+                        'contact_label' => '',
+                        'contact_value' => $impp['value'],
+                    ];
+                    $existing_keys[$key] = true;
+                }
+            }
+            // Other IMPP types could be added here in the future
         }
 
         if (!empty($contact_info)) {

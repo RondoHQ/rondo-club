@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.40.0] - 2026-01-09
+
+### Added
+- vCard export: Social links now use X-SOCIALPROFILE for better client compatibility
+- vCard export: GENDER field is now exported (M/F/O/N codes)
+- vCard export: Slack contacts exported as IMPP;X-SERVICE-TYPE=Slack
+- vCard import: X-SOCIALPROFILE parsing for social network profiles
+- vCard import: GENDER field parsing and mapping to system gender values
+- vCard import: IMPP parsing for Slack contacts
+
+### Changed
+- vCard export: LinkedIn, Twitter, Instagram, Facebook use X-SOCIALPROFILE instead of generic URL
+
 ## [1.39.6] - 2026-01-09
 
 ### Added
