@@ -610,6 +610,7 @@ export default function Layout({ children }) {
           last_name: data.last_name,
           nickname: data.nickname,
           gender: data.gender || null,
+          pronouns: data.pronouns || null,
           how_we_met: data.how_we_met,
           is_favorite: data.is_favorite,
           contact_info: contactInfo,
