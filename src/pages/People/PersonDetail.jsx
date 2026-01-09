@@ -1429,10 +1429,10 @@ export default function PersonDetail() {
       <div className="space-y-6">
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="columns-1 md:columns-2 gap-6">
             {/* Contact info - only show for living people */}
           {!isDeceased && (
-            <div className="card p-6">
+            <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold">Contact information</h2>
                 <button
@@ -1526,7 +1526,7 @@ export default function PersonDetail() {
           )}
 
           {/* Important Dates */}
-          <div className="card p-6">
+          <div className="card p-6 break-inside-avoid mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">Important dates</h2>
               <button
@@ -1601,7 +1601,7 @@ export default function PersonDetail() {
 
             {/* Addresses - only show for living people */}
             {!isDeceased && (
-              <div className="card p-6">
+              <div className="card p-6 break-inside-avoid mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold">Addresses</h2>
                   <button
@@ -1679,7 +1679,7 @@ export default function PersonDetail() {
 
             {/* How we met */}
             {(acf.how_we_met || acf.met_date) && (
-              <div className="card p-6">
+              <div className="card p-6 break-inside-avoid mb-6">
                 <h2 className="font-semibold mb-3">How we met</h2>
                 {acf.met_date && (
                   <p className="text-sm text-gray-500 mb-2">
@@ -1694,7 +1694,7 @@ export default function PersonDetail() {
             )}
 
             {/* Relationships */}
-            <div className="card p-6">
+            <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold">Relationships</h2>
                 <button
@@ -1782,9 +1782,9 @@ export default function PersonDetail() {
 
         {/* Timeline Tab */}
         {activeTab === 'timeline' && (
-          <div className="space-y-6">
+          <div className="columns-1 md:columns-2 gap-6">
             {/* Todos */}
-            <div className="card p-6">
+            <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold">Todos</h2>
                 <button
@@ -1857,7 +1857,7 @@ export default function PersonDetail() {
             </div>
 
             {/* Timeline */}
-            <div className="card p-6">
+            <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold">Timeline</h2>
                 <div className="flex gap-2">
@@ -1892,9 +1892,9 @@ export default function PersonDetail() {
 
         {/* Work Tab */}
         {activeTab === 'work' && (
-          <div className="space-y-6">
+          <div className="columns-1 md:columns-2 gap-6">
             {/* Work history */}
-          <div className="card p-6">
+          <div className="card p-6 break-inside-avoid mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">Work history</h2>
               <button
@@ -1981,7 +1981,7 @@ export default function PersonDetail() {
           
           {/* Investments */}
           {investments.length > 0 && (
-            <div className="card p-6">
+            <div className="card p-6 break-inside-avoid mb-6">
               <h2 className="font-semibold mb-4 flex items-center">
                 <TrendingUp className="w-5 h-5 mr-2" />
                 Investments
@@ -2018,7 +2018,7 @@ export default function PersonDetail() {
 
           {/* Colleagues - only show if person has current job(s) */}
           {colleagues.length > 0 && (
-            <div className="card p-6">
+            <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold">Colleagues</h2>
                 <span className="text-xs text-gray-500">{colleagues.length} {colleagues.length === 1 ? 'colleague' : 'colleagues'}</span>
