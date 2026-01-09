@@ -556,6 +556,8 @@ class PRM_Comment_Types {
         $content = $comment->comment_content;
         if ($type === 'activity' || $type === 'note') {
             $content = make_clickable($content);
+            // Add target="_blank" and rel="noopener noreferrer" to links for security
+            $content = str_replace('<a href=', '<a target="_blank" rel="noopener noreferrer" href=', $content);
         }
         
         $data = [

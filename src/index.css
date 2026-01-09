@@ -13,6 +13,32 @@
   }
 }
 
+/* Timeline content styles for activities and notes */
+.timeline-content a {
+  @apply text-primary-600 hover:text-primary-700 underline;
+}
+
+.timeline-content ul,
+.timeline-content ol {
+  @apply pl-5 my-2;
+}
+
+.timeline-content ul {
+  @apply list-disc;
+}
+
+.timeline-content ol {
+  @apply list-decimal;
+}
+
+.timeline-content li {
+  @apply my-1;
+}
+
+.timeline-content p {
+  @apply my-2 first:mt-0 last:mb-0;
+}
+
 /* Custom component classes */
 @layer components {
   .btn {

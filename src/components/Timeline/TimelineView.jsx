@@ -123,7 +123,7 @@ export default function TimelineView({
                 {/* Render rich text content for notes/activities, plain text for todos */}
                 {(isNote || isActivity) && item.content?.includes('<') ? (
                   <div 
-                    className={`text-sm flex-1 prose prose-sm max-w-none ${item.is_completed ? 'line-through opacity-60' : ''}`}
+                    className={`text-sm flex-1 timeline-content ${item.is_completed ? 'line-through opacity-60' : ''}`}
                     dangerouslySetInnerHTML={{ __html: item.content }}
                   />
                 ) : (
