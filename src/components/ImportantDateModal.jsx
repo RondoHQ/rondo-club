@@ -174,8 +174,12 @@ export default function ImportantDateModal({
     if (isOpen) {
       if (dateItem) {
         // Editing existing date
+        // related_people can be:
+        // - Array of objects { id, name } from /prm/v1/people/{id}/dates
+        // - Array of objects with ID/id from ACF (when dateItem.acf exists)
+        // - Array of numbers
         let relatedPeopleIds = [];
-        const rawRelatedPeople = dateItem.acf?.related_people;
+        const rawRelatedPeople = dateItem.related_people || dateItem.acf?.related_people;
         if (rawRelatedPeople) {
           if (Array.isArray(rawRelatedPeople)) {
             relatedPeopleIds = rawRelatedPeople.map(p => {
@@ -189,9 +193,22 @@ export default function ImportantDateModal({
           }
         }
 
+        // date_type can be:
+        // - Array of term NAMES (strings) from /prm/v1/people/{id}/dates
+        // - Array of term IDs (numbers) from WP REST API
         let dateTypeId = '';
-        if (dateItem.date_type?.length > 0) {
-          dateTypeId = dateItem.date_type[0].toString();
+        if (dateItem.date_type?.length > 0 && dateItem.date_type[0] != null) {
+          const firstType = dateItem.date_type[0];
+          if (typeof firstType === 'string') {
+            // It's a name - find the matching ID from dateTypes
+            const matchingType = dateTypes.find(t => 
+              t.name.toLowerCase() === firstType.toLowerCase()
+            );
+            dateTypeId = matchingType ? String(matchingType.id) : '';
+          } else {
+            // It's already an ID
+            dateTypeId = String(firstType);
+          }
         }
 
         reset({
@@ -214,14 +231,18 @@ export default function ImportantDateModal({
         });
       }
     }
-  }, [isOpen, dateItem, personId, reset]);
+  }, [isOpen, dateItem, personId, reset, dateTypes]);
 
   if (!isOpen) return null;
 
   const handleFormSubmit = (data) => {
+    // Parse date_type and filter out invalid values
+    const dateTypeId = data.date_type ? parseInt(data.date_type, 10) : null;
+    const dateType = dateTypeId && !isNaN(dateTypeId) ? [dateTypeId] : [];
+    
     onSubmit({
       title: data.title,
-      date_type: data.date_type ? [parseInt(data.date_type)] : [],
+      date_type: dateType,
       date_value: data.date_value,
       related_people: data.related_people,
       is_recurring: data.is_recurring,
