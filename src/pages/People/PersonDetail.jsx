@@ -37,6 +37,7 @@ import ImportantDateModal from '@/components/ImportantDateModal';
 import RelationshipEditModal from '@/components/RelationshipEditModal';
 import AddressEditModal from '@/components/AddressEditModal';
 import WorkHistoryEditModal from '@/components/WorkHistoryEditModal';
+import PersonEditModal from '@/components/PersonEditModal';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -106,11 +107,13 @@ export default function PersonDetail() {
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showWorkHistoryModal, setShowWorkHistoryModal] = useState(false);
+  const [showPersonEditModal, setShowPersonEditModal] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
   const [isSavingDate, setIsSavingDate] = useState(false);
   const [isSavingRelationship, setIsSavingRelationship] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [isSavingWorkHistory, setIsSavingWorkHistory] = useState(false);
+  const [isSavingPerson, setIsSavingPerson] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [editingDate, setEditingDate] = useState(null);
@@ -406,6 +409,36 @@ export default function PersonDetail() {
       alert('Failed to save work history. Please try again.');
     } finally {
       setIsSavingWorkHistory(false);
+    }
+  };
+
+  // Handle saving person details
+  const handleSavePerson = async (data) => {
+    setIsSavingPerson(true);
+    try {
+      const acfData = sanitizePersonAcf(person.acf, {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        nickname: data.nickname,
+        gender: data.gender || null,
+        how_we_met: data.how_we_met,
+        is_favorite: data.is_favorite,
+      });
+
+      await updatePerson.mutateAsync({
+        id,
+        data: {
+          title: `${data.first_name} ${data.last_name}`.trim(),
+          acf: acfData,
+        },
+      });
+      
+      setShowPersonEditModal(false);
+    } catch (error) {
+      console.error('Failed to save person:', error);
+      alert('Failed to save person. Please try again.');
+    } finally {
+      setIsSavingPerson(false);
     }
   };
 
@@ -1111,10 +1144,10 @@ export default function PersonDetail() {
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Export vCard</span>
           </button>
-          <Link to={`/people/${id}/edit`} className="btn-secondary">
+          <button onClick={() => setShowPersonEditModal(true)} className="btn-secondary">
             <Edit className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Edit</span>
-          </Link>
+          </button>
           <button onClick={handleDelete} className="btn-danger">
             <Trash2 className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Delete</span>
@@ -1728,6 +1761,14 @@ export default function PersonDetail() {
             onSubmit={handleSaveWorkHistory}
             isLoading={isSavingWorkHistory}
             workHistoryItem={editingWorkHistory}
+          />
+          
+          <PersonEditModal
+            isOpen={showPersonEditModal}
+            onClose={() => setShowPersonEditModal(false)}
+            onSubmit={handleSavePerson}
+            isLoading={isSavingPerson}
+            person={person}
           />
         </div>
         

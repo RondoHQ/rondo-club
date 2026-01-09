@@ -6,7 +6,6 @@ import Layout from '@/components/layout/Layout';
 import Dashboard from '@/pages/Dashboard';
 import PeopleList from '@/pages/People/PeopleList';
 import PersonDetail from '@/pages/People/PersonDetail';
-import PersonForm from '@/pages/People/PersonForm';
 import CompaniesList from '@/pages/Companies/CompaniesList';
 import CompanyDetail from '@/pages/Companies/CompanyDetail';
 import CompanyForm from '@/pages/Companies/CompanyForm';
@@ -133,9 +132,7 @@ function App() {
                 
                 {/* People routes */}
                 <Route path="/people" element={<PeopleList />} />
-                <Route path="/people/new" element={<PersonForm />} />
                 <Route path="/people/:id/family-tree" element={<FamilyTree />} />
-                <Route path="/people/:id/edit" element={<PersonForm />} />
                 <Route path="/people/:id" element={<PersonDetail />} />
                 
                 {/* Companies routes */}

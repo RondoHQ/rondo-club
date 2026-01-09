@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.35.0] - 2026-01-09
+
+### Added
+- PersonEditModal now supports full editing with all fields (nickname, gender, how we met, favorite)
+- vCard import support in PersonEditModal when creating new people (drag & drop or browse)
+- Gravatar auto-fetch when email is provided in person creation
+- Birthday creation support when creating a new person
+
+### Changed
+- PersonDetail "Edit" button now opens PersonEditModal instead of navigating to separate page
+- PersonEditModal shows email/phone/birthday fields only when creating (editing contacts separately)
+
+### Removed
+- PersonForm.jsx removed - all person creation/editing now via PersonEditModal
+- Routes `/people/new` and `/people/:id/edit` removed
+
 ## [1.34.0] - 2026-01-09
 
 ### Added
