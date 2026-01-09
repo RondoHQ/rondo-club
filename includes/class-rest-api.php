@@ -163,6 +163,13 @@ class PRM_REST_API {
             'permission_callback' => [$this, 'check_user_approved'],
         ]);
         
+        // Version check (public endpoint for cache invalidation)
+        register_rest_route('prm/v1', '/version', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_version'],
+            'permission_callback' => '__return_true',
+        ]);
+        
         // All todos (across all people)
         register_rest_route('prm/v1', '/todos', [
             'methods'             => WP_REST_Server::READABLE,
@@ -995,6 +1002,16 @@ class PRM_REST_API {
         }
         
         return rest_ensure_response($results);
+    }
+    
+    /**
+     * Get current theme version
+     * Used for cache invalidation on PWA/mobile apps
+     */
+    public function get_version($request) {
+        return rest_ensure_response([
+            'version' => PRM_THEME_VERSION,
+        ]);
     }
     
     /**

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { useVersionCheck } from '@/hooks/useVersionCheck';
 import { prmApi } from '@/api/client';
 import Layout from '@/components/layout/Layout';
 import Dashboard from '@/pages/Dashboard';
@@ -15,7 +16,7 @@ import RelationshipTypes from '@/pages/Settings/RelationshipTypes';
 import UserApproval from '@/pages/Settings/UserApproval';
 import FamilyTree from '@/pages/People/FamilyTree';
 import Login from '@/pages/Login';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 function ApprovalCheck({ children }) {
   const { data: user, isLoading, error } = useQuery({
@@ -114,11 +115,36 @@ function ProtectedRoute({ children }) {
   return <ApprovalCheck>{children}</ApprovalCheck>;
 }
 
+function UpdateBanner() {
+  const { hasUpdate, latestVersion, reload } = useVersionCheck();
+  
+  if (!hasUpdate) return null;
+  
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[100] bg-primary-600 text-white py-2 px-4 shadow-lg">
+      <div className="max-w-7xl mx-auto flex items-center justify-center gap-4 text-sm">
+        <span>
+          A new version ({latestVersion}) is available.
+        </span>
+        <button
+          onClick={reload}
+          className="inline-flex items-center gap-2 px-3 py-1 bg-white text-primary-600 rounded-md font-medium hover:bg-primary-50 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Reload
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/login" element={<Login />} />
+    <>
+      <UpdateBanner />
+      <Routes>
+        {/* Public routes */}
+        <Route path="/login" element={<Login />} />
       
       {/* Protected routes */}
       <Route
@@ -156,7 +182,8 @@ function App() {
           </ProtectedRoute>
         }
       />
-    </Routes>
+      </Routes>
+    </>
   );
 }
 
