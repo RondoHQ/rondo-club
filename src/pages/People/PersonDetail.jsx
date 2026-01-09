@@ -911,6 +911,58 @@ export default function PersonDetail() {
     })),
   });
 
+  // Get current job company IDs (jobs without end_date)
+  const currentJobCompanyIds = useMemo(() => {
+    if (!person?.acf?.work_history) return [];
+    return person.acf.work_history
+      .filter(job => !job.end_date && job.company)
+      .map(job => job.company);
+  }, [person?.acf?.work_history]);
+
+  // Fetch colleagues for current jobs
+  const colleagueQueries = useQueries({
+    queries: currentJobCompanyIds.map(companyId => ({
+      queryKey: ['company-people', companyId],
+      queryFn: async () => {
+        const response = await prmApi.getCompanyPeople(companyId);
+        return { companyId, ...response.data };
+      },
+      enabled: !!companyId,
+    })),
+  });
+
+  // Process colleagues data - combine all current employees from all companies, excluding self
+  const colleagues = useMemo(() => {
+    const colleagueMap = new Map();
+    
+    colleagueQueries.forEach(query => {
+      if (query.data?.current) {
+        query.data.current.forEach(employee => {
+          // Exclude the current person
+          if (employee.id !== parseInt(id)) {
+            // If already in map, just add the company; otherwise create new entry
+            if (colleagueMap.has(employee.id)) {
+              const existing = colleagueMap.get(employee.id);
+              if (!existing.companies.includes(query.data.companyId)) {
+                existing.companies.push(query.data.companyId);
+              }
+            } else {
+              colleagueMap.set(employee.id, {
+                ...employee,
+                companies: [query.data.companyId],
+              });
+            }
+          }
+        });
+      }
+    });
+    
+    // Convert to array and sort alphabetically by name
+    return Array.from(colleagueMap.values()).sort((a, b) => 
+      (a.name || '').localeCompare(b.name || '')
+    );
+  }, [colleagueQueries, id]);
+
   // Fetch dates for related people to calculate ages for sorting
   const relatedPersonIds = person?.acf?.relationships
     ?.map(rel => rel.related_person)
@@ -1955,6 +2007,45 @@ export default function PersonDetail() {
               </p>
             )}
           </div>
+          
+          {/* Colleagues - only show if person has current job(s) */}
+          {colleagues.length > 0 && (
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold">Colleagues</h2>
+                <span className="text-xs text-gray-500">{colleagues.length} {colleagues.length === 1 ? 'colleague' : 'colleagues'}</span>
+              </div>
+              <div className="space-y-2">
+                {colleagues.map((colleague) => (
+                  <Link
+                    key={colleague.id}
+                    to={`/people/${colleague.id}`}
+                    className="flex items-center p-2 rounded hover:bg-gray-50"
+                  >
+                    {colleague.thumbnail ? (
+                      <img
+                        src={colleague.thumbnail}
+                        alt={colleague.name || ''}
+                        className="w-8 h-8 rounded-full object-cover mr-2"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                        <span className="text-xs font-medium text-gray-500">
+                          {colleague.name?.[0] || '?'}
+                        </span>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{colleague.name}</p>
+                      {colleague.job_title && (
+                        <p className="text-xs text-gray-500 truncate">{colleague.job_title}</p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
           
           {/* Addresses - only show for living people */}
           {!isDeceased && (
