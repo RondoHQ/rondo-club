@@ -194,6 +194,14 @@ export default function PeopleList() {
     return filtered.sort((a, b) => {
       let valueA, valueB;
       
+      if (sortField === 'modified') {
+        // Sort by last modified date
+        valueA = a.modified ? new Date(a.modified).getTime() : 0;
+        valueB = b.modified ? new Date(b.modified).getTime() : 0;
+        const comparison = valueA - valueB;
+        return sortOrder === 'asc' ? comparison : -comparison;
+      }
+      
       if (sortField === 'first_name') {
         valueA = (a.acf?.first_name || a.first_name || '').toLowerCase();
         valueB = (b.acf?.first_name || b.first_name || '').toLowerCase();
@@ -299,6 +307,7 @@ export default function PeopleList() {
             >
               <option value="first_name">First name</option>
               <option value="last_name">Last name</option>
+              <option value="modified">Last modified</option>
             </select>
             <div className="h-4 w-px bg-gray-300"></div>
             <button
