@@ -160,6 +160,50 @@ class PRM_VCard_Export {
     }
     
     /**
+     * Get photo as base64 encoded data for vCard inline embedding
+     *
+     * @param int $attachment_id Attachment ID
+     * @return array|null Array with 'type' and 'data' keys, or null if failed
+     */
+    private static function get_photo_base64($attachment_id) {
+        $file_path = get_attached_file($attachment_id);
+        if (!$file_path || !file_exists($file_path)) {
+            return null;
+        }
+        
+        // Get mime type
+        $mime_type = get_post_mime_type($attachment_id);
+        
+        // Map mime type to vCard photo type
+        $type_map = [
+            'image/jpeg' => 'JPEG',
+            'image/jpg' => 'JPEG',
+            'image/png' => 'PNG',
+            'image/gif' => 'GIF',
+        ];
+        
+        $photo_type = $type_map[$mime_type] ?? null;
+        if (!$photo_type) {
+            // Unsupported image type, fall back to URL approach
+            return null;
+        }
+        
+        // Read and encode the file
+        $file_contents = file_get_contents($file_path);
+        if ($file_contents === false) {
+            return null;
+        }
+        
+        // Base64 encode
+        $base64_data = base64_encode($file_contents);
+        
+        return [
+            'type' => $photo_type,
+            'data' => $base64_data,
+        ];
+    }
+    
+    /**
      * Generate vCard 3.0 format from person post
      *
      * @param int|WP_Post $person Person post ID or object
@@ -284,12 +328,12 @@ class PRM_VCard_Export {
             }
         }
         
-        // Photo (include as URL if available)
+        // Photo (include inline as base64 per RFC 2426)
         $thumbnail_id = get_post_thumbnail_id($person->ID);
         if ($thumbnail_id) {
-            $thumbnail_url = wp_get_attachment_url($thumbnail_id);
-            if ($thumbnail_url) {
-                $lines[] = 'PHOTO;VALUE=URI:' . $thumbnail_url;
+            $photo_data = self::get_photo_base64($thumbnail_id);
+            if ($photo_data) {
+                $lines[] = "PHOTO;ENCODING=b;TYPE={$photo_data['type']}:{$photo_data['data']}";
             }
         }
         
@@ -496,10 +540,25 @@ class PRM_VCard_Export {
         // Email
         if (isset($vcard->EMAIL)) {
             foreach ($vcard->EMAIL as $email) {
+                $label = '';
+                $type_param = $email['TYPE'];
+                if ($type_param) {
+                    $types = is_array($type_param) ? $type_param : (is_object($type_param) ? $type_param->getParts() : [$type_param]);
+                    foreach ($types as $t) {
+                        $t_upper = strtoupper((string) $t);
+                        if ($t_upper === 'HOME') {
+                            $label = 'Home';
+                            break;
+                        } elseif ($t_upper === 'WORK') {
+                            $label = 'Work';
+                            break;
+                        }
+                    }
+                }
                 $data['contact_info'][] = [
                     'contact_type' => 'email',
                     'contact_value' => (string) $email,
-                    'contact_label' => '',
+                    'contact_label' => $label,
                 ];
             }
         }
@@ -508,20 +567,26 @@ class PRM_VCard_Export {
         if (isset($vcard->TEL)) {
             foreach ($vcard->TEL as $tel) {
                 $type = 'phone';
+                $label = '';
                 $type_param = $tel['TYPE'];
                 if ($type_param) {
-                    $types = is_array($type_param) ? $type_param : [$type_param];
+                    // Handle different ways TYPE can be returned (array, Parameter object, string)
+                    $types = is_array($type_param) ? $type_param : (is_object($type_param) ? $type_param->getParts() : [$type_param]);
                     foreach ($types as $t) {
-                        if (strtoupper($t) === 'CELL' || strtoupper($t) === 'MOBILE') {
+                        $t_upper = strtoupper((string) $t);
+                        if ($t_upper === 'CELL' || $t_upper === 'MOBILE') {
                             $type = 'mobile';
-                            break;
+                        } elseif ($t_upper === 'HOME') {
+                            $label = 'Home';
+                        } elseif ($t_upper === 'WORK') {
+                            $label = 'Work';
                         }
                     }
                 }
                 $data['contact_info'][] = [
                     'contact_type' => $type,
                     'contact_value' => (string) $tel,
-                    'contact_label' => '',
+                    'contact_label' => $label,
                 ];
             }
         }
@@ -660,22 +725,34 @@ class PRM_VCard_Export {
                     break;
                     
                 case 'EMAIL':
+                    $label = '';
+                    if (stripos($property, 'HOME') !== false) {
+                        $label = 'Home';
+                    } elseif (stripos($property, 'WORK') !== false) {
+                        $label = 'Work';
+                    }
                     $data['contact_info'][] = [
                         'contact_type' => 'email',
                         'contact_value' => self::unescape_value($value),
-                        'contact_label' => '',
+                        'contact_label' => $label,
                     ];
                     break;
                     
                 case 'TEL':
                     $type = 'phone';
+                    $label = '';
                     if (stripos($property, 'CELL') !== false || stripos($property, 'MOBILE') !== false) {
                         $type = 'mobile';
+                    }
+                    if (stripos($property, 'HOME') !== false) {
+                        $label = 'Home';
+                    } elseif (stripos($property, 'WORK') !== false) {
+                        $label = 'Work';
                     }
                     $data['contact_info'][] = [
                         'contact_type' => $type,
                         'contact_value' => self::unescape_value($value),
-                        'contact_label' => '',
+                        'contact_label' => $label,
                     ];
                     break;
                     
