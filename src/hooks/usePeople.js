@@ -36,6 +36,8 @@ function transformPerson(person) {
     last_name: person.acf?.last_name || '',
     is_favorite: person.acf?.is_favorite || false,
     is_deceased: person.is_deceased || false,
+    birth_year: person.birth_year || null,
+    modified: person.modified || null,
     thumbnail,
     labels,
   };
