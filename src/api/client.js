@@ -86,6 +86,9 @@ export const wpApi = {
 
 // Helper for custom PRM API
 export const prmApi = {
+  // Version check (for cache invalidation)
+  getVersion: () => api.get('/prm/v1/version'),
+  
   // Dashboard
   getDashboard: () => api.get('/prm/v1/dashboard'),
   
