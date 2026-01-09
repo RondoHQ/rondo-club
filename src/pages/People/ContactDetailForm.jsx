@@ -20,6 +20,7 @@ const CONTACT_TYPES = [
   { value: 'threads', label: 'Threads' },
   { value: 'instagram', label: 'Instagram' },
   { value: 'facebook', label: 'Facebook' },
+  { value: 'slack', label: 'Slack' },
   { value: 'other', label: 'Other' },
 ];
 

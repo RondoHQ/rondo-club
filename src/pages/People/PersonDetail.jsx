@@ -5,7 +5,7 @@ import {
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, Square, TrendingUp
 } from 'lucide-react';
-import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads } from '@icons-pack/react-simple-icons';
+import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack } from '@icons-pack/react-simple-icons';
 
 // Custom LinkedIn SVG component
 const LinkedInIcon = ({ className }) => (
@@ -851,7 +851,7 @@ export default function PersonDetail() {
   const acf = person.acf || {};
   
   // Extract social links for header display
-  const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'bluesky', 'threads', 'website'];
+  const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'bluesky', 'threads', 'slack', 'website'];
   const socialLinks = acf.contact_info?.filter(contact => socialTypes.includes(contact.contact_type)) || [];
   
   // Define display order for social icons
@@ -862,7 +862,8 @@ export default function PersonDetail() {
     'threads': 4,
     'instagram': 5,
     'facebook': 6,
-    'website': 7,
+    'slack': 7,
+    'website': 8,
   };
   
   // Sort social links by display order
@@ -881,6 +882,7 @@ export default function PersonDetail() {
       case 'twitter': return SiX; // Twitter/X uses SiX in Simple Icons
       case 'bluesky': return SiBluesky;
       case 'threads': return SiThreads;
+      case 'slack': return SiSlack;
       case 'website': return Globe; // Use Lucide Globe for website
       default: return Globe;
     }
@@ -895,6 +897,7 @@ export default function PersonDetail() {
       case 'twitter': return 'text-[#1DA1F2]';
       case 'bluesky': return 'text-[#00A8E8]'; // Bluesky brand color
       case 'threads': return 'text-[#000000]'; // Threads brand color (black)
+      case 'slack': return 'text-[#4A154B]'; // Slack brand color (aubergine)
       case 'website': return 'text-gray-600';
       default: return 'text-gray-600';
     }
