@@ -140,7 +140,7 @@ export default function PersonEditModal({
           first_name: data.first_name || '',
           last_name: data.last_name || '',
           nickname: data.nickname || '',
-          gender: '',
+          gender: data.gender || '',
           email: data.email || '',
           phone: data.phone || '',
           phone_type: data.phone_type || 'mobile',
