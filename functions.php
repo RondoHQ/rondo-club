@@ -7,12 +7,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('PRM_THEME_VERSION', '1.0.0');
 define('PRM_THEME_DIR', get_template_directory());
 define('PRM_THEME_URL', get_template_directory_uri());
+define('PRM_THEME_VERSION', wp_get_theme()->get('Version'));
 
 // Plugin constants (now part of theme)
-define('PRM_VERSION', '1.0.0');
+define('PRM_VERSION', PRM_THEME_VERSION);
 define('PRM_PLUGIN_DIR', PRM_THEME_DIR . '/includes');
 define('PRM_PLUGIN_URL', PRM_THEME_URL . '/includes');
 
