@@ -724,8 +724,25 @@ class PRM_VCard_Export {
         // Photo
         if (isset($vcard->PHOTO)) {
             $photo = $vcard->PHOTO;
+            $photo_value = (string) $photo;
+            
+            // Check if it's a URI
             if (isset($photo['VALUE']) && strtoupper($photo['VALUE']) === 'URI') {
-                $data['photo_url'] = (string) $photo;
+                $data['photo_url'] = $photo_value;
+            } else {
+                // Base64 encoded photo
+                $encoding = $photo['ENCODING'] ?? '';
+                if (strtoupper($encoding) === 'B' || strtoupper($encoding) === 'BASE64' || 
+                    preg_match('/^[a-zA-Z0-9+\/=\s]+$/', $photo_value)) {
+                    // Remove any whitespace from base64 data
+                    $data['photo_base64'] = preg_replace('/\s+/', '', $photo_value);
+                    // Get photo type
+                    $type = $photo['TYPE'] ?? 'jpeg';
+                    if (is_object($type)) {
+                        $type = (string) $type;
+                    }
+                    $data['photo_type'] = strtolower(str_replace(['image/', 'IMAGE/'], '', $type));
+                }
             }
         }
         
@@ -1008,6 +1025,26 @@ class PRM_VCard_Export {
                             'contact_value' => $impp_value,
                             'contact_label' => '',
                         ];
+                    }
+                    break;
+                    
+                case 'PHOTO':
+                    // Check if it's a URI or base64
+                    if (stripos($property, 'VALUE=URI') !== false) {
+                        $data['photo_url'] = self::unescape_value($value);
+                    } else {
+                        // Base64 encoded photo
+                        // Get photo type from property string
+                        $photo_type = 'jpeg';
+                        if (stripos($property, 'TYPE=') !== false) {
+                            preg_match('/TYPE=([^;:]+)/i', $property, $matches);
+                            $photo_type = strtolower($matches[1] ?? 'jpeg');
+                        }
+                        $photo_type = str_replace(['image/', 'IMAGE/'], '', $photo_type);
+                        
+                        // Remove whitespace and store
+                        $data['photo_base64'] = preg_replace('/\s+/', '', $value);
+                        $data['photo_type'] = $photo_type;
                     }
                     break;
             }

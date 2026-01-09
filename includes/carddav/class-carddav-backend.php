@@ -295,6 +295,11 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
             }
         }
         
+        // Import photo (base64 or URL)
+        if (!empty($parsed['photo_base64']) || !empty($parsed['photo_url'])) {
+            $this->importPhoto($post_id, $parsed, $first_name, $last_name);
+        }
+        
         // Log the change for sync
         $this->logChange($addressBookId, $post_id, 'added');
         
@@ -394,6 +399,11 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
                     ]);
                 }
             }
+        }
+        
+        // Import/update photo (base64 or URL)
+        if (!empty($parsed['photo_base64']) || !empty($parsed['photo_url'])) {
+            $this->importPhoto($person_id, $parsed, $first_name, $last_name);
         }
         
         // Log the change for sync
@@ -686,6 +696,167 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
     private function getUriForPerson($person_id) {
         $stored_uri = get_post_meta($person_id, '_carddav_uri', true);
         return $stored_uri ?: $person_id . '.vcf';
+    }
+    
+    /**
+     * Import photo from vCard data
+     * 
+     * Handles both base64 encoded photos and URL-based photos
+     *
+     * @param int $person_id Person post ID
+     * @param array $parsed Parsed vCard data
+     * @param string $first_name Person's first name
+     * @param string $last_name Person's last name
+     */
+    private function importPhoto($person_id, $parsed, $first_name, $last_name) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        
+        $attachment_id = null;
+        
+        // Handle base64 encoded photo
+        if (!empty($parsed['photo_base64'])) {
+            $attachment_id = $this->saveBase64Photo(
+                $parsed['photo_base64'],
+                $parsed['photo_type'] ?? 'jpeg',
+                $person_id,
+                $first_name,
+                $last_name
+            );
+        }
+        // Handle URL-based photo
+        elseif (!empty($parsed['photo_url'])) {
+            $attachment_id = $this->sideloadPhotoFromUrl(
+                $parsed['photo_url'],
+                $person_id,
+                $first_name,
+                $last_name
+            );
+        }
+        
+        if ($attachment_id && !is_wp_error($attachment_id)) {
+            // Delete existing thumbnail if present
+            $existing_thumbnail_id = get_post_thumbnail_id($person_id);
+            if ($existing_thumbnail_id && $existing_thumbnail_id != $attachment_id) {
+                wp_delete_attachment($existing_thumbnail_id, true);
+            }
+            
+            set_post_thumbnail($person_id, $attachment_id);
+            error_log("CardDAV: Imported photo for person {$person_id}, attachment ID: {$attachment_id}");
+        }
+    }
+    
+    /**
+     * Save base64 encoded photo as attachment
+     *
+     * @param string $base64_data Base64 encoded image data
+     * @param string $type Image type (jpeg, png, gif)
+     * @param int $person_id Person post ID
+     * @param string $first_name Person's first name
+     * @param string $last_name Person's last name
+     * @return int|null Attachment ID or null on failure
+     */
+    private function saveBase64Photo($base64_data, $type, $person_id, $first_name, $last_name) {
+        $image_data = base64_decode($base64_data);
+        if ($image_data === false) {
+            error_log("CardDAV: Failed to decode base64 photo data");
+            return null;
+        }
+        
+        // Determine extension
+        $extension = 'jpg';
+        $type_lower = strtolower($type);
+        if (in_array($type_lower, ['png', 'gif', 'webp'])) {
+            $extension = $type_lower;
+        } elseif ($type_lower === 'jpeg') {
+            $extension = 'jpg';
+        }
+        
+        // Create filename
+        $filename = sanitize_title(strtolower(trim($first_name . ' ' . $last_name)));
+        if (empty($filename)) {
+            $filename = 'photo-' . $person_id;
+        }
+        $filename .= '.' . $extension;
+        
+        // Save to temp file
+        $upload_dir = wp_upload_dir();
+        $temp_file = $upload_dir['basedir'] . '/' . $filename;
+        
+        if (file_put_contents($temp_file, $image_data) === false) {
+            error_log("CardDAV: Failed to write temp photo file");
+            return null;
+        }
+        
+        // Prepare file array
+        $file_array = [
+            'name'     => $filename,
+            'tmp_name' => $temp_file,
+        ];
+        
+        // Upload
+        $attachment_id = media_handle_sideload($file_array, $person_id, "{$first_name} {$last_name}");
+        
+        // Clean up temp file if still exists
+        if (file_exists($temp_file)) {
+            @unlink($temp_file);
+        }
+        
+        if (is_wp_error($attachment_id)) {
+            error_log("CardDAV: Failed to sideload photo: " . $attachment_id->get_error_message());
+            return null;
+        }
+        
+        return $attachment_id;
+    }
+    
+    /**
+     * Sideload photo from URL
+     *
+     * @param string $url Photo URL
+     * @param int $person_id Person post ID
+     * @param string $first_name Person's first name
+     * @param string $last_name Person's last name
+     * @return int|null Attachment ID or null on failure
+     */
+    private function sideloadPhotoFromUrl($url, $person_id, $first_name, $last_name) {
+        $tmp = download_url($url);
+        
+        if (is_wp_error($tmp)) {
+            error_log("CardDAV: Failed to download photo from URL: " . $tmp->get_error_message());
+            return null;
+        }
+        
+        // Determine filename
+        $filename = sanitize_title(strtolower(trim($first_name . ' ' . $last_name)));
+        if (empty($filename)) {
+            $filename = 'photo-' . $person_id;
+        }
+        
+        // Get extension from URL
+        $path = parse_url($url, PHP_URL_PATH);
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        if (in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+            $filename .= '.' . strtolower($ext);
+        } else {
+            $filename .= '.jpg';
+        }
+        
+        $file_array = [
+            'name'     => $filename,
+            'tmp_name' => $tmp,
+        ];
+        
+        $attachment_id = media_handle_sideload($file_array, $person_id, "{$first_name} {$last_name}");
+        
+        if (is_wp_error($attachment_id)) {
+            @unlink($tmp);
+            error_log("CardDAV: Failed to sideload photo: " . $attachment_id->get_error_message());
+            return null;
+        }
+        
+        return $attachment_id;
     }
 }
 
