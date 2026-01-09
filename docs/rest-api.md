@@ -115,6 +115,25 @@ Returns summary statistics and recent activity for the dashboard.
 
 ---
 
+### Version
+
+**GET** `/prm/v1/version`
+
+Returns the current theme version. Used for PWA/mobile app cache invalidation.
+
+**Permission:** Public (no authentication required)
+
+**Response:**
+```json
+{
+  "version": "1.42.0"
+}
+```
+
+This endpoint is called periodically by the frontend to detect when a new version has been deployed, allowing users to reload and get the latest code.
+
+---
+
 ### Global Search
 
 **GET** `/prm/v1/search`

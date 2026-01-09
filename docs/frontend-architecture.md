@@ -232,6 +232,31 @@ Document title management:
 | `useDocumentTitle(title)` | Set specific page title |
 | `useRouteTitle(customTitle)` | Auto-set title based on route |
 
+### `useVersionCheck` (`src/hooks/useVersionCheck.js`)
+
+Version checking for PWA/mobile app cache invalidation:
+
+```js
+const { hasUpdate, currentVersion, latestVersion, reload, checkVersion } = useVersionCheck({
+  checkInterval: 5 * 60 * 1000, // Check every 5 minutes (default)
+});
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `hasUpdate` | boolean | True when a new version is available |
+| `currentVersion` | string | Version loaded with the current page |
+| `latestVersion` | string | Latest version from server (when update available) |
+| `reload` | function | Triggers a page reload to get new version |
+| `checkVersion` | function | Manually trigger a version check |
+
+**Check triggers:**
+- Initial check 5 seconds after mount
+- Periodic check every 5 minutes (configurable)
+- When tab becomes visible (user returns to app)
+
+**Backend endpoint:** `/prm/v1/version` returns `{ version: "1.42.0" }`
+
 ## Utility Functions
 
 ### `src/utils/formatters.js`
@@ -314,6 +339,25 @@ All styling uses Tailwind utility classes. Configuration in `tailwind.config.js`
 - Tailwind directives (`@tailwind base/components/utilities`)
 - Custom component classes
 - CSS variables for theming
+
+## PWA/Mobile App Support
+
+### Version Check & Cache Invalidation
+
+When the app is installed as a PWA or loaded in a mobile browser (Add to Home Screen), browser caching can prevent users from receiving updates. The version check system addresses this:
+
+1. **Version Endpoint**: `/prm/v1/version` returns the current theme version
+2. **Periodic Checking**: `useVersionCheck` hook polls for new versions
+3. **Update Banner**: When a new version is detected, a banner appears at the top of the screen with a "Reload" button
+
+**How it works:**
+1. On app load, the current version is stored from `window.prmConfig.version`
+2. Every 5 minutes (and when the user returns to the tab), the hook fetches `/prm/v1/version`
+3. If the server version differs from the loaded version, `hasUpdate` becomes true
+4. The `UpdateBanner` component renders at the top of `App.jsx` when an update is available
+5. User clicks "Reload" → `window.location.reload(true)` forces a fresh load
+
+**Note:** The version is embedded in both the HTML response (via `prmConfig`) and the asset filenames (via Vite's hash-based naming), ensuring a reload fetches all new assets.
 
 ## Related Documentation
 
