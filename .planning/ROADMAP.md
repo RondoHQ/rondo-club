@@ -30,10 +30,11 @@ Plans:
 **Goal**: Bulk organization assignment modal, bulk label add/remove modal
 **Depends on**: Phase 14
 **Research**: Unlikely (internal patterns)
-**Plans**: TBD
+**Plans**: 2
 
 Plans:
-- [ ] 15-01: TBD (run /gsd:plan-phase 15 to break down)
+- [ ] 15-01: Backend REST endpoint extension — add organization_id, labels_add, labels_remove to bulk-update
+- [ ] 15-02: Frontend UI modals — BulkOrganizationModal, BulkLabelsModal in Actions dropdown
 
 <details>
 <summary>✅ v2.1 Bulk Operations (Phases 12-13) — SHIPPED 2026-01-13</summary>
@@ -118,6 +119,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v1.0 Tech Debt Cleanup | 1-6 | 11/11 | Complete ✅ | 2026-01-13 |
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
-| v2.2 List View Polish | 14-15 | 2/? | In progress 🚧 | - |
+| v2.2 List View Polish | 14-15 | 2/4 | In progress 🚧 | - |
 
 **Total: 14 phases, 36 plans shipped**
