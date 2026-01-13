@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.58.0] - 2026-01-13
 
 ### Added
+- Note visibility controls for collaborative note-taking
+  - Notes can be marked as private (only author sees) or shared (visible to all who can see the contact)
+  - Default visibility is private, preserving single-user experience
+  - `_note_visibility` comment meta field stores visibility setting
+  - API endpoints support visibility parameter for create/update operations
+  - Timeline and notes endpoints filter based on visibility
 - New @mentions infrastructure for collaborative notes
   - MentionInput React component using react-mentions library
   - Workspace member search API endpoint (`/prm/v1/workspaces/members/search`)
