@@ -63,6 +63,12 @@ Last session: 2026-01-13
 Stopped at: Completed 18-01-PLAN.md (Milestone v2.3 complete)
 Resume file: None
 
+## Accumulated Context
+
+### Pending Todos
+
+6 todos in `.planning/todos/pending/`
+
 ## Next Steps
 
 - `/gsd:new-milestone` — start planning the next milestone
