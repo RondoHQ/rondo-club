@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v2.0 Multi-User
-Phases: 3/5 complete (7-11)
-Plans: 0/5 complete in Phase 10
-Status: Phase 10 planned
-Last activity: 2026-01-13 — Created Phase 10 plans (Collaborative Features)
+Phases: 4/5 complete (7-11)
+Plans: 5/5 complete in Phase 10
+Status: Phase 10 complete, ready for Phase 11
+Last activity: 2026-01-13 — Completed Phase 10 (Collaborative Features)
 
-Progress: ██████░░░░ 60%
+Progress: ████████░░ 80%
 
 ## v2.0 Multi-User Overview
 
@@ -30,7 +30,7 @@ Progress: ██████░░░░ 60%
 - Phase 7: Data Model & Visibility System ✓ (4 plans complete)
 - Phase 8: Workspace & Team Infrastructure ✓ (3 plans complete)
 - Phase 9: Sharing UI & Permissions Interface ✓ (6 plans complete)
-- Phase 10: Collaborative Features (5 plans created, ready to execute)
+- Phase 10: Collaborative Features ✓ (5 plans complete)
 - Phase 11: Migration, Testing & Polish (0 plans)
 
 ## Accumulated Decisions
@@ -47,29 +47,27 @@ Progress: ██████░░░░ 60%
 | 10 | Mention markup = @[Display Name](user_id) | react-mentions standard format |
 | 10 | Mention notifications default to digest | Reduces notification fatigue |
 | 10 | Workspace iCal uses existing user token | Avoids managing multiple tokens |
+| 10 | Activity in existing digest | Single notification touchpoint |
 
-## Phase 10 Plan Structure
+## Phase 10 Completed
 
-| Plan | Description | Depends On | Can Parallel |
-|------|-------------|------------|--------------|
-| 10-01 | Timeline Note Visibility | - | Yes (Wave 1) |
-| 10-02 | @Mentions Infrastructure | - | Yes (Wave 1) |
-| 10-03 | Mention Notifications | 10-02 | No (Wave 2) |
-| 10-04 | Workspace iCal Feed | - | Yes (Wave 1) |
-| 10-05 | Workspace Activity Digest | 10-03 | Yes (Wave 2) |
+Phase 10: Collaborative Features is complete with all 5 plans executed:
+- 10-01: Note Visibility Controls ✓
+- 10-02: @Mentions Infrastructure ✓
+- 10-03: Mention Notifications ✓
+- 10-04: Workspace iCal Feed ✓
+- 10-05: Workspace Activity Digest ✓
 
-**Execution waves:**
-- Wave 1: 10-01, 10-02, 10-04 (independent)
-- Wave 2: 10-03, 10-05 (after dependencies)
+See `.planning/phases/10-collaborative-features/SUMMARY.md` for full details.
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Phase 10 plans created
+Stopped at: Completed Phase 10 (all 5 plans)
 Resume file: None
 
 ## Next Steps
 
-Ready for Phase 10 execution. Options:
-- `/gsd:execute-phase 10` — execute all plans with parallel optimization
-- `/gsd:execute-plan .planning/phases/10-collaborative-features/10-01-PLAN.md` — run plans one at a time
+Ready for Phase 11: Migration, Testing & Polish. Options:
+- `/gsd:plan-phase 11` — create plans for final phase
+- `/gsd:discuss-phase 11` — gather context before planning
