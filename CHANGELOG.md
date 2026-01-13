@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.60.0] - 2026-01-13
+
+### Added
+- Workspace activity digest integration for collaborative awareness
+  - Daily digest now includes @mention notifications queued via digest preference
+  - Workspace activity section shows shared notes from other workspace members (last 24 hours)
+  - Email subject line updates to indicate when team activity is included
+  - Mentions shown with blue accent styling, workspace activity with green accent styling
+- Slack digest support for collaborative content
+  - Mentions and workspace activity sections added to Slack notification blocks
+  - Consistent formatting with email digest presentation
+
+### Changed
+- PRM_Reminders now gathers mentions and workspace activity before sending digests
+- Empty digests are now skipped when user has no dates, todos, mentions, or workspace activity
+
 ## [1.59.1] - 2026-01-13
 
 ### Fixed

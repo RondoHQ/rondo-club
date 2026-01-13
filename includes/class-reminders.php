@@ -119,7 +119,7 @@ class PRM_Reminders {
     
     /**
      * Process reminders for a specific user (called by per-user cron)
-     * 
+     *
      * @param int $user_id User ID
      */
     public function process_user_reminders($user_id) {
@@ -128,30 +128,43 @@ class PRM_Reminders {
         if (!$user) {
             return;
         }
-        
+
         // Get weekly digest for this user
         $digest_data = $this->get_weekly_digest($user_id);
-        
+
         // Check if there are any dates or todos to notify about
         $has_dates = !empty($digest_data['today']) ||
                      !empty($digest_data['tomorrow']) ||
                      !empty($digest_data['rest_of_week']);
-        
+
         $has_todos = !empty($digest_data['todos']['today']) ||
                      !empty($digest_data['todos']['tomorrow']) ||
                      !empty($digest_data['todos']['rest_of_week']);
-        
-        if (!$has_dates && !$has_todos) {
+
+        // Get queued mention notifications
+        $mentions = PRM_Mention_Notifications::get_queued_mentions($user_id);
+
+        // Get recent workspace activity (notes on shared contacts in user's workspaces)
+        $workspace_activity = $this->get_workspace_activity($user_id);
+
+        // Add collaborative data to digest
+        $digest_data['mentions'] = $mentions;
+        $digest_data['workspace_activity'] = $workspace_activity;
+
+        // Check if there's any content at all
+        $has_collab = !empty($mentions) || !empty($workspace_activity);
+
+        if (!$has_dates && !$has_todos && !$has_collab) {
             return;
         }
-        
+
         // Send via all enabled channels
         foreach ($this->channels as $channel) {
             if ($channel->is_enabled_for_user($user_id)) {
                 $channel->send($user_id, $digest_data);
             }
         }
-        
+
         // Update expired work history (only once per day, not per user)
         // Use a transient to ensure this only runs once per day
         $transient_key = 'prm_work_history_updated_' . date('Y-m-d');
@@ -159,6 +172,89 @@ class PRM_Reminders {
             $this->update_expired_work_history();
             set_transient($transient_key, true, DAY_IN_SECONDS);
         }
+    }
+
+    /**
+     * Get recent activity on contacts in user's workspaces (last 24 hours)
+     *
+     * @param int $user_id User ID
+     * @return array Recent notes on workspace contacts by other users
+     */
+    private function get_workspace_activity($user_id) {
+        // Get user's workspace memberships
+        $memberships = get_user_meta($user_id, '_workspace_memberships', true);
+        if (!is_array($memberships) || empty($memberships)) {
+            return [];
+        }
+
+        $workspace_ids = array_keys($memberships);
+
+        // Get workspace terms
+        $term_slugs = array_map(function($id) { return 'workspace-' . $id; }, $workspace_ids);
+        $terms = get_terms([
+            'taxonomy' => 'workspace_access',
+            'slug' => $term_slugs,
+            'hide_empty' => false,
+        ]);
+        if (empty($terms) || is_wp_error($terms)) {
+            return [];
+        }
+        $term_ids = wp_list_pluck($terms, 'term_id');
+
+        // Get contacts in these workspaces
+        $contacts = get_posts([
+            'post_type' => ['person', 'company'],
+            'posts_per_page' => -1,
+            'tax_query' => [
+                [
+                    'taxonomy' => 'workspace_access',
+                    'field' => 'term_id',
+                    'terms' => $term_ids,
+                ],
+            ],
+            'fields' => 'ids',
+        ]);
+        if (empty($contacts)) {
+            return [];
+        }
+
+        // Get shared notes from last 24 hours by OTHER users
+        $since = date('Y-m-d H:i:s', strtotime('-24 hours'));
+        $comments = get_comments([
+            'post__in' => $contacts,
+            'type' => 'prm_note',
+            'author__not_in' => [$user_id], // Not user's own notes
+            'date_query' => [
+                'after' => $since,
+            ],
+            'meta_query' => [
+                [
+                    'key' => '_note_visibility',
+                    'value' => 'shared',
+                ],
+            ],
+            'number' => 10, // Limit to recent 10
+        ]);
+
+        $activity = [];
+        foreach ($comments as $comment) {
+            $author = get_userdata($comment->user_id);
+            $post = get_post($comment->comment_post_ID);
+            if (!$author || !$post) {
+                continue;
+            }
+
+            $activity[] = [
+                'author' => $author->display_name,
+                'post_title' => $post->post_title,
+                'post_type' => $post->post_type,
+                'post_url' => home_url(($post->post_type === 'person' ? '/people/' : '/companies/') . $post->ID),
+                'preview' => wp_trim_words(wp_strip_all_tags($comment->comment_content), 20),
+                'date' => $comment->comment_date,
+            ];
+        }
+
+        return $activity;
     }
     
     /**
