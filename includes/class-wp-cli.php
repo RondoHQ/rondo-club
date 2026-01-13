@@ -664,11 +664,73 @@ if (defined('WP_CLI') && WP_CLI) {
     }
 
     /**
+     * CardDAV WP-CLI Commands
+     */
+    class PRM_CardDAV_CLI_Command {
+
+        /**
+         * Reset CardDAV sync token to force a full resync
+         *
+         * This clears the sync token for a user, causing the next sync
+         * request from their CardDAV client to receive all contacts as "added".
+         *
+         * ## OPTIONS
+         *
+         * [--user=<user_id>]
+         * : User ID to reset sync for. If not specified, resets for all users.
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm carddav reset-sync
+         *     wp prm carddav reset-sync --user=1
+         *
+         * @when after_wp_load
+         */
+        public function reset_sync($args, $assoc_args) {
+            $user_id = isset($assoc_args['user']) ? (int) $assoc_args['user'] : null;
+
+            $tokens = get_option('prm_carddav_sync_tokens', []);
+            $changes = get_option('prm_carddav_changes', []);
+
+            if ($user_id) {
+                // Reset for specific user
+                $user = get_user_by('ID', $user_id);
+                if (!$user) {
+                    WP_CLI::error(sprintf('User with ID %d not found.', $user_id));
+                    return;
+                }
+
+                unset($tokens[$user_id]);
+                unset($changes[$user_id]);
+
+                update_option('prm_carddav_sync_tokens', $tokens);
+                update_option('prm_carddav_changes', $changes);
+
+                WP_CLI::success(sprintf(
+                    'Reset CardDAV sync token for user %s (ID: %d). Next sync will be a full resync.',
+                    $user->display_name,
+                    $user_id
+                ));
+            } else {
+                // Reset for all users
+                delete_option('prm_carddav_sync_tokens');
+                delete_option('prm_carddav_changes');
+
+                WP_CLI::success('Reset CardDAV sync tokens for all users. Next sync will be a full resync.');
+            }
+
+            WP_CLI::log('');
+            WP_CLI::log('To trigger the resync, open your CardDAV client (iPhone Contacts, etc.) and pull down to refresh.');
+        }
+    }
+
+    /**
      * Register WP-CLI commands
      */
     WP_CLI::add_command('prm reminders', 'PRM_Reminders_CLI_Command');
     WP_CLI::add_command('prm migrate', 'PRM_Migration_CLI_Command');
     WP_CLI::add_command('prm vcard', 'PRM_VCard_CLI_Command');
     WP_CLI::add_command('prm visibility', 'PRM_Visibility_CLI_Command');
+    WP_CLI::add_command('prm carddav', 'PRM_CardDAV_CLI_Command');
 }
 
