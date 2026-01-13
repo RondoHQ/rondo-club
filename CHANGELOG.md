@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updates term names when workspace titles change
 - Removes terms when workspaces are permanently deleted
 - ACF field for assigning contacts to workspaces (shown when visibility = workspace)
+- New `PRM_REST_Workspaces` class for workspace REST API endpoints
+- GET/POST /prm/v1/workspaces for listing and creating workspaces
+- GET/PUT/DELETE /prm/v1/workspaces/{id} for workspace details and management
+- POST /prm/v1/workspaces/{id}/members for adding members
+- DELETE/PUT /prm/v1/workspaces/{id}/members/{user_id} for removing and updating members
+- Permission callbacks for workspace access, admin, and owner checks
 
 ## [1.45.0] - 2026-01-13
 

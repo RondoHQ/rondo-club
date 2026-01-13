@@ -78,6 +78,7 @@ function prm_autoloader($class_name) {
         'PRM_VCard_Export'           => 'class-vcard-export.php',
         'PRM_CardDAV_Server'         => 'class-carddav-server.php',
         'PRM_Workspace_Members'      => 'class-workspace-members.php',
+        'PRM_REST_Workspaces'        => 'class-rest-workspaces.php',
     ];
     
     if (isset($class_map[$class_name])) {
@@ -169,6 +170,7 @@ function prm_init() {
         new PRM_REST_API();
         new PRM_REST_People();
         new PRM_REST_Companies();
+        new PRM_REST_Workspaces();
         new PRM_REST_Slack();
         new PRM_REST_Import_Export();
         new PRM_Monica_Import();
