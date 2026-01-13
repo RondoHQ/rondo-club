@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.66.1] - 2026-01-13
+
+### Added
+- Extended bulk-update endpoint with organization and label support
+  - `organization_id`: Set current organization for selected people (or clear with null)
+  - `labels_add`: Add person labels to selected people in bulk
+  - `labels_remove`: Remove person labels from selected people in bulk
+
 ## [1.66.0] - 2026-01-13
 
 ### Added
