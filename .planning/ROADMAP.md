@@ -19,16 +19,15 @@
 
 **Milestone Goal:** Establish PHPUnit testing foundation covering access control, REST API, and data model
 
-#### Phase 21: PHPUnit Setup
+#### Phase 21: PHPUnit Setup ✓
 
 **Goal**: PHPUnit + wp-browser setup with test database configuration
 **Depends on**: Previous milestone complete
-**Research**: Likely (new tooling: Codeception, wp-browser)
-**Research topics**: wp-browser module configuration, WPLoader vs WPUnit test types, test database isolation patterns
-**Plans**: TBD
+**Research**: Completed (wp-browser 4.5, WPLoader configuration)
+**Result**: wp-browser 4.5.10 installed, 10 smoke tests passing
 
 Plans:
-- [ ] 21-01: TBD (run /gsd:plan-phase 21 to break down)
+- [x] 21-01: Framework Installation (wp-browser, Codeception, test database, smoke tests)
 
 #### Phase 22: Access Control Tests
 
@@ -194,6 +193,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.3 List View Unification | 16-18 | 3/3 | Complete ✅ | 2026-01-13 |
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
-| v3.0 Testing Infrastructure | 21-23 | 0/? | In Progress 🚧 | - |
+| v3.0 Testing Infrastructure | 21-23 | 1/? | In Progress 🚧 | - |
 
 **Shipped: 20 phases, 46 plans**
