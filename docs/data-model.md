@@ -224,6 +224,74 @@ Categorizes important dates by event type.
 
 ---
 
+### Workspace (`workspace`)
+
+Represents collaborative workspaces for multi-user features (Phase 7+).
+
+| Property | Value |
+|----------|-------|
+| REST Base | `/wp/v2/workspaces` |
+| Menu Icon | `dashicons-networking` |
+| Supports | title, editor, author, thumbnail |
+| Public | No (private, accessed via REST API) |
+
+**Membership:** Stored in user meta via `PRM_Workspace_Members` class (see below).
+
+---
+
+## Visibility Settings
+
+All three main post types (Person, Organization, Important Date) include visibility settings.
+
+**ACF Fields** (from `acf-json/group_visibility_settings.json`):
+
+| Field | Key | Type | Description |
+|-------|-----|------|-------------|
+| Visibility | `_visibility` | select | Control who can see this record |
+
+**Visibility Options:**
+
+| Value | Description |
+|-------|-------------|
+| `private` | Only the post author can see (default) |
+| `workspace` | Visible to workspace members |
+| `shared` | Shared with specific users |
+
+**Shared With Post Meta:**
+
+For `shared` visibility, the `_shared_with` post meta stores sharing details:
+
+```json
+[
+  {
+    "user_id": 5,
+    "permission": "edit",
+    "shared_by": 1,
+    "shared_at": "2026-01-15T10:30:00Z"
+  },
+  {
+    "user_id": 8,
+    "permission": "view",
+    "shared_by": 1,
+    "shared_at": "2026-01-16T14:00:00Z"
+  }
+]
+```
+
+**Helper Class:** `PRM_Visibility` provides static methods for managing visibility:
+
+| Method | Description |
+|--------|-------------|
+| `get_visibility($post_id)` | Get visibility value (returns 'private' if not set) |
+| `set_visibility($post_id, $visibility)` | Set visibility value |
+| `get_shares($post_id)` | Get array of share objects |
+| `add_share($post_id, $user_id, $permission, $shared_by)` | Add or update a share |
+| `remove_share($post_id, $user_id)` | Remove a user's share |
+| `user_has_share($post_id, $user_id)` | Check if user has share access |
+| `get_share_permission($post_id, $user_id)` | Get permission level ('view', 'edit', or false) |
+
+---
+
 ## ACF JSON Sync
 
 ACF field groups are version-controlled in `acf-json/`:
@@ -234,6 +302,7 @@ ACF field groups are version-controlled in `acf-json/`:
 | `group_company_fields.json` | Organization post type fields |
 | `group_important_date_fields.json` | Important date post type fields |
 | `group_relationship_type_fields.json` | Relationship type taxonomy fields |
+| `group_visibility_settings.json` | Visibility settings for all main post types |
 
 **How it works:**
 
