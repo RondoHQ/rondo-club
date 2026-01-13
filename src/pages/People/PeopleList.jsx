@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
+import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
@@ -88,6 +89,8 @@ export default function PeopleList() {
   const [selectedLabels, setSelectedLabels] = useState([]);
   const [selectedBirthYear, setSelectedBirthYear] = useState('');
   const [lastModifiedFilter, setLastModifiedFilter] = useState('');
+  const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all', 'mine', 'shared'
+  const [selectedWorkspaceFilter, setSelectedWorkspaceFilter] = useState('');
   const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
   const [showPersonModal, setShowPersonModal] = useState(false);
@@ -96,8 +99,12 @@ export default function PeopleList() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
   const { data: people, isLoading, error } = usePeople();
+  const { data: workspaces = [] } = useWorkspaces();
+
+  // Get current user ID from prmConfig
+  const currentUserId = window.prmConfig?.userId;
   
   // Create person mutation
   const createPersonMutation = useMutation({
@@ -130,6 +137,8 @@ export default function PeopleList() {
           how_we_met: data.how_we_met,
           is_favorite: data.is_favorite,
           contact_info: contactInfo,
+          _visibility: data.visibility || 'private',
+          _assigned_workspaces: data.assigned_workspaces || [],
         },
       };
       
@@ -252,7 +261,7 @@ export default function PeopleList() {
     if (lastModifiedFilter) {
       const now = new Date();
       let cutoffDate;
-      
+
       switch (lastModifiedFilter) {
         case '7':
           cutoffDate = new Date(now.setDate(now.getDate() - 7));
@@ -269,7 +278,7 @@ export default function PeopleList() {
         default:
           cutoffDate = null;
       }
-      
+
       if (cutoffDate) {
         filtered = filtered.filter(person => {
           if (!person.modified) return false;
@@ -278,7 +287,22 @@ export default function PeopleList() {
         });
       }
     }
-    
+
+    // Apply ownership filter
+    if (ownershipFilter === 'mine') {
+      filtered = filtered.filter(person => person.author === currentUserId);
+    } else if (ownershipFilter === 'shared') {
+      filtered = filtered.filter(person => person.author !== currentUserId);
+    }
+
+    // Apply workspace filter
+    if (selectedWorkspaceFilter) {
+      filtered = filtered.filter(person => {
+        const assignedWorkspaces = person.acf?._assigned_workspaces || [];
+        return assignedWorkspaces.includes(parseInt(selectedWorkspaceFilter));
+      });
+    }
+
     // Sort by selected field and order
     return filtered.sort((a, b) => {
       let valueA, valueB;
@@ -315,9 +339,9 @@ export default function PeopleList() {
       const comparison = valueA.localeCompare(valueB);
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [people, showFavoritesOnly, selectedLabels, selectedBirthYear, lastModifiedFilter, sortField, sortOrder]);
-  
-  const hasActiveFilters = showFavoritesOnly || selectedLabels.length > 0 || selectedBirthYear || lastModifiedFilter;
+  }, [people, showFavoritesOnly, selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, selectedWorkspaceFilter, currentUserId, sortField, sortOrder]);
+
+  const hasActiveFilters = showFavoritesOnly || selectedLabels.length > 0 || selectedBirthYear || lastModifiedFilter || ownershipFilter !== 'all' || selectedWorkspaceFilter;
   
   const handleLabelToggle = (label) => {
     setSelectedLabels(prev => 
@@ -332,6 +356,8 @@ export default function PeopleList() {
     setSelectedLabels([]);
     setSelectedBirthYear('');
     setLastModifiedFilter('');
+    setOwnershipFilter('all');
+    setSelectedWorkspaceFilter('');
   };
 
   // Collect all company IDs
@@ -528,7 +554,64 @@ export default function PeopleList() {
                       <option value="365">Last year</option>
                     </select>
                   </div>
-                  
+
+                  {/* Ownership Filter */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Ownership
+                    </h3>
+                    <div className="space-y-1">
+                      {[
+                        { value: 'all', label: 'All Contacts' },
+                        { value: 'mine', label: 'My Contacts' },
+                        { value: 'shared', label: 'Shared with Me' },
+                      ].map(option => (
+                        <label
+                          key={option.value}
+                          className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"
+                        >
+                          <input
+                            type="radio"
+                            name="ownership"
+                            value={option.value}
+                            checked={ownershipFilter === option.value}
+                            onChange={(e) => setOwnershipFilter(e.target.value)}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-4 h-4 border-2 rounded-full mr-3 ${
+                            ownershipFilter === option.value
+                              ? 'border-primary-600'
+                              : 'border-gray-300'
+                          }`}>
+                            {ownershipFilter === option.value && (
+                              <div className="w-2 h-2 bg-primary-600 rounded-full" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700">{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Workspace Filter */}
+                  {workspaces.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Workspace
+                      </h3>
+                      <select
+                        value={selectedWorkspaceFilter}
+                        onChange={(e) => setSelectedWorkspaceFilter(e.target.value)}
+                        className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+                      >
+                        <option value="">All Workspaces</option>
+                        {workspaces.map(ws => (
+                          <option key={ws.id} value={ws.id}>{ws.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   {/* Clear Filters */}
                   {hasActiveFilters && (
                     <button
@@ -585,13 +668,29 @@ export default function PeopleList() {
               )}
               {lastModifiedFilter && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                  Modified: {lastModifiedFilter === '7' ? 'Last 7 days' : 
-                             lastModifiedFilter === '30' ? 'Last 30 days' : 
+                  Modified: {lastModifiedFilter === '7' ? 'Last 7 days' :
+                             lastModifiedFilter === '30' ? 'Last 30 days' :
                              lastModifiedFilter === '90' ? 'Last 90 days' : 'Last year'}
                   <button
                     onClick={() => setLastModifiedFilter('')}
                     className="hover:text-gray-600"
                   >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {ownershipFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-800 rounded-full text-xs">
+                  {ownershipFilter === 'mine' ? 'My Contacts' : 'Shared with Me'}
+                  <button onClick={() => setOwnershipFilter('all')} className="hover:text-primary-600">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {selectedWorkspaceFilter && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                  {workspaces.find(ws => ws.id === parseInt(selectedWorkspaceFilter))?.title || 'Workspace'}
+                  <button onClick={() => setSelectedWorkspaceFilter('')} className="hover:text-blue-600">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
