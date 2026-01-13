@@ -34,45 +34,23 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Add server-side XSS protection with wp_kses — v1.0
 - Validate Slack webhook URLs (whitelist hooks.slack.com) — v1.0
 
+**v2.0 Multi-User (shipped 2026-01-13):**
+- Workspace CPT with role-based membership (Admin/Member/Viewer) — v2.0
+- Contact visibility system (private/workspace/shared) — v2.0
+- `workspace_access` taxonomy for post-to-workspace assignment — v2.0
+- Workspace invitation system with 7-day expiring tokens — v2.0
+- ShareModal and VisibilitySelector React components — v2.0
+- WorkspacesList, WorkspaceDetail, WorkspaceSettings pages — v2.0
+- @mentions in notes with MentionInput component — v2.0
+- Mention notification preferences (immediate/digest/never) — v2.0
+- Workspace iCal calendar feeds with token auth — v2.0
+- Workspace activity digest in daily reminders — v2.0
+- WP-CLI migration command `wp prm multiuser migrate` — v2.0
+- Multi-user documentation in `docs/multi-user.md` — v2.0
+
 ### Active
 
-**v2.0 Multi-User:**
-
-*Phase 7 - Data Model & Visibility:*
-- [ ] Create `workspace` Custom Post Type
-- [ ] Create `workspace_access` taxonomy for post-to-workspace assignment
-- [ ] Add `_visibility` post meta (private/workspace/shared)
-- [ ] Store workspace memberships in user meta `_workspace_memberships`
-- [ ] Add `_shared_with` post meta for direct user shares
-- [ ] Update `PRM_Access_Control` to check visibility, workspace membership, and shares
-
-*Phase 8 - Workspace Infrastructure:*
-- [ ] Workspace REST endpoints (members, invites)
-- [ ] `workspace_invite` CPT for invitation tracking
-- [ ] `PRM_Workspace_Members` class for user meta operations
-- [ ] `PRM_Sharing` class for share management
-- [ ] Email templates for workspace invitations
-- [ ] Auto-sync workspace_access taxonomy terms
-
-*Phase 9 - Sharing UI:*
-- [ ] ShareModal component for sharing contacts
-- [ ] VisibilitySelector component for contact visibility
-- [ ] WorkspacesList, WorkspaceDetail, WorkspaceSettings pages
-- [ ] List view filtering (All/My Contacts/Shared with Me/by workspace)
-- [ ] TanStack Query hooks for workspaces and shares
-
-*Phase 10 - Collaborative Features:*
-- [ ] Timeline visibility controls (shared vs private notes)
-- [ ] @mentions in notes with notifications
-- [ ] Workspace iCal feed endpoint
-- [ ] Workspace activity digest via wp_cron
-- [ ] Per-workspace notification preferences
-
-*Phase 11 - Migration & Testing:*
-- [ ] WP-CLI migration command `wp prm migrate-to-multiuser`
-- [ ] Set `_visibility = private` on all existing contacts
-- [ ] Test suite for permission scenarios
-- [ ] Documentation updates
+No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 
 ### Out of Scope
 
@@ -110,11 +88,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Workspaces as CPT | Leverages WordPress CRUD, REST API, revisions, trash/restore | Pending |
-| Membership in user meta | Easy to query "my workspaces", survives workspace queries | Pending |
-| workspace_access taxonomy | Native WP query support, efficient lookups, multiple workspaces per contact | Pending |
-| Visibility in post meta | Simple flag per contact, easy to filter | Pending |
-| Direct shares in post meta | Keeps share data with post, easy to show "who has access" | Pending |
+| Workspaces as CPT | Leverages WordPress CRUD, REST API, revisions, trash/restore | ✓ Good |
+| Membership in user meta | Easy to query "my workspaces", survives workspace queries | ✓ Good |
+| workspace_access taxonomy | Native WP query support, efficient lookups, multiple workspaces per contact | ✓ Good |
+| Visibility in post meta | Simple flag per contact, easy to filter | ✓ Good |
+| Direct shares in post meta | Keeps share data with post, easy to show "who has access" | ✓ Good |
+| Invitation tokens 32-char | Secure, URL-safe, no special characters | ✓ Good |
+| Invites expire 7 days | Reasonable timeframe for action | ✓ Good |
+| Mention markup @[Name](id) | react-mentions standard format | ✓ Good |
+| Mentions default to digest | Reduces notification fatigue | ✓ Good |
 
 ---
-*Last updated: 2026-01-13 — v2.0 milestone created*
+*Last updated: 2026-01-13 — v2.0 Multi-User shipped*
