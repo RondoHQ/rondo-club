@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.48.0] - 2026-01-13
+
+### Added
+- Workspace invitation REST API endpoints in `PRM_REST_Workspaces`
+- POST /prm/v1/workspaces/{id}/invites - Create and send invitation email
+- GET /prm/v1/workspaces/{id}/invites - List pending invites
+- DELETE /prm/v1/workspaces/{id}/invites/{invite_id} - Revoke pending invite
+- GET /prm/v1/invites/{token} - Validate invite (public, no auth required)
+- POST /prm/v1/invites/{token}/accept - Accept invite and join workspace
+- HTML email template for invitation notifications
+
 ## [1.47.0] - 2026-01-13
 
 ### Added
