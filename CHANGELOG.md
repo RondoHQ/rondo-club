@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.71.0] - 2026-01-13
+
+### Added
+- WP-CLI command `wp prm dates regenerate-titles` to update existing Important Date titles
+  - Supports `--dry-run` flag to preview changes
+  - Skips dates with custom labels
+  - Regenerates titles using full names for consistency
+
+### Changed
+- Important Date titles now use full names instead of first names only
+  - Frontend auto-generation updated to use "Jan Ippen's Birthday" format
+  - Backend already used full names (no changes needed)
+  - Improves clarity when multiple people share the same first name
+
 ## [1.70.1] - 2026-01-13
 
 ### Fixed
