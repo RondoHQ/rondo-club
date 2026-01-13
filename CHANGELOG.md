@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.53.0] - 2026-01-13
+
+### Added
+- ShareModal component for sharing contacts/companies with specific users
+- `useSharing.js` hook with `useShares`, `useAddShare`, `useRemoveShare`, `useUserSearch` hooks
+- Share REST endpoints for People (`/prm/v1/people/{id}/shares`)
+- Share REST endpoints for Companies (`/prm/v1/companies/{id}/shares`)
+- User search endpoint (`/prm/v1/users/search`) for finding users to share with
+- Share button in PersonDetail page header
+- Share button in CompanyDetail page header
+
+## [1.52.0] - 2026-01-13
+
+### Added
+- `WorkspacesList` page for viewing and managing workspaces
+- `WorkspaceDetail` page with member list and role management
+- `WorkspaceCreateModal` for creating new workspaces
+- `WorkspaceInviteModal` for sending workspace invitations
+- Role badges (Owner, Admin, Member, Viewer) with appropriate styling
+- Workspace navigation item in sidebar
+- Routes for /workspaces and /workspaces/:id
+
+## [1.51.0] - 2026-01-13
+
+### Added
+- `VisibilitySelector` component for setting visibility (private/workspace) on contacts and companies
+- Visibility controls integrated into PersonEditModal (add and edit modes)
+- Visibility controls integrated into CompanyEditModal (add and edit modes)
+- Visibility and workspace assignment fields included in person/company create payloads
+
+## [1.50.0] - 2026-01-13
+
+### Added
+- Ownership filter (All/My Contacts/Shared with Me) to People list
+- Ownership filter (All/My Organizations/Shared with Me) to Companies list
+- Workspace filter dropdown to People and Companies lists
+- Filter chips for active ownership and workspace filters
+- "No results match your filters" empty state with clear filters button
+
 ## [1.49.0] - 2026-01-13
 
 ### Added
