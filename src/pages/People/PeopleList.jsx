@@ -598,43 +598,8 @@ export default function PeopleList() {
       });
     }
 
-    // Sort by selected field and order
-    return filtered.sort((a, b) => {
-      let valueA, valueB;
-      
-      if (sortField === 'modified') {
-        // Sort by last modified date
-        valueA = a.modified ? new Date(a.modified).getTime() : 0;
-        valueB = b.modified ? new Date(b.modified).getTime() : 0;
-        const comparison = valueA - valueB;
-        return sortOrder === 'asc' ? comparison : -comparison;
-      }
-      
-      if (sortField === 'first_name') {
-        valueA = (a.acf?.first_name || a.first_name || '').toLowerCase();
-        valueB = (b.acf?.first_name || b.first_name || '').toLowerCase();
-      } else {
-        valueA = (a.acf?.last_name || a.last_name || '').toLowerCase();
-        valueB = (b.acf?.last_name || b.last_name || '').toLowerCase();
-      }
-      
-      // If values are equal, sort by the other field as tiebreaker
-      if (valueA === valueB) {
-        const tiebreakerA = sortField === 'first_name' 
-          ? (a.acf?.last_name || a.last_name || '').toLowerCase()
-          : (a.acf?.first_name || a.first_name || '').toLowerCase();
-        const tiebreakerB = sortField === 'first_name'
-          ? (b.acf?.last_name || b.last_name || '').toLowerCase()
-          : (b.acf?.first_name || b.first_name || '').toLowerCase();
-        
-        const tiebreakerResult = tiebreakerA.localeCompare(tiebreakerB);
-        return sortOrder === 'asc' ? tiebreakerResult : -tiebreakerResult;
-      }
-      
-      const comparison = valueA.localeCompare(valueB);
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  }, [people, showFavoritesOnly, selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, selectedWorkspaceFilter, currentUserId, sortField, sortOrder]);
+    return filtered;
+  }, [people, showFavoritesOnly, selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, selectedWorkspaceFilter, currentUserId]);
 
   const hasActiveFilters = showFavoritesOnly || selectedLabels.length > 0 || selectedBirthYear || lastModifiedFilter || ownershipFilter !== 'all' || selectedWorkspaceFilter;
   
@@ -735,7 +700,98 @@ export default function PeopleList() {
     });
     return map;
   }, [filteredAndSortedPeople, companyMap]);
-  
+
+  // Helper to get workspace names for a person (used in sorting)
+  const getPersonWorkspaceNames = (person) => {
+    const assignedWorkspaces = person.acf?._assigned_workspaces || [];
+    return assignedWorkspaces
+      .map(wsId => {
+        const numId = typeof wsId === 'string' ? parseInt(wsId, 10) : wsId;
+        const found = workspaces.find(ws => ws.id === numId);
+        return found?.title;
+      })
+      .filter(Boolean)
+      .join(', ');
+  };
+
+  // Sort the filtered people
+  const sortedPeople = useMemo(() => {
+    if (!filteredAndSortedPeople) return [];
+
+    return [...filteredAndSortedPeople].sort((a, b) => {
+      let valueA, valueB;
+
+      if (sortField === 'modified') {
+        // Sort by last modified date
+        valueA = a.modified ? new Date(a.modified).getTime() : 0;
+        valueB = b.modified ? new Date(b.modified).getTime() : 0;
+        const comparison = valueA - valueB;
+        return sortOrder === 'asc' ? comparison : -comparison;
+      }
+
+      if (sortField === 'organization') {
+        // Sort by company name (from personCompanyMap)
+        valueA = (personCompanyMap[a.id] || '').toLowerCase();
+        valueB = (personCompanyMap[b.id] || '').toLowerCase();
+        // Empty values sort last
+        if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
+        if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
+        if (!valueA && !valueB) return 0;
+        const comparison = valueA.localeCompare(valueB);
+        return sortOrder === 'asc' ? comparison : -comparison;
+      }
+
+      if (sortField === 'workspace') {
+        // Sort by workspace names
+        valueA = getPersonWorkspaceNames(a).toLowerCase();
+        valueB = getPersonWorkspaceNames(b).toLowerCase();
+        // Empty values sort last
+        if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
+        if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
+        if (!valueA && !valueB) return 0;
+        const comparison = valueA.localeCompare(valueB);
+        return sortOrder === 'asc' ? comparison : -comparison;
+      }
+
+      if (sortField === 'labels') {
+        // Sort by first label name
+        valueA = (a.labels?.[0] || '').toLowerCase();
+        valueB = (b.labels?.[0] || '').toLowerCase();
+        // Empty values sort last
+        if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
+        if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
+        if (!valueA && !valueB) return 0;
+        const comparison = valueA.localeCompare(valueB);
+        return sortOrder === 'asc' ? comparison : -comparison;
+      }
+
+      // Default: first_name or last_name
+      if (sortField === 'first_name') {
+        valueA = (a.acf?.first_name || a.first_name || '').toLowerCase();
+        valueB = (b.acf?.first_name || b.first_name || '').toLowerCase();
+      } else {
+        valueA = (a.acf?.last_name || a.last_name || '').toLowerCase();
+        valueB = (b.acf?.last_name || b.last_name || '').toLowerCase();
+      }
+
+      // If values are equal, sort by the other field as tiebreaker
+      if (valueA === valueB) {
+        const tiebreakerA = sortField === 'first_name'
+          ? (a.acf?.last_name || a.last_name || '').toLowerCase()
+          : (a.acf?.first_name || a.first_name || '').toLowerCase();
+        const tiebreakerB = sortField === 'first_name'
+          ? (b.acf?.last_name || b.last_name || '').toLowerCase()
+          : (b.acf?.first_name || b.first_name || '').toLowerCase();
+
+        const tiebreakerResult = tiebreakerA.localeCompare(tiebreakerB);
+        return sortOrder === 'asc' ? tiebreakerResult : -tiebreakerResult;
+      }
+
+      const comparison = valueA.localeCompare(valueB);
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [filteredAndSortedPeople, sortField, sortOrder, personCompanyMap, workspaces]);
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -751,6 +807,9 @@ export default function PeopleList() {
               <option value="first_name">First name</option>
               <option value="last_name">Last name</option>
               <option value="modified">Last modified</option>
+              <option value="organization">Organization</option>
+              <option value="workspace">Workspace</option>
+              <option value="labels">Labels</option>
             </select>
             <div className="h-4 w-px bg-gray-300"></div>
             <button
@@ -1083,9 +1142,9 @@ export default function PeopleList() {
       )}
       
       {/* People grid (card view) */}
-      {!isLoading && !error && filteredAndSortedPeople?.length > 0 && viewMode === 'card' && (
+      {!isLoading && !error && sortedPeople?.length > 0 && viewMode === 'card' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredAndSortedPeople.map((person) => (
+          {sortedPeople.map((person) => (
             <PersonCard
               key={person.id}
               person={person}
@@ -1150,9 +1209,9 @@ export default function PeopleList() {
       )}
 
       {/* People list (list view) */}
-      {!isLoading && !error && filteredAndSortedPeople?.length > 0 && viewMode === 'list' && (
+      {!isLoading && !error && sortedPeople?.length > 0 && viewMode === 'list' && (
         <PersonListView
-          people={filteredAndSortedPeople}
+          people={sortedPeople}
           companyMap={personCompanyMap}
           workspaces={workspaces}
           selectedIds={selectedIds}
@@ -1164,7 +1223,7 @@ export default function PeopleList() {
       )}
       
       {/* No results with filters */}
-      {!isLoading && !error && people?.length > 0 && filteredAndSortedPeople?.length === 0 && (
+      {!isLoading && !error && people?.length > 0 && sortedPeople?.length === 0 && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Filter className="w-6 h-6 text-gray-400" />
