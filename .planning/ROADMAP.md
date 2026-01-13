@@ -29,15 +29,17 @@
 Plans:
 - [x] 21-01: Framework Installation (wp-browser, Codeception, test database, smoke tests)
 
-#### Phase 22: Access Control Tests
+#### Phase 22: Access Control Tests ✓
 
 **Goal**: User isolation, visibility rules (private/workspace/shared), workspace permissions
 **Depends on**: Phase 21
-**Research**: Unlikely (internal patterns)
-**Plans**: TBD
+**Research**: Not needed (internal patterns)
+**Result**: 55 tests covering all access control patterns, 1 bug fixed
 
 Plans:
-- [ ] 22-01: TBD
+- [x] 22-01: User Isolation Tests (18 tests)
+- [x] 22-02: Visibility Rules Tests (14 tests, bug fix in class-access-control.php)
+- [x] 22-03: Workspace Permissions Tests (23 tests)
 
 #### Phase 23: REST API & Data Model Tests
 
@@ -193,6 +195,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.3 List View Unification | 16-18 | 3/3 | Complete ✅ | 2026-01-13 |
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
-| v3.0 Testing Infrastructure | 21-23 | 1/? | In Progress 🚧 | - |
+| v3.0 Testing Infrastructure | 21-23 | 4/? | In Progress 🚧 | - |
 
 **Shipped: 20 phases, 46 plans**
