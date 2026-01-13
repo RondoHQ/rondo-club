@@ -109,8 +109,8 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
           )}
         </button>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap">
-        <Link to={`/people/${person.id}`} className="flex items-center">
+      <td className="w-10 px-2 py-3">
+        <Link to={`/people/${person.id}`} className="flex items-center justify-center">
           {person.thumbnail ? (
             <img
               src={person.thumbnail}
@@ -124,17 +124,17 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
               </span>
             </div>
           )}
-          <div className="ml-3">
-            <div className="flex items-center">
-              <span className="text-sm font-medium text-gray-900">
-                {person.first_name || ''}
-                {person.is_deceased && <span className="ml-1 text-gray-500">†</span>}
-              </span>
-              {person.is_favorite && (
-                <Star className="w-4 h-4 ml-1 text-yellow-400 fill-current" />
-              )}
-            </div>
-          </div>
+        </Link>
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap">
+        <Link to={`/people/${person.id}`} className="flex items-center">
+          <span className="text-sm font-medium text-gray-900">
+            {person.first_name || ''}
+            {person.is_deceased && <span className="ml-1 text-gray-500">†</span>}
+          </span>
+          {person.is_favorite && (
+            <Star className="w-4 h-4 ml-1 text-yellow-400 fill-current" />
+          )}
         </Link>
       </td>
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
@@ -213,6 +213,7 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
                 )}
               </button>
             </th>
+            <th scope="col" className="w-10 px-2 bg-gray-50"></th>
             <SortableHeader field="first_name" label="First Name" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="last_name" label="Last Name" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="organization" label="Organization" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
