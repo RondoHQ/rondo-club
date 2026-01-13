@@ -86,7 +86,7 @@ function PersonCard({ person, companyName, isDeceased }) {
 function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSelection }) {
   const assignedWorkspaces = person.acf?._assigned_workspaces || [];
   const workspaceNames = assignedWorkspaces
-    .map(wsId => workspaces.find(ws => ws.id === wsId)?.title)
+    .map(wsId => workspaces.find(ws => ws.id === parseInt(wsId))?.title)
     .filter(Boolean)
     .join(', ');
 
@@ -201,7 +201,9 @@ export default function PeopleList() {
   const [selectedWorkspaceFilter, setSelectedWorkspaceFilter] = useState('');
   const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
-  const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
+  const [viewMode, setViewMode] = useState(() => {
+    return localStorage.getItem('peopleViewMode') || 'card';
+  });
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showPersonModal, setShowPersonModal] = useState(false);
   const [isCreatingPerson, setIsCreatingPerson] = useState(false);
@@ -253,6 +255,11 @@ export default function PeopleList() {
     return [...new Set(years)].sort((a, b) => b - a);
   }, [people]);
   
+  // Persist view mode to localStorage
+  useEffect(() => {
+    localStorage.setItem('peopleViewMode', viewMode);
+  }, [viewMode]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -265,7 +272,7 @@ export default function PeopleList() {
         setIsFilterOpen(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
