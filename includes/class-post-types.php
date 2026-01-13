@@ -17,9 +17,50 @@ class PRM_Post_Types {
      * Register all custom post types
      */
     public function register_post_types() {
+        $this->register_workspace_post_type();
         $this->register_person_post_type();
         $this->register_company_post_type();
         $this->register_important_date_post_type();
+    }
+
+    /**
+     * Register Workspace CPT
+     */
+    private function register_workspace_post_type() {
+        $labels = [
+            'name'                  => _x('Workspaces', 'Post type general name', 'personal-crm'),
+            'singular_name'         => _x('Workspace', 'Post type singular name', 'personal-crm'),
+            'menu_name'             => _x('Workspaces', 'Admin Menu text', 'personal-crm'),
+            'add_new'               => __('Add New', 'personal-crm'),
+            'add_new_item'          => __('Add New Workspace', 'personal-crm'),
+            'edit_item'             => __('Edit Workspace', 'personal-crm'),
+            'new_item'              => __('New Workspace', 'personal-crm'),
+            'view_item'             => __('View Workspace', 'personal-crm'),
+            'search_items'          => __('Search Workspaces', 'personal-crm'),
+            'not_found'             => __('No workspaces found', 'personal-crm'),
+            'not_found_in_trash'    => __('No workspaces found in Trash', 'personal-crm'),
+            'all_items'             => __('All Workspaces', 'personal-crm'),
+        ];
+
+        $args = [
+            'labels'              => $labels,
+            'public'              => false,
+            'publicly_queryable'  => false,
+            'show_ui'             => true,
+            'show_in_menu'        => true,
+            'show_in_rest'        => true,
+            'rest_base'           => 'workspaces',
+            'query_var'           => false,
+            'rewrite'             => false, // Disable rewrite rules - React Router handles routing
+            'capability_type'     => 'post',
+            'has_archive'         => false,
+            'hierarchical'        => false,
+            'menu_position'       => 4,
+            'menu_icon'           => 'dashicons-networking',
+            'supports'            => ['title', 'editor', 'author', 'thumbnail'],
+        ];
+
+        register_post_type('workspace', $args);
     }
     
     /**
