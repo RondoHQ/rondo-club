@@ -1,13 +1,22 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Lock, Users } from 'lucide-react';
 import RichTextEditor, { isRichTextEmpty } from '@/components/RichTextEditor';
 
-export default function NoteModal({ isOpen, onClose, onSubmit, isLoading, initialContent = '' }) {
+export default function NoteModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+  initialContent = '',
+  isContactShared = false,
+}) {
   const [content, setContent] = useState('');
+  const [visibility, setVisibility] = useState('private');
 
   useEffect(() => {
     if (isOpen) {
       setContent(initialContent || '');
+      setVisibility('private'); // Default to private on open
     }
   }, [isOpen, initialContent]);
 
@@ -16,13 +25,15 @@ export default function NoteModal({ isOpen, onClose, onSubmit, isLoading, initia
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isRichTextEmpty(content)) return;
-    
-    onSubmit(content);
+
+    onSubmit(content, visibility);
     setContent('');
+    setVisibility('private');
   };
 
   const handleClose = () => {
     setContent('');
+    setVisibility('private');
     onClose();
   };
 
@@ -39,7 +50,7 @@ export default function NoteModal({ isOpen, onClose, onSubmit, isLoading, initia
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-4">
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -54,7 +65,30 @@ export default function NoteModal({ isOpen, onClose, onSubmit, isLoading, initia
               minHeight="150px"
             />
           </div>
-          
+
+          {/* Only show visibility toggle when contact is shared */}
+          {isContactShared && (
+            <div className="mb-4">
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={visibility === 'shared'}
+                  onChange={(e) => setVisibility(e.target.checked ? 'shared' : 'private')}
+                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  disabled={isLoading}
+                />
+                <span className="flex items-center gap-1.5">
+                  {visibility === 'shared' ? (
+                    <Users className="w-4 h-4 text-blue-500" />
+                  ) : (
+                    <Lock className="w-4 h-4 text-gray-400" />
+                  )}
+                  Share this note with others who can see this contact
+                </span>
+              </label>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2">
             <button
               type="button"

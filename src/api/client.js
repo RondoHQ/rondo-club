@@ -127,10 +127,10 @@ export const prmApi = {
   getPersonDates: (personId) => api.get(`/prm/v1/people/${personId}/dates`),
   getPersonTimeline: (personId) => api.get(`/prm/v1/people/${personId}/timeline`),
   getPersonNotes: (personId) => api.get(`/prm/v1/people/${personId}/notes`),
-  createNote: (personId, content) => 
-    api.post(`/prm/v1/people/${personId}/notes`, { content }),
-  updateNote: (noteId, content) => 
-    api.put(`/prm/v1/notes/${noteId}`, { content }),
+  createNote: (personId, content, visibility = 'private') =>
+    api.post(`/prm/v1/people/${personId}/notes`, { content, visibility }),
+  updateNote: (noteId, content, visibility = null) =>
+    api.put(`/prm/v1/notes/${noteId}`, { content, ...(visibility && { visibility }) }),
   deleteNote: (noteId) => api.delete(`/prm/v1/notes/${noteId}`),
   
   // Activities

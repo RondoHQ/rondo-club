@@ -596,9 +596,9 @@ export default function PersonDetail() {
   };
 
   // Handle creating a note
-  const handleCreateNote = async (content) => {
+  const handleCreateNote = async (content, visibility = 'private') => {
     try {
-      await createNote.mutateAsync({ personId: id, content });
+      await createNote.mutateAsync({ personId: id, content, visibility });
       setShowNoteModal(false);
     } catch {
       alert('Failed to create note. Please try again.');
@@ -2063,6 +2063,7 @@ export default function PersonDetail() {
             onClose={() => setShowNoteModal(false)}
             onSubmit={handleCreateNote}
             isLoading={createNote.isPending}
+            isContactShared={person?.acf?._visibility === 'workspace' || person?.acf?._visibility === 'shared'}
           />
           
           <QuickActivityModal

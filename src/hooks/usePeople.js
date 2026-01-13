@@ -247,9 +247,10 @@ export function useDeletePerson() {
 // Notes mutations
 export function useCreateNote() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ personId, content }) => prmApi.createNote(personId, content),
+    mutationFn: ({ personId, content, visibility = 'private' }) =>
+      prmApi.createNote(personId, content, visibility),
     onSuccess: (_, { personId }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
     },
