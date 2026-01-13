@@ -30,7 +30,9 @@ src/
 │   ├── Companies/
 │   ├── Dates/
 │   ├── People/
-│   └── Settings/
+│   ├── Settings/
+│   ├── Todos/
+│   └── Workspaces/
 ├── utils/                # Utility functions
 ├── App.jsx               # Main routing component
 ├── main.jsx              # Application entry point
@@ -90,6 +92,8 @@ Main routing component:
 | `/settings` | `Settings` | Settings page |
 | `/settings/relationship-types` | `RelationshipTypes` | Manage relationship types |
 | `/settings/import` | `Import` | Import contacts |
+| `/workspaces` | `WorkspacesList` | Workspace list |
+| `/workspaces/:id` | `WorkspaceDetail` | View workspace, manage members |
 
 ### Authentication
 
