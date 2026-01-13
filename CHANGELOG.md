@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.55.0] - 2026-01-13
 
+### Added
+- New WP-CLI command `wp prm visibility set_defaults` to set default visibility for existing posts
+
 ### Changed
 - Refactored `useCreatePerson` hook to contain full person creation logic (payload building, Gravatar sideload, birthday creation)
 - Updated PeopleList.jsx and Layout.jsx to use shared `useCreatePerson` hook (DRY principle)

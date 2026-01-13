@@ -536,10 +536,138 @@ if (defined('WP_CLI') && WP_CLI) {
     }
     
     /**
+     * Visibility WP-CLI Commands
+     */
+    class PRM_Visibility_CLI_Command {
+
+        /**
+         * Set default visibility for posts that don't have it set
+         *
+         * ## OPTIONS
+         *
+         * [--post-type=<type>]
+         * : Post type to update (person, company, or all). Default: all
+         *
+         * [--dry-run]
+         * : Preview changes without making them
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm visibility set-defaults
+         *     wp prm visibility set-defaults --dry-run
+         *     wp prm visibility set-defaults --post-type=person
+         *     wp prm visibility set-defaults --post-type=company
+         *
+         * @when after_wp_load
+         */
+        public function set_defaults($args, $assoc_args) {
+            $dry_run = isset($assoc_args['dry-run']);
+            $post_type = $assoc_args['post-type'] ?? 'all';
+
+            if ($dry_run) {
+                WP_CLI::log('DRY RUN MODE - No changes will be made');
+            }
+
+            // Determine which post types to process
+            $post_types = [];
+            if ($post_type === 'all') {
+                $post_types = ['person', 'company'];
+            } elseif (in_array($post_type, ['person', 'company'])) {
+                $post_types = [$post_type];
+            } else {
+                WP_CLI::error('Invalid post type. Use: person, company, or all');
+                return;
+            }
+
+            WP_CLI::log(sprintf('Setting default visibility to "private" for post types: %s', implode(', ', $post_types)));
+            WP_CLI::log('');
+
+            $total_updated = 0;
+            $total_skipped = 0;
+
+            foreach ($post_types as $type) {
+                $result = $this->process_post_type($type, $dry_run);
+                $total_updated += $result['updated'];
+                $total_skipped += $result['skipped'];
+            }
+
+            WP_CLI::log('');
+            if ($dry_run) {
+                WP_CLI::success(sprintf(
+                    'DRY RUN: Would update %d post(s), skipped %d post(s) (already have visibility set)',
+                    $total_updated,
+                    $total_skipped
+                ));
+            } else {
+                WP_CLI::success(sprintf(
+                    'Complete: Updated %d post(s), skipped %d post(s) (already have visibility set)',
+                    $total_updated,
+                    $total_skipped
+                ));
+            }
+        }
+
+        /**
+         * Process a single post type
+         *
+         * @param string $post_type Post type to process
+         * @param bool $dry_run Whether to actually make changes
+         * @return array Results with 'updated' and 'skipped' counts
+         */
+        private function process_post_type($post_type, $dry_run) {
+            global $wpdb;
+
+            // Get all posts of this type
+            $post_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts}
+                 WHERE post_type = %s
+                 AND post_status = 'publish'",
+                $post_type
+            ));
+
+            if (empty($post_ids)) {
+                WP_CLI::log(sprintf('No %s posts found.', $post_type));
+                return ['updated' => 0, 'skipped' => 0];
+            }
+
+            WP_CLI::log(sprintf('Processing %d %s post(s)...', count($post_ids), $post_type));
+
+            $updated = 0;
+            $skipped = 0;
+
+            foreach ($post_ids as $post_id) {
+                $visibility = get_field('_visibility', $post_id);
+
+                // Skip if visibility is already set
+                if (!empty($visibility)) {
+                    $skipped++;
+                    continue;
+                }
+
+                $post_title = get_the_title($post_id);
+
+                if ($dry_run) {
+                    WP_CLI::log(sprintf('  Would set visibility to "private" for: %s (ID: %d)', $post_title, $post_id));
+                } else {
+                    update_field('_visibility', 'private', $post_id);
+                    WP_CLI::log(sprintf('  Set visibility to "private" for: %s (ID: %d)', $post_title, $post_id));
+                }
+
+                $updated++;
+            }
+
+            WP_CLI::log(sprintf('  %s: %d updated, %d skipped', ucfirst($post_type), $updated, $skipped));
+
+            return ['updated' => $updated, 'skipped' => $skipped];
+        }
+    }
+
+    /**
      * Register WP-CLI commands
      */
     WP_CLI::add_command('prm reminders', 'PRM_Reminders_CLI_Command');
     WP_CLI::add_command('prm migrate', 'PRM_Migration_CLI_Command');
     WP_CLI::add_command('prm vcard', 'PRM_VCard_CLI_Command');
+    WP_CLI::add_command('prm visibility', 'PRM_Visibility_CLI_Command');
 }
 
