@@ -146,6 +146,25 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
         {workspaceNames || '-'}
       </td>
+      <td className="px-4 py-3 text-sm text-gray-500">
+        {person.labels && person.labels.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {person.labels.slice(0, 3).map((label) => (
+              <span
+                key={label}
+                className="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
+              >
+                {label}
+              </span>
+            ))}
+            {person.labels.length > 3 && (
+              <span className="text-xs text-gray-400">+{person.labels.length - 3} more</span>
+            )}
+          </div>
+        ) : (
+          '-'
+        )}
+      </td>
     </tr>
   );
 }
@@ -182,6 +201,9 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
             </th>
             <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Workspace
+            </th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Labels
             </th>
           </tr>
         </thead>
