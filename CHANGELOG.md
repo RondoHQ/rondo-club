@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.61.1] - 2026-01-13
+
+### Added
+- Multi-user system documentation (`docs/multi-user.md`)
+  - Comprehensive guide covering workspaces, visibility, sharing, and collaborative features
+  - Migration instructions for upgrading single-user installations
+  - REST API endpoint reference for workspace operations
+
+### Changed
+- Updated access control documentation (`docs/access-control.md`)
+  - Documented permission resolution chain (author > private > workspace > shared > deny)
+  - Added permission levels section explaining return values from `get_user_permission()`
+  - Documented visibility settings and workspace access checking
+  - Added direct sharing documentation with `_shared_with` meta structure
+
+## [1.61.0] - 2026-01-13
+
+### Added
+- Multi-user migration WP-CLI command for upgrading existing installations
+  - `wp prm multiuser migrate` sets visibility to "private" on all existing contacts, companies, and important dates
+  - `wp prm multiuser migrate --dry-run` previews changes without making them
+  - `wp prm multiuser validate` checks migration status and reports any posts missing visibility
+  - User-friendly output with progress, summary, and next steps guidance
+
 ## [1.60.0] - 2026-01-13
 
 ### Added
