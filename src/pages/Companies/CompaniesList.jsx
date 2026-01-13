@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Building2, Filter, X } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
+import { useCreateCompany } from '@/hooks/useCompanies';
 import { wpApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
 import CompanyEditModal from '@/components/CompanyEditModal';
@@ -51,7 +52,6 @@ export default function CompaniesList() {
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: workspaces = [] } = useWorkspaces();
 
@@ -65,34 +65,15 @@ export default function CompaniesList() {
       return response.data;
     },
   });
-  
-  // Create company mutation
-  const createCompanyMutation = useMutation({
-    mutationFn: async (data) => {
-      const payload = {
-        title: data.title,
-        status: 'publish',
-        parent: data.parentId || 0,
-        acf: {
-          website: data.website,
-          industry: data.industry,
-          investors: data.investors || [],
-          _visibility: data.visibility || 'private',
-          _assigned_workspaces: data.assigned_workspaces || [],
-        },
-      };
 
-      const response = await wpApi.createCompany(payload);
-      return response.data;
-    },
+  // Create company mutation
+  const createCompanyMutation = useCreateCompany({
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setShowCompanyModal(false);
       navigate(`/companies/${result.id}`);
     },
   });
-  
+
   const handleCreateCompany = async (data) => {
     setIsCreatingCompany(true);
     try {
