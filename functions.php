@@ -60,6 +60,7 @@ function prm_autoloader($class_name) {
         'PRM_Comment_Types'          => 'class-comment-types.php',
         'PRM_REST_API'               => 'class-rest-api.php',
         'PRM_Reminders'              => 'class-reminders.php',
+        'PRM_REST_Base'              => 'class-rest-base.php',
         'PRM_Monica_Import'          => 'class-monica-import.php',
         'PRM_VCard_Import'           => 'class-vcard-import.php',
         'PRM_Google_Contacts_Import' => 'class-google-contacts-import.php',
