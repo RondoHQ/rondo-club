@@ -617,6 +617,8 @@ export default function Layout({ children }) {
           how_we_met: data.how_we_met,
           is_favorite: data.is_favorite,
           contact_info: contactInfo,
+          _visibility: data.visibility || 'private',
+          _assigned_workspaces: data.assigned_workspaces || [],
         },
       };
       
