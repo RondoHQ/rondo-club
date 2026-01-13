@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.64.0] - 2026-01-13
+
+### Added
+- Bulk actions UI for managing multiple contacts at once
+  - Actions dropdown in selection toolbar with "Change visibility" and "Assign to workspace" options
+  - Bulk visibility modal to change privacy settings for selected contacts
+  - Bulk workspace modal to assign selected contacts to workspaces
+  - Loading states and success/error handling for bulk operations
+
 ## [1.63.0] - 2026-01-13
 
 ### Added
