@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-13)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** None — ready for next milestone
+**Current focus:** v2.4 Bug Fixes — Important Date Polish
 
 ## Current Position
 
-Milestone: None
-Phase: N/A
-Plan: N/A
-Status: Between milestones
-Last activity: 2026-01-13 — Archived v2.3 List View Unification
+Milestone: v2.4 Bug Fixes
+Phase: 19 (Important Date Polish)
+Plan: Not yet planned
+Status: Ready to plan
+Last activity: 2026-01-13 — Created v2.4 milestone with Phase 19
 
-Progress: Ready for `/gsd:new-milestone`
+Progress: Ready for `/gsd:plan-phase 19`
 
 ## Completed Milestones
 
@@ -56,6 +56,8 @@ See `.planning/ISSUES.md`:
 - Phase 17 complete: Organizations list view (1 plan)
 - Phase 18 complete: Organizations bulk actions (1 plan)
 - Milestone v2.3 complete: Full parity between People and Organizations
+- Milestone v2.4 created: Bug Fixes (Phase 19+)
+- Phase 19 added: Important Date Polish (bundled from 5 todos)
 
 ## Session Continuity
 
@@ -71,4 +73,4 @@ Resume file: None
 
 ## Next Steps
 
-- `/gsd:new-milestone` — start planning the next milestone
+- `/gsd:plan-phase 19` — plan Important Date Polish phase
