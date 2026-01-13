@@ -164,40 +164,6 @@ function OrganizationListView({ companies, workspaces, companyLabels, selectedId
   );
 }
 
-function CompanyCard({ company }) {
-  return (
-    <Link 
-      to={`/companies/${company.id}`}
-      className="card p-4 hover:shadow-md transition-shadow"
-    >
-      <div className="flex items-start">
-        {company._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
-          <img 
-            src={company._embedded['wp:featuredmedia'][0].source_url}
-            alt={getCompanyName(company)}
-            className="w-12 h-12 rounded-lg object-contain bg-white"
-          />
-        ) : (
-          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200">
-            <Building2 className="w-6 h-6 text-gray-400" />
-          </div>
-        )}
-        <div className="ml-3 flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-gray-900 truncate">
-            {getCompanyName(company)}
-          </h3>
-          {company.acf?.industry && (
-            <p className="text-sm text-gray-500">{company.acf.industry}</p>
-          )}
-          {company.acf?.website && (
-            <p className="text-xs text-primary-600 truncate">{company.acf.website}</p>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
 export default function CompaniesList() {
   const [search, setSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -570,7 +536,7 @@ export default function CompaniesList() {
       )}
 
       {/* No results with filters */}
-      {!isLoading && !error && companies?.length > 0 && filteredAndSortedCompanies?.length === 0 && (
+      {!isLoading && !error && companies?.length > 0 && sortedCompanies?.length === 0 && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Filter className="w-6 h-6 text-gray-400" />
@@ -585,13 +551,43 @@ export default function CompaniesList() {
         </div>
       )}
       
-      {/* Grid */}
-      {!isLoading && !error && filteredAndSortedCompanies?.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredAndSortedCompanies.map((company) => (
-            <CompanyCard key={company.id} company={company} />
-          ))}
+      {/* Selection toolbar - sticky */}
+      {selectedIds.size > 0 && (
+        <div className="sticky top-0 z-20 flex items-center justify-between bg-primary-50 border border-primary-200 rounded-lg px-4 py-2 shadow-sm">
+          <span className="text-sm text-primary-800 font-medium">
+            {selectedIds.size} {selectedIds.size === 1 ? 'organization' : 'organizations'} selected
+          </span>
+          <button
+            onClick={clearSelection}
+            className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+          >
+            Clear selection
+          </button>
         </div>
+      )}
+
+      {/* Organizations list */}
+      {!isLoading && !error && sortedCompanies?.length > 0 && (
+        <OrganizationListView
+          companies={sortedCompanies}
+          workspaces={workspaces}
+          companyLabels={companyLabels}
+          selectedIds={selectedIds}
+          onToggleSelection={toggleSelection}
+          onToggleSelectAll={toggleSelectAll}
+          isAllSelected={isAllSelected}
+          isSomeSelected={isSomeSelected}
+          sortField={sortField}
+          sortOrder={sortOrder}
+          onSort={(field) => {
+            if (field === sortField) {
+              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+            } else {
+              setSortField(field);
+              setSortOrder('asc');
+            }
+          }}
+        />
       )}
       
       {/* Company Modal */}
