@@ -1,5 +1,75 @@
 # Project Milestones: Caelis
 
+## v2.3 List View Unification (Shipped: 2026-01-13)
+
+**Delivered:** Unified list view experience across People and Organizations, removing card view and ensuring consistent UX with full bulk action parity.
+
+**Phases completed:** 16-18 (3 plans total)
+
+**Key accomplishments:**
+
+- Removed card view toggle from People, list view is now the only option
+- Added dedicated image column to People list for proper alignment
+- Built Organizations list view with columns (logo, name, industry, website, workspace, labels)
+- Added sortable columns and selection infrastructure to Organizations
+- Created bulk actions for Organizations: visibility, workspace assignment, label management
+- Full parity between People and Organizations list views
+
+**Stats:**
+
+- 23 files changed
+- +2,590 / -1,014 lines changed
+- 3 phases, 3 plans
+- 1 day from start to ship
+
+**Git range:** `c932ac6` → `a3246ae`
+
+**Issues closed:** ISS-006, ISS-007, ISS-008
+
+**What's next:** To be determined
+
+---
+
+## v2.2 List View Polish (Shipped: 2026-01-13)
+
+**Delivered:** Complete list view experience with full sorting capabilities, labels display, and extended bulk actions for People.
+
+**Phases completed:** 14-15 (4 plans total)
+
+**Key accomplishments:**
+
+- Split Name column into First Name / Last Name columns
+- Labels column with styled pills
+- Clickable SortableHeader component with sort indicators
+- Sticky table header and selection toolbar
+- Organization, Workspace, Labels sorting options
+- BulkOrganizationModal with search and clear option
+- BulkLabelsModal with add/remove mode toggle
+
+**Issues closed:** ISS-001, ISS-002, ISS-003, ISS-004, ISS-005
+
+**What's next:** v2.3 List View Unification
+
+---
+
+## v2.1 Bulk Operations (Shipped: 2026-01-13)
+
+**Delivered:** Efficient bulk management of contacts through a new list view with multi-select and batch actions.
+
+**Phases completed:** 12-13 (3 plans total)
+
+**Key accomplishments:**
+
+- Card/list view toggle for people screen
+- Tabular list view with Name, Organization, Workspace columns
+- Checkbox multi-selection infrastructure
+- Bulk update REST endpoint with ownership validation
+- Bulk visibility and workspace assignment modals
+
+**What's next:** v2.2 List View Polish
+
+---
+
 ## v2.0 Multi-User (Shipped: 2026-01-13)
 
 **Delivered:** Multi-user collaboration platform with workspaces, contact visibility (private/workspace/shared), @mentions, and team activity features while preserving single-user backward compatibility.

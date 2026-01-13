@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-13)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** List view unification across People and Organizations
+**Current focus:** None — ready for next milestone
 
 ## Current Position
 
-Milestone: v2.3 List View Unification - COMPLETE
-Phase: 18 of 18 (Organizations Bulk Actions) - COMPLETE
-Plan: 1 of 1 in phase
-Status: Milestone complete
-Last activity: 2026-01-13 — Completed 18-01-PLAN.md
+Milestone: None
+Phase: N/A
+Plan: N/A
+Status: Between milestones
+Last activity: 2026-01-13 — Archived v2.3 List View Unification
 
-Progress: ██████████ 100% (3/3 phases)
+Progress: Ready for `/gsd:new-milestone`
 
 ## Completed Milestones
 
@@ -27,7 +27,7 @@ Progress: ██████████ 100% (3/3 phases)
 | v2.2 List View Polish | 14-15 | 4 | 2026-01-13 |
 | v2.3 List View Unification | 16-18 | 3 | 2026-01-13 |
 
-**Total:** 18 phases, 41 plans completed
+**Total:** 5 milestones, 18 phases, 41 plans completed
 
 ## Deferred Issues
 
@@ -65,4 +65,4 @@ Resume file: None
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — archive v2.3 and prepare for next milestone
+- `/gsd:new-milestone` — start planning the next milestone
