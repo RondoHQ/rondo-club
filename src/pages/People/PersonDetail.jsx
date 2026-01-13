@@ -270,6 +270,7 @@ export default function PersonDetail() {
             related_people: data.related_people,
             is_recurring: data.is_recurring,
             year_unknown: data.year_unknown,
+            _visibility: 'private',
           },
         });
       }

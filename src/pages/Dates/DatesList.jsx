@@ -105,9 +105,10 @@ export default function DatesList() {
           related_people: data.related_people,
           is_recurring: data.is_recurring,
           year_unknown: data.year_unknown,
+          _visibility: 'private',
         },
       };
-      
+
       const response = await wpApi.createDate(payload);
       return response.data;
     },

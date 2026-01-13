@@ -187,6 +187,7 @@ export function useCreatePerson({ onSuccess } = {}) {
               date_value: data.birthday,
               is_recurring: true,
               related_people: [personId],
+              _visibility: 'private',
             },
           });
         } catch {
