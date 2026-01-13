@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - API endpoints support visibility parameter for create/update operations
   - Timeline and notes endpoints filter based on visibility
   - NoteModal includes visibility toggle when contact is shared with workspace or other users
+  - TimelineView displays Lock/Globe icons indicating note visibility
+  - Shared notes have subtle blue left border for visual distinction
 - New @mentions infrastructure for collaborative notes
   - MentionInput React component using react-mentions library
   - Workspace member search API endpoint (`/prm/v1/workspaces/members/search`)
