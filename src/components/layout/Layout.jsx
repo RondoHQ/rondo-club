@@ -19,6 +19,7 @@ import {
   UsersRound
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useCreatePerson } from '@/hooks/usePeople';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch } from '@/hooks/useDashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -585,79 +586,9 @@ export default function Layout({ children }) {
   // Update document title based on route
   useRouteTitle();
   
-  // Create person mutation
-  const createPersonMutation = useMutation({
-    mutationFn: async (data) => {
-      // Build contact_info array
-      const contactInfo = [];
-      if (data.email) {
-        contactInfo.push({
-          contact_type: 'email',
-          contact_value: data.email,
-          contact_label: 'Email',
-        });
-      }
-      if (data.phone) {
-        contactInfo.push({
-          contact_type: data.phone_type || 'mobile',
-          contact_value: data.phone,
-          contact_label: data.phone_type === 'mobile' ? 'Mobile' : 'Phone',
-        });
-      }
-      
-      const payload = {
-        title: `${data.first_name} ${data.last_name}`.trim(),
-        status: 'publish',
-        acf: {
-          first_name: data.first_name,
-          last_name: data.last_name,
-          nickname: data.nickname,
-          gender: data.gender || null,
-          pronouns: data.pronouns || null,
-          how_we_met: data.how_we_met,
-          is_favorite: data.is_favorite,
-          contact_info: contactInfo,
-          _visibility: data.visibility || 'private',
-          _assigned_workspaces: data.assigned_workspaces || [],
-        },
-      };
-      
-      const response = await wpApi.createPerson(payload);
-      const personId = response.data.id;
-      
-      // Try to sideload Gravatar if email is provided
-      if (data.email) {
-        try {
-          await prmApi.sideloadGravatar(personId, data.email);
-        } catch {
-          // Gravatar sideload failed silently - not critical
-        }
-      }
-      
-      // Create birthday if provided
-      if (data.birthday && data.birthdayType) {
-        try {
-          await wpApi.createDate({
-            title: `${data.first_name}'s Birthday`,
-            status: 'publish',
-            date_type: [data.birthdayType.id],
-            acf: {
-              date_value: data.birthday,
-              is_recurring: true,
-              related_people: [personId],
-            },
-          });
-        } catch {
-          // Birthday creation failed silently - not critical
-        }
-      }
-      
-      return response.data;
-    },
+  // Create person mutation (using shared hook)
+  const createPersonMutation = useCreatePerson({
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['people'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['reminders'] });
       setShowPersonModal(false);
       navigate(`/people/${result.id}`);
     },
