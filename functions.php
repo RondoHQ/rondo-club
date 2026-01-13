@@ -59,8 +59,9 @@ function prm_autoloader($class_name) {
         'PRM_Access_Control'         => 'class-access-control.php',
         'PRM_Comment_Types'          => 'class-comment-types.php',
         'PRM_REST_API'               => 'class-rest-api.php',
-        'PRM_Reminders'              => 'class-reminders.php',
         'PRM_REST_Base'              => 'class-rest-base.php',
+        'PRM_REST_People'            => 'class-rest-people.php',
+        'PRM_Reminders'              => 'class-reminders.php',
         'PRM_Monica_Import'          => 'class-monica-import.php',
         'PRM_VCard_Import'           => 'class-vcard-import.php',
         'PRM_Google_Contacts_Import' => 'class-google-contacts-import.php',
@@ -160,6 +161,7 @@ function prm_init() {
     // REST API classes - only for REST requests
     if ($is_rest) {
         new PRM_REST_API();
+        new PRM_REST_People();
         new PRM_Monica_Import();
         new PRM_VCard_Import();
         new PRM_Google_Contacts_Import();
