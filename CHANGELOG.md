@@ -14,12 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `_note_visibility` comment meta field stores visibility setting
   - API endpoints support visibility parameter for create/update operations
   - Timeline and notes endpoints filter based on visibility
+  - NoteModal includes visibility toggle when contact is shared with workspace or other users
 - New @mentions infrastructure for collaborative notes
   - MentionInput React component using react-mentions library
   - Workspace member search API endpoint (`/prm/v1/workspaces/members/search`)
   - PRM_Mentions PHP class for parsing, storing, and rendering @mentions
   - Mentioned user IDs stored in comment meta `_mentioned_users`
   - Action hook `prm_user_mentioned` fires when users are mentioned
+- Workspace iCal calendar feed support
+  - New `/workspace/{id}/calendar/{token}.ics` endpoint for workspace calendars
+  - Includes important dates for all contacts shared with the workspace
+  - Token-based authentication validates user membership
+  - Calendar Subscription UI in WorkspaceDetail page with copy button
+  - iCal URL API endpoint now returns raw token for constructing workspace URLs
 
 ## [1.57.2] - 2026-01-13
 
