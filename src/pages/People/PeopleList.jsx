@@ -83,6 +83,85 @@ function PersonCard({ person, companyName, isDeceased }) {
   );
 }
 
+function PersonListRow({ person, companyName, workspaces }) {
+  const assignedWorkspaces = person.acf?._assigned_workspaces || [];
+  const workspaceNames = assignedWorkspaces
+    .map(wsId => workspaces.find(ws => ws.id === wsId)?.title)
+    .filter(Boolean)
+    .join(', ');
+
+  return (
+    <tr className="hover:bg-gray-50">
+      <td className="px-4 py-3 whitespace-nowrap">
+        <Link to={`/people/${person.id}`} className="flex items-center">
+          {person.thumbnail ? (
+            <img
+              src={person.thumbnail}
+              alt=""
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+              <span className="text-sm font-medium text-gray-500">
+                {person.first_name?.[0] || '?'}
+              </span>
+            </div>
+          )}
+          <div className="ml-3">
+            <div className="flex items-center">
+              <span className="text-sm font-medium text-gray-900">
+                {person.name}
+                {person.is_deceased && <span className="ml-1 text-gray-500">†</span>}
+              </span>
+              {person.is_favorite && (
+                <Star className="w-4 h-4 ml-1 text-yellow-400 fill-current" />
+              )}
+            </div>
+          </div>
+        </Link>
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+        {companyName || '-'}
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+        {workspaceNames || '-'}
+      </td>
+    </tr>
+  );
+}
+
+function PersonListView({ people, companyMap, workspaces }) {
+  return (
+    <div className="card overflow-hidden">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Name
+            </th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Organization
+            </th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Workspace
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {people.map((person) => (
+            <PersonListRow
+              key={person.id}
+              person={person}
+              companyName={companyMap[person.id]}
+              workspaces={workspaces}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function PeopleList() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -701,7 +780,11 @@ export default function PeopleList() {
 
       {/* People list (list view) */}
       {!isLoading && !error && filteredAndSortedPeople?.length > 0 && viewMode === 'list' && (
-        <div>List view coming next task</div>
+        <PersonListView
+          people={filteredAndSortedPeople}
+          companyMap={personCompanyMap}
+          workspaces={workspaces}
+        />
       )}
       
       {/* No results with filters */}
