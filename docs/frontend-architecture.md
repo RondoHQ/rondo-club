@@ -232,6 +232,34 @@ Document title management:
 | `useDocumentTitle(title)` | Set specific page title |
 | `useRouteTitle(customTitle)` | Auto-set title based on route |
 
+### `useWorkspaces` (`src/hooks/useWorkspaces.js`)
+
+Workspace and sharing hooks for multi-user collaboration:
+
+| Hook | Purpose |
+|------|---------|
+| `useWorkspaces()` | Fetch all workspaces for current user |
+| `useWorkspace(id)` | Fetch single workspace with members |
+| `useCreateWorkspace()` | Create workspace mutation |
+| `useUpdateWorkspace()` | Update workspace mutation |
+| `useDeleteWorkspace()` | Delete workspace mutation |
+| `useAddWorkspaceMember()` | Add member to workspace |
+| `useRemoveWorkspaceMember()` | Remove member from workspace |
+| `useUpdateWorkspaceMember()` | Update member role |
+| `useWorkspaceInvites(workspaceId)` | Fetch pending invites |
+| `useCreateWorkspaceInvite()` | Create and send invite |
+| `useRevokeWorkspaceInvite()` | Revoke pending invite |
+| `useValidateInvite(token)` | Validate invite token (public) |
+| `useAcceptInvite()` | Accept invite and join workspace |
+
+**Query Key Structure:**
+```js
+['workspaces']                          // List all workspaces
+['workspaces', id]                      // Single workspace
+['workspaces', workspaceId, 'invites']  // Workspace invites
+['invite', token]                       // Invite validation
+```
+
 ### `useVersionCheck` (`src/hooks/useVersionCheck.js`)
 
 Version checking for PWA/mobile app cache invalidation:
