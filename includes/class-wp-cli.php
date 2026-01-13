@@ -989,6 +989,158 @@ if (defined('WP_CLI') && WP_CLI) {
     }
 
     /**
+     * Important Dates WP-CLI Commands
+     */
+    class PRM_Dates_CLI_Command {
+
+        /**
+         * Regenerate all Important Date titles using current naming convention.
+         *
+         * Uses full names instead of first names only.
+         * Skips dates with custom labels.
+         *
+         * ## OPTIONS
+         *
+         * [--dry-run]
+         * : Preview changes without saving.
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm dates regenerate-titles
+         *     wp prm dates regenerate-titles --dry-run
+         *
+         * @when after_wp_load
+         */
+        public function regenerate_titles($args, $assoc_args) {
+            $dry_run = isset($assoc_args['dry-run']);
+
+            if ($dry_run) {
+                WP_CLI::log('Dry run mode - no changes will be saved.');
+            }
+
+            // Query all important_date posts (bypass access control)
+            global $wpdb;
+            $date_ids = $wpdb->get_col(
+                "SELECT ID FROM {$wpdb->posts}
+                 WHERE post_type = 'important_date'
+                 AND post_status IN ('publish', 'draft', 'pending')"
+            );
+
+            if (empty($date_ids)) {
+                WP_CLI::success('No important dates found.');
+                return;
+            }
+
+            WP_CLI::log(sprintf('Found %d important date(s) to process.', count($date_ids)));
+
+            $updated = 0;
+            $skipped = 0;
+
+            foreach ($date_ids as $post_id) {
+                $date_post = get_post($post_id);
+                if (!$date_post) {
+                    continue;
+                }
+
+                // Check if has custom_label - skip if custom
+                $custom_label = get_field('custom_label', $post_id);
+                if (!empty($custom_label)) {
+                    WP_CLI::log(sprintf('[SKIP] #%d: Has custom label "%s"', $post_id, $custom_label));
+                    $skipped++;
+                    continue;
+                }
+
+                $old_title = $date_post->post_title;
+
+                // Generate new title using same logic as PRM_Auto_Title
+                $new_title = $this->generate_date_title($post_id);
+
+                if ($old_title === $new_title) {
+                    WP_CLI::log(sprintf('[SAME] #%d: "%s"', $post_id, $old_title));
+                    $skipped++;
+                    continue;
+                }
+
+                if ($dry_run) {
+                    WP_CLI::log(sprintf('[WOULD UPDATE] #%d: "%s" -> "%s"', $post_id, $old_title, $new_title));
+                } else {
+                    wp_update_post([
+                        'ID' => $post_id,
+                        'post_title' => $new_title,
+                        'post_name' => sanitize_title($new_title . '-' . $post_id),
+                    ]);
+                    WP_CLI::log(sprintf('[UPDATED] #%d: "%s" -> "%s"', $post_id, $old_title, $new_title));
+                }
+                $updated++;
+            }
+
+            if ($dry_run) {
+                WP_CLI::success(sprintf('Would update %d title(s). Skipped %d.', $updated, $skipped));
+            } else {
+                WP_CLI::success(sprintf('Updated %d title(s). Skipped %d.', $updated, $skipped));
+            }
+        }
+
+        /**
+         * Generate date title from fields (mirrors PRM_Auto_Title logic)
+         *
+         * @param int $post_id Post ID
+         * @return string Generated title
+         */
+        private function generate_date_title($post_id) {
+            // Get date type from taxonomy
+            $date_types = wp_get_post_terms($post_id, 'date_type', ['fields' => 'names']);
+            $type_label = !empty($date_types) ? $date_types[0] : __('Date', 'personal-crm');
+
+            // Get related people
+            $people = get_field('related_people', $post_id) ?: [];
+
+            if (empty($people)) {
+                return sprintf(__('Unnamed %s', 'personal-crm'), $type_label);
+            }
+
+            // Get full names of related people
+            $names = [];
+            foreach ($people as $person) {
+                $person_id = is_object($person) ? $person->ID : $person;
+                $full_name = html_entity_decode(get_the_title($person_id), ENT_QUOTES, 'UTF-8');
+                if ($full_name && $full_name !== __('Unnamed Person', 'personal-crm')) {
+                    $names[] = $full_name;
+                }
+            }
+
+            if (empty($names)) {
+                return sprintf(__('Unnamed %s', 'personal-crm'), $type_label);
+            }
+
+            $count = count($names);
+
+            // Get date type slug to check for wedding
+            $date_type_slugs = wp_get_post_terms($post_id, 'date_type', ['fields' => 'slugs']);
+            $type_slug = !empty($date_type_slugs) ? $date_type_slugs[0] : '';
+
+            // Special handling for wedding type
+            if ($type_slug === 'wedding') {
+                if ($count >= 2) {
+                    return sprintf(__('Wedding of %s & %s', 'personal-crm'), $names[0], $names[1]);
+                } elseif ($count === 1) {
+                    return sprintf(__('Wedding of %s', 'personal-crm'), $names[0]);
+                }
+            }
+
+            if ($count === 1) {
+                return sprintf(__("%s's %s", 'personal-crm'), $names[0], $type_label);
+            } elseif ($count === 2) {
+                return sprintf(__("%s & %s's %s", 'personal-crm'), $names[0], $names[1], $type_label);
+            } else {
+                $first_two = implode(', ', array_slice($names, 0, 2));
+                $remaining = $count - 2;
+                return sprintf(__('%s +%d %s', 'personal-crm'), $first_two, $remaining, $type_label);
+            }
+        }
+    }
+
+    /**
      * Register WP-CLI commands
      */
     WP_CLI::add_command('prm reminders', 'PRM_Reminders_CLI_Command');
@@ -997,5 +1149,6 @@ if (defined('WP_CLI') && WP_CLI) {
     WP_CLI::add_command('prm visibility', 'PRM_Visibility_CLI_Command');
     WP_CLI::add_command('prm carddav', 'PRM_CardDAV_CLI_Command');
     WP_CLI::add_command('prm multiuser', 'PRM_MultiUser_CLI_Command');
+    WP_CLI::add_command('prm dates', 'PRM_Dates_CLI_Command');
 }
 
