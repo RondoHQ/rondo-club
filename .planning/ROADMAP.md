@@ -6,10 +6,45 @@
 - ✅ [v2.0 Multi-User](milestones/v2.0-multi-user.md) (Phases 7-11) — SHIPPED 2026-01-13
 - ✅ [v2.1 Bulk Operations](milestones/v2.1-bulk-operations.md) (Phases 12-13) — SHIPPED 2026-01-13
 - ✅ [v2.2 List View Polish](milestones/v2.2-list-view-polish.md) (Phases 14-15) — SHIPPED 2026-01-13
+- 🚧 **v2.3 List View Unification** (Phases 16-18) — In Progress
 
 ## Current Milestone
 
-No active milestone. Use `/gsd:new-milestone` to create the next milestone.
+### 🚧 v2.3 List View Unification (In Progress)
+
+**Milestone Goal:** Unify the list view experience across People and Organizations, removing card view and ensuring consistent UX.
+
+**Issues addressed:** ISS-006, ISS-007, ISS-008
+
+#### Phase 16: People List View Cleanup
+
+**Goal:** Remove card view toggle, add dedicated image column, fix first name alignment
+**Depends on:** v2.2 complete
+**Research:** Unlikely (internal patterns, removing existing code)
+**Plans:** TBD
+
+Plans:
+- [ ] 16-01: TBD (run /gsd:plan-phase 16 to break down)
+
+#### Phase 17: Organizations List View
+
+**Goal:** Build list view for Organizations with columns, sorting, and selection infrastructure
+**Depends on:** Phase 16
+**Research:** Unlikely (following established People list patterns)
+**Plans:** TBD
+
+Plans:
+- [ ] 17-01: TBD (run /gsd:plan-phase 17 to break down)
+
+#### Phase 18: Organizations Bulk Actions
+
+**Goal:** Add bulk actions (visibility, workspace, labels) to Organizations list view
+**Depends on:** Phase 17
+**Research:** Unlikely (reusing bulk action components from People)
+**Plans:** TBD
+
+Plans:
+- [ ] 18-01: TBD (run /gsd:plan-phase 18 to break down)
 
 <details>
 <summary>✅ v2.2 List View Polish (Phases 14-15) — SHIPPED 2026-01-13</summary>
@@ -121,5 +156,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
 | v2.2 List View Polish | 14-15 | 4/4 | Complete ✅ | 2026-01-13 |
+| v2.3 List View Unification | 16-18 | 0/? | In Progress 🚧 | - |
 
 **Total: 15 phases, 38 plans shipped**

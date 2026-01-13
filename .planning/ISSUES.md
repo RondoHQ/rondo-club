@@ -4,7 +4,23 @@ Enhancements discovered during execution. Not critical - address in future phase
 
 ## Open Enhancements
 
-*No open issues.*
+### ISS-006: Remove card view from People, use list view only
+
+- **Discovered:** Post v2.2 completion (2026-01-13)
+- **Context:** The list view now provides all functionality needed. Card view is redundant and adds maintenance burden.
+- **Scope:** Remove card view components, remove view toggle, make list view the default and only option.
+
+### ISS-007: Move person image to its own column without header label
+
+- **Discovered:** Post v2.2 completion (2026-01-13)
+- **Context:** Currently the image is part of the Name column, causing misalignment between "First Name" header and the actual first names below it.
+- **Scope:** Create a narrow image-only column (no header text) before First Name column.
+
+### ISS-008: Organizations should use list interface like People
+
+- **Discovered:** Post v2.2 completion (2026-01-13)
+- **Context:** People now has a polished list view with sorting, selection, and bulk actions. Organizations should have the same experience.
+- **Scope:** Implement list view for Organizations with similar columns, sorting, selection, and bulk actions.
 
 ## Closed Enhancements
 
