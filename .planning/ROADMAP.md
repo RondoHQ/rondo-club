@@ -16,15 +16,14 @@
 
 **Issues addressed:** ISS-006, ISS-007, ISS-008
 
-#### Phase 16: People List View Cleanup
+#### Phase 16: People List View Cleanup ✓
 
 **Goal:** Remove card view toggle, add dedicated image column, fix first name alignment
 **Depends on:** v2.2 complete
-**Research:** Unlikely (internal patterns, removing existing code)
-**Plans:** TBD
+**Status:** Complete (2026-01-13)
 
 Plans:
-- [ ] 16-01: TBD (run /gsd:plan-phase 16 to break down)
+- [x] 16-01: Add image column, remove card view (1/1 plans complete)
 
 #### Phase 17: Organizations List View
 
@@ -156,6 +155,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
 | v2.2 List View Polish | 14-15 | 4/4 | Complete ✅ | 2026-01-13 |
-| v2.3 List View Unification | 16-18 | 0/? | In Progress 🚧 | - |
+| v2.3 List View Unification | 16-18 | 1/? | In Progress 🚧 | - |
 
 **Total: 15 phases, 38 plans shipped**
