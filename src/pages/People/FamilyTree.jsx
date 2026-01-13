@@ -1,11 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, lazy, Suspense } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueries } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { usePerson, usePeople } from '@/hooks/usePeople';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import TreeVisualization from '@/components/family-tree/TreeVisualization';
+
+const TreeVisualization = lazy(() => import('@/components/family-tree/TreeVisualization'));
 import {
   buildFamilyGraph,
   buildRelationshipMap,
@@ -141,11 +142,18 @@ export default function FamilyTree() {
       <div className="card p-6">
         <div className="w-full" style={{ height: '800px' }}>
           {graphData && graphData.nodes && graphData.nodes.length > 0 ? (
-            <TreeVisualization 
-              graphData={graphData} 
-              startPersonId={personId}
-              onNodeClick={handleNodeClick} 
-            />
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                <span className="ml-3 text-gray-500">Loading visualization...</span>
+              </div>
+            }>
+              <TreeVisualization
+                graphData={graphData}
+                startPersonId={personId}
+                onNodeClick={handleNodeClick}
+              />
+            </Suspense>
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
