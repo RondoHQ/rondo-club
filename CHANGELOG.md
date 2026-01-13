@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.74.0] - 2026-01-13
+
+### Changed
+- Lazy load heavy third-party libraries for further bundle optimization
+  - vis-network (~526 KB) loads only when viewing family tree pages
+  - TipTap editor (~371 KB) loads only when opening note/activity modals
+  - FamilyTree page chunk reduced from 534 KB to 9 KB
+  - QuickActivityModal chunk reduced from 383 KB to 13 KB
+  - Initial load now 435 KB raw (no change in core bundles)
+  - Extracted richTextUtils.js for proper code splitting
+
 ## [1.73.0] - 2026-01-13
 
 ### Changed
