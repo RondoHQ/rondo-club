@@ -63,7 +63,7 @@ Resume file: None
 
 ### Pending Todos
 
-1 todo in `.planning/todos/pending/`
+2 todos in `.planning/todos/pending/`
 
 ## Next Steps
 
