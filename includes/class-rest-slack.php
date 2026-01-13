@@ -156,7 +156,14 @@ class PRM_REST_Slack extends PRM_REST_Base {
                 'webhook' => [
                     'required'          => false,
                     'validate_callback' => function($param) {
-                        return empty($param) || filter_var($param, FILTER_VALIDATE_URL);
+                        if (empty($param)) {
+                            return true;
+                        }
+                        if (!filter_var($param, FILTER_VALIDATE_URL)) {
+                            return false;
+                        }
+                        $host = parse_url($param, PHP_URL_HOST);
+                        return $host === 'hooks.slack.com';
                     },
                 ],
             ],
@@ -671,6 +678,16 @@ class PRM_REST_Slack extends PRM_REST_Base {
             return new WP_Error(
                 'invalid_webhook',
                 __('Invalid webhook URL.', 'personal-crm'),
+                ['status' => 400]
+            );
+        }
+
+        // Validate webhook domain to prevent SSRF attacks
+        $host = parse_url($webhook, PHP_URL_HOST);
+        if ($host !== 'hooks.slack.com') {
+            return new WP_Error(
+                'invalid_webhook_domain',
+                __('Webhook URL must be from hooks.slack.com domain.', 'personal-crm'),
                 ['status' => 400]
             );
         }
