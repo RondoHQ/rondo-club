@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.67.0] - 2026-01-13
+
+### Added
+- Bulk organization assignment modal in list view Actions dropdown
+  - Search/filter organizations by name
+  - Select organization to assign to all selected people
+  - "Clear organization" option to remove current organization
+- Bulk labels management modal in list view Actions dropdown
+  - Add/Remove mode toggle for label operations
+  - Multi-select labels for batch operations
+  - Add labels appends without replacing existing labels
+  - Remove labels removes selected labels from people
+
 ## [1.66.1] - 2026-01-13
 
 ### Added
