@@ -11,7 +11,7 @@
 **Overview:** Transform Caelis from a single-user personal CRM into a multi-user platform combining Clay.earth's intimate relationship focus with Twenty CRM's collaborative features. Adds workspaces, sharing, and team collaboration while preserving privacy.
 
 **Phases:**
-- [ ] Phase 7: Data Model & Visibility System (0 plans)
+- [x] Phase 7: Data Model & Visibility System (4/4 plans) ✓
 - [ ] Phase 8: Workspace & Team Infrastructure (0 plans)
 - [ ] Phase 9: Sharing UI & Permissions Interface (0 plans)
 - [ ] Phase 10: Collaborative Features (0 plans) — *research likely*
@@ -57,4 +57,4 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | Milestone | Phases | Plans | Status | Completed |
 |-----------|--------|-------|--------|-----------|
 | v1.0 Tech Debt Cleanup | 1-6 | 11/11 | Complete ✅ | 2026-01-13 |
-| v2.0 Multi-User | 7-11 | 0/? | In Progress | — |
+| v2.0 Multi-User | 7-11 | 4/? | In Progress | — |
