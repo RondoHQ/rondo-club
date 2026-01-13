@@ -4,6 +4,7 @@ import { X, Upload, FileCode, AlertCircle } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import api from '@/api/client';
+import VisibilitySelector from '@/components/VisibilitySelector';
 
 export default function PersonEditModal({ 
   isOpen, 
@@ -18,6 +19,10 @@ export default function PersonEditModal({
   const [dragActive, setDragActive] = useState(false);
   const [vcardFile, setVcardFile] = useState(null);
   const [vcardError, setVcardError] = useState(null);
+
+  // Visibility state
+  const [visibility, setVisibility] = useState('private');
+  const [selectedWorkspaces, setSelectedWorkspaces] = useState([]);
   
   // Fetch date types to get birthday term ID
   const { data: dateTypes = [] } = useQuery({
@@ -66,14 +71,14 @@ export default function PersonEditModal({
       setVcardFile(null);
       setVcardError(null);
       parseVcardMutation.reset();
-      
+
       if (person) {
         // Editing - populate with existing data
         const emailContact = person.acf?.contact_info?.find(contact => contact.contact_type === 'email');
-        const phoneContact = person.acf?.contact_info?.find(contact => 
+        const phoneContact = person.acf?.contact_info?.find(contact =>
           contact.contact_type === 'phone' || contact.contact_type === 'mobile'
         );
-        
+
         reset({
           first_name: person.acf?.first_name || '',
           last_name: person.acf?.last_name || '',
@@ -87,6 +92,9 @@ export default function PersonEditModal({
           how_we_met: person.acf?.how_we_met || '',
           is_favorite: person.acf?.is_favorite || false,
         });
+        // Load existing visibility settings
+        setVisibility(person.acf?._visibility || 'private');
+        setSelectedWorkspaces(person.acf?._assigned_workspaces || []);
       } else {
         // Creating - reset to defaults
         reset({
@@ -102,6 +110,9 @@ export default function PersonEditModal({
           how_we_met: '',
           is_favorite: false,
         });
+        // Reset visibility to private
+        setVisibility('private');
+        setSelectedWorkspaces([]);
       }
     }
   }, [isOpen, person, reset]);
@@ -184,6 +195,8 @@ export default function PersonEditModal({
     onSubmit({
       ...data,
       birthdayType: birthdayType, // Pass birthday type for creating birthday date
+      visibility,
+      assigned_workspaces: selectedWorkspaces,
     });
   };
 
@@ -399,6 +412,17 @@ export default function PersonEditModal({
                 disabled={isLoading}
               />
             </div>
+
+            {/* Visibility */}
+            <VisibilitySelector
+              value={visibility}
+              workspaces={selectedWorkspaces}
+              onChange={({ visibility: v, workspaces: w }) => {
+                setVisibility(v);
+                setSelectedWorkspaces(w);
+              }}
+              disabled={isLoading}
+            />
 
             {/* Favorite */}
             <div className="flex items-center">
