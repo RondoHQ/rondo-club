@@ -381,6 +381,33 @@ export default function CompaniesList() {
             />
           </div>
 
+          {/* Sort Controls */}
+          <div className="flex items-center gap-2 border border-gray-200 rounded-lg p-1">
+            <select
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value)}
+              className="text-sm border-0 bg-transparent focus:ring-0 focus:outline-none cursor-pointer"
+            >
+              <option value="name">Name</option>
+              <option value="industry">Industry</option>
+              <option value="website">Website</option>
+              <option value="workspace">Workspace</option>
+              <option value="labels">Labels</option>
+            </select>
+            <div className="h-4 w-px bg-gray-300"></div>
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+            >
+              {sortOrder === 'asc' ? (
+                <ArrowUp className="w-4 h-4 text-gray-600" />
+              ) : (
+                <ArrowDown className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+          </div>
+
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
