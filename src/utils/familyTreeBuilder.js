@@ -1,9 +1,11 @@
 /**
  * Family Tree Builder Utilities
- * 
+ *
  * Builds graph structures from relationship data for vis.js family tree visualization.
  * vis.js supports proper graph structures where children can have multiple parents.
  */
+
+import { decodeHtml } from './formatters';
 
 const FAMILY_RELATIONSHIP_TYPES = ['parent', 'child', 'spouse', 'lover', 'partner'];
 
@@ -39,12 +41,8 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
   visited.add(startPersonId);
   
   function extractPersonData(person, personId) {
-    let personName = person.name || person.title?.rendered || person.title || `Person ${personId}`;
-    if (personName && typeof personName === 'string' && typeof document !== 'undefined') {
-      const txt = document.createElement('textarea');
-      txt.innerHTML = personName;
-      personName = txt.value;
-    }
+    const rawName = person.name || person.title?.rendered || person.title || `Person ${personId}`;
+    const personName = decodeHtml(rawName);
     
     let age = null;
     let birthDate = person.acf?.birth_date || null;
