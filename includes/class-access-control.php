@@ -43,50 +43,133 @@ class PRM_Access_Control {
     
     /**
      * Check if a user can access a post
+     *
+     * Permission resolution order:
+     * 1. Is user the author? → Full access
+     * 2. Is _visibility = 'private'? → Deny (unless #1)
+     * 3. Is _visibility = 'workspace'? → Check workspace membership
+     * 4. Check _shared_with for user → Allow with specified permission
+     * 5. Deny
      */
     public function user_can_access_post($post_id, $user_id = null) {
         if ($user_id === null) {
             $user_id = get_current_user_id();
         }
-        
+
         // Check if user is approved (admins are always approved)
         if (!user_can($user_id, 'manage_options')) {
             if (!PRM_User_Roles::is_user_approved($user_id)) {
                 return false;
             }
         }
-        
-        // Admins can access everything in admin area, but are restricted on frontend
-        if (user_can($user_id, 'manage_options')) {
-            // On frontend, admins are restricted like regular users
-            if ($this->is_frontend()) {
-                // Continue with normal access checks below
-            } else {
-                // In admin area, admins have full access (except trashed posts)
-                $post = get_post($post_id);
-                if ($post && $post->post_status === 'trash') {
-                    return false;
-                }
-                return true;
-            }
-        }
-        
+
         $post = get_post($post_id);
-        
+
         if (!$post || !in_array($post->post_type, $this->controlled_post_types)) {
             return true; // Not a controlled post type
         }
-        
+
         // Don't allow access to trashed posts
         if ($post->post_status === 'trash') {
             return false;
         }
-        
-        // Check if user is the author
+
+        // 1. Check if user is the author → Full access
         if ((int) $post->post_author === (int) $user_id) {
             return true;
         }
-        
+
+        // Admins in admin area have full access
+        if (user_can($user_id, 'manage_options') && !$this->is_frontend()) {
+            return true;
+        }
+
+        // 2. Check visibility
+        $visibility = PRM_Visibility::get_visibility($post_id);
+
+        // Private = only author (already checked above)
+        if ($visibility === PRM_Visibility::VISIBILITY_PRIVATE) {
+            return false;
+        }
+
+        // 3. Workspace visibility check
+        if ($visibility === PRM_Visibility::VISIBILITY_WORKSPACE) {
+            // Get user's workspace IDs
+            $user_workspace_ids = PRM_Workspace_Members::get_user_workspace_ids($user_id);
+
+            if (!empty($user_workspace_ids)) {
+                // Check if post has any matching workspace_access terms
+                $post_terms = wp_get_post_terms($post_id, 'workspace_access', ['fields' => 'slugs']);
+
+                if (!is_wp_error($post_terms)) {
+                    foreach ($post_terms as $slug) {
+                        // Term slug format: 'workspace-{ID}'
+                        $workspace_id = (int) str_replace('workspace-', '', $slug);
+                        if (in_array($workspace_id, $user_workspace_ids)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Check direct shares
+        if (PRM_Visibility::user_has_share($post_id, $user_id)) {
+            return true;
+        }
+
+        // 5. Deny
+        return false;
+    }
+
+    /**
+     * Get user's permission level for a post
+     *
+     * @param int $post_id Post ID.
+     * @param int $user_id User ID (optional, defaults to current user).
+     * @return string|false 'owner', 'admin', 'member', 'viewer', 'edit', 'view', or false.
+     */
+    public function get_user_permission($post_id, $user_id = null) {
+        if ($user_id === null) {
+            $user_id = get_current_user_id();
+        }
+
+        if (!$this->user_can_access_post($post_id, $user_id)) {
+            return false;
+        }
+
+        $post = get_post($post_id);
+
+        // Owner
+        if ((int) $post->post_author === (int) $user_id) {
+            return 'owner';
+        }
+
+        // Workspace role
+        $visibility = PRM_Visibility::get_visibility($post_id);
+        if ($visibility === PRM_Visibility::VISIBILITY_WORKSPACE) {
+            $user_workspace_ids = PRM_Workspace_Members::get_user_workspace_ids($user_id);
+            $post_terms = wp_get_post_terms($post_id, 'workspace_access', ['fields' => 'slugs']);
+
+            if (!is_wp_error($post_terms)) {
+                foreach ($post_terms as $slug) {
+                    $workspace_id = (int) str_replace('workspace-', '', $slug);
+                    if (in_array($workspace_id, $user_workspace_ids)) {
+                        $role = PRM_Workspace_Members::get_user_role($workspace_id, $user_id);
+                        if ($role) {
+                            return $role; // 'admin', 'member', or 'viewer'
+                        }
+                    }
+                }
+            }
+        }
+
+        // Direct share permission
+        $share_permission = PRM_Visibility::get_share_permission($post_id, $user_id);
+        if ($share_permission) {
+            return $share_permission; // 'edit' or 'view'
+        }
+
         return false;
     }
     
@@ -141,21 +224,75 @@ class PRM_Access_Control {
     
     /**
      * Get all post IDs accessible by a user
+     *
+     * Includes posts where:
+     * 1. User is author
+     * 2. _visibility = 'workspace' AND user is member of any assigned workspace
+     * 3. User appears in _shared_with meta
      */
     public function get_accessible_post_ids($post_type, $user_id) {
         global $wpdb;
-        
-        // Get posts authored by user
+
+        // 1. Posts authored by user
         $authored = $wpdb->get_col($wpdb->prepare(
-            "SELECT ID FROM {$wpdb->posts} 
-             WHERE post_type = %s 
-             AND post_status = 'publish' 
+            "SELECT ID FROM {$wpdb->posts}
+             WHERE post_type = %s
+             AND post_status = 'publish'
              AND post_author = %d",
             $post_type,
             $user_id
         ));
-        
-        return $authored;
+
+        // 2. Workspace-visible posts where user is member
+        $workspace_ids = PRM_Workspace_Members::get_user_workspace_ids($user_id);
+        $workspace_posts = [];
+
+        if (!empty($workspace_ids)) {
+            // Build term slugs from workspace IDs (format: workspace-{ID})
+            $term_slugs = array_map(function($id) {
+                return 'workspace-' . $id;
+            }, $workspace_ids);
+
+            $placeholders = implode(',', array_fill(0, count($term_slugs), '%s'));
+
+            // Prepare query parameters: post_type first, then term slugs
+            $query_params = array_merge([$post_type], $term_slugs);
+
+            $workspace_posts = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT p.ID
+                 FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                 INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+                 INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                 INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
+                 WHERE p.post_type = %s
+                 AND p.post_status = 'publish'
+                 AND pm.meta_key = '_visibility'
+                 AND pm.meta_value = 'workspace'
+                 AND tt.taxonomy = 'workspace_access'
+                 AND t.slug IN ($placeholders)",
+                $query_params
+            ));
+        }
+
+        // 3. Posts shared directly with user
+        // _shared_with is serialized array, so we use LIKE for the user_id
+        $shared_posts = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT p.ID
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+             WHERE p.post_type = %s
+             AND p.post_status = 'publish'
+             AND pm.meta_key = '_shared_with'
+             AND pm.meta_value LIKE %s",
+            $post_type,
+            '%"user_id":' . $user_id . '%'
+        ));
+
+        // Merge and dedupe
+        $all_ids = array_unique(array_merge($authored, $workspace_posts, $shared_posts));
+
+        return $all_ids;
     }
     
     /**

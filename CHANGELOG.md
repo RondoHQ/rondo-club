@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.45.0] - 2026-01-13
+
+### Added
+- Extended access control for visibility, workspace membership, and direct shares
+- `get_accessible_post_ids()` now includes workspace-visible and shared posts
+- New `get_user_permission()` method returns permission level (owner, admin, member, viewer, edit, view)
+- Full permission resolution chain: author → private → workspace → shares → deny
+
+### Changed
+- `user_can_access_post()` now checks full visibility/workspace/share chain
+
 ## [1.44.0] - 2026-01-13
 
 ### Added
