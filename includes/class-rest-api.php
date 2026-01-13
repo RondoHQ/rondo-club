@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class PRM_REST_API {
+class PRM_REST_API extends PRM_REST_Base {
     
     public function __construct() {
         add_action('rest_api_init', [$this, 'register_routes']);
@@ -473,44 +473,6 @@ class PRM_REST_API {
             __('Failed to restore defaults.', 'personal-crm'),
             ['status' => 500]
         );
-    }
-    
-    /**
-     * Check if user is logged in and approved
-     */
-    public function check_user_approved() {
-        if (!is_user_logged_in()) {
-            return false;
-        }
-        
-        $user_id = get_current_user_id();
-        
-        // Admins are always approved
-        if (user_can($user_id, 'manage_options')) {
-            return true;
-        }
-        
-        // Check if user is approved
-        return PRM_User_Roles::is_user_approved($user_id);
-    }
-    
-    /**
-     * Check if user can access a person
-     */
-    public function check_person_access($request) {
-        if (!is_user_logged_in()) {
-            return false;
-        }
-        
-        // Check approval first
-        if (!$this->check_user_approved()) {
-            return false;
-        }
-        
-        $person_id = $request->get_param('person_id');
-        $access_control = new PRM_Access_Control();
-        
-        return $access_control->user_can_access_post($person_id);
     }
     
     /**
@@ -1469,60 +1431,6 @@ class PRM_REST_API {
     }
 
     /**
-     * Format person for summary response
-     */
-    private function format_person_summary($post) {
-        return [
-            'id'          => $post->ID,
-            'name'        => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
-            'first_name'  => get_field('first_name', $post->ID),
-            'last_name'   => get_field('last_name', $post->ID),
-            'thumbnail'   => get_the_post_thumbnail_url($post->ID, 'thumbnail'),
-            'is_favorite' => (bool) get_field('is_favorite', $post->ID),
-            'labels'      => wp_get_post_terms($post->ID, 'person_label', ['fields' => 'names']),
-        ];
-    }
-
-    /**
-     * Format company for summary response
-     */
-    private function format_company_summary($post) {
-        return [
-            'id'        => $post->ID,
-            'name'      => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
-            'thumbnail' => get_the_post_thumbnail_url($post->ID, 'thumbnail'),
-            'website'   => get_field('website', $post->ID),
-            'labels'    => wp_get_post_terms($post->ID, 'company_label', ['fields' => 'names']),
-        ];
-    }
-    
-    /**
-     * Format date for response
-     */
-    private function format_date($post) {
-        $related_people = get_field('related_people', $post->ID) ?: [];
-        $people_names = [];
-
-        foreach ($related_people as $person) {
-            $person_id = is_object($person) ? $person->ID : $person;
-            $people_names[] = [
-                'id'   => $person_id,
-                'name' => html_entity_decode(get_the_title($person_id), ENT_QUOTES, 'UTF-8'),
-            ];
-        }
-
-        return [
-            'id'                   => $post->ID,
-            'title'                => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
-            'date_value'           => get_field('date_value', $post->ID),
-            'is_recurring'         => (bool) get_field('is_recurring', $post->ID),
-            'year_unknown'         => (bool) get_field('year_unknown', $post->ID),
-            'date_type'            => wp_get_post_terms($post->ID, 'date_type', ['fields' => 'names']),
-            'related_people'       => $people_names,
-        ];
-    }
-    
-    /**
      * Sideload Gravatar image for a person
      */
     public function sideload_gravatar($request) {
@@ -1630,54 +1538,6 @@ class PRM_REST_API {
             'profile_url' => $profile_url,
             'admin_url' => $admin_url,
         ]);
-    }
-    
-    /**
-     * Check if user can edit a company
-     */
-    public function check_company_edit_permission($request) {
-        if (!is_user_logged_in()) {
-            return false;
-        }
-        
-        // Check approval first
-        if (!$this->check_user_approved()) {
-            return false;
-        }
-        
-        $company_id = $request->get_param('company_id');
-        $company = get_post($company_id);
-        
-        if (!$company || $company->post_type !== 'company') {
-            return false;
-        }
-        
-        // Check if user can edit this company
-        return current_user_can('edit_post', $company_id);
-    }
-    
-    /**
-     * Check if user can edit a person
-     */
-    public function check_person_edit_permission($request) {
-        if (!is_user_logged_in()) {
-            return false;
-        }
-        
-        // Check approval first
-        if (!$this->check_user_approved()) {
-            return false;
-        }
-        
-        $person_id = $request->get_param('person_id');
-        $person = get_post($person_id);
-        
-        if (!$person || $person->post_type !== 'person') {
-            return false;
-        }
-        
-        // Check if user can edit this person
-        return current_user_can('edit_post', $person_id);
     }
     
     /**
@@ -1857,13 +1717,6 @@ class PRM_REST_API {
             'thumbnail_url' => get_the_post_thumbnail_url($company_id, 'thumbnail'),
             'full_url'      => get_the_post_thumbnail_url($company_id, 'full'),
         ]);
-    }
-    
-    /**
-     * Check if user is admin
-     */
-    public function check_admin_permission() {
-        return current_user_can('manage_options');
     }
     
     /**
