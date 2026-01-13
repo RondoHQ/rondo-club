@@ -255,9 +255,10 @@ export function useBulkUpdatePeople() {
 
   return useMutation({
     mutationFn: ({ ids, updates }) => prmApi.bulkUpdatePeople(ids, updates),
-    onSuccess: () => {
-      // Invalidate people list and details for all updated people
-      queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+    onSuccess: async () => {
+      // Refetch people list to show updated data immediately
+      await queryClient.refetchQueries({ queryKey: peopleKeys.lists() });
+      // Invalidate details for individual person views
       queryClient.invalidateQueries({ queryKey: peopleKeys.details() });
     },
   });
