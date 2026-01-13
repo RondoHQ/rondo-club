@@ -1,0 +1,56 @@
+{
+    "key": "group_visibility_settings",
+    "title": "Visibility Settings",
+    "fields": [
+        {
+            "key": "field_visibility",
+            "label": "Visibility",
+            "name": "_visibility",
+            "type": "select",
+            "instructions": "Control who can see this contact",
+            "required": 1,
+            "choices": {
+                "private": "Private (only you)",
+                "workspace": "Workspace",
+                "shared": "Shared with specific users"
+            },
+            "default_value": "private",
+            "return_format": "value",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 0
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "person"
+            }
+        ],
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "company"
+            }
+        ],
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "important_date"
+            }
+        ]
+    ],
+    "menu_order": 100,
+    "position": "side",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "show_in_rest": 1
+}
