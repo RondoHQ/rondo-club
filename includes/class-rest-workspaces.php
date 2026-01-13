@@ -260,6 +260,30 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
                 ],
             ],
         ]);
+
+        // GET /prm/v1/workspaces/members/search - Search members across workspaces
+        register_rest_route('prm/v1', '/workspaces/members/search', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'search_workspace_members'],
+            'permission_callback' => [$this, 'check_user_approved'],
+            'args'                => [
+                'workspace_ids' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'description'       => 'Comma-separated workspace IDs',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'query' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'description'       => 'Search query',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => function($param) {
+                        return strlen($param) >= 1;
+                    },
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -989,6 +1013,64 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
             'role'           => $role,
             'message'        => __('You have joined the workspace.', 'personal-crm'),
         ]);
+    }
+
+    /**
+     * Search for members across one or more workspaces
+     *
+     * Used for @mention autocomplete functionality.
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response Response containing array of matching members.
+     */
+    public function search_workspace_members($request) {
+        $workspace_ids = array_map('intval', explode(',', $request->get_param('workspace_ids')));
+        $query = $request->get_param('query');
+        $current_user_id = get_current_user_id();
+
+        // Filter to only workspaces the current user has access to
+        $accessible_workspace_ids = [];
+        foreach ($workspace_ids as $workspace_id) {
+            if (PRM_Workspace_Members::is_member($workspace_id, $current_user_id) || current_user_can('manage_options')) {
+                $accessible_workspace_ids[] = $workspace_id;
+            }
+        }
+
+        if (empty($accessible_workspace_ids)) {
+            return rest_ensure_response([]);
+        }
+
+        // Collect all member user IDs from accessible workspaces
+        $member_ids = [];
+        foreach ($accessible_workspace_ids as $workspace_id) {
+            $members = PRM_Workspace_Members::get_members($workspace_id);
+            foreach ($members as $member) {
+                $member_ids[$member['user_id']] = true;
+            }
+        }
+
+        if (empty($member_ids)) {
+            return rest_ensure_response([]);
+        }
+
+        // Search users by display name or email
+        $users = get_users([
+            'include'        => array_keys($member_ids),
+            'search'         => '*' . $query . '*',
+            'search_columns' => ['display_name', 'user_email'],
+            'number'         => 10,
+        ]);
+
+        $results = [];
+        foreach ($users as $user) {
+            $results[] = [
+                'id'    => $user->ID,
+                'name'  => $user->display_name,
+                'email' => $user->user_email,
+            ];
+        }
+
+        return rest_ensure_response($results);
     }
 
     /**

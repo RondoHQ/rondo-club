@@ -191,6 +191,12 @@ export const prmApi = {
   addWorkspaceMember: (workspaceId, data) => api.post(`/prm/v1/workspaces/${workspaceId}/members`, data),
   removeWorkspaceMember: (workspaceId, userId) => api.delete(`/prm/v1/workspaces/${workspaceId}/members/${userId}`),
   updateWorkspaceMember: (workspaceId, userId, data) => api.put(`/prm/v1/workspaces/${workspaceId}/members/${userId}`, data),
+  searchWorkspaceMembers: async (workspaceIds, query) => {
+    const { data } = await api.get('/prm/v1/workspaces/members/search', {
+      params: { workspace_ids: workspaceIds.join(','), query },
+    });
+    return data;
+  },
 
   // Workspace invites
   getWorkspaceInvites: (workspaceId) => api.get(`/prm/v1/workspaces/${workspaceId}/invites`),
@@ -208,4 +214,7 @@ export const prmApi = {
 
   // User search for sharing
   searchUsers: (query) => api.get('/prm/v1/users/search', { params: { q: query } }),
+
+  // iCal feed
+  getIcalUrl: () => api.get('/prm/v1/user/ical-url'),
 };
