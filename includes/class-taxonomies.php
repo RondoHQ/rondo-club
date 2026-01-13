@@ -21,6 +21,38 @@ class PRM_Taxonomies {
         $this->register_company_label_taxonomy();
         $this->register_relationship_type_taxonomy();
         $this->register_date_type_taxonomy();
+        $this->register_workspace_access_taxonomy();
+    }
+
+    /**
+     * Register Workspace Access Taxonomy
+     * Used to link people, companies, and important dates to workspaces.
+     * Terms are auto-created when workspaces are created (Phase 8).
+     */
+    private function register_workspace_access_taxonomy() {
+        $labels = [
+            'name'              => _x('Workspace Access', 'taxonomy general name', 'personal-crm'),
+            'singular_name'     => _x('Workspace Access', 'taxonomy singular name', 'personal-crm'),
+            'search_items'      => __('Search Workspace Access', 'personal-crm'),
+            'all_items'         => __('All Workspace Access', 'personal-crm'),
+            'edit_item'         => __('Edit Workspace Access', 'personal-crm'),
+            'update_item'       => __('Update Workspace Access', 'personal-crm'),
+            'add_new_item'      => __('Add New Workspace Access', 'personal-crm'),
+            'new_item_name'     => __('New Workspace Access Name', 'personal-crm'),
+            'menu_name'         => __('Workspace Access', 'personal-crm'),
+        ];
+
+        $args = [
+            'hierarchical'      => false,
+            'labels'            => $labels,
+            'show_ui'           => true,
+            'show_admin_column' => false, // We'll control display in React
+            'show_in_rest'      => true,
+            'query_var'         => true,
+            'rewrite'           => false, // No frontend permalinks needed
+        ];
+
+        register_taxonomy('workspace_access', ['person', 'company', 'important_date'], $args);
     }
     
     /**
