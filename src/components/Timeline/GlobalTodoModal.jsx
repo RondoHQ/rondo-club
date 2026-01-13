@@ -71,13 +71,13 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
           is_completed: false,
         },
       });
-      
+
       // Invalidate todos query to refresh lists
       queryClient.invalidateQueries({ queryKey: ['todos'] });
-      
+
       onClose();
-    } catch (error) {
-      console.error('Failed to create todo:', error);
+    } catch {
+      // Todo creation failed - user can retry
     }
   };
 

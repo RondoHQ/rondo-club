@@ -624,8 +624,8 @@ export default function Layout({ children }) {
       if (data.email) {
         try {
           await prmApi.sideloadGravatar(personId, data.email);
-        } catch (gravatarError) {
-          console.error('Failed to load Gravatar:', gravatarError);
+        } catch {
+          // Gravatar sideload failed silently - not critical
         }
       }
       
@@ -642,8 +642,8 @@ export default function Layout({ children }) {
               related_people: [personId],
             },
           });
-        } catch (dateError) {
-          console.error('Failed to create birthday:', dateError);
+        } catch {
+          // Birthday creation failed silently - not critical
         }
       }
       

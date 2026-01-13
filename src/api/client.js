@@ -30,10 +30,7 @@ api.interceptors.response.use(
       window.location.href = config.loginUrl || '/wp-login.php';
     }
     
-    // Handle 403 - forbidden
-    if (error.response?.status === 403) {
-      console.error('Access denied:', error.response.data);
-    }
+    // Handle 403 - forbidden (silently handled)
     
     return Promise.reject(error);
   }
