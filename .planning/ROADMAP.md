@@ -5,10 +5,33 @@
 - ✅ [v1.0 Tech Debt Cleanup](milestones/v1.0-tech-debt-cleanup.md) (Phases 1-6) — SHIPPED 2026-01-13
 - ✅ [v2.0 Multi-User](milestones/v2.0-multi-user.md) (Phases 7-11) — SHIPPED 2026-01-13
 - ✅ [v2.1 Bulk Operations](milestones/v2.1-bulk-operations.md) (Phases 12-13) — SHIPPED 2026-01-13
+- 🚧 **v2.2 List View Polish** — Phases 14-15 (in progress)
 
 ## Current Milestone
 
-None active. Run `/gsd:new-milestone` or `/gsd:discuss-milestone` to plan next version.
+### 🚧 v2.2 List View Polish (In Progress)
+
+**Milestone Goal:** Complete the list view experience with full sorting capabilities, labels display, and extended bulk actions.
+
+#### Phase 14: List View Columns & Sorting
+
+**Goal**: Split first/last name columns, add labels column, clickable headers, sticky positioning, org/workspace sorting
+**Depends on**: Phase 13 (Bulk Actions)
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 14-01: TBD (run /gsd:plan-phase 14 to break down)
+
+#### Phase 15: Extended Bulk Actions
+
+**Goal**: Bulk organization assignment modal, bulk label add/remove modal
+**Depends on**: Phase 14
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 15-01: TBD (run /gsd:plan-phase 15 to break down)
 
 <details>
 <summary>✅ v2.1 Bulk Operations (Phases 12-13) — SHIPPED 2026-01-13</summary>
@@ -93,5 +116,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v1.0 Tech Debt Cleanup | 1-6 | 11/11 | Complete ✅ | 2026-01-13 |
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
+| v2.2 List View Polish | 14-15 | 0/? | In progress 🚧 | - |
 
 **Total: 13 phases, 34 plans shipped**
