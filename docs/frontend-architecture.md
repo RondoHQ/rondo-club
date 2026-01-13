@@ -264,6 +264,46 @@ Workspace and sharing hooks for multi-user collaboration:
 ['invite', token]                       // Invite validation
 ```
 
+### `useSharing` (`src/hooks/useSharing.js`)
+
+Direct sharing hooks for sharing individual posts with specific users:
+
+| Hook | Purpose |
+|------|---------|
+| `useShares(postType, postId)` | Fetch users a post is shared with |
+| `useAddShare()` | Share post with a user mutation |
+| `useRemoveShare()` | Remove share from a user mutation |
+| `useUserSearch(query)` | Search users for sharing (min 2 chars) |
+
+**Query Key Structure:**
+```js
+['shares', postType, postId]  // Shares for a specific post
+['users', 'search', query]    // User search results
+```
+
+**Usage Example:**
+```js
+const { data: shares } = useShares('people', personId);
+const addShare = useAddShare();
+const removeShare = useRemoveShare();
+const { data: users } = useUserSearch('john');
+
+// Add a share
+await addShare.mutateAsync({
+  postType: 'people',
+  postId: 123,
+  userId: 456,
+  permission: 'view' // or 'edit'
+});
+
+// Remove a share
+await removeShare.mutateAsync({
+  postType: 'people',
+  postId: 123,
+  userId: 456
+});
+```
+
 ### `useVersionCheck` (`src/hooks/useVersionCheck.js`)
 
 Version checking for PWA/mobile app cache invalidation:
