@@ -1,12 +1,98 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Building2, Filter, X } from 'lucide-react';
+import { Plus, Search, Building2, Filter, X, CheckSquare, Square } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useCreateCompany } from '@/hooks/useCompanies';
 import { wpApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
 import CompanyEditModal from '@/components/CompanyEditModal';
+
+function OrganizationListRow({ company, workspaces, companyLabels, isSelected, onToggleSelection, isOdd }) {
+  const assignedWorkspaces = company.acf?._assigned_workspaces || [];
+  const workspaceNames = assignedWorkspaces
+    .map(wsId => {
+      const numId = typeof wsId === 'string' ? parseInt(wsId, 10) : wsId;
+      const found = workspaces.find(ws => ws.id === numId);
+      return found?.title;
+    })
+    .filter(Boolean)
+    .join(', ');
+
+  // Get label names from label IDs
+  const labelIds = company.company_label || [];
+  const labelNames = labelIds
+    .map(labelId => {
+      const found = companyLabels.find(l => l.id === labelId);
+      return found?.name;
+    })
+    .filter(Boolean);
+
+  return (
+    <tr className={`hover:bg-gray-100 ${isOdd ? 'bg-gray-50' : 'bg-white'}`}>
+      <td className="pl-4 pr-2 py-3 w-10">
+        <button
+          onClick={(e) => { e.preventDefault(); onToggleSelection(company.id); }}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          {isSelected ? (
+            <CheckSquare className="w-5 h-5 text-primary-600" />
+          ) : (
+            <Square className="w-5 h-5" />
+          )}
+        </button>
+      </td>
+      <td className="w-10 px-2 py-3">
+        <Link to={`/companies/${company.id}`} className="flex items-center justify-center">
+          {company._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
+            <img
+              src={company._embedded['wp:featuredmedia'][0].source_url}
+              alt=""
+              className="w-8 h-8 rounded-lg object-contain bg-white"
+            />
+          ) : (
+            <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
+              <Building2 className="w-4 h-4 text-gray-400" />
+            </div>
+          )}
+        </Link>
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap">
+        <Link to={`/companies/${company.id}`} className="text-sm font-medium text-gray-900">
+          {getCompanyName(company)}
+        </Link>
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+        {company.acf?.industry || '-'}
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 truncate max-w-48">
+        {company.acf?.website || '-'}
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+        {workspaceNames || '-'}
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-500">
+        {labelNames.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {labelNames.slice(0, 3).map((label) => (
+              <span
+                key={label}
+                className="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
+              >
+                {label}
+              </span>
+            ))}
+            {labelNames.length > 3 && (
+              <span className="text-xs text-gray-400">+{labelNames.length - 3} more</span>
+            )}
+          </div>
+        ) : (
+          '-'
+        )}
+      </td>
+    </tr>
+  );
+}
 
 function CompanyCard({ company }) {
   return (
