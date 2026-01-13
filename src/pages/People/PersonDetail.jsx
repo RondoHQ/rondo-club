@@ -26,7 +26,7 @@ const LinkedInIcon = ({ className }) => (
       L341.91,330.654L341.91,330.654z"/>
   </svg>
 );
-import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
+import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople, peopleKeys } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import NoteModal from '@/components/Timeline/NoteModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
@@ -278,7 +278,7 @@ export default function PersonDetail() {
         });
       }
       
-      queryClient.invalidateQueries({ queryKey: ['person-dates', id] });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.dates(id) });
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
       setShowDateModal(false);
       setEditingDate(null);
