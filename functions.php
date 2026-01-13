@@ -57,6 +57,7 @@ function prm_autoloader($class_name) {
         'PRM_Taxonomies'             => 'class-taxonomies.php',
         'PRM_Auto_Title'             => 'class-auto-title.php',
         'PRM_Access_Control'         => 'class-access-control.php',
+        'PRM_Visibility'             => 'class-visibility.php',
         'PRM_Comment_Types'          => 'class-comment-types.php',
         'PRM_REST_API'               => 'class-rest-api.php',
         'PRM_REST_Base'              => 'class-rest-base.php',
@@ -76,6 +77,7 @@ function prm_autoloader($class_name) {
         'PRM_Slack_Channel'          => 'class-notification-channels.php',
         'PRM_VCard_Export'           => 'class-vcard-export.php',
         'PRM_CardDAV_Server'         => 'class-carddav-server.php',
+        'PRM_Workspace_Members'      => 'class-workspace-members.php',
     ];
     
     if (isset($class_map[$class_name])) {
