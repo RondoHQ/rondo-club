@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.72.0] - 2026-01-13
+
+### Changed
+- Implemented vendor chunking for improved bundle caching
+  - Split vendor chunk (React, React DOM, React Router, TanStack Query): 210 KB
+  - Split utils chunk (date-fns, clsx, zustand, axios, react-hook-form): 96 KB
+  - Main application chunk remains at 1,336 KB (pending lazy loading in future plans)
+  - Stable dependencies now cached separately, reducing cache invalidation on app updates
+
 ## [1.71.1] - 2026-01-13
 
 ### Fixed
