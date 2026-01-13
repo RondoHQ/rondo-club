@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-13)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** All milestones complete! Ready for new work.
+**Current focus:** Bundle optimization and code splitting for performance
 
 ## Current Position
 
-Milestone: v2.4 Bug Fixes — COMPLETE
-Phase: 19 (Important Date Polish) — COMPLETE
-Plan: 2/2 complete
-Status: Milestone complete
-Last activity: 2026-01-13 — Completed Phase 19 (2 plans, 6 tasks)
+Milestone: v2.5 Performance
+Phase: 20 of 20 (Bundle Optimization)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-13 — Milestone v2.5 created
 
-Progress: ████████████████████ 100%
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -53,11 +53,12 @@ See `.planning/ISSUES.md`:
 - Phase 19 complete: Important Date Polish (2 plans)
 - Milestone v2.4 complete: All date bugs fixed, CLI migration ready
 - Milestone v2.4 archived: Git tag v2.4 created
+- Milestone v2.5 created: Performance, 1 phase (Phase 20)
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Archived v2.4 milestone
+Stopped at: Milestone v2.5 initialization
 Resume file: None
 
 ## Accumulated Context
