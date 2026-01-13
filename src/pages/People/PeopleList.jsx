@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown, LayoutGrid, List } from 'lucide-react';
 import { usePeople, useCreatePerson } from '@/hooks/usePeople';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useQuery } from '@tanstack/react-query';
@@ -93,6 +93,7 @@ export default function PeopleList() {
   const [selectedWorkspaceFilter, setSelectedWorkspaceFilter] = useState('');
   const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
+  const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
   const [showPersonModal, setShowPersonModal] = useState(false);
   const [isCreatingPerson, setIsCreatingPerson] = useState(false);
   const filterRef = useRef(null);
@@ -367,7 +368,25 @@ export default function PeopleList() {
               )}
             </button>
           </div>
-          
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center border border-gray-200 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-1.5 rounded transition-colors ${viewMode === 'card' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+              title="Card view"
+            >
+              <LayoutGrid className={`w-4 h-4 ${viewMode === 'card' ? 'text-primary-600' : 'text-gray-600'}`} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+              title="List view"
+            >
+              <List className={`w-4 h-4 ${viewMode === 'list' ? 'text-primary-600' : 'text-gray-600'}`} />
+            </button>
+          </div>
+
           <div className="relative" ref={filterRef}>
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -666,18 +685,23 @@ export default function PeopleList() {
         </div>
       )}
       
-      {/* People grid */}
-      {!isLoading && !error && filteredAndSortedPeople?.length > 0 && (
+      {/* People grid (card view) */}
+      {!isLoading && !error && filteredAndSortedPeople?.length > 0 && viewMode === 'card' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredAndSortedPeople.map((person) => (
-            <PersonCard 
-              key={person.id} 
-              person={person} 
+            <PersonCard
+              key={person.id}
+              person={person}
               companyName={personCompanyMap[person.id]}
               isDeceased={person.is_deceased}
             />
           ))}
         </div>
+      )}
+
+      {/* People list (list view) */}
+      {!isLoading && !error && filteredAndSortedPeople?.length > 0 && viewMode === 'list' && (
+        <div>List view coming next task</div>
       )}
       
       {/* No results with filters */}
