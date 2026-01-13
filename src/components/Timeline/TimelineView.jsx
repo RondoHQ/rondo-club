@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { format } from 'date-fns';
 import {
   Phone, Mail, Users, Coffee, Utensils, FileText, Circle, MessageCircle,
-  CheckSquare2, Square, Pencil, Trash2, Link as LinkIcon
+  CheckSquare2, Square, Pencil, Trash2, Link as LinkIcon, Lock, Globe
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -84,8 +84,8 @@ export default function TimelineView({
           </div>
         )}
 
-        {/* Content */}
-        <div className={`${todoClasses}`}>
+        {/* Content - shared notes get a subtle left border */}
+        <div className={`${todoClasses} ${isNote && item.visibility === 'shared' ? 'border-l-2 border-blue-200 pl-2' : ''}`}>
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               {/* Date line - only for notes and activities, not todos */}
@@ -103,6 +103,19 @@ export default function TimelineView({
                   )}
                   <span className="text-xs text-gray-400">•</span>
                   <span className="text-xs text-gray-500">{formattedDate}</span>
+                  {/* Note visibility indicator */}
+                  {isNote && (
+                    <span
+                      className="ml-1"
+                      title={item.visibility === 'shared' ? 'Shared note' : 'Private note - only you can see this'}
+                    >
+                      {item.visibility === 'shared' ? (
+                        <Globe className="w-3 h-3 text-blue-500" />
+                      ) : (
+                        <Lock className="w-3 h-3 text-gray-400" />
+                      )}
+                    </span>
+                  )}
                 </div>
               )}
               
