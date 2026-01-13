@@ -83,7 +83,7 @@ function PersonCard({ person, companyName, isDeceased }) {
   );
 }
 
-function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSelection }) {
+function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSelection, isOdd }) {
   const assignedWorkspaces = person.acf?._assigned_workspaces || [];
   const workspaceNames = assignedWorkspaces
     .map(wsId => {
@@ -96,7 +96,7 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
     .join(', ');
 
   return (
-    <tr className="hover:bg-gray-50">
+    <tr className={`hover:bg-gray-100 ${isOdd ? 'bg-gray-50' : 'bg-white'}`}>
       <td className="pl-4 pr-2 py-3 w-10">
         <button
           onClick={(e) => { e.preventDefault(); onToggleSelection(person.id); }}
@@ -127,7 +127,7 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
           <div className="ml-3">
             <div className="flex items-center">
               <span className="text-sm font-medium text-gray-900">
-                {person.name}
+                {person.first_name || ''}
                 {person.is_deceased && <span className="ml-1 text-gray-500">†</span>}
               </span>
               {person.is_favorite && (
@@ -136,6 +136,9 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
             </div>
           </div>
         </Link>
+      </td>
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+        {person.last_name || '-'}
       </td>
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
         {companyName || '-'}
@@ -169,7 +172,10 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
               </button>
             </th>
             <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Name
+              First Name
+            </th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Last Name
             </th>
             <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Organization
@@ -179,8 +185,8 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {people.map((person) => (
+        <tbody className="divide-y divide-gray-200">
+          {people.map((person, index) => (
             <PersonListRow
               key={person.id}
               person={person}
@@ -188,6 +194,7 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
               workspaces={workspaces}
               isSelected={selectedIds.has(person.id)}
               onToggleSelection={onToggleSelection}
+              isOdd={index % 2 === 1}
             />
           ))}
         </tbody>
