@@ -81,10 +81,12 @@ Resume file: None
 
 ### Pending Todos
 
-3 todos in `.planning/todos/pending/`:
-1. Testing framework (PHPUnit + Playwright) — **Addressed by v3.0** (PHPUnit portion)
-2. React bundle chunking optimization — **Addressed by v2.5**
-3. Console MIME type errors — Build hash mismatch after npm run build
+0 todos in `.planning/todos/pending/`
+
+Completed todos in `.planning/todos/done/`:
+1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
+2. React bundle chunking — Done in v2.5
+3. Console MIME type errors — Resolved via production deploy
 
 ## Next Steps
 
