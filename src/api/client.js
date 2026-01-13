@@ -179,4 +179,33 @@ export const prmApi = {
   getAppPasswords: (userId) => api.get(`/wp/v2/users/${userId}/application-passwords`),
   createAppPassword: (userId, name) => api.post(`/wp/v2/users/${userId}/application-passwords`, { name }),
   deleteAppPassword: (userId, uuid) => api.delete(`/wp/v2/users/${userId}/application-passwords/${uuid}`),
+
+  // Workspaces
+  getWorkspaces: () => api.get('/prm/v1/workspaces'),
+  getWorkspace: (id) => api.get(`/prm/v1/workspaces/${id}`),
+  createWorkspace: (data) => api.post('/prm/v1/workspaces', data),
+  updateWorkspace: (id, data) => api.put(`/prm/v1/workspaces/${id}`, data),
+  deleteWorkspace: (id) => api.delete(`/prm/v1/workspaces/${id}`),
+
+  // Workspace members
+  addWorkspaceMember: (workspaceId, data) => api.post(`/prm/v1/workspaces/${workspaceId}/members`, data),
+  removeWorkspaceMember: (workspaceId, userId) => api.delete(`/prm/v1/workspaces/${workspaceId}/members/${userId}`),
+  updateWorkspaceMember: (workspaceId, userId, data) => api.put(`/prm/v1/workspaces/${workspaceId}/members/${userId}`, data),
+
+  // Workspace invites
+  getWorkspaceInvites: (workspaceId) => api.get(`/prm/v1/workspaces/${workspaceId}/invites`),
+  createWorkspaceInvite: (workspaceId, data) => api.post(`/prm/v1/workspaces/${workspaceId}/invites`, data),
+  revokeWorkspaceInvite: (workspaceId, inviteId) => api.delete(`/prm/v1/workspaces/${workspaceId}/invites/${inviteId}`),
+
+  // Public invite endpoints (no auth required for validation)
+  validateInvite: (token) => api.get(`/prm/v1/invites/${token}`),
+  acceptInvite: (token) => api.post(`/prm/v1/invites/${token}/accept`),
+
+  // Sharing (for ShareModal - uses existing _shared_with meta)
+  getPostShares: (postId, postType) => api.get(`/prm/v1/${postType}/${postId}/shares`),
+  sharePost: (postId, postType, data) => api.post(`/prm/v1/${postType}/${postId}/shares`, data),
+  unsharePost: (postId, postType, userId) => api.delete(`/prm/v1/${postType}/${postId}/shares/${userId}`),
+
+  // User search for sharing
+  searchUsers: (query) => api.get('/prm/v1/users/search', { params: { q: query } }),
 };

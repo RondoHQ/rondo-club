@@ -415,6 +415,195 @@ Restore default inverse relationship mappings and gender-dependent configuration
 
 ---
 
+### Workspaces
+
+**GET** `/prm/v1/workspaces`
+
+List all workspaces the current user is a member of.
+
+**Permission:** Logged in users only
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "My Workspace",
+    "description": "Shared team workspace",
+    "member_count": 3,
+    "role": "owner"
+  }
+]
+```
+
+---
+
+**GET** `/prm/v1/workspaces/{id}`
+
+Get single workspace with members.
+
+**Permission:** Must be workspace member
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "My Workspace",
+  "description": "Shared team workspace",
+  "members": [
+    {
+      "user_id": 1,
+      "display_name": "John Doe",
+      "email": "john@example.com",
+      "role": "owner"
+    }
+  ]
+}
+```
+
+---
+
+**POST** `/prm/v1/workspaces`
+
+Create a new workspace.
+
+**Permission:** Logged in users only
+
+**Body:**
+```json
+{
+  "name": "New Workspace",
+  "description": "Optional description"
+}
+```
+
+---
+
+**PUT** `/prm/v1/workspaces/{id}`
+
+Update workspace details.
+
+**Permission:** Must be workspace owner or admin
+
+**Body:**
+```json
+{
+  "name": "Updated Name",
+  "description": "Updated description"
+}
+```
+
+---
+
+**DELETE** `/prm/v1/workspaces/{id}`
+
+Delete a workspace.
+
+**Permission:** Must be workspace owner
+
+---
+
+### Workspace Members
+
+**POST** `/prm/v1/workspaces/{id}/members`
+
+Add a member to the workspace.
+
+**Permission:** Must be workspace owner or admin
+
+**Body:**
+```json
+{
+  "user_id": 123,
+  "role": "member"
+}
+```
+
+---
+
+**PUT** `/prm/v1/workspaces/{id}/members/{user_id}`
+
+Update member role.
+
+**Permission:** Must be workspace owner or admin
+
+**Body:**
+```json
+{
+  "role": "admin"
+}
+```
+
+---
+
+**DELETE** `/prm/v1/workspaces/{id}/members/{user_id}`
+
+Remove a member from the workspace.
+
+**Permission:** Must be workspace owner or admin
+
+---
+
+### Workspace Invites
+
+**GET** `/prm/v1/workspaces/{id}/invites`
+
+List pending invites for a workspace.
+
+**Permission:** Must be workspace owner or admin
+
+---
+
+**POST** `/prm/v1/workspaces/{id}/invites`
+
+Create and send an email invitation.
+
+**Permission:** Must be workspace owner or admin
+
+**Body:**
+```json
+{
+  "email": "newuser@example.com",
+  "role": "member"
+}
+```
+
+---
+
+**DELETE** `/prm/v1/workspaces/{id}/invites/{invite_id}`
+
+Revoke a pending invite.
+
+**Permission:** Must be workspace owner or admin
+
+---
+
+**GET** `/prm/v1/invites/{token}`
+
+Validate an invite token (public endpoint).
+
+**Permission:** Public (no authentication required)
+
+**Response:**
+```json
+{
+  "valid": true,
+  "workspace_name": "Team Workspace",
+  "invited_by": "John Doe",
+  "role": "member"
+}
+```
+
+---
+
+**POST** `/prm/v1/invites/{token}/accept`
+
+Accept an invite and join the workspace.
+
+**Permission:** Must be logged in
+
+---
+
 ## Response Enhancements
 
 ### Person Relationships Expansion
