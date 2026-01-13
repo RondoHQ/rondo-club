@@ -5,36 +5,37 @@
 - ✅ [v1.0 Tech Debt Cleanup](milestones/v1.0-tech-debt-cleanup.md) (Phases 1-6) — SHIPPED 2026-01-13
 - ✅ [v2.0 Multi-User](milestones/v2.0-multi-user.md) (Phases 7-11) — SHIPPED 2026-01-13
 - ✅ [v2.1 Bulk Operations](milestones/v2.1-bulk-operations.md) (Phases 12-13) — SHIPPED 2026-01-13
-- 🚧 **v2.2 List View Polish** — Phases 14-15 (in progress)
+- ✅ [v2.2 List View Polish](milestones/v2.2-list-view-polish.md) (Phases 14-15) — SHIPPED 2026-01-13
 
 ## Current Milestone
 
-### 🚧 v2.2 List View Polish (In Progress)
+No active milestone. Use `/gsd:new-milestone` to create the next milestone.
 
-**Milestone Goal:** Complete the list view experience with full sorting capabilities, labels display, and extended bulk actions.
+<details>
+<summary>✅ v2.2 List View Polish (Phases 14-15) — SHIPPED 2026-01-13</summary>
 
-#### Phase 14: List View Columns & Sorting ✓
+**Overview:** Complete the list view experience with full sorting capabilities, labels display, and extended bulk actions.
 
-**Goal**: Split first/last name columns, add labels column, clickable headers, sticky positioning, org/workspace sorting
-**Depends on**: Phase 13 (Bulk Actions)
-**Status**: Complete (2026-01-13)
+**Phases:**
+- [x] Phase 14: List View Columns & Sorting (2/2 plans) ✓
+- [x] Phase 15: Extended Bulk Actions (2/2 plans) ✓
 
-Plans:
-- [x] 14-01: Columns & Extended Sorting — split name columns, labels column, org/workspace/labels sorting
-- [x] 14-02: Clickable Headers & Sticky — sortable headers with indicators, sticky header/toolbar
+**Total:** 2 phases, 4 plans
 
-**Issues closed:** ISS-001, ISS-002, ISS-004, ISS-005
+**Key Accomplishments:**
+- Split Name into First Name / Last Name columns
+- Labels column with styled pills
+- Clickable column headers with sort indicators
+- Sticky table header and selection toolbar
+- Organization, Workspace, Labels sorting
+- BulkOrganizationModal with search and clear option
+- BulkLabelsModal with add/remove mode toggle
 
-#### Phase 15: Extended Bulk Actions
+**Issues closed:** ISS-001, ISS-002, ISS-003, ISS-004, ISS-005
 
-**Goal**: Bulk organization assignment modal, bulk label add/remove modal
-**Depends on**: Phase 14
-**Research**: Unlikely (internal patterns)
-**Plans**: 2
+See [milestone archive](milestones/v2.2-list-view-polish.md) for full details.
 
-Plans:
-- [ ] 15-01: Backend REST endpoint extension — add organization_id, labels_add, labels_remove to bulk-update
-- [ ] 15-02: Frontend UI modals — BulkOrganizationModal, BulkLabelsModal in Actions dropdown
+</details>
 
 <details>
 <summary>✅ v2.1 Bulk Operations (Phases 12-13) — SHIPPED 2026-01-13</summary>
@@ -119,6 +120,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v1.0 Tech Debt Cleanup | 1-6 | 11/11 | Complete ✅ | 2026-01-13 |
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
-| v2.2 List View Polish | 14-15 | 2/4 | In progress 🚧 | - |
+| v2.2 List View Polish | 14-15 | 4/4 | Complete ✅ | 2026-01-13 |
 
-**Total: 14 phases, 36 plans shipped**
+**Total: 15 phases, 38 plans shipped**
