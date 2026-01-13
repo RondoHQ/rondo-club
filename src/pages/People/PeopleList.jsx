@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown, LayoutGrid, List, Square, CheckSquare, MinusSquare, ChevronDown, Lock, Users, Building2, Tag } from 'lucide-react';
+import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Lock, Users, Building2, Tag } from 'lucide-react';
 import { usePeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useQuery } from '@tanstack/react-query';
@@ -27,60 +27,6 @@ function getCurrentCompanyId(person) {
     });
   
   return jobsWithCompany.length > 0 ? jobsWithCompany[0].company : null;
-}
-
-function PersonCard({ person, companyName, isDeceased }) {
-  return (
-    <Link 
-      to={`/people/${person.id}`}
-      className="card p-4 hover:shadow-md transition-shadow"
-    >
-      <div className="flex items-start">
-        {person.thumbnail ? (
-          <img 
-            src={person.thumbnail} 
-            alt={person.name}
-            loading="lazy"
-            className="w-12 h-12 rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-lg font-medium text-gray-500">
-              {person.first_name?.[0] || '?'}
-            </span>
-          </div>
-        )}
-        <div className="ml-3 flex-1 min-w-0">
-          <div className="flex items-center">
-            <h3 className="text-sm font-medium text-gray-900 truncate">
-              {person.name}
-              {isDeceased && <span className="ml-1 text-gray-500">†</span>}
-            </h3>
-            {person.is_favorite && (
-              <Star className="w-4 h-4 ml-1 text-yellow-400 fill-current flex-shrink-0" />
-            )}
-          </div>
-          {companyName && (
-            <p className="text-xs text-gray-500 mt-0.5 truncate">
-              {companyName}
-            </p>
-          )}
-          {person.labels?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {person.labels.slice(0, 3).map((label) => (
-                <span 
-                  key={label}
-                  className="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
 }
 
 function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSelection, isOdd }) {
@@ -683,9 +629,6 @@ export default function PeopleList() {
   const [selectedWorkspaceFilter, setSelectedWorkspaceFilter] = useState('');
   const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
-  const [viewMode, setViewMode] = useState(() => {
-    return localStorage.getItem('peopleViewMode') || 'card';
-  });
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showPersonModal, setShowPersonModal] = useState(false);
   const [isCreatingPerson, setIsCreatingPerson] = useState(false);
@@ -761,11 +704,6 @@ export default function PeopleList() {
     return [...new Set(years)].sort((a, b) => b - a);
   }, [people]);
   
-  // Persist view mode to localStorage
-  useEffect(() => {
-    localStorage.setItem('peopleViewMode', viewMode);
-  }, [viewMode]);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -1090,24 +1028,6 @@ export default function PeopleList() {
             </button>
           </div>
 
-          {/* View Mode Toggle */}
-          <div className="flex items-center border border-gray-200 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode('card')}
-              className={`p-1.5 rounded transition-colors ${viewMode === 'card' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
-              title="Card view"
-            >
-              <LayoutGrid className={`w-4 h-4 ${viewMode === 'card' ? 'text-primary-600' : 'text-gray-600'}`} />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
-              title="List view"
-            >
-              <List className={`w-4 h-4 ${viewMode === 'list' ? 'text-primary-600' : 'text-gray-600'}`} />
-            </button>
-          </div>
-
           <div className="relative" ref={filterRef}>
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -1406,22 +1326,8 @@ export default function PeopleList() {
         </div>
       )}
       
-      {/* People grid (card view) */}
-      {!isLoading && !error && sortedPeople?.length > 0 && viewMode === 'card' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedPeople.map((person) => (
-            <PersonCard
-              key={person.id}
-              person={person}
-              companyName={personCompanyMap[person.id]}
-              isDeceased={person.is_deceased}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Selection toolbar (list view only) - sticky */}
-      {viewMode === 'list' && selectedIds.size > 0 && (
+      {/* Selection toolbar - sticky */}
+      {selectedIds.size > 0 && (
         <div className="sticky top-0 z-20 flex items-center justify-between bg-primary-50 border border-primary-200 rounded-lg px-4 py-2 shadow-sm">
           <span className="text-sm text-primary-800 font-medium">
             {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'} selected
@@ -1493,8 +1399,8 @@ export default function PeopleList() {
         </div>
       )}
 
-      {/* People list (list view) */}
-      {!isLoading && !error && sortedPeople?.length > 0 && viewMode === 'list' && (
+      {/* People list */}
+      {!isLoading && !error && sortedPeople?.length > 0 && (
         <PersonListView
           people={sortedPeople}
           companyMap={personCompanyMap}
