@@ -94,6 +94,7 @@ export const prmApi = {
 
   // Bulk operations
   bulkUpdatePeople: (ids, updates) => api.post('/prm/v1/people/bulk-update', { ids, updates }),
+  bulkUpdateCompanies: (ids, updates) => api.post('/prm/v1/companies/bulk-update', { ids, updates }),
   
   // Current user
   getCurrentUser: () => api.get('/prm/v1/user/me'),
