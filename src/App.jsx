@@ -15,6 +15,8 @@ import Settings from '@/pages/Settings/Settings';
 import RelationshipTypes from '@/pages/Settings/RelationshipTypes';
 import UserApproval from '@/pages/Settings/UserApproval';
 import FamilyTree from '@/pages/People/FamilyTree';
+import WorkspacesList from '@/pages/Workspaces/WorkspacesList';
+import WorkspaceDetail from '@/pages/Workspaces/WorkspaceDetail';
 import Login from '@/pages/Login';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
@@ -174,7 +176,11 @@ function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/settings/relationship-types" element={<RelationshipTypes />} />
                 <Route path="/settings/user-approval" element={<UserApproval />} />
-                
+
+                {/* Workspaces routes */}
+                <Route path="/workspaces" element={<WorkspacesList />} />
+                <Route path="/workspaces/:id" element={<WorkspaceDetail />} />
+
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  Building2, 
-  Calendar, 
-  Settings, 
-  Menu, 
+import {
+  Users,
+  Building2,
+  Calendar,
+  Settings,
+  Menu,
   X,
   Home,
   LogOut,
@@ -15,7 +15,8 @@ import {
   Sparkles,
   CheckSquare,
   Plus,
-  Command
+  Command,
+  UsersRound
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
@@ -35,6 +36,7 @@ const navigation = [
   { name: 'Organizations', href: '/companies', icon: Building2 },
   { name: 'Dates', href: '/dates', icon: Calendar },
   { name: 'Todos', href: '/todos', icon: CheckSquare },
+  { name: 'Workspaces', href: '/workspaces', icon: UsersRound },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
@@ -508,6 +510,7 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddCompany, onAddDate, 
     if (path.startsWith('/companies')) return 'Organizations';
     if (path.startsWith('/dates')) return 'Important Dates';
     if (path.startsWith('/todos')) return 'Todos';
+    if (path.startsWith('/workspaces')) return 'Workspaces';
     if (path.startsWith('/settings')) return 'Settings';
     return '';
   };
