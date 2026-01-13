@@ -14,7 +14,7 @@
 - [x] Phase 7: Data Model & Visibility System (4/4 plans) ✓
 - [x] Phase 8: Workspace & Team Infrastructure (3/3 plans) ✓
 - [x] Phase 9: Sharing UI & Permissions Interface (6/6 plans) ✓
-- [ ] Phase 10: Collaborative Features (0 plans) — *research likely*
+- [ ] Phase 10: Collaborative Features (0/5 plans) — *planned*
 - [ ] Phase 11: Migration, Testing & Polish (0 plans)
 
 **Key deliverables:**
