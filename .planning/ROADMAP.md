@@ -12,15 +12,14 @@
 
 **Milestone Goal:** Enable efficient bulk management of contacts through a new list view with multi-select and batch actions
 
-#### Phase 12: List View & Selection Infrastructure
+#### Phase 12: List View & Selection Infrastructure ✓
 
 **Goal**: Add list view to people screen with columns (name, workspace, org) and checkbox selection
 **Depends on**: v2.0 Multi-User complete
-**Research**: Unlikely (internal React patterns)
-**Plans**: TBD
+**Status**: Complete (2026-01-13)
 
 Plans:
-- [ ] 12-01: TBD (run /gsd:plan-phase 12 to break down)
+- [x] 12-01: List view with card/list toggle, table columns, checkbox selection infrastructure
 
 #### Phase 13: Bulk Actions
 
@@ -92,9 +91,9 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 |-----------|--------|-------|--------|-----------|
 | v1.0 Tech Debt Cleanup | 1-6 | 11/11 | Complete ✅ | 2026-01-13 |
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
-| v2.1 Bulk Operations | 12-13 | 0/? | In progress | - |
+| v2.1 Bulk Operations | 12-13 | 1/? | In progress | - |
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
-| 12. List View & Selection | v2.1 | 0/? | Not started | - |
+| 12. List View & Selection | v2.1 | 1/1 | Complete ✓ | 2026-01-13 |
 | 13. Bulk Actions | v2.1 | 0/? | Not started | - |

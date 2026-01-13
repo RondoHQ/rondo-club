@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.62.0] - 2026-01-13
+
+### Added
+- List view for People screen with tabular layout
+  - Toggle between card view and list view using LayoutGrid/List icons
+  - Table displays Name (with avatar, deceased marker, favorite star), Organization, and Workspace columns
+  - Rows link to person detail page
+- Multi-select infrastructure for bulk operations
+  - Checkbox selection for individual rows and select all/none
+  - Header checkbox shows checked/partial/unchecked state based on selection
+  - Selection toolbar shows count and clear button
+  - Selection automatically clears when filters change
+
 ## [1.61.1] - 2026-01-13
 
 ### Added
