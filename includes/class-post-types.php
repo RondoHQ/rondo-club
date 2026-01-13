@@ -18,6 +18,7 @@ class PRM_Post_Types {
      */
     public function register_post_types() {
         $this->register_workspace_post_type();
+        $this->register_workspace_invite_post_type();
         $this->register_person_post_type();
         $this->register_company_post_type();
         $this->register_important_date_post_type();
@@ -62,7 +63,47 @@ class PRM_Post_Types {
 
         register_post_type('workspace', $args);
     }
-    
+
+    /**
+     * Register Workspace Invite CPT
+     *
+     * Used for tracking workspace invitations sent to users via email.
+     * Not exposed via standard wp/v2 REST - uses custom endpoints only.
+     */
+    private function register_workspace_invite_post_type() {
+        $labels = [
+            'name'                  => _x('Workspace Invites', 'Post type general name', 'personal-crm'),
+            'singular_name'         => _x('Workspace Invite', 'Post type singular name', 'personal-crm'),
+            'menu_name'             => _x('Invites', 'Admin Menu text', 'personal-crm'),
+            'add_new'               => __('Add New', 'personal-crm'),
+            'add_new_item'          => __('Add New Invite', 'personal-crm'),
+            'edit_item'             => __('Edit Invite', 'personal-crm'),
+            'new_item'              => __('New Invite', 'personal-crm'),
+            'view_item'             => __('View Invite', 'personal-crm'),
+            'search_items'          => __('Search Invites', 'personal-crm'),
+            'not_found'             => __('No invites found', 'personal-crm'),
+            'not_found_in_trash'    => __('No invites found in Trash', 'personal-crm'),
+            'all_items'             => __('All Invites', 'personal-crm'),
+        ];
+
+        $args = [
+            'labels'              => $labels,
+            'public'              => false,
+            'publicly_queryable'  => false,
+            'show_ui'             => true,
+            'show_in_menu'        => 'edit.php?post_type=workspace', // Submenu under Workspaces
+            'show_in_rest'        => false, // Custom endpoints only
+            'query_var'           => false,
+            'rewrite'             => false,
+            'capability_type'     => 'post',
+            'has_archive'         => false,
+            'hierarchical'        => false,
+            'supports'            => ['title'], // Title = email for easy identification
+        ];
+
+        register_post_type('workspace_invite', $args);
+    }
+
     /**
      * Register Person CPT
      */

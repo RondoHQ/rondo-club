@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.47.0] - 2026-01-13
+
+### Added
+- `workspace_invite` Custom Post Type for tracking workspace invitations
+- ACF field group for invite metadata (email, role, token, status, expiry)
+- Invites appear in admin under Workspaces menu for easy management
+
 ## [1.46.0] - 2026-01-13
 
 ### Added

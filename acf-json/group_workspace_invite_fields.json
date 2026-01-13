@@ -1,0 +1,109 @@
+{
+    "key": "group_workspace_invite_fields",
+    "title": "Workspace Invite Fields",
+    "fields": [
+        {
+            "key": "field_invite_workspace_id",
+            "label": "Workspace",
+            "name": "_invite_workspace_id",
+            "type": "number",
+            "instructions": "The workspace this invitation is for",
+            "required": 1,
+            "min": 1,
+            "step": 1
+        },
+        {
+            "key": "field_invite_email",
+            "label": "Email",
+            "name": "_invite_email",
+            "type": "email",
+            "instructions": "Invitee email address",
+            "required": 1
+        },
+        {
+            "key": "field_invite_role",
+            "label": "Role",
+            "name": "_invite_role",
+            "type": "select",
+            "instructions": "Role to assign when invitation is accepted",
+            "required": 1,
+            "choices": {
+                "admin": "Admin",
+                "member": "Member",
+                "viewer": "Viewer"
+            },
+            "default_value": "member",
+            "return_format": "value",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 0
+        },
+        {
+            "key": "field_invite_token",
+            "label": "Token",
+            "name": "_invite_token",
+            "type": "text",
+            "instructions": "Secure random token for acceptance URL",
+            "required": 1,
+            "readonly": 1
+        },
+        {
+            "key": "field_invite_status",
+            "label": "Status",
+            "name": "_invite_status",
+            "type": "select",
+            "instructions": "Current status of the invitation",
+            "required": 1,
+            "choices": {
+                "pending": "Pending",
+                "accepted": "Accepted",
+                "expired": "Expired",
+                "revoked": "Revoked"
+            },
+            "default_value": "pending",
+            "return_format": "value",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 0
+        },
+        {
+            "key": "field_invite_expires_at",
+            "label": "Expires At",
+            "name": "_invite_expires_at",
+            "type": "text",
+            "instructions": "ISO 8601 expiration timestamp",
+            "required": 1,
+            "readonly": 1
+        },
+        {
+            "key": "field_invite_accepted_by",
+            "label": "Accepted By",
+            "name": "_invite_accepted_by",
+            "type": "number",
+            "instructions": "User ID who accepted the invitation",
+            "required": 0,
+            "readonly": 1,
+            "min": 1,
+            "step": 1
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "workspace_invite"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "show_in_rest": 0
+}
