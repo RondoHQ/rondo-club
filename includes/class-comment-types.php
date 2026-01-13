@@ -84,6 +84,14 @@ class PRM_Comment_Types {
             'single'       => true,
             'show_in_rest' => true,
         ]);
+
+        // Note visibility meta
+        register_comment_meta('comment', '_note_visibility', [
+            'type'         => 'string',
+            'description'  => 'Note visibility: private (only author) or shared (anyone who can see the contact)',
+            'single'       => true,
+            'show_in_rest' => true,
+        ]);
     }
     
     /**
@@ -228,7 +236,7 @@ class PRM_Comment_Types {
      */
     public function get_notes($request) {
         $person_id = $request->get_param('person_id');
-        
+
         $comments = get_comments([
             'post_id' => $person_id,
             'type'    => self::TYPE_NOTE,
@@ -236,7 +244,10 @@ class PRM_Comment_Types {
             'orderby' => 'comment_date',
             'order'   => 'DESC',
         ]);
-        
+
+        // Filter notes based on visibility
+        $comments = $this->filter_notes_by_visibility($comments);
+
         return rest_ensure_response($this->format_comments($comments, 'note'));
     }
     
@@ -247,11 +258,17 @@ class PRM_Comment_Types {
         $person_id = $request->get_param('person_id');
         // Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
         $content = wp_kses_post($request->get_param('content'));
-        
+        $visibility = sanitize_text_field($request->get_param('visibility'));
+
+        // Default to private if not specified or invalid
+        if (!in_array($visibility, ['private', 'shared'], true)) {
+            $visibility = 'private';
+        }
+
         if (empty($content)) {
             return new WP_Error('empty_content', __('Note content is required.', 'personal-crm'), ['status' => 400]);
         }
-        
+
         $comment_id = wp_insert_comment([
             'comment_post_ID' => $person_id,
             'comment_content' => $content,
@@ -259,13 +276,16 @@ class PRM_Comment_Types {
             'user_id'         => get_current_user_id(),
             'comment_approved' => 1,
         ]);
-        
+
         if (!$comment_id) {
             return new WP_Error('create_failed', __('Failed to create note.', 'personal-crm'), ['status' => 500]);
         }
-        
+
+        // Save visibility meta
+        update_comment_meta($comment_id, '_note_visibility', $visibility);
+
         $comment = get_comment($comment_id);
-        
+
         return rest_ensure_response($this->format_comment($comment, 'note'));
     }
     
@@ -276,19 +296,28 @@ class PRM_Comment_Types {
         $comment_id = $request->get_param('id');
         // Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
         $content = wp_kses_post($request->get_param('content'));
-        
+        $visibility = $request->get_param('visibility');
+
         $result = wp_update_comment([
             'comment_ID'      => $comment_id,
             'comment_content' => $content,
         ]);
-        
+
         // wp_update_comment returns false on failure, 0 if no changes, 1 if updated
         if ($result === false || is_wp_error($result)) {
             return new WP_Error('update_failed', __('Failed to update note.', 'personal-crm'), ['status' => 500]);
         }
-        
+
+        // Update visibility if provided
+        if ($visibility !== null) {
+            $visibility = sanitize_text_field($visibility);
+            if (in_array($visibility, ['private', 'shared'], true)) {
+                update_comment_meta($comment_id, '_note_visibility', $visibility);
+            }
+        }
+
         $comment = get_comment($comment_id);
-        
+
         return rest_ensure_response($this->format_comment($comment, 'note'));
     }
     
@@ -515,7 +544,8 @@ class PRM_Comment_Types {
      */
     public function get_timeline($request) {
         $person_id = $request->get_param('person_id');
-        
+        $current_user_id = get_current_user_id();
+
         $comments = get_comments([
             'post_id'  => $person_id,
             'type__in' => [self::TYPE_NOTE, self::TYPE_ACTIVITY, self::TYPE_TODO],
@@ -523,9 +553,9 @@ class PRM_Comment_Types {
             'orderby'  => 'comment_date',
             'order'    => 'DESC',
         ]);
-        
+
         $timeline = [];
-        
+
         foreach ($comments as $comment) {
             $type = 'note';
             if ($comment->comment_type === self::TYPE_ACTIVITY) {
@@ -533,9 +563,19 @@ class PRM_Comment_Types {
             } elseif ($comment->comment_type === self::TYPE_TODO) {
                 $type = 'todo';
             }
+
+            // Apply visibility filtering for notes
+            if ($type === 'note' && (int) $comment->user_id !== $current_user_id) {
+                $visibility = get_comment_meta($comment->comment_ID, '_note_visibility', true);
+                // Skip private notes from other users (default to private for backward compatibility)
+                if (empty($visibility) || $visibility === 'private') {
+                    continue;
+                }
+            }
+
             $timeline[] = $this->format_comment($comment, $type);
         }
-        
+
         return rest_ensure_response($timeline);
     }
     
@@ -585,10 +625,49 @@ class PRM_Comment_Types {
             $data['is_completed'] = !empty($is_completed);
             $data['due_date'] = get_comment_meta($comment->comment_ID, 'due_date', true) ?: null;
         }
-        
+
+        // Add note-specific meta (visibility)
+        if ($type === 'note') {
+            $visibility = get_comment_meta($comment->comment_ID, '_note_visibility', true);
+            // Default to 'private' for backward compatibility with existing notes
+            $data['visibility'] = $visibility ?: 'private';
+        }
+
         return $data;
     }
-    
+
+    /**
+     * Filter notes based on visibility.
+     *
+     * - Author always sees their own notes
+     * - Shared notes are visible to anyone who can see the contact
+     * - Private notes are only visible to the author
+     *
+     * @param array $comments Array of comment objects
+     * @return array Filtered array of comments
+     */
+    private function filter_notes_by_visibility($comments) {
+        $current_user_id = get_current_user_id();
+
+        return array_filter($comments, function($comment) use ($current_user_id) {
+            // Author always sees their own notes
+            if ((int) $comment->user_id === $current_user_id) {
+                return true;
+            }
+
+            // Check visibility setting
+            $visibility = get_comment_meta($comment->comment_ID, '_note_visibility', true);
+
+            // Default to private for backward compatibility
+            if (empty($visibility)) {
+                $visibility = 'private';
+            }
+
+            // Shared notes are visible to anyone who can see the contact
+            return $visibility === 'shared';
+        });
+    }
+
     /**
      * Exclude custom comment types from regular comment queries
      */
