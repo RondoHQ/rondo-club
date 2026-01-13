@@ -161,6 +161,7 @@ function prm_init() {
         new PRM_Auto_Title();
         new PRM_Inverse_Relationships();
         new PRM_Comment_Types();
+        new PRM_Workspace_Members();
     }
     
     // REST API classes - only for REST requests
