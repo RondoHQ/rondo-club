@@ -2064,6 +2064,7 @@ export default function PersonDetail() {
             onSubmit={handleCreateNote}
             isLoading={createNote.isPending}
             isContactShared={person?.acf?._visibility === 'workspace' || person?.acf?._visibility === 'shared'}
+            workspaceIds={person?.acf?._visibility === 'workspace' ? (person?.acf?._assigned_workspaces || []) : []}
           />
           
           <QuickActivityModal

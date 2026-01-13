@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.59.0] - 2026-01-13
+
+### Added
+- @mention notification system for collaborative features
+  - PRM_Mention_Notifications class handles notification delivery when users are mentioned
+  - Immediate email notifications or queue for daily digest based on user preference
+  - User preference stored in `caelis_mention_notifications` user meta (digest/immediate/never)
+  - Self-mentions are automatically ignored (no notification sent)
+- MentionInput integration in NoteModal for workspace contacts
+  - NoteModal now uses MentionInput component for contacts shared with workspaces
+  - Regular RichTextEditor used for private contacts (backward compatible)
+  - Workspace IDs passed through to enable member autocomplete
+- Mention notification preference in Settings
+  - New "Mention notifications" dropdown in Notifications tab
+  - Three options: Include in daily digest (default), Send immediately, Don't notify me
+  - REST API endpoint `/prm/v1/user/mention-notifications` for preference management
+
 ## [1.58.0] - 2026-01-13
 
 ### Added
