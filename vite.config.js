@@ -16,6 +16,12 @@ export default defineConfig({
     // Entry point
     rollupOptions: {
       input: resolve(__dirname, 'src/main.jsx'),
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
+          utils: ['date-fns', 'clsx', 'zustand', 'axios', 'react-hook-form'],
+        },
+      },
     },
     
     // Don't empty outDir (preserves other files)
