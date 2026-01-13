@@ -806,10 +806,10 @@ class PRM_REST_API extends PRM_REST_Base {
             $todos[] = [
                 'id'               => (int) $comment->comment_ID,
                 'type'             => 'todo',
-                'content'          => $comment->comment_content,
+                'content'          => $this->sanitize_rich_content($comment->comment_content),
                 'person_id'        => $person_id,
-                'person_name'      => $person_name,
-                'person_thumbnail' => $person_thumbnail ?: '',
+                'person_name'      => $this->sanitize_text($person_name),
+                'person_thumbnail' => $this->sanitize_url($person_thumbnail),
                 'author_id'        => (int) $comment->user_id,
                 'created'          => $comment->comment_date,
                 'is_completed'     => !empty($is_completed),
@@ -903,10 +903,10 @@ class PRM_REST_API extends PRM_REST_Base {
             
             $investments[] = [
                 'id'        => $company->ID,
-                'name'      => html_entity_decode($company->post_title, ENT_QUOTES, 'UTF-8'),
-                'industry'  => get_field('industry', $company->ID) ?: '',
-                'website'   => get_field('website', $company->ID) ?: '',
-                'thumbnail' => $thumbnail_url,
+                'name'      => $this->sanitize_text($company->post_title),
+                'industry'  => $this->sanitize_text(get_field('industry', $company->ID)),
+                'website'   => $this->sanitize_url(get_field('website', $company->ID)),
+                'thumbnail' => $this->sanitize_url($thumbnail_url),
             ];
         }
         
