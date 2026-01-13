@@ -40,32 +40,44 @@ class PRM_Access_Control {
         add_filter('rest_prepare_company', [$this, 'filter_rest_single_access'], 10, 3);
         add_filter('rest_prepare_important_date', [$this, 'filter_rest_single_access'], 10, 3);
 
-        // Convert workspace post IDs to term IDs when saving
-        add_filter('acf/update_value/name=_assigned_workspaces', [$this, 'convert_workspace_ids_to_term_ids'], 10, 3);
+        // Convert workspace post IDs to term IDs when saving via REST API
+        add_action('rest_after_insert_person', [$this, 'convert_workspace_ids_after_rest_insert'], 10, 2);
+        add_action('rest_after_insert_company', [$this, 'convert_workspace_ids_after_rest_insert'], 10, 2);
+        add_action('rest_after_insert_important_date', [$this, 'convert_workspace_ids_after_rest_insert'], 10, 2);
 
         // Convert term IDs back to workspace post IDs when loading
         add_filter('acf/load_value/name=_assigned_workspaces', [$this, 'convert_term_ids_to_workspace_ids'], 10, 3);
     }
 
     /**
-     * Convert workspace post IDs to workspace_access term IDs before saving
+     * Convert workspace post IDs to term IDs after REST API insert/update
      *
-     * The frontend sends workspace post IDs, but the ACF taxonomy field expects
-     * workspace_access term IDs. This filter converts between the two formats.
+     * The frontend sends workspace post IDs, but the ACF taxonomy field needs
+     * workspace_access term IDs. This action converts and saves them properly.
      *
-     * @param mixed $value The value to save
-     * @param int $post_id The post ID
-     * @param array $field The field array
-     * @return array Array of term IDs
+     * @param WP_Post $post The inserted/updated post
+     * @param WP_REST_Request $request The request object
      */
-    public function convert_workspace_ids_to_term_ids($value, $post_id, $field) {
-        if (empty($value) || !is_array($value)) {
-            return [];
+    public function convert_workspace_ids_after_rest_insert($post, $request) {
+        $params = $request->get_json_params();
+
+        // Check if workspace IDs were sent
+        if (!isset($params['acf']['_assigned_workspaces'])) {
+            return;
         }
 
+        $workspace_ids = $params['acf']['_assigned_workspaces'];
+
+        // Handle empty array - clear all terms
+        if (empty($workspace_ids) || !is_array($workspace_ids)) {
+            wp_set_object_terms($post->ID, [], 'workspace_access');
+            update_field('_assigned_workspaces', [], $post->ID);
+            return;
+        }
+
+        // Convert workspace post IDs to term IDs
         $term_ids = [];
-        foreach ($value as $workspace_id) {
-            // The term slug format is 'workspace-{post_id}'
+        foreach ($workspace_ids as $workspace_id) {
             $term_slug = 'workspace-' . intval($workspace_id);
             $term = get_term_by('slug', $term_slug, 'workspace_access');
 
@@ -74,7 +86,11 @@ class PRM_Access_Control {
             }
         }
 
-        return $term_ids;
+        // Set the terms on the post
+        wp_set_object_terms($post->ID, $term_ids, 'workspace_access');
+
+        // Update the ACF field with term IDs
+        update_field('_assigned_workspaces', $term_ids, $post->ID);
     }
 
     /**
