@@ -4,34 +4,33 @@
 
 - ✅ [v1.0 Tech Debt Cleanup](milestones/v1.0-tech-debt-cleanup.md) (Phases 1-6) — SHIPPED 2026-01-13
 - ✅ [v2.0 Multi-User](milestones/v2.0-multi-user.md) (Phases 7-11) — SHIPPED 2026-01-13
-- ✅ **v2.1 Bulk Operations** — Phases 12-13 — SHIPPED 2026-01-13
+- ✅ [v2.1 Bulk Operations](milestones/v2.1-bulk-operations.md) (Phases 12-13) — SHIPPED 2026-01-13
 
 ## Current Milestone
 
-None active. Run `/gsd:complete-milestone` to archive v2.1 or `/gsd:new-milestone` to start next version.
+None active. Run `/gsd:new-milestone` or `/gsd:discuss-milestone` to plan next version.
 
-### ✅ v2.1 Bulk Operations (Complete)
+<details>
+<summary>✅ v2.1 Bulk Operations (Phases 12-13) — SHIPPED 2026-01-13</summary>
 
-**Milestone Goal:** Enable efficient bulk management of contacts through a new list view with multi-select and batch actions
+**Overview:** Enable efficient bulk management of contacts through a new list view with multi-select and batch actions.
 
-#### Phase 12: List View & Selection Infrastructure ✓
+**Phases:**
+- [x] Phase 12: List View & Selection Infrastructure (1/1 plans) ✓
+- [x] Phase 13: Bulk Actions (2/2 plans) ✓
 
-**Goal**: Add list view to people screen with columns (name, workspace, org) and checkbox selection
-**Depends on**: v2.0 Multi-User complete
-**Status**: Complete (2026-01-13)
+**Total:** 2 phases, 3 plans
 
-Plans:
-- [x] 12-01: List view with card/list toggle, table columns, checkbox selection infrastructure
+**Key Accomplishments:**
+- Card/list view toggle for people screen
+- Tabular list view with Name, Organization, Workspace columns
+- Checkbox multi-selection infrastructure
+- Bulk update REST endpoint with ownership validation
+- Bulk visibility and workspace assignment modals
 
-#### Phase 13: Bulk Actions ✓
+See [milestone archive](milestones/v2.1-bulk-operations.md) for full details.
 
-**Goal**: Implement bulk workspace assignment and bulk visibility change actions
-**Depends on**: Phase 12
-**Status**: Complete (2026-01-13)
-
-Plans:
-- [x] 13-01: Bulk update REST endpoint and React hook
-- [x] 13-02: Bulk actions UI with dropdown and modals
+</details>
 
 ---
 
@@ -95,7 +94,4 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
 
-| Phase | Milestone | Plans | Status | Completed |
-|-------|-----------|-------|--------|-----------|
-| 12. List View & Selection | v2.1 | 1/1 | Complete ✓ | 2026-01-13 |
-| 13. Bulk Actions | v2.1 | 2/2 | Complete ✓ | 2026-01-13 |
+**Total: 13 phases, 34 plans shipped**
