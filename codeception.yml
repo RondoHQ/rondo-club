@@ -1,6 +1,8 @@
 namespace: Tests
 support_namespace: Support
 actor_suffix: Tester
+params:
+  - tests/.env
 paths:
   tests: tests
   output: tests/_output
