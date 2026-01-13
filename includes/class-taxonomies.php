@@ -8,9 +8,77 @@ if (!defined('ABSPATH')) {
 }
 
 class PRM_Taxonomies {
-    
+
     public function __construct() {
         add_action('init', [$this, 'register_taxonomies']);
+
+        // Workspace term sync hooks
+        add_action('save_post_workspace', [$this, 'ensure_workspace_term'], 10, 3);
+        add_action('before_delete_post', [$this, 'cleanup_workspace_term']);
+    }
+
+    /**
+     * Ensure workspace_access term exists for a workspace
+     *
+     * Creates or updates a term when a workspace is created/published.
+     * Term slug: 'workspace-{ID}', Term name: workspace title
+     *
+     * @param int     $post_id Post ID.
+     * @param WP_Post $post    Post object.
+     * @param bool    $update  Whether this is an existing post being updated.
+     */
+    public function ensure_workspace_term($post_id, $post, $update) {
+        // Only for published workspaces
+        if ($post->post_status !== 'publish') {
+            return;
+        }
+
+        // Don't run on autosave
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+
+        $term_slug = 'workspace-' . $post_id;
+        $term_name = $post->post_title;
+
+        // Check if term exists
+        $existing_term = term_exists($term_slug, 'workspace_access');
+
+        if ($existing_term) {
+            // Term exists - update name if it changed
+            wp_update_term($existing_term['term_id'], 'workspace_access', [
+                'name' => $term_name,
+            ]);
+        } else {
+            // Create new term
+            wp_insert_term($term_name, 'workspace_access', [
+                'slug' => $term_slug,
+            ]);
+        }
+    }
+
+    /**
+     * Clean up workspace_access term when workspace is permanently deleted
+     *
+     * Removes the workspace-{ID} term when a workspace is deleted.
+     * This also automatically removes term relationships from contacts.
+     *
+     * @param int $post_id Post ID.
+     */
+    public function cleanup_workspace_term($post_id) {
+        $post = get_post($post_id);
+
+        // Only for workspace post type
+        if (!$post || $post->post_type !== 'workspace') {
+            return;
+        }
+
+        $term_slug = 'workspace-' . $post_id;
+        $term = get_term_by('slug', $term_slug, 'workspace_access');
+
+        if ($term && !is_wp_error($term)) {
+            wp_delete_term($term->term_id, 'workspace_access');
+        }
     }
     
     /**
