@@ -143,19 +143,23 @@ abstract class PRM_REST_Base {
     }
 
     /**
-     * Sanitize text for safe output
+     * Sanitize text for JSON API output
      *
-     * Decodes HTML entities first (to avoid double-encoding), then escapes for safe output.
-     * Use for plain text fields like names and titles.
+     * Decodes HTML entities stored by WordPress into plain text.
+     * React automatically escapes text when rendering JSX, so XSS protection
+     * is handled client-side. We just need to return clean, decoded text.
      *
-     * @param string|null $text The text to sanitize.
-     * @return string Sanitized text safe for output.
+     * Note: Do NOT use esc_html() here - it's for PHP HTML templates, not JSON APIs.
+     * Using it causes double-encoding (& becomes &amp; which displays literally).
+     *
+     * @param string|null $text The text to decode.
+     * @return string Decoded text for JSON response.
      */
     protected function sanitize_text($text) {
         if (empty($text)) {
             return '';
         }
-        return esc_html(html_entity_decode($text, ENT_QUOTES, 'UTF-8'));
+        return html_entity_decode($text, ENT_QUOTES, 'UTF-8');
     }
 
     /**
