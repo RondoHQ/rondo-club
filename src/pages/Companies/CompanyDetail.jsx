@@ -133,8 +133,7 @@ export default function CompanyDetail() {
     try {
       await deleteCompany.mutateAsync();
       // Navigation will happen in onSuccess callback
-    } catch (error) {
-      console.error('Failed to delete company:', error);
+    } catch {
       alert('Failed to delete organization. Please try again.');
     }
   };
@@ -154,8 +153,7 @@ export default function CompanyDetail() {
       
       await updateCompany.mutateAsync(payload);
       setShowEditModal(false);
-    } catch (error) {
-      console.error('Failed to save company:', error);
+    } catch {
       alert('Failed to save organization. Please try again.');
     } finally {
       setIsSaving(false);
@@ -187,8 +185,7 @@ export default function CompanyDetail() {
       // Invalidate queries to refresh company data
       queryClient.invalidateQueries({ queryKey: ['company', id] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
-    } catch (error) {
-      console.error('Failed to upload logo:', error);
+    } catch {
       alert('Failed to upload logo. Please try again.');
     } finally {
       setIsUploadingLogo(false);

@@ -199,8 +199,7 @@ export default function PersonDetail() {
       await deletePerson.mutateAsync(id);
       // Navigation will happen in onSuccess callback
       navigate('/people');
-    } catch (error) {
-      console.error('Failed to delete person:', error);
+    } catch {
       alert('Failed to delete person. Please try again.');
     }
   };
@@ -235,8 +234,7 @@ export default function PersonDetail() {
       });
       
       setShowContactModal(false);
-    } catch (error) {
-      console.error('Failed to save contacts:', error);
+    } catch {
       alert('Failed to save contacts. Please try again.');
     } finally {
       setIsSavingContacts(false);
@@ -278,8 +276,7 @@ export default function PersonDetail() {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
       setShowDateModal(false);
       setEditingDate(null);
-    } catch (error) {
-      console.error('Failed to save date:', error);
+    } catch {
       alert('Failed to save date. Please try again.');
     } finally {
       setIsSavingDate(false);
@@ -319,8 +316,7 @@ export default function PersonDetail() {
       setShowRelationshipModal(false);
       setEditingRelationship(null);
       setEditingRelationshipIndex(null);
-    } catch (error) {
-      console.error('Failed to save relationship:', error);
+    } catch {
       alert('Failed to save relationship. Please try again.');
     } finally {
       setIsSavingRelationship(false);
@@ -362,8 +358,7 @@ export default function PersonDetail() {
       setShowAddressModal(false);
       setEditingAddress(null);
       setEditingAddressIndex(null);
-    } catch (error) {
-      console.error('Failed to save address:', error);
+    } catch {
       alert('Failed to save address. Please try again.');
     } finally {
       setIsSavingAddress(false);
@@ -405,8 +400,7 @@ export default function PersonDetail() {
       setShowWorkHistoryModal(false);
       setEditingWorkHistory(null);
       setEditingWorkHistoryIndex(null);
-    } catch (error) {
-      console.error('Failed to save work history:', error);
+    } catch {
       alert('Failed to save work history. Please try again.');
     } finally {
       setIsSavingWorkHistory(false);
@@ -436,8 +430,7 @@ export default function PersonDetail() {
       });
       
       setShowPersonEditModal(false);
-    } catch (error) {
-      console.error('Failed to save person:', error);
+    } catch {
       alert('Failed to save person. Please try again.');
     } finally {
       setIsSavingPerson(false);
@@ -520,8 +513,7 @@ export default function PersonDetail() {
             };
           }
         }
-      } catch (error) {
-        console.error('Failed to fetch inverse relationship:', error);
+      } catch {
         // Continue with deletion anyway
       }
     }
@@ -569,8 +561,7 @@ export default function PersonDetail() {
             acf: relatedPersonAcfData,
           });
         }
-      } catch (error) {
-        console.error('Failed to restore inverse relationship:', error);
+      } catch {
         // Don't show error to user - the main relationship was deleted successfully
       }
     }
@@ -606,8 +597,7 @@ export default function PersonDetail() {
     try {
       await createNote.mutateAsync({ personId: id, content });
       setShowNoteModal(false);
-    } catch (error) {
-      console.error('Failed to create note:', error);
+    } catch {
       alert('Failed to create note. Please try again.');
     }
   };
@@ -644,8 +634,7 @@ export default function PersonDetail() {
       }
       
       setShowActivityModal(false);
-    } catch (error) {
-      console.error('Failed to save activity:', error);
+    } catch {
       alert('Failed to save activity. Please try again.');
     }
   };
@@ -656,8 +645,7 @@ export default function PersonDetail() {
       await createTodo.mutateAsync({ personId: id, data });
       setShowTodoModal(false);
       setEditingTodo(null);
-    } catch (error) {
-      console.error('Failed to create todo:', error);
+    } catch {
       alert('Failed to create todo. Please try again.');
     }
   };
@@ -670,8 +658,7 @@ export default function PersonDetail() {
       await updateTodo.mutateAsync({ todoId: editingTodo.id, data, personId: id });
       setShowTodoModal(false);
       setEditingTodo(null);
-    } catch (error) {
-      console.error('Failed to update todo:', error);
+    } catch {
       alert('Failed to update todo. Please try again.');
     }
   };
@@ -696,8 +683,7 @@ export default function PersonDetail() {
         },
         personId: id,
       });
-    } catch (error) {
-      console.error('Failed to toggle todo:', error);
+    } catch {
       alert('Failed to update todo. Please try again.');
     }
   };
@@ -719,8 +705,7 @@ export default function PersonDetail() {
       
       setShowCompleteModal(false);
       setTodoToComplete(null);
-    } catch (error) {
-      console.error('Failed to complete todo:', error);
+    } catch {
       alert('Failed to complete todo. Please try again.');
     }
   };
@@ -870,8 +855,7 @@ export default function PersonDetail() {
       // Invalidate queries to refresh person data
       queryClient.invalidateQueries({ queryKey: ['person', id] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
-    } catch (error) {
-      console.error('Failed to upload photo:', error);
+    } catch {
       alert('Failed to upload photo. Please try again.');
     } finally {
       setIsUploadingPhoto(false);
@@ -891,8 +875,7 @@ export default function PersonDetail() {
         companyMap,
         personDates: personDates || [],
       });
-    } catch (error) {
-      console.error('Failed to export vCard:', error);
+    } catch {
       alert('Failed to export vCard. Please try again.');
     }
   };

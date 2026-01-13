@@ -80,8 +80,8 @@ export default function Settings() {
         const response = await apiClient.get('/prm/v1/user/ical-url');
         setIcalUrl(response.data.url);
         setWebcalUrl(response.data.webcal_url);
-      } catch (error) {
-        console.error('Failed to fetch iCal URL:', error);
+      } catch {
+        // iCal URL fetch failed silently
       } finally {
         setIcalLoading(false);
       }
@@ -99,8 +99,8 @@ export default function Settings() {
         ]);
         setAppPasswords(passwordsResponse.data || []);
         setCarddavUrls(urlsResponse.data);
-      } catch (error) {
-        console.error('Failed to fetch app passwords:', error);
+      } catch {
+        // App passwords fetch failed silently
       } finally {
         setAppPasswordsLoading(false);
       }
@@ -122,8 +122,7 @@ export default function Settings() {
       setSlackChannels(channelsResponse.data.channels || []);
       setSlackUsers(channelsResponse.data.users || []);
       setSlackTargets(targetsResponse.data.targets || []);
-    } catch (error) {
-      console.error('Failed to fetch Slack data:', error);
+    } catch {
       setWebhookTestMessage('Failed to load Slack channels and users. Please try refreshing the page.');
     } finally {
       setLoadingSlackData(false);
@@ -149,8 +148,8 @@ export default function Settings() {
         if (isConnected) {
           await fetchSlackData();
         }
-      } catch (error) {
-        console.error('Failed to fetch notification channels:', error);
+      } catch {
+        // Notification channels fetch failed silently
       } finally {
         setNotificationsLoading(false);
       }
@@ -193,7 +192,6 @@ export default function Settings() {
       const response = await apiClient.get('/prm/v1/slack/oauth/authorize');
       window.location.href = response.data.oauth_url;
     } catch (error) {
-      console.error('Failed to get Slack OAuth URL:', error);
       alert(error.response?.data?.message || 'Failed to connect Slack');
     }
   };
@@ -216,7 +214,6 @@ export default function Settings() {
         await toggleChannel('slack');
       }
     } catch (error) {
-      console.error('Failed to disconnect Slack:', error);
       alert(error.response?.data?.message || 'Failed to disconnect Slack');
     } finally {
       setDisconnectingSlack(false);
@@ -237,7 +234,6 @@ export default function Settings() {
       setWebhookTestMessage('Notification targets saved successfully');
       setTimeout(() => setWebhookTestMessage(''), 3000);
     } catch (error) {
-      console.error('Failed to save Slack targets:', error);
       alert(error.response?.data?.message || 'Failed to save notification targets');
     } finally {
       setSavingSlackTargets(false);
@@ -249,8 +245,8 @@ export default function Settings() {
       await navigator.clipboard.writeText(icalUrl);
       setIcalCopied(true);
       setTimeout(() => setIcalCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
+    } catch {
+      // Copy failed silently
     }
   };
   
@@ -265,7 +261,6 @@ export default function Settings() {
       setAppPasswords([...appPasswords, response.data]);
       setNewPasswordName('');
     } catch (error) {
-      console.error('Failed to create app password:', error);
       alert(error.response?.data?.message || 'Failed to create app password');
     } finally {
       setCreatingPassword(false);
@@ -281,7 +276,6 @@ export default function Settings() {
       await prmApi.deleteAppPassword(userId, uuid);
       setAppPasswords(appPasswords.filter(p => p.uuid !== uuid));
     } catch (error) {
-      console.error('Failed to delete app password:', error);
       alert(error.response?.data?.message || 'Failed to revoke app password');
     }
   };
@@ -291,16 +285,16 @@ export default function Settings() {
       await navigator.clipboard.writeText(newPassword);
       setPasswordCopied(true);
       setTimeout(() => setPasswordCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
+    } catch {
+      // Copy failed silently
     }
   };
   
   const copyCarddavUrl = async (url) => {
     try {
       await navigator.clipboard.writeText(url);
-    } catch (error) {
-      console.error('Failed to copy:', error);
+    } catch {
+      // Copy failed silently
     }
   };
   
@@ -324,8 +318,8 @@ export default function Settings() {
       const response = await apiClient.post('/prm/v1/user/regenerate-ical-token');
       setIcalUrl(response.data.url);
       setWebcalUrl(response.data.webcal_url);
-    } catch (error) {
-      console.error('Failed to regenerate token:', error);
+    } catch {
+      // Token regeneration failed silently
     } finally {
       setRegenerating(false);
     }
@@ -341,7 +335,6 @@ export default function Settings() {
       await prmApi.updateNotificationChannels(newChannels);
       setNotificationChannels(newChannels);
     } catch (error) {
-      console.error('Failed to update notification channels:', error);
       alert(error.response?.data?.message || 'Failed to update notification channels');
     } finally {
       setSavingChannels(false);
@@ -361,7 +354,6 @@ export default function Settings() {
     try {
       await prmApi.updateNotificationTime(roundedTime);
     } catch (error) {
-      console.error('Failed to update notification time:', error);
       alert(error.response?.data?.message || 'Failed to update notification time');
       const response = await prmApi.getNotificationChannels();
       setNotificationTime(response.data.notification_time || '09:00');
@@ -382,7 +374,6 @@ export default function Settings() {
       const response = await prmApi.triggerReminders();
       setReminderMessage(response.data.message || 'Reminders triggered successfully.');
     } catch (error) {
-      console.error('Failed to trigger reminders:', error);
       setReminderMessage(error.response?.data?.message || 'Failed to trigger reminders. Please check server logs.');
     } finally {
       setTriggeringReminders(false);
@@ -401,7 +392,6 @@ export default function Settings() {
       const response = await prmApi.rescheduleCronJobs();
       setCronMessage(response.data.message || 'Cron jobs rescheduled successfully.');
     } catch (error) {
-      console.error('Failed to reschedule cron jobs:', error);
       setCronMessage(error.response?.data?.message || 'Failed to reschedule cron jobs. Please check server logs.');
     } finally {
       setReschedulingCron(false);

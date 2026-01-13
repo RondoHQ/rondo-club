@@ -16,9 +16,7 @@ const queryClient = new QueryClient({
 
 const rootElement = document.getElementById('root');
 
-if (!rootElement) {
-  console.error('Root element not found! Make sure there is a <div id="root"></div> in your HTML.');
-} else {
+if (rootElement) {
   try {
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
@@ -29,8 +27,7 @@ if (!rootElement) {
         </QueryClientProvider>
       </React.StrictMode>
     );
-  } catch (error) {
-    console.error('Error mounting React app:', error);
+  } catch {
     rootElement.innerHTML = '<div style="padding: 20px; color: red;"><h1>Error Loading Application</h1><p>Please check the browser console for details.</p></div>';
   }
 }

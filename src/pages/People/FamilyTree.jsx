@@ -93,8 +93,7 @@ export default function FamilyTree() {
       const visData = graphToVisFormat(graph, personId, personDeceasedMap);
       
       return visData;
-    } catch (error) {
-      console.error('Error building family tree:', error);
+    } catch {
       return null;
     }
   }, [person, allPeople, relationshipTypes, personId, personDeceasedMap]);

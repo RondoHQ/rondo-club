@@ -299,8 +299,7 @@ export default function Dashboard() {
       setShowActivityModal(false);
       setTodoToComplete(null);
       setActivityInitialData(null);
-    } catch (error) {
-      console.error('Failed to create activity:', error);
+    } catch {
       alert('Failed to create activity. Please try again.');
     }
   };
