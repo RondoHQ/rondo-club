@@ -7,7 +7,7 @@
 - ✅ [v2.1 Bulk Operations](milestones/v2.1-bulk-operations.md) (Phases 12-13) — SHIPPED 2026-01-13
 - ✅ [v2.2 List View Polish](milestones/v2.2-list-view-polish.md) (Phases 14-15) — SHIPPED 2026-01-13
 - ✅ [v2.3 List View Unification](milestones/v2.3-list-view-unification.md) (Phases 16-18) — SHIPPED 2026-01-13
-- ✅ v2.4 Bug Fixes (Phase 19) — SHIPPED 2026-01-13
+- ✅ [v2.4 Bug Fixes](milestones/v2.4-bug-fixes.md) (Phase 19) — SHIPPED 2026-01-13
 
 ## Current Milestone: Complete
 
@@ -16,30 +16,7 @@ All milestones complete! Ready for new work.
 <details>
 <summary>✅ v2.4 Bug Fixes (Phase 19) — SHIPPED 2026-01-13</summary>
 
-**Milestone Goal:** Fix bugs and polish rough edges discovered during v2.0-v2.3 development.
-
-**Phases:**
-- [x] Phase 19: Important Date Polish (2/2 plans) ✓
-
-### Phase 19: Important Date Polish
-
-**Goal:** Fix edit bugs, improve defaults, use full names in titles
-
-**Plans:**
-- [x] 19-01: Frontend Bug Fixes (3 tasks) ✓
-- [x] 19-02: Full Name Titles + CLI (3 tasks) ✓
-
-**Key Accomplishments:**
-- Fixed default date to today when creating new important date
-- Fixed visibility required error on edit (REST API 400)
-- Fixed cache invalidation query key mismatch
-- Updated frontend title auto-generation to use full names
-- Created WP-CLI command `wp prm dates regenerate-titles` for migration
-
-**Files Modified:**
-- `src/components/ImportantDateModal.jsx`
-- `src/pages/People/PersonDetail.jsx`
-- `includes/class-wp-cli.php`
+See [milestone archive](milestones/v2.4-bug-fixes.md) for full details.
 
 </details>
 
@@ -70,25 +47,6 @@ See [milestone archive](milestones/v2.3-list-view-unification.md) for full detai
 
 <details>
 <summary>✅ v2.2 List View Polish (Phases 14-15) — SHIPPED 2026-01-13</summary>
-
-**Overview:** Complete the list view experience with full sorting capabilities, labels display, and extended bulk actions.
-
-**Phases:**
-- [x] Phase 14: List View Columns & Sorting (2/2 plans) ✓
-- [x] Phase 15: Extended Bulk Actions (2/2 plans) ✓
-
-**Total:** 2 phases, 4 plans
-
-**Key Accomplishments:**
-- Split Name into First Name / Last Name columns
-- Labels column with styled pills
-- Clickable column headers with sort indicators
-- Sticky table header and selection toolbar
-- Organization, Workspace, Labels sorting
-- BulkOrganizationModal with search and clear option
-- BulkLabelsModal with add/remove mode toggle
-
-**Issues closed:** ISS-001, ISS-002, ISS-003, ISS-004, ISS-005
 
 See [milestone archive](milestones/v2.2-list-view-polish.md) for full details.
 
