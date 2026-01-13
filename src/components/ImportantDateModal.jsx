@@ -220,10 +220,11 @@ export default function ImportantDateModal({
           year_unknown: dateItem.acf?.year_unknown ?? dateItem.year_unknown ?? false,
         });
       } else {
-        // New date - pre-fill with current person
+        // New date - pre-fill with current person and today's date
+        const today = new Date().toISOString().split('T')[0];
         reset({
           title: '',
-          date_value: '',
+          date_value: today,
           date_type: '',
           related_people: personId ? [parseInt(personId)] : [],
           is_recurring: true,
