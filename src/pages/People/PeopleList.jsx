@@ -169,11 +169,34 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
   );
 }
 
-function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected }) {
+// Sortable header component for clickable column headers
+function SortableHeader({ field, label, currentSortField, currentSortOrder, onSort }) {
+  const isActive = currentSortField === field;
+
+  return (
+    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      <button
+        onClick={() => onSort(field)}
+        className="flex items-center gap-1 hover:text-gray-700 cursor-pointer"
+      >
+        {label}
+        {isActive && (
+          currentSortOrder === 'asc' ? (
+            <ArrowUp className="w-3 h-3" />
+          ) : (
+            <ArrowDown className="w-3 h-3" />
+          )
+        )}
+      </button>
+    </th>
+  );
+}
+
+function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
   return (
     <div className="card overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+        <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
           <tr>
             <th scope="col" className="pl-4 pr-2 py-3 w-10">
               <button
@@ -190,21 +213,11 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
                 )}
               </button>
             </th>
-            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              First Name
-            </th>
-            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Last Name
-            </th>
-            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Organization
-            </th>
-            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Workspace
-            </th>
-            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Labels
-            </th>
+            <SortableHeader field="first_name" label="First Name" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="last_name" label="Last Name" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="organization" label="Organization" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="workspace" label="Workspace" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="labels" label="Labels" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -1155,9 +1168,9 @@ export default function PeopleList() {
         </div>
       )}
 
-      {/* Selection toolbar (list view only) */}
+      {/* Selection toolbar (list view only) - sticky */}
       {viewMode === 'list' && selectedIds.size > 0 && (
-        <div className="flex items-center justify-between bg-primary-50 border border-primary-200 rounded-lg px-4 py-2">
+        <div className="sticky top-0 z-20 flex items-center justify-between bg-primary-50 border border-primary-200 rounded-lg px-4 py-2 shadow-sm">
           <span className="text-sm text-primary-800 font-medium">
             {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'} selected
           </span>
@@ -1219,6 +1232,16 @@ export default function PeopleList() {
           onToggleSelectAll={toggleSelectAll}
           isAllSelected={isAllSelected}
           isSomeSelected={isSomeSelected}
+          sortField={sortField}
+          sortOrder={sortOrder}
+          onSort={(field) => {
+            if (field === sortField) {
+              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+            } else {
+              setSortField(field);
+              setSortOrder('asc');
+            }
+          }}
         />
       )}
       
