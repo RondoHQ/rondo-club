@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v3.0 Testing Infrastructure
-Phase: 22 of 23 (Access Control Tests)
+Phase: 23 of 23 (REST API & Data Model Tests)
 Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-13 — Completed Phase 22 (parallel execution)
+Status: Milestone complete
+Last activity: 2026-01-13 — Completed Phase 23 (parallel execution)
 
-Progress: █████░░░░░ 50%
+Progress: ██████████ 100%
 
 ## Completed Milestones
 
@@ -28,8 +28,9 @@ Progress: █████░░░░░ 50%
 | v2.3 List View Unification | 16-18 | 3 | 2026-01-13 |
 | v2.4 Bug Fixes | 19 | 2 | 2026-01-13 |
 | v2.5 Performance | 20 | 3 | 2026-01-13 |
+| v3.0 Testing Infrastructure | 21-23 | 7 | 2026-01-13 |
 
-**Total:** 7 milestones, 20 phases, 46 plans completed
+**Total:** 8 milestones, 23 phases, 53 plans completed
 
 ## Deferred Issues
 
@@ -51,6 +52,9 @@ See `.planning/ISSUES.md`:
 | 22 | Parallel test execution | 3 independent plans run concurrently via agents |
 | 22 | Direct share priority fix | Bug fix: shares checked before visibility denial |
 | 22 | Unique test IDs pattern | wp_generate_password(6) for test isolation |
+| 23 | REST server manual init | WPUnit tests need explicit PRM_REST_* instantiation |
+| 23 | Boolean params as strings | REST API validation requires 'true' not true |
+| 23 | DELETE verifies post_status | Access control filter runs after DELETE, check trash |
 | - | Backend-first testing | Playwright deferred to future milestone |
 
 ## Roadmap Evolution
@@ -64,23 +68,26 @@ See `.planning/ISSUES.md`:
 - Milestone v2.5 archived: Git tag v2.5 created
 - Milestone v3.0 created: Testing Infrastructure, 3 phases (Phase 21-23)
 - Phase 22 complete: Access Control Tests (3 plans via parallel execution)
+- Phase 23 complete: REST API & Data Model Tests (3 plans via parallel execution)
+- Milestone v3.0 complete: Testing Infrastructure with 120 tests
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Completed Phase 22 (all 3 plans)
+Stopped at: Completed Phase 23 and milestone v3.0
 Resume file: None
 
 ## Accumulated Context
 
 ### Pending Todos
 
-2 todos in `.planning/todos/pending/`:
+3 todos in `.planning/todos/pending/`:
 1. Testing framework (PHPUnit + Playwright) — **Addressed by v3.0** (PHPUnit portion)
 2. React bundle chunking optimization — **Addressed by v2.5**
+3. Console MIME type errors — Build hash mismatch after npm run build
 
 ## Next Steps
 
-- `/gsd:plan-phase 23` — create execution plan for REST API & Data Model Tests
-- `/gsd:discuss-phase 23` — gather context about REST testing patterns first
-- `/gsd:research-phase 23` — investigate CRUD and endpoint test patterns
+- `/gsd:complete-milestone` — archive v3.0 Testing Infrastructure
+- `/gsd:new-milestone` — create next milestone (e.g., Playwright frontend testing)
+- Review pending todos for next priorities
