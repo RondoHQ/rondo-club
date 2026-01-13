@@ -21,6 +21,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatePerson } from '@/hooks/usePeople';
 import { useCreateDate } from '@/hooks/useDates';
+import { useCreateCompany } from '@/hooks/useCompanies';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch } from '@/hooks/useDashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -596,25 +597,8 @@ export default function Layout({ children }) {
   });
   
   // Create company mutation
-  const createCompanyMutation = useMutation({
-    mutationFn: async (data) => {
-      const payload = {
-        title: data.title,
-        status: 'publish',
-        parent: data.parentId || 0,
-        acf: {
-          website: data.website,
-          industry: data.industry,
-          investors: data.investors || [],
-        },
-      };
-      
-      const response = await wpApi.createCompany(payload);
-      return response.data;
-    },
+  const createCompanyMutation = useCreateCompany({
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setShowCompanyModal(false);
       navigate(`/companies/${result.id}`);
     },

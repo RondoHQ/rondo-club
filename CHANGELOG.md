@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.57.0] - 2026-01-13
+
+### Changed
+- Refactored company creation into shared `useCreateCompany` hook in `useCompanies.js` (DRY principle)
+- Updated CompaniesList.jsx and Layout.jsx to use shared hook
+
+### Fixed
+- Add missing `_visibility` and `_assigned_workspaces` fields to company quick-add in Layout.jsx
+
 ## [1.56.0] - 2026-01-13
 
 ### Changed
