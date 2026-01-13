@@ -15,6 +15,12 @@
     "config": {
         "optimize-autoloader": true,
         "sort-packages": true
+    },
+    "require-dev": {
+        "lucatume/wp-browser": "^4.5"
+    },
+    "scripts": {
+        "test": "vendor/bin/codecept run wpunit",
+        "test:coverage": "vendor/bin/codecept run wpunit --coverage --coverage-html"
     }
 }
-
