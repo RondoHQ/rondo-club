@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v2.3 List View Unification
-Phase: 16 of 18 (People List View Cleanup)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-13 — Milestone v2.3 created
+Phase: 16 of 18 (People List View Cleanup) - COMPLETE
+Plan: 1 of 1 in phase
+Status: Phase complete
+Last activity: 2026-01-13 — Completed 16-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0%
+Progress: ███░░░░░░░ 33% (1/3 phases)
 
 ## Completed Milestones
 
@@ -31,28 +31,30 @@ Progress: ░░░░░░░░░░ 0%
 ## Deferred Issues
 
 See `.planning/ISSUES.md`:
-- ISS-006: Remove card view from People (addressing in Phase 16)
-- ISS-007: Move person image to its own column (addressing in Phase 16)
+- ~~ISS-006: Remove card view from People~~ — RESOLVED in Phase 16
+- ~~ISS-007: Move person image to its own column~~ — RESOLVED in Phase 16
 - ISS-008: Organizations list interface (addressing in Phases 17-18)
 
-**3 issues being addressed in v2.3**
+**1 issue remaining in v2.3**
 
 ## Decisions Made (v2.3)
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
-| - | - | - |
+| 16 | Image column has no header label | Cleaner appearance, column is narrow |
+| 16 | Star icon stays with first name | Logical grouping of name + favorite indicator |
 
 ## Roadmap Evolution
 
 - Milestone v2.3 created: List view unification, 3 phases (Phase 16-18)
+- Phase 16 complete: People list view cleanup (1 plan)
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Milestone v2.3 initialization
+Stopped at: Completed 16-01-PLAN.md (Phase 16 complete)
 Resume file: None
 
 ## Next Steps
 
-- `/gsd:plan-phase 16` — plan People List View Cleanup phase
+- `/gsd:plan-phase 17` — plan Organizations List View phase
