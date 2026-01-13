@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { X, Phone, Mail, Users, Coffee, Utensils, FileText, Circle, MessageCircle } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
-import RichTextEditor, { isRichTextEmpty } from '@/components/RichTextEditor';
+import { isRichTextEmpty } from '@/utils/richTextUtils';
+
+const RichTextEditor = lazy(() => import('@/components/RichTextEditor'));
 
 const ACTIVITY_TYPES = [
   { id: 'call', label: 'Phone call', icon: Phone },
@@ -309,13 +311,17 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                 Description
               </label>
               <div className="flex-1">
-                <RichTextEditor
-                  value={content}
-                  onChange={setContent}
-                  placeholder="What happened? Add your call notes, chat summary, meeting notes..."
-                  disabled={isLoading}
-                  minHeight="280px"
-                />
+                <Suspense fallback={
+                  <div className="border border-gray-300 rounded-md p-3 min-h-[280px] animate-pulse bg-gray-100" />
+                }>
+                  <RichTextEditor
+                    value={content}
+                    onChange={setContent}
+                    placeholder="What happened? Add your call notes, chat summary, meeting notes..."
+                    disabled={isLoading}
+                    minHeight="280px"
+                  />
+                </Suspense>
               </div>
             </div>
           </div>

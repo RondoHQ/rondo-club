@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { X, Lock, Users } from 'lucide-react';
-import RichTextEditor, { isRichTextEmpty } from '@/components/RichTextEditor';
+import { isRichTextEmpty } from '@/utils/richTextUtils';
 import MentionInput from '@/components/MentionInput';
+
+const RichTextEditor = lazy(() => import('@/components/RichTextEditor'));
 
 export default function NoteModal({
   isOpen,
@@ -71,14 +73,18 @@ export default function NoteModal({
                 workspaceIds={workspaceIds}
               />
             ) : (
-              <RichTextEditor
-                value={content}
-                onChange={setContent}
-                placeholder="Enter your note..."
-                disabled={isLoading}
-                autoFocus
-                minHeight="150px"
-              />
+              <Suspense fallback={
+                <div className="border border-gray-300 rounded-md p-3 min-h-[150px] animate-pulse bg-gray-100" />
+              }>
+                <RichTextEditor
+                  value={content}
+                  onChange={setContent}
+                  placeholder="Enter your note..."
+                  disabled={isLoading}
+                  autoFocus
+                  minHeight="150px"
+                />
+              </Suspense>
             )}
           </div>
 
