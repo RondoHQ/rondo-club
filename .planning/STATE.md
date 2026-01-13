@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v2.3 List View Unification
-Phase: 16 of 18 (People List View Cleanup) - COMPLETE
+Phase: 17 of 18 (Organizations List View) - COMPLETE
 Plan: 1 of 1 in phase
 Status: Phase complete
-Last activity: 2026-01-13 — Completed 16-01-PLAN.md
+Last activity: 2026-01-13 — Completed 17-01-PLAN.md
 
-Progress: ███░░░░░░░ 33% (1/3 phases)
+Progress: ██████░░░░ 67% (2/3 phases)
 
 ## Completed Milestones
 
@@ -33,9 +33,9 @@ Progress: ███░░░░░░░ 33% (1/3 phases)
 See `.planning/ISSUES.md`:
 - ~~ISS-006: Remove card view from People~~ — RESOLVED in Phase 16
 - ~~ISS-007: Move person image to its own column~~ — RESOLVED in Phase 16
-- ISS-008: Organizations list interface (addressing in Phases 17-18)
+- ISS-008: Organizations list interface — RESOLVED in Phase 17
 
-**1 issue remaining in v2.3**
+**0 issues remaining in v2.3**
 
 ## Decisions Made (v2.3)
 
@@ -43,18 +43,21 @@ See `.planning/ISSUES.md`:
 |-------|----------|-----------|
 | 16 | Image column has no header label | Cleaner appearance, column is narrow |
 | 16 | Star icon stays with first name | Logical grouping of name + favorite indicator |
+| 17 | Copied SortableHeader pattern | Keeps files self-contained, pattern is small |
+| 17 | Labels fetched via separate query | Needed to map label IDs to display names |
 
 ## Roadmap Evolution
 
 - Milestone v2.3 created: List view unification, 3 phases (Phase 16-18)
 - Phase 16 complete: People list view cleanup (1 plan)
+- Phase 17 complete: Organizations list view (1 plan)
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Completed 16-01-PLAN.md (Phase 16 complete)
+Stopped at: Completed 17-01-PLAN.md (Phase 17 complete)
 Resume file: None
 
 ## Next Steps
 
-- `/gsd:plan-phase 17` — plan Organizations List View phase
+- `/gsd:plan-phase 18` — plan Organizations Bulk Actions phase

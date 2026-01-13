@@ -4,13 +4,15 @@ Enhancements discovered during execution. Not critical - address in future phase
 
 ## Open Enhancements
 
+None
+
+## Closed Enhancements
+
 ### ISS-008: Organizations should use list interface like People
 
 - **Discovered:** Post v2.2 completion (2026-01-13)
-- **Context:** People now has a polished list view with sorting, selection, and bulk actions. Organizations should have the same experience.
-- **Scope:** Implement list view for Organizations with similar columns, sorting, selection, and bulk actions.
-
-## Closed Enhancements
+- **Closed:** Phase 17 (2026-01-13)
+- **Resolution:** Transformed Organizations from card grid to tabular list view with OrganizationListRow and OrganizationListView components. Added columns (checkbox, logo, name, industry, website, workspace, labels), SortableHeader for column sorting, selection state with select all/none, header sort controls (dropdown + direction toggle), and sticky selection toolbar.
 
 ### ISS-007: Move person image to its own column without header label
 

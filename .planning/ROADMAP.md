@@ -25,15 +25,14 @@
 Plans:
 - [x] 16-01: Add image column, remove card view (1/1 plans complete)
 
-#### Phase 17: Organizations List View
+#### Phase 17: Organizations List View ✓
 
 **Goal:** Build list view for Organizations with columns, sorting, and selection infrastructure
 **Depends on:** Phase 16
-**Research:** Unlikely (following established People list patterns)
-**Plans:** TBD
+**Status:** Complete (2026-01-13)
 
 Plans:
-- [ ] 17-01: TBD (run /gsd:plan-phase 17 to break down)
+- [x] 17-01: List view with columns, sorting, selection (1/1 plans complete)
 
 #### Phase 18: Organizations Bulk Actions
 
@@ -155,6 +154,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
 | v2.2 List View Polish | 14-15 | 4/4 | Complete ✅ | 2026-01-13 |
-| v2.3 List View Unification | 16-18 | 1/? | In Progress 🚧 | - |
+| v2.3 List View Unification | 16-18 | 2/? | In Progress 🚧 | - |
 
 **Total: 15 phases, 38 plans shipped**
