@@ -8,10 +8,23 @@
 - ✅ [v2.2 List View Polish](milestones/v2.2-list-view-polish.md) (Phases 14-15) — SHIPPED 2026-01-13
 - ✅ [v2.3 List View Unification](milestones/v2.3-list-view-unification.md) (Phases 16-18) — SHIPPED 2026-01-13
 - ✅ [v2.4 Bug Fixes](milestones/v2.4-bug-fixes.md) (Phase 19) — SHIPPED 2026-01-13
+- 🚧 **v2.5 Performance** — Phase 20 (in progress)
 
-## Current Milestone: Complete
+## Current Milestone: v2.5 Performance
 
-All milestones complete! Ready for new work.
+### 🚧 v2.5 Performance (In Progress)
+
+**Milestone Goal:** Reduce bundle size from 1.6MB to under 500KB through code splitting
+
+#### Phase 20: Bundle Optimization
+
+**Goal**: Implement vendor chunking and route-based lazy loading to reduce bundle size
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (Vite/Rollup patterns established)
+**Plans**: TBD
+
+Plans:
+- [ ] 20-01: TBD (run /gsd:plan-phase 20 to break down)
 
 <details>
 <summary>✅ v2.4 Bug Fixes (Phase 19) — SHIPPED 2026-01-13</summary>
@@ -138,5 +151,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.2 List View Polish | 14-15 | 4/4 | Complete ✅ | 2026-01-13 |
 | v2.3 List View Unification | 16-18 | 3/3 | Complete ✅ | 2026-01-13 |
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
+| v2.5 Performance | 20 | 0/? | In Progress 🚧 | - |
 
 **Total: 19 phases, 43 plans shipped**
