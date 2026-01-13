@@ -26,21 +26,87 @@ class PRM_Access_Control {
     public function __construct() {
         // Filter queries to only show accessible posts
         add_action('pre_get_posts', [$this, 'filter_queries']);
-        
+
         // Filter REST API queries
         add_filter('rest_person_query', [$this, 'filter_rest_query'], 10, 2);
         add_filter('rest_company_query', [$this, 'filter_rest_query'], 10, 2);
         add_filter('rest_important_date_query', [$this, 'filter_rest_query'], 10, 2);
-        
+
         // Check single post access
         add_filter('the_posts', [$this, 'filter_single_post_access'], 10, 2);
-        
+
         // Filter REST API single item access
         add_filter('rest_prepare_person', [$this, 'filter_rest_single_access'], 10, 3);
         add_filter('rest_prepare_company', [$this, 'filter_rest_single_access'], 10, 3);
         add_filter('rest_prepare_important_date', [$this, 'filter_rest_single_access'], 10, 3);
+
+        // Convert workspace post IDs to term IDs when saving
+        add_filter('acf/update_value/name=_assigned_workspaces', [$this, 'convert_workspace_ids_to_term_ids'], 10, 3);
+
+        // Convert term IDs back to workspace post IDs when loading
+        add_filter('acf/load_value/name=_assigned_workspaces', [$this, 'convert_term_ids_to_workspace_ids'], 10, 3);
     }
-    
+
+    /**
+     * Convert workspace post IDs to workspace_access term IDs before saving
+     *
+     * The frontend sends workspace post IDs, but the ACF taxonomy field expects
+     * workspace_access term IDs. This filter converts between the two formats.
+     *
+     * @param mixed $value The value to save
+     * @param int $post_id The post ID
+     * @param array $field The field array
+     * @return array Array of term IDs
+     */
+    public function convert_workspace_ids_to_term_ids($value, $post_id, $field) {
+        if (empty($value) || !is_array($value)) {
+            return [];
+        }
+
+        $term_ids = [];
+        foreach ($value as $workspace_id) {
+            // The term slug format is 'workspace-{post_id}'
+            $term_slug = 'workspace-' . intval($workspace_id);
+            $term = get_term_by('slug', $term_slug, 'workspace_access');
+
+            if ($term && !is_wp_error($term)) {
+                $term_ids[] = $term->term_id;
+            }
+        }
+
+        return $term_ids;
+    }
+
+    /**
+     * Convert workspace_access term IDs to workspace post IDs when loading
+     *
+     * The ACF taxonomy field stores term IDs, but the frontend expects workspace
+     * post IDs. This filter converts between the two formats.
+     *
+     * @param mixed $value The loaded value (term IDs)
+     * @param int $post_id The post ID
+     * @param array $field The field array
+     * @return array Array of workspace post IDs
+     */
+    public function convert_term_ids_to_workspace_ids($value, $post_id, $field) {
+        if (empty($value) || !is_array($value)) {
+            return [];
+        }
+
+        $workspace_ids = [];
+        foreach ($value as $term_id) {
+            $term = get_term($term_id, 'workspace_access');
+            if ($term && !is_wp_error($term)) {
+                // The term slug format is 'workspace-{post_id}'
+                if (preg_match('/^workspace-(\d+)$/', $term->slug, $matches)) {
+                    $workspace_ids[] = intval($matches[1]);
+                }
+            }
+        }
+
+        return $workspace_ids;
+    }
+
     /**
      * Check if a user can access a post
      *
