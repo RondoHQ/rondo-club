@@ -6,7 +6,23 @@
 
 ## Current Milestone
 
-(None - planning next milestone)
+### v2.0 Multi-User (Phases 7-11)
+
+**Overview:** Transform Caelis from a single-user personal CRM into a multi-user platform combining Clay.earth's intimate relationship focus with Twenty CRM's collaborative features. Adds workspaces, sharing, and team collaboration while preserving privacy.
+
+**Phases:**
+- [ ] Phase 7: Data Model & Visibility System (0 plans)
+- [ ] Phase 8: Workspace & Team Infrastructure (0 plans)
+- [ ] Phase 9: Sharing UI & Permissions Interface (0 plans)
+- [ ] Phase 10: Collaborative Features (0 plans) — *research likely*
+- [ ] Phase 11: Migration, Testing & Polish (0 plans)
+
+**Key deliverables:**
+- Workspace CPT with membership via user meta
+- Contact visibility system (private/workspace/shared)
+- ShareModal and VisibilitySelector React components
+- @mentions in notes with notifications
+- WP-CLI migration command for existing data
 
 ---
 
@@ -41,3 +57,4 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | Milestone | Phases | Plans | Status | Completed |
 |-----------|--------|-------|--------|-----------|
 | v1.0 Tech Debt Cleanup | 1-6 | 11/11 | Complete ✅ | 2026-01-13 |
+| v2.0 Multi-User | 7-11 | 0/? | In Progress | — |

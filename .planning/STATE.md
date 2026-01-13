@@ -4,62 +4,44 @@
 
 See: .planning/PROJECT.md (updated 2026-01-13)
 
-**Core value:** Personal CRM with clean, maintainable codebase
-**Current focus:** v1.0 Tech Debt Cleanup complete — planning next milestone
+**Core value:** Personal CRM with multi-user collaboration capabilities
+**Current focus:** v2.0 Multi-User — transforming to collaborative platform
 
 ## Current Position
 
-Milestone: v1.0 Tech Debt Cleanup ✅ SHIPPED
-Phases: 6/6 complete
-Plans: 11/11 complete
-Status: Milestone shipped
-Last activity: 2026-01-13 — v1.0 milestone complete
+Milestone: v2.0 Multi-User
+Phases: 0/5 complete (7-11)
+Plans: 0/? complete
+Status: Planning phases
+Last activity: 2026-01-13 — v2.0 milestone created
 
-Progress: ██████████ 100%
+Progress: ░░░░░░░░░░ 0%
 
-## Performance Metrics
+## v2.0 Multi-User Overview
 
-**Velocity:**
-- Total plans completed: 11
-- Average duration: ~6 min
-- Total execution time: ~62 min
+**Goal:** Transform Caelis from single-user to multi-user CRM with:
+- Workspaces for team collaboration
+- Contact visibility (private/workspace/shared)
+- Sharing UI with granular permissions
+- @mentions and collaborative notes
+- Migration path for existing data
 
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1. REST API Infrastructure | 2 | 17 min | 8.5 min |
-| 2. REST API People & Companies | 2 | 11 min | 5.5 min |
-| 3. REST API Integrations | 2 | 23 min | 11.5 min |
-| 4. Security Hardening | 2 | 4 min | 2 min |
-| 5. XSS Protection | 1 | 2 min | 2 min |
-| 6. Code Cleanup | 2 | 5 min | 2.5 min |
-
-## v1.0 Milestone Summary
-
-**Shipped:** 2026-01-13
-
-**Key Accomplishments:**
-- Split 107KB class-rest-api.php into 5 domain-specific classes
-- Implemented sodium encryption for Slack tokens
-- Added server-side XSS protection with wp_kses
-- Removed 48 console.error() calls
-- Created .env.example with environment documentation
-
-**Decisions validated:**
-- Split REST API by domain — ✓ Good
-- Use sodium for token encryption — ✓ Good
-- Use WordPress native XSS functions — ✓ Good
-- Restrict webhook URLs to hooks.slack.com — ✓ Good
+**Phases:**
+- Phase 7: Data Model & Visibility System
+- Phase 8: Workspace & Team Infrastructure
+- Phase 9: Sharing UI & Permissions Interface
+- Phase 10: Collaborative Features (research likely)
+- Phase 11: Migration, Testing & Polish
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: v1.0 milestone complete
+Stopped at: v2.0 milestone created
 Resume file: None
 
 ## Next Steps
 
-Ready to plan next milestone. Options:
-- `/gsd:discuss-milestone` — gather context for next milestone
-- `/gsd:new-milestone` — create directly if scope is clear
+Ready to plan phases. Options:
+- `/gsd:plan-phase 7` — create detailed plan for Phase 7
+- `/gsd:research-phase 7` — research approach first (optional)
+- `/gsd:discuss-phase 7` — gather more context before planning
