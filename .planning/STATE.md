@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 
 Milestone: v3.0 Testing Infrastructure
 Phase: 21 of 23 (PHPUnit Setup)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-13 — Milestone v3.0 created
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-01-13 — Completed 21-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █░░░░░░░░░ 10%
 
 ## Completed Milestones
 
@@ -44,8 +44,10 @@ See `.planning/ISSUES.md`:
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
-| - | PHPUnit via wp-browser (Codeception) | WordPress-specific test types (WPLoader, WPUnit) |
-| - | Separate test database (`caelis_test`) | Isolation from dev/prod data |
+| 21 | PHPUnit via wp-browser (Codeception) | WordPress-specific test types (WPLoader, WPUnit) |
+| 21 | Separate test database (`caelis_test`) | Isolation from dev/prod data |
+| 21 | MySQL via Homebrew | Local MySQL CLI needed for test database |
+| 21 | Theme symlink in WP themes dir | WPLoader requires theme in standard location |
 | - | Backend-first testing | Playwright deferred to future milestone |
 
 ## Roadmap Evolution
@@ -62,7 +64,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Milestone v3.0 initialization
+Stopped at: Completed Phase 21 Plan 01
 Resume file: None
 
 ## Accumulated Context
@@ -75,6 +77,6 @@ Resume file: None
 
 ## Next Steps
 
-- `/gsd:research-phase 21` — investigate wp-browser setup (recommended, research likely)
-- `/gsd:plan-phase 21` — create execution plan for PHPUnit setup
-- `/gsd:discuss-phase 21` — gather more context first
+- `/gsd:plan-phase 22` — create execution plan for Access Control Tests
+- `/gsd:discuss-phase 22` — gather context about access control patterns first
+- `/gsd:research-phase 22` — investigate test patterns for user isolation
