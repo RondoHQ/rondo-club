@@ -666,7 +666,15 @@ class PRM_REST_People extends PRM_REST_Base {
     /**
      * Bulk update multiple people
      *
-     * Updates visibility and/or workspace assignments for multiple people at once.
+     * Updates visibility, workspace assignments, organization, and/or labels
+     * for multiple people at once.
+     *
+     * Supported updates:
+     * - visibility: Change privacy setting (private, workspace, shared)
+     * - assigned_workspaces: Array of workspace post IDs to assign
+     * - organization_id: Company post ID to set as current employer (null to clear)
+     * - labels_add: Array of person_label term IDs to add
+     * - labels_remove: Array of person_label term IDs to remove
      *
      * @param WP_REST_Request $request The REST request object.
      * @return WP_REST_Response Response with success/failure details.
@@ -712,6 +720,57 @@ class PRM_REST_People extends PRM_REST_Base {
 
                     // Update the ACF field with term IDs
                     update_field('_assigned_workspaces', $term_ids, $post_id);
+                }
+
+                // Update organization assignment if provided
+                if (array_key_exists('organization_id', $updates)) {
+                    $org_id = $updates['organization_id'];
+
+                    // Get current work_history
+                    $work_history = get_field('work_history', $post_id) ?: [];
+
+                    if ($org_id === null) {
+                        // Clear current organization: set is_current=false on all entries
+                        foreach ($work_history as &$job) {
+                            $job['is_current'] = false;
+                        }
+                        unset($job); // Unset reference to avoid issues
+                    } else {
+                        // Check if company already exists in work history
+                        $found = false;
+                        foreach ($work_history as &$job) {
+                            $job['is_current'] = ($job['company'] == $org_id);
+                            if ($job['company'] == $org_id) {
+                                $found = true;
+                            }
+                        }
+                        unset($job); // Unset reference to avoid issues
+
+                        // If company not in history, add new entry
+                        if (!$found) {
+                            $work_history[] = [
+                                'company'    => $org_id,
+                                'title'      => '',
+                                'start_date' => '',
+                                'end_date'   => '',
+                                'is_current' => true,
+                            ];
+                        }
+                    }
+
+                    update_field('work_history', $work_history, $post_id);
+                }
+
+                // Add labels if provided (append, don't replace)
+                if (!empty($updates['labels_add'])) {
+                    $term_ids = array_map('intval', $updates['labels_add']);
+                    wp_set_object_terms($post_id, $term_ids, 'person_label', true);
+                }
+
+                // Remove labels if provided
+                if (!empty($updates['labels_remove'])) {
+                    $term_ids = array_map('intval', $updates['labels_remove']);
+                    wp_remove_object_terms($post_id, $term_ids, 'person_label');
                 }
 
                 $updated[] = $post_id;
