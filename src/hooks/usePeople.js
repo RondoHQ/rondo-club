@@ -115,14 +115,93 @@ export function usePersonDates(id) {
   });
 }
 
-export function useCreatePerson() {
+/**
+ * Create a new person with all associated data.
+ * Handles: payload building, Gravatar sideload, birthday creation.
+ *
+ * @param {Object} options - Hook options
+ * @param {Function} options.onSuccess - Called with created person data after successful creation
+ * @returns {Object} TanStack Query mutation object
+ */
+export function useCreatePerson({ onSuccess } = {}) {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (data) => wpApi.createPerson(data),
-    onSuccess: () => {
+    mutationFn: async (data) => {
+      // Build contact_info array from individual fields
+      const contactInfo = [];
+      if (data.email) {
+        contactInfo.push({
+          contact_type: 'email',
+          contact_value: data.email,
+          contact_label: 'Email',
+        });
+      }
+      if (data.phone) {
+        contactInfo.push({
+          contact_type: data.phone_type || 'mobile',
+          contact_value: data.phone,
+          contact_label: data.phone_type === 'mobile' ? 'Mobile' : 'Phone',
+        });
+      }
+
+      // Build the full payload
+      const payload = {
+        title: `${data.first_name} ${data.last_name}`.trim(),
+        status: 'publish',
+        acf: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          nickname: data.nickname,
+          gender: data.gender || null,
+          pronouns: data.pronouns || null,
+          how_we_met: data.how_we_met,
+          is_favorite: data.is_favorite,
+          contact_info: contactInfo,
+          _visibility: data.visibility || 'private',
+          _assigned_workspaces: data.assigned_workspaces || [],
+        },
+      };
+
+      // Create the person
+      const response = await wpApi.createPerson(payload);
+      const personId = response.data.id;
+
+      // Try to sideload Gravatar if email is provided
+      if (data.email) {
+        try {
+          await prmApi.sideloadGravatar(personId, data.email);
+        } catch {
+          // Gravatar sideload failed silently - not critical
+        }
+      }
+
+      // Create birthday if provided
+      if (data.birthday && data.birthdayType) {
+        try {
+          await wpApi.createDate({
+            title: `${data.first_name}'s Birthday`,
+            status: 'publish',
+            date_type: [data.birthdayType.id],
+            acf: {
+              date_value: data.birthday,
+              is_recurring: true,
+              related_people: [personId],
+            },
+          });
+        } catch {
+          // Birthday creation failed silently - not critical
+        }
+      }
+
+      return response.data;
+    },
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      // Call custom onSuccess if provided
+      onSuccess?.(result);
     },
   });
 }

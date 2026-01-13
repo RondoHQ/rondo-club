@@ -1,10 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
-import { usePeople } from '@/hooks/usePeople';
+import { usePeople, useCreatePerson } from '@/hooks/usePeople';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { wpApi, prmApi } from '@/api/client';
+import { useQuery } from '@tanstack/react-query';
+import { wpApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
 import PersonEditModal from '@/components/PersonEditModal';
 
@@ -98,7 +98,6 @@ export default function PeopleList() {
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: people, isLoading, error } = usePeople();
   const { data: workspaces = [] } = useWorkspaces();
@@ -106,78 +105,9 @@ export default function PeopleList() {
   // Get current user ID from prmConfig
   const currentUserId = window.prmConfig?.userId;
   
-  // Create person mutation
-  const createPersonMutation = useMutation({
-    mutationFn: async (data) => {
-      const contactInfo = [];
-      if (data.email) {
-        contactInfo.push({
-          contact_type: 'email',
-          contact_value: data.email,
-          contact_label: 'Email',
-        });
-      }
-      if (data.phone) {
-        contactInfo.push({
-          contact_type: data.phone_type || 'mobile',
-          contact_value: data.phone,
-          contact_label: data.phone_type === 'mobile' ? 'Mobile' : 'Phone',
-        });
-      }
-      
-      const payload = {
-        title: `${data.first_name} ${data.last_name}`.trim(),
-        status: 'publish',
-        acf: {
-          first_name: data.first_name,
-          last_name: data.last_name,
-          nickname: data.nickname,
-          gender: data.gender || null,
-          pronouns: data.pronouns || null,
-          how_we_met: data.how_we_met,
-          is_favorite: data.is_favorite,
-          contact_info: contactInfo,
-          _visibility: data.visibility || 'private',
-          _assigned_workspaces: data.assigned_workspaces || [],
-        },
-      };
-      
-      const response = await wpApi.createPerson(payload);
-      const personId = response.data.id;
-      
-      // Try to sideload Gravatar if email is provided
-      if (data.email) {
-        try {
-          await prmApi.sideloadGravatar(personId, data.email);
-        } catch {
-          // Gravatar sideload failed silently - not critical
-        }
-      }
-      
-      // Create birthday if provided
-      if (data.birthday && data.birthdayType) {
-        try {
-          await wpApi.createDate({
-            title: `${data.first_name}'s Birthday`,
-            status: 'publish',
-            date_type: [data.birthdayType.id],
-            acf: {
-              date_value: data.birthday,
-              is_recurring: true,
-              related_people: [personId],
-            },
-          });
-        } catch {
-          // Birthday creation failed silently - not critical
-        }
-      }
-      
-      return response.data;
-    },
+  // Create person mutation (using shared hook)
+  const createPersonMutation = useCreatePerson({
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['people'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['reminders'] });
       setShowPersonModal(false);
       navigate(`/people/${result.id}`);
     },
