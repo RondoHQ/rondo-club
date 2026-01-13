@@ -233,13 +233,32 @@ export function useUpdatePerson() {
 
 export function useDeletePerson() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id) => wpApi.deletePerson(id, { force: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: peopleKeys.details() });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+/**
+ * Bulk update multiple people at once.
+ * Updates visibility and/or workspace assignments for selected people.
+ *
+ * @returns {Object} TanStack Query mutation object with mutate({ ids, updates })
+ */
+export function useBulkUpdatePeople() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ ids, updates }) => prmApi.bulkUpdatePeople(ids, updates),
+    onSuccess: () => {
+      // Invalidate people list and details for all updated people
+      queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.details() });
     },
   });
 }
