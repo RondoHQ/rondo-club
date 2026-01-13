@@ -546,7 +546,7 @@ if (defined('WP_CLI') && WP_CLI) {
          * ## OPTIONS
          *
          * [--post-type=<type>]
-         * : Post type to update (person, company, or all). Default: all
+         * : Post type to update (person, company, important_date, or all). Default: all
          *
          * [--dry-run]
          * : Preview changes without making them
@@ -557,6 +557,7 @@ if (defined('WP_CLI') && WP_CLI) {
          *     wp prm visibility set-defaults --dry-run
          *     wp prm visibility set-defaults --post-type=person
          *     wp prm visibility set-defaults --post-type=company
+         *     wp prm visibility set-defaults --post-type=important_date
          *
          * @when after_wp_load
          */
@@ -571,11 +572,11 @@ if (defined('WP_CLI') && WP_CLI) {
             // Determine which post types to process
             $post_types = [];
             if ($post_type === 'all') {
-                $post_types = ['person', 'company'];
-            } elseif (in_array($post_type, ['person', 'company'])) {
+                $post_types = ['person', 'company', 'important_date'];
+            } elseif (in_array($post_type, ['person', 'company', 'important_date'])) {
                 $post_types = [$post_type];
             } else {
-                WP_CLI::error('Invalid post type. Use: person, company, or all');
+                WP_CLI::error('Invalid post type. Use: person, company, important_date, or all');
                 return;
             }
 
