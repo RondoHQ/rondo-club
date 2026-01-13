@@ -193,7 +193,12 @@ function prm_init() {
     if (!prm_is_carddav_request()) {
         new PRM_CardDAV_Server();
     }
-    
+
+    // Initialize CardDAV sync hooks to track changes made via web UI
+    // This must run on all requests, not just CardDAV requests
+    require_once PRM_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
+    \Caelis\CardDAV\CardDAVBackend::init_hooks();
+
     $initialized = true;
 }
 // Initialize early for REST API requests, but also check on plugins_loaded
