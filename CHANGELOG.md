@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.66.0] - 2026-01-13
+
+### Added
+- Clickable column headers in list view with sort direction indicators
+  - Click any column header to sort by that field
+  - Shows arrow indicator (up/down) for active sort column
+  - Click same header again to toggle sort direction
+- Sticky table header that remains visible when scrolling
+- Sticky selection toolbar when contacts are selected
+  - Selection toolbar stays above the table header for easy access
+
 ## [1.65.0] - 2026-01-13
 
 ### Added
