@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-13)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Milestone complete - ready for next milestone
+**Current focus:** List view unification across People and Organizations
 
 ## Current Position
 
-Milestone: v2.2 List View Polish — COMPLETE
-Phase: 15 of 15 (Extended Bulk Actions) — COMPLETE
-Plan: 2/2 complete
-Status: Milestone complete
-Last activity: 2026-01-13 — Completed Phase 15 (2 plans)
+Milestone: v2.3 List View Unification
+Phase: 16 of 18 (People List View Cleanup)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-13 — Milestone v2.3 created
 
-Progress: ██████████ 100%
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -31,28 +31,28 @@ Progress: ██████████ 100%
 ## Deferred Issues
 
 See `.planning/ISSUES.md`:
-- ~~ISS-001~~: Closed in Phase 14-01 (Org/Workspace sorting)
-- ~~ISS-002~~: Closed in Phase 14-01 (Label column)
-- ~~ISS-003~~: Closed in Phase 15 (Bulk edit for Organizations and Labels)
-- ~~ISS-004~~: Closed in Phase 14-02 (Clickable headers)
-- ~~ISS-005~~: Closed in Phase 14-02 (Sticky header)
+- ISS-006: Remove card view from People (addressing in Phase 16)
+- ISS-007: Move person image to its own column (addressing in Phase 16)
+- ISS-008: Organizations list interface (addressing in Phases 17-18)
 
-**0 issues remaining**
+**3 issues being addressed in v2.3**
 
-## Decisions Made (Phase 15)
+## Decisions Made (v2.3)
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
-| 15-02 | Organizations sorted alphabetically | Better UX for finding organizations |
-| 15-02 | Mode toggle for labels (add/remove) | Simpler than separate modals |
+| - | - | - |
+
+## Roadmap Evolution
+
+- Milestone v2.3 created: List view unification, 3 phases (Phase 16-18)
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Milestone v2.2 complete
+Stopped at: Milestone v2.3 initialization
 Resume file: None
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — archive v2.2 and prepare for next milestone
-- `/gsd:new-milestone` — create next milestone with phases
+- `/gsd:plan-phase 16` — plan People List View Cleanup phase
