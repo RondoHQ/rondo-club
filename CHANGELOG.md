@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.68.0] - 2026-01-13
+
+### Changed
+- People list view now has dedicated image column (before First Name)
+  - Images/initials shown in narrow column without header label
+  - First Name header now aligns directly with first name values
+
+### Removed
+- Card view toggle from People list (list view is now the only view)
+- PersonCard component (no longer needed)
+- View mode localStorage persistence (no longer needed)
+
 ## [1.67.0] - 2026-01-13
 
 ### Added
