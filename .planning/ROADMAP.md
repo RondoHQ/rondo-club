@@ -15,7 +15,7 @@ None
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: REST API Infrastructure** - Extract base class and create domain-specific file structure ✓
-- [ ] **Phase 2: REST API People & Companies** - Extract people and company endpoints
+- [x] **Phase 2: REST API People & Companies** - Extract people and company endpoints ✓
 - [ ] **Phase 3: REST API Integrations** - Extract Slack and import/export endpoints
 - [ ] **Phase 4: Security Hardening** - Encrypt tokens, validate URLs, review public endpoints
 - [ ] **Phase 5: XSS Protection** - Add server-side sanitization using WordPress functions
@@ -40,8 +40,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 02-01: Extract people endpoints to class-rest-people.php
-- [ ] 02-02: Extract company endpoints to class-rest-companies.php
+- [x] 02-01: Extract people endpoints to class-rest-people.php ✓
+- [x] 02-02: Extract company endpoints to class-rest-companies.php ✓
 
 ### Phase 3: REST API Integrations
 **Goal**: Extract Slack integration and import/export endpoints into dedicated classes
@@ -91,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. REST API Infrastructure | 2/2 | Complete ✓ | 2026-01-13 |
-| 2. REST API People & Companies | 0/2 | Not started | - |
+| 2. REST API People & Companies | 2/2 | Complete ✓ | 2026-01-13 |
 | 3. REST API Integrations | 0/2 | Not started | - |
 | 4. Security Hardening | 0/2 | Not started | - |
 | 5. XSS Protection | 0/1 | Not started | - |
