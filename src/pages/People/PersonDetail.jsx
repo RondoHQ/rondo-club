@@ -422,6 +422,8 @@ export default function PersonDetail() {
         pronouns: data.pronouns || null,
         how_we_met: data.how_we_met,
         is_favorite: data.is_favorite,
+        _visibility: data.visibility || 'private',
+        _assigned_workspaces: data.assigned_workspaces || [],
       });
 
       await updatePerson.mutateAsync({
