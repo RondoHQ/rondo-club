@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.73.0] - 2026-01-13
+
+### Changed
+- Implemented route-based lazy loading with React.lazy and Suspense
+  - All 16 page components now load on demand when routes are visited
+  - Initial bundle reduced from 1,336 KB to 87 KB (main chunk only)
+  - Total initial load (vendor + utils + main + CSS): ~435 KB raw / ~128 KB gzipped
+  - Heavy libraries (vis-network, TipTap editor) only load when needed
+  - Added PageLoader spinner for smooth loading states
+
 ## [1.72.0] - 2026-01-13
 
 ### Changed
