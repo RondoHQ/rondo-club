@@ -128,9 +128,9 @@ class PRM_Access_Control {
      *
      * Permission resolution order:
      * 1. Is user the author? → Full access
-     * 2. Is _visibility = 'private'? → Deny (unless #1)
-     * 3. Is _visibility = 'workspace'? → Check workspace membership
-     * 4. Check _shared_with for user → Allow with specified permission
+     * 2. Check _shared_with for user → Allow with specified permission (overrides visibility)
+     * 3. Is _visibility = 'private'? → Deny (unless #1 or #2)
+     * 4. Is _visibility = 'workspace'? → Check workspace membership
      * 5. Deny
      */
     public function user_can_access_post($post_id, $user_id = null) {
@@ -166,15 +166,20 @@ class PRM_Access_Control {
             return true;
         }
 
-        // 2. Check visibility
+        // 2. Check direct shares first (overrides visibility)
+        if (PRM_Visibility::user_has_share($post_id, $user_id)) {
+            return true;
+        }
+
+        // 3. Check visibility
         $visibility = PRM_Visibility::get_visibility($post_id);
 
-        // Private = only author (already checked above)
+        // Private = only author (already checked above), no shares (checked above)
         if ($visibility === PRM_Visibility::VISIBILITY_PRIVATE) {
             return false;
         }
 
-        // 3. Workspace visibility check
+        // 4. Workspace visibility check
         if ($visibility === PRM_Visibility::VISIBILITY_WORKSPACE) {
             // Get user's workspace IDs
             $user_workspace_ids = PRM_Workspace_Members::get_user_workspace_ids($user_id);
@@ -193,11 +198,6 @@ class PRM_Access_Control {
                     }
                 }
             }
-        }
-
-        // 4. Check direct shares
-        if (PRM_Visibility::user_has_share($post_id, $user_id)) {
-            return true;
         }
 
         // 5. Deny
