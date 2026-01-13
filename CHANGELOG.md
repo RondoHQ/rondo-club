@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.42.5] - 2026-01-13
+
+### Changed
+- Added XSS sanitization to REST API responses using WordPress native functions
+- Added sanitize_text(), sanitize_rich_content(), sanitize_url() helpers to PRM_REST_Base
+- All user-supplied content in API responses now properly escaped (defense-in-depth)
+
 ## [1.42.4] - 2026-01-13
 
 ### Changed
