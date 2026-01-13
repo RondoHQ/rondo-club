@@ -97,6 +97,63 @@ class PRM_REST_People extends PRM_REST_Base {
             'callback'            => [$this, 'remove_share'],
             'permission_callback' => [$this, 'check_post_owner'],
         ]);
+
+        // Bulk update endpoint
+        register_rest_route('prm/v1', '/people/bulk-update', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'bulk_update_people'],
+            'permission_callback' => [$this, 'check_bulk_update_permission'],
+            'args'                => [
+                'ids' => [
+                    'required'          => true,
+                    'validate_callback' => function($param) {
+                        if (!is_array($param) || empty($param)) {
+                            return false;
+                        }
+                        foreach ($param as $id) {
+                            if (!is_numeric($id)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    },
+                    'sanitize_callback' => function($param) {
+                        return array_map('intval', $param);
+                    },
+                ],
+                'updates' => [
+                    'required'          => true,
+                    'validate_callback' => function($param) {
+                        if (!is_array($param) || empty($param)) {
+                            return false;
+                        }
+                        // Must have at least visibility or assigned_workspaces
+                        if (!isset($param['visibility']) && !isset($param['assigned_workspaces'])) {
+                            return false;
+                        }
+                        // Validate visibility if provided
+                        if (isset($param['visibility'])) {
+                            $valid_visibilities = ['private', 'workspace', 'shared'];
+                            if (!in_array($param['visibility'], $valid_visibilities, true)) {
+                                return false;
+                            }
+                        }
+                        // Validate assigned_workspaces if provided
+                        if (isset($param['assigned_workspaces'])) {
+                            if (!is_array($param['assigned_workspaces'])) {
+                                return false;
+                            }
+                            foreach ($param['assigned_workspaces'] as $ws_id) {
+                                if (!is_numeric($ws_id)) {
+                                    return false;
+                                }
+                            }
+                        }
+                        return true;
+                    },
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -518,5 +575,117 @@ class PRM_REST_People extends PRM_REST_Base {
         update_field('_shared_with', $shares, $post_id);
 
         return rest_ensure_response(['success' => true, 'message' => __('Share removed.', 'personal-crm')]);
+    }
+
+    /**
+     * Check if current user can bulk update the specified people
+     *
+     * Verifies that the current user owns all posts in the request.
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return bool|WP_Error True if user owns all posts, WP_Error otherwise.
+     */
+    public function check_bulk_update_permission($request) {
+        if (!is_user_logged_in()) {
+            return new WP_Error(
+                'rest_forbidden',
+                __('You must be logged in to perform this action.', 'personal-crm'),
+                ['status' => 401]
+            );
+        }
+
+        $ids = $request->get_param('ids');
+        $current_user_id = get_current_user_id();
+        $is_admin = current_user_can('administrator');
+
+        foreach ($ids as $post_id) {
+            $post = get_post($post_id);
+
+            if (!$post || $post->post_type !== 'person') {
+                return new WP_Error(
+                    'rest_invalid_id',
+                    sprintf(__('Person with ID %d not found.', 'personal-crm'), $post_id),
+                    ['status' => 404]
+                );
+            }
+
+            // Must be post author or admin
+            if ((int) $post->post_author !== $current_user_id && !$is_admin) {
+                return new WP_Error(
+                    'rest_forbidden',
+                    sprintf(__('You do not have permission to update person with ID %d.', 'personal-crm'), $post_id),
+                    ['status' => 403]
+                );
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Bulk update multiple people
+     *
+     * Updates visibility and/or workspace assignments for multiple people at once.
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response Response with success/failure details.
+     */
+    public function bulk_update_people($request) {
+        $ids = $request->get_param('ids');
+        $updates = $request->get_param('updates');
+
+        $updated = [];
+        $failed = [];
+
+        foreach ($ids as $post_id) {
+            try {
+                // Update visibility if provided
+                if (isset($updates['visibility'])) {
+                    $result = PRM_Visibility::set_visibility($post_id, $updates['visibility']);
+                    if (!$result) {
+                        $failed[] = [
+                            'id'    => $post_id,
+                            'error' => __('Failed to update visibility.', 'personal-crm'),
+                        ];
+                        continue;
+                    }
+                }
+
+                // Update workspace assignments if provided
+                if (isset($updates['assigned_workspaces'])) {
+                    $workspace_ids = array_map('intval', $updates['assigned_workspaces']);
+
+                    // Convert workspace post IDs to term IDs
+                    $term_ids = [];
+                    foreach ($workspace_ids as $workspace_id) {
+                        $term_slug = 'workspace-' . $workspace_id;
+                        $term = get_term_by('slug', $term_slug, 'workspace_access');
+
+                        if ($term && !is_wp_error($term)) {
+                            $term_ids[] = $term->term_id;
+                        }
+                    }
+
+                    // Set the terms on the post
+                    wp_set_object_terms($post_id, $term_ids, 'workspace_access');
+
+                    // Update the ACF field with term IDs
+                    update_field('_assigned_workspaces', $term_ids, $post_id);
+                }
+
+                $updated[] = $post_id;
+            } catch (Exception $e) {
+                $failed[] = [
+                    'id'    => $post_id,
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return rest_ensure_response([
+            'success' => empty($failed),
+            'updated' => $updated,
+            'failed'  => $failed,
+        ]);
     }
 }
