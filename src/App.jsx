@@ -1,26 +1,36 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useVersionCheck } from '@/hooks/useVersionCheck';
 import { prmApi } from '@/api/client';
 import Layout from '@/components/layout/Layout';
-import Dashboard from '@/pages/Dashboard';
-import PeopleList from '@/pages/People/PeopleList';
-import PersonDetail from '@/pages/People/PersonDetail';
-import CompaniesList from '@/pages/Companies/CompaniesList';
-import CompanyDetail from '@/pages/Companies/CompanyDetail';
-import DatesList from '@/pages/Dates/DatesList';
-import TodosList from '@/pages/Todos/TodosList';
-import Settings from '@/pages/Settings/Settings';
-import RelationshipTypes from '@/pages/Settings/RelationshipTypes';
-import UserApproval from '@/pages/Settings/UserApproval';
-import FamilyTree from '@/pages/People/FamilyTree';
-import WorkspacesList from '@/pages/Workspaces/WorkspacesList';
-import WorkspaceDetail from '@/pages/Workspaces/WorkspaceDetail';
-import WorkspaceSettings from '@/pages/Workspaces/WorkspaceSettings';
-import WorkspaceInviteAccept from '@/pages/Workspaces/WorkspaceInviteAccept';
-import Login from '@/pages/Login';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+
+// Lazy-loaded page components
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const PeopleList = lazy(() => import('@/pages/People/PeopleList'));
+const PersonDetail = lazy(() => import('@/pages/People/PersonDetail'));
+const FamilyTree = lazy(() => import('@/pages/People/FamilyTree'));
+const CompaniesList = lazy(() => import('@/pages/Companies/CompaniesList'));
+const CompanyDetail = lazy(() => import('@/pages/Companies/CompanyDetail'));
+const DatesList = lazy(() => import('@/pages/Dates/DatesList'));
+const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
+const Settings = lazy(() => import('@/pages/Settings/Settings'));
+const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
+const UserApproval = lazy(() => import('@/pages/Settings/UserApproval'));
+const WorkspacesList = lazy(() => import('@/pages/Workspaces/WorkspacesList'));
+const WorkspaceDetail = lazy(() => import('@/pages/Workspaces/WorkspaceDetail'));
+const WorkspaceSettings = lazy(() => import('@/pages/Workspaces/WorkspaceSettings'));
+const WorkspaceInviteAccept = lazy(() => import('@/pages/Workspaces/WorkspaceInviteAccept'));
+const Login = lazy(() => import('@/pages/Login'));
+
+// Page loading spinner
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+  </div>
+);
 
 function ApprovalCheck({ children }) {
   const { data: user, isLoading, error } = useQuery({
@@ -148,46 +158,52 @@ function App() {
       <UpdateBanner />
       <Routes>
         {/* Public routes */}
-        <Route path="/login" element={<Login />} />
-      
+        <Route path="/login" element={
+          <Suspense fallback={<PageLoader />}>
+            <Login />
+          </Suspense>
+        } />
+
       {/* Protected routes */}
       <Route
         path="/*"
         element={
           <ProtectedRoute>
             <Layout>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                
-                {/* People routes */}
-                <Route path="/people" element={<PeopleList />} />
-                <Route path="/people/:id/family-tree" element={<FamilyTree />} />
-                <Route path="/people/:id" element={<PersonDetail />} />
-                
-                {/* Companies routes */}
-                <Route path="/companies" element={<CompaniesList />} />
-                <Route path="/companies/:id" element={<CompanyDetail />} />
-                
-                {/* Dates routes */}
-                <Route path="/dates" element={<DatesList />} />
-                
-                {/* Todos routes */}
-                <Route path="/todos" element={<TodosList />} />
-                
-                {/* Settings */}
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/settings/relationship-types" element={<RelationshipTypes />} />
-                <Route path="/settings/user-approval" element={<UserApproval />} />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
 
-                {/* Workspaces routes */}
-                <Route path="/workspaces" element={<WorkspacesList />} />
-                <Route path="/workspaces/:id" element={<WorkspaceDetail />} />
-                <Route path="/workspaces/:id/settings" element={<WorkspaceSettings />} />
-                <Route path="/workspace-invite/:token" element={<WorkspaceInviteAccept />} />
+                  {/* People routes */}
+                  <Route path="/people" element={<PeopleList />} />
+                  <Route path="/people/:id/family-tree" element={<FamilyTree />} />
+                  <Route path="/people/:id" element={<PersonDetail />} />
 
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                  {/* Companies routes */}
+                  <Route path="/companies" element={<CompaniesList />} />
+                  <Route path="/companies/:id" element={<CompanyDetail />} />
+
+                  {/* Dates routes */}
+                  <Route path="/dates" element={<DatesList />} />
+
+                  {/* Todos routes */}
+                  <Route path="/todos" element={<TodosList />} />
+
+                  {/* Settings */}
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/settings/relationship-types" element={<RelationshipTypes />} />
+                  <Route path="/settings/user-approval" element={<UserApproval />} />
+
+                  {/* Workspaces routes */}
+                  <Route path="/workspaces" element={<WorkspacesList />} />
+                  <Route path="/workspaces/:id" element={<WorkspaceDetail />} />
+                  <Route path="/workspaces/:id/settings" element={<WorkspaceSettings />} />
+                  <Route path="/workspace-invite/:token" element={<WorkspaceInviteAccept />} />
+
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
             </Layout>
           </ProtectedRoute>
         }
