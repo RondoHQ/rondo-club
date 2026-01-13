@@ -19,16 +19,150 @@ if (!defined('ABSPATH')) {
 }
 
 class CardDAVBackend extends AbstractBackend implements SyncSupport {
-    
+
     /**
      * Option name for sync tokens
      */
     const SYNC_TOKEN_OPTION = 'prm_carddav_sync_tokens';
-    
+
     /**
      * Option name for change log
      */
     const CHANGE_LOG_OPTION = 'prm_carddav_changes';
+
+    /**
+     * Flag to prevent duplicate logging during CardDAV operations
+     */
+    private static $skip_hooks = false;
+
+    /**
+     * Initialize WordPress hooks for tracking changes made outside CardDAV
+     */
+    public static function init_hooks() {
+        // Track when persons are created or updated via web UI
+        add_action('save_post_person', [__CLASS__, 'on_person_saved'], 10, 3);
+
+        // Track when persons are trashed via web UI
+        add_action('wp_trash_post', [__CLASS__, 'on_person_trashed']);
+
+        // Track when persons are permanently deleted
+        add_action('before_delete_post', [__CLASS__, 'on_person_deleted']);
+    }
+
+    /**
+     * Handle person saved (created or updated) via web UI
+     *
+     * @param int $post_id Post ID
+     * @param \WP_Post $post Post object
+     * @param bool $update Whether this is an update
+     */
+    public static function on_person_saved($post_id, $post, $update) {
+        // Skip if this change came from CardDAV
+        if (self::$skip_hooks) {
+            return;
+        }
+
+        // Skip autosaves and revisions
+        if (wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) {
+            return;
+        }
+
+        // Only track published persons
+        if ($post->post_status !== 'publish') {
+            return;
+        }
+
+        $user_id = (int) $post->post_author;
+        $type = $update ? 'modified' : 'added';
+
+        self::log_external_change($user_id, $post_id, $type);
+    }
+
+    /**
+     * Handle person trashed via web UI
+     *
+     * @param int $post_id Post ID
+     */
+    public static function on_person_trashed($post_id) {
+        // Skip if this change came from CardDAV
+        if (self::$skip_hooks) {
+            return;
+        }
+
+        $post = get_post($post_id);
+        if (!$post || $post->post_type !== 'person') {
+            return;
+        }
+
+        $user_id = (int) $post->post_author;
+        $uri = get_post_meta($post_id, '_carddav_uri', true) ?: $post_id . '.vcf';
+
+        self::log_external_change($user_id, $post_id, 'deleted', $uri);
+    }
+
+    /**
+     * Handle person permanently deleted
+     *
+     * @param int $post_id Post ID
+     */
+    public static function on_person_deleted($post_id) {
+        // Skip if this change came from CardDAV
+        if (self::$skip_hooks) {
+            return;
+        }
+
+        $post = get_post($post_id);
+        if (!$post || $post->post_type !== 'person') {
+            return;
+        }
+
+        $user_id = (int) $post->post_author;
+        $uri = get_post_meta($post_id, '_carddav_uri', true) ?: $post_id . '.vcf';
+
+        self::log_external_change($user_id, $post_id, 'deleted', $uri);
+    }
+
+    /**
+     * Log a change made outside of CardDAV (via web UI or REST API)
+     *
+     * @param int $user_id User/address book ID
+     * @param int $person_id Person post ID
+     * @param string $type Change type (added, modified, deleted)
+     * @param string|null $uri Optional URI for deleted cards
+     */
+    public static function log_external_change($user_id, $person_id, $type, $uri = null) {
+        $changes = get_option(self::CHANGE_LOG_OPTION, []);
+
+        if (!isset($changes[$user_id])) {
+            $changes[$user_id] = [];
+        }
+
+        $stored_uri = $uri ?: $person_id . '.vcf';
+
+        $changes[$user_id][$person_id] = [
+            'type' => $type,
+            'timestamp' => time(),
+            'uri' => $stored_uri,
+        ];
+
+        update_option(self::CHANGE_LOG_OPTION, $changes);
+
+        // Update sync token
+        $tokens = get_option(self::SYNC_TOKEN_OPTION, []);
+        $tokens[$user_id] = time();
+        update_option(self::SYNC_TOKEN_OPTION, $tokens);
+
+        error_log("CardDAV: Logged external change - user {$user_id}, person {$person_id}, type: {$type}");
+    }
+
+    /**
+     * Set flag to skip hooks during CardDAV operations
+     *
+     * @param bool $skip Whether to skip hooks
+     */
+    public static function set_skip_hooks($skip) {
+        self::$skip_hooks = $skip;
+    }
     
     /**
      * Get address books for a principal
@@ -228,12 +362,16 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      */
     public function createCard($addressBookId, $cardUri, $cardData) {
         error_log("CardDAV: Creating new card for user {$addressBookId}, URI: {$cardUri}");
-        
+
+        // Skip WordPress hooks to avoid double-logging
+        self::set_skip_hooks(true);
+
         // Parse the vCard data
         $parsed = \PRM_VCard_Export::parse($cardData);
         
         if (empty($parsed['first_name']) && empty($parsed['last_name']) && empty($parsed['full_name'])) {
             error_log("CardDAV: Create failed - no name found in vCard data");
+            self::set_skip_hooks(false);
             return null;
         }
         
@@ -260,6 +398,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         ]);
         
         if (is_wp_error($post_id) || !$post_id) {
+            self::set_skip_hooks(false);
             return null;
         }
         
@@ -312,12 +451,15 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         $this->logChange($addressBookId, $post_id, 'added');
         
         error_log("CardDAV: Created new person ID {$post_id} - {$first_name} {$last_name} (URI: {$cardUri})");
-        
+
+        // Re-enable WordPress hooks
+        self::set_skip_hooks(false);
+
         // Return the etag
         $person = get_post($post_id);
         return $this->generateEtag($person);
     }
-    
+
     /**
      * Update an existing card
      *
@@ -328,25 +470,30 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      */
     public function updateCard($addressBookId, $cardUri, $cardData) {
         $person_id = $this->getPersonIdFromUri($cardUri);
-        
+
         error_log("CardDAV: Updating card for user {$addressBookId}, URI: {$cardUri}, Person ID: " . ($person_id ?: 'null'));
-        
+
         if (!$person_id) {
             error_log("CardDAV: Update failed - could not parse person ID from URI");
             return null;
         }
-        
+
+        // Skip WordPress hooks to avoid double-logging
+        self::set_skip_hooks(true);
+
         // Set current user
         wp_set_current_user($addressBookId);
-        
+
         $person = get_post($person_id);
-        
+
         if (!$person || $person->post_type !== 'person') {
+            self::set_skip_hooks(false);
             return null;
         }
-        
+
         // Verify ownership
         if ((int) $person->post_author !== (int) $addressBookId) {
+            self::set_skip_hooks(false);
             return null;
         }
         
@@ -426,12 +573,15 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         $this->logChange($addressBookId, $person_id, 'modified');
         
         error_log("CardDAV: Updated person ID {$person_id} - {$first_name} {$last_name}");
-        
+
+        // Re-enable WordPress hooks
+        self::set_skip_hooks(false);
+
         // Return new etag
         $person = get_post($person_id);
         return $this->generateEtag($person);
     }
-    
+
     /**
      * Delete a card
      *
@@ -441,40 +591,48 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      */
     public function deleteCard($addressBookId, $cardUri) {
         $person_id = $this->getPersonIdFromUri($cardUri);
-        
+
         error_log("CardDAV: Deleting card for user {$addressBookId}, URI: {$cardUri}, Person ID: " . ($person_id ?: 'null'));
-        
+
         if (!$person_id) {
             error_log("CardDAV: Delete failed - could not parse person ID from URI");
             return false;
         }
-        
+
+        // Skip WordPress hooks to avoid double-logging
+        self::set_skip_hooks(true);
+
         // Set current user
         wp_set_current_user($addressBookId);
-        
+
         $person = get_post($person_id);
-        
+
         if (!$person || $person->post_type !== 'person') {
+            self::set_skip_hooks(false);
             return false;
         }
-        
+
         // Verify ownership
         if ((int) $person->post_author !== (int) $addressBookId) {
+            self::set_skip_hooks(false);
             return false;
         }
-        
+
         // Log the change before deletion (store URI since post will be gone)
         $this->logChange($addressBookId, $person_id, 'deleted', $cardUri);
-        
+
         // Delete the post (move to trash)
         $result = wp_trash_post($person_id);
-        
+
         if ($result !== false) {
             error_log("CardDAV: Deleted (trashed) person ID {$person_id}");
         } else {
             error_log("CardDAV: Delete failed for person ID {$person_id}");
         }
-        
+
+        // Re-enable WordPress hooks
+        self::set_skip_hooks(false);
+
         return $result !== false;
     }
     
