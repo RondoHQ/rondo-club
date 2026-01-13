@@ -52,20 +52,23 @@ See `.planning/ISSUES.md`:
 - Milestone v2.4 created: Bug Fixes (Phase 19+)
 - Phase 19 complete: Important Date Polish (2 plans)
 - Milestone v2.4 complete: All date bugs fixed, CLI migration ready
+- Milestone v2.4 archived: Git tag v2.4 created
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Completed Phase 19 (Milestone v2.4 complete)
+Stopped at: Archived v2.4 milestone
 Resume file: None
 
 ## Accumulated Context
 
 ### Pending Todos
 
-2 todos in `.planning/todos/pending/`
+2 todos in `.planning/todos/pending/`:
+1. Testing framework (PHPUnit + Playwright)
+2. React bundle chunking optimization
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — archive v2.4 and start new milestone
+- `/gsd:new-milestone` — create new milestone from pending todos
 - `/gsd:check-todos` — review pending todos for next milestone
