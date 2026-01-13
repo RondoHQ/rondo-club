@@ -1,19 +1,19 @@
 <?php return array(
     'root' => array(
-        'name' => 'caelis/personal-crm-theme',
+        'name' => 'jdevalk/caelis',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '95286770c428756b266fa183f91f260ea8f5fb19',
+        'reference' => '45bff96d481ade949a29affa240ae98d1655c51c',
         'type' => 'wordpress-theme',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
         'dev' => true,
     ),
     'versions' => array(
-        'caelis/personal-crm-theme' => array(
+        'jdevalk/caelis' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '95286770c428756b266fa183f91f260ea8f5fb19',
+            'reference' => '45bff96d481ade949a29affa240ae98d1655c51c',
             'type' => 'wordpress-theme',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -65,9 +65,9 @@
             'dev_requirement' => false,
         ),
         'sabre/vobject' => array(
-            'pretty_version' => '4.5.7',
-            'version' => '4.5.7.0',
-            'reference' => 'ff22611a53782e90c97be0d0bc4a5f98a5c0a12c',
+            'pretty_version' => '4.5.8',
+            'version' => '4.5.8.0',
+            'reference' => 'd554eb24d64232922e1eab5896cc2f84b3b9ffb1',
             'type' => 'library',
             'install_path' => __DIR__ . '/../sabre/vobject',
             'aliases' => array(),
