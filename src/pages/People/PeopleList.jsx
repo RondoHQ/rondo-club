@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown, LayoutGrid, List, Square, CheckSquare, MinusSquare, ChevronDown, Lock, Users } from 'lucide-react';
+import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown, LayoutGrid, List, Square, CheckSquare, MinusSquare, ChevronDown, Lock, Users, Building2, Tag } from 'lucide-react';
 import { usePeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useQuery } from '@tanstack/react-query';
@@ -439,6 +439,239 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
   );
 }
 
+// Bulk Organization Modal Component
+function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSubmit, isLoading }) {
+  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Reset when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedCompanyId(null);
+      setSearchQuery('');
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  // Filter companies by search query
+  const filteredCompanies = (companies || []).filter(company =>
+    company.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-semibold">Set Organization</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" disabled={isLoading}>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          <p className="text-sm text-gray-600">
+            Set current organization for {selectedCount} {selectedCount === 1 ? 'person' : 'people'}:
+          </p>
+
+          {/* Search input */}
+          <input
+            type="text"
+            placeholder="Search organizations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500"
+          />
+
+          {/* Option to clear organization */}
+          <button
+            type="button"
+            onClick={() => setSelectedCompanyId('clear')}
+            disabled={isLoading}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
+              selectedCompanyId === 'clear'
+                ? 'border-primary-500 bg-primary-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <X className={`w-5 h-5 ${selectedCompanyId === 'clear' ? 'text-primary-600' : 'text-gray-400'}`} />
+            <div className="flex-1">
+              <div className="text-sm font-medium text-gray-900">Clear organization</div>
+              <div className="text-xs text-gray-500">Remove current organization from selected people</div>
+            </div>
+            {selectedCompanyId === 'clear' && <Check className="w-5 h-5 text-primary-600" />}
+          </button>
+
+          {/* Company list */}
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {filteredCompanies.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">
+                {searchQuery ? 'No organizations match your search' : 'No organizations found'}
+              </p>
+            ) : (
+              filteredCompanies.map((company) => {
+                const isSelected = selectedCompanyId === company.id;
+                return (
+                  <button
+                    key={company.id}
+                    type="button"
+                    onClick={() => setSelectedCompanyId(company.id)}
+                    disabled={isLoading}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
+                      isSelected
+                        ? 'border-primary-500 bg-primary-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <Building2 className={`w-5 h-5 ${isSelected ? 'text-primary-600' : 'text-gray-400'}`} />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">{company.name}</div>
+                    </div>
+                    {isSelected && <Check className="w-5 h-5 text-primary-600" />}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+          <button type="button" onClick={onClose} className="btn-secondary" disabled={isLoading}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onSubmit(selectedCompanyId === 'clear' ? null : selectedCompanyId)}
+            className="btn-primary"
+            disabled={isLoading || selectedCompanyId === null}
+          >
+            {isLoading ? 'Applying...' : `Apply to ${selectedCount} ${selectedCount === 1 ? 'person' : 'people'}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Bulk Labels Modal Component
+function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isLoading }) {
+  const [mode, setMode] = useState('add'); // 'add' or 'remove'
+  const [selectedLabelIds, setSelectedLabelIds] = useState([]);
+
+  // Reset when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setMode('add');
+      setSelectedLabelIds([]);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleLabelToggle = (labelId) => {
+    setSelectedLabelIds(prev =>
+      prev.includes(labelId)
+        ? prev.filter(id => id !== labelId)
+        : [...prev, labelId]
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-semibold">Manage Labels</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" disabled={isLoading}>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          <p className="text-sm text-gray-600">
+            {mode === 'add' ? 'Add' : 'Remove'} labels for {selectedCount} {selectedCount === 1 ? 'person' : 'people'}:
+          </p>
+
+          {/* Mode toggle */}
+          <div className="flex rounded-lg border border-gray-200 p-1">
+            <button
+              type="button"
+              onClick={() => { setMode('add'); setSelectedLabelIds([]); }}
+              className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                mode === 'add' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Add Labels
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('remove'); setSelectedLabelIds([]); }}
+              className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                mode === 'remove' ? 'bg-red-100 text-red-700' : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Remove Labels
+            </button>
+          </div>
+
+          {/* Label list */}
+          {(!labels || labels.length === 0) ? (
+            <div className="text-center py-6 text-gray-500">
+              <Tag className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+              <p className="text-sm">No labels available.</p>
+              <p className="text-xs">Create labels first to use this feature.</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {labels.map((label) => {
+                const isChecked = selectedLabelIds.includes(label.id);
+                return (
+                  <button
+                    key={label.id}
+                    type="button"
+                    onClick={() => handleLabelToggle(label.id)}
+                    disabled={isLoading}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
+                      isChecked
+                        ? mode === 'add' ? 'border-primary-500 bg-primary-50' : 'border-red-500 bg-red-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
+                      isChecked
+                        ? mode === 'add' ? 'bg-primary-600 border-primary-600' : 'bg-red-600 border-red-600'
+                        : 'border-gray-300'
+                    }`}>
+                      {isChecked && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    <span className="text-sm font-medium text-gray-900">{label.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+          <button type="button" onClick={onClose} className="btn-secondary" disabled={isLoading}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onSubmit(mode, selectedLabelIds)}
+            className={mode === 'add' ? 'btn-primary' : 'bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50'}
+            disabled={isLoading || selectedLabelIds.length === 0}
+          >
+            {isLoading
+              ? (mode === 'add' ? 'Adding...' : 'Removing...')
+              : `${mode === 'add' ? 'Add' : 'Remove'} ${selectedLabelIds.length} ${selectedLabelIds.length === 1 ? 'label' : 'labels'}`
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PeopleList() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -458,6 +691,8 @@ export default function PeopleList() {
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
   const [showBulkVisibilityModal, setShowBulkVisibilityModal] = useState(false);
   const [showBulkWorkspaceModal, setShowBulkWorkspaceModal] = useState(false);
+  const [showBulkOrganizationModal, setShowBulkOrganizationModal] = useState(false);
+  const [showBulkLabelsModal, setShowBulkLabelsModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -496,8 +731,22 @@ export default function PeopleList() {
       return response.data;
     },
   });
-  
+
   const availableLabels = labelsData?.map(label => label.name) || [];
+  // Labels with IDs for the bulk modal
+  const availableLabelsWithIds = labelsData || [];
+
+  // Fetch all companies for bulk organization modal
+  const { data: allCompaniesData } = useQuery({
+    queryKey: ['companies', 'all'],
+    queryFn: async () => {
+      const response = await wpApi.getCompanies({ per_page: 100 });
+      return response.data.map(company => ({
+        id: company.id,
+        name: getCompanyName(company),
+      }));
+    },
+  });
   
   // Get available birth years from people data
   const availableBirthYears = useMemo(() => {
@@ -1207,6 +1456,26 @@ export default function PeopleList() {
                       <Users className="w-4 h-4" />
                       Assign to workspace...
                     </button>
+                    <button
+                      onClick={() => {
+                        setShowBulkDropdown(false);
+                        setShowBulkOrganizationModal(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <Building2 className="w-4 h-4" />
+                      Set organization...
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowBulkDropdown(false);
+                        setShowBulkLabelsModal(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <Tag className="w-4 h-4" />
+                      Manage labels...
+                    </button>
                   </div>
                 </div>
               )}
@@ -1305,6 +1574,53 @@ export default function PeopleList() {
             });
             clearSelection();
             setShowBulkWorkspaceModal(false);
+          } finally {
+            setBulkActionLoading(false);
+          }
+        }}
+        isLoading={bulkActionLoading}
+      />
+
+      {/* Bulk Organization Modal */}
+      <BulkOrganizationModal
+        isOpen={showBulkOrganizationModal}
+        onClose={() => setShowBulkOrganizationModal(false)}
+        selectedCount={selectedIds.size}
+        companies={allCompaniesData || []}
+        onSubmit={async (companyId) => {
+          setBulkActionLoading(true);
+          try {
+            await bulkUpdateMutation.mutateAsync({
+              ids: Array.from(selectedIds),
+              updates: { organization_id: companyId }
+            });
+            clearSelection();
+            setShowBulkOrganizationModal(false);
+          } finally {
+            setBulkActionLoading(false);
+          }
+        }}
+        isLoading={bulkActionLoading}
+      />
+
+      {/* Bulk Labels Modal */}
+      <BulkLabelsModal
+        isOpen={showBulkLabelsModal}
+        onClose={() => setShowBulkLabelsModal(false)}
+        selectedCount={selectedIds.size}
+        labels={availableLabelsWithIds}
+        onSubmit={async (mode, labelIds) => {
+          setBulkActionLoading(true);
+          try {
+            const updates = mode === 'add'
+              ? { labels_add: labelIds }
+              : { labels_remove: labelIds };
+            await bulkUpdateMutation.mutateAsync({
+              ids: Array.from(selectedIds),
+              updates
+            });
+            clearSelection();
+            setShowBulkLabelsModal(false);
           } finally {
             setBulkActionLoading(false);
           }
