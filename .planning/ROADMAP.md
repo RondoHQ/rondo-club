@@ -12,7 +12,7 @@
 
 **Phases:**
 - [x] Phase 7: Data Model & Visibility System (4/4 plans) ✓
-- [ ] Phase 8: Workspace & Team Infrastructure (0 plans)
+- [x] Phase 8: Workspace & Team Infrastructure (3/3 plans) ✓
 - [ ] Phase 9: Sharing UI & Permissions Interface (0 plans)
 - [ ] Phase 10: Collaborative Features (0 plans) — *research likely*
 - [ ] Phase 11: Migration, Testing & Polish (0 plans)
@@ -57,4 +57,4 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | Milestone | Phases | Plans | Status | Completed |
 |-----------|--------|-------|--------|-----------|
 | v1.0 Tech Debt Cleanup | 1-6 | 11/11 | Complete ✅ | 2026-01-13 |
-| v2.0 Multi-User | 7-11 | 4/? | In Progress | — |
+| v2.0 Multi-User | 7-11 | 7/? | In Progress | — |

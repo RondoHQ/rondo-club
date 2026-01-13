@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v2.0 Multi-User
-Phases: 1/5 complete (7-11)
-Plans: 4/4 complete in Phase 7
-Status: Phase 7 complete
-Last activity: 2026-01-13 — Completed Phase 7 (Data Model & Visibility System)
+Phases: 2/5 complete (7-11)
+Plans: 3/3 complete in Phase 8
+Status: Phase 8 complete
+Last activity: 2026-01-13 — Completed Phase 8 (Workspace & Team Infrastructure) via parallel execution
 
-Progress: ██░░░░░░░░ 20%
+Progress: ████░░░░░░ 40%
 
 ## v2.0 Multi-User Overview
 
@@ -28,7 +28,7 @@ Progress: ██░░░░░░░░ 20%
 
 **Phases:**
 - Phase 7: Data Model & Visibility System ✓ (4 plans complete)
-- Phase 8: Workspace & Team Infrastructure
+- Phase 8: Workspace & Team Infrastructure ✓ (3 plans complete)
 - Phase 9: Sharing UI & Permissions Interface
 - Phase 10: Collaborative Features (research likely)
 - Phase 11: Migration, Testing & Polish
@@ -40,16 +40,19 @@ Progress: ██░░░░░░░░ 20%
 | 7 | Store workspace membership in user meta | Easy "which workspaces am I in?" query |
 | 7 | Default visibility = private | Preserves current single-user behavior |
 | 7 | workspace_access taxonomy with term slugs `workspace-{ID}` | Links contacts to workspaces via standard WP taxonomy |
+| 8 | Invitation tokens are 32-char alphanumeric | Secure, URL-safe, no special characters |
+| 8 | Invites expire after 7 days | Reasonable timeframe for user action |
+| 8 | Workspace term sync on publish | Auto-creates workspace-{ID} terms for access control queries |
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Phase 7 complete
+Stopped at: Phase 8 complete
 Resume file: None
 
 ## Next Steps
 
-Ready for Phase 8. Options:
-- `/gsd:plan-phase 8` — create detailed plan for Phase 8
-- `/gsd:discuss-phase 8` — gather context before planning
-- `/gsd:verify-work 7` — manual acceptance testing of Phase 7
+Ready for Phase 9. Options:
+- `/gsd:plan-phase 9` — create detailed plan for Phase 9
+- `/gsd:discuss-phase 9` — gather context before planning
+- `/gsd:verify-work 8` — manual acceptance testing of Phase 8
