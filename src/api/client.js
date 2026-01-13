@@ -91,6 +91,9 @@ export const prmApi = {
   
   // Gravatar
   sideloadGravatar: (personId, email) => api.post(`/prm/v1/people/${personId}/gravatar`, { email }),
+
+  // Bulk operations
+  bulkUpdatePeople: (ids, updates) => api.post('/prm/v1/people/bulk-update', { ids, updates }),
   
   // Current user
   getCurrentUser: () => api.get('/prm/v1/user/me'),
