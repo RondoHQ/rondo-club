@@ -63,6 +63,7 @@ function prm_autoloader($class_name) {
         'PRM_REST_People'            => 'class-rest-people.php',
         'PRM_REST_Companies'         => 'class-rest-companies.php',
         'PRM_REST_Slack'             => 'class-rest-slack.php',
+        'PRM_REST_Import_Export'     => 'class-rest-import-export.php',
         'PRM_Reminders'              => 'class-reminders.php',
         'PRM_Monica_Import'          => 'class-monica-import.php',
         'PRM_VCard_Import'           => 'class-vcard-import.php',
@@ -166,6 +167,7 @@ function prm_init() {
         new PRM_REST_People();
         new PRM_REST_Companies();
         new PRM_REST_Slack();
+        new PRM_REST_Import_Export();
         new PRM_Monica_Import();
         new PRM_VCard_Import();
         new PRM_Google_Contacts_Import();
