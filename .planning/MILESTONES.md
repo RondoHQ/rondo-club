@@ -1,5 +1,33 @@
 # Project Milestones: Caelis
 
+## v2.0 Multi-User (Shipped: 2026-01-13)
+
+**Delivered:** Multi-user collaboration platform with workspaces, contact visibility (private/workspace/shared), @mentions, and team activity features while preserving single-user backward compatibility.
+
+**Phases completed:** 7-11 (20 plans total)
+
+**Key accomplishments:**
+
+- Workspace CPT with role-based membership system (Admin/Member/Viewer roles) enabling multi-user collaboration
+- Visibility framework for contacts with three levels (private/workspace/shared) and workspace_access taxonomy
+- Complete workspace invitation system with email invitations, 7-day expiring tokens, and role assignment
+- @Mentions infrastructure with MentionInput component, autocomplete, and notification preferences (immediate/digest)
+- Workspace-scoped iCal calendar feeds with token-based authentication
+- Workspace activity digest integrating @mentions and shared notes into daily reminders
+
+**Stats:**
+
+- 105 files created/modified
+- +15,718 / -1,272 lines changed
+- 5 phases, 20 plans
+- 1 day from start to ship
+
+**Git range:** `feat(07-01)` → `docs(11-01)`
+
+**What's next:** To be determined
+
+---
+
 ## v1.0 Tech Debt Cleanup (Shipped: 2026-01-13)
 
 **Delivered:** Split monolithic 107KB REST API into domain-specific classes, hardened security with sodium encryption and XSS protection, cleaned up production code.
@@ -18,30 +46,12 @@
 **Stats:**
 
 - 60 files created/modified
-- +4779 / -2083 lines changed
+- +4,779 / -2,083 lines changed
 - 6 phases, 11 plans
 - 1 day from start to ship
 
 **Git range:** `91806f2` → `f4e307b`
 
 **What's next:** v2.0 Multi-User
-
----
-
-## v2.0 Multi-User (In Progress)
-
-**Goal:** Transform Caelis from single-user to multi-user collaborative CRM. Combines Clay.earth's intimate relationship focus with Twenty CRM's team collaboration.
-
-**Phases planned:** 7-11 (5 phases)
-
-**Key deliverables:**
-
-- Workspace CPT with membership via user meta
-- Contact visibility system (private/workspace/shared)
-- ShareModal and VisibilitySelector React components
-- @mentions in notes with notifications
-- WP-CLI migration command for existing data
-
-**Reference:** See `Caelis-Multi-User-Project-Plan.md` for detailed technical design.
 
 ---
