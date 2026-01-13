@@ -194,7 +194,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
 
 function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
   return (
-    <div className="card overflow-x-auto max-h-[70vh] overflow-y-auto">
+    <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50 sticky top-0 z-10">
           <tr className="shadow-sm">
