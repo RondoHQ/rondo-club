@@ -13,15 +13,17 @@
 
 **Milestone Goal:** Complete the list view experience with full sorting capabilities, labels display, and extended bulk actions.
 
-#### Phase 14: List View Columns & Sorting
+#### Phase 14: List View Columns & Sorting ✓
 
 **Goal**: Split first/last name columns, add labels column, clickable headers, sticky positioning, org/workspace sorting
 **Depends on**: Phase 13 (Bulk Actions)
-**Research**: Unlikely (internal patterns)
-**Plans**: TBD
+**Status**: Complete (2026-01-13)
 
 Plans:
-- [ ] 14-01: TBD (run /gsd:plan-phase 14 to break down)
+- [x] 14-01: Columns & Extended Sorting — split name columns, labels column, org/workspace/labels sorting
+- [x] 14-02: Clickable Headers & Sticky — sortable headers with indicators, sticky header/toolbar
+
+**Issues closed:** ISS-001, ISS-002, ISS-004, ISS-005
 
 #### Phase 15: Extended Bulk Actions
 
@@ -116,6 +118,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v1.0 Tech Debt Cleanup | 1-6 | 11/11 | Complete ✅ | 2026-01-13 |
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
-| v2.2 List View Polish | 14-15 | 0/? | In progress 🚧 | - |
+| v2.2 List View Polish | 14-15 | 2/? | In progress 🚧 | - |
 
-**Total: 13 phases, 34 plans shipped**
+**Total: 14 phases, 36 plans shipped**
