@@ -75,22 +75,7 @@ class PRM_REST_API extends PRM_REST_Base {
                 ],
             ],
         ]);
-        
-        // Update Slack webhook URL
-        register_rest_route('prm/v1', '/user/slack-webhook', [
-            'methods'             => WP_REST_Server::CREATABLE,
-            'callback'            => [$this, 'update_slack_webhook'],
-            'permission_callback' => 'is_user_logged_in',
-            'args'                => [
-                'webhook' => [
-                    'required'          => false,
-                    'validate_callback' => function($param) {
-                        return empty($param) || filter_var($param, FILTER_VALIDATE_URL);
-                    },
-                ],
-            ],
-        ]);
-        
+
         // Update notification time
         register_rest_route('prm/v1', '/user/notification-time', [
             'methods'             => WP_REST_Server::CREATABLE,
@@ -535,79 +520,7 @@ class PRM_REST_API extends PRM_REST_Base {
             'channels' => $channels,
         ]);
     }
-    
-    /**
-     * Update user's Slack webhook URL
-     */
-    public function update_slack_webhook($request) {
-        $user_id = get_current_user_id();
-        $webhook = $request->get_param('webhook');
-        
-        if (empty($webhook)) {
-            // Remove webhook
-            delete_user_meta($user_id, 'caelis_slack_webhook');
-            
-            // Also disable Slack channel if it's enabled
-            $channels = get_user_meta($user_id, 'caelis_notification_channels', true);
-            if (is_array($channels)) {
-                $channels = array_diff($channels, ['slack']);
-                update_user_meta($user_id, 'caelis_notification_channels', $channels);
-            }
-            
-            return rest_ensure_response([
-                'success' => true,
-                'message' => __('Slack webhook removed.', 'personal-crm'),
-            ]);
-        }
-        
-        // Validate webhook URL
-        if (!filter_var($webhook, FILTER_VALIDATE_URL)) {
-            return new WP_Error(
-                'invalid_webhook',
-                __('Invalid webhook URL.', 'personal-crm'),
-                ['status' => 400]
-            );
-        }
-        
-        // Test webhook with a simple message
-        $test_payload = [
-            'text' => __('Caelis notification test', 'personal-crm'),
-        ];
-        
-        $response = wp_remote_post($webhook, [
-            'body' => json_encode($test_payload),
-            'headers' => [
-                'Content-Type' => 'application/json',
-            ],
-            'timeout' => 10,
-        ]);
-        
-        if (is_wp_error($response)) {
-            return new WP_Error(
-                'webhook_test_failed',
-                sprintf(__('Webhook test failed: %s', 'personal-crm'), $response->get_error_message()),
-                ['status' => 400]
-            );
-        }
-        
-        $status_code = wp_remote_retrieve_response_code($response);
-        if ($status_code < 200 || $status_code >= 300) {
-            return new WP_Error(
-                'webhook_test_failed',
-                sprintf(__('Webhook test failed with status code: %d', 'personal-crm'), $status_code),
-                ['status' => 400]
-            );
-        }
-        
-        // Save webhook
-        update_user_meta($user_id, 'caelis_slack_webhook', $webhook);
-        
-        return rest_ensure_response([
-            'success' => true,
-            'message' => __('Slack webhook configured successfully.', 'personal-crm'),
-        ]);
-    }
-    
+
     /**
      * Update user's notification time preference
      */
