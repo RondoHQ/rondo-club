@@ -17,6 +17,8 @@ import UserApproval from '@/pages/Settings/UserApproval';
 import FamilyTree from '@/pages/People/FamilyTree';
 import WorkspacesList from '@/pages/Workspaces/WorkspacesList';
 import WorkspaceDetail from '@/pages/Workspaces/WorkspaceDetail';
+import WorkspaceSettings from '@/pages/Workspaces/WorkspaceSettings';
+import WorkspaceInviteAccept from '@/pages/Workspaces/WorkspaceInviteAccept';
 import Login from '@/pages/Login';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
@@ -180,6 +182,8 @@ function App() {
                 {/* Workspaces routes */}
                 <Route path="/workspaces" element={<WorkspacesList />} />
                 <Route path="/workspaces/:id" element={<WorkspaceDetail />} />
+                <Route path="/workspaces/:id/settings" element={<WorkspaceSettings />} />
+                <Route path="/workspace-invite/:token" element={<WorkspaceInviteAccept />} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />
