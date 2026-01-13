@@ -56,6 +56,22 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Bulk visibility change modal (Private/Workspace) — v2.1
 - Bulk workspace assignment modal — v2.1
 
+**v2.2 List View Polish (shipped 2026-01-13):**
+- Split Name into First Name / Last Name columns — v2.2
+- Labels column with styled pills — v2.2
+- SortableHeader component with click sorting — v2.2
+- Sticky table header and selection toolbar — v2.2
+- BulkOrganizationModal with search and clear — v2.2
+- BulkLabelsModal with add/remove mode — v2.2
+
+**v2.3 List View Unification (shipped 2026-01-13):**
+- Removed card view from People, list-only UI — v2.3
+- Dedicated image column in People list — v2.3
+- Organizations list view with sortable columns — v2.3
+- Organizations selection and bulk action infrastructure — v2.3
+- Bulk visibility, workspace, labels for Organizations — v2.3
+- Full parity between People and Organizations list views — v2.3
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -107,4 +123,4 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Mentions default to digest | Reduces notification fatigue | ✓ Good |
 
 ---
-*Last updated: 2026-01-13 — v2.1 Bulk Operations shipped*
+*Last updated: 2026-01-13 — v2.3 List View Unification shipped*
