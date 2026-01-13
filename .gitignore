@@ -28,6 +28,8 @@ npm-debug.log*
 
 # Testing
 coverage/
+tests/.env
+tests/_output/
 
 # Misc
 *.tgz
