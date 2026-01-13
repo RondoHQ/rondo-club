@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-13)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v2.1 Bulk Operations complete - ready for milestone completion
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v2.1 Bulk Operations
-Phase: 13 of 13 (Bulk Actions)
-Plan: 2 of 2 complete
-Status: Milestone complete
-Last activity: 2026-01-13 — Completed 13-02-PLAN.md
+Milestone: None active
+Phase: N/A
+Plan: N/A
+Status: Ready to plan next milestone
+Last activity: 2026-01-13 — Shipped v2.1 Bulk Operations
 
-Progress: ██████████ 100%
+Progress: All milestones complete
 
 ## Completed Milestones
 
@@ -27,22 +27,22 @@ Progress: ██████████ 100%
 
 **Total:** 13 phases, 34 plans completed
 
-## Roadmap Evolution
-
-- Milestone v2.1 Bulk Operations created: list view + bulk actions, 2 phases (Phase 12-13)
-- Milestone v2.1 completed: 2026-01-13
-
 ## Deferred Issues
 
-- ISS-001: Add sorting by Organization and Workspace columns
+See `.planning/ISSUES.md` for 5 logged enhancements:
+- ISS-001: Sorting by Organization and Workspace
+- ISS-002: Label column with sorting
+- ISS-003: Bulk edit for Organizations and Labels
+- ISS-004: Click table headers to sort
+- ISS-005: Sticky header and action bar
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Phase 13 complete (Bulk Actions) - Milestone complete
+Stopped at: v2.1 milestone archived
 Resume file: None
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — archive v2.1 and prepare for next version
-- `/gsd:verify-work` — manual acceptance testing of bulk operations
+- `/gsd:discuss-milestone` — gather context for next version
+- `/gsd:new-milestone` — create directly if scope is clear

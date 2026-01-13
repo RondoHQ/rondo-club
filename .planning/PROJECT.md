@@ -48,6 +48,14 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - WP-CLI migration command `wp prm multiuser migrate` — v2.0
 - Multi-user documentation in `docs/multi-user.md` — v2.0
 
+**v2.1 Bulk Operations (shipped 2026-01-13):**
+- Card/list view toggle for people screen — v2.1
+- Tabular list view with Name, Organization, Workspace columns — v2.1
+- Checkbox multi-selection with Set-based state — v2.1
+- Bulk update REST endpoint `/prm/v1/people/bulk-update` — v2.1
+- Bulk visibility change modal (Private/Workspace) — v2.1
+- Bulk workspace assignment modal — v2.1
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -99,4 +107,4 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Mentions default to digest | Reduces notification fatigue | ✓ Good |
 
 ---
-*Last updated: 2026-01-13 — v2.0 Multi-User shipped*
+*Last updated: 2026-01-13 — v2.1 Bulk Operations shipped*
