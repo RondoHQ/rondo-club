@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Building2, Filter, X, CheckSquare, Square } from 'lucide-react';
+import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useCreateCompany } from '@/hooks/useCompanies';
@@ -91,6 +91,76 @@ function OrganizationListRow({ company, workspaces, companyLabels, isSelected, o
         )}
       </td>
     </tr>
+  );
+}
+
+// Sortable header component for clickable column headers
+function SortableHeader({ field, label, currentSortField, currentSortOrder, onSort }) {
+  const isActive = currentSortField === field;
+
+  return (
+    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+      <button
+        onClick={() => onSort(field)}
+        className="flex items-center gap-1 hover:text-gray-700 cursor-pointer"
+      >
+        {label}
+        {isActive && (
+          currentSortOrder === 'asc' ? (
+            <ArrowUp className="w-3 h-3" />
+          ) : (
+            <ArrowDown className="w-3 h-3" />
+          )
+        )}
+      </button>
+    </th>
+  );
+}
+
+function OrganizationListView({ companies, workspaces, companyLabels, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
+  return (
+    <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50 sticky top-0 z-10">
+          <tr className="shadow-sm">
+            <th scope="col" className="pl-4 pr-2 py-3 w-10 bg-gray-50">
+              <button
+                onClick={onToggleSelectAll}
+                className="text-gray-400 hover:text-gray-600"
+                title={isAllSelected ? 'Deselect all' : 'Select all'}
+              >
+                {isAllSelected ? (
+                  <CheckSquare className="w-5 h-5 text-primary-600" />
+                ) : isSomeSelected ? (
+                  <MinusSquare className="w-5 h-5 text-primary-600" />
+                ) : (
+                  <Square className="w-5 h-5" />
+                )}
+              </button>
+            </th>
+            <th scope="col" className="w-10 px-2 bg-gray-50"></th>
+            <SortableHeader field="name" label="Name" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="industry" label="Industry" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="website" label="Website" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="workspace" label="Workspace" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="labels" label="Labels" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200">
+          {companies.map((company, index) => (
+            <OrganizationListRow
+              key={company.id}
+              company={company}
+              workspaces={workspaces}
+              companyLabels={companyLabels}
+              isSelected={selectedIds.has(company.id)}
+              onToggleSelection={onToggleSelection}
+              isOdd={index % 2 === 1}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
