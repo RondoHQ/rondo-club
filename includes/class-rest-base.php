@@ -143,6 +143,54 @@ abstract class PRM_REST_Base {
     }
 
     /**
+     * Sanitize text for safe output
+     *
+     * Decodes HTML entities first (to avoid double-encoding), then escapes for safe output.
+     * Use for plain text fields like names and titles.
+     *
+     * @param string|null $text The text to sanitize.
+     * @return string Sanitized text safe for output.
+     */
+    protected function sanitize_text($text) {
+        if (empty($text)) {
+            return '';
+        }
+        return esc_html(html_entity_decode($text, ENT_QUOTES, 'UTF-8'));
+    }
+
+    /**
+     * Sanitize rich content allowing safe HTML
+     *
+     * Allows safe HTML tags (bold, italic, links, lists) but strips dangerous tags.
+     * Use for content fields that may contain user-formatted text.
+     *
+     * @param string|null $content The content to sanitize.
+     * @return string Sanitized content with safe HTML preserved.
+     */
+    protected function sanitize_rich_content($content) {
+        if (empty($content)) {
+            return '';
+        }
+        return wp_kses_post($content);
+    }
+
+    /**
+     * Sanitize URL for safe output
+     *
+     * Validates and escapes URL for safe output.
+     * Use for URL fields like website links and thumbnail URLs.
+     *
+     * @param string|null $url The URL to sanitize.
+     * @return string Sanitized URL or empty string if invalid/empty.
+     */
+    protected function sanitize_url($url) {
+        if (empty($url)) {
+            return '';
+        }
+        return esc_url($url);
+    }
+
+    /**
      * Format person for summary response
      *
      * Returns a minimal representation of a person for list views and relationships.
@@ -153,10 +201,10 @@ abstract class PRM_REST_Base {
     protected function format_person_summary($post) {
         return [
             'id'          => $post->ID,
-            'name'        => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
-            'first_name'  => get_field('first_name', $post->ID),
-            'last_name'   => get_field('last_name', $post->ID),
-            'thumbnail'   => get_the_post_thumbnail_url($post->ID, 'thumbnail'),
+            'name'        => $this->sanitize_text($post->post_title),
+            'first_name'  => $this->sanitize_text(get_field('first_name', $post->ID)),
+            'last_name'   => $this->sanitize_text(get_field('last_name', $post->ID)),
+            'thumbnail'   => $this->sanitize_url(get_the_post_thumbnail_url($post->ID, 'thumbnail')),
             'is_favorite' => (bool) get_field('is_favorite', $post->ID),
             'labels'      => wp_get_post_terms($post->ID, 'person_label', ['fields' => 'names']),
         ];
@@ -173,9 +221,9 @@ abstract class PRM_REST_Base {
     protected function format_company_summary($post) {
         return [
             'id'        => $post->ID,
-            'name'      => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
-            'thumbnail' => get_the_post_thumbnail_url($post->ID, 'thumbnail'),
-            'website'   => get_field('website', $post->ID),
+            'name'      => $this->sanitize_text($post->post_title),
+            'thumbnail' => $this->sanitize_url(get_the_post_thumbnail_url($post->ID, 'thumbnail')),
+            'website'   => $this->sanitize_url(get_field('website', $post->ID)),
             'labels'    => wp_get_post_terms($post->ID, 'company_label', ['fields' => 'names']),
         ];
     }
@@ -196,13 +244,13 @@ abstract class PRM_REST_Base {
             $person_id = is_object($person) ? $person->ID : $person;
             $people_names[] = [
                 'id'   => $person_id,
-                'name' => html_entity_decode(get_the_title($person_id), ENT_QUOTES, 'UTF-8'),
+                'name' => $this->sanitize_text(get_the_title($person_id)),
             ];
         }
 
         return [
             'id'                   => $post->ID,
-            'title'                => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
+            'title'                => $this->sanitize_text($post->post_title),
             'date_value'           => get_field('date_value', $post->ID),
             'is_recurring'         => (bool) get_field('is_recurring', $post->ID),
             'year_unknown'         => (bool) get_field('year_unknown', $post->ID),
