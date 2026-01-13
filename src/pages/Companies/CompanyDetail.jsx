@@ -150,9 +150,12 @@ export default function CompanyDetail() {
           website: data.website,
           industry: data.industry,
           investors: data.investors || [],
+          // Include visibility fields to satisfy ACF required field validation
+          _visibility: company.acf?._visibility || 'private',
+          _assigned_workspaces: company.acf?._assigned_workspaces || [],
         },
       };
-      
+
       await updateCompany.mutateAsync(payload);
       setShowEditModal(false);
     } catch {
