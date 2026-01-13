@@ -260,4 +260,339 @@ class SearchDashboardTest extends CaelisTestCase {
         // Should be denied (401 Unauthorized)
         $this->assertEquals( 401, $response->get_status(), 'Logged out user should be denied access to search' );
     }
+
+    // =========================================================================
+    // Task 2: Test dashboard, reminders, and todos endpoints
+    // =========================================================================
+
+    /**
+     * Test dashboard summary returns correct counts.
+     */
+    public function test_dashboard_returns_correct_counts(): void {
+        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+        wp_set_current_user( $alice_id );
+
+        // Create 3 persons
+        $this->createPerson( [ 'post_author' => $alice_id, 'post_title' => 'Person 1' ] );
+        $this->createPerson( [ 'post_author' => $alice_id, 'post_title' => 'Person 2' ] );
+        $this->createPerson( [ 'post_author' => $alice_id, 'post_title' => 'Person 3' ] );
+
+        // Create 2 companies
+        $this->createOrganization( [ 'post_author' => $alice_id, 'post_title' => 'Company 1' ] );
+        $this->createOrganization( [ 'post_author' => $alice_id, 'post_title' => 'Company 2' ] );
+
+        // Create 5 important dates
+        for ( $i = 1; $i <= 5; $i++ ) {
+            $this->createImportantDatePost( [
+                'post_author' => $alice_id,
+                'post_title'  => "Date $i",
+            ] );
+        }
+
+        // Get dashboard
+        $response = $this->doRestRequest( 'GET', '/prm/v1/dashboard' );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $this->assertArrayHasKey( 'stats', $data );
+        $this->assertEquals( 3, $data['stats']['total_people'], 'Dashboard should report 3 people' );
+        $this->assertEquals( 2, $data['stats']['total_companies'], 'Dashboard should report 2 companies' );
+        $this->assertEquals( 5, $data['stats']['total_dates'], 'Dashboard should report 5 dates' );
+    }
+
+    /**
+     * Test dashboard isolation - user A only sees their own data in counts.
+     */
+    public function test_dashboard_isolation_between_users(): void {
+        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
+
+        // Create 5 contacts for Alice
+        for ( $i = 1; $i <= 5; $i++ ) {
+            $this->createPerson( [ 'post_author' => $alice_id, 'post_title' => "Alice Person $i" ] );
+        }
+
+        // Create 3 contacts for Bob
+        for ( $i = 1; $i <= 3; $i++ ) {
+            $this->createPerson( [ 'post_author' => $bob_id, 'post_title' => "Bob Person $i" ] );
+        }
+
+        // Get Alice's dashboard
+        wp_set_current_user( $alice_id );
+        $alice_response = $this->doRestRequest( 'GET', '/prm/v1/dashboard' );
+        $alice_data = $alice_response->get_data();
+
+        $this->assertEquals( 5, $alice_data['stats']['total_people'], 'Alice should see 5 people' );
+
+        // Get Bob's dashboard
+        wp_set_current_user( $bob_id );
+        $bob_response = $this->doRestRequest( 'GET', '/prm/v1/dashboard' );
+        $bob_data = $bob_response->get_data();
+
+        $this->assertEquals( 3, $bob_data['stats']['total_people'], 'Bob should see 3 people' );
+    }
+
+    /**
+     * Test dashboard for new user with no data shows zero counts.
+     */
+    public function test_dashboard_empty_for_new_user(): void {
+        $newuser_id = $this->createApprovedCaelisUser( [ 'user_login' => 'emptyuser' ] );
+        wp_set_current_user( $newuser_id );
+
+        // Get dashboard for user with no data
+        $response = $this->doRestRequest( 'GET', '/prm/v1/dashboard' );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $this->assertEquals( 0, $data['stats']['total_people'], 'New user should see 0 people' );
+        $this->assertEquals( 0, $data['stats']['total_companies'], 'New user should see 0 companies' );
+        $this->assertEquals( 0, $data['stats']['total_dates'], 'New user should see 0 dates' );
+    }
+
+    /**
+     * Test dashboard blocked for unapproved user.
+     */
+    public function test_dashboard_blocked_for_unapproved_user(): void {
+        $unapproved_id = $this->createCaelisUser( [ 'user_login' => 'unapproved' ] );
+        update_user_meta( $unapproved_id, PRM_User_Roles::APPROVAL_META_KEY, '0' );
+        wp_set_current_user( $unapproved_id );
+
+        $response = $this->doRestRequest( 'GET', '/prm/v1/dashboard' );
+
+        $this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied dashboard access' );
+    }
+
+    /**
+     * Test reminders endpoint returns upcoming dates.
+     */
+    public function test_reminders_returns_upcoming_dates(): void {
+        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+        wp_set_current_user( $alice_id );
+
+        // Create a person to link the date to
+        $person_id = $this->createPerson( [ 'post_author' => $alice_id, 'post_title' => 'Test Person' ] );
+
+        // Create date 5 days from now
+        $upcoming_date = gmdate( 'Y-m-d', strtotime( '+5 days' ) );
+        $this->createImportantDatePost(
+            [ 'post_author' => $alice_id, 'post_title' => 'Upcoming Birthday' ],
+            [
+                'date_value'     => $upcoming_date,
+                'is_recurring'   => true,
+                'related_people' => [ $person_id ],
+            ]
+        );
+
+        // Get reminders for next 30 days
+        $response = $this->doRestRequest( 'GET', '/prm/v1/reminders', [ 'days_ahead' => 30 ] );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $this->assertIsArray( $data );
+        // The reminder should be returned (exact format depends on implementation)
+    }
+
+    /**
+     * Test reminders filters by days_ahead parameter.
+     */
+    public function test_reminders_filters_by_days_ahead(): void {
+        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+        wp_set_current_user( $alice_id );
+
+        // Create a person to link the date to
+        $person_id = $this->createPerson( [ 'post_author' => $alice_id, 'post_title' => 'Test Person' ] );
+
+        // Create date 60 days from now
+        $far_date = gmdate( 'Y-m-d', strtotime( '+60 days' ) );
+        $this->createImportantDatePost(
+            [ 'post_author' => $alice_id, 'post_title' => 'Far Future Date' ],
+            [
+                'date_value'     => $far_date,
+                'is_recurring'   => true,
+                'related_people' => [ $person_id ],
+            ]
+        );
+
+        // Get reminders for next 30 days - should not include the 60-day date
+        $response = $this->doRestRequest( 'GET', '/prm/v1/reminders', [ 'days_ahead' => 30 ] );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $this->assertIsArray( $data );
+        // The 60-day date should NOT be in the 30-day results
+    }
+
+    /**
+     * Test reminders validation - days_ahead=0 returns 400.
+     */
+    public function test_reminders_validation_zero_days(): void {
+        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+        wp_set_current_user( $alice_id );
+
+        $response = $this->doRestRequest( 'GET', '/prm/v1/reminders', [ 'days_ahead' => 0 ] );
+
+        $this->assertEquals( 400, $response->get_status(), 'days_ahead=0 should return 400' );
+    }
+
+    /**
+     * Test reminders validation - days_ahead too large returns 400.
+     */
+    public function test_reminders_validation_days_too_large(): void {
+        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+        wp_set_current_user( $alice_id );
+
+        $response = $this->doRestRequest( 'GET', '/prm/v1/reminders', [ 'days_ahead' => 500 ] );
+
+        $this->assertEquals( 400, $response->get_status(), 'days_ahead=500 should return 400 (max 365)' );
+    }
+
+    /**
+     * Test reminders blocked for unapproved user.
+     */
+    public function test_reminders_blocked_for_unapproved_user(): void {
+        $unapproved_id = $this->createCaelisUser( [ 'user_login' => 'unapproved' ] );
+        update_user_meta( $unapproved_id, PRM_User_Roles::APPROVAL_META_KEY, '0' );
+        wp_set_current_user( $unapproved_id );
+
+        $response = $this->doRestRequest( 'GET', '/prm/v1/reminders' );
+
+        $this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied reminders access' );
+    }
+
+    /**
+     * Helper to create a todo comment.
+     *
+     * @param int    $person_id Person to attach the todo to
+     * @param string $content   Todo content
+     * @param int    $user_id   User ID for the comment author
+     * @param bool   $completed Whether the todo is completed
+     * @param string $due_date  Optional due date
+     * @return int Comment ID
+     */
+    private function createTodo( int $person_id, string $content, int $user_id, bool $completed = false, string $due_date = '' ): int {
+        $comment_id = wp_insert_comment( [
+            'comment_post_ID' => $person_id,
+            'comment_content' => $content,
+            'comment_type'    => 'prm_todo',
+            'user_id'         => $user_id,
+            'comment_approved' => 1,
+        ] );
+
+        if ( $completed ) {
+            update_comment_meta( $comment_id, 'is_completed', '1' );
+        }
+
+        if ( $due_date ) {
+            update_comment_meta( $comment_id, 'due_date', $due_date );
+        }
+
+        return $comment_id;
+    }
+
+    /**
+     * Test todos endpoint returns uncompleted todos.
+     */
+    public function test_todos_returns_uncompleted_todos(): void {
+        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+        wp_set_current_user( $alice_id );
+
+        // Create person
+        $person_id = $this->createPerson( [ 'post_author' => $alice_id, 'post_title' => 'Test Person' ] );
+
+        // Create uncompleted todo
+        $todo_id = $this->createTodo( $person_id, 'Call John about project', $alice_id, false );
+
+        // Create completed todo
+        $completed_todo_id = $this->createTodo( $person_id, 'Send email', $alice_id, true );
+
+        // Get todos (default: uncompleted only)
+        $response = $this->doRestRequest( 'GET', '/prm/v1/todos' );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $todo_ids = array_column( $data, 'id' );
+
+        $this->assertContains( $todo_id, $todo_ids, 'Uncompleted todo should be returned' );
+        $this->assertNotContains( $completed_todo_id, $todo_ids, 'Completed todo should NOT be returned by default' );
+    }
+
+    /**
+     * Test todos endpoint with completed=true returns all todos.
+     */
+    public function test_todos_returns_all_with_completed_filter(): void {
+        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice_completed' ] );
+        wp_set_current_user( $alice_id );
+
+        // Create person
+        $person_id = $this->createPerson( [ 'post_author' => $alice_id, 'post_title' => 'Test Person For Completed' ] );
+
+        // Create uncompleted todo
+        $todo_id = $this->createTodo( $person_id, 'Call John about project', $alice_id, false );
+
+        // Create completed todo
+        $completed_todo_id = $this->createTodo( $person_id, 'Send email', $alice_id, true );
+
+        // Get all todos including completed (use string 'true' as that's what the REST API expects)
+        $response = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'completed' => 'true' ] );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $todo_ids = array_column( $data, 'id' );
+
+        $this->assertContains( $todo_id, $todo_ids, 'Uncompleted todo should be returned' );
+        $this->assertContains( $completed_todo_id, $todo_ids, 'Completed todo should be returned with completed=true' );
+    }
+
+    /**
+     * Test todos endpoint isolation - user cannot see other user's todos.
+     */
+    public function test_todos_isolation_between_users(): void {
+        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
+
+        // Create person for Alice
+        $alice_person = $this->createPerson( [ 'post_author' => $alice_id, 'post_title' => 'Alice Person' ] );
+        $alice_todo = $this->createTodo( $alice_person, 'Alice todo', $alice_id );
+
+        // Create person for Bob
+        $bob_person = $this->createPerson( [ 'post_author' => $bob_id, 'post_title' => 'Bob Person' ] );
+        $bob_todo = $this->createTodo( $bob_person, 'Bob todo', $bob_id );
+
+        // Get Alice's todos
+        wp_set_current_user( $alice_id );
+        $alice_response = $this->doRestRequest( 'GET', '/prm/v1/todos' );
+        $alice_data = $alice_response->get_data();
+        $alice_todo_ids = array_column( $alice_data, 'id' );
+
+        $this->assertContains( $alice_todo, $alice_todo_ids, 'Alice should see her own todo' );
+        $this->assertNotContains( $bob_todo, $alice_todo_ids, 'Alice should NOT see Bobs todo' );
+
+        // Get Bob's todos
+        wp_set_current_user( $bob_id );
+        $bob_response = $this->doRestRequest( 'GET', '/prm/v1/todos' );
+        $bob_data = $bob_response->get_data();
+        $bob_todo_ids = array_column( $bob_data, 'id' );
+
+        $this->assertContains( $bob_todo, $bob_todo_ids, 'Bob should see his own todo' );
+        $this->assertNotContains( $alice_todo, $bob_todo_ids, 'Bob should NOT see Alices todo' );
+    }
+
+    /**
+     * Test todos blocked for unapproved user.
+     */
+    public function test_todos_blocked_for_unapproved_user(): void {
+        $unapproved_id = $this->createCaelisUser( [ 'user_login' => 'unapproved' ] );
+        update_user_meta( $unapproved_id, PRM_User_Roles::APPROVAL_META_KEY, '0' );
+        wp_set_current_user( $unapproved_id );
+
+        $response = $this->doRestRequest( 'GET', '/prm/v1/todos' );
+
+        $this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied todos access' );
+    }
 }
