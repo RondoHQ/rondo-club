@@ -86,7 +86,12 @@ function PersonCard({ person, companyName, isDeceased }) {
 function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSelection }) {
   const assignedWorkspaces = person.acf?._assigned_workspaces || [];
   const workspaceNames = assignedWorkspaces
-    .map(wsId => workspaces.find(ws => ws.id === parseInt(wsId))?.title)
+    .map(wsId => {
+      // Try both number and string comparison
+      const numId = typeof wsId === 'string' ? parseInt(wsId, 10) : wsId;
+      const found = workspaces.find(ws => ws.id === numId);
+      return found?.title;
+    })
     .filter(Boolean)
     .join(', ');
 
