@@ -107,48 +107,52 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
     
     public function send($user_id, $digest_data) {
         $user = get_userdata($user_id);
-        
+
         if (!$user || !$user->user_email) {
             return false;
         }
-        
-        // Don't send if there are no dates or todos
-        $has_dates = !empty($digest_data['today']) || 
-                     !empty($digest_data['tomorrow']) || 
+
+        // Check what content we have
+        $has_dates = !empty($digest_data['today']) ||
+                     !empty($digest_data['tomorrow']) ||
                      !empty($digest_data['rest_of_week']);
-        
+
         $has_todos = isset($digest_data['todos']) && (
-                     !empty($digest_data['todos']['today']) || 
-                     !empty($digest_data['todos']['tomorrow']) || 
+                     !empty($digest_data['todos']['today']) ||
+                     !empty($digest_data['todos']['tomorrow']) ||
                      !empty($digest_data['todos']['rest_of_week']));
-        
-        if (!$has_dates && !$has_todos) {
+
+        $has_mentions = !empty($digest_data['mentions']);
+        $has_workspace_activity = !empty($digest_data['workspace_activity']);
+        $has_collab = $has_mentions || $has_workspace_activity;
+
+        // Don't send if there's no content at all
+        if (!$has_dates && !$has_todos && !$has_collab) {
             return false;
         }
-        
+
         $site_name = get_bloginfo('name');
         $today_formatted = date_i18n(get_option('date_format'));
-        
-        $subject = sprintf(
-            __('[%s] Your Reminders & Todos - %s', 'personal-crm'),
-            $site_name,
-            $today_formatted
-        );
-        
+
+        // Update subject line to indicate collaborative activity
+        $subject = $has_collab
+            ? sprintf(__('[%s] Your digest (including team activity) - %s', 'personal-crm'), $site_name, $today_formatted)
+            : sprintf(__('[%s] Your Reminders & Todos - %s', 'personal-crm'), $site_name, $today_formatted);
+
         $message = $this->format_email_message($user, $digest_data);
-        
+
         // Set custom from name and email
         add_filter('wp_mail_from', [$this, 'set_email_from_address']);
         add_filter('wp_mail_from_name', [$this, 'set_email_from_name']);
-        
+
         $headers = ['Content-Type: text/html; charset=UTF-8'];
-        
+
         $result = wp_mail($user->user_email, $subject, $message, $headers);
-        
+
         // Remove filters after sending
         remove_filter('wp_mail_from', [$this, 'set_email_from_address']);
         remove_filter('wp_mail_from_name', [$this, 'set_email_from_name']);
-        
+
         return $result;
     }
     
@@ -320,14 +324,42 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
                 );
             }
         }
-        
+
+        // Mentions section
+        if (!empty($digest_data['mentions'])) {
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px; color: #2563eb;">You were mentioned</h3>';
+            foreach ($digest_data['mentions'] as $mention) {
+                $html .= sprintf(
+                    '<p style="margin: 5px 0; padding-left: 10px; border-left: 3px solid #2563eb;"><strong>%s</strong> mentioned you on <a href="%s">%s</a>:<br><em style="color: #666;">%s</em></p>',
+                    esc_html($mention['author']),
+                    esc_url($mention['post_url']),
+                    esc_html($mention['post_title']),
+                    esc_html($mention['preview'])
+                );
+            }
+        }
+
+        // Workspace activity section
+        if (!empty($digest_data['workspace_activity'])) {
+            $html .= '<h3 style="margin-top: 20px; margin-bottom: 10px; color: #059669;">Workspace Activity</h3>';
+            foreach ($digest_data['workspace_activity'] as $activity) {
+                $html .= sprintf(
+                    '<p style="margin: 5px 0; padding-left: 10px; border-left: 3px solid #059669;"><strong>%s</strong> added a note on <a href="%s">%s</a>:<br><em style="color: #666;">%s</em></p>',
+                    esc_html($activity['author']),
+                    esc_url($activity['post_url']),
+                    esc_html($activity['post_title']),
+                    esc_html($activity['preview'])
+                );
+            }
+        }
+
         $html .= sprintf(
             '<p style="margin-top: 20px;"><a href="%s">Visit Caelis</a> to see more details.</p>',
             esc_url($site_url)
         );
-        
+
         $html .= '</body></html>';
-        
+
         return $html;
     }
     
@@ -438,18 +470,23 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         if (!$config) {
             return false;
         }
-        
-        // Don't send if there are no dates or todos
-        $has_dates = !empty($digest_data['today']) || 
-                     !empty($digest_data['tomorrow']) || 
+
+        // Check what content we have
+        $has_dates = !empty($digest_data['today']) ||
+                     !empty($digest_data['tomorrow']) ||
                      !empty($digest_data['rest_of_week']);
-        
+
         $has_todos = isset($digest_data['todos']) && (
-                     !empty($digest_data['todos']['today']) || 
-                     !empty($digest_data['todos']['tomorrow']) || 
+                     !empty($digest_data['todos']['today']) ||
+                     !empty($digest_data['todos']['tomorrow']) ||
                      !empty($digest_data['todos']['rest_of_week']));
-        
-        if (!$has_dates && !$has_todos) {
+
+        $has_mentions = !empty($digest_data['mentions']);
+        $has_workspace_activity = !empty($digest_data['workspace_activity']);
+        $has_collab = $has_mentions || $has_workspace_activity;
+
+        // Don't send if there's no content at all
+        if (!$has_dates && !$has_todos && !$has_collab) {
             return false;
         }
         
@@ -697,7 +734,33 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
         if (!$has_week_items) {
             $text_parts[] = "• " . __('No reminders or todos', 'personal-crm');
         }
-        
+
+        // Mentions section
+        if (!empty($digest_data['mentions'])) {
+            $text_parts[] = ''; // Empty line
+            $text_parts[] = '*' . __('You were mentioned', 'personal-crm') . '* 💬';
+            $text_parts[] = ''; // Empty line
+
+            foreach ($digest_data['mentions'] as $mention) {
+                $post_link = sprintf('<%s|%s>', $mention['post_url'], $mention['post_title']);
+                $text_parts[] = sprintf("• *%s* mentioned you on %s:", $mention['author'], $post_link);
+                $text_parts[] = sprintf("  _%s_", $mention['preview']);
+            }
+        }
+
+        // Workspace activity section
+        if (!empty($digest_data['workspace_activity'])) {
+            $text_parts[] = ''; // Empty line
+            $text_parts[] = '*' . __('Workspace Activity', 'personal-crm') . '* 📋';
+            $text_parts[] = ''; // Empty line
+
+            foreach ($digest_data['workspace_activity'] as $activity) {
+                $post_link = sprintf('<%s|%s>', $activity['post_url'], $activity['post_title']);
+                $text_parts[] = sprintf("• *%s* added a note on %s:", $activity['author'], $post_link);
+                $text_parts[] = sprintf("  _%s_", $activity['preview']);
+            }
+        }
+
         // Combine all text parts into a single block
         $blocks[] = [
             'type' => 'section',
@@ -706,7 +769,7 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
                 'text' => implode("\n", $text_parts),
             ],
         ];
-        
+
         return $blocks;
     }
     
