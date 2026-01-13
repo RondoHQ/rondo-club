@@ -705,17 +705,19 @@ if (defined('WP_CLI') && WP_CLI) {
             $now = time();
             $total_contacts = 0;
 
+            global $wpdb;
+
             foreach ($users as $user) {
                 $uid = $user->ID;
 
-                // Get all persons for this user
-                $persons = get_posts([
-                    'post_type' => 'person',
-                    'posts_per_page' => -1,
-                    'post_status' => 'publish',
-                    'author' => $uid,
-                    'fields' => 'ids',
-                ]);
+                // Get all persons for this user (bypass access control filters)
+                $persons = $wpdb->get_col($wpdb->prepare(
+                    "SELECT ID FROM {$wpdb->posts}
+                     WHERE post_type = 'person'
+                     AND post_status = 'publish'
+                     AND post_author = %d",
+                    $uid
+                ));
 
                 if (empty($persons)) {
                     WP_CLI::log(sprintf('User %s (ID: %d) has no contacts to sync.', $user->display_name, $uid));
