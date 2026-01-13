@@ -4,6 +4,7 @@ import { X, ChevronDown, Building2, Search, User, TrendingUp } from 'lucide-reac
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { getCompanyName, decodeHtml } from '@/utils/formatters';
+import VisibilitySelector from '@/components/VisibilitySelector';
 
 export default function CompanyEditModal({ 
   isOpen, 
@@ -23,7 +24,11 @@ export default function CompanyEditModal({
   const [isInvestorsDropdownOpen, setIsInvestorsDropdownOpen] = useState(false);
   const [investorsSearchQuery, setInvestorsSearchQuery] = useState('');
   const [selectedInvestors, setSelectedInvestors] = useState([]);
-  
+
+  // Visibility state
+  const [visibility, setVisibility] = useState('private');
+  const [selectedWorkspaces, setSelectedWorkspaces] = useState([]);
+
   const parentDropdownRef = useRef(null);
   const investorsDropdownRef = useRef(null);
   
@@ -131,7 +136,7 @@ export default function CompanyEditModal({
       setIsInvestorsDropdownOpen(false);
       setParentSearchQuery('');
       setInvestorsSearchQuery('');
-      
+
       if (company) {
         // Editing - populate with existing data
         reset({
@@ -142,6 +147,9 @@ export default function CompanyEditModal({
         // Set parent company if exists
         setSelectedParentId(company.parent ? String(company.parent) : '');
         // Investors will be loaded via separate effect
+        // Load existing visibility settings
+        setVisibility(company.acf?._visibility || 'private');
+        setSelectedWorkspaces(company.acf?._assigned_workspaces || []);
       } else {
         // Creating - reset to defaults
         reset({
@@ -151,6 +159,9 @@ export default function CompanyEditModal({
         });
         setSelectedParentId('');
         setSelectedInvestors([]);
+        // Reset visibility to private
+        setVisibility('private');
+        setSelectedWorkspaces([]);
       }
     }
   }, [isOpen, company, reset]);
@@ -224,6 +235,8 @@ export default function CompanyEditModal({
       ...data,
       parentId: selectedParentId ? parseInt(selectedParentId) : 0,
       investors: selectedInvestors.map(inv => inv.id),
+      visibility,
+      assigned_workspaces: selectedWorkspaces,
     });
   };
 
@@ -518,8 +531,19 @@ export default function CompanyEditModal({
                 Select people or organizations that have invested in this company
               </p>
             </div>
+
+            {/* Visibility */}
+            <VisibilitySelector
+              value={visibility}
+              workspaces={selectedWorkspaces}
+              onChange={({ visibility: v, workspaces: w }) => {
+                setVisibility(v);
+                setSelectedWorkspaces(w);
+              }}
+              disabled={isLoading}
+            />
           </div>
-          
+
           <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
             <button
               type="button"
