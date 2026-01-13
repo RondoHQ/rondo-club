@@ -22,6 +22,33 @@ Enhancements discovered during execution. Not critical - address in future phase
 - **Effort:** Medium (need to display multiple labels in column, sorting by multi-value field)
 - **Suggested phase:** Future
 
+### ISS-003: Extend bulk edit to support Organizations and Labels
+
+- **Discovered:** Post Phase 13 completion (2026-01-13)
+- **Type:** Feature
+- **Description:** Allow bulk actions to assign people to Organizations (set current company) and add/remove Labels. Currently only visibility and workspace assignment are supported.
+- **Impact:** Low (current bulk actions work, this expands capabilities)
+- **Effort:** Medium (need new modals, extend REST endpoint to handle org/label updates)
+- **Suggested phase:** Future
+
+### ISS-004: Click table headers to change sorting
+
+- **Discovered:** Post Phase 13 completion (2026-01-13)
+- **Type:** UX
+- **Description:** Make table column headers clickable to sort by that column. Click once for ascending, again for descending. Show sort indicator arrow in active header.
+- **Impact:** Low (sorting works via dropdown, this is more intuitive)
+- **Effort:** Quick (add onClick handlers to th elements, reuse existing sort logic)
+- **Suggested phase:** Future
+
+### ISS-005: Sticky table header and action bar
+
+- **Discovered:** Post Phase 13 completion (2026-01-13)
+- **Type:** UX
+- **Description:** Make the filter/action buttons and table header row sticky so they remain visible when scrolling down long lists. Users shouldn't need to scroll back up to perform bulk actions on selected items.
+- **Impact:** Low (works correctly, significant usability improvement for long lists)
+- **Effort:** Quick (CSS position: sticky on header elements)
+- **Suggested phase:** Future
+
 ## Closed Enhancements
 
 [Moved here when addressed]
