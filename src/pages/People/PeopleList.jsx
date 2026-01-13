@@ -736,15 +736,17 @@ export default function PeopleList() {
   // Labels with IDs for the bulk modal
   const availableLabelsWithIds = labelsData || [];
 
-  // Fetch all companies for bulk organization modal
+  // Fetch all companies for bulk organization modal (sorted alphabetically)
   const { data: allCompaniesData } = useQuery({
     queryKey: ['companies', 'all'],
     queryFn: async () => {
       const response = await wpApi.getCompanies({ per_page: 100 });
-      return response.data.map(company => ({
-        id: company.id,
-        name: getCompanyName(company),
-      }));
+      return response.data
+        .map(company => ({
+          id: company.id,
+          name: getCompanyName(company),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
     },
   });
   
