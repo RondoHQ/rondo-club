@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.42.4] - 2026-01-13
+
+### Changed
+- Webhook URL validation now restricts to hooks.slack.com domain only (prevents SSRF attacks)
+- Added domain validation in both validate_callback and update_slack_webhook method
+
 ## [1.42.3] - 2026-01-13
 
 ### Changed
