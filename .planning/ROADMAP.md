@@ -4,11 +4,13 @@
 
 - ✅ [v1.0 Tech Debt Cleanup](milestones/v1.0-tech-debt-cleanup.md) (Phases 1-6) — SHIPPED 2026-01-13
 - ✅ [v2.0 Multi-User](milestones/v2.0-multi-user.md) (Phases 7-11) — SHIPPED 2026-01-13
-- 🚧 **v2.1 Bulk Operations** — Phases 12-13 (in progress)
+- ✅ **v2.1 Bulk Operations** — Phases 12-13 — SHIPPED 2026-01-13
 
 ## Current Milestone
 
-### 🚧 v2.1 Bulk Operations (In Progress)
+None active. Run `/gsd:complete-milestone` to archive v2.1 or `/gsd:new-milestone` to start next version.
+
+### ✅ v2.1 Bulk Operations (Complete)
 
 **Milestone Goal:** Enable efficient bulk management of contacts through a new list view with multi-select and batch actions
 
@@ -21,15 +23,15 @@
 Plans:
 - [x] 12-01: List view with card/list toggle, table columns, checkbox selection infrastructure
 
-#### Phase 13: Bulk Actions
+#### Phase 13: Bulk Actions ✓
 
 **Goal**: Implement bulk workspace assignment and bulk visibility change actions
 **Depends on**: Phase 12
-**Research**: Unlikely (established REST API + React patterns)
-**Plans**: TBD
+**Status**: Complete (2026-01-13)
 
 Plans:
-- [ ] 13-01: TBD (run /gsd:plan-phase 13 to break down)
+- [x] 13-01: Bulk update REST endpoint and React hook
+- [x] 13-02: Bulk actions UI with dropdown and modals
 
 ---
 
@@ -91,9 +93,9 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 |-----------|--------|-------|--------|-----------|
 | v1.0 Tech Debt Cleanup | 1-6 | 11/11 | Complete ✅ | 2026-01-13 |
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
-| v2.1 Bulk Operations | 12-13 | 1/? | In progress | - |
+| v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
 | 12. List View & Selection | v2.1 | 1/1 | Complete ✓ | 2026-01-13 |
-| 13. Bulk Actions | v2.1 | 0/? | Not started | - |
+| 13. Bulk Actions | v2.1 | 2/2 | Complete ✓ | 2026-01-13 |
