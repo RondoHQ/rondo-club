@@ -7,36 +7,41 @@
 - ✅ [v2.1 Bulk Operations](milestones/v2.1-bulk-operations.md) (Phases 12-13) — SHIPPED 2026-01-13
 - ✅ [v2.2 List View Polish](milestones/v2.2-list-view-polish.md) (Phases 14-15) — SHIPPED 2026-01-13
 - ✅ [v2.3 List View Unification](milestones/v2.3-list-view-unification.md) (Phases 16-18) — SHIPPED 2026-01-13
-- 🚧 v2.4 Bug Fixes (Phases 19+) — IN PROGRESS
+- ✅ v2.4 Bug Fixes (Phase 19) — SHIPPED 2026-01-13
 
-## Current Milestone: v2.4 Bug Fixes
+## Current Milestone: Complete
+
+All milestones complete! Ready for new work.
+
+<details>
+<summary>✅ v2.4 Bug Fixes (Phase 19) — SHIPPED 2026-01-13</summary>
 
 **Milestone Goal:** Fix bugs and polish rough edges discovered during v2.0-v2.3 development.
 
 **Phases:**
-- [ ] Phase 19: Important Date Polish (0/0 plans)
+- [x] Phase 19: Important Date Polish (2/2 plans) ✓
 
 ### Phase 19: Important Date Polish
 
 **Goal:** Fix edit bugs, improve defaults, use full names in titles
 
-**Depends on:** None
-**Plans:** 0 plans
+**Plans:**
+- [x] 19-01: Frontend Bug Fixes (3 tasks) ✓
+- [x] 19-02: Full Name Titles + CLI (3 tasks) ✓
 
-**Scope (from bundled todos):**
-- Default date to today when creating new important date
-- Use full name in auto-generated titles ("Jan Ippen's birthday" not "Jan's birthday")
-- Fix card not updating after edit (React Query cache invalidation)
-- Fix visibility required error on edit (REST API 400)
-- WP CLI to regenerate existing birthday titles
+**Key Accomplishments:**
+- Fixed default date to today when creating new important date
+- Fixed visibility required error on edit (REST API 400)
+- Fixed cache invalidation query key mismatch
+- Updated frontend title auto-generation to use full names
+- Created WP-CLI command `wp prm dates regenerate-titles` for migration
 
-**Files:**
+**Files Modified:**
+- `src/components/ImportantDateModal.jsx`
 - `src/pages/People/PersonDetail.jsx`
-- `includes/class-auto-title.php`
-- `includes/class-post-types.php`
+- `includes/class-wp-cli.php`
 
-Plans:
-- [ ] TBD (run `/gsd:plan-phase 19` to break down)
+</details>
 
 <details>
 <summary>✅ v2.3 List View Unification (Phases 16-18) — SHIPPED 2026-01-13</summary>
@@ -174,6 +179,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
 | v2.2 List View Polish | 14-15 | 4/4 | Complete ✅ | 2026-01-13 |
 | v2.3 List View Unification | 16-18 | 3/3 | Complete ✅ | 2026-01-13 |
-| v2.4 Bug Fixes | 19+ | 0/? | In Progress 🚧 | - |
+| v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 
-**Total: 18 phases, 41 plans shipped**
+**Total: 19 phases, 43 plans shipped**
