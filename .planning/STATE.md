@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v2.2 List View Polish
-Phase: 14 of 15 (List View Columns & Sorting)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-13 — Milestone v2.2 created
+Phase: 14 of 15 (List View Columns & Sorting) — COMPLETE
+Plan: 2/2 complete
+Status: Phase complete, ready for Phase 15
+Last activity: 2026-01-13 — Completed Phase 14 (2 plans)
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █████░░░░░ 50%
 
 ## Completed Milestones
 
@@ -29,24 +29,31 @@ Progress: ░░░░░░░░░░ 0%
 
 ## Deferred Issues
 
-See `.planning/ISSUES.md` for 5 logged enhancements (all addressed in v2.2):
-- ISS-001: Sorting by Organization and Workspace
-- ISS-002: Label column with sorting
-- ISS-003: Bulk edit for Organizations and Labels
-- ISS-004: Click table headers to sort
-- ISS-005: Sticky header and action bar
+See `.planning/ISSUES.md`:
+- ~~ISS-001~~: Closed in Phase 14-01 (Org/Workspace sorting)
+- ~~ISS-002~~: Closed in Phase 14-01 (Label column)
+- ISS-003: Bulk edit for Organizations and Labels (Phase 15)
+- ~~ISS-004~~: Closed in Phase 14-02 (Clickable headers)
+- ~~ISS-005~~: Closed in Phase 14-02 (Sticky header)
 
-## Roadmap Evolution
+**1 issue remaining** for Phase 15
 
-- Milestone v2.2 created: List View Polish, 2 phases (Phase 14-15)
+## Decisions Made (Phase 14)
+
+| Phase | Decision | Rationale |
+|-------|----------|-----------|
+| 14-01 | Two-stage filtering/sorting | Allows org sorting after company data fetched |
+| 14-01 | Empty values sort last | Keeps populated records prominent |
+| 14-02 | Scrollable table container | Required for sticky header to work |
+| 14-02 | calc(100vh-12rem) height | Fills viewport after header/controls |
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Milestone v2.2 initialization
+Stopped at: Phase 14 complete
 Resume file: None
 
 ## Next Steps
 
-- `/gsd:plan-phase 14` — create execution plan for first phase
-- `/gsd:discuss-phase 14` — gather context first if needed
+- `/gsd:plan-phase 15` — create execution plan for Extended Bulk Actions
+- `/gsd:discuss-phase 15` — gather context first if needed
