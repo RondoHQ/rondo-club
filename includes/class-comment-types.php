@@ -284,11 +284,17 @@ class PRM_Comment_Types {
         // Save visibility meta
         update_comment_meta($comment_id, '_note_visibility', $visibility);
 
+        // Parse and save @mentions, fire action if any mentions found
+        $mentioned_ids = PRM_Mentions::save_mentions($comment_id, $content);
+        if (!empty($mentioned_ids)) {
+            do_action('prm_user_mentioned', $comment_id, $mentioned_ids, get_current_user_id());
+        }
+
         $comment = get_comment($comment_id);
 
         return rest_ensure_response($this->format_comment($comment, 'note'));
     }
-    
+
     /**
      * Update a note
      */
@@ -316,11 +322,19 @@ class PRM_Comment_Types {
             }
         }
 
+        // Update @mentions (check for new mentions to notify)
+        $old_mentions = PRM_Mentions::get_mentions($comment_id);
+        $new_mentions = PRM_Mentions::save_mentions($comment_id, $content);
+        $added_mentions = array_diff($new_mentions, $old_mentions);
+        if (!empty($added_mentions)) {
+            do_action('prm_user_mentioned', $comment_id, $added_mentions, get_current_user_id());
+        }
+
         $comment = get_comment($comment_id);
 
         return rest_ensure_response($this->format_comment($comment, 'note'));
     }
-    
+
     /**
      * Delete a note
      */
@@ -595,11 +609,13 @@ class PRM_Comment_Types {
         // Make URLs in content clickable for activities and notes
         $content = $comment->comment_content;
         if ($type === 'activity' || $type === 'note') {
+            // Render @mentions as styled spans before URL processing
+            $content = PRM_Mentions::render_mentions($content);
             $content = make_clickable($content);
             // Add target="_blank" and rel="noopener noreferrer" to links for security
             $content = str_replace('<a href=', '<a target="_blank" rel="noopener noreferrer" href=', $content);
         }
-        
+
         $data = [
             'id'        => (int) $comment->comment_ID,
             'type'      => $type,

@@ -79,6 +79,7 @@ function prm_autoloader($class_name) {
         'PRM_CardDAV_Server'         => 'class-carddav-server.php',
         'PRM_Workspace_Members'      => 'class-workspace-members.php',
         'PRM_REST_Workspaces'        => 'class-rest-workspaces.php',
+        'PRM_Mentions'               => 'class-mentions.php',
     ];
     
     if (isset($class_map[$class_name])) {
