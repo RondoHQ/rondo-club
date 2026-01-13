@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Settings, UserPlus, Crown, Shield, Users, Eye, MoreVertical, Trash2, UserMinus } from 'lucide-react';
+import { ArrowLeft, Settings, UserPlus, Crown, Shield, Users, Eye, MoreVertical, Trash2, UserMinus, Calendar, Copy, Check } from 'lucide-react';
 import { useWorkspace, useWorkspaceInvites, useRemoveWorkspaceMember, useUpdateWorkspaceMember, useRevokeWorkspaceInvite } from '@/hooks/useWorkspaces';
 import WorkspaceInviteModal from '@/components/WorkspaceInviteModal';
+import { prmApi } from '@/api/client';
 
 function RoleBadge({ role, isOwner, small = false }) {
   if (isOwner) {
@@ -127,12 +128,41 @@ export default function WorkspaceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [icalToken, setIcalToken] = useState(null);
+  const [calendarCopied, setCalendarCopied] = useState(false);
 
   const { data: workspace, isLoading, error } = useWorkspace(id);
   const { data: invites = [] } = useWorkspaceInvites(id);
   const removeMemberMutation = useRemoveWorkspaceMember();
   const updateMemberMutation = useUpdateWorkspaceMember();
   const revokeInviteMutation = useRevokeWorkspaceInvite();
+
+  // Fetch the user's iCal token on mount
+  useEffect(() => {
+    const fetchIcalToken = async () => {
+      try {
+        const response = await prmApi.getIcalUrl();
+        setIcalToken(response.data.token);
+      } catch {
+        // Silently fail - calendar URL just won't be available
+      }
+    };
+    fetchIcalToken();
+  }, []);
+
+  // Construct workspace calendar URL
+  const workspaceCalendarUrl = icalToken && workspace
+    ? `${window.location.origin}/workspace/${workspace.id}/calendar/${icalToken}.ics`
+    : null;
+
+  // Copy handler for calendar URL
+  const handleCopyCalendarUrl = () => {
+    if (workspaceCalendarUrl) {
+      navigator.clipboard.writeText(workspaceCalendarUrl);
+      setCalendarCopied(true);
+      setTimeout(() => setCalendarCopied(false), 2000);
+    }
+  };
 
   const handleRemoveMember = async (userId) => {
     if (confirm('Remove this member from the workspace?')) {
@@ -250,6 +280,39 @@ export default function WorkspaceDetail() {
           </div>
         </div>
       )}
+
+      {/* Calendar Subscription */}
+      <div className="card p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+          <Calendar className="w-4 h-4" />
+          Calendar Subscription
+        </h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Subscribe to important dates for all contacts in this workspace.
+        </p>
+        {icalToken ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={workspaceCalendarUrl || ''}
+              readOnly
+              className="flex-1 text-xs px-2 py-1.5 bg-gray-50 border border-gray-300 rounded font-mono"
+              onClick={(e) => e.target.select()}
+            />
+            <button
+              onClick={handleCopyCalendarUrl}
+              className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 flex items-center gap-1"
+            >
+              {calendarCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              {calendarCopied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-500">
+            Enable iCal feed in Settings to subscribe to workspace calendars.
+          </p>
+        )}
+      </div>
 
       {/* Invite Modal */}
       <WorkspaceInviteModal

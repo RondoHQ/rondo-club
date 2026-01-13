@@ -4,23 +4,37 @@ This document describes the iCal calendar subscription feature that allows users
 
 ## Overview
 
-Caelis generates a personal iCal feed for each user containing all their important dates. The feed URL includes a secret token for authentication, allowing calendar apps to fetch updates without requiring login credentials.
+Caelis generates iCal feeds for users containing important dates. There are two types of feeds:
+
+1. **Personal Feed** - Contains all important dates accessible to the user
+2. **Workspace Feed** - Contains important dates for contacts shared with a workspace
+
+Both feed types use a secret token for authentication, allowing calendar apps to fetch updates without requiring login credentials.
 
 ## Features
 
 - **Token-based authentication** - No password needed for calendar apps
 - **User-specific feeds** - Only shows dates you can access
+- **Workspace feeds** - Subscribe to dates for all workspace contacts
 - **Recurring events** - Yearly dates (like birthdays) repeat automatically
 - **Real-time updates** - Calendar apps refresh periodically to get new dates
 - **Universal compatibility** - Works with Apple Calendar, Google Calendar, Outlook, and any iCal-compatible app
 
-## Feed URL Format
+## Feed URL Formats
+
+### Personal Feed
 
 ```
 https://your-site.com/calendar/{token}.ics
 ```
 
-The token is a 64-character hexadecimal string (32 bytes) stored in user meta.
+### Workspace Feed
+
+```
+https://your-site.com/workspace/{workspace_id}/calendar/{token}.ics
+```
+
+The token is a 64-character hexadecimal string (32 bytes) stored in user meta. The same token is used for both personal and workspace feeds.
 
 **webcal:// Protocol:**
 
@@ -28,6 +42,7 @@ For one-click subscription, use the `webcal://` protocol:
 
 ```
 webcal://your-site.com/calendar/{token}.ics
+webcal://your-site.com/workspace/{workspace_id}/calendar/{token}.ics
 ```
 
 ## Implementation
@@ -42,7 +57,8 @@ Located in `includes/class-ical-feed.php`.
 |-----------|---------|
 | `TOKEN_META_KEY` | User meta key: `prm_ical_token` |
 | `TOKEN_LENGTH` | 32 bytes (64 hex characters) |
-| Rewrite Rule | `^calendar/([a-f0-9]+)\.ics$` |
+| Personal Rewrite Rule | `^calendar/([a-f0-9]+)\.ics$` |
+| Workspace Rewrite Rule | `^workspace/([0-9]+)/calendar/([a-f0-9]+)\.ics$` |
 | REST Endpoints | URL retrieval and token regeneration |
 
 ### Token Management
@@ -75,9 +91,12 @@ Returns the current user's iCal feed URL.
 ```json
 {
   "url": "https://your-site.com/calendar/abc123...def.ics",
-  "webcal_url": "webcal://your-site.com/calendar/abc123...def.ics"
+  "webcal_url": "webcal://your-site.com/calendar/abc123...def.ics",
+  "token": "abc123...def"
 }
 ```
+
+The `token` field can be used to construct workspace calendar URLs on the frontend.
 
 ### Regenerate Token
 
@@ -216,12 +235,47 @@ The feed respects the same access control as the web interface:
 - Only shows dates the user owns or that are shared with them
 - Administrators see all dates
 
+### Workspace Feed Security
+
+Workspace feeds include additional security checks:
+1. **Token validation** - User's iCal token must be valid
+2. **Workspace existence** - Workspace must exist and be published
+3. **Membership verification** - User must be a member of the workspace (any role)
+
+If any check fails, the request is rejected with an appropriate HTTP error:
+- `403 Forbidden` - Invalid token or not a workspace member
+- `404 Not Found` - Workspace does not exist
+
+## Workspace Feeds
+
+### How It Works
+
+Workspace feeds aggregate important dates from all contacts shared with a workspace:
+
+1. Find all people (`person` posts) tagged with `workspace-{id}` in the `workspace_access` taxonomy
+2. Query all important dates linked to those people via the `related_people` field
+3. Generate iCal events for all dates found
+
+### Accessing Workspace Feeds
+
+The workspace calendar URL is shown on the WorkspaceDetail page in the frontend. Users can copy the URL and subscribe in their calendar app.
+
+**URL Format:**
+```
+https://your-site.com/workspace/{workspace_id}/calendar/{token}.ics
+```
+
+### Calendar Name
+
+Workspace calendars are named "Caelis - {Workspace Name}" to help users identify them in their calendar app.
+
 ## Technical Details
 
 ### Rewrite Rules
 
 The feed uses WordPress rewrite rules:
 
+**Personal Feed:**
 ```php
 add_rewrite_rule(
     '^calendar/([a-f0-9]+)\.ics$',
@@ -230,7 +284,22 @@ add_rewrite_rule(
 );
 ```
 
-**Note:** After theme activation, rewrite rules are flushed to register this rule.
+**Workspace Feed:**
+```php
+add_rewrite_rule(
+    '^workspace/([0-9]+)/calendar/([a-f0-9]+)\.ics$',
+    'index.php?prm_workspace_ical=1&prm_workspace_id=$matches[1]&prm_ical_token=$matches[2]',
+    'top'
+);
+```
+
+**Query Variables:**
+- `prm_ical_feed` - Triggers personal feed handler
+- `prm_workspace_ical` - Triggers workspace feed handler
+- `prm_ical_token` - User's authentication token
+- `prm_workspace_id` - Workspace post ID
+
+**Note:** After theme activation, rewrite rules are flushed to register these rules.
 
 ### Headers
 

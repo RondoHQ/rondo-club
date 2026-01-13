@@ -33,9 +33,17 @@ class PRM_ICal_Feed {
      * Register rewrite rules for the calendar feed
      */
     public function register_rewrite_rules() {
+        // Personal calendar feed
         add_rewrite_rule(
             '^calendar/([a-f0-9]+)\.ics$',
             'index.php?prm_ical_feed=1&prm_ical_token=$matches[1]',
+            'top'
+        );
+
+        // Workspace calendar feed
+        add_rewrite_rule(
+            '^workspace/([0-9]+)/calendar/([a-f0-9]+)\.ics$',
+            'index.php?prm_workspace_ical=1&prm_workspace_id=$matches[1]&prm_ical_token=$matches[2]',
             'top'
         );
     }
@@ -46,6 +54,8 @@ class PRM_ICal_Feed {
     public function add_query_vars($vars) {
         $vars[] = 'prm_ical_feed';
         $vars[] = 'prm_ical_token';
+        $vars[] = 'prm_workspace_ical';
+        $vars[] = 'prm_workspace_id';
         return $vars;
     }
     
@@ -53,25 +63,32 @@ class PRM_ICal_Feed {
      * Handle the feed request
      */
     public function handle_feed_request() {
+        // Handle workspace calendar feed first
+        if (get_query_var('prm_workspace_ical')) {
+            $this->handle_workspace_feed();
+            exit;
+        }
+
+        // Handle personal calendar feed
         if (!get_query_var('prm_ical_feed')) {
             return;
         }
-        
+
         $token = get_query_var('prm_ical_token');
-        
+
         if (empty($token)) {
             status_header(400);
             exit('Invalid request');
         }
-        
+
         // Find user by token
         $user_id = $this->get_user_by_token($token);
-        
+
         if (!$user_id) {
             status_header(404);
             exit('Calendar not found');
         }
-        
+
         // Generate and output the feed
         $this->output_feed($user_id);
         exit;
@@ -140,12 +157,13 @@ class PRM_ICal_Feed {
     public function get_ical_url($request) {
         $user_id = get_current_user_id();
         $token = $this->get_user_token($user_id);
-        
+
         $url = home_url('/calendar/' . $token . '.ics');
-        
+
         return rest_ensure_response([
-            'url' => $url,
+            'url'        => $url,
             'webcal_url' => str_replace(['https://', 'http://'], 'webcal://', $url),
+            'token'      => $token,
         ]);
     }
     
@@ -340,6 +358,203 @@ class PRM_ICal_Feed {
     }
     
     /**
+     * Handle workspace iCal feed request
+     */
+    private function handle_workspace_feed() {
+        $workspace_id = intval(get_query_var('prm_workspace_id'));
+        $token = sanitize_text_field(get_query_var('prm_ical_token'));
+
+        // Verify token belongs to a valid user
+        $user_id = $this->get_user_by_token($token);
+        if (!$user_id) {
+            status_header(403);
+            echo 'Invalid token';
+            exit;
+        }
+
+        // Verify workspace exists
+        $workspace = get_post($workspace_id);
+        if (!$workspace || $workspace->post_type !== 'workspace' || $workspace->post_status !== 'publish') {
+            status_header(404);
+            echo 'Workspace not found';
+            exit;
+        }
+
+        // Verify user is a member of the workspace
+        if (!PRM_Workspace_Members::is_member($workspace_id, $user_id)) {
+            status_header(403);
+            echo 'Access denied - not a workspace member';
+            exit;
+        }
+
+        // Get all important dates for contacts in this workspace
+        $dates = $this->get_workspace_important_dates($workspace_id);
+
+        // Generate iCal output with workspace-specific calendar name
+        $this->output_workspace_ical($dates, $workspace->post_title);
+    }
+
+    /**
+     * Get important dates for contacts in a workspace
+     *
+     * @param int $workspace_id The workspace post ID.
+     * @return array Array of date data for iCal generation.
+     */
+    private function get_workspace_important_dates($workspace_id) {
+        // Get term ID for this workspace
+        $term = get_term_by('slug', 'workspace-' . $workspace_id, 'workspace_access');
+        if (!$term) {
+            return [];
+        }
+
+        // Get all contacts (people) in this workspace
+        $people = get_posts([
+            'post_type'      => 'person',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'tax_query'      => [
+                [
+                    'taxonomy' => 'workspace_access',
+                    'field'    => 'term_id',
+                    'terms'    => $term->term_id,
+                ],
+            ],
+            'fields' => 'ids',
+        ]);
+
+        if (empty($people)) {
+            return [];
+        }
+
+        // Get important dates linked to these people
+        $date_posts = get_posts([
+            'post_type'      => 'important_date',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => [
+                [
+                    'key'     => 'related_people',
+                    'value'   => $people,
+                    'compare' => 'IN',
+                ],
+            ],
+        ]);
+
+        // If no results with standard meta query, try ACF relationship approach
+        if (empty($date_posts)) {
+            // ACF stores relationship fields differently, so we need to query each person
+            $date_ids = [];
+            foreach ($people as $person_id) {
+                $person_dates = get_posts([
+                    'post_type'      => 'important_date',
+                    'posts_per_page' => -1,
+                    'post_status'    => 'publish',
+                    'meta_query'     => [
+                        [
+                            'key'     => 'related_people',
+                            'value'   => '"' . $person_id . '"',
+                            'compare' => 'LIKE',
+                        ],
+                    ],
+                    'fields' => 'ids',
+                ]);
+                $date_ids = array_merge($date_ids, $person_dates);
+            }
+
+            if (!empty($date_ids)) {
+                $date_posts = get_posts([
+                    'post_type'      => 'important_date',
+                    'posts_per_page' => -1,
+                    'post_status'    => 'publish',
+                    'post__in'       => array_unique($date_ids),
+                ]);
+            }
+        }
+
+        // Format dates for iCal generation (same format as get_user_dates)
+        $dates = [];
+        foreach ($date_posts as $post) {
+            $related_people = get_field('related_people', $post->ID) ?: [];
+            $people_data = [];
+
+            foreach ($related_people as $person) {
+                $person_id = is_object($person) ? $person->ID : $person;
+                $people_data[] = [
+                    'id'   => $person_id,
+                    'name' => html_entity_decode(get_the_title($person_id), ENT_QUOTES, 'UTF-8'),
+                ];
+            }
+
+            $date_types = wp_get_post_terms($post->ID, 'date_type', ['fields' => 'names']);
+
+            $dates[] = [
+                'id'           => $post->ID,
+                'title'        => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
+                'date_value'   => get_field('date_value', $post->ID),
+                'is_recurring' => (bool) get_field('is_recurring', $post->ID),
+                'date_type'    => !empty($date_types) ? $date_types[0] : '',
+                'people'       => $people_data,
+                'modified'     => $post->post_modified_gmt,
+            ];
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Output iCal feed for workspace
+     *
+     * @param array  $dates          Array of date data.
+     * @param string $workspace_name The workspace name for calendar title.
+     */
+    private function output_workspace_ical($dates, $workspace_name) {
+        // Set headers
+        header('Content-Type: text/calendar; charset=utf-8');
+        header('Content-Disposition: attachment; filename="caelis-workspace.ics"');
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Pragma: no-cache');
+
+        // Generate iCal content with workspace-specific name
+        $output = $this->generate_workspace_ical($dates, $workspace_name);
+
+        echo $output;
+    }
+
+    /**
+     * Generate iCal content for workspace
+     *
+     * @param array  $dates          Array of date data.
+     * @param string $workspace_name The workspace name.
+     * @return string iCal formatted content.
+     */
+    private function generate_workspace_ical($dates, $workspace_name) {
+        $site_url = home_url();
+        $domain = wp_parse_url($site_url, PHP_URL_HOST);
+
+        $lines = [];
+
+        // Calendar header
+        $lines[] = 'BEGIN:VCALENDAR';
+        $lines[] = 'VERSION:2.0';
+        $lines[] = 'PRODID:-//Caelis//' . $workspace_name . '//EN';
+        $lines[] = 'CALSCALE:GREGORIAN';
+        $lines[] = 'METHOD:PUBLISH';
+        $lines[] = 'X-WR-CALNAME:' . $this->escape_ical_text('Caelis - ' . $workspace_name);
+        $lines[] = 'X-WR-TIMEZONE:UTC';
+
+        // Add events
+        foreach ($dates as $date) {
+            $event_lines = $this->generate_event($date, $domain);
+            $lines = array_merge($lines, $event_lines);
+        }
+
+        // Calendar footer
+        $lines[] = 'END:VCALENDAR';
+
+        return implode("\r\n", $lines) . "\r\n";
+    }
+
+    /**
      * Escape text for iCal format
      */
     private function escape_ical_text($text) {
@@ -350,7 +565,7 @@ class PRM_ICal_Feed {
         $text = str_replace("\r\n", '\n', $text);
         $text = str_replace("\r", '\n', $text);
         $text = str_replace("\n", '\n', $text);
-        
+
         return $text;
     }
 }
