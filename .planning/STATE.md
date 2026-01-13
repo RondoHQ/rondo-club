@@ -5,13 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-13)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Ready for next milestone
+**Current focus:** v2.1 Bulk Operations - List view and bulk management
 
 ## Current Position
 
-Milestone: None active
-Last milestone: v2.0 Multi-User (shipped 2026-01-13)
-Last activity: 2026-01-13 — Completed v2.0 Multi-User milestone
+Milestone: v2.1 Bulk Operations
+Phase: 12 of 13 (List View & Selection Infrastructure)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-13 — Milestone v2.1 created
+
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -22,15 +26,18 @@ Last activity: 2026-01-13 — Completed v2.0 Multi-User milestone
 
 **Total:** 11 phases, 31 plans completed
 
+## Roadmap Evolution
+
+- Milestone v2.1 Bulk Operations created: list view + bulk actions, 2 phases (Phase 12-13)
+
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Milestone v2.0 shipped
+Stopped at: Milestone v2.1 initialization
 Resume file: None
 
 ## Next Steps
 
-Options:
-- `/gsd:discuss-milestone` — discuss ideas for next milestone
-- `/gsd:new-milestone` — create a new milestone with phases
-- `/gsd:check-todos` — review any pending todos
+- `/gsd:plan-phase 12` — create execution plan for list view & selection
+- `/gsd:discuss-phase 12` — gather more context first
+- `/gsd:research-phase 12` — investigate unknowns (unlikely needed)

@@ -1,13 +1,36 @@
 # Roadmap: Caelis
 
-## Completed Milestones
+## Milestones
 
 - ✅ [v1.0 Tech Debt Cleanup](milestones/v1.0-tech-debt-cleanup.md) (Phases 1-6) — SHIPPED 2026-01-13
 - ✅ [v2.0 Multi-User](milestones/v2.0-multi-user.md) (Phases 7-11) — SHIPPED 2026-01-13
+- 🚧 **v2.1 Bulk Operations** — Phases 12-13 (in progress)
 
 ## Current Milestone
 
-No active milestone. Use `/gsd:discuss-milestone` or `/gsd:new-milestone` to plan next work.
+### 🚧 v2.1 Bulk Operations (In Progress)
+
+**Milestone Goal:** Enable efficient bulk management of contacts through a new list view with multi-select and batch actions
+
+#### Phase 12: List View & Selection Infrastructure
+
+**Goal**: Add list view to people screen with columns (name, workspace, org) and checkbox selection
+**Depends on**: v2.0 Multi-User complete
+**Research**: Unlikely (internal React patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 12-01: TBD (run /gsd:plan-phase 12 to break down)
+
+#### Phase 13: Bulk Actions
+
+**Goal**: Implement bulk workspace assignment and bulk visibility change actions
+**Depends on**: Phase 12
+**Research**: Unlikely (established REST API + React patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 13-01: TBD (run /gsd:plan-phase 13 to break down)
 
 ---
 
@@ -69,3 +92,9 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 |-----------|--------|-------|--------|-----------|
 | v1.0 Tech Debt Cleanup | 1-6 | 11/11 | Complete ✅ | 2026-01-13 |
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
+| v2.1 Bulk Operations | 12-13 | 0/? | In progress | - |
+
+| Phase | Milestone | Plans | Status | Completed |
+|-------|-----------|-------|--------|-----------|
+| 12. List View & Selection | v2.1 | 0/? | Not started | - |
+| 13. Bulk Actions | v2.1 | 0/? | Not started | - |
