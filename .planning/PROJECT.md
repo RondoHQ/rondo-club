@@ -74,7 +74,7 @@ Split the 107KB `class-rest-api.php` into manageable, domain-specific files whil
 |----------|-----------|---------|
 | Split REST API by domain | 107KB file is unmaintainable, domains are clear (people, companies, slack, import/export) | — Pending |
 | Use sodium for token encryption | Built into PHP 7.2+, no external dependency needed | — Pending |
-| Add DOMPurify for XSS | Industry standard, lightweight, React-compatible | — Pending |
+| Use WordPress native XSS functions | Server-side sanitization with wp_kses(), no client dependency needed | — Pending |
 
 ---
 *Last updated: 2025-01-13 after initialization*
