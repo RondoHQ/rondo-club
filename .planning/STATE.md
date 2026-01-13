@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-13)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Bundle optimization and code splitting for performance
+**Current focus:** All milestones complete — ready for next planning
 
 ## Current Position
 
-Milestone: v2.5 Performance
-Phase: 20 of 20 (Bundle Optimization)
-Plan: 3 of 3 complete
-Status: Phase complete
-Last activity: 2026-01-13 — Completed Phase 20 (Bundle Optimization)
+Milestone: None active
+Phase: All 20 phases complete
+Plan: 46 plans shipped
+Status: Ready for next milestone
+Last activity: 2026-01-13 — v2.5 Performance shipped
 
-Progress: ██████████ 100%
+Progress: ██████████ 100% (all milestones complete)
 
 ## Completed Milestones
 
@@ -27,8 +27,9 @@ Progress: ██████████ 100%
 | v2.2 List View Polish | 14-15 | 4 | 2026-01-13 |
 | v2.3 List View Unification | 16-18 | 3 | 2026-01-13 |
 | v2.4 Bug Fixes | 19 | 2 | 2026-01-13 |
+| v2.5 Performance | 20 | 3 | 2026-01-13 |
 
-**Total:** 6 milestones, 19 phases, 43 plans completed
+**Total:** 7 milestones, 20 phases, 46 plans completed
 
 ## Deferred Issues
 
@@ -55,11 +56,13 @@ See `.planning/ISSUES.md`:
 - Milestone v2.4 complete: All date bugs fixed, CLI migration ready
 - Milestone v2.4 archived: Git tag v2.4 created
 - Milestone v2.5 created: Performance, 1 phase (Phase 20)
+- Phase 20 complete: Bundle Optimization (3 plans)
+- Milestone v2.5 archived: Git tag v2.5 created
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Phase 20 complete, milestone v2.5 ready for completion
+Stopped at: v2.5 Performance milestone archived
 Resume file: None
 
 ## Accumulated Context

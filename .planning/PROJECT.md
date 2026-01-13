@@ -72,13 +72,18 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Bulk visibility, workspace, labels for Organizations — v2.3
 - Full parity between People and Organizations list views — v2.3
 
+**v2.5 Performance (shipped 2026-01-13):**
+- Vite manual chunks for vendor (React) and utils (date-fns, etc.) — v2.5
+- Route-based lazy loading with React.lazy + Suspense — v2.5
+- Heavy library lazy loading (vis-network, TipTap) — v2.5
+- Initial bundle reduced from 1,646 KB to 435 KB (73% reduction) — v2.5
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 
 ### Out of Scope
 
-- Performance optimization (N+1 queries, pagination) — separate milestone
 - Mobile app — future consideration
 - Real-time updates (WebSockets) — future enhancement
 - External integrations beyond Slack — future milestone
@@ -121,6 +126,9 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Invites expire 7 days | Reasonable timeframe for action | ✓ Good |
 | Mention markup @[Name](id) | react-mentions standard format | ✓ Good |
 | Mentions default to digest | Reduces notification fatigue | ✓ Good |
+| Vendor + utils chunking | Stable deps cached separately | ✓ Good |
+| Route-based lazy loading | Pages load on demand | ✓ Good |
+| Component-level Suspense for heavy libs | vis-network/TipTap load only when needed | ✓ Good |
 
 ---
-*Last updated: 2026-01-13 — v2.3 List View Unification shipped*
+*Last updated: 2026-01-13 — v2.5 Performance shipped*
