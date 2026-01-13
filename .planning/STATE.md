@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 
 Milestone: v2.5 Performance
 Phase: 20 of 20 (Bundle Optimization)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-13 — Milestone v2.5 created
+Plan: 3 of 3 complete
+Status: Phase complete
+Last activity: 2026-01-13 — Completed Phase 20 (Bundle Optimization)
 
-Progress: ░░░░░░░░░░ 0%
+Progress: ██████████ 100%
 
 ## Completed Milestones
 
@@ -39,13 +39,14 @@ See `.planning/ISSUES.md`:
 
 **0 issues remaining**
 
-## Decisions Made (v2.4)
+## Decisions Made (v2.5)
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
-| 19 | Used peopleKeys.dates(id) from usePeople hook | Ensures cache invalidation matches query key |
-| 19 | WP-CLI command at `wp prm dates regenerate-titles` | Namespaced under prm dates for clarity |
-| 19 | Full name constructed from first_name + last_name | More reliable than parsing title.rendered |
+| 20 | Vendor chunk (React ecosystem) + Utils chunk (date-fns, etc.) | Stable deps cached separately from app code |
+| 20 | Route-based lazy loading with React.lazy + Suspense | Pages load on demand, reducing initial load |
+| 20 | Extract richTextUtils.js from RichTextEditor | Break static import chain for proper code splitting |
+| 20 | Component-level Suspense for heavy libs | vis-network and TipTap load only when needed |
 
 ## Roadmap Evolution
 
@@ -58,7 +59,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Milestone v2.5 initialization
+Stopped at: Phase 20 complete, milestone v2.5 ready for completion
 Resume file: None
 
 ## Accumulated Context
@@ -71,5 +72,5 @@ Resume file: None
 
 ## Next Steps
 
-- `/gsd:new-milestone` — create new milestone from pending todos
+- `/gsd:complete-milestone` — archive v2.5 and prepare for next
 - `/gsd:check-todos` — review pending todos for next milestone
