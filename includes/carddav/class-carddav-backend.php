@@ -679,13 +679,11 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         
         // Get changes since the sync token
         $changes = get_option(self::CHANGE_LOG_OPTION, []);
-        // Try both string and int keys for compatibility
-        $user_changes = $changes[$addressBookId] ?? $changes[(string)$addressBookId] ?? $changes[(int)$addressBookId] ?? [];
+        // Use string key for consistency (WP stores numeric keys as strings)
+        $user_changes = $changes[(string)$addressBookId] ?? [];
 
         // Parse sync token to get timestamp
         $token_timestamp = $this->parseSyncToken($syncToken);
-
-        error_log("CardDAV: getChangesForAddressBook - user_changes count: " . count($user_changes) . ", token_timestamp: {$token_timestamp}");
         
         $count = 0;
         foreach ($user_changes as $person_id => $change) {
