@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.69.0] - 2026-01-13
+
+### Added
+- Organizations list view with tabular layout (replacing card grid)
+  - Columns: checkbox, logo, name, industry, website, workspace, labels
+  - SortableHeader component for clickable column sorting
+  - Selection checkboxes with select all/none functionality
+  - Sticky table header and selection toolbar
+  - Alternating row colors for better readability
+- Header sort controls for Organizations
+  - Sort field dropdown (Name, Industry, Website, Workspace, Labels)
+  - Sort direction toggle button
+
+### Changed
+- Organizations page now uses list view instead of card grid
+- Organizations data includes company labels for display
+
+### Removed
+- CompanyCard component (replaced by OrganizationListRow)
+- Grid-based card layout for organizations
+
 ## [1.68.0] - 2026-01-13
 
 ### Changed
