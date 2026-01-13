@@ -679,10 +679,13 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
         
         // Get changes since the sync token
         $changes = get_option(self::CHANGE_LOG_OPTION, []);
-        $user_changes = $changes[$addressBookId] ?? [];
-        
+        // Try both string and int keys for compatibility
+        $user_changes = $changes[$addressBookId] ?? $changes[(string)$addressBookId] ?? $changes[(int)$addressBookId] ?? [];
+
         // Parse sync token to get timestamp
         $token_timestamp = $this->parseSyncToken($syncToken);
+
+        error_log("CardDAV: getChangesForAddressBook - user_changes count: " . count($user_changes) . ", token_timestamp: {$token_timestamp}");
         
         $count = 0;
         foreach ($user_changes as $person_id => $change) {
@@ -723,13 +726,15 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      */
     private function getCurrentSyncToken($addressBookId) {
         $tokens = get_option(self::SYNC_TOKEN_OPTION, []);
-        
-        if (!isset($tokens[$addressBookId])) {
-            $tokens[$addressBookId] = time();
+        // Cast to string for consistent array key comparison (WP stores numeric keys as strings)
+        $key = (string) $addressBookId;
+
+        if (!isset($tokens[$key])) {
+            $tokens[$key] = time();
             update_option(self::SYNC_TOKEN_OPTION, $tokens);
         }
-        
-        return 'sync-' . $tokens[$addressBookId];
+
+        return 'sync-' . $tokens[$key];
     }
     
     /**
@@ -740,7 +745,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
      */
     private function updateSyncToken($addressBookId) {
         $tokens = get_option(self::SYNC_TOKEN_OPTION, []);
-        $tokens[$addressBookId] = time();
+        $tokens[(string) $addressBookId] = time();
         update_option(self::SYNC_TOKEN_OPTION, $tokens);
     }
     
