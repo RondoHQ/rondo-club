@@ -215,6 +215,21 @@ class PRM_REST_API extends PRM_REST_Base {
                 ],
             ],
         ]);
+
+        // User search (for sharing)
+        register_rest_route('prm/v1', '/users/search', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'search_users'],
+            'permission_callback' => 'is_user_logged_in',
+            'args'                => [
+                'q' => [
+                    'required'          => true,
+                    'validate_callback' => function($param) {
+                        return is_string($param) && strlen($param) >= 2;
+                    },
+                ],
+            ],
+        ]);
     }
     
     /**
@@ -1060,7 +1075,7 @@ class PRM_REST_API extends PRM_REST_Base {
      */
     private function delete_user_posts($user_id) {
         $post_types = ['person', 'company', 'important_date'];
-        
+
         foreach ($post_types as $post_type) {
             $posts = get_posts([
                 'post_type'      => $post_type,
@@ -1068,10 +1083,43 @@ class PRM_REST_API extends PRM_REST_Base {
                 'posts_per_page' => -1,
                 'post_status'    => 'any',
             ]);
-            
+
             foreach ($posts as $post) {
                 wp_delete_post($post->ID, true); // Force delete (bypass trash)
             }
         }
+    }
+
+    /**
+     * Search users for sharing functionality
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response Response containing matched users.
+     */
+    public function search_users($request) {
+        $query = sanitize_text_field($request->get_param('q'));
+
+        if (strlen($query) < 2) {
+            return rest_ensure_response([]);
+        }
+
+        $users = get_users([
+            'search'         => '*' . $query . '*',
+            'search_columns' => ['user_login', 'user_email', 'display_name'],
+            'number'         => 10,
+            'exclude'        => [get_current_user_id()],
+        ]);
+
+        $result = [];
+        foreach ($users as $user) {
+            $result[] = [
+                'id'           => $user->ID,
+                'display_name' => $user->display_name,
+                'email'        => $user->user_email,
+                'avatar_url'   => get_avatar_url($user->ID, ['size' => 48]),
+            ];
+        }
+
+        return rest_ensure_response($result);
     }
 }

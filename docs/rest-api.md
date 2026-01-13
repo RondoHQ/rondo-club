@@ -604,6 +604,129 @@ Accept an invite and join the workspace.
 
 ---
 
+### Direct Sharing (People)
+
+**GET** `/prm/v1/people/{id}/shares`
+
+Get list of users a person is shared with.
+
+**Permission:** Must be post owner
+
+**Response:**
+```json
+[
+  {
+    "user_id": 123,
+    "display_name": "Jane Smith",
+    "email": "jane@example.com",
+    "avatar_url": "https://...",
+    "permission": "view"
+  }
+]
+```
+
+---
+
+**POST** `/prm/v1/people/{id}/shares`
+
+Share a person with another user.
+
+**Permission:** Must be post owner
+
+**Body:**
+```json
+{
+  "user_id": 123,
+  "permission": "view"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Shared successfully."
+}
+```
+
+---
+
+**DELETE** `/prm/v1/people/{id}/shares/{user_id}`
+
+Remove sharing from a user.
+
+**Permission:** Must be post owner
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Share removed."
+}
+```
+
+---
+
+### Direct Sharing (Companies)
+
+**GET** `/prm/v1/companies/{id}/shares`
+
+Get list of users a company is shared with.
+
+**Permission:** Must be post owner
+
+**Response:** Same format as People shares.
+
+---
+
+**POST** `/prm/v1/companies/{id}/shares`
+
+Share a company with another user.
+
+**Permission:** Must be post owner
+
+**Body:** Same format as People shares.
+
+---
+
+**DELETE** `/prm/v1/companies/{id}/shares/{user_id}`
+
+Remove sharing from a user.
+
+**Permission:** Must be post owner
+
+---
+
+### User Search
+
+**GET** `/prm/v1/users/search`
+
+Search for users to share with.
+
+**Permission:** Logged in users only
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `q` | string | Yes | Search query (minimum 2 characters) |
+
+**Response:**
+```json
+[
+  {
+    "id": 123,
+    "display_name": "Jane Smith",
+    "email": "jane@example.com",
+    "avatar_url": "https://..."
+  }
+]
+```
+
+Note: The current user is automatically excluded from search results.
+
+---
+
 ## Response Enhancements
 
 ### Person Relationships Expansion

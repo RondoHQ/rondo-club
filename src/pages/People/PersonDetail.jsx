@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, Square, TrendingUp, StickyNote
+  CheckSquare2, Square, TrendingUp, StickyNote, Share2
 } from 'lucide-react';
 import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack, SiWhatsapp } from '@icons-pack/react-simple-icons';
 
@@ -38,6 +38,7 @@ import RelationshipEditModal from '@/components/RelationshipEditModal';
 import AddressEditModal from '@/components/AddressEditModal';
 import WorkHistoryEditModal from '@/components/WorkHistoryEditModal';
 import PersonEditModal from '@/components/PersonEditModal';
+import ShareModal from '@/components/ShareModal';
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -109,6 +110,7 @@ export default function PersonDetail() {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showWorkHistoryModal, setShowWorkHistoryModal] = useState(false);
   const [showPersonEditModal, setShowPersonEditModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
   const [isSavingDate, setIsSavingDate] = useState(false);
   const [isSavingRelationship, setIsSavingRelationship] = useState(false);
@@ -1196,6 +1198,10 @@ export default function PersonDetail() {
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Export vCard</span>
           </button>
+          <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Share">
+            <Share2 className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Share</span>
+          </button>
           <button onClick={() => setShowPersonEditModal(true)} className="btn-secondary">
             <Edit className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Edit</span>
@@ -2162,6 +2168,14 @@ export default function PersonDetail() {
         onSubmit={handleSavePerson}
         isLoading={isSavingPerson}
         person={person}
+      />
+
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        postType="people"
+        postId={person.id}
+        postTitle={person.name || person.title?.rendered}
       />
     </div>
   );

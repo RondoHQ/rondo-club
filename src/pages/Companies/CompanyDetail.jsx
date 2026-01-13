@@ -1,11 +1,12 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch, TrendingUp, User, Camera } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch, TrendingUp, User, Camera, Share2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { getCompanyName, decodeHtml } from '@/utils/formatters';
 import CompanyEditModal from '@/components/CompanyEditModal';
+import ShareModal from '@/components/ShareModal';
 
 export default function CompanyDetail() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ export default function CompanyDetail() {
   const fileInputRef = useRef(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
   const { data: company, isLoading, error } = useQuery({
@@ -229,6 +231,10 @@ export default function CompanyDetail() {
           <span className="hidden md:inline">Back to organizations</span>
         </Link>
         <div className="flex gap-2">
+          <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Share">
+            <Share2 className="w-4 h-4 mr-2" />
+            Share
+          </button>
           <button onClick={() => setShowEditModal(true)} className="btn-secondary">
             <Edit className="w-4 h-4 mr-2" />
             Edit
@@ -524,6 +530,14 @@ export default function CompanyDetail() {
         onSubmit={handleSaveCompany}
         isLoading={isSaving}
         company={company}
+      />
+
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        postType="companies"
+        postId={company.id}
+        postTitle={getCompanyName(company)}
       />
     </div>
   );
