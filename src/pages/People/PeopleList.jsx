@@ -174,7 +174,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
   const isActive = currentSortField === field;
 
   return (
-    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
       <button
         onClick={() => onSort(field)}
         className="flex items-center gap-1 hover:text-gray-700 cursor-pointer"
@@ -194,11 +194,11 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
 
 function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-x-auto max-h-[70vh] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
-          <tr>
-            <th scope="col" className="pl-4 pr-2 py-3 w-10">
+        <thead className="bg-gray-50 sticky top-0 z-10">
+          <tr className="shadow-sm">
+            <th scope="col" className="pl-4 pr-2 py-3 w-10 bg-gray-50">
               <button
                 onClick={onToggleSelectAll}
                 className="text-gray-400 hover:text-gray-600"
