@@ -127,8 +127,13 @@ class PRM_REST_People extends PRM_REST_Base {
                         if (!is_array($param) || empty($param)) {
                             return false;
                         }
-                        // Must have at least visibility or assigned_workspaces
-                        if (!isset($param['visibility']) && !isset($param['assigned_workspaces'])) {
+                        // Must have at least one supported update type
+                        $has_update = isset($param['visibility'])
+                            || isset($param['assigned_workspaces'])
+                            || array_key_exists('organization_id', $param)
+                            || isset($param['labels_add'])
+                            || isset($param['labels_remove']);
+                        if (!$has_update) {
                             return false;
                         }
                         // Validate visibility if provided
@@ -145,6 +150,42 @@ class PRM_REST_People extends PRM_REST_Base {
                             }
                             foreach ($param['assigned_workspaces'] as $ws_id) {
                                 if (!is_numeric($ws_id)) {
+                                    return false;
+                                }
+                            }
+                        }
+                        // Validate organization_id if provided (can be int or null)
+                        if (array_key_exists('organization_id', $param)) {
+                            $org_id = $param['organization_id'];
+                            if ($org_id !== null) {
+                                if (!is_numeric($org_id)) {
+                                    return false;
+                                }
+                                // Validate organization exists as published company post
+                                $org = get_post((int) $org_id);
+                                if (!$org || $org->post_type !== 'company' || $org->post_status !== 'publish') {
+                                    return false;
+                                }
+                            }
+                        }
+                        // Validate labels_add if provided
+                        if (isset($param['labels_add'])) {
+                            if (!is_array($param['labels_add'])) {
+                                return false;
+                            }
+                            foreach ($param['labels_add'] as $term_id) {
+                                if (!is_numeric($term_id)) {
+                                    return false;
+                                }
+                            }
+                        }
+                        // Validate labels_remove if provided
+                        if (isset($param['labels_remove'])) {
+                            if (!is_array($param['labels_remove'])) {
+                                return false;
+                            }
+                            foreach ($param['labels_remove'] as $term_id) {
+                                if (!is_numeric($term_id)) {
                                     return false;
                                 }
                             }
