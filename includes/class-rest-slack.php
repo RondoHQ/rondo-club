@@ -20,6 +20,67 @@ class PRM_REST_Slack extends PRM_REST_Base {
     }
 
     /**
+     * Encrypt a token using sodium_crypto_secretbox
+     *
+     * @param string $token The plaintext token to encrypt.
+     * @return string Base64-encoded encrypted token (nonce + ciphertext).
+     */
+    protected function encrypt_token($token) {
+        // Check if encryption key is defined, fallback to base64 if not
+        if (!defined('CAELIS_ENCRYPTION_KEY') || empty(CAELIS_ENCRYPTION_KEY)) {
+            return base64_encode($token);
+        }
+
+        // Generate random nonce
+        $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+
+        // Encrypt the token
+        $ciphertext = sodium_crypto_secretbox($token, $nonce, CAELIS_ENCRYPTION_KEY);
+
+        // Return base64-encoded nonce + ciphertext
+        return base64_encode($nonce . $ciphertext);
+    }
+
+    /**
+     * Decrypt a token encrypted with sodium_crypto_secretbox
+     *
+     * Supports migration from legacy base64-encoded tokens.
+     *
+     * @param string $encrypted The encrypted token (base64-encoded).
+     * @return string|false The decrypted token, or false on failure.
+     */
+    protected function decrypt_token($encrypted) {
+        // Check if encryption key is defined, fallback to base64 decode if not
+        if (!defined('CAELIS_ENCRYPTION_KEY') || empty(CAELIS_ENCRYPTION_KEY)) {
+            return base64_decode($encrypted);
+        }
+
+        $decoded = base64_decode($encrypted, true);
+
+        // Check if decoded data is too short to be sodium-encrypted
+        // Minimum length: nonce (24 bytes) + MAC (16 bytes) = 40 bytes
+        $min_length = SODIUM_CRYPTO_SECRETBOX_NONCEBYTES + SODIUM_CRYPTO_SECRETBOX_MACBYTES;
+        if ($decoded === false || strlen($decoded) < $min_length) {
+            // Assume legacy base64-encoded token
+            return base64_decode($encrypted);
+        }
+
+        // Extract nonce and ciphertext
+        $nonce = substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        $ciphertext = substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+
+        // Attempt decryption
+        $plaintext = sodium_crypto_secretbox_open($ciphertext, $nonce, CAELIS_ENCRYPTION_KEY);
+
+        if ($plaintext === false) {
+            // Decryption failed, try legacy base64 decode (migration path)
+            return base64_decode($encrypted);
+        }
+
+        return $plaintext;
+    }
+
+    /**
      * Register Slack REST routes
      */
     public function register_routes() {
@@ -232,8 +293,8 @@ class PRM_REST_Slack extends PRM_REST_Base {
         $workspace_name = isset($body['team']['name']) ? $body['team']['name'] : '';
         $slack_user_id = isset($body['authed_user']['id']) ? $body['authed_user']['id'] : '';
 
-        // Encrypt token before storing (simple base64 encoding for now, can be improved)
-        update_user_meta($user_id, 'caelis_slack_bot_token', base64_encode($bot_token));
+        // Encrypt token before storing
+        update_user_meta($user_id, 'caelis_slack_bot_token', $this->encrypt_token($bot_token));
         update_user_meta($user_id, 'caelis_slack_workspace_id', $workspace_id);
         update_user_meta($user_id, 'caelis_slack_workspace_name', $workspace_name);
         update_user_meta($user_id, 'caelis_slack_user_id', $slack_user_id);
@@ -272,7 +333,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
             ]);
         }
 
-        $bot_token = base64_decode($encrypted_token);
+        $bot_token = $this->decrypt_token($encrypted_token);
 
         // Revoke token via Slack API
         wp_remote_post('https://slack.com/api/auth.revoke', [
@@ -467,7 +528,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
             );
         }
 
-        $bot_token = base64_decode($bot_token);
+        $bot_token = $this->decrypt_token($bot_token);
         $channels = [];
         $users = [];
 
