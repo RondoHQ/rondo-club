@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 
 Milestone: v2.1 Bulk Operations
 Phase: 12 of 13 (List View & Selection Infrastructure)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-13 — Milestone v2.1 created
+Plan: 1 of 1 complete
+Status: Phase complete
+Last activity: 2026-01-13 — Completed 12-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █████░░░░░ 50%
 
 ## Completed Milestones
 
@@ -33,11 +33,11 @@ Progress: ░░░░░░░░░░ 0%
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: Milestone v2.1 initialization
+Stopped at: Phase 12 complete (List View & Selection)
 Resume file: None
 
 ## Next Steps
 
-- `/gsd:plan-phase 12` — create execution plan for list view & selection
-- `/gsd:discuss-phase 12` — gather more context first
-- `/gsd:research-phase 12` — investigate unknowns (unlikely needed)
+- `/gsd:plan-phase 13` — create execution plan for bulk actions
+- `/gsd:discuss-phase 13` — gather more context first
+- `/gsd:verify-work 12` — manual acceptance testing before continuing
