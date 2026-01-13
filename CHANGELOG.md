@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User meta storage for workspace memberships with roles (admin, member, viewer)
 - Methods for adding, removing, and updating user workspace memberships
 - Query helpers to get user workspaces, workspace members, and role checks
+- Automatic workspace owner membership: workspace creators are auto-added as admin members
+- Protection against removing workspace owner from membership
+- ACF visibility field group for Person, Company, and Important Date post types
+- Visibility options: private (default), workspace, and shared with specific users
+- `PRM_Visibility` helper class for managing visibility and sharing
+- Share management methods: add_share, remove_share, get_shares, user_has_share
+- `_shared_with` post meta for storing direct user shares with permissions
 
 ## [1.43.1] - 2026-01-13
 

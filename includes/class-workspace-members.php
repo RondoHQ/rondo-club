@@ -32,6 +32,40 @@ class PRM_Workspace_Members {
     ];
 
     /**
+     * Constructor - register hooks
+     */
+    public function __construct() {
+        add_action('save_post_workspace', [$this, 'add_owner_as_admin'], 10, 3);
+    }
+
+    /**
+     * When workspace is created, add author as admin member
+     *
+     * @param int     $post_id The workspace post ID.
+     * @param WP_Post $post    The workspace post object.
+     * @param bool    $update  Whether this is an update or new post.
+     */
+    public function add_owner_as_admin($post_id, $post, $update) {
+        // Only on create (not update)
+        if ($update) {
+            return;
+        }
+
+        // Skip revisions
+        if (wp_is_post_revision($post_id)) {
+            return;
+        }
+
+        // Skip auto-drafts
+        if ($post->post_status === 'auto-draft') {
+            return;
+        }
+
+        // Add author as admin
+        self::add($post_id, $post->post_author, self::ROLE_ADMIN);
+    }
+
+    /**
      * Add user to workspace
      *
      * @param int    $workspace_id The workspace post ID.
