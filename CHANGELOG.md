@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.58.0] - 2026-01-13
+
+### Added
+- New @mentions infrastructure for collaborative notes
+  - MentionInput React component using react-mentions library
+  - Workspace member search API endpoint (`/prm/v1/workspaces/members/search`)
+  - PRM_Mentions PHP class for parsing, storing, and rendering @mentions
+  - Mentioned user IDs stored in comment meta `_mentioned_users`
+  - Action hook `prm_user_mentioned` fires when users are mentioned
+
 ## [1.57.2] - 2026-01-13
 
 ### Added
