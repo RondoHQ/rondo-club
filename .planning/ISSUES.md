@@ -4,16 +4,15 @@ Enhancements discovered during execution. Not critical - address in future phase
 
 ## Open Enhancements
 
+*No open issues.*
+
+## Closed Enhancements
+
 ### ISS-003: Extend bulk edit to support Organizations and Labels
 
 - **Discovered:** Post Phase 13 completion (2026-01-13)
-- **Type:** Feature
-- **Description:** Allow bulk actions to assign people to Organizations (set current company) and add/remove Labels. Currently only visibility and workspace assignment are supported.
-- **Impact:** Low (current bulk actions work, this expands capabilities)
-- **Effort:** Medium (need new modals, extend REST endpoint to handle org/label updates)
-- **Suggested phase:** Phase 15
-
-## Closed Enhancements
+- **Closed:** Phase 15 (2026-01-13)
+- **Resolution:** Extended bulk-update endpoint with organization_id, labels_add, labels_remove parameters. Created BulkOrganizationModal with search/filter and clear option. Created BulkLabelsModal with add/remove mode toggle for multi-select label management.
 
 ### ISS-001: Add sorting by Organization and Workspace in list view
 
