@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown, LayoutGrid, List } from 'lucide-react';
+import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown, LayoutGrid, List, Square, CheckSquare, MinusSquare } from 'lucide-react';
 import { usePeople, useCreatePerson } from '@/hooks/usePeople';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useQuery } from '@tanstack/react-query';
@@ -83,7 +83,7 @@ function PersonCard({ person, companyName, isDeceased }) {
   );
 }
 
-function PersonListRow({ person, companyName, workspaces }) {
+function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSelection }) {
   const assignedWorkspaces = person.acf?._assigned_workspaces || [];
   const workspaceNames = assignedWorkspaces
     .map(wsId => workspaces.find(ws => ws.id === wsId)?.title)
@@ -92,6 +92,18 @@ function PersonListRow({ person, companyName, workspaces }) {
 
   return (
     <tr className="hover:bg-gray-50">
+      <td className="pl-4 pr-2 py-3 w-10">
+        <button
+          onClick={(e) => { e.preventDefault(); onToggleSelection(person.id); }}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          {isSelected ? (
+            <CheckSquare className="w-5 h-5 text-primary-600" />
+          ) : (
+            <Square className="w-5 h-5" />
+          )}
+        </button>
+      </td>
       <td className="px-4 py-3 whitespace-nowrap">
         <Link to={`/people/${person.id}`} className="flex items-center">
           {person.thumbnail ? (
@@ -130,12 +142,27 @@ function PersonListRow({ person, companyName, workspaces }) {
   );
 }
 
-function PersonListView({ people, companyMap, workspaces }) {
+function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected }) {
   return (
     <div className="card overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            <th scope="col" className="pl-4 pr-2 py-3 w-10">
+              <button
+                onClick={onToggleSelectAll}
+                className="text-gray-400 hover:text-gray-600"
+                title={isAllSelected ? 'Deselect all' : 'Select all'}
+              >
+                {isAllSelected ? (
+                  <CheckSquare className="w-5 h-5 text-primary-600" />
+                ) : isSomeSelected ? (
+                  <MinusSquare className="w-5 h-5 text-primary-600" />
+                ) : (
+                  <Square className="w-5 h-5" />
+                )}
+              </button>
+            </th>
             <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Name
             </th>
@@ -154,6 +181,8 @@ function PersonListView({ people, companyMap, workspaces }) {
               person={person}
               companyName={companyMap[person.id]}
               workspaces={workspaces}
+              isSelected={selectedIds.has(person.id)}
+              onToggleSelection={onToggleSelection}
             />
           ))}
         </tbody>
@@ -173,6 +202,7 @@ export default function PeopleList() {
   const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
   const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const [showPersonModal, setShowPersonModal] = useState(false);
   const [isCreatingPerson, setIsCreatingPerson] = useState(false);
   const filterRef = useRef(null);
@@ -369,6 +399,39 @@ export default function PeopleList() {
     setOwnershipFilter('all');
     setSelectedWorkspaceFilter('');
   };
+
+  // Selection helper functions
+  const toggleSelection = (personId) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(personId)) {
+        next.delete(personId);
+      } else {
+        next.add(personId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredAndSortedPeople.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredAndSortedPeople.map(p => p.id)));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const isAllSelected = filteredAndSortedPeople.length > 0 &&
+    selectedIds.size === filteredAndSortedPeople.length;
+  const isSomeSelected = selectedIds.size > 0 &&
+    selectedIds.size < filteredAndSortedPeople.length;
+
+  // Clear selection when filters change or data changes
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [showFavoritesOnly, selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, selectedWorkspaceFilter, people]);
 
   // Collect all company IDs
   const companyIds = useMemo(() => {
@@ -778,12 +841,32 @@ export default function PeopleList() {
         </div>
       )}
 
+      {/* Selection toolbar (list view only) */}
+      {viewMode === 'list' && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-primary-50 border border-primary-200 rounded-lg px-4 py-2">
+          <span className="text-sm text-primary-800 font-medium">
+            {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'} selected
+          </span>
+          <button
+            onClick={clearSelection}
+            className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
       {/* People list (list view) */}
       {!isLoading && !error && filteredAndSortedPeople?.length > 0 && viewMode === 'list' && (
         <PersonListView
           people={filteredAndSortedPeople}
           companyMap={personCompanyMap}
           workspaces={workspaces}
+          selectedIds={selectedIds}
+          onToggleSelection={toggleSelection}
+          onToggleSelectAll={toggleSelectAll}
+          isAllSelected={isAllSelected}
+          isSomeSelected={isSomeSelected}
         />
       )}
       
