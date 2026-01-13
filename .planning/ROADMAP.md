@@ -7,10 +7,36 @@
 - ✅ [v2.1 Bulk Operations](milestones/v2.1-bulk-operations.md) (Phases 12-13) — SHIPPED 2026-01-13
 - ✅ [v2.2 List View Polish](milestones/v2.2-list-view-polish.md) (Phases 14-15) — SHIPPED 2026-01-13
 - ✅ [v2.3 List View Unification](milestones/v2.3-list-view-unification.md) (Phases 16-18) — SHIPPED 2026-01-13
+- 🚧 v2.4 Bug Fixes (Phases 19+) — IN PROGRESS
 
-## Current Milestone
+## Current Milestone: v2.4 Bug Fixes
 
-None — run `/gsd:new-milestone` to start the next milestone.
+**Milestone Goal:** Fix bugs and polish rough edges discovered during v2.0-v2.3 development.
+
+**Phases:**
+- [ ] Phase 19: Important Date Polish (0/0 plans)
+
+### Phase 19: Important Date Polish
+
+**Goal:** Fix edit bugs, improve defaults, use full names in titles
+
+**Depends on:** None
+**Plans:** 0 plans
+
+**Scope (from bundled todos):**
+- Default date to today when creating new important date
+- Use full name in auto-generated titles ("Jan Ippen's birthday" not "Jan's birthday")
+- Fix card not updating after edit (React Query cache invalidation)
+- Fix visibility required error on edit (REST API 400)
+- WP CLI to regenerate existing birthday titles
+
+**Files:**
+- `src/pages/People/PersonDetail.jsx`
+- `includes/class-auto-title.php`
+- `includes/class-post-types.php`
+
+Plans:
+- [ ] TBD (run `/gsd:plan-phase 19` to break down)
 
 <details>
 <summary>✅ v2.3 List View Unification (Phases 16-18) — SHIPPED 2026-01-13</summary>
@@ -148,5 +174,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
 | v2.2 List View Polish | 14-15 | 4/4 | Complete ✅ | 2026-01-13 |
 | v2.3 List View Unification | 16-18 | 3/3 | Complete ✅ | 2026-01-13 |
+| v2.4 Bug Fixes | 19+ | 0/? | In Progress 🚧 | - |
 
 **Total: 18 phases, 41 plans shipped**
