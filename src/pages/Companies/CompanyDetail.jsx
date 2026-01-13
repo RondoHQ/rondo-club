@@ -150,9 +150,9 @@ export default function CompanyDetail() {
           website: data.website,
           industry: data.industry,
           investors: data.investors || [],
-          // Include visibility fields to satisfy ACF required field validation
-          _visibility: company.acf?._visibility || 'private',
-          _assigned_workspaces: company.acf?._assigned_workspaces || [],
+          // Use visibility values from the form, fall back to existing values
+          _visibility: data.visibility || company.acf?._visibility || 'private',
+          _assigned_workspaces: data.assigned_workspaces || company.acf?._assigned_workspaces || [],
         },
       };
 

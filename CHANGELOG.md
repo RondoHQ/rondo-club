@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.71.1] - 2026-01-13
+
+### Fixed
+- Organization edit now properly saves visibility and workspace changes
+  - Form was passing visibility values but handleSaveCompany was ignoring them
+  - Now uses form values instead of just preserving existing values
+
 ## [1.71.0] - 2026-01-13
 
 ### Added
