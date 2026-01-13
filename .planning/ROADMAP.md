@@ -9,10 +9,46 @@
 - ✅ [v2.3 List View Unification](milestones/v2.3-list-view-unification.md) (Phases 16-18) — SHIPPED 2026-01-13
 - ✅ [v2.4 Bug Fixes](milestones/v2.4-bug-fixes.md) (Phase 19) — SHIPPED 2026-01-13
 - ✅ [v2.5 Performance](milestones/v2.5-performance.md) (Phase 20) — SHIPPED 2026-01-13
+- 🚧 **v3.0 Testing Infrastructure** — Phases 21-23 (in progress)
 
 ## Current Status
 
-All planned milestones complete. Use `/gsd:discuss-milestone` to plan next work.
+**Active:** v3.0 Testing Infrastructure (Phases 21-23)
+
+### 🚧 v3.0 Testing Infrastructure (In Progress)
+
+**Milestone Goal:** Establish PHPUnit testing foundation covering access control, REST API, and data model
+
+#### Phase 21: PHPUnit Setup
+
+**Goal**: PHPUnit + wp-browser setup with test database configuration
+**Depends on**: Previous milestone complete
+**Research**: Likely (new tooling: Codeception, wp-browser)
+**Research topics**: wp-browser module configuration, WPLoader vs WPUnit test types, test database isolation patterns
+**Plans**: TBD
+
+Plans:
+- [ ] 21-01: TBD (run /gsd:plan-phase 21 to break down)
+
+#### Phase 22: Access Control Tests
+
+**Goal**: User isolation, visibility rules (private/workspace/shared), workspace permissions
+**Depends on**: Phase 21
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 22-01: TBD
+
+#### Phase 23: REST API & Data Model Tests
+
+**Goal**: CRUD operations, search, timeline endpoints, CPT relationships, ACF field handling
+**Depends on**: Phase 22
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 23-01: TBD
 
 <details>
 <summary>✅ v2.5 Performance (Phase 20) — SHIPPED 2026-01-13</summary>
@@ -158,5 +194,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.3 List View Unification | 16-18 | 3/3 | Complete ✅ | 2026-01-13 |
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
+| v3.0 Testing Infrastructure | 21-23 | 0/? | In Progress 🚧 | - |
 
-**Total: 20 phases, 46 plans shipped**
+**Shipped: 20 phases, 46 plans**

@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-13)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** All milestones complete — ready for next planning
+**Current focus:** v3.0 Testing Infrastructure — PHPUnit foundation
 
 ## Current Position
 
-Milestone: None active
-Phase: All 20 phases complete
-Plan: 46 plans shipped
-Status: Ready for next milestone
-Last activity: 2026-01-13 — v2.5 Performance shipped
+Milestone: v3.0 Testing Infrastructure
+Phase: 21 of 23 (PHPUnit Setup)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-13 — Milestone v3.0 created
 
-Progress: ██████████ 100% (all milestones complete)
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -40,14 +40,13 @@ See `.planning/ISSUES.md`:
 
 **0 issues remaining**
 
-## Decisions Made (v2.5)
+## Decisions Made (v3.0)
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
-| 20 | Vendor chunk (React ecosystem) + Utils chunk (date-fns, etc.) | Stable deps cached separately from app code |
-| 20 | Route-based lazy loading with React.lazy + Suspense | Pages load on demand, reducing initial load |
-| 20 | Extract richTextUtils.js from RichTextEditor | Break static import chain for proper code splitting |
-| 20 | Component-level Suspense for heavy libs | vis-network and TipTap load only when needed |
+| - | PHPUnit via wp-browser (Codeception) | WordPress-specific test types (WPLoader, WPUnit) |
+| - | Separate test database (`caelis_test`) | Isolation from dev/prod data |
+| - | Backend-first testing | Playwright deferred to future milestone |
 
 ## Roadmap Evolution
 
@@ -58,11 +57,12 @@ See `.planning/ISSUES.md`:
 - Milestone v2.5 created: Performance, 1 phase (Phase 20)
 - Phase 20 complete: Bundle Optimization (3 plans)
 - Milestone v2.5 archived: Git tag v2.5 created
+- Milestone v3.0 created: Testing Infrastructure, 3 phases (Phase 21-23)
 
 ## Session Continuity
 
 Last session: 2026-01-13
-Stopped at: v2.5 Performance milestone archived
+Stopped at: Milestone v3.0 initialization
 Resume file: None
 
 ## Accumulated Context
@@ -70,10 +70,11 @@ Resume file: None
 ### Pending Todos
 
 2 todos in `.planning/todos/pending/`:
-1. Testing framework (PHPUnit + Playwright)
-2. React bundle chunking optimization
+1. Testing framework (PHPUnit + Playwright) — **Addressed by v3.0** (PHPUnit portion)
+2. React bundle chunking optimization — **Addressed by v2.5**
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — archive v2.5 and prepare for next
-- `/gsd:check-todos` — review pending todos for next milestone
+- `/gsd:research-phase 21` — investigate wp-browser setup (recommended, research likely)
+- `/gsd:plan-phase 21` — create execution plan for PHPUnit setup
+- `/gsd:discuss-phase 21` — gather more context first
