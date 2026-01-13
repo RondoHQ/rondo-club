@@ -25,21 +25,19 @@ Split the 107KB `class-rest-api.php` into manageable, domain-specific files whil
 - ✓ Email and Slack notification channels — existing
 - ✓ iCal feed generation — existing
 
+**v1.0 Tech Debt Cleanup:**
+- ✓ Split `class-rest-api.php` into domain-specific classes — v1.0
+- ✓ Remove 48 `console.error()` calls from production code — v1.0
+- ✓ Create `.env.example` documenting required environment variables — v1.0
+- ✓ Consolidate duplicated `decodeHtml()` logic — v1.0
+- ✓ Encrypt Slack tokens with sodium — v1.0
+- ✓ Add server-side XSS protection with wp_kses — v1.0
+- ✓ Validate Slack webhook URLs (whitelist hooks.slack.com) — v1.0
+- ✓ Document public REST endpoints with security rationale — v1.0
+
 ### Active
 
-<!-- Tech debt cleanup scope -->
-
-**Code Quality:**
-- [ ] Split `class-rest-api.php` into domain-specific classes
-- [ ] Remove 30+ `console.error()` calls from production code
-- [ ] Create `.env.example` documenting required environment variables
-- [ ] Consolidate duplicated `decodeHtml()` logic
-
-**Security:**
-- [ ] Encrypt Slack tokens properly (replace base64 with sodium)
-- [ ] Add client-side XSS protection (DOMPurify for dangerouslySetInnerHTML)
-- [ ] Validate Slack webhook URLs (whitelist hooks.slack.com domain)
-- [ ] Review and document public REST endpoints (permission_callback = __return_true)
+(None - milestone complete)
 
 ### Out of Scope
 
@@ -72,9 +70,10 @@ Split the 107KB `class-rest-api.php` into manageable, domain-specific files whil
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Split REST API by domain | 107KB file is unmaintainable, domains are clear (people, companies, slack, import/export) | — Pending |
-| Use sodium for token encryption | Built into PHP 7.2+, no external dependency needed | — Pending |
-| Use WordPress native XSS functions | Server-side sanitization with wp_kses(), no client dependency needed | — Pending |
+| Split REST API by domain | 107KB file is unmaintainable, domains are clear (people, companies, slack, import/export) | ✓ Good — 5 domain classes created |
+| Use sodium for token encryption | Built into PHP 7.2+, no external dependency needed | ✓ Good — implemented with fallback |
+| Use WordPress native XSS functions | Server-side sanitization with wp_kses(), no client dependency needed | ✓ Good — 3 helper methods added |
+| Restrict webhook URLs to hooks.slack.com | Prevent SSRF attacks via webhook configuration | ✓ Good — domain whitelist enforced |
 
 ---
-*Last updated: 2025-01-13 after initialization*
+*Last updated: 2026-01-13 after v1.0 milestone*
