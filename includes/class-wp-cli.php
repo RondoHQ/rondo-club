@@ -689,36 +689,65 @@ if (defined('WP_CLI') && WP_CLI) {
         public function reset_sync($args, $assoc_args) {
             $user_id = isset($assoc_args['user']) ? (int) $assoc_args['user'] : null;
 
-            $tokens = get_option('prm_carddav_sync_tokens', []);
-            $changes = get_option('prm_carddav_changes', []);
-
             if ($user_id) {
-                // Reset for specific user
-                $user = get_user_by('ID', $user_id);
-                if (!$user) {
+                $users = [get_user_by('ID', $user_id)];
+                if (!$users[0]) {
                     WP_CLI::error(sprintf('User with ID %d not found.', $user_id));
                     return;
                 }
-
-                unset($tokens[$user_id]);
-                unset($changes[$user_id]);
-
-                update_option('prm_carddav_sync_tokens', $tokens);
-                update_option('prm_carddav_changes', $changes);
-
-                WP_CLI::success(sprintf(
-                    'Reset CardDAV sync token for user %s (ID: %d). Next sync will be a full resync.',
-                    $user->display_name,
-                    $user_id
-                ));
             } else {
-                // Reset for all users
-                delete_option('prm_carddav_sync_tokens');
-                delete_option('prm_carddav_changes');
-
-                WP_CLI::success('Reset CardDAV sync tokens for all users. Next sync will be a full resync.');
+                // Get all users
+                $users = get_users(['fields' => 'all']);
             }
 
+            $changes = get_option('prm_carddav_changes', []);
+            $tokens = get_option('prm_carddav_sync_tokens', []);
+            $now = time();
+            $total_contacts = 0;
+
+            foreach ($users as $user) {
+                $uid = $user->ID;
+
+                // Get all persons for this user
+                $persons = get_posts([
+                    'post_type' => 'person',
+                    'posts_per_page' => -1,
+                    'post_status' => 'publish',
+                    'author' => $uid,
+                    'fields' => 'ids',
+                ]);
+
+                if (empty($persons)) {
+                    WP_CLI::log(sprintf('User %s (ID: %d) has no contacts to sync.', $user->display_name, $uid));
+                    continue;
+                }
+
+                // Add all contacts to change log as "added"
+                if (!isset($changes[$uid])) {
+                    $changes[$uid] = [];
+                }
+
+                foreach ($persons as $person_id) {
+                    $uri = get_post_meta($person_id, '_carddav_uri', true) ?: $person_id . '.vcf';
+                    $changes[$uid][$person_id] = [
+                        'type' => 'added',
+                        'timestamp' => $now,
+                        'uri' => $uri,
+                    ];
+                }
+
+                // Update sync token
+                $tokens[$uid] = $now;
+
+                $count = count($persons);
+                $total_contacts += $count;
+                WP_CLI::log(sprintf('Queued %d contact(s) for resync for user %s (ID: %d)', $count, $user->display_name, $uid));
+            }
+
+            update_option('prm_carddav_changes', $changes);
+            update_option('prm_carddav_sync_tokens', $tokens);
+
+            WP_CLI::success(sprintf('Queued %d contact(s) for resync. Next sync will pull all contacts.', $total_contacts));
             WP_CLI::log('');
             WP_CLI::log('To trigger the resync, open your CardDAV client (iPhone Contacts, etc.) and pull down to refresh.');
         }
