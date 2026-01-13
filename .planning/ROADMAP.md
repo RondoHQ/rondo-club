@@ -16,7 +16,7 @@ None
 
 - [x] **Phase 1: REST API Infrastructure** - Extract base class and create domain-specific file structure ✓
 - [x] **Phase 2: REST API People & Companies** - Extract people and company endpoints ✓
-- [ ] **Phase 3: REST API Integrations** - Extract Slack and import/export endpoints
+- [x] **Phase 3: REST API Integrations** - Extract Slack and import/export endpoints ✓
 - [ ] **Phase 4: Security Hardening** - Encrypt tokens, validate URLs, review public endpoints
 - [ ] **Phase 5: XSS Protection** - Add server-side sanitization using WordPress functions
 - [ ] **Phase 6: Code Cleanup** - Remove console.error, create .env.example, consolidate utilities
@@ -50,8 +50,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 03-01: Extract Slack integration to class-rest-slack.php
-- [ ] 03-02: Extract import/export to class-rest-import-export.php
+- [x] 03-01: Extract Slack integration to class-rest-slack.php ✓
+- [x] 03-02: Extract import/export to class-rest-import-export.php ✓
 
 ### Phase 4: Security Hardening
 **Goal**: Improve security by encrypting tokens, validating webhook URLs, and documenting public endpoints
@@ -92,7 +92,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. REST API Infrastructure | 2/2 | Complete ✓ | 2026-01-13 |
 | 2. REST API People & Companies | 2/2 | Complete ✓ | 2026-01-13 |
-| 3. REST API Integrations | 0/2 | Not started | - |
+| 3. REST API Integrations | 2/2 | Complete ✓ | 2026-01-13 |
 | 4. Security Hardening | 0/2 | Not started | - |
 | 5. XSS Protection | 0/1 | Not started | - |
 | 6. Code Cleanup | 0/2 | Not started | - |
