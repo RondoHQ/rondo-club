@@ -257,6 +257,9 @@ export default function PersonDetail() {
             related_people: data.related_people,
             is_recurring: data.is_recurring,
             year_unknown: data.year_unknown,
+            // Preserve existing visibility to satisfy ACF required field validation
+            _visibility: editingDate.acf?._visibility || 'private',
+            _assigned_workspaces: editingDate.acf?._assigned_workspaces || [],
           },
         });
       } else {
