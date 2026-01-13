@@ -24,6 +24,24 @@
 
 **Git range:** `91806f2` → `f4e307b`
 
-**What's next:** Planning next milestone
+**What's next:** v2.0 Multi-User
+
+---
+
+## v2.0 Multi-User (In Progress)
+
+**Goal:** Transform Caelis from single-user to multi-user collaborative CRM. Combines Clay.earth's intimate relationship focus with Twenty CRM's team collaboration.
+
+**Phases planned:** 7-11 (5 phases)
+
+**Key deliverables:**
+
+- Workspace CPT with membership via user meta
+- Contact visibility system (private/workspace/shared)
+- ShareModal and VisibilitySelector React components
+- @mentions in notes with notifications
+- WP-CLI migration command for existing data
+
+**Reference:** See `Caelis-Multi-User-Project-Plan.md` for detailed technical design.
 
 ---
