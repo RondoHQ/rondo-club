@@ -205,6 +205,9 @@ export default function CompaniesList() {
   const [selectedWorkspaceFilter, setSelectedWorkspaceFilter] = useState('');
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [isCreatingCompany, setIsCreatingCompany] = useState(false);
+  const [sortField, setSortField] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -221,6 +224,16 @@ export default function CompaniesList() {
       return response.data;
     },
   });
+
+  // Fetch company labels
+  const { data: companyLabelsData } = useQuery({
+    queryKey: ['company-labels'],
+    queryFn: async () => {
+      const response = await wpApi.getCompanyLabels();
+      return response.data;
+    },
+  });
+  const companyLabels = companyLabelsData || [];
 
   // Create company mutation
   const createCompanyMutation = useCreateCompany({
@@ -265,8 +278,47 @@ export default function CompaniesList() {
     setSelectedWorkspaceFilter('');
   };
 
-  // Filter and sort companies
-  const filteredAndSortedCompanies = useMemo(() => {
+  // Selection helper functions
+  const toggleSelection = (companyId) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(companyId)) {
+        next.delete(companyId);
+      } else {
+        next.add(companyId);
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  // Helper to get workspace names for a company (used in sorting)
+  const getCompanyWorkspaceNames = (company) => {
+    const assignedWorkspaces = company.acf?._assigned_workspaces || [];
+    return assignedWorkspaces
+      .map(wsId => {
+        const numId = typeof wsId === 'string' ? parseInt(wsId, 10) : wsId;
+        const found = workspaces.find(ws => ws.id === numId);
+        return found?.title;
+      })
+      .filter(Boolean)
+      .join(', ');
+  };
+
+  // Helper to get label names for a company (used in sorting)
+  const getCompanyLabelNames = (company) => {
+    const labelIds = company.company_label || [];
+    return labelIds
+      .map(labelId => {
+        const found = companyLabels.find(l => l.id === labelId);
+        return found?.name;
+      })
+      .filter(Boolean);
+  };
+
+  // Filter companies
+  const filteredCompanies = useMemo(() => {
     if (!companies) return [];
 
     let filtered = [...companies];
@@ -286,13 +338,66 @@ export default function CompaniesList() {
       });
     }
 
-    // Sort alphabetically by name
-    return filtered.sort((a, b) => {
-      const nameA = (a.title?.rendered || a.title || '').toLowerCase();
-      const nameB = (b.title?.rendered || b.title || '').toLowerCase();
-      return nameA.localeCompare(nameB);
-    });
+    return filtered;
   }, [companies, ownershipFilter, selectedWorkspaceFilter, currentUserId]);
+
+  // Sort filtered companies
+  const sortedCompanies = useMemo(() => {
+    if (!filteredCompanies) return [];
+
+    return [...filteredCompanies].sort((a, b) => {
+      let valueA, valueB;
+
+      if (sortField === 'name') {
+        valueA = (a.title?.rendered || a.title || '').toLowerCase();
+        valueB = (b.title?.rendered || b.title || '').toLowerCase();
+      } else if (sortField === 'industry') {
+        valueA = (a.acf?.industry || '').toLowerCase();
+        valueB = (b.acf?.industry || '').toLowerCase();
+      } else if (sortField === 'website') {
+        valueA = (a.acf?.website || '').toLowerCase();
+        valueB = (b.acf?.website || '').toLowerCase();
+      } else if (sortField === 'workspace') {
+        valueA = getCompanyWorkspaceNames(a).toLowerCase();
+        valueB = getCompanyWorkspaceNames(b).toLowerCase();
+      } else if (sortField === 'labels') {
+        const labelsA = getCompanyLabelNames(a);
+        const labelsB = getCompanyLabelNames(b);
+        valueA = (labelsA[0] || '').toLowerCase();
+        valueB = (labelsB[0] || '').toLowerCase();
+      } else {
+        valueA = (a.title?.rendered || a.title || '').toLowerCase();
+        valueB = (b.title?.rendered || b.title || '').toLowerCase();
+      }
+
+      // Empty values sort last
+      if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
+      if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
+      if (!valueA && !valueB) return 0;
+
+      const comparison = valueA.localeCompare(valueB);
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [filteredCompanies, sortField, sortOrder, workspaces, companyLabels]);
+
+  // Computed selection state
+  const isAllSelected = sortedCompanies.length > 0 &&
+    selectedIds.size === sortedCompanies.length;
+  const isSomeSelected = selectedIds.size > 0 &&
+    selectedIds.size < sortedCompanies.length;
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedCompanies.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedCompanies.map(c => c.id)));
+    }
+  };
+
+  // Clear selection when filters change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [ownershipFilter, selectedWorkspaceFilter, companies]);
   
   return (
     <div className="space-y-4">
