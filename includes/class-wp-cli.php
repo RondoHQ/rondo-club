@@ -664,6 +664,239 @@ if (defined('WP_CLI') && WP_CLI) {
     }
 
     /**
+     * Multi-User Migration WP-CLI Commands
+     */
+    class PRM_MultiUser_CLI_Command {
+
+        /**
+         * Migrate existing Caelis installation to multi-user system
+         *
+         * This command sets default visibility on all existing contacts,
+         * companies, and important dates, enabling the multi-user features
+         * while preserving the existing single-user behavior (all private).
+         *
+         * ## OPTIONS
+         *
+         * [--dry-run]
+         * : Preview changes without making them
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm multiuser migrate
+         *     wp prm multiuser migrate --dry-run
+         *
+         * @when after_wp_load
+         */
+        public function migrate($args, $assoc_args) {
+            $dry_run = isset($assoc_args['dry-run']);
+
+            WP_CLI::log('');
+            WP_CLI::log('╔════════════════════════════════════════════════════════════╗');
+            WP_CLI::log('║         Caelis Multi-User Migration                        ║');
+            WP_CLI::log('╚════════════════════════════════════════════════════════════╝');
+            WP_CLI::log('');
+            WP_CLI::log('This migration will:');
+            WP_CLI::log('  1. Set visibility to "private" on all contacts without visibility');
+            WP_CLI::log('  2. Set visibility to "private" on all companies without visibility');
+            WP_CLI::log('  3. Set visibility to "private" on all important dates without visibility');
+            WP_CLI::log('');
+            WP_CLI::log('This preserves single-user behavior: all your data remains private');
+            WP_CLI::log('and only visible to you. You can then selectively share items.');
+            WP_CLI::log('');
+
+            if ($dry_run) {
+                WP_CLI::log('DRY RUN MODE - No changes will be made');
+                WP_CLI::log('');
+            }
+
+            // Use the existing visibility command logic
+            $visibility_command = new PRM_Visibility_CLI_Command();
+
+            // Process all post types
+            WP_CLI::log('Starting migration...');
+            WP_CLI::log('');
+
+            // We need to call the internal method directly, so we'll replicate the logic
+            $post_types = ['person', 'company', 'important_date'];
+            $results = [];
+
+            foreach ($post_types as $post_type) {
+                $result = $this->migrate_post_type($post_type, $dry_run);
+                $results[$post_type] = $result;
+            }
+
+            // Summary
+            WP_CLI::log('');
+            WP_CLI::log('────────────────────────────────────────────────────────────────');
+            WP_CLI::log('Migration Summary:');
+            WP_CLI::log('────────────────────────────────────────────────────────────────');
+
+            $total_updated = 0;
+            $total_skipped = 0;
+
+            foreach ($results as $type => $result) {
+                $label = $type === 'person' ? 'People' : ($type === 'company' ? 'Companies' : 'Important Dates');
+                $action = $dry_run ? 'Would update' : 'Updated';
+                WP_CLI::log(sprintf('  %s: %s %d, skipped %d (already had visibility)',
+                    $label, $action, $result['updated'], $result['skipped']));
+                $total_updated += $result['updated'];
+                $total_skipped += $result['skipped'];
+            }
+
+            WP_CLI::log('────────────────────────────────────────────────────────────────');
+            WP_CLI::log(sprintf('  Total: %s %d, skipped %d',
+                $dry_run ? 'Would update' : 'Updated', $total_updated, $total_skipped));
+            WP_CLI::log('');
+
+            if ($dry_run) {
+                WP_CLI::success('Dry run complete. Run without --dry-run to apply changes.');
+            } else {
+                if ($total_updated > 0) {
+                    WP_CLI::success('Migration complete! Your Caelis installation is now multi-user ready.');
+                } else {
+                    WP_CLI::success('Migration complete. All posts already had visibility set.');
+                }
+                WP_CLI::log('');
+                WP_CLI::log('Next steps:');
+                WP_CLI::log('  1. Run "wp prm multiuser validate" to verify the migration');
+                WP_CLI::log('  2. Create workspaces to share contacts with other users');
+                WP_CLI::log('');
+            }
+        }
+
+        /**
+         * Validate multi-user migration status
+         *
+         * Checks that all contacts, companies, and important dates have
+         * visibility set. Reports counts and provides guidance if migration
+         * is incomplete.
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm multiuser validate
+         *
+         * @when after_wp_load
+         */
+        public function validate($args, $assoc_args) {
+            WP_CLI::log('');
+            WP_CLI::log('Validating multi-user migration status...');
+            WP_CLI::log('');
+
+            $post_types = ['person', 'company', 'important_date'];
+            $all_valid = true;
+            $total_with = 0;
+            $total_without = 0;
+
+            global $wpdb;
+
+            foreach ($post_types as $post_type) {
+                // Get all posts of this type
+                $post_ids = $wpdb->get_col($wpdb->prepare(
+                    "SELECT ID FROM {$wpdb->posts}
+                     WHERE post_type = %s
+                     AND post_status = 'publish'",
+                    $post_type
+                ));
+
+                $total = count($post_ids);
+                $with_visibility = 0;
+                $without_visibility = 0;
+
+                foreach ($post_ids as $post_id) {
+                    $visibility = get_field('_visibility', $post_id);
+                    if (!empty($visibility)) {
+                        $with_visibility++;
+                    } else {
+                        $without_visibility++;
+                    }
+                }
+
+                $label = $post_type === 'person' ? 'People' : ($post_type === 'company' ? 'Companies' : 'Important Dates');
+
+                if ($without_visibility > 0) {
+                    WP_CLI::log(sprintf('  [!] %s: %d/%d have visibility set (%d missing)',
+                        $label, $with_visibility, $total, $without_visibility));
+                    $all_valid = false;
+                } else {
+                    WP_CLI::log(sprintf('  [OK] %s: %d/%d have visibility set',
+                        $label, $with_visibility, $total));
+                }
+
+                $total_with += $with_visibility;
+                $total_without += $without_visibility;
+            }
+
+            WP_CLI::log('');
+
+            if ($all_valid) {
+                WP_CLI::success(sprintf('Validation passed! All %d posts have visibility set.',
+                    $total_with));
+                WP_CLI::log('');
+                WP_CLI::log('Your Caelis installation is properly configured for multi-user mode.');
+            } else {
+                WP_CLI::warning(sprintf('Validation failed: %d post(s) are missing visibility.',
+                    $total_without));
+                WP_CLI::log('');
+                WP_CLI::log('To complete the migration, run:');
+                WP_CLI::log('  wp prm multiuser migrate');
+                WP_CLI::log('');
+            }
+        }
+
+        /**
+         * Migrate a single post type
+         *
+         * @param string $post_type Post type to process
+         * @param bool $dry_run Whether to actually make changes
+         * @return array Results with 'updated' and 'skipped' counts
+         */
+        private function migrate_post_type($post_type, $dry_run) {
+            global $wpdb;
+
+            // Get all posts of this type
+            $post_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts}
+                 WHERE post_type = %s
+                 AND post_status = 'publish'",
+                $post_type
+            ));
+
+            $label = $post_type === 'person' ? 'people' : ($post_type === 'company' ? 'companies' : 'important dates');
+
+            if (empty($post_ids)) {
+                WP_CLI::log(sprintf('No %s found.', $label));
+                return ['updated' => 0, 'skipped' => 0];
+            }
+
+            WP_CLI::log(sprintf('Processing %d %s...', count($post_ids), $label));
+
+            $updated = 0;
+            $skipped = 0;
+
+            foreach ($post_ids as $post_id) {
+                $visibility = get_field('_visibility', $post_id);
+
+                // Skip if visibility is already set
+                if (!empty($visibility)) {
+                    $skipped++;
+                    continue;
+                }
+
+                if (!$dry_run) {
+                    update_field('_visibility', 'private', $post_id);
+                }
+
+                $updated++;
+            }
+
+            $action = $dry_run ? 'Would update' : 'Updated';
+            WP_CLI::log(sprintf('  %s: %d, skipped: %d', $action, $updated, $skipped));
+
+            return ['updated' => $updated, 'skipped' => $skipped];
+        }
+    }
+
+    /**
      * CardDAV WP-CLI Commands
      */
     class PRM_CardDAV_CLI_Command {
@@ -763,5 +996,6 @@ if (defined('WP_CLI') && WP_CLI) {
     WP_CLI::add_command('prm vcard', 'PRM_VCard_CLI_Command');
     WP_CLI::add_command('prm visibility', 'PRM_Visibility_CLI_Command');
     WP_CLI::add_command('prm carddav', 'PRM_CardDAV_CLI_Command');
+    WP_CLI::add_command('prm multiuser', 'PRM_MultiUser_CLI_Command');
 }
 
