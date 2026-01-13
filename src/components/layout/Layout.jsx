@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatePerson } from '@/hooks/usePeople';
+import { useCreateDate } from '@/hooks/useDates';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch } from '@/hooks/useDashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -620,28 +621,8 @@ export default function Layout({ children }) {
   });
   
   // Create date mutation
-  const createDateMutation = useMutation({
-    mutationFn: async (data) => {
-      const payload = {
-        title: data.title,
-        status: 'publish',
-        date_type: data.date_type,
-        acf: {
-          date_value: data.date_value,
-          related_people: data.related_people,
-          is_recurring: data.is_recurring,
-          year_unknown: data.year_unknown,
-          _visibility: 'private',
-        },
-      };
-
-      const response = await wpApi.createDate(payload);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reminders'] });
-      setShowDateModal(false);
-    },
+  const createDateMutation = useCreateDate({
+    onSuccess: () => setShowDateModal(false),
   });
   
   // Handle creating person
