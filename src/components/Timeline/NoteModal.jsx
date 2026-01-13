@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Lock, Users } from 'lucide-react';
 import RichTextEditor, { isRichTextEmpty } from '@/components/RichTextEditor';
+import MentionInput from '@/components/MentionInput';
 
 export default function NoteModal({
   isOpen,
@@ -9,6 +10,7 @@ export default function NoteModal({
   isLoading,
   initialContent = '',
   isContactShared = false,
+  workspaceIds = [],
 }) {
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState('private');
@@ -22,9 +24,14 @@ export default function NoteModal({
 
   if (!isOpen) return null;
 
+  // Check if content is empty - MentionInput returns plain text, RichTextEditor returns HTML
+  const isContentEmpty = workspaceIds.length > 0
+    ? !content || content.trim() === ''
+    : isRichTextEmpty(content);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isRichTextEmpty(content)) return;
+    if (isContentEmpty) return;
 
     onSubmit(content, visibility);
     setContent('');
@@ -56,14 +63,23 @@ export default function NoteModal({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Note
             </label>
-            <RichTextEditor
-              value={content}
-              onChange={setContent}
-              placeholder="Enter your note..."
-              disabled={isLoading}
-              autoFocus
-              minHeight="150px"
-            />
+            {workspaceIds.length > 0 ? (
+              <MentionInput
+                value={content}
+                onChange={setContent}
+                placeholder="Add a note... Use @ to mention someone"
+                workspaceIds={workspaceIds}
+              />
+            ) : (
+              <RichTextEditor
+                value={content}
+                onChange={setContent}
+                placeholder="Enter your note..."
+                disabled={isLoading}
+                autoFocus
+                minHeight="150px"
+              />
+            )}
           </div>
 
           {/* Only show visibility toggle when contact is shared */}
@@ -101,7 +117,7 @@ export default function NoteModal({
             <button
               type="submit"
               className="btn-primary"
-              disabled={isLoading || isRichTextEmpty(content)}
+              disabled={isLoading || isContentEmpty}
             >
               {isLoading ? 'Adding...' : 'Add note'}
             </button>

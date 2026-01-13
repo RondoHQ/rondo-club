@@ -91,6 +91,21 @@ class PRM_REST_API extends PRM_REST_Base {
                 ],
             ],
         ]);
+
+        // Update mention notification preference
+        register_rest_route('prm/v1', '/user/mention-notifications', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'update_mention_notifications'],
+            'permission_callback' => 'is_user_logged_in',
+            'args'                => [
+                'preference' => [
+                    'required'          => true,
+                    'validate_callback' => function($param) {
+                        return in_array($param, ['digest', 'immediate', 'never'], true);
+                    },
+                ],
+            ],
+        ]);
         
         // Search across all content
         register_rest_route('prm/v1', '/search', [
@@ -463,25 +478,32 @@ class PRM_REST_API extends PRM_REST_Base {
      */
     public function get_notification_channels($request) {
         $user_id = get_current_user_id();
-        
+
         $channels = get_user_meta($user_id, 'caelis_notification_channels', true);
         if (!is_array($channels)) {
             // Default to email only
             $channels = ['email'];
         }
-        
+
         $slack_webhook = get_user_meta($user_id, 'caelis_slack_webhook', true);
-        
+
         $notification_time = get_user_meta($user_id, 'caelis_notification_time', true);
         if (empty($notification_time)) {
             // Default to 9:00 AM
             $notification_time = '09:00';
         }
-        
+
+        $mention_notifications = get_user_meta($user_id, 'caelis_mention_notifications', true);
+        if (empty($mention_notifications)) {
+            // Default to digest
+            $mention_notifications = 'digest';
+        }
+
         return rest_ensure_response([
             'channels' => $channels,
             'slack_webhook' => $slack_webhook ?: '',
             'notification_time' => $notification_time,
+            'mention_notifications' => $mention_notifications,
         ]);
     }
     
@@ -553,7 +575,32 @@ class PRM_REST_API extends PRM_REST_Base {
             'message' => __('Notification time updated and cron job rescheduled successfully.', 'personal-crm'),
         ]);
     }
-    
+
+    /**
+     * Update user's mention notification preference
+     */
+    public function update_mention_notifications($request) {
+        $user_id = get_current_user_id();
+        $preference = sanitize_text_field($request->get_param('preference'));
+
+        // Validate the preference value
+        $valid_preferences = ['digest', 'immediate', 'never'];
+        if (!in_array($preference, $valid_preferences, true)) {
+            return new WP_Error(
+                'invalid_preference',
+                __('Invalid mention notification preference.', 'personal-crm'),
+                ['status' => 400]
+            );
+        }
+
+        update_user_meta($user_id, 'caelis_mention_notifications', $preference);
+
+        return rest_ensure_response([
+            'success' => true,
+            'mention_notifications' => $preference,
+        ]);
+    }
+
     /**
      * Global search across people, companies, and dates
      */

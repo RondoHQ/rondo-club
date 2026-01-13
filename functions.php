@@ -80,6 +80,7 @@ function prm_autoloader($class_name) {
         'PRM_Workspace_Members'      => 'class-workspace-members.php',
         'PRM_REST_Workspaces'        => 'class-rest-workspaces.php',
         'PRM_Mentions'               => 'class-mentions.php',
+        'PRM_Mention_Notifications'  => 'class-mention-notifications.php',
     ];
     
     if (isset($class_map[$class_name])) {
@@ -164,6 +165,7 @@ function prm_init() {
         new PRM_Inverse_Relationships();
         new PRM_Comment_Types();
         new PRM_Workspace_Members();
+        new PRM_Mention_Notifications();
     }
     
     // REST API classes - only for REST requests

@@ -115,6 +115,7 @@ export const prmApi = {
   updateNotificationChannels: (channels) => api.post('/prm/v1/user/notification-channels', { channels }),
   updateSlackWebhook: (webhook) => api.post('/prm/v1/user/slack-webhook', { webhook }),
   updateNotificationTime: (time) => api.post('/prm/v1/user/notification-time', { time }),
+  updateMentionNotifications: (preference) => api.post('/prm/v1/user/mention-notifications', { preference }),
   
   // Slack OAuth
   getSlackStatus: () => api.get('/prm/v1/user/slack-status'),

@@ -54,9 +54,11 @@ export default function Settings() {
   const [slackConnected, setSlackConnected] = useState(false);
   const [slackWorkspaceName, setSlackWorkspaceName] = useState('');
   const [notificationTime, setNotificationTime] = useState('09:00');
+  const [mentionNotifications, setMentionNotifications] = useState('digest');
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [savingChannels, setSavingChannels] = useState(false);
   const [savingTime, setSavingTime] = useState(false);
+  const [savingMentionPref, setSavingMentionPref] = useState(false);
   const [webhookTestMessage, setWebhookTestMessage] = useState('');
   const [disconnectingSlack, setDisconnectingSlack] = useState(false);
   
@@ -137,6 +139,7 @@ export default function Settings() {
         setNotificationChannels(response.data.channels || ['email']);
         setSlackWebhook(response.data.slack_webhook || '');
         setNotificationTime(response.data.notification_time || '09:00');
+        setMentionNotifications(response.data.mention_notifications || 'digest');
         
         // Check Slack OAuth status
         const slackStatus = await prmApi.getSlackStatus();
@@ -347,10 +350,10 @@ export default function Settings() {
     const adjustedHours = roundedMinutes === 60 ? (hours + 1) % 24 : hours;
     const adjustedMinutes = roundedMinutes === 60 ? 0 : roundedMinutes;
     const roundedTime = `${String(adjustedHours).padStart(2, '0')}:${String(adjustedMinutes).padStart(2, '0')}`;
-    
+
     setNotificationTime(roundedTime);
     setSavingTime(true);
-    
+
     try {
       await prmApi.updateNotificationTime(roundedTime);
     } catch (error) {
@@ -359,6 +362,21 @@ export default function Settings() {
       setNotificationTime(response.data.notification_time || '09:00');
     } finally {
       setSavingTime(false);
+    }
+  };
+
+  const handleMentionNotificationsChange = async (preference) => {
+    setSavingMentionPref(true);
+    const previousValue = mentionNotifications;
+    setMentionNotifications(preference);
+
+    try {
+      await prmApi.updateMentionNotifications(preference);
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to update mention notification preference');
+      setMentionNotifications(previousValue);
+    } finally {
+      setSavingMentionPref(false);
     }
   };
   
@@ -449,6 +467,9 @@ export default function Settings() {
           notificationTime={notificationTime}
           handleNotificationTimeChange={handleNotificationTimeChange}
           savingTime={savingTime}
+          mentionNotifications={mentionNotifications}
+          handleMentionNotificationsChange={handleMentionNotificationsChange}
+          savingMentionPref={savingMentionPref}
         />;
       case 'data':
         return <DataTab />;
@@ -738,7 +759,8 @@ function NotificationsTab({
   slackConnected, slackWorkspaceName, handleConnectSlack, handleDisconnectSlack,
   disconnectingSlack, webhookTestMessage, slackChannels, slackUsers, slackTargets,
   loadingSlackData, handleToggleSlackTarget, handleSaveSlackTargets, savingSlackTargets,
-  slackWebhook, notificationTime, handleNotificationTimeChange, savingTime
+  slackWebhook, notificationTime, handleNotificationTimeChange, savingTime,
+  mentionNotifications, handleMentionNotificationsChange, savingMentionPref
 }) {
   return (
     <div className="card p-6">
@@ -962,6 +984,24 @@ function NotificationsTab({
             )}
             <p className="text-xs text-gray-500 mt-1">
               Choose the UTC time when you want to receive your daily reminder digest. Reminders are sent within a 1-hour window of your selected time.
+            </p>
+          </div>
+
+          {/* Mention notifications preference */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mention notifications</label>
+            <select
+              value={mentionNotifications}
+              onChange={(e) => handleMentionNotificationsChange(e.target.value)}
+              className="input"
+              disabled={savingMentionPref}
+            >
+              <option value="digest">Include in daily digest (default)</option>
+              <option value="immediate">Send immediately</option>
+              <option value="never">Don't notify me</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Choose when to receive notifications when someone @mentions you in a note.
             </p>
           </div>
         </div>
