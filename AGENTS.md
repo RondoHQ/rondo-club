@@ -13,7 +13,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 ## Development Commands
 
-All commands run from `personal-crm-theme/`:
+All commands run from `caelis/`:
 
 ```bash
 npm run dev      # Start Vite dev server (port 5173, HMR enabled)
@@ -135,6 +135,10 @@ This is a single repository containing both backend (PHP) and frontend (React) c
 
 ## Required rules for every change
 
+### Rule 0: Use WordPress native functions
+
+When possible, _always_ use WordPress native functions to perform tasks. Make sure that we're not replicating WordPress native functionality to achieve what we want to do.
+
 ### Rule 1: Semantic Versioning
 
 ### What is it?
@@ -195,14 +199,14 @@ If you did not update, add or remove any node modules, do this:
 
 ```bash
 # Sync theme files to production (excludes .git and node_modules)
-rsync -avz --exclude='.git' --exclude='node_modules' -e "ssh -p 18765" /Users/joostdevalk/Code/joost-crm/personal-crm-theme/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
+rsync -avz --exclude='.git' --exclude='node_modules' -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
 ```
 
 If you _did_ update, add or remove node modules, do this:
 
 ```bash
 # Sync theme files to production (excludes .git and node_modules)
-rsync -avz --exclude='.git' -e "ssh -p 18765" /Users/joostdevalk/Code/joost-crm/personal-crm-theme/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
+rsync -avz --exclude='.git' -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
 ```
 
 Then, in both cases, do this:

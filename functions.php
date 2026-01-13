@@ -62,6 +62,7 @@ function prm_autoloader($class_name) {
         'PRM_REST_Base'              => 'class-rest-base.php',
         'PRM_REST_People'            => 'class-rest-people.php',
         'PRM_REST_Companies'         => 'class-rest-companies.php',
+        'PRM_REST_Slack'             => 'class-rest-slack.php',
         'PRM_Reminders'              => 'class-reminders.php',
         'PRM_Monica_Import'          => 'class-monica-import.php',
         'PRM_VCard_Import'           => 'class-vcard-import.php',
@@ -164,6 +165,7 @@ function prm_init() {
         new PRM_REST_API();
         new PRM_REST_People();
         new PRM_REST_Companies();
+        new PRM_REST_Slack();
         new PRM_Monica_Import();
         new PRM_VCard_Import();
         new PRM_Google_Contacts_Import();
@@ -216,7 +218,7 @@ function prm_theme_setup() {
     
     // Register nav menus (optional, React handles navigation)
     register_nav_menus([
-        'primary' => __('Primary Menu', 'personal-crm-theme'),
+        'primary' => __('Primary Menu', 'caelis'),
     ]);
 }
 add_action('after_setup_theme', 'prm_theme_setup');
