@@ -727,6 +727,74 @@ Note: The current user is automatically excluded from search results.
 
 ---
 
+### Mention Notifications Preference
+
+**POST** `/prm/v1/user/mention-notifications`
+
+Update the user's preference for @mention notifications.
+
+**Permission:** Logged in users only
+
+**Body:**
+```json
+{
+  "preference": "digest"
+}
+```
+
+**Valid values:**
+- `digest` - Include mentions in daily digest (default)
+- `immediate` - Send email notification immediately when mentioned
+- `never` - Do not notify me of mentions
+
+**Response:**
+```json
+{
+  "success": true,
+  "mention_notifications": "digest"
+}
+```
+
+The preference is also returned by GET `/prm/v1/user/notification-channels` as part of the response:
+```json
+{
+  "channels": ["email"],
+  "slack_webhook": "",
+  "notification_time": "09:00",
+  "mention_notifications": "digest"
+}
+```
+
+---
+
+### Workspace Member Search
+
+**GET** `/prm/v1/workspaces/members/search`
+
+Search for workspace members for @mention autocomplete.
+
+**Permission:** Logged in users only
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_ids` | string | Yes | Comma-separated workspace IDs |
+| `query` | string | Yes | Search query for member names |
+
+**Response:**
+```json
+[
+  {
+    "id": 123,
+    "name": "Jane Smith",
+    "email": "jane@example.com"
+  }
+]
+```
+
+---
+
 ## Response Enhancements
 
 ### Person Relationships Expansion
