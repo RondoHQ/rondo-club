@@ -20,6 +20,31 @@
             "multiple": 0,
             "ui": 0,
             "ajax": 0
+        },
+        {
+            "key": "field_assigned_workspaces",
+            "label": "Workspaces",
+            "name": "_assigned_workspaces",
+            "type": "taxonomy",
+            "instructions": "Select which workspaces can access this contact",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_visibility",
+                        "operator": "==",
+                        "value": "workspace"
+                    }
+                ]
+            ],
+            "taxonomy": "workspace_access",
+            "add_term": 0,
+            "save_terms": 1,
+            "load_terms": 1,
+            "return_format": "id",
+            "field_type": "checkbox",
+            "allow_null": 1,
+            "multiple": 0
         }
     ],
     "location": [
