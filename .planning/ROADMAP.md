@@ -6,43 +6,36 @@
 - ✅ [v2.0 Multi-User](milestones/v2.0-multi-user.md) (Phases 7-11) — SHIPPED 2026-01-13
 - ✅ [v2.1 Bulk Operations](milestones/v2.1-bulk-operations.md) (Phases 12-13) — SHIPPED 2026-01-13
 - ✅ [v2.2 List View Polish](milestones/v2.2-list-view-polish.md) (Phases 14-15) — SHIPPED 2026-01-13
-- 🚧 **v2.3 List View Unification** (Phases 16-18) — In Progress
+- ✅ [v2.3 List View Unification](milestones/v2.3-list-view-unification.md) (Phases 16-18) — SHIPPED 2026-01-13
 
 ## Current Milestone
 
-### 🚧 v2.3 List View Unification (In Progress)
+None — run `/gsd:new-milestone` to start the next milestone.
+
+<details>
+<summary>✅ v2.3 List View Unification (Phases 16-18) — SHIPPED 2026-01-13</summary>
 
 **Milestone Goal:** Unify the list view experience across People and Organizations, removing card view and ensuring consistent UX.
 
 **Issues addressed:** ISS-006, ISS-007, ISS-008
 
-#### Phase 16: People List View Cleanup ✓
+**Phases:**
+- [x] Phase 16: People List View Cleanup (1/1 plans) ✓
+- [x] Phase 17: Organizations List View (1/1 plans) ✓
+- [x] Phase 18: Organizations Bulk Actions (1/1 plans) ✓
 
-**Goal:** Remove card view toggle, add dedicated image column, fix first name alignment
-**Depends on:** v2.2 complete
-**Status:** Complete (2026-01-13)
+**Total:** 3 phases, 3 plans
 
-Plans:
-- [x] 16-01: Add image column, remove card view (1/1 plans complete)
+**Key Accomplishments:**
+- Removed card view toggle from People, list view only
+- Added dedicated image column to People list
+- Built Organizations list view with columns, sorting, selection
+- Added bulk actions (visibility, workspace, labels) to Organizations
+- Full parity between People and Organizations list views
 
-#### Phase 17: Organizations List View ✓
+See [milestone archive](milestones/v2.3-list-view-unification.md) for full details.
 
-**Goal:** Build list view for Organizations with columns, sorting, and selection infrastructure
-**Depends on:** Phase 16
-**Status:** Complete (2026-01-13)
-
-Plans:
-- [x] 17-01: List view with columns, sorting, selection (1/1 plans complete)
-
-#### Phase 18: Organizations Bulk Actions
-
-**Goal:** Add bulk actions (visibility, workspace, labels) to Organizations list view
-**Depends on:** Phase 17
-**Research:** Unlikely (reusing bulk action components from People)
-**Plans:** TBD
-
-Plans:
-- [ ] 18-01: TBD (run /gsd:plan-phase 18 to break down)
+</details>
 
 <details>
 <summary>✅ v2.2 List View Polish (Phases 14-15) — SHIPPED 2026-01-13</summary>
@@ -154,6 +147,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.0 Multi-User | 7-11 | 20/20 | Complete ✅ | 2026-01-13 |
 | v2.1 Bulk Operations | 12-13 | 3/3 | Complete ✅ | 2026-01-13 |
 | v2.2 List View Polish | 14-15 | 4/4 | Complete ✅ | 2026-01-13 |
-| v2.3 List View Unification | 16-18 | 2/? | In Progress 🚧 | - |
+| v2.3 List View Unification | 16-18 | 3/3 | Complete ✅ | 2026-01-13 |
 
-**Total: 15 phases, 38 plans shipped**
+**Total: 18 phases, 41 plans shipped**
