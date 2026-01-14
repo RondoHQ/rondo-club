@@ -33,7 +33,7 @@
 **Research**: Unlikely (internal patterns)
 
 Plans:
-- [ ] 38-01: Quick UI Fixes (X logo black, dashboard card styling)
+- [x] 38-01: Quick UI Fixes (X logo black, dashboard card styling)
 
 #### Phase 39: API Improvements
 
@@ -349,6 +349,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.2 Person Profile Polish | 29-31 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.3 Todo Enhancement | 32-34 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.4 UI Polish | 35-37 | 3/3 | Complete ✅ | 2026-01-14 |
-| v3.5 Bug Fixes & Polish | 38-39 | 0/? | In Progress 🚧 | - |
+| v3.5 Bug Fixes & Polish | 38-39 | 1/? | In Progress 🚧 | - |
 
 **Shipped: 12 milestones, 37 phases, 71 plans**
