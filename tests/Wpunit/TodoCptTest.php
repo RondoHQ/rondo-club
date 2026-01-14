@@ -63,15 +63,16 @@ class TodoCptTest extends CaelisTestCase {
      *
      * @param int   $person_id Person to link the todo to
      * @param int   $user_id   User ID for the post author
-     * @param array $data      Additional todo data (content, is_completed, due_date)
+     * @param array $data      Additional todo data (content, is_completed, due_date, awaiting_response)
      * @return int Post ID
      */
     private function createTodo( int $person_id, int $user_id, array $data = [] ): int {
         $defaults = [
-            'content'      => 'Test todo',
-            'is_completed' => false,
-            'due_date'     => '',
-            'visibility'   => 'private',
+            'content'           => 'Test todo',
+            'is_completed'      => false,
+            'due_date'          => '',
+            'visibility'        => 'private',
+            'awaiting_response' => false,
         ];
         $data = array_merge( $defaults, $data );
 
@@ -88,6 +89,14 @@ class TodoCptTest extends CaelisTestCase {
 
         if ( ! empty( $data['due_date'] ) ) {
             update_field( 'due_date', $data['due_date'], $post_id );
+        }
+
+        // Handle awaiting_response with auto-timestamp
+        if ( $data['awaiting_response'] ) {
+            update_field( 'awaiting_response', true, $post_id );
+            update_field( 'awaiting_response_since', gmdate( 'Y-m-d H:i:s' ), $post_id );
+        } else {
+            update_field( 'awaiting_response', false, $post_id );
         }
 
         return $post_id;
@@ -500,6 +509,121 @@ class TodoCptTest extends CaelisTestCase {
 
         $this->assertContains( $open_todo, $todo_ids, 'Open todo should be returned' );
         $this->assertContains( $completed_todo, $todo_ids, 'Completed todo should be returned with completed=true' );
+    }
+
+    // =========================================================================
+    // Awaiting Response Filter Tests
+    // =========================================================================
+
+    /**
+     * Test awaiting_response=true filter returns only awaiting todos.
+     */
+    public function test_todos_with_awaiting_response_filter_returns_only_awaiting(): void {
+        $user_id = $this->createApprovedCaelisUser( 'awaiting_filter1' );
+        wp_set_current_user( $user_id );
+
+        $person_id = $this->createPerson( [ 'post_author' => $user_id, 'post_title' => 'Test Person' ] );
+
+        // Create 2 awaiting and 1 non-awaiting todos
+        $awaiting1 = $this->createTodo( $person_id, $user_id, [ 'content' => 'Awaiting 1', 'awaiting_response' => true ] );
+        $awaiting2 = $this->createTodo( $person_id, $user_id, [ 'content' => 'Awaiting 2', 'awaiting_response' => true ] );
+        $not_awaiting = $this->createTodo( $person_id, $user_id, [ 'content' => 'Not awaiting', 'awaiting_response' => false ] );
+
+        // Request with awaiting_response=true
+        $response = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'awaiting_response' => 'true' ] );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $todo_ids = array_column( $data, 'id' );
+
+        $this->assertContains( $awaiting1, $todo_ids, 'First awaiting todo should be returned' );
+        $this->assertContains( $awaiting2, $todo_ids, 'Second awaiting todo should be returned' );
+        $this->assertNotContains( $not_awaiting, $todo_ids, 'Non-awaiting todo should NOT be returned' );
+        $this->assertCount( 2, $data, 'Should return exactly 2 todos' );
+    }
+
+    /**
+     * Test awaiting_response filter combined with completion filter.
+     */
+    public function test_todos_awaiting_response_filter_with_completed(): void {
+        $user_id = $this->createApprovedCaelisUser( 'awaiting_filter2' );
+        wp_set_current_user( $user_id );
+
+        $person_id = $this->createPerson( [ 'post_author' => $user_id, 'post_title' => 'Test Person' ] );
+
+        // Create 4 todos: all combinations of completed and awaiting
+        $open_awaiting = $this->createTodo( $person_id, $user_id, [
+            'content'           => 'Open awaiting',
+            'is_completed'      => false,
+            'awaiting_response' => true,
+        ] );
+        $open_not_awaiting = $this->createTodo( $person_id, $user_id, [
+            'content'           => 'Open not awaiting',
+            'is_completed'      => false,
+            'awaiting_response' => false,
+        ] );
+        $completed_awaiting = $this->createTodo( $person_id, $user_id, [
+            'content'           => 'Completed awaiting',
+            'is_completed'      => true,
+            'awaiting_response' => true,
+        ] );
+        $completed_not_awaiting = $this->createTodo( $person_id, $user_id, [
+            'content'           => 'Completed not awaiting',
+            'is_completed'      => true,
+            'awaiting_response' => false,
+        ] );
+
+        // Test 1: awaiting_response=true only (no completed param) - should return only open + awaiting
+        $response1 = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'awaiting_response' => 'true' ] );
+        $data1 = $response1->get_data();
+        $todo_ids1 = array_column( $data1, 'id' );
+
+        $this->assertContains( $open_awaiting, $todo_ids1, 'Open awaiting should be returned' );
+        $this->assertNotContains( $open_not_awaiting, $todo_ids1, 'Open not awaiting should NOT be returned' );
+        $this->assertNotContains( $completed_awaiting, $todo_ids1, 'Completed awaiting should NOT be returned without completed param' );
+        $this->assertNotContains( $completed_not_awaiting, $todo_ids1, 'Completed not awaiting should NOT be returned' );
+        $this->assertCount( 1, $data1, 'Should return exactly 1 todo' );
+
+        // Test 2: awaiting_response=true AND completed=true - should return both awaiting todos
+        $response2 = $this->doRestRequest( 'GET', '/prm/v1/todos', [
+            'awaiting_response' => 'true',
+            'completed'         => 'true',
+        ] );
+        $data2 = $response2->get_data();
+        $todo_ids2 = array_column( $data2, 'id' );
+
+        $this->assertContains( $open_awaiting, $todo_ids2, 'Open awaiting should be returned' );
+        $this->assertContains( $completed_awaiting, $todo_ids2, 'Completed awaiting should be returned with completed=true' );
+        $this->assertNotContains( $open_not_awaiting, $todo_ids2, 'Open not awaiting should NOT be returned' );
+        $this->assertNotContains( $completed_not_awaiting, $todo_ids2, 'Completed not awaiting should NOT be returned' );
+        $this->assertCount( 2, $data2, 'Should return exactly 2 todos' );
+    }
+
+    /**
+     * Test awaiting_response=false filter returns only non-awaiting todos.
+     */
+    public function test_todos_awaiting_response_filter_false_returns_non_awaiting(): void {
+        $user_id = $this->createApprovedCaelisUser( 'awaiting_filter3' );
+        wp_set_current_user( $user_id );
+
+        $person_id = $this->createPerson( [ 'post_author' => $user_id, 'post_title' => 'Test Person' ] );
+
+        // Create 1 awaiting and 1 non-awaiting todo
+        $awaiting = $this->createTodo( $person_id, $user_id, [ 'content' => 'Awaiting', 'awaiting_response' => true ] );
+        $not_awaiting = $this->createTodo( $person_id, $user_id, [ 'content' => 'Not awaiting', 'awaiting_response' => false ] );
+
+        // Request with awaiting_response=false
+        $response = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'awaiting_response' => 'false' ] );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $todo_ids = array_column( $data, 'id' );
+
+        $this->assertContains( $not_awaiting, $todo_ids, 'Non-awaiting todo should be returned' );
+        $this->assertNotContains( $awaiting, $todo_ids, 'Awaiting todo should NOT be returned' );
+        $this->assertCount( 1, $data, 'Should return exactly 1 todo' );
     }
 
     // =========================================================================

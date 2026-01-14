@@ -315,11 +315,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
 
         // Combine meta queries with AND relation
         if (count($meta_queries) > 0) {
-            if (count($meta_queries) === 1) {
-                $args['meta_query'] = $meta_queries[0];
-            } else {
-                $args['meta_query'] = array_merge(['relation' => 'AND'], $meta_queries);
-            }
+            $args['meta_query'] = array_merge(['relation' => 'AND'], $meta_queries);
         }
 
         $todos = get_posts($args);
