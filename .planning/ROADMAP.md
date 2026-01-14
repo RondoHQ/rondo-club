@@ -14,10 +14,35 @@
 - ✅ [v3.2 Person Profile Polish](milestones/v3.2-person-profile-polish.md) (Phases 29-31) — SHIPPED 2026-01-14
 - ✅ [v3.3 Todo Enhancement](milestones/v3.3-todo-enhancement.md) (Phases 32-34) — SHIPPED 2026-01-14
 - ✅ [v3.4 UI Polish](milestones/v3.4-ui-polish.md) (Phases 35-37) — SHIPPED 2026-01-14
+- 🚧 **v3.5 Bug Fixes & Polish** (Phases 38-39) — IN PROGRESS
 
 ## Current Status
 
-**Active:** None — Use `/gsd:discuss-milestone` to plan next work
+**Active:** v3.5 Bug Fixes & Polish — 2 phases, bug fixes + API improvements
+
+---
+
+### 🚧 v3.5 Bug Fixes & Polish (In Progress)
+
+**Milestone Goal:** Fix bugs and polish existing functionality with quick UI fixes and API improvements.
+
+#### Phase 38: Quick UI Fixes
+
+**Goal**: Update X logo color to black, fix dashboard card styling consistency
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (internal patterns)
+
+Plans:
+- [ ] 38-01: TBD (run /gsd:plan-phase 38 to break down)
+
+#### Phase 39: API Improvements
+
+**Goal**: Fix auto-title bug with special characters, prioritize first name in search, invalidate dashboard cache on todo changes
+**Depends on**: Phase 38
+**Research**: Unlikely (internal patterns)
+
+Plans:
+- [ ] 39-01: TBD (run /gsd:plan-phase 39 to break down)
 
 ---
 
@@ -324,5 +349,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.2 Person Profile Polish | 29-31 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.3 Todo Enhancement | 32-34 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.4 UI Polish | 35-37 | 3/3 | Complete ✅ | 2026-01-14 |
+| v3.5 Bug Fixes & Polish | 38-39 | 0/? | In Progress 🚧 | - |
 
 **Shipped: 12 milestones, 37 phases, 71 plans**

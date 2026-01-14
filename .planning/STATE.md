@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Planning next milestone
+**Current focus:** v3.5 Bug Fixes & Polish
 
 ## Current Position
 
-Milestone: None active
-Phase: Ready for next milestone
-Plan: N/A
-Status: v3.4 shipped, ready for next milestone
-Last activity: 2026-01-14 — v3.4 UI Polish shipped
+Milestone: v3.5 Bug Fixes & Polish
+Phase: 38 (Quick UI Fixes) — Not started
+Plan: 0/? in current phase
+Status: Ready to plan
+Last activity: 2026-01-14 — Milestone v3.5 created
 
-Progress: 12 milestones shipped
+Progress: [░░░░░░░░░░] 0/2 phases (0%)
 
 ## Completed Milestones
 
@@ -59,11 +59,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v3.3 archived: Git tag v3.3 created
 - Milestone v3.4 complete: UI Polish (quick fixes, dashboard, labels)
 - Milestone v3.4 archived: Git tag v3.4 created
+- Milestone v3.5 created: Bug Fixes & Polish, 2 phases (38-39)
 
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: v3.4 milestone shipped
+Stopped at: Milestone v3.5 initialization
 Resume file: None
 
 ## Accumulated Context
@@ -99,5 +100,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:discuss-milestone` — Plan next milestone
+- `/gsd:plan-phase 38` — Plan Phase 38 (Quick UI Fixes)
 - Run `wp prm todos migrate-persons` on production after deployment
