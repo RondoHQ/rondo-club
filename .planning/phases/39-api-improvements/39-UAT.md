@@ -46,3 +46,5 @@ skipped: 0
 ## Issues for /gsd:plan-fix
 
 - UAT-001: Custom title reverts to auto-generated when reopening edit modal (major) - Test 1
+  - **Root cause:** Backend saves custom title to `custom_label` ACF field, but `format_date()` in class-rest-base.php doesn't include this field in the API response. Without `custom_label` data, the frontend modal doesn't know the title was customized and auto-regenerates it on open.
+  - **Fix:** 1) Add `custom_label` to `format_date()` response. 2) In ImportantDateModal, set `hasUserEditedTitle.current = true` when `custom_label` is present.
