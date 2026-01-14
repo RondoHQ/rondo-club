@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckSquare, Square, Pencil, Trash2, Plus, Filter, Clock } from 'lucide-react';
+import { CheckSquare, Square, Pencil, Trash2, Plus, Clock } from 'lucide-react';
 import { useTodos, useUpdateTodo, useDeleteTodo } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format, subDays, isAfter, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import TodoModal from '@/components/Timeline/TodoModal';
 import GlobalTodoModal from '@/components/Timeline/GlobalTodoModal';
@@ -13,61 +13,42 @@ import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 
 export default function TodosList() {
   useDocumentTitle('Todos');
-  
-  const [showAllCompleted, setShowAllCompleted] = useState(false);
+
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState('open'); // 'all' | 'open' | 'completed'
+  const [awaitingFilter, setAwaitingFilter] = useState(false);
+
   const [editingTodo, setEditingTodo] = useState(null);
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [showGlobalTodoModal, setShowGlobalTodoModal] = useState(false);
-  
+
   // State for complete todo flow
   const [todoToComplete, setTodoToComplete] = useState(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [activityInitialData, setActivityInitialData] = useState(null);
-  
+
   // Always fetch all todos including completed
   const { data: todos, isLoading } = useTodos(true);
   const updateTodo = useUpdateTodo();
   const deleteTodo = useDeleteTodo();
   const createActivity = useCreateActivity();
-  
-  // Calculate the cutoff date for "recently completed" (3 days ago)
-  const recentCutoff = useMemo(() => subDays(new Date(), 3), []);
-  
-  // Group todos by status
-  const { incompleteTodos, recentlyCompletedTodos, olderCompletedTodos } = useMemo(() => {
-    if (!todos) {
-      return { incompleteTodos: [], recentlyCompletedTodos: [], olderCompletedTodos: [] };
-    }
-    
-    const incomplete = [];
-    const recentlyCompleted = [];
-    const olderCompleted = [];
-    
-    todos.forEach(todo => {
-      if (!todo.is_completed) {
-        incomplete.push(todo);
-      } else {
-        // Check if completed recently (based on created date as completion timestamp)
-        try {
-          const todoDate = parseISO(todo.created);
-          if (isAfter(todoDate, recentCutoff)) {
-            recentlyCompleted.push(todo);
-          } else {
-            olderCompleted.push(todo);
-          }
-        } catch {
-          olderCompleted.push(todo);
-        }
-      }
+
+  // Filter todos based on status and awaiting filters
+  const filteredTodos = useMemo(() => {
+    if (!todos) return [];
+
+    return todos.filter(todo => {
+      // Status filter
+      if (statusFilter === 'open' && todo.is_completed) return false;
+      if (statusFilter === 'completed' && !todo.is_completed) return false;
+
+      // Awaiting filter
+      if (awaitingFilter && !todo.awaiting_response) return false;
+
+      return true;
     });
-    
-    return {
-      incompleteTodos: incomplete,
-      recentlyCompletedTodos: recentlyCompleted,
-      olderCompletedTodos: olderCompleted,
-    };
-  }, [todos, recentCutoff]);
+  }, [todos, statusFilter, awaitingFilter]);
   
   const handleToggleTodo = (todo) => {
     // If completing a todo, show the complete modal
@@ -168,6 +149,25 @@ export default function TodosList() {
     await deleteTodo.mutateAsync(todoId);
   };
   
+  // Get the appropriate header text based on filters
+  const getHeaderText = () => {
+    if (statusFilter === 'all') return 'All todos';
+    if (statusFilter === 'completed') return 'Completed todos';
+    return 'Open todos';
+  };
+
+  // Get appropriate empty state message
+  const getEmptyMessage = () => {
+    if (awaitingFilter) {
+      if (statusFilter === 'open') return 'No open todos awaiting response';
+      if (statusFilter === 'completed') return 'No completed todos were awaiting response';
+      return 'No todos awaiting response';
+    }
+    if (statusFilter === 'completed') return 'No completed todos';
+    if (statusFilter === 'open') return 'No open todos';
+    return 'No todos found';
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -175,25 +175,13 @@ export default function TodosList() {
       </div>
     );
   }
-  
-  // Combine all completed todos when showing all
-  const allCompletedTodos = [...recentlyCompletedTodos, ...olderCompletedTodos];
-  
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold">Todos</h1>
         <div className="flex items-center gap-2">
-          {olderCompletedTodos.length > 0 && (
-            <button
-              onClick={() => setShowAllCompleted(!showAllCompleted)}
-              className={`btn-secondary text-sm flex items-center gap-2 ${showAllCompleted ? 'bg-primary-50 border-primary-300' : ''}`}
-            >
-              <Filter className="w-4 h-4" />
-              {showAllCompleted ? 'Hide older' : 'Show all completed'}
-            </button>
-          )}
           <button
             onClick={() => setShowGlobalTodoModal(true)}
             className="btn-primary text-sm flex items-center gap-2"
@@ -203,18 +191,66 @@ export default function TodosList() {
           </button>
         </div>
       </div>
-      
-      {/* Incomplete Todos */}
+
+      {/* Filter controls */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Status filter tabs */}
+        <div className="flex rounded-lg border border-gray-200 p-0.5">
+          <button
+            onClick={() => setStatusFilter('all')}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              statusFilter === 'all' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setStatusFilter('open')}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              statusFilter === 'open' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Open
+          </button>
+          <button
+            onClick={() => setStatusFilter('completed')}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              statusFilter === 'completed' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Completed
+          </button>
+        </div>
+
+        {/* Awaiting response toggle */}
+        <button
+          onClick={() => setAwaitingFilter(!awaitingFilter)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+            awaitingFilter
+              ? 'bg-orange-50 border-orange-200 text-orange-700'
+              : 'border-gray-200 text-gray-600 hover:border-gray-300'
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          Awaiting
+        </button>
+      </div>
+
+      {/* Filtered Todos */}
       <div className="card">
         <div className="p-4 border-b border-gray-200">
           <h2 className="font-semibold flex items-center">
-            <Square className="w-5 h-5 mr-2 text-gray-500" />
-            Open todos ({incompleteTodos.length})
+            {statusFilter === 'completed' ? (
+              <CheckSquare className="w-5 h-5 mr-2 text-primary-600" />
+            ) : (
+              <Square className="w-5 h-5 mr-2 text-gray-500" />
+            )}
+            {getHeaderText()} ({filteredTodos.length})
           </h2>
         </div>
-        {incompleteTodos.length > 0 ? (
+        {filteredTodos.length > 0 ? (
           <div className="divide-y divide-gray-100">
-            {incompleteTodos.map((todo) => (
+            {filteredTodos.map((todo) => (
               <TodoItem
                 key={todo.id}
                 todo={todo}
@@ -230,65 +266,15 @@ export default function TodosList() {
         ) : (
           <div className="p-8 text-center">
             <CheckSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No open todos</p>
-            <p className="text-sm text-gray-400 mt-1">
-              Create todos from a person's detail page
-            </p>
+            <p className="text-gray-500">{getEmptyMessage()}</p>
+            {statusFilter === 'open' && !awaitingFilter && (
+              <p className="text-sm text-gray-400 mt-1">
+                Create todos from a person's detail page or click "Add todo"
+              </p>
+            )}
           </div>
         )}
       </div>
-      
-      {/* Recently Completed Todos (always visible if any) */}
-      {recentlyCompletedTodos.length > 0 && !showAllCompleted && (
-        <div className="card">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="font-semibold flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-primary-600" />
-              Recently completed ({recentlyCompletedTodos.length})
-            </h2>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {recentlyCompletedTodos.map((todo) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                onToggle={handleToggleTodo}
-                onEdit={(todo) => {
-                  setEditingTodo(todo);
-                  setShowTodoModal(true);
-                }}
-                onDelete={handleDeleteTodo}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* All Completed Todos (when toggle is on) */}
-      {showAllCompleted && allCompletedTodos.length > 0 && (
-        <div className="card">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="font-semibold flex items-center">
-              <CheckSquare className="w-5 h-5 mr-2 text-primary-600" />
-              All completed todos ({allCompletedTodos.length})
-            </h2>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {allCompletedTodos.map((todo) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                onToggle={handleToggleTodo}
-                onEdit={(todo) => {
-                  setEditingTodo(todo);
-                  setShowTodoModal(true);
-                }}
-                onDelete={handleDeleteTodo}
-              />
-            ))}
-          </div>
-        </div>
-      )}
       
       {/* Edit Todo Modal */}
       <TodoModal
