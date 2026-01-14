@@ -591,24 +591,99 @@ class PRM_REST_API extends PRM_REST_Base {
      */
     public function global_search($request) {
         $query = sanitize_text_field($request->get_param('q'));
-        
+
         $results = [
             'people'    => [],
             'companies' => [],
         ];
-        
-        // Search people
-        $people = get_posts([
+
+        // Search people with scoring to prioritize first name matches
+        $people_results = [];
+
+        // Query 1: First name matches (highest priority)
+        $first_name_matches = get_posts([
+            'post_type'      => 'person',
+            'posts_per_page' => 20,
+            'post_status'    => 'publish',
+            'meta_query'     => [
+                [
+                    'key'     => 'first_name',
+                    'value'   => $query,
+                    'compare' => 'LIKE',
+                ],
+            ],
+        ]);
+
+        foreach ($first_name_matches as $person) {
+            $first_name = strtolower(get_field('first_name', $person->ID) ?: '');
+            $query_lower = strtolower($query);
+
+            // Score: exact = 100, starts with = 80, contains = 60
+            if ($first_name === $query_lower) {
+                $score = 100;
+            } elseif (strpos($first_name, $query_lower) === 0) {
+                $score = 80;
+            } else {
+                $score = 60;
+            }
+
+            $people_results[$person->ID] = [
+                'person' => $person,
+                'score'  => $score,
+            ];
+        }
+
+        // Query 2: Last name matches (lower priority)
+        $last_name_matches = get_posts([
+            'post_type'      => 'person',
+            'posts_per_page' => 20,
+            'post_status'    => 'publish',
+            'meta_query'     => [
+                [
+                    'key'     => 'last_name',
+                    'value'   => $query,
+                    'compare' => 'LIKE',
+                ],
+            ],
+        ]);
+
+        foreach ($last_name_matches as $person) {
+            if (!isset($people_results[$person->ID])) {
+                $people_results[$person->ID] = [
+                    'person' => $person,
+                    'score'  => 40,
+                ];
+            }
+        }
+
+        // Query 3: General WordPress search (catches title, content)
+        $general_matches = get_posts([
             'post_type'      => 'person',
             's'              => $query,
-            'posts_per_page' => 10,
+            'posts_per_page' => 20,
             'post_status'    => 'publish',
         ]);
-        
-        foreach ($people as $person) {
-            $results['people'][] = $this->format_person_summary($person);
+
+        foreach ($general_matches as $person) {
+            if (!isset($people_results[$person->ID])) {
+                $people_results[$person->ID] = [
+                    'person' => $person,
+                    'score'  => 20,
+                ];
+            }
         }
-        
+
+        // Sort by score descending, take top 10
+        uasort($people_results, function ($a, $b) {
+            return $b['score'] - $a['score'];
+        });
+
+        $people_results = array_slice($people_results, 0, 10, true);
+
+        foreach ($people_results as $item) {
+            $results['people'][] = $this->format_person_summary($item['person']);
+        }
+
         // Search companies
         $companies = get_posts([
             'post_type'      => 'company',
