@@ -62,8 +62,16 @@ export const wpApi = {
   deleteDate: (id) => api.delete(`/wp/v2/important-dates/${id}`),
   
   // Taxonomies
-  getPersonLabels: () => api.get('/wp/v2/person_label'),
-  getCompanyLabels: () => api.get('/wp/v2/company_label'),
+  getPersonLabels: () => api.get('/wp/v2/person_label', { params: { per_page: 100, _fields: 'id,name,slug,count' } }),
+  createPersonLabel: (data) => api.post('/wp/v2/person_label', data),
+  updatePersonLabel: (id, data) => api.post(`/wp/v2/person_label/${id}`, data),
+  deletePersonLabel: (id) => api.delete(`/wp/v2/person_label/${id}?force=true`),
+
+  getCompanyLabels: () => api.get('/wp/v2/company_label', { params: { per_page: 100, _fields: 'id,name,slug,count' } }),
+  createCompanyLabel: (data) => api.post('/wp/v2/company_label', data),
+  updateCompanyLabel: (id, data) => api.post(`/wp/v2/company_label/${id}`, data),
+  deleteCompanyLabel: (id) => api.delete(`/wp/v2/company_label/${id}?force=true`),
+
   getRelationshipTypes: () => api.get('/wp/v2/relationship_type', { params: { per_page: 100, _fields: 'id,name,slug,acf' } }),
   createRelationshipType: (data) => api.post('/wp/v2/relationship_type', data),
   updateRelationshipType: (id, data) => api.post(`/wp/v2/relationship_type/${id}`, data),
