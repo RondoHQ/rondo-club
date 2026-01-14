@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 
 Milestone: v3.1 Pending Response Tracking
 Phase: 27 of 28 (Pending Response UI) — COMPLETE
-Plan: 1 of 1 in current phase — All plans complete
+Plan: 2 of 2 in current phase — All plans complete
 Status: Phase 27 complete, ready for Phase 28
-Last activity: 2026-01-14 — Completed 27-01-PLAN.md (Pending Response UI)
+Last activity: 2026-01-14 — Completed 27-02-PLAN.md (Complete Awaiting Response UI)
 
-Progress: █████░░░░░ 22%
+Progress: █████░░░░░ 24%
 
 ## Completed Milestones
 
@@ -65,6 +65,8 @@ See `.planning/ISSUES.md`:
 | 26 | gmdate for timestamps | UTC timestamps for consistency across timezones |
 | 27 | Checkbox for both new/existing todos | Awaiting response toggleable at any time |
 | 27 | Urgency color scheme | Yellow 0-2d, orange 3-6d, red 7+d for visibility |
+| 27 | GlobalTodoModal awaiting checkbox | Mark todos as awaiting at creation time |
+| 27 | Consistent badge pattern | Clock icon + day count across all todo displays |
 
 ## Roadmap Evolution
 
@@ -84,7 +86,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed Phase 27 (Pending Response UI) — all plans complete
+Stopped at: Completed Phase 27 Plan 02 (Complete Awaiting Response UI)
 Resume file: None
 
 ## Accumulated Context
