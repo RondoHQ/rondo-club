@@ -526,7 +526,7 @@ export default function Dashboard() {
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <h2 className="font-semibold flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-orange-500" />
+              <Clock className="w-5 h-5 mr-2 text-gray-500" />
               Awaiting response
             </h2>
             <Link
@@ -557,7 +557,7 @@ export default function Dashboard() {
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <h2 className="font-semibold flex items-center">
-              <Star className="w-5 h-5 mr-2 text-yellow-500 fill-current" />
+              <Star className="w-5 h-5 mr-2 text-gray-500 fill-current" />
               Favorites
             </h2>
           </div>
