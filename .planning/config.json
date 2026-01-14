@@ -15,7 +15,7 @@
     "confirm_roadmap": true,
     "confirm_breakdown": true,
     "confirm_plan": true,
-    "execute_next_plan": true,
+    "execute_next_plan": false,
     "issues_review": true,
     "confirm_transition": true
   },
