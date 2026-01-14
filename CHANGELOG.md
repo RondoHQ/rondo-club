@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.78.0] - 2026-01-14
+
+### Added
+- `TodoCptTest.php` PHPUnit test class with 16 tests covering:
+  - CPT registration (post type exists, REST support)
+  - Access control (user isolation, admin visibility)
+  - REST API CRUD operations (GET, POST, PUT, DELETE)
+  - Dashboard integration (open_todos_count)
+  - Completion filter functionality
+
+### Changed
+- `SearchDashboardTest.php` updated to use CPT-based todos instead of comment-based
+  - `createTodo()` helper now creates `prm_todo` posts
+  - Added `PRM_REST_Todos` route registration
+
 ## [1.77.0] - 2026-01-14
 
 ### Added
