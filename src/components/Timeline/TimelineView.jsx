@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { format } from 'date-fns';
 import {
   Phone, Mail, Users, Coffee, Utensils, FileText, Circle, MessageCircle,
-  CheckSquare2, Square, Pencil, Trash2, Link as LinkIcon, Lock, Globe
+  CheckSquare2, Square, Pencil, Trash2, Link as LinkIcon, Lock, Globe, Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -12,6 +12,8 @@ import {
   getActivityTypeLabel,
   isTodoOverdue,
   getTodoStatusClass,
+  getAwaitingDays,
+  getAwaitingUrgencyClass,
 } from '@/utils/timeline';
 
 const ICON_MAP = {
@@ -175,6 +177,16 @@ export default function TimelineView({
                   }`}>
                     Due: {format(new Date(item.due_date), 'MMM d, yyyy')}
                     {isOverdue && ' (overdue)'}
+                  </span>
+                </div>
+              )}
+
+              {/* Awaiting response indicator */}
+              {isTodo && item.awaiting_response && !item.is_completed && (
+                <div className="mt-2">
+                  <span className={`text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${getAwaitingUrgencyClass(getAwaitingDays(item))}`}>
+                    <Clock className="w-3 h-3" />
+                    {getAwaitingDays(item) === 0 ? 'Awaiting response' : `Awaiting ${getAwaitingDays(item)}d`}
                   </span>
                 </div>
               )}
