@@ -11,6 +11,7 @@ export const peopleKeys = {
   detail: (id) => [...peopleKeys.details(), id],
   timeline: (id) => [...peopleKeys.detail(id), 'timeline'],
   dates: (id) => [...peopleKeys.detail(id), 'dates'],
+  todos: (id) => [...peopleKeys.detail(id), 'todos'],
 };
 
 // Transform person data to include thumbnail and other computed fields
@@ -112,6 +113,17 @@ export function usePersonDates(id) {
       return response.data;
     },
     enabled: !!id,
+  });
+}
+
+export function usePersonTodos(personId) {
+  return useQuery({
+    queryKey: peopleKeys.todos(personId),
+    queryFn: async () => {
+      const response = await prmApi.getPersonTodos(personId);
+      return response.data;
+    },
+    enabled: !!personId,
   });
 }
 
@@ -329,23 +341,25 @@ export function useDeleteActivity() {
 // Todo mutations
 export function useCreateTodo() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ personId, data }) => prmApi.createTodo(personId, data),
     onSuccess: (_, { personId }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.todos(personId) });
     },
   });
 }
 
 export function useUpdateTodo() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ todoId, data, personId }) => prmApi.updateTodo(todoId, data),
     onSuccess: (_, { personId }) => {
       if (personId) {
         queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
+        queryClient.invalidateQueries({ queryKey: peopleKeys.todos(personId) });
       }
     },
   });
@@ -353,12 +367,13 @@ export function useUpdateTodo() {
 
 export function useDeleteTodo() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ todoId, personId }) => prmApi.deleteTodo(todoId),
     onSuccess: (_, { personId }) => {
       if (personId) {
         queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
+        queryClient.invalidateQueries({ queryKey: peopleKeys.todos(personId) });
       }
     },
   });
