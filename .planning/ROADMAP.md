@@ -10,10 +10,63 @@
 - ✅ [v2.4 Bug Fixes](milestones/v2.4-bug-fixes.md) (Phase 19) — SHIPPED 2026-01-13
 - ✅ [v2.5 Performance](milestones/v2.5-performance.md) (Phase 20) — SHIPPED 2026-01-13
 - ✅ [v3.0 Testing Infrastructure](milestones/v3.0-testing-infrastructure.md) (Phases 21-23) — SHIPPED 2026-01-13
+- 🚧 **v3.1 Pending Response Tracking** — Phases 24-28 (in progress)
 
 ## Current Status
 
-**Active:** None (milestone complete)
+**Active:** v3.1 Pending Response Tracking (Phase 24-28)
+
+### 🚧 v3.1 Pending Response Tracking (In Progress)
+
+**Milestone Goal:** Convert todos to a proper post type and add pending response tracking with aging and auto-resolution.
+
+#### Phase 24: Todo Post Type
+
+**Goal**: Create `prm_todo` CPT, migrate from comment type, update REST API
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (internal patterns)
+
+Plans:
+- [ ] 24-01: TBD (run /gsd:plan-phase 24 to break down)
+
+#### Phase 25: Todo UI Migration
+
+**Goal**: Update frontend components to use new todo post type API
+**Depends on**: Phase 24
+
+**Research**: Unlikely (internal patterns)
+
+Plans:
+- [ ] 25-01: TBD
+
+#### Phase 26: Pending Response Model
+
+**Goal**: Add "awaiting response" status to todos with timestamp, link to contact
+**Depends on**: Phase 25
+**Research**: Unlikely (internal patterns)
+
+Plans:
+- [ ] 26-01: TBD
+
+#### Phase 27: Pending Response UI
+
+**Goal**: Mark as awaiting, dashboard widget, age indicators, auto-resolve on activity
+**Depends on**: Phase 26
+**Research**: Unlikely (internal patterns)
+
+Plans:
+- [ ] 27-01: TBD
+
+#### Phase 28: Filters & Polish
+
+**Goal**: Filter by pending status, dedicated view, tests for new functionality
+**Depends on**: Phase 27
+**Research**: Unlikely (internal patterns)
+
+Plans:
+- [ ] 28-01: TBD
+
+---
 
 <details>
 <summary>✅ v3.0 Testing Infrastructure (Phases 21-23) — SHIPPED 2026-01-13</summary>
@@ -205,5 +258,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
+| v3.1 Pending Response Tracking | 24-28 | 0/? | In Progress 🚧 | - |
 
 **Shipped: 23 phases, 53 plans**
