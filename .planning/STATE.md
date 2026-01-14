@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 
 Milestone: v3.5 Bug Fixes & Polish — COMPLETE
 Phase: 39 (API Improvements) — Complete
-Plan: 1/1 in current phase
-Status: Milestone complete
-Last activity: 2026-01-14 — Completed 39-01-PLAN.md
+Plan: 1/1 in current phase + 1 FIX plan
+Status: Milestone complete (UAT fix applied)
+Last activity: 2026-01-14 — Completed 39-01-FIX.md
 
 Progress: [██████████] 2/2 phases (100%)
 
@@ -65,7 +65,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed 39-01-PLAN.md (API Improvements)
+Stopped at: Completed 39-01-FIX.md (UAT fix for custom_label)
 Resume file: None
 
 ## Accumulated Context
