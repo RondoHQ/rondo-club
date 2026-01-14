@@ -501,4 +501,119 @@ class TodoCptTest extends CaelisTestCase {
         $this->assertContains( $open_todo, $todo_ids, 'Open todo should be returned' );
         $this->assertContains( $completed_todo, $todo_ids, 'Completed todo should be returned with completed=true' );
     }
+
+    // =========================================================================
+    // Awaiting Response Tests
+    // =========================================================================
+
+    /**
+     * Test creating todo with awaiting_response sets timestamp.
+     */
+    public function test_create_todo_with_awaiting_response_sets_timestamp(): void {
+        $user_id = $this->createApprovedCaelisUser( 'awaiting_create' );
+        wp_set_current_user( $user_id );
+
+        $person_id = $this->createPerson( [ 'post_author' => $user_id, 'post_title' => 'Test Person' ] );
+
+        $response = $this->doRestRequest( 'POST', '/prm/v1/people/' . $person_id . '/todos', [
+            'content'           => 'Waiting for reply',
+            'awaiting_response' => true,
+        ] );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $this->assertTrue( $data['awaiting_response'], 'Todo should be marked as awaiting response' );
+        $this->assertNotNull( $data['awaiting_response_since'], 'Timestamp should be set' );
+        $this->assertNotEmpty( $data['awaiting_response_since'], 'Timestamp should not be empty' );
+
+        // Verify it's a valid datetime
+        $timestamp = strtotime( $data['awaiting_response_since'] );
+        $this->assertNotFalse( $timestamp, 'Timestamp should be a valid datetime' );
+    }
+
+    /**
+     * Test updating todo sets awaiting_response timestamp.
+     */
+    public function test_update_todo_sets_awaiting_response_timestamp(): void {
+        $user_id = $this->createApprovedCaelisUser( 'awaiting_update' );
+        wp_set_current_user( $user_id );
+
+        $person_id = $this->createPerson( [ 'post_author' => $user_id, 'post_title' => 'Test Person' ] );
+        $todo_id = $this->createTodo( $person_id, $user_id, [ 'content' => 'Test todo' ] );
+
+        // Verify initial state (not awaiting)
+        $initial = $this->doRestRequest( 'GET', '/prm/v1/todos/' . $todo_id );
+        $this->assertFalse( $initial->get_data()['awaiting_response'], 'Todo should not be awaiting initially' );
+
+        // Update to awaiting_response = true
+        $before_update = time();
+        $response = $this->doRestRequest( 'PUT', '/prm/v1/todos/' . $todo_id, [
+            'awaiting_response' => true,
+        ] );
+        $after_update = time();
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $this->assertTrue( $data['awaiting_response'], 'Todo should be marked as awaiting response' );
+        $this->assertNotNull( $data['awaiting_response_since'], 'Timestamp should be set' );
+
+        // Verify timestamp is within 5 seconds of current time
+        $timestamp = strtotime( $data['awaiting_response_since'] );
+        $this->assertGreaterThanOrEqual( $before_update - 5, $timestamp, 'Timestamp should be around current time' );
+        $this->assertLessThanOrEqual( $after_update + 5, $timestamp, 'Timestamp should be around current time' );
+    }
+
+    /**
+     * Test updating todo clears awaiting_response timestamp.
+     */
+    public function test_update_todo_clears_awaiting_response_timestamp(): void {
+        $user_id = $this->createApprovedCaelisUser( 'awaiting_clear' );
+        wp_set_current_user( $user_id );
+
+        $person_id = $this->createPerson( [ 'post_author' => $user_id, 'post_title' => 'Test Person' ] );
+
+        // Create todo with awaiting_response = true via REST
+        $create_response = $this->doRestRequest( 'POST', '/prm/v1/people/' . $person_id . '/todos', [
+            'content'           => 'Waiting todo',
+            'awaiting_response' => true,
+        ] );
+        $todo_id = $create_response->get_data()['id'];
+
+        // Verify it's awaiting
+        $awaiting = $this->doRestRequest( 'GET', '/prm/v1/todos/' . $todo_id );
+        $this->assertTrue( $awaiting->get_data()['awaiting_response'], 'Todo should be awaiting' );
+        $this->assertNotNull( $awaiting->get_data()['awaiting_response_since'], 'Timestamp should be set' );
+
+        // Update to awaiting_response = false
+        $response = $this->doRestRequest( 'PUT', '/prm/v1/todos/' . $todo_id, [
+            'awaiting_response' => false,
+        ] );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $this->assertFalse( $data['awaiting_response'], 'Todo should no longer be awaiting' );
+        $this->assertNull( $data['awaiting_response_since'], 'Timestamp should be cleared' );
+    }
+
+    /**
+     * Test format_todo includes awaiting_response fields.
+     */
+    public function test_format_todo_includes_awaiting_response_fields(): void {
+        $user_id = $this->createApprovedCaelisUser( 'format_awaiting' );
+        wp_set_current_user( $user_id );
+
+        $person_id = $this->createPerson( [ 'post_author' => $user_id, 'post_title' => 'Test Person' ] );
+        $todo_id = $this->createTodo( $person_id, $user_id, [ 'content' => 'Test todo' ] );
+
+        $response = $this->doRestRequest( 'GET', '/prm/v1/todos/' . $todo_id );
+
+        $this->assertEquals( 200, $response->get_status() );
+
+        $data = $response->get_data();
+        $this->assertArrayHasKey( 'awaiting_response', $data, 'Response should have awaiting_response key' );
+        $this->assertArrayHasKey( 'awaiting_response_since', $data, 'Response should have awaiting_response_since key' );
+    }
 }
