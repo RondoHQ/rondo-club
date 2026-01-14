@@ -106,6 +106,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Cross-person todo visibility with "Also:" indicator — v3.3
 - WP-CLI migration: `wp prm todos migrate-persons` — v3.3
 
+**v3.4 UI Polish (shipped 2026-01-14):**
+- Clickable website links in Organizations list — v3.4
+- Labels column removed from Organizations list — v3.4
+- Simplified Slack contact display (label only, clickable) — v3.4
+- Build-time based refresh detection (manifest.json mtime) — v3.4
+- Awaiting todos count in dashboard stats (5-column grid) — v3.4
+- Full-width Timeline panel on person profile desktop — v3.4
+- Labels CRUD interface at /settings/labels (tabbed UI) — v3.4
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -175,4 +184,4 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Filter current person from "Also:" | Only shows OTHER linked people | ✓ Good |
 
 ---
-*Last updated: 2026-01-14 — v3.3 Todo Enhancement shipped*
+*Last updated: 2026-01-14 — v3.4 UI Polish shipped*

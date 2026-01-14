@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-01-14
+
+### Added
+- Labels CRUD interface at `/settings/labels` with tabbed UI for person and company labels
+- 8 new API methods for label management (getPersonLabels, createPersonLabel, etc.)
+- Awaiting todos count in dashboard stats (5-column grid layout)
+- Build-time based refresh detection using manifest.json mtime
+
+### Changed
+- Organizations list website URLs are now clickable blue links opening in new tab
+- Slack contact details simplified to show only label as clickable link
+- Timeline panel on person profile now uses full 2-column width on desktop
+- Dashboard stats grid expanded from 4 to 5 columns on desktop
+
+### Removed
+- Labels column from Organizations list (column, sorting, bulk action removed)
+
 ## [3.3.0] - 2026-01-14
 
 ### Added
