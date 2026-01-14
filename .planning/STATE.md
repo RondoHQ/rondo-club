@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 
 Milestone: v3.2 Person Profile Polish
 Phase: 29 (Header Enhancement)
-Plan: 29-01 planned
-Status: Ready to execute
+Plan: 29-01 complete
+Status: Phase complete, ready for Phase 30
 Last activity: 2026-01-14 — Milestone v3.2 created
 
 Progress: ░░░░░░░░░░ 0%
@@ -70,11 +70,10 @@ Resume file: None
 
 ### Pending Todos
 
-4 todos in `.planning/todos/pending/`:
+3 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
-2. Show role + job in person header (ui)
-3. Add persistent todos sidebar on person profile (ui)
-4. Todo detail modal with notes and multi-person support (ui)
+2. Add persistent todos sidebar on person profile (ui)
+3. Todo detail modal with notes and multi-person support (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
@@ -83,6 +82,7 @@ Completed todos in `.planning/todos/done/`:
 4. Add pending response tracking — Done in v3.1
 5. Convert todos to custom post type — Done in v3.1
 6. Fix todo migration and open todos display — Fixed: migration bypasses access control
+7. Show role + job in person header — Done in Phase 29
 
 ## Next Steps
 

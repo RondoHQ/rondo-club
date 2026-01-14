@@ -31,7 +31,7 @@
 **Plans**: 1
 
 Plans:
-- [ ] 29-01: Add role/job display to person header
+- [x] 29-01: Add role/job display to person header
 
 #### Phase 30: Todos Sidebar
 
