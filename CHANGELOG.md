@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.79.0] - 2026-01-14
+
+### Added
+- Current position (job title + company) display in PersonDetail header
+- Persistent todos sidebar visible across all PersonDetail tabs
+- Mobile todos floating action button (FAB) for screens below lg breakpoint
+- Mobile todos slide-up panel with full CRUD functionality
+- CSS keyframe animation for mobile panel slide-up effect
+
+### Changed
+- PersonDetail layout changed from flex to 3-column CSS grid for equal-width columns
+- Timeline endpoint now queries all todo post statuses (prm_open, prm_awaiting, prm_completed)
+- Timeline endpoint returns proper `status` field instead of deprecated `is_completed`
+
+### Fixed
+- Timeline endpoint wasn't returning todos (was querying 'publish' status instead of custom statuses)
+
 ## [1.78.0] - 2026-01-14
 
 ### Added
