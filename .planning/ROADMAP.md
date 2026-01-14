@@ -27,15 +27,15 @@
 
 **Milestone Goal:** Small UX improvements (awaiting checkbox, email normalization) and bundle size optimization.
 
-#### Phase 40: Quick Wins
+#### Phase 40: Quick Wins ✓
 
 **Goal**: Add awaiting checkbox toggle to todo lists, auto-lowercase emails on save
 **Depends on**: Previous milestone complete
 **Research**: Unlikely (internal patterns)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 40-01: TBD (run /gsd:plan-phase 40 to break down)
+- [x] 40-01: Awaiting checkbox + email lowercasing
 
 #### Phase 41: Bundle Optimization
 
@@ -379,6 +379,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.3 Todo Enhancement | 32-34 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.4 UI Polish | 35-37 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
-| v3.6 Quick Wins & Performance | 40-41 | 0/? | In progress | - |
+| v3.6 Quick Wins & Performance | 40-41 | 1/? | In progress | - |
 
 **Shipped: 13 milestones, 39 phases, 73 plans**
