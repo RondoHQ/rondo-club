@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v3.1 Pending Response Tracking
-Phase: 24 of 28 (Todo Post Type)
-Plan: 3 of 4 in current phase
-Status: In progress
-Last activity: 2026-01-14 — Completed 24-03-PLAN.md (Migration + Cleanup)
+Phase: 24 of 28 (Todo Post Type) — COMPLETE
+Plan: 4 of 4 in current phase — All plans complete
+Status: Phase 24 complete, ready for Phase 25
+Last activity: 2026-01-14 — Completed 24-04-PLAN.md (Tests for Todo CPT)
 
-Progress: ██░░░░░░░░ 6%
+Progress: ██░░░░░░░░ 8%
 
 ## Completed Milestones
 
@@ -58,6 +58,7 @@ See `.planning/ISSUES.md`:
 | - | Backend-first testing | Playwright deferred to future milestone |
 | 24 | Todo CPT not Comment | Todos are posts, not comments; allows richer metadata |
 | 24 | Migration deletes originals | Clean cutover; no duplicate data after migration |
+| 24 | Update existing tests | SearchDashboardTest uses CPT-based todos now |
 
 ## Roadmap Evolution
 
@@ -77,7 +78,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed 24-03-PLAN.md (Migration + Cleanup)
+Stopped at: Completed Phase 24 (Todo Post Type) — all 4 plans complete
 Resume file: None
 
 ## Accumulated Context
@@ -96,6 +97,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:execute-plan .planning/phases/24-todo-post-type/24-04-PLAN.md` — Frontend migration
-- `/gsd:verify-work 24-03` — verify migration and legacy cleanup
-- `/gsd:progress` — check overall progress
+- `/gsd:plan-phase 25` — Create plan for Todo UI Migration
+- `/gsd:verify-work 24` — Verify Phase 24 (Todo CPT backend complete)
+- `/gsd:progress` — Check overall progress

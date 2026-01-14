@@ -29,8 +29,8 @@
 Plans:
 - [x] 24-01: Register prm_todo CPT with ACF fields and access control
 - [x] 24-02: REST API endpoints for todo CRUD
-- [ ] 24-03: Migration from comment-based todos
-- [ ] 24-04: Update tests for new todo system
+- [x] 24-03: Migration from comment-based todos
+- [x] 24-04: Update tests for new todo system
 
 #### Phase 25: Todo UI Migration
 
