@@ -54,14 +54,15 @@ Plans:
 Plans:
 - [x] 26-01: Add ACF fields, REST API support, PHPUnit tests for pending response
 
-#### Phase 27: Pending Response UI
+#### Phase 27: Pending Response UI ✓
 
 **Goal**: Mark as awaiting, dashboard widget, age indicators, auto-resolve on activity
 **Depends on**: Phase 26
 **Research**: Unlikely (internal patterns)
+**Result**: Awaiting response toggle in TodoModal, visual badges in TodosList, dedicated dashboard section with aging indicators
 
 Plans:
-- [ ] 27-01: TBD
+- [x] 27-01: Add awaiting response UI (TodoModal, TodosList, Dashboard)
 
 #### Phase 28: Filters & Polish
 
@@ -264,6 +265,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
-| v3.1 Pending Response Tracking | 24-28 | 6/~8 | In Progress 🚧 | - |
+| v3.1 Pending Response Tracking | 24-28 | 7/~8 | In Progress 🚧 | - |
 
 **Shipped: 23 phases, 53 plans**
