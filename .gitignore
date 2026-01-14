@@ -1,8 +1,9 @@
 # Dependencies
 node_modules/
+vendor/
 
 # Build output (uncomment to include in releases)
-# dist/
+dist/
 
 # OS
 .DS_Store
