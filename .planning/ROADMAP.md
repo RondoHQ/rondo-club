@@ -44,14 +44,15 @@ Plans:
 Plans:
 - [x] 25-01: Integrate CPT todos into timeline and update cache invalidation
 
-#### Phase 26: Pending Response Model
+#### Phase 26: Pending Response Model ✓
 
 **Goal**: Add "awaiting response" status to todos with timestamp, link to contact
 **Depends on**: Phase 25
 **Research**: Unlikely (internal patterns)
+**Result**: ACF fields added (awaiting_response, awaiting_response_since), REST API extended with auto-timestamp logic, 4 new tests (150 total)
 
 Plans:
-- [ ] 26-01: TBD
+- [x] 26-01: Add ACF fields, REST API support, PHPUnit tests for pending response
 
 #### Phase 27: Pending Response UI
 
@@ -263,6 +264,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
-| v3.1 Pending Response Tracking | 24-28 | 5/~8 | In Progress 🚧 | - |
+| v3.1 Pending Response Tracking | 24-28 | 6/~8 | In Progress 🚧 | - |
 
 **Shipped: 23 phases, 53 plans**

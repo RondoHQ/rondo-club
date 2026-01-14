@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v3.1 Pending Response Tracking
-Phase: 25 of 28 (Todo UI Migration) — COMPLETE
+Phase: 26 of 28 (Pending Response Model) — COMPLETE
 Plan: 1 of 1 in current phase — All plans complete
-Status: Phase 25 complete, ready for Phase 26
-Last activity: 2026-01-14 — Completed 25-01-PLAN.md (Timeline Integration)
+Status: Phase 26 complete, ready for Phase 27
+Last activity: 2026-01-14 — Completed 26-01-PLAN.md (Pending Response Model)
 
-Progress: ███░░░░░░░ 9%
+Progress: ████░░░░░░ 11%
 
 ## Completed Milestones
 
@@ -61,6 +61,8 @@ See `.planning/ISSUES.md`:
 | 24 | Update existing tests | SearchDashboardTest uses CPT-based todos now |
 | 25 | Merge todos into timeline with sorting | Combined CPT query with comments and sorted by created date |
 | 25 | Broad timeline invalidation in dashboard | Dashboard hooks invalidate ['people', 'timeline'] since personId not available |
+| 26 | Auto-timestamp on state change | awaiting_response_since set/cleared automatically when awaiting_response changes |
+| 26 | gmdate for timestamps | UTC timestamps for consistency across timezones |
 
 ## Roadmap Evolution
 
@@ -80,7 +82,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed Phase 25 (Todo UI Migration) — all plans complete
+Stopped at: Completed Phase 26 (Pending Response Model) — all plans complete
 Resume file: None
 
 ## Accumulated Context
@@ -99,6 +101,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 26` — Create plan for Pending Response Model
-- `/gsd:verify-work 25` — Verify Phase 25 (Todo UI Migration complete)
+- `/gsd:plan-phase 27` — Create plan for Pending Response UI
+- `/gsd:verify-work 26` — Verify Phase 26 (Pending Response Model complete)
 - `/gsd:progress` — Check overall progress
