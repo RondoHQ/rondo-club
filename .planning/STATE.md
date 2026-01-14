@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v3.5 Bug Fixes & Polish
+**Current focus:** v3.6 Quick Wins & Performance
 
 ## Current Position
 
-Milestone: v3.5 Bug Fixes & Polish — COMPLETE
-Phase: 39 (API Improvements) — Complete
-Plan: 1/1 in current phase + 1 FIX plan
-Status: Milestone complete (UAT fix applied)
-Last activity: 2026-01-14 — Completed 39-01-FIX.md
+Milestone: v3.6 Quick Wins & Performance
+Phase: 40 of 41 (Quick Wins)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-14 — Milestone v3.6 created
 
-Progress: [██████████] 2/2 phases (100%)
+Progress: [░░░░░░░░░░] 0/2 phases (0%)
 
 ## Completed Milestones
 
@@ -61,11 +61,13 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v3.4 complete: UI Polish (quick fixes, dashboard, labels)
 - Milestone v3.4 archived: Git tag v3.4 created
 - Milestone v3.5 created: Bug Fixes & Polish, 2 phases (38-39)
+- Milestone v3.5 complete: X logo, dashboard styling, search ranking, auto-title, cache sync
+- Milestone v3.6 created: Quick Wins & Performance, 2 phases (40-41)
 
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed 39-01-FIX.md (UAT fix for custom_label)
+Stopped at: Milestone v3.6 initialization
 Resume file: None
 
 ## Accumulated Context
@@ -103,6 +105,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:discuss-milestone` — Plan next milestone with context gathering
-- `/gsd:new-milestone` — Create next milestone when ready
+- `/gsd:plan-phase 40` — Plan Quick Wins phase (awaiting checkbox, email lowercasing)
+- `/gsd:discuss-phase 40` — Gather context first if needed
 - Run `wp prm todos migrate-persons` on production after deployment
