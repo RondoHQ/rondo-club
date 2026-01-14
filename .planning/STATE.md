@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-13)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v3.0 Testing Infrastructure — PHPUnit foundation
+**Current focus:** v3.1 Pending Response Tracking — Todo post type + response tracking
 
 ## Current Position
 
-Milestone: v3.0 Testing Infrastructure
-Phase: 23 of 23 (REST API & Data Model Tests)
-Plan: 3 of 3 in current phase
-Status: Milestone complete
-Last activity: 2026-01-13 — Completed Phase 23 (parallel execution)
+Milestone: v3.1 Pending Response Tracking
+Phase: 24 of 28 (Todo Post Type)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-14 — Milestone v3.1 created
 
-Progress: ██████████ 100%
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -41,7 +41,7 @@ See `.planning/ISSUES.md`:
 
 **0 issues remaining**
 
-## Decisions Made (v3.0)
+## Decisions Made (v3.0 → v3.1)
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
@@ -70,29 +70,30 @@ See `.planning/ISSUES.md`:
 - Phase 22 complete: Access Control Tests (3 plans via parallel execution)
 - Phase 23 complete: REST API & Data Model Tests (3 plans via parallel execution)
 - Milestone v3.0 complete: Testing Infrastructure with 120 tests
+- Milestone v3.1 created: Pending Response Tracking, 5 phases (Phase 24-28)
 
 ## Session Continuity
 
-Last session: 2026-01-13
-Stopped at: Completed Phase 23 and milestone v3.0
+Last session: 2026-01-14
+Stopped at: Milestone v3.1 initialization
 Resume file: None
 
 ## Accumulated Context
 
 ### Pending Todos
 
-3 todos in `.planning/todos/pending/`:
-1. Add pending response tracking (ui)
-2. Add label management interface (ui)
-3. Convert todos to custom post type (api)
+1 todo in `.planning/todos/pending/`:
+1. Add label management interface (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
 2. React bundle chunking — Done in v2.5
 3. Console MIME type errors — Resolved via production deploy
+4. Add pending response tracking — Now in v3.1 milestone
+5. Convert todos to custom post type — Now in v3.1 milestone
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — archive v3.0 Testing Infrastructure
-- `/gsd:new-milestone` — create next milestone (e.g., Playwright frontend testing)
-- Review pending todos for next priorities
+- `/gsd:plan-phase 24` — plan Phase 24: Todo Post Type
+- `/gsd:discuss-phase 24` — gather context before planning
+- `/gsd:research-phase 24` — investigate unknowns (if needed)
