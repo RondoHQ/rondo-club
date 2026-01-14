@@ -326,6 +326,18 @@ add_action('wp_enqueue_scripts', 'prm_theme_enqueue_assets');
  */
 function prm_get_js_config() {
     $user = wp_get_current_user();
+
+    // Get build time from manifest file modification time
+    // This ensures every build produces a unique timestamp
+    $build_time = null;
+    $manifest_path = PRM_THEME_DIR . '/dist/.vite/manifest.json';
+    if (file_exists($manifest_path)) {
+        $build_time = date('c', filemtime($manifest_path));
+    } else {
+        // Fallback to current time for dev mode (Vite dev server)
+        $build_time = date('c');
+    }
+
     return [
         'apiUrl'      => rest_url(),
         'nonce'       => wp_create_nonce('wp_rest'),
@@ -340,6 +352,7 @@ function prm_get_js_config() {
         'adminUrl'    => admin_url(),
         'themeUrl'    => PRM_THEME_URL,
         'version'     => wp_get_theme()->get('Version'),
+        'buildTime'   => $build_time,
     ];
 }
 

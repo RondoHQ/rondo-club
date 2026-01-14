@@ -4,7 +4,12 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  
+
+  // Inject build timestamp for version checking
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
+
   // Build configuration
   build: {
     // Output to dist folder

@@ -2,29 +2,36 @@ import { useState, useEffect, useCallback } from 'react';
 import { prmApi } from '../api/client';
 
 /**
- * Hook that periodically checks for new app versions
- * and prompts the user to reload when a new version is available.
- * 
+ * Hook that periodically checks for new app builds
+ * and prompts the user to reload when a new build is available.
+ *
+ * Uses build timestamps instead of version numbers to detect updates,
+ * ensuring that every deployment triggers a refresh prompt even if
+ * the version number hasn't changed.
+ *
  * This is particularly useful for PWA/mobile app installs where
  * the browser cache might prevent automatic updates.
- * 
+ *
  * @param {Object} options - Configuration options
  * @param {number} options.checkInterval - How often to check for updates (ms), default 5 minutes
  * @returns {Object} - { hasUpdate, currentVersion, latestVersion, reload }
  */
 export function useVersionCheck({ checkInterval = 5 * 60 * 1000 } = {}) {
   const [hasUpdate, setHasUpdate] = useState(false);
-  const [currentVersion] = useState(() => window.prmConfig?.version || null);
+  const [currentBuildTime] = useState(() => window.prmConfig?.buildTime || null);
   const [latestVersion, setLatestVersion] = useState(null);
 
   const checkVersion = useCallback(async () => {
-    if (!currentVersion) return;
-    
+    if (!currentBuildTime) return;
+
     try {
       const response = await prmApi.getVersion();
+      const serverBuildTime = response.data?.buildTime;
       const serverVersion = response.data?.version;
-      
-      if (serverVersion && serverVersion !== currentVersion) {
+
+      // Compare build times instead of versions
+      if (serverBuildTime && serverBuildTime !== currentBuildTime) {
+        // Store the version for display in the banner
         setLatestVersion(serverVersion);
         setHasUpdate(true);
       }
@@ -32,7 +39,7 @@ export function useVersionCheck({ checkInterval = 5 * 60 * 1000 } = {}) {
       // Silently fail - version check is not critical
       console.debug('Version check failed:', error.message);
     }
-  }, [currentVersion]);
+  }, [currentBuildTime]);
 
   const reload = useCallback(() => {
     // Clear TanStack Query cache before reload
@@ -62,6 +69,9 @@ export function useVersionCheck({ checkInterval = 5 * 60 * 1000 } = {}) {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [checkVersion]);
+
+  // Keep currentVersion for backward compatibility with consumers
+  const currentVersion = window.prmConfig?.version || null;
 
   return {
     hasUpdate,
