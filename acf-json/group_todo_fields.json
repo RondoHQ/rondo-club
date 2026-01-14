@@ -15,6 +15,17 @@
             "allow_null": 0
         },
         {
+            "key": "field_todo_notes",
+            "label": "Notes",
+            "name": "notes",
+            "type": "wysiwyg",
+            "instructions": "Additional notes or details for this todo",
+            "required": 0,
+            "tabs": "visual",
+            "toolbar": "basic",
+            "media_upload": 0
+        },
+        {
             "key": "field_todo_awaiting_since",
             "label": "Awaiting Since",
             "name": "awaiting_since",
