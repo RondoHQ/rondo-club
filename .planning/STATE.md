@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Milestone: v3.2 Person Profile Polish
-Phase: 29 (Header Enhancement)
-Plan: 29-01 complete
-Status: Phase complete, ready for Phase 30
-Last activity: 2026-01-14 — Milestone v3.2 created
+Phase: 29 (Header Enhancement) — COMPLETE
+Plan: 29-01 complete (SUMMARY created)
+Status: Ready for Phase 30 planning
+Last activity: 2026-01-14 — Phase 29 executed
 
-Progress: ░░░░░░░░░░ 0%
+Progress: [███░░░░░░░] 1/3 phases (33%)
 
 ## Completed Milestones
 
@@ -86,6 +86,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:discuss-milestone` — Plan next milestone features
-- `/gsd:check-todos` — Review pending todos (1 pending)
-- `/gsd:verify-work` — Test recently shipped features
+- `/gsd:plan-phase 30` — Plan Todos Sidebar phase
+- `/gsd:check-todos` — Review pending todos (3 pending)
+- `/gsd:verify-work 29` — Test Phase 29 header enhancement
