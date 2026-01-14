@@ -15,10 +15,37 @@
 - ✅ [v3.3 Todo Enhancement](milestones/v3.3-todo-enhancement.md) (Phases 32-34) — SHIPPED 2026-01-14
 - ✅ [v3.4 UI Polish](milestones/v3.4-ui-polish.md) (Phases 35-37) — SHIPPED 2026-01-14
 - ✅ [v3.5 Bug Fixes & Polish](milestones/v3.5-bug-fixes-polish.md) (Phases 38-39) — SHIPPED 2026-01-14
+- 🚧 **v3.6 Quick Wins & Performance** — Phases 40-41 (in progress)
 
 ## Current Status
 
-**Milestone complete.** Ready to plan next milestone or continue with todos.
+**Active:** v3.6 Quick Wins & Performance (Phase 40-41)
+
+---
+
+### 🚧 v3.6 Quick Wins & Performance (In Progress)
+
+**Milestone Goal:** Small UX improvements (awaiting checkbox, email normalization) and bundle size optimization.
+
+#### Phase 40: Quick Wins
+
+**Goal**: Add awaiting checkbox toggle to todo lists, auto-lowercase emails on save
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 40-01: TBD (run /gsd:plan-phase 40 to break down)
+
+#### Phase 41: Bundle Optimization
+
+**Goal**: Analyze current bundle sizes and optimize (grown since v2.5)
+**Depends on**: Phase 40
+**Research**: Unlikely (established patterns from v2.5)
+**Plans**: TBD
+
+Plans:
+- [ ] 41-01: TBD (run /gsd:plan-phase 41 to break down)
 
 ---
 
@@ -352,5 +379,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.3 Todo Enhancement | 32-34 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.4 UI Polish | 35-37 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
+| v3.6 Quick Wins & Performance | 40-41 | 0/? | In progress | - |
 
 **Shipped: 13 milestones, 39 phases, 73 plans**
