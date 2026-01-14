@@ -178,6 +178,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
         $content = sanitize_textarea_field($request->get_param('content'));
         $due_date = sanitize_text_field($request->get_param('due_date'));
         $is_completed = $request->get_param('is_completed');
+        $awaiting_response = $request->get_param('awaiting_response');
 
         if (empty($content)) {
             return new WP_Error('empty_content', __('Todo content is required.', 'personal-crm'), ['status' => 400]);
@@ -201,6 +202,15 @@ class PRM_REST_Todos extends PRM_REST_Base {
 
         if (!empty($due_date)) {
             update_field('due_date', $due_date, $post_id);
+        }
+
+        // Handle awaiting_response with auto-timestamp
+        if ($awaiting_response) {
+            update_field('awaiting_response', true, $post_id);
+            update_field('awaiting_response_since', gmdate('Y-m-d H:i:s'), $post_id);
+        } else {
+            update_field('awaiting_response', false, $post_id);
+            update_field('awaiting_response_since', '', $post_id);
         }
 
         // Set default visibility to private
@@ -310,6 +320,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
         $content = $request->get_param('content');
         $due_date = $request->get_param('due_date');
         $is_completed = $request->get_param('is_completed');
+        $awaiting_response = $request->get_param('awaiting_response');
 
         $todo = get_post($todo_id);
 
@@ -337,6 +348,23 @@ class PRM_REST_Todos extends PRM_REST_Base {
             } else {
                 update_field('due_date', sanitize_text_field($due_date), $todo_id);
             }
+        }
+
+        // Handle awaiting_response with auto-timestamp
+        if ($awaiting_response !== null) {
+            $current_awaiting = (bool) get_field('awaiting_response', $todo_id);
+            $new_awaiting = (bool) $awaiting_response;
+
+            if ($new_awaiting && !$current_awaiting) {
+                // Changing from false to true: set timestamp
+                update_field('awaiting_response', true, $todo_id);
+                update_field('awaiting_response_since', gmdate('Y-m-d H:i:s'), $todo_id);
+            } elseif (!$new_awaiting && $current_awaiting) {
+                // Changing from true to false: clear timestamp
+                update_field('awaiting_response', false, $todo_id);
+                update_field('awaiting_response_since', '', $todo_id);
+            }
+            // If no change, leave as-is
         }
 
         // Refresh the post object
@@ -388,18 +416,22 @@ class PRM_REST_Todos extends PRM_REST_Base {
 
         $is_completed = get_field('is_completed', $post->ID);
         $due_date = get_field('due_date', $post->ID);
+        $awaiting_response = get_field('awaiting_response', $post->ID);
+        $awaiting_response_since = get_field('awaiting_response_since', $post->ID);
 
         return [
-            'id'               => $post->ID,
-            'type'             => 'todo',
-            'content'          => $this->sanitize_text($post->post_title),
-            'person_id'        => $person_id,
-            'person_name'      => $this->sanitize_text($person_name),
-            'person_thumbnail' => $this->sanitize_url($person_thumbnail),
-            'author_id'        => (int) $post->post_author,
-            'created'          => $post->post_date,
-            'is_completed'     => (bool) $is_completed,
-            'due_date'         => $due_date ?: null,
+            'id'                      => $post->ID,
+            'type'                    => 'todo',
+            'content'                 => $this->sanitize_text($post->post_title),
+            'person_id'               => $person_id,
+            'person_name'             => $this->sanitize_text($person_name),
+            'person_thumbnail'        => $this->sanitize_url($person_thumbnail),
+            'author_id'               => (int) $post->post_author,
+            'created'                 => $post->post_date,
+            'is_completed'            => (bool) $is_completed,
+            'due_date'                => $due_date ?: null,
+            'awaiting_response'       => (bool) $awaiting_response,
+            'awaiting_response_since' => $awaiting_response_since ?: null,
         ];
     }
 }
