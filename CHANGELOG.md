@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.77.0] - 2026-01-14
+
+### Added
+- WP-CLI command `wp prm todos migrate` to migrate comment-based todos to CPT
+  - Supports `--dry-run` flag to preview changes without modifying data
+  - Preserves all metadata: related_person, is_completed, due_date
+  - Sets visibility to private (default for migrated todos)
+  - Deletes original comments after successful migration
+
+### Changed
+- Dashboard `count_open_todos()` now queries `prm_todo` CPT instead of comments
+  - Uses `WP_Query` with access control filtering via `PRM_Access_Control` hooks
+
+### Removed
+- Legacy comment-based todo code from `PRM_Comment_Types`:
+  - `TYPE_TODO` constant
+  - Todo REST routes (`/people/{id}/todos`, `/todos/{id}`)
+  - Todo methods: `get_todos()`, `create_todo()`, `update_todo()`, `delete_todo()`
+  - Todo meta registration (`is_completed`, `due_date`)
+- Legacy `get_all_todos()` method from `PRM_REST_API` (now handled by `PRM_REST_Todos`)
+- Legacy `/prm/v1/todos` route from `PRM_REST_API` (now handled by `PRM_REST_Todos`)
+
 ## [1.76.0] - 2026-01-14
 
 ### Added

@@ -149,11 +149,11 @@ When possible, _always_ use WordPress native functions to perform tasks. Make su
 * ⁠*MINOR* (0.x.0): New features that are backward compatible
 * ⁠*PATCH* (0.0.x): Bug fixes and small improvements
 
-Update the version of the theme in style.css and package.json with every change, following the semantic versioning system.
+Update the version of the theme in style.css and package.json after every milestone, following the semantic versioning system.
 
 ## Rule 2: Update the Changelog
 
-Always add a changelog entry in in [Keep a Changelog](https://keepachangelog.com/) format:
+After each milestone, add a changelog entry in in [Keep a Changelog](https://keepachangelog.com/) format:
 
 * ⁠*Added*: New features
 * ⁠*Changed*: Changes in existing functionality
@@ -191,9 +191,34 @@ Test your changes as much as you can before claiming something works.
 
 Update the documentation in the /docs folder with all relevant information from the change. If the (sub-)system you made changes to is not documented yet, document that system too.
 
-### Rule 7: Deploy to Production
+### Rule 7: Git Commit & Push
 
-After every commit & push, deploy the changes to the production server:
+#### What is it?
+
+*ALWAYS* commit & push after every milestone phase, with clear commit messages:
+
+*Format*: ⁠ 
+
+type: Description ⁠
+* ⁠⁠ feat: ⁠ - New feature
+* ⁠⁠ fix: ⁠ - Bug fix
+* ⁠⁠ chore: ⁠ - Maintenance (version updates, config changes)
+* ⁠⁠ docs: ⁠ - Documentation
+* ⁠⁠ refactor: ⁠ - Code refactoring
+* ⁠⁠ perf: ⁠ - Performance improvement
+* ⁠⁠ style: ⁠ - Code formatting
+
+*Workflow:*
+```⁠ bash
+cd "<project directory>"
+git add -A
+git commit -m "<git commit summary>"
+git push
+```
+
+### Rule 8: Deploy to Production
+
+At the end of every milestone, deploy the changes to the production server:
 
 If you did not update, add or remove any node modules, do this:
 
@@ -223,26 +248,3 @@ ssh u25-eninwxjgiulh@c1130624.sgvps.net -p 18765 "cd ~/www/cael.is/public_html &
 - WordPress path: `~/www/cael.is/public_html/`
 - Theme path: `~/www/cael.is/public_html/wp-content/themes/caelis/`
 - Production URL: `https://cael.is/`
-
-### Rule 8: Git Commit & Push
-
-#### What is it?
-
-*ALWAYS* commit & push after every change, with clear commit messages:
-
-*Format*: ⁠ type: Description ⁠
-* ⁠⁠ feat: ⁠ - New feature
-* ⁠⁠ fix: ⁠ - Bug fix
-* ⁠⁠ chore: ⁠ - Maintenance (version updates, config changes)
-* ⁠⁠ docs: ⁠ - Documentation
-* ⁠⁠ refactor: ⁠ - Code refactoring
-* ⁠⁠ perf: ⁠ - Performance improvement
-* ⁠⁠ style: ⁠ - Code formatting
-
-*Workflow:*
-```⁠ bash
-cd "<project directory>"
-git add -A
-git commit -m "<git commit summary>"
-git push
-```

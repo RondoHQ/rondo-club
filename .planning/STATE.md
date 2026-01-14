@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 
 Milestone: v3.1 Pending Response Tracking
 Phase: 24 of 28 (Todo Post Type)
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: In progress
-Last activity: 2026-01-14 — Completed 24-02-PLAN.md
+Last activity: 2026-01-14 — Completed 24-03-PLAN.md (Migration + Cleanup)
 
-Progress: ██░░░░░░░░ 4%
+Progress: ██░░░░░░░░ 6%
 
 ## Completed Milestones
 
@@ -56,6 +56,8 @@ See `.planning/ISSUES.md`:
 | 23 | Boolean params as strings | REST API validation requires 'true' not true |
 | 23 | DELETE verifies post_status | Access control filter runs after DELETE, check trash |
 | - | Backend-first testing | Playwright deferred to future milestone |
+| 24 | Todo CPT not Comment | Todos are posts, not comments; allows richer metadata |
+| 24 | Migration deletes originals | Clean cutover; no duplicate data after migration |
 
 ## Roadmap Evolution
 
@@ -75,7 +77,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed 24-02-PLAN.md (REST API endpoints for todos)
+Stopped at: Completed 24-03-PLAN.md (Migration + Cleanup)
 Resume file: None
 
 ## Accumulated Context
@@ -94,6 +96,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:execute-plan .planning/phases/24-todo-post-type/24-03-PLAN.md` — Frontend migration
-- `/gsd:verify-work 24-02` — verify REST API endpoints
+- `/gsd:execute-plan .planning/phases/24-todo-post-type/24-04-PLAN.md` — Frontend migration
+- `/gsd:verify-work 24-03` — verify migration and legacy cleanup
 - `/gsd:progress` — check overall progress
