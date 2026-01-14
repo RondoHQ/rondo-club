@@ -10,72 +10,41 @@
 - ✅ [v2.4 Bug Fixes](milestones/v2.4-bug-fixes.md) (Phase 19) — SHIPPED 2026-01-13
 - ✅ [v2.5 Performance](milestones/v2.5-performance.md) (Phase 20) — SHIPPED 2026-01-13
 - ✅ [v3.0 Testing Infrastructure](milestones/v3.0-testing-infrastructure.md) (Phases 21-23) — SHIPPED 2026-01-13
-- ✅ **v3.1 Pending Response Tracking** — Phases 24-28 (complete)
+- ✅ [v3.1 Pending Response Tracking](milestones/v3.1-pending-response-tracking.md) (Phases 24-28) — SHIPPED 2026-01-14
 
 ## Current Status
 
-**Active:** v3.1 Pending Response Tracking complete - ready for milestone completion
+**Active:** No active milestone — ready to plan next work
 
-### ✅ v3.1 Pending Response Tracking (Complete)
+---
+
+<details>
+<summary>✅ v3.1 Pending Response Tracking (Phases 24-28) — SHIPPED 2026-01-14</summary>
 
 **Milestone Goal:** Convert todos to a proper post type and add pending response tracking with aging and auto-resolution.
 
-#### Phase 24: Todo Post Type ✓
+**Result:** prm_todo CPT with WordPress post statuses (open/awaiting/completed), REST API filtering, comprehensive UI
 
-**Goal**: Create `prm_todo` CPT, migrate from comment type, update REST API
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal patterns)
-**Result**: prm_todo CPT registered, REST API created, 13 todos migrated, 16 tests added (146 total)
+**Phases:**
+- [x] Phase 24: Todo Post Type (4/4 plans) ✓
+- [x] Phase 25: Todo UI Migration (1/1 plan) ✓
+- [x] Phase 26: Pending Response Model (1/1 plan) ✓
+- [x] Phase 27: Pending Response UI (2/2 plans) ✓
+- [x] Phase 28: Filters & Polish (1/1 plan) ✓
 
-Plans:
-- [x] 24-01: Register prm_todo CPT with ACF fields and access control
-- [x] 24-02: REST API endpoints for todo CRUD
-- [x] 24-03: Migration from comment-based todos
-- [x] 24-04: Update tests for new todo system
+**Total:** 5 phases, 9 plans
 
-#### Phase 25: Todo UI Migration ✓
+**Key Accomplishments:**
+- Converted todos from comments to prm_todo CPT
+- WordPress post statuses for state management (prm_open, prm_awaiting, prm_completed)
+- Awaiting response tracking with timestamps and aging indicators
+- Filter UI (Open/Awaiting/Completed tabs) across all views
+- 25 PHPUnit tests for todo functionality
+- WP-CLI migration scripts for both todo systems
 
-**Goal**: Update frontend components to use new todo post type API
-**Depends on**: Phase 24
+See [milestone archive](milestones/v3.1-pending-response-tracking.md) for full details.
 
-**Research**: Unlikely (internal patterns)
-**Result**: Timeline endpoint returns todos from CPT, cache invalidation updated across all hooks
-
-Plans:
-- [x] 25-01: Integrate CPT todos into timeline and update cache invalidation
-
-#### Phase 26: Pending Response Model ✓
-
-**Goal**: Add "awaiting response" status to todos with timestamp, link to contact
-**Depends on**: Phase 25
-**Research**: Unlikely (internal patterns)
-**Result**: ACF fields added (awaiting_response, awaiting_response_since), REST API extended with auto-timestamp logic, 4 new tests (150 total)
-
-Plans:
-- [x] 26-01: Add ACF fields, REST API support, PHPUnit tests for pending response
-
-#### Phase 27: Pending Response UI ✓
-
-**Goal**: Mark as awaiting, dashboard widget, age indicators, auto-resolve on activity
-**Depends on**: Phase 26
-**Research**: Unlikely (internal patterns)
-**Result**: Awaiting response toggle in TodoModal, visual badges in TodosList, dedicated dashboard section with aging indicators
-
-Plans:
-- [x] 27-01: Add awaiting response UI (TodoModal, TodosList, Dashboard)
-- [x] 27-02: Add awaiting response to TimelineView, GlobalTodoModal, PersonDetail
-
-#### Phase 28: Filters & Polish ✓
-
-**Goal**: Filter by pending status, dedicated view, tests for new functionality
-**Depends on**: Phase 27
-**Research**: Unlikely (internal patterns)
-**Result**: REST API awaiting_response filter, TodosList filter UI (All/Open/Completed + Awaiting toggle), 3 new tests (23 total in TodoCptTest)
-
-Plans:
-- [x] 28-01: Add awaiting_response filter and TodosList filter UI
-
----
+</details>
 
 <details>
 <summary>✅ v3.0 Testing Infrastructure (Phases 21-23) — SHIPPED 2026-01-13</summary>
@@ -269,4 +238,4 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
 | v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
 
-**Shipped: 23 phases, 53 plans**
+**Shipped: 9 milestones, 28 phases, 62 plans**
