@@ -28,10 +28,10 @@
 **Goal**: Add role/job display to person header showing current position and organization
 **Depends on**: Previous milestone complete
 **Research**: Unlikely (internal UI patterns)
-**Plans**: TBD
+**Plans**: 1
 
 Plans:
-- [ ] 29-01: TBD (run /gsd:plan-phase 29 to break down)
+- [ ] 29-01: Add role/job display to person header
 
 #### Phase 30: Todos Sidebar
 
