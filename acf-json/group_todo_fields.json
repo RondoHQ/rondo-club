@@ -4,13 +4,13 @@
     "fields": [
         {
             "key": "field_todo_related_person",
-            "label": "Related Person",
-            "name": "related_person",
+            "label": "Related People",
+            "name": "related_persons",
             "type": "post_object",
-            "instructions": "Select the person this todo is related to",
+            "instructions": "Select the people this todo is related to",
             "required": 1,
             "post_type": ["person"],
-            "multiple": 0,
+            "multiple": 1,
             "return_format": "id",
             "allow_null": 0
         },
