@@ -68,7 +68,7 @@ Resume file: None
 
 ### Pending Todos
 
-5 todos in `.planning/todos/pending/`:
+6 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — DONE in v3.3
 3. Add import from Twenty CRM (api)
@@ -80,6 +80,7 @@ Resume file: None
 9. ~~Make company website link clickable in list (ui)~~ — DONE in v3.4
 10. ~~Remove labels from company list (ui)~~ — DONE in v3.4
 11. ~~Use build numbers for refresh indicator (ui)~~ — DONE in v3.4
+12. Important date name overwritten by auto-title (api)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
