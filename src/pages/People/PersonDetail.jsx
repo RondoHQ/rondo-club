@@ -1087,6 +1087,12 @@ export default function PersonDetail() {
       });
   }, [person?.acf?.work_history]);
 
+  // Get current position(s) for header display
+  const currentPositions = useMemo(() => {
+    if (!sortedWorkHistory?.length) return [];
+    return sortedWorkHistory.filter(job => job.is_current);
+  }, [sortedWorkHistory]);
+
   // Extract and sort todos from timeline
   // Open first, awaiting second, completed last
   const sortedTodos = useMemo(() => {
@@ -1297,6 +1303,34 @@ export default function PersonDetail() {
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
               )}
             </div>
+            {currentPositions.length > 0 && (
+              <p className="text-base text-gray-600">
+                {currentPositions.map((job, idx) => {
+                  const hasTitle = !!job.job_title;
+                  const hasCompany = job.company && companyMap[job.company];
+
+                  if (!hasTitle && !hasCompany) return null;
+
+                  return (
+                    <span key={idx}>
+                      {idx > 0 && ', '}
+                      {hasTitle ? job.job_title : 'Works'}
+                      {hasCompany && (
+                        <>
+                          <span className="text-gray-400"> at </span>
+                          <Link
+                            to={`/organizations/${job.company}`}
+                            className="text-primary-600 hover:text-primary-700 hover:underline"
+                          >
+                            {companyMap[job.company].name}
+                          </Link>
+                        </>
+                      )}
+                    </span>
+                  );
+                })}
+              </p>
+            )}
             {acf.nickname && (
               <p className="text-gray-500">"{acf.nickname}"</p>
             )}
