@@ -103,6 +103,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — Archive v3.5 and prepare for next milestone
+- `/gsd:discuss-milestone` — Plan next milestone with context gathering
 - `/gsd:new-milestone` — Create next milestone when ready
 - Run `wp prm todos migrate-persons` on production after deployment

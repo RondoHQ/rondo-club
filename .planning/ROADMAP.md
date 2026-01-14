@@ -22,27 +22,29 @@
 
 ---
 
-### ✅ v3.5 Bug Fixes & Polish (Shipped 2026-01-14)
+<details>
+<summary>✅ v3.5 Bug Fixes & Polish (Phases 38-39) — SHIPPED 2026-01-14</summary>
 
 **Milestone Goal:** Fix bugs and polish existing functionality with quick UI fixes and API improvements.
 
-#### Phase 38: Quick UI Fixes
+**Result:** X logo black, dashboard card styling, search ranking by first name, auto-title respects user edits, dashboard cache sync
 
-**Goal**: Update X logo color to black, fix dashboard card styling consistency
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal patterns)
+**Phases:**
+- [x] Phase 38: Quick UI Fixes (1/1 plan) ✓
+- [x] Phase 39: API Improvements (1/1 plan + 1 FIX) ✓
 
-Plans:
-- [x] 38-01: Quick UI Fixes (X logo black, dashboard card styling)
+**Total:** 2 phases, 3 plans
 
-#### Phase 39: API Improvements
+**Key Accomplishments:**
+- X (Twitter) logo color updated to black
+- Dashboard AwaitingTodoCard rounded corners
+- Search prioritizes first name matches (scoring system)
+- Important date titles persist user edits (custom_label detection)
+- Dashboard cache invalidates on todo mutations from PersonDetail
 
-**Goal**: Fix auto-title bug with special characters, prioritize first name in search, invalidate dashboard cache on todo changes
-**Depends on**: Phase 38
-**Research**: Unlikely (internal patterns)
+See [milestone archive](milestones/v3.5-bug-fixes-polish.md) for full details.
 
-Plans:
-- [x] 39-01: API bug fixes (auto-title, search ranking, cache invalidation)
+</details>
 
 ---
 
