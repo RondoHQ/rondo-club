@@ -483,8 +483,9 @@ class PRM_Comment_Types {
             $persons = [];
             foreach ($related_person_ids as $pid) {
                 $persons[] = [
-                    'id'   => (int) $pid,
-                    'name' => get_the_title($pid),
+                    'id'        => (int) $pid,
+                    'name'      => get_the_title($pid),
+                    'thumbnail' => get_the_post_thumbnail_url($pid, 'thumbnail') ?: null,
                 ];
             }
 
