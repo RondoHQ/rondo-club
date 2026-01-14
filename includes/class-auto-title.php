@@ -12,9 +12,13 @@ class PRM_Auto_Title {
     public function __construct() {
         add_action('acf/save_post', [$this, 'auto_generate_person_title'], 20);
         add_action('acf/save_post', [$this, 'auto_generate_date_title'], 20);
-        
+
         // Hide title field in admin for person CPT
         add_filter('acf/prepare_field/name=_post_title', [$this, 'hide_title_field']);
+
+        // Lowercase email addresses on save
+        add_filter('acf/update_value/key=field_contact_value', [$this, 'maybe_lowercase_email'], 10, 4);
+        add_filter('acf/update_value/key=field_company_contact_value', [$this, 'maybe_lowercase_email'], 10, 4);
     }
     
     /**
@@ -180,11 +184,34 @@ class PRM_Auto_Title {
      */
     public function hide_title_field($field) {
         global $post;
-        
+
         if ($post && $post->post_type === 'person') {
             return false;
         }
-        
+
         return $field;
+    }
+
+    /**
+     * Lowercase email addresses when saving contact_info repeater
+     *
+     * @param mixed $value The value to save
+     * @param int $post_id The post ID
+     * @param array $field The field array
+     * @param mixed $original The original value
+     * @return mixed
+     */
+    public function maybe_lowercase_email($value, $post_id, $field, $original) {
+        // Only process string values
+        if (!is_string($value) || empty($value)) {
+            return $value;
+        }
+
+        // Check if this looks like an email (using WordPress is_email function)
+        if (is_email($value)) {
+            return strtolower($value);
+        }
+
+        return $value;
     }
 }
