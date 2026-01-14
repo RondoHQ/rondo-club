@@ -181,3 +181,31 @@ export function getTodoStatusClass(todo) {
   return classes.join(' ');
 }
 
+/**
+ * Calculate days since awaiting response was set
+ * @param {Object} todo
+ * @returns {number|null} Days since awaiting, or null if not awaiting
+ */
+export function getAwaitingDays(todo) {
+  if (!todo.awaiting_response || !todo.awaiting_response_since) {
+    return null;
+  }
+  const since = new Date(todo.awaiting_response_since);
+  const now = new Date();
+  const diffTime = now - since;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
+/**
+ * Get urgency class for awaiting response based on days
+ * @param {number} days
+ * @returns {string} Tailwind class for badge
+ */
+export function getAwaitingUrgencyClass(days) {
+  if (days === null) return '';
+  if (days >= 7) return 'bg-red-100 text-red-700';
+  if (days >= 3) return 'bg-orange-100 text-orange-700';
+  return 'bg-yellow-100 text-yellow-700';
+}
+

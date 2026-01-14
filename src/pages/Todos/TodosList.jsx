@@ -5,7 +5,7 @@ import { useTodos, useUpdateTodo, useDeleteTodo } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, subDays, isAfter, parseISO } from 'date-fns';
-import { isTodoOverdue } from '@/utils/timeline';
+import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import TodoModal from '@/components/Timeline/TodoModal';
 import GlobalTodoModal from '@/components/Timeline/GlobalTodoModal';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
@@ -382,6 +382,14 @@ function TodoItem({ todo, onToggle, onEdit, onDelete }) {
             <span className={`text-xs ${isOverdue && !todo.is_completed ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
               Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
               {isOverdue && !todo.is_completed && ' (overdue)'}
+            </span>
+          )}
+
+          {/* Awaiting response indicator */}
+          {todo.awaiting_response && (
+            <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${getAwaitingUrgencyClass(getAwaitingDays(todo))}`}>
+              <Clock className="w-3 h-3" />
+              {getAwaitingDays(todo) === 0 ? 'Awaiting today' : `Awaiting ${getAwaitingDays(todo)}d`}
             </span>
           )}
         </div>
