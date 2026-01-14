@@ -37,15 +37,15 @@
 Plans:
 - [x] 40-01: Awaiting checkbox + email lowercasing
 
-#### Phase 41: Bundle Optimization
+#### Phase 41: Bundle Optimization ✓
 
 **Goal**: Analyze current bundle sizes and optimize (grown since v2.5)
 **Depends on**: Phase 40
 **Research**: Unlikely (established patterns from v2.5)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 41-01: TBD (run /gsd:plan-phase 41 to break down)
+- [x] 41-01: Modal lazy loading (main bundle 460 KB → 50 KB)
 
 ---
 
@@ -379,6 +379,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.3 Todo Enhancement | 32-34 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.4 UI Polish | 35-37 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
-| v3.6 Quick Wins & Performance | 40-41 | 1/? | In progress | - |
+| v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 
-**Shipped: 13 milestones, 39 phases, 73 plans**
+**Shipped: 14 milestones, 41 phases, 75 plans**
