@@ -625,12 +625,23 @@ class PRM_REST_API extends PRM_REST_Base {
     }
     
     /**
-     * Get current theme version
+     * Get current theme version and build time
      * Used for cache invalidation on PWA/mobile apps
      */
     public function get_version($request) {
+        // Get build time from manifest file modification time
+        $build_time = null;
+        $manifest_path = PRM_THEME_DIR . '/dist/.vite/manifest.json';
+        if (file_exists($manifest_path)) {
+            $build_time = date('c', filemtime($manifest_path));
+        } else {
+            // Fallback to current time for dev mode
+            $build_time = date('c');
+        }
+
         return rest_ensure_response([
             'version' => PRM_THEME_VERSION,
+            'buildTime' => $build_time,
         ]);
     }
     
