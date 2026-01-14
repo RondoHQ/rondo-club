@@ -41,7 +41,7 @@ Plans:
 **Research**: Unlikely (internal patterns)
 
 Plans:
-- [ ] 25-01: TBD
+- [ ] 25-01: Integrate CPT todos into timeline and update cache invalidation
 
 #### Phase 26: Pending Response Model
 
