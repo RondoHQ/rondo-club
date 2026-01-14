@@ -72,7 +72,7 @@ Resume file: None
 
 ### Pending Todos
 
-9 todos in `.planning/todos/pending/`:
+10 todos in `.planning/todos/pending/`:
 1. ~~Add label management interface (ui)~~ — DONE in v3.4 Phase 37
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — DONE in v3.3
 3. Add import from Twenty CRM (api)
@@ -88,6 +88,7 @@ Resume file: None
 13. Update X logo color to black (ui)
 14. ~~Dashboard card styling consistency (ui)~~ — DONE in 38-01-FIX
 15. Add checkbox to awaiting response items (ui)
+16. Lowercase email addresses on save (api)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
