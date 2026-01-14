@@ -1303,6 +1303,117 @@ if (defined('WP_CLI') && WP_CLI) {
                 }
             }
         }
+
+        /**
+         * Migrate todos from related_person to related_persons
+         *
+         * This command migrates existing todos from single-person (related_person)
+         * to multi-person (related_persons) field format.
+         *
+         * ## OPTIONS
+         *
+         * [--dry-run]
+         * : Preview changes without making them
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm todos migrate-persons
+         *     wp prm todos migrate-persons --dry-run
+         *
+         * @when after_wp_load
+         */
+        public function migrate_persons($args, $assoc_args) {
+            $dry_run = isset($assoc_args['dry-run']);
+
+            if ($dry_run) {
+                WP_CLI::log('DRY RUN MODE - No changes will be made');
+            }
+
+            WP_CLI::log('');
+            WP_CLI::log('╔════════════════════════════════════════════════════════════╗');
+            WP_CLI::log('║         Caelis Todo Persons Migration                      ║');
+            WP_CLI::log('╚════════════════════════════════════════════════════════════╝');
+            WP_CLI::log('');
+            WP_CLI::log('This migration will:');
+            WP_CLI::log('  1. Find all todos with old related_person field');
+            WP_CLI::log('  2. Convert single person to related_persons array');
+            WP_CLI::log('  3. Remove old related_person meta');
+            WP_CLI::log('');
+
+            // Query all prm_todo posts (bypass access control)
+            global $wpdb;
+            $todo_ids = $wpdb->get_col(
+                "SELECT ID FROM {$wpdb->posts}
+                 WHERE post_type = 'prm_todo'
+                 AND post_status IN ('prm_open', 'prm_awaiting', 'prm_completed', 'publish')"
+            );
+
+            if (empty($todo_ids)) {
+                WP_CLI::success('No todos found. Nothing to migrate.');
+                return;
+            }
+
+            WP_CLI::log(sprintf('Found %d todo(s) to check.', count($todo_ids)));
+            WP_CLI::log('');
+
+            $migrated = 0;
+            $skipped_already_migrated = 0;
+            $skipped_no_person = 0;
+
+            foreach ($todo_ids as $todo_id) {
+                // Check if already has new format (related_persons)
+                $new_field = get_field('related_persons', $todo_id);
+                if ($new_field && is_array($new_field) && count($new_field) > 0) {
+                    $skipped_already_migrated++;
+                    continue;
+                }
+
+                // Get old single value (check raw meta since field name changed)
+                $old_value = get_post_meta($todo_id, 'related_person', true);
+                if (!$old_value) {
+                    $skipped_no_person++;
+                    continue;
+                }
+
+                $old_person_id = (int) $old_value;
+                $person_title = get_the_title($old_person_id) ?: 'Unknown';
+                $todo_title = get_the_title($todo_id);
+
+                WP_CLI::log(sprintf(
+                    'Todo #%d: "%s" → person %d (%s) → [%d]',
+                    $todo_id,
+                    wp_trim_words($todo_title, 8),
+                    $old_person_id,
+                    $person_title,
+                    $old_person_id
+                ));
+
+                if (!$dry_run) {
+                    // Save new array format
+                    update_field('related_persons', [$old_person_id], $todo_id);
+                    // Remove old meta
+                    delete_post_meta($todo_id, 'related_person');
+                }
+
+                $migrated++;
+            }
+
+            WP_CLI::log('');
+            WP_CLI::log('────────────────────────────────────────────────────────────────');
+            WP_CLI::log('Migration Summary:');
+            WP_CLI::log('────────────────────────────────────────────────────────────────');
+
+            $action = $dry_run ? 'Would migrate' : 'Migrated';
+            WP_CLI::log(sprintf('  %s: %d', $action, $migrated));
+            WP_CLI::log(sprintf('  Skipped (already migrated): %d', $skipped_already_migrated));
+            WP_CLI::log(sprintf('  Skipped (no person set): %d', $skipped_no_person));
+
+            if ($dry_run) {
+                WP_CLI::success('Dry run complete. Run without --dry-run to apply changes.');
+            } else {
+                WP_CLI::success(sprintf('Migration complete! %d todo(s) migrated to multi-person format.', $migrated));
+            }
+        }
     }
 
     /**
