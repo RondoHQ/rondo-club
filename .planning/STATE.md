@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 
 Milestone: v3.3 Todo Enhancement
 Phase: 32 (Todo Data Model Enhancement) — Not started
-Plan: —
-Status: Ready to plan
-Last activity: 2026-01-14 — Milestone v3.3 created
+Plan: 32-01
+Status: Ready to execute
+Last activity: 2026-01-14 — Plan 32-01 created
 
 Progress: [░░░░░░░░░░] 0/3 phases (0%)
 
@@ -67,11 +67,12 @@ Resume file: None
 
 ### Pending Todos
 
-4 todos in `.planning/todos/pending/`:
+5 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — Being addressed in v3.3
 3. Add import from Twenty CRM (api)
 4. Prioritize first name in search (api)
+5. Todo changes should invalidate dashboard cache (api)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
@@ -86,6 +87,4 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 32` — Plan Todo Data Model Enhancement phase
-- `/gsd:discuss-phase 32` — Gather context first
-- `/gsd:research-phase 32` — Investigate unknowns
+- `/gsd:execute-plan .planning/phases/32-todo-data-model/32-01-PLAN.md` — Execute the plan
