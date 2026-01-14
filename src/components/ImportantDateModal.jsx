@@ -229,6 +229,11 @@ export default function ImportantDateModal({
           is_recurring: dateItem.acf?.is_recurring ?? dateItem.is_recurring ?? true,
           year_unknown: dateItem.acf?.year_unknown ?? dateItem.year_unknown ?? false,
         });
+
+        // If custom_label is present, mark title as user-edited to prevent auto-generation
+        if (dateItem.custom_label) {
+          hasUserEditedTitle.current = true;
+        }
       } else {
         // New date - pre-fill with current person and today's date
         const today = new Date().toISOString().split('T')[0];

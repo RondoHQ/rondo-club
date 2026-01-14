@@ -255,6 +255,7 @@ abstract class PRM_REST_Base {
         return [
             'id'                   => $post->ID,
             'title'                => $this->sanitize_text($post->post_title),
+            'custom_label'         => $this->sanitize_text(get_field('custom_label', $post->ID)),
             'date_value'           => get_field('date_value', $post->ID),
             'is_recurring'         => (bool) get_field('is_recurring', $post->ID),
             'year_unknown'         => (bool) get_field('year_unknown', $post->ID),
