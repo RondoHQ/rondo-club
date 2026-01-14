@@ -11,10 +11,47 @@
 - ✅ [v2.5 Performance](milestones/v2.5-performance.md) (Phase 20) — SHIPPED 2026-01-13
 - ✅ [v3.0 Testing Infrastructure](milestones/v3.0-testing-infrastructure.md) (Phases 21-23) — SHIPPED 2026-01-13
 - ✅ [v3.1 Pending Response Tracking](milestones/v3.1-pending-response-tracking.md) (Phases 24-28) — SHIPPED 2026-01-14
+- 🚧 **v3.2 Person Profile Polish** (Phases 29-31) — IN PROGRESS
 
 ## Current Status
 
-**Active:** No active milestone — ready to plan next work
+**Active:** v3.2 Person Profile Polish — Phase 29
+
+---
+
+### 🚧 v3.2 Person Profile Polish (In Progress)
+
+**Milestone Goal:** Enhance the PersonDetail page with role/job display in header and a persistent todos sidebar.
+
+#### Phase 29: Header Enhancement
+
+**Goal**: Add role/job display to person header showing current position and organization
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (internal UI patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 29-01: TBD (run /gsd:plan-phase 29 to break down)
+
+#### Phase 30: Todos Sidebar
+
+**Goal**: Create persistent sidebar showing person's todos across all tabs
+**Depends on**: Phase 29
+**Research**: Unlikely (internal UI patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 30-01: TBD
+
+#### Phase 31: Sidebar Polish
+
+**Goal**: Responsive behavior, collapse/expand, mobile handling
+**Depends on**: Phase 30
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 31-01: TBD
 
 ---
 
@@ -237,5 +274,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
 | v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
+| v3.2 Person Profile Polish | 29-31 | 0/? | In Progress 🚧 | - |
 
 **Shipped: 9 milestones, 28 phases, 62 plans**
