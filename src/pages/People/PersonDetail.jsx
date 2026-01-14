@@ -131,6 +131,9 @@ export default function PersonDetail() {
   const [todoToComplete, setTodoToComplete] = useState(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [activityInitialData, setActivityInitialData] = useState(null);
+
+  // Mobile todos panel state
+  const [showMobileTodos, setShowMobileTodos] = useState(false);
   
   // Fetch available labels
   const { data: availableLabelsData } = useQuery({
@@ -2164,6 +2167,148 @@ export default function PersonDetail() {
           </div>
         </aside>
       </div>
+
+      {/* Mobile Todos FAB - visible on screens below lg */}
+      <button
+        onClick={() => setShowMobileTodos(true)}
+        className="fixed bottom-6 right-6 z-40 lg:hidden bg-primary-600 hover:bg-primary-700 text-white rounded-full p-4 shadow-lg transition-colors"
+        title="View todos"
+      >
+        <CheckSquare2 className="w-6 h-6" />
+        {openTodosCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-primary-100 text-primary-700 text-xs font-medium px-2 py-0.5 rounded-full min-w-[20px] text-center">
+            {openTodosCount}
+          </span>
+        )}
+      </button>
+
+      {/* Mobile Todos Slide-up Panel */}
+      {showMobileTodos && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setShowMobileTodos(false)}
+          />
+          {/* Panel */}
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-xl max-h-[80vh] overflow-hidden flex flex-col animate-slide-up">
+            {/* Drag indicator */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+            </div>
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold text-lg">Todos</h2>
+                {openTodosCount > 0 && (
+                  <span className="bg-primary-100 text-primary-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                    {openTodosCount}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setEditingTodo(null);
+                    setShowTodoModal(true);
+                    setShowMobileTodos(false);
+                  }}
+                  className="btn-secondary text-sm"
+                  title="Add todo"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setShowMobileTodos(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                  title="Close"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {sortedTodos.length > 0 ? (
+                <div className="space-y-2">
+                  {sortedTodos.map((todo) => {
+                    const isOverdue = isTodoOverdue(todo);
+                    const awaitingDays = getAwaitingDays(todo);
+                    return (
+                      <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 group">
+                        <button
+                          onClick={() => handleToggleTodo(todo)}
+                          className="mt-0.5 mr-2 flex-shrink-0"
+                          title={todo.status === 'completed' ? 'Reopen' : todo.status === 'awaiting' ? 'Mark complete' : 'Complete'}
+                        >
+                          {todo.status === 'completed' ? (
+                            <CheckSquare2 className="w-5 h-5 text-primary-600" />
+                          ) : todo.status === 'awaiting' ? (
+                            <Clock className="w-5 h-5 text-orange-500" />
+                          ) : (
+                            <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
+                          )}
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm ${
+                            todo.status === 'completed'
+                              ? 'line-through text-gray-400'
+                              : todo.status === 'awaiting'
+                              ? 'text-orange-700'
+                              : isOverdue
+                              ? 'text-red-600'
+                              : ''
+                          }`}>
+                            {todo.content}
+                          </p>
+                          {/* Due date - only show for open todos */}
+                          {todo.due_date && todo.status === 'open' && (
+                            <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                              Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
+                              {isOverdue && ' (overdue)'}
+                            </p>
+                          )}
+                          {/* Awaiting indicator */}
+                          {todo.status === 'awaiting' && awaitingDays !== null && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1 ${getAwaitingUrgencyClass(awaitingDays)}`}>
+                              <Clock className="w-3 h-3" />
+                              {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 ml-2">
+                          <button
+                            onClick={() => {
+                              setEditingTodo(todo);
+                              setShowTodoModal(true);
+                              setShowMobileTodos(false);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Edit todo"
+                          >
+                            <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTodo(todo.id)}
+                            className="p-1 hover:bg-red-50 rounded"
+                            title="Delete todo"
+                          >
+                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No todos yet.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <NoteModal
