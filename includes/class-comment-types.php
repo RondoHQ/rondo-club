@@ -451,14 +451,16 @@ class PRM_Comment_Types {
 
         // Also fetch todos from the prm_todo CPT
         // Access control is automatic via PRM_Access_Control hooks on WP_Query
+        // Use LIKE query since ACF stores serialized arrays for related_persons
         $todos = get_posts([
             'post_type'      => 'prm_todo',
             'post_status'    => ['prm_open', 'prm_awaiting', 'prm_completed'],
             'posts_per_page' => -1,
             'meta_query'     => [
                 [
-                    'key'   => 'related_person',
-                    'value' => $person_id,
+                    'key'     => 'related_persons',
+                    'value'   => sprintf('"%d"', $person_id),
+                    'compare' => 'LIKE',
                 ],
             ],
         ]);
@@ -471,18 +473,37 @@ class PRM_Comment_Types {
         ];
 
         foreach ($todos as $todo) {
+            // Get all related persons for this todo
+            $related_person_ids = get_field('related_persons', $todo->ID) ?: [];
+            if (!is_array($related_person_ids)) {
+                $related_person_ids = $related_person_ids ? [$related_person_ids] : [];
+            }
+
+            // Build persons array with details
+            $persons = [];
+            foreach ($related_person_ids as $pid) {
+                $persons[] = [
+                    'id'   => (int) $pid,
+                    'name' => get_the_title($pid),
+                ];
+            }
+
             $timeline[] = [
                 'id'             => $todo->ID,
                 'type'           => 'todo',
                 'content'        => $todo->post_title,
                 'author_id'      => (int) $todo->post_author,
                 'created'        => $todo->post_date,
+                // Keep deprecated fields for backward compatibility
                 'person_id'      => (int) $person_id,
                 'person_name'    => get_the_title($person_id),
+                // New multi-person format
+                'persons'        => $persons,
+                'notes'          => get_field('notes', $todo->ID) ?: null,
                 'status'         => $status_map[$todo->post_status] ?? 'open',
                 'is_completed'   => $todo->post_status === 'prm_completed',
                 'due_date'       => get_field('due_date', $todo->ID) ?: null,
-                'awaiting_since' => get_post_meta($todo->ID, 'awaiting_since', true) ?: null,
+                'awaiting_since' => get_field('awaiting_since', $todo->ID) ?: null,
             ];
         }
 
