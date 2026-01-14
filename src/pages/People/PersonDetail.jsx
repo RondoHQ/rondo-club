@@ -1568,18 +1568,31 @@ export default function PersonDetail() {
                         <div className="flex items-center rounded-md -mx-2 px-2 py-1.5">
                           <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
                           <div className="flex-1 min-w-0 flex items-center gap-2">
-                            <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
-                            {linkHref ? (
+                            {isSlack ? (
                               <a
-                                href={linkHref}
-                                target={linkTarget || undefined}
-                                rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
+                                href={contact.contact_value}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="text-primary-600 hover:text-primary-700 hover:underline"
                               >
-                                {contact.contact_value}
+                                {contact.contact_label || 'Slack'}
                               </a>
                             ) : (
-                              <span>{contact.contact_value}</span>
+                              <>
+                                <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
+                                {linkHref ? (
+                                  <a
+                                    href={linkHref}
+                                    target={linkTarget || undefined}
+                                    rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
+                                    className="text-primary-600 hover:text-primary-700 hover:underline"
+                                  >
+                                    {contact.contact_value}
+                                  </a>
+                                ) : (
+                                  <span>{contact.contact_value}</span>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
