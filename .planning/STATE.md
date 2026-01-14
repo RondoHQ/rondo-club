@@ -69,13 +69,14 @@ Resume file: None
 
 ### Pending Todos
 
-6 todos in `.planning/todos/pending/`:
+7 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — Being addressed in v3.3
 3. Add import from Twenty CRM (api)
 4. Prioritize first name in search (api)
 5. Todo changes should invalidate dashboard cache (api)
 6. Add Awaiting block to dashboard (ui)
+7. Make Timeline panel 2 columns wide on desktop (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
