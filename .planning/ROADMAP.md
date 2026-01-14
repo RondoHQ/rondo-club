@@ -13,44 +13,40 @@
 - ✅ [v3.1 Pending Response Tracking](milestones/v3.1-pending-response-tracking.md) (Phases 24-28) — SHIPPED 2026-01-14
 - ✅ [v3.2 Person Profile Polish](milestones/v3.2-person-profile-polish.md) (Phases 29-31) — SHIPPED 2026-01-14
 - ✅ [v3.3 Todo Enhancement](milestones/v3.3-todo-enhancement.md) (Phases 32-34) — SHIPPED 2026-01-14
-- 🚧 **v3.4 UI Polish** (Phases 35-37) — IN PROGRESS
+- ✅ [v3.4 UI Polish](milestones/v3.4-ui-polish.md) (Phases 35-37) — SHIPPED 2026-01-14
 
 ## Current Status
 
-**Active:** v3.4 UI Polish — 3 phases, quick wins + dashboard + label management
+**Active:** None — Use `/gsd:discuss-milestone` to plan next work
 
 ---
 
-### 🚧 v3.4 UI Polish (In Progress)
+<details>
+<summary>✅ v3.4 UI Polish (Phases 35-37) — SHIPPED 2026-01-14</summary>
 
 **Milestone Goal:** Clean up UI, add missing dashboard features, and complete quick wins from backlog.
 
-#### Phase 35: Quick Fixes
+**Result:** Clickable links, label management UI, dashboard enhancements, build-time refresh detection
 
-**Goal**: Small UI improvements - clickable links, remove labels, Slack display, build number
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal patterns)
+**Phases:**
+- [x] Phase 35: Quick Fixes (1/1 plan) ✓
+- [x] Phase 36: Dashboard Enhancement (1/1 plan) ✓
+- [x] Phase 37: Label Management (1/1 plan) ✓
 
-Plans:
-- [x] 35-01: Quick Fixes (website links, labels removal, Slack display, build timestamps) ✓
+**Total:** 3 phases, 3 plans
 
-#### Phase 36: Dashboard Enhancement
+**Key Accomplishments:**
+- Clickable website links in Organizations list
+- Labels column removed from Organizations list
+- Simplified Slack contact display
+- Build-time based refresh detection
+- Awaiting todos count in dashboard stats (5-column grid)
+- Full-width Timeline panel on person profile
+- Labels CRUD interface at /settings/labels
 
-**Goal**: Add Awaiting block to dashboard, make Timeline panel 2 columns wide on desktop
-**Depends on**: Phase 35
-**Research**: Unlikely (internal patterns)
+See [milestone archive](milestones/v3.4-ui-polish.md) for full details.
 
-Plans:
-- [x] 36-01: Dashboard stats with awaiting count + Timeline full width
-
-#### Phase 37: Label Management
-
-**Goal**: Full CRUD interface for managing labels (people and company labels)
-**Depends on**: Phase 36
-**Research**: Unlikely (internal patterns, existing taxonomy infrastructure)
-
-Plans:
-- [x] 37-01: Labels CRUD interface at /settings/labels ✓
+</details>
 
 ---
 
@@ -327,6 +323,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
 | v3.2 Person Profile Polish | 29-31 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.3 Todo Enhancement | 32-34 | 3/3 | Complete ✅ | 2026-01-14 |
-| v3.4 UI Polish | 35-37 | 3/3 | In Progress 🚧 | - |
+| v3.4 UI Polish | 35-37 | 3/3 | Complete ✅ | 2026-01-14 |
 
-**Shipped: 11 milestones, 34 phases, 68 plans**
+**Shipped: 12 milestones, 37 phases, 71 plans**
