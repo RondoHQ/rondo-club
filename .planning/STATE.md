@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Milestone: v3.3 Todo Enhancement
-Phase: 33 (Todo Modal UI Enhancement) — Complete
+Phase: 34 (Cross-Person Todo Display) — Complete
 Plan: 1 of 1 in phase complete
-Status: Phase complete, ready for Phase 34
-Last activity: 2026-01-14 — Completed 33-01-PLAN.md
+Status: Milestone complete, ready for completion
+Last activity: 2026-01-14 — Completed 34-01-PLAN.md
 
-Progress: [██████░░░░] 2/3 phases (67%)
+Progress: [██████████] 3/3 phases (100%)
 
 ## Completed Milestones
 
@@ -53,6 +53,9 @@ See `.planning/ISSUES.md`:
 | 33 | Multi-person selector only in edit mode for TodoModal | New todos context-bound to person page |
 | 33 | Notes section collapsible by default | Avoid modal height bloat |
 | 33 | Stacked avatars (max 3) with +N overflow | Clean multi-person display |
+| 34 | Smaller avatars (w-5 h-5) in PersonDetail sidebar | Compact sidebar space constraints |
+| 34 | Max 2 avatars in sidebar vs 3 in TodosList | Space limitations in sidebar |
+| 34 | Filter out current person from "Also:" display | Only show OTHER linked people |
 
 ## Roadmap Evolution
 
@@ -65,7 +68,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed Phase 33 (33-01-PLAN.md)
+Stopped at: Completed Phase 34 (34-01-PLAN.md) - Milestone v3.3 complete
 Resume file: None
 
 ## Accumulated Context
@@ -97,5 +100,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 34` — Plan Phase 34 (Timeline Integration) if planned
+- `/gsd:complete-milestone` — Complete and archive milestone v3.3
 - Run `wp prm todos migrate-persons` on production after deployment

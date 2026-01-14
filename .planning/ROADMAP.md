@@ -16,7 +16,7 @@
 
 ## Current Status
 
-**Active:** v3.3 Todo Enhancement — Phase 33 (Phase 32 complete)
+**Active:** v3.3 Todo Enhancement — All phases complete, ready for milestone completion
 
 ---
 
@@ -34,25 +34,25 @@
 Plans:
 - [x] 32-01: Todo Data Model Enhancement (notes field, multi-person, REST API, migration)
 
-#### Phase 33: Todo Modal & UI Enhancement
+#### Phase 33: Todo Modal & UI Enhancement ✓
 
 **Goal**: Expand TodoModal with notes editor and multi-person selector, visual polish
 **Depends on**: Phase 32
 **Research**: Unlikely (TipTap already in codebase, existing patterns)
-**Plans**: TBD
+**Result**: TipTap notes editor, multi-person selector in edit mode, stacked avatars in TodosList
 
 Plans:
-- [ ] 33-01: TBD
+- [x] 33-01: Todo Modal UI Enhancement (notes editor, multi-person selector, visual polish)
 
-#### Phase 34: Cross-Person Todo Display
+#### Phase 34: Cross-Person Todo Display ✓
 
 **Goal**: Show shared todos on each linked person's profile with proper indicators
 **Depends on**: Phase 33
 **Research**: Unlikely (internal patterns, extending existing UI)
-**Plans**: TBD
+**Result**: Stacked avatars in PersonDetail todos sidebar, thumbnail in timeline API
 
 Plans:
-- [ ] 34-01: TBD
+- [x] 34-01: Cross-Person Display (stacked avatars in sidebar, thumbnail API support)
 
 ---
 
@@ -301,6 +301,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
 | v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
 | v3.2 Person Profile Polish | 29-31 | 3/3 | Complete ✅ | 2026-01-14 |
-| v3.3 Todo Enhancement | 32-34 | 1/? | In Progress 🚧 | - |
+| v3.3 Todo Enhancement | 32-34 | 3/3 | In Progress 🚧 | - |
 
 **Shipped: 10 milestones, 31 phases, 65 plans**
