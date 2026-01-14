@@ -12,47 +12,38 @@
 - ✅ [v3.0 Testing Infrastructure](milestones/v3.0-testing-infrastructure.md) (Phases 21-23) — SHIPPED 2026-01-13
 - ✅ [v3.1 Pending Response Tracking](milestones/v3.1-pending-response-tracking.md) (Phases 24-28) — SHIPPED 2026-01-14
 - ✅ [v3.2 Person Profile Polish](milestones/v3.2-person-profile-polish.md) (Phases 29-31) — SHIPPED 2026-01-14
-- 🚧 **v3.3 Todo Enhancement** (Phases 32-34) — IN PROGRESS
+- ✅ [v3.3 Todo Enhancement](milestones/v3.3-todo-enhancement.md) (Phases 32-34) — SHIPPED 2026-01-14
 
 ## Current Status
 
-**Active:** v3.3 Todo Enhancement — All phases complete, ready for milestone completion
+**Active:** None — Use `/gsd:discuss-milestone` to plan next work
 
 ---
 
-### 🚧 v3.3 Todo Enhancement (In Progress)
+<details>
+<summary>✅ v3.3 Todo Enhancement (Phases 32-34) — SHIPPED 2026-01-14</summary>
 
 **Milestone Goal:** Expand todo functionality with notes/description field, multi-person support, and visual polish.
 
-#### Phase 32: Todo Data Model Enhancement ✓
+**Result:** Notes ACF field, multi-person linking, enhanced modals, stacked avatar displays
 
-**Goal**: Add notes field to todos, change to multi-person model, update REST API
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal patterns, existing ACF fields)
-**Result**: notes ACF field, related_persons multi-value, REST API with persons array, migration CLI
+**Phases:**
+- [x] Phase 32: Todo Data Model Enhancement (1/1 plan) ✓
+- [x] Phase 33: Todo Modal UI Enhancement (1/1 plan) ✓
+- [x] Phase 34: Cross-Person Todo Display (1/1 plan) ✓
 
-Plans:
-- [x] 32-01: Todo Data Model Enhancement (notes field, multi-person, REST API, migration)
+**Total:** 3 phases, 3 plans
 
-#### Phase 33: Todo Modal & UI Enhancement ✓
+**Key Accomplishments:**
+- WYSIWYG notes field for todo descriptions
+- Multi-person todo linking with migration CLI
+- TodoModal with notes editor and multi-person selector
+- Stacked avatar displays in TodosList and PersonDetail
+- Cross-person visibility with "Also:" indicator
 
-**Goal**: Expand TodoModal with notes editor and multi-person selector, visual polish
-**Depends on**: Phase 32
-**Research**: Unlikely (TipTap already in codebase, existing patterns)
-**Result**: TipTap notes editor, multi-person selector in edit mode, stacked avatars in TodosList
+See [milestone archive](milestones/v3.3-todo-enhancement.md) for full details.
 
-Plans:
-- [x] 33-01: Todo Modal UI Enhancement (notes editor, multi-person selector, visual polish)
-
-#### Phase 34: Cross-Person Todo Display ✓
-
-**Goal**: Show shared todos on each linked person's profile with proper indicators
-**Depends on**: Phase 33
-**Research**: Unlikely (internal patterns, extending existing UI)
-**Result**: Stacked avatars in PersonDetail todos sidebar, thumbnail in timeline API
-
-Plans:
-- [x] 34-01: Cross-Person Display (stacked avatars in sidebar, thumbnail API support)
+</details>
 
 ---
 
@@ -301,6 +292,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
 | v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
 | v3.2 Person Profile Polish | 29-31 | 3/3 | Complete ✅ | 2026-01-14 |
-| v3.3 Todo Enhancement | 32-34 | 3/3 | In Progress 🚧 | - |
+| v3.3 Todo Enhancement | 32-34 | 3/3 | Complete ✅ | 2026-01-14 |
 
-**Shipped: 10 milestones, 31 phases, 65 plans**
+**Shipped: 11 milestones, 34 phases, 68 plans**
