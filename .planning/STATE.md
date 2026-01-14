@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Milestone: v3.5 Bug Fixes & Polish
-Phase: 38 (Quick UI Fixes) — Complete
-Plan: 1/1 in current phase
+Phase: 38 (Quick UI Fixes) — Complete (including FIX plan)
+Plan: 1/1 + FIX in current phase
 Status: Phase complete
-Last activity: 2026-01-14 — Completed 38-01-PLAN.md
+Last activity: 2026-01-14 — Completed 38-01-FIX.md
 
 Progress: [█████░░░░░] 1/2 phases (50%)
 
@@ -64,7 +64,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed 38-01-PLAN.md
+Stopped at: Completed 38-01-FIX.md (UAT fix for dashboard icon colors)
 Resume file: None
 
 ## Accumulated Context
@@ -85,7 +85,7 @@ Resume file: None
 11. ~~Use build numbers for refresh indicator (ui)~~ — DONE in v3.4
 12. Important date name overwritten by auto-title (api)
 13. Update X logo color to black (ui)
-14. Dashboard card styling consistency (ui)
+14. ~~Dashboard card styling consistency (ui)~~ — DONE in 38-01-FIX
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
