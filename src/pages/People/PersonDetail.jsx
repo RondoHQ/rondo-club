@@ -1493,9 +1493,9 @@ export default function PersonDetail() {
       </div>
 
       {/* Tab Content */}
-      <div className="flex gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content */}
-        <div className="flex-1 min-w-0 space-y-6">
+        <div className="lg:col-span-2 min-w-0 space-y-6">
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="columns-1 md:columns-2 gap-6">
@@ -2065,7 +2065,7 @@ export default function PersonDetail() {
         </div>
 
         {/* Todos Sidebar - always visible */}
-        <aside className="w-80 flex-shrink-0 hidden lg:block">
+        <aside className="hidden lg:block">
           <div className="sticky top-6">
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
