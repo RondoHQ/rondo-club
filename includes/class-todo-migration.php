@@ -77,13 +77,13 @@ class PRM_Todo_Migration {
             'skipped'   => 0,
         ];
 
-        // Get all todos with 'publish' status (old system)
-        $todos = get_posts([
-            'post_type'      => 'prm_todo',
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-        ]);
+        // Get all todos with 'publish' status using direct DB query
+        // This bypasses access control filters that would otherwise restrict results
+        $todos = $wpdb->get_col($wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
+            'prm_todo',
+            'publish'
+        ));
 
         foreach ($todos as $todo_id) {
             $stats['total']++;
