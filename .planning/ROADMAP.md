@@ -41,7 +41,7 @@ Plans:
 **Research**: Unlikely (internal patterns)
 
 Plans:
-- [ ] 36-01: TBD (run /gsd:plan-phase 36 to break down)
+- [x] 36-01: Dashboard stats with awaiting count + Timeline full width
 
 #### Phase 37: Label Management
 
@@ -327,6 +327,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
 | v3.2 Person Profile Polish | 29-31 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.3 Todo Enhancement | 32-34 | 3/3 | Complete ✅ | 2026-01-14 |
-| v3.4 UI Polish | 35-37 | 0/? | In Progress 🚧 | - |
+| v3.4 UI Polish | 35-37 | 2/? | In Progress 🚧 | - |
 
 **Shipped: 11 milestones, 34 phases, 68 plans**
