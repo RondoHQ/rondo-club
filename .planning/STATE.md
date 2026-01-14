@@ -81,9 +81,10 @@ Resume file: None
 
 ### Pending Todos
 
-2 todos in `.planning/todos/pending/`:
+3 todos in `.planning/todos/pending/`:
 1. Add pending response tracking (ui)
 2. Add label management interface (ui)
+3. Convert todos to custom post type (api)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
