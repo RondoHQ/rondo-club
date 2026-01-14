@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Milestone: v3.3 Todo Enhancement
-Phase: 32 (Todo Data Model Enhancement) — Not started
-Plan: 32-01
-Status: Ready to execute
-Last activity: 2026-01-14 — Plan 32-01 created
+Phase: 32 (Todo Data Model Enhancement) — Complete
+Plan: 1 of 1 in phase complete
+Status: Phase complete, ready for Phase 33
+Last activity: 2026-01-14 — Completed 32-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0/3 phases (0%)
+Progress: [███░░░░░░░] 1/3 phases (33%)
 
 ## Completed Milestones
 
@@ -47,7 +47,9 @@ See `.planning/ISSUES.md`:
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
-| — | — | — |
+| 32 | Keep deprecated person_id/person_name/person_thumbnail | Backward compatibility during v3.3 transition |
+| 32 | LIKE query for serialized ACF arrays | Format `"%d"` matches ID in serialized string |
+| 32 | XSS sanitization with wp_kses_post | Consistent with notes/activities rich text handling |
 
 ## Roadmap Evolution
 
@@ -60,7 +62,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Milestone v3.3 initialization
+Stopped at: Completed Phase 32 (32-01-PLAN.md)
 Resume file: None
 
 ## Accumulated Context
@@ -88,4 +90,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:execute-plan .planning/phases/32-todo-data-model/32-01-PLAN.md` — Execute the plan
+- `/gsd:plan-phase 33` — Plan Phase 33 (Todo Modal & UI Enhancement)
+- Run `wp prm todos migrate-persons` on production after deployment

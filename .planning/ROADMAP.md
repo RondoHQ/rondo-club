@@ -16,7 +16,7 @@
 
 ## Current Status
 
-**Active:** v3.3 Todo Enhancement — Phase 32
+**Active:** v3.3 Todo Enhancement — Phase 33 (Phase 32 complete)
 
 ---
 
@@ -24,15 +24,15 @@
 
 **Milestone Goal:** Expand todo functionality with notes/description field, multi-person support, and visual polish.
 
-#### Phase 32: Todo Data Model Enhancement
+#### Phase 32: Todo Data Model Enhancement ✓
 
 **Goal**: Add notes field to todos, change to multi-person model, update REST API
 **Depends on**: Previous milestone complete
 **Research**: Unlikely (internal patterns, existing ACF fields)
-**Plans**: TBD
+**Result**: notes ACF field, related_persons multi-value, REST API with persons array, migration CLI
 
 Plans:
-- [ ] 32-01: TBD (run /gsd:plan-phase 32 to break down)
+- [x] 32-01: Todo Data Model Enhancement (notes field, multi-person, REST API, migration)
 
 #### Phase 33: Todo Modal & UI Enhancement
 
@@ -301,6 +301,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
 | v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
 | v3.2 Person Profile Polish | 29-31 | 3/3 | Complete ✅ | 2026-01-14 |
-| v3.3 Todo Enhancement | 32-34 | 0/? | In Progress 🚧 | - |
+| v3.3 Todo Enhancement | 32-34 | 1/? | In Progress 🚧 | - |
 
 **Shipped: 10 milestones, 31 phases, 65 plans**
