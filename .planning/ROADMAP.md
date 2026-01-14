@@ -27,7 +27,10 @@
 **Research**: Unlikely (internal patterns)
 
 Plans:
-- [ ] 24-01: TBD (run /gsd:plan-phase 24 to break down)
+- [x] 24-01: Register prm_todo CPT with ACF fields and access control
+- [ ] 24-02: REST API endpoints for todo CRUD
+- [ ] 24-03: Migration from comment-based todos
+- [ ] 24-04: Update tests for new todo system
 
 #### Phase 25: Todo UI Migration
 
@@ -258,6 +261,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
-| v3.1 Pending Response Tracking | 24-28 | 0/? | In Progress 🚧 | - |
+| v3.1 Pending Response Tracking | 24-28 | 1/? | In Progress 🚧 | - |
 
 **Shipped: 23 phases, 53 plans**

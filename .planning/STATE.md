@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 
 Milestone: v3.1 Pending Response Tracking
 Phase: 24 of 28 (Todo Post Type)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-14 — Milestone v3.1 created
+Plan: 1 of 4 in current phase
+Status: In progress
+Last activity: 2026-01-14 — Completed 24-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █░░░░░░░░░ 2%
 
 ## Completed Milestones
 
@@ -75,7 +75,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Milestone v3.1 initialization
+Stopped at: Completed 24-01-PLAN.md (prm_todo CPT registration)
 Resume file: None
 
 ## Accumulated Context
@@ -94,6 +94,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 24` — plan Phase 24: Todo Post Type
-- `/gsd:discuss-phase 24` — gather context before planning
-- `/gsd:research-phase 24` — investigate unknowns (if needed)
+- `/gsd:execute-plan .planning/phases/24-todo-post-type/24-02-PLAN.md` — REST API endpoints
+- `/gsd:verify-work 24-01` — verify prm_todo registration
+- `/gsd:progress` — check overall progress
