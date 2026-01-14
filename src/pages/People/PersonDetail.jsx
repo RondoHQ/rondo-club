@@ -1228,7 +1228,7 @@ export default function PersonDetail() {
       case 'facebook': return 'text-[#1877F2]';
       case 'linkedin': return 'text-[#0077B7]'; // LinkedIn brand color
       case 'instagram': return 'text-[#E4405F]';
-      case 'twitter': return 'text-[#1DA1F2]';
+      case 'twitter': return 'text-[#000000]';
       case 'bluesky': return 'text-[#00A8E8]'; // Bluesky brand color
       case 'threads': return 'text-[#000000]'; // Threads brand color (black)
       case 'whatsapp': return 'text-[#25D366]'; // WhatsApp brand color

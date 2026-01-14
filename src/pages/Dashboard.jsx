@@ -188,7 +188,7 @@ function AwaitingTodoCard({ todo }) {
   return (
     <Link
       to={`/people/${todo.person_id}`}
-      className="flex items-start p-3 hover:bg-gray-50 transition-colors"
+      className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors"
     >
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">{todo.content}</p>
