@@ -14,7 +14,6 @@ class PRM_Comment_Types {
      */
     const TYPE_NOTE = 'prm_note';
     const TYPE_ACTIVITY = 'prm_activity';
-    const TYPE_TODO = 'prm_todo';
     
     public function __construct() {
         // Register REST API routes for notes and activities
@@ -70,21 +69,6 @@ class PRM_Comment_Types {
             ],
         ]);
         
-        // Todo-specific meta
-        register_comment_meta('comment', 'is_completed', [
-            'type'         => 'boolean',
-            'description'  => 'Todo completion status',
-            'single'       => true,
-            'show_in_rest' => true,
-        ]);
-        
-        register_comment_meta('comment', 'due_date', [
-            'type'         => 'string',
-            'description'  => 'Due date for the todo',
-            'single'       => true,
-            'show_in_rest' => true,
-        ]);
-
         // Note visibility meta
         register_comment_meta('comment', '_note_visibility', [
             'type'         => 'string',
@@ -159,34 +143,7 @@ class PRM_Comment_Types {
             ],
         ]);
         
-        // Todos endpoints
-        register_rest_route('prm/v1', '/people/(?P<person_id>\d+)/todos', [
-            [
-                'methods'             => WP_REST_Server::READABLE,
-                'callback'            => [$this, 'get_todos'],
-                'permission_callback' => [$this, 'check_person_access'],
-            ],
-            [
-                'methods'             => WP_REST_Server::CREATABLE,
-                'callback'            => [$this, 'create_todo'],
-                'permission_callback' => [$this, 'check_person_access'],
-            ],
-        ]);
-        
-        register_rest_route('prm/v1', '/todos/(?P<id>\d+)', [
-            [
-                'methods'             => WP_REST_Server::EDITABLE,
-                'callback'            => [$this, 'update_todo'],
-                'permission_callback' => [$this, 'check_comment_access'],
-            ],
-            [
-                'methods'             => WP_REST_Server::DELETABLE,
-                'callback'            => [$this, 'delete_todo'],
-                'permission_callback' => [$this, 'check_comment_access'],
-            ],
-        ]);
-        
-        // Timeline endpoint (combined notes + activities + todos)
+        // Timeline endpoint (combined notes + activities)
         register_rest_route('prm/v1', '/people/(?P<person_id>\d+)/timeline', [
             'methods'             => WP_REST_Server::READABLE,
             'callback'            => [$this, 'get_timeline'],
@@ -458,103 +415,7 @@ class PRM_Comment_Types {
     }
     
     /**
-     * Get todos for a person
-     */
-    public function get_todos($request) {
-        $person_id = $request->get_param('person_id');
-        
-        $comments = get_comments([
-            'post_id' => $person_id,
-            'type'    => self::TYPE_TODO,
-            'status'  => 'approve',
-            'orderby' => 'comment_date',
-            'order'   => 'DESC',
-        ]);
-        
-        return rest_ensure_response($this->format_comments($comments, 'todo'));
-    }
-    
-    /**
-     * Create a todo
-     */
-    public function create_todo($request) {
-        $person_id = $request->get_param('person_id');
-        $content = sanitize_textarea_field($request->get_param('content'));
-        $due_date = sanitize_text_field($request->get_param('due_date'));
-        $is_completed = $request->get_param('is_completed');
-        
-        if (empty($content)) {
-            return new WP_Error('empty_content', __('Todo description is required.', 'personal-crm'), ['status' => 400]);
-        }
-        
-        $comment_id = wp_insert_comment([
-            'comment_post_ID' => $person_id,
-            'comment_content' => $content,
-            'comment_type'    => self::TYPE_TODO,
-            'user_id'         => get_current_user_id(),
-            'comment_approved' => 1,
-        ]);
-        
-        if (!$comment_id) {
-            return new WP_Error('create_failed', __('Failed to create todo.', 'personal-crm'), ['status' => 500]);
-        }
-        
-        // Save meta
-        update_comment_meta($comment_id, 'is_completed', $is_completed ? 1 : 0);
-        if ($due_date) {
-            update_comment_meta($comment_id, 'due_date', $due_date);
-        }
-        
-        $comment = get_comment($comment_id);
-        
-        return rest_ensure_response($this->format_comment($comment, 'todo'));
-    }
-    
-    /**
-     * Update a todo
-     */
-    public function update_todo($request) {
-        $comment_id = $request->get_param('id');
-        $content = sanitize_textarea_field($request->get_param('content'));
-        $due_date = $request->get_param('due_date');
-        $is_completed = $request->get_param('is_completed');
-        
-        $result = wp_update_comment([
-            'comment_ID'      => $comment_id,
-            'comment_content' => $content,
-        ]);
-        
-        // wp_update_comment returns false on failure, 0 if no changes, 1 if updated
-        if ($result === false || is_wp_error($result)) {
-            return new WP_Error('update_failed', __('Failed to update todo.', 'personal-crm'), ['status' => 500]);
-        }
-        
-        // Update meta
-        if ($is_completed !== null) {
-            update_comment_meta($comment_id, 'is_completed', $is_completed ? 1 : 0);
-        }
-        if ($due_date !== null) {
-            if (empty($due_date)) {
-                delete_comment_meta($comment_id, 'due_date');
-            } else {
-                update_comment_meta($comment_id, 'due_date', sanitize_text_field($due_date));
-            }
-        }
-        
-        $comment = get_comment($comment_id);
-        
-        return rest_ensure_response($this->format_comment($comment, 'todo'));
-    }
-    
-    /**
-     * Delete a todo
-     */
-    public function delete_todo($request) {
-        return $this->delete_note($request); // Same logic
-    }
-    
-    /**
-     * Get combined timeline (notes + activities + todos)
+     * Get combined timeline (notes + activities)
      */
     public function get_timeline($request) {
         $person_id = $request->get_param('person_id');
@@ -562,7 +423,7 @@ class PRM_Comment_Types {
 
         $comments = get_comments([
             'post_id'  => $person_id,
-            'type__in' => [self::TYPE_NOTE, self::TYPE_ACTIVITY, self::TYPE_TODO],
+            'type__in' => [self::TYPE_NOTE, self::TYPE_ACTIVITY],
             'status'   => 'approve',
             'orderby'  => 'comment_date',
             'order'    => 'DESC',
@@ -574,8 +435,6 @@ class PRM_Comment_Types {
             $type = 'note';
             if ($comment->comment_type === self::TYPE_ACTIVITY) {
                 $type = 'activity';
-            } elseif ($comment->comment_type === self::TYPE_TODO) {
-                $type = 'todo';
             }
 
             // Apply visibility filtering for notes
@@ -633,13 +492,6 @@ class PRM_Comment_Types {
             $data['activity_date'] = get_comment_meta($comment->comment_ID, 'activity_date', true);
             $data['activity_time'] = get_comment_meta($comment->comment_ID, 'activity_time', true);
             $data['participants'] = get_comment_meta($comment->comment_ID, 'participants', true) ?: [];
-        }
-        
-        // Add todo-specific meta
-        if ($type === 'todo') {
-            $is_completed = get_comment_meta($comment->comment_ID, 'is_completed', true);
-            $data['is_completed'] = !empty($is_completed);
-            $data['due_date'] = get_comment_meta($comment->comment_ID, 'due_date', true) ?: null;
         }
 
         // Add note-specific meta (visibility)
@@ -705,7 +557,7 @@ class PRM_Comment_Types {
         // Exclude our custom types from regular comment displays
         $query->query_vars['type__not_in'] = array_merge(
             $existing_types,
-            [self::TYPE_NOTE, self::TYPE_ACTIVITY, self::TYPE_TODO]
+            [self::TYPE_NOTE, self::TYPE_ACTIVITY]
         );
     }
 }
