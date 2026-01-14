@@ -98,6 +98,14 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - 3-column grid layout for equal-width content columns — v3.2
 - Timeline endpoint updated for todo post statuses — v3.2
 
+**v3.3 Todo Enhancement (shipped 2026-01-14):**
+- WYSIWYG notes ACF field for todo descriptions — v3.3
+- Multi-person todo linking (related_persons multi-value field) — v3.3
+- TodoModal with collapsible notes editor and multi-person selector — v3.3
+- Stacked avatar display in TodosList and PersonDetail sidebar — v3.3
+- Cross-person todo visibility with "Also:" indicator — v3.3
+- WP-CLI migration: `wp prm todos migrate-persons` — v3.3
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -158,6 +166,13 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | FAB at z-40 | Above content, below modals (z-50) | ✓ Good |
 | Panel closes on action | Edit/Add close panel before modal opens | ✓ Good |
 | 3-column grid layout | Equal-width columns for content and sidebar | ✓ Good |
+| Deprecated fields during transition | Keep person_id/person_name/person_thumbnail for backward compat | ✓ Good |
+| LIKE query for ACF serialized arrays | Format `"%d"` matches ID in serialized string | ✓ Good |
+| Notes sanitization with wp_kses_post | Consistent with notes/activities rich text handling | ✓ Good |
+| Multi-person selector edit-only | New todos context-bound to person page | ✓ Good |
+| Notes section collapsed by default | Avoid modal height bloat | ✓ Good |
+| Stacked avatars max 3/2 | 3 in TodosList, 2 in compact PersonDetail sidebar | ✓ Good |
+| Filter current person from "Also:" | Only shows OTHER linked people | ✓ Good |
 
 ---
-*Last updated: 2026-01-14 — v3.2 Person Profile Polish shipped*
+*Last updated: 2026-01-14 — v3.3 Todo Enhancement shipped*

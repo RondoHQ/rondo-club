@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-01-14
+
+### Added
+- WYSIWYG notes field for todo descriptions (ACF field)
+- Multi-person todo linking with related_persons multi-value field
+- TodoModal collapsible notes editor with RichTextEditor
+- Multi-person chip selector in TodoModal (edit mode only)
+- GlobalTodoModal multi-person selection and notes support
+- Stacked avatar display in TodosList (max 3 + overflow)
+- Stacked avatar display in PersonDetail todos sidebar (max 2 + overflow)
+- Cross-person todo visibility with "Also:" indicator
+- `wp prm todos migrate-persons` WP-CLI command for data migration
+- Thumbnail field in timeline API persons array for avatar display
+
+### Changed
+- TodoModal now shows multi-person selector when editing (new todos context-bound to person page)
+- PersonDetail sidebar uses smaller avatars (w-5 h-5) for compact display
+- Current person filtered from "Also:" display (only shows OTHER linked people)
+
+## [3.2.0] - 2026-01-14
+
+See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
+
 ## [1.79.0] - 2026-01-14
 
 ### Added

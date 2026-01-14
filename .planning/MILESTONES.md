@@ -1,5 +1,70 @@
 # Project Milestones: Caelis
 
+## v3.3 Todo Enhancement (Shipped: 2026-01-14)
+
+**Delivered:** Expanded todo functionality with notes/description field, multi-person support, and stacked avatar displays across all views.
+
+**Phases completed:** 32-34 (3 plans total)
+
+**Key accomplishments:**
+
+- Added WYSIWYG notes field to todo data model for detailed descriptions
+- Changed todos from single-person to multi-person linking
+- TodoModal enhanced with collapsible notes editor and multi-person selector
+- Stacked avatar display in TodosList and PersonDetail sidebar
+- Cross-person todo visibility with "Also:" indicator showing other linked people
+- Migration CLI: `wp prm todos migrate-persons`
+
+**Stats:**
+
+- 23 files changed
+- +2,022 / -338 lines changed
+- 3 phases, 3 plans, 10 tasks
+- 1 day from start to ship
+
+**Git range:** `625f701` → `439ea5f`
+
+**What's next:** To be determined
+
+---
+
+## v3.2 Person Profile Polish (Shipped: 2026-01-14)
+
+**Delivered:** Enhanced PersonDetail page with current position display in header, persistent todos sidebar, and mobile todos access via FAB.
+
+**Phases completed:** 29-31 (3 plans total)
+
+**Key accomplishments:**
+
+- Current position (job title + company) display in person header
+- Persistent todos sidebar visible across all PersonDetail tabs
+- Mobile todos access via floating action button + slide-up panel
+- 3-column grid layout for equal-width content columns
+- Timeline endpoint updated for todo post statuses
+
+**What's next:** v3.3 Todo Enhancement
+
+---
+
+## v3.1 Pending Response Tracking (Shipped: 2026-01-14)
+
+**Delivered:** Converted todos to custom post type with pending response tracking, aging indicators, and filter UI.
+
+**Phases completed:** 24-28 (9 plans total)
+
+**Key accomplishments:**
+
+- prm_todo custom post type (migrated from comments)
+- WordPress post statuses (prm_open, prm_awaiting, prm_completed)
+- Awaiting response tracking with timestamps and aging indicators
+- Filter UI (Open/Awaiting/Completed tabs) across all views
+- WP-CLI migration: `wp prm migrate-todos`
+- 25 PHPUnit tests for todo functionality
+
+**What's next:** v3.2 Person Profile Polish
+
+---
+
 ## v2.3 List View Unification (Shipped: 2026-01-13)
 
 **Delivered:** Unified list view experience across People and Organizations, removing card view and ensuring consistent UX with full bulk action parity.
