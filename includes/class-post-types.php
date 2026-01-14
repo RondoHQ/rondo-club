@@ -22,6 +22,7 @@ class PRM_Post_Types {
         $this->register_person_post_type();
         $this->register_company_post_type();
         $this->register_important_date_post_type();
+        $this->register_todo_post_type();
     }
 
     /**
@@ -222,5 +223,49 @@ class PRM_Post_Types {
         ];
         
         register_post_type('important_date', $args);
+    }
+
+    /**
+     * Register Todo CPT
+     *
+     * Used for tracking todos/tasks related to people. Migrated from comment-based
+     * system to CPT for better query capabilities, visibility/workspace support,
+     * and consistent REST API patterns.
+     */
+    private function register_todo_post_type() {
+        $labels = [
+            'name'                  => _x('Todos', 'Post type general name', 'personal-crm'),
+            'singular_name'         => _x('Todo', 'Post type singular name', 'personal-crm'),
+            'menu_name'             => _x('Todos', 'Admin Menu text', 'personal-crm'),
+            'add_new'               => __('Add New', 'personal-crm'),
+            'add_new_item'          => __('Add New Todo', 'personal-crm'),
+            'edit_item'             => __('Edit Todo', 'personal-crm'),
+            'new_item'              => __('New Todo', 'personal-crm'),
+            'view_item'             => __('View Todo', 'personal-crm'),
+            'search_items'          => __('Search Todos', 'personal-crm'),
+            'not_found'             => __('No todos found', 'personal-crm'),
+            'not_found_in_trash'    => __('No todos found in Trash', 'personal-crm'),
+            'all_items'             => __('All Todos', 'personal-crm'),
+        ];
+
+        $args = [
+            'labels'              => $labels,
+            'public'              => false,
+            'publicly_queryable'  => false,
+            'show_ui'             => true,
+            'show_in_menu'        => true,
+            'show_in_rest'        => true,
+            'rest_base'           => 'todos',
+            'query_var'           => false,
+            'rewrite'             => false,
+            'capability_type'     => 'post',
+            'has_archive'         => false,
+            'hierarchical'        => false,
+            'menu_position'       => 8,
+            'menu_icon'           => 'dashicons-yes-alt',
+            'supports'            => ['title', 'editor', 'author'],
+        ];
+
+        register_post_type('prm_todo', $args);
     }
 }
