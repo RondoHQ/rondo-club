@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Milestone: v3.3 Todo Enhancement
-Phase: 32 (Todo Data Model Enhancement) — Complete
+Phase: 33 (Todo Modal UI Enhancement) — Complete
 Plan: 1 of 1 in phase complete
-Status: Phase complete, ready for Phase 33
-Last activity: 2026-01-14 — Completed 32-01-PLAN.md
+Status: Phase complete, ready for Phase 34
+Last activity: 2026-01-14 — Completed 33-01-PLAN.md
 
-Progress: [███░░░░░░░] 1/3 phases (33%)
+Progress: [██████░░░░] 2/3 phases (67%)
 
 ## Completed Milestones
 
@@ -50,6 +50,9 @@ See `.planning/ISSUES.md`:
 | 32 | Keep deprecated person_id/person_name/person_thumbnail | Backward compatibility during v3.3 transition |
 | 32 | LIKE query for serialized ACF arrays | Format `"%d"` matches ID in serialized string |
 | 32 | XSS sanitization with wp_kses_post | Consistent with notes/activities rich text handling |
+| 33 | Multi-person selector only in edit mode for TodoModal | New todos context-bound to person page |
+| 33 | Notes section collapsible by default | Avoid modal height bloat |
+| 33 | Stacked avatars (max 3) with +N overflow | Clean multi-person display |
 
 ## Roadmap Evolution
 
@@ -62,7 +65,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed Phase 32 (32-01-PLAN.md)
+Stopped at: Completed Phase 33 (33-01-PLAN.md)
 Resume file: None
 
 ## Accumulated Context
@@ -71,7 +74,7 @@ Resume file: None
 
 9 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
-2. ~~Todo detail modal with notes and multi-person support (ui)~~ — Being addressed in v3.3
+2. ~~Todo detail modal with notes and multi-person support (ui)~~ — DONE in Phase 33
 3. Add import from Twenty CRM (api)
 4. Prioritize first name in search (api)
 5. Todo changes should invalidate dashboard cache (api)
@@ -93,5 +96,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 33` — Plan Phase 33 (Todo Modal & UI Enhancement)
+- `/gsd:plan-phase 34` — Plan Phase 34 (Timeline Integration) if planned
 - Run `wp prm todos migrate-persons` on production after deployment
