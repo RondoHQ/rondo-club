@@ -63,6 +63,7 @@ Plans:
 
 Plans:
 - [x] 27-01: Add awaiting response UI (TodoModal, TodosList, Dashboard)
+- [x] 27-02: Add awaiting response to TimelineView, GlobalTodoModal, PersonDetail
 
 #### Phase 28: Filters & Polish
 
@@ -265,6 +266,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
-| v3.1 Pending Response Tracking | 24-28 | 7/~8 | In Progress 🚧 | - |
+| v3.1 Pending Response Tracking | 24-28 | 8/~9 | In Progress 🚧 | - |
 
 **Shipped: 23 phases, 53 plans**
