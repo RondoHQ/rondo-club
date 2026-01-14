@@ -13,10 +13,44 @@
 - ✅ [v3.1 Pending Response Tracking](milestones/v3.1-pending-response-tracking.md) (Phases 24-28) — SHIPPED 2026-01-14
 - ✅ [v3.2 Person Profile Polish](milestones/v3.2-person-profile-polish.md) (Phases 29-31) — SHIPPED 2026-01-14
 - ✅ [v3.3 Todo Enhancement](milestones/v3.3-todo-enhancement.md) (Phases 32-34) — SHIPPED 2026-01-14
+- 🚧 **v3.4 UI Polish** (Phases 35-37) — IN PROGRESS
 
 ## Current Status
 
-**Active:** None — Use `/gsd:discuss-milestone` to plan next work
+**Active:** v3.4 UI Polish — 3 phases, quick wins + dashboard + label management
+
+---
+
+### 🚧 v3.4 UI Polish (In Progress)
+
+**Milestone Goal:** Clean up UI, add missing dashboard features, and complete quick wins from backlog.
+
+#### Phase 35: Quick Fixes
+
+**Goal**: Small UI improvements - clickable links, remove labels, Slack display, build number
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (internal patterns)
+
+Plans:
+- [ ] 35-01: TBD (run /gsd:plan-phase 35 to break down)
+
+#### Phase 36: Dashboard Enhancement
+
+**Goal**: Add Awaiting block to dashboard, make Timeline panel 2 columns wide on desktop
+**Depends on**: Phase 35
+**Research**: Unlikely (internal patterns)
+
+Plans:
+- [ ] 36-01: TBD (run /gsd:plan-phase 36 to break down)
+
+#### Phase 37: Label Management
+
+**Goal**: Full CRUD interface for managing labels (people and company labels)
+**Depends on**: Phase 36
+**Research**: Unlikely (internal patterns, existing taxonomy infrastructure)
+
+Plans:
+- [ ] 37-01: TBD (run /gsd:plan-phase 37 to break down)
 
 ---
 
@@ -293,5 +327,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
 | v3.2 Person Profile Polish | 29-31 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.3 Todo Enhancement | 32-34 | 3/3 | Complete ✅ | 2026-01-14 |
+| v3.4 UI Polish | 35-37 | 0/? | In Progress 🚧 | - |
 
 **Shipped: 11 milestones, 34 phases, 68 plans**
