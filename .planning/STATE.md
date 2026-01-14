@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 
 Milestone: v3.2 Person Profile Polish
 Phase: 29 (Header Enhancement)
-Plan: Not started
-Status: Ready to plan
+Plan: 29-01 planned
+Status: Ready to execute
 Last activity: 2026-01-14 — Milestone v3.2 created
 
 Progress: ░░░░░░░░░░ 0%
