@@ -153,15 +153,17 @@ class PRM_REST_Todos extends PRM_REST_Base {
     public function get_person_todos($request) {
         $person_id = (int) $request->get_param('person_id');
 
+        // Use LIKE query since ACF stores serialized arrays
+        // The serialized format contains the ID as a quoted string: "123"
         $todos = get_posts([
             'post_type'      => 'prm_todo',
             'posts_per_page' => -1,
             'post_status'    => ['prm_open', 'prm_awaiting', 'prm_completed'],
             'meta_query'     => [
                 [
-                    'key'     => 'related_person',
-                    'value'   => $person_id,
-                    'compare' => '=',
+                    'key'     => 'related_persons',
+                    'value'   => sprintf('"%d"', $person_id),
+                    'compare' => 'LIKE',
                 ],
             ],
             'orderby'        => 'date',
@@ -184,6 +186,20 @@ class PRM_REST_Todos extends PRM_REST_Base {
         $content = sanitize_textarea_field($request->get_param('content'));
         $due_date = sanitize_text_field($request->get_param('due_date'));
         $status = $request->get_param('status');
+        $notes = $request->get_param('notes');
+
+        // Accept person_ids array for multi-person support, fallback to URL person_id
+        $person_ids = $request->get_param('person_ids');
+        if (!is_array($person_ids) || empty($person_ids)) {
+            // Single person_id from URL for backward compatibility
+            $person_ids = $person_id ? [$person_id] : [];
+        } else {
+            $person_ids = array_map('intval', $person_ids);
+        }
+
+        if (empty($person_ids)) {
+            return new WP_Error('no_person', __('At least one person is required.', 'personal-crm'), ['status' => 400]);
+        }
 
         if (empty($content)) {
             return new WP_Error('empty_content', __('Todo content is required.', 'personal-crm'), ['status' => 400]);
@@ -208,11 +224,16 @@ class PRM_REST_Todos extends PRM_REST_Base {
             return new WP_Error('create_failed', __('Failed to create todo.', 'personal-crm'), ['status' => 500]);
         }
 
-        // Save ACF fields
-        update_field('related_person', $person_id, $post_id);
+        // Save ACF fields - use new multi-person field
+        update_field('related_persons', $person_ids, $post_id);
 
         if (!empty($due_date)) {
             update_field('due_date', $due_date, $post_id);
+        }
+
+        // Save notes if provided (sanitize HTML for XSS protection)
+        if ($notes !== null) {
+            update_field('notes', wp_kses_post($notes), $post_id);
         }
 
         // Set awaiting_since timestamp if creating with awaiting status
@@ -221,7 +242,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
         }
 
         // Set default visibility to private
-        update_field('visibility', 'private', $post_id);
+        update_field('_visibility', 'private', $post_id);
 
         $todo = get_post($post_id);
 
@@ -321,6 +342,8 @@ class PRM_REST_Todos extends PRM_REST_Base {
         $content = $request->get_param('content');
         $due_date = $request->get_param('due_date');
         $status = $request->get_param('status');
+        $person_ids = $request->get_param('person_ids');
+        $notes = $request->get_param('notes');
 
         $todo = get_post($todo_id);
 
@@ -371,6 +394,18 @@ class PRM_REST_Todos extends PRM_REST_Base {
             } else {
                 update_field('due_date', sanitize_text_field($due_date), $todo_id);
             }
+        }
+
+        // Update persons if provided (multi-person support)
+        if ($person_ids !== null) {
+            if (is_array($person_ids) && !empty($person_ids)) {
+                update_field('related_persons', array_map('intval', $person_ids), $todo_id);
+            }
+        }
+
+        // Update notes if provided (sanitize HTML for XSS protection)
+        if ($notes !== null) {
+            update_field('notes', wp_kses_post($notes), $todo_id);
         }
 
         // Refresh the post object
@@ -426,26 +461,38 @@ class PRM_REST_Todos extends PRM_REST_Base {
      * @return array Formatted todo data.
      */
     private function format_todo($post) {
-        $person_id = (int) get_field('related_person', $post->ID);
-        $person_name = '';
-        $person_thumbnail = '';
+        // Get persons array (new multi-person format)
+        $person_ids = get_field('related_persons', $post->ID) ?: [];
+        if (!is_array($person_ids)) {
+            $person_ids = $person_ids ? [$person_ids] : [];
+        }
 
-        if ($person_id) {
-            $person_name = get_the_title($person_id);
-            $person_thumbnail = get_the_post_thumbnail_url($person_id, 'thumbnail');
+        // Build persons array with details
+        $persons = [];
+        foreach ($person_ids as $pid) {
+            $persons[] = [
+                'id'        => (int) $pid,
+                'name'      => $this->sanitize_text(get_the_title($pid)),
+                'thumbnail' => $this->sanitize_url(get_the_post_thumbnail_url($pid, 'thumbnail')),
+            ];
         }
 
         $status = $this->get_todo_status($post);
         $due_date = get_field('due_date', $post->ID);
         $awaiting_since = get_field('awaiting_since', $post->ID);
+        $notes = get_field('notes', $post->ID);
 
         return [
             'id'               => $post->ID,
             'type'             => 'todo',
             'content'          => $this->sanitize_text($post->post_title),
-            'person_id'        => $person_id,
-            'person_name'      => $this->sanitize_text($person_name),
-            'person_thumbnail' => $this->sanitize_url($person_thumbnail),
+            // Deprecated fields for backward compatibility (first person only)
+            'person_id'        => $persons[0]['id'] ?? null,
+            'person_name'      => $persons[0]['name'] ?? '',
+            'person_thumbnail' => $persons[0]['thumbnail'] ?? '',
+            // New multi-person format
+            'persons'          => $persons,
+            'notes'            => $notes ?: null,
             'author_id'        => (int) $post->post_author,
             'created'          => $post->post_date,
             'status'           => $status,
