@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, Square, TrendingUp, StickyNote, Share2, Clock
+  CheckSquare2, Square, TrendingUp, StickyNote, Share2, Clock, User
 } from 'lucide-react';
 import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack, SiWhatsapp } from '@icons-pack/react-simple-icons';
 
@@ -2141,12 +2141,47 @@ export default function PersonDetail() {
                               {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
                             </span>
                           )}
-                          {/* Multi-person indicator */}
-                          {todo.persons && todo.persons.length > 1 && (
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              Shared with {todo.persons.length - 1} {todo.persons.length - 1 === 1 ? 'other' : 'others'}
-                            </p>
-                          )}
+                          {/* Multi-person indicator with stacked avatars */}
+                          {todo.persons && todo.persons.length > 1 && (() => {
+                            // Get other persons (exclude the current person we're viewing)
+                            const currentPersonId = parseInt(id, 10);
+                            const otherPersons = todo.persons.filter(p => p.id !== currentPersonId);
+                            if (otherPersons.length === 0) return null;
+
+                            return (
+                              <div className="flex items-center gap-1 mt-1">
+                                <span className="text-xs text-gray-500">Also:</span>
+                                <div className="flex -space-x-1.5" title={otherPersons.map(p => p.name).join(', ')}>
+                                  {otherPersons.slice(0, 2).map((person, idx) => (
+                                    <Link
+                                      key={person.id}
+                                      to={`/people/${person.id}`}
+                                      className="relative hover:z-10"
+                                      style={{ zIndex: 2 - idx }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {person.thumbnail ? (
+                                        <img
+                                          src={person.thumbnail}
+                                          alt={person.name}
+                                          className="w-5 h-5 rounded-full object-cover border border-white"
+                                        />
+                                      ) : (
+                                        <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center border border-white">
+                                          <User className="w-2.5 h-2.5 text-gray-500" />
+                                        </div>
+                                      )}
+                                    </Link>
+                                  ))}
+                                  {otherPersons.length > 2 && (
+                                    <span className="w-5 h-5 rounded-full bg-gray-200 text-[10px] flex items-center justify-center border border-white text-gray-600">
+                                      +{otherPersons.length - 2}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                           <button
@@ -2294,12 +2329,47 @@ export default function PersonDetail() {
                               {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
                             </span>
                           )}
-                          {/* Multi-person indicator */}
-                          {todo.persons && todo.persons.length > 1 && (
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              Shared with {todo.persons.length - 1} {todo.persons.length - 1 === 1 ? 'other' : 'others'}
-                            </p>
-                          )}
+                          {/* Multi-person indicator with stacked avatars */}
+                          {todo.persons && todo.persons.length > 1 && (() => {
+                            // Get other persons (exclude the current person we're viewing)
+                            const currentPersonId = parseInt(id, 10);
+                            const otherPersons = todo.persons.filter(p => p.id !== currentPersonId);
+                            if (otherPersons.length === 0) return null;
+
+                            return (
+                              <div className="flex items-center gap-1 mt-1">
+                                <span className="text-xs text-gray-500">Also:</span>
+                                <div className="flex -space-x-1.5" title={otherPersons.map(p => p.name).join(', ')}>
+                                  {otherPersons.slice(0, 2).map((person, idx) => (
+                                    <Link
+                                      key={person.id}
+                                      to={`/people/${person.id}`}
+                                      className="relative hover:z-10"
+                                      style={{ zIndex: 2 - idx }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {person.thumbnail ? (
+                                        <img
+                                          src={person.thumbnail}
+                                          alt={person.name}
+                                          className="w-5 h-5 rounded-full object-cover border border-white"
+                                        />
+                                      ) : (
+                                        <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center border border-white">
+                                          <User className="w-2.5 h-2.5 text-gray-500" />
+                                        </div>
+                                      )}
+                                    </Link>
+                                  ))}
+                                  {otherPersons.length > 2 && (
+                                    <span className="w-5 h-5 rounded-full bg-gray-200 text-[10px] flex items-center justify-center border border-white text-gray-600">
+                                      +{otherPersons.length - 2}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div className="flex items-center gap-1 ml-2">
                           <button
