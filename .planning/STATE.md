@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Milestone: v3.4 UI Polish
-Phase: 35 (Quick Fixes) — Complete
+Phase: 36 (Dashboard Enhancement) — Complete
 Plan: 1/1 in current phase
-Status: Phase complete, ready for Phase 36
-Last activity: 2026-01-14 — Completed 35-01-PLAN.md
+Status: Phase complete, ready for Phase 37
+Last activity: 2026-01-14 — Completed 36-01-PLAN.md
 
-Progress: [███░░░░░░░] 1/3 phases (33%)
+Progress: [██████░░░░] 2/3 phases (67%)
 
 ## Completed Milestones
 
@@ -61,21 +61,21 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Milestone v3.4 initialization
+Stopped at: Completed 36-01-PLAN.md
 Resume file: None
 
 ## Accumulated Context
 
 ### Pending Todos
 
-7 todos in `.planning/todos/pending/`:
+5 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — DONE in v3.3
 3. Add import from Twenty CRM (api)
 4. Prioritize first name in search (api)
 5. Todo changes should invalidate dashboard cache (api)
-6. Add Awaiting block to dashboard (ui)
-7. Make Timeline panel 2 columns wide on desktop (ui)
+6. ~~Add Awaiting block to dashboard (ui)~~ — DONE in v3.4 Phase 36
+7. ~~Make Timeline panel 2 columns wide on desktop (ui)~~ — DONE in v3.4 Phase 36
 8. ~~Simplify Slack contact details display (ui)~~ — DONE in v3.4
 9. ~~Make company website link clickable in list (ui)~~ — DONE in v3.4
 10. ~~Remove labels from company list (ui)~~ — DONE in v3.4
@@ -94,5 +94,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 35` — Plan Phase 35 (Quick Fixes)
+- `/gsd:plan-phase 37` — Plan Phase 37 (Label Management)
 - Run `wp prm todos migrate-persons` on production after deployment
