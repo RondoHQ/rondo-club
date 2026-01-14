@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 
 Milestone: v3.6 Quick Wins & Performance
 Phase: 40 of 41 (Quick Wins)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-14 — Milestone v3.6 created
+Plan: 1 of 1 complete
+Status: Phase complete
+Last activity: 2026-01-14 — Completed 40-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0/2 phases (0%)
+Progress: [█████░░░░░] 1/2 phases (50%)
 
 ## Completed Milestones
 
@@ -105,6 +105,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 40` — Plan Quick Wins phase (awaiting checkbox, email lowercasing)
-- `/gsd:discuss-phase 40` — Gather context first if needed
+- `/gsd:plan-phase 41` — Plan Bundle Optimization phase
+- `/gsd:discuss-phase 41` — Gather context first if needed
 - Run `wp prm todos migrate-persons` on production after deployment
