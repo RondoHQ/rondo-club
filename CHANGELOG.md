@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.0] - 2026-01-14
+
+### Changed
+- Reduced initial bundle from 460 KB to 50 KB via modal lazy loading
+- GlobalTodoModal, PersonEditModal, CompanyEditModal, and ImportantDateModal now load on demand
+- TipTap editor (~370 KB) only loads when opening modals that need it
+- Initial load improved from ~767 KB to ~400 KB total
+
 ## [3.4.0] - 2026-01-14
 
 ### Added
