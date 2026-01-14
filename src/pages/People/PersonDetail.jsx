@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, Square, TrendingUp, StickyNote, Share2
+  CheckSquare2, Square, TrendingUp, StickyNote, Share2, Clock
 } from 'lucide-react';
 import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack, SiWhatsapp } from '@icons-pack/react-simple-icons';
 
@@ -45,7 +45,7 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { decodeHtml, getCompanyName, sanitizePersonAcf } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
-import { isTodoOverdue } from '@/utils/timeline';
+import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 
 // Helper to get gender symbol
 function getGenderSymbol(gender) {
@@ -1826,6 +1826,12 @@ export default function PersonDetail() {
                               Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
                               {isOverdue && !todo.is_completed && ' (overdue)'}
                             </p>
+                          )}
+                          {todo.awaiting_response && !todo.is_completed && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1 ${getAwaitingUrgencyClass(getAwaitingDays(todo))}`}>
+                              <Clock className="w-3 h-3" />
+                              {getAwaitingDays(todo) === 0 ? 'Awaiting' : `Awaiting ${getAwaitingDays(todo)}d`}
+                            </span>
                           )}
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
