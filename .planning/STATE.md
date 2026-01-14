@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Milestone: v3.2 Person Profile Polish
-Phase: 29 (Header Enhancement) — COMPLETE
-Plan: 29-01 complete (SUMMARY created)
-Status: Ready for Phase 30 planning
-Last activity: 2026-01-14 — Phase 29 executed
+Phase: 30 (Todos Sidebar) — COMPLETE
+Plan: 30-01 complete (SUMMARY created)
+Status: Ready for Phase 31 planning
+Last activity: 2026-01-14 — Phase 30 executed
 
-Progress: [███░░░░░░░] 1/3 phases (33%)
+Progress: [██████░░░░] 2/3 phases (67%)
 
 ## Completed Milestones
 
@@ -70,10 +70,9 @@ Resume file: None
 
 ### Pending Todos
 
-3 todos in `.planning/todos/pending/`:
+2 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
-2. Add persistent todos sidebar on person profile (ui)
-3. Todo detail modal with notes and multi-person support (ui)
+2. Todo detail modal with notes and multi-person support (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
@@ -83,9 +82,10 @@ Completed todos in `.planning/todos/done/`:
 5. Convert todos to custom post type — Done in v3.1
 6. Fix todo migration and open todos display — Fixed: migration bypasses access control
 7. Show role + job in person header — Done in Phase 29
+8. Add persistent todos sidebar on person profile — Done in Phase 30
 
 ## Next Steps
 
-- `/gsd:plan-phase 30` — Plan Todos Sidebar phase
-- `/gsd:check-todos` — Review pending todos (3 pending)
-- `/gsd:verify-work 29` — Test Phase 29 header enhancement
+- `/gsd:plan-phase 31` — Plan Person Image Polish phase
+- `/gsd:check-todos` — Review pending todos (2 pending)
+- `/gsd:verify-work 30` — Test Phase 30 todos sidebar
