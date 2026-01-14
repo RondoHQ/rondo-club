@@ -46,6 +46,7 @@ import { wpApi, prmApi } from '@/api/client';
 import { decodeHtml, getCompanyName, sanitizePersonAcf } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
+import { stripHtmlTags } from '@/utils/richTextUtils';
 
 // Helper to get gender symbol
 function getGenderSymbol(gender) {
@@ -2120,6 +2121,12 @@ export default function PersonDetail() {
                           }`}>
                             {todo.content}
                           </p>
+                          {/* Notes preview */}
+                          {todo.notes && (
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                              {stripHtmlTags(todo.notes).slice(0, 60)}{stripHtmlTags(todo.notes).length > 60 ? '...' : ''}
+                            </p>
+                          )}
                           {/* Due date - only show for open todos */}
                           {todo.due_date && todo.status === 'open' && (
                             <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
@@ -2133,6 +2140,12 @@ export default function PersonDetail() {
                               <Clock className="w-3 h-3" />
                               {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
                             </span>
+                          )}
+                          {/* Multi-person indicator */}
+                          {todo.persons && todo.persons.length > 1 && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Shared with {todo.persons.length - 1} {todo.persons.length - 1 === 1 ? 'other' : 'others'}
+                            </p>
                           )}
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
@@ -2261,6 +2274,12 @@ export default function PersonDetail() {
                           }`}>
                             {todo.content}
                           </p>
+                          {/* Notes preview */}
+                          {todo.notes && (
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                              {stripHtmlTags(todo.notes).slice(0, 60)}{stripHtmlTags(todo.notes).length > 60 ? '...' : ''}
+                            </p>
+                          )}
                           {/* Due date - only show for open todos */}
                           {todo.due_date && todo.status === 'open' && (
                             <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
@@ -2274,6 +2293,12 @@ export default function PersonDetail() {
                               <Clock className="w-3 h-3" />
                               {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
                             </span>
+                          )}
+                          {/* Multi-person indicator */}
+                          {todo.persons && todo.persons.length > 1 && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Shared with {todo.persons.length - 1} {todo.persons.length - 1 === 1 ? 'other' : 'others'}
+                            </p>
                           )}
                         </div>
                         <div className="flex items-center gap-1 ml-2">

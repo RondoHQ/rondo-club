@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckSquare, Square, Clock, Pencil, Trash2, Plus, RotateCcw } from 'lucide-react';
+import { CheckSquare, Square, Clock, Pencil, Trash2, Plus, RotateCcw, User } from 'lucide-react';
 import { useTodos, useUpdateTodo, useDeleteTodo } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from 'date-fns';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
+import { stripHtmlTags } from '@/utils/richTextUtils';
 import TodoModal from '@/components/Timeline/TodoModal';
 import GlobalTodoModal from '@/components/Timeline/GlobalTodoModal';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
@@ -340,6 +341,21 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
   const isOverdue = isTodoOverdue(todo);
   const awaitingDays = getAwaitingDays(todo);
 
+  // Support both new persons array and legacy person fields
+  const persons = todo.persons || (todo.person_id ? [{
+    id: todo.person_id,
+    name: todo.person_name,
+    thumbnail: todo.person_thumbnail
+  }] : []);
+
+  // Get notes preview (stripped of HTML, truncated)
+  const notesPreview = useMemo(() => {
+    if (!todo.notes) return null;
+    const stripped = stripHtmlTags(todo.notes);
+    if (!stripped) return null;
+    return stripped.length > 100 ? stripped.slice(0, 100) + '...' : stripped;
+  }, [todo.notes]);
+
   // Determine checkbox icon based on status
   const getStatusIcon = () => {
     if (todo.status === 'completed') {
@@ -382,24 +398,56 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
           {todo.content}
         </p>
 
+        {/* Notes preview */}
+        {notesPreview && (
+          <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+            {notesPreview}
+          </p>
+        )}
+
         <div className="flex flex-wrap items-center gap-3 mt-2">
-          <Link
-            to={`/people/${todo.person_id}`}
-            className="flex items-center gap-2 text-xs text-primary-600 hover:text-primary-700 hover:underline"
-          >
-            {todo.person_thumbnail ? (
-              <img
-                src={todo.person_thumbnail}
-                alt={todo.person_name}
-                className="w-5 h-5 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-xs text-gray-500">{todo.person_name?.[0]}</span>
-              </div>
+          {/* Multi-person avatars */}
+          <div className="flex items-center">
+            <div className="flex items-center -space-x-2" title={persons.map(p => p.name).join(', ')}>
+              {persons.slice(0, 3).map((person, idx) => (
+                <Link
+                  key={person.id}
+                  to={`/people/${person.id}`}
+                  className="relative hover:z-10"
+                  style={{ zIndex: 3 - idx }}
+                >
+                  {person.thumbnail ? (
+                    <img
+                      src={person.thumbnail}
+                      alt={person.name}
+                      className="w-6 h-6 rounded-full object-cover border-2 border-white"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center border-2 border-white">
+                      <User className="w-3 h-3 text-gray-500" />
+                    </div>
+                  )}
+                </Link>
+              ))}
+              {persons.length > 3 && (
+                <span className="w-6 h-6 rounded-full bg-gray-200 text-xs flex items-center justify-center border-2 border-white text-gray-600">
+                  +{persons.length - 3}
+                </span>
+              )}
+            </div>
+            {/* Primary person name link */}
+            {persons.length > 0 && (
+              <Link
+                to={`/people/${persons[0].id}`}
+                className="ml-2 text-xs text-primary-600 hover:text-primary-700 hover:underline"
+              >
+                {persons[0].name}
+                {persons.length > 1 && (
+                  <span className="text-gray-500"> +{persons.length - 1}</span>
+                )}
+              </Link>
             )}
-            {todo.person_name}
-          </Link>
+          </div>
 
           {/* Due date - only show prominently for open todos */}
           {todo.due_date && todo.status === 'open' && (
