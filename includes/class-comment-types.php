@@ -415,7 +415,7 @@ class PRM_Comment_Types {
     }
     
     /**
-     * Get combined timeline (notes + activities)
+     * Get combined timeline (notes + activities + todos)
      */
     public function get_timeline($request) {
         $person_id = $request->get_param('person_id');
@@ -448,6 +448,39 @@ class PRM_Comment_Types {
 
             $timeline[] = $this->format_comment($comment, $type);
         }
+
+        // Also fetch todos from the prm_todo CPT
+        // Access control is automatic via PRM_Access_Control hooks on WP_Query
+        $todos = get_posts([
+            'post_type'      => 'prm_todo',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'meta_query'     => [
+                [
+                    'key'   => 'related_person',
+                    'value' => $person_id,
+                ],
+            ],
+        ]);
+
+        foreach ($todos as $todo) {
+            $timeline[] = [
+                'id'           => $todo->ID,
+                'type'         => 'todo',
+                'content'      => $todo->post_title,
+                'author_id'    => (int) $todo->post_author,
+                'created'      => $todo->post_date,
+                'person_id'    => (int) $person_id,
+                'person_name'  => get_the_title($person_id),
+                'is_completed' => (bool) get_field('is_completed', $todo->ID),
+                'due_date'     => get_field('due_date', $todo->ID) ?: null,
+            ];
+        }
+
+        // Sort timeline by created date descending
+        usort($timeline, function($a, $b) {
+            return strtotime($b['created']) - strtotime($a['created']);
+        });
 
         return rest_ensure_response($timeline);
     }
