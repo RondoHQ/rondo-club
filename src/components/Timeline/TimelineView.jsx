@@ -45,7 +45,9 @@ export default function TimelineView({
 
   const getIconForItem = (item) => {
     if (item.type === 'todo') {
-      return item.is_completed ? CheckSquare2 : Square;
+      if (item.status === 'completed') return CheckSquare2;
+      if (item.status === 'awaiting') return Clock;
+      return Square;
     }
     if (item.type === 'activity' && item.activity_type) {
       const iconName = getActivityTypeIcon(item.activity_type);
@@ -126,10 +128,12 @@ export default function TimelineView({
                   <button
                     onClick={() => onToggleTodo && onToggleTodo(item)}
                     className="mt-0.5 flex-shrink-0"
-                    title={item.is_completed ? 'Mark as incomplete' : 'Mark as complete'}
+                    title={item.status === 'completed' ? 'Reopen' : item.status === 'awaiting' ? 'Mark complete' : 'Complete'}
                   >
-                    {item.is_completed ? (
-                      <CheckSquare2 className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-primary-600'}`} />
+                    {item.status === 'completed' ? (
+                      <CheckSquare2 className="w-5 h-5 text-primary-600" />
+                    ) : item.status === 'awaiting' ? (
+                      <Clock className="w-5 h-5 text-orange-500" />
                     ) : (
                       <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
                     )}
@@ -137,12 +141,12 @@ export default function TimelineView({
                 )}
                 {/* Render rich text content for notes/activities, plain text for todos */}
                 {(isNote || isActivity) && item.content?.includes('<') ? (
-                  <div 
-                    className={`text-sm flex-1 timeline-content ${item.is_completed ? 'line-through opacity-60' : ''}`}
+                  <div
+                    className={`text-sm flex-1 timeline-content ${item.status === 'completed' ? 'line-through opacity-60' : ''}`}
                     dangerouslySetInnerHTML={{ __html: item.content }}
                   />
                 ) : (
-                  <p className={`text-sm flex-1 ${item.is_completed ? 'line-through opacity-60' : ''}`}>
+                  <p className={`text-sm flex-1 ${item.status === 'completed' ? 'line-through opacity-60' : item.status === 'awaiting' ? 'text-orange-700' : ''}`}>
                     {item.content}
                   </p>
                 )}
@@ -169,8 +173,8 @@ export default function TimelineView({
                 </div>
               )}
 
-              {/* Todo due date */}
-              {isTodo && item.due_date && (
+              {/* Todo due date - only show for open todos */}
+              {isTodo && item.due_date && item.status === 'open' && (
                 <div className="mt-2">
                   <span className={`text-xs ${
                     isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'
@@ -182,11 +186,11 @@ export default function TimelineView({
               )}
 
               {/* Awaiting response indicator */}
-              {isTodo && item.awaiting_response && !item.is_completed && (
+              {isTodo && item.status === 'awaiting' && (
                 <div className="mt-2">
                   <span className={`text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${getAwaitingUrgencyClass(getAwaitingDays(item))}`}>
                     <Clock className="w-3 h-3" />
-                    {getAwaitingDays(item) === 0 ? 'Awaiting response' : `Awaiting ${getAwaitingDays(item)}d`}
+                    {getAwaitingDays(item) === 0 ? 'Waiting since today' : `Waiting ${getAwaitingDays(item)}d`}
                   </span>
                 </div>
               )}

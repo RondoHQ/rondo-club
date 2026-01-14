@@ -147,8 +147,8 @@ export const prmApi = {
   deleteActivity: (activityId) => api.delete(`/prm/v1/activities/${activityId}`),
   
   // Todos
-  getAllTodos: (includeCompleted = false) => 
-    api.get('/prm/v1/todos', { params: { completed: includeCompleted } }),
+  getAllTodos: (status = 'open') =>
+    api.get('/prm/v1/todos', { params: { status } }),
   
   // Investments (companies where entity is an investor)
   getInvestments: (investorId) => api.get(`/prm/v1/investments/${investorId}`),

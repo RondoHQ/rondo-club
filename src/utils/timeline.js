@@ -51,15 +51,17 @@ export function groupTimelineByDate(timeline) {
     }
   });
 
-  // Sort todos: incomplete first (by due date), then completed
+  // Sort todos: open first (by due date), awaiting second (by wait time), completed last
   groups.todos.sort((a, b) => {
-    // Completed todos go to the bottom
-    if (a.is_completed && !b.is_completed) return 1;
-    if (!a.is_completed && b.is_completed) return -1;
+    // Status priority: open first, awaiting second, completed last
+    const statusOrder = { open: 0, awaiting: 1, completed: 2 };
+    const aOrder = statusOrder[a.status] ?? 0;
+    const bOrder = statusOrder[b.status] ?? 0;
 
-    // For incomplete todos, sort by due date (earliest first)
-    // Todos without due date go after those with due dates
-    if (!a.is_completed && !b.is_completed) {
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
+    // For open todos, sort by due date (earliest first)
+    if (a.status === 'open') {
       if (a.due_date && b.due_date) {
         return new Date(a.due_date) - new Date(b.due_date);
       }
@@ -67,7 +69,14 @@ export function groupTimelineByDate(timeline) {
       if (!a.due_date && b.due_date) return 1;
     }
 
-    // For completed todos, sort by most recently completed (newest first)
+    // For awaiting todos, sort by awaiting_since (oldest first = waiting longest)
+    if (a.status === 'awaiting') {
+      if (a.awaiting_since && b.awaiting_since) {
+        return new Date(a.awaiting_since) - new Date(b.awaiting_since);
+      }
+    }
+
+    // Default: sort by creation date (newest first)
     return new Date(b.created) - new Date(a.created);
   });
 
@@ -143,12 +152,13 @@ export function getActivityTypeLabel(type) {
 }
 
 /**
- * Check if a todo is overdue
+ * Check if a todo is overdue (only applies to open todos)
  * @param {Object} todo - Todo item
  * @returns {boolean} True if todo is overdue
  */
 export function isTodoOverdue(todo) {
-  if (!todo.due_date || todo.is_completed) {
+  // Only open todos can be overdue
+  if (!todo.due_date || todo.status !== 'open') {
     return false;
   }
 
@@ -172,8 +182,10 @@ export function isTodoOverdue(todo) {
 export function getTodoStatusClass(todo) {
   const classes = [];
 
-  if (todo.is_completed) {
+  if (todo.status === 'completed') {
     classes.push('opacity-60', 'line-through');
+  } else if (todo.status === 'awaiting') {
+    classes.push('text-orange-600');
   } else if (isTodoOverdue(todo)) {
     classes.push('text-red-600', 'font-medium');
   }
@@ -187,10 +199,10 @@ export function getTodoStatusClass(todo) {
  * @returns {number|null} Days since awaiting, or null if not awaiting
  */
 export function getAwaitingDays(todo) {
-  if (!todo.awaiting_response || !todo.awaiting_response_since) {
+  if (todo.status !== 'awaiting' || !todo.awaiting_since) {
     return null;
   }
-  const since = new Date(todo.awaiting_response_since);
+  const since = new Date(todo.awaiting_since);
   const now = new Date();
   const diffTime = now - since;
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));

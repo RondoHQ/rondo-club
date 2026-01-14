@@ -4,8 +4,6 @@ import { X } from 'lucide-react';
 export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo = null }) {
   const [content, setContent] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [awaitingResponse, setAwaitingResponse] = useState(false);
 
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
@@ -17,13 +15,9 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     if (todo) {
       setContent(todo.content || '');
       setDueDate(todo.due_date || '');
-      setIsCompleted(todo.is_completed || false);
-      setAwaitingResponse(todo.awaiting_response || false);
     } else {
       setContent('');
       setDueDate(getTodayDate());
-      setIsCompleted(false);
-      setAwaitingResponse(false);
     }
   }, [todo, isOpen]);
 
@@ -32,19 +26,16 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!content.trim()) return;
-    
+
+    // Only send content and due_date - status is managed via toggle buttons
     onSubmit({
       content: content.trim(),
       due_date: dueDate || null,
-      is_completed: isCompleted,
-      awaiting_response: awaitingResponse,
     });
-    
+
     if (!todo) {
       setContent('');
       setDueDate(getTodayDate());
-      setIsCompleted(false);
-      setAwaitingResponse(false);
     }
   };
 
@@ -52,8 +43,6 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     if (!todo) {
       setContent('');
       setDueDate(getTodayDate());
-      setIsCompleted(false);
-      setAwaitingResponse(false);
     }
     onClose();
   };
@@ -82,7 +71,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="p-4">
           <div className="mb-4">
             <label htmlFor="todo-content" className="block text-sm font-medium text-gray-700 mb-2">
@@ -99,7 +88,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
               autoFocus
             />
           </div>
-          
+
           <div className="mb-4">
             <label htmlFor="todo-due-date" className="block text-sm font-medium text-gray-700 mb-2">
               Due date (optional)
@@ -114,34 +103,13 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
             />
           </div>
 
-          <div className="mb-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={awaitingResponse}
-                onChange={(e) => setAwaitingResponse(e.target.checked)}
-                className="mr-2"
-                disabled={isLoading}
-              />
-              <span className="text-sm text-gray-700">Awaiting response</span>
-            </label>
-          </div>
-
+          {/* Status hint for existing todos */}
           {todo && (
-            <div className="mb-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={isCompleted}
-                  onChange={(e) => setIsCompleted(e.target.checked)}
-                  className="mr-2"
-                  disabled={isLoading}
-                />
-                <span className="text-sm text-gray-700">Completed</span>
-              </label>
-            </div>
+            <p className="text-xs text-gray-500 mb-4">
+              Tip: Use the status buttons on the todo list to change between Open, Awaiting, and Completed.
+            </p>
           )}
-          
+
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -164,4 +132,3 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     </div>
   );
 }
-

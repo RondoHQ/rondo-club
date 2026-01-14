@@ -705,31 +705,15 @@ class PRM_REST_API extends PRM_REST_Base {
      * Count open (non-completed) todos for current user
      *
      * Uses the prm_todo CPT with access control filtering.
+     * Only counts todos with 'prm_open' status (not awaiting or completed).
      */
     private function count_open_todos() {
         // Query todos with access control (PRM_Access_Control hooks into WP_Query)
         $todos = get_posts([
             'post_type'      => 'prm_todo',
-            'post_status'    => 'publish',
+            'post_status'    => 'prm_open',
             'posts_per_page' => -1,
             'fields'         => 'ids',
-            'meta_query'     => [
-                'relation' => 'OR',
-                [
-                    'key'     => 'is_completed',
-                    'value'   => '0',
-                    'compare' => '=',
-                ],
-                [
-                    'key'     => 'is_completed',
-                    'value'   => '',
-                    'compare' => '=',
-                ],
-                [
-                    'key'     => 'is_completed',
-                    'compare' => 'NOT EXISTS',
-                ],
-            ],
         ]);
 
         return count($todos);

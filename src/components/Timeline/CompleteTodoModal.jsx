@@ -1,6 +1,6 @@
-import { CheckSquare, FileText, X } from 'lucide-react';
+import { Clock, CheckSquare, FileText, X } from 'lucide-react';
 
-export default function CompleteTodoModal({ isOpen, onClose, todo, onComplete, onCompleteAsActivity }) {
+export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, onComplete, onCompleteAsActivity }) {
   if (!isOpen || !todo) return null;
 
   return (
@@ -15,28 +15,39 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onComplete, o
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <div className="p-4">
           <p className="text-sm text-gray-600 mb-4">
             "{todo.content}"
           </p>
-          
+
           <p className="text-sm text-gray-500 mb-4">
-            How would you like to complete this todo?
+            What's the status of this todo?
           </p>
-          
+
           <div className="space-y-3">
+            <button
+              onClick={onAwaiting}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors text-left"
+            >
+              <Clock className="w-5 h-5 text-orange-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Awaiting response</p>
+                <p className="text-sm text-gray-500">You did your part, waiting for their reply</p>
+              </div>
+            </button>
+
             <button
               onClick={onComplete}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors text-left"
             >
               <CheckSquare className="w-5 h-5 text-primary-600 flex-shrink-0" />
               <div className="flex-1">
-                <p className="font-medium text-gray-900">Just complete</p>
-                <p className="text-sm text-gray-500">Mark the todo as done</p>
+                <p className="font-medium text-gray-900">Complete</p>
+                <p className="text-sm text-gray-500">Mark the todo as fully done</p>
               </div>
             </button>
-            
+
             <button
               onClick={onCompleteAsActivity}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
@@ -49,7 +60,7 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onComplete, o
             </button>
           </div>
         </div>
-        
+
         <div className="flex justify-end p-4 border-t bg-gray-50 rounded-b-lg">
           <button
             type="button"
@@ -63,4 +74,3 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onComplete, o
     </div>
   );
 }
-
