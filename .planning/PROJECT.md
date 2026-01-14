@@ -78,6 +78,19 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Heavy library lazy loading (vis-network, TipTap) — v2.5
 - Initial bundle reduced from 1,646 KB to 435 KB (73% reduction) — v2.5
 
+**v3.0 Testing Infrastructure (shipped 2026-01-13):**
+- PHPUnit via wp-browser (Codeception) with WPLoader — v3.0
+- 120 tests covering access control, REST API, search, relationships — v3.0
+- Separate test database (caelis_test) for isolation — v3.0
+
+**v3.1 Pending Response Tracking (shipped 2026-01-14):**
+- prm_todo custom post type (migrated from comments) — v3.1
+- WordPress post statuses (prm_open, prm_awaiting, prm_completed) — v3.1
+- Awaiting response tracking with timestamps and aging indicators — v3.1
+- Filter UI (Open/Awaiting/Completed tabs) across all views — v3.1
+- WP-CLI migration: `wp prm migrate-todos` — v3.1
+- 25 PHPUnit tests for todo functionality (145 total) — v3.1
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -129,6 +142,10 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Vendor + utils chunking | Stable deps cached separately | ✓ Good |
 | Route-based lazy loading | Pages load on demand | ✓ Good |
 | Component-level Suspense for heavy libs | vis-network/TipTap load only when needed | ✓ Good |
+| Todo CPT not Comment | Todos are posts; richer metadata, proper access control | ✓ Good |
+| WordPress post statuses for todos | Mutually exclusive states (open/awaiting/completed) | ✓ Good |
+| Auto-timestamp on awaiting | awaiting_since set/cleared automatically on state change | ✓ Good |
+| Urgency color scheme | Yellow 0-2d, orange 3-6d, red 7+d for visual priority | ✓ Good |
 
 ---
-*Last updated: 2026-01-13 — v2.5 Performance shipped*
+*Last updated: 2026-01-14 — v3.1 Pending Response Tracking shipped*

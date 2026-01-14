@@ -2,18 +2,18 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-13)
+See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v3.1 Pending Response Tracking — Todo post type + response tracking
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v3.1 Pending Response Tracking
-Phase: 28 of 28 (Filters & Polish)
-Plan: 1 of 1 in current phase
-Status: Phase 28 complete
-Last activity: 2026-01-14 — Completed 28-01-PLAN.md (Todo Filtering)
+Milestone: None active
+Phase: 28 complete
+Plan: N/A
+Status: Ready to plan next milestone
+Last activity: 2026-01-14 — v3.1 milestone complete
 
 Progress: ██████████ 100%
 
@@ -29,8 +29,9 @@ Progress: ██████████ 100%
 | v2.4 Bug Fixes | 19 | 2 | 2026-01-13 |
 | v2.5 Performance | 20 | 3 | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7 | 2026-01-13 |
+| v3.1 Pending Response Tracking | 24-28 | 9 | 2026-01-14 |
 
-**Total:** 8 milestones, 23 phases, 53 plans completed
+**Total:** 9 milestones, 28 phases, 62 plans completed
 
 ## Deferred Issues
 
@@ -41,55 +42,28 @@ See `.planning/ISSUES.md`:
 
 **0 issues remaining**
 
-## Decisions Made (v3.0 → v3.1)
+## Decisions Made (v3.1)
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
-| 21 | PHPUnit via wp-browser (Codeception) | WordPress-specific test types (WPLoader, WPUnit) |
-| 21 | Separate test database (`caelis_test`) | Isolation from dev/prod data |
-| 21 | MySQL via Homebrew | Local MySQL CLI needed for test database |
-| 21 | Theme symlink in WP themes dir | WPLoader requires theme in standard location |
-| 22 | Parallel test execution | 3 independent plans run concurrently via agents |
-| 22 | Direct share priority fix | Bug fix: shares checked before visibility denial |
-| 22 | Unique test IDs pattern | wp_generate_password(6) for test isolation |
-| 23 | REST server manual init | WPUnit tests need explicit PRM_REST_* instantiation |
-| 23 | Boolean params as strings | REST API validation requires 'true' not true |
-| 23 | DELETE verifies post_status | Access control filter runs after DELETE, check trash |
-| - | Backend-first testing | Playwright deferred to future milestone |
 | 24 | Todo CPT not Comment | Todos are posts, not comments; allows richer metadata |
 | 24 | Migration deletes originals | Clean cutover; no duplicate data after migration |
-| 24 | Update existing tests | SearchDashboardTest uses CPT-based todos now |
-| 25 | Merge todos into timeline with sorting | Combined CPT query with comments and sorted by created date |
-| 25 | Broad timeline invalidation in dashboard | Dashboard hooks invalidate ['people', 'timeline'] since personId not available |
-| 26 | Auto-timestamp on state change | awaiting_response_since set/cleared automatically when awaiting_response changes |
-| 26 | gmdate for timestamps | UTC timestamps for consistency across timezones |
-| 27 | Checkbox for both new/existing todos | Awaiting response toggleable at any time |
-| 27 | Urgency color scheme | Yellow 0-2d, orange 3-6d, red 7+d for visibility |
-| 27 | GlobalTodoModal awaiting checkbox | Mark todos as awaiting at creation time |
-| 27 | Consistent badge pattern | Clock icon + day count across all todo displays |
-| 28 | Always use AND relation wrapper | Simpler meta_query structure, avoids bugs |
-| 28 | Client-side filtering for TodosList | Data already fetched, instant UI response |
-| 28 | Single filtered list pattern | Replaced complex grouping with filter tabs |
+| 26 | Auto-timestamp on state change | awaiting_since set/cleared automatically |
+| 26 | gmdate for timestamps | UTC timestamps for consistency |
+| 27 | Urgency color scheme | Yellow 0-2d, orange 3-6d, red 7+d |
+| 28 | WordPress post statuses | Mutually exclusive states (open/awaiting/completed) |
+| 28 | Status-based filtering | Single status param replaces is_completed + awaiting_response |
 
 ## Roadmap Evolution
 
-- Milestone v2.4 created: Bug Fixes (Phase 19+)
-- Phase 19 complete: Important Date Polish (2 plans)
-- Milestone v2.4 complete: All date bugs fixed, CLI migration ready
-- Milestone v2.4 archived: Git tag v2.4 created
-- Milestone v2.5 created: Performance, 1 phase (Phase 20)
-- Phase 20 complete: Bundle Optimization (3 plans)
-- Milestone v2.5 archived: Git tag v2.5 created
-- Milestone v3.0 created: Testing Infrastructure, 3 phases (Phase 21-23)
-- Phase 22 complete: Access Control Tests (3 plans via parallel execution)
-- Phase 23 complete: REST API & Data Model Tests (3 plans via parallel execution)
-- Milestone v3.0 complete: Testing Infrastructure with 120 tests
-- Milestone v3.1 created: Pending Response Tracking, 5 phases (Phase 24-28)
+- Milestone v3.1 complete: Todo CPT with pending response tracking
+- Milestone v3.1 archived: Git tag v3.1 to be created
+- All 9 milestones shipped
 
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed Phase 28 Plan 01 (Todo Filtering)
+Stopped at: Completed v3.1 milestone
 Resume file: None
 
 ## Accumulated Context
@@ -103,11 +77,11 @@ Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
 2. React bundle chunking — Done in v2.5
 3. Console MIME type errors — Resolved via production deploy
-4. Add pending response tracking — Now in v3.1 milestone
-5. Convert todos to custom post type — Now in v3.1 milestone
+4. Add pending response tracking — Done in v3.1
+5. Convert todos to custom post type — Done in v3.1
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — Complete v3.1 milestone (all phases done)
-- `/gsd:verify-work 28` — Verify Phase 28 (Todo Filtering complete)
-- `/gsd:progress` — Check overall progress
+- `/gsd:discuss-milestone` — Plan next milestone features
+- `/gsd:check-todos` — Review pending todos (1 pending)
+- `/gsd:verify-work` — Test recently shipped features
