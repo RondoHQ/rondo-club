@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Milestone: v3.4 UI Polish
-Phase: 35 (Quick Fixes) — Not started
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-14 — Milestone v3.4 created
+Phase: 35 (Quick Fixes) — Complete
+Plan: 1/1 in current phase
+Status: Phase complete, ready for Phase 36
+Last activity: 2026-01-14 — Completed 35-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0/3 phases (0%)
+Progress: [███░░░░░░░] 1/3 phases (33%)
 
 ## Completed Milestones
 
@@ -68,7 +68,7 @@ Resume file: None
 
 ### Pending Todos
 
-11 todos in `.planning/todos/pending/`:
+7 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — DONE in v3.3
 3. Add import from Twenty CRM (api)
@@ -76,10 +76,10 @@ Resume file: None
 5. Todo changes should invalidate dashboard cache (api)
 6. Add Awaiting block to dashboard (ui)
 7. Make Timeline panel 2 columns wide on desktop (ui)
-8. Simplify Slack contact details display (ui)
-9. Make company website link clickable in list (ui)
-10. Remove labels from company list (ui)
-11. Use build numbers for refresh indicator (ui)
+8. ~~Simplify Slack contact details display (ui)~~ — DONE in v3.4
+9. ~~Make company website link clickable in list (ui)~~ — DONE in v3.4
+10. ~~Remove labels from company list (ui)~~ — DONE in v3.4
+11. ~~Use build numbers for refresh indicator (ui)~~ — DONE in v3.4
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
