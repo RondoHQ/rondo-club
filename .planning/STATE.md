@@ -5,18 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v3.2 Person Profile Polish
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v3.2 Person Profile Polish
-Phase: 31 (Person Image Polish) — COMPLETE
-Plan: 31-01 complete (SUMMARY created)
-Status: Milestone complete, ready for completion
+Milestone: None active (v3.2 complete)
+Phase: —
+Plan: —
+Status: Ready to plan next milestone
+Last activity: 2026-01-14 — v3.2 Person Profile Polish shipped
 
-Last activity: 2026-01-14 — Phase 31 executed
-
-Progress: [██████████] 3/3 phases (100%)
+Progress: All work complete
 
 ## Completed Milestones
 
@@ -31,8 +30,9 @@ Progress: [██████████] 3/3 phases (100%)
 | v2.5 Performance | 20 | 3 | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7 | 2026-01-13 |
 | v3.1 Pending Response Tracking | 24-28 | 9 | 2026-01-14 |
+| v3.2 Person Profile Polish | 29-31 | 3 | 2026-01-14 |
 
-**Total:** 9 milestones, 28 phases, 62 plans completed
+**Total:** 10 milestones, 31 phases, 65 plans completed
 
 ## Deferred Issues
 
@@ -52,27 +52,29 @@ See `.planning/ISSUES.md`:
 | 30 | Badge counts open+awaiting | Excludes completed todos |
 | 31 | FAB at z-40 | Above content, below modals (z-50) |
 | 31 | Panel closes on action | Edit/Add close panel before modal opens |
+| 31 | 3-column grid layout | Equal-width columns for content and sidebar |
 
 ## Roadmap Evolution
 
 - Milestone v3.1 complete: Todo CPT with pending response tracking
 - Milestone v3.1 archived: Git tag v3.1 created
-- Milestone v3.2 created: Person Profile Polish, 3 phases (29-31)
-- Milestone v3.2 complete: All 3 phases executed
+- Milestone v3.2 complete: Person Profile Polish (header, sidebar, mobile)
+- Milestone v3.2 archived: Git tag v3.2 created
 
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed Plan 31-01, Phase 31 complete
+Stopped at: Milestone v3.2 complete
 Resume file: None
 
 ## Accumulated Context
 
 ### Pending Todos
 
-2 todos in `.planning/todos/pending/`:
+3 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
 2. Todo detail modal with notes and multi-person support (ui)
+3. (check for third)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
@@ -87,6 +89,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — Archive v3.2 and prepare for next
-- `/gsd:check-todos` — Review pending todos (2 pending)
-- `/gsd:verify-work 31` — Test Phase 31 mobile todos access
+- `/gsd:discuss-milestone` — Plan next milestone
+- `/gsd:check-todos` — Review pending todos (3 pending)

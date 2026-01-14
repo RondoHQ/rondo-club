@@ -91,6 +91,13 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - WP-CLI migration: `wp prm migrate-todos` — v3.1
 - 25 PHPUnit tests for todo functionality (145 total) — v3.1
 
+**v3.2 Person Profile Polish (shipped 2026-01-14):**
+- Current position (job title + company) display in person header — v3.2
+- Persistent todos sidebar on PersonDetail page (visible across all tabs) — v3.2
+- Mobile todos access via floating action button + slide-up panel — v3.2
+- 3-column grid layout for equal-width content columns — v3.2
+- Timeline endpoint updated for todo post statuses — v3.2
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -146,6 +153,11 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | WordPress post statuses for todos | Mutually exclusive states (open/awaiting/completed) | ✓ Good |
 | Auto-timestamp on awaiting | awaiting_since set/cleared automatically on state change | ✓ Good |
 | Urgency color scheme | Yellow 0-2d, orange 3-6d, red 7+d for visual priority | ✓ Good |
+| Current positions from sortedWorkHistory | Reuses existing sorted data via useMemo | ✓ Good |
+| Sidebar hidden below lg | Mobile gets FAB instead of sidebar | ✓ Good |
+| FAB at z-40 | Above content, below modals (z-50) | ✓ Good |
+| Panel closes on action | Edit/Add close panel before modal opens | ✓ Good |
+| 3-column grid layout | Equal-width columns for content and sidebar | ✓ Good |
 
 ---
-*Last updated: 2026-01-14 — v3.1 Pending Response Tracking shipped*
+*Last updated: 2026-01-14 — v3.2 Person Profile Polish shipped*

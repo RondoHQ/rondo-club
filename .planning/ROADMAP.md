@@ -11,52 +11,38 @@
 - ✅ [v2.5 Performance](milestones/v2.5-performance.md) (Phase 20) — SHIPPED 2026-01-13
 - ✅ [v3.0 Testing Infrastructure](milestones/v3.0-testing-infrastructure.md) (Phases 21-23) — SHIPPED 2026-01-13
 - ✅ [v3.1 Pending Response Tracking](milestones/v3.1-pending-response-tracking.md) (Phases 24-28) — SHIPPED 2026-01-14
-- 🚧 **v3.2 Person Profile Polish** (Phases 29-31) — IN PROGRESS
+- ✅ [v3.2 Person Profile Polish](milestones/v3.2-person-profile-polish.md) (Phases 29-31) — SHIPPED 2026-01-14
 
 ## Current Status
 
-**Active:** v3.2 Person Profile Polish — Phase 31
+**Active:** Planning next milestone
 
 ---
 
-### 🚧 v3.2 Person Profile Polish (In Progress)
+<details>
+<summary>✅ v3.2 Person Profile Polish (Phases 29-31) — SHIPPED 2026-01-14</summary>
 
 **Milestone Goal:** Enhance the PersonDetail page with role/job display in header and a persistent todos sidebar.
 
-#### Phase 29: Header Enhancement ✓
+**Result:** Current position display, persistent todos sidebar, mobile FAB + slide-up panel
 
-**Goal**: Add role/job display to person header showing current position and organization
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal UI patterns)
-**Plans**: 1
-**Status**: COMPLETE
+**Phases:**
+- [x] Phase 29: Header Enhancement (1/1 plan) ✓
+- [x] Phase 30: Todos Sidebar (1/1 plan) ✓
+- [x] Phase 31: Person Image Polish (1/1 plan) ✓
 
-Plans:
-- [x] 29-01: Add role/job display to person header
+**Total:** 3 phases, 3 plans
 
-#### Phase 30: Todos Sidebar ✓
+**Key Accomplishments:**
+- Current position (job title + company) display in person header
+- Persistent todos sidebar visible across all PersonDetail tabs
+- Mobile todos access via floating action button + slide-up panel
+- Fixed timeline endpoint to support new todo post statuses
+- Equal-width 3-column grid layout for person detail page
 
-**Goal**: Create persistent sidebar showing person's todos across all tabs
-**Depends on**: Phase 29
-**Research**: Unlikely (internal UI patterns)
-**Plans**: 1
-**Status**: COMPLETE
+See [milestone archive](milestones/v3.2-person-profile-polish.md) for full details.
 
-Plans:
-- [x] 30-01: Persistent todos sidebar
-
-#### Phase 31: Person Image Polish ✓
-
-**Goal**: Responsive behavior, collapse/expand, mobile handling
-**Depends on**: Phase 30
-**Research**: Unlikely (internal patterns)
-**Plans**: 1
-**Status**: COMPLETE
-
-Plans:
-- [x] 31-01: Mobile todos access (FAB + slide-up panel)
-
----
+</details>
 
 <details>
 <summary>✅ v3.1 Pending Response Tracking (Phases 24-28) — SHIPPED 2026-01-14</summary>
@@ -277,6 +263,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
 | v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
-| v3.2 Person Profile Polish | 29-31 | 3/3 | In Progress 🚧 | - |
+| v3.2 Person Profile Polish | 29-31 | 3/3 | Complete ✅ | 2026-01-14 |
 
-**Shipped: 9 milestones, 28 phases, 62 plans**
+**Shipped: 10 milestones, 31 phases, 65 plans**
