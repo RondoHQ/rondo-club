@@ -70,9 +70,8 @@ Resume file: None
 
 ### Pending Todos
 
-2 todos in `.planning/todos/pending/`:
+1 todo in `.planning/todos/pending/`:
 1. Add label management interface (ui)
-2. Fix todo migration and open todos display (api)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
@@ -80,6 +79,7 @@ Completed todos in `.planning/todos/done/`:
 3. Console MIME type errors — Resolved via production deploy
 4. Add pending response tracking — Done in v3.1
 5. Convert todos to custom post type — Done in v3.1
+6. Fix todo migration and open todos display — Fixed: migration bypasses access control
 
 ## Next Steps
 
