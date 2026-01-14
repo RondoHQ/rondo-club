@@ -64,6 +64,12 @@ class PRM_REST_Todos extends PRM_REST_Base {
                         return is_bool($param) || $param === 'true' || $param === 'false' || $param === '1' || $param === '0';
                     },
                 ],
+                'awaiting_response' => [
+                    'default'           => null,
+                    'validate_callback' => function($param) {
+                        return $param === null || is_bool($param) || $param === 'true' || $param === 'false' || $param === '1' || $param === '0';
+                    },
+                ],
             ],
         ]);
 
@@ -229,12 +235,22 @@ class PRM_REST_Todos extends PRM_REST_Base {
      */
     public function get_all_todos($request) {
         $include_completed = $request->get_param('completed');
+        $awaiting_response = $request->get_param('awaiting_response');
 
-        // Normalize boolean parameter
+        // Normalize boolean parameters
         if ($include_completed === 'true' || $include_completed === '1') {
             $include_completed = true;
         } else {
             $include_completed = false;
+        }
+
+        // Normalize awaiting_response parameter (null means no filter)
+        if ($awaiting_response === 'true' || $awaiting_response === '1') {
+            $awaiting_response = true;
+        } elseif ($awaiting_response === 'false' || $awaiting_response === '0') {
+            $awaiting_response = false;
+        } else {
+            $awaiting_response = null;
         }
 
         // Build query args - access control filter will handle visibility
@@ -246,9 +262,12 @@ class PRM_REST_Todos extends PRM_REST_Base {
             'order'          => 'DESC',
         ];
 
+        // Build meta_query for filters
+        $meta_queries = [];
+
         // Filter by completion status
         if (!$include_completed) {
-            $args['meta_query'] = [
+            $meta_queries[] = [
                 'relation' => 'OR',
                 [
                     'key'     => 'is_completed',
@@ -265,6 +284,42 @@ class PRM_REST_Todos extends PRM_REST_Base {
                     'compare' => 'NOT EXISTS',
                 ],
             ];
+        }
+
+        // Filter by awaiting_response status
+        if ($awaiting_response === true) {
+            $meta_queries[] = [
+                'key'     => 'awaiting_response',
+                'value'   => '1',
+                'compare' => '=',
+            ];
+        } elseif ($awaiting_response === false) {
+            $meta_queries[] = [
+                'relation' => 'OR',
+                [
+                    'key'     => 'awaiting_response',
+                    'value'   => '0',
+                    'compare' => '=',
+                ],
+                [
+                    'key'     => 'awaiting_response',
+                    'value'   => '',
+                    'compare' => '=',
+                ],
+                [
+                    'key'     => 'awaiting_response',
+                    'compare' => 'NOT EXISTS',
+                ],
+            ];
+        }
+
+        // Combine meta queries with AND relation
+        if (count($meta_queries) > 0) {
+            if (count($meta_queries) === 1) {
+                $args['meta_query'] = $meta_queries[0];
+            } else {
+                $args['meta_query'] = array_merge(['relation' => 'AND'], $meta_queries);
+            }
         }
 
         $todos = get_posts($args);
