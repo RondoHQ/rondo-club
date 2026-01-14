@@ -79,6 +79,7 @@ function prm_autoloader($class_name) {
         'PRM_CardDAV_Server'         => 'class-carddav-server.php',
         'PRM_Workspace_Members'      => 'class-workspace-members.php',
         'PRM_REST_Workspaces'        => 'class-rest-workspaces.php',
+        'PRM_REST_Todos'             => 'class-rest-todos.php',
         'PRM_Mentions'               => 'class-mentions.php',
         'PRM_Mention_Notifications'  => 'class-mention-notifications.php',
     ];
@@ -174,6 +175,7 @@ function prm_init() {
         new PRM_REST_People();
         new PRM_REST_Companies();
         new PRM_REST_Workspaces();
+        new PRM_REST_Todos();
         new PRM_REST_Slack();
         new PRM_REST_Import_Export();
         new PRM_Monica_Import();
