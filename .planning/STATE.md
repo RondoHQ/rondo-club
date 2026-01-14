@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Milestone: v3.6 Quick Wins & Performance
-Phase: 40 of 41 (Quick Wins)
+Phase: 41 of 41 (Bundle Optimization)
 Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-01-14 — Completed 40-01-PLAN.md
+Status: Milestone complete
+Last activity: 2026-01-14 — Completed 41-01-PLAN.md
 
-Progress: [█████░░░░░] 1/2 phases (50%)
+Progress: [██████████] 2/2 phases (100%)
 
 ## Completed Milestones
 
@@ -67,7 +67,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Milestone v3.6 initialization
+Stopped at: Completed 41-01-PLAN.md (Bundle Optimization)
 Resume file: None
 
 ## Accumulated Context
@@ -105,6 +105,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 41` — Plan Bundle Optimization phase
-- `/gsd:discuss-phase 41` — Gather context first if needed
+- `/gsd:complete-milestone` — Archive v3.6 and prepare for next
 - Run `wp prm todos migrate-persons` on production after deployment
