@@ -452,8 +452,8 @@ export default function Dashboard() {
         />
       </div>
       
-      {/* Row 1: Upcoming Reminders + Open Todos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Row 1: Upcoming Reminders + Open Todos + Awaiting Response */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Upcoming Reminders */}
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -461,11 +461,11 @@ export default function Dashboard() {
               <Calendar className="w-5 h-5 mr-2 text-gray-500" />
               Upcoming reminders
             </h2>
-            <Link 
-              to="/dates" 
+            <Link
+              to="/dates"
               className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
             >
-              View all reminders
+              View all
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
@@ -481,7 +481,7 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-        
+
         {/* Open Todos */}
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -489,11 +489,11 @@ export default function Dashboard() {
               <CheckSquare className="w-5 h-5 mr-2 text-gray-500" />
               Open todos
             </h2>
-            <Link 
-              to="/todos" 
+            <Link
+              to="/todos"
               className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
             >
-              View all todos
+              View all
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
@@ -509,30 +509,35 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Awaiting Response Card */}
-      {dashboardAwaitingTodos.length > 0 && (
+        {/* Awaiting Response */}
         <div className="card">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold flex items-center">
-                <Clock className="w-5 h-5 mr-2 text-orange-500" />
-                Awaiting response ({awaitingTodos?.length || 0})
-              </h3>
-              <Link to="/todos?status=awaiting" className="text-primary-600 hover:text-primary-700 text-sm">
-                View all
-                <ArrowRight className="w-4 h-4 inline ml-1" />
-              </Link>
-            </div>
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <h2 className="font-semibold flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-orange-500" />
+              Awaiting response
+            </h2>
+            <Link
+              to="/todos?status=awaiting"
+              className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+            >
+              View all
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Link>
           </div>
           <div className="divide-y divide-gray-100">
-            {dashboardAwaitingTodos.map((todo) => (
-              <AwaitingTodoCard key={todo.id} todo={todo} />
-            ))}
+            {dashboardAwaitingTodos.length > 0 ? (
+              dashboardAwaitingTodos.map((todo) => (
+                <AwaitingTodoCard key={todo.id} todo={todo} />
+              ))
+            ) : (
+              <p className="p-4 text-sm text-gray-500 text-center">
+                No awaiting responses
+              </p>
+            )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Row 2: Favorites + Recently Contacted + Recently Edited */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
