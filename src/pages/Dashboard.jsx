@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle } from 'lucide-react';
+import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock } from 'lucide-react';
 import { useDashboard, useTodos, useUpdateTodo } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { format, formatDistanceToNow } from 'date-fns';
 import { APP_NAME } from '@/constants/app';
-import { isTodoOverdue } from '@/utils/timeline';
+import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 
@@ -181,6 +181,41 @@ function TodoCard({ todo, onToggle }) {
   );
 }
 
+function AwaitingTodoCard({ todo }) {
+  const days = getAwaitingDays(todo);
+  const urgencyClass = getAwaitingUrgencyClass(days);
+
+  return (
+    <Link
+      to={`/people/${todo.person_id}`}
+      className="flex items-start p-3 hover:bg-gray-50 transition-colors"
+    >
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 truncate">{todo.content}</p>
+        <div className="flex items-center gap-2 mt-1">
+          {todo.person_thumbnail ? (
+            <img
+              src={todo.person_thumbnail}
+              alt={todo.person_name}
+              loading="lazy"
+              className="w-5 h-5 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+              <span className="text-xs text-gray-500">{todo.person_name?.[0]}</span>
+            </div>
+          )}
+          <span className="text-xs text-gray-500 truncate">{todo.person_name}</span>
+        </div>
+      </div>
+      <div className={`ml-3 text-xs px-2 py-1 rounded-full flex items-center gap-1 ${urgencyClass}`}>
+        <Clock className="w-3 h-3" />
+        {days === 0 ? 'Today' : `${days}d`}
+      </div>
+    </Link>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="card p-12 text-center">
@@ -218,7 +253,13 @@ export default function Dashboard() {
   const { data: todos } = useTodos(false); // Only incomplete todos
   const updateTodo = useUpdateTodo();
   const createActivity = useCreateActivity();
-  
+
+  // Filter todos awaiting response
+  const awaitingTodos = useMemo(() => {
+    if (!todos) return [];
+    return todos.filter(todo => todo.awaiting_response && !todo.is_completed);
+  }, [todos]);
+
   // State for complete todo flow
   const [todoToComplete, setTodoToComplete] = useState(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
@@ -471,7 +512,30 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      
+
+      {/* Awaiting Response Card */}
+      {awaitingTodos.length > 0 && (
+        <div className="card">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center">
+                <Clock className="w-5 h-5 mr-2 text-orange-500" />
+                Awaiting response ({awaitingTodos.length})
+              </h3>
+              <Link to="/todos" className="text-primary-600 hover:text-primary-700 text-sm">
+                View all
+                <ArrowRight className="w-4 h-4 inline ml-1" />
+              </Link>
+            </div>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {awaitingTodos.slice(0, 5).map((todo) => (
+              <AwaitingTodoCard key={todo.id} todo={todo} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Row 2: Favorites + Recently Contacted + Recently Edited */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Favorites */}
