@@ -66,7 +66,7 @@ Resume file: None
 
 ### Pending Todos
 
-10 todos in `.planning/todos/pending/`:
+11 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — DONE in v3.3
 3. Add import from Twenty CRM (api)
@@ -77,6 +77,7 @@ Resume file: None
 8. Simplify Slack contact details display (ui)
 9. Make company website link clickable in list (ui)
 10. Remove labels from company list (ui)
+11. Use build numbers for refresh indicator (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
