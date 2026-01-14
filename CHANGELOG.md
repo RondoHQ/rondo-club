@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Internal only (public: false) but visible in admin and REST API
   - Supports title (todo text), editor (optional notes), and author
   - Menu position after Important Dates with dashicons-yes-alt icon
+- ACF field group for todo metadata (`group_todo_fields.json`)
+  - `related_person`: post_object field linking to a person (required)
+  - `is_completed`: true_false toggle for completion status
+  - `due_date`: date_picker for optional due date (Y-m-d format)
+  - `_visibility`: select field for private/workspace visibility
+  - `_assigned_workspaces`: taxonomy field for workspace assignment (conditional on visibility)
 
 ## [1.74.0] - 2026-01-13
 
