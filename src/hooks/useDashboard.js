@@ -33,24 +33,28 @@ export function useTodos(includeCompleted = false) {
 
 export function useUpdateTodo() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ todoId, data }) => prmApi.updateTodo(todoId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      // Also invalidate timeline since todos now appear there
+      queryClient.invalidateQueries({ queryKey: ['people', 'timeline'] });
     },
   });
 }
 
 export function useDeleteTodo() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (todoId) => prmApi.deleteTodo(todoId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      // Also invalidate timeline since todos now appear there
+      queryClient.invalidateQueries({ queryKey: ['people', 'timeline'] });
     },
   });
 }
