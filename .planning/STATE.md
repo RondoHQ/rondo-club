@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Planning next milestone
+**Current focus:** v3.2 Person Profile Polish
 
 ## Current Position
 
-Milestone: None active
-Phase: 28 complete
-Plan: N/A
-Status: Ready to plan next milestone
-Last activity: 2026-01-14 — v3.1 milestone complete
+Milestone: v3.2 Person Profile Polish
+Phase: 29 (Header Enhancement)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-14 — Milestone v3.2 created
 
-Progress: ██████████ 100%
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -57,13 +57,13 @@ See `.planning/ISSUES.md`:
 ## Roadmap Evolution
 
 - Milestone v3.1 complete: Todo CPT with pending response tracking
-- Milestone v3.1 archived: Git tag v3.1 to be created
-- All 9 milestones shipped
+- Milestone v3.1 archived: Git tag v3.1 created
+- Milestone v3.2 created: Person Profile Polish, 3 phases (29-31)
 
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed v3.1 milestone
+Stopped at: Milestone v3.2 initialization
 Resume file: None
 
 ## Accumulated Context
