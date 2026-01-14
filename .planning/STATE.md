@@ -70,10 +70,11 @@ Resume file: None
 
 ### Pending Todos
 
-3 todos in `.planning/todos/pending/`:
+4 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
 2. Show role + job in person header (ui)
 3. Add persistent todos sidebar on person profile (ui)
+4. Todo detail modal with notes and multi-person support (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
