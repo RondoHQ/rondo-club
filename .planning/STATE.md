@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Planning next milestone
+**Current focus:** v3.3 Todo Enhancement
 
 ## Current Position
 
-Milestone: None active (v3.2 complete)
-Phase: —
+Milestone: v3.3 Todo Enhancement
+Phase: 32 (Todo Data Model Enhancement) — Not started
 Plan: —
-Status: Ready to plan next milestone
-Last activity: 2026-01-14 — v3.2 Person Profile Polish shipped
+Status: Ready to plan
+Last activity: 2026-01-14 — Milestone v3.3 created
 
-Progress: All work complete
+Progress: [░░░░░░░░░░] 0/3 phases (0%)
 
 ## Completed Milestones
 
@@ -43,16 +43,11 @@ See `.planning/ISSUES.md`:
 
 **0 issues remaining**
 
-## Decisions Made (v3.2)
+## Decisions Made (v3.3)
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
-| 29 | Current positions in header | Shows role + company for context |
-| 30 | Sidebar hidden below lg | Mobile gets full-width tab content |
-| 30 | Badge counts open+awaiting | Excludes completed todos |
-| 31 | FAB at z-40 | Above content, below modals (z-50) |
-| 31 | Panel closes on action | Edit/Add close panel before modal opens |
-| 31 | 3-column grid layout | Equal-width columns for content and sidebar |
+| — | — | — |
 
 ## Roadmap Evolution
 
@@ -60,21 +55,21 @@ See `.planning/ISSUES.md`:
 - Milestone v3.1 archived: Git tag v3.1 created
 - Milestone v3.2 complete: Person Profile Polish (header, sidebar, mobile)
 - Milestone v3.2 archived: Git tag v3.2 created
+- Milestone v3.3 created: Todo Enhancement, 3 phases (32-34)
 
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Milestone v3.2 complete
+Stopped at: Milestone v3.3 initialization
 Resume file: None
 
 ## Accumulated Context
 
 ### Pending Todos
 
-3 todos in `.planning/todos/pending/`:
+2 todos in `.planning/todos/pending/`:
 1. Add label management interface (ui)
-2. Todo detail modal with notes and multi-person support (ui)
-3. (check for third)
+2. ~~Todo detail modal with notes and multi-person support (ui)~~ — Being addressed in v3.3
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
@@ -89,5 +84,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:discuss-milestone` — Plan next milestone
-- `/gsd:check-todos` — Review pending todos (3 pending)
+- `/gsd:plan-phase 32` — Plan Todo Data Model Enhancement phase
+- `/gsd:discuss-phase 32` — Gather context first
+- `/gsd:research-phase 32` — Investigate unknowns
