@@ -5,17 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v3.6 Quick Wins & Performance
+**Current focus:** No active milestone — planning next work
 
 ## Current Position
 
-Milestone: v3.6 Quick Wins & Performance
-Phase: 41 of 41 (Bundle Optimization)
-Plan: 1 of 1 complete
-Status: Milestone complete
-Last activity: 2026-01-14 — Completed 41-01-PLAN.md
+Milestone: None active
+Phase: 41 phases completed
+Status: Ready to plan next milestone
+Last activity: 2026-01-14 — v3.6 Quick Wins & Performance shipped
 
-Progress: [██████████] 2/2 phases (100%)
+Progress: [██████████] 14 milestones shipped
 
 ## Completed Milestones
 
@@ -34,8 +33,9 @@ Progress: [██████████] 2/2 phases (100%)
 | v3.3 Todo Enhancement | 32-34 | 3 | 2026-01-14 |
 | v3.4 UI Polish | 35-37 | 3 | 2026-01-14 |
 | v3.5 Bug Fixes & Polish | 38-39 | 2 | 2026-01-14 |
+| v3.6 Quick Wins & Performance | 40-41 | 2 | 2026-01-14 |
 
-**Total:** 13 milestones, 39 phases, 73 plans completed
+**Total:** 14 milestones, 41 phases, 75 plans completed
 
 ## Deferred Issues
 
@@ -60,14 +60,15 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v3.3 archived: Git tag v3.3 created
 - Milestone v3.4 complete: UI Polish (quick fixes, dashboard, labels)
 - Milestone v3.4 archived: Git tag v3.4 created
-- Milestone v3.5 created: Bug Fixes & Polish, 2 phases (38-39)
 - Milestone v3.5 complete: X logo, dashboard styling, search ranking, auto-title, cache sync
-- Milestone v3.6 created: Quick Wins & Performance, 2 phases (40-41)
+- Milestone v3.5 archived: Git tag v3.5 created
+- Milestone v3.6 complete: Awaiting checkbox, email lowercase, modal lazy loading (bundle 460→50 KB)
+- Milestone v3.6 archived: Git tag v3.6 created
 
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed 41-01-PLAN.md (Bundle Optimization)
+Stopped at: v3.6 milestone complete
 Resume file: None
 
 ## Accumulated Context
@@ -87,10 +88,10 @@ Resume file: None
 10. ~~Remove labels from company list (ui)~~ — DONE in v3.4
 11. ~~Use build numbers for refresh indicator (ui)~~ — DONE in v3.4
 12. ~~Important date name overwritten by auto-title (api)~~ — DONE in v3.5 Phase 39
-13. Update X logo color to black (ui)
-14. ~~Dashboard card styling consistency (ui)~~ — DONE in 38-01-FIX
-15. Add checkbox to awaiting response items (ui)
-16. Lowercase email addresses on save (api)
+13. ~~Update X logo color to black (ui)~~ — DONE in v3.5 Phase 38
+14. ~~Dashboard card styling consistency (ui)~~ — DONE in v3.5 Phase 38
+15. ~~Add checkbox to awaiting response items (ui)~~ — DONE in v3.6 Phase 40
+16. ~~Lowercase email addresses on save (api)~~ — DONE in v3.6 Phase 40
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
@@ -105,5 +106,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — Archive v3.6 and prepare for next
+- `/gsd:discuss-milestone` — Plan next milestone
+- `/gsd:check-todos` — Review remaining backlog items
 - Run `wp prm todos migrate-persons` on production after deployment
