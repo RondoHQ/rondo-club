@@ -27,6 +27,37 @@
             "ui_off_text": "No"
         },
         {
+            "key": "field_todo_awaiting_response",
+            "label": "Awaiting Response",
+            "name": "awaiting_response",
+            "type": "true_false",
+            "instructions": "",
+            "required": 0,
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Yes",
+            "ui_off_text": "No"
+        },
+        {
+            "key": "field_todo_awaiting_response_since",
+            "label": "Awaiting Since",
+            "name": "awaiting_response_since",
+            "type": "date_time_picker",
+            "instructions": "",
+            "required": 0,
+            "display_format": "F j, Y g:i a",
+            "return_format": "Y-m-d H:i:s",
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_todo_awaiting_response",
+                        "operator": "==",
+                        "value": "1"
+                    }
+                ]
+            ]
+        },
+        {
             "key": "field_todo_due_date",
             "label": "Due Date",
             "name": "due_date",
