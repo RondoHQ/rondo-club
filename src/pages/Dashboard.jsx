@@ -385,7 +385,7 @@ export default function Dashboard() {
     return (
       <div className="space-y-6">
         {/* Stats - still show them even when empty */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard
             title="Total people"
             value={0}
@@ -410,8 +410,14 @@ export default function Dashboard() {
             icon={CheckSquare}
             href="/todos"
           />
+          <StatCard
+            title="Awaiting"
+            value={0}
+            icon={Clock}
+            href="/todos?status=awaiting"
+          />
         </div>
-        
+
         {/* Empty State */}
         <EmptyState />
       </div>
@@ -425,7 +431,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="Total people"
           value={stats?.total_people || 0}
@@ -449,6 +455,12 @@ export default function Dashboard() {
           value={stats?.open_todos_count || 0}
           icon={CheckSquare}
           href="/todos"
+        />
+        <StatCard
+          title="Awaiting"
+          value={stats?.awaiting_todos_count || 0}
+          icon={Clock}
+          href="/todos?status=awaiting"
         />
       </div>
       

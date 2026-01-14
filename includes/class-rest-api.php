@@ -694,16 +694,20 @@ class PRM_REST_API extends PRM_REST_Base {
         
         // Get open todos count
         $open_todos_count = $this->count_open_todos();
-        
+
+        // Get awaiting todos count
+        $awaiting_todos_count = $this->count_awaiting_todos();
+
         // Recently contacted (people with most recent activities)
         $recently_contacted = $this->get_recently_contacted_people(5);
-        
+
         return rest_ensure_response([
             'stats' => [
-                'total_people'     => $total_people,
-                'total_companies'  => $total_companies,
-                'total_dates'      => $total_dates,
-                'open_todos_count' => $open_todos_count,
+                'total_people'         => $total_people,
+                'total_companies'      => $total_companies,
+                'total_dates'          => $total_dates,
+                'open_todos_count'     => $open_todos_count,
+                'awaiting_todos_count' => $awaiting_todos_count,
             ],
             'recent_people'       => array_map([$this, 'format_person_summary'], $recent_people),
             'upcoming_reminders'  => array_slice($upcoming_reminders, 0, 5),
@@ -723,6 +727,24 @@ class PRM_REST_API extends PRM_REST_Base {
         $todos = get_posts([
             'post_type'      => 'prm_todo',
             'post_status'    => 'prm_open',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+        ]);
+
+        return count($todos);
+    }
+
+    /**
+     * Count awaiting todos for current user
+     *
+     * Uses the prm_todo CPT with access control filtering.
+     * Only counts todos with 'prm_awaiting' status.
+     */
+    private function count_awaiting_todos() {
+        // Query todos with access control (PRM_Access_Control hooks into WP_Query)
+        $todos = get_posts([
+            'post_type'      => 'prm_todo',
+            'post_status'    => 'prm_awaiting',
             'posts_per_page' => -1,
             'fields'         => 'ids',
         ]);
