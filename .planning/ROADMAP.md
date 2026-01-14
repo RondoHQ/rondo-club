@@ -45,15 +45,16 @@ Plans:
 Plans:
 - [x] 30-01: Persistent todos sidebar
 
-#### Phase 31: Person Image Polish
+#### Phase 31: Person Image Polish ✓
 
 **Goal**: Responsive behavior, collapse/expand, mobile handling
 **Depends on**: Phase 30
 **Research**: Unlikely (internal patterns)
-**Plans**: TBD
+**Plans**: 1
+**Status**: COMPLETE
 
 Plans:
-- [ ] 31-01: TBD
+- [x] 31-01: Mobile todos access (FAB + slide-up panel)
 
 ---
 
@@ -276,6 +277,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
 | v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
-| v3.2 Person Profile Polish | 29-31 | 2/? | In Progress 🚧 | - |
+| v3.2 Person Profile Polish | 29-31 | 3/3 | In Progress 🚧 | - |
 
 **Shipped: 9 milestones, 28 phases, 62 plans**

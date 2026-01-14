@@ -10,12 +10,13 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Milestone: v3.2 Person Profile Polish
-Phase: 30 (Todos Sidebar) — COMPLETE
-Plan: 30-01 complete (SUMMARY created)
-Status: Ready for Phase 31 planning
-Last activity: 2026-01-14 — Phase 30 executed
+Phase: 31 (Person Image Polish) — COMPLETE
+Plan: 31-01 complete (SUMMARY created)
+Status: Milestone complete, ready for completion
 
-Progress: [██████░░░░] 2/3 phases (67%)
+Last activity: 2026-01-14 — Phase 31 executed
+
+Progress: [██████████] 3/3 phases (100%)
 
 ## Completed Milestones
 
@@ -42,28 +43,27 @@ See `.planning/ISSUES.md`:
 
 **0 issues remaining**
 
-## Decisions Made (v3.1)
+## Decisions Made (v3.2)
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
-| 24 | Todo CPT not Comment | Todos are posts, not comments; allows richer metadata |
-| 24 | Migration deletes originals | Clean cutover; no duplicate data after migration |
-| 26 | Auto-timestamp on state change | awaiting_since set/cleared automatically |
-| 26 | gmdate for timestamps | UTC timestamps for consistency |
-| 27 | Urgency color scheme | Yellow 0-2d, orange 3-6d, red 7+d |
-| 28 | WordPress post statuses | Mutually exclusive states (open/awaiting/completed) |
-| 28 | Status-based filtering | Single status param replaces is_completed + awaiting_response |
+| 29 | Current positions in header | Shows role + company for context |
+| 30 | Sidebar hidden below lg | Mobile gets full-width tab content |
+| 30 | Badge counts open+awaiting | Excludes completed todos |
+| 31 | FAB at z-40 | Above content, below modals (z-50) |
+| 31 | Panel closes on action | Edit/Add close panel before modal opens |
 
 ## Roadmap Evolution
 
 - Milestone v3.1 complete: Todo CPT with pending response tracking
 - Milestone v3.1 archived: Git tag v3.1 created
 - Milestone v3.2 created: Person Profile Polish, 3 phases (29-31)
+- Milestone v3.2 complete: All 3 phases executed
 
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Milestone v3.2 initialization
+Stopped at: Completed Plan 31-01, Phase 31 complete
 Resume file: None
 
 ## Accumulated Context
@@ -83,9 +83,10 @@ Completed todos in `.planning/todos/done/`:
 6. Fix todo migration and open todos display — Fixed: migration bypasses access control
 7. Show role + job in person header — Done in Phase 29
 8. Add persistent todos sidebar on person profile — Done in Phase 30
+9. Add mobile todos access — Done in Phase 31
 
 ## Next Steps
 
-- `/gsd:plan-phase 31` — Plan Person Image Polish phase
+- `/gsd:complete-milestone` — Archive v3.2 and prepare for next
 - `/gsd:check-todos` — Review pending todos (2 pending)
-- `/gsd:verify-work 30` — Test Phase 30 todos sidebar
+- `/gsd:verify-work 31` — Test Phase 31 mobile todos access
