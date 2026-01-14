@@ -1141,6 +1141,171 @@ if (defined('WP_CLI') && WP_CLI) {
     }
 
     /**
+     * Todos WP-CLI Commands
+     */
+    class PRM_Todos_CLI_Command {
+
+        /**
+         * Migrate todos from comment-based storage to CPT-based storage
+         *
+         * This command migrates all prm_todo comments to the new prm_todo
+         * custom post type, preserving all metadata and relationships.
+         *
+         * ## OPTIONS
+         *
+         * [--dry-run]
+         * : Preview changes without making them
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm todos migrate
+         *     wp prm todos migrate --dry-run
+         *
+         * @when after_wp_load
+         */
+        public function migrate($args, $assoc_args) {
+            $dry_run = isset($assoc_args['dry-run']);
+
+            if ($dry_run) {
+                WP_CLI::log('DRY RUN MODE - No changes will be made');
+            }
+
+            WP_CLI::log('');
+            WP_CLI::log('╔════════════════════════════════════════════════════════════╗');
+            WP_CLI::log('║         Caelis Todo Migration                              ║');
+            WP_CLI::log('╚════════════════════════════════════════════════════════════╝');
+            WP_CLI::log('');
+            WP_CLI::log('This migration will:');
+            WP_CLI::log('  1. Find all comment-based todos (prm_todo comment type)');
+            WP_CLI::log('  2. Create corresponding prm_todo CPT posts');
+            WP_CLI::log('  3. Copy all metadata (is_completed, due_date)');
+            WP_CLI::log('  4. Delete the original comments after successful migration');
+            WP_CLI::log('');
+
+            // Query all prm_todo comments
+            $todos = get_comments([
+                'type'   => 'prm_todo',
+                'status' => 'approve',
+                'number' => 0, // All todos
+            ]);
+
+            if (empty($todos)) {
+                WP_CLI::success('No comment-based todos found. Nothing to migrate.');
+                return;
+            }
+
+            WP_CLI::log(sprintf('Found %d todo(s) to migrate.', count($todos)));
+            WP_CLI::log('');
+
+            $migrated = 0;
+            $skipped = 0;
+            $failed = 0;
+
+            foreach ($todos as $todo) {
+                $person_id = (int) $todo->comment_post_ID;
+                $person = get_post($person_id);
+
+                if (!$person || $person->post_type !== 'person') {
+                    WP_CLI::warning(sprintf(
+                        'Skipping todo ID %d: linked to non-person post ID %d',
+                        $todo->comment_ID,
+                        $person_id
+                    ));
+                    $skipped++;
+                    continue;
+                }
+
+                $todo_content = $todo->comment_content;
+                $is_completed = get_comment_meta($todo->comment_ID, 'is_completed', true);
+                $due_date = get_comment_meta($todo->comment_ID, 'due_date', true);
+
+                WP_CLI::log(sprintf(
+                    'Migrating todo ID %d: "%s" (person: %s)',
+                    $todo->comment_ID,
+                    wp_trim_words($todo_content, 10),
+                    $person->post_title
+                ));
+
+                if ($dry_run) {
+                    WP_CLI::log(sprintf(
+                        '  Would create: author=%d, completed=%s, due=%s',
+                        $todo->user_id,
+                        $is_completed ? 'yes' : 'no',
+                        $due_date ?: 'none'
+                    ));
+                    $migrated++;
+                    continue;
+                }
+
+                // Create the new prm_todo CPT post
+                $post_data = [
+                    'post_type'    => 'prm_todo',
+                    'post_title'   => $todo_content,
+                    'post_author'  => $todo->user_id,
+                    'post_date'    => $todo->comment_date,
+                    'post_status'  => 'publish',
+                ];
+
+                $new_post_id = wp_insert_post($post_data, true);
+
+                if (is_wp_error($new_post_id)) {
+                    WP_CLI::warning(sprintf(
+                        '  Failed to create post: %s',
+                        $new_post_id->get_error_message()
+                    ));
+                    $failed++;
+                    continue;
+                }
+
+                // Set ACF fields
+                update_field('related_person', $person_id, $new_post_id);
+                update_field('is_completed', !empty($is_completed), $new_post_id);
+
+                if (!empty($due_date)) {
+                    update_field('due_date', $due_date, $new_post_id);
+                }
+
+                // Set visibility to private (todos were always private)
+                update_field('_visibility', 'private', $new_post_id);
+
+                WP_CLI::log(sprintf('  Created prm_todo post ID %d', $new_post_id));
+
+                // Delete the original comment
+                $deleted = wp_delete_comment($todo->comment_ID, true);
+
+                if ($deleted) {
+                    WP_CLI::log(sprintf('  Deleted original comment ID %d', $todo->comment_ID));
+                } else {
+                    WP_CLI::warning(sprintf('  Failed to delete original comment ID %d', $todo->comment_ID));
+                }
+
+                $migrated++;
+            }
+
+            WP_CLI::log('');
+            WP_CLI::log('────────────────────────────────────────────────────────────────');
+            WP_CLI::log('Migration Summary:');
+            WP_CLI::log('────────────────────────────────────────────────────────────────');
+
+            if ($dry_run) {
+                WP_CLI::log(sprintf('  Would migrate: %d', $migrated));
+                WP_CLI::log(sprintf('  Would skip: %d', $skipped));
+                WP_CLI::success('Dry run complete. Run without --dry-run to apply changes.');
+            } else {
+                WP_CLI::log(sprintf('  Migrated: %d', $migrated));
+                WP_CLI::log(sprintf('  Skipped: %d', $skipped));
+                WP_CLI::log(sprintf('  Failed: %d', $failed));
+
+                if ($failed > 0) {
+                    WP_CLI::warning(sprintf('Migration completed with %d failure(s).', $failed));
+                } else {
+                    WP_CLI::success('Migration complete! All todos migrated to CPT.');
+                }
+            }
+        }
+    }
+
+    /**
      * Register WP-CLI commands
      */
     WP_CLI::add_command('prm reminders', 'PRM_Reminders_CLI_Command');
@@ -1150,5 +1315,6 @@ if (defined('WP_CLI') && WP_CLI) {
     WP_CLI::add_command('prm carddav', 'PRM_CardDAV_CLI_Command');
     WP_CLI::add_command('prm multiuser', 'PRM_MultiUser_CLI_Command');
     WP_CLI::add_command('prm dates', 'PRM_Dates_CLI_Command');
+    WP_CLI::add_command('prm todos', 'PRM_Todos_CLI_Command');
 }
 
