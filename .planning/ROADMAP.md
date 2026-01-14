@@ -15,37 +15,37 @@
 - ✅ [v3.3 Todo Enhancement](milestones/v3.3-todo-enhancement.md) (Phases 32-34) — SHIPPED 2026-01-14
 - ✅ [v3.4 UI Polish](milestones/v3.4-ui-polish.md) (Phases 35-37) — SHIPPED 2026-01-14
 - ✅ [v3.5 Bug Fixes & Polish](milestones/v3.5-bug-fixes-polish.md) (Phases 38-39) — SHIPPED 2026-01-14
-- 🚧 **v3.6 Quick Wins & Performance** — Phases 40-41 (in progress)
+- ✅ [v3.6 Quick Wins & Performance](milestones/v3.6-quick-wins-performance.md) (Phases 40-41) — SHIPPED 2026-01-14
 
 ## Current Status
 
-**Active:** v3.6 Quick Wins & Performance (Phase 40-41)
+**Active:** No active milestone. Use `/gsd:discuss-milestone` to plan next work.
 
 ---
 
-### 🚧 v3.6 Quick Wins & Performance (In Progress)
+<details>
+<summary>✅ v3.6 Quick Wins & Performance (Phases 40-41) — SHIPPED 2026-01-14</summary>
 
 **Milestone Goal:** Small UX improvements (awaiting checkbox, email normalization) and bundle size optimization.
 
-#### Phase 40: Quick Wins ✓
+**Result:** Main bundle reduced from 460 KB to 50 KB (89%), awaiting checkbox toggle, email auto-lowercase
 
-**Goal**: Add awaiting checkbox toggle to todo lists, auto-lowercase emails on save
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal patterns)
-**Plans**: 1/1 complete
+**Phases:**
+- [x] Phase 40: Quick Wins (1/1 plan) ✓
+- [x] Phase 41: Bundle Optimization (1/1 plan) ✓
 
-Plans:
-- [x] 40-01: Awaiting checkbox + email lowercasing
+**Total:** 2 phases, 2 plans
 
-#### Phase 41: Bundle Optimization ✓
+**Key Accomplishments:**
+- Main bundle reduced from 460 KB to 50 KB (89% reduction)
+- Initial page load reduced from ~767 KB to ~400 KB
+- Awaiting checkbox toggle in Dashboard for quick status changes
+- Email addresses auto-lowercased on save
+- TipTap editor loads only on demand
 
-**Goal**: Analyze current bundle sizes and optimize (grown since v2.5)
-**Depends on**: Phase 40
-**Research**: Unlikely (established patterns from v2.5)
-**Plans**: 1/1 complete
+See [milestone archive](milestones/v3.6-quick-wins-performance.md) for full details.
 
-Plans:
-- [x] 41-01: Modal lazy loading (main bundle 460 KB → 50 KB)
+</details>
 
 ---
 
@@ -382,3 +382,11 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 
 **Shipped: 14 milestones, 41 phases, 75 plans**
+
+---
+
+## Next Steps
+
+No active milestone. Options:
+- `/gsd:discuss-milestone` — Plan next features
+- `/gsd:check-todos` — Review pending backlog items

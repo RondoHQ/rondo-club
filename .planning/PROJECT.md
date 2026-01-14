@@ -123,6 +123,13 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Dashboard cache invalidates on todo mutations from PersonDetail — v3.5
 - custom_label included in important date API response — v3.5
 
+**v3.6 Quick Wins & Performance (shipped 2026-01-14):**
+- Awaiting checkbox toggle in Dashboard for quick completion — v3.6
+- Email addresses auto-lowercased on save via ACF filter — v3.6
+- Modal lazy loading with React.lazy + Suspense — v3.6
+- Main bundle reduced from 460 KB to 50 KB (89% reduction) — v3.6
+- Initial page load reduced from ~767 KB to ~400 KB — v3.6
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -194,6 +201,9 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Backend auto-detects custom titles | Compare to would-be auto-generated, save to custom_label | ✓ Good |
 | useRef for title edit tracking | Avoid re-renders from useState | ✓ Good |
 | custom_label in API response | Frontend knows when title was customized | ✓ Good |
+| Direct completion for awaiting todos | Quick status change, no modal needed | ✓ Good |
+| ACF update_value filter for email | Normalize at save time, not display | ✓ Good |
+| null Suspense fallback for modals | Modals overlay content, no spinner needed | ✓ Good |
 
 ---
-*Last updated: 2026-01-14 — v3.5 Bug Fixes & Polish shipped*
+*Last updated: 2026-01-14 — v3.6 Quick Wins & Performance shipped*
