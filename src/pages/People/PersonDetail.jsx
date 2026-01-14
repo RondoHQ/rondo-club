@@ -1485,7 +1485,9 @@ export default function PersonDetail() {
       </div>
 
       {/* Tab Content */}
-      <div className="space-y-6">
+      <div className="flex gap-6">
+        {/* Main content */}
+        <div className="flex-1 min-w-0 space-y-6">
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="columns-1 md:columns-2 gap-6">
@@ -2144,6 +2146,14 @@ export default function PersonDetail() {
           )}
           </div>
         )}
+        </div>
+
+        {/* Todos Sidebar - always visible */}
+        <aside className="w-80 flex-shrink-0 hidden lg:block">
+          <div className="sticky top-6">
+            {/* Todos content will be moved here in Task 2 */}
+          </div>
+        </aside>
       </div>
 
       {/* Modals */}
