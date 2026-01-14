@@ -5,6 +5,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
   const [content, setContent] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
+  const [awaitingResponse, setAwaitingResponse] = useState(false);
 
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
@@ -17,10 +18,12 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       setContent(todo.content || '');
       setDueDate(todo.due_date || '');
       setIsCompleted(todo.is_completed || false);
+      setAwaitingResponse(todo.awaiting_response || false);
     } else {
       setContent('');
       setDueDate(getTodayDate());
       setIsCompleted(false);
+      setAwaitingResponse(false);
     }
   }, [todo, isOpen]);
 
@@ -34,12 +37,14 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       content: content.trim(),
       due_date: dueDate || null,
       is_completed: isCompleted,
+      awaiting_response: awaitingResponse,
     });
     
     if (!todo) {
       setContent('');
       setDueDate(getTodayDate());
       setIsCompleted(false);
+      setAwaitingResponse(false);
     }
   };
 
@@ -48,6 +53,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       setContent('');
       setDueDate(getTodayDate());
       setIsCompleted(false);
+      setAwaitingResponse(false);
     }
     onClose();
   };
@@ -107,7 +113,20 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
               disabled={isLoading}
             />
           </div>
-          
+
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={awaitingResponse}
+                onChange={(e) => setAwaitingResponse(e.target.checked)}
+                className="mr-2"
+                disabled={isLoading}
+              />
+              <span className="text-sm text-gray-700">Awaiting response</span>
+            </label>
+          </div>
+
           {todo && (
             <div className="mb-4">
               <label className="flex items-center">
