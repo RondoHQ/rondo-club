@@ -32,7 +32,7 @@
 **Research**: Unlikely (internal patterns)
 
 Plans:
-- [ ] 35-01: TBD (run /gsd:plan-phase 35 to break down)
+- [x] 35-01: Quick Fixes (website links, labels removal, Slack display, build timestamps) ✓
 
 #### Phase 36: Dashboard Enhancement
 
