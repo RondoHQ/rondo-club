@@ -1852,98 +1852,6 @@ export default function PersonDetail() {
         {/* Timeline Tab */}
         {activeTab === 'timeline' && (
           <div className="columns-1 md:columns-2 gap-6">
-            {/* Todos */}
-            <div className="card p-6 break-inside-avoid mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Todos</h2>
-                <button
-                  onClick={() => {
-                    setEditingTodo(null);
-                    setShowTodoModal(true);
-                  }}
-                  className="btn-secondary text-sm"
-                  title="Add todo"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-              {sortedTodos.length > 0 ? (
-                <div className="space-y-2">
-                  {sortedTodos.map((todo) => {
-                    const isOverdue = isTodoOverdue(todo);
-                    const awaitingDays = getAwaitingDays(todo);
-                    return (
-                      <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 group">
-                        <button
-                          onClick={() => handleToggleTodo(todo)}
-                          className="mt-0.5 mr-2 flex-shrink-0"
-                          title={todo.status === 'completed' ? 'Reopen' : todo.status === 'awaiting' ? 'Mark complete' : 'Complete'}
-                        >
-                          {todo.status === 'completed' ? (
-                            <CheckSquare2 className="w-5 h-5 text-primary-600" />
-                          ) : todo.status === 'awaiting' ? (
-                            <Clock className="w-5 h-5 text-orange-500" />
-                          ) : (
-                            <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
-                          )}
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${
-                            todo.status === 'completed'
-                              ? 'line-through text-gray-400'
-                              : todo.status === 'awaiting'
-                              ? 'text-orange-700'
-                              : isOverdue
-                              ? 'text-red-600'
-                              : ''
-                          }`}>
-                            {todo.content}
-                          </p>
-                          {/* Due date - only show for open todos */}
-                          {todo.due_date && todo.status === 'open' && (
-                            <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
-                              Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
-                              {isOverdue && ' (overdue)'}
-                            </p>
-                          )}
-                          {/* Awaiting indicator */}
-                          {todo.status === 'awaiting' && awaitingDays !== null && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1 ${getAwaitingUrgencyClass(awaitingDays)}`}>
-                              <Clock className="w-3 h-3" />
-                              {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                          <button
-                            onClick={() => {
-                              setEditingTodo(todo);
-                              setShowTodoModal(true);
-                            }}
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Edit todo"
-                          >
-                            <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteTodo(todo.id)}
-                            className="p-1 hover:bg-red-50 rounded"
-                            title="Delete todo"
-                          >
-                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  No todos yet.
-                </p>
-              )}
-            </div>
-
             {/* Timeline */}
             <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-4">
@@ -2151,7 +2059,96 @@ export default function PersonDetail() {
         {/* Todos Sidebar - always visible */}
         <aside className="w-80 flex-shrink-0 hidden lg:block">
           <div className="sticky top-6">
-            {/* Todos content will be moved here in Task 2 */}
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold">Todos</h2>
+                <button
+                  onClick={() => {
+                    setEditingTodo(null);
+                    setShowTodoModal(true);
+                  }}
+                  className="btn-secondary text-sm"
+                  title="Add todo"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              {sortedTodos.length > 0 ? (
+                <div className="space-y-2">
+                  {sortedTodos.map((todo) => {
+                    const isOverdue = isTodoOverdue(todo);
+                    const awaitingDays = getAwaitingDays(todo);
+                    return (
+                      <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 group">
+                        <button
+                          onClick={() => handleToggleTodo(todo)}
+                          className="mt-0.5 mr-2 flex-shrink-0"
+                          title={todo.status === 'completed' ? 'Reopen' : todo.status === 'awaiting' ? 'Mark complete' : 'Complete'}
+                        >
+                          {todo.status === 'completed' ? (
+                            <CheckSquare2 className="w-5 h-5 text-primary-600" />
+                          ) : todo.status === 'awaiting' ? (
+                            <Clock className="w-5 h-5 text-orange-500" />
+                          ) : (
+                            <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
+                          )}
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm ${
+                            todo.status === 'completed'
+                              ? 'line-through text-gray-400'
+                              : todo.status === 'awaiting'
+                              ? 'text-orange-700'
+                              : isOverdue
+                              ? 'text-red-600'
+                              : ''
+                          }`}>
+                            {todo.content}
+                          </p>
+                          {/* Due date - only show for open todos */}
+                          {todo.due_date && todo.status === 'open' && (
+                            <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                              Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
+                              {isOverdue && ' (overdue)'}
+                            </p>
+                          )}
+                          {/* Awaiting indicator */}
+                          {todo.status === 'awaiting' && awaitingDays !== null && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1 ${getAwaitingUrgencyClass(awaitingDays)}`}>
+                              <Clock className="w-3 h-3" />
+                              {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                          <button
+                            onClick={() => {
+                              setEditingTodo(todo);
+                              setShowTodoModal(true);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Edit todo"
+                          >
+                            <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTodo(todo.id)}
+                            className="p-1 hover:bg-red-50 rounded"
+                            title="Delete todo"
+                          >
+                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No todos yet.
+                </p>
+              )}
+            </div>
           </div>
         </aside>
       </div>
