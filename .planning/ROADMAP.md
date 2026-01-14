@@ -33,7 +33,7 @@
 **Research**: Unlikely (internal patterns)
 
 Plans:
-- [ ] 38-01: TBD (run /gsd:plan-phase 38 to break down)
+- [ ] 38-01: Quick UI Fixes (X logo black, dashboard card styling)
 
 #### Phase 39: API Improvements
 
