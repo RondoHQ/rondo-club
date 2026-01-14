@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.76.0] - 2026-01-14
+
+### Added
+- `PRM_REST_Todos` class for full CRUD operations on the todo CPT via REST API
+  - Person-scoped endpoints: GET/POST `/prm/v1/people/{person_id}/todos`
+  - Global endpoints: GET `/prm/v1/todos` with optional `completed` filter parameter
+  - Single todo endpoints: GET/PUT/DELETE `/prm/v1/todos/{id}`
+  - Response format matches existing comment-based todo system for seamless frontend migration
+  - Proper permission callbacks using `check_person_access()` and `check_user_approved()`
+  - Access control integration via existing `PRM_Access_Control` filters
+
 ## [1.75.0] - 2026-01-14
 
 ### Added
