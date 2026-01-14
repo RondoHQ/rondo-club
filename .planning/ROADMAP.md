@@ -10,13 +10,13 @@
 - ✅ [v2.4 Bug Fixes](milestones/v2.4-bug-fixes.md) (Phase 19) — SHIPPED 2026-01-13
 - ✅ [v2.5 Performance](milestones/v2.5-performance.md) (Phase 20) — SHIPPED 2026-01-13
 - ✅ [v3.0 Testing Infrastructure](milestones/v3.0-testing-infrastructure.md) (Phases 21-23) — SHIPPED 2026-01-13
-- 🚧 **v3.1 Pending Response Tracking** — Phases 24-28 (in progress)
+- ✅ **v3.1 Pending Response Tracking** — Phases 24-28 (complete)
 
 ## Current Status
 
-**Active:** v3.1 Pending Response Tracking (Phase 24-28)
+**Active:** v3.1 Pending Response Tracking complete - ready for milestone completion
 
-### 🚧 v3.1 Pending Response Tracking (In Progress)
+### ✅ v3.1 Pending Response Tracking (Complete)
 
 **Milestone Goal:** Convert todos to a proper post type and add pending response tracking with aging and auto-resolution.
 
@@ -65,14 +65,15 @@ Plans:
 - [x] 27-01: Add awaiting response UI (TodoModal, TodosList, Dashboard)
 - [x] 27-02: Add awaiting response to TimelineView, GlobalTodoModal, PersonDetail
 
-#### Phase 28: Filters & Polish
+#### Phase 28: Filters & Polish ✓
 
 **Goal**: Filter by pending status, dedicated view, tests for new functionality
 **Depends on**: Phase 27
 **Research**: Unlikely (internal patterns)
+**Result**: REST API awaiting_response filter, TodosList filter UI (All/Open/Completed + Awaiting toggle), 3 new tests (23 total in TodoCptTest)
 
 Plans:
-- [ ] 28-01: TBD
+- [x] 28-01: Add awaiting_response filter and TodosList filter UI
 
 ---
 
@@ -266,6 +267,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
-| v3.1 Pending Response Tracking | 24-28 | 8/~9 | In Progress 🚧 | - |
+| v3.1 Pending Response Tracking | 24-28 | 9/9 | Complete ✅ | 2026-01-14 |
 
 **Shipped: 23 phases, 53 plans**

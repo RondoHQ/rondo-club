@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v3.1 Pending Response Tracking
-Phase: 27 of 28 (Pending Response UI) — COMPLETE
-Plan: 2 of 2 in current phase — All plans complete
-Status: Phase 27 complete, ready for Phase 28
-Last activity: 2026-01-14 — Completed 27-02-PLAN.md (Complete Awaiting Response UI)
+Phase: 28 of 28 (Filters & Polish)
+Plan: 1 of 1 in current phase
+Status: Phase 28 complete
+Last activity: 2026-01-14 — Completed 28-01-PLAN.md (Todo Filtering)
 
-Progress: █████░░░░░ 24%
+Progress: ██████████ 100%
 
 ## Completed Milestones
 
@@ -67,6 +67,9 @@ See `.planning/ISSUES.md`:
 | 27 | Urgency color scheme | Yellow 0-2d, orange 3-6d, red 7+d for visibility |
 | 27 | GlobalTodoModal awaiting checkbox | Mark todos as awaiting at creation time |
 | 27 | Consistent badge pattern | Clock icon + day count across all todo displays |
+| 28 | Always use AND relation wrapper | Simpler meta_query structure, avoids bugs |
+| 28 | Client-side filtering for TodosList | Data already fetched, instant UI response |
+| 28 | Single filtered list pattern | Replaced complex grouping with filter tabs |
 
 ## Roadmap Evolution
 
@@ -86,7 +89,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed Phase 27 Plan 02 (Complete Awaiting Response UI)
+Stopped at: Completed Phase 28 Plan 01 (Todo Filtering)
 Resume file: None
 
 ## Accumulated Context
@@ -105,6 +108,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 28` — Create plan for Todo Filtering/Statistics
-- `/gsd:verify-work 27` — Verify Phase 27 (Pending Response UI complete)
+- `/gsd:complete-milestone` — Complete v3.1 milestone (all phases done)
+- `/gsd:verify-work 28` — Verify Phase 28 (Todo Filtering complete)
 - `/gsd:progress` — Check overall progress
