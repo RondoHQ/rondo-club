@@ -3,7 +3,7 @@ status: complete
 phase: 39-api-improvements
 source: [.planning/phases/39-api-improvements/39-01-SUMMARY.md]
 started: 2026-01-14T14:00:00Z
-updated: 2026-01-14T14:05:00Z
+updated: 2026-01-14T14:15:00Z
 ---
 
 ## Current Test
@@ -15,9 +15,7 @@ updated: 2026-01-14T14:05:00Z
 
 ### 1. Important date title persists user edits
 expected: Edit an important date, change the title to a custom value, save. The custom title should persist (not be overwritten by auto-generated text). Reload and verify it's still there.
-result: issue
-reported: "when I re-open the edit, the label immediately changes to the auto-generated title"
-severity: major
+result: pass (fixed in 39-01-FIX, verified 2026-01-14)
 
 ### 2. Auto-title still works for new dates
 expected: Create a new important date (e.g., Birthday for a person). The title should auto-generate as "{Person}'s Birthday". This confirms auto-title still works when appropriate.
@@ -38,8 +36,8 @@ result: pass
 ## Summary
 
 total: 5
-passed: 4
-issues: 1
+passed: 5
+issues: 0
 pending: 0
 skipped: 0
 
