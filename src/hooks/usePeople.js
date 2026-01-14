@@ -347,6 +347,8 @@ export function useCreateTodo() {
     onSuccess: (_, { personId }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
       queryClient.invalidateQueries({ queryKey: peopleKeys.todos(personId) });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
     },
   });
 }
@@ -361,6 +363,8 @@ export function useUpdateTodo() {
         queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
         queryClient.invalidateQueries({ queryKey: peopleKeys.todos(personId) });
       }
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
     },
   });
 }
@@ -375,6 +379,8 @@ export function useDeleteTodo() {
         queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
         queryClient.invalidateQueries({ queryKey: peopleKeys.todos(personId) });
       }
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
     },
   });
 }
