@@ -43,8 +43,9 @@ class SearchDashboardTest extends CaelisTestCase {
         $wp_rest_server = new WP_REST_Server();
         $this->server = $wp_rest_server;
 
-        // Instantiate REST API class to register routes (bypasses prm_is_rest_request() check)
+        // Instantiate REST API classes to register routes (bypasses prm_is_rest_request() check)
         new \PRM_REST_API();
+        new \PRM_REST_Todos();
 
         // Trigger REST API initialization to register routes
         do_action( 'rest_api_init' );
@@ -464,33 +465,32 @@ class SearchDashboardTest extends CaelisTestCase {
     }
 
     /**
-     * Helper to create a todo comment.
+     * Helper to create a todo post (CPT-based).
      *
      * @param int    $person_id Person to attach the todo to
      * @param string $content   Todo content
-     * @param int    $user_id   User ID for the comment author
+     * @param int    $user_id   User ID for the post author
      * @param bool   $completed Whether the todo is completed
      * @param string $due_date  Optional due date
-     * @return int Comment ID
+     * @return int Post ID
      */
     private function createTodo( int $person_id, string $content, int $user_id, bool $completed = false, string $due_date = '' ): int {
-        $comment_id = wp_insert_comment( [
-            'comment_post_ID' => $person_id,
-            'comment_content' => $content,
-            'comment_type'    => 'prm_todo',
-            'user_id'         => $user_id,
-            'comment_approved' => 1,
+        $post_id = self::factory()->post->create( [
+            'post_type'   => 'prm_todo',
+            'post_status' => 'publish',
+            'post_title'  => $content,
+            'post_author' => $user_id,
         ] );
 
-        if ( $completed ) {
-            update_comment_meta( $comment_id, 'is_completed', '1' );
-        }
+        update_field( 'related_person', $person_id, $post_id );
+        update_field( 'is_completed', $completed, $post_id );
+        update_field( 'visibility', 'private', $post_id );
 
         if ( $due_date ) {
-            update_comment_meta( $comment_id, 'due_date', $due_date );
+            update_field( 'due_date', $due_date, $post_id );
         }
 
-        return $comment_id;
+        return $post_id;
     }
 
     /**
