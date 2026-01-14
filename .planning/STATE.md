@@ -9,13 +9,13 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 
 ## Current Position
 
-Milestone: v3.5 Bug Fixes & Polish
-Phase: 38 (Quick UI Fixes) — Complete (including FIX plan)
-Plan: 1/1 + FIX in current phase
-Status: Phase complete
-Last activity: 2026-01-14 — Completed 38-01-FIX.md
+Milestone: v3.5 Bug Fixes & Polish — COMPLETE
+Phase: 39 (API Improvements) — Complete
+Plan: 1/1 in current phase
+Status: Milestone complete
+Last activity: 2026-01-14 — Completed 39-01-PLAN.md
 
-Progress: [█████░░░░░] 1/2 phases (50%)
+Progress: [██████████] 2/2 phases (100%)
 
 ## Completed Milestones
 
@@ -33,8 +33,9 @@ Progress: [█████░░░░░] 1/2 phases (50%)
 | v3.2 Person Profile Polish | 29-31 | 3 | 2026-01-14 |
 | v3.3 Todo Enhancement | 32-34 | 3 | 2026-01-14 |
 | v3.4 UI Polish | 35-37 | 3 | 2026-01-14 |
+| v3.5 Bug Fixes & Polish | 38-39 | 2 | 2026-01-14 |
 
-**Total:** 12 milestones, 37 phases, 71 plans completed
+**Total:** 13 milestones, 39 phases, 73 plans completed
 
 ## Deferred Issues
 
@@ -64,7 +65,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed 38-01-FIX.md (UAT fix for dashboard icon colors)
+Stopped at: Completed 39-01-PLAN.md (API Improvements)
 Resume file: None
 
 ## Accumulated Context
@@ -75,15 +76,15 @@ Resume file: None
 1. ~~Add label management interface (ui)~~ — DONE in v3.4 Phase 37
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — DONE in v3.3
 3. Add import from Twenty CRM (api)
-4. Prioritize first name in search (api)
-5. Todo changes should invalidate dashboard cache (api)
+4. ~~Prioritize first name in search (api)~~ — DONE in v3.5 Phase 39
+5. ~~Todo changes should invalidate dashboard cache (api)~~ — DONE in v3.5 Phase 39
 6. ~~Add Awaiting block to dashboard (ui)~~ — DONE in v3.4 Phase 36
 7. ~~Make Timeline panel 2 columns wide on desktop (ui)~~ — DONE in v3.4 Phase 36
 8. ~~Simplify Slack contact details display (ui)~~ — DONE in v3.4
 9. ~~Make company website link clickable in list (ui)~~ — DONE in v3.4
 10. ~~Remove labels from company list (ui)~~ — DONE in v3.4
 11. ~~Use build numbers for refresh indicator (ui)~~ — DONE in v3.4
-12. Important date name overwritten by auto-title (api)
+12. ~~Important date name overwritten by auto-title (api)~~ — DONE in v3.5 Phase 39
 13. Update X logo color to black (ui)
 14. ~~Dashboard card styling consistency (ui)~~ — DONE in 38-01-FIX
 
@@ -100,5 +101,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 39` — Plan Phase 39 (API Improvements)
+- `/gsd:complete-milestone` — Archive v3.5 and prepare for next milestone
+- `/gsd:new-milestone` — Create next milestone when ready
 - Run `wp prm todos migrate-persons` on production after deployment
