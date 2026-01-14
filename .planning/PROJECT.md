@@ -115,6 +115,14 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Full-width Timeline panel on person profile desktop — v3.4
 - Labels CRUD interface at /settings/labels (tabbed UI) — v3.4
 
+**v3.5 Bug Fixes & Polish (shipped 2026-01-14):**
+- X (Twitter) logo color updated to black — v3.5
+- Dashboard AwaitingTodoCard rounded corners — v3.5
+- Search prioritizes first name matches (scoring system) — v3.5
+- Important date titles persist user edits (custom_label detection) — v3.5
+- Dashboard cache invalidates on todo mutations from PersonDetail — v3.5
+- custom_label included in important date API response — v3.5
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -182,6 +190,10 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Notes section collapsed by default | Avoid modal height bloat | ✓ Good |
 | Stacked avatars max 3/2 | 3 in TodosList, 2 in compact PersonDetail sidebar | ✓ Good |
 | Filter current person from "Also:" | Only shows OTHER linked people | ✓ Good |
+| Search scoring system (100/80/60/40/20) | First name exact highest, then starts-with, contains, last name, general | ✓ Good |
+| Backend auto-detects custom titles | Compare to would-be auto-generated, save to custom_label | ✓ Good |
+| useRef for title edit tracking | Avoid re-renders from useState | ✓ Good |
+| custom_label in API response | Frontend knows when title was customized | ✓ Good |
 
 ---
-*Last updated: 2026-01-14 — v3.4 UI Polish shipped*
+*Last updated: 2026-01-14 — v3.5 Bug Fixes & Polish shipped*
