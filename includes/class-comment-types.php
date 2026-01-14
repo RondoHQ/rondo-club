@@ -453,7 +453,7 @@ class PRM_Comment_Types {
         // Access control is automatic via PRM_Access_Control hooks on WP_Query
         $todos = get_posts([
             'post_type'      => 'prm_todo',
-            'post_status'    => 'publish',
+            'post_status'    => ['prm_open', 'prm_awaiting', 'prm_completed'],
             'posts_per_page' => -1,
             'meta_query'     => [
                 [
@@ -463,17 +463,26 @@ class PRM_Comment_Types {
             ],
         ]);
 
+        // Map post status to frontend status values
+        $status_map = [
+            'prm_open'      => 'open',
+            'prm_awaiting'  => 'awaiting',
+            'prm_completed' => 'completed',
+        ];
+
         foreach ($todos as $todo) {
             $timeline[] = [
-                'id'           => $todo->ID,
-                'type'         => 'todo',
-                'content'      => $todo->post_title,
-                'author_id'    => (int) $todo->post_author,
-                'created'      => $todo->post_date,
-                'person_id'    => (int) $person_id,
-                'person_name'  => get_the_title($person_id),
-                'is_completed' => (bool) get_field('is_completed', $todo->ID),
-                'due_date'     => get_field('due_date', $todo->ID) ?: null,
+                'id'             => $todo->ID,
+                'type'           => 'todo',
+                'content'        => $todo->post_title,
+                'author_id'      => (int) $todo->post_author,
+                'created'        => $todo->post_date,
+                'person_id'      => (int) $person_id,
+                'person_name'    => get_the_title($person_id),
+                'status'         => $status_map[$todo->post_status] ?? 'open',
+                'is_completed'   => $todo->post_status === 'prm_completed',
+                'due_date'       => get_field('due_date', $todo->ID) ?: null,
+                'awaiting_since' => get_post_meta($todo->ID, 'awaiting_since', true) ?: null,
             ];
         }
 
