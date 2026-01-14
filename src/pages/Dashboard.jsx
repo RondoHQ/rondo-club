@@ -181,15 +181,26 @@ function TodoCard({ todo, onToggle }) {
   );
 }
 
-function AwaitingTodoCard({ todo }) {
+function AwaitingTodoCard({ todo, onToggle }) {
   const days = getAwaitingDays(todo);
   const urgencyClass = getAwaitingUrgencyClass(days);
 
   return (
     <Link
       to={`/people/${todo.person_id}`}
-      className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors"
+      className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors group"
     >
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggle(todo);
+        }}
+        className="mt-0.5 mr-3 flex-shrink-0"
+        title="Mark as complete"
+      >
+        <CheckSquare className="w-5 h-5 text-orange-500" />
+      </button>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">{todo.content}</p>
         <div className="flex items-center gap-2 mt-1">
@@ -266,6 +277,15 @@ export default function Dashboard() {
     if (todo.status === 'open') {
       setTodoToComplete(todo);
       setShowCompleteModal(true);
+      return;
+    }
+
+    // If awaiting, mark as completed directly
+    if (todo.status === 'awaiting') {
+      updateTodo.mutate({
+        todoId: todo.id,
+        data: { status: 'completed' },
+      });
       return;
     }
 
@@ -540,7 +560,7 @@ export default function Dashboard() {
           <div className="divide-y divide-gray-100">
             {dashboardAwaitingTodos.length > 0 ? (
               dashboardAwaitingTodos.map((todo) => (
-                <AwaitingTodoCard key={todo.id} todo={todo} />
+                <AwaitingTodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} />
               ))
             ) : (
               <p className="p-4 text-sm text-gray-500 text-center">
