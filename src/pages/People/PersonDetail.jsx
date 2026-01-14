@@ -1128,7 +1128,12 @@ export default function PersonDetail() {
       return new Date(b.created) - new Date(a.created);
     });
   }, [timeline]);
-  
+
+  // Count of open (non-completed) todos for sidebar badge
+  const openTodosCount = useMemo(() => {
+    return sortedTodos.filter(todo => todo.status !== 'completed').length;
+  }, [sortedTodos]);
+
   // Redirect if person is trashed
   useEffect(() => {
     if (person?.status === 'trash') {
@@ -2061,7 +2066,14 @@ export default function PersonDetail() {
           <div className="sticky top-6">
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Todos</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-semibold">Todos</h2>
+                  {openTodosCount > 0 && (
+                    <span className="bg-primary-100 text-primary-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                      {openTodosCount}
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => {
                     setEditingTodo(null);
