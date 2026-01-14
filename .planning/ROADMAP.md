@@ -33,15 +33,16 @@ Plans:
 - [x] 24-03: Migration from comment-based todos
 - [x] 24-04: Update tests for new todo system
 
-#### Phase 25: Todo UI Migration
+#### Phase 25: Todo UI Migration ✓
 
 **Goal**: Update frontend components to use new todo post type API
 **Depends on**: Phase 24
 
 **Research**: Unlikely (internal patterns)
+**Result**: Timeline endpoint returns todos from CPT, cache invalidation updated across all hooks
 
 Plans:
-- [ ] 25-01: Integrate CPT todos into timeline and update cache invalidation
+- [x] 25-01: Integrate CPT todos into timeline and update cache invalidation
 
 #### Phase 26: Pending Response Model
 
@@ -262,6 +263,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v2.4 Bug Fixes | 19 | 2/2 | Complete ✅ | 2026-01-13 |
 | v2.5 Performance | 20 | 3/3 | Complete ✅ | 2026-01-13 |
 | v3.0 Testing Infrastructure | 21-23 | 7/7 | Complete ✅ | 2026-01-13 |
-| v3.1 Pending Response Tracking | 24-28 | 2/? | In Progress 🚧 | - |
+| v3.1 Pending Response Tracking | 24-28 | 5/? | In Progress 🚧 | - |
 
 **Shipped: 23 phases, 53 plans**

@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v3.1 Pending Response Tracking
-Phase: 24 of 28 (Todo Post Type) — COMPLETE
-Plan: 4 of 4 in current phase — All plans complete
-Status: Phase 24 complete, ready for Phase 25
-Last activity: 2026-01-14 — Completed 24-04-PLAN.md (Tests for Todo CPT)
+Phase: 25 of 28 (Todo UI Migration) — COMPLETE
+Plan: 1 of 1 in current phase — All plans complete
+Status: Phase 25 complete, ready for Phase 26
+Last activity: 2026-01-14 — Completed 25-01-PLAN.md (Timeline Integration)
 
-Progress: ██░░░░░░░░ 8%
+Progress: ███░░░░░░░ 9%
 
 ## Completed Milestones
 
@@ -59,6 +59,8 @@ See `.planning/ISSUES.md`:
 | 24 | Todo CPT not Comment | Todos are posts, not comments; allows richer metadata |
 | 24 | Migration deletes originals | Clean cutover; no duplicate data after migration |
 | 24 | Update existing tests | SearchDashboardTest uses CPT-based todos now |
+| 25 | Merge todos into timeline with sorting | Combined CPT query with comments and sorted by created date |
+| 25 | Broad timeline invalidation in dashboard | Dashboard hooks invalidate ['people', 'timeline'] since personId not available |
 
 ## Roadmap Evolution
 
@@ -78,7 +80,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed Phase 24 (Todo Post Type) — all 4 plans complete
+Stopped at: Completed Phase 25 (Todo UI Migration) — all plans complete
 Resume file: None
 
 ## Accumulated Context
@@ -97,6 +99,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 25` — Create plan for Todo UI Migration
-- `/gsd:verify-work 24` — Verify Phase 24 (Todo CPT backend complete)
+- `/gsd:plan-phase 26` — Create plan for Pending Response Model
+- `/gsd:verify-work 25` — Verify Phase 25 (Todo UI Migration complete)
 - `/gsd:progress` — Check overall progress
