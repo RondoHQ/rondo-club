@@ -136,21 +136,6 @@ class PRM_REST_API extends PRM_REST_Base {
             'permission_callback' => '__return_true',
         ]);
         
-        // All todos (across all people)
-        register_rest_route('prm/v1', '/todos', [
-            'methods'             => WP_REST_Server::READABLE,
-            'callback'            => [$this, 'get_all_todos'],
-            'permission_callback' => [$this, 'check_user_approved'],
-            'args'                => [
-                'completed' => [
-                    'default'           => false,
-                    'validate_callback' => function($param) {
-                        return is_bool($param) || $param === 'true' || $param === 'false' || $param === '1' || $param === '0';
-                    },
-                ],
-            ],
-        ]);
-        
         // Get companies where a person or company is an investor
         register_rest_route('prm/v1', '/investments/(?P<investor_id>\d+)', [
             'methods'             => WP_REST_Server::READABLE,
@@ -718,25 +703,17 @@ class PRM_REST_API extends PRM_REST_Base {
     
     /**
      * Count open (non-completed) todos for current user
+     *
+     * Uses the prm_todo CPT with access control filtering.
      */
     private function count_open_todos() {
-        $user_id = get_current_user_id();
-        
-        // Get all people accessible by this user
-        $access_control = new PRM_Access_Control();
-        $accessible_people = $access_control->get_accessible_post_ids('person', $user_id);
-        
-        if (empty($accessible_people)) {
-            return 0;
-        }
-        
-        // Count todos that are not completed
-        $comments = get_comments([
-            'post__in' => $accessible_people,
-            'type'     => 'prm_todo',
-            'status'   => 'approve',
-            'count'    => true,
-            'meta_query' => [
+        // Query todos with access control (PRM_Access_Control hooks into WP_Query)
+        $todos = get_posts([
+            'post_type'      => 'prm_todo',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => [
                 'relation' => 'OR',
                 [
                     'key'     => 'is_completed',
@@ -745,12 +722,17 @@ class PRM_REST_API extends PRM_REST_Base {
                 ],
                 [
                     'key'     => 'is_completed',
+                    'value'   => '',
+                    'compare' => '=',
+                ],
+                [
+                    'key'     => 'is_completed',
                     'compare' => 'NOT EXISTS',
                 ],
             ],
         ]);
-        
-        return (int) $comments;
+
+        return count($todos);
     }
     
     /**
@@ -805,102 +787,6 @@ class PRM_REST_API extends PRM_REST_Base {
         
         return $recently_contacted;
     }
-    
-    /**
-     * Get all todos across all people for current user
-     */
-    public function get_all_todos($request) {
-        $user_id = get_current_user_id();
-        $include_completed = $request->get_param('completed');
-        
-        // Normalize boolean parameter
-        if ($include_completed === 'true' || $include_completed === '1') {
-            $include_completed = true;
-        } else {
-            $include_completed = false;
-        }
-        
-        // Get all people accessible by this user
-        $access_control = new PRM_Access_Control();
-        $accessible_people = $access_control->get_accessible_post_ids('person', $user_id);
-        
-        if (empty($accessible_people)) {
-            return rest_ensure_response([]);
-        }
-        
-        // Build query args
-        $args = [
-            'post__in' => $accessible_people,
-            'type'     => 'prm_todo',
-            'status'   => 'approve',
-            'orderby'  => 'comment_date',
-            'order'    => 'DESC',
-            'number'   => 100, // Reasonable limit
-        ];
-        
-        // Filter by completion status
-        if (!$include_completed) {
-            $args['meta_query'] = [
-                'relation' => 'OR',
-                [
-                    'key'     => 'is_completed',
-                    'value'   => '0',
-                    'compare' => '=',
-                ],
-                [
-                    'key'     => 'is_completed',
-                    'compare' => 'NOT EXISTS',
-                ],
-            ];
-        }
-        
-        $comments = get_comments($args);
-        
-        $todos = [];
-        foreach ($comments as $comment) {
-            $person_id = (int) $comment->comment_post_ID;
-            $person_name = get_the_title($person_id);
-            $person_thumbnail = get_the_post_thumbnail_url($person_id, 'thumbnail');
-            
-            $is_completed = get_comment_meta($comment->comment_ID, 'is_completed', true);
-            $due_date = get_comment_meta($comment->comment_ID, 'due_date', true);
-            
-            $todos[] = [
-                'id'               => (int) $comment->comment_ID,
-                'type'             => 'todo',
-                'content'          => $this->sanitize_rich_content($comment->comment_content),
-                'person_id'        => $person_id,
-                'person_name'      => $this->sanitize_text($person_name),
-                'person_thumbnail' => $this->sanitize_url($person_thumbnail),
-                'author_id'        => (int) $comment->user_id,
-                'created'          => $comment->comment_date,
-                'is_completed'     => !empty($is_completed),
-                'due_date'         => $due_date ?: null,
-            ];
-        }
-        
-        // Sort by due date (earliest first), todos without due date at end
-        usort($todos, function($a, $b) {
-            // Completed todos go to the bottom
-            if ($a['is_completed'] && !$b['is_completed']) return 1;
-            if (!$a['is_completed'] && $b['is_completed']) return -1;
-            
-            // For incomplete todos, sort by due date
-            if (!$a['is_completed'] && !$b['is_completed']) {
-                if ($a['due_date'] && $b['due_date']) {
-                    return strtotime($a['due_date']) - strtotime($b['due_date']);
-                }
-                if ($a['due_date'] && !$b['due_date']) return -1;
-                if (!$a['due_date'] && $b['due_date']) return 1;
-            }
-            
-            // For completed or same status, sort by creation date (newest first)
-            return strtotime($b['created']) - strtotime($a['created']);
-        });
-        
-        return rest_ensure_response($todos);
-    }
-    
     /**
      * Get companies where a person or company is listed as an investor
      */
