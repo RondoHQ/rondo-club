@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-13)
 ## Current Position
 
 Milestone: v3.1 Pending Response Tracking
-Phase: 26 of 28 (Pending Response Model) — COMPLETE
+Phase: 27 of 28 (Pending Response UI) — COMPLETE
 Plan: 1 of 1 in current phase — All plans complete
-Status: Phase 26 complete, ready for Phase 27
-Last activity: 2026-01-14 — Completed 26-01-PLAN.md (Pending Response Model)
+Status: Phase 27 complete, ready for Phase 28
+Last activity: 2026-01-14 — Completed 27-01-PLAN.md (Pending Response UI)
 
-Progress: ████░░░░░░ 11%
+Progress: █████░░░░░ 22%
 
 ## Completed Milestones
 
@@ -63,6 +63,8 @@ See `.planning/ISSUES.md`:
 | 25 | Broad timeline invalidation in dashboard | Dashboard hooks invalidate ['people', 'timeline'] since personId not available |
 | 26 | Auto-timestamp on state change | awaiting_response_since set/cleared automatically when awaiting_response changes |
 | 26 | gmdate for timestamps | UTC timestamps for consistency across timezones |
+| 27 | Checkbox for both new/existing todos | Awaiting response toggleable at any time |
+| 27 | Urgency color scheme | Yellow 0-2d, orange 3-6d, red 7+d for visibility |
 
 ## Roadmap Evolution
 
@@ -82,7 +84,7 @@ See `.planning/ISSUES.md`:
 ## Session Continuity
 
 Last session: 2026-01-14
-Stopped at: Completed Phase 26 (Pending Response Model) — all plans complete
+Stopped at: Completed Phase 27 (Pending Response UI) — all plans complete
 Resume file: None
 
 ## Accumulated Context
@@ -101,6 +103,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 27` — Create plan for Pending Response UI
-- `/gsd:verify-work 26` — Verify Phase 26 (Pending Response Model complete)
+- `/gsd:plan-phase 28` — Create plan for Todo Filtering/Statistics
+- `/gsd:verify-work 27` — Verify Phase 27 (Pending Response UI complete)
 - `/gsd:progress` — Check overall progress
