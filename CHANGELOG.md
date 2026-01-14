@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `due_date`: date_picker for optional due date (Y-m-d format)
   - `_visibility`: select field for private/workspace visibility
   - `_assigned_workspaces`: taxonomy field for workspace assignment (conditional on visibility)
+- Access control integration for `prm_todo` post type
+  - Added to `$controlled_post_types` array for automatic query filtering
+  - REST API query filtering via `rest_prm_todo_query` hook
+  - REST API single item access via `rest_prepare_prm_todo` hook
+  - Workspace ID conversion via `rest_after_insert_prm_todo` hook
 
 ## [1.74.0] - 2026-01-13
 

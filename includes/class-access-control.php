@@ -14,7 +14,7 @@ class PRM_Access_Control {
     /**
      * Post types that should have access control
      */
-    private $controlled_post_types = ['person', 'company', 'important_date'];
+    private $controlled_post_types = ['person', 'company', 'important_date', 'prm_todo'];
     
     /**
      * Check if we're on the frontend (not admin area)
@@ -31,6 +31,7 @@ class PRM_Access_Control {
         add_filter('rest_person_query', [$this, 'filter_rest_query'], 10, 2);
         add_filter('rest_company_query', [$this, 'filter_rest_query'], 10, 2);
         add_filter('rest_important_date_query', [$this, 'filter_rest_query'], 10, 2);
+        add_filter('rest_prm_todo_query', [$this, 'filter_rest_query'], 10, 2);
 
         // Check single post access
         add_filter('the_posts', [$this, 'filter_single_post_access'], 10, 2);
@@ -39,11 +40,13 @@ class PRM_Access_Control {
         add_filter('rest_prepare_person', [$this, 'filter_rest_single_access'], 10, 3);
         add_filter('rest_prepare_company', [$this, 'filter_rest_single_access'], 10, 3);
         add_filter('rest_prepare_important_date', [$this, 'filter_rest_single_access'], 10, 3);
+        add_filter('rest_prepare_prm_todo', [$this, 'filter_rest_single_access'], 10, 3);
 
         // Convert workspace post IDs to term IDs when saving via REST API
         add_action('rest_after_insert_person', [$this, 'convert_workspace_ids_after_rest_insert'], 10, 2);
         add_action('rest_after_insert_company', [$this, 'convert_workspace_ids_after_rest_insert'], 10, 2);
         add_action('rest_after_insert_important_date', [$this, 'convert_workspace_ids_after_rest_insert'], 10, 2);
+        add_action('rest_after_insert_prm_todo', [$this, 'convert_workspace_ids_after_rest_insert'], 10, 2);
 
         // Convert term IDs back to workspace post IDs when loading
         add_filter('acf/load_value/name=_assigned_workspaces', [$this, 'convert_term_ids_to_workspace_ids'], 10, 3);
