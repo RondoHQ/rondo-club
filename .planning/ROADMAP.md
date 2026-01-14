@@ -20,11 +20,12 @@
 
 **Milestone Goal:** Convert todos to a proper post type and add pending response tracking with aging and auto-resolution.
 
-#### Phase 24: Todo Post Type
+#### Phase 24: Todo Post Type ✓
 
 **Goal**: Create `prm_todo` CPT, migrate from comment type, update REST API
 **Depends on**: Previous milestone complete
 **Research**: Unlikely (internal patterns)
+**Result**: prm_todo CPT registered, REST API created, 13 todos migrated, 16 tests added (146 total)
 
 Plans:
 - [x] 24-01: Register prm_todo CPT with ACF fields and access control
