@@ -328,7 +328,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
   );
 }
 
-function OrganizationListRow({ company, workspaces, companyLabels, isSelected, onToggleSelection, isOdd }) {
+function OrganizationListRow({ company, workspaces, isSelected, onToggleSelection, isOdd }) {
   const assignedWorkspaces = company.acf?._assigned_workspaces || [];
   const workspaceNames = assignedWorkspaces
     .map(wsId => {
@@ -338,15 +338,6 @@ function OrganizationListRow({ company, workspaces, companyLabels, isSelected, o
     })
     .filter(Boolean)
     .join(', ');
-
-  // Get label names from label IDs
-  const labelIds = company.company_label || [];
-  const labelNames = labelIds
-    .map(labelId => {
-      const found = companyLabels.find(l => l.id === labelId);
-      return found?.name;
-    })
-    .filter(Boolean);
 
   return (
     <tr className={`hover:bg-gray-100 ${isOdd ? 'bg-gray-50' : 'bg-white'}`}>
@@ -385,30 +376,20 @@ function OrganizationListRow({ company, workspaces, companyLabels, isSelected, o
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
         {company.acf?.industry || '-'}
       </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 truncate max-w-48">
-        {company.acf?.website || '-'}
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 max-w-48">
+        {company.acf?.website ? (
+          <a
+            href={company.acf.website.startsWith('http') ? company.acf.website : `https://${company.acf.website}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-600 hover:underline truncate block"
+          >
+            {company.acf.website}
+          </a>
+        ) : '-'}
       </td>
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
         {workspaceNames || '-'}
-      </td>
-      <td className="px-4 py-3 text-sm text-gray-500">
-        {labelNames.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {labelNames.slice(0, 3).map((label) => (
-              <span
-                key={label}
-                className="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
-              >
-                {label}
-              </span>
-            ))}
-            {labelNames.length > 3 && (
-              <span className="text-xs text-gray-400">+{labelNames.length - 3} more</span>
-            )}
-          </div>
-        ) : (
-          '-'
-        )}
       </td>
     </tr>
   );
@@ -437,7 +418,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
   );
 }
 
-function OrganizationListView({ companies, workspaces, companyLabels, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
+function OrganizationListView({ companies, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200">
@@ -463,7 +444,6 @@ function OrganizationListView({ companies, workspaces, companyLabels, selectedId
             <SortableHeader field="industry" label="Industry" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="website" label="Website" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="workspace" label="Workspace" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="labels" label="Labels" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -472,7 +452,6 @@ function OrganizationListView({ companies, workspaces, companyLabels, selectedId
               key={company.id}
               company={company}
               workspaces={workspaces}
-              companyLabels={companyLabels}
               isSelected={selectedIds.has(company.id)}
               onToggleSelection={onToggleSelection}
               isOdd={index % 2 === 1}
@@ -497,7 +476,6 @@ export default function CompaniesList() {
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
   const [showBulkVisibilityModal, setShowBulkVisibilityModal] = useState(false);
   const [showBulkWorkspaceModal, setShowBulkWorkspaceModal] = useState(false);
-  const [showBulkLabelsModal, setShowBulkLabelsModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -606,16 +584,6 @@ export default function CompaniesList() {
       .join(', ');
   };
 
-  // Helper to get label names for a company (used in sorting)
-  const getCompanyLabelNames = (company) => {
-    const labelIds = company.company_label || [];
-    return labelIds
-      .map(labelId => {
-        const found = companyLabels.find(l => l.id === labelId);
-        return found?.name;
-      })
-      .filter(Boolean);
-  };
 
   // Filter companies
   const filteredCompanies = useMemo(() => {
@@ -660,11 +628,6 @@ export default function CompaniesList() {
       } else if (sortField === 'workspace') {
         valueA = getCompanyWorkspaceNames(a).toLowerCase();
         valueB = getCompanyWorkspaceNames(b).toLowerCase();
-      } else if (sortField === 'labels') {
-        const labelsA = getCompanyLabelNames(a);
-        const labelsB = getCompanyLabelNames(b);
-        valueA = (labelsA[0] || '').toLowerCase();
-        valueB = (labelsB[0] || '').toLowerCase();
       } else {
         valueA = (a.title?.rendered || a.title || '').toLowerCase();
         valueB = (b.title?.rendered || b.title || '').toLowerCase();
@@ -678,7 +641,7 @@ export default function CompaniesList() {
       const comparison = valueA.localeCompare(valueB);
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [filteredCompanies, sortField, sortOrder, workspaces, companyLabels]);
+  }, [filteredCompanies, sortField, sortOrder, workspaces]);
 
   // Computed selection state
   const isAllSelected = sortedCompanies.length > 0 &&
@@ -726,7 +689,6 @@ export default function CompaniesList() {
               <option value="industry">Industry</option>
               <option value="website">Website</option>
               <option value="workspace">Workspace</option>
-              <option value="labels">Labels</option>
             </select>
             <div className="h-4 w-px bg-gray-300"></div>
             <button
@@ -951,16 +913,6 @@ export default function CompaniesList() {
                       <Users className="w-4 h-4" />
                       Assign to workspace...
                     </button>
-                    <button
-                      onClick={() => {
-                        setShowBulkDropdown(false);
-                        setShowBulkLabelsModal(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      <Tag className="w-4 h-4" />
-                      Manage labels...
-                    </button>
                   </div>
                 </div>
               )}
@@ -980,7 +932,6 @@ export default function CompaniesList() {
         <OrganizationListView
           companies={sortedCompanies}
           workspaces={workspaces}
-          companyLabels={companyLabels}
           selectedIds={selectedIds}
           onToggleSelection={toggleSelection}
           onToggleSelectAll={toggleSelectAll}
@@ -1050,30 +1001,6 @@ export default function CompaniesList() {
         isLoading={bulkActionLoading}
       />
 
-      {/* Bulk Labels Modal */}
-      <BulkLabelsModal
-        isOpen={showBulkLabelsModal}
-        onClose={() => setShowBulkLabelsModal(false)}
-        selectedCount={selectedIds.size}
-        labels={companyLabels}
-        onSubmit={async (mode, labelIds) => {
-          setBulkActionLoading(true);
-          try {
-            const updates = mode === 'add'
-              ? { labels_add: labelIds }
-              : { labels_remove: labelIds };
-            await bulkUpdateMutation.mutateAsync({
-              ids: Array.from(selectedIds),
-              updates
-            });
-            clearSelection();
-            setShowBulkLabelsModal(false);
-          } finally {
-            setBulkActionLoading(false);
-          }
-        }}
-        isLoading={bulkActionLoading}
-      />
     </div>
   );
 }
