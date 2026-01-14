@@ -81,7 +81,8 @@ Resume file: None
 
 ### Pending Todos
 
-0 todos in `.planning/todos/pending/`
+1 todo in `.planning/todos/pending/`:
+1. Add pending response tracking (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
