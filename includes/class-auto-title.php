@@ -61,14 +61,26 @@ class PRM_Auto_Title {
         if (get_post_type($post_id) !== 'important_date') {
             return;
         }
-        
+
         // Skip autosaves and revisions
         if (wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) {
             return;
         }
-        
-        // Check for custom label first
+
+        // Check if user has set a custom title (different from what we'd auto-generate)
+        // This preserves user edits even when custom_label field is not explicitly set
+        $current_title = get_the_title($post_id);
+        $auto_title = $this->generate_date_title_from_fields($post_id);
         $custom_label = get_field('custom_label', $post_id);
+
+        // If current title differs from auto-generated, user has customized it
+        // Set custom_label so it persists and skip auto-generation
+        if (!empty($current_title) && $current_title !== $auto_title && empty($custom_label)) {
+            update_field('custom_label', $current_title, $post_id);
+            return; // Respect user's custom title
+        }
+
+        // Check for custom label first (existing logic)
         
         if (!empty($custom_label)) {
             $title = $custom_label;
