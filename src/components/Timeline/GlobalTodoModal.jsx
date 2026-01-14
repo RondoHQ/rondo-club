@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
-import { X, User, ChevronDown, Search } from 'lucide-react';
+import { X, User, ChevronDown, Search, Plus } from 'lucide-react';
 import { usePeople, useCreateTodo } from '@/hooks/usePeople';
 import { useQueryClient } from '@tanstack/react-query';
+import RichTextEditor from '@/components/RichTextEditor';
 
 export default function GlobalTodoModal({ isOpen, onClose }) {
   const [content, setContent] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [selectedPersonId, setSelectedPersonId] = useState('');
+  const [selectedPersonIds, setSelectedPersonIds] = useState([]);
   const [isPersonDropdownOpen, setIsPersonDropdownOpen] = useState(false);
   const [personSearchQuery, setPersonSearchQuery] = useState('');
+  const [notes, setNotes] = useState('');
+  const [showNotes, setShowNotes] = useState(false);
   
   const { data: people = [], isLoading: isPeopleLoading } = usePeople();
   const createTodo = useCreateTodo();
@@ -33,10 +36,10 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
     );
   }, [people, personSearchQuery]);
   
-  // Get selected person details
-  const selectedPerson = useMemo(() => 
-    people.find(p => p.id === parseInt(selectedPersonId)),
-    [people, selectedPersonId]
+  // Get selected persons details
+  const selectedPersons = useMemo(() =>
+    people.filter(p => selectedPersonIds.includes(p.id)),
+    [people, selectedPersonIds]
   );
   
   // Get today's date in YYYY-MM-DD format
@@ -50,9 +53,11 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
     if (isOpen) {
       setContent('');
       setDueDate(getTodayDate());
-      setSelectedPersonId('');
+      setSelectedPersonIds([]);
       setPersonSearchQuery('');
       setIsPersonDropdownOpen(false);
+      setNotes('');
+      setShowNotes(false);
     }
   }, [isOpen]);
 
@@ -60,16 +65,26 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!content.trim() || !selectedPersonId) return;
+    if (!content.trim() || selectedPersonIds.length === 0) return;
 
     try {
+      // Build data object
+      const data = {
+        content: content.trim(),
+        due_date: dueDate || null,
+        person_ids: selectedPersonIds,
+      };
+
+      // Include notes only if not empty
+      if (notes.trim()) {
+        data.notes = notes;
+      }
+
       // New todos are always created with 'open' status (handled by backend)
+      // Use the first person for the endpoint URL (backend handles multi-person via person_ids)
       await createTodo.mutateAsync({
-        personId: parseInt(selectedPersonId),
-        data: {
-          content: content.trim(),
-          due_date: dueDate || null,
-        },
+        personId: selectedPersonIds[0],
+        data,
       });
 
       // Invalidate todos query to refresh lists
@@ -79,6 +94,18 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
     } catch {
       // Todo creation failed - user can retry
     }
+  };
+
+  const handleRemovePerson = (personId) => {
+    setSelectedPersonIds(prev => prev.filter(id => id !== personId));
+  };
+
+  const handleAddPerson = (personId) => {
+    if (!selectedPersonIds.includes(personId)) {
+      setSelectedPersonIds(prev => [...prev, personId]);
+    }
+    setIsPersonDropdownOpen(false);
+    setPersonSearchQuery('');
   };
 
   const handleClose = () => {
@@ -111,41 +138,59 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
         </div>
         
         <form onSubmit={handleSubmit} className="p-4">
-          {/* Person selection */}
+          {/* People selection - multi-person */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Person <span className="text-red-500">*</span>
+              People <span className="text-red-500">*</span>
             </label>
+
+            {/* Selected persons as chips */}
+            {selectedPersons.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {selectedPersons.map(person => (
+                  <span
+                    key={person.id}
+                    className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 rounded-full text-sm"
+                  >
+                    {person.thumbnail ? (
+                      <img
+                        src={person.thumbnail}
+                        alt={person.name}
+                        className="w-5 h-5 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                        <User className="w-3 h-3 text-gray-500" />
+                      </div>
+                    )}
+                    <span className="text-gray-700">{person.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePerson(person.id)}
+                      className="text-gray-400 hover:text-gray-600"
+                      disabled={createTodo.isPending}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Add person button and dropdown */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsPersonDropdownOpen(!isPersonDropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
                 disabled={createTodo.isPending}
               >
-                {selectedPerson ? (
-                  <div className="flex items-center gap-2">
-                    {selectedPerson.thumbnail ? (
-                      <img
-                        src={selectedPerson.thumbnail}
-                        alt={selectedPerson.name}
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User className="w-4 h-4 text-gray-500" />
-                      </div>
-                    )}
-                    <span className="text-gray-900">{selectedPerson.name}</span>
-                  </div>
-                ) : (
-                  <span className="text-gray-400">Select a person...</span>
-                )}
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isPersonDropdownOpen ? 'rotate-180' : ''}`} />
+                <Plus className="w-4 h-4" />
+                Add person
               </button>
-              
+
               {isPersonDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                <div className="absolute z-10 left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
                   {/* Search input */}
                   <div className="p-2 border-b border-gray-100">
                     <div className="relative">
@@ -160,7 +205,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
                       />
                     </div>
                   </div>
-                  
+
                   {/* People list */}
                   <div className="overflow-y-auto max-h-48">
                     {isPeopleLoading ? (
@@ -168,33 +213,29 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
                         Loading...
                       </div>
                     ) : filteredPeople.length > 0 ? (
-                      filteredPeople.map((person) => (
-                        <button
-                          key={person.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedPersonId(String(person.id));
-                            setIsPersonDropdownOpen(false);
-                            setPersonSearchQuery('');
-                          }}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
-                            selectedPersonId === String(person.id) ? 'bg-primary-50' : ''
-                          }`}
-                        >
-                          {person.thumbnail ? (
-                            <img
-                              src={person.thumbnail}
-                              alt={person.name}
-                              className="w-6 h-6 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                              <User className="w-4 h-4 text-gray-500" />
-                            </div>
-                          )}
-                          <span className="text-sm text-gray-900 truncate">{person.name}</span>
-                        </button>
-                      ))
+                      filteredPeople
+                        .filter(person => !selectedPersonIds.includes(person.id))
+                        .map(person => (
+                          <button
+                            key={person.id}
+                            type="button"
+                            onClick={() => handleAddPerson(person.id)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            {person.thumbnail ? (
+                              <img
+                                src={person.thumbnail}
+                                alt={person.name}
+                                className="w-6 h-6 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                                <User className="w-4 h-4 text-gray-500" />
+                              </div>
+                            )}
+                            <span className="text-sm text-gray-900 truncate">{person.name}</span>
+                          </button>
+                        ))
                     ) : (
                       <div className="p-3 text-center text-gray-500 text-sm">
                         No people found
@@ -237,6 +278,27 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
             />
           </div>
 
+          {/* Notes field - collapsible */}
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => setShowNotes(!showNotes)}
+              className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2 hover:text-gray-900"
+            >
+              <ChevronDown className={`w-4 h-4 transition-transform ${showNotes ? '' : '-rotate-90'}`} />
+              Notes (optional)
+            </button>
+            {showNotes && (
+              <RichTextEditor
+                value={notes}
+                onChange={setNotes}
+                placeholder="Add detailed notes..."
+                disabled={createTodo.isPending}
+                minHeight="80px"
+              />
+            )}
+          </div>
+
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -249,7 +311,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
             <button
               type="submit"
               className="btn-primary"
-              disabled={createTodo.isPending || !content.trim() || !selectedPersonId}
+              disabled={createTodo.isPending || !content.trim() || selectedPersonIds.length === 0}
             >
               {createTodo.isPending ? 'Adding...' : 'Add todo'}
             </button>
