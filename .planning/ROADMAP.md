@@ -15,7 +15,7 @@
 
 ## Current Status
 
-**Active:** v3.2 Person Profile Polish — Phase 29
+**Active:** v3.2 Person Profile Polish — Phase 30
 
 ---
 
@@ -23,12 +23,13 @@
 
 **Milestone Goal:** Enhance the PersonDetail page with role/job display in header and a persistent todos sidebar.
 
-#### Phase 29: Header Enhancement
+#### Phase 29: Header Enhancement ✓
 
 **Goal**: Add role/job display to person header showing current position and organization
 **Depends on**: Previous milestone complete
 **Research**: Unlikely (internal UI patterns)
 **Plans**: 1
+**Status**: COMPLETE
 
 Plans:
 - [x] 29-01: Add role/job display to person header
