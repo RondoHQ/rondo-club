@@ -82,6 +82,7 @@ function prm_autoloader($class_name) {
         'PRM_REST_Todos'             => 'class-rest-todos.php',
         'PRM_Mentions'               => 'class-mentions.php',
         'PRM_Mention_Notifications'  => 'class-mention-notifications.php',
+        'PRM_Todo_Migration'         => 'class-todo-migration.php',
     ];
     
     if (isset($class_map[$class_name])) {
@@ -214,6 +215,7 @@ add_action('plugins_loaded', 'prm_init', 5);
 // Load WP-CLI commands if WP-CLI is available
 if (defined('WP_CLI') && WP_CLI) {
     require_once PRM_PLUGIN_DIR . '/class-wp-cli.php';
+    new PRM_Todo_Migration();
 }
 
 /**

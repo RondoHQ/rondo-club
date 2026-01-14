@@ -21,11 +21,11 @@ export function useReminders(daysAhead = 30) {
   });
 }
 
-export function useTodos(includeCompleted = false) {
+export function useTodos(status = 'open') {
   return useQuery({
-    queryKey: ['todos', includeCompleted],
+    queryKey: ['todos', status],
     queryFn: async () => {
-      const response = await prmApi.getAllTodos(includeCompleted);
+      const response = await prmApi.getAllTodos(status);
       return response.data;
     },
   });

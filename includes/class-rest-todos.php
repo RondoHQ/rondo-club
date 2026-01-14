@@ -58,16 +58,10 @@ class PRM_REST_Todos extends PRM_REST_Base {
             'callback'            => [$this, 'get_all_todos'],
             'permission_callback' => [$this, 'check_user_approved'],
             'args'                => [
-                'completed' => [
-                    'default'           => false,
+                'status' => [
+                    'default'           => 'open',
                     'validate_callback' => function($param) {
-                        return is_bool($param) || $param === 'true' || $param === 'false' || $param === '1' || $param === '0';
-                    },
-                ],
-                'awaiting_response' => [
-                    'default'           => null,
-                    'validate_callback' => function($param) {
-                        return $param === null || is_bool($param) || $param === 'true' || $param === 'false' || $param === '1' || $param === '0';
+                        return in_array($param, ['open', 'awaiting', 'completed', 'all'], true);
                     },
                 ],
             ],
@@ -139,6 +133,12 @@ class PRM_REST_Todos extends PRM_REST_Base {
             return false;
         }
 
+        // Verify it's a valid todo status
+        $valid_statuses = ['prm_open', 'prm_awaiting', 'prm_completed', 'publish'];
+        if (!in_array($todo->post_status, $valid_statuses, true)) {
+            return false;
+        }
+
         // Use access control to check if user can access this todo
         $access_control = new PRM_Access_Control();
         return $access_control->user_can_access_post($todo_id);
@@ -156,7 +156,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
         $todos = get_posts([
             'post_type'      => 'prm_todo',
             'posts_per_page' => -1,
-            'post_status'    => 'publish',
+            'post_status'    => ['prm_open', 'prm_awaiting', 'prm_completed'],
             'meta_query'     => [
                 [
                     'key'     => 'related_person',
@@ -183,18 +183,24 @@ class PRM_REST_Todos extends PRM_REST_Base {
         $person_id = (int) $request->get_param('person_id');
         $content = sanitize_textarea_field($request->get_param('content'));
         $due_date = sanitize_text_field($request->get_param('due_date'));
-        $is_completed = $request->get_param('is_completed');
-        $awaiting_response = $request->get_param('awaiting_response');
+        $status = $request->get_param('status');
 
         if (empty($content)) {
             return new WP_Error('empty_content', __('Todo content is required.', 'personal-crm'), ['status' => 400]);
         }
 
+        // Validate and determine post status
+        $valid_statuses = ['open', 'awaiting', 'completed'];
+        if ($status !== null && !in_array($status, $valid_statuses, true)) {
+            return new WP_Error('invalid_status', __('Invalid status. Use: open, awaiting, or completed.', 'personal-crm'), ['status' => 400]);
+        }
+        $post_status = $status ? 'prm_' . $status : 'prm_open';
+
         // Create the todo post
         $post_id = wp_insert_post([
             'post_type'   => 'prm_todo',
             'post_title'  => $content,
-            'post_status' => 'publish',
+            'post_status' => $post_status,
             'post_author' => get_current_user_id(),
         ]);
 
@@ -204,19 +210,14 @@ class PRM_REST_Todos extends PRM_REST_Base {
 
         // Save ACF fields
         update_field('related_person', $person_id, $post_id);
-        update_field('is_completed', $is_completed ? true : false, $post_id);
 
         if (!empty($due_date)) {
             update_field('due_date', $due_date, $post_id);
         }
 
-        // Handle awaiting_response with auto-timestamp
-        if ($awaiting_response) {
-            update_field('awaiting_response', true, $post_id);
-            update_field('awaiting_response_since', gmdate('Y-m-d H:i:s'), $post_id);
-        } else {
-            update_field('awaiting_response', false, $post_id);
-            update_field('awaiting_response_since', '', $post_id);
+        // Set awaiting_since timestamp if creating with awaiting status
+        if ($status === 'awaiting') {
+            update_field('awaiting_since', gmdate('Y-m-d H:i:s'), $post_id);
         }
 
         // Set default visibility to private
@@ -234,101 +235,43 @@ class PRM_REST_Todos extends PRM_REST_Base {
      * @return WP_REST_Response Response containing all accessible todos.
      */
     public function get_all_todos($request) {
-        $include_completed = $request->get_param('completed');
-        $awaiting_response = $request->get_param('awaiting_response');
+        $status = $request->get_param('status');
 
-        // Normalize boolean parameters
-        if ($include_completed === 'true' || $include_completed === '1') {
-            $include_completed = true;
-        } else {
-            $include_completed = false;
-        }
+        // Map status param to post_status values
+        $status_map = [
+            'open'      => ['prm_open'],
+            'awaiting'  => ['prm_awaiting'],
+            'completed' => ['prm_completed'],
+            'all'       => ['prm_open', 'prm_awaiting', 'prm_completed'],
+        ];
 
-        // Normalize awaiting_response parameter (null means no filter)
-        if ($awaiting_response === 'true' || $awaiting_response === '1') {
-            $awaiting_response = true;
-        } elseif ($awaiting_response === 'false' || $awaiting_response === '0') {
-            $awaiting_response = false;
-        } else {
-            $awaiting_response = null;
-        }
+        $post_statuses = $status_map[$status] ?? ['prm_open'];
 
         // Build query args - access control filter will handle visibility
         $args = [
             'post_type'      => 'prm_todo',
             'posts_per_page' => 100, // Reasonable limit
-            'post_status'    => 'publish',
+            'post_status'    => $post_statuses,
             'orderby'        => 'date',
             'order'          => 'DESC',
         ];
 
-        // Build meta_query for filters
-        $meta_queries = [];
-
-        // Filter by completion status
-        if (!$include_completed) {
-            $meta_queries[] = [
-                'relation' => 'OR',
-                [
-                    'key'     => 'is_completed',
-                    'value'   => '0',
-                    'compare' => '=',
-                ],
-                [
-                    'key'     => 'is_completed',
-                    'value'   => '',
-                    'compare' => '=',
-                ],
-                [
-                    'key'     => 'is_completed',
-                    'compare' => 'NOT EXISTS',
-                ],
-            ];
-        }
-
-        // Filter by awaiting_response status
-        if ($awaiting_response === true) {
-            $meta_queries[] = [
-                'key'     => 'awaiting_response',
-                'value'   => '1',
-                'compare' => '=',
-            ];
-        } elseif ($awaiting_response === false) {
-            $meta_queries[] = [
-                'relation' => 'OR',
-                [
-                    'key'     => 'awaiting_response',
-                    'value'   => '0',
-                    'compare' => '=',
-                ],
-                [
-                    'key'     => 'awaiting_response',
-                    'value'   => '',
-                    'compare' => '=',
-                ],
-                [
-                    'key'     => 'awaiting_response',
-                    'compare' => 'NOT EXISTS',
-                ],
-            ];
-        }
-
-        // Combine meta queries with AND relation
-        if (count($meta_queries) > 0) {
-            $args['meta_query'] = array_merge(['relation' => 'AND'], $meta_queries);
-        }
-
         $todos = get_posts($args);
         $formatted = array_map([$this, 'format_todo'], $todos);
 
-        // Sort by due date (earliest first), todos without due date at end
+        // Sort: open by due date, awaiting by waiting time, completed by date
         usort($formatted, function($a, $b) {
-            // Completed todos go to the bottom
-            if ($a['is_completed'] && !$b['is_completed']) return 1;
-            if (!$a['is_completed'] && $b['is_completed']) return -1;
+            // Status priority: open first, awaiting second, completed last
+            $status_order = ['open' => 0, 'awaiting' => 1, 'completed' => 2];
+            $a_order = $status_order[$a['status']] ?? 0;
+            $b_order = $status_order[$b['status']] ?? 0;
 
-            // For incomplete todos, sort by due date
-            if (!$a['is_completed'] && !$b['is_completed']) {
+            if ($a_order !== $b_order) {
+                return $a_order - $b_order;
+            }
+
+            // For open todos, sort by due date (earliest first)
+            if ($a['status'] === 'open') {
                 if ($a['due_date'] && $b['due_date']) {
                     return strtotime($a['due_date']) - strtotime($b['due_date']);
                 }
@@ -336,7 +279,14 @@ class PRM_REST_Todos extends PRM_REST_Base {
                 if (!$a['due_date'] && $b['due_date']) return 1;
             }
 
-            // For completed or same status, sort by creation date (newest first)
+            // For awaiting todos, sort by awaiting_since (oldest first = waiting longest)
+            if ($a['status'] === 'awaiting') {
+                if ($a['awaiting_since'] && $b['awaiting_since']) {
+                    return strtotime($a['awaiting_since']) - strtotime($b['awaiting_since']);
+                }
+            }
+
+            // Default: sort by creation date (newest first)
             return strtotime($b['created']) - strtotime($a['created']);
         });
 
@@ -370,8 +320,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
         $todo_id = (int) $request->get_param('id');
         $content = $request->get_param('content');
         $due_date = $request->get_param('due_date');
-        $is_completed = $request->get_param('is_completed');
-        $awaiting_response = $request->get_param('awaiting_response');
+        $status = $request->get_param('status');
 
         $todo = get_post($todo_id);
 
@@ -379,20 +328,43 @@ class PRM_REST_Todos extends PRM_REST_Base {
             return new WP_Error('not_found', __('Todo not found.', 'personal-crm'), ['status' => 404]);
         }
 
+        // Build update args
+        $update_args = ['ID' => $todo_id];
+
         // Update post title if content provided
         if ($content !== null) {
-            $content = sanitize_textarea_field($content);
-            wp_update_post([
-                'ID'         => $todo_id,
-                'post_title' => $content,
-            ]);
+            $update_args['post_title'] = sanitize_textarea_field($content);
         }
 
-        // Update ACF fields
-        if ($is_completed !== null) {
-            update_field('is_completed', $is_completed ? true : false, $todo_id);
+        // Handle status change
+        if ($status !== null) {
+            $valid_statuses = ['open', 'awaiting', 'completed'];
+            if (!in_array($status, $valid_statuses, true)) {
+                return new WP_Error('invalid_status', __('Invalid status. Use: open, awaiting, or completed.', 'personal-crm'), ['status' => 400]);
+            }
+
+            $current_status = $this->get_todo_status($todo);
+            $new_post_status = 'prm_' . $status;
+
+            // Set awaiting_since timestamp when changing to awaiting
+            if ($status === 'awaiting' && $current_status !== 'awaiting') {
+                update_field('awaiting_since', gmdate('Y-m-d H:i:s'), $todo_id);
+            }
+
+            // Clear awaiting_since when leaving awaiting status
+            if ($status !== 'awaiting' && $current_status === 'awaiting') {
+                update_field('awaiting_since', '', $todo_id);
+            }
+
+            $update_args['post_status'] = $new_post_status;
         }
 
+        // Apply updates
+        if (count($update_args) > 1) {
+            wp_update_post($update_args);
+        }
+
+        // Update due_date ACF field
         if ($due_date !== null) {
             if (empty($due_date)) {
                 update_field('due_date', '', $todo_id);
@@ -401,27 +373,27 @@ class PRM_REST_Todos extends PRM_REST_Base {
             }
         }
 
-        // Handle awaiting_response with auto-timestamp
-        if ($awaiting_response !== null) {
-            $current_awaiting = (bool) get_field('awaiting_response', $todo_id);
-            $new_awaiting = (bool) $awaiting_response;
-
-            if ($new_awaiting && !$current_awaiting) {
-                // Changing from false to true: set timestamp
-                update_field('awaiting_response', true, $todo_id);
-                update_field('awaiting_response_since', gmdate('Y-m-d H:i:s'), $todo_id);
-            } elseif (!$new_awaiting && $current_awaiting) {
-                // Changing from true to false: clear timestamp
-                update_field('awaiting_response', false, $todo_id);
-                update_field('awaiting_response_since', '', $todo_id);
-            }
-            // If no change, leave as-is
-        }
-
         // Refresh the post object
         $todo = get_post($todo_id);
 
         return rest_ensure_response($this->format_todo($todo));
+    }
+
+    /**
+     * Get the status string from a todo post
+     *
+     * @param WP_Post $post The todo post object.
+     * @return string Status string (open, awaiting, completed).
+     */
+    private function get_todo_status($post) {
+        $status_map = [
+            'prm_open'      => 'open',
+            'prm_awaiting'  => 'awaiting',
+            'prm_completed' => 'completed',
+            'publish'       => 'open', // Legacy fallback
+        ];
+
+        return $status_map[$post->post_status] ?? 'open';
     }
 
     /**
@@ -450,8 +422,6 @@ class PRM_REST_Todos extends PRM_REST_Base {
     /**
      * Format a todo post for REST response
      *
-     * Matches the response format from the comment-based todo system.
-     *
      * @param WP_Post $post The todo post object.
      * @return array Formatted todo data.
      */
@@ -465,24 +435,22 @@ class PRM_REST_Todos extends PRM_REST_Base {
             $person_thumbnail = get_the_post_thumbnail_url($person_id, 'thumbnail');
         }
 
-        $is_completed = get_field('is_completed', $post->ID);
+        $status = $this->get_todo_status($post);
         $due_date = get_field('due_date', $post->ID);
-        $awaiting_response = get_field('awaiting_response', $post->ID);
-        $awaiting_response_since = get_field('awaiting_response_since', $post->ID);
+        $awaiting_since = get_field('awaiting_since', $post->ID);
 
         return [
-            'id'                      => $post->ID,
-            'type'                    => 'todo',
-            'content'                 => $this->sanitize_text($post->post_title),
-            'person_id'               => $person_id,
-            'person_name'             => $this->sanitize_text($person_name),
-            'person_thumbnail'        => $this->sanitize_url($person_thumbnail),
-            'author_id'               => (int) $post->post_author,
-            'created'                 => $post->post_date,
-            'is_completed'            => (bool) $is_completed,
-            'due_date'                => $due_date ?: null,
-            'awaiting_response'       => (bool) $awaiting_response,
-            'awaiting_response_since' => $awaiting_response_since ?: null,
+            'id'               => $post->ID,
+            'type'             => 'todo',
+            'content'          => $this->sanitize_text($post->post_title),
+            'person_id'        => $person_id,
+            'person_name'      => $this->sanitize_text($person_name),
+            'person_thumbnail' => $this->sanitize_url($person_thumbnail),
+            'author_id'        => (int) $post->post_author,
+            'created'          => $post->post_date,
+            'status'           => $status,
+            'due_date'         => $due_date ?: null,
+            'awaiting_since'   => $awaiting_since ?: null,
         ];
     }
 }

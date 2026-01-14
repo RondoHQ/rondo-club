@@ -22,6 +22,7 @@ class PRM_Post_Types {
         $this->register_person_post_type();
         $this->register_company_post_type();
         $this->register_important_date_post_type();
+        $this->register_todo_statuses();
         $this->register_todo_post_type();
     }
 
@@ -223,6 +224,41 @@ class PRM_Post_Types {
         ];
         
         register_post_type('important_date', $args);
+    }
+
+    /**
+     * Register custom post statuses for todos
+     *
+     * Todos use a linear state flow: Open → Awaiting Response → Completed
+     * Using post_status instead of meta fields for cleaner queries.
+     */
+    private function register_todo_statuses() {
+        register_post_status('prm_open', [
+            'label'                     => _x('Open', 'Todo status', 'personal-crm'),
+            'public'                    => true,
+            'exclude_from_search'       => false,
+            'show_in_admin_all_list'    => true,
+            'show_in_admin_status_list' => true,
+            'label_count'               => _n_noop('Open <span class="count">(%s)</span>', 'Open <span class="count">(%s)</span>', 'personal-crm'),
+        ]);
+
+        register_post_status('prm_awaiting', [
+            'label'                     => _x('Awaiting Response', 'Todo status', 'personal-crm'),
+            'public'                    => true,
+            'exclude_from_search'       => false,
+            'show_in_admin_all_list'    => true,
+            'show_in_admin_status_list' => true,
+            'label_count'               => _n_noop('Awaiting <span class="count">(%s)</span>', 'Awaiting <span class="count">(%s)</span>', 'personal-crm'),
+        ]);
+
+        register_post_status('prm_completed', [
+            'label'                     => _x('Completed', 'Todo status', 'personal-crm'),
+            'public'                    => true,
+            'exclude_from_search'       => false,
+            'show_in_admin_all_list'    => true,
+            'show_in_admin_status_list' => true,
+            'label_count'               => _n_noop('Completed <span class="count">(%s)</span>', 'Completed <span class="count">(%s)</span>', 'personal-crm'),
+        ]);
     }
 
     /**

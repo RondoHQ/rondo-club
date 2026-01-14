@@ -629,11 +629,7 @@ export default function PersonDetail() {
         if (todoToComplete) {
           await updateTodo.mutateAsync({
             todoId: todoToComplete.id,
-            data: {
-              content: todoToComplete.content,
-              due_date: todoToComplete.due_date,
-              is_completed: true,
-            },
+            data: { status: 'completed' },
             personId: id,
           });
           setTodoToComplete(null);
@@ -673,44 +669,70 @@ export default function PersonDetail() {
 
   // Handle toggling todo completion
   const handleToggleTodo = async (todo) => {
-    // If completing a todo, show the complete modal
-    if (!todo.is_completed) {
+    // If it's an open todo, show the complete modal with options
+    if (todo.status === 'open') {
       setTodoToComplete(todo);
       setShowCompleteModal(true);
       return;
     }
-    
-    // If uncompleting, just update directly
+
+    // If awaiting, mark as complete
+    if (todo.status === 'awaiting') {
+      try {
+        await updateTodo.mutateAsync({
+          todoId: todo.id,
+          data: { status: 'completed' },
+          personId: id,
+        });
+      } catch {
+        alert('Failed to complete todo. Please try again.');
+      }
+      return;
+    }
+
+    // If completed, reopen
+    if (todo.status === 'completed') {
+      try {
+        await updateTodo.mutateAsync({
+          todoId: todo.id,
+          data: { status: 'open' },
+          personId: id,
+        });
+      } catch {
+        alert('Failed to reopen todo. Please try again.');
+      }
+    }
+  };
+  
+  // Handle marking todo as awaiting response
+  const handleMarkAwaiting = async () => {
+    if (!todoToComplete) return;
+
     try {
       await updateTodo.mutateAsync({
-        todoId: todo.id,
-        data: {
-          content: todo.content,
-          due_date: todo.due_date,
-          is_completed: false,
-        },
+        todoId: todoToComplete.id,
+        data: { status: 'awaiting' },
         personId: id,
       });
+
+      setShowCompleteModal(false);
+      setTodoToComplete(null);
     } catch {
       alert('Failed to update todo. Please try again.');
     }
   };
-  
+
   // Handle just completing a todo (no activity)
   const handleJustComplete = async () => {
     if (!todoToComplete) return;
-    
+
     try {
       await updateTodo.mutateAsync({
         todoId: todoToComplete.id,
-        data: {
-          content: todoToComplete.content,
-          due_date: todoToComplete.due_date,
-          is_completed: true,
-        },
+        data: { status: 'completed' },
         personId: id,
       });
-      
+
       setShowCompleteModal(false);
       setTodoToComplete(null);
     } catch {
@@ -1066,20 +1088,22 @@ export default function PersonDetail() {
   }, [person?.acf?.work_history]);
 
   // Extract and sort todos from timeline
-  // Incomplete todos first (by due date), then completed
+  // Open first, awaiting second, completed last
   const sortedTodos = useMemo(() => {
     if (!timeline) return [];
-    
-    const todos = timeline.filter(item => item.type === 'todo');
-    
-    return todos.sort((a, b) => {
-      // Completed todos go to the bottom
-      if (a.is_completed && !b.is_completed) return 1;
-      if (!a.is_completed && b.is_completed) return -1;
 
-      // For incomplete todos, sort by due date (earliest first)
-      // Todos without due date go after those with due dates
-      if (!a.is_completed && !b.is_completed) {
+    const todos = timeline.filter(item => item.type === 'todo');
+
+    return todos.sort((a, b) => {
+      // Status priority: open first, awaiting second, completed last
+      const statusOrder = { open: 0, awaiting: 1, completed: 2 };
+      const aOrder = statusOrder[a.status] ?? 0;
+      const bOrder = statusOrder[b.status] ?? 0;
+
+      if (aOrder !== bOrder) return aOrder - bOrder;
+
+      // For open todos, sort by due date (earliest first)
+      if (a.status === 'open') {
         if (a.due_date && b.due_date) {
           return new Date(a.due_date) - new Date(b.due_date);
         }
@@ -1087,7 +1111,14 @@ export default function PersonDetail() {
         if (!a.due_date && b.due_date) return 1;
       }
 
-      // For completed todos, sort by most recently completed (newest first)
+      // For awaiting todos, sort by awaiting_since (oldest first)
+      if (a.status === 'awaiting') {
+        if (a.awaiting_since && b.awaiting_since) {
+          return new Date(a.awaiting_since) - new Date(b.awaiting_since);
+        }
+      }
+
+      // Default: sort by creation date (newest first)
       return new Date(b.created) - new Date(a.created);
     });
   }, [timeline]);
@@ -1804,33 +1835,46 @@ export default function PersonDetail() {
                 <div className="space-y-2">
                   {sortedTodos.map((todo) => {
                     const isOverdue = isTodoOverdue(todo);
+                    const awaitingDays = getAwaitingDays(todo);
                     return (
                       <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 group">
                         <button
                           onClick={() => handleToggleTodo(todo)}
                           className="mt-0.5 mr-2 flex-shrink-0"
-                          title={todo.is_completed ? 'Mark as incomplete' : 'Mark as complete'}
+                          title={todo.status === 'completed' ? 'Reopen' : todo.status === 'awaiting' ? 'Mark complete' : 'Complete'}
                         >
-                          {todo.is_completed ? (
+                          {todo.status === 'completed' ? (
                             <CheckSquare2 className="w-5 h-5 text-primary-600" />
+                          ) : todo.status === 'awaiting' ? (
+                            <Clock className="w-5 h-5 text-orange-500" />
                           ) : (
                             <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
                           )}
                         </button>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${todo.is_completed ? 'line-through text-gray-400' : isOverdue ? 'text-red-600' : ''}`}>
+                          <p className={`text-sm ${
+                            todo.status === 'completed'
+                              ? 'line-through text-gray-400'
+                              : todo.status === 'awaiting'
+                              ? 'text-orange-700'
+                              : isOverdue
+                              ? 'text-red-600'
+                              : ''
+                          }`}>
                             {todo.content}
                           </p>
-                          {todo.due_date && (
-                            <p className={`text-xs mt-0.5 ${isOverdue && !todo.is_completed ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                          {/* Due date - only show for open todos */}
+                          {todo.due_date && todo.status === 'open' && (
+                            <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
                               Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
-                              {isOverdue && !todo.is_completed && ' (overdue)'}
+                              {isOverdue && ' (overdue)'}
                             </p>
                           )}
-                          {todo.awaiting_response && !todo.is_completed && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1 ${getAwaitingUrgencyClass(getAwaitingDays(todo))}`}>
+                          {/* Awaiting indicator */}
+                          {todo.status === 'awaiting' && awaitingDays !== null && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1 ${getAwaitingUrgencyClass(awaitingDays)}`}>
                               <Clock className="w-3 h-3" />
-                              {getAwaitingDays(todo) === 0 ? 'Awaiting' : `Awaiting ${getAwaitingDays(todo)}d`}
+                              {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
                             </span>
                           )}
                         </div>
@@ -2100,6 +2144,7 @@ export default function PersonDetail() {
               setTodoToComplete(null);
             }}
             todo={todoToComplete}
+            onAwaiting={handleMarkAwaiting}
             onComplete={handleJustComplete}
             onCompleteAsActivity={handleCompleteAsActivity}
           />

@@ -9,7 +9,6 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
   const [selectedPersonId, setSelectedPersonId] = useState('');
   const [isPersonDropdownOpen, setIsPersonDropdownOpen] = useState(false);
   const [personSearchQuery, setPersonSearchQuery] = useState('');
-  const [awaitingResponse, setAwaitingResponse] = useState(false);
   
   const { data: people = [], isLoading: isPeopleLoading } = usePeople();
   const createTodo = useCreateTodo();
@@ -54,7 +53,6 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
       setSelectedPersonId('');
       setPersonSearchQuery('');
       setIsPersonDropdownOpen(false);
-      setAwaitingResponse(false);
     }
   }, [isOpen]);
 
@@ -63,15 +61,14 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!content.trim() || !selectedPersonId) return;
-    
+
     try {
+      // New todos are always created with 'open' status (handled by backend)
       await createTodo.mutateAsync({
         personId: parseInt(selectedPersonId),
         data: {
           content: content.trim(),
           due_date: dueDate || null,
-          is_completed: false,
-          awaiting_response: awaitingResponse,
         },
       });
 
@@ -238,20 +235,6 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               disabled={createTodo.isPending}
             />
-          </div>
-
-          {/* Awaiting response */}
-          <div className="mb-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={awaitingResponse}
-                onChange={(e) => setAwaitingResponse(e.target.checked)}
-                className="mr-2"
-                disabled={createTodo.isPending}
-              />
-              <span className="text-sm text-gray-700">Awaiting response</span>
-            </label>
           </div>
 
           <div className="flex justify-end gap-2">

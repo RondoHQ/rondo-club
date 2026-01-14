@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock } from 'lucide-react';
 import { useDashboard, useTodos, useUpdateTodo } from '@/hooks/useDashboard';
@@ -143,16 +143,16 @@ function TodoCard({ todo, onToggle }) {
           onToggle(todo);
         }}
         className="mt-0.5 mr-3 flex-shrink-0"
-        title={todo.is_completed ? 'Mark as incomplete' : 'Mark as complete'}
+        title={todo.status === 'completed' ? 'Reopen' : 'Complete'}
       >
-        {todo.is_completed ? (
+        {todo.status === 'completed' ? (
           <CheckSquare className="w-5 h-5 text-primary-600" />
         ) : (
           <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
         )}
       </button>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${todo.is_completed ? 'line-through text-gray-400' : isOverdue ? 'text-red-600' : 'text-gray-900'}`}>
+        <p className={`text-sm font-medium ${todo.status === 'completed' ? 'line-through text-gray-400' : isOverdue ? 'text-red-600' : 'text-gray-900'}`}>
           {todo.content}
         </p>
         <div className="flex items-center gap-2 mt-1">
@@ -171,10 +171,10 @@ function TodoCard({ todo, onToggle }) {
           <span className="text-xs text-gray-500 truncate">{todo.person_name}</span>
         </div>
       </div>
-      {todo.due_date && (
-        <div className={`ml-3 text-xs text-right flex-shrink-0 ${isOverdue && !todo.is_completed ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+      {todo.due_date && todo.status === 'open' && (
+        <div className={`ml-3 text-xs text-right flex-shrink-0 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
           <div>{format(new Date(todo.due_date), 'MMM d')}</div>
-          {isOverdue && !todo.is_completed && <div className="text-red-600">overdue</div>}
+          {isOverdue && <div className="text-red-600">overdue</div>}
         </div>
       )}
     </Link>
@@ -250,60 +250,61 @@ function EmptyState() {
 
 export default function Dashboard() {
   const { data, isLoading, error } = useDashboard();
-  const { data: todos } = useTodos(false); // Only incomplete todos
+  const { data: openTodos } = useTodos('open');
+  const { data: awaitingTodos } = useTodos('awaiting');
   const updateTodo = useUpdateTodo();
   const createActivity = useCreateActivity();
-
-  // Filter todos awaiting response
-  const awaitingTodos = useMemo(() => {
-    if (!todos) return [];
-    return todos.filter(todo => todo.awaiting_response && !todo.is_completed);
-  }, [todos]);
 
   // State for complete todo flow
   const [todoToComplete, setTodoToComplete] = useState(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [activityInitialData, setActivityInitialData] = useState(null);
-  
+
   const handleToggleTodo = (todo) => {
-    // If completing a todo, show the complete modal
-    if (!todo.is_completed) {
+    // If it's an open todo, show the complete modal with options
+    if (todo.status === 'open') {
       setTodoToComplete(todo);
       setShowCompleteModal(true);
       return;
     }
-    
-    // If uncompleting, just update directly
-    updateTodo.mutate({
-      todoId: todo.id,
-      data: {
-        content: todo.content,
-        due_date: todo.due_date,
-        is_completed: false,
-      },
-    });
+
+    // If completed, reopen
+    if (todo.status === 'completed') {
+      updateTodo.mutate({
+        todoId: todo.id,
+        data: { status: 'open' },
+      });
+    }
   };
-  
-  const handleJustComplete = () => {
+
+  const handleMarkAwaiting = () => {
     if (!todoToComplete) return;
-    
+
     updateTodo.mutate({
       todoId: todoToComplete.id,
-      data: {
-        content: todoToComplete.content,
-        due_date: todoToComplete.due_date,
-        is_completed: true,
-      },
+      data: { status: 'awaiting' },
     });
-    
+
     setShowCompleteModal(false);
     setTodoToComplete(null);
   };
-  
+
+  const handleJustComplete = () => {
+    if (!todoToComplete) return;
+
+    updateTodo.mutate({
+      todoId: todoToComplete.id,
+      data: { status: 'completed' },
+    });
+
+    setShowCompleteModal(false);
+    setTodoToComplete(null);
+  };
+
   const handleCompleteAsActivity = () => {
     if (!todoToComplete) return;
-    
+
     // Prepare initial data for activity modal
     const today = new Date().toISOString().split('T')[0];
     setActivityInitialData({
@@ -312,31 +313,27 @@ export default function Dashboard() {
       activity_type: 'note',
       participants: [],
     });
-    
+
     setShowCompleteModal(false);
     setShowActivityModal(true);
   };
-  
+
   const handleCreateActivity = async (data) => {
     if (!todoToComplete) return;
-    
+
     try {
       // Create the activity
-      await createActivity.mutateAsync({ 
-        personId: todoToComplete.person_id, 
-        data 
+      await createActivity.mutateAsync({
+        personId: todoToComplete.person_id,
+        data
       });
-      
+
       // Mark the todo as complete
       await updateTodo.mutateAsync({
         todoId: todoToComplete.id,
-        data: {
-          content: todoToComplete.content,
-          due_date: todoToComplete.due_date,
-          is_completed: true,
-        },
+        data: { status: 'completed' },
       });
-      
+
       setShowActivityModal(false);
       setTodoToComplete(null);
       setActivityInitialData(null);
@@ -422,7 +419,8 @@ export default function Dashboard() {
   }
   
   // Limit todos to 5 for dashboard
-  const dashboardTodos = todos?.slice(0, 5) || [];
+  const dashboardTodos = openTodos?.slice(0, 5) || [];
+  const dashboardAwaitingTodos = awaitingTodos?.slice(0, 5) || [];
   
   return (
     <div className="space-y-6">
@@ -514,22 +512,22 @@ export default function Dashboard() {
       </div>
 
       {/* Awaiting Response Card */}
-      {awaitingTodos.length > 0 && (
+      {dashboardAwaitingTodos.length > 0 && (
         <div className="card">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold flex items-center">
                 <Clock className="w-5 h-5 mr-2 text-orange-500" />
-                Awaiting response ({awaitingTodos.length})
+                Awaiting response ({awaitingTodos?.length || 0})
               </h3>
-              <Link to="/todos" className="text-primary-600 hover:text-primary-700 text-sm">
+              <Link to="/todos?status=awaiting" className="text-primary-600 hover:text-primary-700 text-sm">
                 View all
                 <ArrowRight className="w-4 h-4 inline ml-1" />
               </Link>
             </div>
           </div>
           <div className="divide-y divide-gray-100">
-            {awaitingTodos.slice(0, 5).map((todo) => (
+            {dashboardAwaitingTodos.map((todo) => (
               <AwaitingTodoCard key={todo.id} todo={todo} />
             ))}
           </div>
@@ -617,6 +615,7 @@ export default function Dashboard() {
           setTodoToComplete(null);
         }}
         todo={todoToComplete}
+        onAwaiting={handleMarkAwaiting}
         onComplete={handleJustComplete}
         onCompleteAsActivity={handleCompleteAsActivity}
       />

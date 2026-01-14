@@ -318,14 +318,21 @@ class PRM_Access_Control {
     public function get_accessible_post_ids($post_type, $user_id) {
         global $wpdb;
 
+        // Determine valid post statuses based on post type
+        $valid_statuses = ['publish'];
+        if ($post_type === 'prm_todo') {
+            $valid_statuses = ['prm_open', 'prm_awaiting', 'prm_completed'];
+        }
+        $status_placeholders = implode(',', array_fill(0, count($valid_statuses), '%s'));
+
         // 1. Posts authored by user
+        $authored_params = array_merge([$post_type], $valid_statuses, [$user_id]);
         $authored = $wpdb->get_col($wpdb->prepare(
             "SELECT ID FROM {$wpdb->posts}
              WHERE post_type = %s
-             AND post_status = 'publish'
+             AND post_status IN ($status_placeholders)
              AND post_author = %d",
-            $post_type,
-            $user_id
+            $authored_params
         ));
 
         // 2. Workspace-visible posts where user is member
@@ -338,10 +345,10 @@ class PRM_Access_Control {
                 return 'workspace-' . $id;
             }, $workspace_ids);
 
-            $placeholders = implode(',', array_fill(0, count($term_slugs), '%s'));
+            $term_placeholders = implode(',', array_fill(0, count($term_slugs), '%s'));
 
-            // Prepare query parameters: post_type first, then term slugs
-            $query_params = array_merge([$post_type], $term_slugs);
+            // Prepare query parameters: post_type first, then statuses, then term slugs
+            $query_params = array_merge([$post_type], $valid_statuses, $term_slugs);
 
             $workspace_posts = $wpdb->get_col($wpdb->prepare(
                 "SELECT DISTINCT p.ID
@@ -351,27 +358,27 @@ class PRM_Access_Control {
                  INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
                  INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
                  WHERE p.post_type = %s
-                 AND p.post_status = 'publish'
+                 AND p.post_status IN ($status_placeholders)
                  AND pm.meta_key = '_visibility'
                  AND pm.meta_value = 'workspace'
                  AND tt.taxonomy = 'workspace_access'
-                 AND t.slug IN ($placeholders)",
+                 AND t.slug IN ($term_placeholders)",
                 $query_params
             ));
         }
 
         // 3. Posts shared directly with user
         // _shared_with is serialized array, so we use LIKE for the user_id
+        $shared_params = array_merge([$post_type], $valid_statuses, ['%"user_id":' . $user_id . '%']);
         $shared_posts = $wpdb->get_col($wpdb->prepare(
             "SELECT DISTINCT p.ID
              FROM {$wpdb->posts} p
              INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
              WHERE p.post_type = %s
-             AND p.post_status = 'publish'
+             AND p.post_status IN ($status_placeholders)
              AND pm.meta_key = '_shared_with'
              AND pm.meta_value LIKE %s",
-            $post_type,
-            '%"user_id":' . $user_id . '%'
+            $shared_params
         ));
 
         // Merge and dedupe
