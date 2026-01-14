@@ -1,9 +1,43 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { X, User, ChevronDown, Search, Plus } from 'lucide-react';
+import RichTextEditor from '@/components/RichTextEditor';
+import { usePeople } from '@/hooks/usePeople';
 
 export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo = null }) {
   const [content, setContent] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [selectedPersonIds, setSelectedPersonIds] = useState([]);
+  const [isPersonDropdownOpen, setIsPersonDropdownOpen] = useState(false);
+  const [personSearchQuery, setPersonSearchQuery] = useState('');
+  const [showNotes, setShowNotes] = useState(false);
+
+  const { data: people = [], isLoading: isPeopleLoading } = usePeople();
+
+  // Filter and sort people based on search query
+  const filteredPeople = useMemo(() => {
+    const query = personSearchQuery.toLowerCase().trim();
+    let filtered = people;
+
+    if (query) {
+      filtered = people.filter(person =>
+        person.name?.toLowerCase().includes(query) ||
+        person.first_name?.toLowerCase().includes(query) ||
+        person.last_name?.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort alphabetically by name
+    return [...filtered].sort((a, b) =>
+      (a.name || '').localeCompare(b.name || '')
+    );
+  }, [people, personSearchQuery]);
+
+  // Get selected persons details
+  const selectedPersons = useMemo(() =>
+    people.filter(p => selectedPersonIds.includes(p.id)),
+    [people, selectedPersonIds]
+  );
 
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
@@ -15,10 +49,20 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     if (todo) {
       setContent(todo.content || '');
       setDueDate(todo.due_date || '');
+      setNotes(todo.notes || '');
+      // Support both new persons array and legacy single person_id
+      setSelectedPersonIds(todo.persons?.map(p => p.id) || [todo.person_id].filter(Boolean));
+      // Show notes section if there are existing notes
+      setShowNotes(!!todo.notes);
     } else {
       setContent('');
       setDueDate(getTodayDate());
+      setNotes('');
+      setSelectedPersonIds([]);
+      setShowNotes(false);
     }
+    setIsPersonDropdownOpen(false);
+    setPersonSearchQuery('');
   }, [todo, isOpen]);
 
   if (!isOpen) return null;
@@ -27,15 +71,30 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     e.preventDefault();
     if (!content.trim()) return;
 
-    // Only send content and due_date - status is managed via toggle buttons
-    onSubmit({
+    // Build submission data
+    const data = {
       content: content.trim(),
       due_date: dueDate || null,
-    });
+    };
+
+    // Include notes only if not empty
+    if (notes.trim()) {
+      data.notes = notes;
+    }
+
+    // Include person_ids for existing todos
+    if (todo && selectedPersonIds.length > 0) {
+      data.person_ids = selectedPersonIds;
+    }
+
+    onSubmit(data);
 
     if (!todo) {
       setContent('');
       setDueDate(getTodayDate());
+      setNotes('');
+      setSelectedPersonIds([]);
+      setShowNotes(false);
     }
   };
 
@@ -43,8 +102,25 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     if (!todo) {
       setContent('');
       setDueDate(getTodayDate());
+      setNotes('');
+      setSelectedPersonIds([]);
+      setShowNotes(false);
     }
+    setIsPersonDropdownOpen(false);
+    setPersonSearchQuery('');
     onClose();
+  };
+
+  const handleRemovePerson = (personId) => {
+    setSelectedPersonIds(prev => prev.filter(id => id !== personId));
+  };
+
+  const handleAddPerson = (personId) => {
+    if (!selectedPersonIds.includes(personId)) {
+      setSelectedPersonIds(prev => [...prev, personId]);
+    }
+    setIsPersonDropdownOpen(false);
+    setPersonSearchQuery('');
   };
 
   // Format date for input (YYYY-MM-DD)
@@ -102,6 +178,138 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
               disabled={isLoading}
             />
           </div>
+
+          {/* Notes field - collapsible */}
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => setShowNotes(!showNotes)}
+              className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2 hover:text-gray-900"
+            >
+              <ChevronDown className={`w-4 h-4 transition-transform ${showNotes ? '' : '-rotate-90'}`} />
+              Notes (optional)
+            </button>
+            {showNotes && (
+              <RichTextEditor
+                value={notes}
+                onChange={setNotes}
+                placeholder="Add detailed notes..."
+                disabled={isLoading}
+                minHeight="80px"
+              />
+            )}
+          </div>
+
+          {/* Related People section - only show when editing existing todo */}
+          {todo && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Related people
+              </label>
+
+              {/* Selected persons as chips */}
+              {selectedPersons.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {selectedPersons.map(person => (
+                    <span
+                      key={person.id}
+                      className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 rounded-full text-sm"
+                    >
+                      {person.thumbnail ? (
+                        <img
+                          src={person.thumbnail}
+                          alt={person.name}
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                          <User className="w-3 h-3 text-gray-500" />
+                        </div>
+                      )}
+                      <span className="text-gray-700">{person.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePerson(person.id)}
+                        className="text-gray-400 hover:text-gray-600"
+                        disabled={isLoading}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Add person button and dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsPersonDropdownOpen(!isPersonDropdownOpen)}
+                  className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                  disabled={isLoading}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add person
+                </button>
+
+                {isPersonDropdownOpen && (
+                  <div className="absolute z-10 left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                    {/* Search input */}
+                    <div className="p-2 border-b border-gray-100">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="text"
+                          value={personSearchQuery}
+                          onChange={(e) => setPersonSearchQuery(e.target.value)}
+                          placeholder="Search people..."
+                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+
+                    {/* People list */}
+                    <div className="overflow-y-auto max-h-48">
+                      {isPeopleLoading ? (
+                        <div className="p-3 text-center text-gray-500 text-sm">
+                          Loading...
+                        </div>
+                      ) : filteredPeople.length > 0 ? (
+                        filteredPeople
+                          .filter(person => !selectedPersonIds.includes(person.id))
+                          .map(person => (
+                            <button
+                              key={person.id}
+                              type="button"
+                              onClick={() => handleAddPerson(person.id)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors"
+                            >
+                              {person.thumbnail ? (
+                                <img
+                                  src={person.thumbnail}
+                                  alt={person.name}
+                                  className="w-6 h-6 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                                  <User className="w-4 h-4 text-gray-500" />
+                                </div>
+                              )}
+                              <span className="text-sm text-gray-900 truncate">{person.name}</span>
+                            </button>
+                          ))
+                      ) : (
+                        <div className="p-3 text-center text-gray-500 text-sm">
+                          No people found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Status hint for existing todos */}
           {todo && (
