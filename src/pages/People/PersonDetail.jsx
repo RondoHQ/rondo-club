@@ -1873,40 +1873,37 @@ export default function PersonDetail() {
 
         {/* Timeline Tab */}
         {activeTab === 'timeline' && (
-          <div className="columns-1 md:columns-2 gap-6">
-            {/* Timeline */}
-            <div className="card p-6 break-inside-avoid mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Timeline</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowNoteModal(true)}
-                    className="btn-secondary text-sm"
-                    title="Add note"
-                  >
-                    <StickyNote className="w-4 h-4 md:mr-1" />
-                    <span className="hidden md:inline">Note</span>
-                  </button>
-                  <button
-                    onClick={() => setShowActivityModal(true)}
-                    className="btn-secondary text-sm"
-                    title="Add activity"
-                  >
-                    <MessageCircle className="w-4 h-4 md:mr-1" />
-                    <span className="hidden md:inline">Activity</span>
-                  </button>
-                </div>
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold">Timeline</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowNoteModal(true)}
+                  className="btn-secondary text-sm"
+                  title="Add note"
+                >
+                  <StickyNote className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Note</span>
+                </button>
+                <button
+                  onClick={() => setShowActivityModal(true)}
+                  className="btn-secondary text-sm"
+                  title="Add activity"
+                >
+                  <MessageCircle className="w-4 h-4 md:mr-1" />
+                  <span className="hidden md:inline">Activity</span>
+                </button>
               </div>
-              
-              <TimelineView
-                timeline={timeline || []}
-                onEdit={handleEditTimelineItem}
-                onDelete={handleDeleteTimelineItem}
-                onToggleTodo={handleToggleTodo}
-                personId={id}
-                allPeople={allPeople || []}
-              />
             </div>
+
+            <TimelineView
+              timeline={timeline || []}
+              onEdit={handleEditTimelineItem}
+              onDelete={handleDeleteTimelineItem}
+              onToggleTodo={handleToggleTodo}
+              personId={id}
+              allPeople={allPeople || []}
+            />
           </div>
         )}
 
