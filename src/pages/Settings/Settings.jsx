@@ -1171,6 +1171,13 @@ function AdminTab({
             <p className="font-medium">Relationship types</p>
             <p className="text-sm text-gray-500">Manage relationship types and their inverse mappings</p>
           </Link>
+          <Link
+            to="/settings/labels"
+            className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          >
+            <p className="font-medium">Labels</p>
+            <p className="text-sm text-gray-500">Manage labels for people and organizations</p>
+          </Link>
         </div>
       </div>
       
