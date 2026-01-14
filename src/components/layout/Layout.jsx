@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -27,10 +27,12 @@ import { useSearch } from '@/hooks/useDashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi, wpApi } from '@/api/client';
 import { APP_NAME } from '@/constants/app';
-import GlobalTodoModal from '@/components/Timeline/GlobalTodoModal';
-import PersonEditModal from '@/components/PersonEditModal';
-import CompanyEditModal from '@/components/CompanyEditModal';
-import ImportantDateModal from '@/components/ImportantDateModal';
+// Lazy load modals to reduce initial bundle size
+// These pull in TipTap editor (~370 KB) which should only load when needed
+const GlobalTodoModal = lazy(() => import('@/components/Timeline/GlobalTodoModal'));
+const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
+const CompanyEditModal = lazy(() => import('@/components/CompanyEditModal'));
+const ImportantDateModal = lazy(() => import('@/components/ImportantDateModal'));
 import { usePeople } from '@/hooks/usePeople';
 
 const navigation = [
@@ -698,37 +700,45 @@ export default function Layout({ children }) {
         onClose={() => setShowSearchModal(false)}
       />
       
-      {/* Global Todo Modal */}
-      <GlobalTodoModal
-        isOpen={showTodoModal}
-        onClose={() => setShowTodoModal(false)}
-      />
-      
-      {/* Person Modal */}
-      <PersonEditModal
-        isOpen={showPersonModal}
-        onClose={() => setShowPersonModal(false)}
-        onSubmit={handleCreatePerson}
-        isLoading={isCreatingPerson}
-      />
-      
-      {/* Company Modal */}
-      <CompanyEditModal
-        isOpen={showCompanyModal}
-        onClose={() => setShowCompanyModal(false)}
-        onSubmit={handleCreateCompany}
-        isLoading={isCreatingCompany}
-      />
-      
-      {/* Date Modal */}
-      <ImportantDateModal
-        isOpen={showDateModal}
-        onClose={() => setShowDateModal(false)}
-        onSubmit={handleCreateDate}
-        isLoading={isCreatingDate}
-        allPeople={allPeople}
-        isPeopleLoading={isPeopleLoading}
-      />
+      {/* Global Todo Modal (lazy loaded) */}
+      <Suspense fallback={null}>
+        <GlobalTodoModal
+          isOpen={showTodoModal}
+          onClose={() => setShowTodoModal(false)}
+        />
+      </Suspense>
+
+      {/* Person Modal (lazy loaded) */}
+      <Suspense fallback={null}>
+        <PersonEditModal
+          isOpen={showPersonModal}
+          onClose={() => setShowPersonModal(false)}
+          onSubmit={handleCreatePerson}
+          isLoading={isCreatingPerson}
+        />
+      </Suspense>
+
+      {/* Company Modal (lazy loaded) */}
+      <Suspense fallback={null}>
+        <CompanyEditModal
+          isOpen={showCompanyModal}
+          onClose={() => setShowCompanyModal(false)}
+          onSubmit={handleCreateCompany}
+          isLoading={isCreatingCompany}
+        />
+      </Suspense>
+
+      {/* Date Modal (lazy loaded) */}
+      <Suspense fallback={null}>
+        <ImportantDateModal
+          isOpen={showDateModal}
+          onClose={() => setShowDateModal(false)}
+          onSubmit={handleCreateDate}
+          isLoading={isCreatingDate}
+          allPeople={allPeople}
+          isPeopleLoading={isPeopleLoading}
+        />
+      </Suspense>
     </div>
   );
 }
