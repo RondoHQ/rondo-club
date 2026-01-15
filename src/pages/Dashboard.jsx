@@ -570,8 +570,8 @@ export default function Dashboard() {
         />
       </div>
       
-      {/* Row 1: Upcoming Reminders + Open Todos + Awaiting Response */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Row 1: Upcoming Reminders + Open Todos + Awaiting Response (+ Today's Meetings if calendar connected) */}
+      <div className={`grid grid-cols-1 ${hasCalendarConnections ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
         {/* Upcoming Reminders */}
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
@@ -655,35 +655,35 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Today's Meetings */}
-      {hasCalendarConnections && (
-        <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold flex items-center dark:text-gray-50">
-              <CalendarClock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-              Today's meetings
-            </h2>
-            <Link to="/settings?tab=calendars"
-              className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
-              Settings
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
+        {/* Today's Meetings (only when calendar connected) */}
+        {hasCalendarConnections && (
+          <div className="card">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="font-semibold flex items-center dark:text-gray-50">
+                <CalendarClock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
+                Today's meetings
+              </h2>
+              <Link to="/settings?tab=calendars"
+                className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
+                Settings
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
+            </div>
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+              {todayMeetings.length > 0 ? (
+                todayMeetings.map((meeting) => (
+                  <MeetingCard key={meeting.id} meeting={meeting} />
+                ))
+              ) : (
+                <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+                  No meetings scheduled for today
+                </p>
+              )}
+            </div>
           </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {todayMeetings.length > 0 ? (
-              todayMeetings.map((meeting) => (
-                <MeetingCard key={meeting.id} meeting={meeting} />
-              ))
-            ) : (
-              <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-                No meetings scheduled for today
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Row 2: Favorites + Recently Contacted + Recently Edited */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
