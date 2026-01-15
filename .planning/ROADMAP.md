@@ -20,10 +20,48 @@
 - ✅ [v3.8 Theme Customization](milestones/v3.8-theme-customization.md) (Phases 43-46) — SHIPPED 2026-01-15
 - ✅ [v4.0 Calendar Integration](milestones/v4.0-calendar-integration.md) (Phases 47-55) — SHIPPED 2026-01-15
 - ✅ [v4.1 Bug Fixes & Polish](milestones/v4.1-bug-fixes-polish.md) (Phases 56-57) — SHIPPED 2026-01-15
+- 🚧 **v4.2 Settings & Stability** — Phases 58-60 (in progress)
 
 ## Current Status
 
-**Complete:** v4.1 Bug Fixes & Polish — All phases shipped
+**In Progress:** v4.2 Settings & Stability — Phase 58 ready to plan
+
+---
+
+### 🚧 v4.2 Settings & Stability (In Progress)
+
+**Milestone Goal:** Improve settings organization, fix React DOM stability issues, and enhance calendar email matching.
+
+#### Phase 58: React DOM Error Fix
+
+**Goal**: Investigate and fix recurring removeChild synchronization errors between React's virtual DOM and actual DOM
+**Depends on**: Previous milestone complete
+**Research**: Likely (React internals investigation)
+**Research topics**: React DOM reconciliation, StrictMode behavior, component lifecycle issues
+**Plans**: TBD
+
+Plans:
+- [ ] 58-01: TBD (run /gsd:plan-phase 58 to break down)
+
+#### Phase 59: Settings Restructure
+
+**Goal**: Create Connections tab with subtabs for Calendars, CardDAV, and Slack, grouping all external service connections
+**Depends on**: Phase 58
+**Research**: Unlikely (internal UI patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 59-01: TBD (run /gsd:plan-phase 59 to break down)
+
+#### Phase 60: Calendar Email Matching
+
+**Goal**: Re-run meetings matching when email address added and match events against all person email addresses
+**Depends on**: Phase 59
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 60-01: TBD (run /gsd:plan-phase 60 to break down)
 
 ---
 
@@ -505,5 +543,7 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
 | v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
 | v4.1 Bug Fixes & Polish | 56-57 | 3/3 | Complete ✅ | 2026-01-15 |
+| v4.2 Settings & Stability | 58-60 | 0/? | In progress 🚧 | - |
 
 **Shipped: 19 milestones, 57 phases, 102 plans**
+**In Progress: v4.2 (3 phases)**

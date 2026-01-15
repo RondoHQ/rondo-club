@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Planning next milestone
+**Current focus:** v4.2 Settings & Stability - React DOM fixes, settings restructure, calendar matching
 
 ## Current Position
 
-Milestone: v4.1 Bug Fixes & Polish (SHIPPED)
-Phase: All complete
-Plan: All complete
-Status: Ready for next milestone
-Last activity: 2026-01-15 — Archived v4.1 milestone
+Milestone: v4.2 Settings & Stability
+Phase: 58 of 60 (React DOM Error Fix)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-15 — Milestone v4.2 created
 
-Progress: ██████████ 100% (19 milestones shipped)
+Progress: ░░░░░░░░░░ 0% (3 phases in milestone)
 
 ## Completed Milestones
 
@@ -77,11 +77,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.0 archived: Git tag v4.0 created
 - Milestone v4.1 complete: Dark mode fixes, deploy procedure, 3-row dashboard, dynamic favicon
 - Milestone v4.1 archived: Git tag v4.1 created
+- Milestone v4.2 created: Settings & Stability, 3 phases (Phase 58-60)
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Archived v4.1 milestone
+Stopped at: Milestone v4.2 initialization
 Resume file: None
 
 ## Accumulated Context
@@ -130,7 +131,7 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Milestone v4.1 Bug Fixes & Polish shipped: 2 phases, 3 plans
+- Milestone v4.2 Settings & Stability created: 3 phases (58-60)
 - 19 milestones, 57 phases, 102 plans completed to date
-- Use `/gsd:discuss-milestone` to plan next milestone
-- Use `/gsd:new-milestone` if scope is already clear
+- Use `/gsd:plan-phase 58` to plan React DOM Error Fix phase
+- Use `/gsd:research-phase 58` to investigate React DOM issues first
