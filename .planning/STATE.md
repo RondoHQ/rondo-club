@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v4.1 Bug Fixes & Polish
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v4.1 Bug Fixes & Polish
-Phase: 57 of 57 (Calendar Widget Polish)
-Plan: 57-FIX complete (UAT issues fixed)
-Status: Milestone complete - ready for archive
-Last activity: 2026-01-15 — Completed 57-FIX (2 UAT issues resolved)
+Milestone: v4.1 Bug Fixes & Polish (SHIPPED)
+Phase: All complete
+Plan: All complete
+Status: Ready for next milestone
+Last activity: 2026-01-15 — Archived v4.1 milestone
 
-Progress: ██████████ 100% (2 of 2 phases, all plans + fixes complete)
+Progress: ██████████ 100% (19 milestones shipped)
 
 ## Completed Milestones
 
@@ -38,8 +38,9 @@ Progress: ██████████ 100% (2 of 2 phases, all plans + fixes 
 | v3.7 Todo UX Polish | 42 | 1 | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10 | 2026-01-15 |
 | v4.0 Calendar Integration | 47-55 | 11 | 2026-01-15 |
+| v4.1 Bug Fixes & Polish | 56-57 | 3 | 2026-01-15 |
 
-**Total:** 17 milestones, 55 phases, 99 plans completed
+**Total:** 19 milestones, 57 phases, 102 plans completed
 
 ## Deferred Issues
 
@@ -74,12 +75,13 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v3.8 archived: Git tag v3.8 created
 - Milestone v4.0 complete: Calendar Integration (Google, CalDAV, contact matching, dashboard widget)
 - Milestone v4.0 archived: Git tag v4.0 created
-- Milestone v4.1 created: Bug Fixes & Polish, 2 phases (Phase 56-57)
+- Milestone v4.1 complete: Dark mode fixes, deploy procedure, 3-row dashboard, dynamic favicon
+- Milestone v4.1 archived: Git tag v4.1 created
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 57-FIX (UAT issues resolved, milestone ready for archive)
+Stopped at: Archived v4.1 milestone
 Resume file: None
 
 ## Accumulated Context
@@ -128,8 +130,7 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Phase 57 complete: Calendar widget polish (57-01) + UAT fixes (57-FIX)
-- Milestone v4.1 Bug Fixes & Polish complete: All 2 phases, 2 plans + 1 fix executed
-- 17 milestones, 57 phases, 102 plans completed to date
-- Use `/gsd:verify-work 57` to re-verify fixes if needed
-- Use `/gsd:complete-milestone` to archive v4.1 and prepare for next milestone
+- Milestone v4.1 Bug Fixes & Polish shipped: 2 phases, 3 plans
+- 19 milestones, 57 phases, 102 plans completed to date
+- Use `/gsd:discuss-milestone` to plan next milestone
+- Use `/gsd:new-milestone` if scope is already clear

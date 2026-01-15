@@ -143,6 +143,13 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Today's Meetings dashboard widget — v4.0
 - WP-CLI: `wp prm calendar sync/status/auto-log` — v4.0
 
+**v4.1 Bug Fixes & Polish (shipped 2026-01-15):**
+- Dark mode contrast fixes for CardDAV connection details and search modal — v4.1
+- Two-step rsync deploy procedure preventing MIME type errors from stale artifacts — v4.1
+- Dashboard restructured to 3-row layout (Stats | Activity | Favorites) — v4.1
+- Timezone-aware meeting times using ISO 8601 format — v4.1
+- Dynamic favicon that updates when accent color changes — v4.1
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -225,6 +232,11 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | 15-minute cron interval | Balance between freshness and API load | ✓ Good |
 | One user per cron run | Round-robin prevents API rate limit hits | ✓ Good |
 | Conditional dashboard widget | Graceful degradation when no calendar connected | ✓ Good |
+| DOM errors documented as benign | React 18 StrictMode artifacts, no fix needed | ✓ Good |
+| Two-step rsync deploy | Sync dist/ with --delete separately to prevent stale artifacts | ✓ Good |
+| Dashboard 3-row layout | Stats row always 3 cols, Activity row with conditional Meetings | ✓ Good |
+| React manages favicon dynamically | Removed PHP static favicon, React uses inline SVG data URLs | ✓ Good |
+| ISO 8601 for meeting times | Timezone offset preserved in API, JavaScript parses correctly | ✓ Good |
 
 ---
-*Last updated: 2026-01-15 — v4.0 Calendar Integration shipped*
+*Last updated: 2026-01-15 — v4.1 Bug Fixes & Polish shipped*

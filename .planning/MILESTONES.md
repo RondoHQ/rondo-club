@@ -1,5 +1,32 @@
 # Project Milestones: Caelis
 
+## v4.1 Bug Fixes & Polish (Shipped: 2026-01-15)
+
+**Delivered:** Dark mode contrast fixes, improved deploy procedure to prevent MIME type errors, dashboard 3-row layout, and dynamic favicon that updates with accent color.
+
+**Phases completed:** 56-57 (3 plans total)
+
+**Key accomplishments:**
+
+- Dark mode contrast fixes for CardDAV connection details and search modal
+- Two-step rsync deploy procedure to prevent MIME type errors from stale build artifacts
+- Dashboard restructured to 3-row layout (Stats | Activity | Favorites)
+- Timezone-aware meeting times using ISO 8601 format
+- Dynamic favicon that updates when accent color changes
+
+**Stats:**
+
+- 23 files changed
+- +1,260 / -309 lines changed
+- 2 phases, 3 plans, 8 tasks
+- 1 day from start to ship
+
+**Git range:** `5ccfbcd` → `84c19c2`
+
+**What's next:** To be determined
+
+---
+
 ## v4.0 Calendar Integration (Shipped: 2026-01-15)
 
 **Delivered:** Full calendar integration with Google Calendar and CalDAV (iCloud/Fastmail/Nextcloud) support, automatic contact matching, background sync, and Today's Meetings dashboard widget.

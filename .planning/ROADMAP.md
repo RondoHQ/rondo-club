@@ -19,38 +19,37 @@
 - ✅ [v3.7 Todo UX Polish](milestones/v3.7-todo-ux-polish.md) (Phase 42) — SHIPPED 2026-01-15
 - ✅ [v3.8 Theme Customization](milestones/v3.8-theme-customization.md) (Phases 43-46) — SHIPPED 2026-01-15
 - ✅ [v4.0 Calendar Integration](milestones/v4.0-calendar-integration.md) (Phases 47-55) — SHIPPED 2026-01-15
-- 🚧 **v4.1 Bug Fixes & Polish** — Phases 56-57 (in progress)
+- ✅ [v4.1 Bug Fixes & Polish](milestones/v4.1-bug-fixes-polish.md) (Phases 56-57) — SHIPPED 2026-01-15
 
 ## Current Status
 
-**Complete:** v4.1 Bug Fixes & Polish — All phases complete
+**Complete:** v4.1 Bug Fixes & Polish — All phases shipped
 
 ---
 
-### ✅ v4.1 Bug Fixes & Polish (Complete)
+<details>
+<summary>✅ v4.1 Bug Fixes & Polish (Phases 56-57) — SHIPPED 2026-01-15</summary>
 
 **Milestone Goal:** Fix accumulated bugs and polish the Today's Meetings widget.
 
-#### Phase 56: Dark Mode & Console Fixes ✓
+**Result:** Dark mode contrast fixes, improved deploy procedure, dashboard 3-row layout, dynamic favicon
 
-**Goal**: Fix dark mode contrast issues and console errors
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal CSS/React patterns)
-**Plans**: 1
+**Phases:**
+- [x] Phase 56: Dark Mode & Console Fixes (1/1 plan) ✓
+- [x] Phase 57: Calendar Widget Polish (2/2 plans) ✓
 
-Plans:
-- [x] 56-01: Dark Mode & Console Fixes (3 tasks: dark mode contrast, DOM errors, MIME errors)
+**Total:** 2 phases, 3 plans
 
-#### Phase 57: Calendar Widget Polish ✓
+**Key Accomplishments:**
+- Dark mode contrast fixes for CardDAV connection details and search modal
+- Two-step rsync deploy procedure to prevent MIME type errors from stale artifacts
+- Dashboard restructured to 3-row layout (Stats | Activity | Favorites)
+- Timezone-aware meeting times using ISO 8601 format
+- Dynamic favicon that updates when accent color changes
 
-**Goal**: Fix Today's meetings layout, timezone display, and update favicon
-**Depends on**: Phase 56
-**Research**: Unlikely (internal UI patterns)
-**Plans**: 1
+See [milestone archive](milestones/v4.1-bug-fixes-polish.md) for full details.
 
-Plans:
-- [x] 57-01: Calendar Widget Polish (3 tasks: layout, timezone, favicon)
-- [x] 57-FIX: UAT Issue Fixes (2 tasks: 3-row dashboard layout, dynamic favicon)
+</details>
 
 ---
 
@@ -505,6 +504,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
 | v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
-| v4.1 Bug Fixes & Polish | 56-57 | 2/2 | Complete ✅ | 2026-01-15 |
+| v4.1 Bug Fixes & Polish | 56-57 | 3/3 | Complete ✅ | 2026-01-15 |
 
-**Shipped: 18 milestones, 57 phases, 101 plans**
+**Shipped: 19 milestones, 57 phases, 102 plans**
