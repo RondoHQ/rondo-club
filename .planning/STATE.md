@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Milestone: v4.0 Calendar Integration
-Phase: 53 of 55 (Person Meetings Section)
+Phase: 54 of 55 (Background Sync)
 Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-15 — Completed 52-FIX (Google OAuth redirect fix)
+Last activity: 2026-01-15 — Completed 54-01 (Background sync + auto-logging)
 
-Progress: ████████░░ 80%
+Progress: █████████░ 90%
 
 ## Completed Milestones
 
@@ -123,8 +123,9 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Phase 53-01 (Person Meetings Section) complete
-- Meetings tab on PersonDetail showing upcoming/past meetings
-- MeetingCard component with meeting details and Log as Activity button
-- log_event_as_activity endpoint creates activities for all matched people
-- Ready for Phase 54 (Dashboard Integration) or Phase 55 (Polish & Finalization)
+- Phase 54-01 (Background Sync) complete
+- WP-Cron background sync runs every 15 minutes
+- Auto-logging creates activities for past meetings with matched contacts
+- WP-CLI commands: `wp prm calendar sync`, `wp prm calendar status`, `wp prm calendar auto-log`
+- REST endpoint: GET /prm/v1/calendar/sync/status
+- Ready for Phase 55 (Polish & Finalization)
