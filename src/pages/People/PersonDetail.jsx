@@ -1148,7 +1148,7 @@ export default function PersonDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
       </div>
     );
   }
@@ -1329,7 +1329,7 @@ export default function PersonDetail() {
                           <span className="text-gray-400 dark:text-gray-500"> at</span>
                           <Link
                             to={`/organizations/${job.company}`}
-                            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
+                            className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
                           >
                             {companyMap[job.company].name}
                           </Link>
@@ -1409,7 +1409,7 @@ export default function PersonDetail() {
                     <button
                       onClick={handleAddLabel}
                       disabled={!selectedLabelToAdd}
-                      className="text-xs px-2 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-xs px-2 py-1 bg-accent-600 text-white rounded hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Add
                     </button>
@@ -1464,7 +1464,7 @@ export default function PersonDetail() {
             onClick={() => setActiveTab('profile')}
             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'profile'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-accent-600 text-accent-600'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
@@ -1474,7 +1474,7 @@ export default function PersonDetail() {
             onClick={() => setActiveTab('timeline')}
             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'timeline'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-accent-600 text-accent-600'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
@@ -1484,7 +1484,7 @@ export default function PersonDetail() {
             onClick={() => setActiveTab('work')}
             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'work'
-                ? 'border-primary-600 text-primary-600'
+                ? 'border-accent-600 text-accent-600'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
@@ -1573,7 +1573,7 @@ export default function PersonDetail() {
                                 href={contact.contact_value}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
+                                className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
                               >
                                 {contact.contact_label || 'Slack'}
                               </a>
@@ -1585,7 +1585,7 @@ export default function PersonDetail() {
                                     href={linkHref}
                                     target={linkTarget || undefined}
                                     rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
-                                    className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
+                                    className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
                                   >
                                     {contact.contact_value}
                                   </a>
@@ -1602,7 +1602,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No contact information yet. <button onClick={() => setShowContactModal(true)} className="text-primary-600 hover:underline">Add some</button>
+                No contact information yet. <button onClick={() => setShowContactModal(true)} className="text-accent-600 hover:underline">Add some</button>
               </p>
             )}
             </div>
@@ -1677,7 +1677,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No important dates yet. <button onClick={() => { setEditingDate(null); setShowDateModal(true); }} className="text-primary-600 hover:underline">Add one</button>
+                No important dates yet. <button onClick={() => { setEditingDate(null); setShowDateModal(true); }} className="text-accent-600 hover:underline">Add one</button>
               </p>
             )}
           </div>
@@ -1721,7 +1721,7 @@ export default function PersonDetail() {
                               href={googleMapsUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline text-sm"
+                              className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline text-sm"
                             >
                               {addressLines.map((line, i) => (
                                 <span key={i} className="block">{line}</span>
@@ -1754,7 +1754,7 @@ export default function PersonDetail() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 text-center py-4">
-                    No addresses yet. <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-primary-600 hover:underline">Add one</button>
+                    No addresses yet. <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-accent-600 hover:underline">Add one</button>
                   </p>
                 )}
               </div>
@@ -1864,7 +1864,7 @@ export default function PersonDetail() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  No relationships yet. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-primary-600 hover:underline">Add one</button>
+                  No relationships yet. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-accent-600 hover:underline">Add one</button>
                 </p>
               )}
             </div>
@@ -1950,7 +1950,7 @@ export default function PersonDetail() {
                         {job.company && companyData && (
                           <Link 
                             to={`/companies/${job.company}`}
-                            className="text-sm text-primary-600 hover:underline"
+                            className="text-sm text-accent-600 hover:underline"
                           >
                             {companyData.name}
                           </Link>
@@ -1991,7 +1991,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No work history yet. <button onClick={() => { setEditingWorkHistory(null); setEditingWorkHistoryIndex(null); setShowWorkHistoryModal(true); }} className="text-primary-600 hover:underline">Add one</button>
+                No work history yet. <button onClick={() => { setEditingWorkHistory(null); setEditingWorkHistoryIndex(null); setShowWorkHistoryModal(true); }} className="text-accent-600 hover:underline">Add one</button>
               </p>
             )}
           </div>
@@ -2022,7 +2022,7 @@ export default function PersonDetail() {
                       </div>
                     )}
                     <div className="ml-3">
-                      <p className="text-sm font-medium group-hover:text-primary-600">{company.name}</p>
+                      <p className="text-sm font-medium group-hover:text-accent-600">{company.name}</p>
                       {company.industry && (
                         <p className="text-xs text-gray-500 dark:text-gray-400">{company.industry}</p>
                       )}
@@ -2083,7 +2083,7 @@ export default function PersonDetail() {
                 <div className="flex items-center gap-2">
                   <h2 className="font-semibold">Todos</h2>
                   {openTodosCount > 0 && (
-                    <span className="bg-primary-100 text-primary-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                    <span className="bg-accent-100 text-accent-700 text-xs font-medium px-2 py-0.5 rounded-full">
                       {openTodosCount}
                     </span>
                   )}
@@ -2112,7 +2112,7 @@ export default function PersonDetail() {
                           title={todo.status === 'completed' ? 'Reopen' : todo.status === 'awaiting' ? 'Mark complete' : 'Complete'}
                         >
                           {todo.status === 'completed' ? (
-                            <CheckSquare2 className="w-5 h-5 text-primary-600" />
+                            <CheckSquare2 className="w-5 h-5 text-accent-600" />
                           ) : todo.status === 'awaiting' ? (
                             <Clock className="w-5 h-5 text-orange-500" />
                           ) : (
@@ -2229,12 +2229,12 @@ export default function PersonDetail() {
       {/* Mobile Todos FAB - visible on screens below lg */}
       <button
         onClick={() => setShowMobileTodos(true)}
-        className="fixed bottom-6 right-6 z-40 lg:hidden bg-primary-600 hover:bg-primary-700 text-white rounded-full p-4 shadow-lg transition-colors"
+        className="fixed bottom-6 right-6 z-40 lg:hidden bg-accent-600 hover:bg-accent-700 text-white rounded-full p-4 shadow-lg transition-colors"
         title="View todos"
       >
         <CheckSquare2 className="w-6 h-6" />
         {openTodosCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-primary-100 text-primary-700 text-xs font-medium px-2 py-0.5 rounded-full min-w-[20px] text-center">
+          <span className="absolute -top-1 -right-1 bg-accent-100 text-accent-700 text-xs font-medium px-2 py-0.5 rounded-full min-w-[20px] text-center">
             {openTodosCount}
           </span>
         )}
@@ -2259,7 +2259,7 @@ export default function PersonDetail() {
               <div className="flex items-center gap-2">
                 <h2 className="font-semibold text-lg">Todos</h2>
                 {openTodosCount > 0 && (
-                  <span className="bg-primary-100 text-primary-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                  <span className="bg-accent-100 text-accent-700 text-xs font-medium px-2 py-0.5 rounded-full">
                     {openTodosCount}
                   </span>
                 )}
@@ -2300,7 +2300,7 @@ export default function PersonDetail() {
                           title={todo.status === 'completed' ? 'Reopen' : todo.status === 'awaiting' ? 'Mark complete' : 'Complete'}
                         >
                           {todo.status === 'completed' ? (
-                            <CheckSquare2 className="w-5 h-5 text-primary-600" />
+                            <CheckSquare2 className="w-5 h-5 text-accent-600" />
                           ) : todo.status === 'awaiting' ? (
                             <Clock className="w-5 h-5 text-orange-500" />
                           ) : (
