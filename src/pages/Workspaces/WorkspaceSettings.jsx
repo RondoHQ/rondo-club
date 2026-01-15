@@ -47,7 +47,7 @@ export default function WorkspaceSettings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
       </div>
     );
   }
@@ -55,8 +55,8 @@ export default function WorkspaceSettings() {
   if (error || !workspace) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-red-600">Failed to load workspace.</p>
-        <Link to="/workspaces" className="text-primary-600 hover:underline mt-2 inline-block">
+        <p className="text-red-600 dark:text-red-400">Failed to load workspace.</p>
+        <Link to="/workspaces" className="text-primary-600 dark:text-primary-400 hover:underline mt-2 inline-block">
           Back to Workspaces
         </Link>
       </div>
@@ -69,8 +69,8 @@ export default function WorkspaceSettings() {
   if (!isOwner) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-gray-600">Only workspace owners can access settings.</p>
-        <Link to={`/workspaces/${id}`} className="text-primary-600 hover:underline mt-2 inline-block">
+        <p className="text-gray-600 dark:text-gray-300">Only workspace owners can access settings.</p>
+        <Link to={`/workspaces/${id}`} className="text-primary-600 dark:text-primary-400 hover:underline mt-2 inline-block">
           Back to Workspace
         </Link>
       </div>
@@ -83,43 +83,43 @@ export default function WorkspaceSettings() {
       <div>
         <button
           onClick={() => navigate(`/workspaces/${id}`)}
-          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
+          className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-2"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Workspace
         </button>
-        <h1 className="text-2xl font-semibold text-gray-900">Workspace Settings</h1>
-        <p className="text-gray-500 mt-1">{workspace.title}</p>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-50">Workspace Settings</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">{workspace.title}</p>
       </div>
 
       {/* General Settings */}
       <div className="card">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">General</h2>
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">General</h2>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               Workspace Name *
             </label>
             <input
               type="text"
               {...register('title', { required: 'Name is required' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
             {errors.title && (
-              <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.title.message}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               Description
             </label>
             <textarea
               {...register('description')}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
 
@@ -136,19 +136,19 @@ export default function WorkspaceSettings() {
       </div>
 
       {/* Danger Zone */}
-      <div className="card border-red-200">
-        <div className="px-6 py-4 border-b border-red-200 bg-red-50">
-          <h2 className="text-lg font-medium text-red-900 flex items-center gap-2">
+      <div className="card border-red-200 dark:border-red-800">
+        <div className="px-6 py-4 border-b border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30">
+          <h2 className="text-lg font-medium text-red-900 dark:text-red-300 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
             Danger Zone
           </h2>
         </div>
         <div className="p-6">
           <div className="flex items-start gap-4">
-            <Trash2 className="w-6 h-6 text-red-600 flex-shrink-0" />
+            <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" />
             <div className="flex-1">
-              <h3 className="text-base font-medium text-gray-900">Delete Workspace</h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <h3 className="text-base font-medium text-gray-900 dark:text-gray-50">Delete Workspace</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 This will permanently delete the workspace and remove all member access.
                 Contacts will remain but will no longer be shared via this workspace.
               </p>
@@ -156,20 +156,20 @@ export default function WorkspaceSettings() {
               {!showDeleteConfirm ? (
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="mt-4 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+                  className="mt-4 px-4 py-2 border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30"
                 >
                   Delete Workspace
                 </button>
               ) : (
-                <div className="mt-4 p-4 bg-red-50 rounded-lg">
-                  <p className="text-sm text-red-800 mb-3">
+                <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/30 rounded-lg">
+                  <p className="text-sm text-red-800 dark:text-red-300 mb-3">
                     Type <strong>{workspace.title}</strong> to confirm deletion:
                   </p>
                   <input
                     type="text"
                     value={deleteConfirmText}
                     onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 mb-3"
+                    className="w-full px-3 py-2 border border-red-300 dark:border-red-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg focus:ring-2 focus:ring-red-500 mb-3"
                     placeholder="Type workspace name..."
                   />
                   <div className="flex gap-2">
