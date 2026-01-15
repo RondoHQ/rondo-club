@@ -245,15 +245,21 @@ At the end of every milestone, deploy the changes to the production server:
 If you did not update, add or remove any node modules, do this:
 
 ```bash
-# Sync theme files to production (excludes .git and node_modules)
-rsync -avz --exclude='.git' --exclude='node_modules' -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
+# Sync dist folder with --delete to remove old build artifacts
+rsync -avz --delete -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/dist/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/dist/
+
+# Sync remaining theme files (excludes .git, node_modules, and dist)
+rsync -avz --exclude='.git' --exclude='node_modules' --exclude='dist' -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
 ```
 
 If you _did_ update, add or remove node modules, do this:
 
 ```bash
-# Sync theme files to production (excludes .git and node_modules)
-rsync -avz --exclude='.git' -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
+# Sync dist folder with --delete to remove old build artifacts
+rsync -avz --delete -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/dist/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/dist/
+
+# Sync remaining theme files including node_modules (excludes .git and dist)
+rsync -avz --exclude='.git' --exclude='dist' -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
 ```
 
 Then, in both cases, do this:
