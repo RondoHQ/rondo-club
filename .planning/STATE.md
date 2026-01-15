@@ -13,7 +13,7 @@ Milestone: v4.0 Calendar Integration
 Phase: 53 of 55 (Person Meetings Section)
 Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-15 — Completed 53-01-PLAN.md
+Last activity: 2026-01-15 — Completed 52-FIX (Google OAuth redirect fix)
 
 Progress: ████████░░ 80%
 
@@ -76,7 +76,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed Phase 50-01 (CalDAV Provider)
+Stopped at: Completed 52-FIX (Google OAuth redirect fix)
 Resume file: None
 
 ## Accumulated Context
