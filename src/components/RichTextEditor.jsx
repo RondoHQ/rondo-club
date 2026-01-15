@@ -19,8 +19,8 @@ const MenuButton = ({ onClick, isActive, disabled, children, title }) => (
     onClick={onClick}
     disabled={disabled}
     title={title}
-    className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${
-      isActive ? 'bg-gray-200 text-primary-600' : 'text-gray-600'
+    className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
+      isActive ? 'bg-gray-200 dark:bg-gray-600 text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'
     } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
     {children}
@@ -47,7 +47,7 @@ const MenuBar = ({ editor }) => {
   };
 
   return (
-    <div className="flex items-center gap-0.5 p-1.5 border-b border-gray-200 bg-gray-50 rounded-t-md">
+    <div className="flex items-center gap-0.5 p-1.5 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-t-md">
       <MenuButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
@@ -55,7 +55,7 @@ const MenuBar = ({ editor }) => {
       >
         <Bold className="w-4 h-4" />
       </MenuButton>
-      
+
       <MenuButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive('italic')}
@@ -64,7 +64,7 @@ const MenuBar = ({ editor }) => {
         <Italic className="w-4 h-4" />
       </MenuButton>
 
-      <div className="w-px h-4 bg-gray-300 mx-1" />
+      <div className="w-px h-4 bg-gray-300 dark:bg-gray-500 mx-1" />
 
       <MenuButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -73,7 +73,7 @@ const MenuBar = ({ editor }) => {
       >
         <List className="w-4 h-4" />
       </MenuButton>
-      
+
       <MenuButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         isActive={editor.isActive('orderedList')}
@@ -82,7 +82,7 @@ const MenuBar = ({ editor }) => {
         <ListOrdered className="w-4 h-4" />
       </MenuButton>
 
-      <div className="w-px h-4 bg-gray-300 mx-1" />
+      <div className="w-px h-4 bg-gray-300 dark:bg-gray-500 mx-1" />
 
       <MenuButton
         onClick={setLink}
@@ -91,7 +91,7 @@ const MenuBar = ({ editor }) => {
       >
         <LinkIcon className="w-4 h-4" />
       </MenuButton>
-      
+
       {editor.isActive('link') && (
         <MenuButton
           onClick={() => editor.chain().focus().unsetLink().run()}
@@ -110,7 +110,7 @@ const MenuBar = ({ editor }) => {
       >
         <Undo className="w-4 h-4" />
       </MenuButton>
-      
+
       <MenuButton
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
@@ -170,13 +170,13 @@ export default function RichTextEditor({
   }
 
   return (
-    <div className={`border border-gray-300 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent ${
-      disabled ? 'bg-gray-100 opacity-60' : 'bg-white'
+    <div className={`border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent ${
+      disabled ? 'bg-gray-100 dark:bg-gray-800 opacity-60' : 'bg-white dark:bg-gray-700'
     }`}>
       <MenuBar editor={editor} />
-      <EditorContent 
-        editor={editor} 
-        className="prose prose-sm max-w-none"
+      <EditorContent
+        editor={editor}
+        className="prose prose-sm dark:prose-invert max-w-none"
         style={{ minHeight }}
       />
       <style>{`
@@ -185,12 +185,18 @@ export default function RichTextEditor({
           min-height: ${minHeight};
           outline: none;
         }
+        .dark .ProseMirror {
+          color: #f9fafb;
+        }
         .ProseMirror p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           float: left;
           color: #9ca3af;
           pointer-events: none;
           height: 0;
+        }
+        .dark .ProseMirror p.is-editor-empty:first-child::before {
+          color: #6b7280;
         }
         .ProseMirror ul,
         .ProseMirror ol {
