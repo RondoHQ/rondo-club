@@ -17,10 +17,59 @@
 - ✅ [v3.5 Bug Fixes & Polish](milestones/v3.5-bug-fixes-polish.md) (Phases 38-39) — SHIPPED 2026-01-14
 - ✅ [v3.6 Quick Wins & Performance](milestones/v3.6-quick-wins-performance.md) (Phases 40-41) — SHIPPED 2026-01-14
 - ✅ [v3.7 Todo UX Polish](milestones/v3.7-todo-ux-polish.md) (Phase 42) — SHIPPED 2026-01-15
+- 🚧 **v3.8 Theme Customization** — Phases 43-46 (in progress)
 
 ## Current Status
 
-**Active:** Planning next milestone
+**Active:** v3.8 Theme Customization (Phase 43)
+
+---
+
+### 🚧 v3.8 Theme Customization (In Progress)
+
+**Milestone Goal:** User-configurable dark mode and accent color selection with full accessibility compliance.
+
+**PRD:** /Multi-Color.md
+
+#### Phase 43: Infrastructure
+
+**Goal**: CSS custom properties, Tailwind config with accent-* colors, useTheme hook, theme preferences API endpoint
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (internal patterns, Tailwind config)
+**Plans**: TBD
+
+Plans:
+- [ ] 43-01: TBD (run /gsd:plan-phase 43 to break down)
+
+#### Phase 44: Dark Mode
+
+**Goal**: Add dark: variants to all components, color scheme toggle in settings, localStorage caching, test all pages
+**Depends on**: Phase 43
+**Research**: Unlikely (Tailwind dark: variants established)
+**Plans**: TBD
+
+Plans:
+- [ ] 44-01: TBD (run /gsd:plan-phase 44 to break down)
+
+#### Phase 45: Accent Colors
+
+**Goal**: Replace hardcoded orange classes with accent-*, implement color picker in settings, validate accessibility
+**Depends on**: Phase 44
+**Research**: Unlikely (internal class replacement)
+**Plans**: TBD
+
+Plans:
+- [ ] 45-01: TBD (run /gsd:plan-phase 45 to break down)
+
+#### Phase 46: Polish
+
+**Goal**: Smooth transitions (respect prefers-reduced-motion), edge cases, QA testing across all 24 theme combinations
+**Depends on**: Phase 45
+**Research**: Unlikely (CSS transitions, testing)
+**Plans**: TBD
+
+Plans:
+- [ ] 46-01: TBD (run /gsd:plan-phase 46 to break down)
 
 ---
 
@@ -406,5 +455,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
+| v3.8 Theme Customization | 43-46 | 0/? | In Progress | - |
 
 **Shipped: 15 milestones, 42 phases, 76 plans**

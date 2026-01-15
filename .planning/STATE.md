@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Planning next milestone
+**Current focus:** v3.8 Theme Customization
 
 ## Current Position
 
-Milestone: v3.7 Todo UX Polish — SHIPPED
-Phase: None active
-Plan: None active
-Status: Ready for next milestone
-Last activity: 2026-01-15 — v3.7 milestone shipped
+Milestone: v3.8 Theme Customization
+Phase: 43 of 46 (Infrastructure)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-15 — Milestone v3.8 created
 
-Progress: All milestones complete
+Progress: [░░░░░░░░░░] 0/4 phases (0%)
 
 ## Completed Milestones
 
@@ -68,11 +68,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v3.6 archived: Git tag v3.6 created
 - Milestone v3.7 complete: Dashboard todo modal, view-first mode, tomorrow default
 - Milestone v3.7 archived: Git tag v3.7 created
+- Milestone v3.8 created: Theme Customization, 4 phases (Phase 43-46)
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: v3.7 milestone shipped
+Stopped at: Milestone v3.8 initialization
 Resume file: None
 
 ## Accumulated Context
@@ -110,5 +111,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:discuss-milestone` — Plan next milestone
+- `/gsd:plan-phase 43` — Plan Infrastructure phase
 - Run `wp prm todos migrate-persons` on production after deployment
