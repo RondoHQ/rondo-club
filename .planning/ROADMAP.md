@@ -58,12 +58,11 @@ Plans:
 
 **Goal**: Sync logic, event upsert, attendee extraction
 **Depends on**: Phase 48
-**Research**: Likely (Google Calendar API)
-**Research topics**: Google Calendar API endpoints, event schema, attendee data
-**Plans**: TBD
+**Research**: Not needed (google/apiclient installed, patterns established)
+**Plans**: 1
 
 Plans:
-- [ ] 49-01: TBD (run /gsd:plan-phase 49 to break down)
+- [ ] 49-01: Google Calendar sync provider (PRM_Google_Calendar_Provider, trigger_sync, get_events)
 
 #### Phase 50: CalDAV Provider
 
