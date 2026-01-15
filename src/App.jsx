@@ -30,7 +30,7 @@ const Login = lazy(() => import('@/pages/Login'));
 // Page loading spinner
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
   </div>
 );
 
@@ -47,7 +47,7 @@ function ApprovalCheck({ children }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
       </div>
     );
   }
@@ -119,7 +119,7 @@ function ProtectedRoute({ children }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
       </div>
     );
   }
@@ -137,14 +137,14 @@ function UpdateBanner() {
   if (!hasUpdate) return null;
   
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] bg-primary-600 text-white py-2 px-4 shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-[100] bg-accent-600 text-white py-2 px-4 shadow-lg">
       <div className="max-w-7xl mx-auto flex items-center justify-center gap-4 text-sm">
         <span>
           A new version ({latestVersion}) is available.
         </span>
         <button
           onClick={reload}
-          className="inline-flex items-center gap-2 px-3 py-1 bg-white text-primary-600 rounded-md font-medium hover:bg-primary-50 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1 bg-white text-accent-600 rounded-md font-medium hover:bg-accent-50 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Reload

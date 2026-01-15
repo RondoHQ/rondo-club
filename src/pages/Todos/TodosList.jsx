@@ -181,7 +181,7 @@ export default function TodosList() {
   // Get the icon for the header
   const getHeaderIcon = () => {
     if (statusFilter === 'completed') {
-      return <CheckSquare className="w-5 h-5 mr-2 text-primary-600 dark:text-primary-400" />;
+      return <CheckSquare className="w-5 h-5 mr-2 text-accent-600 dark:text-accent-400" />;
     }
     if (statusFilter === 'awaiting') {
       return <Clock className="w-5 h-5 mr-2 text-orange-600 dark:text-orange-400" />;
@@ -192,7 +192,7 @@ export default function TodosList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
       </div>
     );
   }
@@ -219,7 +219,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('open')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'open' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              statusFilter === 'open' ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             Open
@@ -236,7 +236,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('completed')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'completed' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              statusFilter === 'completed' ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             Completed
@@ -244,7 +244,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'all' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              statusFilter === 'all' ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             All
@@ -359,7 +359,7 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
   // Determine checkbox icon based on status
   const getStatusIcon = () => {
     if (todo.status === 'completed') {
-      return <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />;
+      return <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />;
     }
     if (todo.status === 'awaiting') {
       return <Clock className="w-5 h-5 text-orange-500 dark:text-orange-400" />;
@@ -439,7 +439,7 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
             {persons.length > 0 && (
               <Link
                 to={`/people/${persons[0].id}`}
-                className="ml-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
+                className="ml-2 text-xs text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
               >
                 {persons[0].name}
                 {persons.length > 1 && (
