@@ -16,27 +16,35 @@
 - ✅ [v3.4 UI Polish](milestones/v3.4-ui-polish.md) (Phases 35-37) — SHIPPED 2026-01-14
 - ✅ [v3.5 Bug Fixes & Polish](milestones/v3.5-bug-fixes-polish.md) (Phases 38-39) — SHIPPED 2026-01-14
 - ✅ [v3.6 Quick Wins & Performance](milestones/v3.6-quick-wins-performance.md) (Phases 40-41) — SHIPPED 2026-01-14
-- 🚧 **v3.7 Todo UX Polish** — Phase 42 (in progress)
+- ✅ [v3.7 Todo UX Polish](milestones/v3.7-todo-ux-polish.md) (Phase 42) — SHIPPED 2026-01-15
 
 ## Current Status
 
-**Active:** v3.7 Todo UX Polish (Phase 42)
+**Active:** Planning next milestone
 
 ---
 
-### 🚧 v3.7 Todo UX Polish (In Progress)
+<details>
+<summary>✅ v3.7 Todo UX Polish (Phase 42) — SHIPPED 2026-01-15</summary>
 
 **Milestone Goal:** Improve todo interaction patterns for faster, more intuitive task management.
 
-#### Phase 42: Todo UX Polish
+**Result:** Dashboard todo modal, view-first mode with rendered notes, tomorrow as default due date
 
-**Goal**: Dashboard todo click behavior, notes read-only mode, smart due date defaults
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal UI patterns)
-**Plans**: 1/1 complete
+**Phases:**
+- [x] Phase 42: Todo UX Polish (1/1 plan) ✓
 
-Plans:
-- [x] 42-01: Todo UX Polish (Dashboard modal, view-first mode, tomorrow default)
+**Total:** 1 phase, 1 plan
+
+**Key Accomplishments:**
+- Dashboard todo clicks open TodoModal instead of navigating away
+- View-first mode showing formatted dates, rendered HTML notes, person chips
+- Tomorrow as default due date for new todos
+- Edit button to switch from view to edit mode
+
+See [milestone archive](milestones/v3.7-todo-ux-polish.md) for full details.
+
+</details>
 
 ---
 
@@ -397,6 +405,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.4 UI Polish | 35-37 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
-| v3.7 Todo UX Polish | 42 | 1/1 | Complete | 2026-01-15 |
+| v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 
 **Shipped: 15 milestones, 42 phases, 76 plans**
