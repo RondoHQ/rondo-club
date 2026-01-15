@@ -449,31 +449,108 @@ class PRM_REST_Calendar extends PRM_REST_Base {
     }
 
     /**
-     * Initiate Google OAuth flow (stub)
+     * Initiate Google OAuth flow
+     *
+     * Returns the authorization URL for the frontend to redirect to.
      *
      * @param WP_REST_Request $request The REST request object.
-     * @return WP_Error Always returns 501 - will be implemented in Phase 48.
+     * @return WP_REST_Response|WP_Error Response with auth_url or error.
      */
     public function google_auth_init($request) {
-        return new WP_Error(
-            'not_implemented',
-            __('Google OAuth is not yet configured.', 'personal-crm'),
-            ['status' => 501]
-        );
+        // Check if Google OAuth is configured
+        if (!PRM_Google_OAuth::is_configured()) {
+            return new WP_Error(
+                'not_configured',
+                __('Google Calendar integration is not configured. Please add GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET to wp-config.php.', 'personal-crm'),
+                ['status' => 400]
+            );
+        }
+
+        $user_id = get_current_user_id();
+        $auth_url = PRM_Google_OAuth::get_auth_url($user_id);
+
+        if (empty($auth_url)) {
+            return new WP_Error(
+                'auth_url_failed',
+                __('Failed to generate authorization URL.', 'personal-crm'),
+                ['status' => 500]
+            );
+        }
+
+        return rest_ensure_response(['auth_url' => $auth_url]);
     }
 
     /**
-     * Handle Google OAuth callback (stub)
+     * Handle Google OAuth callback
+     *
+     * Exchanges the authorization code for tokens and creates a calendar connection.
+     * Redirects to settings page with success or error status.
      *
      * @param WP_REST_Request $request The REST request object.
-     * @return WP_Error Always returns 501 - will be implemented in Phase 48.
+     * @return WP_REST_Response|WP_Error Redirects to settings page.
      */
     public function google_auth_callback($request) {
-        return new WP_Error(
-            'not_implemented',
-            __('Google OAuth is not yet configured.', 'personal-crm'),
-            ['status' => 501]
-        );
+        // Check for error from Google (user denied access)
+        $error = $request->get_param('error');
+        if ($error) {
+            $error_desc = $request->get_param('error_description') ?? 'Authorization denied';
+            wp_redirect(home_url('/settings/calendars?error=' . urlencode($error_desc)));
+            exit;
+        }
+
+        // Get and validate state parameter (user_id|nonce)
+        $state = $request->get_param('state');
+        if (empty($state) || strpos($state, '|') === false) {
+            wp_redirect(home_url('/settings/calendars?error=' . urlencode('Invalid state parameter')));
+            exit;
+        }
+
+        list($user_id, $nonce) = explode('|', $state, 2);
+        $user_id = absint($user_id);
+
+        // Verify nonce for CSRF protection
+        if (!wp_verify_nonce($nonce, 'google_oauth_' . $user_id)) {
+            wp_redirect(home_url('/settings/calendars?error=' . urlencode('Security verification failed. Please try again.')));
+            exit;
+        }
+
+        // Get authorization code
+        $code = $request->get_param('code');
+        if (empty($code)) {
+            wp_redirect(home_url('/settings/calendars?error=' . urlencode('No authorization code received')));
+            exit;
+        }
+
+        try {
+            // Exchange code for tokens
+            $tokens = PRM_Google_OAuth::handle_callback($code, $user_id);
+
+            // Encrypt tokens for storage
+            $encrypted_credentials = PRM_Credential_Encryption::encrypt($tokens);
+
+            // Create calendar connection
+            $connection = [
+                'provider'       => 'google',
+                'name'           => 'Google Calendar',
+                'calendar_id'    => 'primary',
+                'credentials'    => $encrypted_credentials,
+                'sync_enabled'   => true,
+                'auto_log'       => true,
+                'sync_from_days' => 90,
+                'last_sync'      => null,
+                'last_error'     => null,
+            ];
+
+            PRM_Calendar_Connections::add_connection($user_id, $connection);
+
+            // Redirect to settings page with success
+            wp_redirect(home_url('/settings/calendars?connected=google'));
+            exit;
+
+        } catch (Exception $e) {
+            wp_redirect(home_url('/settings/calendars?error=' . urlencode($e->getMessage())));
+            exit;
+        }
     }
 
     /**
