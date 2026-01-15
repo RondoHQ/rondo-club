@@ -31,15 +31,15 @@
 
 **PRD:** /Multi-Color.md
 
-#### Phase 43: Infrastructure
+#### Phase 43: Infrastructure ✓
 
 **Goal**: CSS custom properties, Tailwind config with accent-* colors, useTheme hook, theme preferences API endpoint
 **Depends on**: Previous milestone complete
 **Research**: Unlikely (internal patterns, Tailwind config)
-**Plans**: TBD
+**Result**: CSS custom properties, Tailwind accent-* utilities, useTheme hook, REST API endpoints
 
 Plans:
-- [ ] 43-01: TBD (run /gsd:plan-phase 43 to break down)
+- [x] 43-01: Theme Infrastructure (CSS vars, Tailwind config, useTheme hook, REST API)
 
 #### Phase 44: Dark Mode
 
@@ -455,6 +455,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
-| v3.8 Theme Customization | 43-46 | 0/? | In Progress | - |
+| v3.8 Theme Customization | 43-46 | 1/? | In Progress | - |
 
 **Shipped: 15 milestones, 42 phases, 76 plans**
