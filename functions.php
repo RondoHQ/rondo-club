@@ -89,6 +89,7 @@ function prm_autoloader($class_name) {
         'PRM_Google_Calendar_Provider' => 'class-google-calendar-provider.php',
         'PRM_CalDAV_Provider'        => 'class-caldav-provider.php',
         'PRM_REST_Calendar'          => 'class-rest-calendar.php',
+        'PRM_Calendar_Matcher'       => 'class-calendar-matcher.php',
     ];
     
     if (isset($class_map[$class_name])) {
@@ -615,6 +616,22 @@ function prm_acf_json_save_point($path) {
     return $path;
 }
 add_filter('acf/settings/save_json', 'prm_acf_json_save_point');
+
+/**
+ * Invalidate email lookup cache when a person is saved
+ *
+ * This ensures that the contact matching cache stays in sync
+ * when contact info (emails) are updated on person records.
+ */
+function prm_invalidate_email_lookup_on_person_save($post_id) {
+    if (get_post_type($post_id) === 'person') {
+        $user_id = get_post_field('post_author', $post_id);
+        if ($user_id) {
+            PRM_Calendar_Matcher::invalidate_cache($user_id);
+        }
+    }
+}
+add_action('acf/save_post', 'prm_invalidate_email_lookup_on_person_save', 20);
 
 /**
  * Custom login page styling
