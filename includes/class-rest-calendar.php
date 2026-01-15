@@ -1,0 +1,538 @@
+<?php
+/**
+ * Calendar REST API Endpoints
+ *
+ * Handles REST API endpoints for calendar connection management,
+ * OAuth flows, and calendar event operations.
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class PRM_REST_Calendar extends PRM_REST_Base {
+
+    /**
+     * Constructor
+     *
+     * Register routes for calendar endpoints.
+     */
+    public function __construct() {
+        add_action('rest_api_init', [$this, 'register_routes']);
+    }
+
+    /**
+     * Register custom REST routes for calendar domain
+     */
+    public function register_routes() {
+        // ===== Connection CRUD endpoints =====
+
+        // GET /prm/v1/calendar/connections - List user's connections
+        register_rest_route('prm/v1', '/calendar/connections', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_connections'],
+            'permission_callback' => [$this, 'check_user_approved'],
+        ]);
+
+        // POST /prm/v1/calendar/connections - Add new connection
+        register_rest_route('prm/v1', '/calendar/connections', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'create_connection'],
+            'permission_callback' => [$this, 'check_user_approved'],
+            'args'                => [
+                'provider' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => function($param) {
+                        return in_array($param, ['google', 'caldav'], true);
+                    },
+                ],
+                'name' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'calendar_id' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'credentials' => [
+                    'required'          => false,
+                    'type'              => 'object',
+                ],
+                'sync_enabled' => [
+                    'required'          => false,
+                    'type'              => 'boolean',
+                    'default'           => true,
+                ],
+                'auto_log' => [
+                    'required'          => false,
+                    'type'              => 'boolean',
+                    'default'           => true,
+                ],
+                'sync_from_days' => [
+                    'required'          => false,
+                    'type'              => 'integer',
+                    'default'           => 90,
+                ],
+            ],
+        ]);
+
+        // GET /prm/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Get single connection
+        register_rest_route('prm/v1', '/calendar/connections/(?P<id>[a-z0-9_]+)', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_connection'],
+            'permission_callback' => [$this, 'check_user_approved'],
+            'args'                => [
+                'id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'validate_callback' => function($param) {
+                        return preg_match('/^[a-z0-9_]+$/', $param);
+                    },
+                ],
+            ],
+        ]);
+
+        // PUT /prm/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Update connection
+        register_rest_route('prm/v1', '/calendar/connections/(?P<id>[a-z0-9_]+)', [
+            'methods'             => WP_REST_Server::EDITABLE,
+            'callback'            => [$this, 'update_connection'],
+            'permission_callback' => [$this, 'check_user_approved'],
+            'args'                => [
+                'id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'validate_callback' => function($param) {
+                        return preg_match('/^[a-z0-9_]+$/', $param);
+                    },
+                ],
+                'name' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'calendar_id' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'credentials' => [
+                    'required'          => false,
+                    'type'              => 'object',
+                ],
+                'sync_enabled' => [
+                    'required'          => false,
+                    'type'              => 'boolean',
+                ],
+                'auto_log' => [
+                    'required'          => false,
+                    'type'              => 'boolean',
+                ],
+                'sync_from_days' => [
+                    'required'          => false,
+                    'type'              => 'integer',
+                ],
+            ],
+        ]);
+
+        // DELETE /prm/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Delete connection
+        register_rest_route('prm/v1', '/calendar/connections/(?P<id>[a-z0-9_]+)', [
+            'methods'             => WP_REST_Server::DELETABLE,
+            'callback'            => [$this, 'delete_connection'],
+            'permission_callback' => [$this, 'check_user_approved'],
+            'args'                => [
+                'id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'validate_callback' => function($param) {
+                        return preg_match('/^[a-z0-9_]+$/', $param);
+                    },
+                ],
+            ],
+        ]);
+
+        // POST /prm/v1/calendar/connections/(?P<id>[a-z0-9_]+)/sync - Trigger sync
+        register_rest_route('prm/v1', '/calendar/connections/(?P<id>[a-z0-9_]+)/sync', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'trigger_sync'],
+            'permission_callback' => [$this, 'check_user_approved'],
+            'args'                => [
+                'id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'validate_callback' => function($param) {
+                        return preg_match('/^[a-z0-9_]+$/', $param);
+                    },
+                ],
+            ],
+        ]);
+
+        // ===== OAuth endpoints (stubs for Phase 48) =====
+
+        // GET /prm/v1/calendar/auth/google - Initiate OAuth
+        register_rest_route('prm/v1', '/calendar/auth/google', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'google_auth_init'],
+            'permission_callback' => [$this, 'check_user_approved'],
+        ]);
+
+        // GET /prm/v1/calendar/auth/google/callback - OAuth callback
+        register_rest_route('prm/v1', '/calendar/auth/google/callback', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'google_auth_callback'],
+            'permission_callback' => '__return_true', // Public for OAuth redirect
+        ]);
+
+        // POST /prm/v1/calendar/auth/caldav/test - Test CalDAV credentials
+        register_rest_route('prm/v1', '/calendar/auth/caldav/test', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'test_caldav'],
+            'permission_callback' => [$this, 'check_user_approved'],
+            'args'                => [
+                'url' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'esc_url_raw',
+                ],
+                'username' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'password' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                ],
+            ],
+        ]);
+
+        // ===== Events and meetings endpoints (stubs for Phase 51+) =====
+
+        // GET /prm/v1/calendar/events - List cached events
+        register_rest_route('prm/v1', '/calendar/events', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_events'],
+            'permission_callback' => [$this, 'check_user_approved'],
+            'args'                => [
+                'from' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'format'            => 'date',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'to' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'format'            => 'date',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'person_id' => [
+                    'required'          => false,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ],
+            ],
+        ]);
+
+        // GET /prm/v1/people/(?P<person_id>\d+)/meetings - Person meetings
+        register_rest_route('prm/v1', '/people/(?P<person_id>\d+)/meetings', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_person_meetings'],
+            'permission_callback' => [$this, 'check_person_access'],
+            'args'                => [
+                'person_id' => [
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'validate_callback' => function($param) {
+                        return is_numeric($param);
+                    },
+                ],
+                'upcoming' => [
+                    'required' => false,
+                    'type'     => 'boolean',
+                    'default'  => true,
+                ],
+                'past' => [
+                    'required' => false,
+                    'type'     => 'boolean',
+                    'default'  => true,
+                ],
+                'limit' => [
+                    'required' => false,
+                    'type'     => 'integer',
+                    'default'  => 10,
+                ],
+            ],
+        ]);
+
+        // POST /prm/v1/calendar/events/(?P<id>\d+)/log - Log as activity
+        register_rest_route('prm/v1', '/calendar/events/(?P<id>\d+)/log', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'log_event_as_activity'],
+            'permission_callback' => [$this, 'check_user_approved'],
+            'args'                => [
+                'id' => [
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'validate_callback' => function($param) {
+                        return is_numeric($param);
+                    },
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Get all connections for the current user
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response Response containing array of connections.
+     */
+    public function get_connections($request) {
+        $user_id = get_current_user_id();
+        $connections = PRM_Calendar_Connections::get_user_connections($user_id);
+
+        // Remove sensitive credentials from response
+        $safe_connections = array_map(function($conn) {
+            unset($conn['credentials']);
+            return $conn;
+        }, $connections);
+
+        return rest_ensure_response($safe_connections);
+    }
+
+    /**
+     * Create a new calendar connection
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response|WP_Error Response containing new connection ID or error.
+     */
+    public function create_connection($request) {
+        $user_id = get_current_user_id();
+        $data = $request->get_json_params();
+
+        // Validate required fields
+        if (empty($data['provider']) || !in_array($data['provider'], ['google', 'caldav'], true)) {
+            return new WP_Error('invalid_provider', __('Invalid provider. Must be "google" or "caldav".', 'personal-crm'), ['status' => 400]);
+        }
+        if (empty($data['name'])) {
+            return new WP_Error('missing_name', __('Connection name is required.', 'personal-crm'), ['status' => 400]);
+        }
+
+        // Encrypt credentials if provided
+        $credentials = '';
+        if (!empty($data['credentials']) && is_array($data['credentials'])) {
+            $credentials = PRM_Credential_Encryption::encrypt($data['credentials']);
+        }
+
+        // Build connection data
+        $connection = [
+            'provider'       => sanitize_text_field($data['provider']),
+            'name'           => sanitize_text_field($data['name']),
+            'calendar_id'    => sanitize_text_field($data['calendar_id'] ?? ''),
+            'credentials'    => $credentials,
+            'sync_enabled'   => isset($data['sync_enabled']) ? (bool) $data['sync_enabled'] : true,
+            'auto_log'       => isset($data['auto_log']) ? (bool) $data['auto_log'] : true,
+            'sync_from_days' => isset($data['sync_from_days']) ? absint($data['sync_from_days']) : 90,
+            'last_sync'      => null,
+            'last_error'     => null,
+        ];
+
+        $id = PRM_Calendar_Connections::add_connection($user_id, $connection);
+
+        return rest_ensure_response([
+            'id'      => $id,
+            'message' => __('Connection created.', 'personal-crm'),
+        ]);
+    }
+
+    /**
+     * Get a single connection by ID
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response|WP_Error Response containing connection data or error.
+     */
+    public function get_connection($request) {
+        $user_id = get_current_user_id();
+        $id = $request->get_param('id');
+        $connection = PRM_Calendar_Connections::get_connection($user_id, $id);
+
+        if (!$connection) {
+            return new WP_Error('not_found', __('Connection not found.', 'personal-crm'), ['status' => 404]);
+        }
+
+        // Remove sensitive credentials from response
+        unset($connection['credentials']);
+
+        return rest_ensure_response($connection);
+    }
+
+    /**
+     * Update an existing connection
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response|WP_Error Response with success message or error.
+     */
+    public function update_connection($request) {
+        $user_id = get_current_user_id();
+        $id = $request->get_param('id');
+        $data = $request->get_json_params();
+
+        $connection = PRM_Calendar_Connections::get_connection($user_id, $id);
+        if (!$connection) {
+            return new WP_Error('not_found', __('Connection not found.', 'personal-crm'), ['status' => 404]);
+        }
+
+        // Sanitize updatable fields
+        $updates = [];
+        if (isset($data['name'])) {
+            $updates['name'] = sanitize_text_field($data['name']);
+        }
+        if (isset($data['sync_enabled'])) {
+            $updates['sync_enabled'] = (bool) $data['sync_enabled'];
+        }
+        if (isset($data['auto_log'])) {
+            $updates['auto_log'] = (bool) $data['auto_log'];
+        }
+        if (isset($data['sync_from_days'])) {
+            $updates['sync_from_days'] = absint($data['sync_from_days']);
+        }
+        if (isset($data['calendar_id'])) {
+            $updates['calendar_id'] = sanitize_text_field($data['calendar_id']);
+        }
+
+        // Handle credential updates (re-encrypt)
+        if (!empty($data['credentials']) && is_array($data['credentials'])) {
+            $updates['credentials'] = PRM_Credential_Encryption::encrypt($data['credentials']);
+        }
+
+        PRM_Calendar_Connections::update_connection($user_id, $id, $updates);
+
+        return rest_ensure_response(['message' => __('Connection updated.', 'personal-crm')]);
+    }
+
+    /**
+     * Delete a connection
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response|WP_Error Response with success message or error.
+     */
+    public function delete_connection($request) {
+        $user_id = get_current_user_id();
+        $id = $request->get_param('id');
+
+        $connection = PRM_Calendar_Connections::get_connection($user_id, $id);
+        if (!$connection) {
+            return new WP_Error('not_found', __('Connection not found.', 'personal-crm'), ['status' => 404]);
+        }
+
+        PRM_Calendar_Connections::delete_connection($user_id, $id);
+
+        return rest_ensure_response(['message' => __('Connection deleted.', 'personal-crm')]);
+    }
+
+    /**
+     * Trigger manual sync for a connection (stub)
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_Error Always returns 501 - will be implemented in Phase 49/50.
+     */
+    public function trigger_sync($request) {
+        return new WP_Error(
+            'not_implemented',
+            __('Calendar sync is not yet implemented.', 'personal-crm'),
+            ['status' => 501]
+        );
+    }
+
+    /**
+     * Initiate Google OAuth flow (stub)
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_Error Always returns 501 - will be implemented in Phase 48.
+     */
+    public function google_auth_init($request) {
+        return new WP_Error(
+            'not_implemented',
+            __('Google OAuth is not yet configured.', 'personal-crm'),
+            ['status' => 501]
+        );
+    }
+
+    /**
+     * Handle Google OAuth callback (stub)
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_Error Always returns 501 - will be implemented in Phase 48.
+     */
+    public function google_auth_callback($request) {
+        return new WP_Error(
+            'not_implemented',
+            __('Google OAuth is not yet configured.', 'personal-crm'),
+            ['status' => 501]
+        );
+    }
+
+    /**
+     * Test CalDAV credentials (stub)
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_Error Always returns 501 - will be implemented in Phase 50.
+     */
+    public function test_caldav($request) {
+        return new WP_Error(
+            'not_implemented',
+            __('CalDAV test is not yet implemented.', 'personal-crm'),
+            ['status' => 501]
+        );
+    }
+
+    /**
+     * Get cached calendar events (stub)
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_Error Always returns 501 - will be implemented in Phase 51.
+     */
+    public function get_events($request) {
+        return new WP_Error(
+            'not_implemented',
+            __('Calendar events sync is not yet implemented.', 'personal-crm'),
+            ['status' => 501]
+        );
+    }
+
+    /**
+     * Get meetings for a person
+     *
+     * Returns empty structure for now so UI can be built against the expected format.
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response Empty meetings structure.
+     */
+    public function get_person_meetings($request) {
+        // Return empty structure for now so UI can be built
+        return rest_ensure_response([
+            'upcoming'       => [],
+            'past'           => [],
+            'total_upcoming' => 0,
+            'total_past'     => 0,
+        ]);
+    }
+
+    /**
+     * Log a calendar event as an activity (stub)
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_Error Always returns 501 - will be implemented in Phase 53.
+     */
+    public function log_event_as_activity($request) {
+        return new WP_Error(
+            'not_implemented',
+            __('Activity logging is not yet implemented.', 'personal-crm'),
+            ['status' => 501]
+        );
+    }
+}
