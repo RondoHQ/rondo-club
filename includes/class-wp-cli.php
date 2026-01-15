@@ -1417,6 +1417,285 @@ if (defined('WP_CLI') && WP_CLI) {
     }
 
     /**
+     * Calendar Sync WP-CLI Commands
+     */
+    class PRM_Calendar_CLI_Command {
+
+        /**
+         * Sync calendar events from connected calendars
+         *
+         * ## OPTIONS
+         *
+         * [--user=<user_id>]
+         * : User ID to sync calendars for (syncs specific user only)
+         *
+         * [--all]
+         * : Sync all users immediately (ignores rate limiting)
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm calendar sync
+         *     wp prm calendar sync --user=1
+         *     wp prm calendar sync --all
+         *
+         * @when after_wp_load
+         */
+        public function sync($args, $assoc_args) {
+            $specific_user_id = isset($assoc_args['user']) ? (int) $assoc_args['user'] : null;
+            $sync_all = isset($assoc_args['all']);
+
+            if ($specific_user_id && $sync_all) {
+                WP_CLI::error('Cannot use both --user and --all options together.');
+                return;
+            }
+
+            if ($sync_all) {
+                WP_CLI::log('Syncing all users (ignoring rate limiting)...');
+                WP_CLI::log('');
+
+                $results = PRM_Calendar_Sync::force_sync_all();
+
+                if (empty($results)) {
+                    WP_CLI::warning('No users with calendar connections found.');
+                    return;
+                }
+
+                $total_connections = 0;
+                $total_events = 0;
+                $total_errors = 0;
+
+                foreach ($results as $user_result) {
+                    $user = get_userdata($user_result['user_id']);
+                    $user_name = $user ? $user->display_name : 'Unknown';
+
+                    WP_CLI::log(sprintf('User: %s (ID: %d)', $user_name, $user_result['user_id']));
+
+                    foreach ($user_result['connections'] as $conn) {
+                        $total_connections++;
+
+                        if ($conn['status'] === 'success') {
+                            WP_CLI::log(sprintf(
+                                '  [OK] Connection %s: %d events (%d created, %d updated)',
+                                $conn['id'],
+                                $conn['total'],
+                                $conn['created'],
+                                $conn['updated']
+                            ));
+                            $total_events += $conn['total'];
+                        } else {
+                            WP_CLI::log(sprintf(
+                                '  [ERROR] Connection %s: %s',
+                                $conn['id'],
+                                $conn['error']
+                            ));
+                            $total_errors++;
+                        }
+                    }
+                    WP_CLI::log('');
+                }
+
+                WP_CLI::success(sprintf(
+                    'Sync complete: %d user(s), %d connection(s), %d event(s) processed, %d error(s)',
+                    count($results),
+                    $total_connections,
+                    $total_events,
+                    $total_errors
+                ));
+                return;
+            }
+
+            if ($specific_user_id) {
+                $user = get_userdata($specific_user_id);
+                if (!$user) {
+                    WP_CLI::error(sprintf('User with ID %d not found.', $specific_user_id));
+                    return;
+                }
+
+                WP_CLI::log(sprintf('Syncing calendars for user: %s (ID: %d)', $user->display_name, $specific_user_id));
+                WP_CLI::log('');
+
+                $connections = PRM_Calendar_Connections::get_user_connections($specific_user_id);
+
+                if (empty($connections)) {
+                    WP_CLI::warning('No calendar connections found for this user.');
+                    return;
+                }
+
+                $synced = 0;
+                $errors = 0;
+
+                foreach ($connections as $connection) {
+                    if (empty($connection['sync_enabled'])) {
+                        WP_CLI::log(sprintf('  [SKIP] Connection %s: sync disabled', $connection['id']));
+                        continue;
+                    }
+
+                    $provider = $connection['provider'] ?? '';
+                    $connection['user_id'] = $specific_user_id;
+
+                    try {
+                        if ($provider === 'caldav') {
+                            $result = PRM_CalDAV_Provider::sync($specific_user_id, $connection);
+                        } elseif ($provider === 'google') {
+                            $result = PRM_Google_Calendar_Provider::sync($specific_user_id, $connection);
+                        } else {
+                            WP_CLI::log(sprintf('  [SKIP] Connection %s: unknown provider "%s"', $connection['id'], $provider));
+                            continue;
+                        }
+
+                        PRM_Calendar_Connections::update_connection($specific_user_id, $connection['id'], [
+                            'last_sync'  => current_time('c'),
+                            'last_error' => null,
+                        ]);
+
+                        WP_CLI::log(sprintf(
+                            '  [OK] Connection %s: %d events (%d created, %d updated)',
+                            $connection['id'],
+                            $result['total'],
+                            $result['created'],
+                            $result['updated']
+                        ));
+                        $synced++;
+
+                    } catch (Exception $e) {
+                        PRM_Calendar_Connections::update_connection($specific_user_id, $connection['id'], [
+                            'last_error' => $e->getMessage(),
+                        ]);
+
+                        WP_CLI::log(sprintf('  [ERROR] Connection %s: %s', $connection['id'], $e->getMessage()));
+                        $errors++;
+                    }
+                }
+
+                WP_CLI::log('');
+                WP_CLI::success(sprintf('Sync complete: %d synced, %d errors', $synced, $errors));
+                return;
+            }
+
+            // Default: run the normal background sync (one user, rate limited)
+            WP_CLI::log('Running background sync (rate-limited, one user)...');
+            WP_CLI::log('');
+
+            $calendar_sync = new PRM_Calendar_Sync();
+            $calendar_sync->run_background_sync();
+
+            WP_CLI::success('Background sync completed. Check error log for details.');
+        }
+
+        /**
+         * Show sync status and schedule information
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm calendar status
+         *
+         * @when after_wp_load
+         */
+        public function status($args, $assoc_args) {
+            WP_CLI::log('');
+            WP_CLI::log('╔════════════════════════════════════════════════════════════╗');
+            WP_CLI::log('║         Calendar Sync Status                               ║');
+            WP_CLI::log('╚════════════════════════════════════════════════════════════╝');
+            WP_CLI::log('');
+
+            $status = PRM_Calendar_Sync::get_sync_status();
+
+            // Cron schedule status
+            if ($status['is_scheduled']) {
+                WP_CLI::log(sprintf('Cron Status: Scheduled'));
+                WP_CLI::log(sprintf('Next Run: %s', $status['next_scheduled']));
+            } else {
+                WP_CLI::log(sprintf('Cron Status: NOT SCHEDULED'));
+                WP_CLI::log('');
+                WP_CLI::warning('Calendar sync cron is not scheduled. Try deactivating and reactivating the theme.');
+            }
+
+            WP_CLI::log(sprintf('Schedule: %s (every 15 minutes)', $status['cron_schedule']));
+            WP_CLI::log('');
+
+            // User stats
+            WP_CLI::log(sprintf('Users with Sync-Enabled Connections: %d', $status['total_users_with_connections']));
+            WP_CLI::log(sprintf('Current User Index (round-robin): %d', $status['current_user_index']));
+
+            if ($status['total_users_with_connections'] > 0) {
+                WP_CLI::log(sprintf('Estimated Full Cycle: %d minutes', $status['estimated_full_cycle_minutes']));
+            }
+
+            WP_CLI::log('');
+
+            // List users with connections
+            global $wpdb;
+            $user_ids = $wpdb->get_col(
+                "SELECT DISTINCT user_id
+                 FROM {$wpdb->usermeta}
+                 WHERE meta_key = '_prm_calendar_connections'"
+            );
+
+            if (!empty($user_ids)) {
+                WP_CLI::log('Users with Calendar Connections:');
+                WP_CLI::log('');
+
+                foreach ($user_ids as $user_id) {
+                    $user = get_userdata($user_id);
+                    $user_name = $user ? $user->display_name : 'Unknown';
+                    $connections = PRM_Calendar_Connections::get_user_connections((int) $user_id);
+
+                    $enabled_count = 0;
+                    foreach ($connections as $conn) {
+                        if (!empty($conn['sync_enabled'])) {
+                            $enabled_count++;
+                        }
+                    }
+
+                    WP_CLI::log(sprintf(
+                        '  User %s (ID: %d): %d connection(s), %d sync-enabled',
+                        $user_name,
+                        $user_id,
+                        count($connections),
+                        $enabled_count
+                    ));
+
+                    foreach ($connections as $conn) {
+                        $status_icon = !empty($conn['sync_enabled']) ? '[ON]' : '[OFF]';
+                        $last_sync = $conn['last_sync'] ?? 'Never';
+                        $last_error = $conn['last_error'] ?? null;
+
+                        WP_CLI::log(sprintf(
+                            '    %s %s (%s) - Last sync: %s%s',
+                            $status_icon,
+                            $conn['name'] ?? $conn['id'],
+                            $conn['provider'] ?? 'unknown',
+                            $last_sync,
+                            $last_error ? ' [ERROR: ' . $last_error . ']' : ''
+                        ));
+                    }
+                }
+            }
+
+            WP_CLI::log('');
+        }
+
+        /**
+         * Run auto-logging of past meetings
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm calendar auto-log
+         *
+         * @when after_wp_load
+         */
+        public function auto_log($args, $assoc_args) {
+            WP_CLI::log('Running auto-logging for past meetings...');
+            WP_CLI::log('');
+
+            $calendar_sync = new PRM_Calendar_Sync();
+            $calendar_sync->auto_log_past_meetings();
+
+            WP_CLI::success('Auto-logging complete. Check error log for details.');
+        }
+    }
+
+    /**
      * Register WP-CLI commands
      */
     WP_CLI::add_command('prm reminders', 'PRM_Reminders_CLI_Command');
@@ -1427,5 +1706,6 @@ if (defined('WP_CLI') && WP_CLI) {
     WP_CLI::add_command('prm multiuser', 'PRM_MultiUser_CLI_Command');
     WP_CLI::add_command('prm dates', 'PRM_Dates_CLI_Command');
     WP_CLI::add_command('prm todos', 'PRM_Todos_CLI_Command');
+    WP_CLI::add_command('prm calendar', 'PRM_Calendar_CLI_Command');
 }
 
