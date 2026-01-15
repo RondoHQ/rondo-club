@@ -123,6 +123,88 @@ class PRM_Calendar_Matcher {
     }
 
     /**
+     * Re-match all calendar events for a user against their contacts
+     *
+     * Called when a person's email addresses change to update event matches.
+     *
+     * @param int $user_id WordPress user ID
+     * @return int Number of events re-matched
+     */
+    public static function rematch_events_for_user(int $user_id): int {
+        $events = get_posts([
+            'post_type'      => 'calendar_event',
+            'author'         => $user_id,
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => [
+                [
+                    'key'     => '_attendees',
+                    'compare' => '!=',
+                    'value'   => '',
+                ],
+            ],
+        ]);
+
+        $count = 0;
+
+        foreach ($events as $event) {
+            $attendees_json = get_post_meta($event->ID, '_attendees', true);
+
+            if (empty($attendees_json)) {
+                continue;
+            }
+
+            $attendees = json_decode($attendees_json, true);
+
+            if (!is_array($attendees) || empty($attendees)) {
+                continue;
+            }
+
+            // Re-match attendees against updated contact list
+            $matches = self::match_attendees($user_id, $attendees);
+
+            // Update matched people meta
+            update_post_meta($event->ID, '_matched_people', wp_json_encode($matches));
+
+            $count++;
+        }
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("PRM_Calendar_Matcher: Re-matched {$count} calendar events for user {$user_id}");
+        }
+
+        return $count;
+    }
+
+    /**
+     * Handle person save - invalidate cache and re-match events
+     *
+     * Called via acf/save_post hook when a person is saved.
+     *
+     * @param int $post_id Person post ID
+     */
+    public static function on_person_saved(int $post_id): void {
+        // Verify it's a person post type
+        if (get_post_type($post_id) !== 'person') {
+            return;
+        }
+
+        // Get the post author (user who owns this contact)
+        $post = get_post($post_id);
+        if (!$post) {
+            return;
+        }
+
+        $user_id = (int) $post->post_author;
+
+        // Invalidate the email lookup cache
+        self::invalidate_cache($user_id);
+
+        // Re-match all calendar events for this user
+        self::rematch_events_for_user($user_id);
+    }
+
+    /**
      * Match single attendee - try email then fuzzy name
      *
      * @param int   $user_id  WordPress user ID
