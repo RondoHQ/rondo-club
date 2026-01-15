@@ -85,6 +85,7 @@ function prm_autoloader($class_name) {
         'PRM_Todo_Migration'         => 'class-todo-migration.php',
         'PRM_Calendar_Connections'   => 'class-calendar-connections.php',
         'PRM_Credential_Encryption'  => 'class-credential-encryption.php',
+        'PRM_REST_Calendar'          => 'class-rest-calendar.php',
     ];
     
     if (isset($class_map[$class_name])) {
@@ -181,6 +182,7 @@ function prm_init() {
         new PRM_REST_Todos();
         new PRM_REST_Slack();
         new PRM_REST_Import_Export();
+        new PRM_REST_Calendar();
         new PRM_Monica_Import();
         new PRM_VCard_Import();
         new PRM_Google_Contacts_Import();
