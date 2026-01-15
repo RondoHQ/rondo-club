@@ -26,7 +26,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
   // Filter by search term
   const filteredTypes = useMemo(() => {
     if (!searchTerm) return availableTypes.slice(0, 10);
-    
+
     const term = searchTerm.toLowerCase();
     return availableTypes.filter(t => {
       const name = (t.name || '').toLowerCase();
@@ -74,7 +74,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
       {/* Selected type display / Search input */}
       <div className="relative">
         {selectedType && !isOpen ? (
-          <div 
+          <div
             className="flex items-center justify-between input pr-8 cursor-text"
             onClick={() => setIsOpen(true)}
           >
@@ -85,7 +85,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
                 e.stopPropagation();
                 handleClear();
               }}
-              className="absolute right-2 text-gray-400 hover:text-gray-600"
+              className="absolute right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X className="w-4 h-4" />
             </button>
@@ -110,26 +110,26 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
       {isOpen && (searchTerm || !selectedType) && (
         <div
           ref={dropdownRef}
-          className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+          className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
         >
           {filteredTypes.length > 0 ? (
             <>
               <button
                 type="button"
                 onClick={() => handleSelect(null)}
-                className={`w-full text-left px-4 py-2 hover:bg-gray-50 ${
-                  !value ? 'bg-primary-50' : ''
+                className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                  !value ? 'bg-primary-50 dark:bg-primary-900/30' : ''
                 }`}
               >
-                <span className="text-gray-500 italic">None (no inverse)</span>
+                <span className="text-gray-500 dark:text-gray-400 italic">None (no inverse)</span>
               </button>
               {filteredTypes.map(type => (
                 <button
                   key={type.id}
                   type="button"
                   onClick={() => handleSelect(type.id)}
-                  className={`w-full text-left px-4 py-2 hover:bg-gray-50 ${
-                    value === type.id.toString() ? 'bg-primary-50' : ''
+                  className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-50 ${
+                    value === type.id.toString() ? 'bg-primary-50 dark:bg-primary-900/30' : ''
                   }`}
                 >
                   {type.name}
@@ -137,7 +137,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
               ))}
             </>
           ) : (
-            <p className="px-4 py-2 text-gray-500 text-sm">No relationship types found</p>
+            <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">No relationship types found</p>
           )}
         </div>
       )}
@@ -156,9 +156,9 @@ export default function RelationshipTypes() {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="card p-8 text-center">
-          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-          <p className="text-gray-600 mb-6">
+          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
+          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Access Denied</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             You don't have permission to manage relationship types. This feature is only available to administrators.
           </p>
           <Link to="/settings" className="btn-primary">
@@ -330,7 +330,7 @@ export default function RelationshipTypes() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
       </div>
     );
   }
@@ -339,7 +339,7 @@ export default function RelationshipTypes() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="card p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Relationship Types</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-50">Relationship Types</h1>
           <div className="flex gap-2">
             {!isAdding && (
               <>
@@ -355,11 +355,11 @@ export default function RelationshipTypes() {
             )}
           </div>
         </div>
-        
+
         {/* Add new form */}
         {isAdding && (
-          <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <h3 className="font-semibold mb-4">Add New Relationship Type</h3>
+          <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+            <h3 className="font-semibold dark:text-gray-50 mb-4">Add New Relationship Type</h3>
             <div className="space-y-4">
               <div>
                 <label className="label">Name *</label>
@@ -378,7 +378,7 @@ export default function RelationshipTypes() {
                   onChange={setNewInverse}
                   relationshipTypes={relationshipTypes}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Select the inverse relationship type. For example, if this is "Parent", select "Child".
                   If this is "Spouse" or "Acquaintance", select the same type (e.g., "Spouse" → "Spouse").
                 </p>
@@ -414,25 +414,25 @@ export default function RelationshipTypes() {
         {/* List of relationship types */}
         <div className="space-y-2">
           {relationshipTypes.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No relationship types found.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">No relationship types found.</p>
           ) : (
             relationshipTypes.map((type) => {
               const isEditing = editingId === type.id;
               // Handle ACF field - could be ID directly or nested object
               const inverseId = type.acf?.inverse_relationship_type;
-              const inverseIdValue = typeof inverseId === 'object' && inverseId?.ID 
-                ? inverseId.ID 
-                : (typeof inverseId === 'object' && inverseId?.id 
-                  ? inverseId.id 
+              const inverseIdValue = typeof inverseId === 'object' && inverseId?.ID
+                ? inverseId.ID
+                : (typeof inverseId === 'object' && inverseId?.id
+                  ? inverseId.id
                   : inverseId);
-              const inverseType = inverseIdValue 
+              const inverseType = inverseIdValue
                 ? relationshipTypes.find(t => t.id === inverseIdValue)
                 : null;
-              
+
               return (
                 <div
                   key={type.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   {isEditing ? (
                     <div className="space-y-4">
@@ -453,7 +453,7 @@ export default function RelationshipTypes() {
                           relationshipTypes={relationshipTypes}
                           currentTypeId={type.id}
                         />
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Select the inverse relationship type. For example, if this is "Parent", select "Child".
                           If this is "Spouse" or "Acquaintance", select the same type (e.g., "Spouse" → "Spouse").
                         </p>
@@ -483,27 +483,27 @@ export default function RelationshipTypes() {
                   ) : (
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="font-medium">{type.name}</div>
+                        <div className="font-medium dark:text-gray-50">{type.name}</div>
                         {inverseType && (
-                          <div className="text-sm text-gray-500 mt-1">
+                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                             Inverse: <span className="font-medium">{inverseType.name}</span>
                           </div>
                         )}
                         {!inverseType && type.acf?.inverse_relationship_type === null && (
-                          <div className="text-sm text-gray-400 mt-1 italic">No inverse relationship</div>
+                          <div className="text-sm text-gray-400 dark:text-gray-500 mt-1 italic">No inverse relationship</div>
                         )}
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEdit(type)}
-                          className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded"
+                          className="p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(type.id, type.name)}
-                          className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded"
+                          className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />

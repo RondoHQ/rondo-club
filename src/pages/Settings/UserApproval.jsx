@@ -15,9 +15,9 @@ export default function UserApproval() {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="card p-8 text-center">
-          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-          <p className="text-gray-600 mb-6">
+          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
+          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Access Denied</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             You don't have permission to manage user approvals. This feature is only available to administrators.
           </p>
           <Link to="/settings" className="btn-primary">
@@ -78,7 +78,7 @@ export default function UserApproval() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600 dark:text-primary-400" />
       </div>
     );
   }
@@ -96,13 +96,13 @@ export default function UserApproval() {
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden md:inline">Back to Settings</span>
         </Link>
-        <h1 className="text-2xl font-semibold">User Approval</h1>
+        <h1 className="text-2xl font-semibold dark:text-gray-50">User Approval</h1>
       </div>
-      
+
       <div className="space-y-6">
       {unapprovedUsers.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold mb-4">Pending Approval</h2>
+          <h2 className="text-lg font-semibold dark:text-gray-50 mb-4">Pending Approval</h2>
           <div className="space-y-3">
             {unapprovedUsers.map((user) => (
               <div
@@ -110,9 +110,9 @@ export default function UserApproval() {
                 className="card p-4 flex items-center justify-between"
               >
                 <div>
-                  <p className="font-medium">{user.name}</p>
-                  <p className="text-sm text-gray-500">{user.email}</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="font-medium dark:text-gray-50">{user.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
                     Registered: {new Date(user.registered).toLocaleDateString()}
                   </p>
                 </div>
@@ -147,10 +147,10 @@ export default function UserApproval() {
           </div>
         </div>
       )}
-      
+
       {approvedUsers.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold mb-4">Approved Users</h2>
+          <h2 className="text-lg font-semibold dark:text-gray-50 mb-4">Approved Users</h2>
           <div className="space-y-3">
             {approvedUsers.map((user) => (
               <div
@@ -158,11 +158,11 @@ export default function UserApproval() {
                 className="card p-4 flex items-center justify-between"
               >
                 <div>
-                  <p className="font-medium flex items-center gap-2">
+                  <p className="font-medium dark:text-gray-50 flex items-center gap-2">
                     {user.name}
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
                   </p>
-                  <p className="text-sm text-gray-500">{user.email}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -187,10 +187,10 @@ export default function UserApproval() {
           </div>
         </div>
       )}
-      
+
       {users.length === 0 && (
         <div className="card p-8 text-center">
-          <p className="text-gray-600">No Caelis users found.</p>
+          <p className="text-gray-600 dark:text-gray-300">No Caelis users found.</p>
         </div>
       )}
       </div>

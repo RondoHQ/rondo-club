@@ -28,9 +28,9 @@ export default function Labels() {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="card p-8 text-center">
-          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-          <p className="text-gray-600 mb-6">
+          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
+          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Access Denied</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             You don't have permission to manage labels. This feature is only available to administrators.
           </p>
           <Link to="/settings" className="btn-primary">
@@ -176,7 +176,7 @@ export default function Labels() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
@@ -187,8 +187,8 @@ export default function Labels() {
                   className={`
                     py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
                     ${isActive
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
+                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}
                   `}
                 >
                   {tab.label}
@@ -200,8 +200,8 @@ export default function Labels() {
 
         {/* Add new form */}
         {isAdding && (
-          <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <h3 className="font-semibold mb-4">Add New Label</h3>
+          <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+            <h3 className="font-semibold dark:text-gray-50 mb-4">Add New Label</h3>
             <div className="space-y-4">
               <div>
                 <label className="label">Name *</label>
@@ -243,7 +243,7 @@ export default function Labels() {
         {/* Loading state */}
         {isLoading && (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
           </div>
         )}
 
@@ -251,7 +251,7 @@ export default function Labels() {
         {!isLoading && (
           <div className="space-y-2">
             {labels.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No labels found. Create one to get started.</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-8">No labels found. Create one to get started.</p>
             ) : (
               labels.map((label) => {
                 const isEditing = editingId === label.id;
@@ -259,7 +259,7 @@ export default function Labels() {
                 return (
                   <div
                     key={label.id}
-                    className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     {isEditing ? (
                       <div className="space-y-4">
@@ -297,22 +297,22 @@ export default function Labels() {
                     ) : (
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <div className="font-medium">{label.name}</div>
-                          <div className="text-sm text-gray-500 mt-1">
+                          <div className="font-medium dark:text-gray-50">{label.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                             {label.count || 0} {entityName}
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleEdit(label)}
-                            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded"
+                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(label.id, label.name)}
-                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded"
+                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
