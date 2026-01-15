@@ -73,11 +73,13 @@ class PRM_Google_OAuth {
             return '';
         }
 
-        // Create state with user_id and nonce for CSRF protection
-        $nonce = wp_create_nonce('google_oauth_' . $user_id);
-        $state = $user_id . '|' . $nonce;
+        // Create state with a random token stored in transient (not session-dependent)
+        // WordPress nonces don't work reliably with OAuth because cross-site redirects
+        // may not preserve the authentication cookies needed for nonce verification
+        $token = wp_generate_password(32, false);
+        set_transient('google_oauth_' . $token, $user_id, 10 * MINUTE_IN_SECONDS);
 
-        $client->setState($state);
+        $client->setState($token);
 
         return $client->createAuthUrl();
     }
