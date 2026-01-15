@@ -5,6 +5,7 @@ import { peopleKeys } from './usePeople';
 // Query keys
 export const meetingsKeys = {
   all: ['meetings'],
+  today: ['meetings', 'today'],
   person: (personId) => ['person-meetings', personId],
 };
 
@@ -23,6 +24,24 @@ export function usePersonMeetings(personId) {
       return response.data;
     },
     enabled: !!personId,
+  });
+}
+
+/**
+ * Hook to fetch today's meetings for the dashboard widget
+ * Returns meetings for the current day with matched attendees and their details
+ *
+ * @returns {Object} TanStack Query result with { meetings, total, has_connections }
+ */
+export function useTodayMeetings() {
+  return useQuery({
+    queryKey: meetingsKeys.today,
+    queryFn: async () => {
+      const response = await prmApi.getTodayMeetings();
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - meetings don't change often
+    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
   });
 }
 
