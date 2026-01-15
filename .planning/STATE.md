@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 Milestone: v4.1 Bug Fixes & Polish
 Phase: 56 of 57 (Dark Mode & Console Fixes)
-Plan: 56-01 (1 plan, 3 tasks)
-Status: Ready to execute
-Last activity: 2026-01-15 — Milestone v4.1 created
+Plan: 56-01 complete
+Status: Ready for Phase 57 planning
+Last activity: 2026-01-15 — Phase 56-01 complete
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █████░░░░░ 50% (1 of 2 phases)
 
 ## Completed Milestones
 
@@ -103,12 +103,12 @@ Resume file: None
 14. ~~Dashboard card styling consistency (ui)~~ — DONE in v3.5 Phase 38
 15. ~~Add checkbox to awaiting response items (ui)~~ — DONE in v3.6 Phase 40
 16. ~~Lowercase email addresses on save (api)~~ — DONE in v3.6 Phase 40
-17. Fix CardDAV connection details dark mode contrast (ui)
-18. Fix React/DOM Node synchronization errors (ui)
-19. Fix recurring module MIME type errors (ui)
+17. ~~Fix CardDAV connection details dark mode contrast (ui)~~ — DONE in v4.1 Phase 56
+18. ~~Fix React/DOM Node synchronization errors (ui)~~ — DONE in v4.1 Phase 56 (documented as benign)
+19. ~~Fix recurring module MIME type errors (ui)~~ — DONE in v4.1 Phase 56 (deploy procedure fix)
 20. Add wp-config.php constants installation documentation (docs)
 21. Restructure Settings with Connections tab and subtabs (ui)
-22. Fix search modal active result dark mode contrast (ui)
+22. ~~Fix search modal active result dark mode contrast (ui)~~ — DONE in v4.1 Phase 56
 23. Re-run meetings matching when email address added (api)
 24. Match events against all person email addresses (api)
 25. Update favicon to match current color scheme (ui)
@@ -127,6 +127,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Milestone v4.1 Bug Fixes & Polish created (2 phases)
-- 17 milestones, 55 phases, 99 plans completed to date
-- Use `/gsd:plan-phase 56` to plan the first phase
+- Phase 56-01 complete: Dark mode contrast fixes, deploy procedure updated
+- 17 milestones, 55 phases, 100 plans completed to date
+- Use `/gsd:plan-phase 57` to plan Calendar Widget Polish phase
