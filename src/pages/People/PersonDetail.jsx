@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, Square, TrendingUp, StickyNote, Share2, Clock, User
+  CheckSquare2, Square, TrendingUp, StickyNote, Share2, Clock, User, Video, ExternalLink, AlertCircle
 } from 'lucide-react';
 import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack, SiWhatsapp } from '@icons-pack/react-simple-icons';
 
@@ -27,6 +27,7 @@ const LinkedInIcon = ({ className }) => (
   </svg>
 );
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople, peopleKeys } from '@/hooks/usePeople';
+import { usePersonMeetings, useLogMeetingAsActivity } from '@/hooks/useMeetings';
 import TimelineView from '@/components/Timeline/TimelineView';
 import NoteModal from '@/components/Timeline/NoteModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
@@ -65,6 +66,124 @@ function getGenderSymbol(gender) {
   }
 }
 
+// MeetingCard component for displaying meeting info
+function MeetingCard({ meeting, showLogButton, onLog, isLogging }) {
+  // Format the meeting date/time
+  const startDate = meeting.start_time ? new Date(meeting.start_time) : null;
+  const endDate = meeting.end_time ? new Date(meeting.end_time) : null;
+
+  // Format time display
+  const formatTime = (date) => {
+    if (!date) return '';
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  };
+
+  const formatDate = (date) => {
+    if (!date) return '';
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const isLowConfidence = meeting.confidence && meeting.confidence < 80;
+
+  return (
+    <div className="flex items-start p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      {/* Calendar icon */}
+      <div className="flex-shrink-0 mr-3">
+        <div className="w-10 h-10 rounded-lg bg-accent-100 dark:bg-accent-900/30 flex items-center justify-center">
+          <Calendar className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+        </div>
+      </div>
+
+      {/* Meeting details */}
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+          {meeting.title}
+        </h3>
+
+        {/* Date and time */}
+        {startDate && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {formatDate(startDate)}
+            {!meeting.all_day && (
+              <>
+                {' '}{formatTime(startDate)}
+                {endDate && <> - {formatTime(endDate)}</>}
+              </>
+            )}
+            {meeting.all_day && ' (All day)'}
+          </p>
+        )}
+
+        {/* Location or meeting URL */}
+        {(meeting.location || meeting.meeting_url) && (
+          <div className="flex items-center gap-1 mt-1">
+            {meeting.meeting_url ? (
+              <a
+                href={meeting.meeting_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-accent-600 dark:text-accent-400 hover:underline flex items-center gap-1"
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span className="truncate">{meeting.location || 'Video meeting'}</span>
+                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              </a>
+            ) : (
+              <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5" />
+                <span className="truncate">{meeting.location}</span>
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Calendar name badge */}
+        {meeting.calendar_name && (
+          <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+            {meeting.calendar_name}
+          </span>
+        )}
+
+        {/* Other attendees */}
+        {meeting.other_attendees && meeting.other_attendees.length > 0 && (
+          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <span className="font-medium">Also attending: </span>
+            {meeting.other_attendees.slice(0, 3).join(', ')}
+            {meeting.other_attendees.length > 3 && ` +${meeting.other_attendees.length - 3} more`}
+          </div>
+        )}
+
+        {/* Low confidence warning */}
+        {isLowConfidence && (
+          <div className="flex items-center gap-1 mt-2 text-xs text-amber-600 dark:text-amber-400">
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>Match confidence: {meeting.confidence}%</span>
+          </div>
+        )}
+      </div>
+
+      {/* Log as Activity button */}
+      {showLogButton && (
+        <div className="flex-shrink-0 ml-2">
+          {meeting.logged_as_activity ? (
+            <span className="text-xs text-green-600 dark:text-green-400 px-2 py-1 rounded bg-green-50 dark:bg-green-900/20">
+              Logged
+            </span>
+          ) : (
+            <button
+              onClick={onLog}
+              disabled={isLogging}
+              className="text-xs px-3 py-1.5 rounded-md bg-accent-600 hover:bg-accent-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isLogging ? 'Logging...' : 'Log Activity'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PersonDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -94,7 +213,11 @@ export default function PersonDetail() {
     },
     enabled: !!id,
   });
-  
+
+  // Fetch meetings for this person
+  const { data: meetings, isLoading: meetingsLoading } = usePersonMeetings(id);
+  const logMeeting = useLogMeetingAsActivity();
+
   const [activeTab, setActiveTab] = useState('profile');
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [selectedLabelToAdd, setSelectedLabelToAdd] = useState('');
@@ -135,7 +258,10 @@ export default function PersonDetail() {
 
   // Mobile todos panel state
   const [showMobileTodos, setShowMobileTodos] = useState(false);
-  
+
+  // Meeting logging state
+  const [loggingMeetingId, setLoggingMeetingId] = useState(null);
+
   // Fetch available labels
   const { data: availableLabelsData } = useQuery({
     queryKey: ['person-labels'],
@@ -747,7 +873,7 @@ export default function PersonDetail() {
   // Handle completing todo as activity
   const handleCompleteAsActivity = () => {
     if (!todoToComplete) return;
-    
+
     // Prepare initial data for activity modal
     const today = new Date().toISOString().split('T')[0];
     setActivityInitialData({
@@ -756,9 +882,23 @@ export default function PersonDetail() {
       activity_type: 'note',
       participants: [],
     });
-    
+
     setShowCompleteModal(false);
     setShowActivityModal(true);
+  };
+
+  // Handle logging a meeting as activity
+  const handleLogMeeting = async (meeting) => {
+    setLoggingMeetingId(meeting.id);
+    try {
+      await logMeeting.mutateAsync(meeting.id);
+      // Success - invalidation happens in the mutation hook
+    } catch (error) {
+      console.error('Failed to log meeting:', error);
+      alert('Failed to log meeting as activity. Please try again.');
+    } finally {
+      setLoggingMeetingId(null);
+    }
   };
 
   // Handle deleting an activity
@@ -1490,6 +1630,21 @@ export default function PersonDetail() {
           >
             Work
           </button>
+          <button
+            onClick={() => setActiveTab('meetings')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'meetings'
+                ? 'border-accent-600 text-accent-600'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
+            }`}
+          >
+            Meetings
+            {meetings?.total_upcoming > 0 && (
+              <span className="ml-1 text-xs bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 px-1.5 py-0.5 rounded-full">
+                {meetings.total_upcoming}
+              </span>
+            )}
+          </button>
         </nav>
       </div>
 
@@ -2071,6 +2226,47 @@ export default function PersonDetail() {
               </div>
             </div>
           )}
+          </div>
+        )}
+
+        {/* Meetings Tab */}
+        {activeTab === 'meetings' && (
+          <div className="space-y-6">
+            {/* Upcoming Meetings */}
+            <div className="card p-6">
+              <h2 className="font-semibold mb-4">Upcoming Meetings</h2>
+              {meetingsLoading ? (
+                <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+              ) : meetings?.upcoming?.length > 0 ? (
+                <div className="space-y-3">
+                  {meetings.upcoming.map(meeting => (
+                    <MeetingCard key={meeting.id} meeting={meeting} showLogButton={false} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-gray-500 dark:text-gray-400 text-sm">No upcoming meetings</div>
+              )}
+            </div>
+
+            {/* Past Meetings */}
+            <div className="card p-6">
+              <h2 className="font-semibold mb-4">Past Meetings</h2>
+              {meetings?.past?.length > 0 ? (
+                <div className="space-y-3">
+                  {meetings.past.map(meeting => (
+                    <MeetingCard
+                      key={meeting.id}
+                      meeting={meeting}
+                      showLogButton={true}
+                      onLog={() => handleLogMeeting(meeting)}
+                      isLogging={loggingMeetingId === meeting.id}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-gray-500 dark:text-gray-400 text-sm">No past meetings</div>
+              )}
+            </div>
           </div>
         )}
         </div>
