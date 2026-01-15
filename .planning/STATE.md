@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Planning next milestone
+**Current focus:** v4.1 Bug Fixes & Polish
 
 ## Current Position
 
-Milestone: None active
-Phase: Ready to plan
+Milestone: v4.1 Bug Fixes & Polish
+Phase: 56 of 57 (Dark Mode & Console Fixes)
 Plan: Not started
-Status: Between milestones
-Last activity: 2026-01-15 — v4.0 Calendar Integration shipped
+Status: Ready to plan
+Last activity: 2026-01-15 — Milestone v4.1 created
 
-Progress: ██████████ 100% (v4.0 complete)
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -74,11 +74,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v3.8 archived: Git tag v3.8 created
 - Milestone v4.0 complete: Calendar Integration (Google, CalDAV, contact matching, dashboard widget)
 - Milestone v4.0 archived: Git tag v4.0 created
+- Milestone v4.1 created: Bug Fixes & Polish, 2 phases (Phase 56-57)
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: v4.0 milestone complete
+Stopped at: Milestone v4.1 initialization
 Resume file: None
 
 ## Accumulated Context
@@ -126,6 +127,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Milestone v4.0 Calendar Integration shipped
+- Milestone v4.1 Bug Fixes & Polish created (2 phases)
 - 17 milestones, 55 phases, 99 plans completed to date
-- Use `/gsd:discuss-milestone` to plan v4.1 or next milestone
+- Use `/gsd:plan-phase 56` to plan the first phase

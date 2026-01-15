@@ -19,10 +19,37 @@
 - ✅ [v3.7 Todo UX Polish](milestones/v3.7-todo-ux-polish.md) (Phase 42) — SHIPPED 2026-01-15
 - ✅ [v3.8 Theme Customization](milestones/v3.8-theme-customization.md) (Phases 43-46) — SHIPPED 2026-01-15
 - ✅ [v4.0 Calendar Integration](milestones/v4.0-calendar-integration.md) (Phases 47-55) — SHIPPED 2026-01-15
+- 🚧 **v4.1 Bug Fixes & Polish** — Phases 56-57 (in progress)
 
 ## Current Status
 
-**Active:** None — Planning next milestone
+**Active:** v4.1 Bug Fixes & Polish — Phase 56
+
+---
+
+### 🚧 v4.1 Bug Fixes & Polish (In Progress)
+
+**Milestone Goal:** Fix accumulated bugs and polish the Today's Meetings widget.
+
+#### Phase 56: Dark Mode & Console Fixes
+
+**Goal**: Fix dark mode contrast issues and console errors
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (internal CSS/React patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 56-01: TBD (run /gsd:plan-phase 56 to break down)
+
+#### Phase 57: Calendar Widget Polish
+
+**Goal**: Fix Today's meetings layout, timezone display, and update favicon
+**Depends on**: Phase 56
+**Research**: Unlikely (internal UI patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 57-01: TBD (run /gsd:plan-phase 57 to break down)
 
 ---
 
@@ -477,5 +504,7 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
 | v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
+| v4.1 Bug Fixes & Polish | 56-57 | 0/? | In Progress 🚧 | - |
 
 **Shipped: 17 milestones, 55 phases, 99 plans**
+**Active: v4.1 (2 phases)**
