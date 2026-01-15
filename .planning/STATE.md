@@ -101,7 +101,7 @@ Resume file: None
 15. ~~Add checkbox to awaiting response items (ui)~~ — DONE in v3.6 Phase 40
 16. ~~Lowercase email addresses on save (api)~~ — DONE in v3.6 Phase 40
 17. Fix CardDAV connection details dark mode contrast (ui)
-18. Fix removeChild Node NotFoundError (ui)
+18. Fix React/DOM Node synchronization errors (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
