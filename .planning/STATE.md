@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Milestone: v4.0 Calendar Integration
-Phase: 49 of 55 (Google Calendar Provider)
+Phase: 50 of 55 (CalDAV Provider)
 Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-15 — Completed 49-01-PLAN.md
+Last activity: 2026-01-15 — Completed 50-01-PLAN.md
 
-Progress: ████░░░░░░ 44%
+Progress: █████░░░░░ 56%
 
 ## Completed Milestones
 
@@ -76,7 +76,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed Phase 48-01 (Google OAuth flow)
+Stopped at: Completed Phase 50-01 (CalDAV Provider)
 Resume file: None
 
 ## Accumulated Context
@@ -115,9 +115,9 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Phase 49-01 (Google Calendar Provider) complete
-- PRM_Google_Calendar_Provider class syncs events from Google Calendar
-- Events stored in calendar_event CPT with full metadata (attendees, location, meeting URL)
-- trigger_sync REST endpoint triggers sync for Google connections
-- get_events REST endpoint returns cached events with date filtering
-- Ready for Phase 50 (CalDAV Provider) or Phase 51 (Contact Matching)
+- Phase 50-01 (CalDAV Provider) complete
+- PRM_CalDAV_Provider class syncs events from CalDAV servers (iCloud, Fastmail, Nextcloud)
+- test_caldav REST endpoint validates credentials and discovers calendars
+- trigger_sync REST endpoint works for both Google and CalDAV connections
+- Events stored with same metadata format as Google provider
+- Ready for Phase 51 (Contact Matching) or Phase 52 (Settings UI)
