@@ -1703,20 +1703,20 @@ if (defined('WP_CLI') && WP_CLI) {
          *
          * ## OPTIONS
          *
-         * [--user=<user_id>]
+         * [--user-id=<user_id>]
          * : User ID to re-match events for (required)
          *
          * ## EXAMPLES
          *
-         *     wp prm calendar rematch --user=1
+         *     wp prm calendar rematch --user-id=1
          *
          * @when after_wp_load
          */
         public function rematch($args, $assoc_args) {
-            $user_id = isset($assoc_args['user']) ? (int) $assoc_args['user'] : 0;
+            $user_id = isset($assoc_args['user-id']) ? (int) $assoc_args['user-id'] : 0;
 
             if (!$user_id) {
-                WP_CLI::error('No user ID provided. Use --user=ID');
+                WP_CLI::error('No user ID provided. Use --user-id=ID');
                 return;
             }
 
