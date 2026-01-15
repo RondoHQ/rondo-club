@@ -544,27 +544,29 @@ class PRM_REST_Calendar extends PRM_REST_Base {
         $error = $request->get_param('error');
         if ($error) {
             $error_desc = $request->get_param('error_description') ?? 'Authorization denied';
-            $this->html_redirect(home_url('/settings/calendars?error=' . urlencode($error_desc)));
+            $this->html_redirect(home_url('/settings?tab=calendars&error=' . urlencode($error_desc)));
         }
 
-        // Get and validate state parameter (user_id|nonce)
-        $state = $request->get_param('state');
-        if (empty($state) || strpos($state, '|') === false) {
-            $this->html_redirect(home_url('/settings/calendars?error=' . urlencode('Invalid state parameter')));
+        // Get and validate state parameter (token stored in transient)
+        $token = $request->get_param('state');
+        if (empty($token)) {
+            $this->html_redirect(home_url('/settings?tab=calendars&error=' . urlencode('Invalid state parameter')));
         }
 
-        list($user_id, $nonce) = explode('|', $state, 2);
+        // Retrieve user_id from transient (database-stored, not session-dependent)
+        $user_id = get_transient('google_oauth_' . $token);
+        if (!$user_id) {
+            $this->html_redirect(home_url('/settings?tab=calendars&error=' . urlencode('Security verification failed or link expired. Please try again.')));
+        }
+
+        // Delete the transient to prevent reuse
+        delete_transient('google_oauth_' . $token);
         $user_id = absint($user_id);
-
-        // Verify nonce for CSRF protection
-        if (!wp_verify_nonce($nonce, 'google_oauth_' . $user_id)) {
-            $this->html_redirect(home_url('/settings/calendars?error=' . urlencode('Security verification failed. Please try again.')));
-        }
 
         // Get authorization code
         $code = $request->get_param('code');
         if (empty($code)) {
-            $this->html_redirect(home_url('/settings/calendars?error=' . urlencode('No authorization code received')));
+            $this->html_redirect(home_url('/settings?tab=calendars&error=' . urlencode('No authorization code received')));
         }
 
         try {
@@ -590,10 +592,10 @@ class PRM_REST_Calendar extends PRM_REST_Base {
             PRM_Calendar_Connections::add_connection($user_id, $connection);
 
             // Redirect to settings page with success
-            $this->html_redirect(home_url('/settings/calendars?connected=google'));
+            $this->html_redirect(home_url('/settings?tab=calendars&connected=google'));
 
         } catch (Exception $e) {
-            $this->html_redirect(home_url('/settings/calendars?error=' . urlencode($e->getMessage())));
+            $this->html_redirect(home_url('/settings?tab=calendars&error=' . urlencode($e->getMessage())));
         }
     }
 
@@ -609,10 +611,18 @@ class PRM_REST_Calendar extends PRM_REST_Base {
      */
     private function html_redirect($url) {
         $safe_url = esc_url($url);
+
+        // Clear any output buffers that REST API may have started
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        // Send headers and HTML redirect
         header('Content-Type: text/html; charset=utf-8');
+        header('Cache-Control: no-cache, no-store, must-revalidate');
         echo '<!DOCTYPE html><html><head>';
         echo '<meta http-equiv="refresh" content="0;url=' . $safe_url . '">';
-        echo '<script>window.location.href="' . esc_js($url) . '";</script>';
+        echo '<script>window.location.replace("' . esc_js($url) . '");</script>';
         echo '</head><body>Redirecting...</body></html>';
         exit;
     }
