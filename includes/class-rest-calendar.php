@@ -290,6 +290,13 @@ class PRM_REST_Calendar extends PRM_REST_Base {
             'callback'            => [$this, 'get_sync_status'],
             'permission_callback' => [$this, 'check_user_approved'],
         ]);
+
+        // GET /prm/v1/calendar/today-meetings - Today's meetings for dashboard
+        register_rest_route('prm/v1', '/calendar/today-meetings', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_today_meetings'],
+            'permission_callback' => [$this, 'check_user_approved'],
+        ]);
     }
 
     /**
@@ -943,6 +950,141 @@ class PRM_REST_Calendar extends PRM_REST_Base {
         $status['user_connections'] = $safe_connections;
 
         return rest_ensure_response($status);
+    }
+
+    /**
+     * Get today's meetings for dashboard widget
+     *
+     * Returns calendar events for today with matched attendees and their details.
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response Response with today's meetings.
+     */
+    public function get_today_meetings($request) {
+        $user_id = get_current_user_id();
+
+        // Check if user has any calendar connections
+        $connections = PRM_Calendar_Connections::get_user_connections($user_id);
+        $has_connections = !empty($connections);
+
+        if (!$has_connections) {
+            return rest_ensure_response([
+                'meetings'        => [],
+                'total'           => 0,
+                'has_connections' => false,
+            ]);
+        }
+
+        // Get today's date range in site timezone
+        $today_start = current_time('Y-m-d') . ' 00:00:00';
+        $today_end = current_time('Y-m-d') . ' 23:59:59';
+
+        // Query calendar events for today
+        $args = [
+            'post_type'      => 'calendar_event',
+            'author'         => $user_id,
+            'posts_per_page' => 50, // Reasonable limit for one day
+            'orderby'        => 'meta_value',
+            'meta_key'       => '_start_time',
+            'order'          => 'ASC',
+            'meta_query'     => [
+                'relation' => 'AND',
+                [
+                    'key'     => '_start_time',
+                    'value'   => $today_start,
+                    'compare' => '>=',
+                    'type'    => 'DATETIME',
+                ],
+                [
+                    'key'     => '_start_time',
+                    'value'   => $today_end,
+                    'compare' => '<=',
+                    'type'    => 'DATETIME',
+                ],
+            ],
+        ];
+
+        $query = new WP_Query($args);
+
+        // Format meetings with matched people details
+        $meetings = [];
+        foreach ($query->posts as $event) {
+            $meetings[] = $this->format_today_meeting($event, $user_id);
+        }
+
+        return rest_ensure_response([
+            'meetings'        => $meetings,
+            'total'           => count($meetings),
+            'has_connections' => true,
+        ]);
+    }
+
+    /**
+     * Format a calendar event for the today's meetings endpoint
+     *
+     * @param WP_Post $event   The calendar event post.
+     * @param int     $user_id The current user ID.
+     * @return array Formatted meeting data with matched people details.
+     */
+    private function format_today_meeting($event, $user_id) {
+        // Get matched people and expand with person details
+        $matched_people_json = get_post_meta($event->ID, '_matched_people', true);
+        $matched_people_raw = $matched_people_json ? json_decode($matched_people_json, true) : [];
+        $matched_people = [];
+
+        if (is_array($matched_people_raw)) {
+            foreach ($matched_people_raw as $match) {
+                $person_id = $match['person_id'] ?? 0;
+                if (!$person_id) {
+                    continue;
+                }
+
+                // Get person details
+                $person = get_post($person_id);
+                if (!$person || $person->post_type !== 'person') {
+                    continue;
+                }
+
+                // Get person thumbnail
+                $thumbnail = null;
+                $featured_image_id = get_post_thumbnail_id($person_id);
+                if ($featured_image_id) {
+                    $thumbnail_url = wp_get_attachment_image_url($featured_image_id, 'thumbnail');
+                    if ($thumbnail_url) {
+                        $thumbnail = $thumbnail_url;
+                    }
+                }
+
+                $matched_people[] = [
+                    'person_id' => $person_id,
+                    'name'      => $person->post_title,
+                    'thumbnail' => $thumbnail,
+                ];
+            }
+        }
+
+        // Get connection/calendar name
+        $connection_id = get_post_meta($event->ID, '_connection_id', true);
+        $calendar_name = '';
+
+        if ($connection_id) {
+            $connection = PRM_Calendar_Connections::get_connection($user_id, $connection_id);
+            if ($connection) {
+                $calendar_name = $connection['name'] ?? '';
+            }
+        }
+
+        return [
+            'id'             => $event->ID,
+            'title'          => sanitize_text_field($event->post_title),
+            'start_time'     => get_post_meta($event->ID, '_start_time', true),
+            'end_time'       => get_post_meta($event->ID, '_end_time', true),
+            'all_day'        => (bool) get_post_meta($event->ID, '_all_day', true),
+            'location'       => get_post_meta($event->ID, '_location', true),
+            'meeting_url'    => get_post_meta($event->ID, '_meeting_url', true),
+            'matched_people' => $matched_people,
+            'calendar_name'  => $calendar_name,
+        ];
     }
 
     /**
