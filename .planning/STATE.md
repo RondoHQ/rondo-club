@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 Milestone: v4.1 Bug Fixes & Polish
 Phase: 57 of 57 (Calendar Widget Polish)
-Plan: 57-01 complete
-Status: Milestone complete
-Last activity: 2026-01-15 — Completed 57-01-PLAN.md
+Plan: 57-FIX complete (UAT issues fixed)
+Status: Milestone complete - ready for archive
+Last activity: 2026-01-15 — Completed 57-FIX (2 UAT issues resolved)
 
-Progress: ██████████ 100% (2 of 2 phases)
+Progress: ██████████ 100% (2 of 2 phases, all plans + fixes complete)
 
 ## Completed Milestones
 
@@ -79,7 +79,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 57-01-PLAN.md (Phase 57 complete)
+Stopped at: Completed 57-FIX (UAT issues resolved, milestone ready for archive)
 Resume file: None
 
 ## Accumulated Context
@@ -127,7 +127,8 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Phase 57-01 complete: Calendar widget polish (layout, timezone, favicon)
-- Milestone v4.1 complete: All 2 phases, 2 plans executed
-- 17 milestones, 57 phases, 101 plans completed to date
+- Phase 57 complete: Calendar widget polish (57-01) + UAT fixes (57-FIX)
+- Milestone v4.1 Bug Fixes & Polish complete: All 2 phases, 2 plans + 1 fix executed
+- 17 milestones, 57 phases, 102 plans completed to date
+- Use `/gsd:verify-work 57` to re-verify fixes if needed
 - Use `/gsd:complete-milestone` to archive v4.1 and prepare for next milestone
