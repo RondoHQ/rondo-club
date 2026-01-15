@@ -138,7 +138,7 @@ export default function VisibilitySelector({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-full px-3 py-2 text-sm font-medium text-accent-600 dark:text-accent-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-md"
+                className="w-full px-3 py-2 text-sm font-medium text-accent-600 dark:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded-md"
               >
                 Done
               </button>
