@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Milestone: v4.0 Calendar Integration
-Phase: 51 of 55 (Contact Matching)
+Phase: 52 of 55 (Settings UI)
 Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-15 — Completed 51-01-PLAN.md
+Last activity: 2026-01-15 — Completed 52-01-PLAN.md
 
-Progress: ██████░░░░ 60%
+Progress: ███████░░░ 70%
 
 ## Completed Milestones
 
@@ -115,9 +115,9 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Phase 51-01 (Contact Matching) complete
-- PRM_Calendar_Matcher class with email-first matching and fuzzy name fallback
-- Email lookup cache using transients with 24h expiration
-- Both Google and CalDAV providers now store _matched_people on sync
-- GET /prm/v1/people/{id}/meetings endpoint returns person's calendar events
-- Ready for Phase 52 (Settings UI) or Phase 53 (Person Meetings Section)
+- Phase 52-01 (Settings UI) complete
+- CalendarsTab component with connections list and add buttons
+- CalDAVModal for adding CalDAV calendars with connection testing
+- EditConnectionModal with sync enabled, auto-log, sync_from_days options
+- Full dark mode support throughout
+- Ready for Phase 53 (Person Meetings Section) or Phase 54 (Dashboard Integration)
