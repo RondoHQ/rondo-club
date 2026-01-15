@@ -64,16 +64,15 @@ Plans:
 Plans:
 - [x] 49-01: Google Calendar sync provider (PRM_Google_Calendar_Provider, trigger_sync, get_events)
 
-#### Phase 50: CalDAV Provider
+#### Phase 50: CalDAV Provider (Complete)
 
 **Goal**: sabre/dav integration, generic CalDAV sync for iCloud/Outlook/Fastmail/Nextcloud
 **Depends on**: Phase 47
-**Research**: Likely (sabre/dav library, CalDAV protocol)
-**Research topics**: sabre/dav usage, CalDAV authentication, iCal parsing
-**Plans**: TBD
+**Research**: Not needed (sabre/dav already installed)
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 50-01: TBD (run /gsd:plan-phase 50 to break down)
+- [x] 50-01: CalDAV provider (PRM_CalDAV_Provider, test_caldav, sync for iCloud/Fastmail/Nextcloud)
 
 #### Phase 51: Contact Matching
 
@@ -541,6 +540,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
-| v4.0 Calendar Integration | 47-55 | 4/? | In Progress | - |
+| v4.0 Calendar Integration | 47-55 | 5/? | In Progress | - |
 
 **Shipped: 16 milestones, 46 phases, 88 plans**
