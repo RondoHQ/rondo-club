@@ -181,18 +181,18 @@ export default function TodosList() {
   // Get the icon for the header
   const getHeaderIcon = () => {
     if (statusFilter === 'completed') {
-      return <CheckSquare className="w-5 h-5 mr-2 text-primary-600" />;
+      return <CheckSquare className="w-5 h-5 mr-2 text-primary-600 dark:text-primary-400" />;
     }
     if (statusFilter === 'awaiting') {
-      return <Clock className="w-5 h-5 mr-2 text-orange-600" />;
+      return <Clock className="w-5 h-5 mr-2 text-orange-600 dark:text-orange-400" />;
     }
-    return <Square className="w-5 h-5 mr-2 text-gray-500" />;
+    return <Square className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />;
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
       </div>
     );
   }
@@ -215,11 +215,11 @@ export default function TodosList() {
 
       {/* Filter controls - now includes Awaiting as a primary tab */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex rounded-lg border border-gray-200 p-0.5">
+        <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5">
           <button
             onClick={() => setStatusFilter('open')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'open' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:text-gray-900'
+              statusFilter === 'open' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             Open
@@ -227,7 +227,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('awaiting')}
             className={`px-3 py-1 text-sm rounded-md transition-colors flex items-center gap-1 ${
-              statusFilter === 'awaiting' ? 'bg-orange-100 text-orange-700' : 'text-gray-600 hover:text-gray-900'
+              statusFilter === 'awaiting' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
@@ -236,7 +236,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('completed')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'completed' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:text-gray-900'
+              statusFilter === 'completed' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             Completed
@@ -244,7 +244,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'all' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:text-gray-900'
+              statusFilter === 'all' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             All
@@ -254,14 +254,14 @@ export default function TodosList() {
 
       {/* Filtered Todos */}
       <div className="card">
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center">
             {getHeaderIcon()}
             {getHeaderText()} ({filteredTodos.length})
           </h2>
         </div>
         {filteredTodos.length > 0 ? (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {filteredTodos.map((todo) => (
               <TodoItem
                 key={todo.id}
@@ -278,10 +278,10 @@ export default function TodosList() {
           </div>
         ) : (
           <div className="p-8 text-center">
-            <CheckSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">{getEmptyMessage()}</p>
+            <CheckSquare className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400">{getEmptyMessage()}</p>
             {statusFilter === 'open' && (
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                 Create todos from a person's detail page or click "Add todo"
               </p>
             )}
@@ -359,13 +359,13 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
   // Determine checkbox icon based on status
   const getStatusIcon = () => {
     if (todo.status === 'completed') {
-      return <CheckSquare className="w-5 h-5 text-primary-600" />;
+      return <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />;
     }
     if (todo.status === 'awaiting') {
-      return <Clock className="w-5 h-5 text-orange-500" />;
+      return <Clock className="w-5 h-5 text-orange-500 dark:text-orange-400" />;
     }
     // Open
-    return <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />;
+    return <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`} />;
   };
 
   // Get title for the toggle button
@@ -376,7 +376,7 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
   };
 
   return (
-    <div className="flex items-start p-4 hover:bg-gray-50 transition-colors group">
+    <div className="flex items-start p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group">
       <button
         onClick={() => onToggle(todo)}
         className="mt-0.5 mr-3 flex-shrink-0"
@@ -388,19 +388,19 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
       <div className="flex-1 min-w-0">
         <p className={`text-sm ${
           todo.status === 'completed'
-            ? 'line-through text-gray-400'
+            ? 'line-through text-gray-400 dark:text-gray-500'
             : todo.status === 'awaiting'
-            ? 'text-orange-700'
+            ? 'text-orange-700 dark:text-orange-400'
             : isOverdue
-            ? 'text-red-600 font-medium'
-            : 'text-gray-900'
+            ? 'text-red-600 dark:text-red-400 font-medium'
+            : 'text-gray-900 dark:text-gray-100'
         }`}>
           {todo.content}
         </p>
 
         {/* Notes preview */}
         {notesPreview && (
-          <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
             {notesPreview}
           </p>
         )}
@@ -420,17 +420,17 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
                     <img
                       src={person.thumbnail}
                       alt={person.name}
-                      className="w-6 h-6 rounded-full object-cover border-2 border-white"
+                      className="w-6 h-6 rounded-full object-cover border-2 border-white dark:border-gray-800"
                     />
                   ) : (
-                    <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center border-2 border-white">
-                      <User className="w-3 h-3 text-gray-500" />
+                    <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-800">
+                      <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                     </div>
                   )}
                 </Link>
               ))}
               {persons.length > 3 && (
-                <span className="w-6 h-6 rounded-full bg-gray-200 text-xs flex items-center justify-center border-2 border-white text-gray-600">
+                <span className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-xs flex items-center justify-center border-2 border-white dark:border-gray-800 text-gray-600 dark:text-gray-300">
                   +{persons.length - 3}
                 </span>
               )}
@@ -439,11 +439,11 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
             {persons.length > 0 && (
               <Link
                 to={`/people/${persons[0].id}`}
-                className="ml-2 text-xs text-primary-600 hover:text-primary-700 hover:underline"
+                className="ml-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
               >
                 {persons[0].name}
                 {persons.length > 1 && (
-                  <span className="text-gray-500"> +{persons.length - 1}</span>
+                  <span className="text-gray-500 dark:text-gray-400"> +{persons.length - 1}</span>
                 )}
               </Link>
             )}
@@ -451,7 +451,7 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
 
           {/* Due date - only show prominently for open todos */}
           {todo.due_date && todo.status === 'open' && (
-            <span className={`text-xs ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+            <span className={`text-xs ${isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
               Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
               {isOverdue && ' (overdue)'}
             </span>
@@ -472,25 +472,25 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
         {todo.status !== 'open' && (
           <button
             onClick={() => onReopen(todo)}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
             title="Reopen todo"
           >
-            <RotateCcw className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+            <RotateCcw className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
           </button>
         )}
         <button
           onClick={() => onEdit(todo)}
-          className="p-1 hover:bg-gray-100 rounded"
+          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
           title="Edit todo"
         >
-          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
         </button>
         <button
           onClick={() => onDelete(todo.id)}
-          className="p-1 hover:bg-red-50 rounded"
+          className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
           title="Delete todo"
         >
-          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600 dark:hover:text-red-400" />
         </button>
       </div>
     </div>

@@ -204,7 +204,7 @@ export default function CompanyDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
       </div>
     );
   }
@@ -212,7 +212,7 @@ export default function CompanyDetail() {
   if (error || !company) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-red-600">Failed to load organization.</p>
+        <p className="text-red-600 dark:text-red-400">Failed to load organization.</p>
         <Link to="/companies" className="btn-secondary mt-4">Back to organizations</Link>
       </div>
     );
@@ -229,7 +229,7 @@ export default function CompanyDetail() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link to="/companies" className="flex items-center text-gray-600 hover:text-gray-900">
+        <Link to="/companies" className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
           <span className="hidden md:inline">Back to organizations</span>
         </Link>
@@ -260,7 +260,7 @@ export default function CompanyDetail() {
                 className="w-24 h-24 rounded-lg object-contain bg-white"
               />
             ) : (
-              <div className="w-24 h-24 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+              <div className="w-24 h-24 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-600">
                 <Building2 className="w-12 h-12 text-gray-400" />
               </div>
             )}
@@ -289,20 +289,20 @@ export default function CompanyDetail() {
             {parentCompany && (
               <Link 
                 to={`/companies/${parentCompany.id}`}
-                className="text-sm text-primary-600 hover:underline flex items-center mb-1"
+                className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center mb-1"
               >
                 <GitBranch className="w-3 h-3 mr-1" />
                 Subsidiary of {getCompanyName(parentCompany)}
               </Link>
             )}
             <h1 className="text-2xl font-bold">{getCompanyName(company)}</h1>
-            {acf.industry && <p className="text-gray-500">{acf.industry}</p>}
+            {acf.industry && <p className="text-gray-500 dark:text-gray-400">{acf.industry}</p>}
             {acf.website && (
               <a 
                 href={acf.website} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-primary-600 hover:underline flex items-center mt-1"
+                className="text-primary-600 dark:text-primary-400 hover:underline flex items-center mt-1"
               >
                 <Globe className="w-4 h-4 mr-1" />
                 {acf.website}
@@ -324,23 +324,23 @@ export default function CompanyDetail() {
               <Link
                 key={child.id}
                 to={`/companies/${child.id}`}
-                className="flex items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200"
+                className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
               >
                 {child._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
-                  <img 
+                  <img
                     src={child._embedded['wp:featuredmedia'][0].source_url}
                     alt={getCompanyName(child)}
-                    className="w-10 h-10 rounded object-contain bg-white"
+                    className="w-10 h-10 rounded object-contain bg-white dark:bg-gray-700"
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
                     <Building2 className="w-5 h-5 text-gray-400" />
                   </div>
                 )}
                 <div className="ml-3">
                   <p className="text-sm font-medium">{getCompanyName(child)}</p>
                   {child.acf?.industry && (
-                    <p className="text-xs text-gray-500">{child.acf.industry}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{child.acf.industry}</p>
                   )}
                 </div>
               </Link>
@@ -363,26 +363,26 @@ export default function CompanyDetail() {
                 <Link
                   key={person.id}
                   to={`/people/${person.id}`}
-                  className="flex items-center p-2 rounded hover:bg-gray-50"
+                  className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   {person.thumbnail ? (
                     <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
                   ) : (
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span className="text-xs text-gray-500">{person.name?.[0] || '?'}</span>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                      <span className="text-xs text-gray-500 dark:text-gray-300">{person.name?.[0] || '?'}</span>
                     </div>
                   )}
                   <div className="ml-2">
                     <p className="text-sm font-medium">{person.name}</p>
                     {person.job_title && (
-                      <p className="text-xs text-gray-500">{person.job_title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{person.job_title}</p>
                     )}
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No current employees.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">No current employees.</p>
           )}
         </div>
         
@@ -399,26 +399,26 @@ export default function CompanyDetail() {
                 <Link
                   key={person.id}
                   to={`/people/${person.id}`}
-                  className="flex items-center p-2 rounded hover:bg-gray-50"
+                  className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   {person.thumbnail ? (
                     <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full opacity-75" />
                   ) : (
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center opacity-75">
-                      <span className="text-xs text-gray-500">{person.name?.[0] || '?'}</span>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center opacity-75">
+                      <span className="text-xs text-gray-500 dark:text-gray-300">{person.name?.[0] || '?'}</span>
                     </div>
                   )}
                   <div className="ml-2">
-                    <p className="text-sm font-medium text-gray-700">{person.name}</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{person.name}</p>
                     {person.job_title && (
-                      <p className="text-xs text-gray-500">{person.job_title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{person.job_title}</p>
                     )}
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No former employees.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">No former employees.</p>
           )}
         </div>
       </div>
@@ -441,17 +441,17 @@ export default function CompanyDetail() {
                 <Link
                   key={`${investor.type}-${investor.id}`}
                   to={linkPath}
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200"
+                  className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
                 >
                   {investor.thumbnail ? (
-                    <img 
+                    <img
                       src={investor.thumbnail}
                       alt={investor.name}
                       loading="lazy"
                       className={`w-10 h-10 object-cover ${isPerson ? 'rounded-full' : 'rounded'}`}
                     />
                   ) : (
-                    <div className={`w-10 h-10 bg-gray-100 flex items-center justify-center ${isPerson ? 'rounded-full' : 'rounded'}`}>
+                    <div className={`w-10 h-10 bg-gray-100 dark:bg-gray-700 flex items-center justify-center ${isPerson ? 'rounded-full' : 'rounded'}`}>
                       {isPerson ? (
                         <User className="w-5 h-5 text-gray-400" />
                       ) : (
@@ -461,7 +461,7 @@ export default function CompanyDetail() {
                   )}
                   <div className="ml-3">
                     <p className="text-sm font-medium">{investor.name}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {isPerson ? 'Person' : 'Organization'}
                     </p>
                   </div>
@@ -484,24 +484,24 @@ export default function CompanyDetail() {
               <Link
                 key={company.id}
                 to={`/companies/${company.id}`}
-                className="flex items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200"
+                className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
               >
                 {company.thumbnail ? (
-                  <img 
+                  <img
                     src={company.thumbnail}
                     alt={company.name}
                     loading="lazy"
                     className="w-10 h-10 object-contain rounded"
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-gray-100 flex items-center justify-center rounded">
+                  <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded">
                     <Building2 className="w-5 h-5 text-gray-400" />
                   </div>
                 )}
                 <div className="ml-3">
                   <p className="text-sm font-medium">{company.name}</p>
                   {company.industry && (
-                    <p className="text-xs text-gray-500">{company.industry}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{company.industry}</p>
                   )}
                 </div>
               </Link>
@@ -517,7 +517,7 @@ export default function CompanyDetail() {
           <div className="space-y-3">
             {acf.contact_info.map((contact, index) => (
               <div key={index}>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   {contact.contact_label || contact.contact_type}:
                 </span>
                 <span className="ml-2">{contact.contact_value}</span>
