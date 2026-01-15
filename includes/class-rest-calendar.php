@@ -720,19 +720,167 @@ class PRM_REST_Calendar extends PRM_REST_Base {
     /**
      * Get meetings for a person
      *
-     * Returns empty structure for now so UI can be built against the expected format.
+     * Returns calendar events where the person was matched as an attendee.
      *
      * @param WP_REST_Request $request The REST request object.
-     * @return WP_REST_Response Empty meetings structure.
+     * @return WP_REST_Response Meetings for the person.
      */
     public function get_person_meetings($request) {
-        // Return empty structure for now so UI can be built
+        $person_id = absint($request->get_param('person_id'));
+        $show_upcoming = (bool) $request->get_param('upcoming');
+        $show_past = (bool) $request->get_param('past');
+        $limit = absint($request->get_param('limit'));
+        $user_id = get_current_user_id();
+
+        // Get current time for date comparison
+        $now = current_time('mysql');
+
+        // Build base meta query to find events with this person matched
+        // _matched_people is a JSON array, we search for the person_id within it
+        $base_meta_query = [
+            [
+                'key'     => '_matched_people',
+                'value'   => '"person_id":' . $person_id,
+                'compare' => 'LIKE',
+            ],
+        ];
+
+        $upcoming = [];
+        $past = [];
+        $total_upcoming = 0;
+        $total_past = 0;
+
+        // Query upcoming events
+        if ($show_upcoming) {
+            $upcoming_args = [
+                'post_type'      => 'calendar_event',
+                'author'         => $user_id,
+                'posts_per_page' => $limit,
+                'orderby'        => 'meta_value',
+                'meta_key'       => '_start_time',
+                'order'          => 'ASC',
+                'meta_query'     => array_merge($base_meta_query, [
+                    [
+                        'key'     => '_start_time',
+                        'value'   => $now,
+                        'compare' => '>=',
+                        'type'    => 'DATETIME',
+                    ],
+                ]),
+            ];
+
+            $upcoming_query = new WP_Query($upcoming_args);
+            $total_upcoming = $upcoming_query->found_posts;
+
+            foreach ($upcoming_query->posts as $event) {
+                $upcoming[] = $this->format_meeting_event($event, $person_id, $user_id);
+            }
+        }
+
+        // Query past events
+        if ($show_past) {
+            $past_args = [
+                'post_type'      => 'calendar_event',
+                'author'         => $user_id,
+                'posts_per_page' => $limit,
+                'orderby'        => 'meta_value',
+                'meta_key'       => '_start_time',
+                'order'          => 'DESC',
+                'meta_query'     => array_merge($base_meta_query, [
+                    [
+                        'key'     => '_start_time',
+                        'value'   => $now,
+                        'compare' => '<',
+                        'type'    => 'DATETIME',
+                    ],
+                ]),
+            ];
+
+            $past_query = new WP_Query($past_args);
+            $total_past = $past_query->found_posts;
+
+            foreach ($past_query->posts as $event) {
+                $past[] = $this->format_meeting_event($event, $person_id, $user_id);
+            }
+        }
+
         return rest_ensure_response([
-            'upcoming'       => [],
-            'past'           => [],
-            'total_upcoming' => 0,
-            'total_past'     => 0,
+            'upcoming'       => $upcoming,
+            'past'           => $past,
+            'total_upcoming' => $total_upcoming,
+            'total_past'     => $total_past,
         ]);
+    }
+
+    /**
+     * Format a calendar event for the meetings endpoint
+     *
+     * @param WP_Post $event     The calendar event post.
+     * @param int     $person_id The matched person ID.
+     * @param int     $user_id   The current user ID.
+     * @return array Formatted event data.
+     */
+    private function format_meeting_event($event, $person_id, $user_id) {
+        $matched_people_json = get_post_meta($event->ID, '_matched_people', true);
+        $matched_people = $matched_people_json ? json_decode($matched_people_json, true) : [];
+
+        // Find the match info for this person
+        $match_type = '';
+        $confidence = 0;
+        $matched_attendee_email = null;
+
+        if (is_array($matched_people)) {
+            foreach ($matched_people as $match) {
+                if (isset($match['person_id']) && $match['person_id'] === $person_id) {
+                    $match_type = $match['match_type'] ?? '';
+                    $confidence = $match['confidence'] ?? 0;
+                    $matched_attendee_email = $match['attendee_email'] ?? null;
+                    break;
+                }
+            }
+        }
+
+        // Get attendees and filter out the matched person's email
+        $attendees_json = get_post_meta($event->ID, '_attendees', true);
+        $attendees = $attendees_json ? json_decode($attendees_json, true) : [];
+        $other_attendees = [];
+
+        if (is_array($attendees)) {
+            foreach ($attendees as $attendee) {
+                $email = $attendee['email'] ?? '';
+                // Exclude the matched person's email from other_attendees
+                if (!empty($email) && $email !== $matched_attendee_email) {
+                    $other_attendees[] = $email;
+                }
+            }
+        }
+
+        // Get connection name
+        $connection_id = get_post_meta($event->ID, '_connection_id', true);
+        $calendar_name = '';
+
+        if ($connection_id) {
+            $connection = PRM_Calendar_Connections::get_connection($user_id, $connection_id);
+            if ($connection) {
+                $calendar_name = $connection['name'] ?? '';
+            }
+        }
+
+        return [
+            'id'                     => $event->ID,
+            'title'                  => sanitize_text_field($event->post_title),
+            'start_time'             => get_post_meta($event->ID, '_start_time', true),
+            'end_time'               => get_post_meta($event->ID, '_end_time', true),
+            'location'               => get_post_meta($event->ID, '_location', true),
+            'meeting_url'            => get_post_meta($event->ID, '_meeting_url', true),
+            'all_day'                => (bool) get_post_meta($event->ID, '_all_day', true),
+            'match_type'             => $match_type,
+            'confidence'             => $confidence,
+            'matched_attendee_email' => $matched_attendee_email,
+            'other_attendees'        => $other_attendees,
+            'calendar_name'          => $calendar_name,
+            'connection_id'          => $connection_id,
+        ];
     }
 
     /**
