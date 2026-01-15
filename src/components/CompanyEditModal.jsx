@@ -242,12 +242,12 @@ export default function CompanyEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{isEditing ? 'Edit organization' : 'Add organization'}</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit organization' : 'Add organization'}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
@@ -267,7 +267,7 @@ export default function CompanyEditModal({
                 autoFocus
               />
               {errors.title && (
-                <p className="text-sm text-red-600 mt-1">{errors.title.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.title.message}</p>
               )}
             </div>
 
@@ -301,7 +301,7 @@ export default function CompanyEditModal({
                 <button
                   type="button"
                   onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   disabled={isLoadingCompanies || isLoading}
                 >
                   {selectedParent ? (
@@ -310,25 +310,25 @@ export default function CompanyEditModal({
                         <img
                           src={selectedParent._embedded['wp:featuredmedia'][0].source_url}
                           alt={getCompanyName(selectedParent)}
-                          className="w-6 h-6 rounded object-contain bg-white"
+                          className="w-6 h-6 rounded object-contain bg-white dark:bg-gray-600"
                         />
                       ) : (
-                        <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
-                          <Building2 className="w-4 h-4 text-gray-500" />
+                        <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
+                          <Building2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         </div>
                       )}
-                      <span className="text-gray-900">{getCompanyName(selectedParent)}</span>
+                      <span className="text-gray-900 dark:text-gray-50">{getCompanyName(selectedParent)}</span>
                     </div>
                   ) : (
-                    <span className="text-gray-400">No parent organization</span>
+                    <span className="text-gray-400 dark:text-gray-500">No parent organization</span>
                   )}
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {isParentDropdownOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-hidden">
                     {/* Search input */}
-                    <div className="p-2 border-b border-gray-100">
+                    <div className="p-2 border-b border-gray-100 dark:border-gray-700">
                       <div className="relative">
                         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
@@ -336,12 +336,12 @@ export default function CompanyEditModal({
                           value={parentSearchQuery}
                           onChange={(e) => setParentSearchQuery(e.target.value)}
                           placeholder="Search organizations..."
-                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-primary-500"
                           autoFocus
                         />
                       </div>
                     </div>
-                    
+
                     {/* "None" option */}
                     <div className="overflow-y-auto max-h-48">
                       <button
@@ -351,16 +351,16 @@ export default function CompanyEditModal({
                           setIsParentDropdownOpen(false);
                           setParentSearchQuery('');
                         }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
-                          !selectedParentId ? 'bg-primary-50' : ''
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                          !selectedParentId ? 'bg-primary-50 dark:bg-primary-900/30' : ''
                         }`}
                       >
-                        <span className="text-sm text-gray-500 italic">No parent organization</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 italic">No parent organization</span>
                       </button>
-                      
+
                       {/* Companies list */}
                       {isLoadingCompanies ? (
-                        <div className="p-3 text-center text-gray-500 text-sm">
+                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
                           Loading...
                         </div>
                       ) : availableParentCompanies.length > 0 ? (
@@ -373,26 +373,26 @@ export default function CompanyEditModal({
                               setIsParentDropdownOpen(false);
                               setParentSearchQuery('');
                             }}
-                            className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
-                              selectedParentId === String(c.id) ? 'bg-primary-50' : ''
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                              selectedParentId === String(c.id) ? 'bg-primary-50 dark:bg-primary-900/30' : ''
                             }`}
                           >
                             {c._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
                               <img
                                 src={c._embedded['wp:featuredmedia'][0].source_url}
                                 alt={getCompanyName(c)}
-                                className="w-6 h-6 rounded object-contain bg-white"
+                                className="w-6 h-6 rounded object-contain bg-white dark:bg-gray-600"
                               />
                             ) : (
-                              <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
-                                <Building2 className="w-4 h-4 text-gray-500" />
+                              <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
+                                <Building2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                               </div>
                             )}
-                            <span className="text-sm text-gray-900 truncate">{getCompanyName(c)}</span>
+                            <span className="text-sm text-gray-900 dark:text-gray-50 truncate">{getCompanyName(c)}</span>
                           </button>
                         ))
                       ) : (
-                        <div className="p-3 text-center text-gray-500 text-sm">
+                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
                           No organizations found
                         </div>
                       )}
@@ -400,25 +400,25 @@ export default function CompanyEditModal({
                   </div>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Select if this organization is a subsidiary or division of another
               </p>
             </div>
-            
+
             {/* Investors selection */}
             <div>
               <label className="label flex items-center">
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Investors
               </label>
-              
+
               {/* Selected investors */}
               {selectedInvestors.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-2">
                   {selectedInvestors.map((investor) => (
                     <div
                       key={`${investor.type}-${investor.id}`}
-                      className="flex items-center gap-1.5 bg-gray-100 rounded-full pl-1 pr-2 py-1"
+                      className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 rounded-full pl-1 pr-2 py-1"
                     >
                       {investor.thumbnail ? (
                         <img
@@ -427,21 +427,21 @@ export default function CompanyEditModal({
                           className={`w-5 h-5 object-cover ${investor.type === 'person' ? 'rounded-full' : 'rounded'}`}
                         />
                       ) : (
-                        <div className={`w-5 h-5 bg-gray-300 flex items-center justify-center ${investor.type === 'person' ? 'rounded-full' : 'rounded'}`}>
+                        <div className={`w-5 h-5 bg-gray-300 dark:bg-gray-600 flex items-center justify-center ${investor.type === 'person' ? 'rounded-full' : 'rounded'}`}>
                           {investor.type === 'person' ? (
-                            <User className="w-3 h-3 text-gray-500" />
+                            <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                           ) : (
-                            <Building2 className="w-3 h-3 text-gray-500" />
+                            <Building2 className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                           )}
                         </div>
                       )}
-                      <span className="text-sm text-gray-700">{investor.name}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-200">{investor.name}</span>
                       <button
                         type="button"
-                        onClick={() => setSelectedInvestors(prev => 
+                        onClick={() => setSelectedInvestors(prev =>
                           prev.filter(inv => !(inv.id === investor.id && inv.type === investor.type))
                         )}
-                        className="ml-1 text-gray-400 hover:text-gray-600"
+                        className="ml-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                         disabled={isLoading}
                       >
                         <X className="w-3.5 h-3.5" />
@@ -455,17 +455,17 @@ export default function CompanyEditModal({
                 <button
                   type="button"
                   onClick={() => setIsInvestorsDropdownOpen(!isInvestorsDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   disabled={isLoadingCompanies || isLoadingPeople || isLoading}
                 >
-                  <span className="text-gray-400">Add investor...</span>
+                  <span className="text-gray-400 dark:text-gray-500">Add investor...</span>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isInvestorsDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-                
+
                 {isInvestorsDropdownOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-hidden">
                     {/* Search input */}
-                    <div className="p-2 border-b border-gray-100">
+                    <div className="p-2 border-b border-gray-100 dark:border-gray-700">
                       <div className="relative">
                         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
@@ -473,15 +473,15 @@ export default function CompanyEditModal({
                           value={investorsSearchQuery}
                           onChange={(e) => setInvestorsSearchQuery(e.target.value)}
                           placeholder="Search people and organizations..."
-                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-primary-500"
                           autoFocus
                         />
                       </div>
                     </div>
-                    
+
                     <div className="overflow-y-auto max-h-48">
                       {(isLoadingCompanies || isLoadingPeople) ? (
-                        <div className="p-3 text-center text-gray-500 text-sm">
+                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
                           Loading...
                         </div>
                       ) : availableInvestors.length > 0 ? (
@@ -493,7 +493,7 @@ export default function CompanyEditModal({
                               setSelectedInvestors(prev => [...prev, item]);
                               setInvestorsSearchQuery('');
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           >
                             {item.thumbnail ? (
                               <img
@@ -502,24 +502,24 @@ export default function CompanyEditModal({
                                 className={`w-6 h-6 object-cover ${item.type === 'person' ? 'rounded-full' : 'rounded'}`}
                               />
                             ) : (
-                              <div className={`w-6 h-6 bg-gray-200 flex items-center justify-center ${item.type === 'person' ? 'rounded-full' : 'rounded'}`}>
+                              <div className={`w-6 h-6 bg-gray-200 dark:bg-gray-600 flex items-center justify-center ${item.type === 'person' ? 'rounded-full' : 'rounded'}`}>
                                 {item.type === 'person' ? (
-                                  <User className="w-4 h-4 text-gray-500" />
+                                  <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                 ) : (
-                                  <Building2 className="w-4 h-4 text-gray-500" />
+                                  <Building2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                 )}
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <span className="text-sm text-gray-900 truncate block">{item.name}</span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-sm text-gray-900 dark:text-gray-50 truncate block">{item.name}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
                                 {item.type === 'person' ? 'Person' : 'Organization'}
                               </span>
                             </div>
                           </button>
                         ))
                       ) : (
-                        <div className="p-3 text-center text-gray-500 text-sm">
+                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
                           {investorsSearchQuery ? 'No results found' : 'No people or organizations available'}
                         </div>
                       )}
@@ -527,7 +527,7 @@ export default function CompanyEditModal({
                   </div>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Select people or organizations that have invested in this company
               </p>
             </div>
@@ -544,7 +544,7 @@ export default function CompanyEditModal({
             />
           </div>
 
-          <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+          <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <button
               type="button"
               onClick={onClose}
