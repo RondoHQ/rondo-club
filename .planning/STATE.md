@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 Milestone: v3.8 Theme Customization
 Phase: 44 of 46 (Dark Mode)
-Plan: 1 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: In progress
-Last activity: 2026-01-15 — Completed 44-01-PLAN.md
+Last activity: 2026-01-15 — Completed 44-02-PLAN.md
 
-Progress: [███░░░░░░░] 2/4 phases partial (30%)
+Progress: [████░░░░░░] 2/4 phases partial (40%)
 
 ## Completed Milestones
 
@@ -111,5 +111,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:execute-plan 44-02` — Execute Core Pages dark mode plan
+- `/gsd:execute-plan 44-03` — Execute Modals dark mode plan
+- `/gsd:execute-plan 44-04` — Execute Utility Components dark mode plan
 - Run `wp prm todos migrate-persons` on production after deployment
