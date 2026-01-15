@@ -40,14 +40,14 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading, currentP
           {selectedPeople.map(person => (
             <span
               key={person.id}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 rounded-full text-sm"
             >
               {getPersonName(person)}
               {person.id !== currentPersonId && (
                 <button
                   type="button"
                   onClick={() => handleRemove(person.id)}
-                  className="hover:text-primary-600"
+                  className="hover:text-primary-600 dark:hover:text-primary-400"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -68,7 +68,7 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading, currentP
         />
 
         {searchTerm && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
             {filteredPeople.length > 0 ? (
               filteredPeople.map(person => (
                 <button
@@ -76,7 +76,7 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading, currentP
                   type="button"
                   onClick={() => handleAdd(person.id)}
                   disabled={value.includes(person.id)}
-                  className={`w-full text-left px-4 py-2 hover:bg-gray-50 ${
+                  className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-50 ${
                     value.includes(person.id) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
@@ -84,7 +84,7 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading, currentP
                 </button>
               ))
             ) : (
-              <p className="px-4 py-2 text-gray-500 text-sm">No people found</p>
+              <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">No people found</p>
             )}
           </div>
         )}
@@ -268,12 +268,12 @@ export default function ImportantDateModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{isEditing ? 'Edit date' : 'Add date'}</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit date' : 'Add date'}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
@@ -324,7 +324,7 @@ export default function ImportantDateModal({
                 )}
               />
               {errors.date_type && (
-                <p className="text-sm text-red-600 mt-1">{errors.date_type.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.date_type.message}</p>
               )}
             </div>
 
@@ -339,7 +339,7 @@ export default function ImportantDateModal({
                 placeholder="e.g., Mom's Birthday"
                 disabled={isLoading}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Auto-generated from person and date type. You can customize it.
               </p>
             </div>
@@ -354,7 +354,7 @@ export default function ImportantDateModal({
                 disabled={isLoading}
               />
               {errors.date_value && (
-                <p className="text-sm text-red-600 mt-1">{errors.date_value.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.date_value.message}</p>
               )}
             </div>
 
@@ -364,10 +364,10 @@ export default function ImportantDateModal({
                 type="checkbox"
                 id="year_unknown"
                 {...register('year_unknown')}
-                className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
                 disabled={isLoading}
               />
-              <label htmlFor="year_unknown" className="ml-2 text-sm text-gray-700 cursor-pointer">
+              <label htmlFor="year_unknown" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                 Year unknown
               </label>
             </div>
@@ -378,16 +378,16 @@ export default function ImportantDateModal({
                 type="checkbox"
                 id="is_recurring"
                 {...register('is_recurring')}
-                className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
                 disabled={isLoading}
               />
-              <label htmlFor="is_recurring" className="ml-2 text-sm text-gray-700 cursor-pointer">
+              <label htmlFor="is_recurring" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                 Repeats every year
               </label>
             </div>
           </div>
           
-          <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+          <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <button
               type="button"
               onClick={onClose}

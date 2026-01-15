@@ -202,12 +202,12 @@ export default function PersonEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{isEditing ? 'Edit person' : 'Add person'}</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit person' : 'Add person'}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
@@ -222,10 +222,10 @@ export default function PersonEditModal({
                 <div
                   className={`relative rounded-lg border-2 border-dashed p-3 text-center transition-colors ${
                     dragActive
-                      ? 'border-primary-500 bg-primary-50'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
                       : vcardFile && !vcardError
-                      ? 'border-green-300 bg-green-50'
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/30'
+                      : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'
                   }`}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
@@ -242,13 +242,13 @@ export default function PersonEditModal({
                   
                   {parseVcardMutation.isPending ? (
                     <div className="flex items-center justify-center gap-2 py-1">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
-                      <span className="text-sm text-gray-600">Parsing vCard...</span>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 dark:border-primary-400"></div>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Parsing vCard...</span>
                     </div>
                   ) : vcardFile && !vcardError ? (
                     <div className="flex items-center justify-center gap-2 py-1">
-                      <FileCode className="h-4 w-4 text-green-600" />
-                      <span className="text-sm text-green-700">Loaded from {vcardFile.name}</span>
+                      <FileCode className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span className="text-sm text-green-700 dark:text-green-400">Loaded from {vcardFile.name}</span>
                       <button
                         type="button"
                         onClick={(e) => {
@@ -256,23 +256,23 @@ export default function PersonEditModal({
                           e.stopPropagation();
                           clearVcard();
                         }}
-                        className="ml-1 p-0.5 hover:bg-green-100 rounded"
+                        className="ml-1 p-0.5 hover:bg-green-100 dark:hover:bg-green-900/50 rounded"
                       >
-                        <X className="h-3 w-3 text-green-600" />
+                        <X className="h-3 w-3 text-green-600 dark:text-green-400" />
                       </button>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center gap-2 py-1">
                       <Upload className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        Drop a vCard or <span className="text-primary-600">browse</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        Drop a vCard or <span className="text-primary-600 dark:text-primary-400">browse</span>
                       </span>
                     </div>
                   )}
                 </div>
                 
                 {vcardError && (
-                  <div className="mt-2 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 rounded-lg p-2">
+                  <div className="mt-2 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-lg p-2">
                     <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
                     <span>{vcardError}</span>
                   </div>
@@ -292,7 +292,7 @@ export default function PersonEditModal({
                   autoFocus
                 />
                 {errors.first_name && (
-                  <p className="text-sm text-red-600 mt-1">{errors.first_name.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.first_name.message}</p>
                 )}
               </div>
               
@@ -358,7 +358,7 @@ export default function PersonEditModal({
                   placeholder="john@example.com"
                   disabled={isLoading}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Gravatar will be auto-fetched if available
                 </p>
               </div>
@@ -430,16 +430,16 @@ export default function PersonEditModal({
                 type="checkbox"
                 id="is_favorite"
                 {...register('is_favorite')}
-                className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
                 disabled={isLoading}
               />
-              <label htmlFor="is_favorite" className="ml-2 text-sm text-gray-700 cursor-pointer">
+              <label htmlFor="is_favorite" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                 Mark as favorite
               </label>
             </div>
           </div>
           
-          <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+          <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <button
               type="button"
               onClick={onClose}
