@@ -1693,6 +1693,47 @@ if (defined('WP_CLI') && WP_CLI) {
 
             WP_CLI::success('Auto-logging complete. Check error log for details.');
         }
+
+        /**
+         * Re-match calendar events against contacts
+         *
+         * Invalidates the email lookup cache and re-matches all calendar events
+         * against the user's contacts. Useful after adding new email addresses
+         * to contacts or after bulk imports.
+         *
+         * ## OPTIONS
+         *
+         * [--user=<user_id>]
+         * : User ID to re-match events for (required)
+         *
+         * ## EXAMPLES
+         *
+         *     wp prm calendar rematch --user=1
+         *
+         * @when after_wp_load
+         */
+        public function rematch($args, $assoc_args) {
+            $user_id = isset($assoc_args['user']) ? (int) $assoc_args['user'] : 0;
+
+            if (!$user_id) {
+                WP_CLI::error('No user ID provided. Use --user=ID');
+                return;
+            }
+
+            $user = get_user_by('ID', $user_id);
+            if (!$user) {
+                WP_CLI::error("User {$user_id} not found.");
+                return;
+            }
+
+            WP_CLI::log("Invalidating email cache for user {$user_id}...");
+            PRM_Calendar_Matcher::invalidate_cache($user_id);
+
+            WP_CLI::log("Re-matching calendar events for user {$user_id}...");
+            $count = PRM_Calendar_Matcher::rematch_events_for_user($user_id);
+
+            WP_CLI::success("Re-matched {$count} calendar events for user {$user->display_name}.");
+        }
     }
 
     /**

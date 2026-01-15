@@ -368,27 +368,3 @@ class PRM_Calendar_Matcher {
         ];
     }
 }
-
-// Register WP-CLI command for manual calendar re-matching
-if (defined('WP_CLI') && WP_CLI) {
-    WP_CLI::add_command('prm calendar rematch', function($args, $assoc_args) {
-        $user_id = isset($assoc_args['user']) ? (int) $assoc_args['user'] : get_current_user_id();
-
-        if (!$user_id) {
-            WP_CLI::error('No user ID provided. Use --user=ID');
-        }
-
-        $user = get_user_by('ID', $user_id);
-        if (!$user) {
-            WP_CLI::error("User {$user_id} not found.");
-        }
-
-        WP_CLI::log("Invalidating email cache for user {$user_id}...");
-        PRM_Calendar_Matcher::invalidate_cache($user_id);
-
-        WP_CLI::log("Re-matching calendar events for user {$user_id}...");
-        $count = PRM_Calendar_Matcher::rematch_events_for_user($user_id);
-
-        WP_CLI::success("Re-matched {$count} calendar events for user {$user->display_name}.");
-    });
-}
