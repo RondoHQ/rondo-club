@@ -508,7 +508,7 @@ export default function Settings() {
                 className={`
                   flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
                   ${isActive
-                    ? 'border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                    ? 'border-accent-500 text-accent-600 dark:border-accent-400 dark:text-accent-400'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'}
                 `}
               >
@@ -902,7 +902,7 @@ function NotificationsTab({
                 disabled={savingChannels}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
             </label>
           </div>
           
@@ -920,7 +920,7 @@ function NotificationsTab({
                 disabled={savingChannels || !slackConnected}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
             </label>
           </div>
           
@@ -1181,19 +1181,19 @@ function DataTab() {
                   onClick={() => setActiveImportType(type.id)}
                   className={`group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
                     isActive
-                      ? 'border-primary-500 text-primary-600'
+                      ? 'border-accent-500 text-accent-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   <Icon
                     className={`mr-2 h-5 w-5 ${
-                      isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
+                      isActive ? 'text-accent-500' : 'text-gray-400 group-hover:text-gray-500'
                     }`}
                   />
                   <div className="text-left">
                     <span className="block">{type.name}</span>
                     <span className={`block text-xs font-normal ${
-                      isActive ? 'text-primary-400' : 'text-gray-400'
+                      isActive ? 'text-accent-400' : 'text-gray-400'
                     }`}>
                       {type.description}
                     </span>
@@ -1220,8 +1220,8 @@ function DataTab() {
             onClick={() => handleExport('vcard')}
             className="w-full p-4 rounded-lg border border-gray-200 hover:bg-gray-50 text-left flex items-center gap-4"
           >
-            <div className="p-3 bg-primary-50 rounded-lg">
-              <FileCode className="w-6 h-6 text-primary-600" />
+            <div className="p-3 bg-accent-50 rounded-lg">
+              <FileCode className="w-6 h-6 text-accent-600" />
             </div>
             <div className="flex-1">
               <p className="font-medium">Export as vCard (.vcf)</p>
@@ -1236,8 +1236,8 @@ function DataTab() {
             onClick={() => handleExport('google-csv')}
             className="w-full p-4 rounded-lg border border-gray-200 hover:bg-gray-50 text-left flex items-center gap-4"
           >
-            <div className="p-3 bg-primary-50 rounded-lg">
-              <FileSpreadsheet className="w-6 h-6 text-primary-600" />
+            <div className="p-3 bg-accent-50 rounded-lg">
+              <FileSpreadsheet className="w-6 h-6 text-accent-600" />
             </div>
             <div className="flex-1">
               <p className="font-medium">Export as Google Contacts CSV</p>
