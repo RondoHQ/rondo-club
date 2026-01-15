@@ -48,7 +48,7 @@ Plans:
 **Research**: Unlikely (Tailwind dark: variants established)
 
 Plans:
-- [ ] 44-01: Foundation & Settings (CSS base, Layout, Settings Appearance with toggle)
+- [x] 44-01: Foundation & Settings (CSS base, Layout, Settings Appearance with toggle)
 - [ ] 44-02: Core Pages (Dashboard, People, Companies, Dates, Todos, Login)
 - [ ] 44-03: Modals & Timeline (All edit modals, Timeline components)
 - [ ] 44-04: Remaining Components (Workspaces, Settings sub-pages, Import wizards, Bulk modals)
@@ -457,6 +457,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
-| v3.8 Theme Customization | 43-46 | 1/? | In Progress | - |
+| v3.8 Theme Customization | 43-46 | 2/? | In Progress | - |
 
 **Shipped: 15 milestones, 42 phases, 76 plans**
