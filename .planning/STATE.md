@@ -83,7 +83,7 @@ Resume file: None
 
 ### Pending Todos
 
-21 todos in `.planning/todos/pending/`:
+22 todos in `.planning/todos/pending/`:
 1. ~~Add label management interface (ui)~~ — DONE in v3.4 Phase 37
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — DONE in v3.3
 3. Add import from Twenty CRM (api)
@@ -104,6 +104,7 @@ Resume file: None
 18. Fix React/DOM Node synchronization errors (ui)
 19. Fix recurring module MIME type errors (ui)
 20. Add wp-config.php constants installation documentation (docs)
+21. Restructure Settings with Connections tab and subtabs (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
