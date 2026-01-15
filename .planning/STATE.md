@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v3.8 Theme Customization
+**Current focus:** v4.0 Calendar Integration
 
 ## Current Position
 
-Milestone: v3.8 Theme Customization
-Phase: 46 of 46 (Polish)
-Plan: 1 of 1 in current phase
-Status: Plan 01 complete - Phase 46 complete - Milestone complete
-Last activity: 2026-01-15 — Completed 46-01 (Theme Polish with contrast fixes)
+Milestone: v4.0 Calendar Integration
+Phase: 47 of 55 (Infrastructure)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-15 — Milestone v4.0 created
 
-Progress: [██████████] 1/1 plans in Phase 46 (100%)
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -36,8 +36,9 @@ Progress: [██████████] 1/1 plans in Phase 46 (100%)
 | v3.5 Bug Fixes & Polish | 38-39 | 2 | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2 | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1 | 2026-01-15 |
+| v3.8 Theme Customization | 43-46 | 10 | 2026-01-15 |
 
-**Total:** 15 milestones, 42 phases, 76 plans completed
+**Total:** 16 milestones, 46 phases, 86 plans completed
 
 ## Deferred Issues
 
@@ -68,13 +69,14 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v3.6 archived: Git tag v3.6 created
 - Milestone v3.7 complete: Dashboard todo modal, view-first mode, tomorrow default
 - Milestone v3.7 archived: Git tag v3.7 created
-- Milestone v3.8 created: Theme Customization, 4 phases (Phase 43-46)
 - Milestone v3.8 complete: Color scheme toggle, accent color picker, dark mode contrast fixes
+- Milestone v3.8 archived: Git tag v3.8 created
+- Milestone v4.0 created: Calendar Integration, 9 phases (Phase 47-55)
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 45-04 execution - Phase 45 complete
+Stopped at: Milestone v4.0 initialization
 Resume file: None
 
 ## Accumulated Context
@@ -112,6 +114,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Milestone v3.8 Theme Customization complete (all 4 phases executed)
-- Next: Archive milestone, update version, create git tag
-- Run `wp prm todos migrate-persons` on production after deployment
+- Milestone v4.0 Calendar Integration created (9 phases)
+- Next: Plan Phase 47 (Infrastructure)
+- Run `/gsd:plan-phase 47` to break down the first phase

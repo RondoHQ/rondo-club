@@ -17,65 +17,144 @@
 - ✅ [v3.5 Bug Fixes & Polish](milestones/v3.5-bug-fixes-polish.md) (Phases 38-39) — SHIPPED 2026-01-14
 - ✅ [v3.6 Quick Wins & Performance](milestones/v3.6-quick-wins-performance.md) (Phases 40-41) — SHIPPED 2026-01-14
 - ✅ [v3.7 Todo UX Polish](milestones/v3.7-todo-ux-polish.md) (Phase 42) — SHIPPED 2026-01-15
-- 🚧 **v3.8 Theme Customization** — Phases 43-46 (in progress)
+- ✅ [v3.8 Theme Customization](milestones/v3.8-theme-customization.md) (Phases 43-46) — SHIPPED 2026-01-15
+- 🚧 **v4.0 Calendar Integration** — Phases 47-55 (in progress)
 
 ## Current Status
 
-**Active:** v3.8 Theme Customization (Phase 45 complete)
+**Active:** v4.0 Calendar Integration (Phase 47 ready to plan)
 
 ---
 
-### 🚧 v3.8 Theme Customization (In Progress)
+### 🚧 v4.0 Calendar Integration (In Progress)
+
+**Milestone Goal:** Connect calendars to auto-log meetings and surface upcoming meetings on contact profiles.
+
+**Reference:** `/Calendar-Integration-Implementation-Plan.md`
+
+#### Phase 47: Infrastructure
+
+**Goal**: calendar_event CPT, user meta helpers, REST endpoint structure
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (internal patterns - CPT, user meta, REST)
+**Plans**: TBD
+
+Plans:
+- [ ] 47-01: TBD (run /gsd:plan-phase 47 to break down)
+
+#### Phase 48: Google OAuth
+
+**Goal**: Credential encryption, OAuth2 flow, token storage/refresh
+**Depends on**: Phase 47
+**Research**: Likely (Google OAuth2 patterns, google/apiclient library)
+**Research topics**: Google OAuth2 flow, google/apiclient setup, token refresh patterns
+**Plans**: TBD
+
+Plans:
+- [ ] 48-01: TBD (run /gsd:plan-phase 48 to break down)
+
+#### Phase 49: Google Calendar Provider
+
+**Goal**: Sync logic, event upsert, attendee extraction
+**Depends on**: Phase 48
+**Research**: Likely (Google Calendar API)
+**Research topics**: Google Calendar API endpoints, event schema, attendee data
+**Plans**: TBD
+
+Plans:
+- [ ] 49-01: TBD (run /gsd:plan-phase 49 to break down)
+
+#### Phase 50: CalDAV Provider
+
+**Goal**: sabre/dav integration, generic CalDAV sync for iCloud/Outlook/Fastmail/Nextcloud
+**Depends on**: Phase 47
+**Research**: Likely (sabre/dav library, CalDAV protocol)
+**Research topics**: sabre/dav usage, CalDAV authentication, iCal parsing
+**Plans**: TBD
+
+Plans:
+- [ ] 50-01: TBD (run /gsd:plan-phase 50 to break down)
+
+#### Phase 51: Contact Matching
+
+**Goal**: Email-first algorithm, fuzzy name matching, transient cache optimization
+**Depends on**: Phase 49, Phase 50
+**Research**: Unlikely (internal algorithm work)
+**Plans**: TBD
+
+Plans:
+- [ ] 51-01: TBD (run /gsd:plan-phase 51 to break down)
+
+#### Phase 52: Settings UI
+
+**Goal**: Calendar connections page at /settings/calendars, add/edit/delete connections, sync status display
+**Depends on**: Phase 48
+**Research**: Unlikely (internal React patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 52-01: TBD (run /gsd:plan-phase 52 to break down)
+
+#### Phase 53: Person Meetings Section
+
+**Goal**: Upcoming/past meetings display in PersonDetail, "Log as Activity" functionality
+**Depends on**: Phase 51
+**Research**: Unlikely (internal React patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 53-01: TBD (run /gsd:plan-phase 53 to break down)
+
+#### Phase 54: Background Sync + Auto-Logging
+
+**Goal**: WP-Cron jobs for 15-minute sync, rate limiting, activity creation from past meetings
+**Depends on**: Phase 51
+**Research**: Unlikely (WP-Cron established patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 54-01: TBD (run /gsd:plan-phase 54 to break down)
+
+#### Phase 55: Dashboard Widget + Polish
+
+**Goal**: "Today's Meetings" widget above Favorites, testing, error handling
+**Depends on**: Phase 53
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 55-01: TBD (run /gsd:plan-phase 55 to break down)
+
+---
+
+<details>
+<summary>✅ v3.8 Theme Customization (Phases 43-46) — SHIPPED 2026-01-15</summary>
 
 **Milestone Goal:** User-configurable dark mode and accent color selection with full accessibility compliance.
 
 **PRD:** /Multi-Color.md
 
-#### Phase 43: Infrastructure ✓
+**Result:** Color scheme toggle (Light/Dark/System), accent color picker with 4 colors, dark mode contrast fixes
 
-**Goal**: CSS custom properties, Tailwind config with accent-* colors, useTheme hook, theme preferences API endpoint
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal patterns, Tailwind config)
-**Result**: CSS custom properties, Tailwind accent-* utilities, useTheme hook, REST API endpoints
+**Phases:**
+- [x] Phase 43: Infrastructure (1/1 plan) ✓
+- [x] Phase 44: Dark Mode (4/4 plans) ✓
+- [x] Phase 45: Accent Colors (4/4 plans) ✓
+- [x] Phase 46: Polish (1/1 plan) ✓
 
-Plans:
-- [x] 43-01: Theme Infrastructure (CSS vars, Tailwind config, useTheme hook, REST API)
+**Total:** 4 phases, 10 plans
 
-#### Phase 44: Dark Mode ✓
+**Key Accomplishments:**
+- CSS custom properties with Tailwind accent-* utilities
+- useTheme hook with localStorage caching
+- Dark mode support across all components
+- Accent color picker in Settings Appearance
+- Smooth theme transitions respecting prefers-reduced-motion
+- Dark mode contrast fixes for menus, icons, and overdue items
 
-**Goal**: Add dark: variants to all components, color scheme toggle in settings, localStorage caching, test all pages
-**Depends on**: Phase 43
-**Research**: Unlikely (Tailwind dark: variants established)
-**Result**: Full dark mode support across all components, Settings Appearance toggle with Light/Dark/System options
+See [milestone archive](milestones/v3.8-theme-customization.md) for full details.
 
-Plans:
-- [x] 44-01: Foundation & Settings (CSS base, Layout, Settings Appearance with toggle)
-- [x] 44-02: Core Pages (Dashboard, People, Companies, Dates, Todos, Login)
-- [x] 44-03: Modals & Timeline (All edit modals, Timeline components)
-- [x] 44-04: Remaining Components (Workspaces, Settings sub-pages, Import wizards, Bulk modals)
-
-#### Phase 45: Accent Colors ✓
-
-**Goal**: Replace hardcoded orange classes with accent-*, implement color picker in settings, validate accessibility
-**Depends on**: Phase 44
-**Research**: Unlikely (internal class replacement)
-**Result**: Accent color picker in Settings, all components migrated to accent-* utilities
-
-Plans:
-- [x] 45-01: Settings UI & CSS (accent picker, component classes)
-- [x] 45-02: Core Pages (Dashboard, People, Companies, Dates, Todos, Login)
-- [x] 45-03: Detail Pages (PersonDetail, CompanyDetail, FamilyTree, Layout, Settings)
-- [x] 45-04: Remaining Components (Timeline, modals, Workspaces, imports)
-
-#### Phase 46: Polish
-
-**Goal**: Smooth transitions (respect prefers-reduced-motion), edge cases, QA testing across all 24 theme combinations
-**Depends on**: Phase 45
-**Research**: Unlikely (CSS transitions, testing)
-**Plans**: TBD
-
-Plans:
-- [ ] 46-01: TBD (run /gsd:plan-phase 46 to break down)
+</details>
 
 ---
 
@@ -461,6 +540,7 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
-| v3.8 Theme Customization | 43-46 | 9/? | In Progress | - |
+| v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
+| v4.0 Calendar Integration | 47-55 | 0/? | In Progress | - |
 
-**Shipped: 15 milestones, 42 phases, 76 plans**
+**Shipped: 16 milestones, 46 phases, 86 plans**
