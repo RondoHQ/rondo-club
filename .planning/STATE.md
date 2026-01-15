@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Milestone: v4.0 Calendar Integration
-Phase: 50 of 55 (CalDAV Provider)
+Phase: 51 of 55 (Contact Matching)
 Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-15 — Completed 50-01-PLAN.md
+Last activity: 2026-01-15 — Completed 51-01-PLAN.md
 
-Progress: █████░░░░░ 56%
+Progress: ██████░░░░ 60%
 
 ## Completed Milestones
 
@@ -115,9 +115,9 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Phase 50-01 (CalDAV Provider) complete
-- PRM_CalDAV_Provider class syncs events from CalDAV servers (iCloud, Fastmail, Nextcloud)
-- test_caldav REST endpoint validates credentials and discovers calendars
-- trigger_sync REST endpoint works for both Google and CalDAV connections
-- Events stored with same metadata format as Google provider
-- Ready for Phase 51 (Contact Matching) or Phase 52 (Settings UI)
+- Phase 51-01 (Contact Matching) complete
+- PRM_Calendar_Matcher class with email-first matching and fuzzy name fallback
+- Email lookup cache using transients with 24h expiration
+- Both Google and CalDAV providers now store _matched_people on sync
+- GET /prm/v1/people/{id}/meetings endpoint returns person's calendar events
+- Ready for Phase 52 (Settings UI) or Phase 53 (Person Meetings Section)

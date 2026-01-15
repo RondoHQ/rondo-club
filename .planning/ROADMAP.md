@@ -74,15 +74,15 @@ Plans:
 Plans:
 - [x] 50-01: CalDAV provider (PRM_CalDAV_Provider, test_caldav, sync for iCloud/Fastmail/Nextcloud)
 
-#### Phase 51: Contact Matching
+#### Phase 51: Contact Matching (Complete)
 
 **Goal**: Email-first algorithm, fuzzy name matching, transient cache optimization
 **Depends on**: Phase 49, Phase 50
 **Research**: Unlikely (internal algorithm work)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 51-01: TBD (run /gsd:plan-phase 51 to break down)
+- [x] 51-01: Contact matching (PRM_Calendar_Matcher class, provider integration, meetings endpoint)
 
 #### Phase 52: Settings UI
 
@@ -540,6 +540,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
-| v4.0 Calendar Integration | 47-55 | 5/? | In Progress | - |
+| v4.0 Calendar Integration | 47-55 | 6/? | In Progress | - |
 
 **Shipped: 16 milestones, 46 phases, 88 plans**
