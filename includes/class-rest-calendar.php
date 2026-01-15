@@ -435,17 +435,65 @@ class PRM_REST_Calendar extends PRM_REST_Base {
     }
 
     /**
-     * Trigger manual sync for a connection (stub)
+     * Trigger manual sync for a connection
      *
      * @param WP_REST_Request $request The REST request object.
-     * @return WP_Error Always returns 501 - will be implemented in Phase 49/50.
+     * @return WP_REST_Response|WP_Error Response with sync results or error.
      */
     public function trigger_sync($request) {
-        return new WP_Error(
-            'not_implemented',
-            __('Calendar sync is not yet implemented.', 'personal-crm'),
-            ['status' => 501]
-        );
+        $user_id = get_current_user_id();
+        $connection_id = $request->get_param('id');
+
+        // Get connection
+        $connection = PRM_Calendar_Connections::get_connection($user_id, $connection_id);
+        if (!$connection) {
+            return new WP_Error('not_found', __('Connection not found.', 'personal-crm'), ['status' => 404]);
+        }
+
+        // Check provider
+        $provider = $connection['provider'] ?? '';
+        if ($provider === 'caldav') {
+            return new WP_Error(
+                'not_implemented',
+                __('CalDAV sync is not yet implemented.', 'personal-crm'),
+                ['status' => 501]
+            );
+        }
+
+        if ($provider !== 'google') {
+            return new WP_Error(
+                'invalid_provider',
+                __('Unknown calendar provider.', 'personal-crm'),
+                ['status' => 400]
+            );
+        }
+
+        // Add user_id to connection for token refresh
+        $connection['user_id'] = $user_id;
+
+        try {
+            $result = PRM_Google_Calendar_Provider::sync($user_id, $connection);
+
+            // Update last_sync timestamp and clear error
+            PRM_Calendar_Connections::update_connection($user_id, $connection_id, [
+                'last_sync'  => current_time('c'),
+                'last_error' => null,
+            ]);
+
+            return rest_ensure_response([
+                'message' => __('Sync completed successfully.', 'personal-crm'),
+                'created' => $result['created'],
+                'updated' => $result['updated'],
+                'total'   => $result['total'],
+            ]);
+        } catch (Exception $e) {
+            // Update last_error
+            PRM_Calendar_Connections::update_connection($user_id, $connection_id, [
+                'last_error' => $e->getMessage(),
+            ]);
+
+            return new WP_Error('sync_failed', $e->getMessage(), ['status' => 500]);
+        }
     }
 
     /**
@@ -568,17 +616,82 @@ class PRM_REST_Calendar extends PRM_REST_Base {
     }
 
     /**
-     * Get cached calendar events (stub)
+     * Get cached calendar events
      *
      * @param WP_REST_Request $request The REST request object.
-     * @return WP_Error Always returns 501 - will be implemented in Phase 51.
+     * @return WP_REST_Response Response with array of events.
      */
     public function get_events($request) {
-        return new WP_Error(
-            'not_implemented',
-            __('Calendar events sync is not yet implemented.', 'personal-crm'),
-            ['status' => 501]
-        );
+        $user_id = get_current_user_id();
+
+        // Build query args
+        $args = [
+            'post_type'      => 'calendar_event',
+            'author'         => $user_id,
+            'posts_per_page' => 100,
+            'orderby'        => 'meta_value',
+            'meta_key'       => '_start_time',
+            'order'          => 'ASC',
+        ];
+
+        // Build meta query for date filtering
+        $meta_query = [];
+
+        // Filter by 'from' date
+        $from = $request->get_param('from');
+        if ($from) {
+            $meta_query[] = [
+                'key'     => '_start_time',
+                'value'   => sanitize_text_field($from),
+                'compare' => '>=',
+                'type'    => 'DATE',
+            ];
+        }
+
+        // Filter by 'to' date
+        $to = $request->get_param('to');
+        if ($to) {
+            $meta_query[] = [
+                'key'     => '_start_time',
+                'value'   => sanitize_text_field($to) . ' 23:59:59',
+                'compare' => '<=',
+                'type'    => 'DATETIME',
+            ];
+        }
+
+        if (!empty($meta_query)) {
+            $meta_query['relation'] = 'AND';
+            $args['meta_query'] = $meta_query;
+        }
+
+        // Execute query
+        $query = new WP_Query($args);
+
+        // Map results to response format
+        $events = array_map(function($post) {
+            $attendees_json = get_post_meta($post->ID, '_attendees', true);
+            $attendees = $attendees_json ? json_decode($attendees_json, true) : [];
+
+            return [
+                'id'            => $post->ID,
+                'title'         => $post->post_title,
+                'description'   => $post->post_content,
+                'start_time'    => get_post_meta($post->ID, '_start_time', true),
+                'end_time'      => get_post_meta($post->ID, '_end_time', true),
+                'all_day'       => (bool) get_post_meta($post->ID, '_all_day', true),
+                'location'      => get_post_meta($post->ID, '_location', true),
+                'meeting_url'   => get_post_meta($post->ID, '_meeting_url', true),
+                'organizer'     => get_post_meta($post->ID, '_organizer_email', true),
+                'attendees'     => is_array($attendees) ? $attendees : [],
+                'connection_id' => get_post_meta($post->ID, '_connection_id', true),
+                'calendar_id'   => get_post_meta($post->ID, '_calendar_id', true),
+            ];
+        }, $query->posts);
+
+        return rest_ensure_response([
+            'events' => $events,
+            'total'  => count($events),
+        ]);
     }
 
     /**
