@@ -230,4 +230,8 @@ export const prmApi = {
 
   // iCal feed
   getIcalUrl: () => api.get('/prm/v1/user/ical-url'),
+
+  // Theme preferences
+  getThemePreferences: () => api.get('/prm/v1/user/theme-preferences'),
+  updateThemePreferences: (prefs) => api.patch('/prm/v1/user/theme-preferences', prefs),
 };
