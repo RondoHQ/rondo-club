@@ -2116,18 +2116,18 @@ export default function PersonDetail() {
                           ) : todo.status === 'awaiting' ? (
                             <Clock className="w-5 h-5 text-orange-500" />
                           ) : (
-                            <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
+                            <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'}`} />
                           )}
                         </button>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm ${
                             todo.status === 'completed'
-                              ? 'line-through text-gray-400'
+                              ? 'line-through text-gray-400 dark:text-gray-500'
                               : todo.status === 'awaiting'
-                              ? 'text-orange-700'
+                              ? 'text-orange-700 dark:text-orange-400'
                               : isOverdue
-                              ? 'text-red-600'
-                              : ''
+                              ? 'text-red-600 dark:text-red-300'
+                              : 'dark:text-gray-100'
                           }`}>
                             {todo.content}
                           </p>
@@ -2139,7 +2139,7 @@ export default function PersonDetail() {
                           )}
                           {/* Due date - only show for open todos */}
                           {todo.due_date && todo.status === 'open' && (
-                            <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                            <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                               Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
                               {isOverdue && ' (overdue)'}
                             </p>
@@ -2304,18 +2304,18 @@ export default function PersonDetail() {
                           ) : todo.status === 'awaiting' ? (
                             <Clock className="w-5 h-5 text-orange-500" />
                           ) : (
-                            <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
+                            <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'}`} />
                           )}
                         </button>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm ${
                             todo.status === 'completed'
-                              ? 'line-through text-gray-400'
+                              ? 'line-through text-gray-400 dark:text-gray-500'
                               : todo.status === 'awaiting'
-                              ? 'text-orange-700'
+                              ? 'text-orange-700 dark:text-orange-400'
                               : isOverdue
-                              ? 'text-red-600'
-                              : ''
+                              ? 'text-red-600 dark:text-red-300'
+                              : 'dark:text-gray-100'
                           }`}>
                             {todo.content}
                           </p>
@@ -2327,7 +2327,7 @@ export default function PersonDetail() {
                           )}
                           {/* Due date - only show for open todos */}
                           {todo.due_date && todo.status === 'open' && (
-                            <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                            <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                               Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
                               {isOverdue && ' (overdue)'}
                             </p>
