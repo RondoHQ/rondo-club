@@ -452,15 +452,8 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
         // Check provider
         $provider = $connection['provider'] ?? '';
-        if ($provider === 'caldav') {
-            return new WP_Error(
-                'not_implemented',
-                __('CalDAV sync is not yet implemented.', 'personal-crm'),
-                ['status' => 501]
-            );
-        }
 
-        if ($provider !== 'google') {
+        if (!in_array($provider, ['google', 'caldav'], true)) {
             return new WP_Error(
                 'invalid_provider',
                 __('Unknown calendar provider.', 'personal-crm'),
@@ -468,11 +461,16 @@ class PRM_REST_Calendar extends PRM_REST_Base {
             );
         }
 
-        // Add user_id to connection for token refresh
+        // Add user_id to connection for token refresh (Google provider)
         $connection['user_id'] = $user_id;
 
         try {
-            $result = PRM_Google_Calendar_Provider::sync($user_id, $connection);
+            // Route to appropriate provider
+            if ($provider === 'caldav') {
+                $result = PRM_CalDAV_Provider::sync($user_id, $connection);
+            } else {
+                $result = PRM_Google_Calendar_Provider::sync($user_id, $connection);
+            }
 
             // Update last_sync timestamp and clear error
             PRM_Calendar_Connections::update_connection($user_id, $connection_id, [
@@ -602,17 +600,42 @@ class PRM_REST_Calendar extends PRM_REST_Base {
     }
 
     /**
-     * Test CalDAV credentials (stub)
+     * Test CalDAV credentials
+     *
+     * Tests the provided CalDAV URL, username, and password by attempting
+     * to discover available calendars on the server.
      *
      * @param WP_REST_Request $request The REST request object.
-     * @return WP_Error Always returns 501 - will be implemented in Phase 50.
+     * @return WP_REST_Response|WP_Error Response with calendars or error.
      */
     public function test_caldav($request) {
-        return new WP_Error(
-            'not_implemented',
-            __('CalDAV test is not yet implemented.', 'personal-crm'),
-            ['status' => 501]
-        );
+        $url = $request->get_param('url');
+        $username = $request->get_param('username');
+        $password = $request->get_param('password');
+
+        // Validate required parameters
+        if (empty($url)) {
+            return new WP_Error('missing_url', __('CalDAV server URL is required.', 'personal-crm'), ['status' => 400]);
+        }
+        if (empty($username)) {
+            return new WP_Error('missing_username', __('Username is required.', 'personal-crm'), ['status' => 400]);
+        }
+        if (empty($password)) {
+            return new WP_Error('missing_password', __('Password is required.', 'personal-crm'), ['status' => 400]);
+        }
+
+        // Test the connection
+        $result = PRM_CalDAV_Provider::test_connection($url, $username, $password);
+
+        if (!$result['success']) {
+            return new WP_Error('connection_failed', $result['error'], ['status' => 400]);
+        }
+
+        return rest_ensure_response([
+            'success'   => true,
+            'calendars' => $result['calendars'],
+            'message'   => $result['message'] ?? __('Connection successful.', 'personal-crm'),
+        ]);
     }
 
     /**
