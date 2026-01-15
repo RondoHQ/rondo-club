@@ -83,7 +83,7 @@ Resume file: None
 
 ### Pending Todos
 
-26 todos in `.planning/todos/pending/`:
+27 todos in `.planning/todos/pending/`:
 1. ~~Add label management interface (ui)~~ — DONE in v3.4 Phase 37
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — DONE in v3.3
 3. Add import from Twenty CRM (api)
@@ -109,6 +109,7 @@ Resume file: None
 23. Re-run meetings matching when email address added (api)
 24. Match events against all person email addresses (api)
 25. Update favicon to match current color scheme (ui)
+26. Fix Today's meetings layout and timezone display (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
