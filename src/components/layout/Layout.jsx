@@ -47,17 +47,17 @@ const navigation = [
 
 function Sidebar({ mobile = false, onClose }) {
   const { logoutUrl } = useAuth();
-  
+
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200">
+    <div className="flex flex-col h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-        <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary-600">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+        <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary-600 dark:text-primary-400">
           <Sparkles className="w-5 h-5" />
           {APP_NAME}
         </Link>
         {mobile && (
-          <button onClick={onClose} className="p-2 -mr-2">
+          <button onClick={onClose} className="p-2 -mr-2 dark:text-gray-300">
             <X className="w-5 h-5" />
           </button>
         )}
@@ -73,8 +73,8 @@ function Sidebar({ mobile = false, onClose }) {
             className={({ isActive }) =>
               `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                 isActive
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
+                  : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
               }`
             }
           >
@@ -85,10 +85,10 @@ function Sidebar({ mobile = false, onClose }) {
       </nav>
       
       {/* Logout */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <a
           href={logoutUrl}
-          className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700"
         >
           <LogOut className="w-5 h-5 mr-3" />
           Log Out
@@ -129,7 +129,7 @@ function UserMenu() {
   if (isLoading || !user) {
     return (
       <div className="flex items-center ml-auto">
-        <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+        <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse dark:bg-gray-700"></div>
       </div>
     );
   }
@@ -145,7 +145,7 @@ function UserMenu() {
     <div className="relative ml-auto" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors dark:hover:bg-gray-700"
         aria-label="User menu"
       >
         {user.avatar_url ? (
@@ -155,21 +155,21 @@ function UserMenu() {
             className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
-          <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-            <span className="text-sm font-medium text-primary-700">{initials}</span>
+          <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center dark:bg-primary-900">
+            <span className="text-sm font-medium text-primary-700 dark:text-primary-300">{initials}</span>
           </div>
         )}
-        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform dark:text-gray-400 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      
+
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 dark:bg-gray-800 dark:border-gray-700">
           <div className="py-1">
             <a
               href={user.profile_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700"
               onClick={() => setIsOpen(false)}
             >
               <User className="w-4 h-4 mr-2" />
@@ -180,7 +180,7 @@ function UserMenu() {
                 href={user.admin_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700"
                 onClick={() => setIsOpen(false)}
               >
                 <Settings className="w-4 h-4 mr-2" />
@@ -274,9 +274,9 @@ function SearchModal({ isOpen, onClose }) {
       
       {/* Modal */}
       <div className="relative min-h-screen flex items-start justify-center pt-[15vh] px-4">
-        <div className="relative w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden">
+        <div className="relative w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden dark:bg-gray-800">
           {/* Search input */}
-          <div className="flex items-center px-4 border-b border-gray-200">
+          <div className="flex items-center px-4 border-b border-gray-200 dark:border-gray-700">
             <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
             <input
               ref={inputRef}
@@ -285,11 +285,11 @@ function SearchModal({ isOpen, onClose }) {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search people & organizations..."
-              className="flex-1 px-4 py-4 text-lg outline-none placeholder:text-gray-400"
+              className="flex-1 px-4 py-4 text-lg outline-none placeholder:text-gray-400 bg-transparent dark:text-gray-100"
               autoComplete="off"
             />
             <div className="flex items-center gap-1 text-xs text-gray-400">
-              <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 font-mono">esc</kbd>
+              <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">esc</kbd>
               <span>to close</span>
             </div>
           </div>
@@ -297,21 +297,21 @@ function SearchModal({ isOpen, onClose }) {
           {/* Results */}
           <div className="max-h-96 overflow-y-auto">
             {!showResults ? (
-              <div className="px-4 py-8 text-center text-gray-500">
-                <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                <Search className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                 <p className="text-sm">Type at least 2 characters to search</p>
               </div>
             ) : isSearchLoading ? (
               <div className="px-4 py-8 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-                <p className="mt-3 text-sm text-gray-500">Searching...</p>
+                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Searching...</p>
               </div>
             ) : hasResults ? (
               <div className="py-2">
                 {/* People results */}
                 {safeResults.people && safeResults.people.length > 0 && (
                   <div className="px-2">
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">
                       People
                     </div>
                     {safeResults.people.map((person, index) => {
@@ -322,7 +322,7 @@ function SearchModal({ isOpen, onClose }) {
                           key={person.id}
                           onClick={() => handleResultClick('person', person.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            isSelected ? 'bg-primary-50 text-primary-900' : 'hover:bg-gray-50'
+                            isSelected ? 'bg-primary-50 text-primary-900 dark:bg-primary-900/50 dark:text-primary-100' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           {person.thumbnail ? (
@@ -332,26 +332,26 @@ function SearchModal({ isOpen, onClose }) {
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                              <User className="w-4 h-4 text-gray-500" />
+                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center dark:bg-gray-700">
+                              <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                             </div>
                           )}
                           <span className="text-sm font-medium flex-1 truncate">
                             {person.name}
                           </span>
                           {isSelected && (
-                            <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono">↵</kbd>
+                            <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">Enter</kbd>
                           )}
                         </button>
                       );
                     })}
                   </div>
                 )}
-                
+
                 {/* Organizations results */}
                 {safeResults.companies && safeResults.companies.length > 0 && (
                   <div className="px-2 mt-2">
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">
                       Organizations
                     </div>
                     {safeResults.companies.map((company, index) => {
@@ -362,25 +362,25 @@ function SearchModal({ isOpen, onClose }) {
                           key={company.id}
                           onClick={() => handleResultClick('company', company.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            isSelected ? 'bg-primary-50 text-primary-900' : 'hover:bg-gray-50'
+                            isSelected ? 'bg-primary-50 text-primary-900 dark:bg-primary-900/50 dark:text-primary-100' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           {company.thumbnail ? (
                             <img
                               src={company.thumbnail}
                               alt={company.name}
-                              className="w-8 h-8 rounded object-contain bg-white"
+                              className="w-8 h-8 rounded object-contain bg-white dark:bg-gray-700"
                             />
                           ) : (
-                            <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                              <Building2 className="w-4 h-4 text-gray-500" />
+                            <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center dark:bg-gray-700">
+                              <Building2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                             </div>
                           )}
                           <span className="text-sm font-medium flex-1 truncate">
                             {company.name}
                           </span>
                           {isSelected && (
-                            <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono">↵</kbd>
+                            <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">Enter</kbd>
                           )}
                         </button>
                       );
@@ -389,22 +389,22 @@ function SearchModal({ isOpen, onClose }) {
                 )}
               </div>
             ) : (
-              <div className="px-4 py-8 text-center text-gray-500">
+              <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                 <p className="text-sm">No results found for "{searchQuery}"</p>
               </div>
             )}
           </div>
           
           {/* Footer */}
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded font-mono">↑</kbd>
-                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded font-mono">↓</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded font-mono dark:bg-gray-800 dark:border-gray-600">up</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded font-mono dark:bg-gray-800 dark:border-gray-600">down</kbd>
                 <span>to navigate</span>
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded font-mono">↵</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded font-mono dark:bg-gray-800 dark:border-gray-600">enter</kbd>
                 <span>to select</span>
               </span>
             </div>
@@ -467,32 +467,32 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddCompany, onAddDate }) {
       </button>
       
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 dark:bg-gray-800 dark:border-gray-700">
           <div className="py-1">
             <button
               onClick={handleAddPerson}
-              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <User className="w-4 h-4 mr-3 text-gray-400" />
               New Person
             </button>
             <button
               onClick={handleAddCompany}
-              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <Building2 className="w-4 h-4 mr-3 text-gray-400" />
               New Organization
             </button>
             <button
               onClick={handleAddTodo}
-              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <CheckSquare className="w-4 h-4 mr-3 text-gray-400" />
               New Todo
             </button>
             <button
               onClick={handleAddDate}
-              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <Calendar className="w-4 h-4 mr-3 text-gray-400" />
               New Date
@@ -521,33 +521,33 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddCompany, onAddDate, 
   };
   
   return (
-    <header className="sticky top-0 z-10 flex items-center h-16 px-4 bg-white border-b border-gray-200 lg:px-6">
+    <header className="sticky top-0 z-10 flex items-center h-16 px-4 bg-white border-b border-gray-200 lg:px-6 dark:bg-gray-800 dark:border-gray-700">
       {/* Mobile menu button */}
       <button
         onClick={onMenuClick}
-        className="p-2 -ml-2 lg:hidden"
+        className="p-2 -ml-2 lg:hidden dark:text-gray-300"
       >
         <Menu className="w-5 h-5" />
       </button>
-      
+
       {/* Page title */}
-      <h1 className="ml-2 text-lg font-semibold lg:ml-0">
+      <h1 className="ml-2 text-lg font-semibold lg:ml-0 dark:text-gray-100">
         {getPageTitle()}
       </h1>
-      
+
       {/* Spacer */}
       <div className="flex-1" />
-      
+
       {/* Search button */}
       <button
         onClick={onOpenSearch}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-400"
         aria-label="Search"
-        title="Search (⌘K)"
+        title="Search (Cmd+K)"
       >
         <Search className="w-4 h-4" />
         <span className="hidden sm:inline text-sm">Search...</span>
-        <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono">
+        <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">
           <Command className="w-3 h-3" />K
         </kbd>
       </button>
@@ -656,23 +656,23 @@ export default function Layout({ children }) {
   }, []);
   
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex lg:w-64 lg:flex-col">
         <Sidebar />
       </div>
-      
+
       {/* Mobile sidebar */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-gray-600 bg-opacity-75"
+          <div
+            className="fixed inset-0 bg-gray-600 bg-opacity-75 dark:bg-black dark:bg-opacity-50"
             onClick={() => setSidebarOpen(false)}
           />
-          
+
           {/* Sidebar */}
-          <div className="fixed inset-y-0 left-0 flex flex-col w-64 bg-white">
+          <div className="fixed inset-y-0 left-0 flex flex-col w-64 bg-white dark:bg-gray-800">
             <Sidebar mobile onClose={() => setSidebarOpen(false)} />
           </div>
         </div>
