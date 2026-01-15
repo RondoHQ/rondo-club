@@ -120,6 +120,25 @@ class PRM_Calendar_Connections {
     }
 
     /**
+     * Update only the credentials for a connection
+     *
+     * Used for token refresh - encrypts credentials and updates only that field.
+     *
+     * @param int    $user_id       WordPress user ID
+     * @param string $connection_id Connection ID to update
+     * @param array  $credentials   New credentials to encrypt and store
+     * @return bool True if updated, false if connection not found
+     */
+    public static function update_credentials(int $user_id, string $connection_id, array $credentials): bool {
+        $encrypted = PRM_Credential_Encryption::encrypt($credentials);
+
+        return self::update_connection($user_id, $connection_id, [
+            'credentials' => $encrypted,
+            'last_error'  => null, // Clear any previous error on successful refresh
+        ]);
+    }
+
+    /**
      * Delete a connection and its associated calendar events
      *
      * @param int    $user_id       WordPress user ID
