@@ -1,5 +1,35 @@
 # Project Milestones: Caelis
 
+## v4.0 Calendar Integration (Shipped: 2026-01-15)
+
+**Delivered:** Full calendar integration with Google Calendar and CalDAV (iCloud/Fastmail/Nextcloud) support, automatic contact matching, background sync, and Today's Meetings dashboard widget.
+
+**Phases completed:** 47-55 (11 plans total)
+
+**Key accomplishments:**
+
+- Google Calendar OAuth2 integration with google/apiclient library and automatic token refresh
+- CalDAV provider supporting iCloud, Fastmail, Nextcloud, and generic CalDAV servers via Sabre DAV
+- Email-first contact matching algorithm with fuzzy name fallback and confidence scores
+- Calendar settings UI with connection management, sync controls, and credential testing
+- Person profile Meetings tab with "Log as Activity" functionality for past meetings
+- Background sync via WP-Cron every 15 minutes with round-robin user rate limiting
+- Today's Meetings dashboard widget with attendee avatars and person navigation
+- WP-CLI commands: `wp prm calendar sync`, `wp prm calendar status`, `wp prm calendar auto-log`
+
+**Stats:**
+
+- 54 files changed
+- +72,880 / -337 lines changed
+- 9 phases, 11 plans
+- 1 day from start to ship
+
+**Git range:** `011b013` → `7ecf366`
+
+**What's next:** To be determined
+
+---
+
 ## v3.3 Todo Enhancement (Shipped: 2026-01-14)
 
 **Delivered:** Expanded todo functionality with notes/description field, multi-person support, and stacked avatar displays across all views.

@@ -18,112 +18,47 @@
 - ✅ [v3.6 Quick Wins & Performance](milestones/v3.6-quick-wins-performance.md) (Phases 40-41) — SHIPPED 2026-01-14
 - ✅ [v3.7 Todo UX Polish](milestones/v3.7-todo-ux-polish.md) (Phase 42) — SHIPPED 2026-01-15
 - ✅ [v3.8 Theme Customization](milestones/v3.8-theme-customization.md) (Phases 43-46) — SHIPPED 2026-01-15
-- 🚧 **v4.0 Calendar Integration** — Phases 47-55 (complete, ready for milestone completion)
+- ✅ [v4.0 Calendar Integration](milestones/v4.0-calendar-integration.md) (Phases 47-55) — SHIPPED 2026-01-15
 
 ## Current Status
 
-**Active:** v4.0 Calendar Integration (All phases complete)
+**Active:** None — Planning next milestone
 
 ---
 
-### 🚧 v4.0 Calendar Integration (In Progress)
+<details>
+<summary>✅ v4.0 Calendar Integration (Phases 47-55) — SHIPPED 2026-01-15</summary>
 
 **Milestone Goal:** Connect calendars to auto-log meetings and surface upcoming meetings on contact profiles.
 
-**Reference:** `/Calendar-Integration-Implementation-Plan.md`
+**Result:** Full Google Calendar and CalDAV integration with contact matching, background sync, and dashboard widget
 
-#### Phase 47: Infrastructure (Complete)
+**Phases:**
+- [x] Phase 47: Infrastructure (2/2 plans) ✓
+- [x] Phase 48: Google OAuth (1/1 plan) ✓
+- [x] Phase 49: Google Calendar Provider (1/1 plan) ✓
+- [x] Phase 50: CalDAV Provider (1/1 plan) ✓
+- [x] Phase 51: Contact Matching (1/1 plan) ✓
+- [x] Phase 52: Settings UI (2/2 plans) ✓
+- [x] Phase 53: Person Meetings Section (1/1 plan) ✓
+- [x] Phase 54: Background Sync (1/1 plan) ✓
+- [x] Phase 55: Dashboard Widget (1/1 plan) ✓
 
-**Goal**: calendar_event CPT, user meta helpers, REST endpoint structure
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal patterns - CPT, user meta, REST)
-**Plans**: 2/2 complete
+**Total:** 9 phases, 11 plans
 
-Plans:
-- [x] 47-01: Calendar infrastructure (CPT, connections helper, encryption)
-- [x] 47-02: REST API skeleton (connection CRUD, OAuth stubs, events stubs)
+**Key Accomplishments:**
+- Google OAuth2 with google/apiclient library and automatic token refresh
+- CalDAV provider for iCloud, Fastmail, Nextcloud via Sabre DAV
+- Email-first contact matching with confidence scores
+- Calendar settings UI with connection management
+- Person profile Meetings tab with "Log as Activity"
+- Background sync via WP-Cron every 15 minutes
+- Today's Meetings dashboard widget
+- WP-CLI commands: `wp prm calendar sync/status/auto-log`
 
-#### Phase 48: Google OAuth (In Progress)
+See [milestone archive](milestones/v4.0-calendar-integration.md) for full details.
 
-**Goal**: Credential encryption, OAuth2 flow, token storage/refresh
-**Depends on**: Phase 47
-**Research**: Likely (Google OAuth2 patterns, google/apiclient library)
-**Research topics**: Google OAuth2 flow, google/apiclient setup, token refresh patterns
-**Plans**: 1/? complete
-
-Plans:
-- [x] 48-01: Google OAuth flow (google/apiclient, PRM_Google_OAuth class, REST endpoints)
-
-#### Phase 49: Google Calendar Provider (Complete)
-
-**Goal**: Sync logic, event upsert, attendee extraction
-**Depends on**: Phase 48
-**Research**: Not needed (google/apiclient installed, patterns established)
-**Plans**: 1/1 complete
-
-Plans:
-- [x] 49-01: Google Calendar sync provider (PRM_Google_Calendar_Provider, trigger_sync, get_events)
-
-#### Phase 50: CalDAV Provider (Complete)
-
-**Goal**: sabre/dav integration, generic CalDAV sync for iCloud/Outlook/Fastmail/Nextcloud
-**Depends on**: Phase 47
-**Research**: Not needed (sabre/dav already installed)
-**Plans**: 1/1 complete
-
-Plans:
-- [x] 50-01: CalDAV provider (PRM_CalDAV_Provider, test_caldav, sync for iCloud/Fastmail/Nextcloud)
-
-#### Phase 51: Contact Matching (Complete)
-
-**Goal**: Email-first algorithm, fuzzy name matching, transient cache optimization
-**Depends on**: Phase 49, Phase 50
-**Research**: Unlikely (internal algorithm work)
-**Plans**: 1/1 complete
-
-Plans:
-- [x] 51-01: Contact matching (PRM_Calendar_Matcher class, provider integration, meetings endpoint)
-
-#### Phase 52: Settings UI (Complete)
-
-**Goal**: Calendar connections page at /settings/calendars, add/edit/delete connections, sync status display
-**Depends on**: Phase 48
-**Research**: Unlikely (internal React patterns)
-**Plans**: 2/2 complete
-
-Plans:
-- [x] 52-01: Calendar settings UI (CalendarsTab, connection modals, sync status)
-- [x] 52-FIX: Google OAuth redirect fix
-
-#### Phase 53: Person Meetings Section (Complete)
-
-**Goal**: Upcoming/past meetings display in PersonDetail, "Log as Activity" functionality
-**Depends on**: Phase 51
-**Research**: Unlikely (internal React patterns)
-**Plans**: 1/1 complete
-
-Plans:
-- [x] 53-01: Person meetings section (MeetingsSection component, usePersonMeetings hook, log as activity)
-
-#### Phase 54: Background Sync + Auto-Logging (Complete)
-
-**Goal**: WP-Cron jobs for 15-minute sync, rate limiting, activity creation from past meetings
-**Depends on**: Phase 51
-**Research**: Unlikely (WP-Cron established patterns)
-**Plans**: 1/1 complete
-
-Plans:
-- [x] 54-01: Background sync (PRM_Calendar_Sync class, WP-Cron, auto-logging, WP-CLI commands)
-
-#### Phase 55: Dashboard Widget + Polish (Complete)
-
-**Goal**: "Today's Meetings" widget above Favorites, testing, error handling
-**Depends on**: Phase 53
-**Research**: Unlikely (internal patterns)
-**Plans**: 1/1 complete
-
-Plans:
-- [x] 55-01: Today's Meetings dashboard widget (REST endpoint, hook, MeetingCard component)
+</details>
 
 ---
 
@@ -541,7 +476,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
-| v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | - |
+| v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
 
-**Shipped: 16 milestones, 46 phases, 88 plans**
-**Ready for completion: v4.0 (9 phases, 11 plans)**
+**Shipped: 17 milestones, 55 phases, 99 plans**

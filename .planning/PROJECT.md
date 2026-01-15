@@ -130,6 +130,19 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Main bundle reduced from 460 KB to 50 KB (89% reduction) — v3.6
 - Initial page load reduced from ~767 KB to ~400 KB — v3.6
 
+**v4.0 Calendar Integration (shipped 2026-01-15):**
+- Google Calendar OAuth2 integration with google/apiclient library — v4.0
+- CalDAV provider for iCloud, Fastmail, Nextcloud, generic servers — v4.0
+- calendar_event CPT for caching synced events — v4.0
+- PRM_Credential_Encryption class for secure OAuth token storage — v4.0
+- Email-first contact matching algorithm with confidence scores — v4.0
+- Calendar settings UI with connection management (/settings/calendars) — v4.0
+- Person profile Meetings tab with upcoming/past meetings — v4.0
+- Log as Activity functionality for past meetings — v4.0
+- Background sync via WP-Cron every 15 minutes — v4.0
+- Today's Meetings dashboard widget — v4.0
+- WP-CLI: `wp prm calendar sync/status/auto-log` — v4.0
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -204,6 +217,14 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Direct completion for awaiting todos | Quick status change, no modal needed | ✓ Good |
 | ACF update_value filter for email | Normalize at save time, not display | ✓ Good |
 | null Suspense fallback for modals | Modals overlay content, no spinner needed | ✓ Good |
+| google/apiclient for OAuth | Official library, reliable token refresh | ✓ Good |
+| Sodium encryption for OAuth tokens | Secure credential storage, AUTH_KEY-derived key | ✓ Good |
+| Event uniqueness via UID + connection | Prevents duplicates across syncs | ✓ Good |
+| Email-first contact matching | Avoids false positives from common names | ✓ Good |
+| 24h transient cache for email lookups | Balances freshness with performance | ✓ Good |
+| 15-minute cron interval | Balance between freshness and API load | ✓ Good |
+| One user per cron run | Round-robin prevents API rate limit hits | ✓ Good |
+| Conditional dashboard widget | Graceful degradation when no calendar connected | ✓ Good |
 
 ---
-*Last updated: 2026-01-14 — v3.6 Quick Wins & Performance shipped*
+*Last updated: 2026-01-15 — v4.0 Calendar Integration shipped*
