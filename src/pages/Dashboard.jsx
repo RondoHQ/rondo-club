@@ -1,8 +1,9 @@
 import { useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock } from 'lucide-react';
+import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock } from 'lucide-react';
 import { useDashboard, useTodos, useUpdateTodo } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
+import { useTodayMeetings } from '@/hooks/useMeetings';
 import { format, formatDistanceToNow } from 'date-fns';
 import { APP_NAME } from '@/constants/app';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
@@ -231,6 +232,60 @@ function AwaitingTodoCard({ todo, onToggle, onView }) {
   );
 }
 
+function MeetingCard({ meeting }) {
+  // Format time display
+  const startTime = format(new Date(meeting.start_time), 'h:mm a');
+
+  // Get first matched person for link target
+  const firstPerson = meeting.matched_people?.[0];
+
+  // Card content shows: time, title, matched people avatars
+  const cardContent = (
+    <>
+      <div className="text-sm font-medium text-accent-600 dark:text-accent-400 w-20 flex-shrink-0">
+        {meeting.all_day ? 'All day' : startTime}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{meeting.title}</p>
+        {meeting.location && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{meeting.location}</p>
+        )}
+      </div>
+      {meeting.matched_people?.length > 0 && (
+        <div className="flex -space-x-2 ml-3 flex-shrink-0">
+          {meeting.matched_people.slice(0, 3).map((person) => (
+            person.thumbnail ? (
+              <img key={person.person_id} src={person.thumbnail} alt={person.name} loading="lazy"
+                className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 object-cover" />
+            ) : (
+              <div key={person.person_id}
+                className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center">
+                <span className="text-xs dark:text-gray-300">{person.name?.[0]}</span>
+              </div>
+            )
+          ))}
+        </div>
+      )}
+    </>
+  );
+
+  // Link to first matched person if available
+  if (firstPerson?.person_id) {
+    return (
+      <Link to={`/people/${firstPerson.person_id}`}
+        className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex items-center p-3 rounded-lg">
+      {cardContent}
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="card p-12 text-center">
@@ -267,8 +322,13 @@ export default function Dashboard() {
   const { data, isLoading, error } = useDashboard();
   const { data: openTodos } = useTodos('open');
   const { data: awaitingTodos } = useTodos('awaiting');
+  const { data: todayMeetingsData } = useTodayMeetings();
   const updateTodo = useUpdateTodo();
   const createActivity = useCreateActivity();
+
+  // Today's meetings data
+  const todayMeetings = todayMeetingsData?.meetings || [];
+  const hasCalendarConnections = todayMeetingsData?.has_connections ?? false;
 
   // State for complete todo flow
   const [todoToComplete, setTodoToComplete] = useState(null);
@@ -596,6 +656,34 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Today's Meetings */}
+      {hasCalendarConnections && (
+        <div className="card">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="font-semibold flex items-center dark:text-gray-50">
+              <CalendarClock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
+              Today's meetings
+            </h2>
+            <Link to="/settings?tab=calendars"
+              className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
+              Settings
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Link>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {todayMeetings.length > 0 ? (
+              todayMeetings.map((meeting) => (
+                <MeetingCard key={meeting.id} meeting={meeting} />
+              ))
+            ) : (
+              <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+                No meetings scheduled for today
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Row 2: Favorites + Recently Contacted + Recently Edited */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
