@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Milestone: v4.0 Calendar Integration
-Phase: 52 of 55 (Settings UI)
+Phase: 53 of 55 (Person Meetings Section)
 Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-15 — Completed 52-01-PLAN.md
+Last activity: 2026-01-15 — Completed 53-01-PLAN.md
 
-Progress: ███████░░░ 70%
+Progress: ████████░░ 80%
 
 ## Completed Milestones
 
@@ -117,9 +117,8 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Phase 52-01 (Settings UI) complete
-- CalendarsTab component with connections list and add buttons
-- CalDAVModal for adding CalDAV calendars with connection testing
-- EditConnectionModal with sync enabled, auto-log, sync_from_days options
-- Full dark mode support throughout
-- Ready for Phase 53 (Person Meetings Section) or Phase 54 (Dashboard Integration)
+- Phase 53-01 (Person Meetings Section) complete
+- Meetings tab on PersonDetail showing upcoming/past meetings
+- MeetingCard component with meeting details and Log as Activity button
+- log_event_as_activity endpoint creates activities for all matched people
+- Ready for Phase 54 (Dashboard Integration) or Phase 55 (Polish & Finalization)
