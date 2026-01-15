@@ -42,17 +42,18 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
     [people, selectedPersonIds]
   );
   
-  // Get today's date in YYYY-MM-DD format
-  const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+  // Get tomorrow's date in YYYY-MM-DD format (default for new todos)
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
   };
   
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setContent('');
-      setDueDate(getTodayDate());
+      setDueDate(getTomorrowDate());
       setSelectedPersonIds([]);
       setPersonSearchQuery('');
       setIsPersonDropdownOpen(false);

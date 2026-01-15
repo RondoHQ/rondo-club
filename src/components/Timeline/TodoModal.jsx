@@ -41,10 +41,11 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     [people, selectedPersonIds]
   );
 
-  // Get today's date in YYYY-MM-DD format
-  const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+  // Get tomorrow's date in YYYY-MM-DD format (default for new todos)
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
   };
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       setIsViewMode(true);
     } else {
       setContent('');
-      setDueDate(getTodayDate());
+      setDueDate(getTomorrowDate());
       setNotes('');
       setSelectedPersonIds([]);
       setShowNotes(false);
@@ -97,7 +98,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
 
     if (!todo) {
       setContent('');
-      setDueDate(getTodayDate());
+      setDueDate(getTomorrowDate());
       setNotes('');
       setSelectedPersonIds([]);
       setShowNotes(false);
@@ -107,7 +108,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
   const handleClose = () => {
     if (!todo) {
       setContent('');
-      setDueDate(getTodayDate());
+      setDueDate(getTomorrowDate());
       setNotes('');
       setSelectedPersonIds([]);
       setShowNotes(false);
