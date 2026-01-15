@@ -380,13 +380,21 @@ add_action('wp_head', 'prm_theme_add_config_to_head', 0);
 
 /**
  * Add favicon to head
+ *
+ * Note: Dynamic favicon is handled by React's useTheme hook (src/hooks/useTheme.js)
+ * which generates an inline SVG with the current accent color. The static favicon
+ * below is only used before React hydrates, then React takes over management.
+ *
+ * To support dynamic accent colors, we don't output a static favicon here.
+ * React will create the favicon link element on mount with the user's accent color.
  */
-function prm_theme_add_favicon() {
-    $favicon_url = PRM_THEME_URL . '/favicon.svg';
-    echo '<link rel="icon" type="image/svg+xml" href="' . esc_url($favicon_url) . '">';
-    echo '<link rel="alternate icon" href="' . esc_url($favicon_url) . '">';
-}
-add_action('wp_head', 'prm_theme_add_favicon', 1);
+// Removed static favicon output - React manages favicon dynamically via useTheme.js
+// function prm_theme_add_favicon() {
+//     $favicon_url = PRM_THEME_URL . '/favicon.svg';
+//     echo '<link rel="icon" type="image/svg+xml" href="' . esc_url($favicon_url) . '">';
+//     echo '<link rel="alternate icon" href="' . esc_url($favicon_url) . '">';
+// }
+// add_action('wp_head', 'prm_theme_add_favicon', 1);
 
 /**
  * Hide admin bar on frontend - it interferes with the SPA interface
