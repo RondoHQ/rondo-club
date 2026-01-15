@@ -85,6 +85,7 @@ function prm_autoloader($class_name) {
         'PRM_Todo_Migration'         => 'class-todo-migration.php',
         'PRM_Calendar_Connections'   => 'class-calendar-connections.php',
         'PRM_Credential_Encryption'  => 'class-credential-encryption.php',
+        'PRM_Google_OAuth'           => 'class-google-oauth.php',
         'PRM_REST_Calendar'          => 'class-rest-calendar.php',
     ];
     

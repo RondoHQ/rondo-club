@@ -5,6 +5,7 @@
     "license": "GPL-2.0-or-later",
     "require": {
         "php": ">=8.0",
+        "google/apiclient": "^2.15",
         "sabre/dav": "^4.6"
     },
     "autoload": {
