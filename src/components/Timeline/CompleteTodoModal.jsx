@@ -5,63 +5,63 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Complete todo</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Complete todo</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-4">
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             "{todo.content}"
           </p>
 
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             What's the status of this todo?
           </p>
 
           <div className="space-y-3">
             <button
               onClick={onAwaiting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors text-left"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-orange-300 dark:hover:border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors text-left"
             >
-              <Clock className="w-5 h-5 text-orange-600 flex-shrink-0" />
+              <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
               <div className="flex-1">
-                <p className="font-medium text-gray-900">Awaiting response</p>
-                <p className="text-sm text-gray-500">You did your part, waiting for their reply</p>
+                <p className="font-medium text-gray-900 dark:text-gray-50">Awaiting response</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">You did your part, waiting for their reply</p>
               </div>
             </button>
 
             <button
               onClick={onComplete}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors text-left"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors text-left"
             >
-              <CheckSquare className="w-5 h-5 text-primary-600 flex-shrink-0" />
+              <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0" />
               <div className="flex-1">
-                <p className="font-medium text-gray-900">Complete</p>
-                <p className="text-sm text-gray-500">Mark the todo as fully done</p>
+                <p className="font-medium text-gray-900 dark:text-gray-50">Complete</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Mark the todo as fully done</p>
               </div>
             </button>
 
             <button
               onClick={onCompleteAsActivity}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-left"
             >
-              <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
               <div className="flex-1">
-                <p className="font-medium text-gray-900">Complete & log activity</p>
-                <p className="text-sm text-gray-500">Record this as an activity on the timeline</p>
+                <p className="font-medium text-gray-900 dark:text-gray-50">Complete & log activity</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Record this as an activity on the timeline</p>
               </div>
             </button>
           </div>
         </div>
 
-        <div className="flex justify-end p-4 border-t bg-gray-50 rounded-b-lg">
+        <div className="flex justify-end p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-b-lg">
           <button
             type="button"
             onClick={onClose}
