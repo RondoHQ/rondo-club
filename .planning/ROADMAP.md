@@ -36,10 +36,10 @@
 **Goal**: Fix dark mode contrast issues and console errors
 **Depends on**: Previous milestone complete
 **Research**: Unlikely (internal CSS/React patterns)
-**Plans**: TBD
+**Plans**: 1
 
 Plans:
-- [ ] 56-01: TBD (run /gsd:plan-phase 56 to break down)
+- [ ] 56-01: Dark Mode & Console Fixes (3 tasks: dark mode contrast, DOM errors, MIME errors)
 
 #### Phase 57: Calendar Widget Polish
 

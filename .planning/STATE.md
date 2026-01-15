@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 Milestone: v4.1 Bug Fixes & Polish
 Phase: 56 of 57 (Dark Mode & Console Fixes)
-Plan: Not started
-Status: Ready to plan
+Plan: 56-01 (1 plan, 3 tasks)
+Status: Ready to execute
 Last activity: 2026-01-15 — Milestone v4.1 created
 
 Progress: ░░░░░░░░░░ 0%
