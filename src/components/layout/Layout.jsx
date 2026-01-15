@@ -322,7 +322,7 @@ function SearchModal({ isOpen, onClose }) {
                           key={person.id}
                           onClick={() => handleResultClick('person', person.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-accent-900/50 dark:text-accent-100' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-accent-700 dark:text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           {person.thumbnail ? (
@@ -362,7 +362,7 @@ function SearchModal({ isOpen, onClose }) {
                           key={company.id}
                           onClick={() => handleResultClick('company', company.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-accent-900/50 dark:text-accent-100' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-accent-700 dark:text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           {company.thumbnail ? (

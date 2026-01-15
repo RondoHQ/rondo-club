@@ -1479,16 +1479,16 @@ function SyncTab({
         ) : (
           <div className="space-y-4">
             {carddavUrls && (
-              <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-                <h3 className="font-medium text-sm">Connection details</h3>
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
+                <h3 className="font-medium text-sm dark:text-gray-200">Connection details</h3>
                 <div>
-                  <label className="text-xs text-gray-500">Server URL (for most apps)</label>
+                  <label className="text-xs text-gray-500 dark:text-gray-400">Server URL (for most apps)</label>
                   <div className="flex gap-2 mt-1">
                     <input
                       type="text"
                       readOnly
                       value={carddavUrls.addressbook}
-                      className="input flex-1 text-xs font-mono bg-white"
+                      className="input flex-1 text-xs font-mono bg-white dark:bg-gray-700"
                       onClick={(e) => e.target.select()}
                     />
                     <button
@@ -1501,13 +1501,13 @@ function SyncTab({
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500">Username</label>
+                  <label className="text-xs text-gray-500 dark:text-gray-400">Username</label>
                   <div className="flex gap-2 mt-1">
                     <input
                       type="text"
                       readOnly
                       value={config.userLogin || ''}
-                      className="input flex-1 text-xs font-mono bg-white"
+                      className="input flex-1 text-xs font-mono bg-white dark:bg-gray-700"
                       onClick={(e) => e.target.select()}
                     />
                     <button
@@ -1519,7 +1519,7 @@ function SyncTab({
                     </button>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Use one of the app passwords below instead of your regular password.
                 </p>
               </div>
