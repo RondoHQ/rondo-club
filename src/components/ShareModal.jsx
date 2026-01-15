@@ -61,16 +61,16 @@ export default function ShareModal({
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl">
+        <div className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-xl">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Share</h2>
-              <p className="text-sm text-gray-500 truncate max-w-xs">{postTitle}</p>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Share</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">{postTitle}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <X className="w-5 h-5" />
             </button>
@@ -87,17 +87,17 @@ export default function ShareModal({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search users by name or email..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
 
             {/* Permission selector */}
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-sm text-gray-600">Permission:</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Permission:</span>
               <select
                 value={selectedPermission}
                 onChange={(e) => setSelectedPermission(e.target.value)}
-                className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:ring-primary-500 focus:border-primary-500"
+                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-primary-500 focus:border-primary-500"
               >
                 <option value="view">Can view</option>
                 <option value="edit">Can edit</option>
@@ -108,30 +108,30 @@ export default function ShareModal({
             {searchQuery.length >= 2 && (
               <div className="mb-4">
                 {searchLoading ? (
-                  <div className="py-3 text-center text-sm text-gray-500">Searching...</div>
+                  <div className="py-3 text-center text-sm text-gray-500 dark:text-gray-400">Searching...</div>
                 ) : availableUsers.length === 0 ? (
-                  <div className="py-3 text-center text-sm text-gray-500">
+                  <div className="py-3 text-center text-sm text-gray-500 dark:text-gray-400">
                     {searchResults.length === 0 ? 'No users found' : 'All matching users already have access'}
                   </div>
                 ) : (
-                  <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg divide-y divide-gray-100 dark:divide-gray-700">
                     {availableUsers.map((user) => (
-                      <div key={user.id} className="flex items-center gap-3 p-3 hover:bg-gray-50">
+                      <div key={user.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700">
                         <img
                           src={user.avatar_url}
                           alt={user.display_name}
                           className="w-8 h-8 rounded-full"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
                             {user.display_name}
                           </div>
-                          <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</div>
                         </div>
                         <button
                           onClick={() => handleAddShare(user)}
                           disabled={addShareMutation.isPending}
-                          className="p-2 text-primary-600 hover:bg-primary-50 rounded-full"
+                          className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-full"
                         >
                           <UserPlus className="w-4 h-4" />
                         </button>
@@ -144,17 +144,17 @@ export default function ShareModal({
 
             {/* Current shares */}
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Shared with ({shares.length})
               </h3>
               {sharesLoading ? (
-                <div className="py-3 text-center text-sm text-gray-500">Loading...</div>
+                <div className="py-3 text-center text-sm text-gray-500 dark:text-gray-400">Loading...</div>
               ) : shares.length === 0 ? (
-                <div className="py-6 text-center text-sm text-gray-500">
+                <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                   Not shared with anyone yet
                 </div>
               ) : (
-                <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg divide-y divide-gray-100 dark:divide-gray-700">
                   {shares.map((share) => (
                     <div key={share.user_id} className="flex items-center gap-3 p-3">
                       <img
@@ -163,17 +163,17 @@ export default function ShareModal({
                         className="w-8 h-8 rounded-full"
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
                           {share.display_name}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           Can {share.permission}
                         </div>
                       </div>
                       <button
                         onClick={() => handleRemoveShare(share.user_id)}
                         disabled={removeShareMutation.isPending}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-full"
+                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -185,7 +185,7 @@ export default function ShareModal({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
             <button
               onClick={onClose}
               className="btn-secondary"

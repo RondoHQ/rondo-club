@@ -73,7 +73,7 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
     <div className="relative">
       <div className="relative">
         {selectedPerson && !isOpen ? (
-          <div 
+          <div
             className="flex items-center justify-between input pr-8 cursor-text"
             onClick={() => setIsOpen(true)}
           >
@@ -84,7 +84,7 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
                 e.stopPropagation();
                 handleClear();
               }}
-              className="absolute right-2 text-gray-400 hover:text-gray-600"
+              className="absolute right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X className="w-4 h-4" />
             </button>
@@ -109,7 +109,7 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
       {isOpen && (searchTerm || !selectedPerson) && (
         <div
           ref={dropdownRef}
-          className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+          className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
         >
           {filteredPeople.length > 0 ? (
             filteredPeople.map(person => (
@@ -117,15 +117,15 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
                 key={person.id}
                 type="button"
                 onClick={() => handleSelect(person.id)}
-                className={`w-full text-left px-4 py-2 hover:bg-gray-50 ${
-                  value === person.id ? 'bg-primary-50' : ''
+                className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-50 ${
+                  value === person.id ? 'bg-primary-50 dark:bg-primary-900/30' : ''
                 }`}
               >
                 {getPersonName(person)}
               </button>
             ))
           ) : (
-            <p className="px-4 py-2 text-gray-500 text-sm">No people found</p>
+            <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">No people found</p>
           )}
         </div>
       )}
@@ -194,18 +194,18 @@ export default function RelationshipEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{isEditing ? 'Edit relationship' : 'Add relationship'}</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit relationship' : 'Add relationship'}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Related Person */}
@@ -226,14 +226,14 @@ export default function RelationshipEditModal({
                 )}
               />
               {errors.related_person && (
-                <p className="text-sm text-red-600 mt-1">{errors.related_person.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.related_person.message}</p>
               )}
               {!isEditing && onCreatePerson && (
                 <div className="mt-2">
                   <button
                     type="button"
                     onClick={onCreatePerson}
-                    className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                    className="inline-flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
                   >
                     <Plus className="w-4 h-4" />
                     Add new person
@@ -268,13 +268,13 @@ export default function RelationshipEditModal({
                 placeholder="e.g., Brother-in-law"
                 disabled={isLoading}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Optional: Override the relationship type with a custom label
               </p>
             </div>
           </div>
-          
-          <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+
+          <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <button
               type="button"
               onClick={onClose}

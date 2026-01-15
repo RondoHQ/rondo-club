@@ -67,45 +67,45 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Edit contact details</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Edit contact details</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4">
             {fields.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
                 No contact details yet. Click "Add contact detail" to add one.
               </p>
             ) : (
               <div className="space-y-3">
                 {/* Header row - visible on larger screens */}
-                <div className="hidden md:grid md:grid-cols-12 gap-2 text-xs font-medium text-gray-500 px-1">
+                <div className="hidden md:grid md:grid-cols-12 gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 px-1">
                   <div className="col-span-3">Type</div>
                   <div className="col-span-3">Label</div>
                   <div className="col-span-5">Value</div>
                   <div className="col-span-1"></div>
                 </div>
-                
+
                 {fields.map((field, index) => (
-                  <div 
-                    key={field.id} 
-                    className="grid grid-cols-1 md:grid-cols-12 gap-2 p-3 md:p-2 bg-gray-50 rounded-lg"
+                  <div
+                    key={field.id}
+                    className="grid grid-cols-1 md:grid-cols-12 gap-2 p-3 md:p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
                   >
                     {/* Type */}
                     <div className="md:col-span-3">
-                      <label className="md:hidden text-xs font-medium text-gray-500 mb-1 block">Type</label>
+                      <label className="md:hidden text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Type</label>
                       <select
                         {...register(`contacts.${index}.contact_type`, { required: true })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         disabled={isLoading}
                       >
                         <option value="">Select type...</option>
@@ -116,35 +116,35 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                         ))}
                       </select>
                     </div>
-                    
+
                     {/* Label */}
                     <div className="md:col-span-3">
-                      <label className="md:hidden text-xs font-medium text-gray-500 mb-1 block">Label</label>
+                      <label className="md:hidden text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Label</label>
                       <input
                         {...register(`contacts.${index}.contact_label`)}
                         placeholder="e.g., Work"
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         disabled={isLoading}
                       />
                     </div>
-                    
+
                     {/* Value */}
                     <div className="md:col-span-5">
-                      <label className="md:hidden text-xs font-medium text-gray-500 mb-1 block">Value</label>
+                      <label className="md:hidden text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Value</label>
                       <input
                         {...register(`contacts.${index}.contact_value`, { required: true })}
                         placeholder="e.g., john@example.com"
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         disabled={isLoading}
                       />
                     </div>
-                    
+
                     {/* Delete button */}
                     <div className="md:col-span-1 flex items-center justify-end md:justify-center">
                       <button
                         type="button"
                         onClick={() => remove(index)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
                         title="Remove"
                         disabled={isLoading}
                       >
@@ -155,21 +155,21 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                 ))}
               </div>
             )}
-            
+
             {/* Add button */}
             <button
               type="button"
               onClick={handleAddRow}
-              className="mt-4 w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors flex items-center justify-center gap-2"
+              className="mt-4 w-full py-2 px-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center justify-center gap-2"
               disabled={isLoading}
             >
               <Plus className="w-4 h-4" />
               Add contact detail
             </button>
           </div>
-          
+
           {/* Footer */}
-          <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+          <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <button
               type="button"
               onClick={onClose}
