@@ -916,6 +916,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
      * Log a calendar event as an activity
      *
      * Creates activity records for all matched people on the event.
+     * Uses shared logic from PRM_Calendar_Sync::create_activity_from_event().
      *
      * @param WP_REST_Request $request The REST request object.
      * @return WP_REST_Response|WP_Error Response with activity count or error.
@@ -941,12 +942,6 @@ class PRM_REST_Calendar extends PRM_REST_Base {
             return new WP_Error('already_logged', __('This event has already been logged as an activity.', 'personal-crm'), ['status' => 400]);
         }
 
-        // Get event metadata
-        $title = $event->post_title;
-        $start_time = get_post_meta($event_id, '_start_time', true);
-        $location = get_post_meta($event_id, '_location', true);
-        $meeting_url = get_post_meta($event_id, '_meeting_url', true);
-
         // Get matched people
         $matched_people_json = get_post_meta($event_id, '_matched_people', true);
         $matched_people = $matched_people_json ? json_decode($matched_people_json, true) : [];
@@ -955,71 +950,11 @@ class PRM_REST_Calendar extends PRM_REST_Base {
             return new WP_Error('no_matches', __('No matched people found for this event.', 'personal-crm'), ['status' => 400]);
         }
 
-        // Extract person IDs
-        $person_ids = [];
-        foreach ($matched_people as $match) {
-            if (isset($match['person_id'])) {
-                $person_ids[] = (int) $match['person_id'];
-            }
-        }
+        // Use shared activity creation logic from PRM_Calendar_Sync
+        $activities_created = PRM_Calendar_Sync::create_activity_from_event($event_id, $user_id, $matched_people);
 
-        if (empty($person_ids)) {
+        if ($activities_created === 0) {
             return new WP_Error('no_matches', __('No matched people found for this event.', 'personal-crm'), ['status' => 400]);
-        }
-
-        // Build activity content
-        $content = esc_html($title);
-        if ($location) {
-            $content .= ' at ' . esc_html($location);
-        }
-        if ($meeting_url) {
-            $content .= ' (' . esc_url($meeting_url) . ')';
-        }
-
-        // Parse date and time from start_time (format: 2024-01-15 10:30:00)
-        $activity_date = '';
-        $activity_time = '';
-        if ($start_time) {
-            $datetime = date_create($start_time);
-            if ($datetime) {
-                $activity_date = $datetime->format('Y-m-d');
-                $activity_time = $datetime->format('H:i');
-            }
-        }
-
-        $activities_created = 0;
-
-        // Create activity for each matched person
-        foreach ($person_ids as $person_id) {
-            // Get other participant IDs (everyone except this person)
-            $participants = array_filter($person_ids, function($pid) use ($person_id) {
-                return $pid !== $person_id;
-            });
-
-            // Create activity comment using same pattern as PRM_Comment_Types
-            $comment_id = wp_insert_comment([
-                'comment_post_ID'  => $person_id,
-                'comment_content'  => $content,
-                'comment_type'     => 'prm_activity',
-                'user_id'          => $user_id,
-                'comment_approved' => 1,
-            ]);
-
-            if ($comment_id) {
-                // Save activity meta
-                update_comment_meta($comment_id, 'activity_type', 'meeting');
-                if ($activity_date) {
-                    update_comment_meta($comment_id, 'activity_date', $activity_date);
-                }
-                if ($activity_time) {
-                    update_comment_meta($comment_id, 'activity_time', $activity_time);
-                }
-                if (!empty($participants)) {
-                    update_comment_meta($comment_id, 'participants', array_values($participants));
-                }
-
-                $activities_created++;
-            }
         }
 
         // Mark event as logged
