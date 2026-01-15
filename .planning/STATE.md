@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 
 Milestone: v3.7 Todo UX Polish
 Phase: 42 of 42 (Todo UX Polish)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-15 — Milestone v3.7 created
+Plan: 1 of 1 complete
+Status: Milestone complete
+Last activity: 2026-01-15 — Completed 42-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0/1 phases (0%)
+Progress: [██████████] 1/1 phases (100%)
 
 ## Completed Milestones
 
@@ -70,7 +70,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Milestone v3.7 initialization
+Stopped at: Completed 42-01-PLAN.md, milestone v3.7 complete
 Resume file: None
 
 ## Accumulated Context
@@ -108,5 +108,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:plan-phase 42` — Plan Todo UX Polish phase
+- `/gsd:complete-milestone` — Archive v3.7 and prepare for next version
 - Run `wp prm todos migrate-persons` on production after deployment

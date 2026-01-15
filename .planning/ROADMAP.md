@@ -33,10 +33,10 @@
 **Goal**: Dashboard todo click behavior, notes read-only mode, smart due date defaults
 **Depends on**: Previous milestone complete
 **Research**: Unlikely (internal UI patterns)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 42-01: TBD (run /gsd:plan-phase 42 to break down)
+- [x] 42-01: Todo UX Polish (Dashboard modal, view-first mode, tomorrow default)
 
 ---
 
@@ -397,6 +397,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.4 UI Polish | 35-37 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
-| v3.7 Todo UX Polish | 42 | 0/? | Not started | - |
+| v3.7 Todo UX Polish | 42 | 1/1 | Complete | 2026-01-15 |
 
-**Shipped: 14 milestones, 41 phases, 75 plans**
+**Shipped: 15 milestones, 42 phases, 76 plans**
