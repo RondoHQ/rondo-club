@@ -19,8 +19,8 @@ function StatCard({ title, value, icon: Icon, href }) {
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
           <p className="mt-1 text-3xl font-semibold dark:text-gray-50">{value}</p>
         </div>
-        <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-lg">
-          <Icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+        <div className="p-3 bg-accent-50 dark:bg-accent-900/30 rounded-lg">
+          <Icon className="w-6 h-6 text-accent-600 dark:text-accent-400" />
         </div>
       </div>
     </Link>
@@ -149,7 +149,7 @@ function TodoCard({ todo, onToggle, onView }) {
         title={todo.status === 'completed' ? 'Reopen' : 'Complete'}
       >
         {todo.status === 'completed' ? (
-          <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+          <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
         ) : (
           <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`} />
         )}
@@ -235,8 +235,8 @@ function EmptyState() {
   return (
     <div className="card p-12 text-center">
       <div className="flex justify-center mb-4">
-        <div className="p-4 bg-primary-50 dark:bg-primary-900/30 rounded-full">
-          <Sparkles className="w-12 h-12 text-primary-600 dark:text-primary-400" />
+        <div className="p-4 bg-accent-50 dark:bg-accent-900/30 rounded-full">
+          <Sparkles className="w-12 h-12 text-accent-600 dark:text-accent-400" />
         </div>
       </div>
       <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-2">Welcome to {APP_NAME}!</h2>
@@ -246,7 +246,7 @@ function EmptyState() {
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
           to="/people/new"
-          className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-500 transition-colors"
+          className="inline-flex items-center px-6 py-3 bg-accent-600 text-white rounded-lg hover:bg-accent-700 dark:hover:bg-accent-500 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Add Your First Person
@@ -391,7 +391,7 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
       </div>
     );
   }
@@ -521,7 +521,7 @@ export default function Dashboard() {
             </h2>
             <Link
               to="/dates"
-              className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center"
+              className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center"
             >
               View all
               <ArrowRight className="w-4 h-4 ml-1" />
@@ -549,7 +549,7 @@ export default function Dashboard() {
             </h2>
             <Link
               to="/todos"
-              className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center"
+              className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center"
             >
               View all
               <ArrowRight className="w-4 h-4 ml-1" />
@@ -577,7 +577,7 @@ export default function Dashboard() {
             </h2>
             <Link
               to="/todos?status=awaiting"
-              className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center"
+              className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center"
             >
               View all
               <ArrowRight className="w-4 h-4 ml-1" />
@@ -650,7 +650,7 @@ export default function Dashboard() {
             </h2>
             <Link
               to="/people"
-              className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center"
+              className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center"
             >
               View all
               <ArrowRight className="w-4 h-4 ml-1" />
@@ -663,7 +663,7 @@ export default function Dashboard() {
               ))
             ) : (
               <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-                No people yet. <Link to="/people/new" className="text-primary-600 dark:text-primary-400">Add someone</Link>
+                No people yet. <Link to="/people/new" className="text-accent-600 dark:text-accent-400">Add someone</Link>
               </p>
             )}
           </div>
