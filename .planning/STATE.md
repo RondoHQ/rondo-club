@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 Milestone: v4.2 Settings & Stability
 Phase: 60 of 60 (Calendar Email Matching)
 Plan: 1 of 1 complete
-Status: Plan 60-01 complete
+Status: Milestone complete, ready to ship
 Last activity: 2026-01-15 — Completed 60-01-PLAN.md
 
 Progress: ██████████ 100% (3 of 3 phases in milestone)
@@ -82,7 +82,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Phase 59 complete, ready for Phase 60
+Stopped at: Milestone v4.2 complete, ready to ship
 Resume file: None
 
 ## Accumulated Context

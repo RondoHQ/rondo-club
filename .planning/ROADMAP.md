@@ -24,7 +24,7 @@
 
 ## Current Status
 
-**In Progress:** v4.2 Settings & Stability — Phase 59 complete, Phase 60 ready to plan
+**In Progress:** v4.2 Settings & Stability — Phase 60 complete, milestone ready to complete
 
 ---
 
@@ -52,14 +52,15 @@ Plans:
 Plans:
 - [x] 59-01: Restructure tabs and update OAuth redirects (2/2 tasks) ✓
 
-#### Phase 60: Calendar Email Matching
+#### Phase 60: Calendar Email Matching ✓
 
 **Goal**: Re-run meetings matching when email address added and match events against all person email addresses
 **Depends on**: Phase 59
 **Research**: Not needed (internal patterns)
+**Result**: Automatic re-matching on person save, WP-CLI command for manual re-matching
 
 Plans:
-- [ ] 60-01: Auto re-match events on person email changes (3/3 tasks)
+- [x] 60-01: Auto re-match events on person email changes (3/3 tasks) ✓
 
 ---
 
@@ -541,7 +542,7 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
 | v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
 | v4.1 Bug Fixes & Polish | 56-57 | 3/3 | Complete ✅ | 2026-01-15 |
-| v4.2 Settings & Stability | 58-60 | 2/? | In progress 🚧 | - |
+| v4.2 Settings & Stability | 58-60 | 3/3 | Ready to complete 🚧 | - |
 
 **Shipped: 19 milestones, 57 phases, 102 plans**
 **In Progress: v4.2 (3 phases)**
