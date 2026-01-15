@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Milestone: v4.2 Settings & Stability
-Phase: 59 of 60 (Settings Restructure)
+Phase: 60 of 60 (Calendar Email Matching)
 Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-01-15 — Completed 59-01-PLAN.md
+Status: Plan 60-01 complete
+Last activity: 2026-01-15 — Completed 60-01-PLAN.md
 
-Progress: ██████░░░░ 66% (2 of 3 phases in milestone)
+Progress: ██████████ 100% (3 of 3 phases in milestone)
 
 ## Completed Milestones
 
@@ -112,8 +112,8 @@ Resume file: None
 20. Add wp-config.php constants installation documentation (docs)
 21. ~~Restructure Settings with Connections tab and subtabs (ui)~~ — DONE in v4.2 Phase 59
 22. ~~Fix search modal active result dark mode contrast (ui)~~ — DONE in v4.1 Phase 56
-23. Re-run meetings matching when email address added (api)
-24. Match events against all person email addresses (api)
+23. ~~Re-run meetings matching when email address added (api)~~ — DONE in v4.2 Phase 60
+24. ~~Match events against all person email addresses (api)~~ — DONE in v4.0 (already implemented in get_email_lookup)
 25. ~~Update favicon to match current color scheme (ui)~~ — DONE in v4.1 Phase 57
 26. ~~Fix Today's meetings layout and timezone display (ui)~~ — DONE in v4.1 Phase 57
 27. Soften PersonDetail delete button style (ui)
@@ -131,7 +131,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Milestone v4.2 Settings & Stability in progress: 2 of 3 phases complete
-- 19 milestones, 59 phases, 104 plans completed to date
-- Use `/gsd:plan-phase 60` to plan Calendar Matching Enhancement phase
-- Phase 60: Match events against all person email addresses, re-run matching on email add
+- Milestone v4.2 Settings & Stability complete: 3 of 3 phases complete
+- 19 milestones, 60 phases, 105 plans completed to date
+- Ready for milestone completion: Update version, changelog, create git tag
