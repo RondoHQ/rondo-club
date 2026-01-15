@@ -150,7 +150,7 @@ export default function VCardImport() {
           <div
             className={`relative rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
               dragActive
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30'
                 : file
                 ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/30'
                 : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
@@ -169,7 +169,7 @@ export default function VCardImport() {
 
             {validateMutation.isPending ? (
               <div className="flex flex-col items-center gap-2">
-                <Loader2 className="h-8 w-8 text-primary-600 dark:text-primary-400 animate-spin" />
+                <Loader2 className="h-8 w-8 text-accent-600 dark:text-accent-400 animate-spin" />
                 <p className="text-gray-600 dark:text-gray-300">Validating file...</p>
               </div>
             ) : file ? (

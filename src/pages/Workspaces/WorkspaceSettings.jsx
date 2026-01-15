@@ -47,7 +47,7 @@ export default function WorkspaceSettings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
       </div>
     );
   }
@@ -56,7 +56,7 @@ export default function WorkspaceSettings() {
     return (
       <div className="card p-6 text-center">
         <p className="text-red-600 dark:text-red-400">Failed to load workspace.</p>
-        <Link to="/workspaces" className="text-primary-600 dark:text-primary-400 hover:underline mt-2 inline-block">
+        <Link to="/workspaces" className="text-accent-600 dark:text-accent-400 hover:underline mt-2 inline-block">
           Back to Workspaces
         </Link>
       </div>
@@ -70,7 +70,7 @@ export default function WorkspaceSettings() {
     return (
       <div className="card p-6 text-center">
         <p className="text-gray-600 dark:text-gray-300">Only workspace owners can access settings.</p>
-        <Link to={`/workspaces/${id}`} className="text-primary-600 dark:text-primary-400 hover:underline mt-2 inline-block">
+        <Link to={`/workspaces/${id}`} className="text-accent-600 dark:text-accent-400 hover:underline mt-2 inline-block">
           Back to Workspace
         </Link>
       </div>
@@ -105,7 +105,7 @@ export default function WorkspaceSettings() {
             <input
               type="text"
               {...register('title', { required: 'Name is required' })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
             />
             {errors.title && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.title.message}</p>
@@ -119,7 +119,7 @@ export default function WorkspaceSettings() {
             <textarea
               {...register('description')}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
             />
           </div>
 
