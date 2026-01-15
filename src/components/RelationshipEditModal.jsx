@@ -118,7 +118,7 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
                 type="button"
                 onClick={() => handleSelect(person.id)}
                 className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-50 ${
-                  value === person.id ? 'bg-primary-50 dark:bg-primary-900/30' : ''
+                  value === person.id ? 'bg-accent-50 dark:bg-accent-900/30' : ''
                 }`}
               >
                 {getPersonName(person)}
@@ -233,7 +233,7 @@ export default function RelationshipEditModal({
                   <button
                     type="button"
                     onClick={onCreatePerson}
-                    className="inline-flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                    className="inline-flex items-center gap-1 text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300"
                   >
                     <Plus className="w-4 h-4" />
                     Add new person

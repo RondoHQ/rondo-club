@@ -40,14 +40,14 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading, currentP
           {selectedPeople.map(person => (
             <span
               key={person.id}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 rounded-full text-sm"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-300 rounded-full text-sm"
             >
               {getPersonName(person)}
               {person.id !== currentPersonId && (
                 <button
                   type="button"
                   onClick={() => handleRemove(person.id)}
-                  className="hover:text-primary-600 dark:hover:text-primary-400"
+                  className="hover:text-accent-600 dark:hover:text-accent-400"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -364,7 +364,7 @@ export default function ImportantDateModal({
                 type="checkbox"
                 id="year_unknown"
                 {...register('year_unknown')}
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500 dark:bg-gray-700"
                 disabled={isLoading}
               />
               <label htmlFor="year_unknown" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
@@ -378,7 +378,7 @@ export default function ImportantDateModal({
                 type="checkbox"
                 id="is_recurring"
                 {...register('is_recurring')}
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500 dark:bg-gray-700"
                 disabled={isLoading}
               />
               <label htmlFor="is_recurring" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
