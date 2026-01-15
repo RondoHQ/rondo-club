@@ -42,14 +42,14 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
     .join(', ');
 
   return (
-    <tr className={`hover:bg-gray-100 ${isOdd ? 'bg-gray-50' : 'bg-white'}`}>
+    <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'}`}>
       <td className="pl-4 pr-2 py-3 w-10">
         <button
           onClick={(e) => { e.preventDefault(); onToggleSelection(person.id); }}
-          className="text-gray-400 hover:text-gray-600"
+          className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
         >
           {isSelected ? (
-            <CheckSquare className="w-5 h-5 text-primary-600" />
+            <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           ) : (
             <Square className="w-5 h-5" />
           )}
@@ -64,8 +64,8 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
               className="w-8 h-8 rounded-full object-cover"
             />
           ) : (
-            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-gray-500">
+            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-300">
                 {person.first_name?.[0] || '?'}
               </span>
             </div>
@@ -74,37 +74,37 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
       </td>
       <td className="px-4 py-3 whitespace-nowrap">
         <Link to={`/people/${person.id}`} className="flex items-center">
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
             {person.first_name || ''}
-            {person.is_deceased && <span className="ml-1 text-gray-500">†</span>}
+            {person.is_deceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
           </span>
           {person.is_favorite && (
             <Star className="w-4 h-4 ml-1 text-yellow-400 fill-current" />
           )}
         </Link>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
         {person.last_name || '-'}
       </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
         {companyName || '-'}
       </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
         {workspaceNames || '-'}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-500">
+      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
         {person.labels && person.labels.length > 0 ? (
           <div className="flex flex-wrap gap-1">
             {person.labels.slice(0, 3).map((label) => (
               <span
                 key={label}
-                className="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
+                className="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
               >
                 {label}
               </span>
             ))}
             {person.labels.length > 3 && (
-              <span className="text-xs text-gray-400">+{person.labels.length - 3} more</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">+{person.labels.length - 3} more</span>
             )}
           </div>
         ) : (
@@ -120,10 +120,10 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
   const isActive = currentSortField === field;
 
   return (
-    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
       <button
         onClick={() => onSort(field)}
-        className="flex items-center gap-1 hover:text-gray-700 cursor-pointer"
+        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
       >
         {label}
         {isActive && (
@@ -141,25 +141,25 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
 function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50 sticky top-0 z-10">
-          <tr className="shadow-sm">
-            <th scope="col" className="pl-4 pr-2 py-3 w-10 bg-gray-50">
+      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
+          <tr className="shadow-sm dark:shadow-gray-900/50">
+            <th scope="col" className="pl-4 pr-2 py-3 w-10 bg-gray-50 dark:bg-gray-800">
               <button
                 onClick={onToggleSelectAll}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                 title={isAllSelected ? 'Deselect all' : 'Select all'}
               >
                 {isAllSelected ? (
-                  <CheckSquare className="w-5 h-5 text-primary-600" />
+                  <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 ) : isSomeSelected ? (
-                  <MinusSquare className="w-5 h-5 text-primary-600" />
+                  <MinusSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 ) : (
                   <Square className="w-5 h-5" />
                 )}
               </button>
             </th>
-            <th scope="col" className="w-10 px-2 bg-gray-50"></th>
+            <th scope="col" className="w-10 px-2 bg-gray-50 dark:bg-gray-800"></th>
             <SortableHeader field="first_name" label="First Name" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="last_name" label="Last Name" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="organization" label="Organization" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
@@ -167,7 +167,7 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
             <SortableHeader field="labels" label="Labels" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
           {people.map((person, index) => (
             <PersonListRow
               key={person.id}
@@ -215,12 +215,12 @@ function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoadi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Change Visibility</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+          <h2 className="text-lg font-semibold dark:text-gray-50">Change Visibility</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
@@ -228,7 +228,7 @@ function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoadi
         </div>
 
         <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Select visibility for {selectedCount} {selectedCount === 1 ? 'person' : 'people'}:
           </p>
 
@@ -244,25 +244,25 @@ function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoadi
                   disabled={isLoading}
                   className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                     isSelected
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 mt-0.5 ${isSelected ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <Icon className={`w-5 h-5 mt-0.5 ${isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
                   <div className="flex-1">
-                    <div className={`text-sm font-medium ${isSelected ? 'text-primary-900' : 'text-gray-900'}`}>
+                    <div className={`text-sm font-medium ${isSelected ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-gray-50'}`}>
                       {option.label}
                     </div>
-                    <div className="text-xs text-gray-500">{option.description}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{option.description}</div>
                   </div>
-                  {isSelected && <Check className="w-5 h-5 text-primary-600 mt-0.5" />}
+                  {isSelected && <Check className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5" />}
                 </button>
               );
             })}
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+        <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <button
             type="button"
             onClick={onClose}
@@ -308,12 +308,12 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Assign to Workspace</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+          <h2 className="text-lg font-semibold dark:text-gray-50">Assign to Workspace</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
@@ -321,13 +321,13 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
         </div>
 
         <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Select workspaces for {selectedCount} {selectedCount === 1 ? 'person' : 'people'}:
           </p>
 
           {workspaces.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+            <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+              <Users className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
               <p className="text-sm">No workspaces available.</p>
               <p className="text-xs">Create a workspace first to use this feature.</p>
             </div>
@@ -343,18 +343,18 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isChecked
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
                     <div className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
-                      isChecked ? 'bg-primary-600 border-primary-600' : 'border-gray-300'
+                      isChecked ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-500'
                     }`}>
                       {isChecked && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900">{workspace.title}</div>
-                      <div className="text-xs text-gray-500">{workspace.member_count} members</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{workspace.title}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{workspace.member_count} members</div>
                     </div>
                   </button>
                 );
@@ -363,7 +363,7 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
           )}
         </div>
 
-        <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+        <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <button
             type="button"
             onClick={onClose}
@@ -408,16 +408,16 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Set Organization</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" disabled={isLoading}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+          <h2 className="text-lg font-semibold dark:text-gray-50">Set Organization</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" disabled={isLoading}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Set current organization for {selectedCount} {selectedCount === 1 ? 'person' : 'people'}:
           </p>
 
@@ -427,7 +427,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
             placeholder="Search organizations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500"
           />
 
           {/* Option to clear organization */}
@@ -437,22 +437,22 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
             disabled={isLoading}
             className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
               selectedCompanyId === 'clear'
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
-            <X className={`w-5 h-5 ${selectedCompanyId === 'clear' ? 'text-primary-600' : 'text-gray-400'}`} />
+            <X className={`w-5 h-5 ${selectedCompanyId === 'clear' ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
             <div className="flex-1">
-              <div className="text-sm font-medium text-gray-900">Clear organization</div>
-              <div className="text-xs text-gray-500">Remove current organization from selected people</div>
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-50">Clear organization</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Remove current organization from selected people</div>
             </div>
-            {selectedCompanyId === 'clear' && <Check className="w-5 h-5 text-primary-600" />}
+            {selectedCompanyId === 'clear' && <Check className="w-5 h-5 text-primary-600 dark:text-primary-400" />}
           </button>
 
           {/* Company list */}
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {filteredCompanies.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
                 {searchQuery ? 'No organizations match your search' : 'No organizations found'}
               </p>
             ) : (
@@ -466,15 +466,15 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isSelected
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
-                    <Building2 className={`w-5 h-5 ${isSelected ? 'text-primary-600' : 'text-gray-400'}`} />
+                    <Building2 className={`w-5 h-5 ${isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900">{company.name}</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{company.name}</div>
                     </div>
-                    {isSelected && <Check className="w-5 h-5 text-primary-600" />}
+                    {isSelected && <Check className="w-5 h-5 text-primary-600 dark:text-primary-400" />}
                   </button>
                 );
               })
@@ -482,7 +482,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+        <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <button type="button" onClick={onClose} className="btn-secondary" disabled={isLoading}>
             Cancel
           </button>
@@ -525,26 +525,26 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Manage Labels</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" disabled={isLoading}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+          <h2 className="text-lg font-semibold dark:text-gray-50">Manage Labels</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" disabled={isLoading}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             {mode === 'add' ? 'Add' : 'Remove'} labels for {selectedCount} {selectedCount === 1 ? 'person' : 'people'}:
           </p>
 
           {/* Mode toggle */}
-          <div className="flex rounded-lg border border-gray-200 p-1">
+          <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 p-1">
             <button
               type="button"
               onClick={() => { setMode('add'); setSelectedLabelIds([]); }}
               className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'add' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-50'
+                mode === 'add' ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
               Add Labels
@@ -553,7 +553,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
               type="button"
               onClick={() => { setMode('remove'); setSelectedLabelIds([]); }}
               className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'remove' ? 'bg-red-100 text-red-700' : 'text-gray-600 hover:bg-gray-50'
+                mode === 'remove' ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
               Remove Labels
@@ -562,8 +562,8 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
 
           {/* Label list */}
           {(!labels || labels.length === 0) ? (
-            <div className="text-center py-6 text-gray-500">
-              <Tag className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+            <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+              <Tag className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
               <p className="text-sm">No labels available.</p>
               <p className="text-xs">Create labels first to use this feature.</p>
             </div>
@@ -579,18 +579,18 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isChecked
-                        ? mode === 'add' ? 'border-primary-500 bg-primary-50' : 'border-red-500 bg-red-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? mode === 'add' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'border-red-500 bg-red-50 dark:bg-red-900/30'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
                     <div className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
                       isChecked
                         ? mode === 'add' ? 'bg-primary-600 border-primary-600' : 'bg-red-600 border-red-600'
-                        : 'border-gray-300'
+                        : 'border-gray-300 dark:border-gray-500'
                     }`}>
                       {isChecked && <Check className="w-3 h-3 text-white" />}
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{label.name}</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-50">{label.name}</span>
                   </button>
                 );
               })}
@@ -598,7 +598,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
           )}
         </div>
 
-        <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+        <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <button type="button" onClick={onClose} className="btn-secondary" disabled={isLoading}>
             Cancel
           </button>
@@ -1001,11 +1001,11 @@ export default function PeopleList() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* Sort Controls */}
-          <div className="flex items-center gap-2 border border-gray-200 rounded-lg p-1">
+          <div className="flex items-center gap-2 border border-gray-200 dark:border-gray-600 rounded-lg p-1">
             <select
               value={sortField}
               onChange={(e) => setSortField(e.target.value)}
-              className="text-sm border-0 bg-transparent focus:ring-0 focus:outline-none cursor-pointer"
+              className="text-sm border-0 bg-transparent dark:text-gray-200 focus:ring-0 focus:outline-none cursor-pointer"
             >
               <option value="first_name">First name</option>
               <option value="last_name">Last name</option>
@@ -1014,16 +1014,16 @@ export default function PeopleList() {
               <option value="workspace">Workspace</option>
               <option value="labels">Labels</option>
             </select>
-            <div className="h-4 w-px bg-gray-300"></div>
+            <div className="h-4 w-px bg-gray-300 dark:bg-gray-600"></div>
             <button
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
               title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
             >
               {sortOrder === 'asc' ? (
-                <ArrowUp className="w-4 h-4 text-gray-600" />
+                <ArrowUp className="w-4 h-4 text-gray-600 dark:text-gray-300" />
               ) : (
-                <ArrowDown className="w-4 h-4 text-gray-600" />
+                <ArrowDown className="w-4 h-4 text-gray-600 dark:text-gray-300" />
               )}
             </button>
           </div>
@@ -1046,7 +1046,7 @@ export default function PeopleList() {
             {isFilterOpen && (
               <div
                 ref={dropdownRef}
-                className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
               >
                 <div className="p-4 space-y-4">
                   {/* Favorites Filter */}
@@ -1059,9 +1059,9 @@ export default function PeopleList() {
                         className="sr-only"
                       />
                       <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                        showFavoritesOnly 
-                          ? 'bg-primary-600 border-primary-600' 
-                          : 'border-gray-300'
+                        showFavoritesOnly
+                          ? 'bg-primary-600 border-primary-600'
+                          : 'border-gray-300 dark:border-gray-500'
                       }`}>
                         {showFavoritesOnly && (
                           <Check className="w-3 h-3 text-white" />
@@ -1069,22 +1069,22 @@ export default function PeopleList() {
                       </div>
                       <div className="flex items-center">
                         <Star className="w-4 h-4 mr-2 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium text-gray-900">Favorites only</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Favorites only</span>
                       </div>
                     </label>
                   </div>
-                  
+
                   {/* Labels Filter */}
                   {availableLabels.length > 0 && (
                     <div>
-                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                         Labels
                       </h3>
                       <div className="space-y-1 max-h-48 overflow-y-auto">
                         {availableLabels.map(label => (
                           <label
                             key={label}
-                            className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"
+                            className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
                           >
                             <input
                               type="checkbox"
@@ -1095,29 +1095,29 @@ export default function PeopleList() {
                             <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                               selectedLabels.includes(label)
                                 ? 'bg-primary-600 border-primary-600'
-                                : 'border-gray-300'
+                                : 'border-gray-300 dark:border-gray-500'
                             }`}>
                               {selectedLabels.includes(label) && (
                                 <Check className="w-3 h-3 text-white" />
                               )}
                             </div>
-                            <span className="text-sm text-gray-700">{label}</span>
+                            <span className="text-sm text-gray-700 dark:text-gray-200">{label}</span>
                           </label>
                         ))}
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Birth Year Filter */}
                   {availableBirthYears.length > 0 && (
                     <div>
-                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                         Birth year
                       </h3>
                       <select
                         value={selectedBirthYear}
                         onChange={(e) => setSelectedBirthYear(e.target.value)}
-                        className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
                       >
                         <option value="">All years</option>
                         {availableBirthYears.map(year => (
@@ -1126,16 +1126,16 @@ export default function PeopleList() {
                       </select>
                     </div>
                   )}
-                  
+
                   {/* Last Modified Filter */}
                   <div>
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                       Last modified
                     </h3>
                     <select
                       value={lastModifiedFilter}
                       onChange={(e) => setLastModifiedFilter(e.target.value)}
-                      className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="">Any time</option>
                       <option value="7">Last 7 days</option>
@@ -1147,7 +1147,7 @@ export default function PeopleList() {
 
                   {/* Ownership Filter */}
                   <div>
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                       Ownership
                     </h3>
                     <div className="space-y-1">
@@ -1158,7 +1158,7 @@ export default function PeopleList() {
                       ].map(option => (
                         <label
                           key={option.value}
-                          className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"
+                          className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
                         >
                           <input
                             type="radio"
@@ -1171,13 +1171,13 @@ export default function PeopleList() {
                           <div className={`flex items-center justify-center w-4 h-4 border-2 rounded-full mr-3 ${
                             ownershipFilter === option.value
                               ? 'border-primary-600'
-                              : 'border-gray-300'
+                              : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {ownershipFilter === option.value && (
                               <div className="w-2 h-2 bg-primary-600 rounded-full" />
                             )}
                           </div>
-                          <span className="text-sm text-gray-700">{option.label}</span>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">{option.label}</span>
                         </label>
                       ))}
                     </div>
@@ -1186,13 +1186,13 @@ export default function PeopleList() {
                   {/* Workspace Filter */}
                   {workspaces.length > 0 && (
                     <div>
-                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                         Workspace
                       </h3>
                       <select
                         value={selectedWorkspaceFilter}
                         onChange={(e) => setSelectedWorkspaceFilter(e.target.value)}
-                        className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
                       >
                         <option value="">All Workspaces</option>
                         {workspaces.map(ws => (
@@ -1206,7 +1206,7 @@ export default function PeopleList() {
                   {hasActiveFilters && (
                     <button
                       onClick={clearFilters}
-                      className="w-full text-sm text-primary-600 hover:text-primary-700 font-medium pt-2 border-t border-gray-200"
+                      className="w-full text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
                     >
                       Clear all filters
                     </button>
@@ -1215,17 +1215,17 @@ export default function PeopleList() {
               </div>
             )}
           </div>
-          
+
           {/* Active Filter Chips */}
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2">
               {showFavoritesOnly && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-800 rounded-full text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 dark:bg-primary-900/50 text-primary-800 dark:text-primary-200 rounded-full text-xs">
                   <Star className="w-3 h-3" />
                   Favorites
                   <button
                     onClick={() => setShowFavoritesOnly(false)}
-                    className="hover:text-primary-600"
+                    className="hover:text-primary-600 dark:hover:text-primary-300"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -1234,53 +1234,53 @@ export default function PeopleList() {
               {selectedLabels.map(label => (
                 <span
                   key={label}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs"
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs"
                 >
                   {label}
                   <button
                     onClick={() => handleLabelToggle(label)}
-                    className="hover:text-gray-600"
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               ))}
               {selectedBirthYear && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
                   Born {selectedBirthYear}
                   <button
                     onClick={() => setSelectedBirthYear('')}
-                    className="hover:text-gray-600"
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
               {lastModifiedFilter && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
                   Modified: {lastModifiedFilter === '7' ? 'Last 7 days' :
                              lastModifiedFilter === '30' ? 'Last 30 days' :
                              lastModifiedFilter === '90' ? 'Last 90 days' : 'Last year'}
                   <button
                     onClick={() => setLastModifiedFilter('')}
-                    className="hover:text-gray-600"
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
               {ownershipFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-800 rounded-full text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 dark:bg-primary-900/50 text-primary-800 dark:text-primary-200 rounded-full text-xs">
                   {ownershipFilter === 'mine' ? 'My Contacts' : 'Shared with Me'}
-                  <button onClick={() => setOwnershipFilter('all')} className="hover:text-primary-600">
+                  <button onClick={() => setOwnershipFilter('all')} className="hover:text-primary-600 dark:hover:text-primary-300">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
               {selectedWorkspaceFilter && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-full text-xs">
                   {workspaces.find(ws => ws.id === parseInt(selectedWorkspaceFilter))?.title || 'Workspace'}
-                  <button onClick={() => setSelectedWorkspaceFilter('')} className="hover:text-blue-600">
+                  <button onClick={() => setSelectedWorkspaceFilter('')} className="hover:text-blue-600 dark:hover:text-blue-300">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -1298,25 +1298,25 @@ export default function PeopleList() {
       {/* Loading state */}
       {isLoading && (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
         </div>
       )}
-      
+
       {/* Error state */}
       {error && (
         <div className="card p-6 text-center">
-          <p className="text-red-600">Failed to load people.</p>
+          <p className="text-red-600 dark:text-red-400">Failed to load people.</p>
         </div>
       )}
-      
+
       {/* Empty state */}
       {!isLoading && !error && people?.length === 0 && (
         <div className="card p-12 text-center">
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Plus className="w-6 h-6 text-gray-400" />
+          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-1">No people found</h3>
-          <p className="text-gray-500 mb-4">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">No people found</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
             Get started by adding your first person.
           </p>
           <button onClick={() => setShowPersonModal(true)} className="btn-primary">
@@ -1325,11 +1325,11 @@ export default function PeopleList() {
           </button>
         </div>
       )}
-      
+
       {/* Selection toolbar - sticky */}
       {selectedIds.size > 0 && (
-        <div className="sticky top-0 z-20 flex items-center justify-between bg-primary-50 border border-primary-200 rounded-lg px-4 py-2 shadow-sm">
-          <span className="text-sm text-primary-800 font-medium">
+        <div className="sticky top-0 z-20 flex items-center justify-between bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700 rounded-lg px-4 py-2 shadow-sm">
+          <span className="text-sm text-primary-800 dark:text-primary-200 font-medium">
             {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'} selected
           </span>
           <div className="flex items-center gap-3">
@@ -1337,20 +1337,20 @@ export default function PeopleList() {
             <div className="relative" ref={bulkDropdownRef}>
               <button
                 onClick={() => setShowBulkDropdown(!showBulkDropdown)}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-700 bg-white border border-primary-300 rounded-md hover:bg-primary-50"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-700 dark:text-primary-200 bg-white dark:bg-gray-800 border border-primary-300 dark:border-primary-600 rounded-md hover:bg-primary-50 dark:hover:bg-gray-700"
               >
                 Actions
                 <ChevronDown className={`w-4 h-4 transition-transform ${showBulkDropdown ? 'rotate-180' : ''}`} />
               </button>
               {showBulkDropdown && (
-                <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
                   <div className="py-1">
                     <button
                       onClick={() => {
                         setShowBulkDropdown(false);
                         setShowBulkVisibilityModal(true);
                       }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Lock className="w-4 h-4" />
                       Change visibility...
@@ -1360,7 +1360,7 @@ export default function PeopleList() {
                         setShowBulkDropdown(false);
                         setShowBulkWorkspaceModal(true);
                       }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Users className="w-4 h-4" />
                       Assign to workspace...
@@ -1370,7 +1370,7 @@ export default function PeopleList() {
                         setShowBulkDropdown(false);
                         setShowBulkOrganizationModal(true);
                       }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Building2 className="w-4 h-4" />
                       Set organization...
@@ -1380,7 +1380,7 @@ export default function PeopleList() {
                         setShowBulkDropdown(false);
                         setShowBulkLabelsModal(true);
                       }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Tag className="w-4 h-4" />
                       Manage labels...
@@ -1391,7 +1391,7 @@ export default function PeopleList() {
             </div>
             <button
               onClick={clearSelection}
-              className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium"
             >
               Clear selection
             </button>
@@ -1422,15 +1422,15 @@ export default function PeopleList() {
           }}
         />
       )}
-      
+
       {/* No results with filters */}
       {!isLoading && !error && people?.length > 0 && sortedPeople?.length === 0 && (
         <div className="card p-12 text-center">
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Filter className="w-6 h-6 text-gray-400" />
+          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Filter className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-1">No people match your filters</h3>
-          <p className="text-gray-500 mb-4">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">No people match your filters</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
             Try adjusting your filters to see more results.
           </p>
           <button onClick={clearFilters} className="btn-secondary">

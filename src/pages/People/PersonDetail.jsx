@@ -1148,15 +1148,15 @@ export default function PersonDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
       </div>
     );
   }
-  
+
   if (error || !person) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-red-600">Failed to load person.</p>
+        <p className="text-red-600 dark:text-red-400">Failed to load person.</p>
         <Link to="/people" className="btn-secondary mt-4">Back to people</Link>
       </div>
     );
@@ -1241,7 +1241,7 @@ export default function PersonDetail() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link to="/people" className="flex items-center text-gray-600 hover:text-gray-900">
+        <Link to="/people" className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
           <span className="hidden md:inline">Back to people</span>
         </Link>
@@ -1276,8 +1276,8 @@ export default function PersonDetail() {
                 className="w-28 h-28 rounded-full object-cover"
               />
             ) : (
-              <div className="w-28 h-28 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-3xl font-medium text-gray-500">
+              <div className="w-28 h-28 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                <span className="text-3xl font-medium text-gray-500 dark:text-gray-300">
                   {person.first_name?.[0] || '?'}
                 </span>
               </div>
@@ -1304,16 +1304,16 @@ export default function PersonDetail() {
 
           <div className="flex-1 space-y-3">
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">
+              <h1 className="text-2xl font-bold dark:text-gray-50">
                 {person.name}
-                {isDeceased && <span className="ml-1 text-gray-500">†</span>}
+                {isDeceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
               </h1>
               {person.is_favorite && (
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
               )}
             </div>
             {currentPositions.length > 0 && (
-              <p className="text-base text-gray-600">
+              <p className="text-base text-gray-600 dark:text-gray-300">
                 {currentPositions.map((job, idx) => {
                   const hasTitle = !!job.job_title;
                   const hasCompany = job.company && companyMap[job.company];
@@ -1326,10 +1326,10 @@ export default function PersonDetail() {
                       {hasTitle ? job.job_title : 'Works'}
                       {hasCompany && (
                         <>
-                          <span className="text-gray-400"> at </span>
+                          <span className="text-gray-400 dark:text-gray-500"> at</span>
                           <Link
                             to={`/organizations/${job.company}`}
-                            className="text-primary-600 hover:text-primary-700 hover:underline"
+                            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
                           >
                             {companyMap[job.company].name}
                           </Link>
@@ -1341,10 +1341,10 @@ export default function PersonDetail() {
               </p>
             )}
             {acf.nickname && (
-              <p className="text-gray-500">"{acf.nickname}"</p>
+              <p className="text-gray-500 dark:text-gray-400">"{acf.nickname}"</p>
             )}
             {isDeceased && deathDateValue && (
-              <p className="text-gray-500 text-sm inline-flex items-center flex-wrap">
+              <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
                 {getGenderSymbol(acf.gender) && <span>{getGenderSymbol(acf.gender)}</span>}
                 {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
                 {acf.pronouns && <span>{acf.pronouns}</span>}
@@ -1353,7 +1353,7 @@ export default function PersonDetail() {
               </p>
             )}
             {!isDeceased && (getGenderSymbol(acf.gender) || acf.pronouns || age !== null) && (
-              <p className="text-gray-500 text-sm inline-flex items-center flex-wrap">
+              <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
                 {getGenderSymbol(acf.gender) && <span>{getGenderSymbol(acf.gender)}</span>}
                 {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
                 {acf.pronouns && <span>{acf.pronouns}</span>}
@@ -1367,12 +1367,12 @@ export default function PersonDetail() {
                   person.labels.map((label, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 group/label"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group/label"
                     >
                       {label}
                       <button
                         onClick={() => handleRemoveLabel(label)}
-                        className="opacity-0 group-hover/label:opacity-100 transition-opacity hover:bg-gray-200 rounded-full p-0.5"
+                        className="opacity-0 group-hover/label:opacity-100 transition-opacity hover:bg-gray-200 dark:bg-gray-600 rounded-full p-0.5"
                         title="Remove label"
                       >
                         <X className="w-3 h-3" />
@@ -1384,7 +1384,7 @@ export default function PersonDetail() {
                   availableLabelsToAdd.length > 0 && (
                     <button
                       onClick={() => setIsAddingLabel(true)}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 transition-colors"
                     >
                       <Plus className="w-3 h-3 mr-1" />
                       Add label
@@ -1458,14 +1458,14 @@ export default function PersonDetail() {
       </div>
       
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="flex gap-8">
           <button
             onClick={() => setActiveTab('profile')}
             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'profile'
                 ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
             Profile
@@ -1475,7 +1475,7 @@ export default function PersonDetail() {
             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'timeline'
                 ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
             Timeline
@@ -1485,7 +1485,7 @@ export default function PersonDetail() {
             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'work'
                 ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
             Work
@@ -1573,19 +1573,19 @@ export default function PersonDetail() {
                                 href={contact.contact_value}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary-600 hover:text-primary-700 hover:underline"
+                                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
                               >
                                 {contact.contact_label || 'Slack'}
                               </a>
                             ) : (
                               <>
-                                <span className="text-sm text-gray-500">{contact.contact_label || contact.contact_type}: </span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">{contact.contact_label || contact.contact_type}: </span>
                                 {linkHref ? (
                                   <a
                                     href={linkHref}
                                     target={linkTarget || undefined}
                                     rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
-                                    className="text-primary-600 hover:text-primary-700 hover:underline"
+                                    className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline"
                                   >
                                     {contact.contact_value}
                                   </a>
@@ -1636,7 +1636,7 @@ export default function PersonDetail() {
 
                   return (
                     <div key={date.id} className="flex items-start group">
-                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                      <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mr-3">
                         {isDied ? (
                           <span className="text-gray-500 text-lg font-semibold">†</span>
                         ) : (
@@ -1645,7 +1645,7 @@ export default function PersonDetail() {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">{date.title}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {date.date_value && format(new Date(date.date_value), dateFormat)}
                         </p>
                         {dateType && (
@@ -1658,7 +1658,7 @@ export default function PersonDetail() {
                             setEditingDate(date);
                             setShowDateModal(true);
                           }}
-                          className="p-1 hover:bg-gray-100 rounded"
+                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                           title="Edit date"
                         >
                           <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
@@ -1715,13 +1715,13 @@ export default function PersonDetail() {
                           <MapPin className="w-4 h-4 text-gray-400 mt-1 mr-3 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             {address.address_label && (
-                              <p className="text-xs text-gray-500 mb-1">{address.address_label}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{address.address_label}</p>
                             )}
                             <a
                               href={googleMapsUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-primary-600 hover:text-primary-700 hover:underline text-sm"
+                              className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline text-sm"
                             >
                               {addressLines.map((line, i) => (
                                 <span key={i} className="block">{line}</span>
@@ -1735,7 +1735,7 @@ export default function PersonDetail() {
                                 setEditingAddressIndex(index);
                                 setShowAddressModal(true);
                               }}
-                              className="p-1 hover:bg-gray-100 rounded"
+                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                               title="Edit address"
                             >
                               <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
@@ -1809,7 +1809,7 @@ export default function PersonDetail() {
                     ) ?? index;
                     
                     return (
-                      <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 group">
+                      <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 group">
                         <Link
                           to={`/people/${rel.related_person}`}
                           className="flex items-center flex-1 min-w-0"
@@ -1821,7 +1821,7 @@ export default function PersonDetail() {
                               className="w-8 h-8 rounded-full object-cover mr-2"
                             />
                           ) : (
-                            <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full mr-2 flex items-center justify-center">
                               <span className="text-xs font-medium text-gray-500">
                                 {decodeHtml(rel.person_name)?.[0] || '?'}
                               </span>
@@ -1834,7 +1834,7 @@ export default function PersonDetail() {
                                 <span className="text-gray-400 ml-1" title="Deceased">†</span>
                               )}
                             </p>
-                            <p className="text-xs text-gray-500">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
                           </div>
                         </Link>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
@@ -1845,7 +1845,7 @@ export default function PersonDetail() {
                               setEditingRelationshipIndex(originalIndex);
                               setShowRelationshipModal(true);
                             }}
-                            className="p-1 hover:bg-gray-100 rounded"
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                             title="Edit relationship"
                           >
                             <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
@@ -1955,7 +1955,7 @@ export default function PersonDetail() {
                             {companyData.name}
                           </Link>
                         )}
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {job.start_date && format(new Date(job.start_date), 'MMM yyyy')}
                           {' - '}
                           {job.is_current ? 'Present' : job.end_date ? format(new Date(job.end_date), 'MMM yyyy') : ''}
@@ -1972,7 +1972,7 @@ export default function PersonDetail() {
                             setEditingWorkHistoryIndex(originalIndex);
                             setShowWorkHistoryModal(true);
                           }}
-                          className="p-1 hover:bg-gray-100 rounded"
+                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                           title="Edit work history"
                         >
                           <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
@@ -2008,7 +2008,7 @@ export default function PersonDetail() {
                   <Link
                     key={company.id}
                     to={`/companies/${company.id}`}
-                    className="flex items-center p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                    className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
                   >
                     {company.thumbnail ? (
                       <img
@@ -2024,7 +2024,7 @@ export default function PersonDetail() {
                     <div className="ml-3">
                       <p className="text-sm font-medium group-hover:text-primary-600">{company.name}</p>
                       {company.industry && (
-                        <p className="text-xs text-gray-500">{company.industry}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{company.industry}</p>
                       )}
                     </div>
                   </Link>
@@ -2038,14 +2038,14 @@ export default function PersonDetail() {
             <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold">Colleagues</h2>
-                <span className="text-xs text-gray-500">{colleagues.length} {colleagues.length === 1 ? 'colleague' : 'colleagues'}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{colleagues.length} {colleagues.length === 1 ? 'colleague' : 'colleagues'}</span>
               </div>
               <div className="space-y-2">
                 {colleagues.map((colleague) => (
                   <Link
                     key={colleague.id}
                     to={`/people/${colleague.id}`}
-                    className="flex items-center p-2 rounded hover:bg-gray-50"
+                    className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     {colleague.thumbnail ? (
                       <img
@@ -2054,7 +2054,7 @@ export default function PersonDetail() {
                         className="w-8 h-8 rounded-full object-cover mr-2"
                       />
                     ) : (
-                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-2 flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full mr-2 flex items-center justify-center">
                         <span className="text-xs font-medium text-gray-500">
                           {colleague.name?.[0] || '?'}
                         </span>
@@ -2063,7 +2063,7 @@ export default function PersonDetail() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{colleague.name}</p>
                       {colleague.job_title && (
-                        <p className="text-xs text-gray-500 truncate">{colleague.job_title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{colleague.job_title}</p>
                       )}
                     </div>
                   </Link>
@@ -2105,7 +2105,7 @@ export default function PersonDetail() {
                     const isOverdue = isTodoOverdue(todo);
                     const awaitingDays = getAwaitingDays(todo);
                     return (
-                      <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 group">
+                      <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 group">
                         <button
                           onClick={() => handleToggleTodo(todo)}
                           className="mt-0.5 mr-2 flex-shrink-0"
@@ -2133,7 +2133,7 @@ export default function PersonDetail() {
                           </p>
                           {/* Notes preview */}
                           {todo.notes && (
-                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
                               {stripHtmlTags(todo.notes).slice(0, 60)}{stripHtmlTags(todo.notes).length > 60 ? '...' : ''}
                             </p>
                           )}
@@ -2160,7 +2160,7 @@ export default function PersonDetail() {
 
                             return (
                               <div className="flex items-center gap-1 mt-1">
-                                <span className="text-xs text-gray-500">Also:</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Also:</span>
                                 <div className="flex -space-x-1.5" title={otherPersons.map(p => p.name).join(', ')}>
                                   {otherPersons.slice(0, 2).map((person, idx) => (
                                     <Link
@@ -2177,7 +2177,7 @@ export default function PersonDetail() {
                                           className="w-5 h-5 rounded-full object-cover border border-white"
                                         />
                                       ) : (
-                                        <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center border border-white">
+                                        <div className="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center border border-white">
                                           <User className="w-2.5 h-2.5 text-gray-500" />
                                         </div>
                                       )}
@@ -2199,7 +2199,7 @@ export default function PersonDetail() {
                               setEditingTodo(todo);
                               setShowTodoModal(true);
                             }}
-                            className="p-1 hover:bg-gray-100 rounded"
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                             title="Edit todo"
                           >
                             <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
@@ -2255,7 +2255,7 @@ export default function PersonDetail() {
               <div className="w-10 h-1 bg-gray-300 rounded-full" />
             </div>
             {/* Header */}
-            <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-200">
+            <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2">
                 <h2 className="font-semibold text-lg">Todos</h2>
                 {openTodosCount > 0 && (
@@ -2278,7 +2278,7 @@ export default function PersonDetail() {
                 </button>
                 <button
                   onClick={() => setShowMobileTodos(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
                   title="Close"
                 >
                   <X className="w-5 h-5 text-gray-500" />
@@ -2293,7 +2293,7 @@ export default function PersonDetail() {
                     const isOverdue = isTodoOverdue(todo);
                     const awaitingDays = getAwaitingDays(todo);
                     return (
-                      <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 group">
+                      <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 group">
                         <button
                           onClick={() => handleToggleTodo(todo)}
                           className="mt-0.5 mr-2 flex-shrink-0"
@@ -2321,7 +2321,7 @@ export default function PersonDetail() {
                           </p>
                           {/* Notes preview */}
                           {todo.notes && (
-                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
                               {stripHtmlTags(todo.notes).slice(0, 60)}{stripHtmlTags(todo.notes).length > 60 ? '...' : ''}
                             </p>
                           )}
@@ -2348,7 +2348,7 @@ export default function PersonDetail() {
 
                             return (
                               <div className="flex items-center gap-1 mt-1">
-                                <span className="text-xs text-gray-500">Also:</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Also:</span>
                                 <div className="flex -space-x-1.5" title={otherPersons.map(p => p.name).join(', ')}>
                                   {otherPersons.slice(0, 2).map((person, idx) => (
                                     <Link
@@ -2365,7 +2365,7 @@ export default function PersonDetail() {
                                           className="w-5 h-5 rounded-full object-cover border border-white"
                                         />
                                       ) : (
-                                        <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center border border-white">
+                                        <div className="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center border border-white">
                                           <User className="w-2.5 h-2.5 text-gray-500" />
                                         </div>
                                       )}
@@ -2388,7 +2388,7 @@ export default function PersonDetail() {
                               setShowTodoModal(true);
                               setShowMobileTodos(false);
                             }}
-                            className="p-1 hover:bg-gray-100 rounded"
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                             title="Edit todo"
                           >
                             <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
