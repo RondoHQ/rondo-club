@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useVersionCheck } from '@/hooks/useVersionCheck';
+import { useTheme } from '@/hooks/useTheme';
 import { prmApi } from '@/api/client';
 import Layout from '@/components/layout/Layout';
 import { AlertCircle, RefreshCw } from 'lucide-react';
@@ -154,6 +155,9 @@ function UpdateBanner() {
 }
 
 function App() {
+  // Initialize theme on app mount (applies dark class and accent color)
+  useTheme();
+
   return (
     <>
       <UpdateBanner />

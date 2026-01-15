@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download } from 'lucide-react';
+import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
 import { prmApi } from '@/api/client';
+import { useTheme, COLOR_SCHEMES } from '@/hooks/useTheme';
 import MonicaImport from '@/components/import/MonicaImport';
 import VCardImport from '@/components/import/VCardImport';
 import GoogleContactsImport from '@/components/import/GoogleContactsImport';
 
 // Tab configuration
 const TABS = [
+  { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'sync', label: 'Sync', icon: Share2 },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'data', label: 'Data', icon: Database },
@@ -22,9 +24,9 @@ export default function Settings() {
   const config = window.prmConfig || {};
   const isAdmin = config.isAdmin || false;
   const userId = config.userId;
-  
-  // Get active tab from URL or default to 'sync'
-  const activeTab = searchParams.get('tab') || 'sync';
+
+  // Get active tab from URL or default to 'appearance'
+  const activeTab = searchParams.get('tab') || 'appearance';
   
   const setActiveTab = (tab) => {
     setSearchParams({ tab });
@@ -419,6 +421,8 @@ export default function Settings() {
   // Render tab content
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'appearance':
+        return <AppearanceTab />;
       case 'sync':
         return <SyncTab 
           icalUrl={icalUrl}
@@ -492,7 +496,7 @@ export default function Settings() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-gray-200 mb-6 dark:border-gray-700">
         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
           {visibleTabs.map((tab) => {
             const Icon = tab.icon;
@@ -503,9 +507,9 @@ export default function Settings() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`
                   flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
-                  ${isActive 
-                    ? 'border-primary-500 text-primary-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
+                  ${isActive
+                    ? 'border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'}
                 `}
               >
                 <Icon className="w-4 h-4" />
@@ -520,6 +524,55 @@ export default function Settings() {
       <div className="space-y-6">
         {renderTabContent()}
       </div>
+    </div>
+  );
+}
+
+// Appearance Tab Component
+function AppearanceTab() {
+  const { colorScheme, setColorScheme, effectiveColorScheme } = useTheme();
+
+  const colorSchemeOptions = [
+    { id: 'light', label: 'Light', icon: Sun },
+    { id: 'dark', label: 'Dark', icon: Moon },
+    { id: 'system', label: 'System', icon: Monitor },
+  ];
+
+  return (
+    <div className="card p-6">
+      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Color scheme</h2>
+      <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
+        Choose how {APP_NAME} looks to you. Select a single theme or sync with your system settings.
+      </p>
+
+      {/* Color scheme selector */}
+      <div className="flex gap-2">
+        {colorSchemeOptions.map((option) => {
+          const Icon = option.icon;
+          const isSelected = colorScheme === option.id;
+          return (
+            <button
+              key={option.id}
+              onClick={() => setColorScheme(option.id)}
+              className={`
+                flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
+                ${isSelected
+                  ? 'bg-accent-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}
+              `}
+            >
+              <Icon className="w-5 h-5" />
+              <span>{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Current mode indicator */}
+      <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+        Currently using <span className="font-medium">{effectiveColorScheme}</span> mode
+        {colorScheme === 'system' && ' (based on your system preference)'}
+      </p>
     </div>
   );
 }
