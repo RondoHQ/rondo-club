@@ -26,12 +26,12 @@ function PersonDateEntry({ person, dateType }) {
             className="w-10 h-10 rounded-full object-cover flex-shrink-0"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-medium text-gray-500">{person.name?.[0]}</span>
+          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-300">{person.name?.[0]}</span>
           </div>
         )}
         <span className="font-medium truncate">{person.name}</span>
-        <span className="text-sm text-gray-500 capitalize flex-shrink-0">{dateType}</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400 capitalize flex-shrink-0">{dateType}</span>
       </Link>
     </div>
   );
@@ -43,7 +43,7 @@ function DateCard({ dates }) {
   const daysUntil = firstDate.days_until;
 
   // Only show green for today, gray for all other dates
-  const urgencyClass = daysUntil === 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600';
+  const urgencyClass = daysUntil === 0 ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
 
   // Collect all people from all dates on this day
   const allPeople = [];
@@ -70,7 +70,7 @@ function DateCard({ dates }) {
             {format(new Date(firstDate.next_occurrence), 'd')}
           </span>
         </div>
-        <div className="flex-1 min-w-0 divide-y divide-gray-100">
+        <div className="flex-1 min-w-0 divide-y divide-gray-100 dark:divide-gray-700">
           {allPeople.map(({ person, dateType }, index) => (
             <PersonDateEntry
               key={person.id ? `${person.id}-${dateType}` : `${index}-${dateType}`}
@@ -125,7 +125,7 @@ export default function DatesList() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-400">
           {dates?.length || 0} upcoming dates
         </p>
         <button onClick={() => setShowDateModal(true)} className="btn-primary">
@@ -137,23 +137,23 @@ export default function DatesList() {
       {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
         </div>
       )}
       
       {/* Error */}
       {error && (
         <div className="card p-6 text-center">
-          <p className="text-red-600">Failed to load dates.</p>
+          <p className="text-red-600 dark:text-red-400">Failed to load dates.</p>
         </div>
       )}
       
       {/* Empty */}
       {!isLoading && !error && dates?.length === 0 && (
         <div className="card p-12 text-center">
-          <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <Calendar className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium mb-1">No important dates</h3>
-          <p className="text-gray-500 mb-4">Add birthdays, anniversaries, and more.</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Add birthdays, anniversaries, and more.</p>
           <button onClick={() => setShowDateModal(true)} className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Add date</span>
@@ -164,7 +164,7 @@ export default function DatesList() {
       {/* Grouped by month */}
       {Object.entries(groupedDates).map(([month, dayGroups]) => (
         <div key={month}>
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">{month}</h2>
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4">{month}</h2>
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4">
             {dayGroups.map((dayDates) => (
               <DateCard key={dayDates[0].next_occurrence} dates={dayDates} />
