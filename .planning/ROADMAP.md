@@ -16,10 +16,27 @@
 - ✅ [v3.4 UI Polish](milestones/v3.4-ui-polish.md) (Phases 35-37) — SHIPPED 2026-01-14
 - ✅ [v3.5 Bug Fixes & Polish](milestones/v3.5-bug-fixes-polish.md) (Phases 38-39) — SHIPPED 2026-01-14
 - ✅ [v3.6 Quick Wins & Performance](milestones/v3.6-quick-wins-performance.md) (Phases 40-41) — SHIPPED 2026-01-14
+- 🚧 **v3.7 Todo UX Polish** — Phase 42 (in progress)
 
 ## Current Status
 
-**Active:** No active milestone. Use `/gsd:discuss-milestone` to plan next work.
+**Active:** v3.7 Todo UX Polish (Phase 42)
+
+---
+
+### 🚧 v3.7 Todo UX Polish (In Progress)
+
+**Milestone Goal:** Improve todo interaction patterns for faster, more intuitive task management.
+
+#### Phase 42: Todo UX Polish
+
+**Goal**: Dashboard todo click behavior, notes read-only mode, smart due date defaults
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (internal UI patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 42-01: TBD (run /gsd:plan-phase 42 to break down)
 
 ---
 
@@ -380,13 +397,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.4 UI Polish | 35-37 | 3/3 | Complete ✅ | 2026-01-14 |
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
+| v3.7 Todo UX Polish | 42 | 0/? | Not started | - |
 
 **Shipped: 14 milestones, 41 phases, 75 plans**
-
----
-
-## Next Steps
-
-No active milestone. Options:
-- `/gsd:discuss-milestone` — Plan next features
-- `/gsd:check-todos` — Review pending backlog items
