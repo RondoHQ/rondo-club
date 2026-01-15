@@ -135,9 +135,31 @@ This is a single repository containing both backend (PHP) and frontend (React) c
 
 ## Required rules for every change
 
-### Rule 0: Use WordPress native functions
+### Rule 0: Use WordPress & ACF native data models
 
-When possible, _always_ use WordPress native functions to perform tasks. Make sure that we're not replicating WordPress native functionality to achieve what we want to do.
+**NEVER create custom database tables.** Always use WordPress native data storage:
+
+| Data Type | Storage Method |
+|-----------|---------------|
+| Entities (contacts, events, etc.) | Custom Post Types (`register_post_type`) |
+| Entity metadata | Post meta (`update_post_meta`, `get_post_meta`) |
+| Complex/repeatable fields | ACF field groups (stored in `acf-json/`) |
+| Categories/tags | Custom Taxonomies (`register_taxonomy`) |
+| User settings | User meta (`update_user_meta`, `get_user_meta`) |
+| Site-wide settings | Options API (`update_option`, `get_option`) |
+| Temporary/cached data | Transients API (`set_transient`, `get_transient`) |
+
+**Use WordPress native functions:**
+- Queries: `WP_Query`, `get_posts()`, `get_users()` - never raw SQL
+- CRUD: `wp_insert_post`, `wp_update_post`, `wp_delete_post`
+- Cron: `wp_schedule_event`, `wp_cron` hooks
+- REST: Extend `WP_REST_Controller` or register via `register_rest_route`
+- Caching: Use WordPress object cache, transients, or WP_Query caching
+
+**ACF for complex fields:**
+- Use ACF for repeaters, flexible content, relationships
+- Store field groups in `acf-json/` for version control
+- Access via `get_field()`, `update_field()`, or native `get_post_meta()` with ACF field keys
 
 ### Rule 1: Semantic Versioning
 

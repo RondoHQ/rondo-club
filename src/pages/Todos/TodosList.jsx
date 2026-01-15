@@ -365,7 +365,7 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
       return <Clock className="w-5 h-5 text-orange-500 dark:text-orange-400" />;
     }
     // Open
-    return <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`} />;
+    return <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'}`} />;
   };
 
   // Get title for the toggle button
@@ -392,7 +392,7 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
             : todo.status === 'awaiting'
             ? 'text-orange-700 dark:text-orange-400'
             : isOverdue
-            ? 'text-red-600 dark:text-red-400 font-medium'
+            ? 'text-red-600 dark:text-red-300 font-medium'
             : 'text-gray-900 dark:text-gray-100'
         }`}>
           {todo.content}
@@ -451,7 +451,7 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
 
           {/* Due date - only show prominently for open todos */}
           {todo.due_date && todo.status === 'open' && (
-            <span className={`text-xs ${isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+            <span className={`text-xs ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
               Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
               {isOverdue && ' (overdue)'}
             </span>

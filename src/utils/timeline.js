@@ -216,8 +216,8 @@ export function getAwaitingDays(todo) {
  */
 export function getAwaitingUrgencyClass(days) {
   if (days === null) return '';
-  if (days >= 7) return 'bg-red-100 text-red-700';
-  if (days >= 3) return 'bg-orange-100 text-orange-700';
-  return 'bg-yellow-100 text-yellow-700';
+  if (days >= 7) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+  if (days >= 3) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300';
+  return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
 }
 

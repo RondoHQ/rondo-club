@@ -19,7 +19,7 @@ function StatCard({ title, value, icon: Icon, href }) {
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
           <p className="mt-1 text-3xl font-semibold dark:text-gray-50">{value}</p>
         </div>
-        <div className="p-3 bg-accent-50 dark:bg-accent-900/30 rounded-lg">
+        <div className="p-3 bg-accent-50 dark:bg-gray-700 rounded-lg">
           <Icon className="w-6 h-6 text-accent-600 dark:text-accent-400" />
         </div>
       </div>
@@ -151,11 +151,11 @@ function TodoCard({ todo, onToggle, onView }) {
         {todo.status === 'completed' ? (
           <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
         ) : (
-          <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`} />
+          <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'}`} />
         )}
       </button>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${todo.status === 'completed' ? 'line-through text-gray-400 dark:text-gray-500' : isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-50'}`}>
+        <p className={`text-sm font-medium ${todo.status === 'completed' ? 'line-through text-gray-400 dark:text-gray-500' : isOverdue ? 'text-red-600 dark:text-red-300' : 'text-gray-900 dark:text-gray-50'}`}>
           {todo.content}
         </p>
         <div className="flex items-center gap-2 mt-1">
@@ -175,9 +175,9 @@ function TodoCard({ todo, onToggle, onView }) {
         </div>
       </div>
       {todo.due_date && todo.status === 'open' && (
-        <div className={`ml-3 text-xs text-right flex-shrink-0 ${isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+        <div className={`ml-3 text-xs text-right flex-shrink-0 ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
           <div>{format(new Date(todo.due_date), 'MMM d')}</div>
-          {isOverdue && <div className="text-red-600 dark:text-red-400">overdue</div>}
+          {isOverdue && <div className="text-red-600 dark:text-red-300">overdue</div>}
         </div>
       )}
     </button>
@@ -235,7 +235,7 @@ function EmptyState() {
   return (
     <div className="card p-12 text-center">
       <div className="flex justify-center mb-4">
-        <div className="p-4 bg-accent-50 dark:bg-accent-900/30 rounded-full">
+        <div className="p-4 bg-accent-50 dark:bg-gray-700 rounded-full">
           <Sparkles className="w-12 h-12 text-accent-600 dark:text-accent-400" />
         </div>
       </div>

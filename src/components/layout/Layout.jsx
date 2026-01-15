@@ -73,7 +73,7 @@ function Sidebar({ mobile = false, onClose }) {
             className={({ isActive }) =>
               `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                 isActive
-                  ? 'bg-accent-50 text-accent-700 dark:bg-accent-900/50 dark:text-accent-300'
+                  ? 'bg-accent-50 text-accent-700 dark:bg-gray-700 dark:text-accent-300'
                   : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
               }`
             }
