@@ -59,10 +59,13 @@ Plans:
 **Goal**: Replace hardcoded orange classes with accent-*, implement color picker in settings, validate accessibility
 **Depends on**: Phase 44
 **Research**: Unlikely (internal class replacement)
-**Plans**: TBD
+**Result**: TBD
 
 Plans:
-- [ ] 45-01: TBD (run /gsd:plan-phase 45 to break down)
+- [ ] 45-01: Settings UI & CSS (accent picker, component classes)
+- [ ] 45-02: Core Pages (Dashboard, People, Companies, Dates, Todos, Login)
+- [ ] 45-03: Detail Pages (PersonDetail, CompanyDetail, FamilyTree, Layout, Settings)
+- [ ] 45-04: Remaining Components (Timeline, modals, Workspaces, imports)
 
 #### Phase 46: Polish
 
