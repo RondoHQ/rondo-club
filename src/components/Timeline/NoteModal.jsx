@@ -48,12 +48,12 @@ export default function NoteModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Add note</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Add note</h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
@@ -62,7 +62,7 @@ export default function NoteModal({
 
         <form onSubmit={handleSubmit} className="p-4">
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Note
             </label>
             {workspaceIds.length > 0 ? (
@@ -74,7 +74,7 @@ export default function NoteModal({
               />
             ) : (
               <Suspense fallback={
-                <div className="border border-gray-300 rounded-md p-3 min-h-[150px] animate-pulse bg-gray-100" />
+                <div className="border border-gray-300 dark:border-gray-600 rounded-md p-3 min-h-[150px] animate-pulse bg-gray-100 dark:bg-gray-700" />
               }>
                 <RichTextEditor
                   value={content}
@@ -91,17 +91,17 @@ export default function NoteModal({
           {/* Only show visibility toggle when contact is shared */}
           {isContactShared && (
             <div className="mb-4">
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+              <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={visibility === 'shared'}
                   onChange={(e) => setVisibility(e.target.checked ? 'shared' : 'private')}
-                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
                   disabled={isLoading}
                 />
                 <span className="flex items-center gap-1.5">
                   {visibility === 'shared' ? (
-                    <Users className="w-4 h-4 text-blue-500" />
+                    <Users className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                   ) : (
                     <Lock className="w-4 h-4 text-gray-400" />
                   )}
