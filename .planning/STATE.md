@@ -5,16 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** No active milestone — planning next work
+**Current focus:** v3.7 Todo UX Polish
 
 ## Current Position
 
-Milestone: None active
-Phase: 41 phases completed
-Status: Ready to plan next milestone
-Last activity: 2026-01-14 — v3.6 Quick Wins & Performance shipped
+Milestone: v3.7 Todo UX Polish
+Phase: 42 of 42 (Todo UX Polish)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-15 — Milestone v3.7 created
 
-Progress: [██████████] 14 milestones shipped
+Progress: [░░░░░░░░░░] 0/1 phases (0%)
 
 ## Completed Milestones
 
@@ -64,11 +65,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v3.5 archived: Git tag v3.5 created
 - Milestone v3.6 complete: Awaiting checkbox, email lowercase, modal lazy loading (bundle 460→50 KB)
 - Milestone v3.6 archived: Git tag v3.6 created
+- Milestone v3.7 created: Todo UX Polish, 1 phase (Phase 42)
 
 ## Session Continuity
 
-Last session: 2026-01-14
-Stopped at: v3.6 milestone complete
+Last session: 2026-01-15
+Stopped at: Milestone v3.7 initialization
 Resume file: None
 
 ## Accumulated Context
@@ -106,6 +108,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:discuss-milestone` — Plan next milestone
-- `/gsd:check-todos` — Review remaining backlog items
+- `/gsd:plan-phase 42` — Plan Todo UX Polish phase
 - Run `wp prm todos migrate-persons` on production after deployment
