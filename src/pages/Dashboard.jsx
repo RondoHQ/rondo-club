@@ -570,8 +570,8 @@ export default function Dashboard() {
         />
       </div>
       
-      {/* Row 1: Upcoming Reminders + Open Todos + Awaiting Response (+ Today's Meetings if calendar connected) */}
-      <div className={`grid grid-cols-1 ${hasCalendarConnections ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
+      {/* Row 1: Stats - Reminders + Todos + Awaiting */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Upcoming Reminders */}
         <div className="card">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
@@ -655,7 +655,10 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+      </div>
 
+      {/* Row 2: Activity - Today's Meetings + Recently Contacted + Recently Edited */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Today's Meetings (only when calendar connected) */}
         {hasCalendarConnections && (
           <div className="card">
@@ -683,30 +686,6 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Row 2: Favorites + Recently Contacted + Recently Edited */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Favorites */}
-        <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold flex items-center dark:text-gray-50">
-              <Star className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400 fill-current" />
-              Favorites
-            </h2>
-          </div>
-          {favorites?.length > 0 ? (
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
-              {favorites.slice(0, 5).map((person) => (
-                <PersonCard key={person.id} person={person} hideStar={true} />
-              ))}
-            </div>
-          ) : (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-              No favorites yet
-            </p>
-          )}
-        </div>
 
         {/* Recently Contacted */}
         <div className="card">
@@ -755,6 +734,30 @@ export default function Dashboard() {
               </p>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Row 3: Favorites */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Favorites */}
+        <div className="card">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="font-semibold flex items-center dark:text-gray-50">
+              <Star className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400 fill-current" />
+              Favorites
+            </h2>
+          </div>
+          {favorites?.length > 0 ? (
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+              {favorites.slice(0, 5).map((person) => (
+                <PersonCard key={person.id} person={person} hideStar={true} />
+              ))}
+            </div>
+          ) : (
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+              No favorites yet
+            </p>
+          )}
         </div>
       </div>
       
