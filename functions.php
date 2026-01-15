@@ -87,6 +87,7 @@ function prm_autoloader($class_name) {
         'PRM_Credential_Encryption'  => 'class-credential-encryption.php',
         'PRM_Google_OAuth'           => 'class-google-oauth.php',
         'PRM_Google_Calendar_Provider' => 'class-google-calendar-provider.php',
+        'PRM_CalDAV_Provider'        => 'class-caldav-provider.php',
         'PRM_REST_Calendar'          => 'class-rest-calendar.php',
     ];
     
