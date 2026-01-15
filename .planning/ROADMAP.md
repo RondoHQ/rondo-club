@@ -54,15 +54,15 @@ Plans:
 Plans:
 - [x] 48-01: Google OAuth flow (google/apiclient, PRM_Google_OAuth class, REST endpoints)
 
-#### Phase 49: Google Calendar Provider
+#### Phase 49: Google Calendar Provider (Complete)
 
 **Goal**: Sync logic, event upsert, attendee extraction
 **Depends on**: Phase 48
 **Research**: Not needed (google/apiclient installed, patterns established)
-**Plans**: 1
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 49-01: Google Calendar sync provider (PRM_Google_Calendar_Provider, trigger_sync, get_events)
+- [x] 49-01: Google Calendar sync provider (PRM_Google_Calendar_Provider, trigger_sync, get_events)
 
 #### Phase 50: CalDAV Provider
 
@@ -541,6 +541,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
-| v4.0 Calendar Integration | 47-55 | 3/? | In Progress | - |
+| v4.0 Calendar Integration | 47-55 | 4/? | In Progress | - |
 
 **Shipped: 16 milestones, 46 phases, 88 plans**
