@@ -13,6 +13,9 @@ class PRM_Auto_Title {
         add_action('acf/save_post', [$this, 'auto_generate_person_title'], 20);
         add_action('acf/save_post', [$this, 'auto_generate_date_title'], 20);
 
+        // Trigger calendar re-matching after person save (priority 25 = after title generation)
+        add_action('acf/save_post', [$this, 'trigger_calendar_rematch'], 25);
+
         // Hide title field in admin for person CPT
         add_filter('acf/prepare_field/name=_post_title', [$this, 'hide_title_field']);
 
@@ -213,5 +216,28 @@ class PRM_Auto_Title {
         }
 
         return $value;
+    }
+
+    /**
+     * Trigger calendar event re-matching when a person is saved
+     *
+     * This ensures that when email addresses are added/changed on a person,
+     * existing calendar events with those emails are now matched to the person.
+     *
+     * @param int $post_id Post ID being saved
+     */
+    public function trigger_calendar_rematch($post_id) {
+        // Skip if not a person post type
+        if (get_post_type($post_id) !== 'person') {
+            return;
+        }
+
+        // Skip autosaves and revisions
+        if (wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) {
+            return;
+        }
+
+        // Trigger calendar re-matching
+        PRM_Calendar_Matcher::on_person_saved($post_id);
     }
 }
