@@ -1,5 +1,31 @@
 # Project Milestones: Caelis
 
+## v4.2 Settings & Stability (Shipped: 2026-01-15)
+
+**Delivered:** DOM stability improvements with error boundary, settings restructure with Connections tab, and automatic calendar event re-matching when person emails change.
+
+**Phases completed:** 58-60 (3 plans total)
+
+**Key accomplishments:**
+
+- DOM stability via translate="no", Google notranslate meta tag, and DomErrorBoundary for graceful recovery
+- Settings restructure with Connections tab containing Calendars/CardDAV/Slack subtabs
+- Automatic calendar event re-matching when a person's email addresses change
+- WP-CLI command: `wp prm calendar rematch --user-id=ID` for manual re-matching
+
+**Stats:**
+
+- 21 files changed
+- +2,258 / -664 lines changed
+- 3 phases, 3 plans, 7 tasks
+- 1 day from start to ship
+
+**Git range:** `27733d8` → `5bdab94`
+
+**What's next:** To be determined
+
+---
+
 ## v4.1 Bug Fixes & Polish (Shipped: 2026-01-15)
 
 **Delivered:** Dark mode contrast fixes, improved deploy procedure to prevent MIME type errors, dashboard 3-row layout, and dynamic favicon that updates with accent color.

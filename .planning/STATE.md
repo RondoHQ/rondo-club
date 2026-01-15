@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v4.2 Settings & Stability - React DOM fixes, settings restructure, calendar matching
+**Current focus:** All milestones complete. Ready to plan next work.
 
 ## Current Position
 
-Milestone: v4.2 Settings & Stability
+Milestone: v4.2 Settings & Stability (SHIPPED)
 Phase: 60 of 60 (Calendar Email Matching)
 Plan: 1 of 1 complete
-Status: Milestone complete, ready to ship
-Last activity: 2026-01-15 — Completed 60-01-PLAN.md
+Status: Shipped
+Last activity: 2026-01-15 — v4.2 milestone complete
 
-Progress: ██████████ 100% (3 of 3 phases in milestone)
+Progress: ██████████ 100% (All milestones shipped)
 
 ## Completed Milestones
 
@@ -39,8 +39,9 @@ Progress: ██████████ 100% (3 of 3 phases in milestone)
 | v3.8 Theme Customization | 43-46 | 10 | 2026-01-15 |
 | v4.0 Calendar Integration | 47-55 | 11 | 2026-01-15 |
 | v4.1 Bug Fixes & Polish | 56-57 | 3 | 2026-01-15 |
+| v4.2 Settings & Stability | 58-60 | 3 | 2026-01-15 |
 
-**Total:** 19 milestones, 57 phases, 102 plans completed
+**Total:** 20 milestones, 60 phases, 105 plans completed
 
 ## Deferred Issues
 
@@ -78,11 +79,13 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.1 complete: Dark mode fixes, deploy procedure, 3-row dashboard, dynamic favicon
 - Milestone v4.1 archived: Git tag v4.1 created
 - Milestone v4.2 created: Settings & Stability, 3 phases (Phase 58-60)
+- Milestone v4.2 complete: DOM stability, settings restructure, calendar re-matching
+- Milestone v4.2 archived: Git tag v4.2 created
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Milestone v4.2 complete, ready to ship
+Stopped at: All milestones shipped
 Resume file: None
 
 ## Accumulated Context
@@ -131,6 +134,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Milestone v4.2 Settings & Stability complete: 3 of 3 phases complete
-- 19 milestones, 60 phases, 105 plans completed to date
-- Ready for milestone completion: Update version, changelog, create git tag
+- Milestone v4.2 Settings & Stability shipped: All 3 phases complete
+- 20 milestones, 60 phases, 105 plans completed to date
+- Use `/gsd:discuss-milestone` to plan next work
