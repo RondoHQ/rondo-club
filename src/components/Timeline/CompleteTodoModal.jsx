@@ -39,9 +39,9 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
 
             <button
               onClick={onComplete}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors text-left"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-accent-300 dark:hover:border-accent-600 hover:bg-accent-50 dark:hover:bg-accent-900/30 transition-colors text-left"
             >
-              <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0" />
+              <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400 flex-shrink-0" />
               <div className="flex-1">
                 <p className="font-medium text-gray-900 dark:text-gray-50">Complete</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Mark the todo as fully done</p>

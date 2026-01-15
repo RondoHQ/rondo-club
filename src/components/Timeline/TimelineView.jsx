@@ -131,7 +131,7 @@ export default function TimelineView({
                     title={item.status === 'completed' ? 'Reopen' : item.status === 'awaiting' ? 'Mark complete' : 'Complete'}
                   >
                     {item.status === 'completed' ? (
-                      <CheckSquare2 className="w-5 h-5 text-primary-600" />
+                      <CheckSquare2 className="w-5 h-5 text-accent-600" />
                     ) : item.status === 'awaiting' ? (
                       <Clock className="w-5 h-5 text-orange-500" />
                     ) : (
@@ -163,7 +163,7 @@ export default function TimelineView({
                       <Link
                         key={participantId}
                         to={`/people/${participantId}`}
-                        className="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline"
+                        className="inline-flex items-center gap-1 text-xs text-accent-600 hover:text-accent-700 hover:underline"
                       >
                         <LinkIcon className="w-3 h-3" />
                         {participant.name}
