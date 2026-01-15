@@ -84,6 +84,7 @@ function prm_autoloader($class_name) {
         'PRM_Mention_Notifications'  => 'class-mention-notifications.php',
         'PRM_Todo_Migration'         => 'class-todo-migration.php',
         'PRM_Calendar_Connections'   => 'class-calendar-connections.php',
+        'PRM_Credential_Encryption'  => 'class-credential-encryption.php',
     ];
     
     if (isset($class_map[$class_name])) {
