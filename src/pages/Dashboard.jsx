@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock } from 'lucide-react';
 import { useDashboard, useTodos, useUpdateTodo } from '@/hooks/useDashboard';
@@ -8,6 +8,8 @@ import { APP_NAME } from '@/constants/app';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
+
+const TodoModal = lazy(() => import('@/components/Timeline/TodoModal'));
 
 function StatCard({ title, value, icon: Icon, href }) {
   return (
@@ -128,17 +130,18 @@ function ReminderCard({ reminder }) {
   );
 }
 
-function TodoCard({ todo, onToggle }) {
+function TodoCard({ todo, onToggle, onView }) {
   const isOverdue = isTodoOverdue(todo);
 
   return (
-    <Link
-      to={`/people/${todo.person_id}`}
-      className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+    <button
+      type="button"
+      onClick={() => onView(todo)}
+      className="w-full flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors group text-left"
     >
       <button
+        type="button"
         onClick={(e) => {
-          e.preventDefault();
           e.stopPropagation();
           onToggle(todo);
         }}
@@ -177,22 +180,23 @@ function TodoCard({ todo, onToggle }) {
           {isOverdue && <div className="text-red-600">overdue</div>}
         </div>
       )}
-    </Link>
+    </button>
   );
 }
 
-function AwaitingTodoCard({ todo, onToggle }) {
+function AwaitingTodoCard({ todo, onToggle, onView }) {
   const days = getAwaitingDays(todo);
   const urgencyClass = getAwaitingUrgencyClass(days);
 
   return (
-    <Link
-      to={`/people/${todo.person_id}`}
-      className="flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+    <button
+      type="button"
+      onClick={() => onView(todo)}
+      className="w-full flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors group text-left"
     >
       <button
+        type="button"
         onClick={(e) => {
-          e.preventDefault();
           e.stopPropagation();
           onToggle(todo);
         }}
@@ -223,7 +227,7 @@ function AwaitingTodoCard({ todo, onToggle }) {
         <Clock className="w-3 h-3" />
         {days === 0 ? 'Today' : `${days}d`}
       </div>
-    </Link>
+    </button>
   );
 }
 
@@ -271,6 +275,10 @@ export default function Dashboard() {
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [activityInitialData, setActivityInitialData] = useState(null);
+
+  // State for viewing/editing todos
+  const [todoToView, setTodoToView] = useState(null);
+  const [showTodoModal, setShowTodoModal] = useState(false);
 
   const handleToggleTodo = (todo) => {
     // If it's an open todo, show the complete modal with options
@@ -361,7 +369,25 @@ export default function Dashboard() {
       alert('Failed to create activity. Please try again.');
     }
   };
-  
+
+  const handleViewTodo = (todo) => {
+    setTodoToView(todo);
+    setShowTodoModal(true);
+  };
+
+  const handleUpdateTodo = (data) => {
+    if (!todoToView) return;
+    updateTodo.mutate({
+      todoId: todoToView.id,
+      data,
+    }, {
+      onSuccess: () => {
+        setShowTodoModal(false);
+        setTodoToView(null);
+      }
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -532,7 +558,7 @@ export default function Dashboard() {
           <div className="divide-y divide-gray-100">
             {dashboardTodos.length > 0 ? (
               dashboardTodos.map((todo) => (
-                <TodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} />
+                <TodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />
               ))
             ) : (
               <p className="p-4 text-sm text-gray-500 text-center">
@@ -560,7 +586,7 @@ export default function Dashboard() {
           <div className="divide-y divide-gray-100">
             {dashboardAwaitingTodos.length > 0 ? (
               dashboardAwaitingTodos.map((todo) => (
-                <AwaitingTodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} />
+                <AwaitingTodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />
               ))
             ) : (
               <p className="p-4 text-sm text-gray-500 text-center">
@@ -670,6 +696,20 @@ export default function Dashboard() {
         personId={todoToComplete?.person_id}
         initialData={activityInitialData}
       />
+
+      {/* Todo Modal (for viewing/editing todos) */}
+      <Suspense fallback={null}>
+        <TodoModal
+          isOpen={showTodoModal}
+          onClose={() => {
+            setShowTodoModal(false);
+            setTodoToView(null);
+          }}
+          onSubmit={handleUpdateTodo}
+          isLoading={updateTodo.isPending}
+          todo={todoToView}
+        />
+      </Suspense>
     </div>
   );
 }
