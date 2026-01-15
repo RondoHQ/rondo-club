@@ -56,11 +56,10 @@ Plans:
 
 **Goal**: Re-run meetings matching when email address added and match events against all person email addresses
 **Depends on**: Phase 59
-**Research**: Unlikely (internal patterns)
-**Plans**: TBD
+**Research**: Not needed (internal patterns)
 
 Plans:
-- [ ] 60-01: TBD (run /gsd:plan-phase 60 to break down)
+- [ ] 60-01: Auto re-match events on person email changes (3/3 tasks)
 
 ---
 
