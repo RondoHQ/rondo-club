@@ -43,16 +43,16 @@ Plans:
 - [x] 47-01: Calendar infrastructure (CPT, connections helper, encryption)
 - [x] 47-02: REST API skeleton (connection CRUD, OAuth stubs, events stubs)
 
-#### Phase 48: Google OAuth
+#### Phase 48: Google OAuth (In Progress)
 
 **Goal**: Credential encryption, OAuth2 flow, token storage/refresh
 **Depends on**: Phase 47
 **Research**: Likely (Google OAuth2 patterns, google/apiclient library)
 **Research topics**: Google OAuth2 flow, google/apiclient setup, token refresh patterns
-**Plans**: TBD
+**Plans**: 1/? complete
 
 Plans:
-- [ ] 48-01: TBD (run /gsd:plan-phase 48 to break down)
+- [x] 48-01: Google OAuth flow (google/apiclient, PRM_Google_OAuth class, REST endpoints)
 
 #### Phase 49: Google Calendar Provider
 
@@ -542,6 +542,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
-| v4.0 Calendar Integration | 47-55 | 2/? | In Progress | - |
+| v4.0 Calendar Integration | 47-55 | 3/? | In Progress | - |
 
 **Shipped: 16 milestones, 46 phases, 88 plans**
