@@ -2,20 +2,20 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-14)
+See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v3.7 Todo UX Polish
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v3.7 Todo UX Polish
-Phase: 42 of 42 (Todo UX Polish)
-Plan: 1 of 1 complete
-Status: Milestone complete
-Last activity: 2026-01-15 — Completed 42-01-PLAN.md
+Milestone: v3.7 Todo UX Polish — SHIPPED
+Phase: None active
+Plan: None active
+Status: Ready for next milestone
+Last activity: 2026-01-15 — v3.7 milestone shipped
 
-Progress: [██████████] 1/1 phases (100%)
+Progress: All milestones complete
 
 ## Completed Milestones
 
@@ -35,8 +35,9 @@ Progress: [██████████] 1/1 phases (100%)
 | v3.4 UI Polish | 35-37 | 3 | 2026-01-14 |
 | v3.5 Bug Fixes & Polish | 38-39 | 2 | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2 | 2026-01-14 |
+| v3.7 Todo UX Polish | 42 | 1 | 2026-01-15 |
 
-**Total:** 14 milestones, 41 phases, 75 plans completed
+**Total:** 15 milestones, 42 phases, 76 plans completed
 
 ## Deferred Issues
 
@@ -65,12 +66,13 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v3.5 archived: Git tag v3.5 created
 - Milestone v3.6 complete: Awaiting checkbox, email lowercase, modal lazy loading (bundle 460→50 KB)
 - Milestone v3.6 archived: Git tag v3.6 created
-- Milestone v3.7 created: Todo UX Polish, 1 phase (Phase 42)
+- Milestone v3.7 complete: Dashboard todo modal, view-first mode, tomorrow default
+- Milestone v3.7 archived: Git tag v3.7 created
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 42-01-PLAN.md, milestone v3.7 complete
+Stopped at: v3.7 milestone shipped
 Resume file: None
 
 ## Accumulated Context
@@ -108,5 +110,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- `/gsd:complete-milestone` — Archive v3.7 and prepare for next version
+- `/gsd:discuss-milestone` — Plan next milestone
 - Run `wp prm todos migrate-persons` on production after deployment

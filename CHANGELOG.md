@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.7.0] - 2026-01-15
+
+### Added
+- TodoModal opens from Dashboard when clicking todo cards (no navigation away)
+- View-first mode for existing todos showing formatted date, rendered notes, and person chips
+- Edit button in view mode to switch to edit mode
+
+### Changed
+- Default due date for new todos changed from today to tomorrow
+- Cancel button in edit mode returns to view mode (for existing todos) instead of closing modal
+
 ## [3.6.0] - 2026-01-14
 
 ### Changed
