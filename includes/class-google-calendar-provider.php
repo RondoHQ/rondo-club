@@ -200,6 +200,10 @@ class PRM_Google_Calendar_Provider {
         update_post_meta($post_id, '_attendees', wp_json_encode($attendees));
         update_post_meta($post_id, '_raw_data', wp_json_encode($event->toSimpleObject()));
 
+        // Run contact matching
+        $matches = PRM_Calendar_Matcher::match_attendees($user_id, $attendees);
+        update_post_meta($post_id, '_matched_people', wp_json_encode($matches));
+
         return [
             'post_id' => $post_id,
             'action'  => $action,
