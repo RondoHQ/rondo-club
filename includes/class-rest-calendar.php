@@ -880,20 +880,136 @@ class PRM_REST_Calendar extends PRM_REST_Base {
             'other_attendees'        => $other_attendees,
             'calendar_name'          => $calendar_name,
             'connection_id'          => $connection_id,
+            'logged_as_activity'     => (bool) get_post_meta($event->ID, '_logged_as_activity', true),
         ];
     }
 
     /**
-     * Log a calendar event as an activity (stub)
+     * Log a calendar event as an activity
+     *
+     * Creates activity records for all matched people on the event.
      *
      * @param WP_REST_Request $request The REST request object.
-     * @return WP_Error Always returns 501 - will be implemented in Phase 53.
+     * @return WP_REST_Response|WP_Error Response with activity count or error.
      */
     public function log_event_as_activity($request) {
-        return new WP_Error(
-            'not_implemented',
-            __('Activity logging is not yet implemented.', 'personal-crm'),
-            ['status' => 501]
-        );
+        $event_id = absint($request->get_param('id'));
+        $user_id = get_current_user_id();
+
+        // Get and verify the event
+        $event = get_post($event_id);
+        if (!$event || $event->post_type !== 'calendar_event') {
+            return new WP_Error('not_found', __('Event not found.', 'personal-crm'), ['status' => 404]);
+        }
+
+        // Verify ownership
+        if ((int) $event->post_author !== $user_id) {
+            return new WP_Error('forbidden', __('You do not have permission to log this event.', 'personal-crm'), ['status' => 403]);
+        }
+
+        // Check if already logged
+        $already_logged = get_post_meta($event_id, '_logged_as_activity', true);
+        if ($already_logged) {
+            return new WP_Error('already_logged', __('This event has already been logged as an activity.', 'personal-crm'), ['status' => 400]);
+        }
+
+        // Get event metadata
+        $title = $event->post_title;
+        $start_time = get_post_meta($event_id, '_start_time', true);
+        $location = get_post_meta($event_id, '_location', true);
+        $meeting_url = get_post_meta($event_id, '_meeting_url', true);
+
+        // Get matched people
+        $matched_people_json = get_post_meta($event_id, '_matched_people', true);
+        $matched_people = $matched_people_json ? json_decode($matched_people_json, true) : [];
+
+        if (empty($matched_people) || !is_array($matched_people)) {
+            return new WP_Error('no_matches', __('No matched people found for this event.', 'personal-crm'), ['status' => 400]);
+        }
+
+        // Extract person IDs
+        $person_ids = [];
+        foreach ($matched_people as $match) {
+            if (isset($match['person_id'])) {
+                $person_ids[] = (int) $match['person_id'];
+            }
+        }
+
+        if (empty($person_ids)) {
+            return new WP_Error('no_matches', __('No matched people found for this event.', 'personal-crm'), ['status' => 400]);
+        }
+
+        // Build activity content
+        $content = esc_html($title);
+        if ($location) {
+            $content .= ' at ' . esc_html($location);
+        }
+        if ($meeting_url) {
+            $content .= ' (' . esc_url($meeting_url) . ')';
+        }
+
+        // Parse date and time from start_time (format: 2024-01-15 10:30:00)
+        $activity_date = '';
+        $activity_time = '';
+        if ($start_time) {
+            $datetime = date_create($start_time);
+            if ($datetime) {
+                $activity_date = $datetime->format('Y-m-d');
+                $activity_time = $datetime->format('H:i');
+            }
+        }
+
+        $activities_created = 0;
+
+        // Create activity for each matched person
+        foreach ($person_ids as $person_id) {
+            // Get other participant IDs (everyone except this person)
+            $participants = array_filter($person_ids, function($pid) use ($person_id) {
+                return $pid !== $person_id;
+            });
+
+            // Create activity comment using same pattern as PRM_Comment_Types
+            $comment_id = wp_insert_comment([
+                'comment_post_ID'  => $person_id,
+                'comment_content'  => $content,
+                'comment_type'     => 'prm_activity',
+                'user_id'          => $user_id,
+                'comment_approved' => 1,
+            ]);
+
+            if ($comment_id) {
+                // Save activity meta
+                update_comment_meta($comment_id, 'activity_type', 'meeting');
+                if ($activity_date) {
+                    update_comment_meta($comment_id, 'activity_date', $activity_date);
+                }
+                if ($activity_time) {
+                    update_comment_meta($comment_id, 'activity_time', $activity_time);
+                }
+                if (!empty($participants)) {
+                    update_comment_meta($comment_id, 'participants', array_values($participants));
+                }
+
+                $activities_created++;
+            }
+        }
+
+        // Mark event as logged
+        update_post_meta($event_id, '_logged_as_activity', true);
+
+        return rest_ensure_response([
+            'success'            => true,
+            'activities_created' => $activities_created,
+            'message'            => sprintf(
+                /* translators: %d: number of activities created */
+                _n(
+                    '%d activity logged.',
+                    '%d activities logged.',
+                    $activities_created,
+                    'personal-crm'
+                ),
+                $activities_created
+            ),
+        ]);
     }
 }
