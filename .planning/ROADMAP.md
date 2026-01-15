@@ -21,7 +21,7 @@
 
 ## Current Status
 
-**Active:** v3.8 Theme Customization (Phase 43)
+**Active:** v3.8 Theme Customization (Phase 44 complete)
 
 ---
 
@@ -41,17 +41,18 @@
 Plans:
 - [x] 43-01: Theme Infrastructure (CSS vars, Tailwind config, useTheme hook, REST API)
 
-#### Phase 44: Dark Mode
+#### Phase 44: Dark Mode ✓
 
 **Goal**: Add dark: variants to all components, color scheme toggle in settings, localStorage caching, test all pages
 **Depends on**: Phase 43
 **Research**: Unlikely (Tailwind dark: variants established)
+**Result**: Full dark mode support across all components, Settings Appearance toggle with Light/Dark/System options
 
 Plans:
 - [x] 44-01: Foundation & Settings (CSS base, Layout, Settings Appearance with toggle)
-- [ ] 44-02: Core Pages (Dashboard, People, Companies, Dates, Todos, Login)
-- [ ] 44-03: Modals & Timeline (All edit modals, Timeline components)
-- [ ] 44-04: Remaining Components (Workspaces, Settings sub-pages, Import wizards, Bulk modals)
+- [x] 44-02: Core Pages (Dashboard, People, Companies, Dates, Todos, Login)
+- [x] 44-03: Modals & Timeline (All edit modals, Timeline components)
+- [x] 44-04: Remaining Components (Workspaces, Settings sub-pages, Import wizards, Bulk modals)
 
 #### Phase 45: Accent Colors
 
@@ -457,6 +458,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
-| v3.8 Theme Customization | 43-46 | 2/? | In Progress | - |
+| v3.8 Theme Customization | 43-46 | 5/? | In Progress | - |
 
 **Shipped: 15 milestones, 42 phases, 76 plans**
