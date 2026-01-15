@@ -234,4 +234,13 @@ export const prmApi = {
   // Theme preferences
   getThemePreferences: () => api.get('/prm/v1/user/theme-preferences'),
   updateThemePreferences: (prefs) => api.patch('/prm/v1/user/theme-preferences', prefs),
+
+  // Calendar connections
+  getCalendarConnections: () => api.get('/prm/v1/calendar/connections'),
+  createCalendarConnection: (data) => api.post('/prm/v1/calendar/connections', data),
+  updateCalendarConnection: (id, data) => api.put(`/prm/v1/calendar/connections/${id}`, data),
+  deleteCalendarConnection: (id) => api.delete(`/prm/v1/calendar/connections/${id}`),
+  triggerCalendarSync: (id) => api.post(`/prm/v1/calendar/connections/${id}/sync`),
+  getGoogleAuthUrl: () => api.get('/prm/v1/calendar/auth/google'),
+  testCalDAVConnection: (credentials) => api.post('/prm/v1/calendar/auth/caldav/test', credentials),
 };
