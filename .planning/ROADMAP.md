@@ -50,6 +50,7 @@ Plans:
 
 Plans:
 - [x] 57-01: Calendar Widget Polish (3 tasks: layout, timezone, favicon)
+- [x] 57-FIX: UAT Issue Fixes (2 tasks: 3-row dashboard layout, dynamic favicon)
 
 ---
 
