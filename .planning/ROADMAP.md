@@ -32,15 +32,15 @@
 
 **Reference:** `/Calendar-Integration-Implementation-Plan.md`
 
-#### Phase 47: Infrastructure
+#### Phase 47: Infrastructure (Complete)
 
 **Goal**: calendar_event CPT, user meta helpers, REST endpoint structure
 **Depends on**: Previous milestone complete
 **Research**: Unlikely (internal patterns - CPT, user meta, REST)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 47-01: TBD (run /gsd:plan-phase 47 to break down)
+- [x] 47-01: Calendar infrastructure (CPT, connections helper, encryption)
 
 #### Phase 48: Google OAuth
 
@@ -541,6 +541,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
-| v4.0 Calendar Integration | 47-55 | 0/? | In Progress | - |
+| v4.0 Calendar Integration | 47-55 | 1/? | In Progress | - |
 
-**Shipped: 16 milestones, 46 phases, 86 plans**
+**Shipped: 16 milestones, 46 phases, 87 plans**
