@@ -150,6 +150,13 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Timezone-aware meeting times using ISO 8601 format — v4.1
 - Dynamic favicon that updates when accent color changes — v4.1
 
+**v4.2 Settings & Stability (shipped 2026-01-15):**
+- DOM modification prevention (translate="no", Google notranslate meta tag) — v4.2
+- DomErrorBoundary for graceful recovery from browser extension DOM conflicts — v4.2
+- Settings restructure with Connections tab (Calendars/CardDAV/Slack subtabs) — v4.2
+- Automatic calendar event re-matching when person emails change — v4.2
+- WP-CLI command: `wp prm calendar rematch --user-id=ID` — v4.2
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -238,5 +245,9 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | React manages favicon dynamically | Removed PHP static favicon, React uses inline SVG data URLs | ✓ Good |
 | ISO 8601 for meeting times | Timezone offset preserved in API, JavaScript parses correctly | ✓ Good |
 
+| Error boundary pattern for DOM sync errors | Catches DOM-specific errors (NotFoundError, removeChild, insertBefore), preserves query cache | ✓ Good |
+| Subtab navigation pattern | URL-based subtab routing (tab=connections&subtab=calendars) | ✓ Good |
+| Re-match on save approach | Triggers on every person save, acceptable performance for background operation | ✓ Good |
+
 ---
-*Last updated: 2026-01-15 — v4.1 Bug Fixes & Polish shipped*
+*Last updated: 2026-01-15 — v4.2 Settings & Stability shipped*

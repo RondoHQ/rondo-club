@@ -20,47 +20,37 @@
 - ✅ [v3.8 Theme Customization](milestones/v3.8-theme-customization.md) (Phases 43-46) — SHIPPED 2026-01-15
 - ✅ [v4.0 Calendar Integration](milestones/v4.0-calendar-integration.md) (Phases 47-55) — SHIPPED 2026-01-15
 - ✅ [v4.1 Bug Fixes & Polish](milestones/v4.1-bug-fixes-polish.md) (Phases 56-57) — SHIPPED 2026-01-15
-- 🚧 **v4.2 Settings & Stability** — Phases 58-60 (in progress)
+- ✅ [v4.2 Settings & Stability](milestones/v4.2-settings-stability.md) (Phases 58-60) — SHIPPED 2026-01-15
 
 ## Current Status
 
-**In Progress:** v4.2 Settings & Stability — Phase 60 complete, milestone ready to complete
+**Complete:** All planned milestones shipped. Use `/gsd:discuss-milestone` to plan next work.
 
 ---
 
-### 🚧 v4.2 Settings & Stability (In Progress)
+<details>
+<summary>✅ v4.2 Settings & Stability (Phases 58-60) — SHIPPED 2026-01-15</summary>
 
 **Milestone Goal:** Improve settings organization, fix React DOM stability issues, and enhance calendar email matching.
 
-#### Phase 58: React DOM Error Fix ✓
+**Result:** DOM stability via error boundary, Settings restructure with Connections tab, calendar re-matching on email changes
 
-**Goal**: Investigate and fix recurring removeChild synchronization errors between React's virtual DOM and actual DOM
-**Depends on**: Previous milestone complete
-**Research**: Complete (58-RESEARCH.md)
-**Result**: Preventive measures (translate="no", meta tag, div wrapper) + DomErrorBoundary for graceful recovery
+**Phases:**
+- [x] Phase 58: React DOM Error Fix (1/1 plan) ✓
+- [x] Phase 59: Settings Restructure (1/1 plan) ✓
+- [x] Phase 60: Calendar Email Matching (1/1 plan) ✓
 
-Plans:
-- [x] 58-01: DOM modification prevention and error boundary (2/2 tasks) ✓
+**Total:** 3 phases, 3 plans
 
-#### Phase 59: Settings Restructure ✓
+**Key Accomplishments:**
+- DOM stability via translate="no", Google notranslate meta tag, and DomErrorBoundary
+- Settings restructure with Connections tab containing Calendars/CardDAV/Slack subtabs
+- Automatic calendar event re-matching when person emails change
+- WP-CLI command: `wp prm calendar rematch --user-id=ID`
 
-**Goal**: Create Connections tab with subtabs for Calendars, CardDAV, and Slack, grouping all external service connections
-**Depends on**: Phase 58
-**Research**: Not needed (internal UI patterns)
-**Result**: Settings page reorganized with Connections tab containing Calendars/CardDAV/Slack subtabs
+See [milestone archive](milestones/v4.2-settings-stability.md) for full details.
 
-Plans:
-- [x] 59-01: Restructure tabs and update OAuth redirects (2/2 tasks) ✓
-
-#### Phase 60: Calendar Email Matching ✓
-
-**Goal**: Re-run meetings matching when email address added and match events against all person email addresses
-**Depends on**: Phase 59
-**Research**: Not needed (internal patterns)
-**Result**: Automatic re-matching on person save, WP-CLI command for manual re-matching
-
-Plans:
-- [x] 60-01: Auto re-match events on person email changes (3/3 tasks) ✓
+</details>
 
 ---
 
@@ -542,7 +532,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
 | v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
 | v4.1 Bug Fixes & Polish | 56-57 | 3/3 | Complete ✅ | 2026-01-15 |
-| v4.2 Settings & Stability | 58-60 | 3/3 | Ready to complete 🚧 | - |
+| v4.2 Settings & Stability | 58-60 | 3/3 | Complete ✅ | 2026-01-15 |
 
-**Shipped: 19 milestones, 57 phases, 102 plans**
-**In Progress: v4.2 (3 phases)**
+**Shipped: 20 milestones, 60 phases, 105 plans**
