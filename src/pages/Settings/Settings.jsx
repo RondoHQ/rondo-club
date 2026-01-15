@@ -1118,6 +1118,267 @@ function CalDAVModal({ onSave, onClose }) {
   );
 }
 
+// Edit Connection Modal Component
+function EditConnectionModal({ connection, onSave, onClose }) {
+  const [name, setName] = useState(connection.name || '');
+  const [syncEnabled, setSyncEnabled] = useState(connection.sync_enabled !== false);
+  const [autoLog, setAutoLog] = useState(connection.auto_log !== false);
+  const [syncFromDays, setSyncFromDays] = useState(connection.sync_from_days || 90);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  // CalDAV-specific fields
+  const [url, setUrl] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [tested, setTested] = useState(true); // Assume tested on edit
+
+  const isCalDAV = connection.provider === 'caldav';
+  const isGoogle = connection.provider === 'google';
+
+  const handleTestCalDAV = async () => {
+    if (!url || !username || !password) {
+      setError('Please fill in server URL, username, and password to test.');
+      return;
+    }
+
+    setTesting(true);
+    setError('');
+
+    try {
+      const response = await prmApi.testCalDAVConnection({ url, username, password });
+      if (response.data?.success) {
+        setTested(true);
+        setError('');
+      } else {
+        setTested(false);
+        setError(response.data?.message || 'Connection test failed.');
+      }
+    } catch (err) {
+      setTested(false);
+      setError(err.response?.data?.message || 'Connection test failed.');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      setError('Please enter a name for this connection.');
+      return;
+    }
+
+    // If CalDAV credentials changed, must be tested
+    if (isCalDAV && (url || username || password) && !tested) {
+      setError('Please test the updated credentials before saving.');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+
+    try {
+      const data = {
+        name: name.trim(),
+        sync_enabled: syncEnabled,
+        auto_log: autoLog,
+        sync_from_days: syncFromDays,
+      };
+
+      // Include CalDAV credentials if any were changed
+      if (isCalDAV && url && username && password) {
+        data.credentials = { url, username, password };
+      }
+
+      await onSave(connection.id, data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to save connection.');
+      setSaving(false);
+    }
+  };
+
+  const syncFromOptions = [
+    { value: 30, label: '30 days' },
+    { value: 60, label: '60 days' },
+    { value: 90, label: '90 days' },
+    { value: 180, label: '180 days' },
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 dark:bg-gray-800">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold dark:text-gray-100">Edit Connection</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded dark:hover:bg-gray-700">
+            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+              {error}
+            </div>
+          )}
+
+          {/* Provider badge */}
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <span className="capitalize font-medium">{connection.provider}</span>
+            {isGoogle && (
+              <span className="text-xs text-gray-400">
+                (credentials managed via Google OAuth)
+              </span>
+            )}
+          </div>
+
+          {/* Connection name */}
+          <div>
+            <label className="label mb-1">Connection name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input"
+              placeholder="e.g., Work Calendar"
+            />
+          </div>
+
+          {/* Sync enabled toggle */}
+          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div>
+              <p className="font-medium dark:text-gray-100">Sync enabled</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Automatically sync calendar events</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={syncEnabled}
+                onChange={(e) => setSyncEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600 dark:peer-focus:ring-accent-800"></div>
+            </label>
+          </div>
+
+          {/* Auto-log meetings toggle */}
+          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div>
+              <p className="font-medium dark:text-gray-100">Auto-log meetings</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Automatically create activities from meetings</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoLog}
+                onChange={(e) => setAutoLog(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600 dark:peer-focus:ring-accent-800"></div>
+            </label>
+          </div>
+
+          {/* Sync from dropdown */}
+          <div>
+            <label className="label mb-1">Sync events from</label>
+            <select
+              value={syncFromDays}
+              onChange={(e) => setSyncFromDays(Number(e.target.value))}
+              className="input"
+            >
+              {syncFromOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  Past {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+              Events older than this will not be synced
+            </p>
+          </div>
+
+          {/* CalDAV credential update section */}
+          {isCalDAV && (
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h4 className="font-medium mb-3 dark:text-gray-100">Update credentials (optional)</h4>
+              <p className="text-sm text-gray-500 mb-3 dark:text-gray-400">
+                Leave blank to keep current credentials. Fill in all fields to update.
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="label mb-1">Server URL</label>
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => { setUrl(e.target.value); setTested(false); }}
+                    className="input"
+                    placeholder="https://caldav.example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="label mb-1">Username</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => { setUsername(e.target.value); setTested(false); }}
+                    className="input"
+                    placeholder="your-email@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="label mb-1">Password / App password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setTested(false); }}
+                    className="input"
+                    placeholder="New app-specific password"
+                  />
+                </div>
+
+                {(url || username || password) && (
+                  <button
+                    onClick={handleTestCalDAV}
+                    disabled={testing || !url || !username || !password}
+                    className="btn-secondary w-full"
+                  >
+                    {testing ? 'Testing...' : tested ? 'Credentials verified' : 'Test new credentials'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Info for Google */}
+          {isGoogle && (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                To change Google Calendar credentials, delete this connection and reconnect with Google OAuth.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+          <button onClick={onClose} className="btn-secondary">
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="btn-primary"
+          >
+            {saving ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Sync Tab Component
 function SyncTab({ 
   icalUrl, webcalUrl, icalLoading, icalCopied, copyIcalUrl, 
