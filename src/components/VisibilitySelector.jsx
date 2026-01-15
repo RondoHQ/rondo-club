@@ -57,7 +57,7 @@ export default function VisibilitySelector({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-left focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-left focus:ring-2 focus:ring-accent-500 focus:border-accent-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
       >
         <div className="flex items-center gap-2">
           <CurrentIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -79,16 +79,16 @@ export default function VisibilitySelector({
                   key={option.value}
                   type="button"
                   onClick={() => handleVisibilityChange(option.value)}
-                  className={`w-full flex items-start gap-3 p-2 rounded-md text-left hover:bg-gray-50 dark:hover:bg-gray-700 ${isSelected ? 'bg-primary-50 dark:bg-primary-900/30' : ''}`}
+                  className={`w-full flex items-start gap-3 p-2 rounded-md text-left hover:bg-gray-50 dark:hover:bg-gray-700 ${isSelected ? 'bg-accent-50 dark:bg-accent-900/30' : ''}`}
                 >
-                  <Icon className={`w-4 h-4 mt-0.5 ${isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
+                  <Icon className={`w-4 h-4 mt-0.5 ${isSelected ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400'}`} />
                   <div className="flex-1">
-                    <div className={`text-sm font-medium ${isSelected ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-gray-50'}`}>
+                    <div className={`text-sm font-medium ${isSelected ? 'text-accent-900 dark:text-accent-100' : 'text-gray-900 dark:text-gray-50'}`}>
                       {option.label}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">{option.description}</div>
                   </div>
-                  {isSelected && <Check className="w-4 h-4 text-primary-600 dark:text-primary-400 mt-0.5" />}
+                  {isSelected && <Check className="w-4 h-4 text-accent-600 dark:text-accent-400 mt-0.5" />}
                 </button>
               );
             })}
@@ -117,7 +117,7 @@ export default function VisibilitySelector({
                         onClick={() => handleWorkspaceToggle(workspace.id)}
                         className="w-full flex items-center gap-3 p-2 rounded-md text-left hover:bg-gray-50 dark:hover:bg-gray-700"
                       >
-                        <div className={`flex items-center justify-center w-4 h-4 border-2 rounded ${isChecked ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600'}`}>
+                        <div className={`flex items-center justify-center w-4 h-4 border-2 rounded ${isChecked ? 'bg-accent-600 border-accent-600' : 'border-gray-300 dark:border-gray-600'}`}>
                           {isChecked && <Check className="w-3 h-3 text-white" />}
                         </div>
                         <div className="flex-1">
@@ -138,7 +138,7 @@ export default function VisibilitySelector({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-full px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-md"
+                className="w-full px-3 py-2 text-sm font-medium text-accent-600 dark:text-accent-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-md"
               >
                 Done
               </button>

@@ -222,7 +222,7 @@ export default function PersonEditModal({
                 <div
                   className={`relative rounded-lg border-2 border-dashed p-3 text-center transition-colors ${
                     dragActive
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                      ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30'
                       : vcardFile && !vcardError
                       ? 'border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/30'
                       : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'
@@ -242,7 +242,7 @@ export default function PersonEditModal({
                   
                   {parseVcardMutation.isPending ? (
                     <div className="flex items-center justify-center gap-2 py-1">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 dark:border-primary-400"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-600 dark:border-accent-400"></div>
                       <span className="text-sm text-gray-600 dark:text-gray-300">Parsing vCard...</span>
                     </div>
                   ) : vcardFile && !vcardError ? (
@@ -265,7 +265,7 @@ export default function PersonEditModal({
                     <div className="flex items-center justify-center gap-2 py-1">
                       <Upload className="h-4 w-4 text-gray-400" />
                       <span className="text-sm text-gray-600 dark:text-gray-300">
-                        Drop a vCard or <span className="text-primary-600 dark:text-primary-400">browse</span>
+                        Drop a vCard or <span className="text-accent-600 dark:text-accent-400">browse</span>
                       </span>
                     </div>
                   )}
@@ -430,7 +430,7 @@ export default function PersonEditModal({
                 type="checkbox"
                 id="is_favorite"
                 {...register('is_favorite')}
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500 dark:bg-gray-700"
                 disabled={isLoading}
               />
               <label htmlFor="is_favorite" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">

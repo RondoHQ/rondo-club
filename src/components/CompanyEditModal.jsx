@@ -301,7 +301,7 @@ export default function CompanyEditModal({
                 <button
                   type="button"
                   onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                   disabled={isLoadingCompanies || isLoading}
                 >
                   {selectedParent ? (
@@ -336,7 +336,7 @@ export default function CompanyEditModal({
                           value={parentSearchQuery}
                           onChange={(e) => setParentSearchQuery(e.target.value)}
                           placeholder="Search organizations..."
-                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
                           autoFocus
                         />
                       </div>
@@ -352,7 +352,7 @@ export default function CompanyEditModal({
                           setParentSearchQuery('');
                         }}
                         className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                          !selectedParentId ? 'bg-primary-50 dark:bg-primary-900/30' : ''
+                          !selectedParentId ? 'bg-accent-50 dark:bg-accent-900/30' : ''
                         }`}
                       >
                         <span className="text-sm text-gray-500 dark:text-gray-400 italic">No parent organization</span>
@@ -374,7 +374,7 @@ export default function CompanyEditModal({
                               setParentSearchQuery('');
                             }}
                             className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                              selectedParentId === String(c.id) ? 'bg-primary-50 dark:bg-primary-900/30' : ''
+                              selectedParentId === String(c.id) ? 'bg-accent-50 dark:bg-accent-900/30' : ''
                             }`}
                           >
                             {c._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
@@ -455,7 +455,7 @@ export default function CompanyEditModal({
                 <button
                   type="button"
                   onClick={() => setIsInvestorsDropdownOpen(!isInvestorsDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                   disabled={isLoadingCompanies || isLoadingPeople || isLoading}
                 >
                   <span className="text-gray-400 dark:text-gray-500">Add investor...</span>
@@ -473,7 +473,7 @@ export default function CompanyEditModal({
                           value={investorsSearchQuery}
                           onChange={(e) => setInvestorsSearchQuery(e.target.value)}
                           placeholder="Search people and organizations..."
-                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
                           autoFocus
                         />
                       </div>

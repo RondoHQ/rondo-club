@@ -65,7 +65,7 @@ export default function WorkspaceInviteModal({ isOpen, onClose, workspaceId, wor
                         message: 'Invalid email address',
                       },
                     })}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
                     placeholder="colleague@example.com"
                   />
                 </div>
@@ -80,7 +80,7 @@ export default function WorkspaceInviteModal({ isOpen, onClose, workspaceId, wor
                 </label>
                 <select
                   {...register('role')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
                 >
                   <option value="admin">Admin - Can manage members and settings</option>
                   <option value="member">Member - Can view and edit contacts</option>

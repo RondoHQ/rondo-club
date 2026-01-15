@@ -57,7 +57,7 @@ export default function WorkspaceCreateModal({ isOpen, onClose }) {
                 <input
                   type="text"
                   {...register('title', { required: 'Name is required' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
                   placeholder="e.g., Sales Team"
                 />
                 {errors.title && (
@@ -72,7 +72,7 @@ export default function WorkspaceCreateModal({ isOpen, onClose }) {
                 <textarea
                   {...register('description')}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
                   placeholder="What's this workspace for?"
                 />
               </div>

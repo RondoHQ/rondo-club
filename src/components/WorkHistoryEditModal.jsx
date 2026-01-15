@@ -185,7 +185,7 @@ export default function WorkHistoryEditModal({
                 type="checkbox"
                 id="is_current"
                 {...register('is_current')}
-                className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-gray-300 text-accent-600 focus:ring-accent-500"
                 disabled={isLoading}
               />
               <label htmlFor="is_current" className="ml-2 text-sm text-gray-700 cursor-pointer">
