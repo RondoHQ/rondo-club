@@ -283,6 +283,13 @@ class PRM_REST_Calendar extends PRM_REST_Base {
                 ],
             ],
         ]);
+
+        // GET /prm/v1/calendar/sync/status - Background sync status
+        register_rest_route('prm/v1', '/calendar/sync/status', [
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_sync_status'],
+            'permission_callback' => [$this, 'check_user_approved'],
+        ]);
     }
 
     /**
@@ -910,6 +917,32 @@ class PRM_REST_Calendar extends PRM_REST_Base {
             'connection_id'          => $connection_id,
             'logged_as_activity'     => (bool) get_post_meta($event->ID, '_logged_as_activity', true),
         ];
+    }
+
+    /**
+     * Get background sync status
+     *
+     * Returns information about the WP-Cron scheduled sync and user connections.
+     *
+     * @param WP_REST_Request $request The REST request object.
+     * @return WP_REST_Response Response with sync status.
+     */
+    public function get_sync_status($request) {
+        $status = PRM_Calendar_Sync::get_sync_status();
+
+        // Add current user's connection details
+        $user_id = get_current_user_id();
+        $user_connections = PRM_Calendar_Connections::get_user_connections($user_id);
+
+        // Remove sensitive credential data
+        $safe_connections = array_map(function($conn) {
+            unset($conn['credentials']);
+            return $conn;
+        }, $user_connections);
+
+        $status['user_connections'] = $safe_connections;
+
+        return rest_ensure_response($status);
     }
 
     /**
