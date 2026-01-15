@@ -4,7 +4,7 @@ import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Downlo
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
 import { prmApi } from '@/api/client';
-import { useTheme, COLOR_SCHEMES } from '@/hooks/useTheme';
+import { useTheme, COLOR_SCHEMES, ACCENT_COLORS } from '@/hooks/useTheme';
 import MonicaImport from '@/components/import/MonicaImport';
 import VCardImport from '@/components/import/VCardImport';
 import GoogleContactsImport from '@/components/import/GoogleContactsImport';
@@ -530,7 +530,7 @@ export default function Settings() {
 
 // Appearance Tab Component
 function AppearanceTab() {
-  const { colorScheme, setColorScheme, effectiveColorScheme } = useTheme();
+  const { colorScheme, setColorScheme, effectiveColorScheme, accentColor, setAccentColor } = useTheme();
 
   const colorSchemeOptions = [
     { id: 'light', label: 'Light', icon: Sun },
@@ -538,41 +538,100 @@ function AppearanceTab() {
     { id: 'system', label: 'System', icon: Monitor },
   ];
 
-  return (
-    <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Color scheme</h2>
-      <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-        Choose how {APP_NAME} looks to you. Select a single theme or sync with your system settings.
-      </p>
+  // Map accent color names to Tailwind color classes
+  const accentColorClasses = {
+    orange: 'bg-orange-500',
+    teal: 'bg-teal-500',
+    indigo: 'bg-indigo-500',
+    emerald: 'bg-emerald-500',
+    violet: 'bg-violet-500',
+    pink: 'bg-pink-500',
+    fuchsia: 'bg-fuchsia-500',
+    rose: 'bg-rose-500',
+  };
 
-      {/* Color scheme selector */}
-      <div className="flex gap-2">
-        {colorSchemeOptions.map((option) => {
-          const Icon = option.icon;
-          const isSelected = colorScheme === option.id;
-          return (
-            <button
-              key={option.id}
-              onClick={() => setColorScheme(option.id)}
-              className={`
-                flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
-                ${isSelected
-                  ? 'bg-accent-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}
-              `}
-            >
-              <Icon className="w-5 h-5" />
-              <span>{option.label}</span>
-            </button>
-          );
-        })}
+  const accentRingClasses = {
+    orange: 'ring-orange-500',
+    teal: 'ring-teal-500',
+    indigo: 'ring-indigo-500',
+    emerald: 'ring-emerald-500',
+    violet: 'ring-violet-500',
+    pink: 'ring-pink-500',
+    fuchsia: 'ring-fuchsia-500',
+    rose: 'ring-rose-500',
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Color scheme card */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Color scheme</h2>
+        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
+          Choose how {APP_NAME} looks to you. Select a single theme or sync with your system settings.
+        </p>
+
+        {/* Color scheme selector */}
+        <div className="flex gap-2">
+          {colorSchemeOptions.map((option) => {
+            const Icon = option.icon;
+            const isSelected = colorScheme === option.id;
+            return (
+              <button
+                key={option.id}
+                onClick={() => setColorScheme(option.id)}
+                className={`
+                  flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
+                  ${isSelected
+                    ? 'bg-accent-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}
+                `}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Current mode indicator */}
+        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+          Currently using <span className="font-medium">{effectiveColorScheme}</span> mode
+          {colorScheme === 'system' && ' (based on your system preference)'}
+        </p>
       </div>
 
-      {/* Current mode indicator */}
-      <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-        Currently using <span className="font-medium">{effectiveColorScheme}</span> mode
-        {colorScheme === 'system' && ' (based on your system preference)'}
-      </p>
+      {/* Accent color card */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Accent color</h2>
+        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
+          Choose the accent color used for buttons, links, and other interactive elements.
+        </p>
+
+        {/* Accent color picker */}
+        <div className="flex flex-wrap gap-3">
+          {ACCENT_COLORS.map((color) => {
+            const isSelected = accentColor === color;
+            return (
+              <button
+                key={color}
+                onClick={() => setAccentColor(color)}
+                className={`
+                  w-10 h-10 rounded-full transition-transform hover:scale-110
+                  ${accentColorClasses[color]}
+                  ${isSelected ? `ring-2 ring-offset-2 ${accentRingClasses[color]} dark:ring-offset-gray-800` : ''}
+                `}
+                title={color.charAt(0).toUpperCase() + color.slice(1)}
+                aria-label={`Select ${color} accent color`}
+              />
+            );
+          })}
+        </div>
+
+        {/* Current accent indicator */}
+        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+          Selected: <span className="font-medium capitalize">{accentColor}</span>
+        </p>
+      </div>
     </div>
   );
 }
