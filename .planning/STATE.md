@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v4.0 Calendar Integration
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v4.0 Calendar Integration
-Phase: 55 of 55 (Dashboard Widget)
-Plan: 1 of 1 complete
-Status: Milestone complete - ready for /gsd:complete-milestone
-Last activity: 2026-01-15 — Completed 55-01 (Today's Meetings dashboard widget)
+Milestone: None active
+Phase: Ready to plan
+Plan: Not started
+Status: Between milestones
+Last activity: 2026-01-15 — v4.0 Calendar Integration shipped
 
-Progress: ██████████ 100%
+Progress: ██████████ 100% (v4.0 complete)
 
 ## Completed Milestones
 
@@ -37,8 +37,9 @@ Progress: ██████████ 100%
 | v3.6 Quick Wins & Performance | 40-41 | 2 | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1 | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10 | 2026-01-15 |
+| v4.0 Calendar Integration | 47-55 | 11 | 2026-01-15 |
 
-**Total:** 16 milestones, 46 phases, 86 plans completed
+**Total:** 17 milestones, 55 phases, 99 plans completed
 
 ## Deferred Issues
 
@@ -71,12 +72,13 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v3.7 archived: Git tag v3.7 created
 - Milestone v3.8 complete: Color scheme toggle, accent color picker, dark mode contrast fixes
 - Milestone v3.8 archived: Git tag v3.8 created
-- Milestone v4.0 created: Calendar Integration, 9 phases (Phase 47-55)
+- Milestone v4.0 complete: Calendar Integration (Google, CalDAV, contact matching, dashboard widget)
+- Milestone v4.0 archived: Git tag v4.0 created
 
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 52-FIX (Google OAuth redirect fix)
+Stopped at: v4.0 milestone complete
 Resume file: None
 
 ## Accumulated Context
@@ -124,8 +126,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Phase 55-01 (Dashboard Widget) complete
-- Today's Meetings widget shows on dashboard when calendar connected
-- REST endpoint: GET /prm/v1/calendar/today-meetings
-- Milestone v4.0 Calendar Integration is 100% complete
-- Run /gsd:complete-milestone to archive and prepare for next version
+- Milestone v4.0 Calendar Integration shipped
+- 17 milestones, 55 phases, 99 plans completed to date
+- Use `/gsd:discuss-milestone` to plan v4.1 or next milestone
