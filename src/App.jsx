@@ -159,7 +159,7 @@ function App() {
   useTheme();
 
   return (
-    <>
+    <div className="app-root">
       <UpdateBanner />
       <Routes>
         {/* Public routes */}
@@ -215,7 +215,7 @@ function App() {
         }
       />
       </Routes>
-    </>
+    </div>
   );
 }
 
