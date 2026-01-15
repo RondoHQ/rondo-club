@@ -24,6 +24,7 @@ class PRM_Post_Types {
         $this->register_important_date_post_type();
         $this->register_todo_statuses();
         $this->register_todo_post_type();
+        $this->register_calendar_event_post_type();
     }
 
     /**
@@ -303,5 +304,47 @@ class PRM_Post_Types {
         ];
 
         register_post_type('prm_todo', $args);
+    }
+
+    /**
+     * Register Calendar Event CPT
+     *
+     * Used for caching calendar events synced from external calendars (Google, CalDAV).
+     * Not exposed via standard wp/v2 REST - uses custom endpoints only.
+     * No admin UI needed - events are managed via sync process.
+     */
+    private function register_calendar_event_post_type() {
+        $labels = [
+            'name'                  => _x('Calendar Events', 'Post type general name', 'personal-crm'),
+            'singular_name'         => _x('Calendar Event', 'Post type singular name', 'personal-crm'),
+            'menu_name'             => _x('Calendar Events', 'Admin Menu text', 'personal-crm'),
+            'add_new'               => __('Add New', 'personal-crm'),
+            'add_new_item'          => __('Add New Event', 'personal-crm'),
+            'edit_item'             => __('Edit Event', 'personal-crm'),
+            'new_item'              => __('New Event', 'personal-crm'),
+            'view_item'             => __('View Event', 'personal-crm'),
+            'search_items'          => __('Search Events', 'personal-crm'),
+            'not_found'             => __('No events found', 'personal-crm'),
+            'not_found_in_trash'    => __('No events found in Trash', 'personal-crm'),
+            'all_items'             => __('All Events', 'personal-crm'),
+        ];
+
+        $args = [
+            'labels'              => $labels,
+            'public'              => false,
+            'publicly_queryable'  => false,
+            'show_ui'             => false, // No admin UI needed
+            'show_in_menu'        => false,
+            'show_in_rest'        => false, // Custom endpoints only
+            'query_var'           => false,
+            'rewrite'             => false,
+            'capability_type'     => 'post',
+            'map_meta_cap'        => true,
+            'has_archive'         => false,
+            'hierarchical'        => false,
+            'supports'            => ['title', 'author'],
+        ];
+
+        register_post_type('calendar_event', $args);
     }
 }
