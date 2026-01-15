@@ -181,7 +181,7 @@ export default function WorkspaceDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
       </div>
     );
   }
@@ -190,7 +190,7 @@ export default function WorkspaceDetail() {
     return (
       <div className="card p-6 text-center">
         <p className="text-red-600 dark:text-red-400">Failed to load workspace.</p>
-        <Link to="/workspaces" className="text-primary-600 dark:text-primary-400 hover:underline mt-2 inline-block">
+        <Link to="/workspaces" className="text-accent-600 dark:text-accent-400 hover:underline mt-2 inline-block">
           Back to Workspaces
         </Link>
       </div>
@@ -301,7 +301,7 @@ export default function WorkspaceDetail() {
             />
             <button
               onClick={handleCopyCalendarUrl}
-              className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 flex items-center gap-1"
+              className="px-3 py-1.5 text-xs bg-accent-600 text-white rounded hover:bg-accent-700 flex items-center gap-1"
             >
               {calendarCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
               {calendarCopied ? 'Copied!' : 'Copy'}

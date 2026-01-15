@@ -130,7 +130,7 @@ export default function GoogleContactsImport() {
         Import contacts from a Google Contacts CSV export. To export from Google:
       </p>
       <ol className="text-sm text-gray-600 dark:text-gray-300 list-decimal list-inside space-y-1 ml-2">
-        <li>Go to <a href="https://contacts.google.com" target="_blank" rel="noopener noreferrer" className="text-primary-600 dark:text-primary-400 hover:underline">contacts.google.com</a></li>
+        <li>Go to <a href="https://contacts.google.com" target="_blank" rel="noopener noreferrer" className="text-accent-600 dark:text-accent-400 hover:underline">contacts.google.com</a></li>
         <li>Click "Export" in the left sidebar</li>
         <li>Select "Google CSV" format and click "Export"</li>
       </ol>
@@ -175,7 +175,7 @@ export default function GoogleContactsImport() {
           <div
             className={`relative rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
               dragActive
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30'
                 : file
                 ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/30'
                 : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
@@ -194,7 +194,7 @@ export default function GoogleContactsImport() {
 
             {validateMutation.isPending ? (
               <div className="flex flex-col items-center gap-2">
-                <Loader2 className="h-8 w-8 text-primary-600 dark:text-primary-400 animate-spin" />
+                <Loader2 className="h-8 w-8 text-accent-600 dark:text-accent-400 animate-spin" />
                 <p className="text-gray-600 dark:text-gray-300">Validating file...</p>
               </div>
             ) : file ? (
@@ -413,7 +413,7 @@ function DuplicateCard({ duplicate, decision, onDecision }) {
           onClick={() => onDecision('merge')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
             decision === 'merge'
-              ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-800 dark:text-primary-300 ring-2 ring-primary-500'
+              ? 'bg-accent-100 dark:bg-accent-900/50 text-accent-800 dark:text-accent-300 ring-2 ring-accent-500'
               : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
           }`}
         >
