@@ -204,7 +204,7 @@ export default function CompanyDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
       </div>
     );
   }
@@ -289,7 +289,7 @@ export default function CompanyDetail() {
             {parentCompany && (
               <Link 
                 to={`/companies/${parentCompany.id}`}
-                className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center mb-1"
+                className="text-sm text-accent-600 dark:text-accent-400 hover:underline flex items-center mb-1"
               >
                 <GitBranch className="w-3 h-3 mr-1" />
                 Subsidiary of {getCompanyName(parentCompany)}
@@ -302,7 +302,7 @@ export default function CompanyDetail() {
                 href={acf.website} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-primary-600 dark:text-primary-400 hover:underline flex items-center mt-1"
+                className="text-accent-600 dark:text-accent-400 hover:underline flex items-center mt-1"
               >
                 <Globe className="w-4 h-4 mr-1" />
                 {acf.website}

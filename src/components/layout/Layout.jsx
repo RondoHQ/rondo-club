@@ -52,7 +52,7 @@ function Sidebar({ mobile = false, onClose }) {
     <div className="flex flex-col h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-        <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary-600 dark:text-primary-400">
+        <Link to="/" className="flex items-center gap-2 text-xl font-bold text-accent-600 dark:text-accent-400">
           <Sparkles className="w-5 h-5" />
           {APP_NAME}
         </Link>
@@ -73,7 +73,7 @@ function Sidebar({ mobile = false, onClose }) {
             className={({ isActive }) =>
               `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                 isActive
-                  ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
+                  ? 'bg-accent-50 text-accent-700 dark:bg-accent-900/50 dark:text-accent-300'
                   : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
               }`
             }
@@ -155,8 +155,8 @@ function UserMenu() {
             className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
-          <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center dark:bg-primary-900">
-            <span className="text-sm font-medium text-primary-700 dark:text-primary-300">{initials}</span>
+          <div className="w-8 h-8 bg-accent-100 rounded-full flex items-center justify-center dark:bg-accent-900">
+            <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{initials}</span>
           </div>
         )}
         <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform dark:text-gray-400 ${isOpen ? 'rotate-180' : ''}`} />
@@ -303,7 +303,7 @@ function SearchModal({ isOpen, onClose }) {
               </div>
             ) : isSearchLoading ? (
               <div className="px-4 py-8 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 mx-auto"></div>
                 <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Searching...</p>
               </div>
             ) : hasResults ? (
@@ -322,7 +322,7 @@ function SearchModal({ isOpen, onClose }) {
                           key={person.id}
                           onClick={() => handleResultClick('person', person.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            isSelected ? 'bg-primary-50 text-primary-900 dark:bg-primary-900/50 dark:text-primary-100' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-accent-900/50 dark:text-accent-100' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           {person.thumbnail ? (
@@ -362,7 +362,7 @@ function SearchModal({ isOpen, onClose }) {
                           key={company.id}
                           onClick={() => handleResultClick('company', company.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            isSelected ? 'bg-primary-50 text-primary-900 dark:bg-primary-900/50 dark:text-primary-100' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-accent-900/50 dark:text-accent-100' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           {company.thumbnail ? (
@@ -459,7 +459,7 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddCompany, onAddDate }) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary-600 hover:bg-primary-700 text-white transition-colors"
+        className="flex items-center justify-center w-9 h-9 rounded-lg bg-accent-600 hover:bg-accent-700 text-white transition-colors"
         aria-label="Quick add"
         title="Quick add"
       >
