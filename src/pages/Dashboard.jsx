@@ -13,14 +13,14 @@ const TodoModal = lazy(() => import('@/components/Timeline/TodoModal'));
 
 function StatCard({ title, value, icon: Icon, href }) {
   return (
-    <Link to={href} className="card p-6 hover:shadow-md transition-shadow">
+    <Link to={href} className="card p-6 hover:shadow-md dark:hover:shadow-gray-900/50 transition-shadow">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="mt-1 text-3xl font-semibold">{value}</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+          <p className="mt-1 text-3xl font-semibold dark:text-gray-50">{value}</p>
         </div>
-        <div className="p-3 bg-primary-50 rounded-lg">
-          <Icon className="w-6 h-6 text-primary-600" />
+        <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-lg">
+          <Icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
         </div>
       </div>
     </Link>
@@ -29,28 +29,28 @@ function StatCard({ title, value, icon: Icon, href }) {
 
 function PersonCard({ person, hideStar = false }) {
   return (
-    <Link 
+    <Link
       to={`/people/${person.id}`}
-      className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+      className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
     >
       {person.thumbnail ? (
-        <img 
-          src={person.thumbnail} 
+        <img
+          src={person.thumbnail}
           alt={person.name}
           loading="lazy"
           className="w-10 h-10 rounded-full object-cover"
         />
       ) : (
-        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-          <span className="text-sm font-medium text-gray-500">
+        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-300">
             {person.first_name?.[0] || '?'}
           </span>
         </div>
       )}
       <div className="ml-3 flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{person.name}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{person.name}</p>
         {person.labels?.length > 0 && (
-          <p className="text-xs text-gray-500 truncate">{person.labels.join(', ')}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{person.labels.join(', ')}</p>
         )}
       </div>
       {person.is_favorite && !hideStar && (
@@ -63,13 +63,13 @@ function PersonCard({ person, hideStar = false }) {
 function ReminderCard({ reminder }) {
   const daysUntil = reminder.days_until;
 
-  let urgencyClass = 'bg-gray-100 text-gray-700';
+  let urgencyClass = 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
   if (daysUntil === 0) {
-    urgencyClass = 'bg-green-100 text-green-700';
+    urgencyClass = 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400';
   } else if (daysUntil <= 3) {
-    urgencyClass = 'bg-orange-100 text-orange-700';
+    urgencyClass = 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400';
   } else if (daysUntil <= 7) {
-    urgencyClass = 'bg-yellow-100 text-yellow-700';
+    urgencyClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400';
   }
 
   const firstPersonId = reminder.related_people?.[0]?.id;
@@ -81,8 +81,8 @@ function ReminderCard({ reminder }) {
         {daysUntil === 0 ? 'Today' : `${daysUntil}d`}
       </div>
       <div className="ml-3 flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">{reminder.title}</p>
-        <p className="text-xs text-gray-500">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{reminder.title}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {format(new Date(reminder.next_occurrence), 'MMMM d, yyyy')}
         </p>
       </div>
@@ -95,14 +95,14 @@ function ReminderCard({ reminder }) {
                 src={person.thumbnail}
                 alt={person.name}
                 loading="lazy"
-                className="w-10 h-10 rounded-full border-2 border-white object-cover"
+                className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 object-cover"
               />
             ) : (
               <div
                 key={person.id}
-                className="w-10 h-10 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center"
+                className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center"
               >
-                <span className="text-sm">{person.name?.[0]}</span>
+                <span className="text-sm dark:text-gray-300">{person.name?.[0]}</span>
               </div>
             )
           ))}
@@ -116,7 +116,7 @@ function ReminderCard({ reminder }) {
     return (
       <Link
         to={`/people/${firstPersonId}`}
-        className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
       >
         {cardContent}
       </Link>
@@ -124,7 +124,7 @@ function ReminderCard({ reminder }) {
   }
 
   return (
-    <div className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
+    <div className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       {cardContent}
     </div>
   );
@@ -137,7 +137,7 @@ function TodoCard({ todo, onToggle, onView }) {
     <button
       type="button"
       onClick={() => onView(todo)}
-      className="w-full flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors group text-left"
+      className="w-full flex items-start p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group text-left"
     >
       <button
         type="button"
@@ -149,13 +149,13 @@ function TodoCard({ todo, onToggle, onView }) {
         title={todo.status === 'completed' ? 'Reopen' : 'Complete'}
       >
         {todo.status === 'completed' ? (
-          <CheckSquare className="w-5 h-5 text-primary-600" />
+          <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
         ) : (
-          <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600' : 'text-gray-400'}`} />
+          <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`} />
         )}
       </button>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${todo.status === 'completed' ? 'line-through text-gray-400' : isOverdue ? 'text-red-600' : 'text-gray-900'}`}>
+        <p className={`text-sm font-medium ${todo.status === 'completed' ? 'line-through text-gray-400 dark:text-gray-500' : isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-50'}`}>
           {todo.content}
         </p>
         <div className="flex items-center gap-2 mt-1">
@@ -167,17 +167,17 @@ function TodoCard({ todo, onToggle, onView }) {
               className="w-5 h-5 rounded-full object-cover"
             />
           ) : (
-            <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-xs text-gray-500">{todo.person_name?.[0]}</span>
+            <div className="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+              <span className="text-xs text-gray-500 dark:text-gray-300">{todo.person_name?.[0]}</span>
             </div>
           )}
-          <span className="text-xs text-gray-500 truncate">{todo.person_name}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{todo.person_name}</span>
         </div>
       </div>
       {todo.due_date && todo.status === 'open' && (
-        <div className={`ml-3 text-xs text-right flex-shrink-0 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+        <div className={`ml-3 text-xs text-right flex-shrink-0 ${isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
           <div>{format(new Date(todo.due_date), 'MMM d')}</div>
-          {isOverdue && <div className="text-red-600">overdue</div>}
+          {isOverdue && <div className="text-red-600 dark:text-red-400">overdue</div>}
         </div>
       )}
     </button>
@@ -192,7 +192,7 @@ function AwaitingTodoCard({ todo, onToggle, onView }) {
     <button
       type="button"
       onClick={() => onView(todo)}
-      className="w-full flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors group text-left"
+      className="w-full flex items-start p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group text-left"
     >
       <button
         type="button"
@@ -203,10 +203,10 @@ function AwaitingTodoCard({ todo, onToggle, onView }) {
         className="mt-0.5 mr-3 flex-shrink-0"
         title="Mark as complete"
       >
-        <CheckSquare className="w-5 h-5 text-orange-500" />
+        <CheckSquare className="w-5 h-5 text-orange-500 dark:text-orange-400" />
       </button>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{todo.content}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{todo.content}</p>
         <div className="flex items-center gap-2 mt-1">
           {todo.person_thumbnail ? (
             <img
@@ -216,11 +216,11 @@ function AwaitingTodoCard({ todo, onToggle, onView }) {
               className="w-5 h-5 rounded-full object-cover"
             />
           ) : (
-            <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-xs text-gray-500">{todo.person_name?.[0]}</span>
+            <div className="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+              <span className="text-xs text-gray-500 dark:text-gray-300">{todo.person_name?.[0]}</span>
             </div>
           )}
-          <span className="text-xs text-gray-500 truncate">{todo.person_name}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{todo.person_name}</span>
         </div>
       </div>
       <div className={`ml-3 text-xs px-2 py-1 rounded-full flex items-center gap-1 ${urgencyClass}`}>
@@ -235,25 +235,25 @@ function EmptyState() {
   return (
     <div className="card p-12 text-center">
       <div className="flex justify-center mb-4">
-        <div className="p-4 bg-primary-50 rounded-full">
-          <Sparkles className="w-12 h-12 text-primary-600" />
+        <div className="p-4 bg-primary-50 dark:bg-primary-900/30 rounded-full">
+          <Sparkles className="w-12 h-12 text-primary-600 dark:text-primary-400" />
         </div>
       </div>
-      <h2 className="text-2xl font-semibold text-gray-900 mb-2">Welcome to {APP_NAME}!</h2>
-      <p className="text-gray-600 mb-8 max-w-md mx-auto">
+      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-2">Welcome to {APP_NAME}!</h2>
+      <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-md mx-auto">
         Get started by adding your first contact, organization, or important date. Your dashboard will populate as you add more information.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
           to="/people/new"
-          className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-500 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Add Your First Person
         </Link>
         <Link
           to="/companies/new"
-          className="inline-flex items-center px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Add Your First Organization
@@ -399,21 +399,21 @@ export default function Dashboard() {
   if (error) {
     // Check if it's a network/API error vs empty state
     const isNetworkError = error?.response?.status >= 500 || !error?.response;
-    
+
     return (
       <div className="card p-8 text-center">
-        <div className="text-red-600 mb-2">
+        <div className="text-red-600 dark:text-red-400 mb-2">
           {isNetworkError ? (
             <>
               <p className="font-medium mb-1">Failed to load dashboard data</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Please check your connection and try refreshing the page.
               </p>
             </>
           ) : (
             <>
               <p className="font-medium mb-1">Unable to load dashboard</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 {error?.response?.data?.message || 'An error occurred while loading your data.'}
               </p>
             </>
@@ -514,26 +514,26 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Upcoming Reminders */}
         <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold flex items-center">
-              <Calendar className="w-5 h-5 mr-2 text-gray-500" />
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="font-semibold flex items-center dark:text-gray-50">
+              <Calendar className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
               Upcoming reminders
             </h2>
             <Link
               to="/dates"
-              className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+              className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center"
             >
               View all
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {upcoming_reminders?.length > 0 ? (
               upcoming_reminders.map((reminder) => (
                 <ReminderCard key={reminder.id} reminder={reminder} />
               ))
             ) : (
-              <p className="p-4 text-sm text-gray-500 text-center">
+              <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
                 No upcoming reminders
               </p>
             )}
@@ -542,26 +542,26 @@ export default function Dashboard() {
 
         {/* Open Todos */}
         <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold flex items-center">
-              <CheckSquare className="w-5 h-5 mr-2 text-gray-500" />
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="font-semibold flex items-center dark:text-gray-50">
+              <CheckSquare className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
               Open todos
             </h2>
             <Link
               to="/todos"
-              className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+              className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center"
             >
               View all
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {dashboardTodos.length > 0 ? (
               dashboardTodos.map((todo) => (
                 <TodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />
               ))
             ) : (
-              <p className="p-4 text-sm text-gray-500 text-center">
+              <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
                 No open todos
               </p>
             )}
@@ -570,26 +570,26 @@ export default function Dashboard() {
 
         {/* Awaiting Response */}
         <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-gray-500" />
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="font-semibold flex items-center dark:text-gray-50">
+              <Clock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
               Awaiting response
             </h2>
             <Link
               to="/todos?status=awaiting"
-              className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+              className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center"
             >
               View all
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {dashboardAwaitingTodos.length > 0 ? (
               dashboardAwaitingTodos.map((todo) => (
                 <AwaitingTodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />
               ))
             ) : (
-              <p className="p-4 text-sm text-gray-500 text-center">
+              <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
                 No awaiting responses
               </p>
             )}
@@ -601,69 +601,69 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Favorites */}
         <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold flex items-center">
-              <Star className="w-5 h-5 mr-2 text-gray-500 fill-current" />
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="font-semibold flex items-center dark:text-gray-50">
+              <Star className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400 fill-current" />
               Favorites
             </h2>
           </div>
           {favorites?.length > 0 ? (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
               {favorites.slice(0, 5).map((person) => (
                 <PersonCard key={person.id} person={person} hideStar={true} />
               ))}
             </div>
           ) : (
-            <p className="p-4 text-sm text-gray-500 text-center">
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
               No favorites yet
             </p>
           )}
         </div>
-        
+
         {/* Recently Contacted */}
         <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold flex items-center">
-              <MessageCircle className="w-5 h-5 mr-2 text-gray-500" />
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="font-semibold flex items-center dark:text-gray-50">
+              <MessageCircle className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
               Recently contacted
             </h2>
           </div>
           {recently_contacted?.length > 0 ? (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
               {recently_contacted.map((person) => (
                 <PersonCard key={person.id} person={person} />
               ))}
             </div>
           ) : (
-            <p className="p-4 text-sm text-gray-500 text-center">
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
               No recent activities yet
             </p>
           )}
         </div>
-        
+
         {/* Recently Edited People */}
         <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="font-semibold flex items-center">
-              <Users className="w-5 h-5 mr-2 text-gray-500" />
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="font-semibold flex items-center dark:text-gray-50">
+              <Users className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
               Recently edited
             </h2>
-            <Link 
-              to="/people" 
-              className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+            <Link
+              to="/people"
+              className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center"
             >
               View all
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {recent_people?.length > 0 ? (
               recent_people.map((person) => (
                 <PersonCard key={person.id} person={person} />
               ))
             ) : (
-              <p className="p-4 text-sm text-gray-500 text-center">
-                No people yet. <Link to="/people/new" className="text-primary-600">Add someone</Link>
+              <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+                No people yet. <Link to="/people/new" className="text-primary-600 dark:text-primary-400">Add someone</Link>
               </p>
             )}
           </div>
