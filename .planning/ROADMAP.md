@@ -24,7 +24,7 @@
 
 ## Current Status
 
-**In Progress:** v4.2 Settings & Stability — Phase 58 complete, Phase 59 ready to plan
+**In Progress:** v4.2 Settings & Stability — Phase 59 complete, Phase 60 ready to plan
 
 ---
 
@@ -42,15 +42,15 @@
 Plans:
 - [x] 58-01: DOM modification prevention and error boundary (2/2 tasks) ✓
 
-#### Phase 59: Settings Restructure
+#### Phase 59: Settings Restructure ✓
 
 **Goal**: Create Connections tab with subtabs for Calendars, CardDAV, and Slack, grouping all external service connections
 **Depends on**: Phase 58
-**Research**: Unlikely (internal UI patterns)
-**Plans**: TBD
+**Research**: Not needed (internal UI patterns)
+**Result**: Settings page reorganized with Connections tab containing Calendars/CardDAV/Slack subtabs
 
 Plans:
-- [ ] 59-01: TBD (run /gsd:plan-phase 59 to break down)
+- [x] 59-01: Restructure tabs and update OAuth redirects (2/2 tasks) ✓
 
 #### Phase 60: Calendar Email Matching
 
@@ -542,7 +542,7 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
 | v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
 | v4.1 Bug Fixes & Polish | 56-57 | 3/3 | Complete ✅ | 2026-01-15 |
-| v4.2 Settings & Stability | 58-60 | 1/? | In progress 🚧 | - |
+| v4.2 Settings & Stability | 58-60 | 2/? | In progress 🚧 | - |
 
 **Shipped: 19 milestones, 57 phases, 102 plans**
 **In Progress: v4.2 (3 phases)**
