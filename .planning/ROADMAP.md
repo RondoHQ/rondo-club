@@ -21,7 +21,7 @@
 
 ## Current Status
 
-**Active:** v3.8 Theme Customization (Phase 44 complete)
+**Active:** v3.8 Theme Customization (Phase 45 plan 1/2 complete)
 
 ---
 
@@ -54,18 +54,16 @@ Plans:
 - [x] 44-03: Modals & Timeline (All edit modals, Timeline components)
 - [x] 44-04: Remaining Components (Workspaces, Settings sub-pages, Import wizards, Bulk modals)
 
-#### Phase 45: Accent Colors
+#### Phase 45: Accent Colors (In Progress)
 
 **Goal**: Replace hardcoded orange classes with accent-*, implement color picker in settings, validate accessibility
 **Depends on**: Phase 44
 **Research**: Unlikely (internal class replacement)
-**Result**: TBD
+**Result**: In progress - accent picker done, migrating components
 
 Plans:
-- [ ] 45-01: Settings UI & CSS (accent picker, component classes)
-- [ ] 45-02: Core Pages (Dashboard, People, Companies, Dates, Todos, Login)
-- [ ] 45-03: Detail Pages (PersonDetail, CompanyDetail, FamilyTree, Layout, Settings)
-- [ ] 45-04: Remaining Components (Timeline, modals, Workspaces, imports)
+- [x] 45-01: Settings UI & CSS (accent picker, component classes)
+- [ ] 45-02: Component Migration (remaining hardcoded primary-* references)
 
 #### Phase 46: Polish
 
@@ -461,6 +459,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.5 Bug Fixes & Polish | 38-39 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
-| v3.8 Theme Customization | 43-46 | 5/? | In Progress | - |
+| v3.8 Theme Customization | 43-46 | 6/? | In Progress | - |
 
 **Shipped: 15 milestones, 42 phases, 76 plans**
