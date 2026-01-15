@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Milestone: v4.2 Settings & Stability
-Phase: 58 of 60 (React DOM Error Fix)
+Phase: 59 of 60 (Settings Restructure)
 Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-15 — Completed 58-01-PLAN.md
+Last activity: 2026-01-15 — Completed 59-01-PLAN.md
 
-Progress: ███░░░░░░░ 33% (1 of 3 phases in milestone)
+Progress: ██████░░░░ 66% (2 of 3 phases in milestone)
 
 ## Completed Milestones
 
@@ -82,7 +82,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Phase 58 complete, ready for Phase 59
+Stopped at: Phase 59 complete, ready for Phase 60
 Resume file: None
 
 ## Accumulated Context
@@ -110,7 +110,7 @@ Resume file: None
 18. ~~Fix React/DOM Node synchronization errors (ui)~~ — DONE in v4.1 Phase 56 (documented as benign)
 19. ~~Fix recurring module MIME type errors (ui)~~ — DONE in v4.1 Phase 56 (deploy procedure fix)
 20. Add wp-config.php constants installation documentation (docs)
-21. Restructure Settings with Connections tab and subtabs (ui)
+21. ~~Restructure Settings with Connections tab and subtabs (ui)~~ — DONE in v4.2 Phase 59
 22. ~~Fix search modal active result dark mode contrast (ui)~~ — DONE in v4.1 Phase 56
 23. Re-run meetings matching when email address added (api)
 24. Match events against all person email addresses (api)
@@ -131,7 +131,7 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Milestone v4.2 Settings & Stability created: 3 phases (58-60)
-- 19 milestones, 57 phases, 102 plans completed to date
-- Use `/gsd:plan-phase 58` to plan React DOM Error Fix phase
-- Use `/gsd:research-phase 58` to investigate React DOM issues first
+- Milestone v4.2 Settings & Stability in progress: 2 of 3 phases complete
+- 19 milestones, 59 phases, 104 plans completed to date
+- Use `/gsd:plan-phase 60` to plan Calendar Matching Enhancement phase
+- Phase 60: Match events against all person email addresses, re-run matching on email add
