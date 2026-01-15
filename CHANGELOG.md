@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-01-15
+
+### Added
+- DomErrorBoundary component for graceful recovery from browser extension DOM conflicts
+- DOM modification prevention via `translate="no"` attribute and Google notranslate meta tag
+- Connections tab in Settings with subtabs for Calendars, CardDAV, and Slack
+- Automatic calendar event re-matching when person email addresses change
+- WP-CLI command `wp prm calendar rematch --user-id=ID` for manual re-matching
+
+### Changed
+- Settings page reorganized: external service connections consolidated under Connections tab
+- Notifications tab simplified to show only channel toggles and preferences
+- OAuth redirect URLs updated to use new Connections tab structure
+
+## [4.1.0] - 2026-01-15
+
+### Added
+- Dynamic favicon that updates when accent color changes
+- Dashboard restructured to 3-row layout (Stats | Activity | Favorites)
+- Timezone-aware meeting times using ISO 8601 format
+
+### Fixed
+- Dark mode contrast for CardDAV connection details and search modal
+- Deploy procedure now uses two-step rsync to prevent MIME type errors from stale artifacts
+
+## [4.0.0] - 2026-01-15
+
+### Added
+- Google Calendar OAuth2 integration with automatic token refresh
+- CalDAV provider supporting iCloud, Fastmail, Nextcloud, and generic servers
+- Calendar event custom post type for caching synced events
+- Email-first contact matching algorithm with confidence scores
+- Calendar settings UI with connection management
+- Person profile Meetings tab with upcoming/past meetings
+- Log as Activity functionality for past meetings
+- Background sync via WP-Cron every 15 minutes
+- Today's Meetings dashboard widget
+- WP-CLI commands: `wp prm calendar sync/status/auto-log`
+
+## [3.8.0] - 2026-01-15
+
+### Added
+- Color scheme toggle (Light/Dark/System) in Settings Appearance
+- Accent color picker with 4 color options (blue, violet, rose, amber)
+- useTheme hook with localStorage caching
+- Dark mode support across all components
+
+### Fixed
+- Dark mode contrast issues in menus, icons, and overdue items
+
 ## [3.7.0] - 2026-01-15
 
 ### Added
