@@ -227,13 +227,13 @@ class PRM_REST_Slack extends PRM_REST_Base {
 
         // Handle error from Slack
         if ($error) {
-            $error_url = home_url('/settings?slack_error=' . urlencode($error));
+            $error_url = home_url('/settings?tab=connections&subtab=slack&slack_error=' . urlencode($error));
             wp_redirect($error_url);
             exit;
         }
 
         if (empty($code) || empty($state)) {
-            $error_url = home_url('/settings?slack_error=missing_parameters');
+            $error_url = home_url('/settings?tab=connections&subtab=slack&slack_error=missing_parameters');
             wp_redirect($error_url);
             exit;
         }
@@ -242,7 +242,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
         // State format: base64(user_id:random_string)
         $decoded_state = base64_decode($state, true);
         if ($decoded_state === false) {
-            $error_url = home_url('/settings?slack_error=invalid_state');
+            $error_url = home_url('/settings?tab=connections&subtab=slack&slack_error=invalid_state');
             wp_redirect($error_url);
             exit;
         }
@@ -251,7 +251,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
         $user_id = absint($user_id_from_state);
 
         if (!$user_id) {
-            $error_url = home_url('/settings?slack_error=invalid_state');
+            $error_url = home_url('/settings?tab=connections&subtab=slack&slack_error=invalid_state');
             wp_redirect($error_url);
             exit;
         }
@@ -259,7 +259,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
         // Verify state matches stored state
         $stored_state = get_transient('slack_oauth_state_' . $user_id);
         if ($stored_state !== $state) {
-            $error_url = home_url('/settings?slack_error=invalid_state');
+            $error_url = home_url('/settings?tab=connections&subtab=slack&slack_error=invalid_state');
             wp_redirect($error_url);
             exit;
         }
@@ -280,7 +280,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
         ]);
 
         if (is_wp_error($response)) {
-            $error_url = home_url('/settings?slack_error=network_error');
+            $error_url = home_url('/settings?tab=connections&subtab=slack&slack_error=network_error');
             wp_redirect($error_url);
             exit;
         }
@@ -289,7 +289,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 
         if (empty($body['ok']) || empty($body['access_token'])) {
             $error_msg = isset($body['error']) ? $body['error'] : 'unknown_error';
-            $error_url = home_url('/settings?slack_error=' . urlencode($error_msg));
+            $error_url = home_url('/settings?tab=connections&subtab=slack&slack_error=' . urlencode($error_msg));
             wp_redirect($error_url);
             exit;
         }
@@ -320,7 +320,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
         delete_user_meta($user_id, 'caelis_slack_webhook');
 
         // Redirect to settings with success message
-        $success_url = home_url('/settings?slack_connected=1');
+        $success_url = home_url('/settings?tab=connections&subtab=slack&slack_connected=1');
         wp_redirect($success_url);
         exit;
     }
