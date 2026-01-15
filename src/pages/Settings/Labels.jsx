@@ -187,7 +187,7 @@ export default function Labels() {
                   className={`
                     py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
                     ${isActive
-                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                      ? 'border-accent-500 text-accent-600 dark:text-accent-400'
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}
                   `}
                 >
@@ -243,7 +243,7 @@ export default function Labels() {
         {/* Loading state */}
         {isLoading && (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
           </div>
         )}
 
@@ -305,7 +305,7 @@ export default function Labels() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleEdit(label)}
-                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded"
+                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />

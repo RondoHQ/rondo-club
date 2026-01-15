@@ -81,7 +81,7 @@ export default function WorkspacesList() {
       {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
         </div>
       )}
 
