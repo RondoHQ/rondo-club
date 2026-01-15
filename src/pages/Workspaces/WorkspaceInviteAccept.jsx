@@ -22,10 +22,10 @@ export default function WorkspaceInviteAccept() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="card p-8 max-w-md w-full mx-4 text-center">
-          <Loader2 className="w-8 h-8 text-primary-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Validating invitation...</p>
+          <Loader2 className="w-8 h-8 text-primary-600 dark:text-primary-400 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-300">Validating invitation...</p>
         </div>
       </div>
     );
@@ -36,15 +36,15 @@ export default function WorkspaceInviteAccept() {
     const errorMessage = error?.response?.data?.message || 'This invitation is invalid or has expired.';
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="card p-8 max-w-md w-full mx-4 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <XCircle className="w-8 h-8 text-red-600" />
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-50 mb-2">
             Invalid Invitation
           </h1>
-          <p className="text-gray-600 mb-6">{errorMessage}</p>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">{errorMessage}</p>
           <Link to="/workspaces" className="btn-primary inline-block">
             Go to Workspaces
           </Link>
@@ -56,15 +56,15 @@ export default function WorkspaceInviteAccept() {
   // Already accepted (shouldn't normally happen, but handle gracefully)
   if (invite.status === 'accepted') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="card p-8 max-w-md w-full mx-4 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-50 mb-2">
             Already Accepted
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             This invitation has already been accepted.
           </p>
           <Link to={`/workspaces/${invite.workspace_id}`} className="btn-primary inline-block">
@@ -77,39 +77,39 @@ export default function WorkspaceInviteAccept() {
 
   // Valid invitation - show accept UI
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="card p-8 max-w-md w-full mx-4">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Users className="w-8 h-8 text-primary-600" />
+          <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
           </div>
-          <h1 className="text-xl font-semibold text-gray-900">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-50">
             Workspace Invitation
           </h1>
         </div>
 
         {/* Invitation details */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6">
           <div className="text-center">
-            <p className="text-sm text-gray-500 mb-1">You have been invited to join</p>
-            <p className="text-lg font-semibold text-gray-900">{invite.workspace_name}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">You have been invited to join</p>
+            <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">{invite.workspace_name}</p>
           </div>
 
-          <hr className="my-4 border-gray-200" />
+          <hr className="my-4 border-gray-200 dark:border-gray-600" />
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-gray-500">Invited by</p>
-              <p className="font-medium text-gray-900">{invite.invited_by}</p>
+              <p className="text-gray-500 dark:text-gray-400">Invited by</p>
+              <p className="font-medium text-gray-900 dark:text-gray-50">{invite.invited_by}</p>
             </div>
             <div>
-              <p className="text-gray-500">Your role</p>
-              <p className="font-medium text-gray-900 capitalize">{invite.role}</p>
+              <p className="text-gray-500 dark:text-gray-400">Your role</p>
+              <p className="font-medium text-gray-900 dark:text-gray-50 capitalize">{invite.role}</p>
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
+          <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             <Clock className="w-4 h-4" />
             Expires {new Date(invite.expires_at).toLocaleDateString()}
           </div>
@@ -117,8 +117,8 @@ export default function WorkspaceInviteAccept() {
 
         {/* Error message */}
         {acceptMutation.error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-sm text-red-600 dark:text-red-400">
               {acceptMutation.error?.response?.data?.message || 'Failed to accept invitation'}
             </p>
           </div>
@@ -150,7 +150,7 @@ export default function WorkspaceInviteAccept() {
         </div>
 
         {/* Note about email */}
-        <p className="text-xs text-gray-500 text-center mt-4">
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-4">
           This invitation was sent to {invite.email}
         </p>
       </div>

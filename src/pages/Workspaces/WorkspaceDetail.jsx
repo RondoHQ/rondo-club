@@ -8,7 +8,7 @@ import { prmApi } from '@/api/client';
 function RoleBadge({ role, isOwner, small = false }) {
   if (isOwner) {
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full ${small ? 'text-xs' : 'text-sm'}`}>
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 rounded-full ${small ? 'text-xs' : 'text-sm'}`}>
         <Crown className={small ? 'w-3 h-3' : 'w-4 h-4'} />
         Owner
       </span>
@@ -16,9 +16,9 @@ function RoleBadge({ role, isOwner, small = false }) {
   }
 
   const roleConfig = {
-    admin: { icon: Shield, bg: 'bg-purple-100', text: 'text-purple-800', label: 'Admin' },
-    member: { icon: Users, bg: 'bg-blue-100', text: 'text-blue-800', label: 'Member' },
-    viewer: { icon: Eye, bg: 'bg-gray-100', text: 'text-gray-600', label: 'Viewer' },
+    admin: { icon: Shield, bg: 'bg-purple-100 dark:bg-purple-900/50', text: 'text-purple-800 dark:text-purple-300', label: 'Admin' },
+    member: { icon: Users, bg: 'bg-blue-100 dark:bg-blue-900/50', text: 'text-blue-800 dark:text-blue-300', label: 'Member' },
+    viewer: { icon: Eye, bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-600 dark:text-gray-300', label: 'Viewer' },
   };
 
   const config = roleConfig[role] || roleConfig.member;
@@ -38,15 +38,15 @@ function MemberRow({ member, currentUserRole, onRemove, onChangeRole }) {
   const isOwnerMember = member.is_owner;
 
   return (
-    <div className="flex items-center gap-3 p-3 hover:bg-gray-50">
+    <div className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700">
       <img
         src={member.avatar_url}
         alt={member.display_name}
         className="w-10 h-10 rounded-full"
       />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-gray-900">{member.display_name}</div>
-        <div className="text-xs text-gray-500">{member.email}</div>
+        <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{member.display_name}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">{member.email}</div>
       </div>
       <RoleBadge role={member.role} isOwner={member.is_owner} small />
 
@@ -54,7 +54,7 @@ function MemberRow({ member, currentUserRole, onRemove, onChangeRole }) {
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
@@ -62,30 +62,30 @@ function MemberRow({ member, currentUserRole, onRemove, onChangeRole }) {
           {showMenu && (
             <>
               <div className="fixed inset-0" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
                 <div className="py-1">
                   <button
                     onClick={() => { onChangeRole(member.user_id, 'admin'); setShowMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     Make Admin
                   </button>
                   <button
                     onClick={() => { onChangeRole(member.user_id, 'member'); setShowMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     Make Member
                   </button>
                   <button
                     onClick={() => { onChangeRole(member.user_id, 'viewer'); setShowMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     Make Viewer
                   </button>
-                  <hr className="my-1" />
+                  <hr className="my-1 dark:border-gray-700" />
                   <button
                     onClick={() => { onRemove(member.user_id); setShowMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
                   >
                     <UserMinus className="w-4 h-4" />
                     Remove
@@ -102,20 +102,20 @@ function MemberRow({ member, currentUserRole, onRemove, onChangeRole }) {
 
 function InviteRow({ invite, onRevoke }) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-gray-50">
-      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-        <UserPlus className="w-5 h-5 text-gray-400" />
+    <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50">
+      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+        <UserPlus className="w-5 h-5 text-gray-400 dark:text-gray-500" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-gray-900">{invite.email}</div>
-        <div className="text-xs text-gray-500">
+        <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{invite.email}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           Invited as {invite.role} · Expires {new Date(invite.expires_at).toLocaleDateString()}
         </div>
       </div>
-      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">Pending</span>
+      <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 text-xs rounded-full">Pending</span>
       <button
         onClick={() => onRevoke(invite.id)}
-        className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50"
+        className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30"
         title="Revoke invite"
       >
         <Trash2 className="w-4 h-4" />
@@ -181,7 +181,7 @@ export default function WorkspaceDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
       </div>
     );
   }
@@ -189,8 +189,8 @@ export default function WorkspaceDetail() {
   if (error || !workspace) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-red-600">Failed to load workspace.</p>
-        <Link to="/workspaces" className="text-primary-600 hover:underline mt-2 inline-block">
+        <p className="text-red-600 dark:text-red-400">Failed to load workspace.</p>
+        <Link to="/workspaces" className="text-primary-600 dark:text-primary-400 hover:underline mt-2 inline-block">
           Back to Workspaces
         </Link>
       </div>
@@ -208,14 +208,14 @@ export default function WorkspaceDetail() {
         <div>
           <button
             onClick={() => navigate('/workspaces')}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
+            className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Workspaces
           </button>
-          <h1 className="text-2xl font-semibold text-gray-900">{workspace.title}</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{workspace.title}</h1>
           {workspace.description && (
-            <p className="text-gray-500 mt-1">{workspace.description}</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">{workspace.description}</p>
           )}
         </div>
 
@@ -243,12 +243,12 @@ export default function WorkspaceDetail() {
 
       {/* Members */}
       <div className="card">
-        <div className="px-4 py-3 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
             Members ({workspace.member_count})
           </h2>
         </div>
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {workspace.members?.map((member) => (
             <MemberRow
               key={member.user_id}
@@ -264,12 +264,12 @@ export default function WorkspaceDetail() {
       {/* Pending Invites */}
       {canInvite && invites.length > 0 && (
         <div className="card">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
               Pending Invites ({invites.length})
             </h2>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {invites.map((invite) => (
               <InviteRow
                 key={invite.id}
@@ -283,11 +283,11 @@ export default function WorkspaceDetail() {
 
       {/* Calendar Subscription */}
       <div className="card p-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2 flex items-center gap-2">
           <Calendar className="w-4 h-4" />
           Calendar Subscription
         </h3>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
           Subscribe to important dates for all contacts in this workspace.
         </p>
         {icalToken ? (
@@ -296,7 +296,7 @@ export default function WorkspaceDetail() {
               type="text"
               value={workspaceCalendarUrl || ''}
               readOnly
-              className="flex-1 text-xs px-2 py-1.5 bg-gray-50 border border-gray-300 rounded font-mono"
+              className="flex-1 text-xs px-2 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded font-mono dark:text-gray-200"
               onClick={(e) => e.target.select()}
             />
             <button
@@ -308,7 +308,7 @@ export default function WorkspaceDetail() {
             </button>
           </div>
         ) : (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Enable iCal feed in Settings to subscribe to workspace calendars.
           </p>
         )}
