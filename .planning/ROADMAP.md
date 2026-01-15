@@ -46,10 +46,12 @@ Plans:
 **Goal**: Add dark: variants to all components, color scheme toggle in settings, localStorage caching, test all pages
 **Depends on**: Phase 43
 **Research**: Unlikely (Tailwind dark: variants established)
-**Plans**: TBD
 
 Plans:
-- [ ] 44-01: TBD (run /gsd:plan-phase 44 to break down)
+- [ ] 44-01: Foundation & Settings (CSS base, Layout, Settings Appearance with toggle)
+- [ ] 44-02: Core Pages (Dashboard, People, Companies, Dates, Todos, Login)
+- [ ] 44-03: Modals & Timeline (All edit modals, Timeline components)
+- [ ] 44-04: Remaining Components (Workspaces, Settings sub-pages, Import wizards, Bulk modals)
 
 #### Phase 45: Accent Colors
 
