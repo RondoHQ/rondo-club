@@ -532,23 +532,25 @@ class PRM_REST_Calendar extends PRM_REST_Base {
      * Exchanges the authorization code for tokens and creates a calendar connection.
      * Redirects to settings page with success or error status.
      *
+     * Note: Uses HTML redirect instead of wp_redirect() because REST API endpoints
+     * don't properly handle HTTP redirects - the response object gets processed
+     * rather than the redirect being executed.
+     *
      * @param WP_REST_Request $request The REST request object.
-     * @return WP_REST_Response|WP_Error Redirects to settings page.
+     * @return void Outputs HTML redirect and exits.
      */
     public function google_auth_callback($request) {
         // Check for error from Google (user denied access)
         $error = $request->get_param('error');
         if ($error) {
             $error_desc = $request->get_param('error_description') ?? 'Authorization denied';
-            wp_redirect(home_url('/settings/calendars?error=' . urlencode($error_desc)));
-            exit;
+            $this->html_redirect(home_url('/settings/calendars?error=' . urlencode($error_desc)));
         }
 
         // Get and validate state parameter (user_id|nonce)
         $state = $request->get_param('state');
         if (empty($state) || strpos($state, '|') === false) {
-            wp_redirect(home_url('/settings/calendars?error=' . urlencode('Invalid state parameter')));
-            exit;
+            $this->html_redirect(home_url('/settings/calendars?error=' . urlencode('Invalid state parameter')));
         }
 
         list($user_id, $nonce) = explode('|', $state, 2);
@@ -556,15 +558,13 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
         // Verify nonce for CSRF protection
         if (!wp_verify_nonce($nonce, 'google_oauth_' . $user_id)) {
-            wp_redirect(home_url('/settings/calendars?error=' . urlencode('Security verification failed. Please try again.')));
-            exit;
+            $this->html_redirect(home_url('/settings/calendars?error=' . urlencode('Security verification failed. Please try again.')));
         }
 
         // Get authorization code
         $code = $request->get_param('code');
         if (empty($code)) {
-            wp_redirect(home_url('/settings/calendars?error=' . urlencode('No authorization code received')));
-            exit;
+            $this->html_redirect(home_url('/settings/calendars?error=' . urlencode('No authorization code received')));
         }
 
         try {
@@ -590,13 +590,31 @@ class PRM_REST_Calendar extends PRM_REST_Base {
             PRM_Calendar_Connections::add_connection($user_id, $connection);
 
             // Redirect to settings page with success
-            wp_redirect(home_url('/settings/calendars?connected=google'));
-            exit;
+            $this->html_redirect(home_url('/settings/calendars?connected=google'));
 
         } catch (Exception $e) {
-            wp_redirect(home_url('/settings/calendars?error=' . urlencode($e->getMessage())));
-            exit;
+            $this->html_redirect(home_url('/settings/calendars?error=' . urlencode($e->getMessage())));
         }
+    }
+
+    /**
+     * Output an HTML redirect and exit
+     *
+     * Used in OAuth callbacks where wp_redirect() doesn't work because
+     * REST API endpoints process the response object rather than executing
+     * the HTTP redirect headers.
+     *
+     * @param string $url The URL to redirect to.
+     * @return void Outputs HTML and exits.
+     */
+    private function html_redirect($url) {
+        $safe_url = esc_url($url);
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html><head>';
+        echo '<meta http-equiv="refresh" content="0;url=' . $safe_url . '">';
+        echo '<script>window.location.href="' . esc_js($url) . '";</script>';
+        echo '</head><body>Redirecting...</body></html>';
+        exit;
     }
 
     /**
