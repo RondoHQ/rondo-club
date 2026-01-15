@@ -90,6 +90,7 @@ function prm_autoloader($class_name) {
         'PRM_CalDAV_Provider'        => 'class-caldav-provider.php',
         'PRM_REST_Calendar'          => 'class-rest-calendar.php',
         'PRM_Calendar_Matcher'       => 'class-calendar-matcher.php',
+        'PRM_Calendar_Sync'          => 'class-calendar-sync.php',
     ];
     
     if (isset($class_map[$class_name])) {
@@ -196,6 +197,10 @@ function prm_init() {
     if ($is_admin || $is_cron) {
         new PRM_Reminders();
     }
+
+    // Calendar sync - needs hooks registered for cron schedule filter
+    // Initialize on all requests to register cron_schedules filter
+    new PRM_Calendar_Sync();
     
     // iCal feed - also initialize on non-iCal requests for hook registration
     // but we check for its specific request above for early return optimization
@@ -526,7 +531,11 @@ function prm_theme_activation() {
     // Schedule per-user reminder cron jobs
     $reminders = new PRM_Reminders();
     $reminders->schedule_all_user_reminders();
-    
+
+    // Schedule calendar background sync
+    $calendar_sync = new PRM_Calendar_Sync();
+    $calendar_sync->schedule_sync();
+
     // Also handle theme-specific rewrite rules
     prm_theme_rewrite_rules();
     
@@ -542,14 +551,18 @@ add_action('after_switch_theme', 'prm_theme_activation');
 function prm_theme_deactivation() {
     // Clear all per-user reminder cron jobs
     wp_clear_scheduled_hook('prm_user_reminder');
-    
+
     // Clear legacy scheduled hook (for backward compatibility)
     wp_clear_scheduled_hook('prm_daily_reminder_check');
-    
+
+    // Clear calendar sync cron job
+    $calendar_sync = new PRM_Calendar_Sync();
+    $calendar_sync->unschedule_sync();
+
     // Remove custom user role (must call directly since switch_theme hook already fired)
     $user_roles = new PRM_User_Roles();
     $user_roles->remove_role();
-    
+
     // Flush rewrite rules
     flush_rewrite_rules();
 }
