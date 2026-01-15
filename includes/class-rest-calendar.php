@@ -908,11 +908,22 @@ class PRM_REST_Calendar extends PRM_REST_Base {
             }
         }
 
+        // Format times with timezone for proper JavaScript parsing
+        // Using ISO 8601 format (c) includes timezone offset: 2026-01-15T10:00:00+01:00
+        $wp_timezone = wp_timezone();
+
+        $start_meta = get_post_meta($event->ID, '_start_time', true);
+        $end_meta = get_post_meta($event->ID, '_end_time', true);
+
+        // Create DateTime objects in WordPress timezone (handles empty/invalid gracefully)
+        $start_datetime = new DateTime($start_meta ?: 'now', $wp_timezone);
+        $end_datetime = new DateTime($end_meta ?: $start_meta ?: 'now', $wp_timezone);
+
         return [
             'id'                     => $event->ID,
             'title'                  => sanitize_text_field($event->post_title),
-            'start_time'             => get_post_meta($event->ID, '_start_time', true),
-            'end_time'               => get_post_meta($event->ID, '_end_time', true),
+            'start_time'             => $start_datetime->format('c'), // ISO 8601 with timezone offset
+            'end_time'               => $end_datetime->format('c'),   // ISO 8601 with timezone offset
             'location'               => get_post_meta($event->ID, '_location', true),
             'meeting_url'            => get_post_meta($event->ID, '_meeting_url', true),
             'all_day'                => (bool) get_post_meta($event->ID, '_all_day', true),
@@ -1074,11 +1085,22 @@ class PRM_REST_Calendar extends PRM_REST_Base {
             }
         }
 
+        // Format times with timezone for proper JavaScript parsing
+        // Using ISO 8601 format (c) includes timezone offset: 2026-01-15T10:00:00+01:00
+        $wp_timezone = wp_timezone();
+
+        $start_meta = get_post_meta($event->ID, '_start_time', true);
+        $end_meta = get_post_meta($event->ID, '_end_time', true);
+
+        // Create DateTime objects in WordPress timezone (handles empty/invalid gracefully)
+        $start_datetime = new DateTime($start_meta ?: 'now', $wp_timezone);
+        $end_datetime = new DateTime($end_meta ?: $start_meta ?: 'now', $wp_timezone);
+
         return [
             'id'             => $event->ID,
             'title'          => sanitize_text_field($event->post_title),
-            'start_time'     => get_post_meta($event->ID, '_start_time', true),
-            'end_time'       => get_post_meta($event->ID, '_end_time', true),
+            'start_time'     => $start_datetime->format('c'), // ISO 8601 with timezone offset
+            'end_time'       => $end_datetime->format('c'),   // ISO 8601 with timezone offset
             'all_day'        => (bool) get_post_meta($event->ID, '_all_day', true),
             'location'       => get_post_meta($event->ID, '_location', true),
             'meeting_url'    => get_post_meta($event->ID, '_meeting_url', true),
