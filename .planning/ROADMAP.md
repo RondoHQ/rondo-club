@@ -18,11 +18,11 @@
 - ✅ [v3.6 Quick Wins & Performance](milestones/v3.6-quick-wins-performance.md) (Phases 40-41) — SHIPPED 2026-01-14
 - ✅ [v3.7 Todo UX Polish](milestones/v3.7-todo-ux-polish.md) (Phase 42) — SHIPPED 2026-01-15
 - ✅ [v3.8 Theme Customization](milestones/v3.8-theme-customization.md) (Phases 43-46) — SHIPPED 2026-01-15
-- 🚧 **v4.0 Calendar Integration** — Phases 47-55 (in progress)
+- 🚧 **v4.0 Calendar Integration** — Phases 47-55 (complete, ready for milestone completion)
 
 ## Current Status
 
-**Active:** v4.0 Calendar Integration (Phase 47 ready to plan)
+**Active:** v4.0 Calendar Integration (All phases complete)
 
 ---
 
@@ -84,45 +84,46 @@ Plans:
 Plans:
 - [x] 51-01: Contact matching (PRM_Calendar_Matcher class, provider integration, meetings endpoint)
 
-#### Phase 52: Settings UI
+#### Phase 52: Settings UI (Complete)
 
 **Goal**: Calendar connections page at /settings/calendars, add/edit/delete connections, sync status display
 **Depends on**: Phase 48
 **Research**: Unlikely (internal React patterns)
-**Plans**: TBD
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 52-01: TBD (run /gsd:plan-phase 52 to break down)
+- [x] 52-01: Calendar settings UI (CalendarsTab, connection modals, sync status)
+- [x] 52-FIX: Google OAuth redirect fix
 
-#### Phase 53: Person Meetings Section
+#### Phase 53: Person Meetings Section (Complete)
 
 **Goal**: Upcoming/past meetings display in PersonDetail, "Log as Activity" functionality
 **Depends on**: Phase 51
 **Research**: Unlikely (internal React patterns)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 53-01: TBD (run /gsd:plan-phase 53 to break down)
+- [x] 53-01: Person meetings section (MeetingsSection component, usePersonMeetings hook, log as activity)
 
-#### Phase 54: Background Sync + Auto-Logging
+#### Phase 54: Background Sync + Auto-Logging (Complete)
 
 **Goal**: WP-Cron jobs for 15-minute sync, rate limiting, activity creation from past meetings
 **Depends on**: Phase 51
 **Research**: Unlikely (WP-Cron established patterns)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 54-01: TBD (run /gsd:plan-phase 54 to break down)
+- [x] 54-01: Background sync (PRM_Calendar_Sync class, WP-Cron, auto-logging, WP-CLI commands)
 
-#### Phase 55: Dashboard Widget + Polish
+#### Phase 55: Dashboard Widget + Polish (Complete)
 
 **Goal**: "Today's Meetings" widget above Favorites, testing, error handling
 **Depends on**: Phase 53
 **Research**: Unlikely (internal patterns)
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 55-01: TBD (run /gsd:plan-phase 55 to break down)
+- [x] 55-01: Today's Meetings dashboard widget (REST endpoint, hook, MeetingCard component)
 
 ---
 
@@ -540,6 +541,7 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.6 Quick Wins & Performance | 40-41 | 2/2 | Complete ✅ | 2026-01-14 |
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
-| v4.0 Calendar Integration | 47-55 | 6/? | In Progress | - |
+| v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | - |
 
 **Shipped: 16 milestones, 46 phases, 88 plans**
+**Ready for completion: v4.0 (9 phases, 11 plans)**
