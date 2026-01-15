@@ -49,7 +49,7 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
           className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
         >
           {isSelected ? (
-            <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
           ) : (
             <Square className="w-5 h-5" />
           )}
@@ -151,9 +151,9 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
                 title={isAllSelected ? 'Deselect all' : 'Select all'}
               >
                 {isAllSelected ? (
-                  <CheckSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                  <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
                 ) : isSomeSelected ? (
-                  <MinusSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                  <MinusSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
                 ) : (
                   <Square className="w-5 h-5" />
                 )}
@@ -244,18 +244,18 @@ function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoadi
                   disabled={isLoading}
                   className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                     isSelected
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                      ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30'
                       : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 mt-0.5 ${isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
+                  <Icon className={`w-5 h-5 mt-0.5 ${isSelected ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'}`} />
                   <div className="flex-1">
-                    <div className={`text-sm font-medium ${isSelected ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-gray-50'}`}>
+                    <div className={`text-sm font-medium ${isSelected ? 'text-accent-900 dark:text-accent-100' : 'text-gray-900 dark:text-gray-50'}`}>
                       {option.label}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">{option.description}</div>
                   </div>
-                  {isSelected && <Check className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5" />}
+                  {isSelected && <Check className="w-5 h-5 text-accent-600 dark:text-accent-400 mt-0.5" />}
                 </button>
               );
             })}
@@ -343,12 +343,12 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isChecked
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                        ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30'
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
                     <div className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
-                      isChecked ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-500'
+                      isChecked ? 'bg-accent-600 border-accent-600' : 'border-gray-300 dark:border-gray-500'
                     }`}>
                       {isChecked && <Check className="w-3 h-3 text-white" />}
                     </div>
@@ -427,7 +427,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
             placeholder="Search organizations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg text-sm focus:ring-accent-500 focus:border-accent-500"
           />
 
           {/* Option to clear organization */}
@@ -437,16 +437,16 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
             disabled={isLoading}
             className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
               selectedCompanyId === 'clear'
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30'
                 : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
-            <X className={`w-5 h-5 ${selectedCompanyId === 'clear' ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
+            <X className={`w-5 h-5 ${selectedCompanyId === 'clear' ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'}`} />
             <div className="flex-1">
               <div className="text-sm font-medium text-gray-900 dark:text-gray-50">Clear organization</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Remove current organization from selected people</div>
             </div>
-            {selectedCompanyId === 'clear' && <Check className="w-5 h-5 text-primary-600 dark:text-primary-400" />}
+            {selectedCompanyId === 'clear' && <Check className="w-5 h-5 text-accent-600 dark:text-accent-400" />}
           </button>
 
           {/* Company list */}
@@ -466,15 +466,15 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isSelected
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                        ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30'
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
-                    <Building2 className={`w-5 h-5 ${isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
+                    <Building2 className={`w-5 h-5 ${isSelected ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'}`} />
                     <div className="flex-1">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{company.name}</div>
                     </div>
-                    {isSelected && <Check className="w-5 h-5 text-primary-600 dark:text-primary-400" />}
+                    {isSelected && <Check className="w-5 h-5 text-accent-600 dark:text-accent-400" />}
                   </button>
                 );
               })
@@ -544,7 +544,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
               type="button"
               onClick={() => { setMode('add'); setSelectedLabelIds([]); }}
               className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'add' ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                mode === 'add' ? 'bg-accent-100 dark:bg-accent-900/50 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
               Add Labels
@@ -579,13 +579,13 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isChecked
-                        ? mode === 'add' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'border-red-500 bg-red-50 dark:bg-red-900/30'
+                        ? mode === 'add' ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30' : 'border-red-500 bg-red-50 dark:bg-red-900/30'
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
                     <div className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
                       isChecked
-                        ? mode === 'add' ? 'bg-primary-600 border-primary-600' : 'bg-red-600 border-red-600'
+                        ? mode === 'add' ? 'bg-accent-600 border-accent-600' : 'bg-red-600 border-red-600'
                         : 'border-gray-300 dark:border-gray-500'
                     }`}>
                       {isChecked && <Check className="w-3 h-3 text-white" />}
@@ -1031,12 +1031,12 @@ export default function PeopleList() {
           <div className="relative" ref={filterRef}>
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`btn-secondary ${hasActiveFilters ? 'bg-primary-50 text-primary-700 border-primary-200' : ''}`}
+              className={`btn-secondary ${hasActiveFilters ? 'bg-accent-50 text-accent-700 border-accent-200' : ''}`}
             >
               <Filter className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
-                <span className="ml-2 px-1.5 py-0.5 bg-primary-600 text-white text-xs rounded-full">
+                <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
                   {selectedLabels.length + (showFavoritesOnly ? 1 : 0) + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0)}
                 </span>
               )}
@@ -1060,7 +1060,7 @@ export default function PeopleList() {
                       />
                       <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                         showFavoritesOnly
-                          ? 'bg-primary-600 border-primary-600'
+                          ? 'bg-accent-600 border-accent-600'
                           : 'border-gray-300 dark:border-gray-500'
                       }`}>
                         {showFavoritesOnly && (
@@ -1094,7 +1094,7 @@ export default function PeopleList() {
                             />
                             <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                               selectedLabels.includes(label)
-                                ? 'bg-primary-600 border-primary-600'
+                                ? 'bg-accent-600 border-accent-600'
                                 : 'border-gray-300 dark:border-gray-500'
                             }`}>
                               {selectedLabels.includes(label) && (
@@ -1117,7 +1117,7 @@ export default function PeopleList() {
                       <select
                         value={selectedBirthYear}
                         onChange={(e) => setSelectedBirthYear(e.target.value)}
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
                       >
                         <option value="">All years</option>
                         {availableBirthYears.map(year => (
@@ -1135,7 +1135,7 @@ export default function PeopleList() {
                     <select
                       value={lastModifiedFilter}
                       onChange={(e) => setLastModifiedFilter(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
                     >
                       <option value="">Any time</option>
                       <option value="7">Last 7 days</option>
@@ -1170,11 +1170,11 @@ export default function PeopleList() {
                           />
                           <div className={`flex items-center justify-center w-4 h-4 border-2 rounded-full mr-3 ${
                             ownershipFilter === option.value
-                              ? 'border-primary-600'
+                              ? 'border-accent-600'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {ownershipFilter === option.value && (
-                              <div className="w-2 h-2 bg-primary-600 rounded-full" />
+                              <div className="w-2 h-2 bg-accent-600 rounded-full" />
                             )}
                           </div>
                           <span className="text-sm text-gray-700 dark:text-gray-200">{option.label}</span>
@@ -1192,7 +1192,7 @@ export default function PeopleList() {
                       <select
                         value={selectedWorkspaceFilter}
                         onChange={(e) => setSelectedWorkspaceFilter(e.target.value)}
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
                       >
                         <option value="">All Workspaces</option>
                         {workspaces.map(ws => (
@@ -1206,7 +1206,7 @@ export default function PeopleList() {
                   {hasActiveFilters && (
                     <button
                       onClick={clearFilters}
-                      className="w-full text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
+                      className="w-full text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
                     >
                       Clear all filters
                     </button>
@@ -1220,12 +1220,12 @@ export default function PeopleList() {
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2">
               {showFavoritesOnly && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 dark:bg-primary-900/50 text-primary-800 dark:text-primary-200 rounded-full text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-900/50 text-accent-800 dark:text-accent-200 rounded-full text-xs">
                   <Star className="w-3 h-3" />
                   Favorites
                   <button
                     onClick={() => setShowFavoritesOnly(false)}
-                    className="hover:text-primary-600 dark:hover:text-primary-300"
+                    className="hover:text-accent-600 dark:hover:text-accent-300"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -1270,9 +1270,9 @@ export default function PeopleList() {
                 </span>
               )}
               {ownershipFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 dark:bg-primary-900/50 text-primary-800 dark:text-primary-200 rounded-full text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-900/50 text-accent-800 dark:text-accent-200 rounded-full text-xs">
                   {ownershipFilter === 'mine' ? 'My Contacts' : 'Shared with Me'}
-                  <button onClick={() => setOwnershipFilter('all')} className="hover:text-primary-600 dark:hover:text-primary-300">
+                  <button onClick={() => setOwnershipFilter('all')} className="hover:text-accent-600 dark:hover:text-accent-300">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -1298,7 +1298,7 @@ export default function PeopleList() {
       {/* Loading state */}
       {isLoading && (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
         </div>
       )}
 
@@ -1328,8 +1328,8 @@ export default function PeopleList() {
 
       {/* Selection toolbar - sticky */}
       {selectedIds.size > 0 && (
-        <div className="sticky top-0 z-20 flex items-center justify-between bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700 rounded-lg px-4 py-2 shadow-sm">
-          <span className="text-sm text-primary-800 dark:text-primary-200 font-medium">
+        <div className="sticky top-0 z-20 flex items-center justify-between bg-accent-50 dark:bg-accent-900/30 border border-accent-200 dark:border-accent-700 rounded-lg px-4 py-2 shadow-sm">
+          <span className="text-sm text-accent-800 dark:text-accent-200 font-medium">
             {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'} selected
           </span>
           <div className="flex items-center gap-3">
@@ -1337,7 +1337,7 @@ export default function PeopleList() {
             <div className="relative" ref={bulkDropdownRef}>
               <button
                 onClick={() => setShowBulkDropdown(!showBulkDropdown)}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-700 dark:text-primary-200 bg-white dark:bg-gray-800 border border-primary-300 dark:border-primary-600 rounded-md hover:bg-primary-50 dark:hover:bg-gray-700"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-accent-700 dark:text-accent-200 bg-white dark:bg-gray-800 border border-accent-300 dark:border-accent-600 rounded-md hover:bg-accent-50 dark:hover:bg-gray-700"
               >
                 Actions
                 <ChevronDown className={`w-4 h-4 transition-transform ${showBulkDropdown ? 'rotate-180' : ''}`} />
@@ -1391,7 +1391,7 @@ export default function PeopleList() {
             </div>
             <button
               onClick={clearSelection}
-              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium"
+              className="text-sm text-accent-600 dark:text-accent-400 hover:text-accent-800 dark:hover:text-accent-300 font-medium"
             >
               Clear selection
             </button>
