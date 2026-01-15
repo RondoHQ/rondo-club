@@ -23,15 +23,15 @@
 
 ## Current Status
 
-**Active:** v4.1 Bug Fixes & Polish — Phase 56
+**Complete:** v4.1 Bug Fixes & Polish — All phases complete
 
 ---
 
-### 🚧 v4.1 Bug Fixes & Polish (In Progress)
+### ✅ v4.1 Bug Fixes & Polish (Complete)
 
 **Milestone Goal:** Fix accumulated bugs and polish the Today's Meetings widget.
 
-#### Phase 56: Dark Mode & Console Fixes
+#### Phase 56: Dark Mode & Console Fixes ✓
 
 **Goal**: Fix dark mode contrast issues and console errors
 **Depends on**: Previous milestone complete
@@ -39,17 +39,17 @@
 **Plans**: 1
 
 Plans:
-- [ ] 56-01: Dark Mode & Console Fixes (3 tasks: dark mode contrast, DOM errors, MIME errors)
+- [x] 56-01: Dark Mode & Console Fixes (3 tasks: dark mode contrast, DOM errors, MIME errors)
 
-#### Phase 57: Calendar Widget Polish
+#### Phase 57: Calendar Widget Polish ✓
 
 **Goal**: Fix Today's meetings layout, timezone display, and update favicon
 **Depends on**: Phase 56
 **Research**: Unlikely (internal UI patterns)
-**Plans**: TBD
+**Plans**: 1
 
 Plans:
-- [ ] 57-01: TBD (run /gsd:plan-phase 57 to break down)
+- [x] 57-01: Calendar Widget Polish (3 tasks: layout, timezone, favicon)
 
 ---
 
@@ -504,7 +504,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v3.7 Todo UX Polish | 42 | 1/1 | Complete ✅ | 2026-01-15 |
 | v3.8 Theme Customization | 43-46 | 10/10 | Complete ✅ | 2026-01-15 |
 | v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
-| v4.1 Bug Fixes & Polish | 56-57 | 0/? | In Progress 🚧 | - |
+| v4.1 Bug Fixes & Polish | 56-57 | 2/2 | Complete ✅ | 2026-01-15 |
 
-**Shipped: 17 milestones, 55 phases, 99 plans**
-**Active: v4.1 (2 phases)**
+**Shipped: 18 milestones, 57 phases, 101 plans**
