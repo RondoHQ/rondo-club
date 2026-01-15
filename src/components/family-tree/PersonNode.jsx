@@ -72,7 +72,7 @@ export default function PersonNode({ node, onClick }) {
   return (
     <div
       onClick={handleClick}
-      className="bg-white border-2 border-gray-300 rounded-lg shadow-md p-2 cursor-pointer hover:border-primary-500 hover:shadow-lg transition-all"
+      className="bg-white border-2 border-gray-300 rounded-lg shadow-md p-2 cursor-pointer hover:border-accent-500 hover:shadow-lg transition-all"
       style={{ width: '100%', height: '100%' }}
     >
       {/* Photo or Initials */}
