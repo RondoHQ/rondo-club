@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 
 Milestone: v4.5 Calendar Sync Control
 Phase: 67 of 68 (Sync Range & Frequency)
-Plan: 01 COMPLETE
-Status: Ready for Plan 02
-Last activity: 2026-01-16 — Plan 67-01 completed (sync fields + UI)
+Plan: 02 COMPLETE
+Status: Phase 67 complete, ready for Phase 68
+Last activity: 2026-01-16 — Plan 67-02 completed (background sync frequency)
 
-Progress: ████░░░░░░ 50% (Plan 01/02 of Phase 67)
+Progress: █████░░░░░ 50% (Phase 67/68 of v4.5)
 
 ## Completed Milestones
 
@@ -94,7 +94,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Phase 67 Plan 01 complete
+Stopped at: Phase 67 Plan 02 complete (phase complete)
 Resume file: None
 
 ## Accumulated Context
