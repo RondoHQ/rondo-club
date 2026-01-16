@@ -848,7 +848,7 @@ function CalendarsTab() {
                   <div>
                     <p className="font-medium dark:text-gray-100">{connection.name}</p>
                     {connection.calendar_id && connection.calendar_id !== 'primary' && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">{connection.calendar_id}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">{connection.calendar_name || connection.calendar_id}</p>
                     )}
                     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <span>{formatLastSync(connection.last_sync)}</span>
@@ -1254,9 +1254,14 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         sync_frequency: syncFrequency,
       };
 
-      // Include calendar_id if changed
+      // Include calendar_id and calendar_name if changed
       if (selectedCalendarId && selectedCalendarId !== connection.calendar_id) {
         data.calendar_id = selectedCalendarId;
+        // Find the calendar name from the loaded calendars list
+        const selectedCal = calendars.find(cal => cal.id === selectedCalendarId);
+        if (selectedCal) {
+          data.calendar_name = selectedCal.name;
+        }
       }
 
       // Include CalDAV credentials if any were changed
