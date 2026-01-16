@@ -135,7 +135,7 @@ class UserRoles {
 	 */
 	public function handle_new_user_registration( $user_id ) {
 		// Set role to Caelis User
-		$user = new WP_User( $user_id );
+		$user = new \WP_User( $user_id );
 		$user->set_role( self::ROLE_NAME );
 
 		// Mark as unapproved by default

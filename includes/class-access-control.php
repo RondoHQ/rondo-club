@@ -475,7 +475,7 @@ class AccessControl {
 		// Check if user is approved (admins are always approved)
 		if ( ! user_can( $user_id, 'manage_options' ) ) {
 			if ( ! PRM_User_Roles::is_user_approved( $user_id ) ) {
-				return new WP_Error(
+				return new \WP_Error(
 					'rest_forbidden',
 					__( 'Your account is pending approval. Please contact an administrator.', 'caelis' ),
 					[ 'status' => 403 ]
@@ -485,7 +485,7 @@ class AccessControl {
 
 		// Don't allow access to trashed posts
 		if ( $post->post_status === 'trash' ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'rest_forbidden',
 				__( 'This item has been deleted.', 'caelis' ),
 				[ 'status' => 404 ]
@@ -493,7 +493,7 @@ class AccessControl {
 		}
 
 		if ( ! $this->user_can_access_post( $post->ID, $user_id ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this item.', 'caelis' ),
 				[ 'status' => 403 ]

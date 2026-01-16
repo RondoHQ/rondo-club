@@ -25,7 +25,7 @@ class Api extends Base {
 			'prm/v1',
 			'/reminders',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_upcoming_reminders' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -44,7 +44,7 @@ class Api extends Base {
 			'prm/v1',
 			'/reminders/trigger',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'trigger_reminders' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 			]
@@ -55,7 +55,7 @@ class Api extends Base {
 			'prm/v1',
 			'/reminders/cron-status',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_cron_status' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 			]
@@ -66,7 +66,7 @@ class Api extends Base {
 			'prm/v1',
 			'/reminders/reschedule-cron',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'reschedule_all_cron_jobs' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 			]
@@ -77,7 +77,7 @@ class Api extends Base {
 			'prm/v1',
 			'/user/notification-channels',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_notification_channels' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -88,7 +88,7 @@ class Api extends Base {
 			'prm/v1',
 			'/user/notification-channels',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'update_notification_channels' ],
 				'permission_callback' => 'is_user_logged_in',
 				'args'                => [
@@ -107,7 +107,7 @@ class Api extends Base {
 			'prm/v1',
 			'/user/notification-time',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'update_notification_time' ],
 				'permission_callback' => 'is_user_logged_in',
 				'args'                => [
@@ -127,7 +127,7 @@ class Api extends Base {
 			'prm/v1',
 			'/user/mention-notifications',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'update_mention_notifications' ],
 				'permission_callback' => 'is_user_logged_in',
 				'args'                => [
@@ -146,7 +146,7 @@ class Api extends Base {
 			'prm/v1',
 			'/user/theme-preferences',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_theme_preferences' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -182,7 +182,7 @@ class Api extends Base {
 			'prm/v1',
 			'/search',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'global_search' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -201,7 +201,7 @@ class Api extends Base {
 			'prm/v1',
 			'/dashboard',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_dashboard_summary' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
@@ -212,7 +212,7 @@ class Api extends Base {
 			'prm/v1',
 			'/version',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_version' ],
 				'permission_callback' => '__return_true',
 			]
@@ -223,7 +223,7 @@ class Api extends Base {
 			'prm/v1',
 			'/investments/(?P<investor_id>\d+)',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_investments' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -241,7 +241,7 @@ class Api extends Base {
 			'prm/v1',
 			'/relationship-types/restore-defaults',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'restore_relationship_type_defaults' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
@@ -253,7 +253,7 @@ class Api extends Base {
 			'prm/v1',
 			'/user/me',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_current_user' ],
 				'permission_callback' => function () {
 					return is_user_logged_in();
@@ -266,7 +266,7 @@ class Api extends Base {
 			'prm/v1',
 			'/users',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_users' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 			]
@@ -276,7 +276,7 @@ class Api extends Base {
 			'prm/v1',
 			'/users/(?P<user_id>\d+)/approve',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'approve_user' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 				'args'                => [
@@ -294,7 +294,7 @@ class Api extends Base {
 			'prm/v1',
 			'/users/(?P<user_id>\d+)/deny',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'deny_user' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 				'args'                => [
@@ -312,7 +312,7 @@ class Api extends Base {
 			'prm/v1',
 			'/users/(?P<user_id>\d+)',
 			[
-				'methods'             => WP_REST_Server::DELETABLE,
+				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'delete_user' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 				'args'                => [
@@ -331,7 +331,7 @@ class Api extends Base {
 			'prm/v1',
 			'/users/search',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'search_users' ],
 				'permission_callback' => 'is_user_logged_in',
 				'args'                => [
@@ -391,7 +391,7 @@ class Api extends Base {
 		if ( method_exists( $taxonomies, 'setup_default_relationship_configurations' ) ) {
 			$taxonomies->setup_default_relationship_configurations();
 
-			return new WP_REST_Response(
+			return new \WP_REST_Response(
 				[
 					'success' => true,
 					'message' => __( 'Default relationship type configurations have been restored.', 'caelis' ),
@@ -400,7 +400,7 @@ class Api extends Base {
 			);
 		}
 
-		return new WP_Error(
+		return new \WP_Error(
 			'restore_failed',
 			__( 'Failed to restore defaults.', 'caelis' ),
 			[ 'status' => 500 ]
@@ -634,7 +634,7 @@ class Api extends Base {
 		if ( in_array( 'slack', $channels ) ) {
 			$webhook = get_user_meta( $user_id, 'caelis_slack_webhook', true );
 			if ( empty( $webhook ) ) {
-				return new WP_Error(
+				return new \WP_Error(
 					'slack_webhook_required',
 					__( 'Slack webhook URL must be configured before enabling Slack notifications.', 'caelis' ),
 					[ 'status' => 400 ]
@@ -661,7 +661,7 @@ class Api extends Base {
 
 		// Validate time format (HH:MM)
 		if ( ! preg_match( '/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $time ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'invalid_time',
 				__( 'Invalid time format. Please use HH:MM format (e.g., 09:00).', 'caelis' ),
 				[ 'status' => 400 ]
@@ -704,7 +704,7 @@ class Api extends Base {
 		// Validate the preference value
 		$valid_preferences = [ 'digest', 'immediate', 'never' ];
 		if ( ! in_array( $preference, $valid_preferences, true ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'invalid_preference',
 				__( 'Invalid mention notification preference.', 'caelis' ),
 				[ 'status' => 400 ]
@@ -761,7 +761,7 @@ class Api extends Base {
 		// Update color scheme if provided and valid
 		if ( $color_scheme !== null ) {
 			if ( ! in_array( $color_scheme, $valid_color_schemes, true ) ) {
-				return new WP_Error(
+				return new \WP_Error(
 					'invalid_color_scheme',
 					__( 'Invalid color scheme. Valid values: light, dark, system.', 'caelis' ),
 					[ 'status' => 400 ]
@@ -773,7 +773,7 @@ class Api extends Base {
 		// Update accent color if provided and valid
 		if ( $accent_color !== null ) {
 			if ( ! in_array( $accent_color, $valid_accent_colors, true ) ) {
-				return new WP_Error(
+				return new \WP_Error(
 					'invalid_accent_color',
 					__( 'Invalid accent color.', 'caelis' ),
 					[ 'status' => 400 ]
@@ -1210,13 +1210,13 @@ class Api extends Base {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			return new WP_Error( 'not_logged_in', __( 'User is not logged in.', 'caelis' ), [ 'status' => 401 ] );
+			return new \WP_Error( 'not_logged_in', __( 'User is not logged in.', 'caelis' ), [ 'status' => 401 ] );
 		}
 
 		$user = get_userdata( $user_id );
 
 		if ( ! $user ) {
-			return new WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Get avatar URL
@@ -1308,7 +1308,7 @@ class Api extends Base {
 
 		// Prevent deleting yourself
 		if ( $user_id === get_current_user_id() ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'cannot_delete_self',
 				__( 'You cannot delete your own account.', 'caelis' ),
 				[ 'status' => 400 ]
@@ -1318,7 +1318,7 @@ class Api extends Base {
 		// Check if user exists
 		$user = get_userdata( $user_id );
 		if ( ! $user ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'user_not_found',
 				__( 'User not found.', 'caelis' ),
 				[ 'status' => 404 ]
@@ -1333,7 +1333,7 @@ class Api extends Base {
 		$result = wp_delete_user( $user_id );
 
 		if ( ! $result ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'delete_failed',
 				__( 'Failed to delete user.', 'caelis' ),
 				[ 'status' => 500 ]

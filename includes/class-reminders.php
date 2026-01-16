@@ -75,7 +75,7 @@ class Reminders {
 		);
 
 		if ( $scheduled === false ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'cron_schedule_failed',
 				sprintf( __( 'Failed to schedule reminder cron for user %d.', 'caelis' ), $user_id )
 			);

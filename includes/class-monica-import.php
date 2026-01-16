@@ -61,7 +61,7 @@ class Monica {
 			'prm/v1',
 			'/import/monica',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'handle_import' ],
 				'permission_callback' => [ $this, 'check_import_permission' ],
 			]
@@ -71,7 +71,7 @@ class Monica {
 			'prm/v1',
 			'/import/monica/validate',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'validate_import' ],
 				'permission_callback' => [ $this, 'check_import_permission' ],
 			]
@@ -92,18 +92,18 @@ class Monica {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$sql_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $sql_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check if it's a valid Monica SQL export
 		if ( strpos( $sql_content, 'INSERT IGNORE INTO `contacts`' ) === false ) {
-			return new WP_Error( 'invalid_format', __( 'Invalid Monica SQL export format. File must contain contacts table.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_format', __( 'Invalid Monica SQL export format. File must contain contacts table.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse the SQL to get summary
@@ -165,11 +165,11 @@ class Monica {
 		$monica_url = $request->get_param( 'monica_url' ) ?? '';
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		if ( empty( $monica_url ) ) {
-			return new WP_Error( 'missing_url', __( 'Monica instance URL is required for photo import.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_url', __( 'Monica instance URL is required for photo import.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Normalize Monica URL
@@ -178,7 +178,7 @@ class Monica {
 		$sql_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $sql_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse the SQL
@@ -1180,7 +1180,7 @@ class Monica {
 	 * Find an existing person by name
 	 */
 	private function find_existing_person( string $first_name, string $last_name ): ?int {
-		$query = new WP_Query(
+		$query = new \WP_Query(
 			[
 				'post_type'      => 'person',
 				'posts_per_page' => 1,

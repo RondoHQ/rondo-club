@@ -31,7 +31,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_workspaces' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
@@ -42,7 +42,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'create_workspace' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -63,7 +63,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces/(?P<id>\d+)',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_workspace' ],
 				'permission_callback' => [ $this, 'check_workspace_access' ],
 				'args'                => [
@@ -81,7 +81,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces/(?P<id>\d+)',
 			[
-				'methods'             => WP_REST_Server::EDITABLE,
+				'methods'             => \WP_REST_Server::EDITABLE,
 				'callback'            => [ $this, 'update_workspace' ],
 				'permission_callback' => [ $this, 'check_workspace_admin' ],
 				'args'                => [
@@ -107,7 +107,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces/(?P<id>\d+)',
 			[
-				'methods'             => WP_REST_Server::DELETABLE,
+				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'delete_workspace' ],
 				'permission_callback' => [ $this, 'check_workspace_owner' ],
 				'args'                => [
@@ -125,7 +125,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces/(?P<id>\d+)/members',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'add_member' ],
 				'permission_callback' => [ $this, 'check_workspace_admin' ],
 				'args'                => [
@@ -157,7 +157,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces/(?P<id>\d+)/members/(?P<user_id>\d+)',
 			[
-				'methods'             => WP_REST_Server::DELETABLE,
+				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'remove_member' ],
 				'permission_callback' => [ $this, 'check_workspace_admin' ],
 				'args'                => [
@@ -180,7 +180,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces/(?P<id>\d+)/members/(?P<user_id>\d+)',
 			[
-				'methods'             => WP_REST_Server::EDITABLE,
+				'methods'             => \WP_REST_Server::EDITABLE,
 				'callback'            => [ $this, 'update_member_role' ],
 				'permission_callback' => [ $this, 'check_workspace_admin' ],
 				'args'                => [
@@ -210,7 +210,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces/(?P<id>\d+)/invites',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'create_invite' ],
 				'permission_callback' => [ $this, 'check_workspace_admin' ],
 				'args'                => [
@@ -243,7 +243,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces/(?P<id>\d+)/invites',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_invites' ],
 				'permission_callback' => [ $this, 'check_workspace_admin' ],
 				'args'                => [
@@ -261,7 +261,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces/(?P<id>\d+)/invites/(?P<invite_id>\d+)',
 			[
-				'methods'             => WP_REST_Server::DELETABLE,
+				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'revoke_invite' ],
 				'permission_callback' => [ $this, 'check_workspace_admin' ],
 				'args'                => [
@@ -284,7 +284,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/invites/(?P<token>[a-zA-Z0-9]+)',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'validate_invite' ],
 				'permission_callback' => '__return_true', // Public endpoint
 				'args'                => [
@@ -302,7 +302,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/invites/(?P<token>[a-zA-Z0-9]+)/accept',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'accept_invite' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -320,7 +320,7 @@ class Workspaces extends Base {
 			'prm/v1',
 			'/workspaces/members/search',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'search_workspace_members' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -486,7 +486,7 @@ class Workspaces extends Base {
 		$user_id      = get_current_user_id();
 
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Get members with user info
@@ -552,7 +552,7 @@ class Workspaces extends Base {
 		$workspace_id = wp_insert_post( $post_data, true );
 
 		if ( is_wp_error( $workspace_id ) ) {
-			return new WP_Error( 'create_failed', $workspace_id->get_error_message(), [ 'status' => 500 ] );
+			return new \WP_Error( 'create_failed', $workspace_id->get_error_message(), [ 'status' => 500 ] );
 		}
 
 		// The save_post_workspace hook in PRM_Workspace_Members auto-adds author as admin
@@ -583,7 +583,7 @@ class Workspaces extends Base {
 		$workspace    = get_post( $workspace_id );
 
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		$post_data = [
@@ -604,7 +604,7 @@ class Workspaces extends Base {
 		$result = wp_update_post( $post_data, true );
 
 		if ( is_wp_error( $result ) ) {
-			return new WP_Error( 'update_failed', $result->get_error_message(), [ 'status' => 500 ] );
+			return new \WP_Error( 'update_failed', $result->get_error_message(), [ 'status' => 500 ] );
 		}
 
 		$workspace    = get_post( $workspace_id );
@@ -636,13 +636,13 @@ class Workspaces extends Base {
 		$workspace    = get_post( $workspace_id );
 
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		$result = wp_trash_post( $workspace_id );
 
 		if ( ! $result ) {
-			return new WP_Error( 'delete_failed', __( 'Failed to delete workspace.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'delete_failed', __( 'Failed to delete workspace.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
@@ -668,13 +668,13 @@ class Workspaces extends Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check if user is already a member
@@ -682,13 +682,13 @@ class Workspaces extends Base {
 			// Update their role instead
 			$result = PRM_Workspace_Members::update_role( $workspace_id, $user_id, $role );
 			if ( ! $result ) {
-				return new WP_Error( 'update_failed', __( 'Failed to update member role.', 'caelis' ), [ 'status' => 500 ] );
+				return new \WP_Error( 'update_failed', __( 'Failed to update member role.', 'caelis' ), [ 'status' => 500 ] );
 			}
 		} else {
 			// Add new member
 			$result = PRM_Workspace_Members::add( $workspace_id, $user_id, $role );
 			if ( ! $result ) {
-				return new WP_Error( 'add_failed', __( 'Failed to add member.', 'caelis' ), [ 'status' => 500 ] );
+				return new \WP_Error( 'add_failed', __( 'Failed to add member.', 'caelis' ), [ 'status' => 500 ] );
 			}
 		}
 
@@ -718,23 +718,23 @@ class Workspaces extends Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check if user is the owner (cannot be removed)
 		if ( (int) $workspace->post_author === $user_id ) {
-			return new WP_Error( 'cannot_remove_owner', __( 'Cannot remove the workspace owner.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'cannot_remove_owner', __( 'Cannot remove the workspace owner.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check if user is a member
 		if ( ! PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
-			return new WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$result = PRM_Workspace_Members::remove( $workspace_id, $user_id );
 
 		if ( ! $result ) {
-			return new WP_Error( 'remove_failed', __( 'Failed to remove member.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'remove_failed', __( 'Failed to remove member.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
@@ -760,24 +760,24 @@ class Workspaces extends Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check if user is a member
 		if ( ! PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
-			return new WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$result = PRM_Workspace_Members::update_role( $workspace_id, $user_id, $role );
 
 		if ( ! $result ) {
-			return new WP_Error( 'update_failed', __( 'Failed to update member role.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'update_failed', __( 'Failed to update member role.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
@@ -807,13 +807,13 @@ class Workspaces extends Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check if user with this email is already a workspace member
 		$existing_user = get_user_by( 'email', $email );
 		if ( $existing_user && PRM_Workspace_Members::is_member( $workspace_id, $existing_user->ID ) ) {
-			return new WP_Error( 'already_member', __( 'This user is already a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'already_member', __( 'This user is already a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check if pending invite already exists for this email+workspace
@@ -841,7 +841,7 @@ class Workspaces extends Base {
 		);
 
 		if ( ! empty( $existing_invites ) ) {
-			return new WP_Error( 'invite_exists', __( 'A pending invite already exists for this email address.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invite_exists', __( 'A pending invite already exists for this email address.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Generate secure token (alphanumeric only)
@@ -861,7 +861,7 @@ class Workspaces extends Base {
 		$invite_id = wp_insert_post( $invite_data, true );
 
 		if ( is_wp_error( $invite_id ) ) {
-			return new WP_Error( 'create_failed', $invite_id->get_error_message(), [ 'status' => 500 ] );
+			return new \WP_Error( 'create_failed', $invite_id->get_error_message(), [ 'status' => 500 ] );
 		}
 
 		// Set ACF fields
@@ -944,19 +944,19 @@ class Workspaces extends Base {
 
 		$invite = get_post( $invite_id );
 		if ( ! $invite || $invite->post_type !== 'workspace_invite' ) {
-			return new WP_Error( 'invite_not_found', __( 'Invite not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invite_not_found', __( 'Invite not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Verify invite belongs to this workspace
 		$invite_workspace_id = (int) get_field( '_invite_workspace_id', $invite_id );
 		if ( $invite_workspace_id !== $workspace_id ) {
-			return new WP_Error( 'invite_not_found', __( 'Invite not found for this workspace.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invite_not_found', __( 'Invite not found for this workspace.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check status
 		$status = get_field( '_invite_status', $invite_id );
 		if ( $status !== 'pending' ) {
-			return new WP_Error( 'invalid_status', __( 'Only pending invites can be revoked.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_status', __( 'Only pending invites can be revoked.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Revoke the invite
@@ -984,13 +984,13 @@ class Workspaces extends Base {
 
 		$invite = $this->get_invite_by_token( $token );
 		if ( ! $invite ) {
-			return new WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check status
 		$status = get_field( '_invite_status', $invite->ID );
 		if ( $status !== 'pending' ) {
-			return new WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check expiration
@@ -998,14 +998,14 @@ class Workspaces extends Base {
 		if ( strtotime( $expires_at ) < time() ) {
 			// Mark as expired
 			update_field( '_invite_status', 'expired', $invite->ID );
-			return new WP_Error( 'expired', __( 'This invitation has expired.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'expired', __( 'This invitation has expired.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get workspace info
 		$workspace_id = (int) get_field( '_invite_workspace_id', $invite->ID );
 		$workspace    = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_status !== 'publish' ) {
-			return new WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Get inviter info
@@ -1036,33 +1036,33 @@ class Workspaces extends Base {
 
 		$invite = $this->get_invite_by_token( $token );
 		if ( ! $invite ) {
-			return new WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check status
 		$status = get_field( '_invite_status', $invite->ID );
 		if ( $status !== 'pending' ) {
-			return new WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check expiration
 		$expires_at = get_field( '_invite_expires_at', $invite->ID );
 		if ( strtotime( $expires_at ) < time() ) {
 			update_field( '_invite_status', 'expired', $invite->ID );
-			return new WP_Error( 'expired', __( 'This invitation has expired.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'expired', __( 'This invitation has expired.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Verify email matches or user is admin
 		$invite_email = get_field( '_invite_email', $invite->ID );
 		if ( $user->user_email !== $invite_email && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'email_mismatch', __( 'Your email address does not match this invitation.', 'caelis' ), [ 'status' => 403 ] );
+			return new \WP_Error( 'email_mismatch', __( 'Your email address does not match this invitation.', 'caelis' ), [ 'status' => 403 ] );
 		}
 
 		// Get workspace
 		$workspace_id = (int) get_field( '_invite_workspace_id', $invite->ID );
 		$workspace    = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_status !== 'publish' ) {
-			return new WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check if user is already a member
@@ -1071,7 +1071,7 @@ class Workspaces extends Base {
 			update_field( '_invite_status', 'accepted', $invite->ID );
 			update_field( '_invite_accepted_by', $user_id, $invite->ID );
 
-			return new WP_Error( 'already_member', __( 'You are already a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'already_member', __( 'You are already a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Add user to workspace
@@ -1079,7 +1079,7 @@ class Workspaces extends Base {
 		$result = PRM_Workspace_Members::add( $workspace_id, $user_id, $role );
 
 		if ( ! $result ) {
-			return new WP_Error( 'join_failed', __( 'Failed to join workspace.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'join_failed', __( 'Failed to join workspace.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Mark invite as accepted

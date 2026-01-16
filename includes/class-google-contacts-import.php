@@ -49,7 +49,7 @@ class GoogleContacts {
 			'prm/v1',
 			'/import/google-contacts',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'handle_import' ],
 				'permission_callback' => [ $this, 'check_import_permission' ],
 			]
@@ -59,7 +59,7 @@ class GoogleContacts {
 			'prm/v1',
 			'/import/google-contacts/validate',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'validate_import' ],
 				'permission_callback' => [ $this, 'check_import_permission' ],
 			]
@@ -80,20 +80,20 @@ class GoogleContacts {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$csv_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $csv_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse CSV to validate and get summary
 		$contacts = $this->parse_csv( $csv_content );
 
 		if ( empty( $contacts ) ) {
-			return new WP_Error( 'invalid_format', __( 'No valid contacts found in CSV. Make sure you exported from Google Contacts.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_format', __( 'No valid contacts found in CSV. Make sure you exported from Google Contacts.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check for required Google Contacts columns (supports both old and new format)
@@ -115,7 +115,7 @@ class GoogleContacts {
 		}
 
 		if ( ! $has_name_columns && ! in_array( 'Name', $this->headers ) ) {
-			return new WP_Error( 'invalid_format', __( 'This doesn\'t appear to be a Google Contacts export. Missing name columns.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_format', __( 'This doesn\'t appear to be a Google Contacts export. Missing name columns.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$summary    = $this->get_import_summary( $contacts );
@@ -304,13 +304,13 @@ class GoogleContacts {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$csv_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $csv_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get user decisions for duplicates (passed as JSON string in 'decisions' field)
@@ -830,7 +830,7 @@ class GoogleContacts {
 			return null;
 		}
 
-		$query = new WP_Query(
+		$query = new \WP_Query(
 			[
 				'post_type'        => 'person',
 				'posts_per_page'   => 1,

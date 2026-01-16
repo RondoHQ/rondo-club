@@ -45,7 +45,7 @@ class VCard {
 			'prm/v1',
 			'/import/vcard',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'handle_import' ],
 				'permission_callback' => [ $this, 'check_import_permission' ],
 			]
@@ -55,7 +55,7 @@ class VCard {
 			'prm/v1',
 			'/import/vcard/validate',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'validate_import' ],
 				'permission_callback' => [ $this, 'check_import_permission' ],
 			]
@@ -65,7 +65,7 @@ class VCard {
 			'prm/v1',
 			'/import/vcard/parse',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'parse_single_contact' ],
 				'permission_callback' => [ $this, 'check_import_permission' ],
 			]
@@ -86,18 +86,18 @@ class VCard {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check if it's a valid vCard file
 		if ( strpos( $vcf_content, 'BEGIN:VCARD' ) === false ) {
-			return new WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse vCards to get summary
@@ -121,25 +121,25 @@ class VCard {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check if it's a valid vCard file
 		if ( strpos( $vcf_content, 'BEGIN:VCARD' ) === false ) {
-			return new WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse vCards and get the first one
 		$vcards = $this->parse_vcards( $vcf_content );
 
 		if ( empty( $vcards ) ) {
-			return new WP_Error( 'no_contacts', __( 'No contacts found in file.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_contacts', __( 'No contacts found in file.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get the first contact
@@ -232,13 +232,13 @@ class VCard {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse and import vCards
@@ -1157,7 +1157,7 @@ class VCard {
 	 * Find an existing person by name
 	 */
 	private function find_existing_person( string $first_name, string $last_name ): ?int {
-		$query = new WP_Query(
+		$query = new \WP_Query(
 			[
 				'post_type'      => 'person',
 				'posts_per_page' => 1,
