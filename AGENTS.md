@@ -240,7 +240,9 @@ git push
 
 ### Rule 8: Deploy to Production
 
-At the end of every milestone, deploy the changes to the production server:
+**ALWAYS deploy to production BEFORE asking for verification or UAT.** The user tests on production, not locally. Deploy after every phase execution, before presenting verification checklists.
+
+At the end of every milestone, also deploy the changes to the production server:
 
 If you did not update, add or remove any node modules, do this:
 
