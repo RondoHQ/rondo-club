@@ -24,37 +24,38 @@
 - ✅ [v4.3 Performance & Documentation](milestones/v4.3-performance-documentation.md) (Phases 61-63) — SHIPPED 2026-01-16
 - ✅ [v4.4 Code Organization](milestones/v4.4-code-organization.md) (Phases 64-66) — SHIPPED 2026-01-16
 - ✅ [v4.5 Calendar Sync Control](milestones/v4.5-calendar-sync-control.md) (Phases 67-68) — SHIPPED 2026-01-16
-- 🚧 **v4.6 Dashboard & Polish** - Phases 69-70 (in progress)
+- ✅ [v4.6 Dashboard & Polish](milestones/v4.6-dashboard-polish.md) (Phases 69-70) — SHIPPED 2026-01-16
 
 ## Current Status
 
-**Current milestone:** v4.6 Dashboard & Polish (Phases 69-70)
+**Current milestone:** None — use `/gsd:discuss-milestone` to plan next work
 
 ---
 
-### 🚧 v4.6 Dashboard & Polish (In Progress)
+<details>
+<summary>✅ v4.6 Dashboard & Polish (Phases 69-70) — SHIPPED 2026-01-16</summary>
 
 **Milestone Goal:** User-customizable dashboard layout with show/hide and drag-and-drop reorder, plus UI polish fixes.
 
-#### Phase 69: Dashboard Customization
+**Result:** Dashboard customization modal with visibility toggles and drag-and-drop reorder, softened delete button styling
 
-**Goal**: Add card visibility toggles and drag-and-drop reorder for all dashboard cards
-**Depends on**: v4.5 complete
-**Research**: Unlikely (internal React patterns)
-**Plans**: TBD
+**Phases:**
+- [x] Phase 69: Dashboard Customization (1/1 plan) ✓
+- [x] Phase 70: UI Polish (1/1 plan) ✓
 
-Plans:
-- [ ] 69-01: TBD (run /gsd:plan-phase 69 to break down)
+**Total:** 2 phases, 2 plans
 
-#### Phase 70: UI Polish
+**Key Accomplishments:**
+- Dashboard "Customize" button with gear icon
+- Modal with card visibility checkboxes and drag-and-drop reorder
+- Settings persist via user meta
+- Reset to defaults functionality
+- Softened delete button styling (outlined red instead of solid)
+- Dark mode support for new button style
 
-**Goal**: Delete button styling improvements and dark mode contrast fixes
-**Depends on**: Phase 69
-**Research**: Unlikely (internal styling patterns)
-**Plans**: TBD
+See [milestone archive](milestones/v4.6-dashboard-polish.md) for full details.
 
-Plans:
-- [ ] 70-01: TBD (run /gsd:plan-phase 70 to break down)
+</details>
 
 ---
 
@@ -660,6 +661,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.3 Performance & Documentation | 61-63 | 5/5 | Complete ✅ | 2026-01-16 |
 | v4.4 Code Organization | 64-66 | 6/6 | Complete ✅ | 2026-01-16 |
 | v4.5 Calendar Sync Control | 67-68 | 3/3 | Complete ✅ | 2026-01-16 |
-| v4.6 Dashboard & Polish | 69-70 | 0/? | In progress 🚧 | - |
+| v4.6 Dashboard & Polish | 69-70 | 2/2 | Complete ✅ | 2026-01-16 |
 
-**Shipped: 24 milestones, 68 phases, 119 plans**
+**Shipped: 25 milestones, 70 phases, 121 plans**
