@@ -5,11 +5,13 @@
  * Imports data from Monica CRM SQL export files.
  */
 
+namespace Caelis\Import;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Monica_Import {
+class Monica {
 
 	/**
 	 * Monica ID to WordPress ID mapping

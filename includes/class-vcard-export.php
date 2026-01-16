@@ -7,11 +7,13 @@
  * @package Caelis
  */
 
+namespace Caelis\Export;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_VCard_Export {
+class VCard {
 
 	/**
 	 * Escape special characters in vCard values

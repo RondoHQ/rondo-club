@@ -6,11 +6,13 @@
  * authenticated via a secret token URL.
  */
 
+namespace Caelis\Export;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_ICal_Feed {
+class ICalFeed {
 
 	/**
 	 * User meta key for storing the iCal token

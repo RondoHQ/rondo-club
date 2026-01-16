@@ -6,11 +6,13 @@
  * Supports vCard versions 2.1, 3.0, and 4.0.
  */
 
+namespace Caelis\Import;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_VCard_Import {
+class VCard {
 
 	/**
 	 * Import statistics

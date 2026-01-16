@@ -276,7 +276,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		);
 
 		foreach ( $persons as $person ) {
-			$vcard = \PRM_VCard_Export::generate( $person );
+			$vcard = \Caelis\Export\VCard::generate( $person );
 			$etag  = $this->generateEtag( $person );
 
 			$cards[] = [
@@ -323,7 +323,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			return null;
 		}
 
-		$vcard = \PRM_VCard_Export::generate( $person );
+		$vcard = \Caelis\Export\VCard::generate( $person );
 		$etag  = $this->generateEtag( $person );
 
 		return [
@@ -371,7 +371,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		self::set_skip_hooks( true );
 
 		// Parse the vCard data
-		$parsed = \PRM_VCard_Export::parse( $cardData );
+		$parsed = \Caelis\Export\VCard::parse( $cardData );
 
 		if ( empty( $parsed['first_name'] ) && empty( $parsed['last_name'] ) && empty( $parsed['full_name'] ) ) {
 			error_log( 'CardDAV: Create failed - no name found in vCard data' );
@@ -506,7 +506,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		}
 
 		// Parse the vCard data
-		$parsed = \PRM_VCard_Export::parse( $cardData );
+		$parsed = \Caelis\Export\VCard::parse( $cardData );
 
 		// Update name fields
 		$first_name = $parsed['first_name'] ?: '';
