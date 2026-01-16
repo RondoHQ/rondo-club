@@ -48,17 +48,17 @@
 **Result**: Comprehensive AUDIT.md with 1 multi-class file identified, 9-folder structure designed, Caelis\ namespace hierarchy
 
 Plans:
-- [x] 64-01: Complete codebase audit, folder structure, namespace hierarchy
+- [x] 64-01: Complete codebase audit, folder structure, namespace hierarchy ✓
 
 #### Phase 65: Split & Reorganize
 
-**Goal**: Move classes to proper locations, create folder structure
+**Goal**: Split multi-class file and achieve one-class-per-file compliance
 **Depends on**: Phase 64
-**Research**: Unlikely (refactoring work)
-**Plans**: TBD
+**Research**: No (internal refactoring guided by AUDIT.md)
+**Plans**: 1
 
 Plans:
-- [ ] 65-01: TBD
+- [ ] 65-01: Split notification classes, update autoloader, enable PHPCS rule
 
 #### Phase 66: PSR-4 Autoloader
 
