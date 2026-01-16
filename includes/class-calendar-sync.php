@@ -166,6 +166,11 @@ class Sync {
 				continue;
 			}
 
+			// Check if sync is due based on frequency setting
+			if ( ! $this->is_sync_due( $connection ) ) {
+				continue;
+			}
+
 			try {
 				// Add user_id to connection for token refresh (Google provider)
 				$connection['user_id'] = $user_id;
@@ -191,12 +196,13 @@ class Sync {
 
 				error_log(
 					sprintf(
-						'PRM_Calendar_Sync: Synced connection %s for user %d - %d events (%d created, %d updated)',
+						'PRM_Calendar_Sync: Synced connection %s for user %d - %d events (%d created, %d updated) [freq: %d min]',
 						$connection_id,
 						$user_id,
 						$result['total'] ?? 0,
 						$result['created'] ?? 0,
-						$result['updated'] ?? 0
+						$result['updated'] ?? 0,
+						$connection['sync_frequency'] ?? 15
 					)
 				);
 
@@ -220,6 +226,36 @@ class Sync {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Check if a connection is due for sync based on its frequency setting
+	 *
+	 * @param array $connection Connection data.
+	 * @return bool True if sync is due.
+	 */
+	private function is_sync_due( array $connection ): bool {
+		$last_sync = $connection['last_sync'] ?? null;
+
+		// No last sync - always due
+		if ( empty( $last_sync ) ) {
+			return true;
+		}
+
+		// Get sync frequency (default 15 minutes)
+		$frequency_minutes = isset( $connection['sync_frequency'] ) ? absint( $connection['sync_frequency'] ) : 15;
+
+		// Parse last_sync timestamp
+		$last_sync_time = strtotime( $last_sync );
+		if ( $last_sync_time === false ) {
+			return true; // Invalid timestamp, sync now
+		}
+
+		// Calculate if enough time has passed
+		$seconds_since_sync = time() - $last_sync_time;
+		$required_seconds   = $frequency_minutes * 60;
+
+		return $seconds_since_sync >= $required_seconds;
 	}
 
 	/**
