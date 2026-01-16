@@ -339,4 +339,44 @@ class GoogleProvider {
 		// All-day events have date but not dateTime
 		return $start->getDate() !== null && $start->getDateTime() === null;
 	}
+
+	/**
+	 * List available calendars for a Google connection
+	 *
+	 * @param array $connection Connection data with credentials
+	 * @return array Array of calendars: ['id' => string, 'name' => string, 'color' => string, 'primary' => bool]
+	 */
+	public static function list_calendars( array $connection ): array {
+		try {
+			// Get valid access token
+			$access_token = \PRM_Google_OAuth::get_access_token( $connection );
+			if ( ! $access_token ) {
+				return [];
+			}
+
+			// Create Google Calendar service
+			$service = self::get_service( $connection );
+			if ( ! $service ) {
+				return [];
+			}
+
+			// Fetch calendar list
+			$calendar_list = $service->calendarList->listCalendarList();
+			$calendars     = [];
+
+			foreach ( $calendar_list->getItems() as $calendar ) {
+				$calendars[] = [
+					'id'      => $calendar->getId(),
+					'name'    => $calendar->getSummary(),
+					'color'   => $calendar->getBackgroundColor() ?: '#0000FF',
+					'primary' => (bool) $calendar->getPrimary(),
+				];
+			}
+
+			return $calendars;
+		} catch ( \Exception $e ) {
+			error_log( 'PRM_Google_Calendar_Provider: Failed to list calendars: ' . $e->getMessage() );
+			return [];
+		}
+	}
 }

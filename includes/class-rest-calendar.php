@@ -379,6 +379,26 @@ class Calendar extends Base {
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
+
+		// GET /prm/v1/calendar/connections/{id}/calendars - List available calendars
+		register_rest_route(
+			'prm/v1',
+			'/calendar/connections/(?P<id>[a-z0-9_]+)/calendars',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_connection_calendars' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id' => [
+						'required'          => true,
+						'type'              => 'string',
+						'validate_callback' => function ( $param ) {
+							return preg_match( '/^[a-z0-9_]+$/', $param );
+						},
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -1316,6 +1336,71 @@ class Calendar extends Base {
 					),
 					$activities_created
 				),
+			]
+		);
+	}
+
+	/**
+	 * Get available calendars for a connection
+	 *
+	 * Lists calendars from the connected provider (Google or CalDAV).
+	 *
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return WP_REST_Response|WP_Error Response with calendars or error.
+	 */
+	public function get_connection_calendars( $request ) {
+		$user_id       = get_current_user_id();
+		$connection_id = $request->get_param( 'id' );
+
+		// Get connection
+		$connection = \PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
+		if ( ! $connection ) {
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
+		}
+
+		$provider   = $connection['provider'] ?? '';
+		$calendars  = [];
+		$current_id = $connection['calendar_id'] ?? '';
+
+		try {
+			if ( $provider === 'google' ) {
+				// Google: Use the new list_calendars method
+				$calendars = \Caelis\Calendar\GoogleProvider::list_calendars( $connection );
+			} elseif ( $provider === 'caldav' ) {
+				// CalDAV: Decrypt credentials and use existing discover_calendars method
+				$credentials = \Caelis\Data\CredentialEncryption::decrypt( $connection['credentials'] );
+				if ( ! $credentials || empty( $credentials['url'] ) || empty( $credentials['username'] ) || empty( $credentials['password'] ) ) {
+					return new \WP_Error(
+						'invalid_credentials',
+						__( 'Invalid CalDAV credentials. Please update your connection settings.', 'caelis' ),
+						[ 'status' => 400 ]
+					);
+				}
+
+				$calendars = \Caelis\Calendar\CalDAVProvider::discover_calendars(
+					$credentials['url'],
+					$credentials['username'],
+					$credentials['password']
+				);
+			} else {
+				return new \WP_Error(
+					'invalid_provider',
+					__( 'Unknown calendar provider.', 'caelis' ),
+					[ 'status' => 400 ]
+				);
+			}
+		} catch ( \Exception $e ) {
+			return new \WP_Error(
+				'fetch_failed',
+				sprintf( __( 'Failed to fetch calendars: %s', 'caelis' ), $e->getMessage() ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		return rest_ensure_response(
+			[
+				'calendars' => $calendars,
+				'current'   => $current_id,
 			]
 		);
 	}
