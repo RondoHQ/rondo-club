@@ -373,7 +373,7 @@ class Workspaces extends Base {
 			return true;
 		}
 
-		return PRM_Workspace_Members::is_member( $workspace_id, $user_id );
+		return \PRM_Workspace_Members::is_member( $workspace_id, $user_id );
 	}
 
 	/**
@@ -405,7 +405,7 @@ class Workspaces extends Base {
 			return true;
 		}
 
-		return PRM_Workspace_Members::is_admin( $workspace_id, $user_id );
+		return \PRM_Workspace_Members::is_admin( $workspace_id, $user_id );
 	}
 
 	/**
@@ -449,7 +449,7 @@ class Workspaces extends Base {
 	 */
 	public function get_workspaces( $request ) {
 		$user_id         = get_current_user_id();
-		$user_workspaces = PRM_Workspace_Members::get_user_workspaces( $user_id );
+		$user_workspaces = \PRM_Workspace_Members::get_user_workspaces( $user_id );
 
 		$workspaces = [];
 		foreach ( $user_workspaces as $membership ) {
@@ -458,7 +458,7 @@ class Workspaces extends Base {
 				continue;
 			}
 
-			$members = PRM_Workspace_Members::get_members( $membership['workspace_id'] );
+			$members = \PRM_Workspace_Members::get_members( $membership['workspace_id'] );
 
 			$workspaces[] = [
 				'id'           => $workspace->ID,
@@ -490,7 +490,7 @@ class Workspaces extends Base {
 		}
 
 		// Get members with user info
-		$members_raw = PRM_Workspace_Members::get_members( $workspace_id );
+		$members_raw = \PRM_Workspace_Members::get_members( $workspace_id );
 		$members     = [];
 
 		foreach ( $members_raw as $member ) {
@@ -510,7 +510,7 @@ class Workspaces extends Base {
 			];
 		}
 
-		$current_role = PRM_Workspace_Members::get_user_role( $workspace_id, $user_id );
+		$current_role = \PRM_Workspace_Members::get_user_role( $workspace_id, $user_id );
 
 		$response = [
 			'id'           => $workspace->ID,
@@ -609,8 +609,8 @@ class Workspaces extends Base {
 
 		$workspace    = get_post( $workspace_id );
 		$user_id      = get_current_user_id();
-		$members      = PRM_Workspace_Members::get_members( $workspace_id );
-		$current_role = PRM_Workspace_Members::get_user_role( $workspace_id, $user_id );
+		$members      = \PRM_Workspace_Members::get_members( $workspace_id );
+		$current_role = \PRM_Workspace_Members::get_user_role( $workspace_id, $user_id );
 
 		return rest_ensure_response(
 			[
@@ -678,15 +678,15 @@ class Workspaces extends Base {
 		}
 
 		// Check if user is already a member
-		if ( PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
+		if ( \PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
 			// Update their role instead
-			$result = PRM_Workspace_Members::update_role( $workspace_id, $user_id, $role );
+			$result = \PRM_Workspace_Members::update_role( $workspace_id, $user_id, $role );
 			if ( ! $result ) {
 				return new \WP_Error( 'update_failed', __( 'Failed to update member role.', 'caelis' ), [ 'status' => 500 ] );
 			}
 		} else {
 			// Add new member
-			$result = PRM_Workspace_Members::add( $workspace_id, $user_id, $role );
+			$result = \PRM_Workspace_Members::add( $workspace_id, $user_id, $role );
 			if ( ! $result ) {
 				return new \WP_Error( 'add_failed', __( 'Failed to add member.', 'caelis' ), [ 'status' => 500 ] );
 			}
@@ -727,11 +727,11 @@ class Workspaces extends Base {
 		}
 
 		// Check if user is a member
-		if ( ! PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
+		if ( ! \PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
 			return new \WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
-		$result = PRM_Workspace_Members::remove( $workspace_id, $user_id );
+		$result = \PRM_Workspace_Members::remove( $workspace_id, $user_id );
 
 		if ( ! $result ) {
 			return new \WP_Error( 'remove_failed', __( 'Failed to remove member.', 'caelis' ), [ 'status' => 500 ] );
@@ -770,11 +770,11 @@ class Workspaces extends Base {
 		}
 
 		// Check if user is a member
-		if ( ! PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
+		if ( ! \PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
 			return new \WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
-		$result = PRM_Workspace_Members::update_role( $workspace_id, $user_id, $role );
+		$result = \PRM_Workspace_Members::update_role( $workspace_id, $user_id, $role );
 
 		if ( ! $result ) {
 			return new \WP_Error( 'update_failed', __( 'Failed to update member role.', 'caelis' ), [ 'status' => 500 ] );
@@ -812,7 +812,7 @@ class Workspaces extends Base {
 
 		// Check if user with this email is already a workspace member
 		$existing_user = get_user_by( 'email', $email );
-		if ( $existing_user && PRM_Workspace_Members::is_member( $workspace_id, $existing_user->ID ) ) {
+		if ( $existing_user && \PRM_Workspace_Members::is_member( $workspace_id, $existing_user->ID ) ) {
 			return new \WP_Error( 'already_member', __( 'This user is already a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
@@ -1066,7 +1066,7 @@ class Workspaces extends Base {
 		}
 
 		// Check if user is already a member
-		if ( PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
+		if ( \PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
 			// Mark invite as accepted anyway
 			update_field( '_invite_status', 'accepted', $invite->ID );
 			update_field( '_invite_accepted_by', $user_id, $invite->ID );
@@ -1076,7 +1076,7 @@ class Workspaces extends Base {
 
 		// Add user to workspace
 		$role   = get_field( '_invite_role', $invite->ID );
-		$result = PRM_Workspace_Members::add( $workspace_id, $user_id, $role );
+		$result = \PRM_Workspace_Members::add( $workspace_id, $user_id, $role );
 
 		if ( ! $result ) {
 			return new \WP_Error( 'join_failed', __( 'Failed to join workspace.', 'caelis' ), [ 'status' => 500 ] );
@@ -1113,7 +1113,7 @@ class Workspaces extends Base {
 		// Filter to only workspaces the current user has access to
 		$accessible_workspace_ids = [];
 		foreach ( $workspace_ids as $workspace_id ) {
-			if ( PRM_Workspace_Members::is_member( $workspace_id, $current_user_id ) || current_user_can( 'manage_options' ) ) {
+			if ( \PRM_Workspace_Members::is_member( $workspace_id, $current_user_id ) || current_user_can( 'manage_options' ) ) {
 				$accessible_workspace_ids[] = $workspace_id;
 			}
 		}
@@ -1125,7 +1125,7 @@ class Workspaces extends Base {
 		// Collect all member user IDs from accessible workspaces
 		$member_ids = [];
 		foreach ( $accessible_workspace_ids as $workspace_id ) {
-			$members = PRM_Workspace_Members::get_members( $workspace_id );
+			$members = \PRM_Workspace_Members::get_members( $workspace_id );
 			foreach ( $members as $member ) {
 				$member_ids[ $member['user_id'] ] = true;
 			}

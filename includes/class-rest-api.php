@@ -385,7 +385,7 @@ class Api extends Base {
 	 */
 	public function restore_relationship_type_defaults( $request ) {
 		// Get the taxonomies class instance
-		$taxonomies = new PRM_Taxonomies();
+		$taxonomies = new \PRM_Taxonomies();
 
 		// Call the setup method (make it public or add a public wrapper)
 		if ( method_exists( $taxonomies, 'setup_default_relationship_configurations' ) ) {
@@ -412,7 +412,7 @@ class Api extends Base {
 	public function get_upcoming_reminders( $request ) {
 		$days_ahead = (int) $request->get_param( 'days_ahead' );
 
-		$reminders_handler = new PRM_Reminders();
+		$reminders_handler = new \PRM_Reminders();
 		$upcoming          = $reminders_handler->get_upcoming_reminders( $days_ahead );
 
 		return rest_ensure_response( $upcoming );
@@ -422,7 +422,7 @@ class Api extends Base {
 	 * Manually trigger reminder emails for today (admin only)
 	 */
 	public function trigger_reminders( $request ) {
-		$reminders_handler = new PRM_Reminders();
+		$reminders_handler = new \PRM_Reminders();
 
 		// Get all users who should receive reminders
 		$users_to_notify = $this->get_all_users_to_notify_for_trigger();
@@ -435,8 +435,8 @@ class Api extends Base {
 			$digest_data = $reminders_handler->get_weekly_digest( $user_id );
 
 			// Send via all enabled channels
-			$email_channel = new PRM_Email_Channel();
-			$slack_channel = new PRM_Slack_Channel();
+			$email_channel = new \PRM_Email_Channel();
+			$slack_channel = new \PRM_Slack_Channel();
 
 			if ( $email_channel->is_enabled_for_user( $user_id ) ) {
 				if ( $email_channel->send( $user_id, $digest_data ) ) {
@@ -528,7 +528,7 @@ class Api extends Base {
 	 * Get cron job status for reminders
 	 */
 	public function get_cron_status( $request ) {
-		$reminders       = new PRM_Reminders();
+		$reminders       = new \PRM_Reminders();
 		$users_to_notify = $reminders->get_all_users_to_notify();
 
 		// Count users with scheduled cron jobs
@@ -566,7 +566,7 @@ class Api extends Base {
 	 * Reschedule all user reminder cron jobs (admin only)
 	 */
 	public function reschedule_all_cron_jobs( $request ) {
-		$reminders = new PRM_Reminders();
+		$reminders = new \PRM_Reminders();
 
 		// Reschedule all user cron jobs
 		$scheduled_count = $reminders->schedule_all_user_reminders();
@@ -671,7 +671,7 @@ class Api extends Base {
 		update_user_meta( $user_id, 'caelis_notification_time', $time );
 
 		// Reschedule user's reminder cron job at the new time
-		$reminders       = new PRM_Reminders();
+		$reminders       = new \PRM_Reminders();
 		$schedule_result = $reminders->schedule_user_reminder( $user_id );
 
 		if ( is_wp_error( $schedule_result ) ) {
@@ -932,7 +932,7 @@ class Api extends Base {
 	public function get_version( $request ) {
 		// Get build time from manifest file modification time
 		$build_time    = null;
-		$manifest_path = PRM_THEME_DIR . '/dist/.vite/manifest.json';
+		$manifest_path = \PRM_THEME_DIR . '/dist/.vite/manifest.json';
 		if ( file_exists( $manifest_path ) ) {
 			$build_time = gmdate( 'c', filemtime( $manifest_path ) );
 		} else {
@@ -942,7 +942,7 @@ class Api extends Base {
 
 		return rest_ensure_response(
 			[
-				'version'   => PRM_THEME_VERSION,
+				'version'   => \PRM_THEME_VERSION,
 				'buildTime' => $build_time,
 			]
 		);
@@ -955,7 +955,7 @@ class Api extends Base {
 		$user_id = get_current_user_id();
 
 		// Get accessible post counts (respects access control)
-		$access_control = new PRM_Access_Control();
+		$access_control = new \PRM_Access_Control();
 
 		// For admins, use wp_count_posts for efficiency
 		// For regular users, count only their accessible posts
@@ -981,7 +981,7 @@ class Api extends Base {
 		);
 
 		// Upcoming reminders
-		$reminders_handler  = new PRM_Reminders();
+		$reminders_handler  = new \PRM_Reminders();
 		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
 
 		// Favorites
@@ -1075,7 +1075,7 @@ class Api extends Base {
 		global $wpdb;
 
 		$user_id           = get_current_user_id();
-		$access_control    = new PRM_Access_Control();
+		$access_control    = new \PRM_Access_Control();
 		$accessible_people = $access_control->get_accessible_post_ids( 'person', $user_id );
 
 		if ( empty( $accessible_people ) ) {
@@ -1125,7 +1125,7 @@ class Api extends Base {
 		$user_id     = get_current_user_id();
 
 		// Get all companies accessible by this user
-		$access_control       = new PRM_Access_Control();
+		$access_control       = new \PRM_Access_Control();
 		$accessible_companies = $access_control->get_accessible_post_ids( 'company', $user_id );
 
 		if ( empty( $accessible_companies ) ) {
@@ -1232,7 +1232,7 @@ class Api extends Base {
 		$admin_url = admin_url();
 
 		// Check approval status
-		$is_approved = PRM_User_Roles::is_user_approved( $user_id );
+		$is_approved = \PRM_User_Roles::is_user_approved( $user_id );
 
 		return rest_ensure_response(
 			[
@@ -1252,7 +1252,7 @@ class Api extends Base {
 	 * Get list of users (admin only)
 	 */
 	public function get_users( $request ) {
-		$users = get_users( [ 'role' => PRM_User_Roles::ROLE_NAME ] );
+		$users = get_users( [ 'role' => \PRM_User_Roles::ROLE_NAME ] );
 
 		$user_list = [];
 		foreach ( $users as $user ) {
@@ -1260,7 +1260,7 @@ class Api extends Base {
 				'id'          => $user->ID,
 				'name'        => $user->display_name,
 				'email'       => $user->user_email,
-				'is_approved' => PRM_User_Roles::is_user_approved( $user->ID ),
+				'is_approved' => \PRM_User_Roles::is_user_approved( $user->ID ),
 				'registered'  => $user->user_registered,
 			];
 		}
@@ -1273,7 +1273,7 @@ class Api extends Base {
 	 */
 	public function approve_user( $request ) {
 		$user_id    = (int) $request->get_param( 'user_id' );
-		$user_roles = new PRM_User_Roles();
+		$user_roles = new \PRM_User_Roles();
 		$user_roles->approve_user( $user_id );
 
 		return rest_ensure_response(
@@ -1289,7 +1289,7 @@ class Api extends Base {
 	 */
 	public function deny_user( $request ) {
 		$user_id    = (int) $request->get_param( 'user_id' );
-		$user_roles = new PRM_User_Roles();
+		$user_roles = new \PRM_User_Roles();
 		$user_roles->deny_user( $user_id );
 
 		return rest_ensure_response(

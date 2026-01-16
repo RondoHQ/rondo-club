@@ -244,6 +244,6 @@ class AutoTitle {
 		}
 
 		// Trigger calendar re-matching
-		PRM_Calendar_Matcher::on_person_saved( $post_id );
+		\PRM_Calendar_Matcher::on_person_saved( $post_id );
 	}
 }

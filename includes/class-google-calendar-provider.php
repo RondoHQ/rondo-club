@@ -24,7 +24,7 @@ class GoogleProvider {
 	 */
 	public static function sync( int $user_id, array $connection ): array {
 		// Get valid access token
-		$access_token = PRM_Google_OAuth::get_access_token( $connection );
+		$access_token = \PRM_Google_OAuth::get_access_token( $connection );
 		if ( ! $access_token ) {
 			throw new \Exception( 'Authentication required. Please reconnect your Google Calendar.' );
 		}
@@ -104,12 +104,12 @@ class GoogleProvider {
 	 * @return Google\Service\Calendar|null Service or null on failure
 	 */
 	private static function get_service( array $connection ): ?Google\Service\Calendar {
-		$access_token = PRM_Google_OAuth::get_access_token( $connection );
+		$access_token = \PRM_Google_OAuth::get_access_token( $connection );
 		if ( ! $access_token ) {
 			return null;
 		}
 
-		$client = PRM_Google_OAuth::get_client();
+		$client = \PRM_Google_OAuth::get_client();
 		if ( ! $client ) {
 			return null;
 		}
@@ -205,7 +205,7 @@ class GoogleProvider {
 		update_post_meta( $post_id, '_raw_data', wp_json_encode( $event->toSimpleObject() ) );
 
 		// Run contact matching
-		$matches = PRM_Calendar_Matcher::match_attendees( $user_id, $attendees );
+		$matches = \PRM_Calendar_Matcher::match_attendees( $user_id, $attendees );
 		update_post_meta( $post_id, '_matched_people', wp_json_encode( $matches ) );
 
 		return [

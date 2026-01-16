@@ -30,8 +30,8 @@ class Reminders {
 
 		// Initialize notification channels
 		$this->channels = [
-			new PRM_Email_Channel(),
-			new PRM_Slack_Channel(),
+			new \PRM_Email_Channel(),
+			new \PRM_Slack_Channel(),
 		];
 	}
 
@@ -144,7 +144,7 @@ class Reminders {
 					! empty( $digest_data['todos']['rest_of_week'] );
 
 		// Get queued mention notifications
-		$mentions = PRM_Mention_Notifications::get_queued_mentions( $user_id );
+		$mentions = \PRM_Mention_Notifications::get_queued_mentions( $user_id );
 
 		// Get recent workspace activity (notes on shared contacts in user's workspaces)
 		$workspace_activity = $this->get_workspace_activity( $user_id );
@@ -422,7 +422,7 @@ class Reminders {
 	 * @return array Digest data with today, tomorrow, rest_of_week, and todos keys
 	 */
 	public function get_weekly_digest( $user_id ) {
-		$access_control = new PRM_Access_Control();
+		$access_control = new \PRM_Access_Control();
 		$today          = new DateTime( 'today', wp_timezone() );
 		$tomorrow       = ( clone $today )->modify( '+1 day' );
 		$end_of_week    = ( clone $today )->modify( '+7 days' );
@@ -580,7 +580,7 @@ class Reminders {
 	 * @return array Todos grouped by today, tomorrow, rest_of_week
 	 */
 	private function get_user_todos_for_digest( $user_id, $today, $end_of_week ) {
-		$access_control = new PRM_Access_Control();
+		$access_control = new \PRM_Access_Control();
 		$tomorrow       = ( clone $today )->modify( '+1 day' );
 
 		$todos = [
@@ -811,7 +811,7 @@ class Reminders {
 		$all_reminders = $this->get_upcoming_reminders( $days_ahead );
 
 		// Filter to only include reminders for people this user can access
-		$access_control = new PRM_Access_Control();
+		$access_control = new \PRM_Access_Control();
 		$user_reminders = [];
 
 		foreach ( $all_reminders as $reminder ) {

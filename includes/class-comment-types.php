@@ -202,7 +202,7 @@ class CommentTypes {
 		}
 
 		$person_id      = $request->get_param( 'person_id' );
-		$access_control = new PRM_Access_Control();
+		$access_control = new \PRM_Access_Control();
 
 		return $access_control->user_can_access_post( $person_id );
 	}
@@ -288,7 +288,7 @@ class CommentTypes {
 		update_comment_meta( $comment_id, '_note_visibility', $visibility );
 
 		// Parse and save @mentions, fire action if any mentions found
-		$mentioned_ids = PRM_Mentions::save_mentions( $comment_id, $content );
+		$mentioned_ids = \PRM_Mentions::save_mentions( $comment_id, $content );
 		if ( ! empty( $mentioned_ids ) ) {
 			do_action( 'prm_user_mentioned', $comment_id, $mentioned_ids, get_current_user_id() );
 		}
@@ -328,8 +328,8 @@ class CommentTypes {
 		}
 
 		// Update @mentions (check for new mentions to notify)
-		$old_mentions   = PRM_Mentions::get_mentions( $comment_id );
-		$new_mentions   = PRM_Mentions::save_mentions( $comment_id, $content );
+		$old_mentions   = \PRM_Mentions::get_mentions( $comment_id );
+		$new_mentions   = \PRM_Mentions::save_mentions( $comment_id, $content );
 		$added_mentions = array_diff( $new_mentions, $old_mentions );
 		if ( ! empty( $added_mentions ) ) {
 			do_action( 'prm_user_mentioned', $comment_id, $added_mentions, get_current_user_id() );
@@ -601,7 +601,7 @@ class CommentTypes {
 		$content = $comment->comment_content;
 		if ( 'activity' === $type || 'note' === $type ) {
 			// Render @mentions as styled spans before URL processing
-			$content = PRM_Mentions::render_mentions( $content );
+			$content = \PRM_Mentions::render_mentions( $content );
 			$content = make_clickable( $content );
 			// Add target="_blank" and rel="noopener noreferrer" to links for security
 			$content = str_replace( '<a href=', '<a target="_blank" rel="noopener noreferrer" href=', $content );

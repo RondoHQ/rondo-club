@@ -158,7 +158,7 @@ class GoogleOAuth {
 					// Connection must have a user context for update
 					$user_id = $connection['user_id'] ?? get_current_user_id();
 					if ( $user_id ) {
-						PRM_Calendar_Connections::update_credentials(
+						\PRM_Calendar_Connections::update_credentials(
 							$user_id,
 							$connection['id'],
 							$new_credentials
@@ -172,7 +172,7 @@ class GoogleOAuth {
 				if ( ! empty( $connection['id'] ) ) {
 					$user_id = $connection['user_id'] ?? get_current_user_id();
 					if ( $user_id ) {
-						PRM_Calendar_Connections::update_connection(
+						\PRM_Calendar_Connections::update_connection(
 							$user_id,
 							$connection['id'],
 							[ 'last_error' => $e->getMessage() ]

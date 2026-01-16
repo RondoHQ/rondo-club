@@ -98,9 +98,9 @@ class Server {
 		}
 
 		// Include backend classes
-		require_once PRM_PLUGIN_DIR . '/carddav/class-auth-backend.php';
-		require_once PRM_PLUGIN_DIR . '/carddav/class-principal-backend.php';
-		require_once PRM_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
+		require_once \PRM_PLUGIN_DIR . '/carddav/class-auth-backend.php';
+		require_once \PRM_PLUGIN_DIR . '/carddav/class-principal-backend.php';
+		require_once \PRM_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
 
 		try {
 			// Create backends

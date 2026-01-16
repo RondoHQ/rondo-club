@@ -154,7 +154,7 @@ class Todos extends Base {
 		}
 
 		// Use access control to check if user can access this todo
-		$access_control = new PRM_Access_Control();
+		$access_control = new \PRM_Access_Control();
 		return $access_control->user_can_access_post( $todo_id );
 	}
 

@@ -535,7 +535,7 @@ class Slack extends Base {
 		}
 
 		// Get user's most recent reminder digest
-		$reminders   = new PRM_Reminders();
+		$reminders   = new \PRM_Reminders();
 		$digest_data = $reminders->get_weekly_digest( $wp_user_id );
 
 		// Debug: Log what we found
@@ -559,7 +559,7 @@ class Slack extends Base {
 		}
 
 		// Format Slack blocks
-		$slack_channel = new PRM_Slack_Channel();
+		$slack_channel = new \PRM_Slack_Channel();
 		$blocks        = $slack_channel->format_slack_blocks( $digest_data );
 
 		return rest_ensure_response(

@@ -132,7 +132,7 @@ class Sync {
 		$filtered_users = [];
 
 		foreach ( $user_ids as $user_id ) {
-			$connections = PRM_Calendar_Connections::get_user_connections( (int) $user_id );
+			$connections = \PRM_Calendar_Connections::get_user_connections( (int) $user_id );
 
 			foreach ( $connections as $connection ) {
 				if ( ! empty( $connection['sync_enabled'] ) ) {
@@ -151,7 +151,7 @@ class Sync {
 	 * @param int $user_id User ID to sync.
 	 */
 	private function sync_user_connections( $user_id ) {
-		$connections = PRM_Calendar_Connections::get_user_connections( $user_id );
+		$connections = \PRM_Calendar_Connections::get_user_connections( $user_id );
 
 		foreach ( $connections as $connection ) {
 			// Skip disabled connections
@@ -172,15 +172,15 @@ class Sync {
 
 				// Route to appropriate provider
 				if ( $provider === 'caldav' ) {
-					$result = PRM_CalDAV_Provider::sync( $user_id, $connection );
+					$result = \PRM_CalDAV_Provider::sync( $user_id, $connection );
 				} elseif ( $provider === 'google' ) {
-					$result = PRM_Google_Calendar_Provider::sync( $user_id, $connection );
+					$result = \PRM_Google_Calendar_Provider::sync( $user_id, $connection );
 				} else {
 					continue; // Unknown provider
 				}
 
 				// Update last_sync timestamp and clear error
-				PRM_Calendar_Connections::update_connection(
+				\PRM_Calendar_Connections::update_connection(
 					$user_id,
 					$connection_id,
 					[
@@ -202,7 +202,7 @@ class Sync {
 
 			} catch ( Exception $e ) {
 				// Update last_error but don't stop other connections
-				PRM_Calendar_Connections::update_connection(
+				\PRM_Calendar_Connections::update_connection(
 					$user_id,
 					$connection_id,
 					[
@@ -351,7 +351,7 @@ class Sync {
 			return false;
 		}
 
-		$connection = PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
+		$connection = \PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
 
 		if ( ! $connection ) {
 			return false;
@@ -476,7 +476,7 @@ class Sync {
 
 		$total_users = 0;
 		foreach ( $user_ids as $user_id ) {
-			$connections = PRM_Calendar_Connections::get_user_connections( (int) $user_id );
+			$connections = \PRM_Calendar_Connections::get_user_connections( (int) $user_id );
 			foreach ( $connections as $connection ) {
 				if ( ! empty( $connection['sync_enabled'] ) ) {
 					++$total_users;
@@ -515,7 +515,7 @@ class Sync {
 				'connections' => [],
 			];
 
-			$connections = PRM_Calendar_Connections::get_user_connections( $user_id );
+			$connections = \PRM_Calendar_Connections::get_user_connections( $user_id );
 
 			foreach ( $connections as $connection ) {
 				if ( empty( $connection['sync_enabled'] ) ) {
@@ -529,14 +529,14 @@ class Sync {
 					$connection['user_id'] = $user_id;
 
 					if ( $provider === 'caldav' ) {
-						$result = PRM_CalDAV_Provider::sync( $user_id, $connection );
+						$result = \PRM_CalDAV_Provider::sync( $user_id, $connection );
 					} elseif ( $provider === 'google' ) {
-						$result = PRM_Google_Calendar_Provider::sync( $user_id, $connection );
+						$result = \PRM_Google_Calendar_Provider::sync( $user_id, $connection );
 					} else {
 						continue;
 					}
 
-					PRM_Calendar_Connections::update_connection(
+					\PRM_Calendar_Connections::update_connection(
 						$user_id,
 						$connection_id,
 						[
@@ -554,7 +554,7 @@ class Sync {
 					];
 
 				} catch ( Exception $e ) {
-					PRM_Calendar_Connections::update_connection(
+					\PRM_Calendar_Connections::update_connection(
 						$user_id,
 						$connection_id,
 						[

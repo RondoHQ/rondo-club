@@ -365,7 +365,7 @@ class Calendar extends Base {
 	 */
 	public function get_connections( $request ) {
 		$user_id     = get_current_user_id();
-		$connections = PRM_Calendar_Connections::get_user_connections( $user_id );
+		$connections = \PRM_Calendar_Connections::get_user_connections( $user_id );
 
 		// Remove sensitive credentials from response
 		$safe_connections = array_map(
@@ -416,7 +416,7 @@ class Calendar extends Base {
 			'last_error'     => null,
 		];
 
-		$id = PRM_Calendar_Connections::add_connection( $user_id, $connection );
+		$id = \PRM_Calendar_Connections::add_connection( $user_id, $connection );
 
 		return rest_ensure_response(
 			[
@@ -435,7 +435,7 @@ class Calendar extends Base {
 	public function get_connection( $request ) {
 		$user_id    = get_current_user_id();
 		$id         = $request->get_param( 'id' );
-		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
+		$connection = \PRM_Calendar_Connections::get_connection( $user_id, $id );
 
 		if ( ! $connection ) {
 			return new \WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
@@ -458,7 +458,7 @@ class Calendar extends Base {
 		$id      = $request->get_param( 'id' );
 		$data    = $request->get_json_params();
 
-		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
+		$connection = \PRM_Calendar_Connections::get_connection( $user_id, $id );
 		if ( ! $connection ) {
 			return new \WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
@@ -486,7 +486,7 @@ class Calendar extends Base {
 			$updates['credentials'] = \Caelis\Data\CredentialEncryption::encrypt( $data['credentials'] );
 		}
 
-		PRM_Calendar_Connections::update_connection( $user_id, $id, $updates );
+		\PRM_Calendar_Connections::update_connection( $user_id, $id, $updates );
 
 		return rest_ensure_response( [ 'message' => __( 'Connection updated.', 'caelis' ) ] );
 	}
@@ -501,12 +501,12 @@ class Calendar extends Base {
 		$user_id = get_current_user_id();
 		$id      = $request->get_param( 'id' );
 
-		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
+		$connection = \PRM_Calendar_Connections::get_connection( $user_id, $id );
 		if ( ! $connection ) {
 			return new \WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
-		PRM_Calendar_Connections::delete_connection( $user_id, $id );
+		\PRM_Calendar_Connections::delete_connection( $user_id, $id );
 
 		return rest_ensure_response( [ 'message' => __( 'Connection deleted.', 'caelis' ) ] );
 	}
@@ -522,7 +522,7 @@ class Calendar extends Base {
 		$connection_id = $request->get_param( 'id' );
 
 		// Get connection
-		$connection = PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
+		$connection = \PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
 		if ( ! $connection ) {
 			return new \WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
@@ -544,13 +544,13 @@ class Calendar extends Base {
 		try {
 			// Route to appropriate provider
 			if ( $provider === 'caldav' ) {
-				$result = PRM_CalDAV_Provider::sync( $user_id, $connection );
+				$result = \PRM_CalDAV_Provider::sync( $user_id, $connection );
 			} else {
-				$result = PRM_Google_Calendar_Provider::sync( $user_id, $connection );
+				$result = \PRM_Google_Calendar_Provider::sync( $user_id, $connection );
 			}
 
 			// Update last_sync timestamp and clear error
-			PRM_Calendar_Connections::update_connection(
+			\PRM_Calendar_Connections::update_connection(
 				$user_id,
 				$connection_id,
 				[
@@ -569,7 +569,7 @@ class Calendar extends Base {
 			);
 		} catch ( Exception $e ) {
 			// Update last_error
-			PRM_Calendar_Connections::update_connection(
+			\PRM_Calendar_Connections::update_connection(
 				$user_id,
 				$connection_id,
 				[
@@ -591,7 +591,7 @@ class Calendar extends Base {
 	 */
 	public function google_auth_init( $request ) {
 		// Check if Google OAuth is configured
-		if ( ! PRM_Google_OAuth::is_configured() ) {
+		if ( ! \PRM_Google_OAuth::is_configured() ) {
 			return new \WP_Error(
 				'not_configured',
 				__( 'Google Calendar integration is not configured. Please add GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET to wp-config.php.', 'caelis' ),
@@ -600,7 +600,7 @@ class Calendar extends Base {
 		}
 
 		$user_id  = get_current_user_id();
-		$auth_url = PRM_Google_OAuth::get_auth_url( $user_id );
+		$auth_url = \PRM_Google_OAuth::get_auth_url( $user_id );
 
 		if ( empty( $auth_url ) ) {
 			return new \WP_Error(
@@ -658,7 +658,7 @@ class Calendar extends Base {
 
 		try {
 			// Exchange code for tokens
-			$tokens = PRM_Google_OAuth::handle_callback( $code, $user_id );
+			$tokens = \PRM_Google_OAuth::handle_callback( $code, $user_id );
 
 			// Encrypt tokens for storage
 			$encrypted_credentials = \Caelis\Data\CredentialEncryption::encrypt( $tokens );
@@ -676,7 +676,7 @@ class Calendar extends Base {
 				'last_error'     => null,
 			];
 
-			PRM_Calendar_Connections::add_connection( $user_id, $connection );
+			\PRM_Calendar_Connections::add_connection( $user_id, $connection );
 
 			// Redirect to settings page with success
 			$this->html_redirect( home_url( '/settings?tab=connections&subtab=calendars&connected=google' ) );
@@ -740,7 +740,7 @@ class Calendar extends Base {
 		}
 
 		// Test the connection
-		$result = PRM_CalDAV_Provider::test_connection( $url, $username, $password );
+		$result = \PRM_CalDAV_Provider::test_connection( $url, $username, $password );
 
 		if ( ! $result['success'] ) {
 			return new \WP_Error( 'connection_failed', $result['error'], [ 'status' => 400 ] );
@@ -990,7 +990,7 @@ class Calendar extends Base {
 		$calendar_name = '';
 
 		if ( $connection_id ) {
-			$connection = PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
+			$connection = \PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
 			if ( $connection ) {
 				$calendar_name = $connection['name'] ?? '';
 			}
@@ -1034,11 +1034,11 @@ class Calendar extends Base {
 	 * @return WP_REST_Response Response with sync status.
 	 */
 	public function get_sync_status( $request ) {
-		$status = PRM_Calendar_Sync::get_sync_status();
+		$status = \PRM_Calendar_Sync::get_sync_status();
 
 		// Add current user's connection details
 		$user_id          = get_current_user_id();
-		$user_connections = PRM_Calendar_Connections::get_user_connections( $user_id );
+		$user_connections = \PRM_Calendar_Connections::get_user_connections( $user_id );
 
 		// Remove sensitive credential data
 		$safe_connections = array_map(
@@ -1066,7 +1066,7 @@ class Calendar extends Base {
 		$user_id = get_current_user_id();
 
 		// Check if user has any calendar connections
-		$connections     = PRM_Calendar_Connections::get_user_connections( $user_id );
+		$connections     = \PRM_Calendar_Connections::get_user_connections( $user_id );
 		$has_connections = ! empty( $connections );
 
 		if ( ! $has_connections ) {
@@ -1174,7 +1174,7 @@ class Calendar extends Base {
 		$calendar_name = '';
 
 		if ( $connection_id ) {
-			$connection = PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
+			$connection = \PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
 			if ( $connection ) {
 				$calendar_name = $connection['name'] ?? '';
 			}
@@ -1208,7 +1208,7 @@ class Calendar extends Base {
 	 * Log a calendar event as an activity
 	 *
 	 * Creates activity records for all matched people on the event.
-	 * Uses shared logic from PRM_Calendar_Sync::create_activity_from_event().
+	 * Uses shared logic from \PRM_Calendar_Sync::create_activity_from_event().
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response|WP_Error Response with activity count or error.
@@ -1243,7 +1243,7 @@ class Calendar extends Base {
 		}
 
 		// Use shared activity creation logic from PRM_Calendar_Sync
-		$activities_created = PRM_Calendar_Sync::create_activity_from_event( $event_id, $user_id, $matched_people );
+		$activities_created = \PRM_Calendar_Sync::create_activity_from_event( $event_id, $user_id, $matched_people );
 
 		if ( $activities_created === 0 ) {
 			return new \WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), [ 'status' => 400 ] );

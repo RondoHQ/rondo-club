@@ -213,7 +213,7 @@ class Companies extends Base {
 		$user_id    = get_current_user_id();
 
 		// Check if user can access this company
-		$access_control = new PRM_Access_Control();
+		$access_control = new \PRM_Access_Control();
 		if ( ! current_user_can( 'manage_options' ) && ! $access_control->user_can_access_post( $company_id, $user_id ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
@@ -613,7 +613,7 @@ class Companies extends Base {
 			try {
 				// Update visibility if provided
 				if ( isset( $updates['visibility'] ) ) {
-					$result = PRM_Visibility::set_visibility( $post_id, $updates['visibility'] );
+					$result = \PRM_Visibility::set_visibility( $post_id, $updates['visibility'] );
 					if ( ! $result ) {
 						$failed[] = [
 							'id'    => $post_id,

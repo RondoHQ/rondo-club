@@ -748,7 +748,7 @@ class GoogleContacts {
 			[
 				'comment_post_ID'  => $post_id,
 				'comment_content'  => $content,
-				'comment_type'     => PRM_Comment_Types::TYPE_NOTE,
+				'comment_type'     => \PRM_Comment_Types::TYPE_NOTE,
 				'user_id'          => get_current_user_id(),
 				'comment_approved' => 1,
 				'comment_date'     => current_time( 'mysql' ),
