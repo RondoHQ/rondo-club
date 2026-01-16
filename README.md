@@ -35,6 +35,97 @@ npm run dev
 npm run build
 ```
 
+## Configuration
+
+Caelis uses PHP constants defined in `wp-config.php` for configuration. This is the standard WordPress approach and ensures settings are secure and environment-specific.
+
+### Configuration Constants Reference
+
+| Constant | Purpose | Required | Generation/Source |
+|----------|---------|----------|-------------------|
+| `CAELIS_ENCRYPTION_KEY` | Encryption for OAuth tokens | Yes | `php -r "echo bin2hex(random_bytes(16));"` |
+| `CAELIS_SLACK_CLIENT_ID` | Slack OAuth app client ID | Optional | Slack API Dashboard |
+| `CAELIS_SLACK_CLIENT_SECRET` | Slack OAuth app client secret | Optional | Slack API Dashboard |
+| `CAELIS_SLACK_SIGNING_SECRET` | Slack webhook verification | Optional | Slack API Dashboard |
+| `GOOGLE_CALENDAR_CLIENT_ID` | Google OAuth client ID | Optional | Google Cloud Console |
+| `GOOGLE_CALENDAR_CLIENT_SECRET` | Google OAuth client secret | Optional | Google Cloud Console |
+
+### Encryption (Required)
+
+The encryption key is required for storing OAuth tokens securely. Generate a 32-byte key:
+
+```bash
+php -r "echo bin2hex(random_bytes(16));"
+```
+
+Add to `wp-config.php`:
+
+```php
+define('CAELIS_ENCRYPTION_KEY', 'your-generated-32-byte-key-here');
+```
+
+### Slack Integration (Optional)
+
+To enable Slack notifications for reminders:
+
+1. Create a Slack app at [https://api.slack.com/apps](https://api.slack.com/apps)
+2. Under **OAuth & Permissions**, add the `chat:write` scope
+3. Install the app to your workspace
+4. Copy credentials from **Basic Information**
+
+```php
+define('CAELIS_SLACK_CLIENT_ID', '1234567890.1234567890');
+define('CAELIS_SLACK_CLIENT_SECRET', 'your-client-secret');
+define('CAELIS_SLACK_SIGNING_SECRET', 'your-signing-secret');
+```
+
+### Google Calendar Integration (Optional)
+
+To sync events from Google Calendar:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create or select a project
+3. Enable the **Google Calendar API** (APIs & Services > Library)
+4. Configure **OAuth consent screen** (APIs & Services > OAuth consent screen)
+   - Add scope: `.../auth/calendar.readonly`
+5. Create **OAuth 2.0 credentials** (APIs & Services > Credentials)
+   - Application type: Web application
+   - Authorized redirect URI: `https://your-domain.com/wp-json/prm/v1/calendar/auth/google/callback`
+
+```php
+define('GOOGLE_CALENDAR_CLIENT_ID', 'your-client-id.apps.googleusercontent.com');
+define('GOOGLE_CALENDAR_CLIENT_SECRET', 'your-client-secret');
+```
+
+### CalDAV Integration (Optional)
+
+CalDAV integration requires no server-side configuration. Users add their own calendar connections via **Settings > Calendars > Add CalDAV Calendar** in the application.
+
+Supported providers:
+- **iCloud** - Use `https://caldav.icloud.com` with an app-specific password
+- **Fastmail** - Use `https://caldav.fastmail.com/dav/calendars/user/{email}/`
+- **Nextcloud** - Use `https://yourserver.com/remote.php/dav/calendars/{user}/`
+- **Generic CalDAV** - Any server supporting the CalDAV standard
+
+### Example wp-config.php
+
+```php
+// Caelis Configuration
+// ====================
+
+// Required: Encryption key (32 bytes)
+define('CAELIS_ENCRYPTION_KEY', 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4');
+
+// Optional: Slack Integration
+define('CAELIS_SLACK_CLIENT_ID', '1234567890.1234567890');
+define('CAELIS_SLACK_CLIENT_SECRET', 'abcdef1234567890abcdef1234567890');
+define('CAELIS_SLACK_SIGNING_SECRET', '1234abcd5678efgh9012ijkl3456mnop');
+
+// Optional: Google Calendar Integration
+define('GOOGLE_CALENDAR_CLIENT_ID', '123456789-abc123def456.apps.googleusercontent.com');
+define('GOOGLE_CALENDAR_CLIENT_SECRET', 'GOCSPX-abcdefghijklmnop');
+```
+
 ## Development
 
 ### File Structure
