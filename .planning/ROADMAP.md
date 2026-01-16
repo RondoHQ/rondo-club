@@ -25,10 +25,38 @@
 - ✅ [v4.4 Code Organization](milestones/v4.4-code-organization.md) (Phases 64-66) — SHIPPED 2026-01-16
 - ✅ [v4.5 Calendar Sync Control](milestones/v4.5-calendar-sync-control.md) (Phases 67-68) — SHIPPED 2026-01-16
 - ✅ [v4.6 Dashboard & Polish](milestones/v4.6-dashboard-polish.md) (Phases 69-70) — SHIPPED 2026-01-16
+- 🚧 **v4.7 Dark Mode & Activity Polish** (Phases 71-72) — In Progress
 
 ## Current Status
 
-**Current milestone:** None — use `/gsd:discuss-milestone` to plan next work
+**Current milestone:** v4.7 Dark Mode & Activity Polish (Phases 71-72)
+
+### 🚧 v4.7 Dark Mode & Activity Polish (In Progress)
+
+**Milestone Goal:** Comprehensive dark mode contrast fixes across modals and settings, plus activity type improvements and minor bug fixes.
+
+#### Phase 71: Dark Mode Fixes
+**Goal**: Fix contrast issues in modals and settings for dark mode
+**Depends on**: Phase 70
+**Requirements**: DM-01, DM-02, DM-03, DM-04, DM-05, DM-06, DM-07
+**Success Criteria** (what must be TRUE):
+  1. User can view/edit work history modal in dark mode with proper contrast
+  2. User can view/edit address modal in dark mode with proper contrast
+  3. User can use date-related people modal in dark mode with proper contrast
+  4. Activity type buttons display correctly in dark mode
+  5. Settings Connections subtab headings are readable in dark mode
+**Plans**: TBD
+
+#### Phase 72: Activity & Bug Fixes
+**Goal**: Add activity types and fix UI bugs
+**Depends on**: Phase 71
+**Requirements**: ACT-01, ACT-02, ACT-03, BUG-01, BUG-02
+**Success Criteria** (what must be TRUE):
+  1. User can select "Dinner" and "Zoom" as activity types
+  2. "Phone call" activity type shows as "Phone"
+  3. Topbar stays above content on People screen
+  4. Person header displays "at Company" with proper spacing
+**Plans**: TBD
 
 ---
 
@@ -662,5 +690,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.4 Code Organization | 64-66 | 6/6 | Complete ✅ | 2026-01-16 |
 | v4.5 Calendar Sync Control | 67-68 | 3/3 | Complete ✅ | 2026-01-16 |
 | v4.6 Dashboard & Polish | 69-70 | 2/2 | Complete ✅ | 2026-01-16 |
+| v4.7 Dark Mode & Activity Polish | 71-72 | 0/TBD | In Progress 🚧 | - |
 
 **Shipped: 25 milestones, 70 phases, 121 plans**
