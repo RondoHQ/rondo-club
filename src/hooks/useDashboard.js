@@ -1,6 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 
+// Default dashboard card configuration
+export const DEFAULT_DASHBOARD_CARDS = [
+  'stats',
+  'reminders',
+  'todos',
+  'awaiting',
+  'meetings',
+  'recent-contacted',
+  'recent-edited',
+  'favorites',
+];
+
 export function useDashboard() {
   return useQuery({
     queryKey: ['dashboard'],
@@ -63,7 +75,7 @@ export function useSearch(query) {
   // Ensure query is always a string to maintain consistent hook calls
   const searchQuery = typeof query === 'string' ? query : '';
   const enabled = searchQuery.length >= 2;
-  
+
   return useQuery({
     queryKey: ['search', searchQuery],
     queryFn: async () => {
@@ -74,5 +86,26 @@ export function useSearch(query) {
       return response.data;
     },
     enabled,
+  });
+}
+
+export function useDashboardSettings() {
+  return useQuery({
+    queryKey: ['dashboardSettings'],
+    queryFn: async () => {
+      const response = await prmApi.getDashboardSettings();
+      return response.data;
+    },
+  });
+}
+
+export function useUpdateDashboardSettings() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (settings) => prmApi.updateDashboardSettings(settings),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboardSettings'] });
+    },
   });
 }

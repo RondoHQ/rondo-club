@@ -177,6 +177,38 @@ class Api extends Base {
 			]
 		);
 
+		// Get user dashboard settings
+		register_rest_route(
+			'prm/v1',
+			'/user/dashboard-settings',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_dashboard_settings' ],
+				'permission_callback' => 'is_user_logged_in',
+			]
+		);
+
+		// Update user dashboard settings
+		register_rest_route(
+			'prm/v1',
+			'/user/dashboard-settings',
+			[
+				'methods'             => 'PATCH',
+				'callback'            => [ $this, 'update_dashboard_settings' ],
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => [
+					'visible_cards' => [
+						'required'          => false,
+						'validate_callback' => [ $this, 'validate_dashboard_cards' ],
+					],
+					'card_order'    => [
+						'required'          => false,
+						'validate_callback' => [ $this, 'validate_dashboard_cards' ],
+					],
+				],
+			]
+		);
+
 		// Search across all content
 		register_rest_route(
 			'prm/v1',
@@ -797,6 +829,125 @@ class Api extends Base {
 			[
 				'color_scheme' => $updated_color_scheme,
 				'accent_color' => $updated_accent_color,
+			]
+		);
+	}
+
+	/**
+	 * Valid dashboard card IDs
+	 */
+	private const VALID_DASHBOARD_CARDS = [
+		'stats',
+		'reminders',
+		'todos',
+		'awaiting',
+		'meetings',
+		'recent-contacted',
+		'recent-edited',
+		'favorites',
+	];
+
+	/**
+	 * Default dashboard card order
+	 */
+	private const DEFAULT_DASHBOARD_ORDER = [
+		'stats',
+		'reminders',
+		'todos',
+		'awaiting',
+		'meetings',
+		'recent-contacted',
+		'recent-edited',
+		'favorites',
+	];
+
+	/**
+	 * Validate dashboard cards array
+	 *
+	 * @param mixed $param The parameter value.
+	 * @return bool
+	 */
+	public function validate_dashboard_cards( $param ) {
+		if ( ! is_array( $param ) ) {
+			return false;
+		}
+
+		foreach ( $param as $card ) {
+			if ( ! in_array( $card, self::VALID_DASHBOARD_CARDS, true ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get user's dashboard settings
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_dashboard_settings() {
+		$user_id = get_current_user_id();
+
+		$visible_cards = get_user_meta( $user_id, 'caelis_dashboard_visible_cards', true );
+		if ( empty( $visible_cards ) || ! is_array( $visible_cards ) ) {
+			$visible_cards = self::DEFAULT_DASHBOARD_ORDER;
+		}
+
+		$card_order = get_user_meta( $user_id, 'caelis_dashboard_card_order', true );
+		if ( empty( $card_order ) || ! is_array( $card_order ) ) {
+			$card_order = self::DEFAULT_DASHBOARD_ORDER;
+		}
+
+		return rest_ensure_response(
+			[
+				'visible_cards' => $visible_cards,
+				'card_order'    => $card_order,
+			]
+		);
+	}
+
+	/**
+	 * Update user's dashboard settings
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_dashboard_settings( $request ) {
+		$user_id = get_current_user_id();
+
+		$visible_cards = $request->get_param( 'visible_cards' );
+		$card_order    = $request->get_param( 'card_order' );
+
+		// Update visible cards if provided
+		if ( $visible_cards !== null ) {
+			// Filter to only valid card IDs
+			$visible_cards = array_values( array_intersect( $visible_cards, self::VALID_DASHBOARD_CARDS ) );
+			update_user_meta( $user_id, 'caelis_dashboard_visible_cards', $visible_cards );
+		}
+
+		// Update card order if provided
+		if ( $card_order !== null ) {
+			// Filter to only valid card IDs and remove duplicates
+			$card_order = array_values( array_unique( array_intersect( $card_order, self::VALID_DASHBOARD_CARDS ) ) );
+			update_user_meta( $user_id, 'caelis_dashboard_card_order', $card_order );
+		}
+
+		// Return updated settings
+		$updated_visible = get_user_meta( $user_id, 'caelis_dashboard_visible_cards', true );
+		if ( empty( $updated_visible ) || ! is_array( $updated_visible ) ) {
+			$updated_visible = self::DEFAULT_DASHBOARD_ORDER;
+		}
+
+		$updated_order = get_user_meta( $user_id, 'caelis_dashboard_card_order', true );
+		if ( empty( $updated_order ) || ! is_array( $updated_order ) ) {
+			$updated_order = self::DEFAULT_DASHBOARD_ORDER;
+		}
+
+		return rest_ensure_response(
+			[
+				'visible_cards' => $updated_visible,
+				'card_order'    => $updated_order,
 			]
 		);
 	}

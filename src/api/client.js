@@ -235,6 +235,10 @@ export const prmApi = {
   getThemePreferences: () => api.get('/prm/v1/user/theme-preferences'),
   updateThemePreferences: (prefs) => api.patch('/prm/v1/user/theme-preferences', prefs),
 
+  // Dashboard settings
+  getDashboardSettings: () => api.get('/prm/v1/user/dashboard-settings'),
+  updateDashboardSettings: (settings) => api.patch('/prm/v1/user/dashboard-settings', settings),
+
   // Person meetings
   getPersonMeetings: (personId, params = {}) => api.get(`/prm/v1/people/${personId}/meetings`, { params }),
   logMeetingAsActivity: (eventId) => api.post(`/prm/v1/calendar/events/${eventId}/log`),

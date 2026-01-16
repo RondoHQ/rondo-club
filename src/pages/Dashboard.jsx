@@ -1,14 +1,15 @@
 import { useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock } from 'lucide-react';
-import { useDashboard, useTodos, useUpdateTodo } from '@/hooks/useDashboard';
+import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock, Settings } from 'lucide-react';
+import { useDashboard, useTodos, useUpdateTodo, useDashboardSettings, useUpdateDashboardSettings, DEFAULT_DASHBOARD_CARDS } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useTodayMeetings } from '@/hooks/useMeetings';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { APP_NAME } from '@/constants/app';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
+import DashboardCustomizeModal from '@/components/DashboardCustomizeModal';
 
 const TodoModal = lazy(() => import('@/components/Timeline/TodoModal'));
 
@@ -323,8 +324,10 @@ export default function Dashboard() {
   const { data: openTodos } = useTodos('open');
   const { data: awaitingTodos } = useTodos('awaiting');
   const { data: todayMeetingsData } = useTodayMeetings();
+  const { data: dashboardSettings } = useDashboardSettings();
   const updateTodo = useUpdateTodo();
   const createActivity = useCreateActivity();
+  const updateDashboardSettings = useUpdateDashboardSettings();
 
   // Today's meetings data
   const todayMeetings = todayMeetingsData?.meetings || [];
@@ -339,6 +342,20 @@ export default function Dashboard() {
   // State for viewing/editing todos
   const [todoToView, setTodoToView] = useState(null);
   const [showTodoModal, setShowTodoModal] = useState(false);
+
+  // State for customize modal
+  const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+
+  // Handle saving dashboard settings
+  const handleSaveSettings = (settings) => {
+    updateDashboardSettings.mutate(settings, {
+      onSuccess: () => setShowCustomizeModal(false),
+    });
+  };
+
+  // Get visible cards in order from settings
+  const visibleCards = dashboardSettings?.visible_cards || DEFAULT_DASHBOARD_CARDS;
+  const cardOrder = dashboardSettings?.card_order || DEFAULT_DASHBOARD_CARDS;
 
   const handleToggleTodo = (todo) => {
     // If it's an open todo, show the complete modal with options
@@ -533,234 +550,186 @@ export default function Dashboard() {
   // Limit todos to 5 for dashboard
   const dashboardTodos = openTodos?.slice(0, 5) || [];
   const dashboardAwaitingTodos = awaitingTodos?.slice(0, 5) || [];
-  
+
+  // Card renderers - each returns JSX for a single card
+  const cardRenderers = {
+    'stats': () => (
+      <div key="stats" className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatCard title="Total people" value={stats?.total_people || 0} icon={Users} href="/people" />
+        <StatCard title="Organizations" value={stats?.total_companies || 0} icon={Building2} href="/companies" />
+        <StatCard title="Events" value={stats?.total_dates || 0} icon={Calendar} href="/dates" />
+        <StatCard title="Open todos" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
+        <StatCard title="Awaiting" value={stats?.awaiting_todos_count || 0} icon={Clock} href="/todos?status=awaiting" />
+      </div>
+    ),
+    'reminders': () => (
+      <div key="reminders" className="card">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="font-semibold flex items-center dark:text-gray-50">
+            <Calendar className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
+            Upcoming reminders
+          </h2>
+          <Link to="/dates" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
+            View all <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
+        </div>
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          {upcoming_reminders?.length > 0 ? (
+            upcoming_reminders.map((reminder) => <ReminderCard key={reminder.id} reminder={reminder} />)
+          ) : (
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No upcoming reminders</p>
+          )}
+        </div>
+      </div>
+    ),
+    'todos': () => (
+      <div key="todos" className="card">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="font-semibold flex items-center dark:text-gray-50">
+            <CheckSquare className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
+            Open todos
+          </h2>
+          <Link to="/todos" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
+            View all <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
+        </div>
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          {dashboardTodos.length > 0 ? (
+            dashboardTodos.map((todo) => <TodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />)
+          ) : (
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No open todos</p>
+          )}
+        </div>
+      </div>
+    ),
+    'awaiting': () => (
+      <div key="awaiting" className="card">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="font-semibold flex items-center dark:text-gray-50">
+            <Clock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
+            Awaiting response
+          </h2>
+          <Link to="/todos?status=awaiting" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
+            View all <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
+        </div>
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          {dashboardAwaitingTodos.length > 0 ? (
+            dashboardAwaitingTodos.map((todo) => <AwaitingTodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />)
+          ) : (
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No awaiting responses</p>
+          )}
+        </div>
+      </div>
+    ),
+    'meetings': () => hasCalendarConnections ? (
+      <div key="meetings" className="card">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="font-semibold flex items-center dark:text-gray-50">
+            <CalendarClock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
+            Today's meetings
+          </h2>
+          <Link to="/settings?tab=connections&subtab=calendars" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
+            Settings <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
+        </div>
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          {todayMeetings.length > 0 ? (
+            todayMeetings.map((meeting) => <MeetingCard key={meeting.id} meeting={meeting} />)
+          ) : (
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No meetings scheduled for today</p>
+          )}
+        </div>
+      </div>
+    ) : null,
+    'recent-contacted': () => (
+      <div key="recent-contacted" className="card">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="font-semibold flex items-center dark:text-gray-50">
+            <MessageCircle className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
+            Recently contacted
+          </h2>
+        </div>
+        {recently_contacted?.length > 0 ? (
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {recently_contacted.map((person) => <PersonCard key={person.id} person={person} />)}
+          </div>
+        ) : (
+          <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No recent activities yet</p>
+        )}
+      </div>
+    ),
+    'recent-edited': () => (
+      <div key="recent-edited" className="card">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="font-semibold flex items-center dark:text-gray-50">
+            <Users className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
+            Recently edited
+          </h2>
+          <Link to="/people" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
+            View all <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
+        </div>
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          {recent_people?.length > 0 ? (
+            recent_people.map((person) => <PersonCard key={person.id} person={person} />)
+          ) : (
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+              No people yet. <Link to="/people/new" className="text-accent-600 dark:text-accent-400">Add someone</Link>
+            </p>
+          )}
+        </div>
+      </div>
+    ),
+    'favorites': () => (
+      <div key="favorites" className="card">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="font-semibold flex items-center dark:text-gray-50">
+            <Star className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400 fill-current" />
+            Favorites
+          </h2>
+        </div>
+        {favorites?.length > 0 ? (
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {favorites.slice(0, 5).map((person) => <PersonCard key={person.id} person={person} hideStar={true} />)}
+          </div>
+        ) : (
+          <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No favorites yet</p>
+        )}
+      </div>
+    ),
+  };
+
+  // Filter cards to show based on visibility settings, maintaining order
+  const orderedVisibleCards = cardOrder.filter((cardId) => visibleCards.includes(cardId));
+
+  // Separate stats from other cards (stats always renders full-width)
+  const showStats = orderedVisibleCards.includes('stats');
+  const otherCards = orderedVisibleCards.filter((id) => id !== 'stats');
+
   return (
     <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard
-          title="Total people"
-          value={stats?.total_people || 0}
-          icon={Users}
-          href="/people"
-        />
-        <StatCard
-          title="Organizations"
-          value={stats?.total_companies || 0}
-          icon={Building2}
-          href="/companies"
-        />
-        <StatCard
-          title="Events"
-          value={stats?.total_dates || 0}
-          icon={Calendar}
-          href="/dates"
-        />
-        <StatCard
-          title="Open todos"
-          value={stats?.open_todos_count || 0}
-          icon={CheckSquare}
-          href="/todos"
-        />
-        <StatCard
-          title="Awaiting"
-          value={stats?.awaiting_todos_count || 0}
-          icon={Clock}
-          href="/todos?status=awaiting"
-        />
-      </div>
-      
-      {/* Row 1: Stats - Reminders + Todos + Awaiting */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Upcoming Reminders */}
-        <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold flex items-center dark:text-gray-50">
-              <Calendar className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-              Upcoming reminders
-            </h2>
-            <Link
-              to="/dates"
-              className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center"
-            >
-              View all
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
-          </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {upcoming_reminders?.length > 0 ? (
-              upcoming_reminders.map((reminder) => (
-                <ReminderCard key={reminder.id} reminder={reminder} />
-              ))
-            ) : (
-              <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-                No upcoming reminders
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Open Todos */}
-        <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold flex items-center dark:text-gray-50">
-              <CheckSquare className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-              Open todos
-            </h2>
-            <Link
-              to="/todos"
-              className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center"
-            >
-              View all
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
-          </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {dashboardTodos.length > 0 ? (
-              dashboardTodos.map((todo) => (
-                <TodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />
-              ))
-            ) : (
-              <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-                No open todos
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Awaiting Response */}
-        <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold flex items-center dark:text-gray-50">
-              <Clock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-              Awaiting response
-            </h2>
-            <Link
-              to="/todos?status=awaiting"
-              className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center"
-            >
-              View all
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
-          </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {dashboardAwaitingTodos.length > 0 ? (
-              dashboardAwaitingTodos.map((todo) => (
-                <AwaitingTodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />
-              ))
-            ) : (
-              <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-                No awaiting responses
-              </p>
-            )}
-          </div>
-        </div>
+      {/* Header with customize button */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowCustomizeModal(true)}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+        >
+          <Settings className="w-4 h-4" />
+          Customize
+        </button>
       </div>
 
-      {/* Row 2: Activity - Today's Meetings + Recently Contacted + Recently Edited */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's Meetings (only when calendar connected) */}
-        {hasCalendarConnections && (
-          <div className="card">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="font-semibold flex items-center dark:text-gray-50">
-                <CalendarClock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-                Today's meetings
-              </h2>
-              <Link to="/settings?tab=connections&subtab=calendars"
-                className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
-                Settings
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
-              {todayMeetings.length > 0 ? (
-                todayMeetings.map((meeting) => (
-                  <MeetingCard key={meeting.id} meeting={meeting} />
-                ))
-              ) : (
-                <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-                  No meetings scheduled for today
-                </p>
-              )}
-            </div>
-          </div>
-        )}
+      {/* Stats row - rendered separately if visible */}
+      {showStats && cardRenderers['stats']()}
 
-        {/* Recently Contacted */}
-        <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold flex items-center dark:text-gray-50">
-              <MessageCircle className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-              Recently contacted
-            </h2>
-          </div>
-          {recently_contacted?.length > 0 ? (
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
-              {recently_contacted.map((person) => (
-                <PersonCard key={person.id} person={person} />
-              ))}
-            </div>
-          ) : (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-              No recent activities yet
-            </p>
-          )}
+      {/* Other cards in a responsive grid */}
+      {otherCards.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {otherCards.map((cardId) => cardRenderers[cardId]?.())}
         </div>
+      )}
 
-        {/* Recently Edited People */}
-        <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold flex items-center dark:text-gray-50">
-              <Users className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-              Recently edited
-            </h2>
-            <Link
-              to="/people"
-              className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center"
-            >
-              View all
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
-          </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {recent_people?.length > 0 ? (
-              recent_people.map((person) => (
-                <PersonCard key={person.id} person={person} />
-              ))
-            ) : (
-              <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-                No people yet. <Link to="/people/new" className="text-accent-600 dark:text-accent-400">Add someone</Link>
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Row 3: Favorites */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Favorites */}
-        <div className="card">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold flex items-center dark:text-gray-50">
-              <Star className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400 fill-current" />
-              Favorites
-            </h2>
-          </div>
-          {favorites?.length > 0 ? (
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
-              {favorites.slice(0, 5).map((person) => (
-                <PersonCard key={person.id} person={person} hideStar={true} />
-              ))}
-            </div>
-          ) : (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-              No favorites yet
-            </p>
-          )}
-        </div>
-      </div>
-      
       {/* Complete Todo Modal */}
       <CompleteTodoModal
         isOpen={showCompleteModal}
@@ -801,6 +770,15 @@ export default function Dashboard() {
           todo={todoToView}
         />
       </Suspense>
+
+      {/* Dashboard Customize Modal */}
+      <DashboardCustomizeModal
+        isOpen={showCustomizeModal}
+        onClose={() => setShowCustomizeModal(false)}
+        settings={dashboardSettings}
+        onSave={handleSaveSettings}
+        isSaving={updateDashboardSettings.isPending}
+      />
     </div>
   );
 }

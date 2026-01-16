@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 
 Milestone: v4.6 Dashboard & Polish
 Phase: 69 of 70 (Dashboard Customization)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-16 — Milestone v4.6 created
+Plan: 69-01 complete
+Status: Phase 69 complete, ready for Phase 70
+Last activity: 2026-01-16 — Phase 69 Plan 01 complete
 
-Progress: ░░░░░░░░░░ 0% (Phase 69/70 of v4.6)
+Progress: █████░░░░░ 50% (Phase 69/70 of v4.6)
 
 ## Completed Milestones
 
@@ -150,5 +150,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Use `/gsd:discuss-milestone` to plan next work
-- Consider remaining todos: Twenty CRM import, Google Calendar sync settings, PersonDetail delete button styling
+- Execute Phase 69 Plan 01: Dashboard Customization
+- Phase 70 will cover UI polish (delete button, dark mode tweaks)
