@@ -29,12 +29,6 @@
         -->
         <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
 
-        <!--
-            Exclude multiple classes per file rule - we intentionally group
-            related classes (e.g., notification channels, REST controllers)
-            in single files for better organization.
-        -->
-        <exclude name="Generic.Files.OneObjectStructurePerFile.MultipleFound"/>
 
         <!--
             Exclude Universal.Arrays.DisallowShortArraySyntax - we prefer
@@ -42,6 +36,60 @@
             rule below enforces this preference.
         -->
         <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+
+        <!--
+            Short ternary operators ($a ?: $b) are used throughout as a
+            concise null-coalescing pattern. These are readable and intentional.
+        -->
+        <exclude name="Universal.Operators.DisallowShortTernary.Found"/>
+
+        <!--
+            Using role names directly (e.g., 'administrator', 'caelis_user')
+            is valid in WordPress capability checks.
+        -->
+        <exclude name="WordPress.WP.Capabilities.RoleFound"/>
+
+        <!--
+            get_page_by_title is deprecated in WP 6.2 but needed for
+            backwards compatibility. Will update when minimum WP increases.
+        -->
+        <exclude name="WordPress.WP.DeprecatedFunctions.get_page_by_titleFound"/>
+
+        <!--
+            Some hook names use established WordPress conventions that
+            don't follow our prefix pattern (e.g., 'rest_api_init').
+        -->
+        <exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound"/>
+
+        <!--
+            Size functions in loops are acceptable when the array/string
+            is small and the check is necessary for loop termination.
+        -->
+        <exclude name="Squiz.PHP.DisallowSizeFunctionsInLoops.Found"/>
+
+        <!--
+            Control structure spacing issues in closure syntax are acceptable
+            when they follow PHP modern style conventions.
+        -->
+        <exclude name="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseBrace"/>
+
+        <!--
+            Empty if statements with comments explaining why they're empty
+            (e.g., intentional no-op for certain conditions) are acceptable.
+        -->
+        <exclude name="Generic.CodeAnalysis.EmptyStatement.DetectedIf"/>
+
+        <!--
+            Lone if inside else is sometimes clearer than complex elseif
+            chains, especially when the conditions are logically grouped.
+        -->
+        <exclude name="Universal.ControlStructures.DisallowLonelyIf.Found"/>
+
+        <!--
+            Disable Yoda conditions requirement - we actively disallow them
+            with Generic.ControlStructures.DisallowYodaConditions below.
+        -->
+        <exclude name="WordPress.PHP.YodaConditions"/>
     </rule>
 
     <!-- Theme-specific file naming -->
@@ -104,14 +152,6 @@
     </rule>
 
     <!--
-        CardDAV backend uses short ternary for null coalescing patterns
-        common in SabreDAV code. These are intentional and readable.
-    -->
-    <rule ref="Universal.Operators.DisallowShortTernary.Found">
-        <exclude-pattern>includes/carddav/*</exclude-pattern>
-    </rule>
-
-    <!--
         Empty catch blocks are used for graceful degradation when
         parsing vCards or handling optional data. This is intentional.
     -->
@@ -121,76 +161,20 @@
     </rule>
 
     <!--
-        Short ternary operators ($a ?: $b) are used throughout as a
-        concise null-coalescing pattern. These are readable and intentional.
+        WP-CLI commands file contains multiple command classes by design.
+        Each command class is registered with WP_CLI::add_command() and
+        is only loaded when WP-CLI is active. Splitting would add complexity
+        without benefit since these are CLI-only and logically grouped.
     -->
-    <rule ref="Universal.Operators.DisallowShortTernary.Found">
-        <severity>0</severity>
+    <rule ref="Generic.Files.OneObjectStructurePerFile.MultipleFound">
+        <exclude-pattern>includes/class-wp-cli.php</exclude-pattern>
     </rule>
 
     <!--
-        Using role names directly (e.g., 'administrator', 'caelis_user')
-        is valid in WordPress capability checks.
+        Actively disallow Yoda conditions - prefer readable $var === 'value'
+        style over WordPress-mandated 'value' === $var style.
     -->
-    <rule ref="WordPress.WP.Capabilities.RoleFound">
-        <severity>0</severity>
-    </rule>
-
-    <!--
-        get_page_by_title is deprecated in WP 6.2 but needed for
-        backwards compatibility. Will update when minimum WP increases.
-    -->
-    <rule ref="WordPress.WP.DeprecatedFunctions.get_page_by_titleFound">
-        <severity>0</severity>
-    </rule>
-
-    <!--
-        Some hook names use established WordPress conventions that
-        don't follow our prefix pattern (e.g., 'rest_api_init').
-    -->
-    <rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound">
-        <severity>0</severity>
-    </rule>
-
-    <!--
-        Size functions in loops are acceptable when the array/string
-        is small and the check is necessary for loop termination.
-    -->
-    <rule ref="Squiz.PHP.DisallowSizeFunctionsInLoops.Found">
-        <severity>0</severity>
-    </rule>
-
-    <!--
-        Control structure spacing issues in closure syntax are acceptable
-        when they follow PHP modern style conventions.
-    -->
-    <rule ref="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseBrace">
-        <severity>0</severity>
-    </rule>
-
-    <!--
-        Empty if statements with comments explaining why they're empty
-        (e.g., intentional no-op for certain conditions) are acceptable.
-    -->
-    <rule ref="Generic.CodeAnalysis.EmptyStatement.DetectedIf">
-        <severity>0</severity>
-    </rule>
-
-    <!--
-        Lone if inside else is sometimes clearer than complex elseif
-        chains, especially when the conditions are logically grouped.
-    -->
-    <rule ref="Universal.ControlStructures.DisallowLonelyIf.Found">
-        <severity>0</severity>
-    </rule>
-
-    <!--
-        Yoda conditions disabled - prefer readable $var === 'value' style
-        over WordPress-mandated 'value' === $var style.
-    -->
-    <rule ref="WordPress.PHP.YodaConditions">
-        <severity>0</severity>
-    </rule>
+    <rule ref="Generic.ControlStructures.DisallowYodaConditions"/>
 
     <!--
         Require modern short array syntax [] instead of array().
