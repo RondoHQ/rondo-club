@@ -5,11 +5,13 @@
  * Imports contacts from Google Contacts CSV export files.
  */
 
+namespace Caelis\Import;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Google_Contacts_Import {
+class GoogleContacts {
 
 	/**
 	 * Import statistics

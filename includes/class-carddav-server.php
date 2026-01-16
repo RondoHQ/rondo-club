@@ -7,11 +7,13 @@
  * @package Caelis
  */
 
+namespace Caelis\CardDAV;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_CardDAV_Server {
+class Server {
 
 	/**
 	 * Base URI for CardDAV server

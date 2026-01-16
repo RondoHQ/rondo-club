@@ -446,7 +446,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			// Generate vCard using the same method CardDAV uses
-			$vcard = PRM_VCard_Export::generate( $person );
+			$vcard = \Caelis\Export\VCard::generate( $person );
 
 			if ( empty( $vcard ) ) {
 				WP_CLI::error( 'Failed to generate vCard.' );
@@ -500,7 +500,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			// Parse the vCard
-			$parsed = PRM_VCard_Export::parse( $vcard_data );
+			$parsed = \Caelis\Export\VCard::parse( $vcard_data );
 
 			if ( empty( $parsed ) ) {
 				WP_CLI::error( 'Failed to parse vCard.' );
