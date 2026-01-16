@@ -261,7 +261,7 @@ class PRM_REST_People extends PRM_REST_Base {
 		$email     = sanitize_email( $request->get_param( 'email' ) );
 
 		if ( empty( $email ) ) {
-			return new WP_Error( 'missing_email', __( 'Email address is required.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_email', __( 'Email address is required.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Generate Gravatar URL
@@ -288,7 +288,7 @@ class PRM_REST_People extends PRM_REST_Base {
 		$tmp = download_url( $gravatar_url );
 
 		if ( is_wp_error( $tmp ) ) {
-			return new WP_Error( 'download_failed', __( 'Failed to download Gravatar image.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'download_failed', __( 'Failed to download Gravatar image.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		// Get person's name for filename
@@ -304,12 +304,12 @@ class PRM_REST_People extends PRM_REST_Base {
 		);
 
 		// Sideload the file
-		$attachment_id = media_handle_sideload( $file_array, $person_id, sprintf( __( '%s Gravatar', 'personal-crm' ), $first_name . ' ' . $last_name ) );
+		$attachment_id = media_handle_sideload( $file_array, $person_id, sprintf( __( '%s Gravatar', 'caelis' ), $first_name . ' ' . $last_name ) );
 
 		// Clean up temp file if sideload failed
 		if ( is_wp_error( $attachment_id ) ) {
 			@unlink( $tmp );
-			return new WP_Error( 'sideload_failed', __( 'Failed to sideload Gravatar image.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'sideload_failed', __( 'Failed to sideload Gravatar image.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		// Set as featured image
@@ -336,13 +336,13 @@ class PRM_REST_People extends PRM_REST_Base {
 		// Verify person exists
 		$person = get_post( $person_id );
 		if ( ! $person || $person->post_type !== 'person' ) {
-			return new WP_Error( 'person_not_found', __( 'Person not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'person_not_found', __( 'Person not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check for uploaded file
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new WP_Error( 'no_file', __( 'No file uploaded.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$file = $files['file'];
@@ -350,7 +350,7 @@ class PRM_REST_People extends PRM_REST_Base {
 		// Validate file type
 		$allowed_types = array( 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp' );
 		if ( ! in_array( $file['type'], $allowed_types ) ) {
-			return new WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Get person's name for filename
@@ -523,7 +523,7 @@ class PRM_REST_People extends PRM_REST_Base {
 				if ( ! $year_unknown ) {
 					$date_value = get_field( 'date_value', $date_post->ID );
 					if ( $date_value ) {
-						$year = (int) date( 'Y', strtotime( $date_value ) );
+						$year = (int) gmdate( 'Y', strtotime( $date_value ) );
 						if ( $year > 0 ) {
 							$data['birth_year'] = $year;
 						}
@@ -600,12 +600,12 @@ class PRM_REST_People extends PRM_REST_Base {
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'invalid_user', __( 'User not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Can't share with yourself
 		if ( $user_id === get_current_user_id() ) {
-			return new WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Get current shares
@@ -620,7 +620,7 @@ class PRM_REST_People extends PRM_REST_Base {
 				return rest_ensure_response(
 					array(
 						'success' => true,
-						'message' => __( 'Share updated.', 'personal-crm' ),
+						'message' => __( 'Share updated.', 'caelis' ),
 					)
 				);
 			}
@@ -636,7 +636,7 @@ class PRM_REST_People extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'success' => true,
-				'message' => __( 'Shared successfully.', 'personal-crm' ),
+				'message' => __( 'Shared successfully.', 'caelis' ),
 			)
 		);
 	}
@@ -665,7 +665,7 @@ class PRM_REST_People extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'success' => true,
-				'message' => __( 'Share removed.', 'personal-crm' ),
+				'message' => __( 'Share removed.', 'caelis' ),
 			)
 		);
 	}
@@ -682,7 +682,7 @@ class PRM_REST_People extends PRM_REST_Base {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You must be logged in to perform this action.', 'personal-crm' ),
+				__( 'You must be logged in to perform this action.', 'caelis' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -697,7 +697,7 @@ class PRM_REST_People extends PRM_REST_Base {
 			if ( ! $post || $post->post_type !== 'person' ) {
 				return new WP_Error(
 					'rest_invalid_id',
-					sprintf( __( 'Person with ID %d not found.', 'personal-crm' ), $post_id ),
+					sprintf( __( 'Person with ID %d not found.', 'caelis' ), $post_id ),
 					array( 'status' => 404 )
 				);
 			}
@@ -706,7 +706,7 @@ class PRM_REST_People extends PRM_REST_Base {
 			if ( (int) $post->post_author !== $current_user_id && ! $is_admin ) {
 				return new WP_Error(
 					'rest_forbidden',
-					sprintf( __( 'You do not have permission to update person with ID %d.', 'personal-crm' ), $post_id ),
+					sprintf( __( 'You do not have permission to update person with ID %d.', 'caelis' ), $post_id ),
 					array( 'status' => 403 )
 				);
 			}
@@ -746,7 +746,7 @@ class PRM_REST_People extends PRM_REST_Base {
 					if ( ! $result ) {
 						$failed[] = array(
 							'id'    => $post_id,
-							'error' => __( 'Failed to update visibility.', 'personal-crm' ),
+							'error' => __( 'Failed to update visibility.', 'caelis' ),
 						);
 						continue;
 					}

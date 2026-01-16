@@ -75,7 +75,7 @@ class PRM_Reminders {
 		if ( $scheduled === false ) {
 			return new WP_Error(
 				'cron_schedule_failed',
-				sprintf( __( 'Failed to schedule reminder cron for user %d.', 'personal-crm' ), $user_id )
+				sprintf( __( 'Failed to schedule reminder cron for user %d.', 'caelis' ), $user_id )
 			);
 		}
 
@@ -167,8 +167,8 @@ class PRM_Reminders {
 
 		// Update expired work history (only once per day, not per user)
 		// Use a transient to ensure this only runs once per day
-		$transient_key = 'prm_work_history_updated_' . date( 'Y-m-d' );
-		if ( get_transient( $transient_key ) === false ) {
+		$transient_key = 'prm_work_history_updated_' . gmdate( 'Y-m-d' );
+		if ( false === get_transient( $transient_key ) ) {
 			$this->update_expired_work_history();
 			set_transient( $transient_key, true, DAY_IN_SECONDS );
 		}
@@ -228,7 +228,7 @@ class PRM_Reminders {
 		}
 
 		// Get shared notes from last 24 hours by OTHER users
-		$since    = date( 'Y-m-d H:i:s', strtotime( '-24 hours' ) );
+		$since    = gmdate( 'Y-m-d H:i:s', strtotime( '-24 hours' ) );
 		$comments = get_comments(
 			array(
 				'post__in'       => $contacts,
@@ -274,7 +274,7 @@ class PRM_Reminders {
 	public function add_cron_schedules( $schedules ) {
 		$schedules['prm_twice_daily'] = array(
 			'interval' => 12 * HOUR_IN_SECONDS,
-			'display'  => __( 'Twice Daily', 'personal-crm' ),
+			'display'  => __( 'Twice Daily', 'caelis' ),
 		);
 
 		return $schedules;

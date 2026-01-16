@@ -67,7 +67,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
 
 		if ( empty( $people_ids ) ) {
-			return new WP_Error( 'no_contacts', __( 'No contacts to export.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Get companies for work history
@@ -115,7 +115,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		}
 
 		if ( empty( $vcards ) ) {
-			return new WP_Error( 'export_failed', __( 'Failed to generate vCard export.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'export_failed', __( 'Failed to generate vCard export.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		$vcard_content = implode( "\n", $vcards );
@@ -139,7 +139,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
 
 		if ( empty( $people_ids ) ) {
-			return new WP_Error( 'no_contacts', __( 'No contacts to export.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Google Contacts CSV headers
@@ -240,8 +240,8 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 			if ( ! is_wp_error( $dates_response ) && $dates_response->get_status() === 200 ) {
 				$dates = $dates_response->get_data();
 				foreach ( $dates as $date ) {
-					if ( isset( $date['date_type'] ) && $date['date_type'] === 'birthday' && isset( $date['date_value'] ) ) {
-						$row[14] = date( 'Y-m-d', strtotime( $date['date_value'] ) ); // Birthday
+					if ( isset( $date['date_type'] ) && 'birthday' === $date['date_type'] && isset( $date['date_value'] ) ) {
+						$row[14] = gmdate( 'Y-m-d', strtotime( $date['date_value'] ) ); // Birthday.
 						break;
 					}
 				}
@@ -426,10 +426,10 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 			}
 		}
 
-		// Birthday
+		// Birthday.
 		foreach ( $person_dates as $date ) {
-			if ( isset( $date['date_type'] ) && $date['date_type'] === 'birthday' && isset( $date['date_value'] ) ) {
-				$birthday = date( 'Ymd', strtotime( $date['date_value'] ) );
+			if ( isset( $date['date_type'] ) && 'birthday' === $date['date_type'] && isset( $date['date_value'] ) ) {
+				$birthday = gmdate( 'Ymd', strtotime( $date['date_value'] ) );
 				$lines[]  = "BDAY:{$birthday}";
 				break;
 			}
@@ -469,7 +469,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		if ( ! $user || ! $user->ID ) {
 			return new WP_Error(
 				'not_logged_in',
-				__( 'You must be logged in.', 'personal-crm' ),
+				__( 'You must be logged in.', 'caelis' ),
 				array( 'status' => 401 )
 			);
 		}

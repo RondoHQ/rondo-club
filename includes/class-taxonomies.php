@@ -107,15 +107,15 @@ class PRM_Taxonomies {
 	 */
 	private function register_workspace_access_taxonomy() {
 		$labels = array(
-			'name'          => _x( 'Workspace Access', 'taxonomy general name', 'personal-crm' ),
-			'singular_name' => _x( 'Workspace Access', 'taxonomy singular name', 'personal-crm' ),
-			'search_items'  => __( 'Search Workspace Access', 'personal-crm' ),
-			'all_items'     => __( 'All Workspace Access', 'personal-crm' ),
-			'edit_item'     => __( 'Edit Workspace Access', 'personal-crm' ),
-			'update_item'   => __( 'Update Workspace Access', 'personal-crm' ),
-			'add_new_item'  => __( 'Add New Workspace Access', 'personal-crm' ),
-			'new_item_name' => __( 'New Workspace Access Name', 'personal-crm' ),
-			'menu_name'     => __( 'Workspace Access', 'personal-crm' ),
+			'name'          => _x( 'Workspace Access', 'taxonomy general name', 'caelis' ),
+			'singular_name' => _x( 'Workspace Access', 'taxonomy singular name', 'caelis' ),
+			'search_items'  => __( 'Search Workspace Access', 'caelis' ),
+			'all_items'     => __( 'All Workspace Access', 'caelis' ),
+			'edit_item'     => __( 'Edit Workspace Access', 'caelis' ),
+			'update_item'   => __( 'Update Workspace Access', 'caelis' ),
+			'add_new_item'  => __( 'Add New Workspace Access', 'caelis' ),
+			'new_item_name' => __( 'New Workspace Access Name', 'caelis' ),
+			'menu_name'     => __( 'Workspace Access', 'caelis' ),
 		);
 
 		$args = array(
@@ -136,15 +136,15 @@ class PRM_Taxonomies {
 	 */
 	private function register_person_label_taxonomy() {
 		$labels = array(
-			'name'          => _x( 'Labels', 'taxonomy general name', 'personal-crm' ),
-			'singular_name' => _x( 'Label', 'taxonomy singular name', 'personal-crm' ),
-			'search_items'  => __( 'Search Labels', 'personal-crm' ),
-			'all_items'     => __( 'All Labels', 'personal-crm' ),
-			'edit_item'     => __( 'Edit Label', 'personal-crm' ),
-			'update_item'   => __( 'Update Label', 'personal-crm' ),
-			'add_new_item'  => __( 'Add New Label', 'personal-crm' ),
-			'new_item_name' => __( 'New Label Name', 'personal-crm' ),
-			'menu_name'     => __( 'Labels', 'personal-crm' ),
+			'name'          => _x( 'Labels', 'taxonomy general name', 'caelis' ),
+			'singular_name' => _x( 'Label', 'taxonomy singular name', 'caelis' ),
+			'search_items'  => __( 'Search Labels', 'caelis' ),
+			'all_items'     => __( 'All Labels', 'caelis' ),
+			'edit_item'     => __( 'Edit Label', 'caelis' ),
+			'update_item'   => __( 'Update Label', 'caelis' ),
+			'add_new_item'  => __( 'Add New Label', 'caelis' ),
+			'new_item_name' => __( 'New Label Name', 'caelis' ),
+			'menu_name'     => __( 'Labels', 'caelis' ),
 		);
 
 		$args = array(
@@ -165,15 +165,15 @@ class PRM_Taxonomies {
 	 */
 	private function register_company_label_taxonomy() {
 		$labels = array(
-			'name'          => _x( 'Company Labels', 'taxonomy general name', 'personal-crm' ),
-			'singular_name' => _x( 'Company Label', 'taxonomy singular name', 'personal-crm' ),
-			'search_items'  => __( 'Search Company Labels', 'personal-crm' ),
-			'all_items'     => __( 'All Company Labels', 'personal-crm' ),
-			'edit_item'     => __( 'Edit Company Label', 'personal-crm' ),
-			'update_item'   => __( 'Update Company Label', 'personal-crm' ),
-			'add_new_item'  => __( 'Add New Company Label', 'personal-crm' ),
-			'new_item_name' => __( 'New Company Label Name', 'personal-crm' ),
-			'menu_name'     => __( 'Labels', 'personal-crm' ),
+			'name'          => _x( 'Company Labels', 'taxonomy general name', 'caelis' ),
+			'singular_name' => _x( 'Company Label', 'taxonomy singular name', 'caelis' ),
+			'search_items'  => __( 'Search Company Labels', 'caelis' ),
+			'all_items'     => __( 'All Company Labels', 'caelis' ),
+			'edit_item'     => __( 'Edit Company Label', 'caelis' ),
+			'update_item'   => __( 'Update Company Label', 'caelis' ),
+			'add_new_item'  => __( 'Add New Company Label', 'caelis' ),
+			'new_item_name' => __( 'New Company Label Name', 'caelis' ),
+			'menu_name'     => __( 'Labels', 'caelis' ),
 		);
 
 		$args = array(
@@ -194,15 +194,15 @@ class PRM_Taxonomies {
 	 */
 	private function register_relationship_type_taxonomy() {
 		$labels = array(
-			'name'          => _x( 'Relationship Types', 'taxonomy general name', 'personal-crm' ),
-			'singular_name' => _x( 'Relationship Type', 'taxonomy singular name', 'personal-crm' ),
-			'search_items'  => __( 'Search Relationship Types', 'personal-crm' ),
-			'all_items'     => __( 'All Relationship Types', 'personal-crm' ),
-			'edit_item'     => __( 'Edit Relationship Type', 'personal-crm' ),
-			'update_item'   => __( 'Update Relationship Type', 'personal-crm' ),
-			'add_new_item'  => __( 'Add New Relationship Type', 'personal-crm' ),
-			'new_item_name' => __( 'New Relationship Type Name', 'personal-crm' ),
-			'menu_name'     => __( 'Relationship Types', 'personal-crm' ),
+			'name'          => _x( 'Relationship Types', 'taxonomy general name', 'caelis' ),
+			'singular_name' => _x( 'Relationship Type', 'taxonomy singular name', 'caelis' ),
+			'search_items'  => __( 'Search Relationship Types', 'caelis' ),
+			'all_items'     => __( 'All Relationship Types', 'caelis' ),
+			'edit_item'     => __( 'Edit Relationship Type', 'caelis' ),
+			'update_item'   => __( 'Update Relationship Type', 'caelis' ),
+			'add_new_item'  => __( 'Add New Relationship Type', 'caelis' ),
+			'new_item_name' => __( 'New Relationship Type Name', 'caelis' ),
+			'menu_name'     => __( 'Relationship Types', 'caelis' ),
 		);
 
 		$args = array(
@@ -226,15 +226,15 @@ class PRM_Taxonomies {
 	 */
 	private function register_date_type_taxonomy() {
 		$labels = array(
-			'name'          => _x( 'Date Types', 'taxonomy general name', 'personal-crm' ),
-			'singular_name' => _x( 'Date Type', 'taxonomy singular name', 'personal-crm' ),
-			'search_items'  => __( 'Search Date Types', 'personal-crm' ),
-			'all_items'     => __( 'All Date Types', 'personal-crm' ),
-			'edit_item'     => __( 'Edit Date Type', 'personal-crm' ),
-			'update_item'   => __( 'Update Date Type', 'personal-crm' ),
-			'add_new_item'  => __( 'Add New Date Type', 'personal-crm' ),
-			'new_item_name' => __( 'New Date Type Name', 'personal-crm' ),
-			'menu_name'     => __( 'Date Types', 'personal-crm' ),
+			'name'          => _x( 'Date Types', 'taxonomy general name', 'caelis' ),
+			'singular_name' => _x( 'Date Type', 'taxonomy singular name', 'caelis' ),
+			'search_items'  => __( 'Search Date Types', 'caelis' ),
+			'all_items'     => __( 'All Date Types', 'caelis' ),
+			'edit_item'     => __( 'Edit Date Type', 'caelis' ),
+			'update_item'   => __( 'Update Date Type', 'caelis' ),
+			'add_new_item'  => __( 'Add New Date Type', 'caelis' ),
+			'new_item_name' => __( 'New Date Type Name', 'caelis' ),
+			'menu_name'     => __( 'Date Types', 'caelis' ),
 		);
 
 		$args = array(
@@ -259,42 +259,42 @@ class PRM_Taxonomies {
 	private function add_default_relationship_types() {
 		$defaults = array(
 			// Basic relationships
-			'partner'      => __( 'Partner', 'personal-crm' ),
-			'spouse'       => __( 'Spouse', 'personal-crm' ),
-			'friend'       => __( 'Friend', 'personal-crm' ),
-			'colleague'    => __( 'Colleague', 'personal-crm' ),
-			'acquaintance' => __( 'Acquaintance', 'personal-crm' ),
-			'ex'           => __( 'Ex', 'personal-crm' ),
+			'partner'      => __( 'Partner', 'caelis' ),
+			'spouse'       => __( 'Spouse', 'caelis' ),
+			'friend'       => __( 'Friend', 'caelis' ),
+			'colleague'    => __( 'Colleague', 'caelis' ),
+			'acquaintance' => __( 'Acquaintance', 'caelis' ),
+			'ex'           => __( 'Ex', 'caelis' ),
 
 			// Family - immediate
-			'parent'       => __( 'Parent', 'personal-crm' ),
-			'child'        => __( 'Child', 'personal-crm' ),
-			'sibling'      => __( 'Sibling', 'personal-crm' ),
+			'parent'       => __( 'Parent', 'caelis' ),
+			'child'        => __( 'Child', 'caelis' ),
+			'sibling'      => __( 'Sibling', 'caelis' ),
 
 			// Family - extended
-			'grandparent'  => __( 'Grandparent', 'personal-crm' ),
-			'grandchild'   => __( 'Grandchild', 'personal-crm' ),
-			'uncle'        => __( 'Uncle', 'personal-crm' ),
-			'aunt'         => __( 'Aunt', 'personal-crm' ),
-			'nephew'       => __( 'Nephew', 'personal-crm' ),
-			'niece'        => __( 'Niece', 'personal-crm' ),
-			'cousin'       => __( 'Cousin', 'personal-crm' ),
+			'grandparent'  => __( 'Grandparent', 'caelis' ),
+			'grandchild'   => __( 'Grandchild', 'caelis' ),
+			'uncle'        => __( 'Uncle', 'caelis' ),
+			'aunt'         => __( 'Aunt', 'caelis' ),
+			'nephew'       => __( 'Nephew', 'caelis' ),
+			'niece'        => __( 'Niece', 'caelis' ),
+			'cousin'       => __( 'Cousin', 'caelis' ),
 
 			// Family - step/in-law
-			'stepparent'   => __( 'Stepparent', 'personal-crm' ),
-			'stepchild'    => __( 'Stepchild', 'personal-crm' ),
-			'stepsibling'  => __( 'Stepsibling', 'personal-crm' ),
-			'inlaw'        => __( 'In-law', 'personal-crm' ),
+			'stepparent'   => __( 'Stepparent', 'caelis' ),
+			'stepchild'    => __( 'Stepchild', 'caelis' ),
+			'stepsibling'  => __( 'Stepsibling', 'caelis' ),
+			'inlaw'        => __( 'In-law', 'caelis' ),
 
 			// Family - other
-			'godparent'    => __( 'Godparent', 'personal-crm' ),
-			'godchild'     => __( 'Godchild', 'personal-crm' ),
+			'godparent'    => __( 'Godparent', 'caelis' ),
+			'godchild'     => __( 'Godchild', 'caelis' ),
 
 			// Professional
-			'boss'         => __( 'Boss', 'personal-crm' ),
-			'subordinate'  => __( 'Subordinate', 'personal-crm' ),
-			'mentor'       => __( 'Mentor', 'personal-crm' ),
-			'mentee'       => __( 'Mentee', 'personal-crm' ),
+			'boss'         => __( 'Boss', 'caelis' ),
+			'subordinate'  => __( 'Subordinate', 'caelis' ),
+			'mentor'       => __( 'Mentor', 'caelis' ),
+			'mentee'       => __( 'Mentee', 'caelis' ),
 		);
 
 		foreach ( $defaults as $slug => $name ) {
@@ -417,58 +417,58 @@ class PRM_Taxonomies {
 	private function add_default_date_types() {
 		$defaults = array(
 			// Core types
-			'birthday'                => __( 'Birthday', 'personal-crm' ),
-			'memorial'                => __( 'Memorial', 'personal-crm' ),
-			'first-met'               => __( 'First Met', 'personal-crm' ),
+			'birthday'                => __( 'Birthday', 'caelis' ),
+			'memorial'                => __( 'Memorial', 'caelis' ),
+			'first-met'               => __( 'First Met', 'caelis' ),
 
 			// Family & relationships (Monica category 2)
-			'new-relationship'        => __( 'New Relationship', 'personal-crm' ),
-			'engagement'              => __( 'Engagement', 'personal-crm' ),
-			'wedding'                 => __( 'Wedding', 'personal-crm' ),
-			'marriage'                => __( 'Marriage', 'personal-crm' ),
-			'expecting-a-baby'        => __( 'Expecting a Baby', 'personal-crm' ),
-			'new-child'               => __( 'New Child', 'personal-crm' ),
-			'new-family-member'       => __( 'New Family Member', 'personal-crm' ),
-			'new-pet'                 => __( 'New Pet', 'personal-crm' ),
-			'end-of-relationship'     => __( 'End of Relationship', 'personal-crm' ),
-			'loss-of-a-loved-one'     => __( 'Loss of a Loved One', 'personal-crm' ),
+			'new-relationship'        => __( 'New Relationship', 'caelis' ),
+			'engagement'              => __( 'Engagement', 'caelis' ),
+			'wedding'                 => __( 'Wedding', 'caelis' ),
+			'marriage'                => __( 'Marriage', 'caelis' ),
+			'expecting-a-baby'        => __( 'Expecting a Baby', 'caelis' ),
+			'new-child'               => __( 'New Child', 'caelis' ),
+			'new-family-member'       => __( 'New Family Member', 'caelis' ),
+			'new-pet'                 => __( 'New Pet', 'caelis' ),
+			'end-of-relationship'     => __( 'End of Relationship', 'caelis' ),
+			'loss-of-a-loved-one'     => __( 'Loss of a Loved One', 'caelis' ),
 
 			// Work & education (Monica category 1)
-			'new-job'                 => __( 'New Job', 'personal-crm' ),
-			'retirement'              => __( 'Retirement', 'personal-crm' ),
-			'new-school'              => __( 'New School', 'personal-crm' ),
-			'study-abroad'            => __( 'Study Abroad', 'personal-crm' ),
-			'volunteer-work'          => __( 'Volunteer Work', 'personal-crm' ),
-			'published-book-or-paper' => __( 'Published Book or Paper', 'personal-crm' ),
-			'military-service'        => __( 'Military Service', 'personal-crm' ),
+			'new-job'                 => __( 'New Job', 'caelis' ),
+			'retirement'              => __( 'Retirement', 'caelis' ),
+			'new-school'              => __( 'New School', 'caelis' ),
+			'study-abroad'            => __( 'Study Abroad', 'caelis' ),
+			'volunteer-work'          => __( 'Volunteer Work', 'caelis' ),
+			'published-book-or-paper' => __( 'Published Book or Paper', 'caelis' ),
+			'military-service'        => __( 'Military Service', 'caelis' ),
 
 			// Home & living (Monica category 3)
-			'moved'                   => __( 'Moved', 'personal-crm' ),
-			'bought-a-home'           => __( 'Bought a Home', 'personal-crm' ),
-			'home-improvement'        => __( 'Home Improvement', 'personal-crm' ),
-			'holidays'                => __( 'Holidays', 'personal-crm' ),
-			'new-vehicle'             => __( 'New Vehicle', 'personal-crm' ),
-			'new-roommate'            => __( 'New Roommate', 'personal-crm' ),
+			'moved'                   => __( 'Moved', 'caelis' ),
+			'bought-a-home'           => __( 'Bought a Home', 'caelis' ),
+			'home-improvement'        => __( 'Home Improvement', 'caelis' ),
+			'holidays'                => __( 'Holidays', 'caelis' ),
+			'new-vehicle'             => __( 'New Vehicle', 'caelis' ),
+			'new-roommate'            => __( 'New Roommate', 'caelis' ),
 
 			// Health & wellness (Monica category 4)
-			'overcame-an-illness'     => __( 'Overcame an Illness', 'personal-crm' ),
-			'quit-a-habit'            => __( 'Quit a Habit', 'personal-crm' ),
-			'new-eating-habits'       => __( 'New Eating Habits', 'personal-crm' ),
-			'weight-loss'             => __( 'Weight Loss', 'personal-crm' ),
-			'surgery'                 => __( 'Surgery', 'personal-crm' ),
+			'overcame-an-illness'     => __( 'Overcame an Illness', 'caelis' ),
+			'quit-a-habit'            => __( 'Quit a Habit', 'caelis' ),
+			'new-eating-habits'       => __( 'New Eating Habits', 'caelis' ),
+			'weight-loss'             => __( 'Weight Loss', 'caelis' ),
+			'surgery'                 => __( 'Surgery', 'caelis' ),
 
 			// Travel & experiences (Monica category 5)
-			'new-sport'               => __( 'New Sport', 'personal-crm' ),
-			'new-hobby'               => __( 'New Hobby', 'personal-crm' ),
-			'new-instrument'          => __( 'New Instrument', 'personal-crm' ),
-			'new-language'            => __( 'New Language', 'personal-crm' ),
-			'travel'                  => __( 'Travel', 'personal-crm' ),
-			'achievement-or-award'    => __( 'Achievement or Award', 'personal-crm' ),
-			'first-word'              => __( 'First Word', 'personal-crm' ),
-			'first-kiss'              => __( 'First Kiss', 'personal-crm' ),
+			'new-sport'               => __( 'New Sport', 'caelis' ),
+			'new-hobby'               => __( 'New Hobby', 'caelis' ),
+			'new-instrument'          => __( 'New Instrument', 'caelis' ),
+			'new-language'            => __( 'New Language', 'caelis' ),
+			'travel'                  => __( 'Travel', 'caelis' ),
+			'achievement-or-award'    => __( 'Achievement or Award', 'caelis' ),
+			'first-word'              => __( 'First Word', 'caelis' ),
+			'first-kiss'              => __( 'First Kiss', 'caelis' ),
 
 			// Fallback
-			'other'                   => __( 'Other', 'personal-crm' ),
+			'other'                   => __( 'Other', 'caelis' ),
 		);
 
 		foreach ( $defaults as $slug => $name ) {

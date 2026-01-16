@@ -78,20 +78,20 @@ class PRM_Google_Contacts_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$csv_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $csv_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Parse CSV to validate and get summary
 		$contacts = $this->parse_csv( $csv_content );
 
 		if ( empty( $contacts ) ) {
-			return new WP_Error( 'invalid_format', __( 'No valid contacts found in CSV. Make sure you exported from Google Contacts.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_format', __( 'No valid contacts found in CSV. Make sure you exported from Google Contacts.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Check for required Google Contacts columns (supports both old and new format)
@@ -113,7 +113,7 @@ class PRM_Google_Contacts_Import {
 		}
 
 		if ( ! $has_name_columns && ! in_array( 'Name', $this->headers ) ) {
-			return new WP_Error( 'invalid_format', __( 'This doesn\'t appear to be a Google Contacts export. Missing name columns.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_format', __( 'This doesn\'t appear to be a Google Contacts export. Missing name columns.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$summary    = $this->get_import_summary( $contacts );
@@ -302,13 +302,13 @@ class PRM_Google_Contacts_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$csv_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $csv_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Get user decisions for duplicates (passed as JSON string in 'decisions' field)
@@ -665,10 +665,10 @@ class PRM_Google_Contacts_Import {
 			return sprintf( '%s-%02d-%02d', $match[3], $match[2], $match[1] );
 		}
 
-		// Try strtotime as fallback
+		// Try strtotime as fallback.
 		$timestamp = strtotime( $date );
 		if ( $timestamp ) {
-			return date( 'Y-m-d', $timestamp );
+			return gmdate( 'Y-m-d', $timestamp );
 		}
 
 		return '';
@@ -706,7 +706,7 @@ class PRM_Google_Contacts_Import {
 			return;
 		}
 
-		$title = sprintf( __( "%s's Birthday", 'personal-crm' ), $full_name );
+		$title = sprintf( __( "%s's Birthday", 'caelis' ), $full_name );
 
 		$date_post_id = wp_insert_post(
 			array(

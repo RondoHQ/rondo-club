@@ -32,18 +32,18 @@ class PRM_Post_Types {
 	 */
 	private function register_workspace_post_type() {
 		$labels = array(
-			'name'               => _x( 'Workspaces', 'Post type general name', 'personal-crm' ),
-			'singular_name'      => _x( 'Workspace', 'Post type singular name', 'personal-crm' ),
-			'menu_name'          => _x( 'Workspaces', 'Admin Menu text', 'personal-crm' ),
-			'add_new'            => __( 'Add New', 'personal-crm' ),
-			'add_new_item'       => __( 'Add New Workspace', 'personal-crm' ),
-			'edit_item'          => __( 'Edit Workspace', 'personal-crm' ),
-			'new_item'           => __( 'New Workspace', 'personal-crm' ),
-			'view_item'          => __( 'View Workspace', 'personal-crm' ),
-			'search_items'       => __( 'Search Workspaces', 'personal-crm' ),
-			'not_found'          => __( 'No workspaces found', 'personal-crm' ),
-			'not_found_in_trash' => __( 'No workspaces found in Trash', 'personal-crm' ),
-			'all_items'          => __( 'All Workspaces', 'personal-crm' ),
+			'name'               => _x( 'Workspaces', 'Post type general name', 'caelis' ),
+			'singular_name'      => _x( 'Workspace', 'Post type singular name', 'caelis' ),
+			'menu_name'          => _x( 'Workspaces', 'Admin Menu text', 'caelis' ),
+			'add_new'            => __( 'Add New', 'caelis' ),
+			'add_new_item'       => __( 'Add New Workspace', 'caelis' ),
+			'edit_item'          => __( 'Edit Workspace', 'caelis' ),
+			'new_item'           => __( 'New Workspace', 'caelis' ),
+			'view_item'          => __( 'View Workspace', 'caelis' ),
+			'search_items'       => __( 'Search Workspaces', 'caelis' ),
+			'not_found'          => __( 'No workspaces found', 'caelis' ),
+			'not_found_in_trash' => __( 'No workspaces found in Trash', 'caelis' ),
+			'all_items'          => __( 'All Workspaces', 'caelis' ),
 		);
 
 		$args = array(
@@ -75,18 +75,18 @@ class PRM_Post_Types {
 	 */
 	private function register_workspace_invite_post_type() {
 		$labels = array(
-			'name'               => _x( 'Workspace Invites', 'Post type general name', 'personal-crm' ),
-			'singular_name'      => _x( 'Workspace Invite', 'Post type singular name', 'personal-crm' ),
-			'menu_name'          => _x( 'Invites', 'Admin Menu text', 'personal-crm' ),
-			'add_new'            => __( 'Add New', 'personal-crm' ),
-			'add_new_item'       => __( 'Add New Invite', 'personal-crm' ),
-			'edit_item'          => __( 'Edit Invite', 'personal-crm' ),
-			'new_item'           => __( 'New Invite', 'personal-crm' ),
-			'view_item'          => __( 'View Invite', 'personal-crm' ),
-			'search_items'       => __( 'Search Invites', 'personal-crm' ),
-			'not_found'          => __( 'No invites found', 'personal-crm' ),
-			'not_found_in_trash' => __( 'No invites found in Trash', 'personal-crm' ),
-			'all_items'          => __( 'All Invites', 'personal-crm' ),
+			'name'               => _x( 'Workspace Invites', 'Post type general name', 'caelis' ),
+			'singular_name'      => _x( 'Workspace Invite', 'Post type singular name', 'caelis' ),
+			'menu_name'          => _x( 'Invites', 'Admin Menu text', 'caelis' ),
+			'add_new'            => __( 'Add New', 'caelis' ),
+			'add_new_item'       => __( 'Add New Invite', 'caelis' ),
+			'edit_item'          => __( 'Edit Invite', 'caelis' ),
+			'new_item'           => __( 'New Invite', 'caelis' ),
+			'view_item'          => __( 'View Invite', 'caelis' ),
+			'search_items'       => __( 'Search Invites', 'caelis' ),
+			'not_found'          => __( 'No invites found', 'caelis' ),
+			'not_found_in_trash' => __( 'No invites found in Trash', 'caelis' ),
+			'all_items'          => __( 'All Invites', 'caelis' ),
 		);
 
 		$args = array(
@@ -112,18 +112,18 @@ class PRM_Post_Types {
 	 */
 	private function register_person_post_type() {
 		$labels = array(
-			'name'               => _x( 'People', 'Post type general name', 'personal-crm' ),
-			'singular_name'      => _x( 'Person', 'Post type singular name', 'personal-crm' ),
-			'menu_name'          => _x( 'People', 'Admin Menu text', 'personal-crm' ),
-			'add_new'            => __( 'Add New', 'personal-crm' ),
-			'add_new_item'       => __( 'Add New Person', 'personal-crm' ),
-			'edit_item'          => __( 'Edit Person', 'personal-crm' ),
-			'new_item'           => __( 'New Person', 'personal-crm' ),
-			'view_item'          => __( 'View Person', 'personal-crm' ),
-			'search_items'       => __( 'Search People', 'personal-crm' ),
-			'not_found'          => __( 'No people found', 'personal-crm' ),
-			'not_found_in_trash' => __( 'No people found in Trash', 'personal-crm' ),
-			'all_items'          => __( 'All People', 'personal-crm' ),
+			'name'               => _x( 'People', 'Post type general name', 'caelis' ),
+			'singular_name'      => _x( 'Person', 'Post type singular name', 'caelis' ),
+			'menu_name'          => _x( 'People', 'Admin Menu text', 'caelis' ),
+			'add_new'            => __( 'Add New', 'caelis' ),
+			'add_new_item'       => __( 'Add New Person', 'caelis' ),
+			'edit_item'          => __( 'Edit Person', 'caelis' ),
+			'new_item'           => __( 'New Person', 'caelis' ),
+			'view_item'          => __( 'View Person', 'caelis' ),
+			'search_items'       => __( 'Search People', 'caelis' ),
+			'not_found'          => __( 'No people found', 'caelis' ),
+			'not_found_in_trash' => __( 'No people found in Trash', 'caelis' ),
+			'all_items'          => __( 'All People', 'caelis' ),
 		);
 
 		$args = array(
@@ -152,18 +152,18 @@ class PRM_Post_Types {
 	 */
 	private function register_company_post_type() {
 		$labels = array(
-			'name'               => _x( 'Organizations', 'Post type general name', 'personal-crm' ),
-			'singular_name'      => _x( 'Organization', 'Post type singular name', 'personal-crm' ),
-			'menu_name'          => _x( 'Organizations', 'Admin Menu text', 'personal-crm' ),
-			'add_new'            => __( 'Add New', 'personal-crm' ),
-			'add_new_item'       => __( 'Add New Organization', 'personal-crm' ),
-			'edit_item'          => __( 'Edit Organization', 'personal-crm' ),
-			'new_item'           => __( 'New Organization', 'personal-crm' ),
-			'view_item'          => __( 'View Organization', 'personal-crm' ),
-			'search_items'       => __( 'Search Organizations', 'personal-crm' ),
-			'not_found'          => __( 'No organizations found', 'personal-crm' ),
-			'not_found_in_trash' => __( 'No organizations found in Trash', 'personal-crm' ),
-			'all_items'          => __( 'All Organizations', 'personal-crm' ),
+			'name'               => _x( 'Organizations', 'Post type general name', 'caelis' ),
+			'singular_name'      => _x( 'Organization', 'Post type singular name', 'caelis' ),
+			'menu_name'          => _x( 'Organizations', 'Admin Menu text', 'caelis' ),
+			'add_new'            => __( 'Add New', 'caelis' ),
+			'add_new_item'       => __( 'Add New Organization', 'caelis' ),
+			'edit_item'          => __( 'Edit Organization', 'caelis' ),
+			'new_item'           => __( 'New Organization', 'caelis' ),
+			'view_item'          => __( 'View Organization', 'caelis' ),
+			'search_items'       => __( 'Search Organizations', 'caelis' ),
+			'not_found'          => __( 'No organizations found', 'caelis' ),
+			'not_found_in_trash' => __( 'No organizations found in Trash', 'caelis' ),
+			'all_items'          => __( 'All Organizations', 'caelis' ),
 		);
 
 		$args = array(
@@ -192,18 +192,18 @@ class PRM_Post_Types {
 	 */
 	private function register_important_date_post_type() {
 		$labels = array(
-			'name'               => _x( 'Important Dates', 'Post type general name', 'personal-crm' ),
-			'singular_name'      => _x( 'Important Date', 'Post type singular name', 'personal-crm' ),
-			'menu_name'          => _x( 'Dates', 'Admin Menu text', 'personal-crm' ),
-			'add_new'            => __( 'Add New', 'personal-crm' ),
-			'add_new_item'       => __( 'Add New Date', 'personal-crm' ),
-			'edit_item'          => __( 'Edit Date', 'personal-crm' ),
-			'new_item'           => __( 'New Date', 'personal-crm' ),
-			'view_item'          => __( 'View Date', 'personal-crm' ),
-			'search_items'       => __( 'Search Dates', 'personal-crm' ),
-			'not_found'          => __( 'No dates found', 'personal-crm' ),
-			'not_found_in_trash' => __( 'No dates found in Trash', 'personal-crm' ),
-			'all_items'          => __( 'All Dates', 'personal-crm' ),
+			'name'               => _x( 'Important Dates', 'Post type general name', 'caelis' ),
+			'singular_name'      => _x( 'Important Date', 'Post type singular name', 'caelis' ),
+			'menu_name'          => _x( 'Dates', 'Admin Menu text', 'caelis' ),
+			'add_new'            => __( 'Add New', 'caelis' ),
+			'add_new_item'       => __( 'Add New Date', 'caelis' ),
+			'edit_item'          => __( 'Edit Date', 'caelis' ),
+			'new_item'           => __( 'New Date', 'caelis' ),
+			'view_item'          => __( 'View Date', 'caelis' ),
+			'search_items'       => __( 'Search Dates', 'caelis' ),
+			'not_found'          => __( 'No dates found', 'caelis' ),
+			'not_found_in_trash' => __( 'No dates found in Trash', 'caelis' ),
+			'all_items'          => __( 'All Dates', 'caelis' ),
 		);
 
 		$args = array(
@@ -237,36 +237,36 @@ class PRM_Post_Types {
 		register_post_status(
 			'prm_open',
 			array(
-				'label'                     => _x( 'Open', 'Todo status', 'personal-crm' ),
+				'label'                     => _x( 'Open', 'Todo status', 'caelis' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Open <span class="count">(%s)</span>', 'Open <span class="count">(%s)</span>', 'personal-crm' ),
+				'label_count'               => _n_noop( 'Open <span class="count">(%s)</span>', 'Open <span class="count">(%s)</span>', 'caelis' ),
 			)
 		);
 
 		register_post_status(
 			'prm_awaiting',
 			array(
-				'label'                     => _x( 'Awaiting Response', 'Todo status', 'personal-crm' ),
+				'label'                     => _x( 'Awaiting Response', 'Todo status', 'caelis' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Awaiting <span class="count">(%s)</span>', 'Awaiting <span class="count">(%s)</span>', 'personal-crm' ),
+				'label_count'               => _n_noop( 'Awaiting <span class="count">(%s)</span>', 'Awaiting <span class="count">(%s)</span>', 'caelis' ),
 			)
 		);
 
 		register_post_status(
 			'prm_completed',
 			array(
-				'label'                     => _x( 'Completed', 'Todo status', 'personal-crm' ),
+				'label'                     => _x( 'Completed', 'Todo status', 'caelis' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Completed <span class="count">(%s)</span>', 'Completed <span class="count">(%s)</span>', 'personal-crm' ),
+				'label_count'               => _n_noop( 'Completed <span class="count">(%s)</span>', 'Completed <span class="count">(%s)</span>', 'caelis' ),
 			)
 		);
 	}
@@ -280,18 +280,18 @@ class PRM_Post_Types {
 	 */
 	private function register_todo_post_type() {
 		$labels = array(
-			'name'               => _x( 'Todos', 'Post type general name', 'personal-crm' ),
-			'singular_name'      => _x( 'Todo', 'Post type singular name', 'personal-crm' ),
-			'menu_name'          => _x( 'Todos', 'Admin Menu text', 'personal-crm' ),
-			'add_new'            => __( 'Add New', 'personal-crm' ),
-			'add_new_item'       => __( 'Add New Todo', 'personal-crm' ),
-			'edit_item'          => __( 'Edit Todo', 'personal-crm' ),
-			'new_item'           => __( 'New Todo', 'personal-crm' ),
-			'view_item'          => __( 'View Todo', 'personal-crm' ),
-			'search_items'       => __( 'Search Todos', 'personal-crm' ),
-			'not_found'          => __( 'No todos found', 'personal-crm' ),
-			'not_found_in_trash' => __( 'No todos found in Trash', 'personal-crm' ),
-			'all_items'          => __( 'All Todos', 'personal-crm' ),
+			'name'               => _x( 'Todos', 'Post type general name', 'caelis' ),
+			'singular_name'      => _x( 'Todo', 'Post type singular name', 'caelis' ),
+			'menu_name'          => _x( 'Todos', 'Admin Menu text', 'caelis' ),
+			'add_new'            => __( 'Add New', 'caelis' ),
+			'add_new_item'       => __( 'Add New Todo', 'caelis' ),
+			'edit_item'          => __( 'Edit Todo', 'caelis' ),
+			'new_item'           => __( 'New Todo', 'caelis' ),
+			'view_item'          => __( 'View Todo', 'caelis' ),
+			'search_items'       => __( 'Search Todos', 'caelis' ),
+			'not_found'          => __( 'No todos found', 'caelis' ),
+			'not_found_in_trash' => __( 'No todos found in Trash', 'caelis' ),
+			'all_items'          => __( 'All Todos', 'caelis' ),
 		);
 
 		$args = array(
@@ -324,18 +324,18 @@ class PRM_Post_Types {
 	 */
 	private function register_calendar_event_post_type() {
 		$labels = array(
-			'name'               => _x( 'Calendar Events', 'Post type general name', 'personal-crm' ),
-			'singular_name'      => _x( 'Calendar Event', 'Post type singular name', 'personal-crm' ),
-			'menu_name'          => _x( 'Calendar Events', 'Admin Menu text', 'personal-crm' ),
-			'add_new'            => __( 'Add New', 'personal-crm' ),
-			'add_new_item'       => __( 'Add New Event', 'personal-crm' ),
-			'edit_item'          => __( 'Edit Event', 'personal-crm' ),
-			'new_item'           => __( 'New Event', 'personal-crm' ),
-			'view_item'          => __( 'View Event', 'personal-crm' ),
-			'search_items'       => __( 'Search Events', 'personal-crm' ),
-			'not_found'          => __( 'No events found', 'personal-crm' ),
-			'not_found_in_trash' => __( 'No events found in Trash', 'personal-crm' ),
-			'all_items'          => __( 'All Events', 'personal-crm' ),
+			'name'               => _x( 'Calendar Events', 'Post type general name', 'caelis' ),
+			'singular_name'      => _x( 'Calendar Event', 'Post type singular name', 'caelis' ),
+			'menu_name'          => _x( 'Calendar Events', 'Admin Menu text', 'caelis' ),
+			'add_new'            => __( 'Add New', 'caelis' ),
+			'add_new_item'       => __( 'Add New Event', 'caelis' ),
+			'edit_item'          => __( 'Edit Event', 'caelis' ),
+			'new_item'           => __( 'New Event', 'caelis' ),
+			'view_item'          => __( 'View Event', 'caelis' ),
+			'search_items'       => __( 'Search Events', 'caelis' ),
+			'not_found'          => __( 'No events found', 'caelis' ),
+			'not_found_in_trash' => __( 'No events found in Trash', 'caelis' ),
+			'all_items'          => __( 'All Events', 'caelis' ),
 		);
 
 		$args = array(

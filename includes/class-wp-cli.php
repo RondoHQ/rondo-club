@@ -177,7 +177,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					}
 				}
 
-				if ( $user_notifications_sent === 0 ) {
+				if ( 0 === $user_notifications_sent ) {
 					WP_CLI::log( sprintf( '  ⚠ No notification channels enabled for user %s', $user->display_name ) );
 				}
 
@@ -329,7 +329,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$address_entries = array_filter(
 					$contact_info,
 					function ( $item ) {
-						return isset( $item['contact_type'] ) && $item['contact_type'] === 'address';
+						return isset( $item['contact_type'] ) && 'address' === $item['contact_type'];
 					}
 				);
 
@@ -353,7 +353,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$updated_contact_info = array();
 
 				foreach ( $contact_info as $item ) {
-					if ( isset( $item['contact_type'] ) && $item['contact_type'] === 'address' ) {
+					if ( isset( $item['contact_type'] ) && 'address' === $item['contact_type'] ) {
 						// Migrate to addresses field
 						$new_addresses[] = array(
 							'address_label' => $item['contact_label'] ?? '',
@@ -440,7 +440,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				return;
 			}
 
-			if ( $person->post_type !== 'person' ) {
+			if ( 'person' !== $person->post_type ) {
 				WP_CLI::error( sprintf( 'Post ID %d is not a person (it is a %s).', $person_id, $person->post_type ) );
 				return;
 			}
@@ -458,7 +458,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$file_path = $assoc_args['output'];
 				$result    = file_put_contents( $file_path, $vcard );
 
-				if ( $result === false ) {
+				if ( false === $result ) {
 					WP_CLI::error( sprintf( 'Failed to write to file: %s', $file_path ) );
 					return;
 				}
@@ -592,9 +592,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::log( 'DRY RUN MODE - No changes will be made' );
 			}
 
-			// Determine which post types to process
+			// Determine which post types to process.
 			$post_types = array();
-			if ( $post_type === 'all' ) {
+			if ( 'all' === $post_type ) {
 				$post_types = array( 'person', 'company', 'important_date' );
 			} elseif ( in_array( $post_type, array( 'person', 'company', 'important_date' ) ) ) {
 				$post_types = array( $post_type );
@@ -770,7 +770,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$total_skipped = 0;
 
 			foreach ( $results as $type => $result ) {
-				$label  = $type === 'person' ? 'People' : ( $type === 'company' ? 'Companies' : 'Important Dates' );
+				$label  = 'person' === $type ? 'People' : ( 'company' === $type ? 'Companies' : 'Important Dates' );
 				$action = $dry_run ? 'Would update' : 'Updated';
 				WP_CLI::log(
 					sprintf(
@@ -861,7 +861,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					}
 				}
 
-				$label = $post_type === 'person' ? 'People' : ( $post_type === 'company' ? 'Companies' : 'Important Dates' );
+				$label = 'person' === $post_type ? 'People' : ( 'company' === $post_type ? 'Companies' : 'Important Dates' );
 
 				if ( $without_visibility > 0 ) {
 					WP_CLI::log(
@@ -934,7 +934,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				)
 			);
 
-			$label = $post_type === 'person' ? 'people' : ( $post_type === 'company' ? 'companies' : 'important dates' );
+			$label = 'person' === $post_type ? 'people' : ( 'company' === $post_type ? 'companies' : 'important dates' );
 
 			if ( empty( $post_ids ) ) {
 				WP_CLI::log( sprintf( 'No %s found.', $label ) );
@@ -1173,52 +1173,59 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		private function generate_date_title( $post_id ) {
 			// Get date type from taxonomy
 			$date_types = wp_get_post_terms( $post_id, 'date_type', array( 'fields' => 'names' ) );
-			$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'personal-crm' );
+			$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'caelis' );
 
 			// Get related people
 			$people = get_field( 'related_people', $post_id ) ?: array();
 
 			if ( empty( $people ) ) {
-				return sprintf( __( 'Unnamed %s', 'personal-crm' ), $type_label );
+				// translators: %s is the date type label (e.g., "Birthday", "Anniversary").
+				return sprintf( __( 'Unnamed %s', 'caelis' ), $type_label );
 			}
 
-			// Get full names of related people
+			// Get full names of related people.
 			$names = array();
 			foreach ( $people as $person ) {
 				$person_id = is_object( $person ) ? $person->ID : $person;
 				$full_name = html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' );
-				if ( $full_name && $full_name !== __( 'Unnamed Person', 'personal-crm' ) ) {
+				if ( $full_name && __( 'Unnamed Person', 'caelis' ) !== $full_name ) {
 					$names[] = $full_name;
 				}
 			}
 
 			if ( empty( $names ) ) {
-				return sprintf( __( 'Unnamed %s', 'personal-crm' ), $type_label );
+				// translators: %s is the date type label (e.g., "Birthday", "Anniversary").
+				return sprintf( __( 'Unnamed %s', 'caelis' ), $type_label );
 			}
 
 			$count = count( $names );
 
-			// Get date type slug to check for wedding
+			// Get date type slug to check for wedding.
 			$date_type_slugs = wp_get_post_terms( $post_id, 'date_type', array( 'fields' => 'slugs' ) );
 			$type_slug       = ! empty( $date_type_slugs ) ? $date_type_slugs[0] : '';
 
-			// Special handling for wedding type
-			if ( $type_slug === 'wedding' ) {
+			// Special handling for wedding type.
+			if ( 'wedding' === $type_slug ) {
 				if ( $count >= 2 ) {
-					return sprintf( __( 'Wedding of %1$s & %2$s', 'personal-crm' ), $names[0], $names[1] );
-				} elseif ( $count === 1 ) {
-					return sprintf( __( 'Wedding of %s', 'personal-crm' ), $names[0] );
+					// translators: %1$s and %2$s are the names of the people getting married.
+					return sprintf( __( 'Wedding of %1$s & %2$s', 'caelis' ), $names[0], $names[1] );
+				} elseif ( 1 === $count ) {
+					// translators: %s is the name of the person getting married.
+					return sprintf( __( 'Wedding of %s', 'caelis' ), $names[0] );
 				}
 			}
 
-			if ( $count === 1 ) {
-				return sprintf( __( "%1\$s's %2\$s", 'personal-crm' ), $names[0], $type_label );
-			} elseif ( $count === 2 ) {
-				return sprintf( __( "%1\$s & %2\$s's %3\$s", 'personal-crm' ), $names[0], $names[1], $type_label );
+			if ( 1 === $count ) {
+				// translators: %1$s is person name, %2$s is date type (e.g., "John's Birthday").
+				return sprintf( __( "%1\$s's %2\$s", 'caelis' ), $names[0], $type_label );
+			} elseif ( 2 === $count ) {
+				// translators: %1$s and %2$s are person names, %3$s is date type (e.g., "John & Jane's Anniversary").
+				return sprintf( __( "%1\$s & %2\$s's %3\$s", 'caelis' ), $names[0], $names[1], $type_label );
 			} else {
 				$first_two = implode( ', ', array_slice( $names, 0, 2 ) );
 				$remaining = $count - 2;
-				return sprintf( __( '%1$s +%2$d %3$s', 'personal-crm' ), $first_two, $remaining, $type_label );
+				// translators: %1$s is first two names, %2$d is remaining count, %3$s is date type.
+				return sprintf( __( '%1$s +%2$d %3$s', 'caelis' ), $first_two, $remaining, $type_label );
 			}
 		}
 	}
@@ -1290,7 +1297,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$person_id = (int) $todo->comment_post_ID;
 				$person    = get_post( $person_id );
 
-				if ( ! $person || $person->post_type !== 'person' ) {
+				if ( ! $person || 'person' !== $person->post_type ) {
 					WP_CLI::warning(
 						sprintf(
 							'Skipping todo ID %d: linked to non-person post ID %d',
@@ -1568,7 +1575,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					foreach ( $user_result['connections'] as $conn ) {
 						++$total_connections;
 
-						if ( $conn['status'] === 'success' ) {
+						if ( 'success' === $conn['status'] ) {
 							WP_CLI::log(
 								sprintf(
 									'  [OK] Connection %s: %d events (%d created, %d updated)',
@@ -1635,9 +1642,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					$connection['user_id'] = $specific_user_id;
 
 					try {
-						if ( $provider === 'caldav' ) {
+						if ( 'caldav' === $provider ) {
 							$result = PRM_CalDAV_Provider::sync( $specific_user_id, $connection );
-						} elseif ( $provider === 'google' ) {
+						} elseif ( 'google' === $provider ) {
 							$result = PRM_Google_Calendar_Provider::sync( $specific_user_id, $connection );
 						} else {
 							WP_CLI::log( sprintf( '  [SKIP] Connection %s: unknown provider "%s"', $connection['id'], $provider ) );

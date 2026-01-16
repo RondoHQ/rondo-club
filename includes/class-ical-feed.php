@@ -195,7 +195,7 @@ class PRM_ICal_Feed {
 				'success'    => true,
 				'url'        => $url,
 				'webcal_url' => str_replace( array( 'https://', 'http://' ), 'webcal://', $url ),
-				'message'    => __( 'Your calendar URL has been regenerated. Update any calendar subscriptions with the new URL.', 'personal-crm' ),
+				'message'    => __( 'Your calendar URL has been regenerated. Update any calendar subscriptions with the new URL.', 'caelis' ),
 			)
 		);
 	}
@@ -314,9 +314,9 @@ class PRM_ICal_Feed {
 		// Format: YYYYMMDD for all-day events
 		$dtstart = str_replace( '-', '', $date_value );
 
-		// Calculate end date (next day for all-day events)
+		// Calculate end date (next day for all-day events).
 		$end_timestamp = strtotime( $date_value . ' +1 day' );
-		$dtend         = date( 'Ymd', $end_timestamp );
+		$dtend         = gmdate( 'Ymd', $end_timestamp );
 
 		// Generate UID
 		$uid = 'date-' . $date['id'] . '@' . $domain;

@@ -475,7 +475,7 @@ class PRM_Access_Control {
 			if ( ! PRM_User_Roles::is_user_approved( $user_id ) ) {
 				return new WP_Error(
 					'rest_forbidden',
-					__( 'Your account is pending approval. Please contact an administrator.', 'personal-crm' ),
+					__( 'Your account is pending approval. Please contact an administrator.', 'caelis' ),
 					array( 'status' => 403 )
 				);
 			}
@@ -485,7 +485,7 @@ class PRM_Access_Control {
 		if ( $post->post_status === 'trash' ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'This item has been deleted.', 'personal-crm' ),
+				__( 'This item has been deleted.', 'caelis' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -493,7 +493,7 @@ class PRM_Access_Control {
 		if ( ! $this->user_can_access_post( $post->ID, $user_id ) ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to access this item.', 'personal-crm' ),
+				__( 'You do not have permission to access this item.', 'caelis' ),
 				array( 'status' => 403 )
 			);
 		}

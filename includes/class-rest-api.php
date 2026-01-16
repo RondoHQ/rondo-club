@@ -392,7 +392,7 @@ class PRM_REST_API extends PRM_REST_Base {
 			return new WP_REST_Response(
 				array(
 					'success' => true,
-					'message' => __( 'Default relationship type configurations have been restored.', 'personal-crm' ),
+					'message' => __( 'Default relationship type configurations have been restored.', 'caelis' ),
 				),
 				200
 			);
@@ -400,7 +400,7 @@ class PRM_REST_API extends PRM_REST_Base {
 
 		return new WP_Error(
 			'restore_failed',
-			__( 'Failed to restore defaults.', 'personal-crm' ),
+			__( 'Failed to restore defaults.', 'caelis' ),
 			array( 'status' => 500 )
 		);
 	}
@@ -455,7 +455,7 @@ class PRM_REST_API extends PRM_REST_Base {
 			array(
 				'success'            => true,
 				'message'            => sprintf(
-					__( 'Processed %1$d user(s), sent %2$d notification(s).', 'personal-crm' ),
+					__( 'Processed %1$d user(s), sent %2$d notification(s).', 'caelis' ),
 					$users_processed,
 					$notifications_sent
 				),
@@ -538,13 +538,13 @@ class PRM_REST_API extends PRM_REST_Base {
 				$scheduled_users[] = array(
 					'user_id'            => $user_id,
 					'display_name'       => $user ? $user->display_name : "User $user_id",
-					'next_run'           => date( 'Y-m-d H:i:s', $next_run ),
+					'next_run'           => gmdate( 'Y-m-d H:i:s', $next_run ),
 					'next_run_timestamp' => $next_run,
 				);
 			}
 		}
 
-		// Check legacy cron (deprecated)
+		// Check legacy cron (deprecated).
 		$legacy_scheduled = wp_next_scheduled( 'prm_daily_reminder_check' );
 
 		return rest_ensure_response(
@@ -552,10 +552,10 @@ class PRM_REST_API extends PRM_REST_Base {
 				'total_users'           => count( $users_to_notify ),
 				'scheduled_users'       => count( $scheduled_users ),
 				'users'                 => $scheduled_users,
-				'current_time'          => date( 'Y-m-d H:i:s', time() ),
+				'current_time'          => gmdate( 'Y-m-d H:i:s', time() ),
 				'current_timestamp'     => time(),
-				'legacy_cron_scheduled' => $legacy_scheduled !== false,
-				'legacy_next_run'       => $legacy_scheduled ? date( 'Y-m-d H:i:s', $legacy_scheduled ) : null,
+				'legacy_cron_scheduled' => false !== $legacy_scheduled,
+				'legacy_next_run'       => $legacy_scheduled ? gmdate( 'Y-m-d H:i:s', $legacy_scheduled ) : null,
 			)
 		);
 	}
@@ -573,7 +573,7 @@ class PRM_REST_API extends PRM_REST_Base {
 			array(
 				'success'         => true,
 				'message'         => sprintf(
-					__( 'Successfully rescheduled reminder cron jobs for %d user(s).', 'personal-crm' ),
+					__( 'Successfully rescheduled reminder cron jobs for %d user(s).', 'caelis' ),
 					$scheduled_count
 				),
 				'users_scheduled' => $scheduled_count,
@@ -634,7 +634,7 @@ class PRM_REST_API extends PRM_REST_Base {
 			if ( empty( $webhook ) ) {
 				return new WP_Error(
 					'slack_webhook_required',
-					__( 'Slack webhook URL must be configured before enabling Slack notifications.', 'personal-crm' ),
+					__( 'Slack webhook URL must be configured before enabling Slack notifications.', 'caelis' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -661,7 +661,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		if ( ! preg_match( '/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $time ) ) {
 			return new WP_Error(
 				'invalid_time',
-				__( 'Invalid time format. Please use HH:MM format (e.g., 09:00).', 'personal-crm' ),
+				__( 'Invalid time format. Please use HH:MM format (e.g., 09:00).', 'caelis' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -677,7 +677,7 @@ class PRM_REST_API extends PRM_REST_Base {
 				array(
 					'success'           => true,
 					'notification_time' => $time,
-					'message'           => __( 'Notification time updated, but failed to reschedule cron job.', 'personal-crm' ),
+					'message'           => __( 'Notification time updated, but failed to reschedule cron job.', 'caelis' ),
 					'cron_error'        => $schedule_result->get_error_message(),
 				)
 			);
@@ -687,7 +687,7 @@ class PRM_REST_API extends PRM_REST_Base {
 			array(
 				'success'           => true,
 				'notification_time' => $time,
-				'message'           => __( 'Notification time updated and cron job rescheduled successfully.', 'personal-crm' ),
+				'message'           => __( 'Notification time updated and cron job rescheduled successfully.', 'caelis' ),
 			)
 		);
 	}
@@ -704,7 +704,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		if ( ! in_array( $preference, $valid_preferences, true ) ) {
 			return new WP_Error(
 				'invalid_preference',
-				__( 'Invalid mention notification preference.', 'personal-crm' ),
+				__( 'Invalid mention notification preference.', 'caelis' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -761,7 +761,7 @@ class PRM_REST_API extends PRM_REST_Base {
 			if ( ! in_array( $color_scheme, $valid_color_schemes, true ) ) {
 				return new WP_Error(
 					'invalid_color_scheme',
-					__( 'Invalid color scheme. Valid values: light, dark, system.', 'personal-crm' ),
+					__( 'Invalid color scheme. Valid values: light, dark, system.', 'caelis' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -773,7 +773,7 @@ class PRM_REST_API extends PRM_REST_Base {
 			if ( ! in_array( $accent_color, $valid_accent_colors, true ) ) {
 				return new WP_Error(
 					'invalid_accent_color',
-					__( 'Invalid accent color.', 'personal-crm' ),
+					__( 'Invalid accent color.', 'caelis' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -932,10 +932,10 @@ class PRM_REST_API extends PRM_REST_Base {
 		$build_time    = null;
 		$manifest_path = PRM_THEME_DIR . '/dist/.vite/manifest.json';
 		if ( file_exists( $manifest_path ) ) {
-			$build_time = date( 'c', filemtime( $manifest_path ) );
+			$build_time = gmdate( 'c', filemtime( $manifest_path ) );
 		} else {
-			// Fallback to current time for dev mode
-			$build_time = date( 'c' );
+			// Fallback to current time for dev mode.
+			$build_time = gmdate( 'c' );
 		}
 
 		return rest_ensure_response(
@@ -1208,13 +1208,13 @@ class PRM_REST_API extends PRM_REST_Base {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			return new WP_Error( 'not_logged_in', __( 'User is not logged in.', 'personal-crm' ), array( 'status' => 401 ) );
+			return new WP_Error( 'not_logged_in', __( 'User is not logged in.', 'caelis' ), array( 'status' => 401 ) );
 		}
 
 		$user = get_userdata( $user_id );
 
 		if ( ! $user ) {
-			return new WP_Error( 'user_not_found', __( 'User not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Get avatar URL
@@ -1277,7 +1277,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'success' => true,
-				'message' => __( 'User approved.', 'personal-crm' ),
+				'message' => __( 'User approved.', 'caelis' ),
 			)
 		);
 	}
@@ -1293,7 +1293,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'success' => true,
-				'message' => __( 'User denied.', 'personal-crm' ),
+				'message' => __( 'User denied.', 'caelis' ),
 			)
 		);
 	}
@@ -1308,7 +1308,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		if ( $user_id === get_current_user_id() ) {
 			return new WP_Error(
 				'cannot_delete_self',
-				__( 'You cannot delete your own account.', 'personal-crm' ),
+				__( 'You cannot delete your own account.', 'caelis' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1318,7 +1318,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		if ( ! $user ) {
 			return new WP_Error(
 				'user_not_found',
-				__( 'User not found.', 'personal-crm' ),
+				__( 'User not found.', 'caelis' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -1333,7 +1333,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		if ( ! $result ) {
 			return new WP_Error(
 				'delete_failed',
-				__( 'Failed to delete user.', 'personal-crm' ),
+				__( 'Failed to delete user.', 'caelis' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -1341,7 +1341,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'success' => true,
-				'message' => __( 'User and all related data deleted.', 'personal-crm' ),
+				'message' => __( 'User and all related data deleted.', 'caelis' ),
 			)
 		);
 	}

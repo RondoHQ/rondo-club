@@ -110,7 +110,7 @@ class PRM_Visibility {
 		}
 
 		// Default shared_by to current user
-		if ( $shared_by === null ) {
+		if ( null === $shared_by ) {
 			$shared_by = get_current_user_id();
 		}
 

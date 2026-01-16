@@ -44,7 +44,7 @@ class PRM_Auto_Title {
 		$full_name = trim( $first_name . ' ' . $last_name );
 
 		if ( empty( $full_name ) ) {
-			$full_name = __( 'Unnamed Person', 'personal-crm' );
+			$full_name = __( 'Unnamed Person', 'caelis' );
 		}
 
 		// Unhook to prevent infinite loop
@@ -118,13 +118,13 @@ class PRM_Auto_Title {
 	private function generate_date_title_from_fields( $post_id ) {
 		// Get date type from taxonomy
 		$date_types = wp_get_post_terms( $post_id, 'date_type', array( 'fields' => 'names' ) );
-		$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'personal-crm' );
+		$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'caelis' );
 
 		// Get related people
 		$people = get_field( 'related_people', $post_id ) ?: array();
 
 		if ( empty( $people ) ) {
-			return sprintf( __( 'Unnamed %s', 'personal-crm' ), $type_label );
+			return sprintf( __( 'Unnamed %s', 'caelis' ), $type_label );
 		}
 
 		// Get full names of related people
@@ -132,13 +132,13 @@ class PRM_Auto_Title {
 		foreach ( $people as $person ) {
 			$person_id = is_object( $person ) ? $person->ID : $person;
 			$full_name = html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' );
-			if ( $full_name && $full_name !== __( 'Unnamed Person', 'personal-crm' ) ) {
+			if ( $full_name && $full_name !== __( 'Unnamed Person', 'caelis' ) ) {
 				$names[] = $full_name;
 			}
 		}
 
 		if ( empty( $names ) ) {
-			return sprintf( __( 'Unnamed %s', 'personal-crm' ), $type_label );
+			return sprintf( __( 'Unnamed %s', 'caelis' ), $type_label );
 		}
 
 		$count = count( $names );
@@ -152,23 +152,23 @@ class PRM_Auto_Title {
 			if ( $count >= 2 ) {
 				// "Wedding of Person1 & Person2"
 				return sprintf(
-					__( 'Wedding of %1$s & %2$s', 'personal-crm' ),
+					__( 'Wedding of %1$s & %2$s', 'caelis' ),
 					$names[0],
 					$names[1]
 				);
 			} elseif ( $count === 1 ) {
 				// "Wedding of Person1" (fallback if only one person)
-				return sprintf( __( 'Wedding of %s', 'personal-crm' ), $names[0] );
+				return sprintf( __( 'Wedding of %s', 'caelis' ), $names[0] );
 			}
 		}
 
 		if ( $count === 1 ) {
 			// "Sarah's Birthday"
-			return sprintf( __( "%1\$s's %2\$s", 'personal-crm' ), $names[0], $type_label );
+			return sprintf( __( "%1\$s's %2\$s", 'caelis' ), $names[0], $type_label );
 		} elseif ( $count === 2 ) {
 			// "Tom & Lisa's Birthday"
 			return sprintf(
-				__( "%1\$s & %2\$s's %3\$s", 'personal-crm' ),
+				__( "%1\$s & %2\$s's %3\$s", 'caelis' ),
 				$names[0],
 				$names[1],
 				$type_label
@@ -178,7 +178,7 @@ class PRM_Auto_Title {
 			$first_two = implode( ', ', array_slice( $names, 0, 2 ) );
 			$remaining = $count - 2;
 			return sprintf(
-				__( '%1$s +%2$d %3$s', 'personal-crm' ),
+				__( '%1$s +%2$d %3$s', 'caelis' ),
 				$first_two,
 				$remaining,
 				$type_label
