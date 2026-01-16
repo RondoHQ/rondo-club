@@ -32,7 +32,8 @@ function prm_check_dependencies() {
 			'admin_notices',
 			function () use ( $missing ) {
 				$message = sprintf(
-					__( 'Caelis requires the following plugins: %s', 'personal-crm' ),
+					// translators: %s is a comma-separated list of plugin names.
+					__( 'Caelis requires the following plugins: %s', 'caelis' ),
 					implode( ', ', $missing )
 				);
 				echo '<div class="notice notice-error"><p>' . esc_html( $message ) . '</p></div>';
@@ -325,25 +326,27 @@ function prm_theme_enqueue_assets() {
 				wp_localize_script( 'prm-theme-script', 'prmConfig', prm_get_js_config() );
 			}
 		}
+	} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		// Development mode - load from Vite dev server.
+		add_action(
+			'wp_head',
+			function () {
+				// Vite HMR requires direct script tags, cannot use wp_enqueue_script.
+				// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript, WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo '<script type="module" src="http://localhost:5173/@vite/client"></script>';
+				// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript, WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo '<script type="module" src="http://localhost:5173/src/main.jsx"></script>';
+			}
+		);
 	} else {
-		// Development mode - load from Vite dev server
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			add_action(
-				'wp_head',
-				function () {
-					echo '<script type="module" src="http://localhost:5173/@vite/client"></script>';
-					echo '<script type="module" src="http://localhost:5173/src/main.jsx"></script>';
-				}
-			);
-		} else {
-			// Production mode but no build found - show error
-			add_action(
-				'wp_head',
-				function () {
-					echo '<script>console.error("Caelis: Build files not found. Please run npm run build.");</script>';
-				}
-			);
-		}
+		// Production mode but no build found - show error.
+		add_action(
+			'wp_head',
+			function () {
+				// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript, WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo '<script>console.error("Caelis: Build files not found. Please run npm run build.");</script>';
+			}
+		);
 	}
 }
 add_action( 'wp_enqueue_scripts', 'prm_theme_enqueue_assets' );
@@ -354,15 +357,15 @@ add_action( 'wp_enqueue_scripts', 'prm_theme_enqueue_assets' );
 function prm_get_js_config() {
 	$user = wp_get_current_user();
 
-	// Get build time from manifest file modification time
-	// This ensures every build produces a unique timestamp
+	// Get build time from manifest file modification time.
+	// This ensures every build produces a unique timestamp.
 	$build_time    = null;
 	$manifest_path = PRM_THEME_DIR . '/dist/.vite/manifest.json';
 	if ( file_exists( $manifest_path ) ) {
-		$build_time = date( 'c', filemtime( $manifest_path ) );
+		$build_time = gmdate( 'c', filemtime( $manifest_path ) );
 	} else {
-		// Fallback to current time for dev mode (Vite dev server)
-		$build_time = date( 'c' );
+		// Fallback to current time for dev mode (Vite dev server).
+		$build_time = gmdate( 'c' );
 	}
 
 	return array(
@@ -426,8 +429,8 @@ add_action( 'after_setup_theme', 'prm_theme_remove_admin_bar' );
  * Handles URLs like ?post_type=person&p=123 → /people/123
  */
 function prm_redirect_backend_urls() {
-	// Don't redirect admin, login, or API requests
-	if ( is_admin() || $GLOBALS['pagenow'] === 'wp-login.php' ) {
+	// Don't redirect admin, login, or API requests.
+	if ( is_admin() || 'wp-login.php' === $GLOBALS['pagenow'] ) {
 		return;
 	}
 
@@ -464,8 +467,8 @@ add_action( 'template_redirect', 'prm_redirect_backend_urls', 0 ); // Priority 0
  * Redirect all frontend requests to index.php (SPA)
  */
 function prm_theme_template_redirect() {
-	// Don't redirect admin, login, or API requests
-	if ( is_admin() || $GLOBALS['pagenow'] === 'wp-login.php' ) {
+	// Don't redirect admin, login, or API requests.
+	if ( is_admin() || 'wp-login.php' === $GLOBALS['pagenow'] ) {
 		return;
 	}
 
@@ -497,14 +500,14 @@ function prm_theme_template_redirect() {
 
 	$is_app_route = false;
 
-	// Check if it's the root path
-	if ( empty( $path ) || $path === '/' ) {
+	// Check if it's the root path.
+	if ( empty( $path ) || '/' === $path ) {
 		$is_app_route = true;
 	}
 
-	// Check if it starts with any of our app route prefixes
+	// Check if it starts with any of our app route prefixes.
 	foreach ( $app_routes as $route ) {
-		if ( $path === $route || strpos( $path, $route . '/' ) === 0 ) {
+		if ( $route === $path || 0 === strpos( $path, $route . '/' ) ) {
 			$is_app_route = true;
 			break;
 		}
@@ -601,9 +604,15 @@ add_action( 'delete_user', 'prm_user_deleted' );
 
 /**
  * Add type="module" to script tags
+ *
+ * @param string $tag    Script tag HTML.
+ * @param string $handle Script handle.
+ * @param string $src    Script source URL.
+ * @return string Modified script tag.
  */
 function prm_theme_script_type( $tag, $handle, $src ) {
-	if ( $handle === 'prm-theme-script' ) {
+	if ( 'prm-theme-script' === $handle ) {
+		// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript -- Modifying enqueued script tag.
 		return '<script type="module" src="' . esc_url( $src ) . '"></script>';
 	}
 	return $tag;
@@ -891,11 +900,21 @@ if ( file_exists( PRM_THEME_DIR . '/vendor/autoload.php' ) ) {
 /**
  * Modify registration confirmation message to include approval notice
  * Uses gettext filter to intercept WordPress core translation string
+ *
+ * @param string $translated_text Translated text.
+ * @param string $text            Original text.
+ * @param string $domain          Text domain.
+ * @return string Modified text.
  */
 function prm_registration_message_filter( $translated_text, $text, $domain ) {
-	// Only filter on login/registration pages
-	if ( ! is_admin() && ( isset( $_GET['action'] ) && $_GET['action'] === 'register' ) || ( isset( $_GET['checkemail'] ) && $_GET['checkemail'] === 'registered' ) ) {
-		if ( $text === 'Registration confirmation will be emailed to you.' ) {
+	// Only filter on login/registration pages.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking URL context only.
+	$is_register  = isset( $_GET['action'] ) && 'register' === $_GET['action'];
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking URL context only.
+	$is_confirmed = isset( $_GET['checkemail'] ) && 'registered' === $_GET['checkemail'];
+
+	if ( ! is_admin() && ( $is_register || $is_confirmed ) ) {
+		if ( 'Registration confirmation will be emailed to you.' === $text ) {
 			return 'Registration confirmation will be emailed to you. Your account is then subject to approval.';
 		}
 	}
@@ -905,9 +924,14 @@ add_filter( 'gettext', 'prm_registration_message_filter', 20, 3 );
 
 /**
  * Change "Register For This Site" to "Register for Caelis"
+ *
+ * @param string $translated_text Translated text.
+ * @param string $text            Original text.
+ * @param string $domain          Text domain.
+ * @return string Modified text.
  */
 function prm_change_register_notice_text( $translated_text, $text, $domain ) {
-	if ( $text === 'Register For This Site' ) {
+	if ( 'Register For This Site' === $text ) {
 		return 'Register for Caelis';
 	}
 	return $translated_text;
