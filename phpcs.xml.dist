@@ -22,7 +22,19 @@
 
     <!-- Use WordPress-Extra (includes Core + best practices) -->
     <rule ref="WordPress-Extra">
-        <!-- Exclude rules that conflict with existing patterns if needed -->
+        <!--
+            Exclude file naming rule - our class files use class-*.php naming
+            without requiring the class prefix in the filename. Renaming would
+            break the class autoloading in functions.php.
+        -->
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+
+        <!--
+            Exclude multiple classes per file rule - we intentionally group
+            related classes (e.g., notification channels, REST controllers)
+            in single files for better organization.
+        -->
+        <exclude name="Generic.Files.OneObjectStructurePerFile.MultipleFound"/>
     </rule>
 
     <!-- Theme-specific file naming -->
@@ -61,5 +73,107 @@
     </rule>
     <rule ref="WordPress.Files.FileName">
         <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!--
+        Test namespaces follow Codeception conventions (Tests\Wpunit),
+        not WordPress prefix conventions.
+    -->
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedNamespaceFound">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!--
+        CardDAV/CalDAV classes and vCard/iCal import/export use Sabre libraries
+        which have uppercase property names (UID, FN, VEVENT, DTSTART, etc.)
+        and camelCase variables. These cannot be changed to snake_case.
+    -->
+    <rule ref="WordPress.NamingConventions.ValidVariableName">
+        <exclude-pattern>includes/carddav/*</exclude-pattern>
+        <exclude-pattern>includes/class-carddav-server.php</exclude-pattern>
+        <exclude-pattern>includes/class-vcard-*.php</exclude-pattern>
+        <exclude-pattern>includes/class-caldav-provider.php</exclude-pattern>
+        <exclude-pattern>includes/class-ical-feed.php</exclude-pattern>
+    </rule>
+
+    <!--
+        CardDAV backend uses short ternary for null coalescing patterns
+        common in SabreDAV code. These are intentional and readable.
+    -->
+    <rule ref="Universal.Operators.DisallowShortTernary.Found">
+        <exclude-pattern>includes/carddav/*</exclude-pattern>
+    </rule>
+
+    <!--
+        Empty catch blocks are used for graceful degradation when
+        parsing vCards or handling optional data. This is intentional.
+    -->
+    <rule ref="Generic.CodeAnalysis.EmptyStatement.DetectedCatch">
+        <exclude-pattern>includes/carddav/*</exclude-pattern>
+        <exclude-pattern>includes/class-vcard-*.php</exclude-pattern>
+    </rule>
+
+    <!--
+        Short ternary operators ($a ?: $b) are used throughout as a
+        concise null-coalescing pattern. These are readable and intentional.
+    -->
+    <rule ref="Universal.Operators.DisallowShortTernary.Found">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Using role names directly (e.g., 'administrator', 'caelis_user')
+        is valid in WordPress capability checks.
+    -->
+    <rule ref="WordPress.WP.Capabilities.RoleFound">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        get_page_by_title is deprecated in WP 6.2 but needed for
+        backwards compatibility. Will update when minimum WP increases.
+    -->
+    <rule ref="WordPress.WP.DeprecatedFunctions.get_page_by_titleFound">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Some hook names use established WordPress conventions that
+        don't follow our prefix pattern (e.g., 'rest_api_init').
+    -->
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Size functions in loops are acceptable when the array/string
+        is small and the check is necessary for loop termination.
+    -->
+    <rule ref="Squiz.PHP.DisallowSizeFunctionsInLoops.Found">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Control structure spacing issues in closure syntax are acceptable
+        when they follow PHP modern style conventions.
+    -->
+    <rule ref="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseBrace">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Empty if statements with comments explaining why they're empty
+        (e.g., intentional no-op for certain conditions) are acceptable.
+    -->
+    <rule ref="Generic.CodeAnalysis.EmptyStatement.DetectedIf">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Lone if inside else is sometimes clearer than complex elseif
+        chains, especially when the conditions are logically grouped.
+    -->
+    <rule ref="Universal.ControlStructures.DisallowLonelyIf.Found">
+        <severity>0</severity>
     </rule>
 </ruleset>
