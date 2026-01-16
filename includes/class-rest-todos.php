@@ -6,11 +6,13 @@
  * replacing the comment-based todo endpoints.
  */
 
+namespace Caelis\REST;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_REST_Todos extends PRM_REST_Base {
+class Todos extends Base {
 
 	/**
 	 * Constructor

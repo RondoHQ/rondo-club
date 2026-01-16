@@ -6,11 +6,13 @@
  * Contains common permission checks and response formatting methods.
  */
 
+namespace Caelis\REST;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-abstract class PRM_REST_Base {
+abstract class Base {
 
 	/**
 	 * Constructor

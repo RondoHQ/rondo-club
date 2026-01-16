@@ -6,11 +6,13 @@
  * notifications, channels, and slash commands.
  */
 
+namespace Caelis\REST;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_REST_Slack extends PRM_REST_Base {
+class Slack extends Base {
 
 	/**
 	 * Constructor - register routes via rest_api_init hook
