@@ -7,6 +7,47 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Load Composer autoloader for PSR-4 classes and CardDAV support
+if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+	require_once __DIR__ . '/vendor/autoload.php';
+}
+
+// PSR-4 namespaced class imports
+use Caelis\Core\PostTypes;
+use Caelis\Core\Taxonomies;
+use Caelis\Core\AutoTitle;
+use Caelis\Core\AccessControl;
+use Caelis\Core\Visibility;
+use Caelis\Core\UserRoles;
+use Caelis\REST\Api;
+use Caelis\REST\People;
+use Caelis\REST\Companies;
+use Caelis\REST\Todos;
+use Caelis\REST\Workspaces;
+use Caelis\REST\Slack;
+use Caelis\REST\ImportExport;
+use Caelis\REST\Calendar as RESTCalendar;
+use Caelis\Calendar\Connections;
+use Caelis\Calendar\Matcher;
+use Caelis\Calendar\Sync;
+use Caelis\Calendar\GoogleProvider;
+use Caelis\Calendar\CalDAVProvider;
+use Caelis\Calendar\GoogleOAuth;
+use Caelis\Notifications\EmailChannel;
+use Caelis\Notifications\SlackChannel;
+use Caelis\Collaboration\CommentTypes;
+use Caelis\Collaboration\WorkspaceMembers;
+use Caelis\Collaboration\MentionNotifications;
+use Caelis\Collaboration\Reminders;
+use Caelis\Import\Monica;
+use Caelis\Import\VCard as VCardImport;
+use Caelis\Import\GoogleContacts;
+use Caelis\Export\VCard as VCardExport;
+use Caelis\Export\ICalFeed;
+use Caelis\CardDAV\Server as CardDAVServer;
+use Caelis\Data\InverseRelationships;
+use Caelis\Data\TodoMigration;
+
 define( 'PRM_THEME_DIR', get_template_directory() );
 define( 'PRM_THEME_URL', get_template_directory_uri() );
 define( 'PRM_THEME_VERSION', wp_get_theme()->get( 'Version' ) );
@@ -149,21 +190,21 @@ function prm_init() {
 	}
 
 	// Core classes - always needed for WordPress integration
-	new PRM_Post_Types();
-	new PRM_Taxonomies();
-	new PRM_Access_Control();
-	new PRM_User_Roles();
+	new PostTypes();
+	new Taxonomies();
+	new AccessControl();
+	new UserRoles();
 
 	// iCal feed - only load for iCal requests
 	if ( prm_is_ical_request() ) {
-		new PRM_ICal_Feed();
+		new ICalFeed();
 		$initialized = true;
 		return; // iCal requests don't need other functionality
 	}
 
 	// CardDAV server - only load for CardDAV requests
 	if ( prm_is_carddav_request() ) {
-		new PRM_CardDAV_Server();
+		new CardDAVServer();
 		$initialized = true;
 		return; // CardDAV requests don't need other functionality
 	}
@@ -175,51 +216,50 @@ function prm_init() {
 
 	// Classes needed for content creation/editing (admin, REST, or cron)
 	if ( $is_admin || $is_rest || $is_cron ) {
-		new PRM_Auto_Title();
-		new PRM_Inverse_Relationships();
-		new PRM_Comment_Types();
-		new PRM_Workspace_Members();
-		new PRM_Mention_Notifications();
+		new AutoTitle();
+		new InverseRelationships();
+		new CommentTypes();
+		new WorkspaceMembers();
+		new MentionNotifications();
 	}
 
 	// REST API classes - only for REST requests
 	if ( $is_rest ) {
-		new PRM_REST_API();
-		new PRM_REST_People();
-		new PRM_REST_Companies();
-		new PRM_REST_Workspaces();
-		new PRM_REST_Todos();
-		new PRM_REST_Slack();
-		new PRM_REST_Import_Export();
-		new PRM_REST_Calendar();
-		new PRM_Monica_Import();
-		new PRM_VCard_Import();
-		new PRM_Google_Contacts_Import();
+		new Api();
+		new People();
+		new Companies();
+		new Workspaces();
+		new Todos();
+		new Slack();
+		new ImportExport();
+		new RESTCalendar();
+		new Monica();
+		new VCardImport();
+		new GoogleContacts();
 	}
 
 	// Reminders - only for admin or cron
 	if ( $is_admin || $is_cron ) {
-		new PRM_Reminders();
+		new Reminders();
 	}
 
 	// Calendar sync - needs hooks registered for cron schedule filter
 	// Initialize on all requests to register cron_schedules filter
-	new PRM_Calendar_Sync();
+	new Sync();
 
 	// iCal feed - also initialize on non-iCal requests for hook registration
 	// but we check for its specific request above for early return optimization
 	if ( ! prm_is_ical_request() ) {
-		new PRM_ICal_Feed();
+		new ICalFeed();
 	}
 
 	// CardDAV server - initialize for rewrite rule registration
 	if ( ! prm_is_carddav_request() ) {
-		new PRM_CardDAV_Server();
+		new CardDAVServer();
 	}
 
 	// Initialize CardDAV sync hooks to track changes made via web UI
 	// This must run on all requests, not just CardDAV requests
-	require_once PRM_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
 	\Caelis\CardDAV\CardDAVBackend::init_hooks();
 
 	$initialized = true;
@@ -232,7 +272,7 @@ add_action( 'plugins_loaded', 'prm_init', 5 );
 // Load WP-CLI commands if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once PRM_PLUGIN_DIR . '/class-wp-cli.php';
-	new PRM_Todo_Migration();
+	new TodoMigration();
 }
 
 /**
@@ -540,32 +580,32 @@ add_action( 'init', 'prm_theme_rewrite_rules' );
  * Theme activation - includes CRM initialization
  */
 function prm_theme_activation() {
-	// Trigger post type registration (autoloader handles class loading)
-	$post_types = new PRM_Post_Types();
+	// Trigger post type registration (Composer autoloader handles class loading)
+	$post_types = new PostTypes();
 	$post_types->register_post_types();
 
-	$taxonomies = new PRM_Taxonomies();
+	$taxonomies = new Taxonomies();
 	$taxonomies->register_taxonomies();
 
 	// Register custom user role (class constructor handles registration via hook)
-	new PRM_User_Roles();
+	new UserRoles();
 
 	// Flush rewrite rules
 	flush_rewrite_rules();
 
 	// Schedule per-user reminder cron jobs
-	$reminders = new PRM_Reminders();
+	$reminders = new Reminders();
 	$reminders->schedule_all_user_reminders();
 
 	// Schedule calendar background sync
-	$calendar_sync = new PRM_Calendar_Sync();
+	$calendar_sync = new Sync();
 	$calendar_sync->schedule_sync();
 
 	// Also handle theme-specific rewrite rules
 	prm_theme_rewrite_rules();
 
 	// Initialize CardDAV server rewrite rules
-	$carddav = new PRM_CardDAV_Server();
+	$carddav = new CardDAVServer();
 	$carddav->register_rewrite_rules();
 }
 add_action( 'after_switch_theme', 'prm_theme_activation' );
@@ -581,11 +621,11 @@ function prm_theme_deactivation() {
 	wp_clear_scheduled_hook( 'prm_daily_reminder_check' );
 
 	// Clear calendar sync cron job
-	$calendar_sync = new PRM_Calendar_Sync();
+	$calendar_sync = new Sync();
 	$calendar_sync->unschedule_sync();
 
 	// Remove custom user role (must call directly since switch_theme hook already fired)
-	$user_roles = new PRM_User_Roles();
+	$user_roles = new UserRoles();
 	$user_roles->remove_role();
 
 	// Flush rewrite rules
@@ -597,7 +637,7 @@ add_action( 'switch_theme', 'prm_theme_deactivation' );
  * Unschedule user reminder cron when user is deleted
  */
 function prm_user_deleted( $user_id ) {
-	$reminders = new PRM_Reminders();
+	$reminders = new Reminders();
 	$reminders->unschedule_user_reminder( $user_id );
 }
 add_action( 'delete_user', 'prm_user_deleted' );
@@ -671,7 +711,7 @@ function prm_invalidate_email_lookup_on_person_save( $post_id ) {
 	if ( get_post_type( $post_id ) === 'person' ) {
 		$user_id = get_post_field( 'post_author', $post_id );
 		if ( $user_id ) {
-			PRM_Calendar_Matcher::invalidate_cache( $user_id );
+			Matcher::invalidate_cache( $user_id );
 		}
 	}
 }
@@ -889,13 +929,6 @@ add_filter( 'login_redirect', 'prm_login_redirect', 10, 3 );
  * Disable admin color scheme picker for all users
  */
 remove_action( 'admin_color_scheme_picker', 'admin_color_scheme_picker' );
-
-/**
- * Load Composer autoloader for CardDAV support
- */
-if ( file_exists( PRM_THEME_DIR . '/vendor/autoload.php' ) ) {
-	require_once PRM_THEME_DIR . '/vendor/autoload.php';
-}
 
 /**
  * Modify registration confirmation message to include approval notice
