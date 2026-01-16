@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 
 Milestone: v4.7 Dark Mode & Activity Polish
 Phase: 71 of 72 (Dark Mode Fixes)
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-01-16 — Completed 71-01-PLAN.md (Modal Dark Mode)
+Plan: 2 of 2 complete
+Status: Phase complete
+Last activity: 2026-01-16 — Completed 71-02-PLAN.md (Dark Mode Contrast Fixes)
 
-Progress: █████░░░░░ 50%
+Progress: ██████████ 100%
 
 ## Completed Milestones
 
@@ -85,6 +85,10 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - **Server-side validation:** Added validate_callback for sync_frequency to ensure only allowed values (15, 30, 60, 240, 1440) are accepted.
 - **Backward compatibility:** Both providers default to 30 days for sync_to_days when field is not present, so existing connections continue to work.
 
+### Phase 71-02 Decisions
+
+- **Dark mode contrast pattern:** Consistently use gray-300/gray-400 for better contrast in dark mode (not gray-400/gray-500).
+
 ## Roadmap Evolution
 
 - Milestone v4.3 complete: React performance review, installation documentation, WPCS compliance
@@ -95,11 +99,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.5 complete: Per-connection sync settings, calendar selection UI
 - Milestone v4.6 created: Dashboard customization & UI polish, 2 phases (Phase 69-70)
 - Milestone v4.7 created: Dark Mode & Activity Polish, 2 phases (Phase 71-72)
+- Phase 71 complete: Dark Mode Fixes (2 plans completed)
 
 ## Session Continuity
 
-Last session: 2026-01-16T18:43:00Z
-Stopped at: Completed 71-01-PLAN.md
+Last session: 2026-01-16T18:43:38Z
+Stopped at: Completed 71-02-PLAN.md
 Resume file: None
 
 ## Accumulated Context
@@ -138,6 +143,9 @@ Resume file: None
 29. ~~Allow selecting Google Calendars to sync (ui)~~ — DONE in v4.5 Phase 68-01
 30. ~~Check and configure Google Calendar sync date range (api)~~ — DONE in v4.5 Phase 67-01
 31. ~~Split multi-class files and reorganize includes folder (refactoring)~~ — DONE in v4.4 Phase 65-66
+32. ~~Fix Settings subtab headings dark mode contrast (ui)~~ — DONE in v4.7 Phase 71-02
+33. ~~Fix Timeline activity type label dark mode contrast (ui)~~ — DONE in v4.7 Phase 71-02
+34. ~~Fix ImportantDateModal people selector dark mode contrast (ui)~~ — DONE in v4.7 Phase 71-02
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
@@ -152,5 +160,4 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Execute 71-02-PLAN.md (Settings subtab headers dark mode)
-- Then proceed to Phase 72 (Activity Bug Fixes)
+- Phase 71 complete - proceed to Phase 72 (Activity Bug Fixes)
