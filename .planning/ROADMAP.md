@@ -21,11 +21,11 @@
 - ✅ [v4.0 Calendar Integration](milestones/v4.0-calendar-integration.md) (Phases 47-55) — SHIPPED 2026-01-15
 - ✅ [v4.1 Bug Fixes & Polish](milestones/v4.1-bug-fixes-polish.md) (Phases 56-57) — SHIPPED 2026-01-15
 - ✅ [v4.2 Settings & Stability](milestones/v4.2-settings-stability.md) (Phases 58-60) — SHIPPED 2026-01-15
-- 🚧 **v4.3 Performance & Documentation** - Phases 61-62 (in progress)
+- 🚧 **v4.3 Performance & Documentation** - Phases 61-62.1 (in progress)
 
 ## Current Status
 
-**In Progress:** v4.3 Performance & Documentation (Phases 61-62)
+**In Progress:** v4.3 Performance & Documentation (Phases 61-62.1)
 
 ---
 
@@ -52,6 +52,17 @@ Plans:
 
 Plans:
 - [x] 62-01: Add Configuration section to README.md (2/2 tasks) ✓
+
+#### Phase 62.1: WordPress Coding Standards (INSERTED)
+
+**Goal**: Install WordPress Coding Standards (WPCS) and make all PHP code adhere to it
+**Depends on**: Phase 62
+**Research**: Complete (WPCS 3.3, phpcs configuration, auto-fixing workflow)
+**Reference**: https://github.com/WordPress/WordPress-Coding-Standards
+
+Plans:
+- [x] 62.1-01: WPCS Installation & Auto-Fix (3/3 tasks) - 97.7% violations auto-fixed ✓
+- [ ] 62.1-02: Manual fixes for remaining 1,140 errors + 240 warnings (TBD)
 
 ---
 
@@ -560,6 +571,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
 | v4.1 Bug Fixes & Polish | 56-57 | 3/3 | Complete ✅ | 2026-01-15 |
 | v4.2 Settings & Stability | 58-60 | 3/3 | Complete ✅ | 2026-01-15 |
-| v4.3 Performance & Documentation | 61-62 | 2/2 | Complete ✅ | 2026-01-16 |
+| v4.3 Performance & Documentation | 61-62.1 | 3/4 | In Progress 🚧 | - |
 
-**Shipped: 21 milestones, 62 phases, 107 plans**
+**Shipped: 21 milestones, 62 phases, 108 plans**
