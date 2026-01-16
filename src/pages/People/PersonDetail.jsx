@@ -1398,7 +1398,7 @@ export default function PersonDetail() {
             <Edit className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Edit</span>
           </button>
-          <button onClick={handleDelete} className="btn-danger">
+          <button onClick={handleDelete} className="btn-danger-outline">
             <Trash2 className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Delete</span>
           </button>

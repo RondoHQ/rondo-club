@@ -242,7 +242,7 @@ export default function CompanyDetail() {
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </button>
-          <button onClick={handleDelete} className="btn-danger">
+          <button onClick={handleDelete} className="btn-danger-outline">
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
           </button>
