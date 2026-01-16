@@ -22,53 +22,51 @@
 - ✅ [v4.1 Bug Fixes & Polish](milestones/v4.1-bug-fixes-polish.md) (Phases 56-57) — SHIPPED 2026-01-15
 - ✅ [v4.2 Settings & Stability](milestones/v4.2-settings-stability.md) (Phases 58-60) — SHIPPED 2026-01-15
 - ✅ [v4.3 Performance & Documentation](milestones/v4.3-performance-documentation.md) (Phases 61-63) — SHIPPED 2026-01-16
-- 🚧 **v4.4 Code Organization** - Phases 64-66 (in progress)
+- ✅ [v4.4 Code Organization](milestones/v4.4-code-organization.md) (Phases 64-66) — SHIPPED 2026-01-16
 
 ## Current Status
 
-**Active milestone:** v4.4 Code Organization (Phases 64-66)
+**Last completed milestone:** v4.4 Code Organization (Phases 64-66)
 
 ---
 
-### 🚧 v4.4 Code Organization (In Progress)
+<details>
+<summary>✅ v4.4 Code Organization (Phases 64-66) — SHIPPED 2026-01-16</summary>
 
 **Milestone Goal:** Reorganize PHP codebase with proper structure, one-class-per-file, and PSR-4 autoloading.
 
-**Constraints:**
-- Backward compatibility required (no breaking changes to function names or class interfaces)
-- CardDAV/CalDAV code must remain compatible with Sabre libraries
-- REST API endpoints must continue working unchanged
-- Tests must pass after reorganization
+**Result:** 38 classes with PSR-4 namespaces, Composer autoloading, backward-compatible class aliases, manual autoloader removed
 
-#### Phase 64: Audit & Planning ✓
+**Phases:**
+- [x] Phase 64: Audit & Planning (1/1 plan) ✓
+- [x] Phase 65: Split & Reorganize (1/1 plan) ✓
+- [x] Phase 66: PSR-4 Autoloader (4/4 plans) ✓
 
-**Goal**: Identify multi-class files, design folder structure, plan namespace hierarchy
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (internal codebase analysis)
-**Result**: Comprehensive AUDIT.md with 1 multi-class file identified, 9-folder structure designed, Caelis\ namespace hierarchy
+**Total:** 3 phases, 6 plans
 
-Plans:
-- [x] 64-01: Complete codebase audit, folder structure, namespace hierarchy ✓
+**Key Accomplishments:**
+- Comprehensive codebase audit (AUDIT.md) with namespace hierarchy design
+- Split notification channel classes (one-class-per-file compliance)
+- Added PSR-4 namespaces to 38 PHP classes across 9 namespace groups
+- Composer autoloading with classmap for includes/ directory
+- 38 backward-compatible class aliases for migration period
+- Removed manual prm_autoloader() function (52 lines)
+- PHPCS one-class-per-file rule enabled
 
-#### Phase 65: Split & Reorganize
+**Namespace Groups:**
+- Caelis\Core (6 classes): PostTypes, Taxonomies, AccessControl, Visibility, UserRoles, AutoTitle
+- Caelis\REST (9 classes): Base, Api, People, Companies, Todos, Workspaces, Slack, ImportExport, Calendar
+- Caelis\Calendar (6 classes): Connections, Matcher, Sync, GoogleProvider, CalDAVProvider, GoogleOAuth
+- Caelis\Notifications (3 classes): Channel, EmailChannel, SlackChannel
+- Caelis\Collaboration (5 classes): CommentTypes, WorkspaceMembers, Mentions, MentionNotifications, Reminders
+- Caelis\Import (3 classes): Monica, VCard, GoogleContacts
+- Caelis\Export (2 classes): VCard, ICalFeed
+- Caelis\CardDAV (4 classes): Server, AuthBackend, CardDAVBackend, PrincipalBackend
+- Caelis\Data (3 classes): InverseRelationships, TodoMigration, CredentialEncryption
 
-**Goal**: Split multi-class file and achieve one-class-per-file compliance
-**Depends on**: Phase 64
-**Research**: No (internal refactoring guided by AUDIT.md)
-**Plans**: 1
+See [milestone archive](milestones/v4.4-code-organization.md) for full details.
 
-Plans:
-- [ ] 65-01: Split notification classes, update autoloader, enable PHPCS rule
-
-#### Phase 66: PSR-4 Autoloader
-
-**Goal**: Implement Composer autoloading with namespaces, remove manual requires
-**Depends on**: Phase 65
-**Research**: Unlikely (Composer standard patterns)
-**Plans**: TBD
-
-Plans:
-- [ ] 66-01: TBD
+</details>
 
 ---
 
@@ -606,7 +604,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.1 Bug Fixes & Polish | 56-57 | 3/3 | Complete ✅ | 2026-01-15 |
 | v4.2 Settings & Stability | 58-60 | 3/3 | Complete ✅ | 2026-01-15 |
 | v4.3 Performance & Documentation | 61-63 | 5/5 | Complete ✅ | 2026-01-16 |
-| v4.4 Code Organization | 64-66 | 0/? | In Progress 🚧 | - |
+| v4.4 Code Organization | 64-66 | 6/6 | Complete ✅ | 2026-01-16 |
 
-**Shipped: 22 milestones, 63 phases, 110 plans**
-**In Progress: v4.4 (3 phases)**
+**Shipped: 23 milestones, 66 phases, 116 plans**
