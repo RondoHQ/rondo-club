@@ -54,7 +54,7 @@ class Reminders {
 		$minute              = (int) $minute;
 
 		// Calculate next occurrence in WordPress timezone
-		$now      = new DateTime( 'now', wp_timezone() );
+		$now      = new \DateTime( 'now', wp_timezone() );
 		$next_run = clone $now;
 		$next_run->setTime( $hour, $minute, 0 );
 
@@ -295,7 +295,7 @@ class Reminders {
 		);
 
 		$upcoming = [];
-		$today    = new DateTime( 'today', wp_timezone() );
+		$today    = new \DateTime( 'today', wp_timezone() );
 		$end_date = ( clone $today )->modify( "+{$days_ahead} days" );
 
 		foreach ( $dates as $date_post ) {
@@ -363,18 +363,18 @@ class Reminders {
 	 */
 	public function calculate_next_occurrence( $date_string, $is_recurring ) {
 		try {
-			$date = DateTime::createFromFormat( 'Y-m-d', $date_string, wp_timezone() );
+			$date = \DateTime::createFromFormat( 'Y-m-d', $date_string, wp_timezone() );
 
 			if ( ! $date ) {
 				// Try alternative formats
-				$date = DateTime::createFromFormat( 'Ymd', $date_string, wp_timezone() );
+				$date = \DateTime::createFromFormat( 'Ymd', $date_string, wp_timezone() );
 			}
 
 			if ( ! $date ) {
 				return null;
 			}
 
-			$today = new DateTime( 'today', wp_timezone() );
+			$today = new \DateTime( 'today', wp_timezone() );
 
 			if ( ! $is_recurring ) {
 				// One-time date: only return if today or in the future
@@ -423,7 +423,7 @@ class Reminders {
 	 */
 	public function get_weekly_digest( $user_id ) {
 		$access_control = new \PRM_Access_Control();
-		$today          = new DateTime( 'today', wp_timezone() );
+		$today          = new \DateTime( 'today', wp_timezone() );
 		$tomorrow       = ( clone $today )->modify( '+1 day' );
 		$end_of_week    = ( clone $today )->modify( '+7 days' );
 
@@ -636,7 +636,7 @@ class Reminders {
 			}
 
 			try {
-				$due_date = DateTime::createFromFormat( 'Y-m-d', $due_date_str, wp_timezone() );
+				$due_date = \DateTime::createFromFormat( 'Y-m-d', $due_date_str, wp_timezone() );
 
 				if ( ! $due_date ) {
 					continue;
@@ -766,7 +766,7 @@ class Reminders {
 			]
 		);
 
-		$today         = new DateTime( 'today', wp_timezone() );
+		$today         = new \DateTime( 'today', wp_timezone() );
 		$updated_count = 0;
 
 		foreach ( $people as $person ) {
@@ -781,7 +781,7 @@ class Reminders {
 			foreach ( $work_history as $index => $job ) {
 				// Check if job is marked as current but has an end_date that has passed
 				if ( ! empty( $job['is_current'] ) && ! empty( $job['end_date'] ) ) {
-					$end_date = DateTime::createFromFormat( 'Y-m-d', $job['end_date'], wp_timezone() );
+					$end_date = \DateTime::createFromFormat( 'Y-m-d', $job['end_date'], wp_timezone() );
 
 					if ( $end_date && $end_date < $today ) {
 						// End date has passed, mark as not current
