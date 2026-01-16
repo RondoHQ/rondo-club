@@ -15,13 +15,19 @@
     },
     "config": {
         "optimize-autoloader": true,
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     },
     "require-dev": {
-        "lucatume/wp-browser": "^4.5"
+        "lucatume/wp-browser": "^4.5",
+        "wp-coding-standards/wpcs": "^3.3"
     },
     "scripts": {
         "test": "vendor/bin/codecept run wpunit",
-        "test:coverage": "vendor/bin/codecept run wpunit --coverage --coverage-html"
+        "test:coverage": "vendor/bin/codecept run wpunit --coverage --coverage-html",
+        "lint": "vendor/bin/phpcs",
+        "lint:fix": "vendor/bin/phpcbf"
     }
 }
