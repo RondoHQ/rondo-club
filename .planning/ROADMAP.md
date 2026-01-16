@@ -21,15 +21,15 @@
 - ✅ [v4.0 Calendar Integration](milestones/v4.0-calendar-integration.md) (Phases 47-55) — SHIPPED 2026-01-15
 - ✅ [v4.1 Bug Fixes & Polish](milestones/v4.1-bug-fixes-polish.md) (Phases 56-57) — SHIPPED 2026-01-15
 - ✅ [v4.2 Settings & Stability](milestones/v4.2-settings-stability.md) (Phases 58-60) — SHIPPED 2026-01-15
-- ✅ [v4.3 Performance & Documentation](milestones/v4.3-performance-documentation.md) (Phases 61-62.1) — SHIPPED 2026-01-16
+- 🚧 **v4.3 Performance & Documentation** - Phases 61-63 (in progress)
 
 ## Current Status
 
-**Complete:** v4.3 Performance & Documentation (Phases 61-62.1)
+**In Progress:** v4.3 Performance & Documentation (Phases 61-63)
 
 ---
 
-### ✅ v4.3 Performance & Documentation — SHIPPED 2026-01-16
+### 🚧 v4.3 Performance & Documentation (In Progress)
 
 **Milestone Goal:** Optimize React frontend performance and complete installation documentation.
 
@@ -64,6 +64,16 @@ Plans:
 Plans:
 - [x] 62.1-01: WPCS Installation & Auto-Fix (3/3 tasks) - 97.7% violations auto-fixed ✓
 - [x] 62.1-02: Manual Fixes (3/3 tasks) - 79% additional reduction, strategic exclusions ✓
+
+#### Phase 63: PHPCS Config Refinement
+
+**Goal**: Disable Yoda conditions rule and require short array syntax
+**Depends on**: Phase 62.1
+**Research**: Unlikely (simple phpcs.xml.dist configuration)
+**Result**: Yoda disabled, short array syntax enforced, 192 errors eliminated
+
+Plans:
+- [x] 63-01: Disable Yoda and enforce short array syntax (3/3 tasks) ✓
 
 ---
 
@@ -572,6 +582,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
 | v4.1 Bug Fixes & Polish | 56-57 | 3/3 | Complete ✅ | 2026-01-15 |
 | v4.2 Settings & Stability | 58-60 | 3/3 | Complete ✅ | 2026-01-15 |
-| v4.3 Performance & Documentation | 61-62.1 | 4/4 | Complete ✅ | 2026-01-16 |
+| v4.3 Performance & Documentation | 61-63 | 5/5 | In Progress 🚧 | - |
 
-**Shipped: 21 milestones, 63 phases, 109 plans**
+**Shipped: 21 milestones, 62 phases, 109 plans**
