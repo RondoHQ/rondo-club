@@ -160,4 +160,4 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Phase 71 complete - proceed to Phase 72 (Activity Bug Fixes)
+- Run `/gsd:plan-phase 72` to plan Activity & Bug Fixes phase

@@ -35,17 +35,17 @@
 
 **Milestone Goal:** Comprehensive dark mode contrast fixes across modals and settings, plus activity type improvements and minor bug fixes.
 
-#### Phase 71: Dark Mode Fixes
+#### Phase 71: Dark Mode Fixes ✓
 **Goal**: Fix contrast issues in modals and settings for dark mode
 **Depends on**: Phase 70
 **Requirements**: DM-01, DM-02, DM-03, DM-04, DM-05, DM-06, DM-07
 **Success Criteria** (what must be TRUE):
-  1. User can view/edit work history modal in dark mode with proper contrast
-  2. User can view/edit address modal in dark mode with proper contrast
-  3. User can use date-related people modal in dark mode with proper contrast
-  4. Activity type buttons display correctly in dark mode
-  5. Settings Connections subtab headings are readable in dark mode
-**Plans**: TBD
+  1. User can view/edit work history modal in dark mode with proper contrast ✓
+  2. User can view/edit address modal in dark mode with proper contrast ✓
+  3. User can use date-related people modal in dark mode with proper contrast ✓
+  4. Activity type buttons display correctly in dark mode ✓
+  5. Settings Connections subtab headings are readable in dark mode ✓
+**Plans**: 2/2 complete
 
 #### Phase 72: Activity & Bug Fixes
 **Goal**: Add activity types and fix UI bugs

@@ -9,16 +9,16 @@ Requirements for v4.7 release. Each maps to roadmap phases.
 
 ### Dark Mode - Modals
 
-- [ ] **DM-01**: User can view/edit work history in dark mode with proper contrast
-- [ ] **DM-02**: User can view/edit addresses in dark mode with proper contrast
-- [ ] **DM-03**: User can add date-related people in dark mode with proper contrast
-- [ ] **DM-04**: Activity type button displays correctly in dark mode
+- [x] **DM-01**: User can view/edit work history in dark mode with proper contrast
+- [x] **DM-02**: User can view/edit addresses in dark mode with proper contrast
+- [x] **DM-03**: User can add date-related people in dark mode with proper contrast
+- [x] **DM-04**: Activity type button displays correctly in dark mode
 
 ### Dark Mode - Settings
 
-- [ ] **DM-05**: Connections subtab heading has readable contrast in dark mode
-- [ ] **DM-06**: CardDAV subtab heading has readable contrast in dark mode
-- [ ] **DM-07**: Slack subtab heading has readable contrast in dark mode
+- [x] **DM-05**: Connections subtab heading has readable contrast in dark mode
+- [x] **DM-06**: CardDAV subtab heading has readable contrast in dark mode
+- [x] **DM-07**: Slack subtab heading has readable contrast in dark mode
 
 ### Activity Types
 
@@ -49,13 +49,13 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DM-01 | Phase 71 | Pending |
-| DM-02 | Phase 71 | Pending |
-| DM-03 | Phase 71 | Pending |
-| DM-04 | Phase 71 | Pending |
-| DM-05 | Phase 71 | Pending |
-| DM-06 | Phase 71 | Pending |
-| DM-07 | Phase 71 | Pending |
+| DM-01 | Phase 71 | Complete |
+| DM-02 | Phase 71 | Complete |
+| DM-03 | Phase 71 | Complete |
+| DM-04 | Phase 71 | Complete |
+| DM-05 | Phase 71 | Complete |
+| DM-06 | Phase 71 | Complete |
+| DM-07 | Phase 71 | Complete |
 | ACT-01 | Phase 72 | Pending |
 | ACT-02 | Phase 72 | Pending |
 | ACT-03 | Phase 72 | Pending |
@@ -69,4 +69,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-16 after initial definition*
+*Last updated: 2026-01-16 after Phase 71 execution*
