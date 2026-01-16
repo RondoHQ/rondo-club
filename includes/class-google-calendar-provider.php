@@ -87,7 +87,7 @@ class GoogleProvider {
 				}
 
 				$page_token = $events->getNextPageToken();
-			} catch ( Google\Service\Exception $e ) {
+			} catch ( \Google\Service\Exception $e ) {
 				throw new \Exception( 'Google Calendar API error: ' . $e->getMessage() );
 			}
 		} while ( $page_token );
@@ -103,9 +103,9 @@ class GoogleProvider {
 	 * Get authenticated Google Calendar service
 	 *
 	 * @param array $connection Connection with credentials
-	 * @return Google\Service\Calendar|null Service or null on failure
+	 * @return \Google\Service\Calendar|null Service or null on failure
 	 */
-	private static function get_service( array $connection ): ?Google\Service\Calendar {
+	private static function get_service( array $connection ): ?\Google\Service\Calendar {
 		$access_token = \PRM_Google_OAuth::get_access_token( $connection );
 		if ( ! $access_token ) {
 			return null;
@@ -118,7 +118,7 @@ class GoogleProvider {
 
 		$client->setAccessToken( $access_token );
 
-		return new Google\Service\Calendar( $client );
+		return new \Google\Service\Calendar( $client );
 	}
 
 	/**
