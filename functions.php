@@ -1116,3 +1116,38 @@ function prm_login_page_titles() {
 	<?php
 }
 add_action( 'login_footer', 'prm_login_page_titles' );
+
+/**
+ * Debug log rotation - runs daily via WP-Cron
+ */
+add_action( 'prm_rotate_debug_log', 'prm_rotate_debug_log' );
+function prm_rotate_debug_log() {
+    $log_dir  = WP_CONTENT_DIR;
+    $log_file = $log_dir . '/debug.log';
+    $date     = date( 'Y-m-d' );
+
+    // Only rotate if log exists and has content
+    if ( file_exists( $log_file ) && filesize( $log_file ) > 0 ) {
+        // Rotate current log
+        $rotated = $log_dir . '/debug-' . $date . '.log';
+        rename( $log_file, $rotated );
+
+        // Create fresh empty log
+        touch( $log_file );
+        chmod( $log_file, 0644 );
+
+        // Delete logs older than 7 days
+        $files = glob( $log_dir . '/debug-*.log' );
+        $now   = time();
+        foreach ( $files as $file ) {
+            if ( $now - filemtime( $file ) > 7 * DAY_IN_SECONDS ) {
+                unlink( $file );
+            }
+        }
+    }
+}
+
+// Schedule daily rotation if not already scheduled
+if ( ! wp_next_scheduled( 'prm_rotate_debug_log' ) ) {
+    wp_schedule_event( strtotime( 'tomorrow midnight' ), 'daily', 'prm_rotate_debug_log' );
+}
