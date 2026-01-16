@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v4.5 Calendar Sync Control — sync range, frequency, and calendar selection
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v4.5 Calendar Sync Control
-Phase: 68 of 68 (Calendar Selection UI)
-Plan: 01 COMPLETE
-Status: Milestone complete, ready for completion
-Last activity: 2026-01-16 — Plan 68-01 completed (calendar selection UI)
+Milestone: v4.5 Calendar Sync Control — SHIPPED
+Phase: Complete
+Plan: Complete
+Status: Ready for next milestone
+Last activity: 2026-01-16 — v4.5 milestone shipped
 
-Progress: ██████████ 100% (Phase 68/68 of v4.5)
+Progress: ██████████ 100% (24 milestones shipped)
 
 ## Completed Milestones
 
@@ -42,8 +42,9 @@ Progress: ██████████ 100% (Phase 68/68 of v4.5)
 | v4.2 Settings & Stability | 58-60 | 3 | 2026-01-15 |
 | v4.3 Performance & Documentation | 61-63 | 5 | 2026-01-16 |
 | v4.4 Code Organization | 64-66 | 6 | 2026-01-16 |
+| v4.5 Calendar Sync Control | 67-68 | 3 | 2026-01-16 |
 
-**Total:** 23 milestones, 66 phases, 116 plans completed
+**Total:** 24 milestones, 68 phases, 119 plans completed
 
 ## Deferred Issues
 
