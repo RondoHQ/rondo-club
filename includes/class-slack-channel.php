@@ -5,7 +5,7 @@
  * Handles Slack-based notification delivery via OAuth or webhooks.
  */
 
-namespace Caelis\Notification;
+namespace Caelis\Notifications;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

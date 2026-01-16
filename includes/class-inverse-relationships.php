@@ -5,11 +5,13 @@
  * Automatically creates/updates/deletes inverse relationships when relationships are modified.
  */
 
+namespace Caelis\Data;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Inverse_Relationships {
+class InverseRelationships {
 
 	/**
 	 * Track which posts are currently being processed to prevent infinite loops

@@ -398,7 +398,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		// Encrypt credentials if provided
 		$credentials = '';
 		if ( ! empty( $data['credentials'] ) && is_array( $data['credentials'] ) ) {
-			$credentials = PRM_Credential_Encryption::encrypt( $data['credentials'] );
+			$credentials = \Caelis\Data\CredentialEncryption::encrypt( $data['credentials'] );
 		}
 
 		// Build connection data
@@ -481,7 +481,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		// Handle credential updates (re-encrypt)
 		if ( ! empty( $data['credentials'] ) && is_array( $data['credentials'] ) ) {
-			$updates['credentials'] = PRM_Credential_Encryption::encrypt( $data['credentials'] );
+			$updates['credentials'] = \Caelis\Data\CredentialEncryption::encrypt( $data['credentials'] );
 		}
 
 		PRM_Calendar_Connections::update_connection( $user_id, $id, $updates );
@@ -659,7 +659,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 			$tokens = PRM_Google_OAuth::handle_callback( $code, $user_id );
 
 			// Encrypt tokens for storage
-			$encrypted_credentials = PRM_Credential_Encryption::encrypt( $tokens );
+			$encrypted_credentials = \Caelis\Data\CredentialEncryption::encrypt( $tokens );
 
 			// Create calendar connection
 			$connection = [

@@ -6,11 +6,13 @@
  * using sodium encryption (available via WordPress/PHP).
  */
 
+namespace Caelis\Data;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Credential_Encryption {
+class CredentialEncryption {
 
 	/**
 	 * Get the encryption key derived from WordPress AUTH_KEY

@@ -5,7 +5,7 @@
  * Handles date-based reminders and notifications
  */
 
-namespace Caelis\Notification;
+namespace Caelis\Collaboration;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

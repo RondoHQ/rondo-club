@@ -249,7 +249,7 @@ class CalDAVProvider {
 	 */
 	public static function sync( int $user_id, array $connection ): array {
 		// Decrypt credentials
-		$credentials = PRM_Credential_Encryption::decrypt( $connection['credentials'] );
+		$credentials = \Caelis\Data\CredentialEncryption::decrypt( $connection['credentials'] );
 		if ( ! $credentials || empty( $credentials['url'] ) || empty( $credentials['username'] ) || empty( $credentials['password'] ) ) {
 			throw new Exception( __( 'Invalid CalDAV credentials. Please reconnect your calendar.', 'caelis' ) );
 		}
