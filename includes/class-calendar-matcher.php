@@ -36,6 +36,12 @@ class Matcher {
 			return [];
 		}
 
+		// Set user context to bypass access control in cron/CLI contexts
+		$original_user = get_current_user_id();
+		if ( $original_user !== $user_id ) {
+			wp_set_current_user( $user_id );
+		}
+
 		// Build email lookup cache
 		$lookup  = self::get_email_lookup( $user_id );
 		$matches = [];
@@ -45,6 +51,11 @@ class Matcher {
 			if ( $match !== null ) {
 				$matches[] = $match;
 			}
+		}
+
+		// Restore original user context
+		if ( $original_user !== $user_id ) {
+			wp_set_current_user( $original_user );
 		}
 
 		return $matches;
@@ -71,6 +82,12 @@ class Matcher {
 
 		// Build lookup from user's people
 		$lookup = [];
+
+		// Set user context to bypass access control in cron/CLI contexts
+		$original_user = get_current_user_id();
+		if ( $original_user !== $user_id ) {
+			wp_set_current_user( $user_id );
+		}
 
 		$people = get_posts(
 			[
@@ -110,6 +127,11 @@ class Matcher {
 			}
 		}
 
+		// Restore original user context
+		if ( $original_user !== $user_id ) {
+			wp_set_current_user( $original_user );
+		}
+
 		// Cache the lookup
 		set_transient( $cache_key, $lookup, self::CACHE_EXPIRATION );
 
@@ -135,6 +157,12 @@ class Matcher {
 	 * @return int Number of events re-matched
 	 */
 	public static function rematch_events_for_user( int $user_id ): int {
+		// Set user context to bypass access control in cron/CLI contexts
+		$original_user = get_current_user_id();
+		if ( $original_user !== $user_id ) {
+			wp_set_current_user( $user_id );
+		}
+
 		$events = get_posts(
 			[
 				'post_type'      => 'calendar_event',
@@ -173,6 +201,11 @@ class Matcher {
 			update_post_meta( $event->ID, '_matched_people', wp_json_encode( $matches ) );
 
 			++$count;
+		}
+
+		// Restore original user context
+		if ( $original_user !== $user_id ) {
+			wp_set_current_user( $original_user );
 		}
 
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -261,7 +294,7 @@ class Matcher {
 			return null;
 		}
 
-		// Query user's people
+		// Query user's people (user context set by match_attendees)
 		$people = get_posts(
 			[
 				'post_type'      => 'person',
