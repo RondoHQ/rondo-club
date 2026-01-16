@@ -102,12 +102,12 @@ export default function WorkHistoryEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{isEditing ? 'Edit work history' : 'Add work history'}</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit work history' : 'Add work history'}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
@@ -185,16 +185,16 @@ export default function WorkHistoryEditModal({
                 type="checkbox"
                 id="is_current"
                 {...register('is_current')}
-                className="w-4 h-4 rounded border-gray-300 text-accent-600 focus:ring-accent-500"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500 dark:bg-gray-700"
                 disabled={isLoading}
               />
-              <label htmlFor="is_current" className="ml-2 text-sm text-gray-700 cursor-pointer">
+              <label htmlFor="is_current" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                 Currently works here
               </label>
             </div>
           </div>
           
-          <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+          <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             <button
               type="button"
               onClick={onClose}
