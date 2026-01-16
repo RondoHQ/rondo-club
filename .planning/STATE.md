@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 
 Milestone: v4.5 Calendar Sync Control
 Phase: 67 of 68 (Sync Range & Frequency)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-16 — Milestone v4.5 created
+Plan: 01 COMPLETE
+Status: Ready for Plan 02
+Last activity: 2026-01-16 — Plan 67-01 completed (sync fields + UI)
 
-Progress: ░░░░░░░░░░ 0% (0/2 phases)
+Progress: ████░░░░░░ 50% (Plan 01/02 of Phase 67)
 
 ## Completed Milestones
 
@@ -77,6 +77,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - **Composer classmap added:** Added classmap alongside PSR-4 to support current `class-*.php` file naming convention during transition.
 - **WP-CLI kept using PRM_* CLI classes:** WP-CLI command classes (e.g., `PRM_Reminders_CLI_Command`) remain with original names since they're not part of the PSR-4 namespace structure.
 
+### Phase 67-01 Decisions
+
+- **sync_frequency values in minutes:** Used minutes (15, 30, 60, 240, 1440) for consistency with WP cron interval patterns.
+- **Server-side validation:** Added validate_callback for sync_frequency to ensure only allowed values (15, 30, 60, 240, 1440) are accepted.
+- **Backward compatibility:** Both providers default to 30 days for sync_to_days when field is not present, so existing connections continue to work.
+
 ## Roadmap Evolution
 
 - Milestone v4.3 complete: React performance review, installation documentation, WPCS compliance
@@ -88,7 +94,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Milestone v4.5 initialization
+Stopped at: Phase 67 Plan 01 complete
 Resume file: None
 
 ## Accumulated Context
@@ -125,7 +131,7 @@ Resume file: None
 27. Soften PersonDetail delete button style (ui)
 28. ~~Review performance using react-best-practices skill (ui)~~ — DONE in v4.3 Phase 61 (no changes needed)
 29. Allow selecting Google Calendars to sync (ui)
-30. Check and configure Google Calendar sync date range (api)
+30. ~~Check and configure Google Calendar sync date range (api)~~ — DONE in v4.5 Phase 67-01
 31. ~~Split multi-class files and reorganize includes folder (refactoring)~~ — DONE in v4.4 Phase 65-66
 
 Completed todos in `.planning/todos/done/`:
