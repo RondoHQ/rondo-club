@@ -97,16 +97,16 @@ export default function TimelineView({
                 <div className="flex items-center gap-2 mb-1">
                   <Icon className={`w-4 h-4 flex-shrink-0 ${
                     isActivity
-                      ? 'text-blue-600'
-                      : 'text-gray-500'
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-gray-500 dark:text-gray-400'
                   }`} />
                   {isActivity && item.activity_type && (
-                    <span className="text-xs font-medium text-gray-600">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
                       {getActivityTypeLabel(item.activity_type)}
                     </span>
                   )}
-                  <span className="text-xs text-gray-400">•</span>
-                  <span className="text-xs text-gray-500">{formattedDate}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{formattedDate}</span>
                   {/* Note visibility indicator */}
                   {isNote && (
                     <span
@@ -155,7 +155,7 @@ export default function TimelineView({
               {/* Activity participants */}
               {isActivity && item.participants && item.participants.length > 0 && (
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-gray-500">With:</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">With:</span>
                   {item.participants.map((participantId) => {
                     const participant = getPersonById(participantId);
                     if (!participant) return null;
@@ -177,7 +177,7 @@ export default function TimelineView({
               {isTodo && item.due_date && item.status === 'open' && (
                 <div className="mt-2">
                   <span className={`text-xs ${
-                    isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'
+                    isOverdue ? 'text-red-600 font-medium' : 'text-gray-500 dark:text-gray-400'
                   }`}>
                     Due: {format(new Date(item.due_date), 'MMM d, yyyy')}
                     {isOverdue && ' (overdue)'}
@@ -201,19 +201,19 @@ export default function TimelineView({
               {onEdit && (
                 <button
                   onClick={() => onEdit(item)}
-                  className="p-1 hover:bg-gray-100 rounded"
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                   title="Edit"
                 >
-                  <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                  <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300" />
                 </button>
               )}
               {onDelete && (
                 <button
                   onClick={() => onDelete(item)}
-                  className="p-1 hover:bg-red-50 rounded"
+                  className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                   title="Delete"
                 >
-                  <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                  <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400" />
                 </button>
               )}
             </div>
@@ -228,10 +228,10 @@ export default function TimelineView({
 
     return (
       <div className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide">
           {title}
         </h3>
-        <div className="relative pl-4 border-l-2 border-gray-200">
+        <div className="relative pl-4 border-l-2 border-gray-200 dark:border-gray-700">
           {items.map(renderTimelineItem)}
         </div>
       </div>
@@ -247,7 +247,7 @@ export default function TimelineView({
   if (!hasAnyItems) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-gray-500">No timeline items yet.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No timeline items yet.</p>
       </div>
     );
   }
