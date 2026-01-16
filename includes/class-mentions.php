@@ -3,11 +3,13 @@
  * Handles @mention parsing, storage, and rendering
  */
 
+namespace Caelis\Collaboration;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Mentions {
+class Mentions {
 
 	/**
 	 * Parse user IDs from mention markup

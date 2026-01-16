@@ -6,11 +6,13 @@
  * Enables users to belong to multiple workspaces with different roles.
  */
 
+namespace Caelis\Collaboration;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Workspace_Members {
+class WorkspaceMembers {
 
 	/** Role constants */
 	const ROLE_ADMIN  = 'admin';

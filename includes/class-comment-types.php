@@ -3,11 +3,13 @@
  * Custom Comment Types for Notes and Activities
  */
 
+namespace Caelis\Collaboration;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Comment_Types {
+class CommentTypes {
 
 	/**
 	 * Registered comment types
