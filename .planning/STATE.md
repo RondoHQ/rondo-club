@@ -61,6 +61,11 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 
 - **WP-CLI multi-class exception:** Discovered `class-wp-cli.php` contains 9 CLI command classes (not in audit). Added PHPCS exclusion rather than splitting. Rationale: conditionally loaded, logically grouped CLI commands, audit stated "pattern should be preserved".
 
+### Phase 66-02 Decisions
+
+- **Namespace plural convention:** Used `Caelis\Notifications` (plural) to match `Caelis\Collaboration` naming pattern as specified in audit.
+- **Reminders placement:** Placed Reminders class in `Caelis\Collaboration` namespace per audit mapping, not in Notifications namespace.
+
 ### Phase 66-03 Decisions
 
 - **Cross-references updated immediately:** Updated 6 files that reference namespaced classes (VCard export, CredentialEncryption) to use fully qualified namespaces rather than waiting for Plan 04 class aliases.
