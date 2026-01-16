@@ -157,6 +157,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Automatic calendar event re-matching when person emails change — v4.2
 - WP-CLI command: `wp prm calendar rematch --user-id=ID` — v4.2
 
+**v4.3 Performance & Documentation (shipped 2026-01-16):**
+- React frontend validated against 40+ performance rules (already optimized, no changes needed) — v4.3
+- Complete wp-config.php configuration documentation in README.md — v4.3
+- WPCS 3.3 installed via Composer with phpcs.xml.dist configuration — v4.3
+- PHPCS violations reduced from 49,450 to 46 (99.9% reduction) — v4.3
+- Composer lint scripts (`composer lint`, `composer lint:fix`) — v4.3
+- Short array syntax enforced across entire codebase ([] instead of array()) — v4.3
+- Yoda conditions disabled for improved readability — v4.3
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -248,6 +257,10 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Error boundary pattern for DOM sync errors | Catches DOM-specific errors (NotFoundError, removeChild, insertBefore), preserves query cache | ✓ Good |
 | Subtab navigation pattern | URL-based subtab routing (tab=connections&subtab=calendars) | ✓ Good |
 | Re-match on save approach | Triggers on every person save, acceptable performance for background operation | ✓ Good |
+| WordPress-Extra standard | Stricter than WordPress-Core, includes best practices | ✓ Good |
+| Yoda conditions disabled | Prefer readable `$var === 'value'` over WordPress-mandated `'value' === $var` | ✓ Good |
+| Short array syntax enforced | Modern PHP convention `[]` instead of `array()` | ✓ Good |
+| Strategic PHPCS exclusions | CardDAV/Sabre naming, short ternary, deprecated functions kept as documented | ✓ Good |
 
 ---
-*Last updated: 2026-01-15 — v4.2 Settings & Stability shipped*
+*Last updated: 2026-01-16 — v4.3 Performance & Documentation shipped*

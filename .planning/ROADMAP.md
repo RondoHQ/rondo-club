@@ -25,55 +25,35 @@
 
 ## Current Status
 
-**Complete:** v4.3 Performance & Documentation (Phases 61-63)
+**No active milestone.** Use `/gsd:discuss-milestone` to plan next work.
 
 ---
 
-### ✅ v4.3 Performance & Documentation — SHIPPED 2026-01-16
+<details>
+<summary>✅ v4.3 Performance & Documentation (Phases 61-63) — SHIPPED 2026-01-16</summary>
 
 **Milestone Goal:** Optimize React frontend performance and complete installation documentation.
 
-#### Phase 61: React Performance Review
+**Result:** React performance validated (no changes needed), README.md Configuration section added, WPCS 3.3 installed with 99.9% violation reduction (49,450→46), short array syntax enforced
 
-**Goal**: Use react-best-practices skill to analyze and optimize the frontend
-**Depends on**: Previous milestone complete
-**Research**: Unlikely (following react-best-practices skill patterns)
-**Result**: Codebase already follows React best practices, no changes needed
+**Phases:**
+- [x] Phase 61: React Performance Review (1/1 plan) ✓
+- [x] Phase 62: Installation Documentation (1/1 plan) ✓
+- [x] Phase 62.1: WordPress Coding Standards (2/2 plans) ✓ (INSERTED)
+- [x] Phase 63: PHPCS Config Refinement (1/1 plan) ✓
 
-Plans:
-- [x] 61-01: React Performance Review (no code changes needed) ✓
+**Total:** 4 phases, 5 plans
 
-#### Phase 62: Installation Documentation
+**Key Accomplishments:**
+- React frontend validated against 40+ performance rules — already optimized
+- Complete wp-config.php configuration documentation in README.md
+- WPCS 3.3 installed with phpcs.xml.dist configuration
+- PHPCS violations reduced from 49,450 to 46 (99.9% reduction)
+- Short array syntax enforced, Yoda conditions disabled
 
-**Goal**: Add wp-config.php constants to README.md
-**Depends on**: Phase 61
-**Research**: Unlikely (documenting existing constants)
-**Result**: README.md Configuration section with all wp-config.php constants
+See [milestone archive](milestones/v4.3-performance-documentation.md) for full details.
 
-Plans:
-- [x] 62-01: Add Configuration section to README.md (2/2 tasks) ✓
-
-#### Phase 62.1: WordPress Coding Standards (INSERTED)
-
-**Goal**: Install WordPress Coding Standards (WPCS) and make all PHP code adhere to it
-**Depends on**: Phase 62
-**Research**: Complete (WPCS 3.3, phpcs configuration, auto-fixing workflow)
-**Reference**: https://github.com/WordPress/WordPress-Coding-Standards
-**Result**: WPCS 3.3 installed, 99.5% violations fixed (49,450→238), Composer lint scripts added
-
-Plans:
-- [x] 62.1-01: WPCS Installation & Auto-Fix (3/3 tasks) - 97.7% violations auto-fixed ✓
-- [x] 62.1-02: Manual Fixes (3/3 tasks) - 79% additional reduction, strategic exclusions ✓
-
-#### Phase 63: PHPCS Config Refinement
-
-**Goal**: Disable Yoda conditions rule and require short array syntax
-**Depends on**: Phase 62.1
-**Research**: Unlikely (simple phpcs.xml.dist configuration)
-**Result**: Yoda disabled, short array syntax enforced, 192 errors eliminated
-
-Plans:
-- [x] 63-01: Disable Yoda and enforce short array syntax (3/3 tasks) ✓
+</details>
 
 ---
 
