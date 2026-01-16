@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Milestone v4.4 complete — ready for next milestone
+**Current focus:** v4.5 Calendar Sync Control — sync range, frequency, and calendar selection
 
 ## Current Position
 
-Milestone: v4.4 Code Organization — SHIPPED 2026-01-16
-Phase: 66 of 66 (PSR-4 Autoloader) — Complete
-Plan: 6 of 6 complete
-Status: Milestone complete
-Last activity: 2026-01-16 — Shipped v4.4 Code Organization milestone
+Milestone: v4.5 Calendar Sync Control
+Phase: 67 of 68 (Sync Range & Frequency)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-16 — Milestone v4.5 created
 
-Progress: ██████████ 100% (3/3 phases)
+Progress: ░░░░░░░░░░ 0% (0/2 phases)
 
 ## Completed Milestones
 
@@ -82,11 +82,13 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.3 complete: React performance review, installation documentation, WPCS compliance
 - Milestone v4.3 archived: Git tag v4.3 created
 - Milestone v4.4 created: Code organization, 3 phases (Phase 64-66)
+- Milestone v4.4 complete: PSR-4 namespaces, Composer autoloading, 38 classes namespaced
+- Milestone v4.5 created: Calendar sync control, 2 phases (Phase 67-68)
 
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Phase 66 complete, milestone v4.4 ready for completion
+Stopped at: Milestone v4.5 initialization
 Resume file: None
 
 ## Accumulated Context

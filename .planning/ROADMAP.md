@@ -23,10 +23,37 @@
 - ✅ [v4.2 Settings & Stability](milestones/v4.2-settings-stability.md) (Phases 58-60) — SHIPPED 2026-01-15
 - ✅ [v4.3 Performance & Documentation](milestones/v4.3-performance-documentation.md) (Phases 61-63) — SHIPPED 2026-01-16
 - ✅ [v4.4 Code Organization](milestones/v4.4-code-organization.md) (Phases 64-66) — SHIPPED 2026-01-16
+- 🚧 **v4.5 Calendar Sync Control** - Phases 67-68 (in progress)
 
 ## Current Status
 
-**Last completed milestone:** v4.4 Code Organization (Phases 64-66)
+**Current milestone:** v4.5 Calendar Sync Control (Phases 67-68)
+
+---
+
+### 🚧 v4.5 Calendar Sync Control (In Progress)
+
+**Milestone Goal:** Give users control over calendar sync behavior - date range limits, sync frequency, and calendar selection per connection.
+
+#### Phase 67: Sync Range & Frequency
+
+**Goal**: Add settings for configuring how far back/forward to sync events and how often to sync
+**Depends on**: v4.4 complete
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 67-01: TBD (run /gsd:plan-phase 67 to break down)
+
+#### Phase 68: Calendar Selection UI
+
+**Goal**: Add calendar picker to settings allowing users to select which calendars to sync per connection
+**Depends on**: Phase 67
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 68-01: TBD (run /gsd:plan-phase 68 to break down)
 
 ---
 
@@ -605,5 +632,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.2 Settings & Stability | 58-60 | 3/3 | Complete ✅ | 2026-01-15 |
 | v4.3 Performance & Documentation | 61-63 | 5/5 | Complete ✅ | 2026-01-16 |
 | v4.4 Code Organization | 64-66 | 6/6 | Complete ✅ | 2026-01-16 |
+| v4.5 Calendar Sync Control | 67-68 | 0/? | In progress 🚧 | - |
 
 **Shipped: 23 milestones, 66 phases, 116 plans**
