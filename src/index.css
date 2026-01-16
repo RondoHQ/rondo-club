@@ -199,6 +199,10 @@
     @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 dark:bg-red-500 dark:hover:bg-red-400;
   }
 
+  .btn-danger-outline {
+    @apply btn bg-transparent text-red-500 border border-red-500 hover:bg-red-50 hover:text-red-600 focus:ring-red-500 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300;
+  }
+
   .input {
     @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100;
   }
