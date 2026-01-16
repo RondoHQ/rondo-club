@@ -120,6 +120,7 @@ Resume file: None
 25. ~~Update favicon to match current color scheme (ui)~~ — DONE in v4.1 Phase 57
 26. ~~Fix Today's meetings layout and timezone display (ui)~~ — DONE in v4.1 Phase 57
 27. Soften PersonDetail delete button style (ui)
+28. Review performance using react-best-practices skill (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
