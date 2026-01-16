@@ -36,14 +36,14 @@ class GoogleOAuth {
 	/**
 	 * Get Google API client instance configured with credentials
 	 *
-	 * @return Google\Client|null Configured client or null if not configured
+	 * @return \Google\Client|null Configured client or null if not configured
 	 */
-	public static function get_client(): ?Google\Client {
+	public static function get_client(): ?\Google\Client {
 		if ( ! self::is_configured() ) {
 			return null;
 		}
 
-		$client = new Google\Client();
+		$client = new \Google\Client();
 		$client->setClientId( GOOGLE_CALENDAR_CLIENT_ID );
 		$client->setClientSecret( GOOGLE_CALENDAR_CLIENT_SECRET );
 		$client->setRedirectUri( self::get_redirect_uri() );
