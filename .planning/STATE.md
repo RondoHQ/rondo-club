@@ -2,20 +2,20 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-15)
+See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v4.3 Performance & Documentation - React optimization and installation docs
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v4.3 Performance & Documentation (COMPLETE)
-Phase: 63 of 63 (PHPCS Config Refinement) ✓
-Plan: All plans complete
-Status: Milestone complete, awaiting archive
-Last activity: 2026-01-16 — Completed Phase 63 (PHPCS Config Refinement)
+Milestone: None active
+Phase: Ready for next milestone
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-16 — v4.3 milestone complete
 
-Progress: ██████████ 100% (4/4 phases)
+Progress: No active milestone
 
 ## Completed Milestones
 
@@ -40,8 +40,9 @@ Progress: ██████████ 100% (4/4 phases)
 | v4.0 Calendar Integration | 47-55 | 11 | 2026-01-15 |
 | v4.1 Bug Fixes & Polish | 56-57 | 3 | 2026-01-15 |
 | v4.2 Settings & Stability | 58-60 | 3 | 2026-01-15 |
+| v4.3 Performance & Documentation | 61-63 | 5 | 2026-01-16 |
 
-**Total:** 20 milestones, 60 phases, 105 plans completed
+**Total:** 20 milestones, 63 phases, 110 plans completed
 
 ## Deferred Issues
 
@@ -58,39 +59,13 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 
 ## Roadmap Evolution
 
-- Milestone v3.1 complete: Todo CPT with pending response tracking
-- Milestone v3.1 archived: Git tag v3.1 created
-- Milestone v3.2 complete: Person Profile Polish (header, sidebar, mobile)
-- Milestone v3.2 archived: Git tag v3.2 created
-- Milestone v3.3 complete: Todo Enhancement (notes, multi-person, avatars)
-- Milestone v3.3 archived: Git tag v3.3 created
-- Milestone v3.4 complete: UI Polish (quick fixes, dashboard, labels)
-- Milestone v3.4 archived: Git tag v3.4 created
-- Milestone v3.5 complete: X logo, dashboard styling, search ranking, auto-title, cache sync
-- Milestone v3.5 archived: Git tag v3.5 created
-- Milestone v3.6 complete: Awaiting checkbox, email lowercase, modal lazy loading (bundle 460→50 KB)
-- Milestone v3.6 archived: Git tag v3.6 created
-- Milestone v3.7 complete: Dashboard todo modal, view-first mode, tomorrow default
-- Milestone v3.7 archived: Git tag v3.7 created
-- Milestone v3.8 complete: Color scheme toggle, accent color picker, dark mode contrast fixes
-- Milestone v3.8 archived: Git tag v3.8 created
-- Milestone v4.0 complete: Calendar Integration (Google, CalDAV, contact matching, dashboard widget)
-- Milestone v4.0 archived: Git tag v4.0 created
-- Milestone v4.1 complete: Dark mode fixes, deploy procedure, 3-row dashboard, dynamic favicon
-- Milestone v4.1 archived: Git tag v4.1 created
-- Milestone v4.2 created: Settings & Stability, 3 phases (Phase 58-60)
-- Milestone v4.2 complete: DOM stability, settings restructure, calendar re-matching
-- Milestone v4.2 archived: Git tag v4.2 created
-- Milestone v4.3 created: Performance & Documentation, 2 phases (Phase 61-62)
-- Phase 62.1 inserted after Phase 62: WordPress Coding Standards (URGENT)
-- Phase 62.1 complete: WPCS installed, 99.5% violations fixed (49,450→238)
-- Phase 63 added: PHPCS Config Refinement (disable Yoda, require short arrays)
-- Phase 63 complete: Disabled Yoda, short array syntax enforced, 2458 violations eliminated
+- Milestone v4.3 complete: React performance review, installation documentation, WPCS compliance
+- Milestone v4.3 archived: Git tag v4.3 created
 
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 63-01-PLAN.md (Phase 63 complete)
+Stopped at: Milestone v4.3 complete
 Resume file: None
 
 ## Accumulated Context
@@ -117,7 +92,7 @@ Resume file: None
 17. ~~Fix CardDAV connection details dark mode contrast (ui)~~ — DONE in v4.1 Phase 56
 18. ~~Fix React/DOM Node synchronization errors (ui)~~ — DONE in v4.1 Phase 56 (documented as benign)
 19. ~~Fix recurring module MIME type errors (ui)~~ — DONE in v4.1 Phase 56 (deploy procedure fix)
-~~20. Add wp-config.php constants installation documentation (docs)~~ — DONE in v4.3 Phase 62
+20. ~~Add wp-config.php constants installation documentation (docs)~~ — DONE in v4.3 Phase 62
 21. ~~Restructure Settings with Connections tab and subtabs (ui)~~ — DONE in v4.2 Phase 59
 22. ~~Fix search modal active result dark mode contrast (ui)~~ — DONE in v4.1 Phase 56
 23. ~~Re-run meetings matching when email address added (api)~~ — DONE in v4.2 Phase 60
@@ -125,7 +100,7 @@ Resume file: None
 25. ~~Update favicon to match current color scheme (ui)~~ — DONE in v4.1 Phase 57
 26. ~~Fix Today's meetings layout and timezone display (ui)~~ — DONE in v4.1 Phase 57
 27. Soften PersonDetail delete button style (ui)
-~~28. Review performance using react-best-practices skill (ui)~~ — DONE in v4.3 Phase 61 (no changes needed)
+28. ~~Review performance using react-best-practices skill (ui)~~ — DONE in v4.3 Phase 61 (no changes needed)
 29. Allow selecting Google Calendars to sync (ui)
 30. Check and configure Google Calendar sync date range (api)
 
@@ -142,11 +117,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Phase 61: React Performance Review - COMPLETE (no code changes needed)
-- Phase 62: Installation Documentation - COMPLETE (README.md updated)
-- Phase 62.1: WordPress Coding Standards - COMPLETE
-  - Plan 01: WPCS installed, 97.7% violations auto-fixed
-  - Plan 02: Reduced remaining violations from 1,140 to 238 (79% reduction)
-- Phase 63: PHPCS Config Refinement - COMPLETE
-  - Plan 01: Disabled Yoda, short array syntax, 192 errors eliminated
-- Ready for: /gsd:complete-milestone to archive and bump version to v4.3
+- Use `/gsd:discuss-milestone` to plan next work
+- Consider remaining todos: Twenty CRM import, Google Calendar sync settings, PersonDetail delete button styling
