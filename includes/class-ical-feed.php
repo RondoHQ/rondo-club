@@ -397,7 +397,7 @@ class ICalFeed {
 		}
 
 		// Verify user is a member of the workspace
-		if ( ! PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
+		if ( ! \PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
 			status_header( 403 );
 			echo 'Access denied - not a workspace member';
 			exit;

@@ -63,7 +63,7 @@ class ImportExport extends Base {
 	 */
 	public function export_vcard( $request ) {
 		$user_id        = get_current_user_id();
-		$access_control = new PRM_Access_Control();
+		$access_control = new \PRM_Access_Control();
 
 		// Get all accessible people
 		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
@@ -135,7 +135,7 @@ class ImportExport extends Base {
 	 */
 	public function export_google_csv( $request ) {
 		$user_id        = get_current_user_id();
-		$access_control = new PRM_Access_Control();
+		$access_control = new \PRM_Access_Control();
 
 		// Get all accessible people
 		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );

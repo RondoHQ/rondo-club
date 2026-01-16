@@ -744,7 +744,7 @@ class People extends Base {
 			try {
 				// Update visibility if provided
 				if ( isset( $updates['visibility'] ) ) {
-					$result = PRM_Visibility::set_visibility( $post_id, $updates['visibility'] );
+					$result = \PRM_Visibility::set_visibility( $post_id, $updates['visibility'] );
 					if ( ! $result ) {
 						$failed[] = [
 							'id'    => $post_id,

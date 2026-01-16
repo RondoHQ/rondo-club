@@ -513,7 +513,7 @@ class CalDAVProvider {
 		update_post_meta( $post_id, '_raw_data', wp_json_encode( $raw_data ) );
 
 		// Run contact matching
-		$matches = PRM_Calendar_Matcher::match_attendees( $user_id, $attendees );
+		$matches = \PRM_Calendar_Matcher::match_attendees( $user_id, $attendees );
 		update_post_meta( $post_id, '_matched_people', wp_json_encode( $matches ) );
 
 		return [

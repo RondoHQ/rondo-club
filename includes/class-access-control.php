@@ -145,7 +145,7 @@ class AccessControl {
 
 		// Check if user is approved (admins are always approved)
 		if ( ! user_can( $user_id, 'manage_options' ) ) {
-			if ( ! PRM_User_Roles::is_user_approved( $user_id ) ) {
+			if ( ! \PRM_User_Roles::is_user_approved( $user_id ) ) {
 				return false;
 			}
 		}
@@ -172,22 +172,22 @@ class AccessControl {
 		}
 
 		// 2. Check direct shares first (overrides visibility)
-		if ( PRM_Visibility::user_has_share( $post_id, $user_id ) ) {
+		if ( \PRM_Visibility::user_has_share( $post_id, $user_id ) ) {
 			return true;
 		}
 
 		// 3. Check visibility
-		$visibility = PRM_Visibility::get_visibility( $post_id );
+		$visibility = \PRM_Visibility::get_visibility( $post_id );
 
 		// Private = only author (already checked above), no shares (checked above)
-		if ( $visibility === PRM_Visibility::VISIBILITY_PRIVATE ) {
+		if ( $visibility === \PRM_Visibility::VISIBILITY_PRIVATE ) {
 			return false;
 		}
 
 		// 4. Workspace visibility check
-		if ( $visibility === PRM_Visibility::VISIBILITY_WORKSPACE ) {
+		if ( $visibility === \PRM_Visibility::VISIBILITY_WORKSPACE ) {
 			// Get user's workspace IDs
-			$user_workspace_ids = PRM_Workspace_Members::get_user_workspace_ids( $user_id );
+			$user_workspace_ids = \PRM_Workspace_Members::get_user_workspace_ids( $user_id );
 
 			if ( ! empty( $user_workspace_ids ) ) {
 				// Check if post has any matching workspace_access terms
@@ -233,16 +233,16 @@ class AccessControl {
 		}
 
 		// Workspace role
-		$visibility = PRM_Visibility::get_visibility( $post_id );
-		if ( $visibility === PRM_Visibility::VISIBILITY_WORKSPACE ) {
-			$user_workspace_ids = PRM_Workspace_Members::get_user_workspace_ids( $user_id );
+		$visibility = \PRM_Visibility::get_visibility( $post_id );
+		if ( $visibility === \PRM_Visibility::VISIBILITY_WORKSPACE ) {
+			$user_workspace_ids = \PRM_Workspace_Members::get_user_workspace_ids( $user_id );
 			$post_terms         = wp_get_post_terms( $post_id, 'workspace_access', [ 'fields' => 'slugs' ] );
 
 			if ( ! is_wp_error( $post_terms ) ) {
 				foreach ( $post_terms as $slug ) {
 					$workspace_id = (int) str_replace( 'workspace-', '', $slug );
 					if ( in_array( $workspace_id, $user_workspace_ids ) ) {
-						$role = PRM_Workspace_Members::get_user_role( $workspace_id, $user_id );
+						$role = \PRM_Workspace_Members::get_user_role( $workspace_id, $user_id );
 						if ( $role ) {
 							return $role; // 'admin', 'member', or 'viewer'
 						}
@@ -252,7 +252,7 @@ class AccessControl {
 		}
 
 		// Direct share permission
-		$share_permission = PRM_Visibility::get_share_permission( $post_id, $user_id );
+		$share_permission = \PRM_Visibility::get_share_permission( $post_id, $user_id );
 		if ( $share_permission ) {
 			return $share_permission; // 'edit' or 'view'
 		}
@@ -286,7 +286,7 @@ class AccessControl {
 
 		// Check if user is approved (admins are always approved)
 		if ( ! current_user_can( 'manage_options' ) ) {
-			if ( ! PRM_User_Roles::is_user_approved( $user_id ) ) {
+			if ( ! \PRM_User_Roles::is_user_approved( $user_id ) ) {
 				// Unapproved user - show nothing
 				$query->set( 'post__in', [ 0 ] );
 				return;
@@ -340,7 +340,7 @@ class AccessControl {
 		);
 
 		// 2. Workspace-visible posts where user is member
-		$workspace_ids   = PRM_Workspace_Members::get_user_workspace_ids( $user_id );
+		$workspace_ids   = \PRM_Workspace_Members::get_user_workspace_ids( $user_id );
 		$workspace_posts = [];
 
 		if ( ! empty( $workspace_ids ) ) {
@@ -411,7 +411,7 @@ class AccessControl {
 
 		// Check if user is approved (admins are always approved)
 		if ( ! user_can( $user_id, 'manage_options' ) ) {
-			if ( ! PRM_User_Roles::is_user_approved( $user_id ) ) {
+			if ( ! \PRM_User_Roles::is_user_approved( $user_id ) ) {
 				// Unapproved user - show nothing
 				$args['post__in'] = [ 0 ];
 				return $args;
@@ -474,7 +474,7 @@ class AccessControl {
 
 		// Check if user is approved (admins are always approved)
 		if ( ! user_can( $user_id, 'manage_options' ) ) {
-			if ( ! PRM_User_Roles::is_user_approved( $user_id ) ) {
+			if ( ! \PRM_User_Roles::is_user_approved( $user_id ) ) {
 				return new \WP_Error(
 					'rest_forbidden',
 					__( 'Your account is pending approval. Please contact an administrator.', 'caelis' ),
