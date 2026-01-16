@@ -87,62 +87,142 @@ function prm_check_dependencies() {
 }
 
 /**
- * PSR-4 style autoloader for PRM classes
- * Classes are only loaded when first used
+ * Backward compatibility class aliases.
+ *
+ * These allow code using old PRM_* class names to continue working
+ * while the codebase transitions to PSR-4 namespaced classes.
  */
-function prm_autoloader( $class_name ) {
-	// Only handle PRM_ prefixed classes
-	if ( strpos( $class_name, 'PRM_' ) !== 0 ) {
-		return;
-	}
-
-	// Map class names to file names
-	$class_map = [
-		'PRM_Post_Types'               => 'class-post-types.php',
-		'PRM_Taxonomies'               => 'class-taxonomies.php',
-		'PRM_Auto_Title'               => 'class-auto-title.php',
-		'PRM_Access_Control'           => 'class-access-control.php',
-		'PRM_Visibility'               => 'class-visibility.php',
-		'PRM_Comment_Types'            => 'class-comment-types.php',
-		'PRM_REST_API'                 => 'class-rest-api.php',
-		'PRM_REST_Base'                => 'class-rest-base.php',
-		'PRM_REST_People'              => 'class-rest-people.php',
-		'PRM_REST_Companies'           => 'class-rest-companies.php',
-		'PRM_REST_Slack'               => 'class-rest-slack.php',
-		'PRM_REST_Import_Export'       => 'class-rest-import-export.php',
-		'PRM_Reminders'                => 'class-reminders.php',
-		'PRM_Monica_Import'            => 'class-monica-import.php',
-		'PRM_VCard_Import'             => 'class-vcard-import.php',
-		'PRM_Google_Contacts_Import'   => 'class-google-contacts-import.php',
-		'PRM_Inverse_Relationships'    => 'class-inverse-relationships.php',
-		'PRM_ICal_Feed'                => 'class-ical-feed.php',
-		'PRM_User_Roles'               => 'class-user-roles.php',
-		'PRM_Notification_Channel'     => 'class-notification-channel.php',
-		'PRM_Email_Channel'            => 'class-email-channel.php',
-		'PRM_Slack_Channel'            => 'class-slack-channel.php',
-		'PRM_VCard_Export'             => 'class-vcard-export.php',
-		'PRM_CardDAV_Server'           => 'class-carddav-server.php',
-		'PRM_Workspace_Members'        => 'class-workspace-members.php',
-		'PRM_REST_Workspaces'          => 'class-rest-workspaces.php',
-		'PRM_REST_Todos'               => 'class-rest-todos.php',
-		'PRM_Mentions'                 => 'class-mentions.php',
-		'PRM_Mention_Notifications'    => 'class-mention-notifications.php',
-		'PRM_Todo_Migration'           => 'class-todo-migration.php',
-		'PRM_Calendar_Connections'     => 'class-calendar-connections.php',
-		'PRM_Credential_Encryption'    => 'class-credential-encryption.php',
-		'PRM_Google_OAuth'             => 'class-google-oauth.php',
-		'PRM_Google_Calendar_Provider' => 'class-google-calendar-provider.php',
-		'PRM_CalDAV_Provider'          => 'class-caldav-provider.php',
-		'PRM_REST_Calendar'            => 'class-rest-calendar.php',
-		'PRM_Calendar_Matcher'         => 'class-calendar-matcher.php',
-		'PRM_Calendar_Sync'            => 'class-calendar-sync.php',
-	];
-
-	if ( isset( $class_map[ $class_name ] ) ) {
-		require_once PRM_PLUGIN_DIR . '/' . $class_map[ $class_name ];
-	}
+// Core classes
+if ( ! class_exists( 'PRM_Post_Types' ) ) {
+	class_alias( PostTypes::class, 'PRM_Post_Types' );
 }
-spl_autoload_register( 'prm_autoloader' );
+if ( ! class_exists( 'PRM_Taxonomies' ) ) {
+	class_alias( Taxonomies::class, 'PRM_Taxonomies' );
+}
+if ( ! class_exists( 'PRM_Auto_Title' ) ) {
+	class_alias( AutoTitle::class, 'PRM_Auto_Title' );
+}
+if ( ! class_exists( 'PRM_Access_Control' ) ) {
+	class_alias( AccessControl::class, 'PRM_Access_Control' );
+}
+if ( ! class_exists( 'PRM_Visibility' ) ) {
+	class_alias( Visibility::class, 'PRM_Visibility' );
+}
+if ( ! class_exists( 'PRM_User_Roles' ) ) {
+	class_alias( UserRoles::class, 'PRM_User_Roles' );
+}
+
+// REST classes
+if ( ! class_exists( 'PRM_REST_API' ) ) {
+	class_alias( Api::class, 'PRM_REST_API' );
+}
+if ( ! class_exists( 'PRM_REST_Base' ) ) {
+	class_alias( \Caelis\REST\Base::class, 'PRM_REST_Base' );
+}
+if ( ! class_exists( 'PRM_REST_People' ) ) {
+	class_alias( People::class, 'PRM_REST_People' );
+}
+if ( ! class_exists( 'PRM_REST_Companies' ) ) {
+	class_alias( Companies::class, 'PRM_REST_Companies' );
+}
+if ( ! class_exists( 'PRM_REST_Todos' ) ) {
+	class_alias( Todos::class, 'PRM_REST_Todos' );
+}
+if ( ! class_exists( 'PRM_REST_Workspaces' ) ) {
+	class_alias( Workspaces::class, 'PRM_REST_Workspaces' );
+}
+if ( ! class_exists( 'PRM_REST_Slack' ) ) {
+	class_alias( Slack::class, 'PRM_REST_Slack' );
+}
+if ( ! class_exists( 'PRM_REST_Import_Export' ) ) {
+	class_alias( ImportExport::class, 'PRM_REST_Import_Export' );
+}
+if ( ! class_exists( 'PRM_REST_Calendar' ) ) {
+	class_alias( RESTCalendar::class, 'PRM_REST_Calendar' );
+}
+
+// Calendar classes
+if ( ! class_exists( 'PRM_Calendar_Connections' ) ) {
+	class_alias( Connections::class, 'PRM_Calendar_Connections' );
+}
+if ( ! class_exists( 'PRM_Calendar_Matcher' ) ) {
+	class_alias( Matcher::class, 'PRM_Calendar_Matcher' );
+}
+if ( ! class_exists( 'PRM_Calendar_Sync' ) ) {
+	class_alias( Sync::class, 'PRM_Calendar_Sync' );
+}
+if ( ! class_exists( 'PRM_Google_Calendar_Provider' ) ) {
+	class_alias( GoogleProvider::class, 'PRM_Google_Calendar_Provider' );
+}
+if ( ! class_exists( 'PRM_CalDAV_Provider' ) ) {
+	class_alias( CalDAVProvider::class, 'PRM_CalDAV_Provider' );
+}
+if ( ! class_exists( 'PRM_Google_OAuth' ) ) {
+	class_alias( GoogleOAuth::class, 'PRM_Google_OAuth' );
+}
+
+// Notification classes
+if ( ! class_exists( 'PRM_Notification_Channel' ) ) {
+	class_alias( \Caelis\Notifications\Channel::class, 'PRM_Notification_Channel' );
+}
+if ( ! class_exists( 'PRM_Email_Channel' ) ) {
+	class_alias( EmailChannel::class, 'PRM_Email_Channel' );
+}
+if ( ! class_exists( 'PRM_Slack_Channel' ) ) {
+	class_alias( SlackChannel::class, 'PRM_Slack_Channel' );
+}
+
+// Collaboration classes
+if ( ! class_exists( 'PRM_Comment_Types' ) ) {
+	class_alias( CommentTypes::class, 'PRM_Comment_Types' );
+}
+if ( ! class_exists( 'PRM_Workspace_Members' ) ) {
+	class_alias( WorkspaceMembers::class, 'PRM_Workspace_Members' );
+}
+if ( ! class_exists( 'PRM_Mentions' ) ) {
+	class_alias( \Caelis\Collaboration\Mentions::class, 'PRM_Mentions' );
+}
+if ( ! class_exists( 'PRM_Mention_Notifications' ) ) {
+	class_alias( MentionNotifications::class, 'PRM_Mention_Notifications' );
+}
+if ( ! class_exists( 'PRM_Reminders' ) ) {
+	class_alias( Reminders::class, 'PRM_Reminders' );
+}
+
+// Import classes
+if ( ! class_exists( 'PRM_Monica_Import' ) ) {
+	class_alias( Monica::class, 'PRM_Monica_Import' );
+}
+if ( ! class_exists( 'PRM_VCard_Import' ) ) {
+	class_alias( VCardImport::class, 'PRM_VCard_Import' );
+}
+if ( ! class_exists( 'PRM_Google_Contacts_Import' ) ) {
+	class_alias( GoogleContacts::class, 'PRM_Google_Contacts_Import' );
+}
+
+// Export classes
+if ( ! class_exists( 'PRM_VCard_Export' ) ) {
+	class_alias( VCardExport::class, 'PRM_VCard_Export' );
+}
+if ( ! class_exists( 'PRM_ICal_Feed' ) ) {
+	class_alias( ICalFeed::class, 'PRM_ICal_Feed' );
+}
+
+// CardDAV class
+if ( ! class_exists( 'PRM_CardDAV_Server' ) ) {
+	class_alias( CardDAVServer::class, 'PRM_CardDAV_Server' );
+}
+
+// Data classes
+if ( ! class_exists( 'PRM_Inverse_Relationships' ) ) {
+	class_alias( InverseRelationships::class, 'PRM_Inverse_Relationships' );
+}
+if ( ! class_exists( 'PRM_Todo_Migration' ) ) {
+	class_alias( TodoMigration::class, 'PRM_Todo_Migration' );
+}
+if ( ! class_exists( 'PRM_Credential_Encryption' ) ) {
+	class_alias( \Caelis\Data\CredentialEncryption::class, 'PRM_Credential_Encryption' );
+}
 
 /**
  * Check if current request is a CardDAV request
