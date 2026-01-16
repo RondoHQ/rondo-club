@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 ## Current Position
 
 Milestone: v4.4 Code Organization
-Phase: 64 of 66 (Audit & Planning)
-Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-01-16 — Completed 64-01-PLAN.md
+Phase: 65 of 66 (Split & Reorganize)
+Plan: 1 of 3 complete
+Status: Plan 65-01 complete
+Last activity: 2026-01-16 — Completed 65-01-PLAN.md (split notification channels)
 
-Progress: █░░░░░░░░░ 33% (1/3 phases)
+Progress: █████░░░░░ 50% (1.5/3 phases)
 
 ## Completed Milestones
 
@@ -56,6 +56,10 @@ See `.planning/ISSUES.md`:
 ## Decisions Made
 
 See `.planning/PROJECT.md` Key Decisions table for full decision history.
+
+### Phase 65-01 Decisions
+
+- **WP-CLI multi-class exception:** Discovered `class-wp-cli.php` contains 9 CLI command classes (not in audit). Added PHPCS exclusion rather than splitting. Rationale: conditionally loaded, logically grouped CLI commands, audit stated "pattern should be preserved".
 
 ## Roadmap Evolution
 
