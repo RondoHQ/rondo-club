@@ -16,481 +16,499 @@ use WP_Query;
  */
 class UserIsolationTest extends CaelisTestCase {
 
-    /**
-     * Access control instance for testing.
-     *
-     * @var PRM_Access_Control
-     */
-    private PRM_Access_Control $access_control;
-
-    /**
-     * Set up test environment before each test.
-     */
-    protected function set_up(): void {
-        parent::set_up();
-
-        // Create fresh access control instance for testing
-        $this->access_control = new PRM_Access_Control();
-    }
-
-    /**
-     * Helper to create an approved Caelis user.
-     *
-     * @param array $args User arguments
-     * @return int User ID
-     */
-    private function createApprovedCaelisUser( array $args = [] ): int {
-        $user_id = $this->createCaelisUser( $args );
-        update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
-        return $user_id;
-    }
-
-    /**
-     * Helper to create an important date post.
-     *
-     * @param array $args Post arguments
-     * @return int Post ID
-     */
-    private function createImportantDatePost( array $args = [] ): int {
-        $defaults = [
-            'post_type'   => 'important_date',
-            'post_status' => 'publish',
-            'post_author' => get_current_user_id() ?: 1,
-        ];
-
-        return self::factory()->post->create( array_merge( $defaults, $args ) );
-    }
-
-    // =========================================================================
-    // Task 1: Test user_can_access_post() author check
-    // =========================================================================
-
-    /**
-     * Test that author can access their own person post.
-     */
-    public function test_author_can_access_own_person_post(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-
-        $person_id = $this->createPerson( [ 'post_author' => $alice_id ] );
-
-        $this->assertTrue(
-            $this->access_control->user_can_access_post( $person_id, $alice_id ),
-            'Alice should have access to her own person post'
-        );
-    }
-
-    /**
-     * Test that non-author cannot access another user's person post.
-     */
-    public function test_non_author_cannot_access_person_post(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
-
-        $person_id = $this->createPerson( [ 'post_author' => $alice_id ] );
-
-        $this->assertFalse(
-            $this->access_control->user_can_access_post( $person_id, $bob_id ),
-            'Bob should NOT have access to Alice\'s person post'
-        );
-    }
-
-    /**
-     * Test that author can access their own company post.
-     */
-    public function test_author_can_access_own_company_post(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-
-        $company_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
-
-        $this->assertTrue(
-            $this->access_control->user_can_access_post( $company_id, $alice_id ),
-            'Alice should have access to her own company post'
-        );
-    }
-
-    /**
-     * Test that non-author cannot access another user's company post.
-     */
-    public function test_non_author_cannot_access_company_post(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
-
-        $company_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
-
-        $this->assertFalse(
-            $this->access_control->user_can_access_post( $company_id, $bob_id ),
-            'Bob should NOT have access to Alice\'s company post'
-        );
-    }
-
-    /**
-     * Test that author can access their own important_date post.
-     */
-    public function test_author_can_access_own_important_date_post(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-
-        $date_id = $this->createImportantDatePost( [ 'post_author' => $alice_id ] );
-
-        $this->assertTrue(
-            $this->access_control->user_can_access_post( $date_id, $alice_id ),
-            'Alice should have access to her own important_date post'
-        );
-    }
-
-    /**
-     * Test that non-author cannot access another user's important_date post.
-     */
-    public function test_non_author_cannot_access_important_date_post(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
-
-        $date_id = $this->createImportantDatePost( [ 'post_author' => $alice_id ] );
-
-        $this->assertFalse(
-            $this->access_control->user_can_access_post( $date_id, $bob_id ),
-            'Bob should NOT have access to Alice\'s important_date post'
-        );
-    }
-
-    /**
-     * Test that unapproved user cannot access any posts.
-     */
-    public function test_unapproved_user_cannot_access_posts(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-
-        // Create unapproved user
-        $unapproved_id = $this->createCaelisUser( [ 'user_login' => 'unapproved' ] );
-        update_user_meta( $unapproved_id, PRM_User_Roles::APPROVAL_META_KEY, '0' );
-
-        // Create posts by Alice
-        $person_id  = $this->createPerson( [ 'post_author' => $alice_id ] );
-        $company_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
-        $date_id    = $this->createImportantDatePost( [ 'post_author' => $alice_id ] );
-
-        // Even posts created by the unapproved user shouldn't be accessible
-        $own_person_id = $this->createPerson( [ 'post_author' => $unapproved_id ] );
-
-        $this->assertFalse(
-            $this->access_control->user_can_access_post( $person_id, $unapproved_id ),
-            'Unapproved user should NOT access other\'s person post'
-        );
-        $this->assertFalse(
-            $this->access_control->user_can_access_post( $company_id, $unapproved_id ),
-            'Unapproved user should NOT access other\'s company post'
-        );
-        $this->assertFalse(
-            $this->access_control->user_can_access_post( $date_id, $unapproved_id ),
-            'Unapproved user should NOT access other\'s important_date post'
-        );
-        $this->assertFalse(
-            $this->access_control->user_can_access_post( $own_person_id, $unapproved_id ),
-            'Unapproved user should NOT even access their own post'
-        );
-    }
-
-    /**
-     * Test that trashed posts are not accessible even by author.
-     */
-    public function test_author_cannot_access_trashed_post(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-
-        $person_id = $this->createPerson( [
-            'post_author' => $alice_id,
-            'post_status' => 'trash',
-        ] );
-
-        $this->assertFalse(
-            $this->access_control->user_can_access_post( $person_id, $alice_id ),
-            'Alice should NOT have access to her trashed post'
-        );
-    }
-
-    /**
-     * Test that non-controlled post types are accessible.
-     */
-    public function test_non_controlled_post_types_are_accessible(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
-
-        // Create a regular WordPress post (not a controlled post type)
-        $post_id = self::factory()->post->create( [
-            'post_type'   => 'post',
-            'post_status' => 'publish',
-            'post_author' => $alice_id,
-        ] );
-
-        $this->assertTrue(
-            $this->access_control->user_can_access_post( $post_id, $bob_id ),
-            'Bob should have access to regular WordPress posts (non-controlled type)'
-        );
-    }
-
-    // =========================================================================
-    // Task 2: Test query filtering for user isolation
-    // =========================================================================
-
-    /**
-     * Test get_accessible_post_ids returns only user's own posts.
-     */
-    public function test_get_accessible_post_ids_returns_only_user_posts(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
-
-        // Create 3 persons for Alice
-        $alice_person_1 = $this->createPerson( [ 'post_author' => $alice_id ] );
-        $alice_person_2 = $this->createPerson( [ 'post_author' => $alice_id ] );
-        $alice_person_3 = $this->createPerson( [ 'post_author' => $alice_id ] );
-
-        // Create 2 persons for Bob
-        $bob_person_1 = $this->createPerson( [ 'post_author' => $bob_id ] );
-        $bob_person_2 = $this->createPerson( [ 'post_author' => $bob_id ] );
-
-        // Test Alice's accessible IDs (cast to int for comparison - DB returns strings)
-        $alice_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'person', $alice_id ) );
-        $this->assertCount( 3, $alice_ids, 'Alice should have exactly 3 accessible persons' );
-        $this->assertContains( $alice_person_1, $alice_ids );
-        $this->assertContains( $alice_person_2, $alice_ids );
-        $this->assertContains( $alice_person_3, $alice_ids );
-        $this->assertNotContains( $bob_person_1, $alice_ids );
-        $this->assertNotContains( $bob_person_2, $alice_ids );
-
-        // Test Bob's accessible IDs
-        $bob_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'person', $bob_id ) );
-        $this->assertCount( 2, $bob_ids, 'Bob should have exactly 2 accessible persons' );
-        $this->assertContains( $bob_person_1, $bob_ids );
-        $this->assertContains( $bob_person_2, $bob_ids );
-        $this->assertNotContains( $alice_person_1, $bob_ids );
-        $this->assertNotContains( $alice_person_2, $bob_ids );
-        $this->assertNotContains( $alice_person_3, $bob_ids );
-    }
-
-    /**
-     * Test get_accessible_post_ids works for all controlled post types.
-     */
-    public function test_get_accessible_post_ids_works_for_all_post_types(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
-
-        // Create posts for Alice
-        $alice_person  = $this->createPerson( [ 'post_author' => $alice_id ] );
-        $alice_company = $this->createOrganization( [ 'post_author' => $alice_id ] );
-        $alice_date    = $this->createImportantDatePost( [ 'post_author' => $alice_id ] );
-
-        // Create posts for Bob
-        $bob_person  = $this->createPerson( [ 'post_author' => $bob_id ] );
-        $bob_company = $this->createOrganization( [ 'post_author' => $bob_id ] );
-        $bob_date    = $this->createImportantDatePost( [ 'post_author' => $bob_id ] );
-
-        // Test Alice's person access (cast to int - DB returns strings)
-        $alice_person_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'person', $alice_id ) );
-        $this->assertContains( $alice_person, $alice_person_ids );
-        $this->assertNotContains( $bob_person, $alice_person_ids );
-
-        // Test Alice's company access
-        $alice_company_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'company', $alice_id ) );
-        $this->assertContains( $alice_company, $alice_company_ids );
-        $this->assertNotContains( $bob_company, $alice_company_ids );
-
-        // Test Alice's important_date access
-        $alice_date_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'important_date', $alice_id ) );
-        $this->assertContains( $alice_date, $alice_date_ids );
-        $this->assertNotContains( $bob_date, $alice_date_ids );
-    }
-
-    /**
-     * Test WP_Query filtering returns only current user's posts.
-     */
-    public function test_wp_query_filtering_returns_only_user_posts(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
-
-        // Create posts for Alice
-        $alice_person_1 = $this->createPerson( [ 'post_author' => $alice_id ] );
-        $alice_person_2 = $this->createPerson( [ 'post_author' => $alice_id ] );
-
-        // Create posts for Bob
-        $bob_person_1 = $this->createPerson( [ 'post_author' => $bob_id ] );
-
-        // Set current user to Alice
-        wp_set_current_user( $alice_id );
-
-        // Query all persons - should only return Alice's
-        $query = new WP_Query( [
-            'post_type'      => 'person',
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-        ] );
-
-        $result_ids = $query->posts;
-
-        $this->assertContains( $alice_person_1, $result_ids, 'Alice should see her first person' );
-        $this->assertContains( $alice_person_2, $result_ids, 'Alice should see her second person' );
-        $this->assertNotContains( $bob_person_1, $result_ids, 'Alice should NOT see Bob\'s person' );
-    }
-
-    /**
-     * Test WP_Query filtering works when switching users.
-     */
-    public function test_wp_query_filtering_switches_with_user_context(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
-
-        // Create posts
-        $alice_person = $this->createPerson( [ 'post_author' => $alice_id ] );
-        $bob_person   = $this->createPerson( [ 'post_author' => $bob_id ] );
-
-        // Query as Alice
-        wp_set_current_user( $alice_id );
-        $alice_query = new WP_Query( [
-            'post_type'      => 'person',
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-        ] );
-
-        $this->assertContains( $alice_person, $alice_query->posts );
-        $this->assertNotContains( $bob_person, $alice_query->posts );
-
-        // Query as Bob
-        wp_set_current_user( $bob_id );
-        $bob_query = new WP_Query( [
-            'post_type'      => 'person',
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-        ] );
-
-        $this->assertContains( $bob_person, $bob_query->posts );
-        $this->assertNotContains( $alice_person, $bob_query->posts );
-    }
-
-    /**
-     * Test REST query filtering sets post__in to user's posts only.
-     */
-    public function test_rest_query_filtering_restricts_to_user_posts(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
-
-        // Create posts
-        $alice_person = $this->createPerson( [ 'post_author' => $alice_id ] );
-        $bob_person   = $this->createPerson( [ 'post_author' => $bob_id ] );
-
-        // Set current user to Alice
-        wp_set_current_user( $alice_id );
-
-        // Simulate REST API request args
-        $args = [
-            'post_type'      => 'person',
-            'posts_per_page' => 10,
-        ];
-
-        // Create mock WP_REST_Request
-        $request = new \WP_REST_Request( 'GET', '/wp/v2/people' );
-
-        // Call filter_rest_query directly
-        $filtered_args = $this->access_control->filter_rest_query( $args, $request );
-
-        // Cast post__in to integers for comparison (DB returns strings)
-        $post_in_ids = array_map( 'intval', $filtered_args['post__in'] );
-
-        $this->assertArrayHasKey( 'post__in', $filtered_args, 'REST query should have post__in set' );
-        $this->assertContains( $alice_person, $post_in_ids, 'Alice\'s person should be in allowed IDs' );
-        $this->assertNotContains( $bob_person, $post_in_ids, 'Bob\'s person should NOT be in allowed IDs' );
-    }
-
-    /**
-     * Test logged out user gets empty results from WP_Query.
-     */
-    public function test_logged_out_user_gets_empty_wp_query_results(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-
-        // Create a post
-        $this->createPerson( [ 'post_author' => $alice_id ] );
-
-        // Set no current user (logged out)
-        wp_set_current_user( 0 );
-
-        // Query - should return empty
-        $query = new WP_Query( [
-            'post_type'      => 'person',
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-        ] );
-
-        $this->assertEmpty( $query->posts, 'Logged out user should get no results' );
-    }
-
-    /**
-     * Test logged out user gets post__in = [0] from REST query filter.
-     */
-    public function test_logged_out_user_gets_blocked_rest_query(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-
-        // Create a post
-        $this->createPerson( [ 'post_author' => $alice_id ] );
-
-        // Set no current user (logged out)
-        wp_set_current_user( 0 );
-
-        // Simulate REST API request
-        $args = [
-            'post_type'      => 'person',
-            'posts_per_page' => 10,
-        ];
-        $request = new \WP_REST_Request( 'GET', '/wp/v2/people' );
-
-        $filtered_args = $this->access_control->filter_rest_query( $args, $request );
-
-        $this->assertArrayHasKey( 'post__in', $filtered_args );
-        $this->assertEquals( [ 0 ], $filtered_args['post__in'], 'Logged out user should get post__in = [0]' );
-    }
-
-    /**
-     * Test get_accessible_post_ids returns empty array for user with no posts.
-     */
-    public function test_get_accessible_post_ids_returns_empty_for_new_user(): void {
-        $alice_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $newuser_id = $this->createApprovedCaelisUser( [ 'user_login' => 'newuser' ] );
-
-        // Create posts only for Alice
-        $this->createPerson( [ 'post_author' => $alice_id ] );
-        $this->createPerson( [ 'post_author' => $alice_id ] );
-
-        // New user should have empty accessible IDs
-        $newuser_ids = $this->access_control->get_accessible_post_ids( 'person', $newuser_id );
-
-        $this->assertEmpty( $newuser_ids, 'New user with no posts should get empty array' );
-    }
-
-    /**
-     * Test that query filtering does not affect non-controlled post types.
-     */
-    public function test_query_filtering_ignores_non_controlled_post_types(): void {
-        $alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
-        $bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
-
-        // Create regular WordPress posts
-        $alice_post = self::factory()->post->create( [
-            'post_type'   => 'post',
-            'post_status' => 'publish',
-            'post_author' => $alice_id,
-        ] );
-        $bob_post = self::factory()->post->create( [
-            'post_type'   => 'post',
-            'post_status' => 'publish',
-            'post_author' => $bob_id,
-        ] );
-
-        // Set current user to Alice
-        wp_set_current_user( $alice_id );
-
-        // Query regular posts - Alice should see both (no access control)
-        $query = new WP_Query( [
-            'post_type'      => 'post',
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-        ] );
-
-        // Both posts should be accessible since 'post' is not a controlled type
-        $this->assertContains( $alice_post, $query->posts );
-        $this->assertContains( $bob_post, $query->posts );
-    }
+	/**
+	 * Access control instance for testing.
+	 *
+	 * @var PRM_Access_Control
+	 */
+	private PRM_Access_Control $access_control;
+
+	/**
+	 * Set up test environment before each test.
+	 */
+	protected function set_up(): void {
+		parent::set_up();
+
+		// Create fresh access control instance for testing
+		$this->access_control = new PRM_Access_Control();
+	}
+
+	/**
+	 * Helper to create an approved Caelis user.
+	 *
+	 * @param array $args User arguments
+	 * @return int User ID
+	 */
+	private function createApprovedCaelisUser( array $args = array() ): int {
+		$user_id = $this->createCaelisUser( $args );
+		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
+		return $user_id;
+	}
+
+	/**
+	 * Helper to create an important date post.
+	 *
+	 * @param array $args Post arguments
+	 * @return int Post ID
+	 */
+	private function createImportantDatePost( array $args = array() ): int {
+		$defaults = array(
+			'post_type'   => 'important_date',
+			'post_status' => 'publish',
+			'post_author' => get_current_user_id() ?: 1,
+		);
+
+		return self::factory()->post->create( array_merge( $defaults, $args ) );
+	}
+
+	// =========================================================================
+	// Task 1: Test user_can_access_post() author check
+	// =========================================================================
+
+	/**
+	 * Test that author can access their own person post.
+	 */
+	public function test_author_can_access_own_person_post(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+
+		$person_id = $this->createPerson( array( 'post_author' => $alice_id ) );
+
+		$this->assertTrue(
+			$this->access_control->user_can_access_post( $person_id, $alice_id ),
+			'Alice should have access to her own person post'
+		);
+	}
+
+	/**
+	 * Test that non-author cannot access another user's person post.
+	 */
+	public function test_non_author_cannot_access_person_post(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+
+		$person_id = $this->createPerson( array( 'post_author' => $alice_id ) );
+
+		$this->assertFalse(
+			$this->access_control->user_can_access_post( $person_id, $bob_id ),
+			'Bob should NOT have access to Alice\'s person post'
+		);
+	}
+
+	/**
+	 * Test that author can access their own company post.
+	 */
+	public function test_author_can_access_own_company_post(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+
+		$company_id = $this->createOrganization( array( 'post_author' => $alice_id ) );
+
+		$this->assertTrue(
+			$this->access_control->user_can_access_post( $company_id, $alice_id ),
+			'Alice should have access to her own company post'
+		);
+	}
+
+	/**
+	 * Test that non-author cannot access another user's company post.
+	 */
+	public function test_non_author_cannot_access_company_post(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+
+		$company_id = $this->createOrganization( array( 'post_author' => $alice_id ) );
+
+		$this->assertFalse(
+			$this->access_control->user_can_access_post( $company_id, $bob_id ),
+			'Bob should NOT have access to Alice\'s company post'
+		);
+	}
+
+	/**
+	 * Test that author can access their own important_date post.
+	 */
+	public function test_author_can_access_own_important_date_post(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+
+		$date_id = $this->createImportantDatePost( array( 'post_author' => $alice_id ) );
+
+		$this->assertTrue(
+			$this->access_control->user_can_access_post( $date_id, $alice_id ),
+			'Alice should have access to her own important_date post'
+		);
+	}
+
+	/**
+	 * Test that non-author cannot access another user's important_date post.
+	 */
+	public function test_non_author_cannot_access_important_date_post(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+
+		$date_id = $this->createImportantDatePost( array( 'post_author' => $alice_id ) );
+
+		$this->assertFalse(
+			$this->access_control->user_can_access_post( $date_id, $bob_id ),
+			'Bob should NOT have access to Alice\'s important_date post'
+		);
+	}
+
+	/**
+	 * Test that unapproved user cannot access any posts.
+	 */
+	public function test_unapproved_user_cannot_access_posts(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+
+		// Create unapproved user
+		$unapproved_id = $this->createCaelisUser( array( 'user_login' => 'unapproved' ) );
+		update_user_meta( $unapproved_id, PRM_User_Roles::APPROVAL_META_KEY, '0' );
+
+		// Create posts by Alice
+		$person_id  = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$company_id = $this->createOrganization( array( 'post_author' => $alice_id ) );
+		$date_id    = $this->createImportantDatePost( array( 'post_author' => $alice_id ) );
+
+		// Even posts created by the unapproved user shouldn't be accessible
+		$own_person_id = $this->createPerson( array( 'post_author' => $unapproved_id ) );
+
+		$this->assertFalse(
+			$this->access_control->user_can_access_post( $person_id, $unapproved_id ),
+			'Unapproved user should NOT access other\'s person post'
+		);
+		$this->assertFalse(
+			$this->access_control->user_can_access_post( $company_id, $unapproved_id ),
+			'Unapproved user should NOT access other\'s company post'
+		);
+		$this->assertFalse(
+			$this->access_control->user_can_access_post( $date_id, $unapproved_id ),
+			'Unapproved user should NOT access other\'s important_date post'
+		);
+		$this->assertFalse(
+			$this->access_control->user_can_access_post( $own_person_id, $unapproved_id ),
+			'Unapproved user should NOT even access their own post'
+		);
+	}
+
+	/**
+	 * Test that trashed posts are not accessible even by author.
+	 */
+	public function test_author_cannot_access_trashed_post(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+
+		$person_id = $this->createPerson(
+			array(
+				'post_author' => $alice_id,
+				'post_status' => 'trash',
+			)
+		);
+
+		$this->assertFalse(
+			$this->access_control->user_can_access_post( $person_id, $alice_id ),
+			'Alice should NOT have access to her trashed post'
+		);
+	}
+
+	/**
+	 * Test that non-controlled post types are accessible.
+	 */
+	public function test_non_controlled_post_types_are_accessible(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+
+		// Create a regular WordPress post (not a controlled post type)
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'post_author' => $alice_id,
+			)
+		);
+
+		$this->assertTrue(
+			$this->access_control->user_can_access_post( $post_id, $bob_id ),
+			'Bob should have access to regular WordPress posts (non-controlled type)'
+		);
+	}
+
+	// =========================================================================
+	// Task 2: Test query filtering for user isolation
+	// =========================================================================
+
+	/**
+	 * Test get_accessible_post_ids returns only user's own posts.
+	 */
+	public function test_get_accessible_post_ids_returns_only_user_posts(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+
+		// Create 3 persons for Alice
+		$alice_person_1 = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$alice_person_2 = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$alice_person_3 = $this->createPerson( array( 'post_author' => $alice_id ) );
+
+		// Create 2 persons for Bob
+		$bob_person_1 = $this->createPerson( array( 'post_author' => $bob_id ) );
+		$bob_person_2 = $this->createPerson( array( 'post_author' => $bob_id ) );
+
+		// Test Alice's accessible IDs (cast to int for comparison - DB returns strings)
+		$alice_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'person', $alice_id ) );
+		$this->assertCount( 3, $alice_ids, 'Alice should have exactly 3 accessible persons' );
+		$this->assertContains( $alice_person_1, $alice_ids );
+		$this->assertContains( $alice_person_2, $alice_ids );
+		$this->assertContains( $alice_person_3, $alice_ids );
+		$this->assertNotContains( $bob_person_1, $alice_ids );
+		$this->assertNotContains( $bob_person_2, $alice_ids );
+
+		// Test Bob's accessible IDs
+		$bob_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'person', $bob_id ) );
+		$this->assertCount( 2, $bob_ids, 'Bob should have exactly 2 accessible persons' );
+		$this->assertContains( $bob_person_1, $bob_ids );
+		$this->assertContains( $bob_person_2, $bob_ids );
+		$this->assertNotContains( $alice_person_1, $bob_ids );
+		$this->assertNotContains( $alice_person_2, $bob_ids );
+		$this->assertNotContains( $alice_person_3, $bob_ids );
+	}
+
+	/**
+	 * Test get_accessible_post_ids works for all controlled post types.
+	 */
+	public function test_get_accessible_post_ids_works_for_all_post_types(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+
+		// Create posts for Alice
+		$alice_person  = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$alice_company = $this->createOrganization( array( 'post_author' => $alice_id ) );
+		$alice_date    = $this->createImportantDatePost( array( 'post_author' => $alice_id ) );
+
+		// Create posts for Bob
+		$bob_person  = $this->createPerson( array( 'post_author' => $bob_id ) );
+		$bob_company = $this->createOrganization( array( 'post_author' => $bob_id ) );
+		$bob_date    = $this->createImportantDatePost( array( 'post_author' => $bob_id ) );
+
+		// Test Alice's person access (cast to int - DB returns strings)
+		$alice_person_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'person', $alice_id ) );
+		$this->assertContains( $alice_person, $alice_person_ids );
+		$this->assertNotContains( $bob_person, $alice_person_ids );
+
+		// Test Alice's company access
+		$alice_company_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'company', $alice_id ) );
+		$this->assertContains( $alice_company, $alice_company_ids );
+		$this->assertNotContains( $bob_company, $alice_company_ids );
+
+		// Test Alice's important_date access
+		$alice_date_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'important_date', $alice_id ) );
+		$this->assertContains( $alice_date, $alice_date_ids );
+		$this->assertNotContains( $bob_date, $alice_date_ids );
+	}
+
+	/**
+	 * Test WP_Query filtering returns only current user's posts.
+	 */
+	public function test_wp_query_filtering_returns_only_user_posts(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+
+		// Create posts for Alice
+		$alice_person_1 = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$alice_person_2 = $this->createPerson( array( 'post_author' => $alice_id ) );
+
+		// Create posts for Bob
+		$bob_person_1 = $this->createPerson( array( 'post_author' => $bob_id ) );
+
+		// Set current user to Alice
+		wp_set_current_user( $alice_id );
+
+		// Query all persons - should only return Alice's
+		$query = new WP_Query(
+			array(
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		);
+
+		$result_ids = $query->posts;
+
+		$this->assertContains( $alice_person_1, $result_ids, 'Alice should see her first person' );
+		$this->assertContains( $alice_person_2, $result_ids, 'Alice should see her second person' );
+		$this->assertNotContains( $bob_person_1, $result_ids, 'Alice should NOT see Bob\'s person' );
+	}
+
+	/**
+	 * Test WP_Query filtering works when switching users.
+	 */
+	public function test_wp_query_filtering_switches_with_user_context(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+
+		// Create posts
+		$alice_person = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$bob_person   = $this->createPerson( array( 'post_author' => $bob_id ) );
+
+		// Query as Alice
+		wp_set_current_user( $alice_id );
+		$alice_query = new WP_Query(
+			array(
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		);
+
+		$this->assertContains( $alice_person, $alice_query->posts );
+		$this->assertNotContains( $bob_person, $alice_query->posts );
+
+		// Query as Bob
+		wp_set_current_user( $bob_id );
+		$bob_query = new WP_Query(
+			array(
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		);
+
+		$this->assertContains( $bob_person, $bob_query->posts );
+		$this->assertNotContains( $alice_person, $bob_query->posts );
+	}
+
+	/**
+	 * Test REST query filtering sets post__in to user's posts only.
+	 */
+	public function test_rest_query_filtering_restricts_to_user_posts(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+
+		// Create posts
+		$alice_person = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$bob_person   = $this->createPerson( array( 'post_author' => $bob_id ) );
+
+		// Set current user to Alice
+		wp_set_current_user( $alice_id );
+
+		// Simulate REST API request args
+		$args = array(
+			'post_type'      => 'person',
+			'posts_per_page' => 10,
+		);
+
+		// Create mock WP_REST_Request
+		$request = new \WP_REST_Request( 'GET', '/wp/v2/people' );
+
+		// Call filter_rest_query directly
+		$filtered_args = $this->access_control->filter_rest_query( $args, $request );
+
+		// Cast post__in to integers for comparison (DB returns strings)
+		$post_in_ids = array_map( 'intval', $filtered_args['post__in'] );
+
+		$this->assertArrayHasKey( 'post__in', $filtered_args, 'REST query should have post__in set' );
+		$this->assertContains( $alice_person, $post_in_ids, 'Alice\'s person should be in allowed IDs' );
+		$this->assertNotContains( $bob_person, $post_in_ids, 'Bob\'s person should NOT be in allowed IDs' );
+	}
+
+	/**
+	 * Test logged out user gets empty results from WP_Query.
+	 */
+	public function test_logged_out_user_gets_empty_wp_query_results(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+
+		// Create a post
+		$this->createPerson( array( 'post_author' => $alice_id ) );
+
+		// Set no current user (logged out)
+		wp_set_current_user( 0 );
+
+		// Query - should return empty
+		$query = new WP_Query(
+			array(
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		);
+
+		$this->assertEmpty( $query->posts, 'Logged out user should get no results' );
+	}
+
+	/**
+	 * Test logged out user gets post__in = [0] from REST query filter.
+	 */
+	public function test_logged_out_user_gets_blocked_rest_query(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+
+		// Create a post
+		$this->createPerson( array( 'post_author' => $alice_id ) );
+
+		// Set no current user (logged out)
+		wp_set_current_user( 0 );
+
+		// Simulate REST API request
+		$args    = array(
+			'post_type'      => 'person',
+			'posts_per_page' => 10,
+		);
+		$request = new \WP_REST_Request( 'GET', '/wp/v2/people' );
+
+		$filtered_args = $this->access_control->filter_rest_query( $args, $request );
+
+		$this->assertArrayHasKey( 'post__in', $filtered_args );
+		$this->assertEquals( array( 0 ), $filtered_args['post__in'], 'Logged out user should get post__in = [0]' );
+	}
+
+	/**
+	 * Test get_accessible_post_ids returns empty array for user with no posts.
+	 */
+	public function test_get_accessible_post_ids_returns_empty_for_new_user(): void {
+		$alice_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$newuser_id = $this->createApprovedCaelisUser( array( 'user_login' => 'newuser' ) );
+
+		// Create posts only for Alice
+		$this->createPerson( array( 'post_author' => $alice_id ) );
+		$this->createPerson( array( 'post_author' => $alice_id ) );
+
+		// New user should have empty accessible IDs
+		$newuser_ids = $this->access_control->get_accessible_post_ids( 'person', $newuser_id );
+
+		$this->assertEmpty( $newuser_ids, 'New user with no posts should get empty array' );
+	}
+
+	/**
+	 * Test that query filtering does not affect non-controlled post types.
+	 */
+	public function test_query_filtering_ignores_non_controlled_post_types(): void {
+		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+
+		// Create regular WordPress posts
+		$alice_post = self::factory()->post->create(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'post_author' => $alice_id,
+			)
+		);
+		$bob_post   = self::factory()->post->create(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'post_author' => $bob_id,
+			)
+		);
+
+		// Set current user to Alice
+		wp_set_current_user( $alice_id );
+
+		// Query regular posts - Alice should see both (no access control)
+		$query = new WP_Query(
+			array(
+				'post_type'      => 'post',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		);
+
+		// Both posts should be accessible since 'post' is not a controlled type
+		$this->assertContains( $alice_post, $query->posts );
+		$this->assertContains( $bob_post, $query->posts );
+	}
 }
