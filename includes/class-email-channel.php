@@ -5,6 +5,8 @@
  * Handles email-based notification delivery for daily digests.
  */
 
+namespace Caelis\Notification;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -12,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Email notification channel
  */
-class PRM_Email_Channel extends PRM_Notification_Channel {
+class EmailChannel extends Channel {
 
 	public function get_channel_id() {
 		return 'email';

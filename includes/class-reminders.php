@@ -5,11 +5,13 @@
  * Handles date-based reminders and notifications
  */
 
+namespace Caelis\Notification;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Reminders {
+class Reminders {
 
 	/**
 	 * Available notification channels

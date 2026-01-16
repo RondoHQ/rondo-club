@@ -5,6 +5,8 @@
  * Handles Slack-based notification delivery via OAuth or webhooks.
  */
 
+namespace Caelis\Notification;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -12,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Slack notification channel
  */
-class PRM_Slack_Channel extends PRM_Notification_Channel {
+class SlackChannel extends Channel {
 
 	public function get_channel_id() {
 		return 'slack';

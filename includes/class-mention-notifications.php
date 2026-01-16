@@ -3,11 +3,13 @@
  * Handles notifications when users are @mentioned
  */
 
+namespace Caelis\Collaboration;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Mention_Notifications {
+class MentionNotifications {
 
 	public function __construct() {
 		add_action( 'prm_user_mentioned', [ $this, 'handle_mentions' ], 10, 3 );

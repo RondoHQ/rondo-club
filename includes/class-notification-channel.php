@@ -5,6 +5,8 @@
  * Provides the contract for notification channel implementations.
  */
 
+namespace Caelis\Notification;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -12,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Abstract base class for notification channels
  */
-abstract class PRM_Notification_Channel {
+abstract class Channel {
 
 	/**
 	 * Send notification to user via this channel
