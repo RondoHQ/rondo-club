@@ -31,7 +31,7 @@ class Companies extends Base {
 			'prm/v1',
 			'/companies/(?P<company_id>\d+)/people',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_people_by_company' ],
 				'permission_callback' => '__return_true',
 				'args'                => [
@@ -49,7 +49,7 @@ class Companies extends Base {
 			'prm/v1',
 			'/companies/(?P<company_id>\d+)/logo',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'set_company_logo' ],
 				'permission_callback' => [ $this, 'check_company_edit_permission' ],
 				'args'                => [
@@ -73,7 +73,7 @@ class Companies extends Base {
 			'prm/v1',
 			'/companies/(?P<company_id>\d+)/logo/upload',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'upload_company_logo' ],
 				'permission_callback' => [ $this, 'check_company_edit_permission' ],
 				'args'                => [
@@ -92,12 +92,12 @@ class Companies extends Base {
 			'/companies/(?P<id>\d+)/shares',
 			[
 				[
-					'methods'             => WP_REST_Server::READABLE,
+					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_shares' ],
 					'permission_callback' => [ $this, 'check_post_owner' ],
 				],
 				[
-					'methods'             => WP_REST_Server::CREATABLE,
+					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'add_share' ],
 					'permission_callback' => [ $this, 'check_post_owner' ],
 				],
@@ -108,7 +108,7 @@ class Companies extends Base {
 			'prm/v1',
 			'/companies/(?P<id>\d+)/shares/(?P<user_id>\d+)',
 			[
-				'methods'             => WP_REST_Server::DELETABLE,
+				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'remove_share' ],
 				'permission_callback' => [ $this, 'check_post_owner' ],
 			]
@@ -119,7 +119,7 @@ class Companies extends Base {
 			'prm/v1',
 			'/companies/bulk-update',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'bulk_update_companies' ],
 				'permission_callback' => [ $this, 'check_bulk_update_permission' ],
 				'args'                => [
@@ -215,7 +215,7 @@ class Companies extends Base {
 		// Check if user can access this company
 		$access_control = new PRM_Access_Control();
 		if ( ! current_user_can( 'manage_options' ) && ! $access_control->user_can_access_post( $company_id, $user_id ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this company.', 'caelis' ),
 				[ 'status' => 403 ]
@@ -314,20 +314,20 @@ class Companies extends Base {
 		// Verify company exists
 		$company = get_post( $company_id );
 		if ( ! $company || $company->post_type !== 'company' ) {
-			return new WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Verify media exists
 		$media = get_post( $media_id );
 		if ( ! $media || $media->post_type !== 'attachment' ) {
-			return new WP_Error( 'media_not_found', __( 'Media not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'media_not_found', __( 'Media not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Set as featured image
 		$result = set_post_thumbnail( $company_id, $media_id );
 
 		if ( ! $result ) {
-			return new WP_Error( 'set_thumbnail_failed', __( 'Failed to set company logo.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'set_thumbnail_failed', __( 'Failed to set company logo.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
@@ -352,13 +352,13 @@ class Companies extends Base {
 		// Verify company exists
 		$company = get_post( $company_id );
 		if ( ! $company || $company->post_type !== 'company' ) {
-			return new WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check for uploaded file
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$file = $files['file'];
@@ -366,7 +366,7 @@ class Companies extends Base {
 		// Validate file type
 		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' ];
 		if ( ! in_array( $file['type'], $allowed_types ) ) {
-			return new WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get company name for filename
@@ -400,7 +400,7 @@ class Companies extends Base {
 		$attachment_id = media_handle_sideload( $file_array, $company_id, sprintf( '%s Logo', $company_name ) );
 
 		if ( is_wp_error( $attachment_id ) ) {
-			return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), [ 'status' => 500 ] );
+			return new \WP_Error( 'upload_failed', $attachment_id->get_error_message(), [ 'status' => 500 ] );
 		}
 
 		// Set as featured image
@@ -480,12 +480,12 @@ class Companies extends Base {
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Can't share with yourself
 		if ( $user_id === get_current_user_id() ) {
-			return new WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get current shares
@@ -558,7 +558,7 @@ class Companies extends Base {
 	 */
 	public function check_bulk_update_permission( $request ) {
 		if ( ! is_user_logged_in() ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'rest_forbidden',
 				__( 'You must be logged in to perform this action.', 'caelis' ),
 				[ 'status' => 401 ]
@@ -573,7 +573,7 @@ class Companies extends Base {
 			$post = get_post( $post_id );
 
 			if ( ! $post || $post->post_type !== 'company' ) {
-				return new WP_Error(
+				return new \WP_Error(
 					'rest_invalid_id',
 					sprintf( __( 'Company with ID %d not found.', 'caelis' ), $post_id ),
 					[ 'status' => 404 ]
@@ -582,7 +582,7 @@ class Companies extends Base {
 
 			// Must be post author or admin
 			if ( (int) $post->post_author !== $current_user_id && ! $is_admin ) {
-				return new WP_Error(
+				return new \WP_Error(
 					'rest_forbidden',
 					sprintf( __( 'You do not have permission to update company with ID %d.', 'caelis' ), $post_id ),
 					[ 'status' => 403 ]

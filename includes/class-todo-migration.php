@@ -18,8 +18,8 @@ class TodoMigration {
 	 * Constructor - register WP-CLI command
 	 */
 	public function __construct() {
-		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			WP_CLI::add_command( 'prm migrate-todos', [ $this, 'migrate_todos_command' ] );
+		if ( defined( 'WP_CLI' ) && \WP_CLI ) {
+			\WP_CLI::add_command( 'prm migrate-todos', [ $this, 'migrate_todos_command' ] );
 		}
 	}
 
@@ -38,13 +38,13 @@ class TodoMigration {
 		$dry_run = isset( $assoc_args['dry-run'] );
 
 		if ( $dry_run ) {
-			WP_CLI::log( 'Dry run mode - no changes will be made.' );
+			\WP_CLI::log( 'Dry run mode - no changes will be made.' );
 		}
 
 		$result = $this->migrate_todos( $dry_run );
 
 		if ( $dry_run ) {
-			WP_CLI::success(
+			\WP_CLI::success(
 				sprintf(
 					'Would migrate %d todos: %d to open, %d to awaiting, %d to completed.',
 					$result['total'],
@@ -54,7 +54,7 @@ class TodoMigration {
 				)
 			);
 		} else {
-			WP_CLI::success(
+			\WP_CLI::success(
 				sprintf(
 					'Migrated %d todos: %d to open, %d to awaiting, %d to completed.',
 					$result['total'],

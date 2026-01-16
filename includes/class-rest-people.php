@@ -37,7 +37,7 @@ class People extends Base {
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/dates',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_dates_by_person' ],
 				'permission_callback' => [ $this, 'check_person_access' ],
 				'args'                => [
@@ -55,7 +55,7 @@ class People extends Base {
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/gravatar',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'sideload_gravatar' ],
 				'permission_callback' => [ $this, 'check_person_access' ],
 				'args'                => [
@@ -79,7 +79,7 @@ class People extends Base {
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/photo',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'upload_person_photo' ],
 				'permission_callback' => [ $this, 'check_person_edit_permission' ],
 				'args'                => [
@@ -98,12 +98,12 @@ class People extends Base {
 			'/people/(?P<id>\d+)/shares',
 			[
 				[
-					'methods'             => WP_REST_Server::READABLE,
+					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_shares' ],
 					'permission_callback' => [ $this, 'check_post_owner' ],
 				],
 				[
-					'methods'             => WP_REST_Server::CREATABLE,
+					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'add_share' ],
 					'permission_callback' => [ $this, 'check_post_owner' ],
 				],
@@ -114,7 +114,7 @@ class People extends Base {
 			'prm/v1',
 			'/people/(?P<id>\d+)/shares/(?P<user_id>\d+)',
 			[
-				'methods'             => WP_REST_Server::DELETABLE,
+				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'remove_share' ],
 				'permission_callback' => [ $this, 'check_post_owner' ],
 			]
@@ -125,7 +125,7 @@ class People extends Base {
 			'prm/v1',
 			'/people/bulk-update',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'bulk_update_people' ],
 				'permission_callback' => [ $this, 'check_bulk_update_permission' ],
 				'args'                => [
@@ -263,7 +263,7 @@ class People extends Base {
 		$email     = sanitize_email( $request->get_param( 'email' ) );
 
 		if ( empty( $email ) ) {
-			return new WP_Error( 'missing_email', __( 'Email address is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_email', __( 'Email address is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Generate Gravatar URL
@@ -290,7 +290,7 @@ class People extends Base {
 		$tmp = download_url( $gravatar_url );
 
 		if ( is_wp_error( $tmp ) ) {
-			return new WP_Error( 'download_failed', __( 'Failed to download Gravatar image.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'download_failed', __( 'Failed to download Gravatar image.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Get person's name for filename
@@ -311,7 +311,7 @@ class People extends Base {
 		// Clean up temp file if sideload failed
 		if ( is_wp_error( $attachment_id ) ) {
 			@unlink( $tmp );
-			return new WP_Error( 'sideload_failed', __( 'Failed to sideload Gravatar image.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'sideload_failed', __( 'Failed to sideload Gravatar image.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Set as featured image
@@ -338,13 +338,13 @@ class People extends Base {
 		// Verify person exists
 		$person = get_post( $person_id );
 		if ( ! $person || $person->post_type !== 'person' ) {
-			return new WP_Error( 'person_not_found', __( 'Person not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'person_not_found', __( 'Person not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check for uploaded file
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$file = $files['file'];
@@ -352,7 +352,7 @@ class People extends Base {
 		// Validate file type
 		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp' ];
 		if ( ! in_array( $file['type'], $allowed_types ) ) {
-			return new WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get person's name for filename
@@ -387,7 +387,7 @@ class People extends Base {
 		$attachment_id = media_handle_sideload( $file_array, $person_id, sprintf( '%s %s', $first_name, $last_name ) );
 
 		if ( is_wp_error( $attachment_id ) ) {
-			return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), [ 'status' => 500 ] );
+			return new \WP_Error( 'upload_failed', $attachment_id->get_error_message(), [ 'status' => 500 ] );
 		}
 
 		// Set as featured image
@@ -602,12 +602,12 @@ class People extends Base {
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Can't share with yourself
 		if ( $user_id === get_current_user_id() ) {
-			return new WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get current shares
@@ -682,7 +682,7 @@ class People extends Base {
 	 */
 	public function check_bulk_update_permission( $request ) {
 		if ( ! is_user_logged_in() ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'rest_forbidden',
 				__( 'You must be logged in to perform this action.', 'caelis' ),
 				[ 'status' => 401 ]
@@ -697,7 +697,7 @@ class People extends Base {
 			$post = get_post( $post_id );
 
 			if ( ! $post || $post->post_type !== 'person' ) {
-				return new WP_Error(
+				return new \WP_Error(
 					'rest_invalid_id',
 					sprintf( __( 'Person with ID %d not found.', 'caelis' ), $post_id ),
 					[ 'status' => 404 ]
@@ -706,7 +706,7 @@ class People extends Base {
 
 			// Must be post author or admin
 			if ( (int) $post->post_author !== $current_user_id && ! $is_admin ) {
-				return new WP_Error(
+				return new \WP_Error(
 					'rest_forbidden',
 					sprintf( __( 'You do not have permission to update person with ID %d.', 'caelis' ), $post_id ),
 					[ 'status' => 403 ]

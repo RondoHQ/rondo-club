@@ -34,7 +34,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/connections',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_connections' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
@@ -45,7 +45,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/connections',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'create_connection' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -95,7 +95,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_connection' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -115,7 +115,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)',
 			[
-				'methods'             => WP_REST_Server::EDITABLE,
+				'methods'             => \WP_REST_Server::EDITABLE,
 				'callback'            => [ $this, 'update_connection' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -161,7 +161,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)',
 			[
-				'methods'             => WP_REST_Server::DELETABLE,
+				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'delete_connection' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -181,7 +181,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)/sync',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'trigger_sync' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -203,7 +203,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/auth/google',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'google_auth_init' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
@@ -214,7 +214,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/auth/google/callback',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'google_auth_callback' ],
 				'permission_callback' => '__return_true', // Public for OAuth redirect
 			]
@@ -225,7 +225,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/auth/caldav/test',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'test_caldav' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -254,7 +254,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/events',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_events' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -284,7 +284,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/meetings',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_person_meetings' ],
 				'permission_callback' => [ $this, 'check_person_access' ],
 				'args'                => [
@@ -319,7 +319,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/events/(?P<id>\d+)/log',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'log_event_as_activity' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
@@ -339,7 +339,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/sync/status',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_sync_status' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
@@ -350,7 +350,7 @@ class Calendar extends Base {
 			'prm/v1',
 			'/calendar/today-meetings',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_today_meetings' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
@@ -391,10 +391,10 @@ class Calendar extends Base {
 
 		// Validate required fields
 		if ( empty( $data['provider'] ) || ! in_array( $data['provider'], [ 'google', 'caldav' ], true ) ) {
-			return new WP_Error( 'invalid_provider', __( 'Invalid provider. Must be "google" or "caldav".', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_provider', __( 'Invalid provider. Must be "google" or "caldav".', 'caelis' ), [ 'status' => 400 ] );
 		}
 		if ( empty( $data['name'] ) ) {
-			return new WP_Error( 'missing_name', __( 'Connection name is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_name', __( 'Connection name is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Encrypt credentials if provided
@@ -438,7 +438,7 @@ class Calendar extends Base {
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
 
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Remove sensitive credentials from response
@@ -460,7 +460,7 @@ class Calendar extends Base {
 
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Sanitize updatable fields
@@ -503,7 +503,7 @@ class Calendar extends Base {
 
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		PRM_Calendar_Connections::delete_connection( $user_id, $id );
@@ -524,14 +524,14 @@ class Calendar extends Base {
 		// Get connection
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check provider
 		$provider = $connection['provider'] ?? '';
 
 		if ( ! in_array( $provider, [ 'google', 'caldav' ], true ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'invalid_provider',
 				__( 'Unknown calendar provider.', 'caelis' ),
 				[ 'status' => 400 ]
@@ -577,7 +577,7 @@ class Calendar extends Base {
 				]
 			);
 
-			return new WP_Error( 'sync_failed', $e->getMessage(), [ 'status' => 500 ] );
+			return new \WP_Error( 'sync_failed', $e->getMessage(), [ 'status' => 500 ] );
 		}
 	}
 
@@ -592,7 +592,7 @@ class Calendar extends Base {
 	public function google_auth_init( $request ) {
 		// Check if Google OAuth is configured
 		if ( ! PRM_Google_OAuth::is_configured() ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'not_configured',
 				__( 'Google Calendar integration is not configured. Please add GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET to wp-config.php.', 'caelis' ),
 				[ 'status' => 400 ]
@@ -603,7 +603,7 @@ class Calendar extends Base {
 		$auth_url = PRM_Google_OAuth::get_auth_url( $user_id );
 
 		if ( empty( $auth_url ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'auth_url_failed',
 				__( 'Failed to generate authorization URL.', 'caelis' ),
 				[ 'status' => 500 ]
@@ -730,20 +730,20 @@ class Calendar extends Base {
 
 		// Validate required parameters
 		if ( empty( $url ) ) {
-			return new WP_Error( 'missing_url', __( 'CalDAV server URL is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_url', __( 'CalDAV server URL is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 		if ( empty( $username ) ) {
-			return new WP_Error( 'missing_username', __( 'Username is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_username', __( 'Username is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 		if ( empty( $password ) ) {
-			return new WP_Error( 'missing_password', __( 'Password is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_password', __( 'Password is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Test the connection
 		$result = PRM_CalDAV_Provider::test_connection( $url, $username, $password );
 
 		if ( ! $result['success'] ) {
-			return new WP_Error( 'connection_failed', $result['error'], [ 'status' => 400 ] );
+			return new \WP_Error( 'connection_failed', $result['error'], [ 'status' => 400 ] );
 		}
 
 		return rest_ensure_response(
@@ -805,7 +805,7 @@ class Calendar extends Base {
 		}
 
 		// Execute query
-		$query = new WP_Query( $args );
+		$query = new \WP_Query( $args );
 
 		// Map results to response format
 		$events = array_map(
@@ -894,7 +894,7 @@ class Calendar extends Base {
 				),
 			];
 
-			$upcoming_query = new WP_Query( $upcoming_args );
+			$upcoming_query = new \WP_Query( $upcoming_args );
 			$total_upcoming = $upcoming_query->found_posts;
 
 			foreach ( $upcoming_query->posts as $event ) {
@@ -924,7 +924,7 @@ class Calendar extends Base {
 				),
 			];
 
-			$past_query = new WP_Query( $past_args );
+			$past_query = new \WP_Query( $past_args );
 			$total_past = $past_query->found_posts;
 
 			foreach ( $past_query->posts as $event ) {
@@ -1108,7 +1108,7 @@ class Calendar extends Base {
 			],
 		];
 
-		$query = new WP_Query( $args );
+		$query = new \WP_Query( $args );
 
 		// Format meetings with matched people details
 		$meetings = [];
@@ -1220,18 +1220,18 @@ class Calendar extends Base {
 		// Get and verify the event
 		$event = get_post( $event_id );
 		if ( ! $event || $event->post_type !== 'calendar_event' ) {
-			return new WP_Error( 'not_found', __( 'Event not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Event not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Verify ownership
 		if ( (int) $event->post_author !== $user_id ) {
-			return new WP_Error( 'forbidden', __( 'You do not have permission to log this event.', 'caelis' ), [ 'status' => 403 ] );
+			return new \WP_Error( 'forbidden', __( 'You do not have permission to log this event.', 'caelis' ), [ 'status' => 403 ] );
 		}
 
 		// Check if already logged
 		$already_logged = get_post_meta( $event_id, '_logged_as_activity', true );
 		if ( $already_logged ) {
-			return new WP_Error( 'already_logged', __( 'This event has already been logged as an activity.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'already_logged', __( 'This event has already been logged as an activity.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get matched people
@@ -1239,14 +1239,14 @@ class Calendar extends Base {
 		$matched_people      = $matched_people_json ? json_decode( $matched_people_json, true ) : [];
 
 		if ( empty( $matched_people ) || ! is_array( $matched_people ) ) {
-			return new WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Use shared activity creation logic from PRM_Calendar_Sync
 		$activities_created = PRM_Calendar_Sync::create_activity_from_event( $event_id, $user_id, $matched_people );
 
 		if ( $activities_created === 0 ) {
-			return new WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Mark event as logged

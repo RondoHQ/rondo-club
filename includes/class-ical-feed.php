@@ -105,7 +105,7 @@ class ICalFeed {
 			'prm/v1',
 			'/user/ical-url',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_ical_url' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -116,7 +116,7 @@ class ICalFeed {
 			'prm/v1',
 			'/user/regenerate-ical-token',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'regenerate_token' ],
 				'permission_callback' => 'is_user_logged_in',
 			]

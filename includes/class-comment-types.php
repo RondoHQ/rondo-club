@@ -110,7 +110,7 @@ class CommentTypes {
 			'/people/(?P<person_id>\d+)/notes',
 			[
 				[
-					'methods'             => WP_REST_Server::READABLE,
+					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_notes' ],
 					'permission_callback' => [ $this, 'check_person_access' ],
 					'args'                => [
@@ -122,7 +122,7 @@ class CommentTypes {
 					],
 				],
 				[
-					'methods'             => WP_REST_Server::CREATABLE,
+					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'create_note' ],
 					'permission_callback' => [ $this, 'check_person_access' ],
 				],
@@ -134,12 +134,12 @@ class CommentTypes {
 			'/notes/(?P<id>\d+)',
 			[
 				[
-					'methods'             => WP_REST_Server::EDITABLE,
+					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => [ $this, 'update_note' ],
 					'permission_callback' => [ $this, 'check_comment_access' ],
 				],
 				[
-					'methods'             => WP_REST_Server::DELETABLE,
+					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'delete_note' ],
 					'permission_callback' => [ $this, 'check_comment_access' ],
 				],
@@ -152,12 +152,12 @@ class CommentTypes {
 			'/people/(?P<person_id>\d+)/activities',
 			[
 				[
-					'methods'             => WP_REST_Server::READABLE,
+					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_activities' ],
 					'permission_callback' => [ $this, 'check_person_access' ],
 				],
 				[
-					'methods'             => WP_REST_Server::CREATABLE,
+					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'create_activity' ],
 					'permission_callback' => [ $this, 'check_person_access' ],
 				],
@@ -169,12 +169,12 @@ class CommentTypes {
 			'/activities/(?P<id>\d+)',
 			[
 				[
-					'methods'             => WP_REST_Server::EDITABLE,
+					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => [ $this, 'update_activity' ],
 					'permission_callback' => [ $this, 'check_comment_access' ],
 				],
 				[
-					'methods'             => WP_REST_Server::DELETABLE,
+					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'delete_activity' ],
 					'permission_callback' => [ $this, 'check_comment_access' ],
 				],
@@ -186,7 +186,7 @@ class CommentTypes {
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/timeline',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_timeline' ],
 				'permission_callback' => [ $this, 'check_person_access' ],
 			]
@@ -267,7 +267,7 @@ class CommentTypes {
 		}
 
 		if ( empty( $content ) ) {
-			return new WP_Error( 'empty_content', __( 'Note content is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_content', __( 'Note content is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$comment_id = wp_insert_comment(
@@ -281,7 +281,7 @@ class CommentTypes {
 		);
 
 		if ( ! $comment_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create note.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'create_failed', __( 'Failed to create note.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Save visibility meta
@@ -316,7 +316,7 @@ class CommentTypes {
 
 		// wp_update_comment returns false on failure, 0 if no changes, 1 if updated.
 		if ( false === $result || is_wp_error( $result ) ) {
-			return new WP_Error( 'update_failed', __( 'Failed to update note.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'update_failed', __( 'Failed to update note.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Update visibility if provided.
@@ -349,7 +349,7 @@ class CommentTypes {
 		$result = wp_delete_comment( $comment_id, true );
 
 		if ( ! $result ) {
-			return new WP_Error( 'delete_failed', __( 'Failed to delete note.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'delete_failed', __( 'Failed to delete note.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response( [ 'deleted' => true ] );
@@ -387,7 +387,7 @@ class CommentTypes {
 		$participants  = $request->get_param( 'participants' ) ?: [];
 
 		if ( empty( $content ) ) {
-			return new WP_Error( 'empty_content', __( 'Activity description is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_content', __( 'Activity description is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$comment_id = wp_insert_comment(
@@ -401,7 +401,7 @@ class CommentTypes {
 		);
 
 		if ( ! $comment_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create activity.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'create_failed', __( 'Failed to create activity.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Save meta

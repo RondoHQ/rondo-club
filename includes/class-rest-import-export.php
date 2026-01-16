@@ -29,7 +29,7 @@ class ImportExport extends Base {
 			'prm/v1',
 			'/export/vcard',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'export_vcard' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -40,7 +40,7 @@ class ImportExport extends Base {
 			'prm/v1',
 			'/export/google-csv',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'export_google_csv' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -51,7 +51,7 @@ class ImportExport extends Base {
 			'prm/v1',
 			'/carddav/urls',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_carddav_urls' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -69,7 +69,7 @@ class ImportExport extends Base {
 		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
 
 		if ( empty( $people_ids ) ) {
-			return new WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Get companies for work history
@@ -117,7 +117,7 @@ class ImportExport extends Base {
 		}
 
 		if ( empty( $vcards ) ) {
-			return new WP_Error( 'export_failed', __( 'Failed to generate vCard export.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'export_failed', __( 'Failed to generate vCard export.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		$vcard_content = implode( "\n", $vcards );
@@ -141,7 +141,7 @@ class ImportExport extends Base {
 		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
 
 		if ( empty( $people_ids ) ) {
-			return new WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Google Contacts CSV headers
@@ -469,7 +469,7 @@ class ImportExport extends Base {
 		$user = wp_get_current_user();
 
 		if ( ! $user || ! $user->ID ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'not_logged_in',
 				__( 'You must be logged in.', 'caelis' ),
 				[ 'status' => 401 ]

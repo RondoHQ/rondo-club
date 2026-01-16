@@ -251,7 +251,7 @@ class CalDAVProvider {
 		// Decrypt credentials
 		$credentials = \Caelis\Data\CredentialEncryption::decrypt( $connection['credentials'] );
 		if ( ! $credentials || empty( $credentials['url'] ) || empty( $credentials['username'] ) || empty( $credentials['password'] ) ) {
-			throw new Exception( __( 'Invalid CalDAV credentials. Please reconnect your calendar.', 'caelis' ) );
+			throw new \Exception( __( 'Invalid CalDAV credentials. Please reconnect your calendar.', 'caelis' ) );
 		}
 
 		$url      = $credentials['url'];
@@ -320,7 +320,7 @@ class CalDAVProvider {
 			);
 
 			if ( $response['statusCode'] < 200 || $response['statusCode'] >= 300 ) {
-				throw new Exception( sprintf( __( 'CalDAV server returned error: %d', 'caelis' ), $response['statusCode'] ) );
+				throw new \Exception( sprintf( __( 'CalDAV server returned error: %d', 'caelis' ), $response['statusCode'] ) );
 			}
 
 			// Parse response and upsert events
@@ -328,7 +328,7 @@ class CalDAVProvider {
 
 		} catch ( Exception $e ) {
 			error_log( 'PRM_CalDAV_Provider: Sync failed: ' . $e->getMessage() );
-			throw new Exception( sprintf( __( 'Sync failed: %s', 'caelis' ), $e->getMessage() ) );
+			throw new \Exception( sprintf( __( 'Sync failed: %s', 'caelis' ), $e->getMessage() ) );
 		}
 	}
 
@@ -411,7 +411,7 @@ class CalDAVProvider {
 		// Get unique event identifier
 		$event_uid = isset( $vevent->UID ) ? (string) $vevent->UID : '';
 		if ( empty( $event_uid ) ) {
-			throw new Exception( 'Event has no UID' );
+			throw new \Exception( 'Event has no UID' );
 		}
 
 		$connection_id = $connection['id'] ?? '';
@@ -486,7 +486,7 @@ class CalDAVProvider {
 		}
 
 		if ( is_wp_error( $post_id ) ) {
-			throw new Exception( 'Failed to save event: ' . $post_id->get_error_message() );
+			throw new \Exception( 'Failed to save event: ' . $post_id->get_error_message() );
 		}
 
 		// Update post meta (same fields as Google provider)

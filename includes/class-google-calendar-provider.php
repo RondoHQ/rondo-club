@@ -26,13 +26,13 @@ class GoogleProvider {
 		// Get valid access token
 		$access_token = PRM_Google_OAuth::get_access_token( $connection );
 		if ( ! $access_token ) {
-			throw new Exception( 'Authentication required. Please reconnect your Google Calendar.' );
+			throw new \Exception( 'Authentication required. Please reconnect your Google Calendar.' );
 		}
 
 		// Create Google Calendar service
 		$service = self::get_service( $connection );
 		if ( ! $service ) {
-			throw new Exception( 'Failed to initialize Google Calendar service.' );
+			throw new \Exception( 'Failed to initialize Google Calendar service.' );
 		}
 
 		// Calculate date range
@@ -86,7 +86,7 @@ class GoogleProvider {
 
 				$page_token = $events->getNextPageToken();
 			} catch ( Google\Service\Exception $e ) {
-				throw new Exception( 'Google Calendar API error: ' . $e->getMessage() );
+				throw new \Exception( 'Google Calendar API error: ' . $e->getMessage() );
 			}
 		} while ( $page_token );
 
@@ -188,7 +188,7 @@ class GoogleProvider {
 		}
 
 		if ( is_wp_error( $post_id ) ) {
-			throw new Exception( 'Failed to save event: ' . $post_id->get_error_message() );
+			throw new \Exception( 'Failed to save event: ' . $post_id->get_error_message() );
 		}
 
 		// Update post meta

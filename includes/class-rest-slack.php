@@ -91,7 +91,7 @@ class Slack extends Base {
 			'prm/v1',
 			'/slack/oauth/authorize',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'slack_oauth_authorize' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -102,7 +102,7 @@ class Slack extends Base {
 			'prm/v1',
 			'/slack/oauth/callback',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'slack_oauth_callback' ],
 				'permission_callback' => '__return_true', // Public endpoint, we verify state
 			]
@@ -113,7 +113,7 @@ class Slack extends Base {
 			'prm/v1',
 			'/slack/disconnect',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'slack_disconnect' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -124,7 +124,7 @@ class Slack extends Base {
 			'prm/v1',
 			'/user/slack-status',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_slack_status' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -135,7 +135,7 @@ class Slack extends Base {
 			'prm/v1',
 			'/slack/commands',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'slack_commands' ],
 				'permission_callback' => '__return_true', // Public endpoint, we verify signature
 			]
@@ -146,7 +146,7 @@ class Slack extends Base {
 			'prm/v1',
 			'/slack/events',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'slack_events' ],
 				'permission_callback' => '__return_true', // Public endpoint, we verify signature
 			]
@@ -157,7 +157,7 @@ class Slack extends Base {
 			'prm/v1',
 			'/slack/channels',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_slack_channels' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -168,7 +168,7 @@ class Slack extends Base {
 			'prm/v1',
 			'/slack/targets',
 			[
-				'methods'             => WP_REST_Server::READABLE,
+				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_slack_targets' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -179,7 +179,7 @@ class Slack extends Base {
 			'prm/v1',
 			'/slack/targets',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'update_slack_targets' ],
 				'permission_callback' => 'is_user_logged_in',
 			]
@@ -190,7 +190,7 @@ class Slack extends Base {
 			'prm/v1',
 			'/user/slack-webhook',
 			[
-				'methods'             => WP_REST_Server::CREATABLE,
+				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'update_slack_webhook' ],
 				'permission_callback' => 'is_user_logged_in',
 				'args'                => [
@@ -218,7 +218,7 @@ class Slack extends Base {
 	 */
 	public function slack_oauth_authorize( $request ) {
 		if ( ! defined( 'CAELIS_SLACK_CLIENT_ID' ) || empty( CAELIS_SLACK_CLIENT_ID ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'slack_not_configured',
 				__( 'Slack integration is not configured.', 'caelis' ),
 				[ 'status' => 500 ]
@@ -227,7 +227,7 @@ class Slack extends Base {
 
 		$user_id = get_current_user_id();
 		if ( ! $user_id ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'not_authenticated',
 				__( 'You must be logged in to connect Slack.', 'caelis' ),
 				[ 'status' => 401 ]
@@ -454,7 +454,7 @@ class Slack extends Base {
 	public function slack_commands( $request ) {
 		// Verify request signature
 		if ( ! defined( 'CAELIS_SLACK_SIGNING_SECRET' ) || empty( CAELIS_SLACK_SIGNING_SECRET ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'slack_not_configured',
 				__( 'Slack integration is not configured.', 'caelis' ),
 				[ 'status' => 500 ]
@@ -473,7 +473,7 @@ class Slack extends Base {
 
 		// Verify timestamp (prevent replay attacks)
 		if ( empty( $timestamp ) || abs( time() - (int) $timestamp ) > 300 ) { // 5 minutes
-			return new WP_Error(
+			return new \WP_Error(
 				'invalid_timestamp',
 				__( 'Request timestamp is invalid or too old.', 'caelis' ),
 				[ 'status' => 401 ]
@@ -482,7 +482,7 @@ class Slack extends Base {
 
 		// Verify signature
 		if ( empty( $signature ) || empty( $body ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'missing_signature',
 				__( 'Missing request signature.', 'caelis' ),
 				[ 'status' => 401 ]
@@ -493,7 +493,7 @@ class Slack extends Base {
 		$my_signature   = 'v0=' . hash_hmac( 'sha256', $sig_basestring, CAELIS_SLACK_SIGNING_SECRET );
 
 		if ( ! hash_equals( $my_signature, $signature ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'invalid_signature',
 				__( 'Invalid request signature.', 'caelis' ),
 				[ 'status' => 401 ]
@@ -598,7 +598,7 @@ class Slack extends Base {
 		$bot_token = get_user_meta( $user_id, 'caelis_slack_bot_token', true );
 
 		if ( empty( $bot_token ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'slack_not_connected',
 				__( 'Slack is not connected.', 'caelis' ),
 				[ 'status' => 400 ]
@@ -707,7 +707,7 @@ class Slack extends Base {
 		$targets = $request->get_param( 'targets' );
 
 		if ( ! is_array( $targets ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'invalid_targets',
 				__( 'Targets must be an array.', 'caelis' ),
 				[ 'status' => 400 ]
@@ -761,7 +761,7 @@ class Slack extends Base {
 
 		// Validate webhook URL
 		if ( ! filter_var( $webhook, FILTER_VALIDATE_URL ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'invalid_webhook',
 				__( 'Invalid webhook URL.', 'caelis' ),
 				[ 'status' => 400 ]
@@ -771,7 +771,7 @@ class Slack extends Base {
 		// Validate webhook domain to prevent SSRF attacks
 		$host = parse_url( $webhook, PHP_URL_HOST );
 		if ( $host !== 'hooks.slack.com' ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'invalid_webhook_domain',
 				__( 'Webhook URL must be from hooks.slack.com domain.', 'caelis' ),
 				[ 'status' => 400 ]
@@ -795,7 +795,7 @@ class Slack extends Base {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'webhook_test_failed',
 				sprintf( __( 'Webhook test failed: %s', 'caelis' ), $response->get_error_message() ),
 				[ 'status' => 400 ]
@@ -804,7 +804,7 @@ class Slack extends Base {
 
 		$status_code = wp_remote_retrieve_response_code( $response );
 		if ( $status_code < 200 || $status_code >= 300 ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'webhook_test_failed',
 				sprintf( __( 'Webhook test failed with status code: %d', 'caelis' ), $status_code ),
 				[ 'status' => 400 ]
