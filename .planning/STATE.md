@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 
 Milestone: v4.7 Dark Mode & Activity Polish
 Phase: 71 of 72 (Dark Mode Fixes)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-16 — Roadmap created (2 phases, 12 requirements)
+Plan: 2 plans created
+Status: Ready to execute
+Last activity: 2026-01-16 — Phase 71 planned (2 plans, 1 wave)
 
 Progress: ░░░░░░░░░░ 0%
 
@@ -99,7 +99,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: v4.7 roadmap created (2 phases)
+Stopped at: Phase 71 planned (2 plans)
 Resume file: None
 
 ## Accumulated Context
@@ -152,4 +152,4 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Run `/gsd:plan-phase 71` to plan Dark Mode Fixes phase
+- Run `/gsd:execute-phase 71` to execute Dark Mode Fixes phase
