@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class PRM_Mention_Notifications {
 
 	public function __construct() {
-		add_action( 'prm_user_mentioned', array( $this, 'handle_mentions' ), 10, 3 );
+		add_action( 'prm_user_mentioned', [ $this, 'handle_mentions' ], 10, 3 );
 	}
 
 	/**
@@ -87,7 +87,7 @@ class PRM_Mention_Notifications {
 			$user->user_email,
 			$subject,
 			$message,
-			array( 'Content-Type: text/html; charset=UTF-8' )
+			[ 'Content-Type: text/html; charset=UTF-8' ]
 		);
 	}
 
@@ -97,7 +97,7 @@ class PRM_Mention_Notifications {
 	private function queue_for_digest( $user_id, $comment_id ) {
 		$queued = get_user_meta( $user_id, '_queued_mention_notifications', true );
 		if ( ! is_array( $queued ) ) {
-			$queued = array();
+			$queued = [];
 		}
 
 		// Add to queue if not already present
@@ -116,10 +116,10 @@ class PRM_Mention_Notifications {
 	public static function get_queued_mentions( $user_id ) {
 		$queued = get_user_meta( $user_id, '_queued_mention_notifications', true );
 		if ( ! is_array( $queued ) || empty( $queued ) ) {
-			return array();
+			return [];
 		}
 
-		$mentions = array();
+		$mentions = [];
 		foreach ( $queued as $comment_id ) {
 			$comment = get_comment( $comment_id );
 			if ( ! $comment ) {
@@ -133,12 +133,12 @@ class PRM_Mention_Notifications {
 
 			$author = get_userdata( $comment->user_id );
 
-			$mentions[] = array(
+			$mentions[] = [
 				'author'     => $author ? $author->display_name : 'Someone',
 				'post_title' => $post->post_title,
 				'post_url'   => home_url( '/people/' . $post->ID ),
 				'preview'    => wp_trim_words( wp_strip_all_tags( $comment->comment_content ), 20 ),
-			);
+			];
 		}
 
 		// Clear the queue

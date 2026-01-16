@@ -32,16 +32,16 @@ class PRM_Calendar_Sync {
 	 */
 	public function __construct() {
 		// Register custom cron schedule
-		add_filter( 'cron_schedules', array( $this, 'add_cron_schedules' ) );
+		add_filter( 'cron_schedules', [ $this, 'add_cron_schedules' ] );
 
 		// Register cron callback
-		add_action( self::CRON_HOOK, array( $this, 'run_background_sync' ) );
+		add_action( self::CRON_HOOK, [ $this, 'run_background_sync' ] );
 
 		// Schedule cron on theme activation
-		add_action( 'after_switch_theme', array( $this, 'schedule_sync' ) );
+		add_action( 'after_switch_theme', [ $this, 'schedule_sync' ] );
 
 		// Unschedule cron on theme deactivation
-		add_action( 'switch_theme', array( $this, 'unschedule_sync' ) );
+		add_action( 'switch_theme', [ $this, 'unschedule_sync' ] );
 	}
 
 	/**
@@ -51,10 +51,10 @@ class PRM_Calendar_Sync {
 	 * @return array Modified schedules with our interval added.
 	 */
 	public function add_cron_schedules( $schedules ) {
-		$schedules[ self::CRON_SCHEDULE ] = array(
+		$schedules[ self::CRON_SCHEDULE ] = [
 			'interval' => 900, // 15 minutes in seconds
 			'display'  => __( 'Every 15 Minutes', 'caelis' ),
-		);
+		];
 
 		return $schedules;
 	}
@@ -127,7 +127,7 @@ class PRM_Calendar_Sync {
 		);
 
 		// Filter to users who have at least one sync-enabled connection
-		$filtered_users = array();
+		$filtered_users = [];
 
 		foreach ( $user_ids as $user_id ) {
 			$connections = PRM_Calendar_Connections::get_user_connections( (int) $user_id );
@@ -181,10 +181,10 @@ class PRM_Calendar_Sync {
 				PRM_Calendar_Connections::update_connection(
 					$user_id,
 					$connection_id,
-					array(
+					[
 						'last_sync'  => current_time( 'c' ),
 						'last_error' => null,
-					)
+					]
 				);
 
 				error_log(
@@ -203,9 +203,9 @@ class PRM_Calendar_Sync {
 				PRM_Calendar_Connections::update_connection(
 					$user_id,
 					$connection_id,
-					array(
+					[
 						'last_error' => $e->getMessage(),
-					)
+					]
 				);
 
 				error_log(
@@ -236,48 +236,48 @@ class PRM_Calendar_Sync {
 
 		// Query for past events that haven't been logged
 		$events = get_posts(
-			array(
+			[
 				'post_type'      => 'calendar_event',
 				'posts_per_page' => 10, // Rate limit
 				'post_status'    => 'publish',
 				'orderby'        => 'meta_value',
 				'meta_key'       => '_end_time',
 				'order'          => 'ASC',
-				'meta_query'     => array(
+				'meta_query'     => [
 					'relation' => 'AND',
 					// Past events only
-					array(
+					[
 						'key'     => '_end_time',
 						'value'   => $current_time,
 						'compare' => '<',
 						'type'    => 'DATETIME',
-					),
+					],
 					// Not already logged
-					array(
+					[
 						'relation' => 'OR',
-						array(
+						[
 							'key'     => '_logged_as_activity',
 							'compare' => 'NOT EXISTS',
-						),
-						array(
+						],
+						[
 							'key'     => '_logged_as_activity',
 							'value'   => '',
 							'compare' => '=',
-						),
-						array(
+						],
+						[
 							'key'     => '_logged_as_activity',
 							'value'   => '0',
 							'compare' => '=',
-						),
-					),
+						],
+					],
 					// Has matched people
-					array(
+					[
 						'key'     => '_matched_people',
 						'value'   => '',
 						'compare' => '!=',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		foreach ( $events as $event ) {
@@ -302,7 +302,7 @@ class PRM_Calendar_Sync {
 
 		// Get matched people
 		$matched_people_json = get_post_meta( $event_id, '_matched_people', true );
-		$matched_people      = $matched_people_json ? json_decode( $matched_people_json, true ) : array();
+		$matched_people      = $matched_people_json ? json_decode( $matched_people_json, true ) : [];
 
 		if ( empty( $matched_people ) || ! is_array( $matched_people ) ) {
 			return;
@@ -402,7 +402,7 @@ class PRM_Calendar_Sync {
 		}
 
 		// Extract person IDs
-		$person_ids = array();
+		$person_ids = [];
 		foreach ( $matched_people as $match ) {
 			if ( isset( $match['person_id'] ) ) {
 				$person_ids[] = (int) $match['person_id'];
@@ -427,13 +427,13 @@ class PRM_Calendar_Sync {
 
 			// Create activity comment
 			$comment_id = wp_insert_comment(
-				array(
+				[
 					'comment_post_ID'  => $person_id,
 					'comment_content'  => $content,
 					'comment_type'     => 'prm_activity',
 					'user_id'          => $user_id,
 					'comment_approved' => 1,
-				)
+				]
 			);
 
 			if ( $comment_id ) {
@@ -485,14 +485,14 @@ class PRM_Calendar_Sync {
 
 		$current_index = (int) get_transient( self::USER_INDEX_TRANSIENT );
 
-		return array(
+		return [
 			'next_scheduled'               => $next_scheduled ? gmdate( 'c', $next_scheduled ) : null,
 			'is_scheduled'                 => (bool) $next_scheduled,
 			'total_users_with_connections' => $total_users,
 			'current_user_index'           => $current_index,
 			'estimated_full_cycle_minutes' => $total_users * 15,
 			'cron_schedule'                => self::CRON_SCHEDULE,
-		);
+		];
 	}
 
 	/**
@@ -505,13 +505,13 @@ class PRM_Calendar_Sync {
 	public static function force_sync_all() {
 		$instance = new self();
 		$users    = $instance->get_users_with_connections();
-		$results  = array();
+		$results  = [];
 
 		foreach ( $users as $user_id ) {
-			$user_results = array(
+			$user_results = [
 				'user_id'     => $user_id,
-				'connections' => array(),
-			);
+				'connections' => [],
+			];
 
 			$connections = PRM_Calendar_Connections::get_user_connections( $user_id );
 
@@ -537,34 +537,34 @@ class PRM_Calendar_Sync {
 					PRM_Calendar_Connections::update_connection(
 						$user_id,
 						$connection_id,
-						array(
+						[
 							'last_sync'  => current_time( 'c' ),
 							'last_error' => null,
-						)
+						]
 					);
 
-					$user_results['connections'][] = array(
+					$user_results['connections'][] = [
 						'id'      => $connection_id,
 						'status'  => 'success',
 						'created' => $result['created'] ?? 0,
 						'updated' => $result['updated'] ?? 0,
 						'total'   => $result['total'] ?? 0,
-					);
+					];
 
 				} catch ( Exception $e ) {
 					PRM_Calendar_Connections::update_connection(
 						$user_id,
 						$connection_id,
-						array(
+						[
 							'last_error' => $e->getMessage(),
-						)
+						]
 					);
 
-					$user_results['connections'][] = array(
+					$user_results['connections'][] = [
 						'id'     => $connection_id,
 						'status' => 'error',
 						'error'  => $e->getMessage(),
-					);
+					];
 				}
 			}
 

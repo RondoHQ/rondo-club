@@ -25,17 +25,17 @@ class PRM_Workspace_Members {
 	 *
 	 * @var array
 	 */
-	private static $valid_roles = array(
+	private static $valid_roles = [
 		self::ROLE_ADMIN,
 		self::ROLE_MEMBER,
 		self::ROLE_VIEWER,
-	);
+	];
 
 	/**
 	 * Constructor - register hooks
 	 */
 	public function __construct() {
-		add_action( 'save_post_workspace', array( $this, 'add_owner_as_admin' ), 10, 3 );
+		add_action( 'save_post_workspace', [ $this, 'add_owner_as_admin' ], 10, 3 );
 	}
 
 	/**
@@ -104,11 +104,11 @@ class PRM_Workspace_Members {
 		}
 
 		// Add new membership
-		$memberships[] = array(
+		$memberships[] = [
 			'workspace_id' => (int) $workspace_id,
 			'role'         => $role,
 			'joined_at'    => gmdate( 'c' ), // ISO 8601 format
-		);
+		];
 
 		return (bool) update_user_meta( $user_id, self::META_KEY, $memberships );
 	}
@@ -185,15 +185,15 @@ class PRM_Workspace_Members {
 	 * @return array Array of member data [{user_id, role, joined_at}, ...].
 	 */
 	public static function get_members( $workspace_id ) {
-		$members = array();
+		$members = [];
 
 		// Query all users who have this workspace in their memberships
 		// Note: This is a somewhat expensive query but necessary without a separate table
 		$users = get_users(
-			array(
+			[
 				'meta_key'     => self::META_KEY,
 				'meta_compare' => 'EXISTS',
-			)
+			]
 		);
 
 		foreach ( $users as $user ) {
@@ -201,11 +201,11 @@ class PRM_Workspace_Members {
 
 			foreach ( $memberships as $membership ) {
 				if ( (int) $membership['workspace_id'] === (int) $workspace_id ) {
-					$members[] = array(
+					$members[] = [
 						'user_id'   => $user->ID,
 						'role'      => $membership['role'],
 						'joined_at' => $membership['joined_at'],
-					);
+					];
 					break;
 				}
 			}
@@ -222,17 +222,17 @@ class PRM_Workspace_Members {
 	 */
 	public static function get_user_workspaces( $user_id ) {
 		$memberships = self::get_user_memberships_raw( $user_id );
-		$workspaces  = array();
+		$workspaces  = [];
 
 		foreach ( $memberships as $membership ) {
 			// Verify workspace still exists
 			$workspace = get_post( $membership['workspace_id'] );
 			if ( $workspace && $workspace->post_type === 'workspace' && $workspace->post_status === 'publish' ) {
-				$workspaces[] = array(
+				$workspaces[] = [
 					'workspace_id' => $membership['workspace_id'],
 					'role'         => $membership['role'],
 					'joined_at'    => $membership['joined_at'],
-				);
+				];
 			}
 		}
 
@@ -277,7 +277,7 @@ class PRM_Workspace_Members {
 	 */
 	public static function get_user_workspace_ids( $user_id ) {
 		$memberships = self::get_user_memberships_raw( $user_id );
-		$ids         = array();
+		$ids         = [];
 
 		foreach ( $memberships as $membership ) {
 			$ids[] = (int) $membership['workspace_id'];
@@ -306,7 +306,7 @@ class PRM_Workspace_Members {
 	 */
 	public static function can_edit( $workspace_id, $user_id ) {
 		$role = self::get_user_role( $workspace_id, $user_id );
-		return in_array( $role, array( self::ROLE_ADMIN, self::ROLE_MEMBER ), true );
+		return in_array( $role, [ self::ROLE_ADMIN, self::ROLE_MEMBER ], true );
 	}
 
 	/**
@@ -319,7 +319,7 @@ class PRM_Workspace_Members {
 		$memberships = get_user_meta( $user_id, self::META_KEY, true );
 
 		if ( ! is_array( $memberships ) ) {
-			return array();
+			return [];
 		}
 
 		return $memberships;

@@ -14,23 +14,23 @@ class PRM_Inverse_Relationships {
 	/**
 	 * Track which posts are currently being processed to prevent infinite loops
 	 */
-	private $processing = array();
+	private $processing = [];
 
 	/**
 	 * Store old relationship values before they're updated
 	 */
-	private $old_relationships = array();
+	private $old_relationships = [];
 
 	public function __construct() {
 		// Capture old value before update
-		add_filter( 'acf/update_value/name=relationships', array( $this, 'capture_old_relationships' ), 5, 3 );
+		add_filter( 'acf/update_value/name=relationships', [ $this, 'capture_old_relationships' ], 5, 3 );
 
 		// Sync inverse relationships after relationships field is saved
-		add_action( 'acf/save_post', array( $this, 'sync_inverse_relationships' ), 20 );
+		add_action( 'acf/save_post', [ $this, 'sync_inverse_relationships' ], 20 );
 
 		// Also hook into REST API updates to ensure sync happens
-		add_action( 'rest_after_insert_person', array( $this, 'sync_inverse_relationships' ), 20, 1 );
-		add_action( 'rest_after_update_person', array( $this, 'sync_inverse_relationships' ), 20, 1 );
+		add_action( 'rest_after_insert_person', [ $this, 'sync_inverse_relationships' ], 20, 1 );
+		add_action( 'rest_after_update_person', [ $this, 'sync_inverse_relationships' ], 20, 1 );
 	}
 
 	/**
@@ -79,13 +79,13 @@ class PRM_Inverse_Relationships {
 		// Get current relationships (new value)
 		$current_relationships = get_field( 'relationships', $post_id );
 		if ( ! is_array( $current_relationships ) ) {
-			$current_relationships = array();
+			$current_relationships = [];
 		}
 
 		// Get previous relationships (old value we captured)
-		$previous_relationships = $this->old_relationships[ $post_id ] ?? array();
+		$previous_relationships = $this->old_relationships[ $post_id ] ?? [];
 		if ( ! is_array( $previous_relationships ) ) {
-			$previous_relationships = array();
+			$previous_relationships = [];
 		}
 
 		// Clean up stored old value
@@ -168,7 +168,7 @@ class PRM_Inverse_Relationships {
 	 * Handles different ACF return formats
 	 */
 	private function normalize_relationships( $relationships ) {
-		$normalized = array();
+		$normalized = [];
 
 		if ( ! is_array( $relationships ) ) {
 			return $normalized;
@@ -202,11 +202,11 @@ class PRM_Inverse_Relationships {
 			}
 
 			if ( $related_person_id && $relationship_type_id ) {
-				$normalized[] = array(
+				$normalized[] = [
 					'related_person'     => $related_person_id,
 					'relationship_type'  => $relationship_type_id,
 					'relationship_label' => $rel['relationship_label'] ?? '',
-				);
+				];
 			}
 		}
 
@@ -240,7 +240,7 @@ class PRM_Inverse_Relationships {
 		if ( ! $inverse_type_id ) {
 			// No inverse mapping defined - try to set it up for symmetric relationships
 			$term_slug       = $term->slug ?? '';
-			$symmetric_types = array( 'spouse', 'friend', 'colleague', 'acquaintance', 'sibling', 'cousin', 'partner' );
+			$symmetric_types = [ 'spouse', 'friend', 'colleague', 'acquaintance', 'sibling', 'cousin', 'partner' ];
 
 			if ( in_array( $term_slug, $symmetric_types ) ) {
 				// For symmetric relationships, inverse is the same type
@@ -305,7 +305,7 @@ class PRM_Inverse_Relationships {
 		// Get existing relationships for the related person
 		$related_person_relationships = get_field( 'relationships', $to_person_id );
 		if ( ! is_array( $related_person_relationships ) ) {
-			$related_person_relationships = array();
+			$related_person_relationships = [];
 		}
 
 		// Check if inverse relationship already exists
@@ -330,11 +330,11 @@ class PRM_Inverse_Relationships {
 		}
 
 		// Prepare inverse relationship data
-		$inverse_rel = array(
+		$inverse_rel = [
 			'related_person'     => $from_person_id,
 			'relationship_type'  => $inverse_type_id,
 			'relationship_label' => $relationship_label, // Keep same label
-		);
+		];
 
 		// Mark as processing to prevent infinite loop
 		$this->processing[ $to_person_id ] = true;
@@ -381,7 +381,7 @@ class PRM_Inverse_Relationships {
 		if ( ! $inverse_type_id ) {
 			// No inverse mapping defined - try to set it up for symmetric relationships
 			$term_slug       = $term->slug ?? '';
-			$symmetric_types = array( 'spouse', 'friend', 'colleague', 'acquaintance', 'sibling', 'cousin', 'partner' );
+			$symmetric_types = [ 'spouse', 'friend', 'colleague', 'acquaintance', 'sibling', 'cousin', 'partner' ];
 
 			if ( in_array( $term_slug, $symmetric_types ) ) {
 				// For symmetric relationships, inverse is the same type
@@ -570,14 +570,14 @@ class PRM_Inverse_Relationships {
 	 * @return array Array of type_id => slug
 	 */
 	private function get_types_in_gender_group( $group_name ) {
-		$types = array();
+		$types = [];
 
 		// Get all relationship types
 		$all_types = get_terms(
-			array(
+			[
 				'taxonomy'   => 'relationship_type',
 				'hide_empty' => false,
-			)
+			]
 		);
 
 		if ( is_wp_error( $all_types ) || empty( $all_types ) ) {
@@ -605,16 +605,16 @@ class PRM_Inverse_Relationships {
 	private function infer_gender_type_from_group( $group_name, $gender, $group_types ) {
 		// Known gender-dependent group mappings
 		// Maps group name → gender → expected slug
-		$group_mappings = array(
-			'aunt_uncle'   => array(
+		$group_mappings = [
+			'aunt_uncle'   => [
 				'female' => 'aunt',
 				'male'   => 'uncle',
-			),
-			'niece_nephew' => array(
+			],
+			'niece_nephew' => [
 				'female' => 'niece',
 				'male'   => 'nephew',
-			),
-		);
+			],
+		];
 
 		// If we have a mapping for this group, use it
 		if ( isset( $group_mappings[ $group_name ] ) && isset( $group_mappings[ $group_name ][ $gender ] ) ) {
@@ -633,13 +633,13 @@ class PRM_Inverse_Relationships {
 		// Male variants typically: uncle, nephew
 		if ( $gender === 'female' ) {
 			foreach ( $group_types as $type_id => $type_slug ) {
-				if ( in_array( $type_slug, array( 'aunt', 'niece' ) ) ) {
+				if ( in_array( $type_slug, [ 'aunt', 'niece' ] ) ) {
 					return $type_id;
 				}
 			}
 		} elseif ( $gender === 'male' ) {
 			foreach ( $group_types as $type_id => $type_slug ) {
-				if ( in_array( $type_slug, array( 'uncle', 'nephew' ) ) ) {
+				if ( in_array( $type_slug, [ 'uncle', 'nephew' ] ) ) {
 					return $type_id;
 				}
 			}

@@ -19,7 +19,7 @@ class PRM_Mentions {
 	public static function parse_mention_ids( $content ) {
 		$pattern = '/@\[[^\]]+\]\((\d+)\)/';
 		preg_match_all( $pattern, $content, $matches );
-		return array_map( 'intval', $matches[1] ?? array() );
+		return array_map( 'intval', $matches[1] ?? [] );
 	}
 
 	/**
@@ -74,6 +74,6 @@ class PRM_Mentions {
 	 */
 	public static function get_mentions( $comment_id ) {
 		$mentions = get_comment_meta( $comment_id, '_mentioned_users', true );
-		return is_array( $mentions ) ? $mentions : array();
+		return is_array( $mentions ) ? $mentions : [];
 	}
 }

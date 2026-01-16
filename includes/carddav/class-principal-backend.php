@@ -24,7 +24,7 @@ class PrincipalBackend extends AbstractBackend {
 	 * @return array Array of principal URIs
 	 */
 	public function getPrincipalsByPrefix( $prefixPath ) {
-		$principals = array();
+		$principals = [];
 
 		if ( $prefixPath !== 'principals' ) {
 			return $principals;
@@ -32,9 +32,9 @@ class PrincipalBackend extends AbstractBackend {
 
 		// Get all users who can use the CRM
 		$users = get_users(
-			array(
-				'role__in' => array( 'administrator', 'caelis_user' ),
-			)
+			[
+				'role__in' => [ 'administrator', 'caelis_user' ],
+			]
 		);
 
 		foreach ( $users as $user ) {
@@ -92,7 +92,7 @@ class PrincipalBackend extends AbstractBackend {
 	 * @return array Matching principals
 	 */
 	public function searchPrincipals( $prefixPath, array $searchProperties, $test = 'allof' ) {
-		$results = array();
+		$results = [];
 
 		if ( $prefixPath !== 'principals' ) {
 			return $results;
@@ -102,13 +102,13 @@ class PrincipalBackend extends AbstractBackend {
 		$email       = $searchProperties['{http://sabredav.org/ns}email-address'] ?? null;
 		$displayName = $searchProperties['{DAV:}displayname'] ?? null;
 
-		$args = array(
-			'role__in' => array( 'administrator', 'caelis_user' ),
-		);
+		$args = [
+			'role__in' => [ 'administrator', 'caelis_user' ],
+		];
 
 		if ( $email ) {
 			$args['search']         = $email;
-			$args['search_columns'] = array( 'user_email' );
+			$args['search_columns'] = [ 'user_email' ];
 		}
 
 		$users = get_users( $args );
@@ -152,7 +152,7 @@ class PrincipalBackend extends AbstractBackend {
 	 * @return array Group members
 	 */
 	public function getGroupMemberSet( $principal ) {
-		return array();
+		return [];
 	}
 
 	/**
@@ -162,7 +162,7 @@ class PrincipalBackend extends AbstractBackend {
 	 * @return array Groups this principal is a member of
 	 */
 	public function getGroupMembership( $principal ) {
-		return array();
+		return [];
 	}
 
 	/**
@@ -183,10 +183,10 @@ class PrincipalBackend extends AbstractBackend {
 	 * @return array Principal data
 	 */
 	private function getUserPrincipal( \WP_User $user ) {
-		return array(
+		return [
 			'uri'                                   => 'principals/' . $user->user_login,
 			'{DAV:}displayname'                     => $user->display_name,
 			'{http://sabredav.org/ns}email-address' => $user->user_email,
-		);
+		];
 	}
 }

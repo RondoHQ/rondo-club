@@ -20,7 +20,7 @@ define( 'PRM_PLUGIN_URL', PRM_THEME_URL . '/includes' );
  * Check for required dependencies
  */
 function prm_check_dependencies() {
-	$missing = array();
+	$missing = [];
 
 	// Check for ACF Pro
 	if ( ! class_exists( 'ACF' ) ) {
@@ -56,7 +56,7 @@ function prm_autoloader( $class_name ) {
 	}
 
 	// Map class names to file names
-	$class_map = array(
+	$class_map = [
 		'PRM_Post_Types'               => 'class-post-types.php',
 		'PRM_Taxonomies'               => 'class-taxonomies.php',
 		'PRM_Auto_Title'               => 'class-auto-title.php',
@@ -95,7 +95,7 @@ function prm_autoloader( $class_name ) {
 		'PRM_REST_Calendar'            => 'class-rest-calendar.php',
 		'PRM_Calendar_Matcher'         => 'class-calendar-matcher.php',
 		'PRM_Calendar_Sync'            => 'class-calendar-sync.php',
-	);
+	];
 
 	if ( isset( $class_map[ $class_name ] ) ) {
 		require_once PRM_PLUGIN_DIR . '/' . $class_map[ $class_name ];
@@ -244,7 +244,7 @@ function prm_theme_setup() {
 	add_theme_support( 'post-thumbnails' );
 	add_theme_support(
 		'html5',
-		array(
+		[
 			'search-form',
 			'comment-form',
 			'comment-list',
@@ -252,14 +252,14 @@ function prm_theme_setup() {
 			'caption',
 			'style',
 			'script',
-		)
+		]
 	);
 
 	// Register nav menus (optional, React handles navigation)
 	register_nav_menus(
-		array(
+		[
 			'primary' => __( 'Primary Menu', 'caelis' ),
-		)
+		]
 	);
 }
 add_action( 'after_setup_theme', 'prm_theme_setup' );
@@ -307,7 +307,7 @@ function prm_theme_enqueue_assets() {
 					wp_enqueue_style(
 						'prm-theme-style',
 						$dist_url . '/' . $css_file,
-						array(),
+						[],
 						PRM_THEME_VERSION
 					);
 				}
@@ -317,7 +317,7 @@ function prm_theme_enqueue_assets() {
 				wp_enqueue_script(
 					'prm-theme-script',
 					$dist_url . '/' . $main_js['file'],
-					array(),
+					[],
 					PRM_THEME_VERSION,
 					true
 				);
@@ -368,7 +368,7 @@ function prm_get_js_config() {
 		$build_time = gmdate( 'c' );
 	}
 
-	return array(
+	return [
 		'apiUrl'     => rest_url(),
 		'nonce'      => wp_create_nonce( 'wp_rest' ),
 		'siteUrl'    => home_url(),
@@ -383,7 +383,7 @@ function prm_get_js_config() {
 		'themeUrl'   => PRM_THEME_URL,
 		'version'    => wp_get_theme()->get( 'Version' ),
 		'buildTime'  => $build_time,
-	);
+	];
 }
 
 /**
@@ -443,11 +443,11 @@ function prm_redirect_backend_urls() {
 	}
 
 	// Map post types to frontend routes
-	$route_map = array(
+	$route_map = [
 		'person'         => 'people',
 		'company'        => 'companies',
 		'important_date' => 'dates',
-	);
+	];
 
 	if ( ! isset( $route_map[ $post_type ] ) ) {
 		return;
@@ -490,13 +490,13 @@ function prm_theme_template_redirect() {
 
 	// If this is a request for our app routes, serve index.php
 	// This includes: /, /people, /people/:id, /companies, /companies/:id, /dates, /dates/:id, /settings, /login
-	$app_routes = array(
+	$app_routes = [
 		'people',
 		'companies',
 		'dates',
 		'settings',
 		'login',
-	);
+	];
 
 	$is_app_route = false;
 

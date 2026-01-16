@@ -15,7 +15,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 	 * Constructor
 	 */
 	public function __construct() {
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	/**
@@ -26,33 +26,33 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		register_rest_route(
 			'prm/v1',
 			'/export/vcard',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'export_vcard' ),
+				'callback'            => [ $this, 'export_vcard' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Export contacts as Google CSV
 		register_rest_route(
 			'prm/v1',
 			'/export/google-csv',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'export_google_csv' ),
+				'callback'            => [ $this, 'export_google_csv' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Get CardDAV URLs for the current user
 		register_rest_route(
 			'prm/v1',
 			'/carddav/urls',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_carddav_urls' ),
+				'callback'            => [ $this, 'get_carddav_urls' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 	}
 
@@ -67,12 +67,12 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
 
 		if ( empty( $people_ids ) ) {
-			return new WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Get companies for work history
 		$company_ids = $access_control->get_accessible_post_ids( 'company', $user_id );
-		$company_map = array();
+		$company_map = [];
 		foreach ( $company_ids as $company_id ) {
 			$company = get_post( $company_id );
 			if ( $company ) {
@@ -81,7 +81,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		}
 
 		// Build vCard content
-		$vcards = array();
+		$vcards = [];
 		foreach ( $people_ids as $person_id ) {
 			$person = get_post( $person_id );
 			if ( ! $person || $person->post_status !== 'publish' ) {
@@ -90,7 +90,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 
 			// Get person data via REST API to ensure proper formatting
 			$rest_request = new WP_REST_Request( 'GET', "/wp/v2/people/{$person_id}" );
-			$rest_request->set_query_params( array( '_embed' => true ) );
+			$rest_request->set_query_params( [ '_embed' => true ] );
 			$rest_response = rest_do_request( $rest_request );
 
 			if ( is_wp_error( $rest_response ) || $rest_response->get_status() !== 200 ) {
@@ -102,7 +102,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 			// Get dates for birthday
 			$dates_request  = new WP_REST_Request( 'GET', "/prm/v1/people/{$person_id}/dates" );
 			$dates_response = rest_do_request( $dates_request );
-			$person_dates   = array();
+			$person_dates   = [];
 			if ( ! is_wp_error( $dates_response ) && $dates_response->get_status() === 200 ) {
 				$person_dates = $dates_response->get_data();
 			}
@@ -115,7 +115,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		}
 
 		if ( empty( $vcards ) ) {
-			return new WP_Error( 'export_failed', __( 'Failed to generate vCard export.', 'caelis' ), array( 'status' => 500 ) );
+			return new WP_Error( 'export_failed', __( 'Failed to generate vCard export.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		$vcard_content = implode( "\n", $vcards );
@@ -139,11 +139,11 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
 
 		if ( empty( $people_ids ) ) {
-			return new WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Google Contacts CSV headers
-		$headers = array(
+		$headers = [
 			'Name',
 			'Given Name',
 			'Additional Name',
@@ -201,9 +201,9 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 			'Organization 1 - Symbol',
 			'Organization 1 - Location',
 			'Organization 1 - Job Description',
-		);
+		];
 
-		$rows = array();
+		$rows = [];
 		foreach ( $people_ids as $person_id ) {
 			$person = get_post( $person_id );
 			if ( ! $person || $person->post_status !== 'publish' ) {
@@ -212,7 +212,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 
 			// Get person data via REST API
 			$rest_request = new WP_REST_Request( 'GET', "/wp/v2/people/{$person_id}" );
-			$rest_request->set_query_params( array( '_embed' => true ) );
+			$rest_request->set_query_params( [ '_embed' => true ] );
 			$rest_response = rest_do_request( $rest_request );
 
 			if ( is_wp_error( $rest_response ) || $rest_response->get_status() !== 200 ) {
@@ -220,7 +220,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 			}
 
 			$person_data = $rest_response->get_data();
-			$acf         = $person_data['acf'] ?? array();
+			$acf         = $person_data['acf'] ?? [];
 
 			$row = array_fill( 0, count( $headers ), '' );
 
@@ -248,7 +248,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 			}
 
 			// Contact info
-			$contact_info = $acf['contact_info'] ?? array();
+			$contact_info = $acf['contact_info'] ?? [];
 			$email_count  = 0;
 			$phone_count  = 0;
 
@@ -274,7 +274,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 			}
 
 			// Work history
-			$work_history = $acf['work_history'] ?? array();
+			$work_history = $acf['work_history'] ?? [];
 			if ( ! empty( $work_history ) ) {
 				$current_job = null;
 				foreach ( $work_history as $job ) {
@@ -338,9 +338,9 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 	 * @param array $person_dates Array of person's important dates.
 	 * @return string vCard content.
 	 */
-	private function generate_vcard_from_person( $person_data, $company_map = array(), $person_dates = array() ) {
-		$acf   = $person_data['acf'] ?? array();
-		$lines = array();
+	private function generate_vcard_from_person( $person_data, $company_map = [], $person_dates = [] ) {
+		$acf   = $person_data['acf'] ?? [];
+		$lines = [];
 
 		$lines[] = 'BEGIN:VCARD';
 		$lines[] = 'VERSION:3.0';
@@ -358,7 +358,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		}
 
 		// Contact info
-		$contact_info = $acf['contact_info'] ?? array();
+		$contact_info = $acf['contact_info'] ?? [];
 		foreach ( $contact_info as $contact ) {
 			$type  = $contact['contact_type'] ?? '';
 			$value = $contact['contact_value'] ?? '';
@@ -402,7 +402,7 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 		}
 
 		// Organization
-		$work_history = $acf['work_history'] ?? array();
+		$work_history = $acf['work_history'] ?? [];
 		if ( ! empty( $work_history ) ) {
 			$current_job = null;
 			foreach ( $work_history as $job ) {
@@ -470,19 +470,19 @@ class PRM_REST_Import_Export extends PRM_REST_Base {
 			return new WP_Error(
 				'not_logged_in',
 				__( 'You must be logged in.', 'caelis' ),
-				array( 'status' => 401 )
+				[ 'status' => 401 ]
 			);
 		}
 
 		$base_url = home_url( '/carddav/' );
 
 		return rest_ensure_response(
-			array(
+			[
 				'server'      => $base_url,
 				'principal'   => $base_url . 'principals/' . $user->user_login . '/',
 				'addressbook' => $base_url . 'addressbooks/' . $user->user_login . '/contacts/',
 				'username'    => $user->user_login,
-			)
+			]
 		);
 	}
 }

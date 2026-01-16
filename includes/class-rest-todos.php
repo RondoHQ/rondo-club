@@ -17,7 +17,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
 	 */
 	public function __construct() {
 		parent::__construct();
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	/**
@@ -28,94 +28,94 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		register_rest_route(
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/todos',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_person_todos' ),
-					'permission_callback' => array( $this, 'check_person_access' ),
-					'args'                => array(
-						'person_id' => array(
+					'callback'            => [ $this, 'get_person_todos' ],
+					'permission_callback' => [ $this, 'check_person_access' ],
+					'args'                => [
+						'person_id' => [
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
-						),
-					),
-				),
-				array(
+						],
+					],
+				],
+				[
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'create_person_todo' ),
-					'permission_callback' => array( $this, 'check_person_access' ),
-					'args'                => array(
-						'person_id' => array(
+					'callback'            => [ $this, 'create_person_todo' ],
+					'permission_callback' => [ $this, 'check_person_access' ],
+					'args'                => [
+						'person_id' => [
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
-						),
-					),
-				),
-			)
+						],
+					],
+				],
+			]
 		);
 
 		// Global endpoints
 		register_rest_route(
 			'prm/v1',
 			'/todos',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_all_todos' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'status' => array(
+				'callback'            => [ $this, 'get_all_todos' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'status' => [
 						'default'           => 'open',
 						'validate_callback' => function ( $param ) {
-							return in_array( $param, array( 'open', 'awaiting', 'completed', 'all' ), true );
+							return in_array( $param, [ 'open', 'awaiting', 'completed', 'all' ], true );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/todos/(?P<id>\d+)',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_todo' ),
-					'permission_callback' => array( $this, 'check_todo_access' ),
-					'args'                => array(
-						'id' => array(
+					'callback'            => [ $this, 'get_todo' ],
+					'permission_callback' => [ $this, 'check_todo_access' ],
+					'args'                => [
+						'id' => [
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
-						),
-					),
-				),
-				array(
+						],
+					],
+				],
+				[
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_todo' ),
-					'permission_callback' => array( $this, 'check_todo_access' ),
-					'args'                => array(
-						'id' => array(
+					'callback'            => [ $this, 'update_todo' ],
+					'permission_callback' => [ $this, 'check_todo_access' ],
+					'args'                => [
+						'id' => [
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
-						),
-					),
-				),
-				array(
+						],
+					],
+				],
+				[
 					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_todo' ),
-					'permission_callback' => array( $this, 'check_todo_access' ),
-					'args'                => array(
-						'id' => array(
+					'callback'            => [ $this, 'delete_todo' ],
+					'permission_callback' => [ $this, 'check_todo_access' ],
+					'args'                => [
+						'id' => [
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
-						),
-					),
-				),
-			)
+						],
+					],
+				],
+			]
 		);
 	}
 
@@ -146,7 +146,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		}
 
 		// Verify it's a valid todo status
-		$valid_statuses = array( 'prm_open', 'prm_awaiting', 'prm_completed', 'publish' );
+		$valid_statuses = [ 'prm_open', 'prm_awaiting', 'prm_completed', 'publish' ];
 		if ( ! in_array( $todo->post_status, $valid_statuses, true ) ) {
 			return false;
 		}
@@ -168,23 +168,23 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		// Use LIKE query since ACF stores serialized arrays
 		// The serialized format contains the ID as a quoted string: "123"
 		$todos = get_posts(
-			array(
+			[
 				'post_type'      => 'prm_todo',
 				'posts_per_page' => -1,
-				'post_status'    => array( 'prm_open', 'prm_awaiting', 'prm_completed' ),
-				'meta_query'     => array(
-					array(
+				'post_status'    => [ 'prm_open', 'prm_awaiting', 'prm_completed' ],
+				'meta_query'     => [
+					[
 						'key'     => 'related_persons',
 						'value'   => sprintf( '"%d"', $person_id ),
 						'compare' => 'LIKE',
-					),
-				),
+					],
+				],
 				'orderby'        => 'date',
 				'order'          => 'DESC',
-			)
+			]
 		);
 
-		$formatted = array_map( array( $this, 'format_todo' ), $todos );
+		$formatted = array_map( [ $this, 'format_todo' ], $todos );
 
 		return rest_ensure_response( $formatted );
 	}
@@ -206,38 +206,38 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		$person_ids = $request->get_param( 'person_ids' );
 		if ( ! is_array( $person_ids ) || empty( $person_ids ) ) {
 			// Single person_id from URL for backward compatibility
-			$person_ids = $person_id ? array( $person_id ) : array();
+			$person_ids = $person_id ? [ $person_id ] : [];
 		} else {
 			$person_ids = array_map( 'intval', $person_ids );
 		}
 
 		if ( empty( $person_ids ) ) {
-			return new WP_Error( 'no_person', __( 'At least one person is required.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_person', __( 'At least one person is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		if ( empty( $content ) ) {
-			return new WP_Error( 'empty_content', __( 'Todo content is required.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_content', __( 'Todo content is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Validate and determine post status
-		$valid_statuses = array( 'open', 'awaiting', 'completed' );
+		$valid_statuses = [ 'open', 'awaiting', 'completed' ];
 		if ( $status !== null && ! in_array( $status, $valid_statuses, true ) ) {
-			return new WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 		$post_status = $status ? 'prm_' . $status : 'prm_open';
 
 		// Create the todo post
 		$post_id = wp_insert_post(
-			array(
+			[
 				'post_type'   => 'prm_todo',
 				'post_title'  => $content,
 				'post_status' => $post_status,
 				'post_author' => get_current_user_id(),
-			)
+			]
 		);
 
 		if ( is_wp_error( $post_id ) ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create todo.', 'caelis' ), array( 'status' => 500 ) );
+			return new WP_Error( 'create_failed', __( 'Failed to create todo.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Save ACF fields - use new multi-person field
@@ -275,37 +275,37 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		$status = $request->get_param( 'status' );
 
 		// Map status param to post_status values
-		$status_map = array(
-			'open'      => array( 'prm_open' ),
-			'awaiting'  => array( 'prm_awaiting' ),
-			'completed' => array( 'prm_completed' ),
-			'all'       => array( 'prm_open', 'prm_awaiting', 'prm_completed' ),
-		);
+		$status_map = [
+			'open'      => [ 'prm_open' ],
+			'awaiting'  => [ 'prm_awaiting' ],
+			'completed' => [ 'prm_completed' ],
+			'all'       => [ 'prm_open', 'prm_awaiting', 'prm_completed' ],
+		];
 
-		$post_statuses = $status_map[ $status ] ?? array( 'prm_open' );
+		$post_statuses = $status_map[ $status ] ?? [ 'prm_open' ];
 
 		// Build query args - access control filter will handle visibility
-		$args = array(
+		$args = [
 			'post_type'      => 'prm_todo',
 			'posts_per_page' => 100, // Reasonable limit
 			'post_status'    => $post_statuses,
 			'orderby'        => 'date',
 			'order'          => 'DESC',
-		);
+		];
 
 		$todos     = get_posts( $args );
-		$formatted = array_map( array( $this, 'format_todo' ), $todos );
+		$formatted = array_map( [ $this, 'format_todo' ], $todos );
 
 		// Sort: open by due date, awaiting by waiting time, completed by date
 		usort(
 			$formatted,
 			function ( $a, $b ) {
 				// Status priority: open first, awaiting second, completed last
-				$status_order = array(
+				$status_order = [
 					'open'      => 0,
 					'awaiting'  => 1,
 					'completed' => 2,
-				);
+				];
 				$a_order      = $status_order[ $a['status'] ] ?? 0;
 				$b_order      = $status_order[ $b['status'] ] ?? 0;
 
@@ -352,7 +352,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		$todo    = get_post( $todo_id );
 
 		if ( ! $todo || $todo->post_type !== 'prm_todo' ) {
-			return new WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		return rest_ensure_response( $this->format_todo( $todo ) );
@@ -375,11 +375,11 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		$todo = get_post( $todo_id );
 
 		if ( ! $todo || $todo->post_type !== 'prm_todo' ) {
-			return new WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Build update args
-		$update_args = array( 'ID' => $todo_id );
+		$update_args = [ 'ID' => $todo_id ];
 
 		// Update post title if content provided
 		if ( $content !== null ) {
@@ -388,9 +388,9 @@ class PRM_REST_Todos extends PRM_REST_Base {
 
 		// Handle status change
 		if ( $status !== null ) {
-			$valid_statuses = array( 'open', 'awaiting', 'completed' );
+			$valid_statuses = [ 'open', 'awaiting', 'completed' ];
 			if ( ! in_array( $status, $valid_statuses, true ) ) {
-				return new WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'caelis' ), array( 'status' => 400 ) );
+				return new WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'caelis' ), [ 'status' => 400 ] );
 			}
 
 			$current_status  = $this->get_todo_status( $todo );
@@ -448,12 +448,12 @@ class PRM_REST_Todos extends PRM_REST_Base {
 	 * @return string Status string (open, awaiting, completed).
 	 */
 	private function get_todo_status( $post ) {
-		$status_map = array(
+		$status_map = [
 			'prm_open'      => 'open',
 			'prm_awaiting'  => 'awaiting',
 			'prm_completed' => 'completed',
 			'publish'       => 'open', // Legacy fallback
-		);
+		];
 
 		return $status_map[ $post->post_status ] ?? 'open';
 	}
@@ -469,16 +469,16 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		$todo    = get_post( $todo_id );
 
 		if ( ! $todo || $todo->post_type !== 'prm_todo' ) {
-			return new WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		$result = wp_delete_post( $todo_id, true ); // Force delete (bypass trash)
 
 		if ( ! $result ) {
-			return new WP_Error( 'delete_failed', __( 'Failed to delete todo.', 'caelis' ), array( 'status' => 500 ) );
+			return new WP_Error( 'delete_failed', __( 'Failed to delete todo.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
-		return rest_ensure_response( array( 'deleted' => true ) );
+		return rest_ensure_response( [ 'deleted' => true ] );
 	}
 
 	/**
@@ -489,19 +489,19 @@ class PRM_REST_Todos extends PRM_REST_Base {
 	 */
 	private function format_todo( $post ) {
 		// Get persons array (new multi-person format)
-		$person_ids = get_field( 'related_persons', $post->ID ) ?: array();
+		$person_ids = get_field( 'related_persons', $post->ID ) ?: [];
 		if ( ! is_array( $person_ids ) ) {
-			$person_ids = $person_ids ? array( $person_ids ) : array();
+			$person_ids = $person_ids ? [ $person_ids ] : [];
 		}
 
 		// Build persons array with details
-		$persons = array();
+		$persons = [];
 		foreach ( $person_ids as $pid ) {
-			$persons[] = array(
+			$persons[] = [
 				'id'        => (int) $pid,
 				'name'      => $this->sanitize_text( get_the_title( $pid ) ),
 				'thumbnail' => $this->sanitize_url( get_the_post_thumbnail_url( $pid, 'thumbnail' ) ),
-			);
+			];
 		}
 
 		$status         = $this->get_todo_status( $post );
@@ -509,7 +509,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		$awaiting_since = get_field( 'awaiting_since', $post->ID );
 		$notes          = get_field( 'notes', $post->ID );
 
-		return array(
+		return [
 			'id'               => $post->ID,
 			'type'             => 'todo',
 			'content'          => $this->sanitize_text( $post->post_title ),
@@ -525,6 +525,6 @@ class PRM_REST_Todos extends PRM_REST_Base {
 			'status'           => $status,
 			'due_date'         => $due_date ?: null,
 			'awaiting_since'   => $awaiting_since ?: null,
-		);
+		];
 	}
 }

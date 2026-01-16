@@ -14,23 +14,23 @@ class PRM_Reminders {
 	/**
 	 * Available notification channels
 	 */
-	private $channels = array();
+	private $channels = [];
 
 	public function __construct() {
 		// Register per-user cron hook (new system)
-		add_action( 'prm_user_reminder', array( $this, 'process_user_reminders' ) );
+		add_action( 'prm_user_reminder', [ $this, 'process_user_reminders' ] );
 
 		// Register legacy cron hook (deprecated, kept for backward compatibility)
-		add_action( 'prm_daily_reminder_check', array( $this, 'process_daily_reminders' ) );
+		add_action( 'prm_daily_reminder_check', [ $this, 'process_daily_reminders' ] );
 
 		// Add custom cron schedule if needed
-		add_filter( 'cron_schedules', array( $this, 'add_cron_schedules' ) );
+		add_filter( 'cron_schedules', [ $this, 'add_cron_schedules' ] );
 
 		// Initialize notification channels
-		$this->channels = array(
+		$this->channels = [
 			new PRM_Email_Channel(),
 			new PRM_Slack_Channel(),
-		);
+		];
 	}
 
 	/**
@@ -69,7 +69,7 @@ class PRM_Reminders {
 			$next_run->getTimestamp(),
 			'daily',
 			'prm_user_reminder',
-			array( $user_id )
+			[ $user_id ]
 		);
 
 		if ( $scheduled === false ) {
@@ -89,10 +89,10 @@ class PRM_Reminders {
 	 * @return bool True on success
 	 */
 	public function unschedule_user_reminder( $user_id ) {
-		$timestamp = wp_next_scheduled( 'prm_user_reminder', array( $user_id ) );
+		$timestamp = wp_next_scheduled( 'prm_user_reminder', [ $user_id ] );
 
 		if ( $timestamp !== false ) {
-			wp_unschedule_event( $timestamp, 'prm_user_reminder', array( $user_id ) );
+			wp_unschedule_event( $timestamp, 'prm_user_reminder', [ $user_id ] );
 		}
 
 		return true;
@@ -184,7 +184,7 @@ class PRM_Reminders {
 		// Get user's workspace memberships
 		$memberships = get_user_meta( $user_id, '_workspace_memberships', true );
 		if ( ! is_array( $memberships ) || empty( $memberships ) ) {
-			return array();
+			return [];
 		}
 
 		$workspace_ids = array_keys( $memberships );
@@ -197,57 +197,57 @@ class PRM_Reminders {
 			$workspace_ids
 		);
 		$terms      = get_terms(
-			array(
+			[
 				'taxonomy'   => 'workspace_access',
 				'slug'       => $term_slugs,
 				'hide_empty' => false,
-			)
+			]
 		);
 		if ( empty( $terms ) || is_wp_error( $terms ) ) {
-			return array();
+			return [];
 		}
 		$term_ids = wp_list_pluck( $terms, 'term_id' );
 
 		// Get contacts in these workspaces
 		$contacts = get_posts(
-			array(
-				'post_type'      => array( 'person', 'company' ),
+			[
+				'post_type'      => [ 'person', 'company' ],
 				'posts_per_page' => -1,
-				'tax_query'      => array(
-					array(
+				'tax_query'      => [
+					[
 						'taxonomy' => 'workspace_access',
 						'field'    => 'term_id',
 						'terms'    => $term_ids,
-					),
-				),
+					],
+				],
 				'fields'         => 'ids',
-			)
+			]
 		);
 		if ( empty( $contacts ) ) {
-			return array();
+			return [];
 		}
 
 		// Get shared notes from last 24 hours by OTHER users
 		$since    = gmdate( 'Y-m-d H:i:s', strtotime( '-24 hours' ) );
 		$comments = get_comments(
-			array(
+			[
 				'post__in'       => $contacts,
 				'type'           => 'prm_note',
-				'author__not_in' => array( $user_id ), // Not user's own notes
-				'date_query'     => array(
+				'author__not_in' => [ $user_id ], // Not user's own notes
+				'date_query'     => [
 					'after' => $since,
-				),
-				'meta_query'     => array(
-					array(
+				],
+				'meta_query'     => [
+					[
 						'key'   => '_note_visibility',
 						'value' => 'shared',
-					),
-				),
+					],
+				],
 				'number'         => 10, // Limit to recent 10
-			)
+			]
 		);
 
-		$activity = array();
+		$activity = [];
 		foreach ( $comments as $comment ) {
 			$author = get_userdata( $comment->user_id );
 			$post   = get_post( $comment->comment_post_ID );
@@ -255,14 +255,14 @@ class PRM_Reminders {
 				continue;
 			}
 
-			$activity[] = array(
+			$activity[] = [
 				'author'     => $author->display_name,
 				'post_title' => $post->post_title,
 				'post_type'  => $post->post_type,
 				'post_url'   => home_url( ( $post->post_type === 'person' ? '/people/' : '/companies/' ) . $post->ID ),
 				'preview'    => wp_trim_words( wp_strip_all_tags( $comment->comment_content ), 20 ),
 				'date'       => $comment->comment_date,
-			);
+			];
 		}
 
 		return $activity;
@@ -272,10 +272,10 @@ class PRM_Reminders {
 	 * Add custom cron schedules
 	 */
 	public function add_cron_schedules( $schedules ) {
-		$schedules['prm_twice_daily'] = array(
+		$schedules['prm_twice_daily'] = [
 			'interval' => 12 * HOUR_IN_SECONDS,
 			'display'  => __( 'Twice Daily', 'caelis' ),
-		);
+		];
 
 		return $schedules;
 	}
@@ -285,14 +285,14 @@ class PRM_Reminders {
 	 */
 	public function get_upcoming_reminders( $days_ahead = 30 ) {
 		$dates = get_posts(
-			array(
+			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-			)
+			]
 		);
 
-		$upcoming = array();
+		$upcoming = [];
 		$today    = new DateTime( 'today', wp_timezone() );
 		$end_date = ( clone $today )->modify( "+{$days_ahead} days" );
 
@@ -320,19 +320,19 @@ class PRM_Reminders {
 				continue;
 			}
 
-			$related_people = get_field( 'related_people', $date_post->ID ) ?: array();
-			$people_data    = array();
+			$related_people = get_field( 'related_people', $date_post->ID ) ?: [];
+			$people_data    = [];
 
 			foreach ( $related_people as $person ) {
 				$person_id     = is_object( $person ) ? $person->ID : $person;
-				$people_data[] = array(
+				$people_data[] = [
 					'id'        => $person_id,
 					'name'      => html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ),
 					'thumbnail' => get_the_post_thumbnail_url( $person_id, 'thumbnail' ),
-				);
+				];
 			}
 
-			$upcoming[] = array(
+			$upcoming[] = [
 				'id'              => $date_post->ID,
 				'title'           => html_entity_decode( $date_post->post_title, ENT_QUOTES, 'UTF-8' ),
 				'date_value'      => $date_value,
@@ -340,9 +340,9 @@ class PRM_Reminders {
 				'days_until'      => (int) $today->diff( $next_occurrence )->days,
 				'is_recurring'    => (bool) $is_recurring,
 				'year_unknown'    => (bool) get_field( 'year_unknown', $date_post->ID ),
-				'date_type'       => wp_get_post_terms( $date_post->ID, 'date_type', array( 'fields' => 'names' ) ),
+				'date_type'       => wp_get_post_terms( $date_post->ID, 'date_type', [ 'fields' => 'names' ] ),
 				'related_people'  => $people_data,
-			);
+			];
 		}
 
 		// Sort by next occurrence
@@ -442,23 +442,23 @@ class PRM_Reminders {
 		$todos = $this->get_user_todos_for_digest( $user_id, $today, $end_of_week );
 
 		if ( empty( $date_ids ) ) {
-			return array(
-				'today'        => array(),
-				'tomorrow'     => array(),
-				'rest_of_week' => array(),
+			return [
+				'today'        => [],
+				'tomorrow'     => [],
+				'rest_of_week' => [],
 				'todos'        => $todos,
-			);
+			];
 		}
 
 		// Get full post objects
 		$dates = array_map( 'get_post', $date_ids );
 
-		$digest = array(
-			'today'        => array(),
-			'tomorrow'     => array(),
-			'rest_of_week' => array(),
+		$digest = [
+			'today'        => [],
+			'tomorrow'     => [],
+			'rest_of_week' => [],
 			'todos'        => $todos,
-		);
+		];
 
 		foreach ( $dates as $date_post ) {
 			if ( ! $date_post ) {
@@ -483,8 +483,8 @@ class PRM_Reminders {
 			}
 
 			// Get related people and check access
-			$related_people  = get_field( 'related_people', $date_post->ID ) ?: array();
-			$people_data     = array();
+			$related_people  = get_field( 'related_people', $date_post->ID ) ?: [];
+			$people_data     = [];
 			$user_has_access = false;
 
 			// Skip dates with no related people
@@ -494,7 +494,7 @@ class PRM_Reminders {
 
 			// Ensure it's an array
 			if ( ! is_array( $related_people ) ) {
-				$related_people = array( $related_people );
+				$related_people = [ $related_people ];
 			}
 
 			foreach ( $related_people as $person ) {
@@ -515,11 +515,11 @@ class PRM_Reminders {
 				// Only include if user can access this person
 				if ( $access_control->user_can_access_post( $person_id, $user_id ) ) {
 					$user_has_access = true;
-					$people_data[]   = array(
+					$people_data[]   = [
 						'id'        => $person_id,
 						'name'      => html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ),
 						'thumbnail' => get_the_post_thumbnail_url( $person_id, 'thumbnail' ),
-					);
+					];
 				}
 			}
 
@@ -528,7 +528,7 @@ class PRM_Reminders {
 				continue;
 			}
 
-			$date_item = array(
+			$date_item = [
 				'id'              => $date_post->ID,
 				'title'           => html_entity_decode( $date_post->post_title, ENT_QUOTES, 'UTF-8' ),
 				'date_value'      => $date_value,
@@ -536,9 +536,9 @@ class PRM_Reminders {
 				'days_until'      => (int) $today->diff( $next_occurrence )->days,
 				'is_recurring'    => (bool) $is_recurring,
 				'year_unknown'    => (bool) get_field( 'year_unknown', $date_post->ID ),
-				'date_type'       => wp_get_post_terms( $date_post->ID, 'date_type', array( 'fields' => 'names' ) ),
+				'date_type'       => wp_get_post_terms( $date_post->ID, 'date_type', [ 'fields' => 'names' ] ),
 				'related_people'  => $people_data,
-			);
+			];
 
 			// Categorize by when it occurs
 			$occurrence_date = $next_occurrence->format( 'Y-m-d' );
@@ -555,7 +555,7 @@ class PRM_Reminders {
 		}
 
 		// Sort each section by next occurrence (only for date sections)
-		foreach ( array( 'today', 'tomorrow', 'rest_of_week' ) as $key ) {
+		foreach ( [ 'today', 'tomorrow', 'rest_of_week' ] as $key ) {
 			if ( ! empty( $digest[ $key ] ) ) {
 				usort(
 					$digest[ $key ],
@@ -581,11 +581,11 @@ class PRM_Reminders {
 		$access_control = new PRM_Access_Control();
 		$tomorrow       = ( clone $today )->modify( '+1 day' );
 
-		$todos = array(
-			'today'        => array(),
-			'tomorrow'     => array(),
-			'rest_of_week' => array(),
-		);
+		$todos = [
+			'today'        => [],
+			'tomorrow'     => [],
+			'rest_of_week' => [],
+		];
 
 		// Get person IDs that the user can access
 		global $wpdb;
@@ -606,24 +606,24 @@ class PRM_Reminders {
 
 		// Get incomplete todos with due dates in the week
 		$todo_comments = get_comments(
-			array(
+			[
 				'post__in'   => $person_ids,
 				'type'       => 'prm_todo',
 				'status'     => 'approve',
-				'meta_query' => array(
+				'meta_query' => [
 					'relation' => 'AND',
-					array(
+					[
 						'key'     => 'is_completed',
 						'value'   => '0',
 						'compare' => '=',
-					),
-					array(
+					],
+					[
 						'key'     => 'due_date',
 						'value'   => '',
 						'compare' => '!=',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		foreach ( $todo_comments as $comment ) {
@@ -651,7 +651,7 @@ class PRM_Reminders {
 					continue;
 				}
 
-				$todo_item = array(
+				$todo_item = [
 					'id'               => $comment->comment_ID,
 					'content'          => $comment->comment_content,
 					'due_date'         => $due_date_str,
@@ -659,7 +659,7 @@ class PRM_Reminders {
 					'person_name'      => html_entity_decode( get_the_title( $comment->comment_post_ID ), ENT_QUOTES, 'UTF-8' ),
 					'person_thumbnail' => get_the_post_thumbnail_url( $comment->comment_post_ID, 'thumbnail' ),
 					'is_overdue'       => $due_date < $today,
-				);
+				];
 
 				// Categorize by when it's due
 				$due_date_formatted = $due_date->format( 'Y-m-d' );
@@ -713,13 +713,13 @@ class PRM_Reminders {
 		);
 
 		if ( empty( $date_ids ) ) {
-			return array();
+			return [];
 		}
 
 		// Get full post objects
 		$dates = array_map( 'get_post', $date_ids );
 
-		$user_ids = array();
+		$user_ids = [];
 
 		foreach ( $dates as $date_post ) {
 			// Get related people using ACF (handles repeater fields correctly)
@@ -731,7 +731,7 @@ class PRM_Reminders {
 
 			// Ensure it's an array
 			if ( ! is_array( $related_people ) ) {
-				$related_people = array( $related_people );
+				$related_people = [ $related_people ];
 			}
 
 			// Get user IDs from people post authors
@@ -757,18 +757,18 @@ class PRM_Reminders {
 	 */
 	private function update_expired_work_history() {
 		$people = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-			)
+			]
 		);
 
 		$today         = new DateTime( 'today', wp_timezone() );
 		$updated_count = 0;
 
 		foreach ( $people as $person ) {
-			$work_history = get_field( 'work_history', $person->ID ) ?: array();
+			$work_history = get_field( 'work_history', $person->ID ) ?: [];
 
 			if ( empty( $work_history ) ) {
 				continue;
@@ -810,7 +810,7 @@ class PRM_Reminders {
 
 		// Filter to only include reminders for people this user can access
 		$access_control = new PRM_Access_Control();
-		$user_reminders = array();
+		$user_reminders = [];
 
 		foreach ( $all_reminders as $reminder ) {
 			foreach ( $reminder['related_people'] as $person ) {

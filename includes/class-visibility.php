@@ -29,11 +29,11 @@ class PRM_Visibility {
 	/**
 	 * Valid visibility values
 	 */
-	private static $valid_visibilities = array(
+	private static $valid_visibilities = [
 		self::VISIBILITY_PRIVATE,
 		self::VISIBILITY_WORKSPACE,
 		self::VISIBILITY_SHARED,
-	);
+	];
 
 	/**
 	 * Get visibility for a post
@@ -81,7 +81,7 @@ class PRM_Visibility {
 
 		// Return empty array if not set or invalid
 		if ( empty( $shares ) || ! is_array( $shares ) ) {
-			return array();
+			return [];
 		}
 
 		return $shares;
@@ -105,7 +105,7 @@ class PRM_Visibility {
 		}
 
 		// Validate permission
-		if ( ! in_array( $permission, array( 'view', 'edit' ), true ) ) {
+		if ( ! in_array( $permission, [ 'view', 'edit' ], true ) ) {
 			$permission = 'view';
 		}
 
@@ -133,12 +133,12 @@ class PRM_Visibility {
 
 		// Add new share if not found
 		if ( ! $found ) {
-			$shares[] = array(
+			$shares[] = [
 				'user_id'    => (int) $user_id,
 				'permission' => $permission,
 				'shared_by'  => (int) $shared_by,
 				'shared_at'  => gmdate( 'c' ),
-			);
+			];
 		}
 
 		// Save shares

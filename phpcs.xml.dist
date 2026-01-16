@@ -35,6 +35,13 @@
             in single files for better organization.
         -->
         <exclude name="Generic.Files.OneObjectStructurePerFile.MultipleFound"/>
+
+        <!--
+            Exclude Universal.Arrays.DisallowShortArraySyntax - we prefer
+            modern short array syntax [] over array(). The Generic.Arrays.DisallowLongArraySyntax
+            rule below enforces this preference.
+        -->
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
     </rule>
 
     <!-- Theme-specific file naming -->

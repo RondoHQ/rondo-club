@@ -10,18 +10,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 class PRM_Auto_Title {
 
 	public function __construct() {
-		add_action( 'acf/save_post', array( $this, 'auto_generate_person_title' ), 20 );
-		add_action( 'acf/save_post', array( $this, 'auto_generate_date_title' ), 20 );
+		add_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
+		add_action( 'acf/save_post', [ $this, 'auto_generate_date_title' ], 20 );
 
 		// Trigger calendar re-matching after person save (priority 25 = after title generation)
-		add_action( 'acf/save_post', array( $this, 'trigger_calendar_rematch' ), 25 );
+		add_action( 'acf/save_post', [ $this, 'trigger_calendar_rematch' ], 25 );
 
 		// Hide title field in admin for person CPT
-		add_filter( 'acf/prepare_field/name=_post_title', array( $this, 'hide_title_field' ) );
+		add_filter( 'acf/prepare_field/name=_post_title', [ $this, 'hide_title_field' ] );
 
 		// Lowercase email addresses on save
-		add_filter( 'acf/update_value/key=field_contact_value', array( $this, 'maybe_lowercase_email' ), 10, 4 );
-		add_filter( 'acf/update_value/key=field_company_contact_value', array( $this, 'maybe_lowercase_email' ), 10, 4 );
+		add_filter( 'acf/update_value/key=field_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
+		add_filter( 'acf/update_value/key=field_company_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 	}
 
 	/**
@@ -48,18 +48,18 @@ class PRM_Auto_Title {
 		}
 
 		// Unhook to prevent infinite loop
-		remove_action( 'acf/save_post', array( $this, 'auto_generate_person_title' ), 20 );
+		remove_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
 
 		wp_update_post(
-			array(
+			[
 				'ID'         => $post_id,
 				'post_title' => $full_name,
 				'post_name'  => sanitize_title( $full_name . '-' . $post_id ),
-			)
+			]
 		);
 
 		// Re-hook
-		add_action( 'acf/save_post', array( $this, 'auto_generate_person_title' ), 20 );
+		add_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
 	}
 
 	/**
@@ -98,18 +98,18 @@ class PRM_Auto_Title {
 		}
 
 		// Unhook to prevent infinite loop
-		remove_action( 'acf/save_post', array( $this, 'auto_generate_date_title' ), 20 );
+		remove_action( 'acf/save_post', [ $this, 'auto_generate_date_title' ], 20 );
 
 		wp_update_post(
-			array(
+			[
 				'ID'         => $post_id,
 				'post_title' => $title,
 				'post_name'  => sanitize_title( $title . '-' . $post_id ),
-			)
+			]
 		);
 
 		// Re-hook
-		add_action( 'acf/save_post', array( $this, 'auto_generate_date_title' ), 20 );
+		add_action( 'acf/save_post', [ $this, 'auto_generate_date_title' ], 20 );
 	}
 
 	/**
@@ -117,18 +117,18 @@ class PRM_Auto_Title {
 	 */
 	private function generate_date_title_from_fields( $post_id ) {
 		// Get date type from taxonomy
-		$date_types = wp_get_post_terms( $post_id, 'date_type', array( 'fields' => 'names' ) );
+		$date_types = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'names' ] );
 		$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'caelis' );
 
 		// Get related people
-		$people = get_field( 'related_people', $post_id ) ?: array();
+		$people = get_field( 'related_people', $post_id ) ?: [];
 
 		if ( empty( $people ) ) {
 			return sprintf( __( 'Unnamed %s', 'caelis' ), $type_label );
 		}
 
 		// Get full names of related people
-		$names = array();
+		$names = [];
 		foreach ( $people as $person ) {
 			$person_id = is_object( $person ) ? $person->ID : $person;
 			$full_name = html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' );
@@ -144,7 +144,7 @@ class PRM_Auto_Title {
 		$count = count( $names );
 
 		// Get date type slug to check for wedding
-		$date_type_slugs = wp_get_post_terms( $post_id, 'date_type', array( 'fields' => 'slugs' ) );
+		$date_type_slugs = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'slugs' ] );
 		$type_slug       = ! empty( $date_type_slugs ) ? $date_type_slugs[0] : '';
 
 		// Special handling for wedding type

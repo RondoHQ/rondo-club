@@ -58,7 +58,7 @@ class SmokeTest extends CaelisTestCase {
 	}
 
 	public function test_can_create_person_with_factory(): void {
-		$person_id = $this->createPerson( array( 'post_title' => 'Test Person' ) );
+		$person_id = $this->createPerson( [ 'post_title' => 'Test Person' ] );
 
 		$this->assertGreaterThan( 0, $person_id );
 		$this->assertEquals( 'person', get_post_type( $person_id ) );
@@ -66,7 +66,7 @@ class SmokeTest extends CaelisTestCase {
 	}
 
 	public function test_can_create_caelis_user(): void {
-		$user_id = $this->createCaelisUser( array( 'user_login' => 'testuser' ) );
+		$user_id = $this->createCaelisUser( [ 'user_login' => 'testuser' ] );
 
 		$this->assertGreaterThan( 0, $user_id );
 		$user = get_user_by( 'id', $user_id );
@@ -75,7 +75,7 @@ class SmokeTest extends CaelisTestCase {
 
 	public function test_database_transactions_rollback(): void {
 		// Create a person in this test
-		$person_id = $this->createPerson( array( 'post_title' => 'Transaction Test' ) );
+		$person_id = $this->createPerson( [ 'post_title' => 'Transaction Test' ] );
 
 		// Person should exist within this test
 		$this->assertNotNull( get_post( $person_id ) );

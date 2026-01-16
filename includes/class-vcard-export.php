@@ -73,10 +73,10 @@ class PRM_VCard_Export {
 	 */
 	public static function get_current_job( $work_history ) {
 		if ( ! is_array( $work_history ) || empty( $work_history ) ) {
-			return array(
+			return [
 				'title' => '',
 				'org'   => '',
-			);
+			];
 		}
 
 		// Find current job
@@ -89,10 +89,10 @@ class PRM_VCard_Export {
 						$company_name = $company->post_title;
 					}
 				}
-				return array(
+				return [
 					'title' => $job['job_title'] ?? '',
 					'org'   => $company_name,
-				);
+				];
 			}
 		}
 
@@ -115,16 +115,16 @@ class PRM_VCard_Export {
 					$company_name = $company->post_title;
 				}
 			}
-			return array(
+			return [
 				'title' => $job['job_title'] ?? '',
 				'org'   => $company_name,
-			);
+			];
 		}
 
-		return array(
+		return [
 			'title' => '',
 			'org'   => '',
-		);
+		];
 	}
 
 	/**
@@ -142,24 +142,24 @@ class PRM_VCard_Export {
 
 		// Query for important dates linked to this person with birthday type
 		$dates = get_posts(
-			array(
+			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => 1,
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'related_people',
 						'value'   => '"' . $person_id . '"',
 						'compare' => 'LIKE',
-					),
-				),
-				'tax_query'      => array(
-					array(
+					],
+				],
+				'tax_query'      => [
+					[
 						'taxonomy' => 'date_type',
 						'field'    => 'slug',
 						'terms'    => 'birthday',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		if ( ! empty( $dates ) ) {
@@ -186,12 +186,12 @@ class PRM_VCard_Export {
 		$mime_type = get_post_mime_type( $attachment_id );
 
 		// Map mime type to vCard photo type
-		$type_map = array(
+		$type_map = [
 			'image/jpeg' => 'JPEG',
 			'image/jpg'  => 'JPEG',
 			'image/png'  => 'PNG',
 			'image/gif'  => 'GIF',
-		);
+		];
 
 		$photo_type = $type_map[ $mime_type ] ?? null;
 		if ( ! $photo_type ) {
@@ -208,10 +208,10 @@ class PRM_VCard_Export {
 		// Base64 encode
 		$base64_data = base64_encode( $file_contents );
 
-		return array(
+		return [
 			'type' => $photo_type,
 			'data' => $base64_data,
-		);
+		];
 	}
 
 	/**
@@ -229,8 +229,8 @@ class PRM_VCard_Export {
 			return '';
 		}
 
-		$acf   = get_fields( $person->ID ) ?: array();
-		$lines = array();
+		$acf   = get_fields( $person->ID ) ?: [];
+		$lines = [];
 
 		// BEGIN:VCARD
 		$lines[] = 'BEGIN:VCARD';
@@ -258,12 +258,12 @@ class PRM_VCard_Export {
 
 		// Gender (vCard 4.0 style, but widely supported)
 		if ( ! empty( $acf['gender'] ) ) {
-			$gender_map  = array(
+			$gender_map  = [
 				'male'              => 'M',
 				'female'            => 'F',
 				'other'             => 'O',
 				'prefer_not_to_say' => 'N',
-			);
+			];
 			$gender_code = $gender_map[ $acf['gender'] ] ?? '';
 			if ( $gender_code ) {
 				$lines[] = "GENDER:{$gender_code}";
@@ -364,7 +364,7 @@ class PRM_VCard_Export {
 		}
 
 		// Organization and title from work history
-		$job = self::get_current_job( $acf['work_history'] ?? array() );
+		$job = self::get_current_job( $acf['work_history'] ?? [] );
 		if ( $job['org'] ) {
 			$lines[] = 'ORG:' . self::escape_value( $job['org'] );
 		}
@@ -410,7 +410,7 @@ class PRM_VCard_Export {
 	 * @return string vCard content
 	 */
 	public static function generate_from_array( $data ) {
-		$lines = array();
+		$lines = [];
 
 		// BEGIN:VCARD
 		$lines[] = 'BEGIN:VCARD';
@@ -439,12 +439,12 @@ class PRM_VCard_Export {
 
 		// Gender
 		if ( ! empty( $data['gender'] ) ) {
-			$gender_map  = array(
+			$gender_map  = [
 				'male'              => 'M',
 				'female'            => 'F',
 				'other'             => 'O',
 				'prefer_not_to_say' => 'N',
-			);
+			];
 			$gender_code = $gender_map[ $data['gender'] ] ?? '';
 			if ( $gender_code ) {
 				$lines[] = "GENDER:{$gender_code}";
@@ -585,22 +585,22 @@ class PRM_VCard_Export {
 	 * @return array
 	 */
 	private static function vobject_to_array( $vcard ) {
-		$data = array(
+		$data = [
 			'first_name'   => '',
 			'last_name'    => '',
 			'full_name'    => '',
 			'nickname'     => '',
 			'gender'       => '',
 			'pronouns'     => '',
-			'contact_info' => array(),
-			'addresses'    => array(),
+			'contact_info' => [],
+			'addresses'    => [],
 			'org'          => '',
 			'title'        => '',
 			'birthday'     => '',
 			'photo_url'    => '',
 			'uid'          => '',
-			'notes'        => array(),
-		);
+			'notes'        => [],
+		];
 
 		// UID
 		if ( isset( $vcard->UID ) ) {
@@ -630,7 +630,7 @@ class PRM_VCard_Export {
 				$label      = '';
 				$type_param = $email['TYPE'];
 				if ( $type_param ) {
-					$types = is_array( $type_param ) ? $type_param : ( is_object( $type_param ) ? $type_param->getParts() : array( $type_param ) );
+					$types = is_array( $type_param ) ? $type_param : ( is_object( $type_param ) ? $type_param->getParts() : [ $type_param ] );
 					foreach ( $types as $t ) {
 						$t_upper = strtoupper( (string) $t );
 						if ( $t_upper === 'HOME' ) {
@@ -642,11 +642,11 @@ class PRM_VCard_Export {
 						}
 					}
 				}
-				$data['contact_info'][] = array(
+				$data['contact_info'][] = [
 					'contact_type'  => 'email',
 					'contact_value' => (string) $email,
 					'contact_label' => $label,
-				);
+				];
 			}
 		}
 
@@ -658,7 +658,7 @@ class PRM_VCard_Export {
 				$type_param = $tel['TYPE'];
 				if ( $type_param ) {
 					// Handle different ways TYPE can be returned (array, Parameter object, string)
-					$types = is_array( $type_param ) ? $type_param : ( is_object( $type_param ) ? $type_param->getParts() : array( $type_param ) );
+					$types = is_array( $type_param ) ? $type_param : ( is_object( $type_param ) ? $type_param->getParts() : [ $type_param ] );
 					foreach ( $types as $t ) {
 						$t_upper = strtoupper( (string) $t );
 						if ( $t_upper === 'CELL' || $t_upper === 'MOBILE' ) {
@@ -670,11 +670,11 @@ class PRM_VCard_Export {
 						}
 					}
 				}
-				$data['contact_info'][] = array(
+				$data['contact_info'][] = [
 					'contact_type'  => $type,
 					'contact_value' => (string) $tel,
 					'contact_label' => $label,
-				);
+				];
 			}
 		}
 
@@ -697,11 +697,11 @@ class PRM_VCard_Export {
 					$type = 'calendar';
 				}
 
-				$data['contact_info'][] = array(
+				$data['contact_info'][] = [
 					'contact_type'  => $type,
 					'contact_value' => $url_value,
 					'contact_label' => '',
-				);
+				];
 			}
 		}
 
@@ -715,14 +715,14 @@ class PRM_VCard_Export {
 					$label = strtolower( is_array( $type_param ) ? $type_param[0] : $type_param );
 				}
 
-				$data['addresses'][] = array(
+				$data['addresses'][] = [
 					'address_label' => $label,
 					'street'        => $parts[2] ?? '',
 					'city'          => $parts[3] ?? '',
 					'state'         => $parts[4] ?? '',
 					'postal_code'   => $parts[5] ?? '',
 					'country'       => $parts[6] ?? '',
-				);
+				];
 			}
 		}
 
@@ -767,7 +767,7 @@ class PRM_VCard_Export {
 					if ( is_object( $type ) ) {
 						$type = (string) $type;
 					}
-					$data['photo_type'] = strtolower( str_replace( array( 'image/', 'IMAGE/' ), '', $type ) );
+					$data['photo_type'] = strtolower( str_replace( [ 'image/', 'IMAGE/' ], '', $type ) );
 				}
 			}
 		}
@@ -790,12 +790,12 @@ class PRM_VCard_Export {
 				$gender_value = explode( ';', $gender_value )[0];
 			}
 			$gender_code    = strtoupper( trim( $gender_value ) );
-			$gender_map     = array(
+			$gender_map     = [
 				'M' => 'male',
 				'F' => 'female',
 				'O' => 'other',
 				'N' => 'prefer_not_to_say',
-			);
+			];
 			$data['gender'] = $gender_map[ $gender_code ] ?? '';
 		}
 
@@ -819,20 +819,20 @@ class PRM_VCard_Export {
 					$type = strtolower( is_object( $type_param ) ? (string) $type_param : $type_param );
 				}
 				// Map type or detect from URL
-				$type_map        = array(
+				$type_map        = [
 					'linkedin'  => 'linkedin',
 					'twitter'   => 'twitter',
 					'x'         => 'twitter',
 					'instagram' => 'instagram',
 					'facebook'  => 'facebook',
-				);
+				];
 				$normalized_type = $type_map[ $type ] ?? self::detect_social_type( $url );
 				if ( $normalized_type ) {
-					$data['contact_info'][] = array(
+					$data['contact_info'][] = [
 						'contact_type'  => $normalized_type,
 						'contact_value' => $url,
 						'contact_label' => '',
-					);
+					];
 				}
 			}
 		}
@@ -846,11 +846,11 @@ class PRM_VCard_Export {
 
 				// Check for Slack
 				if ( $service === 'slack' || strpos( strtolower( $value ), 'slack' ) !== false ) {
-					$data['contact_info'][] = array(
+					$data['contact_info'][] = [
 						'contact_type'  => 'slack',
 						'contact_value' => $value,
 						'contact_label' => '',
-					);
+					];
 				}
 			}
 		}
@@ -887,22 +887,22 @@ class PRM_VCard_Export {
 	 * @return array
 	 */
 	private static function manual_parse( $vcard_data ) {
-		$data = array(
+		$data = [
 			'first_name'   => '',
 			'last_name'    => '',
 			'full_name'    => '',
 			'nickname'     => '',
 			'gender'       => '',
 			'pronouns'     => '',
-			'contact_info' => array(),
-			'addresses'    => array(),
+			'contact_info' => [],
+			'addresses'    => [],
 			'org'          => '',
 			'title'        => '',
 			'birthday'     => '',
 			'photo_url'    => '',
 			'uid'          => '',
-			'notes'        => array(),
-		);
+			'notes'        => [],
+		];
 
 		$lines = preg_split( '/\r\n|\r|\n/', $vcard_data );
 
@@ -943,11 +943,11 @@ class PRM_VCard_Export {
 					} elseif ( stripos( $property, 'WORK' ) !== false ) {
 						$label = 'Work';
 					}
-					$data['contact_info'][] = array(
+					$data['contact_info'][] = [
 						'contact_type'  => 'email',
 						'contact_value' => self::unescape_value( $value ),
 						'contact_label' => $label,
-					);
+					];
 					break;
 
 				case 'TEL':
@@ -961,19 +961,19 @@ class PRM_VCard_Export {
 					} elseif ( stripos( $property, 'WORK' ) !== false ) {
 						$label = 'Work';
 					}
-					$data['contact_info'][] = array(
+					$data['contact_info'][] = [
 						'contact_type'  => $type,
 						'contact_value' => self::unescape_value( $value ),
 						'contact_label' => $label,
-					);
+					];
 					break;
 
 				case 'URL':
-					$data['contact_info'][] = array(
+					$data['contact_info'][] = [
 						'contact_type'  => 'website',
 						'contact_value' => self::unescape_value( $value ),
 						'contact_label' => '',
-					);
+					];
 					break;
 
 				case 'ORG':
@@ -1011,12 +1011,12 @@ class PRM_VCard_Export {
 						$gender_value = explode( ';', $gender_value )[0];
 					}
 					$gender_code    = strtoupper( trim( $gender_value ) );
-					$gender_map     = array(
+					$gender_map     = [
 						'M' => 'male',
 						'F' => 'female',
 						'O' => 'other',
 						'N' => 'prefer_not_to_say',
-					);
+					];
 					$data['gender'] = $gender_map[ $gender_code ] ?? '';
 					break;
 
@@ -1036,20 +1036,20 @@ class PRM_VCard_Export {
 						$type = strtolower( $matches[1] ?? '' );
 					}
 					// Map type or detect from URL
-					$type_map        = array(
+					$type_map        = [
 						'linkedin'  => 'linkedin',
 						'twitter'   => 'twitter',
 						'x'         => 'twitter',
 						'instagram' => 'instagram',
 						'facebook'  => 'facebook',
-					);
+					];
 					$normalized_type = $type_map[ $type ] ?? self::detect_social_type( $url );
 					if ( $normalized_type ) {
-						$data['contact_info'][] = array(
+						$data['contact_info'][] = [
 							'contact_type'  => $normalized_type,
 							'contact_value' => $url,
 							'contact_label' => '',
-						);
+						];
 					}
 					break;
 
@@ -1063,11 +1063,11 @@ class PRM_VCard_Export {
 					}
 					// Check for Slack
 					if ( $service === 'slack' || stripos( $impp_value, 'slack' ) !== false ) {
-						$data['contact_info'][] = array(
+						$data['contact_info'][] = [
 							'contact_type'  => 'slack',
 							'contact_value' => $impp_value,
 							'contact_label' => '',
-						);
+						];
 					}
 					break;
 
@@ -1083,7 +1083,7 @@ class PRM_VCard_Export {
 							preg_match( '/TYPE=([^;:]+)/i', $property, $matches );
 							$photo_type = strtolower( $matches[1] ?? 'jpeg' );
 						}
-						$photo_type = str_replace( array( 'image/', 'IMAGE/' ), '', $photo_type );
+						$photo_type = str_replace( [ 'image/', 'IMAGE/' ], '', $photo_type );
 
 						// Remove whitespace and store
 						$data['photo_base64'] = preg_replace( '/\s+/', '', $value );

@@ -40,13 +40,13 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 */
 	public static function init_hooks() {
 		// Track when persons are created or updated via web UI
-		add_action( 'save_post_person', array( __CLASS__, 'on_person_saved' ), 10, 3 );
+		add_action( 'save_post_person', [ __CLASS__, 'on_person_saved' ], 10, 3 );
 
 		// Track when persons are trashed via web UI
-		add_action( 'wp_trash_post', array( __CLASS__, 'on_person_trashed' ) );
+		add_action( 'wp_trash_post', [ __CLASS__, 'on_person_trashed' ] );
 
 		// Track when persons are permanently deleted
-		add_action( 'before_delete_post', array( __CLASS__, 'on_person_deleted' ) );
+		add_action( 'before_delete_post', [ __CLASS__, 'on_person_deleted' ] );
 	}
 
 	/**
@@ -131,24 +131,24 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @param string|null $uri Optional URI for deleted cards
 	 */
 	public static function log_external_change( $user_id, $person_id, $type, $uri = null ) {
-		$changes = get_option( self::CHANGE_LOG_OPTION, array() );
+		$changes = get_option( self::CHANGE_LOG_OPTION, [] );
 
 		if ( ! isset( $changes[ $user_id ] ) ) {
-			$changes[ $user_id ] = array();
+			$changes[ $user_id ] = [];
 		}
 
 		$stored_uri = $uri ?: $person_id . '.vcf';
 
-		$changes[ $user_id ][ $person_id ] = array(
+		$changes[ $user_id ][ $person_id ] = [
 			'type'      => $type,
 			'timestamp' => time(),
 			'uri'       => $stored_uri,
-		);
+		];
 
 		update_option( self::CHANGE_LOG_OPTION, $changes );
 
 		// Update sync token
-		$tokens             = get_option( self::SYNC_TOKEN_OPTION, array() );
+		$tokens             = get_option( self::SYNC_TOKEN_OPTION, [] );
 		$tokens[ $user_id ] = time();
 		update_option( self::SYNC_TOKEN_OPTION, $tokens );
 
@@ -179,7 +179,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 
 		if ( ! $user ) {
 			error_log( "CardDAV: getAddressBooksForUser - user not found for: {$username}" );
-			return array();
+			return [];
 		}
 
 		// Get count of contacts for this user
@@ -189,13 +189,13 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 
 		// Get user's own contacts count
 		$own_contacts = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
 				'author'         => $user->ID,
 				'fields'         => 'ids',
-			)
+			]
 		);
 		$own_count    = count( $own_contacts );
 
@@ -205,8 +205,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		error_log( "CardDAV: Returning address book for user ID {$user->ID} - {$own_count} contacts, ctag: {$ctag}, sync-token: {$sync_token}" );
 
 		// Each user has one address book containing their contacts
-		return array(
-			array(
+		return [
+			[
 				'id'                                     => $user->ID,
 				'uri'                                    => 'contacts',
 				'principaluri'                           => $principalUri,
@@ -214,8 +214,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 				'{' . Plugin::NS_CARDDAV . '}addressbook-description' => 'Contacts from Caelis CRM',
 				'{http://calendarserver.org/ns/}getctag' => $ctag,
 				'{http://sabredav.org/ns}sync-token'     => $sync_token,
-			),
-		);
+			],
+		];
 	}
 
 	/**
@@ -260,32 +260,32 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	public function getCards( $addressBookId ) {
 		error_log( "CardDAV: getCards called for address book (user) ID: {$addressBookId}" );
 
-		$cards = array();
+		$cards = [];
 
 		// Set current user for access control
 		wp_set_current_user( $addressBookId );
 
 		// Get all persons for this user
 		$persons = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
 				'author'         => $addressBookId,
-			)
+			]
 		);
 
 		foreach ( $persons as $person ) {
 			$vcard = \PRM_VCard_Export::generate( $person );
 			$etag  = $this->generateEtag( $person );
 
-			$cards[] = array(
+			$cards[] = [
 				'id'           => $person->ID,
 				'uri'          => $this->getUriForPerson( $person->ID ),
 				'lastmodified' => strtotime( $person->post_modified_gmt ),
 				'etag'         => $etag,
 				'size'         => strlen( $vcard ),
-			);
+			];
 		}
 
 		error_log( 'CardDAV: getCards returning ' . count( $cards ) . ' cards' );
@@ -326,14 +326,14 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		$vcard = \PRM_VCard_Export::generate( $person );
 		$etag  = $this->generateEtag( $person );
 
-		return array(
+		return [
 			'id'           => $person->ID,
 			'uri'          => $cardUri,
 			'lastmodified' => strtotime( $person->post_modified_gmt ),
 			'etag'         => $etag,
 			'size'         => strlen( $vcard ),
 			'carddata'     => $vcard,
-		);
+		];
 	}
 
 	/**
@@ -344,7 +344,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return array Array of card data
 	 */
 	public function getMultipleCards( $addressBookId, array $uris ) {
-		$cards = array();
+		$cards = [];
 
 		foreach ( $uris as $uri ) {
 			$card = $this->getCard( $addressBookId, $uri );
@@ -395,12 +395,12 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 
 		// Create the person post
 		$post_id = wp_insert_post(
-			array(
+			[
 				'post_type'   => 'person',
 				'post_status' => 'publish',
 				'post_author' => $addressBookId,
 				'post_title'  => trim( $first_name . ' ' . $last_name ) ?: 'Unknown',
-			)
+			]
 		);
 
 		if ( is_wp_error( $post_id ) || ! $post_id ) {
@@ -439,13 +439,13 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		if ( ! empty( $parsed['notes'] ) ) {
 			foreach ( $parsed['notes'] as $note_content ) {
 				wp_insert_comment(
-					array(
+					[
 						'comment_post_ID'  => $post_id,
 						'comment_content'  => wp_kses_post( $note_content ),
 						'comment_type'     => \PRM_Comment_Types::TYPE_NOTE,
 						'user_id'          => $addressBookId,
 						'comment_approved' => 1,
-					)
+					]
 				);
 			}
 		}
@@ -520,10 +520,10 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 
 		// Update the post
 		wp_update_post(
-			array(
+			[
 				'ID'         => $person_id,
 				'post_title' => trim( $first_name . ' ' . $last_name ) ?: 'Unknown',
-			)
+			]
 		);
 
 		// Update ACF fields
@@ -556,23 +556,23 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			foreach ( $parsed['notes'] as $note_content ) {
 				// Check if this exact note already exists to avoid duplicates
 				$existing = get_comments(
-					array(
+					[
 						'post_id' => $person_id,
 						'type'    => \PRM_Comment_Types::TYPE_NOTE,
 						'search'  => $note_content,
 						'number'  => 1,
-					)
+					]
 				);
 
 				if ( empty( $existing ) ) {
 					wp_insert_comment(
-						array(
+						[
 							'comment_post_ID'  => $person_id,
 							'comment_content'  => wp_kses_post( $note_content ),
 							'comment_type'     => \PRM_Comment_Types::TYPE_NOTE,
 							'user_id'          => $addressBookId,
 							'comment_approved' => 1,
-						)
+						]
 					);
 				}
 			}
@@ -664,12 +664,12 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	public function getChangesForAddressBook( $addressBookId, $syncToken, $syncLevel, $limit = null ) {
 		error_log( "CardDAV: getChangesForAddressBook called for user {$addressBookId}, syncToken: " . ( $syncToken ?: 'none' ) );
 
-		$result = array(
+		$result = [
 			'syncToken' => $this->getCurrentSyncToken( $addressBookId ),
-			'added'     => array(),
-			'modified'  => array(),
-			'deleted'   => array(),
-		);
+			'added'     => [],
+			'modified'  => [],
+			'deleted'   => [],
+		];
 
 		// If no sync token provided, return all contacts as added
 		if ( empty( $syncToken ) ) {
@@ -677,12 +677,12 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			wp_set_current_user( $addressBookId );
 
 			$persons = get_posts(
-				array(
+				[
 					'post_type'      => 'person',
 					'posts_per_page' => $limit ?: -1,
 					'post_status'    => 'publish',
 					'author'         => $addressBookId,
-				)
+				]
 			);
 
 			foreach ( $persons as $person ) {
@@ -694,9 +694,9 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		}
 
 		// Get changes since the sync token
-		$changes = get_option( self::CHANGE_LOG_OPTION, array() );
+		$changes = get_option( self::CHANGE_LOG_OPTION, [] );
 		// Use string key for consistency (WP stores numeric keys as strings)
-		$user_changes = $changes[ (string) $addressBookId ] ?? array();
+		$user_changes = $changes[ (string) $addressBookId ] ?? [];
 
 		// Parse sync token to get timestamp
 		$token_timestamp = $this->parseSyncToken( $syncToken );
@@ -739,7 +739,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return string Sync token
 	 */
 	private function getCurrentSyncToken( $addressBookId ) {
-		$tokens = get_option( self::SYNC_TOKEN_OPTION, array() );
+		$tokens = get_option( self::SYNC_TOKEN_OPTION, [] );
 		// Cast to string for consistent array key comparison (WP stores numeric keys as strings)
 		$key = (string) $addressBookId;
 
@@ -758,7 +758,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return void
 	 */
 	private function updateSyncToken( $addressBookId ) {
-		$tokens                            = get_option( self::SYNC_TOKEN_OPTION, array() );
+		$tokens                            = get_option( self::SYNC_TOKEN_OPTION, [] );
 		$tokens[ (string) $addressBookId ] = time();
 		update_option( self::SYNC_TOKEN_OPTION, $tokens );
 	}
@@ -785,20 +785,20 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return void
 	 */
 	private function logChange( $addressBookId, $personId, $type, $uri = null ) {
-		$changes = get_option( self::CHANGE_LOG_OPTION, array() );
+		$changes = get_option( self::CHANGE_LOG_OPTION, [] );
 
 		if ( ! isset( $changes[ $addressBookId ] ) ) {
-			$changes[ $addressBookId ] = array();
+			$changes[ $addressBookId ] = [];
 		}
 
 		// Store the URI for deleted cards (since the post won't exist later)
 		$stored_uri = $uri ?: $this->getUriForPerson( $personId );
 
-		$changes[ $addressBookId ][ $personId ] = array(
+		$changes[ $addressBookId ][ $personId ] = [
 			'type'      => $type,
 			'timestamp' => time(),
 			'uri'       => $stored_uri,
-		);
+		];
 
 		update_option( self::CHANGE_LOG_OPTION, $changes );
 		$this->updateSyncToken( $addressBookId );
@@ -817,14 +817,14 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		wp_set_current_user( $addressBookId );
 
 		$persons = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => 1,
 				'post_status'    => 'publish',
 				'author'         => $addressBookId,
 				'orderby'        => 'modified',
 				'order'          => 'DESC',
-			)
+			]
 		);
 
 		if ( ! empty( $persons ) ) {
@@ -866,13 +866,13 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 
 		// Try looking up by stored URI in post meta
 		$posts = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => 1,
 				'post_status'    => 'publish',
 				'meta_key'       => '_carddav_uri',
 				'meta_value'     => $cardUri,
-			)
+			]
 		);
 
 		if ( ! empty( $posts ) ) {
@@ -964,7 +964,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		// Determine extension
 		$extension  = 'jpg';
 		$type_lower = strtolower( $type );
-		if ( in_array( $type_lower, array( 'png', 'gif', 'webp' ) ) ) {
+		if ( in_array( $type_lower, [ 'png', 'gif', 'webp' ] ) ) {
 			$extension = $type_lower;
 		} elseif ( $type_lower === 'jpeg' ) {
 			$extension = 'jpg';
@@ -987,10 +987,10 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		}
 
 		// Prepare file array
-		$file_array = array(
+		$file_array = [
 			'name'     => $filename,
 			'tmp_name' => $temp_file,
-		);
+		];
 
 		// Upload
 		$attachment_id = media_handle_sideload( $file_array, $person_id, "{$first_name} {$last_name}" );
@@ -1034,16 +1034,16 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		// Get extension from URL
 		$path = parse_url( $url, PHP_URL_PATH );
 		$ext  = pathinfo( $path, PATHINFO_EXTENSION );
-		if ( in_array( strtolower( $ext ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ) ) ) {
+		if ( in_array( strtolower( $ext ), [ 'jpg', 'jpeg', 'png', 'gif', 'webp' ] ) ) {
 			$filename .= '.' . strtolower( $ext );
 		} else {
 			$filename .= '.jpg';
 		}
 
-		$file_array = array(
+		$file_array = [
 			'name'     => $filename,
 			'tmp_name' => $tmp,
-		);
+		];
 
 		$attachment_id = media_handle_sideload( $file_array, $person_id, "{$first_name} {$last_name}" );
 

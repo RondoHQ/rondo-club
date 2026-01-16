@@ -23,10 +23,10 @@ class PRM_ICal_Feed {
 	const TOKEN_LENGTH = 32;
 
 	public function __construct() {
-		add_action( 'init', array( $this, 'register_rewrite_rules' ) );
-		add_action( 'template_redirect', array( $this, 'handle_feed_request' ) );
-		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
-		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		add_action( 'init', [ $this, 'register_rewrite_rules' ] );
+		add_action( 'template_redirect', [ $this, 'handle_feed_request' ] );
+		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
+		add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
 	}
 
 	/**
@@ -102,22 +102,22 @@ class PRM_ICal_Feed {
 		register_rest_route(
 			'prm/v1',
 			'/user/ical-url',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_ical_url' ),
+				'callback'            => [ $this, 'get_ical_url' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Regenerate iCal token
 		register_rest_route(
 			'prm/v1',
 			'/user/regenerate-ical-token',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'regenerate_token' ),
+				'callback'            => [ $this, 'regenerate_token' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 	}
 
@@ -171,11 +171,11 @@ class PRM_ICal_Feed {
 		$url = home_url( '/calendar/' . $token . '.ics' );
 
 		return rest_ensure_response(
-			array(
+			[
 				'url'        => $url,
-				'webcal_url' => str_replace( array( 'https://', 'http://' ), 'webcal://', $url ),
+				'webcal_url' => str_replace( [ 'https://', 'http://' ], 'webcal://', $url ),
 				'token'      => $token,
-			)
+			]
 		);
 	}
 
@@ -191,12 +191,12 @@ class PRM_ICal_Feed {
 		$url = home_url( '/calendar/' . $token . '.ics' );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'    => true,
 				'url'        => $url,
-				'webcal_url' => str_replace( array( 'https://', 'http://' ), 'webcal://', $url ),
+				'webcal_url' => str_replace( [ 'https://', 'http://' ], 'webcal://', $url ),
 				'message'    => __( 'Your calendar URL has been regenerated. Update any calendar subscriptions with the new URL.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -227,31 +227,31 @@ class PRM_ICal_Feed {
 		$old_user = wp_get_current_user();
 		wp_set_current_user( $user_id );
 
-		$args = array(
+		$args = [
 			'post_type'      => 'important_date',
 			'posts_per_page' => -1,
 			'post_status'    => 'publish',
-		);
+		];
 
 		// Access control filters will automatically apply
 		$posts = get_posts( $args );
 
-		$dates = array();
+		$dates = [];
 		foreach ( $posts as $post ) {
-			$related_people = get_field( 'related_people', $post->ID ) ?: array();
-			$people_data    = array();
+			$related_people = get_field( 'related_people', $post->ID ) ?: [];
+			$people_data    = [];
 
 			foreach ( $related_people as $person ) {
 				$person_id     = is_object( $person ) ? $person->ID : $person;
-				$people_data[] = array(
+				$people_data[] = [
 					'id'   => $person_id,
 					'name' => html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ),
-				);
+				];
 			}
 
-			$date_types = wp_get_post_terms( $post->ID, 'date_type', array( 'fields' => 'names' ) );
+			$date_types = wp_get_post_terms( $post->ID, 'date_type', [ 'fields' => 'names' ] );
 
-			$dates[] = array(
+			$dates[] = [
 				'id'           => $post->ID,
 				'title'        => html_entity_decode( $post->post_title, ENT_QUOTES, 'UTF-8' ),
 				'date_value'   => get_field( 'date_value', $post->ID ),
@@ -259,7 +259,7 @@ class PRM_ICal_Feed {
 				'date_type'    => ! empty( $date_types ) ? $date_types[0] : '',
 				'people'       => $people_data,
 				'modified'     => $post->post_modified_gmt,
-			);
+			];
 		}
 
 		// Restore original user
@@ -276,7 +276,7 @@ class PRM_ICal_Feed {
 		$site_url  = home_url();
 		$domain    = wp_parse_url( $site_url, PHP_URL_HOST );
 
-		$lines = array();
+		$lines = [];
 
 		// Calendar header
 		$lines[] = 'BEGIN:VCALENDAR';
@@ -303,7 +303,7 @@ class PRM_ICal_Feed {
 	 * Generate a single VEVENT
 	 */
 	private function generate_event( $date, $domain ) {
-		$lines = array();
+		$lines = [];
 
 		// Parse the date
 		$date_value = $date['date_value'];
@@ -418,98 +418,98 @@ class PRM_ICal_Feed {
 		// Get term ID for this workspace
 		$term = get_term_by( 'slug', 'workspace-' . $workspace_id, 'workspace_access' );
 		if ( ! $term ) {
-			return array();
+			return [];
 		}
 
 		// Get all contacts (people) in this workspace
 		$people = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-				'tax_query'      => array(
-					array(
+				'tax_query'      => [
+					[
 						'taxonomy' => 'workspace_access',
 						'field'    => 'term_id',
 						'terms'    => $term->term_id,
-					),
-				),
+					],
+				],
 				'fields'         => 'ids',
-			)
+			]
 		);
 
 		if ( empty( $people ) ) {
-			return array();
+			return [];
 		}
 
 		// Get important dates linked to these people
 		$date_posts = get_posts(
-			array(
+			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'related_people',
 						'value'   => $people,
 						'compare' => 'IN',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// If no results with standard meta query, try ACF relationship approach
 		if ( empty( $date_posts ) ) {
 			// ACF stores relationship fields differently, so we need to query each person
-			$date_ids = array();
+			$date_ids = [];
 			foreach ( $people as $person_id ) {
 				$person_dates = get_posts(
-					array(
+					[
 						'post_type'      => 'important_date',
 						'posts_per_page' => -1,
 						'post_status'    => 'publish',
-						'meta_query'     => array(
-							array(
+						'meta_query'     => [
+							[
 								'key'     => 'related_people',
 								'value'   => '"' . $person_id . '"',
 								'compare' => 'LIKE',
-							),
-						),
+							],
+						],
 						'fields'         => 'ids',
-					)
+					]
 				);
 				$date_ids     = array_merge( $date_ids, $person_dates );
 			}
 
 			if ( ! empty( $date_ids ) ) {
 				$date_posts = get_posts(
-					array(
+					[
 						'post_type'      => 'important_date',
 						'posts_per_page' => -1,
 						'post_status'    => 'publish',
 						'post__in'       => array_unique( $date_ids ),
-					)
+					]
 				);
 			}
 		}
 
 		// Format dates for iCal generation (same format as get_user_dates)
-		$dates = array();
+		$dates = [];
 		foreach ( $date_posts as $post ) {
-			$related_people = get_field( 'related_people', $post->ID ) ?: array();
-			$people_data    = array();
+			$related_people = get_field( 'related_people', $post->ID ) ?: [];
+			$people_data    = [];
 
 			foreach ( $related_people as $person ) {
 				$person_id     = is_object( $person ) ? $person->ID : $person;
-				$people_data[] = array(
+				$people_data[] = [
 					'id'   => $person_id,
 					'name' => html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ),
-				);
+				];
 			}
 
-			$date_types = wp_get_post_terms( $post->ID, 'date_type', array( 'fields' => 'names' ) );
+			$date_types = wp_get_post_terms( $post->ID, 'date_type', [ 'fields' => 'names' ] );
 
-			$dates[] = array(
+			$dates[] = [
 				'id'           => $post->ID,
 				'title'        => html_entity_decode( $post->post_title, ENT_QUOTES, 'UTF-8' ),
 				'date_value'   => get_field( 'date_value', $post->ID ),
@@ -517,7 +517,7 @@ class PRM_ICal_Feed {
 				'date_type'    => ! empty( $date_types ) ? $date_types[0] : '',
 				'people'       => $people_data,
 				'modified'     => $post->post_modified_gmt,
-			);
+			];
 		}
 
 		return $dates;
@@ -553,7 +553,7 @@ class PRM_ICal_Feed {
 		$site_url = home_url();
 		$domain   = wp_parse_url( $site_url, PHP_URL_HOST );
 
-		$lines = array();
+		$lines = [];
 
 		// Calendar header
 		$lines[] = 'BEGIN:VCALENDAR';

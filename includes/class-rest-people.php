@@ -17,13 +17,13 @@ class PRM_REST_People extends PRM_REST_Base {
 	 * Register routes and filters for people endpoints.
 	 */
 	public function __construct() {
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 
 		// Expand relationship data in person REST responses
-		add_filter( 'rest_prepare_person', array( $this, 'expand_person_relationships' ), 10, 3 );
+		add_filter( 'rest_prepare_person', [ $this, 'expand_person_relationships' ], 10, 3 );
 
 		// Add computed fields (is_deceased) to person REST responses
-		add_filter( 'rest_prepare_person', array( $this, 'add_person_computed_fields' ), 20, 3 );
+		add_filter( 'rest_prepare_person', [ $this, 'add_person_computed_fields' ], 20, 3 );
 	}
 
 	/**
@@ -34,100 +34,100 @@ class PRM_REST_People extends PRM_REST_Base {
 		register_rest_route(
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/dates',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_dates_by_person' ),
-				'permission_callback' => array( $this, 'check_person_access' ),
-				'args'                => array(
-					'person_id' => array(
+				'callback'            => [ $this, 'get_dates_by_person' ],
+				'permission_callback' => [ $this, 'check_person_access' ],
+				'args'                => [
+					'person_id' => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Sideload Gravatar image
 		register_rest_route(
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/gravatar',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'sideload_gravatar' ),
-				'permission_callback' => array( $this, 'check_person_access' ),
-				'args'                => array(
-					'person_id' => array(
+				'callback'            => [ $this, 'sideload_gravatar' ],
+				'permission_callback' => [ $this, 'check_person_access' ],
+				'args'                => [
+					'person_id' => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-					'email'     => array(
+					],
+					'email'     => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_email( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Upload person photo with proper filename
 		register_rest_route(
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/photo',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'upload_person_photo' ),
-				'permission_callback' => array( $this, 'check_person_edit_permission' ),
-				'args'                => array(
-					'person_id' => array(
+				'callback'            => [ $this, 'upload_person_photo' ],
+				'permission_callback' => [ $this, 'check_person_edit_permission' ],
+				'args'                => [
+					'person_id' => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Sharing endpoints
 		register_rest_route(
 			'prm/v1',
 			'/people/(?P<id>\d+)/shares',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_shares' ),
-					'permission_callback' => array( $this, 'check_post_owner' ),
-				),
-				array(
+					'callback'            => [ $this, 'get_shares' ],
+					'permission_callback' => [ $this, 'check_post_owner' ],
+				],
+				[
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'add_share' ),
-					'permission_callback' => array( $this, 'check_post_owner' ),
-				),
-			)
+					'callback'            => [ $this, 'add_share' ],
+					'permission_callback' => [ $this, 'check_post_owner' ],
+				],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/people/(?P<id>\d+)/shares/(?P<user_id>\d+)',
-			array(
+			[
 				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'remove_share' ),
-				'permission_callback' => array( $this, 'check_post_owner' ),
-			)
+				'callback'            => [ $this, 'remove_share' ],
+				'permission_callback' => [ $this, 'check_post_owner' ],
+			]
 		);
 
 		// Bulk update endpoint
 		register_rest_route(
 			'prm/v1',
 			'/people/bulk-update',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'bulk_update_people' ),
-				'permission_callback' => array( $this, 'check_bulk_update_permission' ),
-				'args'                => array(
-					'ids'     => array(
+				'callback'            => [ $this, 'bulk_update_people' ],
+				'permission_callback' => [ $this, 'check_bulk_update_permission' ],
+				'args'                => [
+					'ids'     => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							if ( ! is_array( $param ) || empty( $param ) ) {
@@ -143,8 +143,8 @@ class PRM_REST_People extends PRM_REST_Base {
 						'sanitize_callback' => function ( $param ) {
 							return array_map( 'intval', $param );
 						},
-					),
-					'updates' => array(
+					],
+					'updates' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							if ( ! is_array( $param ) || empty( $param ) ) {
@@ -161,7 +161,7 @@ class PRM_REST_People extends PRM_REST_Base {
 							}
 							// Validate visibility if provided
 							if ( isset( $param['visibility'] ) ) {
-								$valid_visibilities = array( 'private', 'workspace', 'shared' );
+								$valid_visibilities = [ 'private', 'workspace', 'shared' ];
 								if ( ! in_array( $param['visibility'], $valid_visibilities, true ) ) {
 									return false;
 								}
@@ -215,9 +215,9 @@ class PRM_REST_People extends PRM_REST_Base {
 							}
 							return true;
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 	}
 
@@ -231,21 +231,21 @@ class PRM_REST_People extends PRM_REST_Base {
 		$person_id = $request->get_param( 'person_id' );
 
 		$dates = get_posts(
-			array(
+			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'related_people',
 						'value'   => '"' . $person_id . '"',
 						'compare' => 'LIKE',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
-		$formatted = array_map( array( $this, 'format_date' ), $dates );
+		$formatted = array_map( [ $this, 'format_date' ], $dates );
 
 		return rest_ensure_response( $formatted );
 	}
@@ -261,7 +261,7 @@ class PRM_REST_People extends PRM_REST_Base {
 		$email     = sanitize_email( $request->get_param( 'email' ) );
 
 		if ( empty( $email ) ) {
-			return new WP_Error( 'missing_email', __( 'Email address is required.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_email', __( 'Email address is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Generate Gravatar URL
@@ -272,10 +272,10 @@ class PRM_REST_People extends PRM_REST_Base {
 		$response = wp_remote_head( $gravatar_url );
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) === 404 ) {
 			return rest_ensure_response(
-				array(
+				[
 					'success' => false,
 					'message' => 'No Gravatar found for this email address',
-				)
+				]
 			);
 		}
 
@@ -288,7 +288,7 @@ class PRM_REST_People extends PRM_REST_Base {
 		$tmp = download_url( $gravatar_url );
 
 		if ( is_wp_error( $tmp ) ) {
-			return new WP_Error( 'download_failed', __( 'Failed to download Gravatar image.', 'caelis' ), array( 'status' => 500 ) );
+			return new WP_Error( 'download_failed', __( 'Failed to download Gravatar image.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Get person's name for filename
@@ -298,10 +298,10 @@ class PRM_REST_People extends PRM_REST_Base {
 		$filename   = ! empty( $name_slug ) ? $name_slug . '.jpg' : 'gravatar-' . $person_id . '.jpg';
 
 		// Get file info
-		$file_array = array(
+		$file_array = [
 			'name'     => $filename,
 			'tmp_name' => $tmp,
-		);
+		];
 
 		// Sideload the file
 		$attachment_id = media_handle_sideload( $file_array, $person_id, sprintf( __( '%s Gravatar', 'caelis' ), $first_name . ' ' . $last_name ) );
@@ -309,18 +309,18 @@ class PRM_REST_People extends PRM_REST_Base {
 		// Clean up temp file if sideload failed
 		if ( is_wp_error( $attachment_id ) ) {
 			@unlink( $tmp );
-			return new WP_Error( 'sideload_failed', __( 'Failed to sideload Gravatar image.', 'caelis' ), array( 'status' => 500 ) );
+			return new WP_Error( 'sideload_failed', __( 'Failed to sideload Gravatar image.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Set as featured image
 		set_post_thumbnail( $person_id, $attachment_id );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'       => true,
 				'attachment_id' => $attachment_id,
 				'thumbnail_url' => get_the_post_thumbnail_url( $person_id, 'thumbnail' ),
-			)
+			]
 		);
 	}
 
@@ -336,21 +336,21 @@ class PRM_REST_People extends PRM_REST_Base {
 		// Verify person exists
 		$person = get_post( $person_id );
 		if ( ! $person || $person->post_type !== 'person' ) {
-			return new WP_Error( 'person_not_found', __( 'Person not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'person_not_found', __( 'Person not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check for uploaded file
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$file = $files['file'];
 
 		// Validate file type
-		$allowed_types = array( 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp' );
+		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp' ];
 		if ( ! in_array( $file['type'], $allowed_types ) ) {
-			return new WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get person's name for filename
@@ -373,32 +373,32 @@ class PRM_REST_People extends PRM_REST_Base {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
 		// Prepare file array with new filename
-		$file_array = array(
+		$file_array = [
 			'name'     => $filename,
 			'type'     => $file['type'],
 			'tmp_name' => $file['tmp_name'],
 			'error'    => $file['error'],
 			'size'     => $file['size'],
-		);
+		];
 
 		// Handle the upload
 		$attachment_id = media_handle_sideload( $file_array, $person_id, sprintf( '%s %s', $first_name, $last_name ) );
 
 		if ( is_wp_error( $attachment_id ) ) {
-			return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), array( 'status' => 500 ) );
+			return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), [ 'status' => 500 ] );
 		}
 
 		// Set as featured image
 		set_post_thumbnail( $person_id, $attachment_id );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'       => true,
 				'attachment_id' => $attachment_id,
 				'filename'      => $filename,
 				'thumbnail_url' => get_the_post_thumbnail_url( $person_id, 'thumbnail' ),
 				'full_url'      => get_the_post_thumbnail_url( $person_id, 'full' ),
-			)
+			]
 		);
 	}
 
@@ -417,7 +417,7 @@ class PRM_REST_People extends PRM_REST_Base {
 			return $response;
 		}
 
-		$expanded_relationships = array();
+		$expanded_relationships = [];
 
 		foreach ( $data['acf']['relationships'] as $rel ) {
 			// Get person ID - could be an object, array, or just an ID
@@ -462,7 +462,7 @@ class PRM_REST_People extends PRM_REST_Base {
 				$person_thumbnail = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
 			}
 
-			$expanded_relationships[] = array(
+			$expanded_relationships[] = [
 				'related_person'     => $person_id,
 				'person_name'        => $person_name,
 				'person_thumbnail'   => $person_thumbnail ?: '',
@@ -470,7 +470,7 @@ class PRM_REST_People extends PRM_REST_Base {
 				'relationship_name'  => $type_name,
 				'relationship_slug'  => $type_slug,
 				'relationship_label' => $rel['relationship_label'] ?? '',
-			);
+			];
 		}
 
 		$data['acf']['relationships'] = $expanded_relationships;
@@ -493,24 +493,24 @@ class PRM_REST_People extends PRM_REST_Base {
 
 		// Get all dates for this person to compute deceased status and birth year
 		$person_dates = get_posts(
-			array(
+			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => -1,
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'related_people',
 						'value'   => '"' . $post->ID . '"',
 						'compare' => 'LIKE',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		$data['is_deceased'] = false;
 		$data['birth_year']  = null;
 
 		foreach ( $person_dates as $date_post ) {
-			$date_types = wp_get_post_terms( $date_post->ID, 'date_type', array( 'fields' => 'slugs' ) );
+			$date_types = wp_get_post_terms( $date_post->ID, 'date_type', [ 'fields' => 'slugs' ] );
 
 			// Check for deceased status
 			if ( in_array( 'died', $date_types ) ) {
@@ -567,19 +567,19 @@ class PRM_REST_People extends PRM_REST_Base {
 	 */
 	public function get_shares( $request ) {
 		$post_id = $request->get_param( 'id' );
-		$shares  = get_field( '_shared_with', $post_id ) ?: array();
+		$shares  = get_field( '_shared_with', $post_id ) ?: [];
 
-		$result = array();
+		$result = [];
 		foreach ( $shares as $share ) {
 			$user = get_user_by( 'ID', $share['user_id'] );
 			if ( $user ) {
-				$result[] = array(
+				$result[] = [
 					'user_id'      => (int) $share['user_id'],
 					'display_name' => $user->display_name,
 					'email'        => $user->user_email,
-					'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 48 ) ),
+					'avatar_url'   => get_avatar_url( $user->ID, [ 'size' => 48 ] ),
 					'permission'   => $share['permission'],
-				);
+				];
 			}
 		}
 
@@ -600,16 +600,16 @@ class PRM_REST_People extends PRM_REST_Base {
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Can't share with yourself
 		if ( $user_id === get_current_user_id() ) {
-			return new WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get current shares
-		$shares = get_field( '_shared_with', $post_id ) ?: array();
+		$shares = get_field( '_shared_with', $post_id ) ?: [];
 
 		// Check if already shared
 		foreach ( $shares as $key => $share ) {
@@ -618,26 +618,26 @@ class PRM_REST_People extends PRM_REST_Base {
 				$shares[ $key ]['permission'] = $permission;
 				update_field( '_shared_with', $shares, $post_id );
 				return rest_ensure_response(
-					array(
+					[
 						'success' => true,
 						'message' => __( 'Share updated.', 'caelis' ),
-					)
+					]
 				);
 			}
 		}
 
 		// Add new share
-		$shares[] = array(
+		$shares[] = [
 			'user_id'    => $user_id,
 			'permission' => $permission,
-		);
+		];
 		update_field( '_shared_with', $shares, $post_id );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'message' => __( 'Shared successfully.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -651,7 +651,7 @@ class PRM_REST_People extends PRM_REST_Base {
 		$post_id = $request->get_param( 'id' );
 		$user_id = (int) $request->get_param( 'user_id' );
 
-		$shares = get_field( '_shared_with', $post_id ) ?: array();
+		$shares = get_field( '_shared_with', $post_id ) ?: [];
 		$shares = array_filter(
 			$shares,
 			function ( $share ) use ( $user_id ) {
@@ -663,10 +663,10 @@ class PRM_REST_People extends PRM_REST_Base {
 		update_field( '_shared_with', $shares, $post_id );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'message' => __( 'Share removed.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -683,7 +683,7 @@ class PRM_REST_People extends PRM_REST_Base {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You must be logged in to perform this action.', 'caelis' ),
-				array( 'status' => 401 )
+				[ 'status' => 401 ]
 			);
 		}
 
@@ -698,7 +698,7 @@ class PRM_REST_People extends PRM_REST_Base {
 				return new WP_Error(
 					'rest_invalid_id',
 					sprintf( __( 'Person with ID %d not found.', 'caelis' ), $post_id ),
-					array( 'status' => 404 )
+					[ 'status' => 404 ]
 				);
 			}
 
@@ -707,7 +707,7 @@ class PRM_REST_People extends PRM_REST_Base {
 				return new WP_Error(
 					'rest_forbidden',
 					sprintf( __( 'You do not have permission to update person with ID %d.', 'caelis' ), $post_id ),
-					array( 'status' => 403 )
+					[ 'status' => 403 ]
 				);
 			}
 		}
@@ -735,8 +735,8 @@ class PRM_REST_People extends PRM_REST_Base {
 		$ids     = $request->get_param( 'ids' );
 		$updates = $request->get_param( 'updates' );
 
-		$updated = array();
-		$failed  = array();
+		$updated = [];
+		$failed  = [];
 
 		foreach ( $ids as $post_id ) {
 			try {
@@ -744,10 +744,10 @@ class PRM_REST_People extends PRM_REST_Base {
 				if ( isset( $updates['visibility'] ) ) {
 					$result = PRM_Visibility::set_visibility( $post_id, $updates['visibility'] );
 					if ( ! $result ) {
-						$failed[] = array(
+						$failed[] = [
 							'id'    => $post_id,
 							'error' => __( 'Failed to update visibility.', 'caelis' ),
-						);
+						];
 						continue;
 					}
 				}
@@ -757,7 +757,7 @@ class PRM_REST_People extends PRM_REST_Base {
 					$workspace_ids = array_map( 'intval', $updates['assigned_workspaces'] );
 
 					// Convert workspace post IDs to term IDs
-					$term_ids = array();
+					$term_ids = [];
 					foreach ( $workspace_ids as $workspace_id ) {
 						$term_slug = 'workspace-' . $workspace_id;
 						$term      = get_term_by( 'slug', $term_slug, 'workspace_access' );
@@ -779,7 +779,7 @@ class PRM_REST_People extends PRM_REST_Base {
 					$org_id = $updates['organization_id'];
 
 					// Get current work_history
-					$work_history = get_field( 'work_history', $post_id ) ?: array();
+					$work_history = get_field( 'work_history', $post_id ) ?: [];
 
 					if ( $org_id === null ) {
 						// Clear current organization: set is_current=false on all entries
@@ -800,13 +800,13 @@ class PRM_REST_People extends PRM_REST_Base {
 
 						// If company not in history, add new entry
 						if ( ! $found ) {
-							$work_history[] = array(
+							$work_history[] = [
 								'company'    => $org_id,
 								'title'      => '',
 								'start_date' => '',
 								'end_date'   => '',
 								'is_current' => true,
-							);
+							];
 						}
 					}
 
@@ -827,19 +827,19 @@ class PRM_REST_People extends PRM_REST_Base {
 
 				$updated[] = $post_id;
 			} catch ( Exception $e ) {
-				$failed[] = array(
+				$failed[] = [
 					'id'    => $post_id,
 					'error' => $e->getMessage(),
-				);
+				];
 			}
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => empty( $failed ),
 				'updated' => $updated,
 				'failed'  => $failed,
-			)
+			]
 		);
 	}
 }

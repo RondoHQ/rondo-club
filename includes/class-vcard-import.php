@@ -15,7 +15,7 @@ class PRM_VCard_Import {
 	/**
 	 * Import statistics
 	 */
-	private array $stats = array(
+	private array $stats = [
 		'contacts_imported' => 0,
 		'contacts_updated'  => 0,
 		'contacts_skipped'  => 0,
@@ -23,16 +23,16 @@ class PRM_VCard_Import {
 		'dates_created'     => 0,
 		'notes_created'     => 0,
 		'photos_imported'   => 0,
-		'errors'            => array(),
-	);
+		'errors'            => [],
+	];
 
 	/**
 	 * Company name to ID mapping
 	 */
-	private array $company_map = array();
+	private array $company_map = [];
 
 	public function __construct() {
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	/**
@@ -42,31 +42,31 @@ class PRM_VCard_Import {
 		register_rest_route(
 			'prm/v1',
 			'/import/vcard',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'handle_import' ),
-				'permission_callback' => array( $this, 'check_import_permission' ),
-			)
+				'callback'            => [ $this, 'handle_import' ],
+				'permission_callback' => [ $this, 'check_import_permission' ],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/import/vcard/validate',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'validate_import' ),
-				'permission_callback' => array( $this, 'check_import_permission' ),
-			)
+				'callback'            => [ $this, 'validate_import' ],
+				'permission_callback' => [ $this, 'check_import_permission' ],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/import/vcard/parse',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'parse_single_contact' ),
-				'permission_callback' => array( $this, 'check_import_permission' ),
-			)
+				'callback'            => [ $this, 'parse_single_contact' ],
+				'permission_callback' => [ $this, 'check_import_permission' ],
+			]
 		);
 	}
 
@@ -84,18 +84,18 @@ class PRM_VCard_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check if it's a valid vCard file
 		if ( strpos( $vcf_content, 'BEGIN:VCARD' ) === false ) {
-			return new WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse vCards to get summary
@@ -103,11 +103,11 @@ class PRM_VCard_Import {
 		$summary = $this->get_import_summary( $vcards );
 
 		return rest_ensure_response(
-			array(
+			[
 				'valid'   => true,
 				'version' => 'vcard',
 				'summary' => $summary,
-			)
+			]
 		);
 	}
 
@@ -119,25 +119,25 @@ class PRM_VCard_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check if it's a valid vCard file
 		if ( strpos( $vcf_content, 'BEGIN:VCARD' ) === false ) {
-			return new WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse vCards and get the first one
 		$vcards = $this->parse_vcards( $vcf_content );
 
 		if ( empty( $vcards ) ) {
-			return new WP_Error( 'no_contacts', __( 'No contacts found in file.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_contacts', __( 'No contacts found in file.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get the first contact
@@ -158,11 +158,11 @@ class PRM_VCard_Import {
 		}
 
 		// Get notes - return all notes and first one for backward compatibility
-		$notes = $vcard['notes'] ?? array();
+		$notes = $vcard['notes'] ?? [];
 		$note  = ! empty( $notes ) ? $notes[0] : '';
 
 		return rest_ensure_response(
-			array(
+			[
 				'first_name'    => $vcard['first_name'] ?? '',
 				'last_name'     => $vcard['last_name'] ?? '',
 				'nickname'      => $vcard['nickname'] ?? '',
@@ -178,7 +178,7 @@ class PRM_VCard_Import {
 				'notes'         => $notes, // All notes for timeline import
 				'has_photo'     => ! empty( $vcard['photo'] ),
 				'contact_count' => count( $vcards ),
-			)
+			]
 		);
 	}
 
@@ -187,7 +187,7 @@ class PRM_VCard_Import {
 	 */
 	private function get_import_summary( array $vcards ): array {
 		$contacts  = 0;
-		$companies = array();
+		$companies = [];
 		$birthdays = 0;
 		$photos    = 0;
 		$notes     = 0;
@@ -210,13 +210,13 @@ class PRM_VCard_Import {
 			}
 		}
 
-		return array(
+		return [
 			'contacts'        => $contacts,
 			'companies_count' => count( $companies ),
 			'birthdays'       => $birthdays,
 			'photos'          => $photos,
 			'notes'           => $notes,
-		);
+		];
 	}
 
 	/**
@@ -230,13 +230,13 @@ class PRM_VCard_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse and import vCards
@@ -244,10 +244,10 @@ class PRM_VCard_Import {
 		$this->import_vcards( $vcards );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'stats'   => $this->stats,
-			)
+			]
 		);
 	}
 
@@ -255,10 +255,10 @@ class PRM_VCard_Import {
 	 * Parse vCard content into an array of contact data
 	 */
 	private function parse_vcards( string $content ): array {
-		$vcards = array();
+		$vcards = [];
 
 		// Normalize line endings
-		$content = str_replace( array( "\r\n", "\r" ), "\n", $content );
+		$content = str_replace( [ "\r\n", "\r" ], "\n", $content );
 
 		// Handle line folding (lines starting with space or tab are continuations)
 		$content = preg_replace( '/\n[ \t]/', '', $content );
@@ -280,7 +280,7 @@ class PRM_VCard_Import {
 	 * Parse a single vCard into structured data
 	 */
 	private function parse_single_vcard( string $content ): array {
-		$vcard = array(
+		$vcard = [
 			'first_name'      => '',
 			'last_name'       => '',
 			'nickname'        => '',
@@ -288,17 +288,17 @@ class PRM_VCard_Import {
 			'pronouns'        => '',
 			'org'             => '',
 			'title'           => '',
-			'emails'          => array(),
-			'phones'          => array(),
-			'addresses'       => array(),
-			'urls'            => array(),
-			'social_profiles' => array(),
-			'impp'            => array(),
+			'emails'          => [],
+			'phones'          => [],
+			'addresses'       => [],
+			'urls'            => [],
+			'social_profiles' => [],
+			'impp'            => [],
 			'bday'            => '',
-			'notes'           => array(),
+			'notes'           => [],
 			'photo'           => null,
 			'photo_type'      => '',
-		);
+		];
 
 		$lines = explode( "\n", $content );
 
@@ -352,19 +352,19 @@ class PRM_VCard_Import {
 
 				case 'EMAIL':
 					$type              = $this->get_type_param( $params );
-					$vcard['emails'][] = array(
+					$vcard['emails'][] = [
 						'value' => $this->decode_vcard_value( $value ),
 						'type'  => $type,
-					);
+					];
 					break;
 
 				case 'TEL':
 					$raw_type          = $this->get_type_param( $params );
-					$vcard['phones'][] = array(
+					$vcard['phones'][] = [
 						'value'    => $this->decode_vcard_value( $value ),
 						'type'     => $this->normalize_phone_type( $raw_type ),
 						'raw_type' => $raw_type, // Preserve for label extraction
-					);
+					];
 					break;
 
 				case 'ADR':
@@ -379,24 +379,24 @@ class PRM_VCard_Import {
 					// Only add if there's at least some address data
 					if ( ! empty( $street ) || ! empty( $city ) || ! empty( $state ) || ! empty( $postal_code ) || ! empty( $country ) ) {
 						$type                 = $this->get_type_param( $params );
-						$vcard['addresses'][] = array(
+						$vcard['addresses'][] = [
 							'street'      => $street,
 							'city'        => $city,
 							'state'       => $state,
 							'postal_code' => $postal_code,
 							'country'     => $country,
 							'type'        => $type,
-						);
+						];
 					}
 					break;
 
 				case 'URL':
 					$type            = $this->get_type_param( $params );
 					$url             = $this->decode_vcard_value( $value );
-					$vcard['urls'][] = array(
+					$vcard['urls'][] = [
 						'value' => $url,
 						'type'  => $this->detect_url_type( $url, $type ),
-					);
+					];
 					break;
 
 				case 'BDAY':
@@ -425,13 +425,13 @@ class PRM_VCard_Import {
 					if ( strpos( $gender_code, ';' ) !== false ) {
 						$gender_code = explode( ';', $gender_code )[0];
 					}
-					$gender_map      = array(
+					$gender_map      = [
 						'M' => 'male',
 						'F' => 'female',
 						'O' => 'other',
 						'N' => 'prefer_not_to_say',
 						'U' => '', // Unknown/unspecified
-					);
+					];
 					$vcard['gender'] = $gender_map[ $gender_code ] ?? '';
 					break;
 
@@ -446,20 +446,20 @@ class PRM_VCard_Import {
 					$url  = $this->decode_vcard_value( $value );
 					$type = strtolower( $this->get_type_param( $params ) );
 					// Map common type variations
-					$type_map        = array(
+					$type_map        = [
 						'linkedin'  => 'linkedin',
 						'twitter'   => 'twitter',
 						'x'         => 'twitter',
 						'instagram' => 'instagram',
 						'facebook'  => 'facebook',
 						'fb'        => 'facebook',
-					);
+					];
 					$normalized_type = $type_map[ $type ] ?? $this->detect_social_type_from_url( $url );
 					if ( $normalized_type ) {
-						$vcard['social_profiles'][] = array(
+						$vcard['social_profiles'][] = [
 							'type'  => $normalized_type,
 							'value' => $url,
-						);
+						];
 					}
 					break;
 
@@ -474,10 +474,10 @@ class PRM_VCard_Import {
 					if ( empty( $service_type ) && preg_match( '/^([a-z]+):/i', $impp_value, $matches ) ) {
 						$service_type = strtolower( $matches[1] );
 					}
-					$vcard['impp'][] = array(
+					$vcard['impp'][] = [
 						'service' => $service_type,
 						'value'   => $impp_value,
-					);
+					];
 					break;
 			}
 		}
@@ -521,7 +521,7 @@ class PRM_VCard_Import {
 		$value     = $match[3];
 
 		// Parse parameters
-		$params = array();
+		$params = [];
 		if ( ! empty( $param_str ) ) {
 			$param_parts = explode( ';', ltrim( $param_str, ';' ) );
 			foreach ( $param_parts as $param ) {
@@ -541,11 +541,11 @@ class PRM_VCard_Import {
 			}
 		}
 
-		return array(
+		return [
 			'property' => $property,
 			'params'   => $params,
 			'value'    => $value,
-		);
+		];
 	}
 
 	/**
@@ -563,7 +563,7 @@ class PRM_VCard_Import {
 			$types = array_map( 'strtolower', $types );
 
 			// Priority types for phone numbers
-			$priority_types = array( 'cell', 'mobile', 'iphone', 'home', 'work', 'fax' );
+			$priority_types = [ 'cell', 'mobile', 'iphone', 'home', 'work', 'fax' ];
 			foreach ( $priority_types as $priority ) {
 				if ( in_array( $priority, $types ) ) {
 					return $priority;
@@ -571,7 +571,7 @@ class PRM_VCard_Import {
 			}
 
 			// Filter out generic types that don't indicate the actual type
-			$generic_types    = array( 'voice', 'pref', 'text', 'msg' );
+			$generic_types    = [ 'voice', 'pref', 'text', 'msg' ];
 			$meaningful_types = array_filter(
 				$types,
 				function ( $t ) use ( $generic_types ) {
@@ -591,7 +591,7 @@ class PRM_VCard_Import {
 	 */
 	private function normalize_phone_type( string $type ): string {
 		$type = strtolower( $type );
-		if ( in_array( $type, array( 'cell', 'mobile', 'iphone' ) ) ) {
+		if ( in_array( $type, [ 'cell', 'mobile', 'iphone' ] ) ) {
 			return 'mobile';
 		}
 		return 'phone';
@@ -651,22 +651,22 @@ class PRM_VCard_Import {
 		if ( strpos( $type, '/' ) !== false ) {
 			$type = explode( '/', $type )[1];
 		}
-		$type = strtolower( str_replace( array( 'image/', 'IMAGE/' ), '', $type ) );
+		$type = strtolower( str_replace( [ 'image/', 'IMAGE/' ], '', $type ) );
 
 		// Base64 encoded photo
 		if ( $encoding === 'B' || $encoding === 'BASE64' || preg_match( '/^[a-zA-Z0-9+\/=]+$/', $value ) ) {
-			return array(
+			return [
 				'data' => $value,
 				'type' => $type,
-			);
+			];
 		}
 
 		// URL to photo
 		if ( filter_var( $value, FILTER_VALIDATE_URL ) ) {
-			return array(
+			return [
 				'data' => $value,
 				'type' => 'url',
-			);
+			];
 		}
 
 		return null;
@@ -677,10 +677,10 @@ class PRM_VCard_Import {
 	 */
 	private function decode_vcard_value( string $value ): string {
 		// Decode escaped characters
-		$value = str_replace( array( '\\n', '\\N' ), "\n", $value );
-		$value = str_replace( array( '\\,' ), ',', $value );
-		$value = str_replace( array( '\\;' ), ';', $value );
-		$value = str_replace( array( '\\\\' ), '\\', $value );
+		$value = str_replace( [ '\\n', '\\N' ], "\n", $value );
+		$value = str_replace( [ '\\,' ], ',', $value );
+		$value = str_replace( [ '\\;' ], ';', $value );
+		$value = str_replace( [ '\\\\' ], '\\', $value );
 
 		// Decode quoted-printable if present
 		if ( preg_match( '/=([0-9A-F]{2})/i', $value ) ) {
@@ -724,12 +724,12 @@ class PRM_VCard_Import {
 			++$this->stats['contacts_updated'];
 		} else {
 			$post_id = wp_insert_post(
-				array(
+				[
 					'post_type'   => 'person',
 					'post_status' => 'publish',
 					'post_title'  => trim( $first_name . ' ' . $last_name ),
 					'post_author' => get_current_user_id(),
-				)
+				]
 			);
 
 			if ( is_wp_error( $post_id ) ) {
@@ -768,9 +768,9 @@ class PRM_VCard_Import {
 			}
 
 			if ( $company_id || $vcard['title'] ) {
-				$existing_work_history = array();
+				$existing_work_history = [];
 				if ( $is_update ) {
-					$existing_work_history = get_field( 'work_history', $post_id ) ?: array();
+					$existing_work_history = get_field( 'work_history', $post_id ) ?: [];
 				}
 
 				// Check if this work history entry already exists
@@ -786,13 +786,13 @@ class PRM_VCard_Import {
 				if ( ! $work_exists ) {
 					$work_history = array_merge(
 						$existing_work_history,
-						array(
-							array(
+						[
+							[
 								'company'    => $company_id,
 								'job_title'  => $vcard['title'],
 								'is_current' => true,
-							),
-						)
+							],
+						]
 					);
 					update_field( 'work_history', $work_history, $post_id );
 				}
@@ -825,13 +825,13 @@ class PRM_VCard_Import {
 	 */
 	private function import_contact_info( int $post_id, array $vcard, bool $is_update = false ): void {
 		// Get existing contact info if updating
-		$existing_contact_info = array();
+		$existing_contact_info = [];
 		if ( $is_update ) {
-			$existing_contact_info = get_field( 'contact_info', $post_id ) ?: array();
+			$existing_contact_info = get_field( 'contact_info', $post_id ) ?: [];
 		}
 
 		// Create array to track existing entries (to avoid duplicates)
-		$existing_keys = array();
+		$existing_keys = [];
 		foreach ( $existing_contact_info as $existing ) {
 			$key                   = strtolower( trim( $existing['contact_type'] . '|' . $existing['contact_value'] ) );
 			$existing_keys[ $key ] = true;
@@ -843,11 +843,11 @@ class PRM_VCard_Import {
 		foreach ( $vcard['emails'] as $email ) {
 			$key = 'email|' . strtolower( trim( $email['value'] ) );
 			if ( ! isset( $existing_keys[ $key ] ) ) {
-				$contact_info[]        = array(
+				$contact_info[]        = [
 					'contact_type'  => 'email',
 					'contact_label' => ucfirst( $email['type'] ),
 					'contact_value' => $email['value'],
-				);
+				];
 				$existing_keys[ $key ] = true;
 			}
 		}
@@ -865,11 +865,11 @@ class PRM_VCard_Import {
 					$label = 'Work';
 				}
 
-				$contact_info[]        = array(
+				$contact_info[]        = [
 					'contact_type'  => $phone['type'],
 					'contact_label' => $label,
 					'contact_value' => $phone['value'],
-				);
+				];
 				$existing_keys[ $key ] = true;
 			}
 		}
@@ -878,39 +878,39 @@ class PRM_VCard_Import {
 		foreach ( $vcard['urls'] as $url ) {
 			$key = strtolower( trim( $url['type'] . '|' . $url['value'] ) );
 			if ( ! isset( $existing_keys[ $key ] ) ) {
-				$contact_info[]        = array(
+				$contact_info[]        = [
 					'contact_type'  => $url['type'],
 					'contact_label' => '',
 					'contact_value' => $url['value'],
-				);
+				];
 				$existing_keys[ $key ] = true;
 			}
 		}
 
 		// Social profiles (from X-SOCIALPROFILE)
-		foreach ( $vcard['social_profiles'] ?? array() as $social ) {
+		foreach ( $vcard['social_profiles'] ?? [] as $social ) {
 			$key = strtolower( trim( $social['type'] . '|' . $social['value'] ) );
 			if ( ! isset( $existing_keys[ $key ] ) ) {
-				$contact_info[]        = array(
+				$contact_info[]        = [
 					'contact_type'  => $social['type'],
 					'contact_label' => '',
 					'contact_value' => $social['value'],
-				);
+				];
 				$existing_keys[ $key ] = true;
 			}
 		}
 
 		// IMPP (Instant messaging - Slack, etc.)
-		foreach ( $vcard['impp'] ?? array() as $impp ) {
+		foreach ( $vcard['impp'] ?? [] as $impp ) {
 			// Handle Slack specifically
 			if ( $impp['service'] === 'slack' ) {
 				$key = 'slack|' . strtolower( trim( $impp['value'] ) );
 				if ( ! isset( $existing_keys[ $key ] ) ) {
-					$contact_info[]        = array(
+					$contact_info[]        = [
 						'contact_type'  => 'slack',
 						'contact_label' => '',
 						'contact_value' => $impp['value'],
-					);
+					];
 					$existing_keys[ $key ] = true;
 				}
 			}
@@ -923,13 +923,13 @@ class PRM_VCard_Import {
 
 		// Import addresses to the dedicated addresses field
 		if ( ! empty( $vcard['addresses'] ) ) {
-			$existing_addresses = array();
+			$existing_addresses = [];
 			if ( $is_update ) {
-				$existing_addresses = get_field( 'addresses', $post_id ) ?: array();
+				$existing_addresses = get_field( 'addresses', $post_id ) ?: [];
 			}
 
 			// Create array to track existing entries (to avoid duplicates)
-			$existing_address_keys = array();
+			$existing_address_keys = [];
 			foreach ( $existing_addresses as $existing ) {
 				$key                           = strtolower( trim( $existing['street'] . '|' . $existing['city'] . '|' . $existing['postal_code'] ) );
 				$existing_address_keys[ $key ] = true;
@@ -940,14 +940,14 @@ class PRM_VCard_Import {
 			foreach ( $vcard['addresses'] as $address ) {
 				$key = strtolower( trim( $address['street'] . '|' . $address['city'] . '|' . $address['postal_code'] ) );
 				if ( ! isset( $existing_address_keys[ $key ] ) ) {
-					$addresses[]                   = array(
+					$addresses[]                   = [
 						'address_label' => ucfirst( $address['type'] ?: '' ),
 						'street'        => $address['street'],
 						'postal_code'   => $address['postal_code'],
 						'city'          => $address['city'],
 						'state'         => $address['state'],
 						'country'       => $address['country'],
-					);
+					];
 					$existing_address_keys[ $key ] = true;
 				}
 			}
@@ -966,24 +966,24 @@ class PRM_VCard_Import {
 
 		// Check if birthday already exists
 		$existing = get_posts(
-			array(
+			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => 1,
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'related_people',
 						'value'   => '"' . $post_id . '"',
 						'compare' => 'LIKE',
-					),
-				),
-				'tax_query'      => array(
-					array(
+					],
+				],
+				'tax_query'      => [
+					[
 						'taxonomy' => 'date_type',
 						'field'    => 'slug',
 						'terms'    => 'birthday',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		if ( ! empty( $existing ) ) {
@@ -993,12 +993,12 @@ class PRM_VCard_Import {
 		$title = sprintf( __( "%s's Birthday", 'caelis' ), $full_name );
 
 		$date_post_id = wp_insert_post(
-			array(
+			[
 				'post_type'   => 'important_date',
 				'post_status' => 'publish',
 				'post_title'  => $title,
 				'post_author' => get_current_user_id(),
-			)
+			]
 		);
 
 		if ( is_wp_error( $date_post_id ) ) {
@@ -1007,16 +1007,16 @@ class PRM_VCard_Import {
 
 		update_field( 'date_value', $date, $date_post_id );
 		update_field( 'is_recurring', true, $date_post_id );
-		update_field( 'related_people', array( $post_id ), $date_post_id );
+		update_field( 'related_people', [ $post_id ], $date_post_id );
 
 		// Ensure the birthday term exists
 		$term = term_exists( 'birthday', 'date_type' );
 		if ( ! $term ) {
-			$term = wp_insert_term( 'Birthday', 'date_type', array( 'slug' => 'birthday' ) );
+			$term = wp_insert_term( 'Birthday', 'date_type', [ 'slug' => 'birthday' ] );
 		}
 		if ( $term && ! is_wp_error( $term ) ) {
 			$term_id = is_array( $term ) ? $term['term_id'] : $term;
-			wp_set_post_terms( $date_post_id, array( (int) $term_id ), 'date_type' );
+			wp_set_post_terms( $date_post_id, [ (int) $term_id ], 'date_type' );
 		}
 
 		++$this->stats['dates_created'];
@@ -1027,7 +1027,7 @@ class PRM_VCard_Import {
 	 */
 	private function import_note( int $post_id, string $content ): void {
 		$comment_id = wp_insert_comment(
-			array(
+			[
 				'comment_post_ID'  => $post_id,
 				'comment_content'  => $content,
 				'comment_type'     => PRM_Comment_Types::TYPE_NOTE,
@@ -1035,7 +1035,7 @@ class PRM_VCard_Import {
 				'comment_approved' => 1,
 				'comment_date'     => current_time( 'mysql' ),
 				'comment_date_gmt' => current_time( 'mysql', true ),
-			)
+			]
 		);
 
 		if ( $comment_id ) {
@@ -1084,7 +1084,7 @@ class PRM_VCard_Import {
 
 		// Determine extension
 		$extension = 'jpg';
-		if ( in_array( $type, array( 'png', 'gif', 'webp' ) ) ) {
+		if ( in_array( $type, [ 'png', 'gif', 'webp' ] ) ) {
 			$extension = $type;
 		}
 
@@ -1097,10 +1097,10 @@ class PRM_VCard_Import {
 		file_put_contents( $temp_file, $image_data );
 
 		// Prepare file array
-		$file_array = array(
+		$file_array = [
 			'name'     => $filename,
 			'tmp_name' => $temp_file,
-		);
+		];
 
 		// Upload
 		$attachment_id = media_handle_sideload( $file_array, $post_id, "{$first_name} {$last_name}" );
@@ -1132,14 +1132,14 @@ class PRM_VCard_Import {
 		// Get extension from URL
 		$path = parse_url( $url, PHP_URL_PATH );
 		$ext  = pathinfo( $path, PATHINFO_EXTENSION );
-		if ( in_array( strtolower( $ext ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ) ) ) {
+		if ( in_array( strtolower( $ext ), [ 'jpg', 'jpeg', 'png', 'gif', 'webp' ] ) ) {
 			$filename = sanitize_title( strtolower( $description ) ) . '.' . strtolower( $ext );
 		}
 
-		$file_array = array(
+		$file_array = [
 			'name'     => $filename,
 			'tmp_name' => $tmp,
-		);
+		];
 
 		$attachment_id = media_handle_sideload( $file_array, $post_id, $description );
 
@@ -1156,24 +1156,24 @@ class PRM_VCard_Import {
 	 */
 	private function find_existing_person( string $first_name, string $last_name ): ?int {
 		$query = new WP_Query(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => 1,
 				'post_status'    => 'any',
-				'meta_query'     => array(
+				'meta_query'     => [
 					'relation' => 'AND',
-					array(
+					[
 						'key'     => 'first_name',
 						'value'   => $first_name,
 						'compare' => '=',
-					),
-					array(
+					],
+					[
 						'key'     => 'last_name',
 						'value'   => $last_name,
 						'compare' => '=',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		if ( $query->have_posts() ) {
@@ -1200,12 +1200,12 @@ class PRM_VCard_Import {
 
 		// Create new company
 		$post_id = wp_insert_post(
-			array(
+			[
 				'post_type'   => 'company',
 				'post_status' => 'publish',
 				'post_title'  => $name,
 				'post_author' => get_current_user_id(),
-			)
+			]
 		);
 
 		if ( ! is_wp_error( $post_id ) ) {

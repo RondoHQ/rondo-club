@@ -27,7 +27,7 @@ class PRM_Calendar_Connections {
 		$connections = get_user_meta( $user_id, self::META_KEY, true );
 
 		if ( ! is_array( $connections ) ) {
-			return array();
+			return [];
 		}
 
 		return $connections;
@@ -70,7 +70,7 @@ class PRM_Calendar_Connections {
 		// Set defaults for required fields
 		$connection = wp_parse_args(
 			$connection,
-			array(
+			[
 				'provider'       => '',
 				'name'           => '',
 				'calendar_id'    => '',
@@ -81,7 +81,7 @@ class PRM_Calendar_Connections {
 				'last_sync'      => null,
 				'last_error'     => null,
 				'created_at'     => current_time( 'c' ),
-			)
+			]
 		);
 
 		$connections[] = $connection;
@@ -138,10 +138,10 @@ class PRM_Calendar_Connections {
 		return self::update_connection(
 			$user_id,
 			$connection_id,
-			array(
+			[
 				'credentials' => $encrypted,
 				'last_error'  => null, // Clear any previous error on successful refresh
-			)
+			]
 		);
 	}
 
@@ -175,14 +175,14 @@ class PRM_Calendar_Connections {
 
 		// Delete all calendar_event posts associated with this connection
 		$events = get_posts(
-			array(
+			[
 				'post_type'      => 'calendar_event',
 				'author'         => $user_id,
 				'meta_key'       => '_connection_id',
 				'meta_value'     => $connection_id,
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
-			)
+			]
 		);
 
 		foreach ( $events as $event_id ) {
