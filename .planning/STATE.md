@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Planning next milestone
+**Current focus:** v4.6 Dashboard & Polish — customizable dashboard layout and UI fixes
 
 ## Current Position
 
-Milestone: v4.5 Calendar Sync Control — SHIPPED
-Phase: Complete
-Plan: Complete
-Status: Ready for next milestone
-Last activity: 2026-01-16 — v4.5 milestone shipped
+Milestone: v4.6 Dashboard & Polish
+Phase: 69 of 70 (Dashboard Customization)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-16 — Milestone v4.6 created
 
-Progress: ██████████ 100% (24 milestones shipped)
+Progress: ░░░░░░░░░░ 0% (Phase 69/70 of v4.6)
 
 ## Completed Milestones
 
@@ -91,6 +91,8 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.4 created: Code organization, 3 phases (Phase 64-66)
 - Milestone v4.4 complete: PSR-4 namespaces, Composer autoloading, 38 classes namespaced
 - Milestone v4.5 created: Calendar sync control, 2 phases (Phase 67-68)
+- Milestone v4.5 complete: Per-connection sync settings, calendar selection UI
+- Milestone v4.6 created: Dashboard customization & UI polish, 2 phases (Phase 69-70)
 
 ## Session Continuity
 
