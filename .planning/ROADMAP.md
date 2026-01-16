@@ -22,10 +22,53 @@
 - ✅ [v4.1 Bug Fixes & Polish](milestones/v4.1-bug-fixes-polish.md) (Phases 56-57) — SHIPPED 2026-01-15
 - ✅ [v4.2 Settings & Stability](milestones/v4.2-settings-stability.md) (Phases 58-60) — SHIPPED 2026-01-15
 - ✅ [v4.3 Performance & Documentation](milestones/v4.3-performance-documentation.md) (Phases 61-63) — SHIPPED 2026-01-16
+- 🚧 **v4.4 Code Organization** - Phases 64-66 (in progress)
 
 ## Current Status
 
-**No active milestone.** Use `/gsd:discuss-milestone` to plan next work.
+**Active milestone:** v4.4 Code Organization (Phases 64-66)
+
+---
+
+### 🚧 v4.4 Code Organization (In Progress)
+
+**Milestone Goal:** Reorganize PHP codebase with proper structure, one-class-per-file, and PSR-4 autoloading.
+
+**Constraints:**
+- Backward compatibility required (no breaking changes to function names or class interfaces)
+- CardDAV/CalDAV code must remain compatible with Sabre libraries
+- REST API endpoints must continue working unchanged
+- Tests must pass after reorganization
+
+#### Phase 64: Audit & Planning
+
+**Goal**: Identify multi-class files, design folder structure, plan namespace hierarchy
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (internal codebase analysis)
+**Plans**: TBD
+
+Plans:
+- [ ] 64-01: TBD (run /gsd:plan-phase 64 to break down)
+
+#### Phase 65: Split & Reorganize
+
+**Goal**: Move classes to proper locations, create folder structure
+**Depends on**: Phase 64
+**Research**: Unlikely (refactoring work)
+**Plans**: TBD
+
+Plans:
+- [ ] 65-01: TBD
+
+#### Phase 66: PSR-4 Autoloader
+
+**Goal**: Implement Composer autoloading with namespaces, remove manual requires
+**Depends on**: Phase 65
+**Research**: Unlikely (Composer standard patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 66-01: TBD
 
 ---
 
@@ -563,5 +606,7 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.1 Bug Fixes & Polish | 56-57 | 3/3 | Complete ✅ | 2026-01-15 |
 | v4.2 Settings & Stability | 58-60 | 3/3 | Complete ✅ | 2026-01-15 |
 | v4.3 Performance & Documentation | 61-63 | 5/5 | Complete ✅ | 2026-01-16 |
+| v4.4 Code Organization | 64-66 | 0/? | In Progress 🚧 | - |
 
 **Shipped: 22 milestones, 63 phases, 110 plans**
+**In Progress: v4.4 (3 phases)**

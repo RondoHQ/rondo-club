@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Planning next milestone
+**Current focus:** v4.4 Code Organization - PHP codebase restructuring
 
 ## Current Position
 
-Milestone: None active
-Phase: Ready for next milestone
+Milestone: v4.4 Code Organization
+Phase: 64 of 66 (Audit & Planning)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-01-16 — v4.3 milestone complete
+Last activity: 2026-01-16 — Milestone v4.4 created
 
-Progress: No active milestone
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -61,11 +61,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 
 - Milestone v4.3 complete: React performance review, installation documentation, WPCS compliance
 - Milestone v4.3 archived: Git tag v4.3 created
+- Milestone v4.4 created: Code organization, 3 phases (Phase 64-66)
 
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Milestone v4.3 complete
+Stopped at: Milestone v4.4 initialization
 Resume file: None
 
 ## Accumulated Context
