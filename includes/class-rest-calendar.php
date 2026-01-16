@@ -1074,10 +1074,26 @@ class Calendar extends Base {
 		$user_id          = get_current_user_id();
 		$user_connections = \PRM_Calendar_Connections::get_user_connections( $user_id );
 
-		// Remove sensitive credential data
+		// Remove sensitive credential data and add next_sync calculation
 		$safe_connections = array_map(
 			function ( $conn ) {
 				unset( $conn['credentials'] );
+
+				// Calculate next scheduled sync time
+				$last_sync  = $conn['last_sync'] ?? null;
+				$frequency  = isset( $conn['sync_frequency'] ) ? absint( $conn['sync_frequency'] ) : 15;
+				$next_sync  = null;
+
+				if ( $last_sync ) {
+					$last_sync_time = strtotime( $last_sync );
+					if ( $last_sync_time !== false ) {
+						$next_sync_time = $last_sync_time + ( $frequency * 60 );
+						$next_sync      = gmdate( 'c', $next_sync_time );
+					}
+				}
+
+				$conn['next_sync'] = $next_sync;
+
 				return $conn;
 			},
 			$user_connections
