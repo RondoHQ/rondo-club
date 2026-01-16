@@ -5,11 +5,13 @@
  * Users can only see posts they created themselves.
  */
 
+namespace Caelis\Core;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Access_Control {
+class AccessControl {
 
 	/**
 	 * Post types that should have access control
