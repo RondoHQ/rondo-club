@@ -121,6 +121,7 @@ Resume file: None
 26. ~~Fix Today's meetings layout and timezone display (ui)~~ — DONE in v4.1 Phase 57
 27. Soften PersonDetail delete button style (ui)
 28. Review performance using react-best-practices skill (ui)
+29. Allow selecting Google Calendars to sync (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
