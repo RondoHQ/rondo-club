@@ -6,11 +6,13 @@
  * a linked calendar (Google Calendar, CalDAV) with encrypted credentials.
  */
 
+namespace Caelis\Calendar;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Calendar_Connections {
+class Connections {
 
 	/**
 	 * User meta key for storing calendar connections

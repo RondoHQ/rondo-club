@@ -14,6 +14,8 @@
  * - Generic: User provides full calendar URL
  */
 
+namespace Caelis\Calendar;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -21,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use Sabre\DAV\Client;
 use Sabre\VObject\Reader;
 
-class PRM_CalDAV_Provider {
+class CalDAVProvider {
 
 	/**
 	 * Test CalDAV connection credentials

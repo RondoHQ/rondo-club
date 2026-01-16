@@ -6,11 +6,13 @@
  * with rate limiting and auto-logging of past meetings as activities.
  */
 
+namespace Caelis\Calendar;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Calendar_Sync {
+class Sync {
 
 	/**
 	 * Cron action name

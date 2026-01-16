@@ -6,11 +6,13 @@
  * Uses the Google Calendar API to fetch events and upserts them locally.
  */
 
+namespace Caelis\Calendar;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Google_Calendar_Provider {
+class GoogleProvider {
 
 	/**
 	 * Sync events from Google Calendar for a connection
