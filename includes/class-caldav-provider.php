@@ -38,60 +38,60 @@ class PRM_CalDAV_Provider {
 		try {
 			// Create DAV client with basic auth
 			$client = new Client(
-				array(
+				[
 					'baseUri'  => $url,
 					'userName' => $username,
 					'password' => $password,
-				)
+				]
 			);
 
 			// Check for CalDAV support via OPTIONS request
 			$supported = self::check_caldav_support( $client, $url );
 			if ( ! $supported ) {
-				return array(
+				return [
 					'success' => false,
 					'error'   => __( 'Server does not support CalDAV. Please check the URL.', 'caelis' ),
-				);
+				];
 			}
 
 			// Discover available calendars
 			$calendars = self::discover_calendars( $url, $username, $password );
 
 			if ( empty( $calendars ) ) {
-				return array(
+				return [
 					'success'   => true,
-					'calendars' => array(),
+					'calendars' => [],
 					'message'   => __( 'Connected successfully but no calendars found.', 'caelis' ),
-				);
+				];
 			}
 
-			return array(
+			return [
 				'success'   => true,
 				'calendars' => $calendars,
-			);
+			];
 
 		} catch ( Exception $e ) {
 			$error_message = $e->getMessage();
 
 			// Provide user-friendly error messages for common issues
 			if ( strpos( $error_message, '401' ) !== false || strpos( $error_message, 'Unauthorized' ) !== false ) {
-				return array(
+				return [
 					'success' => false,
 					'error'   => __( 'Authentication failed. Check username and password. For iCloud, use an app-specific password.', 'caelis' ),
-				);
+				];
 			}
 
 			if ( strpos( $error_message, '404' ) !== false ) {
-				return array(
+				return [
 					'success' => false,
 					'error'   => __( 'Calendar URL not found. Please verify the CalDAV server address.', 'caelis' ),
-				);
+				];
 			}
 
-			return array(
+			return [
 				'success' => false,
 				'error'   => sprintf( __( 'Connection failed: %s', 'caelis' ), $error_message ),
-			);
+			];
 		}
 	}
 
@@ -132,11 +132,11 @@ class PRM_CalDAV_Provider {
 	 */
 	public static function discover_calendars( string $url, string $username, string $password ): array {
 		$client = new Client(
-			array(
+			[
 				'baseUri'  => $url,
 				'userName' => $username,
 				'password' => $password,
-			)
+			]
 		);
 
 		// Build PROPFIND request to find calendar collections
@@ -155,20 +155,20 @@ class PRM_CalDAV_Provider {
 				'PROPFIND',
 				'',
 				$body,
-				array(
+				[
 					'Depth'        => '1',
 					'Content-Type' => 'application/xml; charset=utf-8',
-				)
+				]
 			);
 
 			if ( $response['statusCode'] < 200 || $response['statusCode'] >= 300 ) {
-				return array();
+				return [];
 			}
 
 			return self::parse_calendar_response( $response['body'], $url );
 		} catch ( Exception $e ) {
 			error_log( 'PRM_CalDAV_Provider: Failed to discover calendars: ' . $e->getMessage() );
-			return array();
+			return [];
 		}
 	}
 
@@ -180,7 +180,7 @@ class PRM_CalDAV_Provider {
 	 * @return array Array of calendar objects
 	 */
 	private static function parse_calendar_response( string $xml_body, string $base_url ): array {
-		$calendars = array();
+		$calendars = [];
 
 		try {
 			$xml = new SimpleXMLElement( $xml_body );
@@ -222,11 +222,11 @@ class PRM_CalDAV_Provider {
 					$color = substr( $color, 0, 7 ); // Remove alpha channel
 				}
 
-				$calendars[] = array(
+				$calendars[] = [
 					'id'    => $href,
 					'name'  => $displayname,
 					'color' => $color,
-				);
+				];
 			}
 		} catch ( Exception $e ) {
 			error_log( 'PRM_CalDAV_Provider: Failed to parse calendar response: ' . $e->getMessage() );
@@ -271,11 +271,11 @@ class PRM_CalDAV_Provider {
 		}
 
 		$client = new Client(
-			array(
+			[
 				'baseUri'  => $calendar_url,
 				'userName' => $username,
 				'password' => $password,
-			)
+			]
 		);
 
 		// Calculate date range
@@ -311,10 +311,10 @@ class PRM_CalDAV_Provider {
 				'REPORT',
 				'',
 				$body,
-				array(
+				[
 					'Depth'        => '1',
 					'Content-Type' => 'application/xml; charset=utf-8',
-				)
+				]
 			);
 
 			if ( $response['statusCode'] < 200 || $response['statusCode'] >= 300 ) {
@@ -390,11 +390,11 @@ class PRM_CalDAV_Provider {
 			error_log( 'PRM_CalDAV_Provider: Failed to parse REPORT response: ' . $e->getMessage() );
 		}
 
-		return array(
+		return [
 			'created' => $created,
 			'updated' => $updated,
 			'total'   => $total,
-		);
+		];
 	}
 
 	/**
@@ -416,23 +416,23 @@ class PRM_CalDAV_Provider {
 
 		// Check for existing event
 		$existing = get_posts(
-			array(
+			[
 				'post_type'      => 'calendar_event',
 				'author'         => $user_id,
-				'meta_query'     => array(
+				'meta_query'     => [
 					'relation' => 'AND',
-					array(
+					[
 						'key'   => '_event_uid',
 						'value' => $event_uid,
-					),
-					array(
+					],
+					[
 						'key'   => '_connection_id',
 						'value' => $connection_id,
-					),
-				),
+					],
+				],
 				'posts_per_page' => 1,
 				'fields'         => 'ids',
-			)
+			]
 		);
 
 		$existing_id = ! empty( $existing ) ? $existing[0] : null;
@@ -464,14 +464,14 @@ class PRM_CalDAV_Provider {
 		}
 
 		// Build post data
-		$post_data = array(
+		$post_data = [
 			'post_type'    => 'calendar_event',
 			'post_title'   => sanitize_text_field( $summary ),
 			'post_content' => sanitize_textarea_field( $description ),
 			'post_author'  => $user_id,
 			'post_status'  => 'publish',
 			'post_date'    => $start_time,
-		);
+		];
 
 		$action = 'updated';
 		if ( $existing_id ) {
@@ -500,24 +500,24 @@ class PRM_CalDAV_Provider {
 		update_post_meta( $post_id, '_attendees', wp_json_encode( $attendees ) );
 
 		// Store raw iCalendar data for debugging
-		$raw_data = array(
+		$raw_data = [
 			'uid'         => $event_uid,
 			'summary'     => $summary,
 			'description' => $description,
 			'location'    => $location,
 			'start'       => $start_time,
 			'end'         => $end_time,
-		);
+		];
 		update_post_meta( $post_id, '_raw_data', wp_json_encode( $raw_data ) );
 
 		// Run contact matching
 		$matches = PRM_Calendar_Matcher::match_attendees( $user_id, $attendees );
 		update_post_meta( $post_id, '_matched_people', wp_json_encode( $matches ) );
 
-		return array(
+		return [
 			'post_id' => $post_id,
 			'action'  => $action,
-		);
+		];
 	}
 
 	/**
@@ -527,7 +527,7 @@ class PRM_CalDAV_Provider {
 	 * @return array Array of ['email' => string, 'name' => string, 'status' => string]
 	 */
 	private static function parse_attendees( $vevent ): array {
-		$attendees = array();
+		$attendees = [];
 
 		if ( ! isset( $vevent->ATTENDEE ) ) {
 			return $attendees;
@@ -570,11 +570,11 @@ class PRM_CalDAV_Provider {
 				}
 			}
 
-			$attendees[] = array(
+			$attendees[] = [
 				'email'  => sanitize_email( $email ),
 				'name'   => sanitize_text_field( $name ),
 				'status' => $status,
-			);
+			];
 		}
 
 		return $attendees;
@@ -637,12 +637,12 @@ class PRM_CalDAV_Provider {
 	 * @return bool True if it's a meeting URL
 	 */
 	private static function is_meeting_url( string $url ): bool {
-		$meeting_domains = array(
+		$meeting_domains = [
 			'zoom.us',
 			'teams.microsoft.com',
 			'meet.google.com',
 			'webex.com',
-		);
+		];
 
 		foreach ( $meeting_domains as $domain ) {
 			if ( strpos( $url, $domain ) !== false ) {

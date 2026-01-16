@@ -17,7 +17,7 @@ class PRM_Todo_Migration {
 	 */
 	public function __construct() {
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			WP_CLI::add_command( 'prm migrate-todos', array( $this, 'migrate_todos_command' ) );
+			WP_CLI::add_command( 'prm migrate-todos', [ $this, 'migrate_todos_command' ] );
 		}
 	}
 
@@ -73,13 +73,13 @@ class PRM_Todo_Migration {
 	public function migrate_todos( $dry_run = false ) {
 		global $wpdb;
 
-		$stats = array(
+		$stats = [
 			'total'     => 0,
 			'open'      => 0,
 			'awaiting'  => 0,
 			'completed' => 0,
 			'skipped'   => 0,
-		);
+		];
 
 		// Get all todos with 'publish' status using direct DB query
 		// This bypasses access control filters that would otherwise restrict results
@@ -114,10 +114,10 @@ class PRM_Todo_Migration {
 				// Update post status
 				$wpdb->update(
 					$wpdb->posts,
-					array( 'post_status' => $new_status ),
-					array( 'ID' => $todo_id ),
-					array( '%s' ),
-					array( '%d' )
+					[ 'post_status' => $new_status ],
+					[ 'ID' => $todo_id ],
+					[ '%s' ],
+					[ '%d' ]
 				);
 
 				// Rename awaiting_response_since to awaiting_since if migrating to awaiting

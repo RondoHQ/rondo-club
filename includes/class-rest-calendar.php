@@ -18,7 +18,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 	 * Register routes for calendar endpoints.
 	 */
 	public function __construct() {
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	/**
@@ -31,167 +31,167 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		register_rest_route(
 			'prm/v1',
 			'/calendar/connections',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_connections' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-			)
+				'callback'            => [ $this, 'get_connections' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
 		);
 
 		// POST /prm/v1/calendar/connections - Add new connection
 		register_rest_route(
 			'prm/v1',
 			'/calendar/connections',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'create_connection' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'provider'       => array(
+				'callback'            => [ $this, 'create_connection' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'provider'       => [
 						'required'          => true,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 						'validate_callback' => function ( $param ) {
-							return in_array( $param, array( 'google', 'caldav' ), true );
+							return in_array( $param, [ 'google', 'caldav' ], true );
 						},
-					),
-					'name'           => array(
+					],
+					'name'           => [
 						'required'          => true,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'calendar_id'    => array(
+					],
+					'calendar_id'    => [
 						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'credentials'    => array(
+					],
+					'credentials'    => [
 						'required' => false,
 						'type'     => 'object',
-					),
-					'sync_enabled'   => array(
+					],
+					'sync_enabled'   => [
 						'required' => false,
 						'type'     => 'boolean',
 						'default'  => true,
-					),
-					'auto_log'       => array(
+					],
+					'auto_log'       => [
 						'required' => false,
 						'type'     => 'boolean',
 						'default'  => true,
-					),
-					'sync_from_days' => array(
+					],
+					'sync_from_days' => [
 						'required' => false,
 						'type'     => 'integer',
 						'default'  => 90,
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// GET /prm/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Get single connection
 		register_rest_route(
 			'prm/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_connection' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'id' => array(
+				'callback'            => [ $this, 'get_connection' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id' => [
 						'required'          => true,
 						'type'              => 'string',
 						'validate_callback' => function ( $param ) {
 							return preg_match( '/^[a-z0-9_]+$/', $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// PUT /prm/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Update connection
 		register_rest_route(
 			'prm/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)',
-			array(
+			[
 				'methods'             => WP_REST_Server::EDITABLE,
-				'callback'            => array( $this, 'update_connection' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'id'             => array(
+				'callback'            => [ $this, 'update_connection' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id'             => [
 						'required'          => true,
 						'type'              => 'string',
 						'validate_callback' => function ( $param ) {
 							return preg_match( '/^[a-z0-9_]+$/', $param );
 						},
-					),
-					'name'           => array(
+					],
+					'name'           => [
 						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'calendar_id'    => array(
+					],
+					'calendar_id'    => [
 						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'credentials'    => array(
+					],
+					'credentials'    => [
 						'required' => false,
 						'type'     => 'object',
-					),
-					'sync_enabled'   => array(
+					],
+					'sync_enabled'   => [
 						'required' => false,
 						'type'     => 'boolean',
-					),
-					'auto_log'       => array(
+					],
+					'auto_log'       => [
 						'required' => false,
 						'type'     => 'boolean',
-					),
-					'sync_from_days' => array(
+					],
+					'sync_from_days' => [
 						'required' => false,
 						'type'     => 'integer',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// DELETE /prm/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Delete connection
 		register_rest_route(
 			'prm/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)',
-			array(
+			[
 				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'delete_connection' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'id' => array(
+				'callback'            => [ $this, 'delete_connection' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id' => [
 						'required'          => true,
 						'type'              => 'string',
 						'validate_callback' => function ( $param ) {
 							return preg_match( '/^[a-z0-9_]+$/', $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// POST /prm/v1/calendar/connections/(?P<id>[a-z0-9_]+)/sync - Trigger sync
 		register_rest_route(
 			'prm/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)/sync',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'trigger_sync' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'id' => array(
+				'callback'            => [ $this, 'trigger_sync' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id' => [
 						'required'          => true,
 						'type'              => 'string',
 						'validate_callback' => function ( $param ) {
 							return preg_match( '/^[a-z0-9_]+$/', $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// ===== OAuth endpoints (stubs for Phase 48) =====
@@ -200,49 +200,49 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		register_rest_route(
 			'prm/v1',
 			'/calendar/auth/google',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'google_auth_init' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-			)
+				'callback'            => [ $this, 'google_auth_init' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
 		);
 
 		// GET /prm/v1/calendar/auth/google/callback - OAuth callback
 		register_rest_route(
 			'prm/v1',
 			'/calendar/auth/google/callback',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'google_auth_callback' ),
+				'callback'            => [ $this, 'google_auth_callback' ],
 				'permission_callback' => '__return_true', // Public for OAuth redirect
-			)
+			]
 		);
 
 		// POST /prm/v1/calendar/auth/caldav/test - Test CalDAV credentials
 		register_rest_route(
 			'prm/v1',
 			'/calendar/auth/caldav/test',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'test_caldav' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'url'      => array(
+				'callback'            => [ $this, 'test_caldav' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'url'      => [
 						'required'          => true,
 						'type'              => 'string',
 						'sanitize_callback' => 'esc_url_raw',
-					),
-					'username' => array(
+					],
+					'username' => [
 						'required'          => true,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'password' => array(
+					],
+					'password' => [
 						'required' => true,
 						'type'     => 'string',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// ===== Events and meetings endpoints (stubs for Phase 51+) =====
@@ -251,107 +251,107 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		register_rest_route(
 			'prm/v1',
 			'/calendar/events',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_events' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'from'      => array(
+				'callback'            => [ $this, 'get_events' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'from'      => [
 						'required'          => false,
 						'type'              => 'string',
 						'format'            => 'date',
 						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'to'        => array(
+					],
+					'to'        => [
 						'required'          => false,
 						'type'              => 'string',
 						'format'            => 'date',
 						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'person_id' => array(
+					],
+					'person_id' => [
 						'required'          => false,
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// GET /prm/v1/people/(?P<person_id>\d+)/meetings - Person meetings
 		register_rest_route(
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/meetings',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_person_meetings' ),
-				'permission_callback' => array( $this, 'check_person_access' ),
-				'args'                => array(
-					'person_id' => array(
+				'callback'            => [ $this, 'get_person_meetings' ],
+				'permission_callback' => [ $this, 'check_person_access' ],
+				'args'                => [
+					'person_id' => [
 						'required'          => true,
 						'type'              => 'integer',
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-					'upcoming'  => array(
+					],
+					'upcoming'  => [
 						'required' => false,
 						'type'     => 'boolean',
 						'default'  => true,
-					),
-					'past'      => array(
+					],
+					'past'      => [
 						'required' => false,
 						'type'     => 'boolean',
 						'default'  => true,
-					),
-					'limit'     => array(
+					],
+					'limit'     => [
 						'required' => false,
 						'type'     => 'integer',
 						'default'  => 10,
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// POST /prm/v1/calendar/events/(?P<id>\d+)/log - Log as activity
 		register_rest_route(
 			'prm/v1',
 			'/calendar/events/(?P<id>\d+)/log',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'log_event_as_activity' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'id' => array(
+				'callback'            => [ $this, 'log_event_as_activity' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id' => [
 						'required'          => true,
 						'type'              => 'integer',
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// GET /prm/v1/calendar/sync/status - Background sync status
 		register_rest_route(
 			'prm/v1',
 			'/calendar/sync/status',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_sync_status' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-			)
+				'callback'            => [ $this, 'get_sync_status' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
 		);
 
 		// GET /prm/v1/calendar/today-meetings - Today's meetings for dashboard
 		register_rest_route(
 			'prm/v1',
 			'/calendar/today-meetings',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_today_meetings' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-			)
+				'callback'            => [ $this, 'get_today_meetings' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
 		);
 	}
 
@@ -388,11 +388,11 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		$data    = $request->get_json_params();
 
 		// Validate required fields
-		if ( empty( $data['provider'] ) || ! in_array( $data['provider'], array( 'google', 'caldav' ), true ) ) {
-			return new WP_Error( 'invalid_provider', __( 'Invalid provider. Must be "google" or "caldav".', 'caelis' ), array( 'status' => 400 ) );
+		if ( empty( $data['provider'] ) || ! in_array( $data['provider'], [ 'google', 'caldav' ], true ) ) {
+			return new WP_Error( 'invalid_provider', __( 'Invalid provider. Must be "google" or "caldav".', 'caelis' ), [ 'status' => 400 ] );
 		}
 		if ( empty( $data['name'] ) ) {
-			return new WP_Error( 'missing_name', __( 'Connection name is required.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_name', __( 'Connection name is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Encrypt credentials if provided
@@ -402,7 +402,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		}
 
 		// Build connection data
-		$connection = array(
+		$connection = [
 			'provider'       => sanitize_text_field( $data['provider'] ),
 			'name'           => sanitize_text_field( $data['name'] ),
 			'calendar_id'    => sanitize_text_field( $data['calendar_id'] ?? '' ),
@@ -412,15 +412,15 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 			'sync_from_days' => isset( $data['sync_from_days'] ) ? absint( $data['sync_from_days'] ) : 90,
 			'last_sync'      => null,
 			'last_error'     => null,
-		);
+		];
 
 		$id = PRM_Calendar_Connections::add_connection( $user_id, $connection );
 
 		return rest_ensure_response(
-			array(
+			[
 				'id'      => $id,
 				'message' => __( 'Connection created.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -436,7 +436,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
 
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Remove sensitive credentials from response
@@ -458,11 +458,11 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Sanitize updatable fields
-		$updates = array();
+		$updates = [];
 		if ( isset( $data['name'] ) ) {
 			$updates['name'] = sanitize_text_field( $data['name'] );
 		}
@@ -486,7 +486,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		PRM_Calendar_Connections::update_connection( $user_id, $id, $updates );
 
-		return rest_ensure_response( array( 'message' => __( 'Connection updated.', 'caelis' ) ) );
+		return rest_ensure_response( [ 'message' => __( 'Connection updated.', 'caelis' ) ] );
 	}
 
 	/**
@@ -501,12 +501,12 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		PRM_Calendar_Connections::delete_connection( $user_id, $id );
 
-		return rest_ensure_response( array( 'message' => __( 'Connection deleted.', 'caelis' ) ) );
+		return rest_ensure_response( [ 'message' => __( 'Connection deleted.', 'caelis' ) ] );
 	}
 
 	/**
@@ -522,17 +522,17 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		// Get connection
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check provider
 		$provider = $connection['provider'] ?? '';
 
-		if ( ! in_array( $provider, array( 'google', 'caldav' ), true ) ) {
+		if ( ! in_array( $provider, [ 'google', 'caldav' ], true ) ) {
 			return new WP_Error(
 				'invalid_provider',
 				__( 'Unknown calendar provider.', 'caelis' ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
@@ -551,31 +551,31 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 			PRM_Calendar_Connections::update_connection(
 				$user_id,
 				$connection_id,
-				array(
+				[
 					'last_sync'  => current_time( 'c' ),
 					'last_error' => null,
-				)
+				]
 			);
 
 			return rest_ensure_response(
-				array(
+				[
 					'message' => __( 'Sync completed successfully.', 'caelis' ),
 					'created' => $result['created'],
 					'updated' => $result['updated'],
 					'total'   => $result['total'],
-				)
+				]
 			);
 		} catch ( Exception $e ) {
 			// Update last_error
 			PRM_Calendar_Connections::update_connection(
 				$user_id,
 				$connection_id,
-				array(
+				[
 					'last_error' => $e->getMessage(),
-				)
+				]
 			);
 
-			return new WP_Error( 'sync_failed', $e->getMessage(), array( 'status' => 500 ) );
+			return new WP_Error( 'sync_failed', $e->getMessage(), [ 'status' => 500 ] );
 		}
 	}
 
@@ -593,7 +593,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 			return new WP_Error(
 				'not_configured',
 				__( 'Google Calendar integration is not configured. Please add GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET to wp-config.php.', 'caelis' ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
@@ -604,11 +604,11 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 			return new WP_Error(
 				'auth_url_failed',
 				__( 'Failed to generate authorization URL.', 'caelis' ),
-				array( 'status' => 500 )
+				[ 'status' => 500 ]
 			);
 		}
 
-		return rest_ensure_response( array( 'auth_url' => $auth_url ) );
+		return rest_ensure_response( [ 'auth_url' => $auth_url ] );
 	}
 
 	/**
@@ -662,7 +662,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 			$encrypted_credentials = PRM_Credential_Encryption::encrypt( $tokens );
 
 			// Create calendar connection
-			$connection = array(
+			$connection = [
 				'provider'       => 'google',
 				'name'           => 'Google Calendar',
 				'calendar_id'    => 'primary',
@@ -672,7 +672,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 				'sync_from_days' => 90,
 				'last_sync'      => null,
 				'last_error'     => null,
-			);
+			];
 
 			PRM_Calendar_Connections::add_connection( $user_id, $connection );
 
@@ -728,28 +728,28 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		// Validate required parameters
 		if ( empty( $url ) ) {
-			return new WP_Error( 'missing_url', __( 'CalDAV server URL is required.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_url', __( 'CalDAV server URL is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 		if ( empty( $username ) ) {
-			return new WP_Error( 'missing_username', __( 'Username is required.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_username', __( 'Username is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 		if ( empty( $password ) ) {
-			return new WP_Error( 'missing_password', __( 'Password is required.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_password', __( 'Password is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Test the connection
 		$result = PRM_CalDAV_Provider::test_connection( $url, $username, $password );
 
 		if ( ! $result['success'] ) {
-			return new WP_Error( 'connection_failed', $result['error'], array( 'status' => 400 ) );
+			return new WP_Error( 'connection_failed', $result['error'], [ 'status' => 400 ] );
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'   => true,
 				'calendars' => $result['calendars'],
 				'message'   => $result['message'] ?? __( 'Connection successful.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -763,38 +763,38 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		$user_id = get_current_user_id();
 
 		// Build query args
-		$args = array(
+		$args = [
 			'post_type'      => 'calendar_event',
 			'author'         => $user_id,
 			'posts_per_page' => 100,
 			'orderby'        => 'meta_value',
 			'meta_key'       => '_start_time',
 			'order'          => 'ASC',
-		);
+		];
 
 		// Build meta query for date filtering
-		$meta_query = array();
+		$meta_query = [];
 
 		// Filter by 'from' date
 		$from = $request->get_param( 'from' );
 		if ( $from ) {
-			$meta_query[] = array(
+			$meta_query[] = [
 				'key'     => '_start_time',
 				'value'   => sanitize_text_field( $from ),
 				'compare' => '>=',
 				'type'    => 'DATE',
-			);
+			];
 		}
 
 		// Filter by 'to' date
 		$to = $request->get_param( 'to' );
 		if ( $to ) {
-			$meta_query[] = array(
+			$meta_query[] = [
 				'key'     => '_start_time',
 				'value'   => sanitize_text_field( $to ) . ' 23:59:59',
 				'compare' => '<=',
 				'type'    => 'DATETIME',
-			);
+			];
 		}
 
 		if ( ! empty( $meta_query ) ) {
@@ -809,9 +809,9 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		$events = array_map(
 			function ( $post ) {
 				$attendees_json = get_post_meta( $post->ID, '_attendees', true );
-				$attendees      = $attendees_json ? json_decode( $attendees_json, true ) : array();
+				$attendees      = $attendees_json ? json_decode( $attendees_json, true ) : [];
 
-				return array(
+				return [
 					'id'            => $post->ID,
 					'title'         => $post->post_title,
 					'description'   => $post->post_content,
@@ -821,19 +821,19 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 					'location'      => get_post_meta( $post->ID, '_location', true ),
 					'meeting_url'   => get_post_meta( $post->ID, '_meeting_url', true ),
 					'organizer'     => get_post_meta( $post->ID, '_organizer_email', true ),
-					'attendees'     => is_array( $attendees ) ? $attendees : array(),
+					'attendees'     => is_array( $attendees ) ? $attendees : [],
 					'connection_id' => get_post_meta( $post->ID, '_connection_id', true ),
 					'calendar_id'   => get_post_meta( $post->ID, '_calendar_id', true ),
-				);
+				];
 			},
 			$query->posts
 		);
 
 		return rest_ensure_response(
-			array(
+			[
 				'events' => $events,
 				'total'  => count( $events ),
-			)
+			]
 		);
 	}
 
@@ -857,22 +857,22 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		// Build base meta query to find events with this person matched
 		// _matched_people is a JSON array, we search for the person_id within it
-		$base_meta_query = array(
-			array(
+		$base_meta_query = [
+			[
 				'key'     => '_matched_people',
 				'value'   => '"person_id":' . $person_id,
 				'compare' => 'LIKE',
-			),
-		);
+			],
+		];
 
-		$upcoming       = array();
-		$past           = array();
+		$upcoming       = [];
+		$past           = [];
 		$total_upcoming = 0;
 		$total_past     = 0;
 
 		// Query upcoming events
 		if ( $show_upcoming ) {
-			$upcoming_args = array(
+			$upcoming_args = [
 				'post_type'      => 'calendar_event',
 				'author'         => $user_id,
 				'posts_per_page' => $limit,
@@ -881,16 +881,16 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 				'order'          => 'ASC',
 				'meta_query'     => array_merge(
 					$base_meta_query,
-					array(
-						array(
+					[
+						[
 							'key'     => '_start_time',
 							'value'   => $now,
 							'compare' => '>=',
 							'type'    => 'DATETIME',
-						),
-					)
+						],
+					]
 				),
-			);
+			];
 
 			$upcoming_query = new WP_Query( $upcoming_args );
 			$total_upcoming = $upcoming_query->found_posts;
@@ -902,7 +902,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		// Query past events
 		if ( $show_past ) {
-			$past_args = array(
+			$past_args = [
 				'post_type'      => 'calendar_event',
 				'author'         => $user_id,
 				'posts_per_page' => $limit,
@@ -911,16 +911,16 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 				'order'          => 'DESC',
 				'meta_query'     => array_merge(
 					$base_meta_query,
-					array(
-						array(
+					[
+						[
 							'key'     => '_start_time',
 							'value'   => $now,
 							'compare' => '<',
 							'type'    => 'DATETIME',
-						),
-					)
+						],
+					]
 				),
-			);
+			];
 
 			$past_query = new WP_Query( $past_args );
 			$total_past = $past_query->found_posts;
@@ -931,12 +931,12 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'upcoming'       => $upcoming,
 				'past'           => $past,
 				'total_upcoming' => $total_upcoming,
 				'total_past'     => $total_past,
-			)
+			]
 		);
 	}
 
@@ -950,7 +950,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 	 */
 	private function format_meeting_event( $event, $person_id, $user_id ) {
 		$matched_people_json = get_post_meta( $event->ID, '_matched_people', true );
-		$matched_people      = $matched_people_json ? json_decode( $matched_people_json, true ) : array();
+		$matched_people      = $matched_people_json ? json_decode( $matched_people_json, true ) : [];
 
 		// Find the match info for this person
 		$match_type             = '';
@@ -970,8 +970,8 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		// Get attendees and filter out the matched person's email
 		$attendees_json  = get_post_meta( $event->ID, '_attendees', true );
-		$attendees       = $attendees_json ? json_decode( $attendees_json, true ) : array();
-		$other_attendees = array();
+		$attendees       = $attendees_json ? json_decode( $attendees_json, true ) : [];
+		$other_attendees = [];
 
 		if ( is_array( $attendees ) ) {
 			foreach ( $attendees as $attendee ) {
@@ -1005,7 +1005,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		$start_datetime = new DateTime( $start_meta ?: 'now', $wp_timezone );
 		$end_datetime   = new DateTime( $end_meta ?: $start_meta ?: 'now', $wp_timezone );
 
-		return array(
+		return [
 			'id'                     => $event->ID,
 			'title'                  => sanitize_text_field( $event->post_title ),
 			'start_time'             => $start_datetime->format( 'c' ), // ISO 8601 with timezone offset
@@ -1020,7 +1020,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 			'calendar_name'          => $calendar_name,
 			'connection_id'          => $connection_id,
 			'logged_as_activity'     => (bool) get_post_meta( $event->ID, '_logged_as_activity', true ),
-		);
+		];
 	}
 
 	/**
@@ -1069,11 +1069,11 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		if ( ! $has_connections ) {
 			return rest_ensure_response(
-				array(
-					'meetings'        => array(),
+				[
+					'meetings'        => [],
 					'total'           => 0,
 					'has_connections' => false,
-				)
+				]
 			);
 		}
 
@@ -1082,44 +1082,44 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		$today_end   = current_time( 'Y-m-d' ) . ' 23:59:59';
 
 		// Query calendar events for today
-		$args = array(
+		$args = [
 			'post_type'      => 'calendar_event',
 			'author'         => $user_id,
 			'posts_per_page' => 50, // Reasonable limit for one day
 			'orderby'        => 'meta_value',
 			'meta_key'       => '_start_time',
 			'order'          => 'ASC',
-			'meta_query'     => array(
+			'meta_query'     => [
 				'relation' => 'AND',
-				array(
+				[
 					'key'     => '_start_time',
 					'value'   => $today_start,
 					'compare' => '>=',
 					'type'    => 'DATETIME',
-				),
-				array(
+				],
+				[
 					'key'     => '_start_time',
 					'value'   => $today_end,
 					'compare' => '<=',
 					'type'    => 'DATETIME',
-				),
-			),
-		);
+				],
+			],
+		];
 
 		$query = new WP_Query( $args );
 
 		// Format meetings with matched people details
-		$meetings = array();
+		$meetings = [];
 		foreach ( $query->posts as $event ) {
 			$meetings[] = $this->format_today_meeting( $event, $user_id );
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'meetings'        => $meetings,
 				'total'           => count( $meetings ),
 				'has_connections' => true,
-			)
+			]
 		);
 	}
 
@@ -1133,8 +1133,8 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 	private function format_today_meeting( $event, $user_id ) {
 		// Get matched people and expand with person details
 		$matched_people_json = get_post_meta( $event->ID, '_matched_people', true );
-		$matched_people_raw  = $matched_people_json ? json_decode( $matched_people_json, true ) : array();
-		$matched_people      = array();
+		$matched_people_raw  = $matched_people_json ? json_decode( $matched_people_json, true ) : [];
+		$matched_people      = [];
 
 		if ( is_array( $matched_people_raw ) ) {
 			foreach ( $matched_people_raw as $match ) {
@@ -1159,11 +1159,11 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 					}
 				}
 
-				$matched_people[] = array(
+				$matched_people[] = [
 					'person_id' => $person_id,
 					'name'      => $person->post_title,
 					'thumbnail' => $thumbnail,
-				);
+				];
 			}
 		}
 
@@ -1189,7 +1189,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		$start_datetime = new DateTime( $start_meta ?: 'now', $wp_timezone );
 		$end_datetime   = new DateTime( $end_meta ?: $start_meta ?: 'now', $wp_timezone );
 
-		return array(
+		return [
 			'id'             => $event->ID,
 			'title'          => sanitize_text_field( $event->post_title ),
 			'start_time'     => $start_datetime->format( 'c' ), // ISO 8601 with timezone offset
@@ -1199,7 +1199,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 			'meeting_url'    => get_post_meta( $event->ID, '_meeting_url', true ),
 			'matched_people' => $matched_people,
 			'calendar_name'  => $calendar_name,
-		);
+		];
 	}
 
 	/**
@@ -1218,40 +1218,40 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		// Get and verify the event
 		$event = get_post( $event_id );
 		if ( ! $event || $event->post_type !== 'calendar_event' ) {
-			return new WP_Error( 'not_found', __( 'Event not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Event not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Verify ownership
 		if ( (int) $event->post_author !== $user_id ) {
-			return new WP_Error( 'forbidden', __( 'You do not have permission to log this event.', 'caelis' ), array( 'status' => 403 ) );
+			return new WP_Error( 'forbidden', __( 'You do not have permission to log this event.', 'caelis' ), [ 'status' => 403 ] );
 		}
 
 		// Check if already logged
 		$already_logged = get_post_meta( $event_id, '_logged_as_activity', true );
 		if ( $already_logged ) {
-			return new WP_Error( 'already_logged', __( 'This event has already been logged as an activity.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'already_logged', __( 'This event has already been logged as an activity.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get matched people
 		$matched_people_json = get_post_meta( $event_id, '_matched_people', true );
-		$matched_people      = $matched_people_json ? json_decode( $matched_people_json, true ) : array();
+		$matched_people      = $matched_people_json ? json_decode( $matched_people_json, true ) : [];
 
 		if ( empty( $matched_people ) || ! is_array( $matched_people ) ) {
-			return new WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Use shared activity creation logic from PRM_Calendar_Sync
 		$activities_created = PRM_Calendar_Sync::create_activity_from_event( $event_id, $user_id, $matched_people );
 
 		if ( $activities_created === 0 ) {
-			return new WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Mark event as logged
 		update_post_meta( $event_id, '_logged_as_activity', true );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'            => true,
 				'activities_created' => $activities_created,
 				'message'            => sprintf(
@@ -1264,7 +1264,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 					),
 					$activities_created
 				),
-			)
+			]
 		);
 	}
 }

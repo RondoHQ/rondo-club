@@ -100,9 +100,9 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
 		if ( ! $user || ! $user->user_email ) {
 			return false;
 		}
-		return array(
+		return [
 			'email' => $user->user_email,
-		);
+		];
 	}
 
 	public function send( $user_id, $digest_data ) {
@@ -142,16 +142,16 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
 		$message = $this->format_email_message( $user, $digest_data );
 
 		// Set custom from name and email
-		add_filter( 'wp_mail_from', array( $this, 'set_email_from_address' ) );
-		add_filter( 'wp_mail_from_name', array( $this, 'set_email_from_name' ) );
+		add_filter( 'wp_mail_from', [ $this, 'set_email_from_address' ] );
+		add_filter( 'wp_mail_from_name', [ $this, 'set_email_from_name' ] );
 
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 
 		$result = wp_mail( $user->user_email, $subject, $message, $headers );
 
 		// Remove filters after sending
-		remove_filter( 'wp_mail_from', array( $this, 'set_email_from_address' ) );
-		remove_filter( 'wp_mail_from_name', array( $this, 'set_email_from_name' ) );
+		remove_filter( 'wp_mail_from', [ $this, 'set_email_from_address' ] );
+		remove_filter( 'wp_mail_from_name', [ $this, 'set_email_from_name' ] );
 
 		return $result;
 	}
@@ -163,11 +163,11 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
 		$site_url        = home_url();
 		$today_formatted = date_i18n( get_option( 'date_format' ) );
 
-		$todos = isset( $digest_data['todos'] ) ? $digest_data['todos'] : array(
-			'today'        => array(),
-			'tomorrow'     => array(),
-			'rest_of_week' => array(),
-		);
+		$todos = isset( $digest_data['todos'] ) ? $digest_data['todos'] : [
+			'today'        => [],
+			'tomorrow'     => [],
+			'rest_of_week' => [],
+		];
 
 		$html  = '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
 		$html .= sprintf(
@@ -386,7 +386,7 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
 	 * Format people names as clickable HTML links
 	 */
 	private function format_people_links( $people, $site_url ) {
-		$links = array();
+		$links = [];
 		foreach ( $people as $person ) {
 			$person_url  = esc_url( $site_url . '/people/' . $person['id'] );
 			$person_name = esc_html( $person['name'] );
@@ -451,19 +451,19 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 		// Prefer OAuth bot token over webhook
 		$bot_token = get_user_meta( $user_id, 'caelis_slack_bot_token', true );
 		if ( ! empty( $bot_token ) ) {
-			return array(
+			return [
 				'bot_token'    => base64_decode( $bot_token ),
 				'workspace_id' => get_user_meta( $user_id, 'caelis_slack_workspace_id', true ),
 				'target'       => get_user_meta( $user_id, 'caelis_slack_target', true ), // Channel or user ID
-			);
+			];
 		}
 
 		// Fallback to webhook for legacy support
 		$webhook = get_user_meta( $user_id, 'caelis_slack_webhook', true );
 		if ( ! empty( $webhook ) ) {
-			return array(
+			return [
 				'webhook_url' => $webhook,
-			);
+			];
 		}
 
 		return false;
@@ -499,10 +499,10 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 		// Use OAuth bot token if available
 		if ( isset( $config['bot_token'] ) && ! empty( $config['bot_token'] ) ) {
 			// Get targets - use parameter if provided, otherwise use configured targets
-			$targets = array();
+			$targets = [];
 			if ( ! empty( $target ) ) {
 				// Single target passed as parameter (for backward compatibility)
-				$targets = array( $target );
+				$targets = [ $target ];
 			} else {
 				// Get configured targets from user meta
 				$targets = get_user_meta( $user_id, 'caelis_slack_targets', true );
@@ -510,7 +510,7 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 					// Fallback to user's Slack user ID (DM) if no targets configured
 					$slack_user_id = get_user_meta( $user_id, 'caelis_slack_user_id', true );
 					if ( ! empty( $slack_user_id ) ) {
-						$targets = array( $slack_user_id );
+						$targets = [ $slack_user_id ];
 					}
 				}
 			}
@@ -545,22 +545,22 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 	 */
 	private function send_via_web_api( $bot_token, $blocks, $target ) {
 
-		$payload = array(
+		$payload = [
 			'channel' => $target,
 			'text'    => __( 'Your Reminders & Todos for This Week', 'caelis' ),
 			'blocks'  => $blocks,
-		);
+		];
 
 		$response = wp_remote_post(
 			'https://slack.com/api/chat.postMessage',
-			array(
+			[
 				'body'    => json_encode( $payload ),
-				'headers' => array(
+				'headers' => [
 					'Content-Type'  => 'application/json',
 					'Authorization' => 'Bearer ' . $bot_token,
-				),
+				],
 				'timeout' => 10,
-			)
+			]
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -585,11 +585,11 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 	private function send_via_webhook( $webhook_url, $blocks ) {
 		$logo_url = $this->get_logo_url();
 
-		$payload = array(
+		$payload = [
 			'text'     => __( 'Your Important Dates for This Week', 'caelis' ),
 			'blocks'   => $blocks,
 			'username' => 'Caelis',
-		);
+		];
 
 		if ( $logo_url ) {
 			$payload['icon_url'] = $logo_url;
@@ -597,13 +597,13 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 
 		$response = wp_remote_post(
 			$webhook_url,
-			array(
+			[
 				'body'    => json_encode( $payload ),
-				'headers' => array(
+				'headers' => [
 					'Content-Type' => 'application/json',
-				),
+				],
 				'timeout' => 10,
-			)
+			]
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -620,17 +620,17 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 	 * Made public so it can be called from REST API for slash commands
 	 */
 	public function format_slack_blocks( $digest_data ) {
-		$blocks   = array();
+		$blocks   = [];
 		$site_url = home_url();
 
-		$todos = isset( $digest_data['todos'] ) ? $digest_data['todos'] : array(
-			'today'        => array(),
-			'tomorrow'     => array(),
-			'rest_of_week' => array(),
-		);
+		$todos = isset( $digest_data['todos'] ) ? $digest_data['todos'] : [
+			'today'        => [],
+			'tomorrow'     => [],
+			'rest_of_week' => [],
+		];
 
 		// Build text content for all sections
-		$text_parts = array();
+		$text_parts = [];
 
 		// Today section
 		$text_parts[] = sprintf( '*<%s|%s> %s*', home_url(), 'Caelis', __( 'Today', 'caelis' ) );
@@ -776,13 +776,13 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 		}
 
 		// Combine all text parts into a single block
-		$blocks[] = array(
+		$blocks[] = [
 			'type' => 'section',
-			'text' => array(
+			'text' => [
 				'type' => 'mrkdwn',
 				'text' => implode( "\n", $text_parts ),
-			),
-		);
+			],
+		];
 
 		return $blocks;
 	}
@@ -792,7 +792,7 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 	 */
 	private function format_slack_people_links( $people ) {
 		$site_url = home_url();
-		$links    = array();
+		$links    = [];
 		foreach ( $people as $person ) {
 			$person_url = $site_url . '/people/' . $person['id'];
 			$links[]    = sprintf( '<%s|%s>', $person_url, $person['name'] );

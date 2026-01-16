@@ -14,13 +14,13 @@ class PRM_Monica_Import {
 	/**
 	 * Monica ID to WordPress ID mapping
 	 */
-	private array $contact_map         = array();
-	private array $company_map         = array();
-	private array $photo_map           = array();
-	private array $relationship_types  = array();
-	private array $contact_field_types = array();
-	private array $life_event_types    = array();
-	private array $genders             = array();
+	private array $contact_map         = [];
+	private array $company_map         = [];
+	private array $photo_map           = [];
+	private array $relationship_types  = [];
+	private array $contact_field_types = [];
+	private array $life_event_types    = [];
+	private array $genders             = [];
 
 	/**
 	 * Monica instance URL for photo sideloading
@@ -30,7 +30,7 @@ class PRM_Monica_Import {
 	/**
 	 * Import statistics
 	 */
-	private array $stats = array(
+	private array $stats = [
 		'contacts_imported'     => 0,
 		'contacts_updated'      => 0,
 		'contacts_skipped'      => 0,
@@ -39,16 +39,16 @@ class PRM_Monica_Import {
 		'dates_created'         => 0,
 		'notes_created'         => 0,
 		'photos_imported'       => 0,
-		'errors'                => array(),
-	);
+		'errors'                => [],
+	];
 
 	/**
 	 * Parsed SQL data
 	 */
-	private array $tables = array();
+	private array $tables = [];
 
 	public function __construct() {
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	/**
@@ -58,21 +58,21 @@ class PRM_Monica_Import {
 		register_rest_route(
 			'prm/v1',
 			'/import/monica',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'handle_import' ),
-				'permission_callback' => array( $this, 'check_import_permission' ),
-			)
+				'callback'            => [ $this, 'handle_import' ],
+				'permission_callback' => [ $this, 'check_import_permission' ],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/import/monica/validate',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'validate_import' ),
-				'permission_callback' => array( $this, 'check_import_permission' ),
-			)
+				'callback'            => [ $this, 'validate_import' ],
+				'permission_callback' => [ $this, 'check_import_permission' ],
+			]
 		);
 	}
 
@@ -90,18 +90,18 @@ class PRM_Monica_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$sql_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $sql_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check if it's a valid Monica SQL export
 		if ( strpos( $sql_content, 'INSERT IGNORE INTO `contacts`' ) === false ) {
-			return new WP_Error( 'invalid_format', __( 'Invalid Monica SQL export format. File must contain contacts table.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_format', __( 'Invalid Monica SQL export format. File must contain contacts table.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse the SQL to get summary
@@ -109,11 +109,11 @@ class PRM_Monica_Import {
 		$summary = $this->get_import_summary();
 
 		return rest_ensure_response(
-			array(
+			[
 				'valid'   => true,
 				'version' => 'sql',
 				'summary' => $summary,
-			)
+			]
 		);
 	}
 
@@ -121,16 +121,16 @@ class PRM_Monica_Import {
 	 * Get summary of what will be imported
 	 */
 	private function get_import_summary(): array {
-		$contacts      = $this->tables['contacts'] ?? array();
-		$relationships = $this->tables['relationships'] ?? array();
-		$notes         = $this->tables['notes'] ?? array();
-		$special_dates = $this->tables['special_dates'] ?? array();
-		$life_events   = $this->tables['life_events'] ?? array();
-		$photos        = $this->tables['photos'] ?? array();
+		$contacts      = $this->tables['contacts'] ?? [];
+		$relationships = $this->tables['relationships'] ?? [];
+		$notes         = $this->tables['notes'] ?? [];
+		$special_dates = $this->tables['special_dates'] ?? [];
+		$life_events   = $this->tables['life_events'] ?? [];
+		$photos        = $this->tables['photos'] ?? [];
 
 		// Count non-partial contacts
 		$contact_count = 0;
-		$companies     = array();
+		$companies     = [];
 		foreach ( $contacts as $contact ) {
 			if ( empty( $contact['is_partial'] ) || $contact['is_partial'] == '0' ) {
 				++$contact_count;
@@ -140,7 +140,7 @@ class PRM_Monica_Import {
 			}
 		}
 
-		return array(
+		return [
 			'contacts'        => $contact_count,
 			'relationships'   => count( $relationships ),
 			'notes'           => count( $notes ),
@@ -148,7 +148,7 @@ class PRM_Monica_Import {
 			'life_events'     => count( $life_events ),
 			'photos'          => count( $photos ),
 			'companies_count' => count( $companies ),
-		);
+		];
 	}
 
 	/**
@@ -163,11 +163,11 @@ class PRM_Monica_Import {
 		$monica_url = $request->get_param( 'monica_url' ) ?? '';
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		if ( empty( $monica_url ) ) {
-			return new WP_Error( 'missing_url', __( 'Monica instance URL is required for photo import.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_url', __( 'Monica instance URL is required for photo import.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Normalize Monica URL
@@ -176,7 +176,7 @@ class PRM_Monica_Import {
 		$sql_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $sql_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse the SQL
@@ -186,10 +186,10 @@ class PRM_Monica_Import {
 		$this->import_data();
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'stats'   => $this->stats,
-			)
+			]
 		);
 	}
 
@@ -197,7 +197,7 @@ class PRM_Monica_Import {
 	 * Parse SQL INSERT statements
 	 */
 	private function parse_sql( string $sql ): void {
-		$tables_to_parse = array(
+		$tables_to_parse = [
 			'contacts',
 			'photos',
 			'contact_photo',
@@ -214,7 +214,7 @@ class PRM_Monica_Import {
 			'life_events',
 			'life_event_types',
 			'genders',
-		);
+		];
 
 		foreach ( $tables_to_parse as $table ) {
 			$this->tables[ $table ] = $this->parse_table_inserts( $sql, $table );
@@ -228,7 +228,7 @@ class PRM_Monica_Import {
 	 * Parse INSERT statements for a specific table
 	 */
 	private function parse_table_inserts( string $sql, string $table ): array {
-		$results = array();
+		$results = [];
 
 		// Match INSERT IGNORE INTO `table_name` (`columns`) VALUES ...
 		$pattern = '/INSERT IGNORE INTO `' . preg_quote( $table, '/' ) . '` \(([^)]+)\) VALUES\s*\n?((?:\s*\([^)]+\),?\s*\n?)+)/i';
@@ -267,7 +267,7 @@ class PRM_Monica_Import {
 	 * Parse SQL values from a row string
 	 */
 	private function parse_sql_values( string $row ): array {
-		$values      = array();
+		$values      = [];
 		$current     = '';
 		$in_string   = false;
 		$escape_next = false;
@@ -347,27 +347,27 @@ class PRM_Monica_Import {
 	 */
 	private function build_lookup_maps(): void {
 		// Build relationship types map (id => name)
-		foreach ( $this->tables['relationship_types'] ?? array() as $type ) {
+		foreach ( $this->tables['relationship_types'] ?? [] as $type ) {
 			$this->relationship_types[ $type['id'] ] = $type['name'];
 		}
 
 		// Build contact field types map (id => type)
-		foreach ( $this->tables['contact_field_types'] ?? array() as $type ) {
+		foreach ( $this->tables['contact_field_types'] ?? [] as $type ) {
 			$this->contact_field_types[ $type['id'] ] = $type['type'] ?? $type['name'];
 		}
 
 		// Build photo map (id => data)
-		foreach ( $this->tables['photos'] ?? array() as $photo ) {
+		foreach ( $this->tables['photos'] ?? [] as $photo ) {
 			$this->photo_map[ $photo['id'] ] = $photo;
 		}
 
 		// Build life event types map (id => key/slug)
-		foreach ( $this->tables['life_event_types'] ?? array() as $type ) {
+		foreach ( $this->tables['life_event_types'] ?? [] as $type ) {
 			$this->life_event_types[ $type['id'] ] = $type['default_life_event_type_key'] ?? 'other';
 		}
 
 		// Build genders map (id => type)
-		foreach ( $this->tables['genders'] ?? array() as $gender ) {
+		foreach ( $this->tables['genders'] ?? [] as $gender ) {
 			$this->genders[ $gender['id'] ] = $gender['type'] ?? '';
 		}
 	}
@@ -376,7 +376,7 @@ class PRM_Monica_Import {
 	 * Main import logic
 	 */
 	private function import_data(): void {
-		$contacts = $this->tables['contacts'] ?? array();
+		$contacts = $this->tables['contacts'] ?? [];
 
 		// First pass: Import all non-partial contacts
 		foreach ( $contacts as $contact ) {
@@ -384,7 +384,7 @@ class PRM_Monica_Import {
 		}
 
 		// Second pass: Import relationships
-		foreach ( $this->tables['relationships'] ?? array() as $relationship ) {
+		foreach ( $this->tables['relationships'] ?? [] as $relationship ) {
 			$this->import_relationship( $relationship );
 		}
 	}
@@ -420,12 +420,12 @@ class PRM_Monica_Import {
 			++$this->stats['contacts_updated'];
 		} else {
 			$post_id = wp_insert_post(
-				array(
+				[
 					'post_type'   => 'person',
 					'post_status' => 'publish',
 					'post_title'  => trim( $first_name . ' ' . $last_name ),
 					'post_author' => get_current_user_id(),
-				)
+				]
 			);
 
 			if ( is_wp_error( $post_id ) ) {
@@ -483,13 +483,13 @@ class PRM_Monica_Import {
 			}
 
 			if ( $company_id || $job_title ) {
-				$work_history = array(
-					array(
+				$work_history = [
+					[
 						'company'    => $company_id,
 						'job_title'  => $job_title,
 						'is_current' => true,
-					),
-				);
+					],
+				];
 				update_field( 'work_history', $work_history, $post_id );
 			}
 		}
@@ -523,7 +523,7 @@ class PRM_Monica_Import {
 	 */
 	private function import_contact_tags( int $post_id, string $monica_id ): void {
 		$contact_tags = array_filter(
-			$this->tables['contact_tag'] ?? array(),
+			$this->tables['contact_tag'] ?? [],
 			function ( $ct ) use ( $monica_id ) {
 				return $ct['contact_id'] === $monica_id;
 			}
@@ -533,12 +533,12 @@ class PRM_Monica_Import {
 			return;
 		}
 
-		$tags_by_id = array();
-		foreach ( $this->tables['tags'] ?? array() as $tag ) {
+		$tags_by_id = [];
+		foreach ( $this->tables['tags'] ?? [] as $tag ) {
 			$tags_by_id[ $tag['id'] ] = $tag['name'];
 		}
 
-		$term_ids = array();
+		$term_ids = [];
 		foreach ( $contact_tags as $ct ) {
 			$tag_name = $tags_by_id[ $ct['tag_id'] ] ?? '';
 			if ( empty( $tag_name ) ) {
@@ -565,7 +565,7 @@ class PRM_Monica_Import {
 	 */
 	private function import_contact_fields( int $post_id, string $monica_id ): void {
 		$fields = array_filter(
-			$this->tables['contact_fields'] ?? array(),
+			$this->tables['contact_fields'] ?? [],
 			function ( $f ) use ( $monica_id ) {
 				return $f['contact_id'] === $monica_id;
 			}
@@ -575,7 +575,7 @@ class PRM_Monica_Import {
 			return;
 		}
 
-		$contact_info = array();
+		$contact_info = [];
 		foreach ( $fields as $field ) {
 			$type_id = $field['contact_field_type_id'];
 			$value   = $field['data'] ?? '';
@@ -588,11 +588,11 @@ class PRM_Monica_Import {
 			$type_name    = $this->contact_field_types[ $type_id ] ?? '';
 			$contact_type = $this->map_field_type( $type_name, $value );
 
-			$contact_info[] = array(
+			$contact_info[] = [
 				'contact_type'  => $contact_type,
 				'contact_label' => '',
 				'contact_value' => $value,
-			);
+			];
 		}
 
 		if ( ! empty( $contact_info ) ) {
@@ -647,7 +647,7 @@ class PRM_Monica_Import {
 	 */
 	private function import_addresses( int $post_id, string $monica_id ): void {
 		$addresses = array_filter(
-			$this->tables['addresses'] ?? array(),
+			$this->tables['addresses'] ?? [],
 			function ( $a ) use ( $monica_id ) {
 				return $a['contact_id'] === $monica_id;
 			}
@@ -658,16 +658,16 @@ class PRM_Monica_Import {
 		}
 
 		// Build places lookup
-		$places = array();
-		foreach ( $this->tables['places'] ?? array() as $place ) {
+		$places = [];
+		foreach ( $this->tables['places'] ?? [] as $place ) {
 			$places[ $place['id'] ] = $place;
 		}
 
-		$structured_addresses = array();
+		$structured_addresses = [];
 
 		foreach ( $addresses as $address ) {
 			$place_id = $address['place_id'] ?? '';
-			$place    = $places[ $place_id ] ?? array();
+			$place    = $places[ $place_id ] ?? [];
 
 			$street      = trim( $place['street'] ?? '' );
 			$city        = trim( $place['city'] ?? '' );
@@ -677,14 +677,14 @@ class PRM_Monica_Import {
 
 			// Only add if there's at least some address data
 			if ( ! empty( $street ) || ! empty( $city ) || ! empty( $state ) || ! empty( $postal_code ) || ! empty( $country ) ) {
-				$structured_addresses[] = array(
+				$structured_addresses[] = [
 					'address_label' => $address['name'] ?? '',
 					'street'        => $street,
 					'postal_code'   => $postal_code,
 					'city'          => $city,
 					'state'         => $state,
 					'country'       => $country,
-				);
+				];
 			}
 		}
 
@@ -698,7 +698,7 @@ class PRM_Monica_Import {
 	 */
 	private function import_notes( int $post_id, string $monica_id ): void {
 		$notes = array_filter(
-			$this->tables['notes'] ?? array(),
+			$this->tables['notes'] ?? [],
 			function ( $n ) use ( $monica_id ) {
 				return $n['contact_id'] === $monica_id;
 			}
@@ -713,7 +713,7 @@ class PRM_Monica_Import {
 			$created_at = $note['created_at'] ?? current_time( 'mysql' );
 
 			$comment_id = wp_insert_comment(
-				array(
+				[
 					'comment_post_ID'  => $post_id,
 					'comment_content'  => $content,
 					'comment_type'     => PRM_Comment_Types::TYPE_NOTE,
@@ -721,7 +721,7 @@ class PRM_Monica_Import {
 					'comment_approved' => 1,
 					'comment_date'     => $this->format_date( $created_at ),
 					'comment_date_gmt' => $this->format_date( $created_at, true ),
-				)
+				]
 			);
 
 			if ( $comment_id ) {
@@ -744,7 +744,7 @@ class PRM_Monica_Import {
 
 		// Import other special dates linked to this contact
 		$dates = array_filter(
-			$this->tables['special_dates'] ?? array(),
+			$this->tables['special_dates'] ?? [],
 			function ( $d ) use ( $monica_id ) {
 				return $d['contact_id'] === $monica_id;
 			}
@@ -772,7 +772,7 @@ class PRM_Monica_Import {
 	private function import_birthday( int $post_id, string $date_id, string $full_name ): void {
 		// Find the special date
 		$date_entry = null;
-		foreach ( $this->tables['special_dates'] ?? array() as $d ) {
+		foreach ( $this->tables['special_dates'] ?? [] as $d ) {
 			if ( $d['id'] === $date_id ) {
 				$date_entry = $d;
 				break;
@@ -785,24 +785,24 @@ class PRM_Monica_Import {
 
 		// Check if birthday already exists
 		$existing = get_posts(
-			array(
+			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => 1,
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'related_people',
 						'value'   => '"' . $post_id . '"',
 						'compare' => 'LIKE',
-					),
-				),
-				'tax_query'      => array(
-					array(
+					],
+				],
+				'tax_query'      => [
+					[
 						'taxonomy' => 'date_type',
 						'field'    => 'slug',
 						'terms'    => 'birthday',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		if ( ! empty( $existing ) ) {
@@ -812,12 +812,12 @@ class PRM_Monica_Import {
 		$title = sprintf( __( "%s's Birthday", 'caelis' ), $full_name );
 
 		$date_post_id = wp_insert_post(
-			array(
+			[
 				'post_type'   => 'important_date',
 				'post_status' => 'publish',
 				'post_title'  => $title,
 				'post_author' => get_current_user_id(),
-			)
+			]
 		);
 
 		if ( is_wp_error( $date_post_id ) ) {
@@ -826,16 +826,16 @@ class PRM_Monica_Import {
 
 		update_field( 'date_value', $this->format_date_for_acf( $date_entry['date'] ), $date_post_id );
 		update_field( 'is_recurring', true, $date_post_id );
-		update_field( 'related_people', array( $post_id ), $date_post_id );
+		update_field( 'related_people', [ $post_id ], $date_post_id );
 
 		// Ensure the birthday term exists, create if needed
 		$term = term_exists( 'birthday', 'date_type' );
 		if ( ! $term ) {
-			$term = wp_insert_term( 'Birthday', 'date_type', array( 'slug' => 'birthday' ) );
+			$term = wp_insert_term( 'Birthday', 'date_type', [ 'slug' => 'birthday' ] );
 		}
 		if ( $term && ! is_wp_error( $term ) ) {
 			$term_id = is_array( $term ) ? $term['term_id'] : $term;
-			wp_set_post_terms( $date_post_id, array( (int) $term_id ), 'date_type' );
+			wp_set_post_terms( $date_post_id, [ (int) $term_id ], 'date_type' );
 		}
 
 		++$this->stats['dates_created'];
@@ -853,12 +853,12 @@ class PRM_Monica_Import {
 		$title = sprintf( __( '%s - Special Date', 'caelis' ), $full_name );
 
 		$date_post_id = wp_insert_post(
-			array(
+			[
 				'post_type'   => 'important_date',
 				'post_status' => 'publish',
 				'post_title'  => $title,
 				'post_author' => get_current_user_id(),
-			)
+			]
 		);
 
 		if ( is_wp_error( $date_post_id ) ) {
@@ -867,16 +867,16 @@ class PRM_Monica_Import {
 
 		update_field( 'date_value', $this->format_date_for_acf( $date_value ), $date_post_id );
 		update_field( 'is_recurring', true, $date_post_id );
-		update_field( 'related_people', array( $post_id ), $date_post_id );
+		update_field( 'related_people', [ $post_id ], $date_post_id );
 
 		// Ensure the other term exists, create if needed
 		$term = term_exists( 'other', 'date_type' );
 		if ( ! $term ) {
-			$term = wp_insert_term( 'Other', 'date_type', array( 'slug' => 'other' ) );
+			$term = wp_insert_term( 'Other', 'date_type', [ 'slug' => 'other' ] );
 		}
 		if ( $term && ! is_wp_error( $term ) ) {
 			$term_id = is_array( $term ) ? $term['term_id'] : $term;
-			wp_set_post_terms( $date_post_id, array( (int) $term_id ), 'date_type' );
+			wp_set_post_terms( $date_post_id, [ (int) $term_id ], 'date_type' );
 		}
 
 		++$this->stats['dates_created'];
@@ -889,7 +889,7 @@ class PRM_Monica_Import {
 		$full_name = trim( $first_name . ' ' . $last_name );
 
 		$life_events = array_filter(
-			$this->tables['life_events'] ?? array(),
+			$this->tables['life_events'] ?? [],
 			function ( $event ) use ( $monica_id ) {
 				return $event['contact_id'] === $monica_id;
 			}
@@ -922,37 +922,37 @@ class PRM_Monica_Import {
 			$title = $event_name;
 		} else {
 			// Generate title from type
-			$type_label = ucwords( str_replace( array( '-', '_' ), ' ', $type_key ) );
+			$type_label = ucwords( str_replace( [ '-', '_' ], ' ', $type_key ) );
 			$title      = sprintf( __( "%1\$s's %2\$s", 'caelis' ), $full_name, $type_label );
 		}
 
 		// Check if this exact life event already exists (avoid duplicates).
 		$date_for_query = gmdate( 'Y-m-d', strtotime( $event_date ) );
 		$existing       = get_posts(
-			array(
+			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => 1,
-				'meta_query'     => array(
+				'meta_query'     => [
 					'relation' => 'AND',
-					array(
+					[
 						'key'     => 'related_people',
 						'value'   => '"' . $post_id . '"',
 						'compare' => 'LIKE',
-					),
-					array(
+					],
+					[
 						'key'     => 'date_value',
 						'value'   => $date_for_query,
 						'compare' => '=',
-					),
-				),
-				'tax_query'      => array(
-					array(
+					],
+				],
+				'tax_query'      => [
+					[
 						'taxonomy' => 'date_type',
 						'field'    => 'slug',
 						'terms'    => $type_slug,
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		if ( ! empty( $existing ) ) {
@@ -961,12 +961,12 @@ class PRM_Monica_Import {
 
 		// Create the important_date post
 		$date_post_id = wp_insert_post(
-			array(
+			[
 				'post_type'   => 'important_date',
 				'post_status' => 'publish',
 				'post_title'  => $title,
 				'post_author' => get_current_user_id(),
-			)
+			]
 		);
 
 		if ( is_wp_error( $date_post_id ) ) {
@@ -977,11 +977,11 @@ class PRM_Monica_Import {
 		update_field( 'date_value', $this->format_date_for_acf( $event_date ), $date_post_id );
 
 		// Life events like marriage/wedding should be recurring
-		$recurring_types = array( 'marriage', 'wedding', 'engagement', 'new-relationship' );
+		$recurring_types = [ 'marriage', 'wedding', 'engagement', 'new-relationship' ];
 		$is_recurring    = in_array( $type_slug, $recurring_types );
 		update_field( 'is_recurring', $is_recurring, $date_post_id );
 
-		update_field( 'related_people', array( $post_id ), $date_post_id );
+		update_field( 'related_people', [ $post_id ], $date_post_id );
 
 		// Add notes if present
 		$notes = $event['note'] ?? '';
@@ -993,12 +993,12 @@ class PRM_Monica_Import {
 		$term = term_exists( $type_slug, 'date_type' );
 		if ( ! $term ) {
 			// Create the term if it doesn't exist
-			$type_label = ucwords( str_replace( array( '-', '_' ), ' ', $type_key ) );
-			$term       = wp_insert_term( $type_label, 'date_type', array( 'slug' => $type_slug ) );
+			$type_label = ucwords( str_replace( [ '-', '_' ], ' ', $type_key ) );
+			$term       = wp_insert_term( $type_label, 'date_type', [ 'slug' => $type_slug ] );
 		}
 		if ( $term && ! is_wp_error( $term ) ) {
 			$term_id = is_array( $term ) ? $term['term_id'] : $term;
-			wp_set_post_terms( $date_post_id, array( (int) $term_id ), 'date_type' );
+			wp_set_post_terms( $date_post_id, [ (int) $term_id ], 'date_type' );
 		}
 
 		++$this->stats['dates_created'];
@@ -1014,7 +1014,7 @@ class PRM_Monica_Import {
 		// First, try to get photo from contact_photo table (uploaded photos)
 		if ( $avatar_source === 'photo' ) {
 			$contact_photos = array_filter(
-				$this->tables['contact_photo'] ?? array(),
+				$this->tables['contact_photo'] ?? [],
 				function ( $cp ) use ( $monica_id ) {
 					return $cp['contact_id'] === $monica_id;
 				}
@@ -1076,7 +1076,7 @@ class PRM_Monica_Import {
 
 		// Clean up extension (remove query strings, default to jpg)
 		$extension = preg_replace( '/\?.*$/', '', $extension );
-		if ( empty( $extension ) || ! in_array( strtolower( $extension ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ) ) ) {
+		if ( empty( $extension ) || ! in_array( strtolower( $extension ), [ 'jpg', 'jpeg', 'png', 'gif', 'webp' ] ) ) {
 			$extension = 'jpg';
 		}
 
@@ -1104,10 +1104,10 @@ class PRM_Monica_Import {
 		}
 
 		// Get file info
-		$file_array = array(
+		$file_array = [
 			'name'     => $filename,
 			'tmp_name' => $tmp,
-		);
+		];
 
 		// Sideload the file
 		$attachment_id = media_handle_sideload( $file_array, $post_id, $description );
@@ -1143,7 +1143,7 @@ class PRM_Monica_Import {
 		// Get the term ID for the relationship type
 		$term = term_exists( $type_name, 'relationship_type' );
 		if ( ! $term ) {
-			$term = wp_insert_term( ucfirst( $type_name ), 'relationship_type', array( 'slug' => $type_name ) );
+			$term = wp_insert_term( ucfirst( $type_name ), 'relationship_type', [ 'slug' => $type_name ] );
 		}
 
 		if ( is_wp_error( $term ) ) {
@@ -1153,7 +1153,7 @@ class PRM_Monica_Import {
 		$term_id = is_array( $term ) ? $term['term_id'] : $term;
 
 		// Get existing relationships
-		$existing = get_field( 'relationships', $person_id ) ?: array();
+		$existing = get_field( 'relationships', $person_id ) ?: [];
 
 		// Check if relationship already exists
 		foreach ( $existing as $rel ) {
@@ -1164,11 +1164,11 @@ class PRM_Monica_Import {
 		}
 
 		// Add the new relationship
-		$existing[] = array(
+		$existing[] = [
 			'related_person'     => $related_id,
 			'relationship_type'  => $term_id,
 			'relationship_label' => '',
-		);
+		];
 
 		update_field( 'relationships', $existing, $person_id );
 		++$this->stats['relationships_created'];
@@ -1179,24 +1179,24 @@ class PRM_Monica_Import {
 	 */
 	private function find_existing_person( string $first_name, string $last_name ): ?int {
 		$query = new WP_Query(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => 1,
 				'post_status'    => 'any',
-				'meta_query'     => array(
+				'meta_query'     => [
 					'relation' => 'AND',
-					array(
+					[
 						'key'     => 'first_name',
 						'value'   => $first_name,
 						'compare' => '=',
-					),
-					array(
+					],
+					[
 						'key'     => 'last_name',
 						'value'   => $last_name,
 						'compare' => '=',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		if ( $query->have_posts() ) {
@@ -1223,12 +1223,12 @@ class PRM_Monica_Import {
 
 		// Create new company
 		$post_id = wp_insert_post(
-			array(
+			[
 				'post_type'   => 'company',
 				'post_status' => 'publish',
 				'post_title'  => $name,
 				'post_author' => get_current_user_id(),
-			)
+			]
 		);
 
 		if ( ! is_wp_error( $post_id ) ) {

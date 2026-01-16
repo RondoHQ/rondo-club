@@ -31,12 +31,12 @@ class PRM_Calendar_Matcher {
 	 */
 	public static function match_attendees( int $user_id, array $attendees ): array {
 		if ( empty( $attendees ) ) {
-			return array();
+			return [];
 		}
 
 		// Build email lookup cache
 		$lookup  = self::get_email_lookup( $user_id );
-		$matches = array();
+		$matches = [];
 
 		foreach ( $attendees as $attendee ) {
 			$match = self::match_single( $user_id, $attendee, $lookup );
@@ -68,16 +68,16 @@ class PRM_Calendar_Matcher {
 		}
 
 		// Build lookup from user's people
-		$lookup = array();
+		$lookup = [];
 
 		$people = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'author'         => $user_id,
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
 				'post_status'    => 'publish',
-			)
+			]
 		);
 
 		foreach ( $people as $person_id ) {
@@ -134,19 +134,19 @@ class PRM_Calendar_Matcher {
 	 */
 	public static function rematch_events_for_user( int $user_id ): int {
 		$events = get_posts(
-			array(
+			[
 				'post_type'      => 'calendar_event',
 				'author'         => $user_id,
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => '_attendees',
 						'compare' => '!=',
 						'value'   => '',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		$count = 0;
@@ -222,12 +222,12 @@ class PRM_Calendar_Matcher {
 
 		// 1. Try exact email match (100% confidence)
 		if ( ! empty( $email ) && isset( $lookup[ $email ] ) ) {
-			return array(
+			return [
 				'person_id'      => $lookup[ $email ],
 				'match_type'     => 'email_exact',
 				'confidence'     => 100,
 				'attendee_email' => $email,
-			);
+			];
 		}
 
 		// 2. Try fuzzy name match if we have a name
@@ -261,12 +261,12 @@ class PRM_Calendar_Matcher {
 
 		// Query user's people
 		$people = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'author'         => $user_id,
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-			)
+			]
 		);
 
 		if ( empty( $people ) ) {
@@ -285,17 +285,17 @@ class PRM_Calendar_Matcher {
 
 			// Exact full name match
 			if ( ! empty( $search_full ) && ! empty( $person_full ) && $person_full === $search_full ) {
-				return array(
+				return [
 					'person_id'  => $person->ID,
 					'match_type' => 'name_exact',
 					'confidence' => 80,
-				);
+				];
 			}
 		}
 
 		// Check for first name only match if unique (60% confidence)
 		$first_name_lower   = strtolower( $first_name );
-		$first_name_matches = array();
+		$first_name_matches = [];
 
 		foreach ( $people as $person ) {
 			$person_first = strtolower( trim( get_field( 'first_name', $person->ID ) ?: '' ) );
@@ -306,11 +306,11 @@ class PRM_Calendar_Matcher {
 
 		// Only use first name match if it's unique
 		if ( count( $first_name_matches ) === 1 ) {
-			return array(
+			return [
 				'person_id'  => $first_name_matches[0],
 				'match_type' => 'name_partial',
 				'confidence' => 60,
-			);
+			];
 		}
 
 		// Check for Levenshtein distance <= 2 on full name (50% confidence)
@@ -328,11 +328,11 @@ class PRM_Calendar_Matcher {
 			$distance = levenshtein( $search_full, $person_full );
 
 			if ( $distance <= 2 && $distance > 0 ) {
-				return array(
+				return [
 					'person_id'  => $person->ID,
 					'match_type' => 'name_fuzzy',
 					'confidence' => 50,
-				);
+				];
 			}
 		}
 
@@ -354,26 +354,26 @@ class PRM_Calendar_Matcher {
 		$name = trim( $name );
 
 		if ( empty( $name ) ) {
-			return array(
+			return [
 				'first' => '',
 				'last'  => '',
-			);
+			];
 		}
 
 		// Handle "Last, First" format
 		if ( strpos( $name, ',' ) !== false ) {
 			$parts = array_map( 'trim', explode( ',', $name, 2 ) );
-			return array(
+			return [
 				'first' => $parts[1] ?? '',
 				'last'  => $parts[0] ?? '',
-			);
+			];
 		}
 
 		// Handle "First Last" or "First" format
 		$parts = preg_split( '/\s+/', $name, 2 );
-		return array(
+		return [
 			'first' => $parts[0] ?? '',
 			'last'  => $parts[1] ?? '',
-		);
+		];
 	}
 }

@@ -16,7 +16,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 	 * Constructor - register routes via rest_api_init hook
 	 */
 	public function __construct() {
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	/**
@@ -88,111 +88,111 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		register_rest_route(
 			'prm/v1',
 			'/slack/oauth/authorize',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'slack_oauth_authorize' ),
+				'callback'            => [ $this, 'slack_oauth_authorize' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Slack OAuth - Callback
 		register_rest_route(
 			'prm/v1',
 			'/slack/oauth/callback',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'slack_oauth_callback' ),
+				'callback'            => [ $this, 'slack_oauth_callback' ],
 				'permission_callback' => '__return_true', // Public endpoint, we verify state
-			)
+			]
 		);
 
 		// Slack - Disconnect
 		register_rest_route(
 			'prm/v1',
 			'/slack/disconnect',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'slack_disconnect' ),
+				'callback'            => [ $this, 'slack_disconnect' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Slack - Status
 		register_rest_route(
 			'prm/v1',
 			'/user/slack-status',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_slack_status' ),
+				'callback'            => [ $this, 'get_slack_status' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Slack - Commands (slash command endpoint)
 		register_rest_route(
 			'prm/v1',
 			'/slack/commands',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'slack_commands' ),
+				'callback'            => [ $this, 'slack_commands' ],
 				'permission_callback' => '__return_true', // Public endpoint, we verify signature
-			)
+			]
 		);
 
 		// Slack - Events (event subscription endpoint)
 		register_rest_route(
 			'prm/v1',
 			'/slack/events',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'slack_events' ),
+				'callback'            => [ $this, 'slack_events' ],
 				'permission_callback' => '__return_true', // Public endpoint, we verify signature
-			)
+			]
 		);
 
 		// Slack - Get channels and users
 		register_rest_route(
 			'prm/v1',
 			'/slack/channels',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_slack_channels' ),
+				'callback'            => [ $this, 'get_slack_channels' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Slack - Get notification targets
 		register_rest_route(
 			'prm/v1',
 			'/slack/targets',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_slack_targets' ),
+				'callback'            => [ $this, 'get_slack_targets' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Slack - Update notification targets
 		register_rest_route(
 			'prm/v1',
 			'/slack/targets',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'update_slack_targets' ),
+				'callback'            => [ $this, 'update_slack_targets' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Slack - Update webhook URL (legacy)
 		register_rest_route(
 			'prm/v1',
 			'/user/slack-webhook',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'update_slack_webhook' ),
+				'callback'            => [ $this, 'update_slack_webhook' ],
 				'permission_callback' => 'is_user_logged_in',
-				'args'                => array(
-					'webhook' => array(
+				'args'                => [
+					'webhook' => [
 						'required'          => false,
 						'validate_callback' => function ( $param ) {
 							if ( empty( $param ) ) {
@@ -204,9 +204,9 @@ class PRM_REST_Slack extends PRM_REST_Base {
 							$host = parse_url( $param, PHP_URL_HOST );
 							return $host === 'hooks.slack.com';
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 	}
 
@@ -219,7 +219,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'slack_not_configured',
 				__( 'Slack integration is not configured.', 'caelis' ),
-				array( 'status' => 500 )
+				[ 'status' => 500 ]
 			);
 		}
 
@@ -228,7 +228,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'not_authenticated',
 				__( 'You must be logged in to connect Slack.', 'caelis' ),
-				array( 'status' => 401 )
+				[ 'status' => 401 ]
 			);
 		}
 
@@ -241,20 +241,20 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		$redirect_uri = rest_url( 'prm/v1/slack/oauth/callback' );
 		$scopes       = 'chat:write,chat:write.public,channels:read,users:read,users:read.email,commands';
 
-		$params = array(
+		$params = [
 			'client_id'    => CAELIS_SLACK_CLIENT_ID,
 			'scope'        => $scopes,
 			'redirect_uri' => $redirect_uri,
 			'state'        => $state,
-		);
+		];
 
 		$oauth_url = 'https://slack.com/oauth/v2/authorize?' . http_build_query( $params );
 
 		// Return OAuth URL - frontend will handle redirect
 		return rest_ensure_response(
-			array(
+			[
 				'oauth_url' => $oauth_url,
-			)
+			]
 		);
 	}
 
@@ -313,15 +313,15 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		$redirect_uri = rest_url( 'prm/v1/slack/oauth/callback' );
 		$response     = wp_remote_post(
 			'https://slack.com/api/oauth.v2.access',
-			array(
-				'body'    => array(
+			[
+				'body'    => [
 					'client_id'     => CAELIS_SLACK_CLIENT_ID,
 					'client_secret' => CAELIS_SLACK_CLIENT_SECRET,
 					'code'          => $code,
 					'redirect_uri'  => $redirect_uri,
-				),
+				],
 				'timeout' => 30,
-			)
+			]
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -354,7 +354,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		// Auto-enable Slack channel
 		$channels = get_user_meta( $user_id, 'caelis_notification_channels', true );
 		if ( ! is_array( $channels ) ) {
-			$channels = array();
+			$channels = [];
 		}
 		if ( ! in_array( 'slack', $channels ) ) {
 			$channels[] = 'slack';
@@ -380,10 +380,10 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		$encrypted_token = get_user_meta( $user_id, 'caelis_slack_bot_token', true );
 		if ( empty( $encrypted_token ) ) {
 			return rest_ensure_response(
-				array(
+				[
 					'success' => true,
 					'message' => __( 'Slack was not connected.', 'caelis' ),
-				)
+				]
 			);
 		}
 
@@ -392,12 +392,12 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		// Revoke token via Slack API
 		wp_remote_post(
 			'https://slack.com/api/auth.revoke',
-			array(
-				'body'    => array(
+			[
+				'body'    => [
 					'token' => $bot_token,
-				),
+				],
 				'timeout' => 10,
-			)
+			]
 		);
 
 		// Remove stored data
@@ -409,15 +409,15 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		// Disable Slack channel
 		$channels = get_user_meta( $user_id, 'caelis_notification_channels', true );
 		if ( is_array( $channels ) ) {
-			$channels = array_diff( $channels, array( 'slack' ) );
+			$channels = array_diff( $channels, [ 'slack' ] );
 			update_user_meta( $user_id, 'caelis_notification_channels', $channels );
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'message' => __( 'Slack disconnected successfully.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -430,19 +430,19 @@ class PRM_REST_Slack extends PRM_REST_Base {
 
 		if ( empty( $bot_token ) ) {
 			return rest_ensure_response(
-				array(
+				[
 					'connected' => false,
-				)
+				]
 			);
 		}
 
 		$workspace_name = get_user_meta( $user_id, 'caelis_slack_workspace_name', true );
 
 		return rest_ensure_response(
-			array(
+			[
 				'connected'      => true,
 				'workspace_name' => $workspace_name ?: __( 'Unknown workspace', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -455,7 +455,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'slack_not_configured',
 				__( 'Slack integration is not configured.', 'caelis' ),
-				array( 'status' => 500 )
+				[ 'status' => 500 ]
 			);
 		}
 
@@ -474,7 +474,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'invalid_timestamp',
 				__( 'Request timestamp is invalid or too old.', 'caelis' ),
-				array( 'status' => 401 )
+				[ 'status' => 401 ]
 			);
 		}
 
@@ -483,7 +483,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'missing_signature',
 				__( 'Missing request signature.', 'caelis' ),
-				array( 'status' => 401 )
+				[ 'status' => 401 ]
 			);
 		}
 
@@ -494,7 +494,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'invalid_signature',
 				__( 'Invalid request signature.', 'caelis' ),
-				array( 'status' => 401 )
+				[ 'status' => 401 ]
 			);
 		}
 
@@ -505,16 +505,16 @@ class PRM_REST_Slack extends PRM_REST_Base {
 
 		if ( $command !== '/caelis' ) {
 			return rest_ensure_response(
-				array(
+				[
 					'response_type' => 'ephemeral',
 					'text'          => __( 'Unknown command.', 'caelis' ),
-				)
+				]
 			);
 		}
 
 		// Find WordPress user by Slack user ID
 		$wp_user_id = null;
-		$users      = get_users( array( 'fields' => 'ID' ) );
+		$users      = get_users( [ 'fields' => 'ID' ] );
 		foreach ( $users as $uid ) {
 			$stored_slack_user_id = get_user_meta( $uid, 'caelis_slack_user_id', true );
 			if ( $stored_slack_user_id === $slack_user_id ) {
@@ -525,10 +525,10 @@ class PRM_REST_Slack extends PRM_REST_Base {
 
 		if ( ! $wp_user_id ) {
 			return rest_ensure_response(
-				array(
+				[
 					'response_type' => 'ephemeral',
 					'text'          => __( 'You need to connect your Slack account first. Visit your Caelis settings to connect.', 'caelis' ),
-				)
+				]
 			);
 		}
 
@@ -541,18 +541,18 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			sprintf(
 				'Slack command for user %d: Found %d today, %d tomorrow, %d rest_of_week',
 				$wp_user_id,
-				count( $digest_data['today'] ?? array() ),
-				count( $digest_data['tomorrow'] ?? array() ),
-				count( $digest_data['rest_of_week'] ?? array() )
+				count( $digest_data['today'] ?? [] ),
+				count( $digest_data['tomorrow'] ?? [] ),
+				count( $digest_data['rest_of_week'] ?? [] )
 			)
 		);
 
 		if ( empty( $digest_data['today'] ) && empty( $digest_data['tomorrow'] ) && empty( $digest_data['rest_of_week'] ) ) {
 			return rest_ensure_response(
-				array(
+				[
 					'response_type' => 'ephemeral',
 					'text'          => __( 'You have no upcoming reminders.', 'caelis' ),
-				)
+				]
 			);
 		}
 
@@ -561,10 +561,10 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		$blocks        = $slack_channel->format_slack_blocks( $digest_data );
 
 		return rest_ensure_response(
-			array(
+			[
 				'response_type' => 'ephemeral',
 				'blocks'        => $blocks,
-			)
+			]
 		);
 	}
 
@@ -577,15 +577,15 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		// Handle URL verification challenge
 		if ( isset( $body['type'] ) && $body['type'] === 'url_verification' ) {
 			return rest_ensure_response(
-				array(
+				[
 					'challenge' => $body['challenge'],
-				)
+				]
 			);
 		}
 
 		// For other events, just acknowledge receipt
 		// We're not subscribing to any events, so this shouldn't be called
-		return rest_ensure_response( array( 'ok' => true ) );
+		return rest_ensure_response( [ 'ok' => true ] );
 	}
 
 	/**
@@ -599,41 +599,41 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'slack_not_connected',
 				__( 'Slack is not connected.', 'caelis' ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
 		$bot_token = $this->decrypt_token( $bot_token );
-		$channels  = array();
-		$users     = array();
+		$channels  = [];
+		$users     = [];
 
 		// Fetch public channels
 		$channels_response = wp_remote_post(
 			'https://slack.com/api/conversations.list',
-			array(
-				'headers' => array(
+			[
+				'headers' => [
 					'Authorization' => 'Bearer ' . $bot_token,
 					'Content-Type'  => 'application/json',
-				),
+				],
 				'body'    => json_encode(
-					array(
+					[
 						'types'            => 'public_channel,private_channel',
 						'exclude_archived' => true,
-					)
+					]
 				),
 				'timeout' => 10,
-			)
+			]
 		);
 
 		if ( ! is_wp_error( $channels_response ) ) {
 			$channels_body = json_decode( wp_remote_retrieve_body( $channels_response ), true );
 			if ( ! empty( $channels_body['ok'] ) && ! empty( $channels_body['channels'] ) ) {
 				foreach ( $channels_body['channels'] as $channel ) {
-					$channels[] = array(
+					$channels[] = [
 						'id'   => $channel['id'],
 						'name' => '#' . $channel['name'],
 						'type' => 'channel',
-					);
+					];
 				}
 			}
 		}
@@ -641,13 +641,13 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		// Fetch users
 		$users_response = wp_remote_post(
 			'https://slack.com/api/users.list',
-			array(
-				'headers' => array(
+			[
+				'headers' => [
 					'Authorization' => 'Bearer ' . $bot_token,
 					'Content-Type'  => 'application/json',
-				),
+				],
 				'timeout' => 10,
-			)
+			]
 		);
 
 		if ( ! is_wp_error( $users_response ) ) {
@@ -659,21 +659,21 @@ class PRM_REST_Slack extends PRM_REST_Base {
 					if ( ! empty( $user['deleted'] ) || ( ! empty( $user['is_bot'] ) && $user['id'] !== 'USLACKBOT' ) ) {
 						continue;
 					}
-					$users[] = array(
+					$users[] = [
 						'id'    => $user['id'],
 						'name'  => $user['real_name'] ?: $user['name'],
 						'type'  => 'user',
 						'is_me' => ( $user['id'] === $slack_user_id ),
-					);
+					];
 				}
 			}
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'channels' => $channels,
 				'users'    => $users,
-			)
+			]
 		);
 	}
 
@@ -687,13 +687,13 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( ! is_array( $targets ) ) {
 			// Default to user's own Slack user ID (DM)
 			$slack_user_id = get_user_meta( $user_id, 'caelis_slack_user_id', true );
-			$targets       = $slack_user_id ? array( $slack_user_id ) : array();
+			$targets       = $slack_user_id ? [ $slack_user_id ] : [];
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'targets' => $targets,
-			)
+			]
 		);
 	}
 
@@ -708,7 +708,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'invalid_targets',
 				__( 'Targets must be an array.', 'caelis' ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
@@ -718,16 +718,16 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		// If empty, default to user's Slack user ID
 		if ( empty( $targets ) ) {
 			$slack_user_id = get_user_meta( $user_id, 'caelis_slack_user_id', true );
-			$targets       = $slack_user_id ? array( $slack_user_id ) : array();
+			$targets       = $slack_user_id ? [ $slack_user_id ] : [];
 		}
 
 		update_user_meta( $user_id, 'caelis_slack_targets', $targets );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'targets' => $targets,
-			)
+			]
 		);
 	}
 
@@ -745,15 +745,15 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			// Also disable Slack channel if it's enabled
 			$channels = get_user_meta( $user_id, 'caelis_notification_channels', true );
 			if ( is_array( $channels ) ) {
-				$channels = array_diff( $channels, array( 'slack' ) );
+				$channels = array_diff( $channels, [ 'slack' ] );
 				update_user_meta( $user_id, 'caelis_notification_channels', $channels );
 			}
 
 			return rest_ensure_response(
-				array(
+				[
 					'success' => true,
 					'message' => __( 'Slack webhook removed.', 'caelis' ),
-				)
+				]
 			);
 		}
 
@@ -762,7 +762,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'invalid_webhook',
 				__( 'Invalid webhook URL.', 'caelis' ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
@@ -772,31 +772,31 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'invalid_webhook_domain',
 				__( 'Webhook URL must be from hooks.slack.com domain.', 'caelis' ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
 		// Test webhook with a simple message
-		$test_payload = array(
+		$test_payload = [
 			'text' => __( 'Caelis notification test', 'caelis' ),
-		);
+		];
 
 		$response = wp_remote_post(
 			$webhook,
-			array(
+			[
 				'body'    => json_encode( $test_payload ),
-				'headers' => array(
+				'headers' => [
 					'Content-Type' => 'application/json',
-				),
+				],
 				'timeout' => 10,
-			)
+			]
 		);
 
 		if ( is_wp_error( $response ) ) {
 			return new WP_Error(
 				'webhook_test_failed',
 				sprintf( __( 'Webhook test failed: %s', 'caelis' ), $response->get_error_message() ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
@@ -805,7 +805,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return new WP_Error(
 				'webhook_test_failed',
 				sprintf( __( 'Webhook test failed with status code: %d', 'caelis' ), $status_code ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
@@ -813,10 +813,10 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		update_user_meta( $user_id, 'caelis_slack_webhook', $webhook );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'message' => __( 'Slack webhook configured successfully.', 'caelis' ),
-			)
+			]
 		);
 	}
 }

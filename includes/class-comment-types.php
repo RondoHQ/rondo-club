@@ -17,13 +17,13 @@ class PRM_Comment_Types {
 
 	public function __construct() {
 		// Register REST API routes for notes and activities
-		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
 
 		// Register comment meta on REST API init (when function is available)
-		add_action( 'rest_api_init', array( $this, 'register_comment_meta' ) );
+		add_action( 'rest_api_init', [ $this, 'register_comment_meta' ] );
 
 		// Exclude custom comment types from regular comment queries
-		add_filter( 'pre_get_comments', array( $this, 'exclude_from_regular_queries' ) );
+		add_filter( 'pre_get_comments', [ $this, 'exclude_from_regular_queries' ] );
 	}
 
 	/**
@@ -39,62 +39,62 @@ class PRM_Comment_Types {
 		register_comment_meta(
 			'comment',
 			'activity_type',
-			array(
+			[
 				'type'         => 'string',
 				'description'  => 'Type of activity',
 				'single'       => true,
 				'show_in_rest' => true,
-			)
+			]
 		);
 
 		register_comment_meta(
 			'comment',
 			'activity_date',
-			array(
+			[
 				'type'         => 'string',
 				'description'  => 'Date of the activity',
 				'single'       => true,
 				'show_in_rest' => true,
-			)
+			]
 		);
 
 		register_comment_meta(
 			'comment',
 			'activity_time',
-			array(
+			[
 				'type'         => 'string',
 				'description'  => 'Time of the activity',
 				'single'       => true,
 				'show_in_rest' => true,
-			)
+			]
 		);
 
 		register_comment_meta(
 			'comment',
 			'participants',
-			array(
+			[
 				'type'         => 'array',
 				'description'  => 'IDs of other people involved',
 				'single'       => true,
-				'show_in_rest' => array(
-					'schema' => array(
+				'show_in_rest' => [
+					'schema' => [
 						'type'  => 'array',
-						'items' => array( 'type' => 'integer' ),
-					),
-				),
-			)
+						'items' => [ 'type' => 'integer' ],
+					],
+				],
+			]
 		);
 
 		// Note visibility meta
 		register_comment_meta(
 			'comment',
 			'_note_visibility',
-			array(
+			[
 				'type'         => 'string',
 				'description'  => 'Note visibility: private (only author) or shared (anyone who can see the contact)',
 				'single'       => true,
 				'show_in_rest' => true,
-			)
+			]
 		);
 	}
 
@@ -106,88 +106,88 @@ class PRM_Comment_Types {
 		register_rest_route(
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/notes',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_notes' ),
-					'permission_callback' => array( $this, 'check_person_access' ),
-					'args'                => array(
-						'person_id' => array(
+					'callback'            => [ $this, 'get_notes' ],
+					'permission_callback' => [ $this, 'check_person_access' ],
+					'args'                => [
+						'person_id' => [
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
-						),
-					),
-				),
-				array(
+						],
+					],
+				],
+				[
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'create_note' ),
-					'permission_callback' => array( $this, 'check_person_access' ),
-				),
-			)
+					'callback'            => [ $this, 'create_note' ],
+					'permission_callback' => [ $this, 'check_person_access' ],
+				],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/notes/(?P<id>\d+)',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_note' ),
-					'permission_callback' => array( $this, 'check_comment_access' ),
-				),
-				array(
+					'callback'            => [ $this, 'update_note' ],
+					'permission_callback' => [ $this, 'check_comment_access' ],
+				],
+				[
 					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_note' ),
-					'permission_callback' => array( $this, 'check_comment_access' ),
-				),
-			)
+					'callback'            => [ $this, 'delete_note' ],
+					'permission_callback' => [ $this, 'check_comment_access' ],
+				],
+			]
 		);
 
 		// Activities endpoints
 		register_rest_route(
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/activities',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_activities' ),
-					'permission_callback' => array( $this, 'check_person_access' ),
-				),
-				array(
+					'callback'            => [ $this, 'get_activities' ],
+					'permission_callback' => [ $this, 'check_person_access' ],
+				],
+				[
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'create_activity' ),
-					'permission_callback' => array( $this, 'check_person_access' ),
-				),
-			)
+					'callback'            => [ $this, 'create_activity' ],
+					'permission_callback' => [ $this, 'check_person_access' ],
+				],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/activities/(?P<id>\d+)',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_activity' ),
-					'permission_callback' => array( $this, 'check_comment_access' ),
-				),
-				array(
+					'callback'            => [ $this, 'update_activity' ],
+					'permission_callback' => [ $this, 'check_comment_access' ],
+				],
+				[
 					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_activity' ),
-					'permission_callback' => array( $this, 'check_comment_access' ),
-				),
-			)
+					'callback'            => [ $this, 'delete_activity' ],
+					'permission_callback' => [ $this, 'check_comment_access' ],
+				],
+			]
 		);
 
 		// Timeline endpoint (combined notes + activities)
 		register_rest_route(
 			'prm/v1',
 			'/people/(?P<person_id>\d+)/timeline',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_timeline' ),
-				'permission_callback' => array( $this, 'check_person_access' ),
-			)
+				'callback'            => [ $this, 'get_timeline' ],
+				'permission_callback' => [ $this, 'check_person_access' ],
+			]
 		);
 	}
 
@@ -235,13 +235,13 @@ class PRM_Comment_Types {
 		$person_id = $request->get_param( 'person_id' );
 
 		$comments = get_comments(
-			array(
+			[
 				'post_id' => $person_id,
 				'type'    => self::TYPE_NOTE,
 				'status'  => 'approve',
 				'orderby' => 'comment_date',
 				'order'   => 'DESC',
-			)
+			]
 		);
 
 		// Filter notes based on visibility
@@ -260,26 +260,26 @@ class PRM_Comment_Types {
 		$visibility = sanitize_text_field( $request->get_param( 'visibility' ) );
 
 		// Default to private if not specified or invalid
-		if ( ! in_array( $visibility, array( 'private', 'shared' ), true ) ) {
+		if ( ! in_array( $visibility, [ 'private', 'shared' ], true ) ) {
 			$visibility = 'private';
 		}
 
 		if ( empty( $content ) ) {
-			return new WP_Error( 'empty_content', __( 'Note content is required.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_content', __( 'Note content is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$comment_id = wp_insert_comment(
-			array(
+			[
 				'comment_post_ID'  => $person_id,
 				'comment_content'  => $content,
 				'comment_type'     => self::TYPE_NOTE,
 				'user_id'          => get_current_user_id(),
 				'comment_approved' => 1,
-			)
+			]
 		);
 
 		if ( ! $comment_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create note.', 'caelis' ), array( 'status' => 500 ) );
+			return new WP_Error( 'create_failed', __( 'Failed to create note.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Save visibility meta
@@ -306,21 +306,21 @@ class PRM_Comment_Types {
 		$visibility = $request->get_param( 'visibility' );
 
 		$result = wp_update_comment(
-			array(
+			[
 				'comment_ID'      => $comment_id,
 				'comment_content' => $content,
-			)
+			]
 		);
 
 		// wp_update_comment returns false on failure, 0 if no changes, 1 if updated.
 		if ( false === $result || is_wp_error( $result ) ) {
-			return new WP_Error( 'update_failed', __( 'Failed to update note.', 'caelis' ), array( 'status' => 500 ) );
+			return new WP_Error( 'update_failed', __( 'Failed to update note.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Update visibility if provided.
 		if ( null !== $visibility ) {
 			$visibility = sanitize_text_field( $visibility );
-			if ( in_array( $visibility, array( 'private', 'shared' ), true ) ) {
+			if ( in_array( $visibility, [ 'private', 'shared' ], true ) ) {
 				update_comment_meta( $comment_id, '_note_visibility', $visibility );
 			}
 		}
@@ -347,10 +347,10 @@ class PRM_Comment_Types {
 		$result = wp_delete_comment( $comment_id, true );
 
 		if ( ! $result ) {
-			return new WP_Error( 'delete_failed', __( 'Failed to delete note.', 'caelis' ), array( 'status' => 500 ) );
+			return new WP_Error( 'delete_failed', __( 'Failed to delete note.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
-		return rest_ensure_response( array( 'deleted' => true ) );
+		return rest_ensure_response( [ 'deleted' => true ] );
 	}
 
 	/**
@@ -360,13 +360,13 @@ class PRM_Comment_Types {
 		$person_id = $request->get_param( 'person_id' );
 
 		$comments = get_comments(
-			array(
+			[
 				'post_id' => $person_id,
 				'type'    => self::TYPE_ACTIVITY,
 				'status'  => 'approve',
 				'orderby' => 'comment_date',
 				'order'   => 'DESC',
-			)
+			]
 		);
 
 		return rest_ensure_response( $this->format_comments( $comments, 'activity' ) );
@@ -382,24 +382,24 @@ class PRM_Comment_Types {
 		$activity_type = sanitize_text_field( $request->get_param( 'activity_type' ) );
 		$activity_date = sanitize_text_field( $request->get_param( 'activity_date' ) );
 		$activity_time = sanitize_text_field( $request->get_param( 'activity_time' ) );
-		$participants  = $request->get_param( 'participants' ) ?: array();
+		$participants  = $request->get_param( 'participants' ) ?: [];
 
 		if ( empty( $content ) ) {
-			return new WP_Error( 'empty_content', __( 'Activity description is required.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_content', __( 'Activity description is required.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$comment_id = wp_insert_comment(
-			array(
+			[
 				'comment_post_ID'  => $person_id,
 				'comment_content'  => $content,
 				'comment_type'     => self::TYPE_ACTIVITY,
 				'user_id'          => get_current_user_id(),
 				'comment_approved' => 1,
-			)
+			]
 		);
 
 		if ( ! $comment_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create activity.', 'caelis' ), array( 'status' => 500 ) );
+			return new WP_Error( 'create_failed', __( 'Failed to create activity.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		// Save meta
@@ -434,10 +434,10 @@ class PRM_Comment_Types {
 		$participants  = $request->get_param( 'participants' );
 
 		$result = wp_update_comment(
-			array(
+			[
 				'comment_ID'      => $comment_id,
 				'comment_content' => $content,
-			)
+			]
 		);
 
 		// Update meta.
@@ -474,16 +474,16 @@ class PRM_Comment_Types {
 		$current_user_id = get_current_user_id();
 
 		$comments = get_comments(
-			array(
+			[
 				'post_id'  => $person_id,
-				'type__in' => array( self::TYPE_NOTE, self::TYPE_ACTIVITY ),
+				'type__in' => [ self::TYPE_NOTE, self::TYPE_ACTIVITY ],
 				'status'   => 'approve',
 				'orderby'  => 'comment_date',
 				'order'    => 'DESC',
-			)
+			]
 		);
 
-		$timeline = array();
+		$timeline = [];
 
 		foreach ( $comments as $comment ) {
 			$type = 'note';
@@ -507,45 +507,45 @@ class PRM_Comment_Types {
 		// Access control is automatic via PRM_Access_Control hooks on WP_Query
 		// Use LIKE query since ACF stores serialized arrays for related_persons
 		$todos = get_posts(
-			array(
+			[
 				'post_type'      => 'prm_todo',
-				'post_status'    => array( 'prm_open', 'prm_awaiting', 'prm_completed' ),
+				'post_status'    => [ 'prm_open', 'prm_awaiting', 'prm_completed' ],
 				'posts_per_page' => -1,
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'related_persons',
 						'value'   => sprintf( '"%d"', $person_id ),
 						'compare' => 'LIKE',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Map post status to frontend status values
-		$status_map = array(
+		$status_map = [
 			'prm_open'      => 'open',
 			'prm_awaiting'  => 'awaiting',
 			'prm_completed' => 'completed',
-		);
+		];
 
 		foreach ( $todos as $todo ) {
 			// Get all related persons for this todo
-			$related_person_ids = get_field( 'related_persons', $todo->ID ) ?: array();
+			$related_person_ids = get_field( 'related_persons', $todo->ID ) ?: [];
 			if ( ! is_array( $related_person_ids ) ) {
-				$related_person_ids = $related_person_ids ? array( $related_person_ids ) : array();
+				$related_person_ids = $related_person_ids ? [ $related_person_ids ] : [];
 			}
 
 			// Build persons array with details
-			$persons = array();
+			$persons = [];
 			foreach ( $related_person_ids as $pid ) {
-				$persons[] = array(
+				$persons[] = [
 					'id'        => (int) $pid,
 					'name'      => get_the_title( $pid ),
 					'thumbnail' => get_the_post_thumbnail_url( $pid, 'thumbnail' ) ?: null,
-				);
+				];
 			}
 
-			$timeline[] = array(
+			$timeline[] = [
 				'id'             => $todo->ID,
 				'type'           => 'todo',
 				'content'        => $todo->post_title,
@@ -561,7 +561,7 @@ class PRM_Comment_Types {
 				'is_completed'   => 'prm_completed' === $todo->post_status,
 				'due_date'       => get_field( 'due_date', $todo->ID ) ?: null,
 				'awaiting_since' => get_field( 'awaiting_since', $todo->ID ) ?: null,
-			);
+			];
 		}
 
 		// Sort timeline by created date descending
@@ -605,7 +605,7 @@ class PRM_Comment_Types {
 			$content = str_replace( '<a href=', '<a target="_blank" rel="noopener noreferrer" href=', $content );
 		}
 
-		$data = array(
+		$data = [
 			'id'        => (int) $comment->comment_ID,
 			'type'      => $type,
 			'content'   => $content,
@@ -614,14 +614,14 @@ class PRM_Comment_Types {
 			'author'    => get_the_author_meta( 'display_name', $comment->user_id ),
 			'created'   => $comment->comment_date,
 			'modified'  => $comment->comment_date, // Comments don't track modified date
-		);
+		];
 
 		// Add activity-specific meta.
 		if ( 'activity' === $type ) {
 			$data['activity_type'] = get_comment_meta( $comment->comment_ID, 'activity_type', true );
 			$data['activity_date'] = get_comment_meta( $comment->comment_ID, 'activity_date', true );
 			$data['activity_time'] = get_comment_meta( $comment->comment_ID, 'activity_time', true );
-			$data['participants']  = get_comment_meta( $comment->comment_ID, 'participants', true ) ?: array();
+			$data['participants']  = get_comment_meta( $comment->comment_ID, 'participants', true ) ?: [];
 		}
 
 		// Add note-specific meta (visibility).
@@ -682,15 +682,15 @@ class PRM_Comment_Types {
 		}
 
 		// Ensure type__not_in is an array
-		$existing_types = $query->query_vars['type__not_in'] ?? array();
+		$existing_types = $query->query_vars['type__not_in'] ?? [];
 		if ( ! is_array( $existing_types ) ) {
-			$existing_types = array();
+			$existing_types = [];
 		}
 
 		// Exclude our custom types from regular comment displays
 		$query->query_vars['type__not_in'] = array_merge(
 			$existing_types,
-			array( self::TYPE_NOTE, self::TYPE_ACTIVITY )
+			[ self::TYPE_NOTE, self::TYPE_ACTIVITY ]
 		);
 	}
 }

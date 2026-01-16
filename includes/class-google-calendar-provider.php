@@ -52,13 +52,13 @@ class PRM_Google_Calendar_Provider {
 
 		do {
 			try {
-				$params = array(
+				$params = [
 					'timeMin'      => $start_date->format( 'c' ),
 					'timeMax'      => $end_date->format( 'c' ),
 					'singleEvents' => true,
 					'orderBy'      => 'startTime',
 					'maxResults'   => 250,
-				);
+				];
 
 				if ( $page_token ) {
 					$params['pageToken'] = $page_token;
@@ -88,11 +88,11 @@ class PRM_Google_Calendar_Provider {
 			}
 		} while ( $page_token );
 
-		return array(
+		return [
 			'created' => $created,
 			'updated' => $updated,
 			'total'   => $total,
-		);
+		];
 	}
 
 	/**
@@ -131,23 +131,23 @@ class PRM_Google_Calendar_Provider {
 
 		// Check for existing event
 		$existing = get_posts(
-			array(
+			[
 				'post_type'      => 'calendar_event',
 				'author'         => $user_id,
-				'meta_query'     => array(
+				'meta_query'     => [
 					'relation' => 'AND',
-					array(
+					[
 						'key'   => '_event_uid',
 						'value' => $event_uid,
-					),
-					array(
+					],
+					[
 						'key'   => '_connection_id',
 						'value' => $connection_id,
-					),
-				),
+					],
+				],
 				'posts_per_page' => 1,
 				'fields'         => 'ids',
-			)
+			]
 		);
 
 		$existing_id = ! empty( $existing ) ? $existing[0] : null;
@@ -166,14 +166,14 @@ class PRM_Google_Calendar_Provider {
 		$organizer_email = $organizer ? $organizer->getEmail() : '';
 
 		// Build post data
-		$post_data = array(
+		$post_data = [
 			'post_type'    => 'calendar_event',
 			'post_title'   => sanitize_text_field( $event->getSummary() ?: '(No title)' ),
 			'post_content' => sanitize_textarea_field( $event->getDescription() ?: '' ),
 			'post_author'  => $user_id,
 			'post_status'  => 'publish',
 			'post_date'    => $start_time,
-		);
+		];
 
 		$action = 'updated';
 		if ( $existing_id ) {
@@ -206,10 +206,10 @@ class PRM_Google_Calendar_Provider {
 		$matches = PRM_Calendar_Matcher::match_attendees( $user_id, $attendees );
 		update_post_meta( $post_id, '_matched_people', wp_json_encode( $matches ) );
 
-		return array(
+		return [
 			'post_id' => $post_id,
 			'action'  => $action,
-		);
+		];
 	}
 
 	/**
@@ -221,21 +221,21 @@ class PRM_Google_Calendar_Provider {
 	private static function extract_attendees( $event ): array {
 		$attendees = $event->getAttendees();
 		if ( ! $attendees || ! is_array( $attendees ) ) {
-			return array();
+			return [];
 		}
 
-		$result = array();
+		$result = [];
 		foreach ( $attendees as $attendee ) {
 			$email = $attendee->getEmail();
 			if ( empty( $email ) ) {
 				continue;
 			}
 
-			$result[] = array(
+			$result[] = [
 				'email'  => sanitize_email( $email ),
 				'name'   => sanitize_text_field( $attendee->getDisplayName() ?: '' ),
 				'status' => sanitize_text_field( $attendee->getResponseStatus() ?: 'needsAction' ),
-			);
+			];
 		}
 
 		return $result;

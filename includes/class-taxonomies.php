@@ -10,11 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class PRM_Taxonomies {
 
 	public function __construct() {
-		add_action( 'init', array( $this, 'register_taxonomies' ) );
+		add_action( 'init', [ $this, 'register_taxonomies' ] );
 
 		// Workspace term sync hooks
-		add_action( 'save_post_workspace', array( $this, 'ensure_workspace_term' ), 10, 3 );
-		add_action( 'before_delete_post', array( $this, 'cleanup_workspace_term' ) );
+		add_action( 'save_post_workspace', [ $this, 'ensure_workspace_term' ], 10, 3 );
+		add_action( 'before_delete_post', [ $this, 'cleanup_workspace_term' ] );
 	}
 
 	/**
@@ -49,18 +49,18 @@ class PRM_Taxonomies {
 			wp_update_term(
 				$existing_term['term_id'],
 				'workspace_access',
-				array(
+				[
 					'name' => $term_name,
-				)
+				]
 			);
 		} else {
 			// Create new term
 			wp_insert_term(
 				$term_name,
 				'workspace_access',
-				array(
+				[
 					'slug' => $term_slug,
-				)
+				]
 			);
 		}
 	}
@@ -106,7 +106,7 @@ class PRM_Taxonomies {
 	 * Terms are auto-created when workspaces are created (Phase 8).
 	 */
 	private function register_workspace_access_taxonomy() {
-		$labels = array(
+		$labels = [
 			'name'          => _x( 'Workspace Access', 'taxonomy general name', 'caelis' ),
 			'singular_name' => _x( 'Workspace Access', 'taxonomy singular name', 'caelis' ),
 			'search_items'  => __( 'Search Workspace Access', 'caelis' ),
@@ -116,9 +116,9 @@ class PRM_Taxonomies {
 			'add_new_item'  => __( 'Add New Workspace Access', 'caelis' ),
 			'new_item_name' => __( 'New Workspace Access Name', 'caelis' ),
 			'menu_name'     => __( 'Workspace Access', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'hierarchical'      => false,
 			'labels'            => $labels,
 			'show_ui'           => true,
@@ -126,16 +126,16 @@ class PRM_Taxonomies {
 			'show_in_rest'      => true,
 			'query_var'         => true,
 			'rewrite'           => false, // No frontend permalinks needed
-		);
+		];
 
-		register_taxonomy( 'workspace_access', array( 'person', 'company', 'important_date' ), $args );
+		register_taxonomy( 'workspace_access', [ 'person', 'company', 'important_date' ], $args );
 	}
 
 	/**
 	 * Register Person Label Taxonomy
 	 */
 	private function register_person_label_taxonomy() {
-		$labels = array(
+		$labels = [
 			'name'          => _x( 'Labels', 'taxonomy general name', 'caelis' ),
 			'singular_name' => _x( 'Label', 'taxonomy singular name', 'caelis' ),
 			'search_items'  => __( 'Search Labels', 'caelis' ),
@@ -145,26 +145,26 @@ class PRM_Taxonomies {
 			'add_new_item'  => __( 'Add New Label', 'caelis' ),
 			'new_item_name' => __( 'New Label Name', 'caelis' ),
 			'menu_name'     => __( 'Labels', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'hierarchical'      => false,
 			'labels'            => $labels,
 			'show_ui'           => true,
 			'show_admin_column' => true,
 			'show_in_rest'      => true,
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'person-label' ),
-		);
+			'rewrite'           => [ 'slug' => 'person-label' ],
+		];
 
-		register_taxonomy( 'person_label', array( 'person' ), $args );
+		register_taxonomy( 'person_label', [ 'person' ], $args );
 	}
 
 	/**
 	 * Register Company Label Taxonomy
 	 */
 	private function register_company_label_taxonomy() {
-		$labels = array(
+		$labels = [
 			'name'          => _x( 'Company Labels', 'taxonomy general name', 'caelis' ),
 			'singular_name' => _x( 'Company Label', 'taxonomy singular name', 'caelis' ),
 			'search_items'  => __( 'Search Company Labels', 'caelis' ),
@@ -174,26 +174,26 @@ class PRM_Taxonomies {
 			'add_new_item'  => __( 'Add New Company Label', 'caelis' ),
 			'new_item_name' => __( 'New Company Label Name', 'caelis' ),
 			'menu_name'     => __( 'Labels', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'hierarchical'      => false,
 			'labels'            => $labels,
 			'show_ui'           => true,
 			'show_admin_column' => true,
 			'show_in_rest'      => true,
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'company-label' ),
-		);
+			'rewrite'           => [ 'slug' => 'company-label' ],
+		];
 
-		register_taxonomy( 'company_label', array( 'company' ), $args );
+		register_taxonomy( 'company_label', [ 'company' ], $args );
 	}
 
 	/**
 	 * Register Relationship Type Taxonomy
 	 */
 	private function register_relationship_type_taxonomy() {
-		$labels = array(
+		$labels = [
 			'name'          => _x( 'Relationship Types', 'taxonomy general name', 'caelis' ),
 			'singular_name' => _x( 'Relationship Type', 'taxonomy singular name', 'caelis' ),
 			'search_items'  => __( 'Search Relationship Types', 'caelis' ),
@@ -203,19 +203,19 @@ class PRM_Taxonomies {
 			'add_new_item'  => __( 'Add New Relationship Type', 'caelis' ),
 			'new_item_name' => __( 'New Relationship Type Name', 'caelis' ),
 			'menu_name'     => __( 'Relationship Types', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'hierarchical'      => true,
 			'labels'            => $labels,
 			'show_ui'           => true,
 			'show_admin_column' => false,
 			'show_in_rest'      => true,
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'relationship-type' ),
-		);
+			'rewrite'           => [ 'slug' => 'relationship-type' ],
+		];
 
-		register_taxonomy( 'relationship_type', array( 'person' ), $args );
+		register_taxonomy( 'relationship_type', [ 'person' ], $args );
 
 		// Add default terms on activation
 		$this->add_default_relationship_types();
@@ -225,7 +225,7 @@ class PRM_Taxonomies {
 	 * Register Date Type Taxonomy
 	 */
 	private function register_date_type_taxonomy() {
-		$labels = array(
+		$labels = [
 			'name'          => _x( 'Date Types', 'taxonomy general name', 'caelis' ),
 			'singular_name' => _x( 'Date Type', 'taxonomy singular name', 'caelis' ),
 			'search_items'  => __( 'Search Date Types', 'caelis' ),
@@ -235,19 +235,19 @@ class PRM_Taxonomies {
 			'add_new_item'  => __( 'Add New Date Type', 'caelis' ),
 			'new_item_name' => __( 'New Date Type Name', 'caelis' ),
 			'menu_name'     => __( 'Date Types', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'hierarchical'      => true,
 			'labels'            => $labels,
 			'show_ui'           => true,
 			'show_admin_column' => true,
 			'show_in_rest'      => true,
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'date-type' ),
-		);
+			'rewrite'           => [ 'slug' => 'date-type' ],
+		];
 
-		register_taxonomy( 'date_type', array( 'important_date' ), $args );
+		register_taxonomy( 'date_type', [ 'important_date' ], $args );
 
 		// Add default terms on activation
 		$this->add_default_date_types();
@@ -257,7 +257,7 @@ class PRM_Taxonomies {
 	 * Add default relationship types
 	 */
 	private function add_default_relationship_types() {
-		$defaults = array(
+		$defaults = [
 			// Basic relationships
 			'partner'      => __( 'Partner', 'caelis' ),
 			'spouse'       => __( 'Spouse', 'caelis' ),
@@ -295,11 +295,11 @@ class PRM_Taxonomies {
 			'subordinate'  => __( 'Subordinate', 'caelis' ),
 			'mentor'       => __( 'Mentor', 'caelis' ),
 			'mentee'       => __( 'Mentee', 'caelis' ),
-		);
+		];
 
 		foreach ( $defaults as $slug => $name ) {
 			if ( ! term_exists( $slug, 'relationship_type' ) ) {
-				wp_insert_term( $name, 'relationship_type', array( 'slug' => $slug ) );
+				wp_insert_term( $name, 'relationship_type', [ 'slug' => $slug ] );
 			}
 		}
 
@@ -313,12 +313,12 @@ class PRM_Taxonomies {
 	 */
 	public function setup_default_relationship_configurations() {
 		// Get all relationship type terms by slug
-		$types     = array();
+		$types     = [];
 		$all_terms = get_terms(
-			array(
+			[
 				'taxonomy'   => 'relationship_type',
 				'hide_empty' => false,
-			)
+			]
 		);
 
 		if ( ! is_wp_error( $all_terms ) ) {
@@ -328,7 +328,7 @@ class PRM_Taxonomies {
 		}
 
 		// Symmetric relationships (same type as inverse)
-		$symmetric = array( 'spouse', 'friend', 'colleague', 'acquaintance', 'sibling', 'cousin', 'partner' );
+		$symmetric = [ 'spouse', 'friend', 'colleague', 'acquaintance', 'sibling', 'cousin', 'partner' ];
 		foreach ( $symmetric as $slug ) {
 			if ( isset( $types[ $slug ] ) ) {
 				$inverse = get_field( 'inverse_relationship_type', 'relationship_type_' . $types[ $slug ] );
@@ -339,7 +339,7 @@ class PRM_Taxonomies {
 		}
 
 		// Asymmetric parent-child relationships
-		$asymmetric = array(
+		$asymmetric = [
 			'parent'      => 'child',
 			'child'       => 'parent',
 			'grandparent' => 'grandchild',
@@ -352,7 +352,7 @@ class PRM_Taxonomies {
 			'subordinate' => 'boss',
 			'mentor'      => 'mentee',
 			'mentee'      => 'mentor',
-		);
+		];
 
 		foreach ( $asymmetric as $from_slug => $to_slug ) {
 			if ( isset( $types[ $from_slug ] ) && isset( $types[ $to_slug ] ) ) {
@@ -365,7 +365,7 @@ class PRM_Taxonomies {
 
 		// Gender-dependent relationships
 		// Aunt/Uncle group - these map to Niece/Nephew based on the related person's gender
-		$aunt_uncle_group = array( 'aunt', 'uncle' );
+		$aunt_uncle_group = [ 'aunt', 'uncle' ];
 		foreach ( $aunt_uncle_group as $slug ) {
 			if ( isset( $types[ $slug ] ) ) {
 				$term_id             = $types[ $slug ];
@@ -388,7 +388,7 @@ class PRM_Taxonomies {
 		}
 
 		// Niece/Nephew group - these map to Aunt/Uncle based on the related person's gender
-		$niece_nephew_group = array( 'niece', 'nephew' );
+		$niece_nephew_group = [ 'niece', 'nephew' ];
 		foreach ( $niece_nephew_group as $slug ) {
 			if ( isset( $types[ $slug ] ) ) {
 				$term_id             = $types[ $slug ];
@@ -415,7 +415,7 @@ class PRM_Taxonomies {
 	 * Add default date types - aligned with Monica CRM life event types
 	 */
 	private function add_default_date_types() {
-		$defaults = array(
+		$defaults = [
 			// Core types
 			'birthday'                => __( 'Birthday', 'caelis' ),
 			'memorial'                => __( 'Memorial', 'caelis' ),
@@ -469,11 +469,11 @@ class PRM_Taxonomies {
 
 			// Fallback
 			'other'                   => __( 'Other', 'caelis' ),
-		);
+		];
 
 		foreach ( $defaults as $slug => $name ) {
 			if ( ! term_exists( $slug, 'date_type' ) ) {
-				wp_insert_term( $name, 'date_type', array( 'slug' => $slug ) );
+				wp_insert_term( $name, 'date_type', [ 'slug' => $slug ] );
 			}
 		}
 	}

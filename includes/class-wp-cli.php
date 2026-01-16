@@ -61,7 +61,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				}
 
 				WP_CLI::log( sprintf( 'Processing reminders for user: %s (ID: %d)', $user->display_name, $specific_user_id ) );
-				$users_to_notify = array( $specific_user_id );
+				$users_to_notify = [ $specific_user_id ];
 			} else {
 				// Get all users who should receive reminders
 				$users_to_notify = $this->get_all_users_to_notify();
@@ -216,13 +216,13 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( sprintf( 'Found %d important date(s) in system.', count( $date_ids ) ) );
 
 			if ( empty( $date_ids ) ) {
-				return array();
+				return [];
 			}
 
 			// Get full post objects
 			$dates = array_map( 'get_post', $date_ids );
 
-			$user_ids = array();
+			$user_ids = [];
 
 			foreach ( $dates as $date_post ) {
 				// Get related people using ACF (handles repeater fields correctly)
@@ -235,7 +235,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				// Ensure it's an array
 				if ( ! is_array( $related_people ) ) {
-					$related_people = array( $related_people );
+					$related_people = [ $related_people ];
 				}
 
 				WP_CLI::debug( sprintf( 'Date "%s" (ID: %d) has %d related people.', $date_post->post_title, $date_post->ID, count( $related_people ) ) );
@@ -322,8 +322,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$people_with_addresses = 0;
 
 			foreach ( $person_ids as $post_id ) {
-				$contact_info       = get_field( 'contact_info', $post_id ) ?: array();
-				$existing_addresses = get_field( 'addresses', $post_id ) ?: array();
+				$contact_info       = get_field( 'contact_info', $post_id ) ?: [];
+				$existing_addresses = get_field( 'addresses', $post_id ) ?: [];
 
 				// Find address entries in contact_info
 				$address_entries = array_filter(
@@ -350,19 +350,19 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				// Build new addresses array from address entries
 				$new_addresses        = $existing_addresses;
-				$updated_contact_info = array();
+				$updated_contact_info = [];
 
 				foreach ( $contact_info as $item ) {
 					if ( isset( $item['contact_type'] ) && 'address' === $item['contact_type'] ) {
 						// Migrate to addresses field
-						$new_addresses[] = array(
+						$new_addresses[] = [
 							'address_label' => $item['contact_label'] ?? '',
 							'street'        => $item['contact_value'] ?? '', // Put full address in street
 							'postal_code'   => '',
 							'city'          => '',
 							'state'         => '',
 							'country'       => '',
-						);
+						];
 						++$addresses_migrated;
 						WP_CLI::log( sprintf( '  → Moving: "%s" to addresses field', $item['contact_value'] ?? '' ) );
 					} else {
@@ -540,13 +540,13 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::log( 'Addresses:' );
 				foreach ( $parsed['addresses'] as $addr ) {
 					$parts = array_filter(
-						array(
+						[
 							$addr['street'] ?? '',
 							$addr['city'] ?? '',
 							$addr['state'] ?? '',
 							$addr['postal_code'] ?? '',
 							$addr['country'] ?? '',
-						)
+						]
 					);
 					$label = $addr['address_label'] ?? 'Address';
 					WP_CLI::log( sprintf( '  %s: %s', $label, implode( ', ', $parts ) ) );
@@ -593,11 +593,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			// Determine which post types to process.
-			$post_types = array();
+			$post_types = [];
 			if ( 'all' === $post_type ) {
-				$post_types = array( 'person', 'company', 'important_date' );
-			} elseif ( in_array( $post_type, array( 'person', 'company', 'important_date' ) ) ) {
-				$post_types = array( $post_type );
+				$post_types = [ 'person', 'company', 'important_date' ];
+			} elseif ( in_array( $post_type, [ 'person', 'company', 'important_date' ] ) ) {
+				$post_types = [ $post_type ];
 			} else {
 				WP_CLI::error( 'Invalid post type. Use: person, company, important_date, or all' );
 				return;
@@ -657,10 +657,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			if ( empty( $post_ids ) ) {
 				WP_CLI::log( sprintf( 'No %s posts found.', $post_type ) );
-				return array(
+				return [
 					'updated' => 0,
 					'skipped' => 0,
-				);
+				];
 			}
 
 			WP_CLI::log( sprintf( 'Processing %d %s post(s)...', count( $post_ids ), $post_type ) );
@@ -691,10 +691,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			WP_CLI::log( sprintf( '  %s: %d updated, %d skipped', ucfirst( $post_type ), $updated, $skipped ) );
 
-			return array(
+			return [
 				'updated' => $updated,
 				'skipped' => $skipped,
-			);
+			];
 		}
 	}
 
@@ -752,8 +752,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '' );
 
 			// We need to call the internal method directly, so we'll replicate the logic
-			$post_types = array( 'person', 'company', 'important_date' );
-			$results    = array();
+			$post_types = [ 'person', 'company', 'important_date' ];
+			$results    = [];
 
 			foreach ( $post_types as $post_type ) {
 				$result                = $this->migrate_post_type( $post_type, $dry_run );
@@ -830,7 +830,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( 'Validating multi-user migration status...' );
 			WP_CLI::log( '' );
 
-			$post_types    = array( 'person', 'company', 'important_date' );
+			$post_types    = [ 'person', 'company', 'important_date' ];
 			$all_valid     = true;
 			$total_with    = 0;
 			$total_without = 0;
@@ -938,10 +938,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			if ( empty( $post_ids ) ) {
 				WP_CLI::log( sprintf( 'No %s found.', $label ) );
-				return array(
+				return [
 					'updated' => 0,
 					'skipped' => 0,
-				);
+				];
 			}
 
 			WP_CLI::log( sprintf( 'Processing %d %s...', count( $post_ids ), $label ) );
@@ -968,10 +968,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$action = $dry_run ? 'Would update' : 'Updated';
 			WP_CLI::log( sprintf( '  %s: %d, skipped: %d', $action, $updated, $skipped ) );
 
-			return array(
+			return [
 				'updated' => $updated,
 				'skipped' => $skipped,
-			);
+			];
 		}
 	}
 
@@ -1002,18 +1002,18 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$user_id = isset( $assoc_args['user'] ) ? (int) $assoc_args['user'] : null;
 
 			if ( $user_id ) {
-				$users = array( get_user_by( 'ID', $user_id ) );
+				$users = [ get_user_by( 'ID', $user_id ) ];
 				if ( ! $users[0] ) {
 					WP_CLI::error( sprintf( 'User with ID %d not found.', $user_id ) );
 					return;
 				}
 			} else {
 				// Get all users
-				$users = get_users( array( 'fields' => 'all' ) );
+				$users = get_users( [ 'fields' => 'all' ] );
 			}
 
-			$changes        = get_option( 'prm_carddav_changes', array() );
-			$tokens         = get_option( 'prm_carddav_sync_tokens', array() );
+			$changes        = get_option( 'prm_carddav_changes', [] );
+			$tokens         = get_option( 'prm_carddav_sync_tokens', [] );
 			$now            = time();
 			$total_contacts = 0;
 
@@ -1040,16 +1040,16 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				// Add all contacts to change log as "added"
 				if ( ! isset( $changes[ $uid ] ) ) {
-					$changes[ $uid ] = array();
+					$changes[ $uid ] = [];
 				}
 
 				foreach ( $persons as $person_id ) {
 					$uri                           = get_post_meta( $person_id, '_carddav_uri', true ) ?: $person_id . '.vcf';
-					$changes[ $uid ][ $person_id ] = array(
+					$changes[ $uid ][ $person_id ] = [
 						'type'      => 'added',
 						'timestamp' => $now,
 						'uri'       => $uri,
-					);
+					];
 				}
 
 				// Update sync token
@@ -1146,11 +1146,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					WP_CLI::log( sprintf( '[WOULD UPDATE] #%d: "%s" -> "%s"', $post_id, $old_title, $new_title ) );
 				} else {
 					wp_update_post(
-						array(
+						[
 							'ID'         => $post_id,
 							'post_title' => $new_title,
 							'post_name'  => sanitize_title( $new_title . '-' . $post_id ),
-						)
+						]
 					);
 					WP_CLI::log( sprintf( '[UPDATED] #%d: "%s" -> "%s"', $post_id, $old_title, $new_title ) );
 				}
@@ -1172,11 +1172,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 */
 		private function generate_date_title( $post_id ) {
 			// Get date type from taxonomy
-			$date_types = wp_get_post_terms( $post_id, 'date_type', array( 'fields' => 'names' ) );
+			$date_types = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'names' ] );
 			$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'caelis' );
 
 			// Get related people
-			$people = get_field( 'related_people', $post_id ) ?: array();
+			$people = get_field( 'related_people', $post_id ) ?: [];
 
 			if ( empty( $people ) ) {
 				// translators: %s is the date type label (e.g., "Birthday", "Anniversary").
@@ -1184,7 +1184,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			// Get full names of related people.
-			$names = array();
+			$names = [];
 			foreach ( $people as $person ) {
 				$person_id = is_object( $person ) ? $person->ID : $person;
 				$full_name = html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' );
@@ -1201,7 +1201,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$count = count( $names );
 
 			// Get date type slug to check for wedding.
-			$date_type_slugs = wp_get_post_terms( $post_id, 'date_type', array( 'fields' => 'slugs' ) );
+			$date_type_slugs = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'slugs' ] );
 			$type_slug       = ! empty( $date_type_slugs ) ? $date_type_slugs[0] : '';
 
 			// Special handling for wedding type.
@@ -1274,11 +1274,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			// Query all prm_todo comments
 			$todos = get_comments(
-				array(
+				[
 					'type'   => 'prm_todo',
 					'status' => 'approve',
 					'number' => 0, // All todos
-				)
+				]
 			);
 
 			if ( empty( $todos ) ) {
@@ -1336,13 +1336,13 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				}
 
 				// Create the new prm_todo CPT post
-				$post_data = array(
+				$post_data = [
 					'post_type'   => 'prm_todo',
 					'post_title'  => $todo_content,
 					'post_author' => $todo->user_id,
 					'post_date'   => $todo->comment_date,
 					'post_status' => 'publish',
-				);
+				];
 
 				$new_post_id = wp_insert_post( $post_data, true );
 
@@ -1492,7 +1492,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				if ( ! $dry_run ) {
 					// Save new array format
-					update_field( 'related_persons', array( $old_person_id ), $todo_id );
+					update_field( 'related_persons', [ $old_person_id ], $todo_id );
 					// Remove old meta
 					delete_post_meta( $todo_id, 'related_person' );
 				}
@@ -1654,10 +1654,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						PRM_Calendar_Connections::update_connection(
 							$specific_user_id,
 							$connection['id'],
-							array(
+							[
 								'last_sync'  => current_time( 'c' ),
 								'last_error' => null,
-							)
+							]
 						);
 
 						WP_CLI::log(
@@ -1675,9 +1675,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						PRM_Calendar_Connections::update_connection(
 							$specific_user_id,
 							$connection['id'],
-							array(
+							[
 								'last_error' => $e->getMessage(),
-							)
+							]
 						);
 
 						WP_CLI::log( sprintf( '  [ERROR] Connection %s: %s', $connection['id'], $e->getMessage() ) );

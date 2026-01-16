@@ -57,7 +57,7 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * @param array $args User arguments
 	 * @return int User ID
 	 */
-	private function createApprovedCaelisUser( array $args = array() ): int {
+	private function createApprovedCaelisUser( array $args = [] ): int {
 		$user_id = $this->createCaelisUser( $args );
 		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
@@ -70,12 +70,12 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * @param array $acf ACF field values
 	 * @return int Post ID
 	 */
-	private function createImportantDatePost( array $args = array(), array $acf = array() ): int {
-		$defaults = array(
+	private function createImportantDatePost( array $args = [], array $acf = [] ): int {
+		$defaults = [
 			'post_type'   => 'important_date',
 			'post_status' => 'publish',
 			'post_author' => get_current_user_id() ?: 1,
-		);
+		];
 
 		$post_id = self::factory()->post->create( array_merge( $defaults, $args ) );
 
@@ -94,7 +94,7 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * @param array $params Query parameters
 	 * @return \WP_REST_Response
 	 */
-	private function doRestRequest( string $method, string $route, array $params = array() ): \WP_REST_Response {
+	private function doRestRequest( string $method, string $route, array $params = [] ): \WP_REST_Response {
 		$request = new WP_REST_Request( $method, $route );
 
 		foreach ( $params as $key => $value ) {
@@ -112,25 +112,25 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test basic search returns matching person.
 	 */
 	public function test_search_returns_matching_person(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create persons
 		$john_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'John Doe',
-			)
+			]
 		);
 		$jane_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Jane Smith',
-			)
+			]
 		);
 
 		// Search for John
-		$response = $this->doRestRequest( 'GET', '/prm/v1/search', array( 'q' => 'John' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/search', [ 'q' => 'John' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -148,28 +148,28 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test search isolation - user A cannot see user B's contacts.
 	 */
 	public function test_search_isolation_between_users(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
-		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+		$bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
 
 		// Create person for Alice
 		$alice_john = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Johns Contact',
-			)
+			]
 		);
 
 		// Create person for Bob
 		$bob_john = $this->createPerson(
-			array(
+			[
 				'post_author' => $bob_id,
 				'post_title'  => 'Johns Other Contact',
-			)
+			]
 		);
 
 		// Set current user to Alice and search
 		wp_set_current_user( $alice_id );
-		$response = $this->doRestRequest( 'GET', '/prm/v1/search', array( 'q' => 'John' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/search', [ 'q' => 'John' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -184,27 +184,27 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test search across custom post types (person and company).
 	 */
 	public function test_search_across_post_types(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Acme Employee',
-			)
+			]
 		);
 
 		// Create company
 		$company_id = $this->createOrganization(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Acme Corp',
-			)
+			]
 		);
 
 		// Search for Acme
-		$response = $this->doRestRequest( 'GET', '/prm/v1/search', array( 'q' => 'Acme' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/search', [ 'q' => 'Acme' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -223,11 +223,11 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test search validation - empty query returns 400.
 	 */
 	public function test_search_validation_empty_query(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Search with empty query - should fail validation
-		$response = $this->doRestRequest( 'GET', '/prm/v1/search', array( 'q' => '' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/search', [ 'q' => '' ] );
 
 		$this->assertEquals( 400, $response->get_status(), 'Empty search query should return 400' );
 	}
@@ -236,11 +236,11 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test search validation - single character returns 400.
 	 */
 	public function test_search_validation_single_character(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Search with single character - should fail validation (min 2 chars)
-		$response = $this->doRestRequest( 'GET', '/prm/v1/search', array( 'q' => 'A' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/search', [ 'q' => 'A' ] );
 
 		$this->assertEquals( 400, $response->get_status(), 'Single character search should return 400' );
 	}
@@ -250,12 +250,12 @@ class SearchDashboardTest extends CaelisTestCase {
 	 */
 	public function test_search_blocked_for_unapproved_user(): void {
 		// Create unapproved user
-		$unapproved_id = $this->createCaelisUser( array( 'user_login' => 'unapproved' ) );
+		$unapproved_id = $this->createCaelisUser( [ 'user_login' => 'unapproved' ] );
 		update_user_meta( $unapproved_id, PRM_User_Roles::APPROVAL_META_KEY, '0' );
 		wp_set_current_user( $unapproved_id );
 
 		// Attempt search
-		$response = $this->doRestRequest( 'GET', '/prm/v1/search', array( 'q' => 'Test' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/search', [ 'q' => 'Test' ] );
 
 		// Should be denied (403 Forbidden)
 		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied access to search' );
@@ -268,7 +268,7 @@ class SearchDashboardTest extends CaelisTestCase {
 		wp_set_current_user( 0 );
 
 		// Attempt search
-		$response = $this->doRestRequest( 'GET', '/prm/v1/search', array( 'q' => 'Test' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/search', [ 'q' => 'Test' ] );
 
 		// Should be denied (401 Unauthorized)
 		$this->assertEquals( 401, $response->get_status(), 'Logged out user should be denied access to search' );
@@ -282,50 +282,50 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test dashboard summary returns correct counts.
 	 */
 	public function test_dashboard_returns_correct_counts(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create 3 persons
 		$this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Person 1',
-			)
+			]
 		);
 		$this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Person 2',
-			)
+			]
 		);
 		$this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Person 3',
-			)
+			]
 		);
 
 		// Create 2 companies
 		$this->createOrganization(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Company 1',
-			)
+			]
 		);
 		$this->createOrganization(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Company 2',
-			)
+			]
 		);
 
 		// Create 5 important dates
 		for ( $i = 1; $i <= 5; $i++ ) {
 			$this->createImportantDatePost(
-				array(
+				[
 					'post_author' => $alice_id,
 					'post_title'  => "Date $i",
-				)
+				]
 			);
 		}
 
@@ -345,26 +345,26 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test dashboard isolation - user A only sees their own data in counts.
 	 */
 	public function test_dashboard_isolation_between_users(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
-		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+		$bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
 
 		// Create 5 contacts for Alice
 		for ( $i = 1; $i <= 5; $i++ ) {
 			$this->createPerson(
-				array(
+				[
 					'post_author' => $alice_id,
 					'post_title'  => "Alice Person $i",
-				)
+				]
 			);
 		}
 
 		// Create 3 contacts for Bob
 		for ( $i = 1; $i <= 3; $i++ ) {
 			$this->createPerson(
-				array(
+				[
 					'post_author' => $bob_id,
 					'post_title'  => "Bob Person $i",
-				)
+				]
 			);
 		}
 
@@ -387,7 +387,7 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test dashboard for new user with no data shows zero counts.
 	 */
 	public function test_dashboard_empty_for_new_user(): void {
-		$newuser_id = $this->createApprovedCaelisUser( array( 'user_login' => 'emptyuser' ) );
+		$newuser_id = $this->createApprovedCaelisUser( [ 'user_login' => 'emptyuser' ] );
 		wp_set_current_user( $newuser_id );
 
 		// Get dashboard for user with no data
@@ -405,7 +405,7 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test dashboard blocked for unapproved user.
 	 */
 	public function test_dashboard_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createCaelisUser( array( 'user_login' => 'unapproved' ) );
+		$unapproved_id = $this->createCaelisUser( [ 'user_login' => 'unapproved' ] );
 		update_user_meta( $unapproved_id, PRM_User_Roles::APPROVAL_META_KEY, '0' );
 		wp_set_current_user( $unapproved_id );
 
@@ -418,33 +418,33 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test reminders endpoint returns upcoming dates.
 	 */
 	public function test_reminders_returns_upcoming_dates(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create a person to link the date to
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		// Create date 5 days from now
 		$upcoming_date = gmdate( 'Y-m-d', strtotime( '+5 days' ) );
 		$this->createImportantDatePost(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Upcoming Birthday',
-			),
-			array(
+			],
+			[
 				'date_value'     => $upcoming_date,
 				'is_recurring'   => true,
-				'related_people' => array( $person_id ),
-			)
+				'related_people' => [ $person_id ],
+			]
 		);
 
 		// Get reminders for next 30 days
-		$response = $this->doRestRequest( 'GET', '/prm/v1/reminders', array( 'days_ahead' => 30 ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/reminders', [ 'days_ahead' => 30 ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -457,33 +457,33 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test reminders filters by days_ahead parameter.
 	 */
 	public function test_reminders_filters_by_days_ahead(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create a person to link the date to
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		// Create date 60 days from now
 		$far_date = gmdate( 'Y-m-d', strtotime( '+60 days' ) );
 		$this->createImportantDatePost(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Far Future Date',
-			),
-			array(
+			],
+			[
 				'date_value'     => $far_date,
 				'is_recurring'   => true,
-				'related_people' => array( $person_id ),
-			)
+				'related_people' => [ $person_id ],
+			]
 		);
 
 		// Get reminders for next 30 days - should not include the 60-day date
-		$response = $this->doRestRequest( 'GET', '/prm/v1/reminders', array( 'days_ahead' => 30 ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/reminders', [ 'days_ahead' => 30 ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -496,10 +496,10 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test reminders validation - days_ahead=0 returns 400.
 	 */
 	public function test_reminders_validation_zero_days(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
-		$response = $this->doRestRequest( 'GET', '/prm/v1/reminders', array( 'days_ahead' => 0 ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/reminders', [ 'days_ahead' => 0 ] );
 
 		$this->assertEquals( 400, $response->get_status(), 'days_ahead=0 should return 400' );
 	}
@@ -508,10 +508,10 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test reminders validation - days_ahead too large returns 400.
 	 */
 	public function test_reminders_validation_days_too_large(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
-		$response = $this->doRestRequest( 'GET', '/prm/v1/reminders', array( 'days_ahead' => 500 ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/reminders', [ 'days_ahead' => 500 ] );
 
 		$this->assertEquals( 400, $response->get_status(), 'days_ahead=500 should return 400 (max 365)' );
 	}
@@ -520,7 +520,7 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test reminders blocked for unapproved user.
 	 */
 	public function test_reminders_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createCaelisUser( array( 'user_login' => 'unapproved' ) );
+		$unapproved_id = $this->createCaelisUser( [ 'user_login' => 'unapproved' ] );
 		update_user_meta( $unapproved_id, PRM_User_Roles::APPROVAL_META_KEY, '0' );
 		wp_set_current_user( $unapproved_id );
 
@@ -541,12 +541,12 @@ class SearchDashboardTest extends CaelisTestCase {
 	 */
 	private function createTodo( int $person_id, string $content, int $user_id, bool $completed = false, string $due_date = '' ): int {
 		$post_id = self::factory()->post->create(
-			array(
+			[
 				'post_type'   => 'prm_todo',
 				'post_status' => 'publish',
 				'post_title'  => $content,
 				'post_author' => $user_id,
-			)
+			]
 		);
 
 		update_field( 'related_person', $person_id, $post_id );
@@ -564,15 +564,15 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test todos endpoint returns uncompleted todos.
 	 */
 	public function test_todos_returns_uncompleted_todos(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		// Create uncompleted todo
@@ -597,15 +597,15 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test todos endpoint with completed=true returns all todos.
 	 */
 	public function test_todos_returns_all_with_completed_filter(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice_completed' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice_completed' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Test Person For Completed',
-			)
+			]
 		);
 
 		// Create uncompleted todo
@@ -615,7 +615,7 @@ class SearchDashboardTest extends CaelisTestCase {
 		$completed_todo_id = $this->createTodo( $person_id, 'Send email', $alice_id, true );
 
 		// Get all todos including completed (use string 'true' as that's what the REST API expects)
-		$response = $this->doRestRequest( 'GET', '/prm/v1/todos', array( 'completed' => 'true' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'completed' => 'true' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -630,24 +630,24 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test todos endpoint isolation - user cannot see other user's todos.
 	 */
 	public function test_todos_isolation_between_users(): void {
-		$alice_id = $this->createApprovedCaelisUser( array( 'user_login' => 'alice' ) );
-		$bob_id   = $this->createApprovedCaelisUser( array( 'user_login' => 'bob' ) );
+		$alice_id = $this->createApprovedCaelisUser( [ 'user_login' => 'alice' ] );
+		$bob_id   = $this->createApprovedCaelisUser( [ 'user_login' => 'bob' ] );
 
 		// Create person for Alice
 		$alice_person = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Alice Person',
-			)
+			]
 		);
 		$alice_todo   = $this->createTodo( $alice_person, 'Alice todo', $alice_id );
 
 		// Create person for Bob
 		$bob_person = $this->createPerson(
-			array(
+			[
 				'post_author' => $bob_id,
 				'post_title'  => 'Bob Person',
-			)
+			]
 		);
 		$bob_todo   = $this->createTodo( $bob_person, 'Bob todo', $bob_id );
 
@@ -674,7 +674,7 @@ class SearchDashboardTest extends CaelisTestCase {
 	 * Test todos blocked for unapproved user.
 	 */
 	public function test_todos_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createCaelisUser( array( 'user_login' => 'unapproved' ) );
+		$unapproved_id = $this->createCaelisUser( [ 'user_login' => 'unapproved' ] );
 		update_user_meta( $unapproved_id, PRM_User_Roles::APPROVAL_META_KEY, '0' );
 		wp_set_current_user( $unapproved_id );
 

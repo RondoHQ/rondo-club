@@ -14,7 +14,7 @@ class PRM_Google_Contacts_Import {
 	/**
 	 * Import statistics
 	 */
-	private array $stats = array(
+	private array $stats = [
 		'contacts_imported' => 0,
 		'contacts_updated'  => 0,
 		'contacts_skipped'  => 0,
@@ -22,21 +22,21 @@ class PRM_Google_Contacts_Import {
 		'dates_created'     => 0,
 		'notes_created'     => 0,
 		'photos_imported'   => 0,
-		'errors'            => array(),
-	);
+		'errors'            => [],
+	];
 
 	/**
 	 * Company name to ID mapping
 	 */
-	private array $company_map = array();
+	private array $company_map = [];
 
 	/**
 	 * CSV column headers
 	 */
-	private array $headers = array();
+	private array $headers = [];
 
 	public function __construct() {
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	/**
@@ -46,21 +46,21 @@ class PRM_Google_Contacts_Import {
 		register_rest_route(
 			'prm/v1',
 			'/import/google-contacts',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'handle_import' ),
-				'permission_callback' => array( $this, 'check_import_permission' ),
-			)
+				'callback'            => [ $this, 'handle_import' ],
+				'permission_callback' => [ $this, 'check_import_permission' ],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/import/google-contacts/validate',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'validate_import' ),
-				'permission_callback' => array( $this, 'check_import_permission' ),
-			)
+				'callback'            => [ $this, 'validate_import' ],
+				'permission_callback' => [ $this, 'check_import_permission' ],
+			]
 		);
 	}
 
@@ -78,29 +78,29 @@ class PRM_Google_Contacts_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$csv_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $csv_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Parse CSV to validate and get summary
 		$contacts = $this->parse_csv( $csv_content );
 
 		if ( empty( $contacts ) ) {
-			return new WP_Error( 'invalid_format', __( 'No valid contacts found in CSV. Make sure you exported from Google Contacts.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_format', __( 'No valid contacts found in CSV. Make sure you exported from Google Contacts.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Check for required Google Contacts columns (supports both old and new format)
 		// Old format: "Given Name", "Family Name"
 		// New format: "First Name", "Last Name"
-		$name_column_sets = array(
-			array( 'Given Name', 'Family Name' ),
-			array( 'First Name', 'Last Name' ),
-		);
+		$name_column_sets = [
+			[ 'Given Name', 'Family Name' ],
+			[ 'First Name', 'Last Name' ],
+		];
 
 		$has_name_columns = false;
 		foreach ( $name_column_sets as $columns ) {
@@ -113,19 +113,19 @@ class PRM_Google_Contacts_Import {
 		}
 
 		if ( ! $has_name_columns && ! in_array( 'Name', $this->headers ) ) {
-			return new WP_Error( 'invalid_format', __( 'This doesn\'t appear to be a Google Contacts export. Missing name columns.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_format', __( 'This doesn\'t appear to be a Google Contacts export. Missing name columns.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$summary    = $this->get_import_summary( $contacts );
 		$duplicates = $this->find_potential_duplicates( $contacts );
 
 		return rest_ensure_response(
-			array(
+			[
 				'valid'      => true,
 				'version'    => 'google-contacts-csv',
 				'summary'    => $summary,
 				'duplicates' => $duplicates,
-			)
+			]
 		);
 	}
 
@@ -133,11 +133,11 @@ class PRM_Google_Contacts_Import {
 	 * Find potential duplicates for contacts in the CSV
 	 */
 	private function find_potential_duplicates( array $contacts ): array {
-		$duplicates = array();
+		$duplicates = [];
 
 		foreach ( $contacts as $index => $contact ) {
-			$first_name = $this->get_field( $contact, array( 'Given Name', 'First Name' ) );
-			$last_name  = $this->get_field( $contact, array( 'Family Name', 'Last Name' ) );
+			$first_name = $this->get_field( $contact, [ 'Given Name', 'First Name' ] );
+			$last_name  = $this->get_field( $contact, [ 'Family Name', 'Last Name' ] );
 
 			// Fallback to Name field
 			if ( empty( $first_name ) && empty( $last_name ) && ! empty( $contact['Name'] ) ) {
@@ -158,10 +158,10 @@ class PRM_Google_Contacts_Import {
 				$existing_person = $this->get_person_details( $existing_id );
 
 				// Get CSV contact preview
-				$csv_org   = $this->get_field( $contact, array( 'Organization 1 - Name', 'Organization Name' ) );
+				$csv_org   = $this->get_field( $contact, [ 'Organization 1 - Name', 'Organization Name' ] );
 				$csv_email = trim( $contact['E-mail 1 - Value'] ?? '' );
 
-				$duplicates[] = array(
+				$duplicates[] = [
 					'index'          => $index,
 					'csv_name'       => $full_name,
 					'csv_org'        => $csv_org,
@@ -171,7 +171,7 @@ class PRM_Google_Contacts_Import {
 					'existing_org'   => $existing_person['organization'],
 					'existing_email' => $existing_person['email'],
 					'existing_photo' => $existing_person['photo'],
-				);
+				];
 			}
 		}
 
@@ -217,12 +217,12 @@ class PRM_Google_Contacts_Import {
 			$photo = wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' );
 		}
 
-		return array(
+		return [
 			'name'         => $name,
 			'organization' => $organization,
 			'email'        => $email,
 			'photo'        => $photo,
-		);
+		];
 	}
 
 	/**
@@ -230,15 +230,15 @@ class PRM_Google_Contacts_Import {
 	 */
 	private function get_import_summary( array $contacts ): array {
 		$valid_contacts = 0;
-		$companies      = array();
+		$companies      = [];
 		$birthdays      = 0;
 		$notes          = 0;
 		$photos         = 0;
 
 		foreach ( $contacts as $contact ) {
 			// Support both old format (Given Name/Family Name) and new format (First Name/Last Name)
-			$first = $this->get_field( $contact, array( 'Given Name', 'First Name' ) );
-			$last  = $this->get_field( $contact, array( 'Family Name', 'Last Name' ) );
+			$first = $this->get_field( $contact, [ 'Given Name', 'First Name' ] );
+			$last  = $this->get_field( $contact, [ 'Family Name', 'Last Name' ] );
 			$name  = $contact['Name'] ?? '';
 
 			if ( ! empty( $first ) || ! empty( $last ) || ! empty( $name ) ) {
@@ -246,7 +246,7 @@ class PRM_Google_Contacts_Import {
 			}
 
 			// Support both old format (Organization 1 - Name) and new format (Organization Name)
-			$org = $this->get_field( $contact, array( 'Organization 1 - Name', 'Organization Name' ) );
+			$org = $this->get_field( $contact, [ 'Organization 1 - Name', 'Organization Name' ] );
 			if ( ! empty( $org ) ) {
 				$companies[ $org ] = true;
 			}
@@ -264,13 +264,13 @@ class PRM_Google_Contacts_Import {
 			}
 		}
 
-		return array(
+		return [
 			'contacts'        => $valid_contacts,
 			'companies_count' => count( $companies ),
 			'birthdays'       => $birthdays,
 			'notes'           => $notes,
 			'photos'          => $photos,
-		);
+		];
 	}
 
 	/**
@@ -289,7 +289,7 @@ class PRM_Google_Contacts_Import {
 	 * User decisions for duplicate handling
 	 * Key: CSV index, Value: 'merge', 'new', or 'skip'
 	 */
-	private array $decisions = array();
+	private array $decisions = [];
 
 	/**
 	 * Handle the import request
@@ -302,19 +302,19 @@ class PRM_Google_Contacts_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$csv_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $csv_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get user decisions for duplicates (passed as JSON string in 'decisions' field)
 		$decisions_json = $request->get_param( 'decisions' );
 		if ( ! empty( $decisions_json ) ) {
-			$this->decisions = json_decode( $decisions_json, true ) ?: array();
+			$this->decisions = json_decode( $decisions_json, true ) ?: [];
 		}
 
 		// Parse and import contacts
@@ -322,10 +322,10 @@ class PRM_Google_Contacts_Import {
 		$this->import_contacts( $contacts );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'stats'   => $this->stats,
-			)
+			]
 		);
 	}
 
@@ -333,7 +333,7 @@ class PRM_Google_Contacts_Import {
 	 * Parse CSV content into array of contacts
 	 */
 	private function parse_csv( string $content ): array {
-		$contacts = array();
+		$contacts = [];
 
 		// Handle BOM
 		$content = preg_replace( '/^\xEF\xBB\xBF/', '', $content );
@@ -357,7 +357,7 @@ class PRM_Google_Contacts_Import {
 			$values = str_getcsv( $line );
 
 			// Create associative array
-			$contact = array();
+			$contact = [];
 			foreach ( $this->headers as $i => $header ) {
 				$contact[ $header ] = $values[ $i ] ?? '';
 			}
@@ -382,8 +382,8 @@ class PRM_Google_Contacts_Import {
 	 */
 	private function import_single_contact( array $contact, int $index = 0 ): void {
 		// Extract name - support both old format (Given Name/Family Name) and new format (First Name/Last Name)
-		$first_name = $this->get_field( $contact, array( 'Given Name', 'First Name' ) );
-		$last_name  = $this->get_field( $contact, array( 'Family Name', 'Last Name' ) );
+		$first_name = $this->get_field( $contact, [ 'Given Name', 'First Name' ] );
+		$last_name  = $this->get_field( $contact, [ 'Family Name', 'Last Name' ] );
 
 		// Fallback to Name field if first/last name are empty
 		if ( empty( $first_name ) && empty( $last_name ) && ! empty( $contact['Name'] ) ) {
@@ -420,12 +420,12 @@ class PRM_Google_Contacts_Import {
 			++$this->stats['contacts_updated'];
 		} else {
 			$post_id = wp_insert_post(
-				array(
+				[
 					'post_type'   => 'person',
 					'post_status' => 'publish',
 					'post_title'  => trim( $first_name . ' ' . $last_name ),
 					'post_author' => get_current_user_id(),
-				)
+				]
 			);
 
 			if ( is_wp_error( $post_id ) ) {
@@ -447,9 +447,9 @@ class PRM_Google_Contacts_Import {
 		}
 
 		// Handle company/work history - support both old format (Organization 1 - Name) and new format (Organization Name)
-		$org_name   = $this->get_field( $contact, array( 'Organization 1 - Name', 'Organization Name' ) );
-		$job_title  = $this->get_field( $contact, array( 'Organization 1 - Title', 'Organization Title' ) );
-		$department = $this->get_field( $contact, array( 'Organization 1 - Department', 'Organization Department' ) );
+		$org_name   = $this->get_field( $contact, [ 'Organization 1 - Name', 'Organization Name' ] );
+		$job_title  = $this->get_field( $contact, [ 'Organization 1 - Title', 'Organization Title' ] );
+		$department = $this->get_field( $contact, [ 'Organization 1 - Department', 'Organization Department' ] );
 
 		if ( ! empty( $org_name ) || ! empty( $job_title ) ) {
 			$company_id = null;
@@ -466,13 +466,13 @@ class PRM_Google_Contacts_Import {
 					$full_title = $department;
 				}
 
-				$work_history = array(
-					array(
+				$work_history = [
+					[
 						'company'    => $company_id,
 						'job_title'  => $full_title,
 						'is_current' => true,
-					),
-				);
+					],
+				];
 				update_field( 'work_history', $work_history, $post_id );
 			}
 		}
@@ -506,20 +506,20 @@ class PRM_Google_Contacts_Import {
 	 * Import contact information (emails, phones, addresses)
 	 */
 	private function import_contact_info( int $post_id, array $contact ): void {
-		$contact_info = array();
+		$contact_info = [];
 
 		// Import emails (Google uses E-mail 1 - Value, E-mail 2 - Value, etc.)
 		// Type/Label field can be "E-mail X - Type" (old) or "E-mail X - Label" (new)
 		for ( $i = 1; $i <= 5; $i++ ) {
 			$email = trim( $contact[ "E-mail {$i} - Value" ] ?? '' );
-			$type  = $this->get_field( $contact, array( "E-mail {$i} - Type", "E-mail {$i} - Label" ) );
+			$type  = $this->get_field( $contact, [ "E-mail {$i} - Type", "E-mail {$i} - Label" ] );
 
 			if ( ! empty( $email ) ) {
-				$contact_info[] = array(
+				$contact_info[] = [
 					'contact_type'  => 'email',
 					'contact_label' => $this->format_label( $type ),
 					'contact_value' => $email,
-				);
+				];
 			}
 		}
 
@@ -527,7 +527,7 @@ class PRM_Google_Contacts_Import {
 		// Type/Label field can be "Phone X - Type" (old) or "Phone X - Label" (new)
 		for ( $i = 1; $i <= 5; $i++ ) {
 			$phone = trim( $contact[ "Phone {$i} - Value" ] ?? '' );
-			$type  = strtolower( $this->get_field( $contact, array( "Phone {$i} - Type", "Phone {$i} - Label" ) ) );
+			$type  = strtolower( $this->get_field( $contact, [ "Phone {$i} - Type", "Phone {$i} - Label" ] ) );
 
 			if ( ! empty( $phone ) ) {
 				$contact_type = 'phone';
@@ -535,11 +535,11 @@ class PRM_Google_Contacts_Import {
 					$contact_type = 'mobile';
 				}
 
-				$contact_info[] = array(
+				$contact_info[] = [
 					'contact_type'  => $contact_type,
 					'contact_label' => $this->format_label( $type ),
 					'contact_value' => $phone,
-				);
+				];
 			}
 		}
 
@@ -547,14 +547,14 @@ class PRM_Google_Contacts_Import {
 		// Type/Label field can be "Website X - Type" (old) or "Website X - Label" (new)
 		for ( $i = 1; $i <= 3; $i++ ) {
 			$url  = trim( $contact[ "Website {$i} - Value" ] ?? '' );
-			$type = $this->get_field( $contact, array( "Website {$i} - Type", "Website {$i} - Label" ) );
+			$type = $this->get_field( $contact, [ "Website {$i} - Type", "Website {$i} - Label" ] );
 
 			if ( ! empty( $url ) ) {
-				$contact_info[] = array(
+				$contact_info[] = [
 					'contact_type'  => $this->detect_url_type( $url ),
 					'contact_label' => $this->format_label( $type ),
 					'contact_value' => $url,
-				);
+				];
 			}
 		}
 
@@ -564,25 +564,25 @@ class PRM_Google_Contacts_Import {
 
 		// Import addresses to the dedicated addresses field
 		// Google uses Address X - Street, City, Region (state), Postal Code, Country
-		$addresses = array();
+		$addresses = [];
 		for ( $i = 1; $i <= 3; $i++ ) {
 			$street      = trim( $contact[ "Address {$i} - Street" ] ?? '' );
 			$city        = trim( $contact[ "Address {$i} - City" ] ?? '' );
 			$state       = trim( $contact[ "Address {$i} - Region" ] ?? '' );
 			$postal_code = trim( $contact[ "Address {$i} - Postal Code" ] ?? '' );
 			$country     = trim( $contact[ "Address {$i} - Country" ] ?? '' );
-			$type        = $this->get_field( $contact, array( "Address {$i} - Type", "Address {$i} - Label" ) );
+			$type        = $this->get_field( $contact, [ "Address {$i} - Type", "Address {$i} - Label" ] );
 
 			// Only add if there's at least some address data
 			if ( ! empty( $street ) || ! empty( $city ) || ! empty( $state ) || ! empty( $postal_code ) || ! empty( $country ) ) {
-				$addresses[] = array(
+				$addresses[] = [
 					'address_label' => $this->format_label( $type ),
 					'street'        => $street,
 					'postal_code'   => $postal_code,
 					'city'          => $city,
 					'state'         => $state,
 					'country'       => $country,
-				);
+				];
 			}
 		}
 
@@ -599,10 +599,10 @@ class PRM_Google_Contacts_Import {
 
 		// Remove common prefixes used by Google (e.g., "* Other", "* Work", "* myContacts")
 		$type = preg_replace( '/^\*\s*/', '', $type );
-		$type = str_replace( array( ':: ', '::: ' ), '', $type );
+		$type = str_replace( [ ':: ', '::: ' ], '', $type );
 
 		// Skip generic labels
-		if ( in_array( $type, array( '', 'other', 'custom', 'mycontacts' ) ) ) {
+		if ( in_array( $type, [ '', 'other', 'custom', 'mycontacts' ] ) ) {
 			return '';
 		}
 
@@ -682,24 +682,24 @@ class PRM_Google_Contacts_Import {
 
 		// Check if birthday already exists
 		$existing = get_posts(
-			array(
+			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => 1,
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'related_people',
 						'value'   => '"' . $post_id . '"',
 						'compare' => 'LIKE',
-					),
-				),
-				'tax_query'      => array(
-					array(
+					],
+				],
+				'tax_query'      => [
+					[
 						'taxonomy' => 'date_type',
 						'field'    => 'slug',
 						'terms'    => 'birthday',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		if ( ! empty( $existing ) ) {
@@ -709,12 +709,12 @@ class PRM_Google_Contacts_Import {
 		$title = sprintf( __( "%s's Birthday", 'caelis' ), $full_name );
 
 		$date_post_id = wp_insert_post(
-			array(
+			[
 				'post_type'   => 'important_date',
 				'post_status' => 'publish',
 				'post_title'  => $title,
 				'post_author' => get_current_user_id(),
-			)
+			]
 		);
 
 		if ( is_wp_error( $date_post_id ) ) {
@@ -723,16 +723,16 @@ class PRM_Google_Contacts_Import {
 
 		update_field( 'date_value', $date, $date_post_id );
 		update_field( 'is_recurring', true, $date_post_id );
-		update_field( 'related_people', array( $post_id ), $date_post_id );
+		update_field( 'related_people', [ $post_id ], $date_post_id );
 
 		// Ensure the birthday term exists
 		$term = term_exists( 'birthday', 'date_type' );
 		if ( ! $term ) {
-			$term = wp_insert_term( 'Birthday', 'date_type', array( 'slug' => 'birthday' ) );
+			$term = wp_insert_term( 'Birthday', 'date_type', [ 'slug' => 'birthday' ] );
 		}
 		if ( $term && ! is_wp_error( $term ) ) {
 			$term_id = is_array( $term ) ? $term['term_id'] : $term;
-			wp_set_post_terms( $date_post_id, array( (int) $term_id ), 'date_type' );
+			wp_set_post_terms( $date_post_id, [ (int) $term_id ], 'date_type' );
 		}
 
 		++$this->stats['dates_created'];
@@ -743,7 +743,7 @@ class PRM_Google_Contacts_Import {
 	 */
 	private function import_note( int $post_id, string $content ): void {
 		$comment_id = wp_insert_comment(
-			array(
+			[
 				'comment_post_ID'  => $post_id,
 				'comment_content'  => $content,
 				'comment_type'     => PRM_Comment_Types::TYPE_NOTE,
@@ -751,7 +751,7 @@ class PRM_Google_Contacts_Import {
 				'comment_approved' => 1,
 				'comment_date'     => current_time( 'mysql' ),
 				'comment_date_gmt' => current_time( 'mysql', true ),
-			)
+			]
 		);
 
 		if ( $comment_id ) {
@@ -792,15 +792,15 @@ class PRM_Google_Contacts_Import {
 		$path = parse_url( $url, PHP_URL_PATH );
 		if ( $path ) {
 			$ext = pathinfo( $path, PATHINFO_EXTENSION );
-			if ( in_array( strtolower( $ext ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ) ) ) {
+			if ( in_array( strtolower( $ext ), [ 'jpg', 'jpeg', 'png', 'gif', 'webp' ] ) ) {
 				$filename = sanitize_title( strtolower( $description ) ) . '.' . strtolower( $ext );
 			}
 		}
 
-		$file_array = array(
+		$file_array = [
 			'name'     => $filename,
 			'tmp_name' => $tmp,
-		);
+		];
 
 		$attachment_id = media_handle_sideload( $file_array, $post_id, $description );
 
@@ -829,26 +829,26 @@ class PRM_Google_Contacts_Import {
 		}
 
 		$query = new WP_Query(
-			array(
+			[
 				'post_type'        => 'person',
 				'posts_per_page'   => 1,
 				'post_status'      => 'publish',
 				'post__in'         => $accessible_ids,
 				'suppress_filters' => true, // Bypass access control filter
-				'meta_query'       => array(
+				'meta_query'       => [
 					'relation' => 'AND',
-					array(
+					[
 						'key'     => 'first_name',
 						'value'   => $first_name,
 						'compare' => '=',
-					),
-					array(
+					],
+					[
 						'key'     => 'last_name',
 						'value'   => $last_name,
 						'compare' => '=',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		if ( $query->have_posts() ) {
@@ -904,12 +904,12 @@ class PRM_Google_Contacts_Import {
 
 		// Create new company
 		$post_id = wp_insert_post(
-			array(
+			[
 				'post_type'   => 'company',
 				'post_status' => 'publish',
 				'post_title'  => $name,
 				'post_author' => get_current_user_id(),
-			)
+			]
 		);
 
 		if ( ! is_wp_error( $post_id ) ) {

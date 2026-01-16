@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class PRM_Post_Types {
 
 	public function __construct() {
-		add_action( 'init', array( $this, 'register_post_types' ) );
+		add_action( 'init', [ $this, 'register_post_types' ] );
 	}
 
 	/**
@@ -31,7 +31,7 @@ class PRM_Post_Types {
 	 * Register Workspace CPT
 	 */
 	private function register_workspace_post_type() {
-		$labels = array(
+		$labels = [
 			'name'               => _x( 'Workspaces', 'Post type general name', 'caelis' ),
 			'singular_name'      => _x( 'Workspace', 'Post type singular name', 'caelis' ),
 			'menu_name'          => _x( 'Workspaces', 'Admin Menu text', 'caelis' ),
@@ -44,9 +44,9 @@ class PRM_Post_Types {
 			'not_found'          => __( 'No workspaces found', 'caelis' ),
 			'not_found_in_trash' => __( 'No workspaces found in Trash', 'caelis' ),
 			'all_items'          => __( 'All Workspaces', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'labels'             => $labels,
 			'public'             => false,
 			'publicly_queryable' => false,
@@ -61,8 +61,8 @@ class PRM_Post_Types {
 			'hierarchical'       => false,
 			'menu_position'      => 4,
 			'menu_icon'          => 'dashicons-networking',
-			'supports'           => array( 'title', 'editor', 'author', 'thumbnail' ),
-		);
+			'supports'           => [ 'title', 'editor', 'author', 'thumbnail' ],
+		];
 
 		register_post_type( 'workspace', $args );
 	}
@@ -74,7 +74,7 @@ class PRM_Post_Types {
 	 * Not exposed via standard wp/v2 REST - uses custom endpoints only.
 	 */
 	private function register_workspace_invite_post_type() {
-		$labels = array(
+		$labels = [
 			'name'               => _x( 'Workspace Invites', 'Post type general name', 'caelis' ),
 			'singular_name'      => _x( 'Workspace Invite', 'Post type singular name', 'caelis' ),
 			'menu_name'          => _x( 'Invites', 'Admin Menu text', 'caelis' ),
@@ -87,9 +87,9 @@ class PRM_Post_Types {
 			'not_found'          => __( 'No invites found', 'caelis' ),
 			'not_found_in_trash' => __( 'No invites found in Trash', 'caelis' ),
 			'all_items'          => __( 'All Invites', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'labels'             => $labels,
 			'public'             => false,
 			'publicly_queryable' => false,
@@ -101,8 +101,8 @@ class PRM_Post_Types {
 			'capability_type'    => 'post',
 			'has_archive'        => false,
 			'hierarchical'       => false,
-			'supports'           => array( 'title' ), // Title = email for easy identification
-		);
+			'supports'           => [ 'title' ], // Title = email for easy identification
+		];
 
 		register_post_type( 'workspace_invite', $args );
 	}
@@ -111,7 +111,7 @@ class PRM_Post_Types {
 	 * Register Person CPT
 	 */
 	private function register_person_post_type() {
-		$labels = array(
+		$labels = [
 			'name'               => _x( 'People', 'Post type general name', 'caelis' ),
 			'singular_name'      => _x( 'Person', 'Post type singular name', 'caelis' ),
 			'menu_name'          => _x( 'People', 'Admin Menu text', 'caelis' ),
@@ -124,9 +124,9 @@ class PRM_Post_Types {
 			'not_found'          => __( 'No people found', 'caelis' ),
 			'not_found_in_trash' => __( 'No people found in Trash', 'caelis' ),
 			'all_items'          => __( 'All People', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'labels'             => $labels,
 			'public'             => false,
 			'publicly_queryable' => false,
@@ -141,8 +141,8 @@ class PRM_Post_Types {
 			'hierarchical'       => false,
 			'menu_position'      => 5,
 			'menu_icon'          => 'dashicons-groups',
-			'supports'           => array( 'title', 'thumbnail', 'comments', 'author' ),
-		);
+			'supports'           => [ 'title', 'thumbnail', 'comments', 'author' ],
+		];
 
 		register_post_type( 'person', $args );
 	}
@@ -151,7 +151,7 @@ class PRM_Post_Types {
 	 * Register Company CPT
 	 */
 	private function register_company_post_type() {
-		$labels = array(
+		$labels = [
 			'name'               => _x( 'Organizations', 'Post type general name', 'caelis' ),
 			'singular_name'      => _x( 'Organization', 'Post type singular name', 'caelis' ),
 			'menu_name'          => _x( 'Organizations', 'Admin Menu text', 'caelis' ),
@@ -164,9 +164,9 @@ class PRM_Post_Types {
 			'not_found'          => __( 'No organizations found', 'caelis' ),
 			'not_found_in_trash' => __( 'No organizations found in Trash', 'caelis' ),
 			'all_items'          => __( 'All Organizations', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'labels'             => $labels,
 			'public'             => false,
 			'publicly_queryable' => false,
@@ -181,8 +181,8 @@ class PRM_Post_Types {
 			'hierarchical'       => true, // Enable parent-child relationships
 			'menu_position'      => 6,
 			'menu_icon'          => 'dashicons-building',
-			'supports'           => array( 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ),
-		);
+			'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
+		];
 
 		register_post_type( 'company', $args );
 	}
@@ -191,7 +191,7 @@ class PRM_Post_Types {
 	 * Register Important Date CPT
 	 */
 	private function register_important_date_post_type() {
-		$labels = array(
+		$labels = [
 			'name'               => _x( 'Important Dates', 'Post type general name', 'caelis' ),
 			'singular_name'      => _x( 'Important Date', 'Post type singular name', 'caelis' ),
 			'menu_name'          => _x( 'Dates', 'Admin Menu text', 'caelis' ),
@@ -204,9 +204,9 @@ class PRM_Post_Types {
 			'not_found'          => __( 'No dates found', 'caelis' ),
 			'not_found_in_trash' => __( 'No dates found in Trash', 'caelis' ),
 			'all_items'          => __( 'All Dates', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'labels'             => $labels,
 			'public'             => false,
 			'publicly_queryable' => false,
@@ -221,8 +221,8 @@ class PRM_Post_Types {
 			'hierarchical'       => false,
 			'menu_position'      => 7,
 			'menu_icon'          => 'dashicons-calendar-alt',
-			'supports'           => array( 'title', 'editor', 'author' ),
-		);
+			'supports'           => [ 'title', 'editor', 'author' ],
+		];
 
 		register_post_type( 'important_date', $args );
 	}
@@ -236,38 +236,38 @@ class PRM_Post_Types {
 	private function register_todo_statuses() {
 		register_post_status(
 			'prm_open',
-			array(
+			[
 				'label'                     => _x( 'Open', 'Todo status', 'caelis' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
 				'label_count'               => _n_noop( 'Open <span class="count">(%s)</span>', 'Open <span class="count">(%s)</span>', 'caelis' ),
-			)
+			]
 		);
 
 		register_post_status(
 			'prm_awaiting',
-			array(
+			[
 				'label'                     => _x( 'Awaiting Response', 'Todo status', 'caelis' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
 				'label_count'               => _n_noop( 'Awaiting <span class="count">(%s)</span>', 'Awaiting <span class="count">(%s)</span>', 'caelis' ),
-			)
+			]
 		);
 
 		register_post_status(
 			'prm_completed',
-			array(
+			[
 				'label'                     => _x( 'Completed', 'Todo status', 'caelis' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
 				'label_count'               => _n_noop( 'Completed <span class="count">(%s)</span>', 'Completed <span class="count">(%s)</span>', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -279,7 +279,7 @@ class PRM_Post_Types {
 	 * and consistent REST API patterns.
 	 */
 	private function register_todo_post_type() {
-		$labels = array(
+		$labels = [
 			'name'               => _x( 'Todos', 'Post type general name', 'caelis' ),
 			'singular_name'      => _x( 'Todo', 'Post type singular name', 'caelis' ),
 			'menu_name'          => _x( 'Todos', 'Admin Menu text', 'caelis' ),
@@ -292,9 +292,9 @@ class PRM_Post_Types {
 			'not_found'          => __( 'No todos found', 'caelis' ),
 			'not_found_in_trash' => __( 'No todos found in Trash', 'caelis' ),
 			'all_items'          => __( 'All Todos', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'labels'             => $labels,
 			'public'             => false,
 			'publicly_queryable' => false,
@@ -309,8 +309,8 @@ class PRM_Post_Types {
 			'hierarchical'       => false,
 			'menu_position'      => 8,
 			'menu_icon'          => 'dashicons-yes-alt',
-			'supports'           => array( 'title', 'editor', 'author' ),
-		);
+			'supports'           => [ 'title', 'editor', 'author' ],
+		];
 
 		register_post_type( 'prm_todo', $args );
 	}
@@ -323,7 +323,7 @@ class PRM_Post_Types {
 	 * No admin UI needed - events are managed via sync process.
 	 */
 	private function register_calendar_event_post_type() {
-		$labels = array(
+		$labels = [
 			'name'               => _x( 'Calendar Events', 'Post type general name', 'caelis' ),
 			'singular_name'      => _x( 'Calendar Event', 'Post type singular name', 'caelis' ),
 			'menu_name'          => _x( 'Calendar Events', 'Admin Menu text', 'caelis' ),
@@ -336,9 +336,9 @@ class PRM_Post_Types {
 			'not_found'          => __( 'No events found', 'caelis' ),
 			'not_found_in_trash' => __( 'No events found in Trash', 'caelis' ),
 			'all_items'          => __( 'All Events', 'caelis' ),
-		);
+		];
 
-		$args = array(
+		$args = [
 			'labels'             => $labels,
 			'public'             => false,
 			'publicly_queryable' => false,
@@ -351,8 +351,8 @@ class PRM_Post_Types {
 			'map_meta_cap'       => true,
 			'has_archive'        => false,
 			'hierarchical'       => false,
-			'supports'           => array( 'title', 'author' ),
-		);
+			'supports'           => [ 'title', 'author' ],
+		];
 
 		register_post_type( 'calendar_event', $args );
 	}

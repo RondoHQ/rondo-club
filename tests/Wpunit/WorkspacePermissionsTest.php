@@ -43,13 +43,13 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 	 * @param array $args Post arguments.
 	 * @return int Workspace post ID.
 	 */
-	protected function createWorkspace( array $args = array() ): int {
-		$defaults = array(
+	protected function createWorkspace( array $args = [] ): int {
+		$defaults = [
 			'post_type'   => 'workspace',
 			'post_status' => 'publish',
 			'post_author' => get_current_user_id() ?: 1,
 			'post_title'  => 'Test Workspace ' . $this->test_id,
-		);
+		];
 
 		return self::factory()->post->create( array_merge( $defaults, $args ) );
 	}
@@ -62,7 +62,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 	 */
 	protected function createUniqueUser( string $suffix = 'user' ): int {
 		$login = $suffix . '_' . $this->test_id;
-		return $this->createCaelisUser( array( 'user_login' => $login ) );
+		return $this->createCaelisUser( [ 'user_login' => $login ] );
 	}
 
 	/**
@@ -76,9 +76,9 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$term      = wp_insert_term(
 			$term_slug,
 			'workspace_access',
-			array(
+			[
 				'slug' => $term_slug,
-			)
+			]
 		);
 
 		if ( is_wp_error( $term ) ) {
@@ -98,8 +98,8 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 	 */
 	protected function assignPostToWorkspace( int $post_id, int $workspace_id ): void {
 		$term_id = $this->createWorkspaceAccessTerm( $workspace_id );
-		wp_set_object_terms( $post_id, array( $term_id ), 'workspace_access' );
-		update_field( '_assigned_workspaces', array( $term_id ), $post_id );
+		wp_set_object_terms( $post_id, [ $term_id ], 'workspace_access' );
+		update_field( '_assigned_workspaces', [ $term_id ], $post_id );
 		PRM_Visibility::set_visibility( $post_id, PRM_Visibility::VISIBILITY_WORKSPACE );
 	}
 
@@ -111,7 +111,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		$member_id = $this->createUniqueUser( 'member' );
 		update_user_meta( $member_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
@@ -130,7 +130,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		$member_id = $this->createUniqueUser( 'member' );
 		update_user_meta( $member_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
@@ -152,7 +152,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		$user_id = $this->createUniqueUser( 'admin_user' );
 		PRM_Workspace_Members::add( $workspace_id, $user_id, 'admin' );
@@ -168,7 +168,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		$user_id = $this->createUniqueUser( 'member_user' );
 		PRM_Workspace_Members::add( $workspace_id, $user_id, 'member' );
@@ -184,7 +184,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		$user_id = $this->createUniqueUser( 'viewer_user' );
 		PRM_Workspace_Members::add( $workspace_id, $user_id, 'viewer' );
@@ -200,7 +200,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		$user_id = $this->createUniqueUser( 'role_change' );
 		PRM_Workspace_Members::add( $workspace_id, $user_id, 'viewer' );
@@ -222,7 +222,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		$admin_id  = $this->createUniqueUser( 'ws_admin' );
 		$member_id = $this->createUniqueUser( 'ws_member' );
@@ -241,7 +241,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		$admin_id  = $this->createUniqueUser( 'edit_admin' );
 		$member_id = $this->createUniqueUser( 'edit_member' );
@@ -260,7 +260,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$author_id = $this->createUniqueUser( 'author' );
 		update_user_meta( $author_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$person_id = $this->createPerson( array( 'post_author' => $author_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $author_id ] );
 
 		$this->assertEquals(
 			'owner',
@@ -273,10 +273,10 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'ws_owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		// Create person owned by workspace owner with workspace visibility
-		$person_id = $this->createPerson( array( 'post_author' => $owner_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $owner_id ] );
 		$this->assignPostToWorkspace( $person_id, $workspace_id );
 
 		// Add users with different roles
@@ -301,7 +301,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'share_owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$person_id = $this->createPerson( array( 'post_author' => $owner_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $owner_id ] );
 
 		$edit_user_id = $this->createUniqueUser( 'share_edit' );
 		$view_user_id = $this->createUniqueUser( 'share_view' );
@@ -321,7 +321,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$person_id = $this->createPerson( array( 'post_author' => $owner_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $owner_id ] );
 
 		$other_user_id = $this->createUniqueUser( 'other' );
 		update_user_meta( $other_user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
@@ -336,7 +336,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$owner_id = $this->createUniqueUser( 'protected_owner' );
 		update_user_meta( $owner_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		// Owner should be added automatically (via save_post hook)
 		// Try to remove owner
@@ -351,7 +351,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 
 		// Create workspace - this triggers save_post_workspace hook
 		// which should auto-add owner as admin
-		$workspace_id = $this->createWorkspace( array( 'post_author' => $owner_id ) );
+		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		// Manually add owner as admin to simulate what the hook does
 		// (the hook runs on save_post which might not trigger in factory)
@@ -394,7 +394,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$user_id = $this->createUniqueUser( 'blocked' );
 		// Don't approve the user
 
-		$person_id = $this->createPerson( array( 'post_author' => $user_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
 
 		$this->assertFalse(
 			$this->access_control->user_can_access_post( $person_id, $user_id ),
@@ -406,13 +406,13 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$user_id = $this->createUniqueUser( 'empty_ids' );
 		// Don't approve
 
-		$this->createPerson( array( 'post_author' => $user_id ) );
-		$this->createPerson( array( 'post_author' => $user_id ) );
+		$this->createPerson( [ 'post_author' => $user_id ] );
+		$this->createPerson( [ 'post_author' => $user_id ] );
 
 		// Since user is unapproved, access control will block them before checking owned posts
 		// We need to test at the filter level
 		$result = $this->access_control->user_can_access_post(
-			$this->createPerson( array( 'post_author' => $user_id ) ),
+			$this->createPerson( [ 'post_author' => $user_id ] ),
 			$user_id
 		);
 
@@ -423,7 +423,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$user_id = $this->createUniqueUser( 'approved' );
 		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$person_id = $this->createPerson( array( 'post_author' => $user_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
 
 		$this->assertTrue(
 			$this->access_control->user_can_access_post( $person_id, $user_id ),
@@ -433,7 +433,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 
 	public function test_admin_always_approved(): void {
 		// Create a user first
-		$admin_id = self::factory()->user->create( array( 'user_login' => 'test_admin_' . $this->test_id ) );
+		$admin_id = self::factory()->user->create( [ 'user_login' => 'test_admin_' . $this->test_id ] );
 
 		// The user_register hook forces caelis_user role, so manually set admin role
 		$admin = new \WP_User( $admin_id );
@@ -470,25 +470,25 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		// Don't approve
 
 		// Create a post for this user
-		$this->createPerson( array( 'post_author' => $user_id ) );
+		$this->createPerson( [ 'post_author' => $user_id ] );
 
 		// Simulate REST query filter
 		wp_set_current_user( $user_id );
 
-		$args = array(
+		$args = [
 			'post_type' => 'person',
-		);
+		];
 
 		$filtered = $this->access_control->filter_rest_query( $args, new \WP_REST_Request() );
 
-		$this->assertEquals( array( 0 ), $filtered['post__in'], 'Unapproved user REST query should return empty' );
+		$this->assertEquals( [ 0 ], $filtered['post__in'], 'Unapproved user REST query should return empty' );
 	}
 
 	public function test_rest_single_access_returns_error_for_unapproved(): void {
 		$user_id = $this->createUniqueUser( 'rest_single' );
 		// Don't approve
 
-		$person_id = $this->createPerson( array( 'post_author' => $user_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
 		$post      = get_post( $person_id );
 
 		wp_set_current_user( $user_id );
@@ -509,7 +509,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 		$this->assertTrue( PRM_User_Roles::is_user_approved( $user_id ) );
 
-		$person_id = $this->createPerson( array( 'post_author' => $user_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
 		$this->assertTrue( $this->access_control->user_can_access_post( $person_id, $user_id ) );
 
 		// Now deny
@@ -526,7 +526,7 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		$user_id = $this->createUniqueUser( 'rest_approved' );
 		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$person_id = $this->createPerson( array( 'post_author' => $user_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
 
 		// Verify the post exists with correct attributes
 		$post = get_post( $person_id );
@@ -553,15 +553,15 @@ class WorkspacePermissionsTest extends CaelisTestCase {
 		// Now test the REST filter indirectly - unapproved should fail, approved should not
 		// We've already tested that unapproved returns [0] in another test
 		// Here we just verify the approved path doesn't hit the unapproved block
-		$args = array(
+		$args = [
 			'post_type' => 'person',
-		);
+		];
 
 		$filtered = $this->access_control->filter_rest_query( $args, new \WP_REST_Request() );
 
 		// The filter should NOT return [0] which would indicate blocked
 		$this->assertNotEquals(
-			array( 0 ),
+			[ 0 ],
 			$filtered['post__in'],
 			'Approved user REST query should not return blocked indicator'
 		);

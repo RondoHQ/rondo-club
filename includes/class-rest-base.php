@@ -203,15 +203,15 @@ abstract class PRM_REST_Base {
 	 * @return array Formatted person data.
 	 */
 	protected function format_person_summary( $post ) {
-		return array(
+		return [
 			'id'          => $post->ID,
 			'name'        => $this->sanitize_text( $post->post_title ),
 			'first_name'  => $this->sanitize_text( get_field( 'first_name', $post->ID ) ),
 			'last_name'   => $this->sanitize_text( get_field( 'last_name', $post->ID ) ),
 			'thumbnail'   => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
 			'is_favorite' => (bool) get_field( 'is_favorite', $post->ID ),
-			'labels'      => wp_get_post_terms( $post->ID, 'person_label', array( 'fields' => 'names' ) ),
-		);
+			'labels'      => wp_get_post_terms( $post->ID, 'person_label', [ 'fields' => 'names' ] ),
+		];
 	}
 
 	/**
@@ -223,13 +223,13 @@ abstract class PRM_REST_Base {
 	 * @return array Formatted company data.
 	 */
 	protected function format_company_summary( $post ) {
-		return array(
+		return [
 			'id'        => $post->ID,
 			'name'      => $this->sanitize_text( $post->post_title ),
 			'thumbnail' => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
 			'website'   => $this->sanitize_url( get_field( 'website', $post->ID ) ),
-			'labels'    => wp_get_post_terms( $post->ID, 'company_label', array( 'fields' => 'names' ) ),
-		);
+			'labels'    => wp_get_post_terms( $post->ID, 'company_label', [ 'fields' => 'names' ] ),
+		];
 	}
 
 	/**
@@ -241,26 +241,26 @@ abstract class PRM_REST_Base {
 	 * @return array Formatted date data.
 	 */
 	protected function format_date( $post ) {
-		$related_people = get_field( 'related_people', $post->ID ) ?: array();
-		$people_names   = array();
+		$related_people = get_field( 'related_people', $post->ID ) ?: [];
+		$people_names   = [];
 
 		foreach ( $related_people as $person ) {
 			$person_id      = is_object( $person ) ? $person->ID : $person;
-			$people_names[] = array(
+			$people_names[] = [
 				'id'   => $person_id,
 				'name' => $this->sanitize_text( get_the_title( $person_id ) ),
-			);
+			];
 		}
 
-		return array(
+		return [
 			'id'             => $post->ID,
 			'title'          => $this->sanitize_text( $post->post_title ),
 			'custom_label'   => $this->sanitize_text( get_field( 'custom_label', $post->ID ) ),
 			'date_value'     => get_field( 'date_value', $post->ID ),
 			'is_recurring'   => (bool) get_field( 'is_recurring', $post->ID ),
 			'year_unknown'   => (bool) get_field( 'year_unknown', $post->ID ),
-			'date_type'      => wp_get_post_terms( $post->ID, 'date_type', array( 'fields' => 'names' ) ),
+			'date_type'      => wp_get_post_terms( $post->ID, 'date_type', [ 'fields' => 'names' ] ),
 			'related_people' => $people_names,
-		);
+		];
 	}
 }

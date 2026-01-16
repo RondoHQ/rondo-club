@@ -43,7 +43,7 @@ class CptCrudTest extends CaelisTestCase {
 	 */
 	private function createApprovedCaelisUser( string $prefix = 'user' ): int {
 		$unique_id = uniqid( $prefix . '_' );
-		$user_id   = $this->createCaelisUser( array( 'user_login' => $unique_id ) );
+		$user_id   = $this->createCaelisUser( [ 'user_login' => $unique_id ] );
 		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
 	}
@@ -54,12 +54,12 @@ class CptCrudTest extends CaelisTestCase {
 	 * @param array $args Post arguments
 	 * @return int Post ID
 	 */
-	private function createImportantDatePost( array $args = array() ): int {
-		$defaults = array(
+	private function createImportantDatePost( array $args = [] ): int {
+		$defaults = [
 			'post_type'   => 'important_date',
 			'post_status' => 'publish',
 			'post_author' => get_current_user_id() ?: 1,
-		);
+		];
 
 		return self::factory()->post->create( array_merge( $defaults, $args ) );
 	}
@@ -72,7 +72,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * @param array  $params Request parameters
 	 * @return \WP_REST_Response
 	 */
-	private function restRequest( string $method, string $route, array $params = array() ): \WP_REST_Response {
+	private function restRequest( string $method, string $route, array $params = [] ): \WP_REST_Response {
 		$request = new WP_REST_Request( $method, $route );
 
 		foreach ( $params as $key => $value ) {
@@ -96,10 +96,10 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest(
 			'POST',
 			'/wp/v2/people',
-			array(
+			[
 				'title'  => 'John Doe',
 				'status' => 'publish',
-			)
+			]
 		);
 
 		$this->assertEquals( 201, $response->get_status(), 'Should return 201 Created' );
@@ -121,10 +121,10 @@ class CptCrudTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_title'  => 'Jane Doe',
 				'post_author' => $user_id,
-			)
+			]
 		);
 
 		$response = $this->restRequest( 'GET', '/wp/v2/people/' . $person_id );
@@ -146,10 +146,10 @@ class CptCrudTest extends CaelisTestCase {
 		// Create person as owner
 		wp_set_current_user( $owner_id );
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_title'  => 'Owner Person',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Try to read as other user
@@ -159,7 +159,7 @@ class CptCrudTest extends CaelisTestCase {
 		// Should be denied - either 403 or empty/filtered
 		$status = $response->get_status();
 		$this->assertTrue(
-			in_array( $status, array( 403, 401 ), true ) || $response->get_data()['code'] === 'rest_forbidden',
+			in_array( $status, [ 403, 401 ], true ) || $response->get_data()['code'] === 'rest_forbidden',
 			'Non-owner should be denied access (got status ' . $status . ')'
 		);
 	}
@@ -174,30 +174,30 @@ class CptCrudTest extends CaelisTestCase {
 		// Create persons for Alice
 		wp_set_current_user( $alice_id );
 		$alice_person_1 = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Alice Person 1',
-			)
+			]
 		);
 		$alice_person_2 = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Alice Person 2',
-			)
+			]
 		);
 
 		// Create person for Bob
 		wp_set_current_user( $bob_id );
 		$bob_person = $this->createPerson(
-			array(
+			[
 				'post_author' => $bob_id,
 				'post_title'  => 'Bob Person',
-			)
+			]
 		);
 
 		// Query as Alice - should only see her own
 		wp_set_current_user( $alice_id );
-		$response = $this->restRequest( 'GET', '/wp/v2/people', array( 'per_page' => 100 ) );
+		$response = $this->restRequest( 'GET', '/wp/v2/people', [ 'per_page' => 100 ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -217,18 +217,18 @@ class CptCrudTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_title'  => 'Original Name',
 				'post_author' => $user_id,
-			)
+			]
 		);
 
 		$response = $this->restRequest(
 			'PATCH',
 			'/wp/v2/people/' . $person_id,
-			array(
+			[
 				'title' => 'Updated Name',
-			)
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status(), 'Owner should be able to update' );
@@ -251,10 +251,10 @@ class CptCrudTest extends CaelisTestCase {
 		// Create person as owner
 		wp_set_current_user( $owner_id );
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_title'  => 'Owner Person',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Try to update as other user
@@ -262,15 +262,15 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest(
 			'PATCH',
 			'/wp/v2/people/' . $person_id,
-			array(
+			[
 				'title' => 'Hacked Name',
-			)
+			]
 		);
 
 		// Should be denied
 		$status = $response->get_status();
 		$this->assertTrue(
-			in_array( $status, array( 403, 401 ), true ),
+			in_array( $status, [ 403, 401 ], true ),
 			'Non-owner should NOT be able to update (got status ' . $status . ')'
 		);
 
@@ -292,10 +292,10 @@ class CptCrudTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_title'  => 'To Be Deleted',
 				'post_author' => $user_id,
-			)
+			]
 		);
 
 		// Verify post exists and is owned by user before delete
@@ -311,7 +311,7 @@ class CptCrudTest extends CaelisTestCase {
 		// filter sees the trashed post and returns "This item has been deleted"
 		// This is expected behavior - the important thing is that the post is trashed
 		$this->assertTrue(
-			in_array( $status, array( 200, 404 ), true ),
+			in_array( $status, [ 200, 404 ], true ),
 			'Owner delete should succeed or return 404 (got status ' . $status . ')'
 		);
 
@@ -330,10 +330,10 @@ class CptCrudTest extends CaelisTestCase {
 		// Create person as owner
 		wp_set_current_user( $owner_id );
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_title'  => 'Owner Person',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Try to delete as other user
@@ -343,7 +343,7 @@ class CptCrudTest extends CaelisTestCase {
 		// Should be denied - access control filters first, so non-owner gets 404 (not found)
 		$status = $response->get_status();
 		$this->assertTrue(
-			in_array( $status, array( 403, 401, 404 ), true ),
+			in_array( $status, [ 403, 401, 404 ], true ),
 			'Non-owner should NOT be able to delete (got status ' . $status . ')'
 		);
 
@@ -366,10 +366,10 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest(
 			'POST',
 			'/wp/v2/companies',
-			array(
+			[
 				'title'  => 'Acme Corp',
 				'status' => 'publish',
-			)
+			]
 		);
 
 		$this->assertEquals( 201, $response->get_status(), 'Should return 201 Created' );
@@ -391,10 +391,10 @@ class CptCrudTest extends CaelisTestCase {
 
 		wp_set_current_user( $owner_id );
 		$company_id = $this->createOrganization(
-			array(
+			[
 				'post_title'  => 'Owner Company',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Owner can read
@@ -406,7 +406,7 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest( 'GET', '/wp/v2/companies/' . $company_id );
 		$status   = $response->get_status();
 		$this->assertTrue(
-			in_array( $status, array( 403, 401 ), true ) || $response->get_data()['code'] === 'rest_forbidden',
+			in_array( $status, [ 403, 401 ], true ) || $response->get_data()['code'] === 'rest_forbidden',
 			'Non-owner should be denied (got status ' . $status . ')'
 		);
 	}
@@ -420,19 +420,19 @@ class CptCrudTest extends CaelisTestCase {
 
 		wp_set_current_user( $owner_id );
 		$company_id = $this->createOrganization(
-			array(
+			[
 				'post_title'  => 'Original Corp',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Owner can update
 		$response = $this->restRequest(
 			'PATCH',
 			'/wp/v2/companies/' . $company_id,
-			array(
+			[
 				'title' => 'Updated Corp',
-			)
+			]
 		);
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -441,11 +441,11 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest(
 			'PATCH',
 			'/wp/v2/companies/' . $company_id,
-			array(
+			[
 				'title' => 'Hacked Corp',
-			)
+			]
 		);
-		$this->assertTrue( in_array( $response->get_status(), array( 403, 401 ), true ) );
+		$this->assertTrue( in_array( $response->get_status(), [ 403, 401 ], true ) );
 	}
 
 	/**
@@ -459,10 +459,10 @@ class CptCrudTest extends CaelisTestCase {
 
 		wp_set_current_user( $owner_id );
 		$company_id = $this->createOrganization(
-			array(
+			[
 				'post_title'  => 'Delete Corp',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Verify exists before delete
@@ -473,7 +473,7 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest( 'DELETE', '/wp/v2/companies/' . $company_id );
 		$status   = $response->get_status();
 		$this->assertTrue(
-			in_array( $status, array( 200, 404 ), true ),
+			in_array( $status, [ 200, 404 ], true ),
 			'Owner delete should succeed or return 404 (got status ' . $status . ')'
 		);
 
@@ -491,10 +491,10 @@ class CptCrudTest extends CaelisTestCase {
 
 		wp_set_current_user( $owner_id );
 		$company_id = $this->createOrganization(
-			array(
+			[
 				'post_title'  => 'Delete Corp',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Non-owner denied (gets 404 because access control filters the post)
@@ -502,7 +502,7 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest( 'DELETE', '/wp/v2/companies/' . $company_id );
 		$status   = $response->get_status();
 		$this->assertTrue(
-			in_array( $status, array( 403, 401, 404 ), true ),
+			in_array( $status, [ 403, 401, 404 ], true ),
 			'Non-owner should not be able to delete (got status ' . $status . ')'
 		);
 
@@ -520,19 +520,19 @@ class CptCrudTest extends CaelisTestCase {
 
 		// Create a person first to link to
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		$response = $this->restRequest(
 			'POST',
 			'/wp/v2/important-dates',
-			array(
+			[
 				'title'  => 'Birthday',
 				'status' => 'publish',
-			)
+			]
 		);
 
 		$this->assertEquals( 201, $response->get_status(), 'Should return 201 Created' );
@@ -553,10 +553,10 @@ class CptCrudTest extends CaelisTestCase {
 
 		wp_set_current_user( $owner_id );
 		$date_id = $this->createImportantDatePost(
-			array(
+			[
 				'post_title'  => 'Owner Birthday',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Owner can read
@@ -568,7 +568,7 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest( 'GET', '/wp/v2/important-dates/' . $date_id );
 		$status   = $response->get_status();
 		$this->assertTrue(
-			in_array( $status, array( 403, 401 ), true ) || $response->get_data()['code'] === 'rest_forbidden',
+			in_array( $status, [ 403, 401 ], true ) || $response->get_data()['code'] === 'rest_forbidden',
 			'Non-owner should be denied (got status ' . $status . ')'
 		);
 	}
@@ -582,19 +582,19 @@ class CptCrudTest extends CaelisTestCase {
 
 		wp_set_current_user( $owner_id );
 		$date_id = $this->createImportantDatePost(
-			array(
+			[
 				'post_title'  => 'Original Event',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Owner can update
 		$response = $this->restRequest(
 			'PATCH',
 			'/wp/v2/important-dates/' . $date_id,
-			array(
+			[
 				'title' => 'Updated Event',
-			)
+			]
 		);
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -603,11 +603,11 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest(
 			'PATCH',
 			'/wp/v2/important-dates/' . $date_id,
-			array(
+			[
 				'title' => 'Hacked Event',
-			)
+			]
 		);
-		$this->assertTrue( in_array( $response->get_status(), array( 403, 401 ), true ) );
+		$this->assertTrue( in_array( $response->get_status(), [ 403, 401 ], true ) );
 	}
 
 	/**
@@ -621,10 +621,10 @@ class CptCrudTest extends CaelisTestCase {
 
 		wp_set_current_user( $owner_id );
 		$date_id = $this->createImportantDatePost(
-			array(
+			[
 				'post_title'  => 'Delete Event',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Verify exists before delete
@@ -635,7 +635,7 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest( 'DELETE', '/wp/v2/important-dates/' . $date_id );
 		$status   = $response->get_status();
 		$this->assertTrue(
-			in_array( $status, array( 200, 404 ), true ),
+			in_array( $status, [ 200, 404 ], true ),
 			'Owner delete should succeed or return 404 (got status ' . $status . ')'
 		);
 
@@ -653,10 +653,10 @@ class CptCrudTest extends CaelisTestCase {
 
 		wp_set_current_user( $owner_id );
 		$date_id = $this->createImportantDatePost(
-			array(
+			[
 				'post_title'  => 'Delete Event',
 				'post_author' => $owner_id,
-			)
+			]
 		);
 
 		// Non-owner denied (gets 404 because access control filters the post)
@@ -664,7 +664,7 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest( 'DELETE', '/wp/v2/important-dates/' . $date_id );
 		$status   = $response->get_status();
 		$this->assertTrue(
-			in_array( $status, array( 403, 401, 404 ), true ),
+			in_array( $status, [ 403, 401, 404 ], true ),
 			'Non-owner should not be able to delete (got status ' . $status . ')'
 		);
 
@@ -685,15 +685,15 @@ class CptCrudTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_title'  => 'John ACF Test',
 				'post_author' => $user_id,
-			),
-			array(
+			],
+			[
 				'first_name' => 'John',
 				'last_name'  => 'Tester',
 				'nickname'   => 'JT',
-			)
+			]
 		);
 
 		$response = $this->restRequest( 'GET', '/wp/v2/people/' . $person_id );
@@ -717,14 +717,14 @@ class CptCrudTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$company_id = $this->createOrganization(
-			array(
+			[
 				'post_title'  => 'ACF Corp',
 				'post_author' => $user_id,
-			),
-			array(
+			],
+			[
 				'website'  => 'https://example.com',
 				'industry' => 'Technology',
-			)
+			]
 		);
 
 		$response = $this->restRequest( 'GET', '/wp/v2/companies/' . $company_id );
@@ -747,24 +747,24 @@ class CptCrudTest extends CaelisTestCase {
 
 		// Create a person to link to
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Birthday Person',
-			)
+			]
 		);
 
 		$date_id = $this->createImportantDatePost(
-			array(
+			[
 				'post_title'  => 'Birthday Test',
 				'post_author' => $user_id,
-			)
+			]
 		);
 
 		// Set ACF fields
 		update_field( 'date_value', '2000-06-15', $date_id );
 		update_field( 'is_recurring', true, $date_id );
 		update_field( 'year_unknown', false, $date_id );
-		update_field( 'related_people', array( $person_id ), $date_id );
+		update_field( 'related_people', [ $person_id ], $date_id );
 
 		$response = $this->restRequest( 'GET', '/wp/v2/important-dates/' . $date_id );
 
@@ -786,26 +786,26 @@ class CptCrudTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_title'  => 'Update ACF Test',
 				'post_author' => $user_id,
-			),
-			array(
+			],
+			[
 				'first_name' => 'Original',
 				'last_name'  => 'Name',
-			)
+			]
 		);
 
 		// Update ACF field via REST
 		$response = $this->restRequest(
 			'PATCH',
 			'/wp/v2/people/' . $person_id,
-			array(
-				'acf' => array(
+			[
+				'acf' => [
 					'first_name' => 'Updated',
 					'nickname'   => 'New Nick',
-				),
-			)
+				],
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
@@ -824,24 +824,24 @@ class CptCrudTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$company_id = $this->createOrganization(
-			array(
+			[
 				'post_title'  => 'Update Corp',
 				'post_author' => $user_id,
-			),
-			array(
+			],
+			[
 				'website'  => 'https://old.com',
 				'industry' => 'Finance',
-			)
+			]
 		);
 
 		$response = $this->restRequest(
 			'PATCH',
 			'/wp/v2/companies/' . $company_id,
-			array(
-				'acf' => array(
+			[
+				'acf' => [
 					'website' => 'https://new.com',
-				),
-			)
+				],
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
@@ -857,10 +857,10 @@ class CptCrudTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$date_id = $this->createImportantDatePost(
-			array(
+			[
 				'post_title'  => 'Update Event',
 				'post_author' => $user_id,
-			)
+			]
 		);
 
 		update_field( 'date_value', '2000-01-01', $date_id );
@@ -869,12 +869,12 @@ class CptCrudTest extends CaelisTestCase {
 		$response = $this->restRequest(
 			'PATCH',
 			'/wp/v2/important-dates/' . $date_id,
-			array(
-				'acf' => array(
+			[
+				'acf' => [
 					'date_value'   => '2000-12-25',
 					'is_recurring' => true,
-				),
-			)
+				],
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );

@@ -28,12 +28,12 @@ abstract class CaelisTestCase extends WPTestCase {
 	 * @param array $acf ACF field values keyed by field name
 	 * @return int Post ID
 	 */
-	protected function createPerson( array $args = array(), array $acf = array() ): int {
-		$defaults = array(
+	protected function createPerson( array $args = [], array $acf = [] ): int {
+		$defaults = [
 			'post_type'   => 'person',
 			'post_status' => 'publish',
 			'post_author' => get_current_user_id() ?: 1,
-		);
+		];
 
 		$post_id = self::factory()->post->create( array_merge( $defaults, $args ) );
 
@@ -51,12 +51,12 @@ abstract class CaelisTestCase extends WPTestCase {
 	 * @param array $acf ACF field values
 	 * @return int Post ID
 	 */
-	protected function createOrganization( array $args = array(), array $acf = array() ): int {
-		$defaults = array(
+	protected function createOrganization( array $args = [], array $acf = [] ): int {
+		$defaults = [
 			'post_type'   => 'company',
 			'post_status' => 'publish',
 			'post_author' => get_current_user_id() ?: 1,
-		);
+		];
 
 		$post_id = self::factory()->post->create( array_merge( $defaults, $args ) );
 
@@ -73,8 +73,8 @@ abstract class CaelisTestCase extends WPTestCase {
 	 * @param array $args User arguments
 	 * @return int User ID
 	 */
-	protected function createCaelisUser( array $args = array() ): int {
-		$defaults = array( 'role' => 'caelis_user' );
+	protected function createCaelisUser( array $args = [] ): int {
+		$defaults = [ 'role' => 'caelis_user' ];
 		return self::factory()->user->create( array_merge( $defaults, $args ) );
 	}
 
@@ -86,12 +86,12 @@ abstract class CaelisTestCase extends WPTestCase {
 	 * @param array $acf ACF field values
 	 * @return int Post ID
 	 */
-	protected function createImportantDate( int $person_id, array $args = array(), array $acf = array() ): int {
-		$defaults = array(
+	protected function createImportantDate( int $person_id, array $args = [], array $acf = [] ): int {
+		$defaults = [
 			'post_type'   => 'important_date',
 			'post_status' => 'publish',
 			'post_author' => get_current_user_id() ?: 1,
-		);
+		];
 
 		$post_id = self::factory()->post->create( array_merge( $defaults, $args ) );
 

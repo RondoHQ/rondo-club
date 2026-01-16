@@ -10,8 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 class PRM_REST_API extends PRM_REST_Base {
 
 	public function __construct() {
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
-		add_action( 'rest_api_init', array( $this, 'register_acf_fields' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_action( 'rest_api_init', [ $this, 'register_acf_fields' ] );
 	}
 
 	/**
@@ -22,227 +22,227 @@ class PRM_REST_API extends PRM_REST_Base {
 		register_rest_route(
 			'prm/v1',
 			'/reminders',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_upcoming_reminders' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'days_ahead' => array(
+				'callback'            => [ $this, 'get_upcoming_reminders' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'days_ahead' => [
 						'default'           => 30,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && $param > 0 && $param <= 365;
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Trigger reminders manually (admin only)
 		register_rest_route(
 			'prm/v1',
 			'/reminders/trigger',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'trigger_reminders' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
-			)
+				'callback'            => [ $this, 'trigger_reminders' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
 		);
 
 		// Check cron status (admin only)
 		register_rest_route(
 			'prm/v1',
 			'/reminders/cron-status',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_cron_status' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
-			)
+				'callback'            => [ $this, 'get_cron_status' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
 		);
 
 		// Reschedule all user reminder cron jobs (admin only)
 		register_rest_route(
 			'prm/v1',
 			'/reminders/reschedule-cron',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'reschedule_all_cron_jobs' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
-			)
+				'callback'            => [ $this, 'reschedule_all_cron_jobs' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
 		);
 
 		// Get user notification channels
 		register_rest_route(
 			'prm/v1',
 			'/user/notification-channels',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_notification_channels' ),
+				'callback'            => [ $this, 'get_notification_channels' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Update user notification channels
 		register_rest_route(
 			'prm/v1',
 			'/user/notification-channels',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'update_notification_channels' ),
+				'callback'            => [ $this, 'update_notification_channels' ],
 				'permission_callback' => 'is_user_logged_in',
-				'args'                => array(
-					'channels' => array(
+				'args'                => [
+					'channels' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_array( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Update notification time
 		register_rest_route(
 			'prm/v1',
 			'/user/notification-time',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'update_notification_time' ),
+				'callback'            => [ $this, 'update_notification_time' ],
 				'permission_callback' => 'is_user_logged_in',
-				'args'                => array(
-					'time' => array(
+				'args'                => [
+					'time' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							// Validate HH:MM format
 							return preg_match( '/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Update mention notification preference
 		register_rest_route(
 			'prm/v1',
 			'/user/mention-notifications',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'update_mention_notifications' ),
+				'callback'            => [ $this, 'update_mention_notifications' ],
 				'permission_callback' => 'is_user_logged_in',
-				'args'                => array(
-					'preference' => array(
+				'args'                => [
+					'preference' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
-							return in_array( $param, array( 'digest', 'immediate', 'never' ), true );
+							return in_array( $param, [ 'digest', 'immediate', 'never' ], true );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Get user theme preferences
 		register_rest_route(
 			'prm/v1',
 			'/user/theme-preferences',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_theme_preferences' ),
+				'callback'            => [ $this, 'get_theme_preferences' ],
 				'permission_callback' => 'is_user_logged_in',
-			)
+			]
 		);
 
 		// Update user theme preferences
 		register_rest_route(
 			'prm/v1',
 			'/user/theme-preferences',
-			array(
+			[
 				'methods'             => 'PATCH',
-				'callback'            => array( $this, 'update_theme_preferences' ),
+				'callback'            => [ $this, 'update_theme_preferences' ],
 				'permission_callback' => 'is_user_logged_in',
-				'args'                => array(
-					'color_scheme' => array(
+				'args'                => [
+					'color_scheme' => [
 						'required'          => false,
 						'validate_callback' => function ( $param ) {
-							return in_array( $param, array( 'light', 'dark', 'system' ), true );
+							return in_array( $param, [ 'light', 'dark', 'system' ], true );
 						},
-					),
-					'accent_color' => array(
+					],
+					'accent_color' => [
 						'required'          => false,
 						'validate_callback' => function ( $param ) {
-							return in_array( $param, array( 'orange', 'teal', 'indigo', 'emerald', 'violet', 'pink', 'fuchsia', 'rose' ), true );
+							return in_array( $param, [ 'orange', 'teal', 'indigo', 'emerald', 'violet', 'pink', 'fuchsia', 'rose' ], true );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Search across all content
 		register_rest_route(
 			'prm/v1',
 			'/search',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'global_search' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'q' => array(
+				'callback'            => [ $this, 'global_search' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'q' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_string( $param ) && strlen( $param ) >= 2;
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Dashboard summary
 		register_rest_route(
 			'prm/v1',
 			'/dashboard',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_dashboard_summary' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-			)
+				'callback'            => [ $this, 'get_dashboard_summary' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
 		);
 
 		// Version check (public endpoint for cache invalidation)
 		register_rest_route(
 			'prm/v1',
 			'/version',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_version' ),
+				'callback'            => [ $this, 'get_version' ],
 				'permission_callback' => '__return_true',
-			)
+			]
 		);
 
 		// Get companies where a person or company is an investor
 		register_rest_route(
 			'prm/v1',
 			'/investments/(?P<investor_id>\d+)',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_investments' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-				'args'                => array(
-					'investor_id' => array(
+				'callback'            => [ $this, 'get_investments' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'investor_id' => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Restore default relationship type configurations
 		register_rest_route(
 			'prm/v1',
 			'/relationship-types/restore-defaults',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'restore_relationship_type_defaults' ),
-				'permission_callback' => array( $this, 'check_user_approved' ),
-			)
+				'callback'            => [ $this, 'restore_relationship_type_defaults' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
 		);
 
 		// Current user info
@@ -250,97 +250,97 @@ class PRM_REST_API extends PRM_REST_Base {
 		register_rest_route(
 			'prm/v1',
 			'/user/me',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_current_user' ),
+				'callback'            => [ $this, 'get_current_user' ],
 				'permission_callback' => function () {
 					return is_user_logged_in();
 				},
-			)
+			]
 		);
 
 		// User management (admin only)
 		register_rest_route(
 			'prm/v1',
 			'/users',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_users' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
-			)
+				'callback'            => [ $this, 'get_users' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/users/(?P<user_id>\d+)/approve',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'approve_user' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
-				'args'                => array(
-					'user_id' => array(
+				'callback'            => [ $this, 'approve_user' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'user_id' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/users/(?P<user_id>\d+)/deny',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'deny_user' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
-				'args'                => array(
-					'user_id' => array(
+				'callback'            => [ $this, 'deny_user' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'user_id' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/users/(?P<user_id>\d+)',
-			array(
+			[
 				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'delete_user' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
-				'args'                => array(
-					'user_id' => array(
+				'callback'            => [ $this, 'delete_user' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'user_id' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// User search (for sharing)
 		register_rest_route(
 			'prm/v1',
 			'/users/search',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'search_users' ),
+				'callback'            => [ $this, 'search_users' ],
 				'permission_callback' => 'is_user_logged_in',
-				'args'                => array(
-					'q' => array(
+				'args'                => [
+					'q' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_string( $param ) && strlen( $param ) >= 2;
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 	}
 
@@ -349,10 +349,10 @@ class PRM_REST_API extends PRM_REST_Base {
 	 */
 	public function register_acf_fields() {
 		// Expose ACF fields in REST API for taxonomy terms
-		add_filter( 'rest_prepare_relationship_type', array( $this, 'add_acf_to_relationship_type' ), 10, 3 );
+		add_filter( 'rest_prepare_relationship_type', [ $this, 'add_acf_to_relationship_type' ], 10, 3 );
 
 		// Allow updating ACF fields via REST API
-		add_action( 'rest_insert_relationship_type', array( $this, 'update_relationship_type_acf' ), 10, 3 );
+		add_action( 'rest_insert_relationship_type', [ $this, 'update_relationship_type_acf' ], 10, 3 );
 	}
 
 	/**
@@ -390,10 +390,10 @@ class PRM_REST_API extends PRM_REST_Base {
 			$taxonomies->setup_default_relationship_configurations();
 
 			return new WP_REST_Response(
-				array(
+				[
 					'success' => true,
 					'message' => __( 'Default relationship type configurations have been restored.', 'caelis' ),
-				),
+				],
 				200
 			);
 		}
@@ -401,7 +401,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		return new WP_Error(
 			'restore_failed',
 			__( 'Failed to restore defaults.', 'caelis' ),
-			array( 'status' => 500 )
+			[ 'status' => 500 ]
 		);
 	}
 	/**
@@ -452,7 +452,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'            => true,
 				'message'            => sprintf(
 					__( 'Processed %1$d user(s), sent %2$d notification(s).', 'caelis' ),
@@ -461,7 +461,7 @@ class PRM_REST_API extends PRM_REST_Base {
 				),
 				'users_processed'    => $users_processed,
 				'notifications_sent' => $notifications_sent,
-			)
+			]
 		);
 	}
 
@@ -483,13 +483,13 @@ class PRM_REST_API extends PRM_REST_Base {
 		);
 
 		if ( empty( $date_ids ) ) {
-			return array();
+			return [];
 		}
 
 		// Get full post objects
 		$dates = array_map( 'get_post', $date_ids );
 
-		$user_ids = array();
+		$user_ids = [];
 
 		foreach ( $dates as $date_post ) {
 			// Get related people using ACF (handles repeater fields correctly)
@@ -501,7 +501,7 @@ class PRM_REST_API extends PRM_REST_Base {
 
 			// Ensure it's an array
 			if ( ! is_array( $related_people ) ) {
-				$related_people = array( $related_people );
+				$related_people = [ $related_people ];
 			}
 
 			// Get user IDs from people post authors
@@ -530,17 +530,17 @@ class PRM_REST_API extends PRM_REST_Base {
 		$users_to_notify = $reminders->get_all_users_to_notify();
 
 		// Count users with scheduled cron jobs
-		$scheduled_users = array();
+		$scheduled_users = [];
 		foreach ( $users_to_notify as $user_id ) {
-			$next_run = wp_next_scheduled( 'prm_user_reminder', array( $user_id ) );
+			$next_run = wp_next_scheduled( 'prm_user_reminder', [ $user_id ] );
 			if ( $next_run !== false ) {
 				$user              = get_userdata( $user_id );
-				$scheduled_users[] = array(
+				$scheduled_users[] = [
 					'user_id'            => $user_id,
 					'display_name'       => $user ? $user->display_name : "User $user_id",
 					'next_run'           => gmdate( 'Y-m-d H:i:s', $next_run ),
 					'next_run_timestamp' => $next_run,
-				);
+				];
 			}
 		}
 
@@ -548,7 +548,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		$legacy_scheduled = wp_next_scheduled( 'prm_daily_reminder_check' );
 
 		return rest_ensure_response(
-			array(
+			[
 				'total_users'           => count( $users_to_notify ),
 				'scheduled_users'       => count( $scheduled_users ),
 				'users'                 => $scheduled_users,
@@ -556,7 +556,7 @@ class PRM_REST_API extends PRM_REST_Base {
 				'current_timestamp'     => time(),
 				'legacy_cron_scheduled' => false !== $legacy_scheduled,
 				'legacy_next_run'       => $legacy_scheduled ? gmdate( 'Y-m-d H:i:s', $legacy_scheduled ) : null,
-			)
+			]
 		);
 	}
 
@@ -570,14 +570,14 @@ class PRM_REST_API extends PRM_REST_Base {
 		$scheduled_count = $reminders->schedule_all_user_reminders();
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'         => true,
 				'message'         => sprintf(
 					__( 'Successfully rescheduled reminder cron jobs for %d user(s).', 'caelis' ),
 					$scheduled_count
 				),
 				'users_scheduled' => $scheduled_count,
-			)
+			]
 		);
 	}
 
@@ -590,7 +590,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		$channels = get_user_meta( $user_id, 'caelis_notification_channels', true );
 		if ( ! is_array( $channels ) ) {
 			// Default to email only
-			$channels = array( 'email' );
+			$channels = [ 'email' ];
 		}
 
 		$slack_webhook = get_user_meta( $user_id, 'caelis_slack_webhook', true );
@@ -608,12 +608,12 @@ class PRM_REST_API extends PRM_REST_Base {
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'channels'              => $channels,
 				'slack_webhook'         => $slack_webhook ?: '',
 				'notification_time'     => $notification_time,
 				'mention_notifications' => $mention_notifications,
-			)
+			]
 		);
 	}
 
@@ -625,7 +625,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		$channels = $request->get_param( 'channels' );
 
 		// Validate channels
-		$valid_channels = array( 'email', 'slack' );
+		$valid_channels = [ 'email', 'slack' ];
 		$channels       = array_intersect( $channels, $valid_channels );
 
 		// If Slack is enabled, check if webhook is configured
@@ -635,7 +635,7 @@ class PRM_REST_API extends PRM_REST_Base {
 				return new WP_Error(
 					'slack_webhook_required',
 					__( 'Slack webhook URL must be configured before enabling Slack notifications.', 'caelis' ),
-					array( 'status' => 400 )
+					[ 'status' => 400 ]
 				);
 			}
 		}
@@ -643,10 +643,10 @@ class PRM_REST_API extends PRM_REST_Base {
 		update_user_meta( $user_id, 'caelis_notification_channels', $channels );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'  => true,
 				'channels' => $channels,
-			)
+			]
 		);
 	}
 
@@ -662,7 +662,7 @@ class PRM_REST_API extends PRM_REST_Base {
 			return new WP_Error(
 				'invalid_time',
 				__( 'Invalid time format. Please use HH:MM format (e.g., 09:00).', 'caelis' ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
@@ -674,21 +674,21 @@ class PRM_REST_API extends PRM_REST_Base {
 
 		if ( is_wp_error( $schedule_result ) ) {
 			return rest_ensure_response(
-				array(
+				[
 					'success'           => true,
 					'notification_time' => $time,
 					'message'           => __( 'Notification time updated, but failed to reschedule cron job.', 'caelis' ),
 					'cron_error'        => $schedule_result->get_error_message(),
-				)
+				]
 			);
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'           => true,
 				'notification_time' => $time,
 				'message'           => __( 'Notification time updated and cron job rescheduled successfully.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -700,22 +700,22 @@ class PRM_REST_API extends PRM_REST_Base {
 		$preference = sanitize_text_field( $request->get_param( 'preference' ) );
 
 		// Validate the preference value
-		$valid_preferences = array( 'digest', 'immediate', 'never' );
+		$valid_preferences = [ 'digest', 'immediate', 'never' ];
 		if ( ! in_array( $preference, $valid_preferences, true ) ) {
 			return new WP_Error(
 				'invalid_preference',
 				__( 'Invalid mention notification preference.', 'caelis' ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
 		update_user_meta( $user_id, 'caelis_mention_notifications', $preference );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'               => true,
 				'mention_notifications' => $preference,
-			)
+			]
 		);
 	}
 
@@ -736,10 +736,10 @@ class PRM_REST_API extends PRM_REST_Base {
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'color_scheme' => $color_scheme,
 				'accent_color' => $accent_color,
-			)
+			]
 		);
 	}
 
@@ -750,8 +750,8 @@ class PRM_REST_API extends PRM_REST_Base {
 		$user_id = get_current_user_id();
 
 		// Valid values for validation
-		$valid_color_schemes = array( 'light', 'dark', 'system' );
-		$valid_accent_colors = array( 'orange', 'teal', 'indigo', 'emerald', 'violet', 'pink', 'fuchsia', 'rose' );
+		$valid_color_schemes = [ 'light', 'dark', 'system' ];
+		$valid_accent_colors = [ 'orange', 'teal', 'indigo', 'emerald', 'violet', 'pink', 'fuchsia', 'rose' ];
 
 		$color_scheme = $request->get_param( 'color_scheme' );
 		$accent_color = $request->get_param( 'accent_color' );
@@ -762,7 +762,7 @@ class PRM_REST_API extends PRM_REST_Base {
 				return new WP_Error(
 					'invalid_color_scheme',
 					__( 'Invalid color scheme. Valid values: light, dark, system.', 'caelis' ),
-					array( 'status' => 400 )
+					[ 'status' => 400 ]
 				);
 			}
 			update_user_meta( $user_id, 'caelis_color_scheme', $color_scheme );
@@ -774,7 +774,7 @@ class PRM_REST_API extends PRM_REST_Base {
 				return new WP_Error(
 					'invalid_accent_color',
 					__( 'Invalid accent color.', 'caelis' ),
-					array( 'status' => 400 )
+					[ 'status' => 400 ]
 				);
 			}
 			update_user_meta( $user_id, 'caelis_accent_color', $accent_color );
@@ -792,10 +792,10 @@ class PRM_REST_API extends PRM_REST_Base {
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'color_scheme' => $updated_color_scheme,
 				'accent_color' => $updated_accent_color,
-			)
+			]
 		);
 	}
 
@@ -805,28 +805,28 @@ class PRM_REST_API extends PRM_REST_Base {
 	public function global_search( $request ) {
 		$query = sanitize_text_field( $request->get_param( 'q' ) );
 
-		$results = array(
-			'people'    => array(),
-			'companies' => array(),
-		);
+		$results = [
+			'people'    => [],
+			'companies' => [],
+		];
 
 		// Search people with scoring to prioritize first name matches
-		$people_results = array();
+		$people_results = [];
 
 		// Query 1: First name matches (highest priority)
 		$first_name_matches = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => 20,
 				'post_status'    => 'publish',
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'first_name',
 						'value'   => $query,
 						'compare' => 'LIKE',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		foreach ( $first_name_matches as $person ) {
@@ -842,53 +842,53 @@ class PRM_REST_API extends PRM_REST_Base {
 				$score = 60;
 			}
 
-			$people_results[ $person->ID ] = array(
+			$people_results[ $person->ID ] = [
 				'person' => $person,
 				'score'  => $score,
-			);
+			];
 		}
 
 		// Query 2: Last name matches (lower priority)
 		$last_name_matches = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => 20,
 				'post_status'    => 'publish',
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'last_name',
 						'value'   => $query,
 						'compare' => 'LIKE',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		foreach ( $last_name_matches as $person ) {
 			if ( ! isset( $people_results[ $person->ID ] ) ) {
-				$people_results[ $person->ID ] = array(
+				$people_results[ $person->ID ] = [
 					'person' => $person,
 					'score'  => 40,
-				);
+				];
 			}
 		}
 
 		// Query 3: General WordPress search (catches title, content)
 		$general_matches = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				's'              => $query,
 				'posts_per_page' => 20,
 				'post_status'    => 'publish',
-			)
+			]
 		);
 
 		foreach ( $general_matches as $person ) {
 			if ( ! isset( $people_results[ $person->ID ] ) ) {
-				$people_results[ $person->ID ] = array(
+				$people_results[ $person->ID ] = [
 					'person' => $person,
 					'score'  => 20,
-				);
+				];
 			}
 		}
 
@@ -908,12 +908,12 @@ class PRM_REST_API extends PRM_REST_Base {
 
 		// Search companies
 		$companies = get_posts(
-			array(
+			[
 				'post_type'      => 'company',
 				's'              => $query,
 				'posts_per_page' => 10,
 				'post_status'    => 'publish',
-			)
+			]
 		);
 
 		foreach ( $companies as $company ) {
@@ -939,10 +939,10 @@ class PRM_REST_API extends PRM_REST_Base {
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'version'   => PRM_THEME_VERSION,
 				'buildTime' => $build_time,
-			)
+			]
 		);
 	}
 
@@ -969,13 +969,13 @@ class PRM_REST_API extends PRM_REST_Base {
 
 		// Recent people
 		$recent_people = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => 5,
 				'post_status'    => 'publish',
 				'orderby'        => 'modified',
 				'order'          => 'DESC',
-			)
+			]
 		);
 
 		// Upcoming reminders
@@ -984,17 +984,17 @@ class PRM_REST_API extends PRM_REST_Base {
 
 		// Favorites
 		$favorites = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => 10,
 				'post_status'    => 'publish',
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'   => 'is_favorite',
 						'value' => '1',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Get open todos count
@@ -1007,19 +1007,19 @@ class PRM_REST_API extends PRM_REST_Base {
 		$recently_contacted = $this->get_recently_contacted_people( 5 );
 
 		return rest_ensure_response(
-			array(
-				'stats'              => array(
+			[
+				'stats'              => [
 					'total_people'         => $total_people,
 					'total_companies'      => $total_companies,
 					'total_dates'          => $total_dates,
 					'open_todos_count'     => $open_todos_count,
 					'awaiting_todos_count' => $awaiting_todos_count,
-				),
-				'recent_people'      => array_map( array( $this, 'format_person_summary' ), $recent_people ),
+				],
+				'recent_people'      => array_map( [ $this, 'format_person_summary' ], $recent_people ),
 				'upcoming_reminders' => array_slice( $upcoming_reminders, 0, 5 ),
-				'favorites'          => array_map( array( $this, 'format_person_summary' ), $favorites ),
+				'favorites'          => array_map( [ $this, 'format_person_summary' ], $favorites ),
 				'recently_contacted' => $recently_contacted,
-			)
+			]
 		);
 	}
 
@@ -1032,12 +1032,12 @@ class PRM_REST_API extends PRM_REST_Base {
 	private function count_open_todos() {
 		// Query todos with access control (PRM_Access_Control hooks into WP_Query)
 		$todos = get_posts(
-			array(
+			[
 				'post_type'      => 'prm_todo',
 				'post_status'    => 'prm_open',
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
-			)
+			]
 		);
 
 		return count( $todos );
@@ -1052,12 +1052,12 @@ class PRM_REST_API extends PRM_REST_Base {
 	private function count_awaiting_todos() {
 		// Query todos with access control (PRM_Access_Control hooks into WP_Query)
 		$todos = get_posts(
-			array(
+			[
 				'post_type'      => 'prm_todo',
 				'post_status'    => 'prm_awaiting',
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
-			)
+			]
 		);
 
 		return count( $todos );
@@ -1077,7 +1077,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		$accessible_people = $access_control->get_accessible_post_ids( 'person', $user_id );
 
 		if ( empty( $accessible_people ) ) {
-			return array();
+			return [];
 		}
 
 		// Get the most recent activity for each person
@@ -1094,16 +1094,16 @@ class PRM_REST_API extends PRM_REST_Base {
              GROUP BY c.comment_post_ID
              ORDER BY last_activity_date DESC
              LIMIT %d",
-			...array_merge( $accessible_people, array( $limit ) )
+			...array_merge( $accessible_people, [ $limit ] )
 		);
 
 		$results = $wpdb->get_results( $query );
 
 		if ( empty( $results ) ) {
-			return array();
+			return [];
 		}
 
-		$recently_contacted = array();
+		$recently_contacted = [];
 		foreach ( $results as $row ) {
 			$person = get_post( $row->person_id );
 			if ( $person && $person->post_status === 'publish' ) {
@@ -1127,47 +1127,47 @@ class PRM_REST_API extends PRM_REST_Base {
 		$accessible_companies = $access_control->get_accessible_post_ids( 'company', $user_id );
 
 		if ( empty( $accessible_companies ) ) {
-			return rest_ensure_response( array() );
+			return rest_ensure_response( [] );
 		}
 
 		// Query companies where this ID appears in the investors field
 		$companies = get_posts(
-			array(
+			[
 				'post_type'      => 'company',
 				'post__in'       => $accessible_companies,
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'investors',
 						'value'   => sprintf( '"%d"', $investor_id ),
 						'compare' => 'LIKE',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Also check with serialized format (ACF stores as serialized array)
 		$companies_serialized = get_posts(
-			array(
+			[
 				'post_type'      => 'company',
 				'post__in'       => $accessible_companies,
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-				'meta_query'     => array(
-					array(
+				'meta_query'     => [
+					[
 						'key'     => 'investors',
 						'value'   => serialize( strval( $investor_id ) ),
 						'compare' => 'LIKE',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Merge and dedupe
 		$all_companies    = array_merge( $companies, $companies_serialized );
-		$seen_ids         = array();
-		$unique_companies = array();
+		$seen_ids         = [];
+		$unique_companies = [];
 		foreach ( $all_companies as $company ) {
 			if ( ! in_array( $company->ID, $seen_ids ) ) {
 				$seen_ids[]         = $company->ID;
@@ -1176,18 +1176,18 @@ class PRM_REST_API extends PRM_REST_Base {
 		}
 
 		// Format response
-		$investments = array();
+		$investments = [];
 		foreach ( $unique_companies as $company ) {
 			$thumbnail_id  = get_post_thumbnail_id( $company->ID );
 			$thumbnail_url = $thumbnail_id ? wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' ) : '';
 
-			$investments[] = array(
+			$investments[] = [
 				'id'        => $company->ID,
 				'name'      => $this->sanitize_text( $company->post_title ),
 				'industry'  => $this->sanitize_text( get_field( 'industry', $company->ID ) ),
 				'website'   => $this->sanitize_url( get_field( 'website', $company->ID ) ),
 				'thumbnail' => $this->sanitize_url( $thumbnail_url ),
-			);
+			];
 		}
 
 		// Sort alphabetically by name
@@ -1208,17 +1208,17 @@ class PRM_REST_API extends PRM_REST_Base {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			return new WP_Error( 'not_logged_in', __( 'User is not logged in.', 'caelis' ), array( 'status' => 401 ) );
+			return new WP_Error( 'not_logged_in', __( 'User is not logged in.', 'caelis' ), [ 'status' => 401 ] );
 		}
 
 		$user = get_userdata( $user_id );
 
 		if ( ! $user ) {
-			return new WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Get avatar URL
-		$avatar_url = get_avatar_url( $user_id, array( 'size' => 96 ) );
+		$avatar_url = get_avatar_url( $user_id, [ 'size' => 96 ] );
 
 		// Check if user is admin
 		$is_admin = current_user_can( 'manage_options' );
@@ -1233,7 +1233,7 @@ class PRM_REST_API extends PRM_REST_Base {
 		$is_approved = PRM_User_Roles::is_user_approved( $user_id );
 
 		return rest_ensure_response(
-			array(
+			[
 				'id'          => $user_id,
 				'name'        => $user->display_name,
 				'email'       => $user->user_email,
@@ -1242,7 +1242,7 @@ class PRM_REST_API extends PRM_REST_Base {
 				'is_approved' => $is_approved,
 				'profile_url' => $profile_url,
 				'admin_url'   => $admin_url,
-			)
+			]
 		);
 	}
 
@@ -1250,17 +1250,17 @@ class PRM_REST_API extends PRM_REST_Base {
 	 * Get list of users (admin only)
 	 */
 	public function get_users( $request ) {
-		$users = get_users( array( 'role' => PRM_User_Roles::ROLE_NAME ) );
+		$users = get_users( [ 'role' => PRM_User_Roles::ROLE_NAME ] );
 
-		$user_list = array();
+		$user_list = [];
 		foreach ( $users as $user ) {
-			$user_list[] = array(
+			$user_list[] = [
 				'id'          => $user->ID,
 				'name'        => $user->display_name,
 				'email'       => $user->user_email,
 				'is_approved' => PRM_User_Roles::is_user_approved( $user->ID ),
 				'registered'  => $user->user_registered,
-			);
+			];
 		}
 
 		return rest_ensure_response( $user_list );
@@ -1275,10 +1275,10 @@ class PRM_REST_API extends PRM_REST_Base {
 		$user_roles->approve_user( $user_id );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'message' => __( 'User approved.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -1291,10 +1291,10 @@ class PRM_REST_API extends PRM_REST_Base {
 		$user_roles->deny_user( $user_id );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'message' => __( 'User denied.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -1309,7 +1309,7 @@ class PRM_REST_API extends PRM_REST_Base {
 			return new WP_Error(
 				'cannot_delete_self',
 				__( 'You cannot delete your own account.', 'caelis' ),
-				array( 'status' => 400 )
+				[ 'status' => 400 ]
 			);
 		}
 
@@ -1319,7 +1319,7 @@ class PRM_REST_API extends PRM_REST_Base {
 			return new WP_Error(
 				'user_not_found',
 				__( 'User not found.', 'caelis' ),
-				array( 'status' => 404 )
+				[ 'status' => 404 ]
 			);
 		}
 
@@ -1334,15 +1334,15 @@ class PRM_REST_API extends PRM_REST_Base {
 			return new WP_Error(
 				'delete_failed',
 				__( 'Failed to delete user.', 'caelis' ),
-				array( 'status' => 500 )
+				[ 'status' => 500 ]
 			);
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'message' => __( 'User and all related data deleted.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -1350,16 +1350,16 @@ class PRM_REST_API extends PRM_REST_Base {
 	 * Delete all posts belonging to a user
 	 */
 	private function delete_user_posts( $user_id ) {
-		$post_types = array( 'person', 'company', 'important_date' );
+		$post_types = [ 'person', 'company', 'important_date' ];
 
 		foreach ( $post_types as $post_type ) {
 			$posts = get_posts(
-				array(
+				[
 					'post_type'      => $post_type,
 					'author'         => $user_id,
 					'posts_per_page' => -1,
 					'post_status'    => 'any',
-				)
+				]
 			);
 
 			foreach ( $posts as $post ) {
@@ -1378,26 +1378,26 @@ class PRM_REST_API extends PRM_REST_Base {
 		$query = sanitize_text_field( $request->get_param( 'q' ) );
 
 		if ( strlen( $query ) < 2 ) {
-			return rest_ensure_response( array() );
+			return rest_ensure_response( [] );
 		}
 
 		$users = get_users(
-			array(
+			[
 				'search'         => '*' . $query . '*',
-				'search_columns' => array( 'user_login', 'user_email', 'display_name' ),
+				'search_columns' => [ 'user_login', 'user_email', 'display_name' ],
 				'number'         => 10,
-				'exclude'        => array( get_current_user_id() ),
-			)
+				'exclude'        => [ get_current_user_id() ],
+			]
 		);
 
-		$result = array();
+		$result = [];
 		foreach ( $users as $user ) {
-			$result[] = array(
+			$result[] = [
 				'id'           => $user->ID,
 				'display_name' => $user->display_name,
 				'email'        => $user->user_email,
-				'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 48 ) ),
-			);
+				'avatar_url'   => get_avatar_url( $user->ID, [ 'size' => 48 ] ),
+			];
 		}
 
 		return rest_ensure_response( $result );

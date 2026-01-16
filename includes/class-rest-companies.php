@@ -17,7 +17,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 	 * Register routes for company endpoints.
 	 */
 	public function __construct() {
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	/**
@@ -28,100 +28,100 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		register_rest_route(
 			'prm/v1',
 			'/companies/(?P<company_id>\d+)/people',
-			array(
+			[
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_people_by_company' ),
+				'callback'            => [ $this, 'get_people_by_company' ],
 				'permission_callback' => '__return_true',
-				'args'                => array(
-					'company_id' => array(
+				'args'                => [
+					'company_id' => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Set company logo (featured image) - by media ID
 		register_rest_route(
 			'prm/v1',
 			'/companies/(?P<company_id>\d+)/logo',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'set_company_logo' ),
-				'permission_callback' => array( $this, 'check_company_edit_permission' ),
-				'args'                => array(
-					'company_id' => array(
+				'callback'            => [ $this, 'set_company_logo' ],
+				'permission_callback' => [ $this, 'check_company_edit_permission' ],
+				'args'                => [
+					'company_id' => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-					'media_id'   => array(
+					],
+					'media_id'   => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Upload company logo with proper filename
 		register_rest_route(
 			'prm/v1',
 			'/companies/(?P<company_id>\d+)/logo/upload',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'upload_company_logo' ),
-				'permission_callback' => array( $this, 'check_company_edit_permission' ),
-				'args'                => array(
-					'company_id' => array(
+				'callback'            => [ $this, 'upload_company_logo' ],
+				'permission_callback' => [ $this, 'check_company_edit_permission' ],
+				'args'                => [
+					'company_id' => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 
 		// Sharing endpoints
 		register_rest_route(
 			'prm/v1',
 			'/companies/(?P<id>\d+)/shares',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_shares' ),
-					'permission_callback' => array( $this, 'check_post_owner' ),
-				),
-				array(
+					'callback'            => [ $this, 'get_shares' ],
+					'permission_callback' => [ $this, 'check_post_owner' ],
+				],
+				[
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'add_share' ),
-					'permission_callback' => array( $this, 'check_post_owner' ),
-				),
-			)
+					'callback'            => [ $this, 'add_share' ],
+					'permission_callback' => [ $this, 'check_post_owner' ],
+				],
+			]
 		);
 
 		register_rest_route(
 			'prm/v1',
 			'/companies/(?P<id>\d+)/shares/(?P<user_id>\d+)',
-			array(
+			[
 				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'remove_share' ),
-				'permission_callback' => array( $this, 'check_post_owner' ),
-			)
+				'callback'            => [ $this, 'remove_share' ],
+				'permission_callback' => [ $this, 'check_post_owner' ],
+			]
 		);
 
 		// Bulk update companies
 		register_rest_route(
 			'prm/v1',
 			'/companies/bulk-update',
-			array(
+			[
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'bulk_update_companies' ),
-				'permission_callback' => array( $this, 'check_bulk_update_permission' ),
-				'args'                => array(
-					'ids'     => array(
+				'callback'            => [ $this, 'bulk_update_companies' ],
+				'permission_callback' => [ $this, 'check_bulk_update_permission' ],
+				'args'                => [
+					'ids'     => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							if ( ! is_array( $param ) || empty( $param ) ) {
@@ -137,8 +137,8 @@ class PRM_REST_Companies extends PRM_REST_Base {
 						'sanitize_callback' => function ( $param ) {
 							return array_map( 'intval', $param );
 						},
-					),
-					'updates' => array(
+					],
+					'updates' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							if ( ! is_array( $param ) || empty( $param ) ) {
@@ -154,7 +154,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 							}
 							// Validate visibility if provided
 							if ( isset( $param['visibility'] ) ) {
-								$valid_visibilities = array( 'private', 'workspace', 'shared' );
+								$valid_visibilities = [ 'private', 'workspace', 'shared' ];
 								if ( ! in_array( $param['visibility'], $valid_visibilities, true ) ) {
 									return false;
 								}
@@ -194,9 +194,9 @@ class PRM_REST_Companies extends PRM_REST_Base {
 							}
 							return true;
 						},
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 	}
 
@@ -216,26 +216,26 @@ class PRM_REST_Companies extends PRM_REST_Base {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this company.', 'caelis' ),
-				array( 'status' => 403 )
+				[ 'status' => 403 ]
 			);
 		}
 
 		// Get all people (if you can see the company, you can see who works there)
 		// Don't rely on meta_query with ACF repeater fields - filter in PHP instead
 		$people = get_posts(
-			array(
+			[
 				'post_type'      => 'person',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-			)
+			]
 		);
 
-		$current = array();
-		$former  = array();
+		$current = [];
+		$former  = [];
 
 		// Loop through all people and check their work history
 		foreach ( $people as $person ) {
-			$work_history = get_field( 'work_history', $person->ID ) ?: array();
+			$work_history = get_field( 'work_history', $person->ID ) ?: [];
 
 			if ( empty( $work_history ) ) {
 				continue;
@@ -292,10 +292,10 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'current' => $current,
 				'former'  => $former,
-			)
+			]
 		);
 	}
 
@@ -312,29 +312,29 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		// Verify company exists
 		$company = get_post( $company_id );
 		if ( ! $company || $company->post_type !== 'company' ) {
-			return new WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Verify media exists
 		$media = get_post( $media_id );
 		if ( ! $media || $media->post_type !== 'attachment' ) {
-			return new WP_Error( 'media_not_found', __( 'Media not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'media_not_found', __( 'Media not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Set as featured image
 		$result = set_post_thumbnail( $company_id, $media_id );
 
 		if ( ! $result ) {
-			return new WP_Error( 'set_thumbnail_failed', __( 'Failed to set company logo.', 'caelis' ), array( 'status' => 500 ) );
+			return new WP_Error( 'set_thumbnail_failed', __( 'Failed to set company logo.', 'caelis' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'       => true,
 				'media_id'      => $media_id,
 				'thumbnail_url' => get_the_post_thumbnail_url( $company_id, 'thumbnail' ),
 				'full_url'      => get_the_post_thumbnail_url( $company_id, 'full' ),
-			)
+			]
 		);
 	}
 
@@ -350,21 +350,21 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		// Verify company exists
 		$company = get_post( $company_id );
 		if ( ! $company || $company->post_type !== 'company' ) {
-			return new WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Check for uploaded file
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		$file = $files['file'];
 
 		// Validate file type
-		$allowed_types = array( 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' );
+		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' ];
 		if ( ! in_array( $file['type'], $allowed_types ) ) {
-			return new WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get company name for filename
@@ -386,32 +386,32 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
 		// Prepare file array with new filename
-		$file_array = array(
+		$file_array = [
 			'name'     => $filename,
 			'type'     => $file['type'],
 			'tmp_name' => $file['tmp_name'],
 			'error'    => $file['error'],
 			'size'     => $file['size'],
-		);
+		];
 
 		// Handle the upload
 		$attachment_id = media_handle_sideload( $file_array, $company_id, sprintf( '%s Logo', $company_name ) );
 
 		if ( is_wp_error( $attachment_id ) ) {
-			return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), array( 'status' => 500 ) );
+			return new WP_Error( 'upload_failed', $attachment_id->get_error_message(), [ 'status' => 500 ] );
 		}
 
 		// Set as featured image
 		set_post_thumbnail( $company_id, $attachment_id );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success'       => true,
 				'attachment_id' => $attachment_id,
 				'filename'      => $filename,
 				'thumbnail_url' => get_the_post_thumbnail_url( $company_id, 'thumbnail' ),
 				'full_url'      => get_the_post_thumbnail_url( $company_id, 'full' ),
-			)
+			]
 		);
 	}
 
@@ -445,19 +445,19 @@ class PRM_REST_Companies extends PRM_REST_Base {
 	 */
 	public function get_shares( $request ) {
 		$post_id = $request->get_param( 'id' );
-		$shares  = get_field( '_shared_with', $post_id ) ?: array();
+		$shares  = get_field( '_shared_with', $post_id ) ?: [];
 
-		$result = array();
+		$result = [];
 		foreach ( $shares as $share ) {
 			$user = get_user_by( 'ID', $share['user_id'] );
 			if ( $user ) {
-				$result[] = array(
+				$result[] = [
 					'user_id'      => (int) $share['user_id'],
 					'display_name' => $user->display_name,
 					'email'        => $user->user_email,
-					'avatar_url'   => get_avatar_url( $user->ID, array( 'size' => 48 ) ),
+					'avatar_url'   => get_avatar_url( $user->ID, [ 'size' => 48 ] ),
 					'permission'   => $share['permission'],
-				);
+				];
 			}
 		}
 
@@ -478,16 +478,16 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), array( 'status' => 404 ) );
+			return new WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
 		}
 
 		// Can't share with yourself
 		if ( $user_id === get_current_user_id() ) {
-			return new WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), [ 'status' => 400 ] );
 		}
 
 		// Get current shares
-		$shares = get_field( '_shared_with', $post_id ) ?: array();
+		$shares = get_field( '_shared_with', $post_id ) ?: [];
 
 		// Check if already shared
 		foreach ( $shares as $key => $share ) {
@@ -496,26 +496,26 @@ class PRM_REST_Companies extends PRM_REST_Base {
 				$shares[ $key ]['permission'] = $permission;
 				update_field( '_shared_with', $shares, $post_id );
 				return rest_ensure_response(
-					array(
+					[
 						'success' => true,
 						'message' => __( 'Share updated.', 'caelis' ),
-					)
+					]
 				);
 			}
 		}
 
 		// Add new share
-		$shares[] = array(
+		$shares[] = [
 			'user_id'    => $user_id,
 			'permission' => $permission,
-		);
+		];
 		update_field( '_shared_with', $shares, $post_id );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'message' => __( 'Shared successfully.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -529,7 +529,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		$post_id = $request->get_param( 'id' );
 		$user_id = (int) $request->get_param( 'user_id' );
 
-		$shares = get_field( '_shared_with', $post_id ) ?: array();
+		$shares = get_field( '_shared_with', $post_id ) ?: [];
 		$shares = array_filter(
 			$shares,
 			function ( $share ) use ( $user_id ) {
@@ -541,10 +541,10 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		update_field( '_shared_with', $shares, $post_id );
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'message' => __( 'Share removed.', 'caelis' ),
-			)
+			]
 		);
 	}
 
@@ -559,7 +559,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You must be logged in to perform this action.', 'caelis' ),
-				array( 'status' => 401 )
+				[ 'status' => 401 ]
 			);
 		}
 
@@ -574,7 +574,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 				return new WP_Error(
 					'rest_invalid_id',
 					sprintf( __( 'Company with ID %d not found.', 'caelis' ), $post_id ),
-					array( 'status' => 404 )
+					[ 'status' => 404 ]
 				);
 			}
 
@@ -583,7 +583,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 				return new WP_Error(
 					'rest_forbidden',
 					sprintf( __( 'You do not have permission to update company with ID %d.', 'caelis' ), $post_id ),
-					array( 'status' => 403 )
+					[ 'status' => 403 ]
 				);
 			}
 		}
@@ -604,8 +604,8 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		$ids     = $request->get_param( 'ids' );
 		$updates = $request->get_param( 'updates' );
 
-		$updated = array();
-		$failed  = array();
+		$updated = [];
+		$failed  = [];
 
 		foreach ( $ids as $post_id ) {
 			try {
@@ -613,10 +613,10 @@ class PRM_REST_Companies extends PRM_REST_Base {
 				if ( isset( $updates['visibility'] ) ) {
 					$result = PRM_Visibility::set_visibility( $post_id, $updates['visibility'] );
 					if ( ! $result ) {
-						$failed[] = array(
+						$failed[] = [
 							'id'    => $post_id,
 							'error' => __( 'Failed to update visibility.', 'caelis' ),
-						);
+						];
 						continue;
 					}
 				}
@@ -626,7 +626,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 					$workspace_ids = array_map( 'intval', $updates['assigned_workspaces'] );
 
 					// Convert workspace post IDs to term IDs
-					$term_ids = array();
+					$term_ids = [];
 					foreach ( $workspace_ids as $workspace_id ) {
 						$term_slug = 'workspace-' . $workspace_id;
 						$term      = get_term_by( 'slug', $term_slug, 'workspace_access' );
@@ -657,19 +657,19 @@ class PRM_REST_Companies extends PRM_REST_Base {
 
 				$updated[] = $post_id;
 			} catch ( Exception $e ) {
-				$failed[] = array(
+				$failed[] = [
 					'id'    => $post_id,
 					'error' => $e->getMessage(),
-				);
+				];
 			}
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => empty( $failed ),
 				'updated' => $updated,
 				'failed'  => $failed,
-			)
+			]
 		);
 	}
 }

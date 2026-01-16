@@ -14,7 +14,7 @@ class PRM_Access_Control {
 	/**
 	 * Post types that should have access control
 	 */
-	private $controlled_post_types = array( 'person', 'company', 'important_date', 'prm_todo' );
+	private $controlled_post_types = [ 'person', 'company', 'important_date', 'prm_todo' ];
 
 	/**
 	 * Check if we're on the frontend (not admin area)
@@ -25,31 +25,31 @@ class PRM_Access_Control {
 
 	public function __construct() {
 		// Filter queries to only show accessible posts
-		add_action( 'pre_get_posts', array( $this, 'filter_queries' ) );
+		add_action( 'pre_get_posts', [ $this, 'filter_queries' ] );
 
 		// Filter REST API queries
-		add_filter( 'rest_person_query', array( $this, 'filter_rest_query' ), 10, 2 );
-		add_filter( 'rest_company_query', array( $this, 'filter_rest_query' ), 10, 2 );
-		add_filter( 'rest_important_date_query', array( $this, 'filter_rest_query' ), 10, 2 );
-		add_filter( 'rest_prm_todo_query', array( $this, 'filter_rest_query' ), 10, 2 );
+		add_filter( 'rest_person_query', [ $this, 'filter_rest_query' ], 10, 2 );
+		add_filter( 'rest_company_query', [ $this, 'filter_rest_query' ], 10, 2 );
+		add_filter( 'rest_important_date_query', [ $this, 'filter_rest_query' ], 10, 2 );
+		add_filter( 'rest_prm_todo_query', [ $this, 'filter_rest_query' ], 10, 2 );
 
 		// Check single post access
-		add_filter( 'the_posts', array( $this, 'filter_single_post_access' ), 10, 2 );
+		add_filter( 'the_posts', [ $this, 'filter_single_post_access' ], 10, 2 );
 
 		// Filter REST API single item access
-		add_filter( 'rest_prepare_person', array( $this, 'filter_rest_single_access' ), 10, 3 );
-		add_filter( 'rest_prepare_company', array( $this, 'filter_rest_single_access' ), 10, 3 );
-		add_filter( 'rest_prepare_important_date', array( $this, 'filter_rest_single_access' ), 10, 3 );
-		add_filter( 'rest_prepare_prm_todo', array( $this, 'filter_rest_single_access' ), 10, 3 );
+		add_filter( 'rest_prepare_person', [ $this, 'filter_rest_single_access' ], 10, 3 );
+		add_filter( 'rest_prepare_company', [ $this, 'filter_rest_single_access' ], 10, 3 );
+		add_filter( 'rest_prepare_important_date', [ $this, 'filter_rest_single_access' ], 10, 3 );
+		add_filter( 'rest_prepare_prm_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
 
 		// Convert workspace post IDs to term IDs when saving via REST API
-		add_action( 'rest_after_insert_person', array( $this, 'convert_workspace_ids_after_rest_insert' ), 10, 2 );
-		add_action( 'rest_after_insert_company', array( $this, 'convert_workspace_ids_after_rest_insert' ), 10, 2 );
-		add_action( 'rest_after_insert_important_date', array( $this, 'convert_workspace_ids_after_rest_insert' ), 10, 2 );
-		add_action( 'rest_after_insert_prm_todo', array( $this, 'convert_workspace_ids_after_rest_insert' ), 10, 2 );
+		add_action( 'rest_after_insert_person', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
+		add_action( 'rest_after_insert_company', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
+		add_action( 'rest_after_insert_important_date', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
+		add_action( 'rest_after_insert_prm_todo', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
 
 		// Convert term IDs back to workspace post IDs when loading
-		add_filter( 'acf/load_value/name=_assigned_workspaces', array( $this, 'convert_term_ids_to_workspace_ids' ), 10, 3 );
+		add_filter( 'acf/load_value/name=_assigned_workspaces', [ $this, 'convert_term_ids_to_workspace_ids' ], 10, 3 );
 	}
 
 	/**
@@ -73,13 +73,13 @@ class PRM_Access_Control {
 
 		// Handle empty array - clear all terms
 		if ( empty( $workspace_ids ) || ! is_array( $workspace_ids ) ) {
-			wp_set_object_terms( $post->ID, array(), 'workspace_access' );
-			update_field( '_assigned_workspaces', array(), $post->ID );
+			wp_set_object_terms( $post->ID, [], 'workspace_access' );
+			update_field( '_assigned_workspaces', [], $post->ID );
 			return;
 		}
 
 		// Convert workspace post IDs to term IDs
-		$term_ids = array();
+		$term_ids = [];
 		foreach ( $workspace_ids as $workspace_id ) {
 			$term_slug = 'workspace-' . intval( $workspace_id );
 			$term      = get_term_by( 'slug', $term_slug, 'workspace_access' );
@@ -109,10 +109,10 @@ class PRM_Access_Control {
 	 */
 	public function convert_term_ids_to_workspace_ids( $value, $post_id, $field ) {
 		if ( empty( $value ) || ! is_array( $value ) ) {
-			return array();
+			return [];
 		}
 
-		$workspace_ids = array();
+		$workspace_ids = [];
 		foreach ( $value as $term_id ) {
 			$term = get_term( $term_id, 'workspace_access' );
 			if ( $term && ! is_wp_error( $term ) ) {
@@ -189,7 +189,7 @@ class PRM_Access_Control {
 
 			if ( ! empty( $user_workspace_ids ) ) {
 				// Check if post has any matching workspace_access terms
-				$post_terms = wp_get_post_terms( $post_id, 'workspace_access', array( 'fields' => 'slugs' ) );
+				$post_terms = wp_get_post_terms( $post_id, 'workspace_access', [ 'fields' => 'slugs' ] );
 
 				if ( ! is_wp_error( $post_terms ) ) {
 					foreach ( $post_terms as $slug ) {
@@ -234,7 +234,7 @@ class PRM_Access_Control {
 		$visibility = PRM_Visibility::get_visibility( $post_id );
 		if ( $visibility === PRM_Visibility::VISIBILITY_WORKSPACE ) {
 			$user_workspace_ids = PRM_Workspace_Members::get_user_workspace_ids( $user_id );
-			$post_terms         = wp_get_post_terms( $post_id, 'workspace_access', array( 'fields' => 'slugs' ) );
+			$post_terms         = wp_get_post_terms( $post_id, 'workspace_access', [ 'fields' => 'slugs' ] );
 
 			if ( ! is_wp_error( $post_terms ) ) {
 				foreach ( $post_terms as $slug ) {
@@ -278,7 +278,7 @@ class PRM_Access_Control {
 
 		if ( ! $user_id ) {
 			// Not logged in - show nothing
-			$query->set( 'post__in', array( 0 ) );
+			$query->set( 'post__in', [ 0 ] );
 			return;
 		}
 
@@ -286,7 +286,7 @@ class PRM_Access_Control {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			if ( ! PRM_User_Roles::is_user_approved( $user_id ) ) {
 				// Unapproved user - show nothing
-				$query->set( 'post__in', array( 0 ) );
+				$query->set( 'post__in', [ 0 ] );
 				return;
 			}
 		}
@@ -301,7 +301,7 @@ class PRM_Access_Control {
 		$accessible_ids = $this->get_accessible_post_ids( $post_type, $user_id );
 
 		if ( empty( $accessible_ids ) ) {
-			$query->set( 'post__in', array( 0 ) ); // No accessible posts
+			$query->set( 'post__in', [ 0 ] ); // No accessible posts
 		} else {
 			$query->set( 'post__in', $accessible_ids );
 		}
@@ -319,14 +319,14 @@ class PRM_Access_Control {
 		global $wpdb;
 
 		// Determine valid post statuses based on post type
-		$valid_statuses = array( 'publish' );
+		$valid_statuses = [ 'publish' ];
 		if ( $post_type === 'prm_todo' ) {
-			$valid_statuses = array( 'prm_open', 'prm_awaiting', 'prm_completed' );
+			$valid_statuses = [ 'prm_open', 'prm_awaiting', 'prm_completed' ];
 		}
 		$status_placeholders = implode( ',', array_fill( 0, count( $valid_statuses ), '%s' ) );
 
 		// 1. Posts authored by user
-		$authored_params = array_merge( array( $post_type ), $valid_statuses, array( $user_id ) );
+		$authored_params = array_merge( [ $post_type ], $valid_statuses, [ $user_id ] );
 		$authored        = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT ID FROM {$wpdb->posts}
@@ -339,7 +339,7 @@ class PRM_Access_Control {
 
 		// 2. Workspace-visible posts where user is member
 		$workspace_ids   = PRM_Workspace_Members::get_user_workspace_ids( $user_id );
-		$workspace_posts = array();
+		$workspace_posts = [];
 
 		if ( ! empty( $workspace_ids ) ) {
 			// Build term slugs from workspace IDs (format: workspace-{ID})
@@ -353,7 +353,7 @@ class PRM_Access_Control {
 			$term_placeholders = implode( ',', array_fill( 0, count( $term_slugs ), '%s' ) );
 
 			// Prepare query parameters: post_type first, then statuses, then term slugs
-			$query_params = array_merge( array( $post_type ), $valid_statuses, $term_slugs );
+			$query_params = array_merge( [ $post_type ], $valid_statuses, $term_slugs );
 
 			$workspace_posts = $wpdb->get_col(
 				$wpdb->prepare(
@@ -376,7 +376,7 @@ class PRM_Access_Control {
 
 		// 3. Posts shared directly with user
 		// _shared_with is serialized array, so we use LIKE for the user_id
-		$shared_params = array_merge( array( $post_type ), $valid_statuses, array( '%"user_id":' . $user_id . '%' ) );
+		$shared_params = array_merge( [ $post_type ], $valid_statuses, [ '%"user_id":' . $user_id . '%' ] );
 		$shared_posts  = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT DISTINCT p.ID
@@ -403,7 +403,7 @@ class PRM_Access_Control {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			$args['post__in'] = array( 0 );
+			$args['post__in'] = [ 0 ];
 			return $args;
 		}
 
@@ -411,7 +411,7 @@ class PRM_Access_Control {
 		if ( ! user_can( $user_id, 'manage_options' ) ) {
 			if ( ! PRM_User_Roles::is_user_approved( $user_id ) ) {
 				// Unapproved user - show nothing
-				$args['post__in'] = array( 0 );
+				$args['post__in'] = [ 0 ];
 				return $args;
 			}
 		}
@@ -424,7 +424,7 @@ class PRM_Access_Control {
 		$accessible_ids = $this->get_accessible_post_ids( $post_type, $user_id );
 
 		if ( empty( $accessible_ids ) ) {
-			$args['post__in'] = array( 0 );
+			$args['post__in'] = [ 0 ];
 		} else {
 			$args['post__in'] = $accessible_ids;
 		}
@@ -448,7 +448,7 @@ class PRM_Access_Control {
 			return $posts;
 		}
 
-		$filtered = array();
+		$filtered = [];
 
 		foreach ( $posts as $post ) {
 			if ( ! in_array( $post->post_type, $this->controlled_post_types ) ) {
@@ -476,7 +476,7 @@ class PRM_Access_Control {
 				return new WP_Error(
 					'rest_forbidden',
 					__( 'Your account is pending approval. Please contact an administrator.', 'caelis' ),
-					array( 'status' => 403 )
+					[ 'status' => 403 ]
 				);
 			}
 		}
@@ -486,7 +486,7 @@ class PRM_Access_Control {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'This item has been deleted.', 'caelis' ),
-				array( 'status' => 404 )
+				[ 'status' => 404 ]
 			);
 		}
 
@@ -494,7 +494,7 @@ class PRM_Access_Control {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this item.', 'caelis' ),
-				array( 'status' => 403 )
+				[ 'status' => 403 ]
 			);
 		}
 

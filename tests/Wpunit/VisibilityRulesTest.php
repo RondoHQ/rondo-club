@@ -36,7 +36,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 	 * @param array $args Optional user arguments.
 	 * @return int User ID.
 	 */
-	protected function createApprovedUser( array $args = array() ): int {
+	protected function createApprovedUser( array $args = [] ): int {
 		$user_id = $this->createCaelisUser( $args );
 		// Mark user as approved
 		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
@@ -50,20 +50,20 @@ class VisibilityRulesTest extends CaelisTestCase {
 	 * @param array $args     Optional post arguments.
 	 * @return int Workspace post ID.
 	 */
-	protected function createWorkspace( int $owner_id, array $args = array() ): int {
-		$defaults = array(
+	protected function createWorkspace( int $owner_id, array $args = [] ): int {
+		$defaults = [
 			'post_type'   => 'workspace',
 			'post_status' => 'publish',
 			'post_author' => $owner_id,
 			'post_title'  => 'Test Workspace',
-		);
+		];
 
 		$workspace_id = self::factory()->post->create( array_merge( $defaults, $args ) );
 
 		// Create the workspace_access term (normally done by taxonomies class hook)
 		$term_slug = 'workspace-' . $workspace_id;
 		$term_name = get_the_title( $workspace_id );
-		wp_insert_term( $term_name, 'workspace_access', array( 'slug' => $term_slug ) );
+		wp_insert_term( $term_name, 'workspace_access', [ 'slug' => $term_slug ] );
 
 		// Add owner as admin member
 		PRM_Workspace_Members::add( $workspace_id, $owner_id, PRM_Workspace_Members::ROLE_ADMIN );
@@ -82,7 +82,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		$term      = get_term_by( 'slug', $term_slug, 'workspace_access' );
 
 		if ( $term && ! is_wp_error( $term ) ) {
-			wp_set_object_terms( $post_id, array( $term->term_id ), 'workspace_access' );
+			wp_set_object_terms( $post_id, [ $term->term_id ], 'workspace_access' );
 		}
 	}
 
@@ -92,14 +92,14 @@ class VisibilityRulesTest extends CaelisTestCase {
 
 	public function test_private_visibility_author_can_access(): void {
 		// Create two approved users
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_private' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_private' ] );
 
 		// Create a person post authored by Alice
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Private Person',
-			)
+			]
 		);
 
 		// Set visibility to private
@@ -114,15 +114,15 @@ class VisibilityRulesTest extends CaelisTestCase {
 
 	public function test_private_visibility_non_author_cannot_access(): void {
 		// Create two approved users
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_priv2' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_priv2' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_priv2' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_priv2' ] );
 
 		// Create a person post authored by Alice
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Private Person 2',
-			)
+			]
 		);
 
 		// Set visibility to private
@@ -136,13 +136,13 @@ class VisibilityRulesTest extends CaelisTestCase {
 	}
 
 	public function test_get_visibility_returns_private(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_getvis' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_getvis' ] );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Test Get Visibility',
-			)
+			]
 		);
 
 		// Set visibility to private
@@ -157,13 +157,13 @@ class VisibilityRulesTest extends CaelisTestCase {
 	}
 
 	public function test_default_visibility_is_private(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_default' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_default' ] );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Default Visibility Person',
-			)
+			]
 		);
 
 		// Do NOT set visibility - should default to private
@@ -180,22 +180,22 @@ class VisibilityRulesTest extends CaelisTestCase {
 
 	public function test_workspace_visibility_member_can_access(): void {
 		// Create three approved users
-		$alice_id   = $this->createApprovedUser( array( 'user_login' => 'alice_ws' ) );
-		$bob_id     = $this->createApprovedUser( array( 'user_login' => 'bob_ws' ) );
-		$charlie_id = $this->createApprovedUser( array( 'user_login' => 'charlie_ws' ) );
+		$alice_id   = $this->createApprovedUser( [ 'user_login' => 'alice_ws' ] );
+		$bob_id     = $this->createApprovedUser( [ 'user_login' => 'bob_ws' ] );
+		$charlie_id = $this->createApprovedUser( [ 'user_login' => 'charlie_ws' ] );
 
 		// Create a workspace owned by Alice
-		$workspace_id = $this->createWorkspace( $alice_id, array( 'post_title' => 'Team Workspace' ) );
+		$workspace_id = $this->createWorkspace( $alice_id, [ 'post_title' => 'Team Workspace' ] );
 
 		// Add Bob as member
 		PRM_Workspace_Members::add( $workspace_id, $bob_id, PRM_Workspace_Members::ROLE_MEMBER );
 
 		// Create a person post authored by Alice with workspace visibility
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Workspace Person',
-			)
+			]
 		);
 
 		// Set visibility to workspace
@@ -225,21 +225,21 @@ class VisibilityRulesTest extends CaelisTestCase {
 
 	public function test_workspace_visibility_viewer_role_can_access(): void {
 		// Create users
-		$alice_id  = $this->createApprovedUser( array( 'user_login' => 'alice_viewer' ) );
-		$viewer_id = $this->createApprovedUser( array( 'user_login' => 'viewer_user' ) );
+		$alice_id  = $this->createApprovedUser( [ 'user_login' => 'alice_viewer' ] );
+		$viewer_id = $this->createApprovedUser( [ 'user_login' => 'viewer_user' ] );
 
 		// Create workspace
-		$workspace_id = $this->createWorkspace( $alice_id, array( 'post_title' => 'Viewer Test Workspace' ) );
+		$workspace_id = $this->createWorkspace( $alice_id, [ 'post_title' => 'Viewer Test Workspace' ] );
 
 		// Add viewer as viewer role
 		PRM_Workspace_Members::add( $workspace_id, $viewer_id, PRM_Workspace_Members::ROLE_VIEWER );
 
 		// Create workspace-visible person
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Viewer Test Person',
-			)
+			]
 		);
 
 		PRM_Visibility::set_visibility( $person_id, 'workspace' );
@@ -254,13 +254,13 @@ class VisibilityRulesTest extends CaelisTestCase {
 
 	public function test_workspace_visibility_multiple_workspaces(): void {
 		// Create users
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_multi' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_multi' ) );
-		$dave_id  = $this->createApprovedUser( array( 'user_login' => 'dave_multi' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_multi' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_multi' ] );
+		$dave_id  = $this->createApprovedUser( [ 'user_login' => 'dave_multi' ] );
 
 		// Create two workspaces
-		$workspace1_id = $this->createWorkspace( $alice_id, array( 'post_title' => 'Workspace One' ) );
-		$workspace2_id = $this->createWorkspace( $alice_id, array( 'post_title' => 'Workspace Two' ) );
+		$workspace1_id = $this->createWorkspace( $alice_id, [ 'post_title' => 'Workspace One' ] );
+		$workspace2_id = $this->createWorkspace( $alice_id, [ 'post_title' => 'Workspace Two' ] );
 
 		// Bob is member of workspace1 only
 		PRM_Workspace_Members::add( $workspace1_id, $bob_id, PRM_Workspace_Members::ROLE_MEMBER );
@@ -270,10 +270,10 @@ class VisibilityRulesTest extends CaelisTestCase {
 
 		// Create person assigned to both workspaces
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Multi-Workspace Person',
-			)
+			]
 		);
 
 		PRM_Visibility::set_visibility( $person_id, 'workspace' );
@@ -281,7 +281,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		// Assign to both workspaces
 		$term1 = get_term_by( 'slug', 'workspace-' . $workspace1_id, 'workspace_access' );
 		$term2 = get_term_by( 'slug', 'workspace-' . $workspace2_id, 'workspace_access' );
-		wp_set_object_terms( $person_id, array( $term1->term_id, $term2->term_id ), 'workspace_access' );
+		wp_set_object_terms( $person_id, [ $term1->term_id, $term2->term_id ], 'workspace_access' );
 
 		// Bob can access (member of workspace1)
 		$this->assertTrue(
@@ -302,15 +302,15 @@ class VisibilityRulesTest extends CaelisTestCase {
 
 	public function test_direct_share_grants_access_to_private_post(): void {
 		// Create users
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_share' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_share' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_share' ] );
 
 		// Create private person post
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Shared Private Person',
-			)
+			]
 		);
 
 		PRM_Visibility::set_visibility( $person_id, 'private' );
@@ -338,14 +338,14 @@ class VisibilityRulesTest extends CaelisTestCase {
 	}
 
 	public function test_get_share_permission(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_perm' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_perm' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_perm' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_perm' ] );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Permission Test Person',
-			)
+			]
 		);
 
 		// Share with view permission
@@ -360,14 +360,14 @@ class VisibilityRulesTest extends CaelisTestCase {
 	}
 
 	public function test_edit_share_permission(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_edit' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_edit' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_edit' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_edit' ] );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Edit Permission Person',
-			)
+			]
 		);
 
 		// Share with edit permission
@@ -388,14 +388,14 @@ class VisibilityRulesTest extends CaelisTestCase {
 	}
 
 	public function test_remove_share_revokes_access(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_remove' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_remove' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_remove' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_remove' ] );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Remove Share Person',
-			)
+			]
 		);
 
 		PRM_Visibility::set_visibility( $person_id, 'private' );
@@ -420,14 +420,14 @@ class VisibilityRulesTest extends CaelisTestCase {
 	}
 
 	public function test_user_has_share_returns_correct_boolean(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_has' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_has' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_has' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_has' ] );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Has Share Person',
-			)
+			]
 		);
 
 		// Before sharing
@@ -455,18 +455,18 @@ class VisibilityRulesTest extends CaelisTestCase {
 
 	public function test_share_overrides_workspace_visibility_for_non_member(): void {
 		// Create users
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_wsshare' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_wsshare' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_wsshare' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_wsshare' ] );
 
 		// Create workspace (Alice is member)
-		$workspace_id = $this->createWorkspace( $alice_id, array( 'post_title' => 'Share Override Workspace' ) );
+		$workspace_id = $this->createWorkspace( $alice_id, [ 'post_title' => 'Share Override Workspace' ] );
 
 		// Create workspace-visible person
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Workspace Share Person',
-			)
+			]
 		);
 
 		PRM_Visibility::set_visibility( $person_id, 'workspace' );
@@ -489,14 +489,14 @@ class VisibilityRulesTest extends CaelisTestCase {
 	}
 
 	public function test_update_existing_share_permission(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_update' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_update' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_update' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_update' ] );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Update Share Person',
-			)
+			]
 		);
 
 		// Share with view permission

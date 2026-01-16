@@ -53,7 +53,7 @@ class TodoCptTest extends CaelisTestCase {
 	 */
 	private function createApprovedCaelisUser( string $prefix = 'user' ): int {
 		$unique_id = uniqid( $prefix . '_' );
-		$user_id   = $this->createCaelisUser( array( 'user_login' => $unique_id ) );
+		$user_id   = $this->createCaelisUser( [ 'user_login' => $unique_id ] );
 		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
 	}
@@ -66,25 +66,25 @@ class TodoCptTest extends CaelisTestCase {
 	 * @param array $data      Additional todo data (content, status, due_date)
 	 * @return int Post ID
 	 */
-	private function createTodo( int $person_id, int $user_id, array $data = array() ): int {
-		$defaults = array(
+	private function createTodo( int $person_id, int $user_id, array $data = [] ): int {
+		$defaults = [
 			'content'    => 'Test todo',
 			'status'     => 'open', // 'open', 'awaiting', or 'completed'
 			'due_date'   => '',
 			'visibility' => 'private',
-		);
+		];
 		$data     = array_merge( $defaults, $data );
 
 		// Map status to post_status
 		$post_status = 'prm_' . $data['status'];
 
 		$post_id = self::factory()->post->create(
-			array(
+			[
 				'post_type'   => 'prm_todo',
 				'post_status' => $post_status,
 				'post_title'  => $data['content'],
 				'post_author' => $user_id,
-			)
+			]
 		);
 
 		update_field( 'related_person', $person_id, $post_id );
@@ -110,7 +110,7 @@ class TodoCptTest extends CaelisTestCase {
 	 * @param array  $params Request parameters
 	 * @return \WP_REST_Response
 	 */
-	private function doRestRequest( string $method, string $route, array $params = array() ): \WP_REST_Response {
+	private function doRestRequest( string $method, string $route, array $params = [] ): \WP_REST_Response {
 		$request = new WP_REST_Request( $method, $route );
 
 		foreach ( $params as $key => $value ) {
@@ -160,22 +160,22 @@ class TodoCptTest extends CaelisTestCase {
 		// Create person for Alice
 		wp_set_current_user( $alice_id );
 		$alice_person = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Alice Person',
-			)
+			]
 		);
-		$alice_todo   = $this->createTodo( $alice_person, $alice_id, array( 'content' => 'Alice todo' ) );
+		$alice_todo   = $this->createTodo( $alice_person, $alice_id, [ 'content' => 'Alice todo' ] );
 
 		// Create person for Bob
 		wp_set_current_user( $bob_id );
 		$bob_person = $this->createPerson(
-			array(
+			[
 				'post_author' => $bob_id,
 				'post_title'  => 'Bob Person',
-			)
+			]
 		);
-		$bob_todo   = $this->createTodo( $bob_person, $bob_id, array( 'content' => 'Bob todo' ) );
+		$bob_todo   = $this->createTodo( $bob_person, $bob_id, [ 'content' => 'Bob todo' ] );
 
 		// Query as Alice - should only see her own todos
 		wp_set_current_user( $alice_id );
@@ -195,7 +195,7 @@ class TodoCptTest extends CaelisTestCase {
 	 */
 	public function test_admin_sees_own_todos(): void {
 		// Create admin user
-		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		update_user_meta( $admin_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$regular_user_id = $this->createApprovedCaelisUser( 'regular' );
@@ -203,22 +203,22 @@ class TodoCptTest extends CaelisTestCase {
 		// Create person and todo for admin
 		wp_set_current_user( $admin_id );
 		$admin_person = $this->createPerson(
-			array(
+			[
 				'post_author' => $admin_id,
 				'post_title'  => 'Admin Person',
-			)
+			]
 		);
-		$admin_todo   = $this->createTodo( $admin_person, $admin_id, array( 'content' => 'Admin todo' ) );
+		$admin_todo   = $this->createTodo( $admin_person, $admin_id, [ 'content' => 'Admin todo' ] );
 
 		// Create person and todo for regular user
 		wp_set_current_user( $regular_user_id );
 		$regular_person = $this->createPerson(
-			array(
+			[
 				'post_author' => $regular_user_id,
 				'post_title'  => 'Regular Person',
-			)
+			]
 		);
-		$regular_todo   = $this->createTodo( $regular_person, $regular_user_id, array( 'content' => 'Regular todo' ) );
+		$regular_todo   = $this->createTodo( $regular_person, $regular_user_id, [ 'content' => 'Regular todo' ] );
 
 		// Query as admin - in frontend context, admin sees only their own data
 		wp_set_current_user( $admin_id );
@@ -246,13 +246,13 @@ class TodoCptTest extends CaelisTestCase {
 
 		// Create person and todos
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
-		$todo1     = $this->createTodo( $person_id, $user_id, array( 'content' => 'Todo 1' ) );
-		$todo2     = $this->createTodo( $person_id, $user_id, array( 'content' => 'Todo 2' ) );
+		$todo1     = $this->createTodo( $person_id, $user_id, [ 'content' => 'Todo 1' ] );
+		$todo2     = $this->createTodo( $person_id, $user_id, [ 'content' => 'Todo 2' ] );
 
 		$response = $this->doRestRequest( 'GET', '/prm/v1/todos' );
 
@@ -274,21 +274,21 @@ class TodoCptTest extends CaelisTestCase {
 
 		// Create two people
 		$person1 = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Person 1',
-			)
+			]
 		);
 		$person2 = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Person 2',
-			)
+			]
 		);
 
 		// Create todos for each
-		$todo1 = $this->createTodo( $person1, $user_id, array( 'content' => 'Todo for Person 1' ) );
-		$todo2 = $this->createTodo( $person2, $user_id, array( 'content' => 'Todo for Person 2' ) );
+		$todo1 = $this->createTodo( $person1, $user_id, [ 'content' => 'Todo for Person 1' ] );
+		$todo2 = $this->createTodo( $person2, $user_id, [ 'content' => 'Todo for Person 2' ] );
 
 		// Query todos for person 1 only
 		$response = $this->doRestRequest( 'GET', '/prm/v1/people/' . $person1 . '/todos' );
@@ -310,19 +310,19 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		$response = $this->doRestRequest(
 			'POST',
 			'/prm/v1/people/' . $person_id . '/todos',
-			array(
+			[
 				'content'  => 'New todo item',
 				'due_date' => '2026-02-01',
-			)
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
@@ -350,27 +350,27 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 		$todo_id   = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Test todo',
 				'status'  => 'open',
-			)
+			]
 		);
 
 		// Update to completed
 		$response = $this->doRestRequest(
 			'PUT',
 			'/prm/v1/todos/' . $todo_id,
-			array(
+			[
 				'status' => 'completed',
-			)
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
@@ -391,12 +391,12 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
-		$todo_id   = $this->createTodo( $person_id, $user_id, array( 'content' => 'To be deleted' ) );
+		$todo_id   = $this->createTodo( $person_id, $user_id, [ 'content' => 'To be deleted' ] );
 
 		// Verify post exists
 		$this->assertNotNull( get_post( $todo_id ), 'Todo should exist before delete' );
@@ -427,34 +427,34 @@ class TodoCptTest extends CaelisTestCase {
 
 		// Create person and 3 open todos
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 		$this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Todo 1',
 				'status'  => 'open',
-			)
+			]
 		);
 		$this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Todo 2',
 				'status'  => 'open',
-			)
+			]
 		);
 		$this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Todo 3',
 				'status'  => 'open',
-			)
+			]
 		);
 
 		// Get dashboard
@@ -475,44 +475,44 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		// Create 2 open and 2 completed todos
 		$this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Open 1',
 				'status'  => 'open',
-			)
+			]
 		);
 		$this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Open 2',
 				'status'  => 'open',
-			)
+			]
 		);
 		$this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Completed 1',
 				'status'  => 'completed',
-			)
+			]
 		);
 		$this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Completed 2',
 				'status'  => 'completed',
-			)
+			]
 		);
 
 		$response = $this->doRestRequest( 'GET', '/prm/v1/dashboard' );
@@ -533,28 +533,28 @@ class TodoCptTest extends CaelisTestCase {
 		// Create 3 todos for Alice
 		wp_set_current_user( $alice_id );
 		$alice_person = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Alice Person',
-			)
+			]
 		);
-		$this->createTodo( $alice_person, $alice_id, array( 'content' => 'Alice 1' ) );
-		$this->createTodo( $alice_person, $alice_id, array( 'content' => 'Alice 2' ) );
-		$this->createTodo( $alice_person, $alice_id, array( 'content' => 'Alice 3' ) );
+		$this->createTodo( $alice_person, $alice_id, [ 'content' => 'Alice 1' ] );
+		$this->createTodo( $alice_person, $alice_id, [ 'content' => 'Alice 2' ] );
+		$this->createTodo( $alice_person, $alice_id, [ 'content' => 'Alice 3' ] );
 
 		// Create 5 todos for Bob
 		wp_set_current_user( $bob_id );
 		$bob_person = $this->createPerson(
-			array(
+			[
 				'post_author' => $bob_id,
 				'post_title'  => 'Bob Person',
-			)
+			]
 		);
-		$this->createTodo( $bob_person, $bob_id, array( 'content' => 'Bob 1' ) );
-		$this->createTodo( $bob_person, $bob_id, array( 'content' => 'Bob 2' ) );
-		$this->createTodo( $bob_person, $bob_id, array( 'content' => 'Bob 3' ) );
-		$this->createTodo( $bob_person, $bob_id, array( 'content' => 'Bob 4' ) );
-		$this->createTodo( $bob_person, $bob_id, array( 'content' => 'Bob 5' ) );
+		$this->createTodo( $bob_person, $bob_id, [ 'content' => 'Bob 1' ] );
+		$this->createTodo( $bob_person, $bob_id, [ 'content' => 'Bob 2' ] );
+		$this->createTodo( $bob_person, $bob_id, [ 'content' => 'Bob 3' ] );
+		$this->createTodo( $bob_person, $bob_id, [ 'content' => 'Bob 4' ] );
+		$this->createTodo( $bob_person, $bob_id, [ 'content' => 'Bob 5' ] );
 
 		// Alice's dashboard should show 3 todos
 		wp_set_current_user( $alice_id );
@@ -577,7 +577,7 @@ class TodoCptTest extends CaelisTestCase {
 	 * Test todos endpoint blocked for unapproved user.
 	 */
 	public function test_todos_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createCaelisUser( array( 'user_login' => 'unapproved_todo' ) );
+		$unapproved_id = $this->createCaelisUser( [ 'user_login' => 'unapproved_todo' ] );
 		update_user_meta( $unapproved_id, PRM_User_Roles::APPROVAL_META_KEY, '0' );
 		wp_set_current_user( $unapproved_id );
 
@@ -609,36 +609,36 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		// Create open and completed todos
 		$open_todo      = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Open todo',
 				'status'  => 'open',
-			)
+			]
 		);
 		$completed_todo = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Completed todo',
 				'status'  => 'completed',
-			)
+			]
 		);
 		$awaiting_todo  = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Awaiting todo',
 				'status'  => 'awaiting',
-			)
+			]
 		);
 
 		// Default request (status=open)
@@ -660,39 +660,39 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		$open_todo      = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Open todo',
 				'status'  => 'open',
-			)
+			]
 		);
 		$completed_todo = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Completed todo',
 				'status'  => 'completed',
-			)
+			]
 		);
 		$awaiting_todo  = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Awaiting todo',
 				'status'  => 'awaiting',
-			)
+			]
 		);
 
 		// Request with status=all
-		$response = $this->doRestRequest( 'GET', '/prm/v1/todos', array( 'status' => 'all' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'status' => 'all' ] );
 
 		$data     = $response->get_data();
 		$todo_ids = array_column( $data, 'id' );
@@ -710,39 +710,39 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		$open_todo      = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Open todo',
 				'status'  => 'open',
-			)
+			]
 		);
 		$completed_todo = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Completed todo',
 				'status'  => 'completed',
-			)
+			]
 		);
 		$awaiting_todo  = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Awaiting todo',
 				'status'  => 'awaiting',
-			)
+			]
 		);
 
 		// Request with status=completed
-		$response = $this->doRestRequest( 'GET', '/prm/v1/todos', array( 'status' => 'completed' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'status' => 'completed' ] );
 
 		$data     = $response->get_data();
 		$todo_ids = array_column( $data, 'id' );
@@ -764,48 +764,48 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		// Create 2 awaiting, 1 open, and 1 completed todos
 		$awaiting1      = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Awaiting 1',
 				'status'  => 'awaiting',
-			)
+			]
 		);
 		$awaiting2      = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Awaiting 2',
 				'status'  => 'awaiting',
-			)
+			]
 		);
 		$open_todo      = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Open',
 				'status'  => 'open',
-			)
+			]
 		);
 		$completed_todo = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Completed',
 				'status'  => 'completed',
-			)
+			]
 		);
 
 		// Request with status=awaiting
-		$response = $this->doRestRequest( 'GET', '/prm/v1/todos', array( 'status' => 'awaiting' ) );
+		$response = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'status' => 'awaiting' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -827,58 +827,58 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		// Create 3 todos: one for each status
 		$open_todo      = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Open',
 				'status'  => 'open',
-			)
+			]
 		);
 		$awaiting_todo  = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Awaiting',
 				'status'  => 'awaiting',
-			)
+			]
 		);
 		$completed_todo = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Completed',
 				'status'  => 'completed',
-			)
+			]
 		);
 
 		// Test status=open returns only open
-		$response1 = $this->doRestRequest( 'GET', '/prm/v1/todos', array( 'status' => 'open' ) );
+		$response1 = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'status' => 'open' ] );
 		$data1     = $response1->get_data();
 		$this->assertCount( 1, $data1, 'status=open should return 1 todo' );
 		$this->assertEquals( $open_todo, $data1[0]['id'], 'Should return open todo' );
 
 		// Test status=awaiting returns only awaiting
-		$response2 = $this->doRestRequest( 'GET', '/prm/v1/todos', array( 'status' => 'awaiting' ) );
+		$response2 = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'status' => 'awaiting' ] );
 		$data2     = $response2->get_data();
 		$this->assertCount( 1, $data2, 'status=awaiting should return 1 todo' );
 		$this->assertEquals( $awaiting_todo, $data2[0]['id'], 'Should return awaiting todo' );
 
 		// Test status=completed returns only completed
-		$response3 = $this->doRestRequest( 'GET', '/prm/v1/todos', array( 'status' => 'completed' ) );
+		$response3 = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'status' => 'completed' ] );
 		$data3     = $response3->get_data();
 		$this->assertCount( 1, $data3, 'status=completed should return 1 todo' );
 		$this->assertEquals( $completed_todo, $data3[0]['id'], 'Should return completed todo' );
 
 		// Test status=all returns all
-		$response4 = $this->doRestRequest( 'GET', '/prm/v1/todos', array( 'status' => 'all' ) );
+		$response4 = $this->doRestRequest( 'GET', '/prm/v1/todos', [ 'status' => 'all' ] );
 		$data4     = $response4->get_data();
 		$this->assertCount( 3, $data4, 'status=all should return all 3 todos' );
 	}
@@ -895,19 +895,19 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		$response = $this->doRestRequest(
 			'POST',
 			'/prm/v1/people/' . $person_id . '/todos',
-			array(
+			[
 				'content' => 'Waiting for reply',
 				'status'  => 'awaiting',
-			)
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
@@ -930,18 +930,18 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 		$todo_id   = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Test todo',
 				'status'  => 'open',
-			)
+			]
 		);
 
 		// Verify initial state (open, not awaiting)
@@ -953,9 +953,9 @@ class TodoCptTest extends CaelisTestCase {
 		$response      = $this->doRestRequest(
 			'PUT',
 			'/prm/v1/todos/' . $todo_id,
-			array(
+			[
 				'status' => 'awaiting',
-			)
+			]
 		);
 		$after_update  = time();
 
@@ -979,20 +979,20 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		// Create todo with awaiting status via REST
 		$create_response = $this->doRestRequest(
 			'POST',
 			'/prm/v1/people/' . $person_id . '/todos',
-			array(
+			[
 				'content' => 'Waiting todo',
 				'status'  => 'awaiting',
-			)
+			]
 		);
 		$todo_id         = $create_response->get_data()['id'];
 
@@ -1005,9 +1005,9 @@ class TodoCptTest extends CaelisTestCase {
 		$response = $this->doRestRequest(
 			'PUT',
 			'/prm/v1/todos/' . $todo_id,
-			array(
+			[
 				'status' => 'completed',
-			)
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
@@ -1025,20 +1025,20 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		// Create todo with awaiting status
 		$create_response = $this->doRestRequest(
 			'POST',
 			'/prm/v1/people/' . $person_id . '/todos',
-			array(
+			[
 				'content' => 'Waiting todo',
 				'status'  => 'awaiting',
-			)
+			]
 		);
 		$todo_id         = $create_response->get_data()['id'];
 
@@ -1046,9 +1046,9 @@ class TodoCptTest extends CaelisTestCase {
 		$response = $this->doRestRequest(
 			'PUT',
 			'/prm/v1/todos/' . $todo_id,
-			array(
+			[
 				'status' => 'open',
-			)
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
@@ -1066,18 +1066,18 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 		$todo_id   = $this->createTodo(
 			$person_id,
 			$user_id,
-			array(
+			[
 				'content' => 'Test todo',
 				'status'  => 'open',
-			)
+			]
 		);
 
 		$response = $this->doRestRequest( 'GET', '/prm/v1/todos/' . $todo_id );
@@ -1099,39 +1099,39 @@ class TodoCptTest extends CaelisTestCase {
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $user_id,
 				'post_title'  => 'Test Person',
-			)
+			]
 		);
 
 		// Create open todo
 		$create_response = $this->doRestRequest(
 			'POST',
 			'/prm/v1/people/' . $person_id . '/todos',
-			array(
+			[
 				'content' => 'Test todo',
-			)
+			]
 		);
 		$todo_id         = $create_response->get_data()['id'];
 		$this->assertEquals( 'open', $create_response->get_data()['status'], 'New todo should be open' );
 
 		// Open -> Awaiting
-		$response1 = $this->doRestRequest( 'PUT', '/prm/v1/todos/' . $todo_id, array( 'status' => 'awaiting' ) );
+		$response1 = $this->doRestRequest( 'PUT', '/prm/v1/todos/' . $todo_id, [ 'status' => 'awaiting' ] );
 		$this->assertEquals( 'awaiting', $response1->get_data()['status'], 'Todo should transition to awaiting' );
 		$this->assertNotNull( $response1->get_data()['awaiting_since'], 'awaiting_since should be set' );
 
 		// Awaiting -> Completed
-		$response2 = $this->doRestRequest( 'PUT', '/prm/v1/todos/' . $todo_id, array( 'status' => 'completed' ) );
+		$response2 = $this->doRestRequest( 'PUT', '/prm/v1/todos/' . $todo_id, [ 'status' => 'completed' ] );
 		$this->assertEquals( 'completed', $response2->get_data()['status'], 'Todo should transition to completed' );
 		$this->assertNull( $response2->get_data()['awaiting_since'], 'awaiting_since should be cleared' );
 
 		// Completed -> Open (reopen)
-		$response3 = $this->doRestRequest( 'PUT', '/prm/v1/todos/' . $todo_id, array( 'status' => 'open' ) );
+		$response3 = $this->doRestRequest( 'PUT', '/prm/v1/todos/' . $todo_id, [ 'status' => 'open' ] );
 		$this->assertEquals( 'open', $response3->get_data()['status'], 'Todo should transition back to open' );
 
 		// Open -> Completed (direct completion without awaiting)
-		$response4 = $this->doRestRequest( 'PUT', '/prm/v1/todos/' . $todo_id, array( 'status' => 'completed' ) );
+		$response4 = $this->doRestRequest( 'PUT', '/prm/v1/todos/' . $todo_id, [ 'status' => 'completed' ] );
 		$this->assertEquals( 'completed', $response4->get_data()['status'], 'Todo should transition directly to completed' );
 	}
 }

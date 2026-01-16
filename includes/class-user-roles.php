@@ -17,36 +17,36 @@ class PRM_User_Roles {
 
 	public function __construct() {
 		// Register role on theme activation
-		add_action( 'after_switch_theme', array( $this, 'register_role' ) );
+		add_action( 'after_switch_theme', [ $this, 'register_role' ] );
 
 		// Remove role on theme deactivation
-		add_action( 'switch_theme', array( $this, 'remove_role' ) );
+		add_action( 'switch_theme', [ $this, 'remove_role' ] );
 
 		// Ensure role exists on init (in case theme was already active)
-		add_action( 'init', array( $this, 'ensure_role_exists' ), 20 );
+		add_action( 'init', [ $this, 'ensure_role_exists' ], 20 );
 
 		// Set default role for new users
-		add_filter( 'pre_option_default_role', array( $this, 'set_default_role' ) );
+		add_filter( 'pre_option_default_role', [ $this, 'set_default_role' ] );
 
 		// Set new users to Caelis User role and mark as unapproved
-		add_action( 'user_register', array( $this, 'handle_new_user_registration' ), 10, 1 );
+		add_action( 'user_register', [ $this, 'handle_new_user_registration' ], 10, 1 );
 
 		// Add admin columns for user approval
-		add_filter( 'manage_users_columns', array( $this, 'add_approval_column' ) );
-		add_filter( 'manage_users_custom_column', array( $this, 'show_approval_column' ), 10, 3 );
+		add_filter( 'manage_users_columns', [ $this, 'add_approval_column' ] );
+		add_filter( 'manage_users_custom_column', [ $this, 'show_approval_column' ], 10, 3 );
 
 		// Add bulk actions for approval
-		add_filter( 'bulk_actions-users', array( $this, 'add_bulk_approval_actions' ) );
-		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_approval' ), 10, 3 );
+		add_filter( 'bulk_actions-users', [ $this, 'add_bulk_approval_actions' ] );
+		add_filter( 'handle_bulk_actions-users', [ $this, 'handle_bulk_approval' ], 10, 3 );
 
 		// Add approve/deny actions to user row
-		add_filter( 'user_row_actions', array( $this, 'add_user_row_actions' ), 10, 2 );
+		add_filter( 'user_row_actions', [ $this, 'add_user_row_actions' ], 10, 2 );
 
 		// Handle approve/deny actions
-		add_action( 'admin_init', array( $this, 'handle_approval_action' ) );
+		add_action( 'admin_init', [ $this, 'handle_approval_action' ] );
 
 		// Delete user's posts when user is deleted
-		add_action( 'delete_user', array( $this, 'delete_user_posts' ), 10, 1 );
+		add_action( 'delete_user', [ $this, 'delete_user_posts' ], 10, 1 );
 	}
 
 	/**
@@ -78,7 +78,7 @@ class PRM_User_Roles {
 	 */
 	public function remove_role() {
 		// Get all users with this role
-		$users = get_users( array( 'role' => self::ROLE_NAME ) );
+		$users = get_users( [ 'role' => self::ROLE_NAME ] );
 
 		// Reassign to subscriber role before removing
 		foreach ( $users as $user ) {
@@ -98,7 +98,7 @@ class PRM_User_Roles {
 	 * - Read content (required for WordPress)
 	 */
 	private function get_role_capabilities() {
-		return array(
+		return [
 			// Basic WordPress capabilities
 			'read'                   => true,
 
@@ -118,7 +118,7 @@ class PRM_User_Roles {
 			// - Access WordPress admin settings
 			// - Install plugins or themes
 			// - Edit themes or plugins
-		);
+		];
 	}
 
 	/**
@@ -149,10 +149,10 @@ class PRM_User_Roles {
 	private function notify_admins_of_pending_user( $user ) {
 		// Get all users with manage_options capability (administrators)
 		$admins = get_users(
-			array(
+			[
 				'capability' => 'manage_options',
-				'fields'     => array( 'user_email', 'display_name' ),
-			)
+				'fields'     => [ 'user_email', 'display_name' ],
+			]
 		);
 
 		if ( empty( $admins ) ) {
@@ -254,7 +254,7 @@ Caelis Team',
 	 */
 	public function add_approval_column( $columns ) {
 		// Insert after role column.
-		$new_columns = array();
+		$new_columns = [];
 		foreach ( $columns as $key => $value ) {
 			$new_columns[ $key ] = $value;
 			if ( 'role' === $key ) {
@@ -421,16 +421,16 @@ Caelis Team',
 	 * This is called by WordPress before the user is actually deleted
 	 */
 	public function delete_user_posts( $user_id ) {
-		$post_types = array( 'person', 'company', 'important_date' );
+		$post_types = [ 'person', 'company', 'important_date' ];
 
 		foreach ( $post_types as $post_type ) {
 			$posts = get_posts(
-				array(
+				[
 					'post_type'      => $post_type,
 					'author'         => $user_id,
 					'posts_per_page' => -1,
 					'post_status'    => 'any',
-				)
+				]
 			);
 
 			foreach ( $posts as $post ) {

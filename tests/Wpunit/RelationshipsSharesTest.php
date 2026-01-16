@@ -65,7 +65,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * @param array $args Optional user arguments.
 	 * @return int User ID.
 	 */
-	protected function createApprovedUser( array $args = array() ): int {
+	protected function createApprovedUser( array $args = [] ): int {
 		$user_id = $this->createCaelisUser( $args );
 		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
@@ -78,20 +78,20 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * @param array $args     Optional post arguments.
 	 * @return int Workspace post ID.
 	 */
-	protected function createWorkspace( int $owner_id, array $args = array() ): int {
-		$defaults = array(
+	protected function createWorkspace( int $owner_id, array $args = [] ): int {
+		$defaults = [
 			'post_type'   => 'workspace',
 			'post_status' => 'publish',
 			'post_author' => $owner_id,
 			'post_title'  => 'Test Workspace',
-		);
+		];
 
 		$workspace_id = self::factory()->post->create( array_merge( $defaults, $args ) );
 
 		// Create the workspace_access term
 		$term_slug = 'workspace-' . $workspace_id;
 		$term_name = get_the_title( $workspace_id );
-		wp_insert_term( $term_name, 'workspace_access', array( 'slug' => $term_slug ) );
+		wp_insert_term( $term_name, 'workspace_access', [ 'slug' => $term_slug ] );
 
 		// Add owner as admin member
 		PRM_Workspace_Members::add( $workspace_id, $owner_id, PRM_Workspace_Members::ROLE_ADMIN );
@@ -110,7 +110,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$term      = get_term_by( 'slug', $term_slug, 'workspace_access' );
 
 		if ( $term && ! is_wp_error( $term ) ) {
-			wp_set_object_terms( $post_id, array( $term->term_id ), 'workspace_access' );
+			wp_set_object_terms( $post_id, [ $term->term_id ], 'workspace_access' );
 		}
 	}
 
@@ -122,7 +122,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * @param array  $params  Request parameters.
 	 * @return WP_REST_Response The REST response.
 	 */
-	protected function restRequest( string $method, string $route, array $params = array() ): WP_REST_Response {
+	protected function restRequest( string $method, string $route, array $params = [] ): WP_REST_Response {
 		$request = new WP_REST_Request( $method, $route );
 
 		foreach ( $params as $key => $value ) {
@@ -141,39 +141,39 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * GET /prm/v1/companies/{id}/people should return people working at the company.
 	 */
 	public function test_company_people_endpoint_returns_employees(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_rel1' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel1' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create company "Acme Corp"
 		$company_id = $this->createOrganization(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Acme Corp',
-			)
+			]
 		);
 
 		// Create person with work_history containing Acme Corp
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'John Doe',
-			),
-			array(
+			],
+			[
 				'first_name' => 'John',
 				'last_name'  => 'Doe',
-			)
+			]
 		);
 
 		// Set work_history to link person to company
-		$work_history = array(
-			array(
+		$work_history = [
+			[
 				'company'    => $company_id,
 				'job_title'  => 'Engineer',
 				'start_date' => '2020-01-01',
 				'end_date'   => '',
 				'is_current' => true,
-			),
-		);
+			],
+		];
 		update_field( 'work_history', $work_history, $person_id );
 
 		// GET /prm/v1/companies/{id}/people
@@ -195,56 +195,56 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test person-company relationship with former employees.
 	 */
 	public function test_company_people_endpoint_distinguishes_current_former(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_rel2' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel2' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create company
 		$company_id = $this->createOrganization(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'TechCorp',
-			)
+			]
 		);
 
 		// Create current employee
 		$current_person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Current Employee',
-			)
+			]
 		);
 		update_field(
 			'work_history',
-			array(
-				array(
+			[
+				[
 					'company'    => $company_id,
 					'job_title'  => 'Developer',
 					'start_date' => '2023-01-01',
 					'end_date'   => '',
 					'is_current' => true,
-				),
-			),
+				],
+			],
 			$current_person_id
 		);
 
 		// Create former employee (has end_date in the past)
 		$former_person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Former Employee',
-			)
+			]
 		);
 		update_field(
 			'work_history',
-			array(
-				array(
+			[
+				[
 					'company'    => $company_id,
 					'job_title'  => 'Manager',
 					'start_date' => '2020-01-01',
 					'end_date'   => '2022-12-31',
 					'is_current' => false,
-				),
-			),
+				],
+			],
 			$former_person_id
 		);
 
@@ -262,33 +262,33 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * GET /prm/v1/people/{id}/dates should return dates linked to the person.
 	 */
 	public function test_person_dates_endpoint_returns_linked_dates(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_rel3' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel3' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Jane Smith',
-			)
+			]
 		);
 
 		// Create important_date linked to person
 		$date_id = $this->createImportantDate(
 			$person_id,
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Birthday',
-			),
-			array(
+			],
+			[
 				'date_value'   => '1990-05-15',
 				'is_recurring' => true,
-			)
+			]
 		);
 
 		// The createImportantDate links via 'person' field, but REST expects 'related_people'
 		// Let's also set the related_people field explicitly
-		update_field( 'related_people', array( $person_id ), $date_id );
+		update_field( 'related_people', [ $person_id ], $date_id );
 
 		// GET /prm/v1/people/{person_id}/dates
 		$response = $this->restRequest( 'GET', '/prm/v1/people/' . $person_id . '/dates' );
@@ -305,27 +305,27 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test person computed fields (is_deceased, birth_year).
 	 */
 	public function test_person_computed_fields_is_deceased(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_rel4' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel4' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Deceased Person',
-			)
+			]
 		);
 
 		// Create a death date linked to this person
 		$death_date_id = self::factory()->post->create(
-			array(
+			[
 				'post_type'   => 'important_date',
 				'post_status' => 'publish',
 				'post_author' => $alice_id,
 				'post_title'  => 'Death',
-			)
+			]
 		);
-		update_field( 'related_people', array( $person_id ), $death_date_id );
+		update_field( 'related_people', [ $person_id ], $death_date_id );
 		update_field( 'date_value', '2020-01-15', $death_date_id );
 
 		// Set date_type taxonomy to 'died'
@@ -345,27 +345,27 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test person computed field birth_year.
 	 */
 	public function test_person_computed_fields_birth_year(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_rel5' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel5' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Person with Birthday',
-			)
+			]
 		);
 
 		// Create a birthday date linked to this person
 		$birthday_id = self::factory()->post->create(
-			array(
+			[
 				'post_type'   => 'important_date',
 				'post_status' => 'publish',
 				'post_author' => $alice_id,
 				'post_title'  => 'Birthday',
-			)
+			]
 		);
-		update_field( 'related_people', array( $person_id ), $birthday_id );
+		update_field( 'related_people', [ $person_id ], $birthday_id );
 		update_field( 'date_value', '1985-03-20', $birthday_id );
 		update_field( 'year_unknown', false, $birthday_id );
 
@@ -386,26 +386,26 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test that birth_year is null when year_unknown is true.
 	 */
 	public function test_person_birth_year_null_when_year_unknown(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_rel6' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel6' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Person Unknown Year',
-			)
+			]
 		);
 
 		// Create birthday with year_unknown = true
 		$birthday_id = self::factory()->post->create(
-			array(
+			[
 				'post_type'   => 'important_date',
 				'post_status' => 'publish',
 				'post_author' => $alice_id,
-			)
+			]
 		);
-		update_field( 'related_people', array( $person_id ), $birthday_id );
+		update_field( 'related_people', [ $person_id ], $birthday_id );
 		update_field( 'date_value', '1990-06-15', $birthday_id );
 		update_field( 'year_unknown', true, $birthday_id );
 		wp_set_object_terms( $birthday_id, 'birthday', 'date_type' );
@@ -425,26 +425,26 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * POST /prm/v1/people/{id}/shares
 	 */
 	public function test_people_share_add(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_share1' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_share1' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share1' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_share1' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person as Alice
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Shared Person',
-			)
+			]
 		);
 
 		// POST share with Bob (view permission)
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/people/' . $person_id . '/shares',
-			array(
+			[
 				'user_id'    => $bob_id,
 				'permission' => 'view',
-			)
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status(), 'Add share should return 200' );
@@ -458,16 +458,16 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * GET /prm/v1/people/{id}/shares
 	 */
 	public function test_people_share_get(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_share2' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_share2' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share2' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_share2' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person and share with Bob
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Get Shares Person',
-			)
+			]
 		);
 
 		PRM_Visibility::add_share( $person_id, $bob_id, 'view' );
@@ -488,16 +488,16 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * DELETE /prm/v1/people/{id}/shares/{user_id}
 	 */
 	public function test_people_share_remove(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_share3' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_share3' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share3' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_share3' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person and share with Bob
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Remove Share Person',
-			)
+			]
 		);
 
 		PRM_Visibility::add_share( $person_id, $bob_id, 'view' );
@@ -518,25 +518,25 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test share permission levels.
 	 */
 	public function test_share_permission_update(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_share4' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_share4' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share4' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_share4' ] );
 		wp_set_current_user( $alice_id );
 
 		$person_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Permission Update Person',
-			)
+			]
 		);
 
 		// Add share with view permission
 		$this->restRequest(
 			'POST',
 			'/prm/v1/people/' . $person_id . '/shares',
-			array(
+			[
 				'user_id'    => $bob_id,
 				'permission' => 'view',
-			)
+			]
 		);
 
 		$this->assertEquals( 'view', PRM_Visibility::get_share_permission( $person_id, $bob_id ), 'Initial permission should be view' );
@@ -545,10 +545,10 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$this->restRequest(
 			'POST',
 			'/prm/v1/people/' . $person_id . '/shares',
-			array(
+			[
 				'user_id'    => $bob_id,
 				'permission' => 'edit',
-			)
+			]
 		);
 
 		$this->assertEquals( 'edit', PRM_Visibility::get_share_permission( $person_id, $bob_id ), 'Permission should be updated to edit' );
@@ -559,26 +559,26 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * POST/GET/DELETE /prm/v1/companies/{id}/shares
 	 */
 	public function test_companies_share_lifecycle(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_share5' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_share5' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share5' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_share5' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create company as Alice
 		$company_id = $this->createOrganization(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Shared Company',
-			)
+			]
 		);
 
 		// POST share
 		$add_response = $this->restRequest(
 			'POST',
 			'/prm/v1/companies/' . $company_id . '/shares',
-			array(
+			[
 				'user_id'    => $bob_id,
 				'permission' => 'view',
-			)
+			]
 		);
 		$this->assertEquals( 200, $add_response->get_status(), 'Add share should return 200' );
 
@@ -602,30 +602,30 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * POST /prm/v1/people/bulk-update
 	 */
 	public function test_people_bulk_update_visibility(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_bulk1' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk1' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create a workspace first (needed for workspace visibility)
-		$workspace_id = $this->createWorkspace( $alice_id, array( 'post_title' => 'Bulk Workspace' ) );
+		$workspace_id = $this->createWorkspace( $alice_id, [ 'post_title' => 'Bulk Workspace' ] );
 
 		// Create 3 persons
 		$person1_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Bulk Person 1',
-			)
+			]
 		);
 		$person2_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Bulk Person 2',
-			)
+			]
 		);
 		$person3_id = $this->createPerson(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Bulk Person 3',
-			)
+			]
 		);
 
 		// All should start as private (default)
@@ -637,12 +637,12 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/people/bulk-update',
-			array(
-				'ids'     => array( $person1_id, $person2_id, $person3_id ),
-				'updates' => array(
+			[
+				'ids'     => [ $person1_id, $person2_id, $person3_id ],
+				'updates' => [
 					'visibility' => 'workspace',
-				),
-			)
+				],
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status(), 'Bulk update should return 200' );
@@ -661,26 +661,26 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test bulk update for people - workspace assignment.
 	 */
 	public function test_people_bulk_update_workspace_assignment(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_bulk2' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk2' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create workspace
-		$workspace_id = $this->createWorkspace( $alice_id, array( 'post_title' => 'Assignment Workspace' ) );
+		$workspace_id = $this->createWorkspace( $alice_id, [ 'post_title' => 'Assignment Workspace' ] );
 
 		// Create 2 persons
-		$person1_id = $this->createPerson( array( 'post_author' => $alice_id ) );
-		$person2_id = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$person1_id = $this->createPerson( [ 'post_author' => $alice_id ] );
+		$person2_id = $this->createPerson( [ 'post_author' => $alice_id ] );
 
 		// Bulk update workspace assignment
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/people/bulk-update',
-			array(
-				'ids'     => array( $person1_id, $person2_id ),
-				'updates' => array(
-					'assigned_workspaces' => array( $workspace_id ),
-				),
-			)
+			[
+				'ids'     => [ $person1_id, $person2_id ],
+				'updates' => [
+					'assigned_workspaces' => [ $workspace_id ],
+				],
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
@@ -688,8 +688,8 @@ class RelationshipsSharesTest extends CaelisTestCase {
 
 		// Verify workspace assignment
 		$term_slug     = 'workspace-' . $workspace_id;
-		$person1_terms = wp_get_object_terms( $person1_id, 'workspace_access', array( 'fields' => 'slugs' ) );
-		$person2_terms = wp_get_object_terms( $person2_id, 'workspace_access', array( 'fields' => 'slugs' ) );
+		$person1_terms = wp_get_object_terms( $person1_id, 'workspace_access', [ 'fields' => 'slugs' ] );
+		$person2_terms = wp_get_object_terms( $person2_id, 'workspace_access', [ 'fields' => 'slugs' ] );
 
 		$this->assertContains( $term_slug, $person1_terms, 'Person 1 should be assigned to workspace' );
 		$this->assertContains( $term_slug, $person2_terms, 'Person 2 should be assigned to workspace' );
@@ -699,7 +699,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test bulk update for people - add labels.
 	 */
 	public function test_people_bulk_update_add_labels(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_bulk3' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk3' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create a label term
@@ -707,27 +707,27 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$label_id   = $label_term['term_id'];
 
 		// Create 2 persons
-		$person1_id = $this->createPerson( array( 'post_author' => $alice_id ) );
-		$person2_id = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$person1_id = $this->createPerson( [ 'post_author' => $alice_id ] );
+		$person2_id = $this->createPerson( [ 'post_author' => $alice_id ] );
 
 		// Bulk add label
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/people/bulk-update',
-			array(
-				'ids'     => array( $person1_id, $person2_id ),
-				'updates' => array(
-					'labels_add' => array( $label_id ),
-				),
-			)
+			[
+				'ids'     => [ $person1_id, $person2_id ],
+				'updates' => [
+					'labels_add' => [ $label_id ],
+				],
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
 		$this->assertTrue( $response->get_data()['success'] );
 
 		// Verify labels added
-		$person1_labels = wp_get_object_terms( $person1_id, 'person_label', array( 'fields' => 'ids' ) );
-		$person2_labels = wp_get_object_terms( $person2_id, 'person_label', array( 'fields' => 'ids' ) );
+		$person1_labels = wp_get_object_terms( $person1_id, 'person_label', [ 'fields' => 'ids' ] );
+		$person2_labels = wp_get_object_terms( $person2_id, 'person_label', [ 'fields' => 'ids' ] );
 
 		$this->assertContains( $label_id, $person1_labels );
 		$this->assertContains( $label_id, $person2_labels );
@@ -737,7 +737,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test bulk update for people - remove labels.
 	 */
 	public function test_people_bulk_update_remove_labels(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_bulk4' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk4' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create a label term
@@ -745,30 +745,30 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$label_id   = $label_term['term_id'];
 
 		// Create 2 persons with the label
-		$person1_id = $this->createPerson( array( 'post_author' => $alice_id ) );
-		$person2_id = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$person1_id = $this->createPerson( [ 'post_author' => $alice_id ] );
+		$person2_id = $this->createPerson( [ 'post_author' => $alice_id ] );
 
-		wp_set_object_terms( $person1_id, array( $label_id ), 'person_label' );
-		wp_set_object_terms( $person2_id, array( $label_id ), 'person_label' );
+		wp_set_object_terms( $person1_id, [ $label_id ], 'person_label' );
+		wp_set_object_terms( $person2_id, [ $label_id ], 'person_label' );
 
 		// Bulk remove label
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/people/bulk-update',
-			array(
-				'ids'     => array( $person1_id, $person2_id ),
-				'updates' => array(
-					'labels_remove' => array( $label_id ),
-				),
-			)
+			[
+				'ids'     => [ $person1_id, $person2_id ],
+				'updates' => [
+					'labels_remove' => [ $label_id ],
+				],
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
 		$this->assertTrue( $response->get_data()['success'] );
 
 		// Verify labels removed
-		$person1_labels = wp_get_object_terms( $person1_id, 'person_label', array( 'fields' => 'ids' ) );
-		$person2_labels = wp_get_object_terms( $person2_id, 'person_label', array( 'fields' => 'ids' ) );
+		$person1_labels = wp_get_object_terms( $person1_id, 'person_label', [ 'fields' => 'ids' ] );
+		$person2_labels = wp_get_object_terms( $person2_id, 'person_label', [ 'fields' => 'ids' ] );
 
 		$this->assertNotContains( $label_id, $person1_labels );
 		$this->assertNotContains( $label_id, $person2_labels );
@@ -778,13 +778,13 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test bulk update authorization - user cannot update others' posts.
 	 */
 	public function test_people_bulk_update_authorization_denied(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_bulk5' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_bulk5' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk5' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_bulk5' ] );
 
 		// Alice creates persons
 		wp_set_current_user( $alice_id );
-		$person1_id = $this->createPerson( array( 'post_author' => $alice_id ) );
-		$person2_id = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$person1_id = $this->createPerson( [ 'post_author' => $alice_id ] );
+		$person2_id = $this->createPerson( [ 'post_author' => $alice_id ] );
 
 		// Bob tries to bulk update Alice's persons
 		wp_set_current_user( $bob_id );
@@ -792,12 +792,12 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/people/bulk-update',
-			array(
-				'ids'     => array( $person1_id, $person2_id ),
-				'updates' => array(
+			[
+				'ids'     => [ $person1_id, $person2_id ],
+				'updates' => [
 					'visibility' => 'shared',
-				),
-			)
+				],
+			]
 		);
 
 		// Should be 403 Forbidden
@@ -808,33 +808,33 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test bulk update for companies - visibility change.
 	 */
 	public function test_companies_bulk_update_visibility(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_bulk6' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk6' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create 2 companies
 		$company1_id = $this->createOrganization(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Company 1',
-			)
+			]
 		);
 		$company2_id = $this->createOrganization(
-			array(
+			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Company 2',
-			)
+			]
 		);
 
 		// Bulk update visibility
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/companies/bulk-update',
-			array(
-				'ids'     => array( $company1_id, $company2_id ),
-				'updates' => array(
+			[
+				'ids'     => [ $company1_id, $company2_id ],
+				'updates' => [
 					'visibility' => 'shared',
-				),
-			)
+				],
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
@@ -849,7 +849,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test bulk update for companies - add labels.
 	 */
 	public function test_companies_bulk_update_add_labels(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_bulk7' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk7' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create a company label term
@@ -857,27 +857,27 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$label_id   = $label_term['term_id'];
 
 		// Create companies
-		$company1_id = $this->createOrganization( array( 'post_author' => $alice_id ) );
-		$company2_id = $this->createOrganization( array( 'post_author' => $alice_id ) );
+		$company1_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
+		$company2_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
 
 		// Bulk add label
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/companies/bulk-update',
-			array(
-				'ids'     => array( $company1_id, $company2_id ),
-				'updates' => array(
-					'labels_add' => array( $label_id ),
-				),
-			)
+			[
+				'ids'     => [ $company1_id, $company2_id ],
+				'updates' => [
+					'labels_add' => [ $label_id ],
+				],
+			]
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
 		$this->assertTrue( $response->get_data()['success'] );
 
 		// Verify labels added
-		$company1_labels = wp_get_object_terms( $company1_id, 'company_label', array( 'fields' => 'ids' ) );
-		$company2_labels = wp_get_object_terms( $company2_id, 'company_label', array( 'fields' => 'ids' ) );
+		$company1_labels = wp_get_object_terms( $company1_id, 'company_label', [ 'fields' => 'ids' ] );
+		$company2_labels = wp_get_object_terms( $company2_id, 'company_label', [ 'fields' => 'ids' ] );
 
 		$this->assertContains( $label_id, $company1_labels );
 		$this->assertContains( $label_id, $company2_labels );
@@ -887,13 +887,13 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test bulk update for companies - authorization denied for other users' companies.
 	 */
 	public function test_companies_bulk_update_authorization_denied(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_bulk8' ) );
-		$bob_id   = $this->createApprovedUser( array( 'user_login' => 'bob_bulk8' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk8' ] );
+		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_bulk8' ] );
 
 		// Alice creates companies
 		wp_set_current_user( $alice_id );
-		$company1_id = $this->createOrganization( array( 'post_author' => $alice_id ) );
-		$company2_id = $this->createOrganization( array( 'post_author' => $alice_id ) );
+		$company1_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
+		$company2_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
 
 		// Bob tries to bulk update Alice's companies
 		wp_set_current_user( $bob_id );
@@ -901,12 +901,12 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/companies/bulk-update',
-			array(
-				'ids'     => array( $company1_id, $company2_id ),
-				'updates' => array(
+			[
+				'ids'     => [ $company1_id, $company2_id ],
+				'updates' => [
 					'visibility' => 'workspace',
-				),
-			)
+				],
+			]
 		);
 
 		$this->assertEquals( 403, $response->get_status(), 'Bob should be denied access to Alice\'s companies' );
@@ -916,13 +916,13 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test that sharing endpoint denies access to non-owner.
 	 */
 	public function test_share_endpoint_denies_non_owner(): void {
-		$alice_id   = $this->createApprovedUser( array( 'user_login' => 'alice_share6' ) );
-		$bob_id     = $this->createApprovedUser( array( 'user_login' => 'bob_share6' ) );
-		$charlie_id = $this->createApprovedUser( array( 'user_login' => 'charlie_share6' ) );
+		$alice_id   = $this->createApprovedUser( [ 'user_login' => 'alice_share6' ] );
+		$bob_id     = $this->createApprovedUser( [ 'user_login' => 'bob_share6' ] );
+		$charlie_id = $this->createApprovedUser( [ 'user_login' => 'charlie_share6' ] );
 
 		// Alice creates person
 		wp_set_current_user( $alice_id );
-		$person_id = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $alice_id ] );
 
 		// Bob tries to share Alice's person with Charlie
 		wp_set_current_user( $bob_id );
@@ -930,10 +930,10 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/people/' . $person_id . '/shares',
-			array(
+			[
 				'user_id'    => $charlie_id,
 				'permission' => 'view',
-			)
+			]
 		);
 
 		// Should fail with false (permission callback returns false, typically 403)
@@ -944,19 +944,19 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	 * Test cannot share with yourself.
 	 */
 	public function test_cannot_share_with_self(): void {
-		$alice_id = $this->createApprovedUser( array( 'user_login' => 'alice_share7' ) );
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share7' ] );
 		wp_set_current_user( $alice_id );
 
-		$person_id = $this->createPerson( array( 'post_author' => $alice_id ) );
+		$person_id = $this->createPerson( [ 'post_author' => $alice_id ] );
 
 		// Alice tries to share with herself
 		$response = $this->restRequest(
 			'POST',
 			'/prm/v1/people/' . $person_id . '/shares',
-			array(
+			[
 				'user_id'    => $alice_id,
 				'permission' => 'view',
-			)
+			]
 		);
 
 		$this->assertEquals( 400, $response->get_status(), 'Should not be able to share with yourself' );

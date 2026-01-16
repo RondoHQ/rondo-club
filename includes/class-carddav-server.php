@@ -22,11 +22,11 @@ class PRM_CardDAV_Server {
 	 * Initialize hooks
 	 */
 	public function __construct() {
-		add_action( 'init', array( $this, 'register_rewrite_rules' ) );
+		add_action( 'init', [ $this, 'register_rewrite_rules' ] );
 		// Handle .well-known early (before WordPress routing kicks in)
-		add_action( 'init', array( $this, 'handle_well_known' ), 1 );
-		add_action( 'template_redirect', array( $this, 'handle_request' ), 0 );
-		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
+		add_action( 'init', [ $this, 'handle_well_known' ], 1 );
+		add_action( 'template_redirect', [ $this, 'handle_request' ], 0 );
+		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
 	}
 
 	/**
@@ -107,10 +107,10 @@ class PRM_CardDAV_Server {
 			$carddavBackend   = new \Caelis\CardDAV\CardDAVBackend();
 
 			// Create directory tree
-			$tree = array(
+			$tree = [
 				new \Sabre\DAVACL\PrincipalCollection( $principalBackend ),
 				new \Sabre\CardDAV\AddressBookRoot( $principalBackend, $carddavBackend ),
-			);
+			];
 
 			// Create server
 			$server = new \Sabre\DAV\Server( $tree );
@@ -134,7 +134,7 @@ class PRM_CardDAV_Server {
 					error_log( "CardDAV Request: {$method} {$uri} (Depth: {$depth})" );
 
 					// Log request body for PROPFIND/REPORT
-					if ( in_array( $method, array( 'PROPFIND', 'REPORT' ) ) ) {
+					if ( in_array( $method, [ 'PROPFIND', 'REPORT' ] ) ) {
 						$body = $request->getBodyAsString();
 						if ( $body ) {
 							error_log( 'CardDAV Request body: ' . substr( $body, 0, 1000 ) );
@@ -204,15 +204,15 @@ class PRM_CardDAV_Server {
 		$user = get_user_by( 'ID', $user_id );
 
 		if ( ! $user ) {
-			return array();
+			return [];
 		}
 
 		$base_url = home_url( self::BASE_URI );
 
-		return array(
+		return [
 			'server'      => $base_url,
 			'principal'   => $base_url . 'principals/' . $user->user_login . '/',
 			'addressbook' => $base_url . 'addressbooks/' . $user->user_login . '/contacts/',
-		);
+		];
 	}
 }

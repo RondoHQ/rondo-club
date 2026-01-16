@@ -17,7 +17,7 @@ class PRM_Google_OAuth {
 	/**
 	 * Google Calendar readonly scope
 	 */
-	private const SCOPES = array( 'https://www.googleapis.com/auth/calendar.readonly' );
+	private const SCOPES = [ 'https://www.googleapis.com/auth/calendar.readonly' ];
 
 	/**
 	 * Check if Google OAuth is configured
@@ -106,13 +106,13 @@ class PRM_Google_OAuth {
 		}
 
 		// Build token credential structure
-		return array(
+		return [
 			'access_token'  => $token['access_token'] ?? '',
 			'refresh_token' => $token['refresh_token'] ?? '',
 			'expires_at'    => time() + ( $token['expires_in'] ?? 3600 ),
 			'token_type'    => $token['token_type'] ?? 'Bearer',
 			'scope'         => $token['scope'] ?? implode( ' ', self::SCOPES ),
-		);
+		];
 	}
 
 	/**
@@ -173,7 +173,7 @@ class PRM_Google_OAuth {
 						PRM_Calendar_Connections::update_connection(
 							$user_id,
 							$connection['id'],
-							array( 'last_error' => $e->getMessage() )
+							[ 'last_error' => $e->getMessage() ]
 						);
 					}
 				}
@@ -204,12 +204,12 @@ class PRM_Google_OAuth {
 			throw new Exception( $token['error_description'] ?? $token['error'] );
 		}
 
-		return array(
+		return [
 			'access_token'  => $token['access_token'] ?? '',
 			'refresh_token' => $token['refresh_token'] ?? '',
 			'expires_at'    => time() + ( $token['expires_in'] ?? 3600 ),
 			'token_type'    => $token['token_type'] ?? 'Bearer',
 			'scope'         => $token['scope'] ?? implode( ' ', self::SCOPES ),
-		);
+		];
 	}
 }
