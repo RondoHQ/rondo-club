@@ -8,11 +8,13 @@
  * - Token storage and refresh
  */
 
+namespace Caelis\Calendar;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Google_OAuth {
+class GoogleOAuth {
 
 	/**
 	 * Google Calendar readonly scope

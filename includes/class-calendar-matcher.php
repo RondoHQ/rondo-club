@@ -6,11 +6,13 @@
  * with fuzzy name fallback. Uses transient-based caching for performance.
  */
 
+namespace Caelis\Calendar;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Calendar_Matcher {
+class Matcher {
 
 	/**
 	 * Transient key prefix for email lookup cache
