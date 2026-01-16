@@ -1159,6 +1159,8 @@ function EditConnectionModal({ connection, onSave, onClose }) {
   const [syncEnabled, setSyncEnabled] = useState(connection.sync_enabled !== false);
   const [autoLog, setAutoLog] = useState(connection.auto_log !== false);
   const [syncFromDays, setSyncFromDays] = useState(connection.sync_from_days || 90);
+  const [syncToDays, setSyncToDays] = useState(connection.sync_to_days || 30);
+  const [syncFrequency, setSyncFrequency] = useState(connection.sync_frequency || 15);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -1219,6 +1221,8 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         sync_enabled: syncEnabled,
         auto_log: autoLog,
         sync_from_days: syncFromDays,
+        sync_to_days: syncToDays,
+        sync_frequency: syncFrequency,
       };
 
       // Include CalDAV credentials if any were changed
@@ -1238,6 +1242,22 @@ function EditConnectionModal({ connection, onSave, onClose }) {
     { value: 60, label: '60 days' },
     { value: 90, label: '90 days' },
     { value: 180, label: '180 days' },
+  ];
+
+  const syncToOptions = [
+    { value: 7, label: '1 week' },
+    { value: 14, label: '2 weeks' },
+    { value: 30, label: '30 days' },
+    { value: 60, label: '60 days' },
+    { value: 90, label: '90 days' },
+  ];
+
+  const syncFrequencyOptions = [
+    { value: 15, label: 'Every 15 minutes' },
+    { value: 30, label: 'Every 30 minutes' },
+    { value: 60, label: 'Every hour' },
+    { value: 240, label: 'Every 4 hours' },
+    { value: 1440, label: 'Once daily' },
   ];
 
   return (
@@ -1329,6 +1349,44 @@ function EditConnectionModal({ connection, onSave, onClose }) {
             </select>
             <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
               Events older than this will not be synced
+            </p>
+          </div>
+
+          {/* Sync to dropdown */}
+          <div>
+            <label className="label mb-1">Sync events until</label>
+            <select
+              value={syncToDays}
+              onChange={(e) => setSyncToDays(Number(e.target.value))}
+              className="input"
+            >
+              {syncToOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  Next {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+              Future events beyond this will not be synced
+            </p>
+          </div>
+
+          {/* Sync frequency dropdown */}
+          <div>
+            <label className="label mb-1">Sync frequency</label>
+            <select
+              value={syncFrequency}
+              onChange={(e) => setSyncFrequency(Number(e.target.value))}
+              className="input"
+            >
+              {syncFrequencyOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+              How often to check for calendar updates
             </p>
           </div>
 
