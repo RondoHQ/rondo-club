@@ -6,11 +6,13 @@
  * to WordPress post status (prm_open, prm_awaiting, prm_completed).
  */
 
+namespace Caelis\Data;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Todo_Migration {
+class TodoMigration {
 
 	/**
 	 * Constructor - register WP-CLI command

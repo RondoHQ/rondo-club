@@ -129,7 +129,7 @@ class GoogleOAuth {
 			return null;
 		}
 
-		$credentials = PRM_Credential_Encryption::decrypt( $connection['credentials'] );
+		$credentials = \Caelis\Data\CredentialEncryption::decrypt( $connection['credentials'] );
 		if ( ! $credentials || empty( $credentials['access_token'] ) ) {
 			return null;
 		}

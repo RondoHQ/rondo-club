@@ -5,7 +5,7 @@
  * Handles email-based notification delivery for daily digests.
  */
 
-namespace Caelis\Notification;
+namespace Caelis\Notifications;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

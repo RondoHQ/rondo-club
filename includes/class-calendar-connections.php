@@ -135,7 +135,7 @@ class Connections {
 	 * @return bool True if updated, false if connection not found
 	 */
 	public static function update_credentials( int $user_id, string $connection_id, array $credentials ): bool {
-		$encrypted = PRM_Credential_Encryption::encrypt( $credentials );
+		$encrypted = \Caelis\Data\CredentialEncryption::encrypt( $credentials );
 
 		return self::update_connection(
 			$user_id,
