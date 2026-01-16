@@ -5,11 +5,13 @@
  * Handles REST API endpoints related to people domain.
  */
 
+namespace Caelis\REST;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_REST_People extends PRM_REST_Base {
+class People extends Base {
 
 	/**
 	 * Constructor

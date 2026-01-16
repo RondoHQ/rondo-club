@@ -5,11 +5,13 @@
  * Handles export endpoints (vCard, Google CSV) and CardDAV URL endpoints.
  */
 
+namespace Caelis\REST;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_REST_Import_Export extends PRM_REST_Base {
+class ImportExport extends Base {
 
 	/**
 	 * Constructor

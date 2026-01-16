@@ -3,11 +3,13 @@
  * Extended REST API Endpoints
  */
 
+namespace Caelis\REST;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_REST_API extends PRM_REST_Base {
+class Api extends Base {
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );

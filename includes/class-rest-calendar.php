@@ -6,11 +6,13 @@
  * OAuth flows, and calendar event operations.
  */
 
+namespace Caelis\REST;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_REST_Calendar extends PRM_REST_Base {
+class Calendar extends Base {
 
 	/**
 	 * Constructor

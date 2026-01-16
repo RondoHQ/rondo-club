@@ -5,11 +5,13 @@
  * Handles REST API endpoints for workspace management and member operations.
  */
 
+namespace Caelis\REST;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_REST_Workspaces extends PRM_REST_Base {
+class Workspaces extends Base {
 
 	/**
 	 * Constructor
