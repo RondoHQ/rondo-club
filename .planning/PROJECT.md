@@ -166,6 +166,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Short array syntax enforced across entire codebase ([] instead of array()) — v4.3
 - Yoda conditions disabled for improved readability — v4.3
 
+**v4.4 Code Organization (shipped 2026-01-16):**
+- Comprehensive codebase audit identifying 41 classes across 39 PHP files — v4.4
+- Split notification channel classes into separate files (one-class-per-file compliance) — v4.4
+- PSR-4 namespaces added to 38 PHP classes across 9 namespace groups — v4.4
+- Composer autoloading with classmap for includes/ directory — v4.4
+- 38 backward-compatible class aliases (PRM_* → Caelis\*) — v4.4
+- Manual prm_autoloader() function removed (52 lines) — v4.4
+- PHPCS Generic.Files.OneClassPerFile rule enabled — v4.4
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -261,6 +270,10 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Yoda conditions disabled | Prefer readable `$var === 'value'` over WordPress-mandated `'value' === $var` | ✓ Good |
 | Short array syntax enforced | Modern PHP convention `[]` instead of `array()` | ✓ Good |
 | Strategic PHPCS exclusions | CardDAV/Sabre naming, short ternary, deprecated functions kept as documented | ✓ Good |
+| WP-CLI multi-class exception | Keep 9 CLI command classes in one file (conditionally loaded, logically grouped) | ✓ Good |
+| Composer classmap alongside PSR-4 | Supports current class-*.php naming during transition to standard PSR-4 | ✓ Good |
+| Backward-compatible class aliases | All PRM_* class names work via class_alias() for existing code | ✓ Good |
+| Global class backslash prefix | PHP/WP classes (DateTime, WP_Error, etc.) need `\` in namespaced files | ✓ Good |
 
 ---
-*Last updated: 2026-01-16 — v4.3 Performance & Documentation shipped*
+*Last updated: 2026-01-16 — v4.4 Code Organization shipped*
