@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.0] - 2026-01-16
+
+### Added
+- Per-connection sync_to_days setting (1 week to 90 days forward)
+- Per-connection sync_frequency setting (15 min, 30 min, hourly, 4 hours, daily)
+- Background sync respects per-connection frequency settings with `is_sync_due()` check
+- Calendar list API endpoint `GET /prm/v1/calendar/connections/{id}/calendars`
+- Calendar selector dropdown in EditConnectionModal
+- Connection card displays selected calendar name as subtitle
+- `list_calendars()` method in GoogleProvider for fetching available calendars
+- `next_sync` timestamp in sync status endpoint
+
+### Fixed
+- Duplicate calendar events from race conditions via transient-based sync lock
+- Contact matching in CLI/cron contexts by setting user context before queries
+- Google vendor class namespace resolution (added absolute namespace prefixes)
+
+## [4.4.0] - 2026-01-16
+
+### Added
+- Comprehensive codebase audit (AUDIT.md) with namespace hierarchy design
+- PSR-4 namespaces for 38 PHP classes across 9 namespace groups
+- Composer autoloading with classmap for includes/ directory
+- 38 backward-compatible class aliases (PRM_* → Caelis\*)
+- PHPCS Generic.Files.OneClassPerFile rule enabled
+- Daily debug.log rotation via WP-Cron with 7-day retention
+
+### Changed
+- Split notification channel classes into separate files (one-class-per-file compliance)
+- Removed manual prm_autoloader() function (52 lines)
+- All classes now use proper PHP namespaces (Caelis\Core, Caelis\REST, etc.)
+
 ## [4.3.0] - 2026-01-16
 
 ### Added

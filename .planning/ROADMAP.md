@@ -23,38 +23,37 @@
 - ✅ [v4.2 Settings & Stability](milestones/v4.2-settings-stability.md) (Phases 58-60) — SHIPPED 2026-01-15
 - ✅ [v4.3 Performance & Documentation](milestones/v4.3-performance-documentation.md) (Phases 61-63) — SHIPPED 2026-01-16
 - ✅ [v4.4 Code Organization](milestones/v4.4-code-organization.md) (Phases 64-66) — SHIPPED 2026-01-16
-- 🚧 **v4.5 Calendar Sync Control** - Phases 67-68 (in progress)
+- ✅ [v4.5 Calendar Sync Control](milestones/v4.5-calendar-sync-control.md) (Phases 67-68) — SHIPPED 2026-01-16
 
 ## Current Status
 
-**Current milestone:** v4.5 Calendar Sync Control (Phases 67-68)
+**Current milestone:** Planning next milestone
 
 ---
 
-### 🚧 v4.5 Calendar Sync Control (In Progress)
+<details>
+<summary>✅ v4.5 Calendar Sync Control (Phases 67-68) — SHIPPED 2026-01-16</summary>
 
 **Milestone Goal:** Give users control over calendar sync behavior - date range limits, sync frequency, and calendar selection per connection.
 
-#### Phase 67: Sync Range & Frequency ✓
+**Result:** Per-connection sync settings, calendar selection UI, bug fixes for duplicate events and contact matching
 
-**Goal**: Add settings for configuring how far back/forward to sync events and how often to sync
-**Depends on**: v4.4 complete
-**Research**: Unlikely (internal patterns)
-**Plans**: 2/2 complete
+**Phases:**
+- [x] Phase 67: Sync Range & Frequency (2/2 plans) ✓
+- [x] Phase 68: Calendar Selection UI (1/1 plan) ✓
 
-Plans:
-- [x] 67-01: Sync settings data model and UI
-- [x] 67-02: Background sync frequency enforcement
+**Total:** 2 phases, 3 plans
 
-#### Phase 68: Calendar Selection UI
+**Key Accomplishments:**
+- Sync range (sync_to_days) configurable per connection (1 week to 90 days)
+- Sync frequency settings (15 min to daily) with background enforcement
+- Calendar list API for Google and CalDAV providers
+- Calendar selector UI in EditConnectionModal with name display
+- Bug fixes: sync lock for duplicate prevention, contact matching access control
 
-**Goal**: Add calendar picker to settings allowing users to select which calendars to sync per connection
-**Depends on**: Phase 67
-**Research**: Unlikely (internal patterns)
-**Plans**: TBD
+See [milestone archive](milestones/v4.5-calendar-sync-control.md) for full details.
 
-Plans:
-- [ ] 68-01: TBD (run /gsd:plan-phase 68 to break down)
+</details>
 
 ---
 
@@ -633,6 +632,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.2 Settings & Stability | 58-60 | 3/3 | Complete ✅ | 2026-01-15 |
 | v4.3 Performance & Documentation | 61-63 | 5/5 | Complete ✅ | 2026-01-16 |
 | v4.4 Code Organization | 64-66 | 6/6 | Complete ✅ | 2026-01-16 |
-| v4.5 Calendar Sync Control | 67-68 | 2/? | In progress 🚧 | - |
+| v4.5 Calendar Sync Control | 67-68 | 3/3 | Complete ✅ | 2026-01-16 |
 
-**Shipped: 23 milestones, 66 phases, 116 plans**
+**Shipped: 24 milestones, 68 phases, 119 plans**

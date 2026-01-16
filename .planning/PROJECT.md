@@ -175,6 +175,16 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Manual prm_autoloader() function removed (52 lines) — v4.4
 - PHPCS Generic.Files.OneClassPerFile rule enabled — v4.4
 
+**v4.5 Calendar Sync Control (shipped 2026-01-16):**
+- Per-connection sync_to_days setting (1 week to 90 days forward) — v4.5
+- Per-connection sync_frequency setting (15 min to daily) — v4.5
+- Background sync respects per-connection frequency settings — v4.5
+- Calendar list API for Google and CalDAV providers — v4.5
+- Calendar selector UI in EditConnectionModal — v4.5
+- Connection card displays selected calendar name — v4.5
+- Sync lock to prevent duplicate events from race conditions — v4.5
+- User context in calendar matcher for CLI/cron access control — v4.5
+
 ### Active
 
 No active requirements. Use `/gsd:discuss-milestone` to plan next work.
@@ -276,4 +286,4 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Global class backslash prefix | PHP/WP classes (DateTime, WP_Error, etc.) need `\` in namespaced files | ✓ Good |
 
 ---
-*Last updated: 2026-01-16 — v4.4 Code Organization shipped*
+*Last updated: 2026-01-16 — v4.5 Calendar Sync Control shipped*
