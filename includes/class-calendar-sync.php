@@ -53,7 +53,7 @@ class PRM_Calendar_Sync {
 	public function add_cron_schedules( $schedules ) {
 		$schedules[ self::CRON_SCHEDULE ] = array(
 			'interval' => 900, // 15 minutes in seconds
-			'display'  => __( 'Every 15 Minutes', 'personal-crm' ),
+			'display'  => __( 'Every 15 Minutes', 'caelis' ),
 		);
 
 		return $schedules;
@@ -486,7 +486,7 @@ class PRM_Calendar_Sync {
 		$current_index = (int) get_transient( self::USER_INDEX_TRANSIENT );
 
 		return array(
-			'next_scheduled'               => $next_scheduled ? date( 'c', $next_scheduled ) : null,
+			'next_scheduled'               => $next_scheduled ? gmdate( 'c', $next_scheduled ) : null,
 			'is_scheduled'                 => (bool) $next_scheduled,
 			'total_users_with_connections' => $total_users,
 			'current_user_index'           => $current_index,

@@ -50,7 +50,7 @@ class PRM_CalDAV_Provider {
 			if ( ! $supported ) {
 				return array(
 					'success' => false,
-					'error'   => __( 'Server does not support CalDAV. Please check the URL.', 'personal-crm' ),
+					'error'   => __( 'Server does not support CalDAV. Please check the URL.', 'caelis' ),
 				);
 			}
 
@@ -61,7 +61,7 @@ class PRM_CalDAV_Provider {
 				return array(
 					'success'   => true,
 					'calendars' => array(),
-					'message'   => __( 'Connected successfully but no calendars found.', 'personal-crm' ),
+					'message'   => __( 'Connected successfully but no calendars found.', 'caelis' ),
 				);
 			}
 
@@ -77,20 +77,20 @@ class PRM_CalDAV_Provider {
 			if ( strpos( $error_message, '401' ) !== false || strpos( $error_message, 'Unauthorized' ) !== false ) {
 				return array(
 					'success' => false,
-					'error'   => __( 'Authentication failed. Check username and password. For iCloud, use an app-specific password.', 'personal-crm' ),
+					'error'   => __( 'Authentication failed. Check username and password. For iCloud, use an app-specific password.', 'caelis' ),
 				);
 			}
 
 			if ( strpos( $error_message, '404' ) !== false ) {
 				return array(
 					'success' => false,
-					'error'   => __( 'Calendar URL not found. Please verify the CalDAV server address.', 'personal-crm' ),
+					'error'   => __( 'Calendar URL not found. Please verify the CalDAV server address.', 'caelis' ),
 				);
 			}
 
 			return array(
 				'success' => false,
-				'error'   => sprintf( __( 'Connection failed: %s', 'personal-crm' ), $error_message ),
+				'error'   => sprintf( __( 'Connection failed: %s', 'caelis' ), $error_message ),
 			);
 		}
 	}
@@ -249,7 +249,7 @@ class PRM_CalDAV_Provider {
 		// Decrypt credentials
 		$credentials = PRM_Credential_Encryption::decrypt( $connection['credentials'] );
 		if ( ! $credentials || empty( $credentials['url'] ) || empty( $credentials['username'] ) || empty( $credentials['password'] ) ) {
-			throw new Exception( __( 'Invalid CalDAV credentials. Please reconnect your calendar.', 'personal-crm' ) );
+			throw new Exception( __( 'Invalid CalDAV credentials. Please reconnect your calendar.', 'caelis' ) );
 		}
 
 		$url      = $credentials['url'];
@@ -318,7 +318,7 @@ class PRM_CalDAV_Provider {
 			);
 
 			if ( $response['statusCode'] < 200 || $response['statusCode'] >= 300 ) {
-				throw new Exception( sprintf( __( 'CalDAV server returned error: %d', 'personal-crm' ), $response['statusCode'] ) );
+				throw new Exception( sprintf( __( 'CalDAV server returned error: %d', 'caelis' ), $response['statusCode'] ) );
 			}
 
 			// Parse response and upsert events
@@ -326,7 +326,7 @@ class PRM_CalDAV_Provider {
 
 		} catch ( Exception $e ) {
 			error_log( 'PRM_CalDAV_Provider: Sync failed: ' . $e->getMessage() );
-			throw new Exception( sprintf( __( 'Sync failed: %s', 'personal-crm' ), $e->getMessage() ) );
+			throw new Exception( sprintf( __( 'Sync failed: %s', 'caelis' ), $e->getMessage() ) );
 		}
 	}
 

@@ -218,7 +218,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( ! defined( 'CAELIS_SLACK_CLIENT_ID' ) || empty( CAELIS_SLACK_CLIENT_ID ) ) {
 			return new WP_Error(
 				'slack_not_configured',
-				__( 'Slack integration is not configured.', 'personal-crm' ),
+				__( 'Slack integration is not configured.', 'caelis' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -227,7 +227,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( ! $user_id ) {
 			return new WP_Error(
 				'not_authenticated',
-				__( 'You must be logged in to connect Slack.', 'personal-crm' ),
+				__( 'You must be logged in to connect Slack.', 'caelis' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -382,7 +382,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return rest_ensure_response(
 				array(
 					'success' => true,
-					'message' => __( 'Slack was not connected.', 'personal-crm' ),
+					'message' => __( 'Slack was not connected.', 'caelis' ),
 				)
 			);
 		}
@@ -416,7 +416,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'success' => true,
-				'message' => __( 'Slack disconnected successfully.', 'personal-crm' ),
+				'message' => __( 'Slack disconnected successfully.', 'caelis' ),
 			)
 		);
 	}
@@ -441,7 +441,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'connected'      => true,
-				'workspace_name' => $workspace_name ?: __( 'Unknown workspace', 'personal-crm' ),
+				'workspace_name' => $workspace_name ?: __( 'Unknown workspace', 'caelis' ),
 			)
 		);
 	}
@@ -454,7 +454,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( ! defined( 'CAELIS_SLACK_SIGNING_SECRET' ) || empty( CAELIS_SLACK_SIGNING_SECRET ) ) {
 			return new WP_Error(
 				'slack_not_configured',
-				__( 'Slack integration is not configured.', 'personal-crm' ),
+				__( 'Slack integration is not configured.', 'caelis' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -473,7 +473,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( empty( $timestamp ) || abs( time() - (int) $timestamp ) > 300 ) { // 5 minutes
 			return new WP_Error(
 				'invalid_timestamp',
-				__( 'Request timestamp is invalid or too old.', 'personal-crm' ),
+				__( 'Request timestamp is invalid or too old.', 'caelis' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -482,7 +482,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( empty( $signature ) || empty( $body ) ) {
 			return new WP_Error(
 				'missing_signature',
-				__( 'Missing request signature.', 'personal-crm' ),
+				__( 'Missing request signature.', 'caelis' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -493,7 +493,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( ! hash_equals( $my_signature, $signature ) ) {
 			return new WP_Error(
 				'invalid_signature',
-				__( 'Invalid request signature.', 'personal-crm' ),
+				__( 'Invalid request signature.', 'caelis' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -507,7 +507,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return rest_ensure_response(
 				array(
 					'response_type' => 'ephemeral',
-					'text'          => __( 'Unknown command.', 'personal-crm' ),
+					'text'          => __( 'Unknown command.', 'caelis' ),
 				)
 			);
 		}
@@ -527,7 +527,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return rest_ensure_response(
 				array(
 					'response_type' => 'ephemeral',
-					'text'          => __( 'You need to connect your Slack account first. Visit your Caelis settings to connect.', 'personal-crm' ),
+					'text'          => __( 'You need to connect your Slack account first. Visit your Caelis settings to connect.', 'caelis' ),
 				)
 			);
 		}
@@ -551,7 +551,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return rest_ensure_response(
 				array(
 					'response_type' => 'ephemeral',
-					'text'          => __( 'You have no upcoming reminders.', 'personal-crm' ),
+					'text'          => __( 'You have no upcoming reminders.', 'caelis' ),
 				)
 			);
 		}
@@ -598,7 +598,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( empty( $bot_token ) ) {
 			return new WP_Error(
 				'slack_not_connected',
-				__( 'Slack is not connected.', 'personal-crm' ),
+				__( 'Slack is not connected.', 'caelis' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -707,7 +707,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( ! is_array( $targets ) ) {
 			return new WP_Error(
 				'invalid_targets',
-				__( 'Targets must be an array.', 'personal-crm' ),
+				__( 'Targets must be an array.', 'caelis' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -752,7 +752,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 			return rest_ensure_response(
 				array(
 					'success' => true,
-					'message' => __( 'Slack webhook removed.', 'personal-crm' ),
+					'message' => __( 'Slack webhook removed.', 'caelis' ),
 				)
 			);
 		}
@@ -761,7 +761,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( ! filter_var( $webhook, FILTER_VALIDATE_URL ) ) {
 			return new WP_Error(
 				'invalid_webhook',
-				__( 'Invalid webhook URL.', 'personal-crm' ),
+				__( 'Invalid webhook URL.', 'caelis' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -771,14 +771,14 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( $host !== 'hooks.slack.com' ) {
 			return new WP_Error(
 				'invalid_webhook_domain',
-				__( 'Webhook URL must be from hooks.slack.com domain.', 'personal-crm' ),
+				__( 'Webhook URL must be from hooks.slack.com domain.', 'caelis' ),
 				array( 'status' => 400 )
 			);
 		}
 
 		// Test webhook with a simple message
 		$test_payload = array(
-			'text' => __( 'Caelis notification test', 'personal-crm' ),
+			'text' => __( 'Caelis notification test', 'caelis' ),
 		);
 
 		$response = wp_remote_post(
@@ -795,7 +795,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( is_wp_error( $response ) ) {
 			return new WP_Error(
 				'webhook_test_failed',
-				sprintf( __( 'Webhook test failed: %s', 'personal-crm' ), $response->get_error_message() ),
+				sprintf( __( 'Webhook test failed: %s', 'caelis' ), $response->get_error_message() ),
 				array( 'status' => 400 )
 			);
 		}
@@ -804,7 +804,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		if ( $status_code < 200 || $status_code >= 300 ) {
 			return new WP_Error(
 				'webhook_test_failed',
-				sprintf( __( 'Webhook test failed with status code: %d', 'personal-crm' ), $status_code ),
+				sprintf( __( 'Webhook test failed with status code: %d', 'caelis' ), $status_code ),
 				array( 'status' => 400 )
 			);
 		}
@@ -815,7 +815,7 @@ class PRM_REST_Slack extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'success' => true,
-				'message' => __( 'Slack webhook configured successfully.', 'personal-crm' ),
+				'message' => __( 'Slack webhook configured successfully.', 'caelis' ),
 			)
 		);
 	}

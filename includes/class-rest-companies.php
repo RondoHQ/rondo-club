@@ -215,7 +215,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		if ( ! current_user_can( 'manage_options' ) && ! $access_control->user_can_access_post( $company_id, $user_id ) ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to access this company.', 'personal-crm' ),
+				__( 'You do not have permission to access this company.', 'caelis' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -312,20 +312,20 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		// Verify company exists
 		$company = get_post( $company_id );
 		if ( ! $company || $company->post_type !== 'company' ) {
-			return new WP_Error( 'company_not_found', __( 'Company not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Verify media exists
 		$media = get_post( $media_id );
 		if ( ! $media || $media->post_type !== 'attachment' ) {
-			return new WP_Error( 'media_not_found', __( 'Media not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'media_not_found', __( 'Media not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Set as featured image
 		$result = set_post_thumbnail( $company_id, $media_id );
 
 		if ( ! $result ) {
-			return new WP_Error( 'set_thumbnail_failed', __( 'Failed to set company logo.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'set_thumbnail_failed', __( 'Failed to set company logo.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		return rest_ensure_response(
@@ -350,13 +350,13 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		// Verify company exists
 		$company = get_post( $company_id );
 		if ( ! $company || $company->post_type !== 'company' ) {
-			return new WP_Error( 'company_not_found', __( 'Company not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check for uploaded file
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new WP_Error( 'no_file', __( 'No file uploaded.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$file = $files['file'];
@@ -364,7 +364,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		// Validate file type
 		$allowed_types = array( 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' );
 		if ( ! in_array( $file['type'], $allowed_types ) ) {
-			return new WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Get company name for filename
@@ -478,12 +478,12 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'invalid_user', __( 'User not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Can't share with yourself
 		if ( $user_id === get_current_user_id() ) {
-			return new WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Get current shares
@@ -498,7 +498,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 				return rest_ensure_response(
 					array(
 						'success' => true,
-						'message' => __( 'Share updated.', 'personal-crm' ),
+						'message' => __( 'Share updated.', 'caelis' ),
 					)
 				);
 			}
@@ -514,7 +514,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'success' => true,
-				'message' => __( 'Shared successfully.', 'personal-crm' ),
+				'message' => __( 'Shared successfully.', 'caelis' ),
 			)
 		);
 	}
@@ -543,7 +543,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'success' => true,
-				'message' => __( 'Share removed.', 'personal-crm' ),
+				'message' => __( 'Share removed.', 'caelis' ),
 			)
 		);
 	}
@@ -558,7 +558,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You must be logged in to perform this action.', 'personal-crm' ),
+				__( 'You must be logged in to perform this action.', 'caelis' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -573,7 +573,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 			if ( ! $post || $post->post_type !== 'company' ) {
 				return new WP_Error(
 					'rest_invalid_id',
-					sprintf( __( 'Company with ID %d not found.', 'personal-crm' ), $post_id ),
+					sprintf( __( 'Company with ID %d not found.', 'caelis' ), $post_id ),
 					array( 'status' => 404 )
 				);
 			}
@@ -582,7 +582,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 			if ( (int) $post->post_author !== $current_user_id && ! $is_admin ) {
 				return new WP_Error(
 					'rest_forbidden',
-					sprintf( __( 'You do not have permission to update company with ID %d.', 'personal-crm' ), $post_id ),
+					sprintf( __( 'You do not have permission to update company with ID %d.', 'caelis' ), $post_id ),
 					array( 'status' => 403 )
 				);
 			}
@@ -615,7 +615,7 @@ class PRM_REST_Companies extends PRM_REST_Base {
 					if ( ! $result ) {
 						$failed[] = array(
 							'id'    => $post_id,
-							'error' => __( 'Failed to update visibility.', 'personal-crm' ),
+							'error' => __( 'Failed to update visibility.', 'caelis' ),
 						);
 						continue;
 					}

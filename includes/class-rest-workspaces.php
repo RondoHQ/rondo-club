@@ -484,7 +484,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		$user_id      = get_current_user_id();
 
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Get members with user info
@@ -581,7 +581,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		$workspace    = get_post( $workspace_id );
 
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		$post_data = array(
@@ -634,20 +634,20 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		$workspace    = get_post( $workspace_id );
 
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		$result = wp_trash_post( $workspace_id );
 
 		if ( ! $result ) {
-			return new WP_Error( 'delete_failed', __( 'Failed to delete workspace.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'delete_failed', __( 'Failed to delete workspace.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		return rest_ensure_response(
 			array(
 				'success' => true,
 				'id'      => $workspace_id,
-				'message' => __( 'Workspace moved to trash.', 'personal-crm' ),
+				'message' => __( 'Workspace moved to trash.', 'caelis' ),
 			)
 		);
 	}
@@ -666,13 +666,13 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'user_not_found', __( 'User not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check if user is already a member
@@ -680,13 +680,13 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 			// Update their role instead
 			$result = PRM_Workspace_Members::update_role( $workspace_id, $user_id, $role );
 			if ( ! $result ) {
-				return new WP_Error( 'update_failed', __( 'Failed to update member role.', 'personal-crm' ), array( 'status' => 500 ) );
+				return new WP_Error( 'update_failed', __( 'Failed to update member role.', 'caelis' ), array( 'status' => 500 ) );
 			}
 		} else {
 			// Add new member
 			$result = PRM_Workspace_Members::add( $workspace_id, $user_id, $role );
 			if ( ! $result ) {
-				return new WP_Error( 'add_failed', __( 'Failed to add member.', 'personal-crm' ), array( 'status' => 500 ) );
+				return new WP_Error( 'add_failed', __( 'Failed to add member.', 'caelis' ), array( 'status' => 500 ) );
 			}
 		}
 
@@ -716,30 +716,30 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check if user is the owner (cannot be removed)
 		if ( (int) $workspace->post_author === $user_id ) {
-			return new WP_Error( 'cannot_remove_owner', __( 'Cannot remove the workspace owner.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'cannot_remove_owner', __( 'Cannot remove the workspace owner.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Check if user is a member
 		if ( ! PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
-			return new WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$result = PRM_Workspace_Members::remove( $workspace_id, $user_id );
 
 		if ( ! $result ) {
-			return new WP_Error( 'remove_failed', __( 'Failed to remove member.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'remove_failed', __( 'Failed to remove member.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		return rest_ensure_response(
 			array(
 				'success' => true,
 				'user_id' => $user_id,
-				'message' => __( 'Member removed from workspace.', 'personal-crm' ),
+				'message' => __( 'Member removed from workspace.', 'caelis' ),
 			)
 		);
 	}
@@ -758,24 +758,24 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new WP_Error( 'user_not_found', __( 'User not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check if user is a member
 		if ( ! PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
-			return new WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$result = PRM_Workspace_Members::update_role( $workspace_id, $user_id, $role );
 
 		if ( ! $result ) {
-			return new WP_Error( 'update_failed', __( 'Failed to update member role.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'update_failed', __( 'Failed to update member role.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		return rest_ensure_response(
@@ -805,13 +805,13 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check if user with this email is already a workspace member
 		$existing_user = get_user_by( 'email', $email );
 		if ( $existing_user && PRM_Workspace_Members::is_member( $workspace_id, $existing_user->ID ) ) {
-			return new WP_Error( 'already_member', __( 'This user is already a member of this workspace.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'already_member', __( 'This user is already a member of this workspace.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Check if pending invite already exists for this email+workspace
@@ -839,7 +839,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		);
 
 		if ( ! empty( $existing_invites ) ) {
-			return new WP_Error( 'invite_exists', __( 'A pending invite already exists for this email address.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invite_exists', __( 'A pending invite already exists for this email address.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Generate secure token (alphanumeric only)
@@ -922,7 +922,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 				'role'       => get_field( '_invite_role', $invite->ID ),
 				'status'     => get_field( '_invite_status', $invite->ID ),
 				'expires_at' => get_field( '_invite_expires_at', $invite->ID ),
-				'invited_by' => $inviter ? $inviter->display_name : __( 'Unknown', 'personal-crm' ),
+				'invited_by' => $inviter ? $inviter->display_name : __( 'Unknown', 'caelis' ),
 				'invited_at' => $invite->post_date_gmt,
 			);
 		}
@@ -942,19 +942,19 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 
 		$invite = get_post( $invite_id );
 		if ( ! $invite || $invite->post_type !== 'workspace_invite' ) {
-			return new WP_Error( 'invite_not_found', __( 'Invite not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'invite_not_found', __( 'Invite not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Verify invite belongs to this workspace
 		$invite_workspace_id = (int) get_field( '_invite_workspace_id', $invite_id );
 		if ( $invite_workspace_id !== $workspace_id ) {
-			return new WP_Error( 'invite_not_found', __( 'Invite not found for this workspace.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'invite_not_found', __( 'Invite not found for this workspace.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check status
 		$status = get_field( '_invite_status', $invite_id );
 		if ( $status !== 'pending' ) {
-			return new WP_Error( 'invalid_status', __( 'Only pending invites can be revoked.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_status', __( 'Only pending invites can be revoked.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Revoke the invite
@@ -964,7 +964,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 			array(
 				'success' => true,
 				'id'      => $invite_id,
-				'message' => __( 'Invite has been revoked.', 'personal-crm' ),
+				'message' => __( 'Invite has been revoked.', 'caelis' ),
 			)
 		);
 	}
@@ -982,13 +982,13 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 
 		$invite = $this->get_invite_by_token( $token );
 		if ( ! $invite ) {
-			return new WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check status
 		$status = get_field( '_invite_status', $invite->ID );
 		if ( $status !== 'pending' ) {
-			return new WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Check expiration
@@ -996,14 +996,14 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		if ( strtotime( $expires_at ) < time() ) {
 			// Mark as expired
 			update_field( '_invite_status', 'expired', $invite->ID );
-			return new WP_Error( 'expired', __( 'This invitation has expired.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'expired', __( 'This invitation has expired.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Get workspace info
 		$workspace_id = (int) get_field( '_invite_workspace_id', $invite->ID );
 		$workspace    = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_status !== 'publish' ) {
-			return new WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Get inviter info
@@ -1015,7 +1015,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 				'role'           => get_field( '_invite_role', $invite->ID ),
 				'workspace_id'   => $workspace_id,
 				'workspace_name' => $this->sanitize_text( $workspace->post_title ),
-				'invited_by'     => $inviter ? $inviter->display_name : __( 'Unknown', 'personal-crm' ),
+				'invited_by'     => $inviter ? $inviter->display_name : __( 'Unknown', 'caelis' ),
 				'expires_at'     => $expires_at,
 			)
 		);
@@ -1034,33 +1034,33 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 
 		$invite = $this->get_invite_by_token( $token );
 		if ( ! $invite ) {
-			return new WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check status
 		$status = get_field( '_invite_status', $invite->ID );
 		if ( $status !== 'pending' ) {
-			return new WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Check expiration
 		$expires_at = get_field( '_invite_expires_at', $invite->ID );
 		if ( strtotime( $expires_at ) < time() ) {
 			update_field( '_invite_status', 'expired', $invite->ID );
-			return new WP_Error( 'expired', __( 'This invitation has expired.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'expired', __( 'This invitation has expired.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Verify email matches or user is admin
 		$invite_email = get_field( '_invite_email', $invite->ID );
 		if ( $user->user_email !== $invite_email && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'email_mismatch', __( 'Your email address does not match this invitation.', 'personal-crm' ), array( 'status' => 403 ) );
+			return new WP_Error( 'email_mismatch', __( 'Your email address does not match this invitation.', 'caelis' ), array( 'status' => 403 ) );
 		}
 
 		// Get workspace
 		$workspace_id = (int) get_field( '_invite_workspace_id', $invite->ID );
 		$workspace    = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_status !== 'publish' ) {
-			return new WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check if user is already a member
@@ -1069,7 +1069,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 			update_field( '_invite_status', 'accepted', $invite->ID );
 			update_field( '_invite_accepted_by', $user_id, $invite->ID );
 
-			return new WP_Error( 'already_member', __( 'You are already a member of this workspace.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'already_member', __( 'You are already a member of this workspace.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Add user to workspace
@@ -1077,7 +1077,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		$result = PRM_Workspace_Members::add( $workspace_id, $user_id, $role );
 
 		if ( ! $result ) {
-			return new WP_Error( 'join_failed', __( 'Failed to join workspace.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'join_failed', __( 'Failed to join workspace.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		// Mark invite as accepted
@@ -1090,7 +1090,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 				'workspace_id'   => $workspace_id,
 				'workspace_name' => $this->sanitize_text( $workspace->post_title ),
 				'role'           => $role,
-				'message'        => __( 'You have joined the workspace.', 'personal-crm' ),
+				'message'        => __( 'You have joined the workspace.', 'caelis' ),
 			)
 		);
 	}
@@ -1202,7 +1202,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		}
 
 		$inviter      = get_user_by( 'ID', $invite->post_author );
-		$inviter_name = $inviter ? $inviter->display_name : __( 'Someone', 'personal-crm' );
+		$inviter_name = $inviter ? $inviter->display_name : __( 'Someone', 'caelis' );
 
 		$workspace_name = $this->sanitize_text( $workspace->post_title );
 		$accept_url     = site_url( '/workspace-invite/' . $token );
@@ -1210,7 +1210,7 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 		// Build email subject
 		$subject = sprintf(
 			/* translators: %s: workspace name */
-			__( "You've been invited to %s on Caelis", 'personal-crm' ),
+			__( "You've been invited to %s on Caelis", 'caelis' ),
 			$workspace_name
 		);
 
@@ -1234,9 +1234,9 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 	 */
 	private function build_invite_email_html( $inviter_name, $workspace_name, $role, $accept_url ) {
 		$role_labels = array(
-			'admin'  => __( 'Admin', 'personal-crm' ),
-			'member' => __( 'Member', 'personal-crm' ),
-			'viewer' => __( 'Viewer', 'personal-crm' ),
+			'admin'  => __( 'Admin', 'caelis' ),
+			'member' => __( 'Member', 'caelis' ),
+			'viewer' => __( 'Viewer', 'caelis' ),
 		);
 		$role_label  = $role_labels[ $role ] ?? $role;
 
@@ -1248,28 +1248,28 @@ class PRM_REST_Workspaces extends PRM_REST_Base {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">' . __( 'Workspace Invitation', 'personal-crm' ) . '</h1>
+        <h1 style="color: white; margin: 0; font-size: 24px;">' . __( 'Workspace Invitation', 'caelis' ) . '</h1>
     </div>
     <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
         <p style="font-size: 16px; margin-top: 0;">' . sprintf(
 			/* translators: 1: inviter name, 2: workspace name */
-			__( '%1$s has invited you to join <strong>%2$s</strong>.', 'personal-crm' ),
+			__( '%1$s has invited you to join <strong>%2$s</strong>.', 'caelis' ),
 			esc_html( $inviter_name ),
 			esc_html( $workspace_name )
 		) . '</p>
         <p style="font-size: 14px; color: #666;">' . sprintf(
 			/* translators: %s: role name */
-			__( 'You will be added as a %s.', 'personal-crm' ),
+			__( 'You will be added as a %s.', 'caelis' ),
 			'<strong>' . esc_html( $role_label ) . '</strong>'
 		) . '</p>
         <div style="text-align: center; margin: 30px 0;">
-            <a href="' . esc_url( $accept_url ) . '" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 14px 30px; border-radius: 6px; font-weight: 600; font-size: 16px;">' . __( 'Accept Invitation', 'personal-crm' ) . '</a>
+            <a href="' . esc_url( $accept_url ) . '" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 14px 30px; border-radius: 6px; font-weight: 600; font-size: 16px;">' . __( 'Accept Invitation', 'caelis' ) . '</a>
         </div>
-        <p style="font-size: 13px; color: #888; margin-bottom: 0;">' . __( 'This invitation expires in 7 days.', 'personal-crm' ) . '</p>
+        <p style="font-size: 13px; color: #888; margin-bottom: 0;">' . __( 'This invitation expires in 7 days.', 'caelis' ) . '</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
         <p style="font-size: 12px; color: #888; margin: 0;">' . sprintf(
 			/* translators: %s: accept URL */
-			__( 'If the button above does not work, copy and paste this link into your browser: %s', 'personal-crm' ),
+			__( 'If the button above does not work, copy and paste this link into your browser: %s', 'caelis' ),
 			'<br><a href="' . esc_url( $accept_url ) . '" style="color: #667eea; word-break: break-all;">' . esc_url( $accept_url ) . '</a>'
 		) . '</p>
     </div>

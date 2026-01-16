@@ -90,18 +90,18 @@ class PRM_Monica_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$sql_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $sql_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Check if it's a valid Monica SQL export
 		if ( strpos( $sql_content, 'INSERT IGNORE INTO `contacts`' ) === false ) {
-			return new WP_Error( 'invalid_format', __( 'Invalid Monica SQL export format. File must contain contacts table.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_format', __( 'Invalid Monica SQL export format. File must contain contacts table.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Parse the SQL to get summary
@@ -163,11 +163,11 @@ class PRM_Monica_Import {
 		$monica_url = $request->get_param( 'monica_url' ) ?? '';
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		if ( empty( $monica_url ) ) {
-			return new WP_Error( 'missing_url', __( 'Monica instance URL is required for photo import.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_url', __( 'Monica instance URL is required for photo import.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Normalize Monica URL
@@ -176,7 +176,7 @@ class PRM_Monica_Import {
 		$sql_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $sql_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Parse the SQL
@@ -809,7 +809,7 @@ class PRM_Monica_Import {
 			return;
 		}
 
-		$title = sprintf( __( "%s's Birthday", 'personal-crm' ), $full_name );
+		$title = sprintf( __( "%s's Birthday", 'caelis' ), $full_name );
 
 		$date_post_id = wp_insert_post(
 			array(
@@ -850,7 +850,7 @@ class PRM_Monica_Import {
 			return;
 		}
 
-		$title = sprintf( __( '%s - Special Date', 'personal-crm' ), $full_name );
+		$title = sprintf( __( '%s - Special Date', 'caelis' ), $full_name );
 
 		$date_post_id = wp_insert_post(
 			array(
@@ -923,11 +923,11 @@ class PRM_Monica_Import {
 		} else {
 			// Generate title from type
 			$type_label = ucwords( str_replace( array( '-', '_' ), ' ', $type_key ) );
-			$title      = sprintf( __( "%1\$s's %2\$s", 'personal-crm' ), $full_name, $type_label );
+			$title      = sprintf( __( "%1\$s's %2\$s", 'caelis' ), $full_name, $type_label );
 		}
 
-		// Check if this exact life event already exists (avoid duplicates)
-		$date_for_query = date( 'Y-m-d', strtotime( $event_date ) );
+		// Check if this exact life event already exists (avoid duplicates).
+		$date_for_query = gmdate( 'Y-m-d', strtotime( $event_date ) );
 		$existing       = get_posts(
 			array(
 				'post_type'      => 'important_date',
@@ -1248,17 +1248,20 @@ class PRM_Monica_Import {
 		if ( ! $timestamp ) {
 			return current_time( 'mysql', $gmt );
 		}
-		return date( 'Y-m-d H:i:s', $timestamp );
+		return gmdate( 'Y-m-d H:i:s', $timestamp );
 	}
 
 	/**
 	 * Format a date string for ACF date picker (Y-m-d)
+	 *
+	 * @param string $date The date string to format.
+	 * @return string Formatted date in Y-m-d format.
 	 */
 	private function format_date_for_acf( string $date ): string {
 		$timestamp = strtotime( $date );
 		if ( ! $timestamp ) {
 			return '';
 		}
-		return date( 'Y-m-d', $timestamp );
+		return gmdate( 'Y-m-d', $timestamp );
 	}
 }

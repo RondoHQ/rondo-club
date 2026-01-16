@@ -62,7 +62,7 @@ class PRM_VCard_Export {
 			return '';
 		}
 
-		return date( 'Ymd', $timestamp );
+		return gmdate( 'Ymd', $timestamp );
 	}
 
 	/**
@@ -393,7 +393,7 @@ class PRM_VCard_Export {
 		// REV (Revision) - last modified date
 		$modified = $person->post_modified_gmt;
 		if ( $modified ) {
-			$rev_date = date( 'Ymd\THis\Z', strtotime( $modified ) );
+			$rev_date = gmdate( 'Ymd\THis\Z', strtotime( $modified ) );
 			$lines[]  = "REV:{$rev_date}";
 		}
 
@@ -545,9 +545,9 @@ class PRM_VCard_Export {
 			$lines[] = 'PHOTO;VALUE=URI:' . $data['photo_url'];
 		}
 
-		// REV
+		// REV.
 		if ( ! empty( $data['modified'] ) ) {
-			$rev_date = date( 'Ymd\THis\Z', strtotime( $data['modified'] ) );
+			$rev_date = gmdate( 'Ymd\THis\Z', strtotime( $data['modified'] ) );
 			$lines[]  = "REV:{$rev_date}";
 		}
 

@@ -212,17 +212,17 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		}
 
 		if ( empty( $person_ids ) ) {
-			return new WP_Error( 'no_person', __( 'At least one person is required.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_person', __( 'At least one person is required.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		if ( empty( $content ) ) {
-			return new WP_Error( 'empty_content', __( 'Todo content is required.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_content', __( 'Todo content is required.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Validate and determine post status
 		$valid_statuses = array( 'open', 'awaiting', 'completed' );
 		if ( $status !== null && ! in_array( $status, $valid_statuses, true ) ) {
-			return new WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'caelis' ), array( 'status' => 400 ) );
 		}
 		$post_status = $status ? 'prm_' . $status : 'prm_open';
 
@@ -237,7 +237,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		);
 
 		if ( is_wp_error( $post_id ) ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create todo.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'create_failed', __( 'Failed to create todo.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		// Save ACF fields - use new multi-person field
@@ -352,7 +352,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		$todo    = get_post( $todo_id );
 
 		if ( ! $todo || $todo->post_type !== 'prm_todo' ) {
-			return new WP_Error( 'not_found', __( 'Todo not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		return rest_ensure_response( $this->format_todo( $todo ) );
@@ -375,7 +375,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		$todo = get_post( $todo_id );
 
 		if ( ! $todo || $todo->post_type !== 'prm_todo' ) {
-			return new WP_Error( 'not_found', __( 'Todo not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Build update args
@@ -390,7 +390,7 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		if ( $status !== null ) {
 			$valid_statuses = array( 'open', 'awaiting', 'completed' );
 			if ( ! in_array( $status, $valid_statuses, true ) ) {
-				return new WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'personal-crm' ), array( 'status' => 400 ) );
+				return new WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'caelis' ), array( 'status' => 400 ) );
 			}
 
 			$current_status  = $this->get_todo_status( $todo );
@@ -469,13 +469,13 @@ class PRM_REST_Todos extends PRM_REST_Base {
 		$todo    = get_post( $todo_id );
 
 		if ( ! $todo || $todo->post_type !== 'prm_todo' ) {
-			return new WP_Error( 'not_found', __( 'Todo not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		$result = wp_delete_post( $todo_id, true ); // Force delete (bypass trash)
 
 		if ( ! $result ) {
-			return new WP_Error( 'delete_failed', __( 'Failed to delete todo.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'delete_failed', __( 'Failed to delete todo.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		return rest_ensure_response( array( 'deleted' => true ) );

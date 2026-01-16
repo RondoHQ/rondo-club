@@ -83,7 +83,7 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
 	}
 
 	public function get_channel_name() {
-		return __( 'Email', 'personal-crm' );
+		return __( 'Email', 'caelis' );
 	}
 
 	public function is_enabled_for_user( $user_id ) {
@@ -136,8 +136,8 @@ class PRM_Email_Channel extends PRM_Notification_Channel {
 
 		// Update subject line to indicate collaborative activity
 		$subject = $has_collab
-			? sprintf( __( '[%1$s] Your digest (including team activity) - %2$s', 'personal-crm' ), $site_name, $today_formatted )
-			: sprintf( __( '[%1$s] Your Reminders & Todos - %2$s', 'personal-crm' ), $site_name, $today_formatted );
+			? sprintf( __( '[%1$s] Your digest (including team activity) - %2$s', 'caelis' ), $site_name, $today_formatted )
+			: sprintf( __( '[%1$s] Your Reminders & Todos - %2$s', 'caelis' ), $site_name, $today_formatted );
 
 		$message = $this->format_email_message( $user, $digest_data );
 
@@ -430,7 +430,7 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 	}
 
 	public function get_channel_name() {
-		return __( 'Slack', 'personal-crm' );
+		return __( 'Slack', 'caelis' );
 	}
 
 	public function is_enabled_for_user( $user_id ) {
@@ -547,7 +547,7 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 
 		$payload = array(
 			'channel' => $target,
-			'text'    => __( 'Your Reminders & Todos for This Week', 'personal-crm' ),
+			'text'    => __( 'Your Reminders & Todos for This Week', 'caelis' ),
 			'blocks'  => $blocks,
 		);
 
@@ -586,7 +586,7 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 		$logo_url = $this->get_logo_url();
 
 		$payload = array(
-			'text'     => __( 'Your Important Dates for This Week', 'personal-crm' ),
+			'text'     => __( 'Your Important Dates for This Week', 'caelis' ),
 			'blocks'   => $blocks,
 			'username' => 'Caelis',
 		);
@@ -633,7 +633,7 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 		$text_parts = array();
 
 		// Today section
-		$text_parts[] = sprintf( '*<%s|%s> %s*', home_url(), 'Caelis', __( 'Today', 'personal-crm' ) );
+		$text_parts[] = sprintf( '*<%s|%s> %s*', home_url(), 'Caelis', __( 'Today', 'caelis' ) );
 		$text_parts[] = ''; // Empty line
 
 		$has_today_items = false;
@@ -669,13 +669,13 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 		}
 
 		if ( ! $has_today_items ) {
-			$text_parts[] = '• ' . __( 'No reminders or todos', 'personal-crm' );
+			$text_parts[] = '• ' . __( 'No reminders or todos', 'caelis' );
 		}
 
 		$text_parts[] = ''; // Empty line
 
 		// Tomorrow section
-		$text_parts[] = '*' . __( 'Tomorrow', 'personal-crm' ) . '*';
+		$text_parts[] = '*' . __( 'Tomorrow', 'caelis' ) . '*';
 		$text_parts[] = ''; // Empty line
 
 		$has_tomorrow_items = false;
@@ -707,13 +707,13 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 		}
 
 		if ( ! $has_tomorrow_items ) {
-			$text_parts[] = '• ' . __( 'No reminders or todos', 'personal-crm' );
+			$text_parts[] = '• ' . __( 'No reminders or todos', 'caelis' );
 		}
 
 		$text_parts[] = ''; // Empty line
 
 		// Rest of week section
-		$text_parts[] = '*' . __( 'Rest of the week', 'personal-crm' ) . '*';
+		$text_parts[] = '*' . __( 'Rest of the week', 'caelis' ) . '*';
 		$text_parts[] = ''; // Empty line
 
 		$has_week_items = false;
@@ -746,13 +746,13 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 		}
 
 		if ( ! $has_week_items ) {
-			$text_parts[] = '• ' . __( 'No reminders or todos', 'personal-crm' );
+			$text_parts[] = '• ' . __( 'No reminders or todos', 'caelis' );
 		}
 
 		// Mentions section
 		if ( ! empty( $digest_data['mentions'] ) ) {
 			$text_parts[] = ''; // Empty line
-			$text_parts[] = '*' . __( 'You were mentioned', 'personal-crm' ) . '* 💬';
+			$text_parts[] = '*' . __( 'You were mentioned', 'caelis' ) . '* 💬';
 			$text_parts[] = ''; // Empty line
 
 			foreach ( $digest_data['mentions'] as $mention ) {
@@ -765,7 +765,7 @@ class PRM_Slack_Channel extends PRM_Notification_Channel {
 		// Workspace activity section
 		if ( ! empty( $digest_data['workspace_activity'] ) ) {
 			$text_parts[] = ''; // Empty line
-			$text_parts[] = '*' . __( 'Workspace Activity', 'personal-crm' ) . '* 📋';
+			$text_parts[] = '*' . __( 'Workspace Activity', 'caelis' ) . '* 📋';
 			$text_parts[] = ''; // Empty line
 
 			foreach ( $digest_data['workspace_activity'] as $activity ) {

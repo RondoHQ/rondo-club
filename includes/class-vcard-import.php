@@ -84,18 +84,18 @@ class PRM_VCard_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Check if it's a valid vCard file
 		if ( strpos( $vcf_content, 'BEGIN:VCARD' ) === false ) {
-			return new WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Parse vCards to get summary
@@ -119,25 +119,25 @@ class PRM_VCard_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Check if it's a valid vCard file
 		if ( strpos( $vcf_content, 'BEGIN:VCARD' ) === false ) {
-			return new WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Parse vCards and get the first one
 		$vcards = $this->parse_vcards( $vcf_content );
 
 		if ( empty( $vcards ) ) {
-			return new WP_Error( 'no_contacts', __( 'No contacts found in file.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_contacts', __( 'No contacts found in file.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Get the first contact
@@ -230,13 +230,13 @@ class PRM_VCard_Import {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new WP_Error( 'upload_error', __( 'File upload failed.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new WP_Error( 'empty_file', __( 'File is empty.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Parse and import vCards
@@ -631,10 +631,10 @@ class PRM_VCard_Import {
 			return sprintf( '%s-%s-%s', $match[1], $match[2], $match[3] );
 		}
 
-		// Try parsing with strtotime
+		// Try parsing with strtotime.
 		$timestamp = strtotime( $value );
 		if ( $timestamp ) {
-			return date( 'Y-m-d', $timestamp );
+			return gmdate( 'Y-m-d', $timestamp );
 		}
 
 		return '';
@@ -990,7 +990,7 @@ class PRM_VCard_Import {
 			return;
 		}
 
-		$title = sprintf( __( "%s's Birthday", 'personal-crm' ), $full_name );
+		$title = sprintf( __( "%s's Birthday", 'caelis' ), $full_name );
 
 		$date_post_id = wp_insert_post(
 			array(

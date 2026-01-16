@@ -225,7 +225,7 @@ class PRM_Comment_Types {
 			return true;
 		}
 
-		return (int) $comment->user_id === get_current_user_id();
+		return get_current_user_id() === (int) $comment->user_id;
 	}
 
 	/**
@@ -265,7 +265,7 @@ class PRM_Comment_Types {
 		}
 
 		if ( empty( $content ) ) {
-			return new WP_Error( 'empty_content', __( 'Note content is required.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_content', __( 'Note content is required.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$comment_id = wp_insert_comment(
@@ -279,7 +279,7 @@ class PRM_Comment_Types {
 		);
 
 		if ( ! $comment_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create note.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'create_failed', __( 'Failed to create note.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		// Save visibility meta
@@ -312,13 +312,13 @@ class PRM_Comment_Types {
 			)
 		);
 
-		// wp_update_comment returns false on failure, 0 if no changes, 1 if updated
-		if ( $result === false || is_wp_error( $result ) ) {
-			return new WP_Error( 'update_failed', __( 'Failed to update note.', 'personal-crm' ), array( 'status' => 500 ) );
+		// wp_update_comment returns false on failure, 0 if no changes, 1 if updated.
+		if ( false === $result || is_wp_error( $result ) ) {
+			return new WP_Error( 'update_failed', __( 'Failed to update note.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
-		// Update visibility if provided
-		if ( $visibility !== null ) {
+		// Update visibility if provided.
+		if ( null !== $visibility ) {
 			$visibility = sanitize_text_field( $visibility );
 			if ( in_array( $visibility, array( 'private', 'shared' ), true ) ) {
 				update_comment_meta( $comment_id, '_note_visibility', $visibility );
@@ -347,7 +347,7 @@ class PRM_Comment_Types {
 		$result = wp_delete_comment( $comment_id, true );
 
 		if ( ! $result ) {
-			return new WP_Error( 'delete_failed', __( 'Failed to delete note.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'delete_failed', __( 'Failed to delete note.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		return rest_ensure_response( array( 'deleted' => true ) );
@@ -385,7 +385,7 @@ class PRM_Comment_Types {
 		$participants  = $request->get_param( 'participants' ) ?: array();
 
 		if ( empty( $content ) ) {
-			return new WP_Error( 'empty_content', __( 'Activity description is required.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'empty_content', __( 'Activity description is required.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		$comment_id = wp_insert_comment(
@@ -399,7 +399,7 @@ class PRM_Comment_Types {
 		);
 
 		if ( ! $comment_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create activity.', 'personal-crm' ), array( 'status' => 500 ) );
+			return new WP_Error( 'create_failed', __( 'Failed to create activity.', 'caelis' ), array( 'status' => 500 ) );
 		}
 
 		// Save meta
@@ -440,17 +440,17 @@ class PRM_Comment_Types {
 			)
 		);
 
-		// Update meta
-		if ( $activity_type !== null ) {
+		// Update meta.
+		if ( null !== $activity_type ) {
 			update_comment_meta( $comment_id, 'activity_type', $activity_type );
 		}
-		if ( $activity_date !== null ) {
+		if ( null !== $activity_date ) {
 			update_comment_meta( $comment_id, 'activity_date', $activity_date );
 		}
-		if ( $activity_time !== null ) {
+		if ( null !== $activity_time ) {
 			update_comment_meta( $comment_id, 'activity_time', $activity_time );
 		}
-		if ( $participants !== null ) {
+		if ( null !== $participants ) {
 			update_comment_meta( $comment_id, 'participants', array_map( 'intval', $participants ) );
 		}
 
@@ -487,15 +487,15 @@ class PRM_Comment_Types {
 
 		foreach ( $comments as $comment ) {
 			$type = 'note';
-			if ( $comment->comment_type === self::TYPE_ACTIVITY ) {
+			if ( self::TYPE_ACTIVITY === $comment->comment_type ) {
 				$type = 'activity';
 			}
 
-			// Apply visibility filtering for notes
-			if ( $type === 'note' && (int) $comment->user_id !== $current_user_id ) {
+			// Apply visibility filtering for notes.
+			if ( 'note' === $type && $current_user_id !== (int) $comment->user_id ) {
 				$visibility = get_comment_meta( $comment->comment_ID, '_note_visibility', true );
-				// Skip private notes from other users (default to private for backward compatibility)
-				if ( empty( $visibility ) || $visibility === 'private' ) {
+				// Skip private notes from other users (default to private for backward compatibility).
+				if ( empty( $visibility ) || 'private' === $visibility ) {
 					continue;
 				}
 			}
@@ -558,7 +558,7 @@ class PRM_Comment_Types {
 				'persons'        => $persons,
 				'notes'          => get_field( 'notes', $todo->ID ) ?: null,
 				'status'         => $status_map[ $todo->post_status ] ?? 'open',
-				'is_completed'   => $todo->post_status === 'prm_completed',
+				'is_completed'   => 'prm_completed' === $todo->post_status,
 				'due_date'       => get_field( 'due_date', $todo->ID ) ?: null,
 				'awaiting_since' => get_field( 'awaiting_since', $todo->ID ) ?: null,
 			);
@@ -589,11 +589,15 @@ class PRM_Comment_Types {
 
 	/**
 	 * Format a single comment for REST response
+	 *
+	 * @param WP_Comment $comment The comment object.
+	 * @param string     $type    The type of comment ('note' or 'activity').
+	 * @return array Formatted comment data.
 	 */
 	private function format_comment( $comment, $type ) {
-		// Make URLs in content clickable for activities and notes
+		// Make URLs in content clickable for activities and notes.
 		$content = $comment->comment_content;
-		if ( $type === 'activity' || $type === 'note' ) {
+		if ( 'activity' === $type || 'note' === $type ) {
 			// Render @mentions as styled spans before URL processing
 			$content = PRM_Mentions::render_mentions( $content );
 			$content = make_clickable( $content );
@@ -612,16 +616,16 @@ class PRM_Comment_Types {
 			'modified'  => $comment->comment_date, // Comments don't track modified date
 		);
 
-		// Add activity-specific meta
-		if ( $type === 'activity' ) {
+		// Add activity-specific meta.
+		if ( 'activity' === $type ) {
 			$data['activity_type'] = get_comment_meta( $comment->comment_ID, 'activity_type', true );
 			$data['activity_date'] = get_comment_meta( $comment->comment_ID, 'activity_date', true );
 			$data['activity_time'] = get_comment_meta( $comment->comment_ID, 'activity_time', true );
 			$data['participants']  = get_comment_meta( $comment->comment_ID, 'participants', true ) ?: array();
 		}
 
-		// Add note-specific meta (visibility)
-		if ( $type === 'note' ) {
+		// Add note-specific meta (visibility).
+		if ( 'note' === $type ) {
 			$visibility = get_comment_meta( $comment->comment_ID, '_note_visibility', true );
 			// Default to 'private' for backward compatibility with existing notes
 			$data['visibility'] = $visibility ?: 'private';
@@ -659,8 +663,8 @@ class PRM_Comment_Types {
 					$visibility = 'private';
 				}
 
-				// Shared notes are visible to anyone who can see the contact
-				return $visibility === 'shared';
+				// Shared notes are visible to anyone who can see the contact.
+				return 'shared' === $visibility;
 			}
 		);
 	}

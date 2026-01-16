@@ -389,10 +389,10 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		// Validate required fields
 		if ( empty( $data['provider'] ) || ! in_array( $data['provider'], array( 'google', 'caldav' ), true ) ) {
-			return new WP_Error( 'invalid_provider', __( 'Invalid provider. Must be "google" or "caldav".', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_provider', __( 'Invalid provider. Must be "google" or "caldav".', 'caelis' ), array( 'status' => 400 ) );
 		}
 		if ( empty( $data['name'] ) ) {
-			return new WP_Error( 'missing_name', __( 'Connection name is required.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_name', __( 'Connection name is required.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Encrypt credentials if provided
@@ -419,7 +419,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		return rest_ensure_response(
 			array(
 				'id'      => $id,
-				'message' => __( 'Connection created.', 'personal-crm' ),
+				'message' => __( 'Connection created.', 'caelis' ),
 			)
 		);
 	}
@@ -436,7 +436,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
 
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Remove sensitive credentials from response
@@ -458,7 +458,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Sanitize updatable fields
@@ -486,7 +486,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		PRM_Calendar_Connections::update_connection( $user_id, $id, $updates );
 
-		return rest_ensure_response( array( 'message' => __( 'Connection updated.', 'personal-crm' ) ) );
+		return rest_ensure_response( array( 'message' => __( 'Connection updated.', 'caelis' ) ) );
 	}
 
 	/**
@@ -501,12 +501,12 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $id );
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		PRM_Calendar_Connections::delete_connection( $user_id, $id );
 
-		return rest_ensure_response( array( 'message' => __( 'Connection deleted.', 'personal-crm' ) ) );
+		return rest_ensure_response( array( 'message' => __( 'Connection deleted.', 'caelis' ) ) );
 	}
 
 	/**
@@ -522,7 +522,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		// Get connection
 		$connection = PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
 		if ( ! $connection ) {
-			return new WP_Error( 'not_found', __( 'Connection not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Connection not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Check provider
@@ -531,7 +531,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		if ( ! in_array( $provider, array( 'google', 'caldav' ), true ) ) {
 			return new WP_Error(
 				'invalid_provider',
-				__( 'Unknown calendar provider.', 'personal-crm' ),
+				__( 'Unknown calendar provider.', 'caelis' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -559,7 +559,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 			return rest_ensure_response(
 				array(
-					'message' => __( 'Sync completed successfully.', 'personal-crm' ),
+					'message' => __( 'Sync completed successfully.', 'caelis' ),
 					'created' => $result['created'],
 					'updated' => $result['updated'],
 					'total'   => $result['total'],
@@ -592,7 +592,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		if ( ! PRM_Google_OAuth::is_configured() ) {
 			return new WP_Error(
 				'not_configured',
-				__( 'Google Calendar integration is not configured. Please add GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET to wp-config.php.', 'personal-crm' ),
+				__( 'Google Calendar integration is not configured. Please add GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET to wp-config.php.', 'caelis' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -603,7 +603,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		if ( empty( $auth_url ) ) {
 			return new WP_Error(
 				'auth_url_failed',
-				__( 'Failed to generate authorization URL.', 'personal-crm' ),
+				__( 'Failed to generate authorization URL.', 'caelis' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -728,13 +728,13 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 
 		// Validate required parameters
 		if ( empty( $url ) ) {
-			return new WP_Error( 'missing_url', __( 'CalDAV server URL is required.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_url', __( 'CalDAV server URL is required.', 'caelis' ), array( 'status' => 400 ) );
 		}
 		if ( empty( $username ) ) {
-			return new WP_Error( 'missing_username', __( 'Username is required.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_username', __( 'Username is required.', 'caelis' ), array( 'status' => 400 ) );
 		}
 		if ( empty( $password ) ) {
-			return new WP_Error( 'missing_password', __( 'Password is required.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'missing_password', __( 'Password is required.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Test the connection
@@ -748,7 +748,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 			array(
 				'success'   => true,
 				'calendars' => $result['calendars'],
-				'message'   => $result['message'] ?? __( 'Connection successful.', 'personal-crm' ),
+				'message'   => $result['message'] ?? __( 'Connection successful.', 'caelis' ),
 			)
 		);
 	}
@@ -1218,18 +1218,18 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		// Get and verify the event
 		$event = get_post( $event_id );
 		if ( ! $event || $event->post_type !== 'calendar_event' ) {
-			return new WP_Error( 'not_found', __( 'Event not found.', 'personal-crm' ), array( 'status' => 404 ) );
+			return new WP_Error( 'not_found', __( 'Event not found.', 'caelis' ), array( 'status' => 404 ) );
 		}
 
 		// Verify ownership
 		if ( (int) $event->post_author !== $user_id ) {
-			return new WP_Error( 'forbidden', __( 'You do not have permission to log this event.', 'personal-crm' ), array( 'status' => 403 ) );
+			return new WP_Error( 'forbidden', __( 'You do not have permission to log this event.', 'caelis' ), array( 'status' => 403 ) );
 		}
 
 		// Check if already logged
 		$already_logged = get_post_meta( $event_id, '_logged_as_activity', true );
 		if ( $already_logged ) {
-			return new WP_Error( 'already_logged', __( 'This event has already been logged as an activity.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'already_logged', __( 'This event has already been logged as an activity.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Get matched people
@@ -1237,14 +1237,14 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 		$matched_people      = $matched_people_json ? json_decode( $matched_people_json, true ) : array();
 
 		if ( empty( $matched_people ) || ! is_array( $matched_people ) ) {
-			return new WP_Error( 'no_matches', __( 'No matched people found for this event.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Use shared activity creation logic from PRM_Calendar_Sync
 		$activities_created = PRM_Calendar_Sync::create_activity_from_event( $event_id, $user_id, $matched_people );
 
 		if ( $activities_created === 0 ) {
-			return new WP_Error( 'no_matches', __( 'No matched people found for this event.', 'personal-crm' ), array( 'status' => 400 ) );
+			return new WP_Error( 'no_matches', __( 'No matched people found for this event.', 'caelis' ), array( 'status' => 400 ) );
 		}
 
 		// Mark event as logged
@@ -1260,7 +1260,7 @@ class PRM_REST_Calendar extends PRM_REST_Base {
 						'%d activity logged.',
 						'%d activities logged.',
 						$activities_created,
-						'personal-crm'
+						'caelis'
 					),
 					$activities_created
 				),

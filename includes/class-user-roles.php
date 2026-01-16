@@ -160,11 +160,12 @@ class PRM_User_Roles {
 		}
 
 		// Build the email
-		$subject               = __( 'New Caelis user awaiting approval', 'personal-crm' );
+		$subject               = __( 'New Caelis user awaiting approval', 'caelis' );
 		$approval_url          = admin_url( 'users.php' );
 		$frontend_approval_url = home_url( '/settings/user-approval' );
 
 		$message = sprintf(
+			// translators: %1$s: user name, %2$s: email, %3$s: date, %4$s: admin URL, %5$s: frontend URL.
 			__(
 				'Hello,
 
@@ -180,7 +181,7 @@ You can approve or deny this user from:
 
 Best regards,
 Caelis',
-				'personal-crm'
+				'caelis'
 			),
 			$user->display_name ?: $user->user_login,
 			$user->user_email,
@@ -204,9 +205,9 @@ Caelis',
 			return true;
 		}
 
-		// Check approval status
+		// Check approval status.
 		$approved = get_user_meta( $user_id, self::APPROVAL_META_KEY, true );
-		return $approved === '1' || $approved === true || $approved === 1;
+		return '1' === $approved || true === $approved || 1 === $approved;
 	}
 
 	/**
@@ -215,13 +216,14 @@ Caelis',
 	public function approve_user( $user_id ) {
 		update_user_meta( $user_id, self::APPROVAL_META_KEY, '1' );
 
-		// Send notification email
+		// Send notification email.
 		$user = get_userdata( $user_id );
 		if ( $user ) {
 			wp_mail(
 				$user->user_email,
-				__( 'Your Caelis account has been approved', 'personal-crm' ),
+				__( 'Your Caelis account has been approved', 'caelis' ),
 				sprintf(
+					// translators: %1$s: user name, %2$s: login URL.
 					__(
 						'Hello %1$s,
 
@@ -231,7 +233,7 @@ Login: %2$s
 
 Best regards,
 Caelis Team',
-						'personal-crm'
+						'caelis'
 					),
 					$user->display_name,
 					wp_login_url()
@@ -251,12 +253,12 @@ Caelis Team',
 	 * Add approval column to users list
 	 */
 	public function add_approval_column( $columns ) {
-		// Insert after role column
+		// Insert after role column.
 		$new_columns = array();
 		foreach ( $columns as $key => $value ) {
 			$new_columns[ $key ] = $value;
-			if ( $key === 'role' ) {
-				$new_columns['caelis_approved'] = __( 'Approved', 'personal-crm' );
+			if ( 'role' === $key ) {
+				$new_columns['caelis_approved'] = __( 'Approved', 'caelis' );
 			}
 		}
 		return $new_columns;
@@ -264,18 +266,23 @@ Caelis Team',
 
 	/**
 	 * Show approval status in column
+	 *
+	 * @param string $value       Current column value.
+	 * @param string $column_name Column name.
+	 * @param int    $user_id     User ID.
+	 * @return string Column HTML.
 	 */
 	public function show_approval_column( $value, $column_name, $user_id ) {
-		if ( $column_name === 'caelis_approved' ) {
+		if ( 'caelis_approved' === $column_name ) {
 			$is_approved = self::is_user_approved( $user_id );
 			$user        = get_userdata( $user_id );
 
 			// Only show for Caelis Users
 			if ( in_array( self::ROLE_NAME, $user->roles ) ) {
 				if ( $is_approved ) {
-					return '<span style="color: green;">✓ ' . __( 'Yes', 'personal-crm' ) . '</span>';
+					return '<span style="color: green;">✓ ' . __( 'Yes', 'caelis' ) . '</span>';
 				} else {
-					return '<span style="color: red;">✗ ' . __( 'No', 'personal-crm' ) . '</span>';
+					return '<span style="color: red;">✗ ' . __( 'No', 'caelis' ) . '</span>';
 				}
 			}
 			return '—';
@@ -287,21 +294,26 @@ Caelis Team',
 	 * Add bulk approval actions
 	 */
 	public function add_bulk_approval_actions( $actions ) {
-		$actions['caelis_approve'] = __( 'Approve', 'personal-crm' );
-		$actions['caelis_deny']    = __( 'Deny', 'personal-crm' );
+		$actions['caelis_approve'] = __( 'Approve', 'caelis' );
+		$actions['caelis_deny']    = __( 'Deny', 'caelis' );
 		return $actions;
 	}
 
 	/**
 	 * Handle bulk approval actions
+	 *
+	 * @param string $sendback URL to redirect to.
+	 * @param string $action   Action being performed.
+	 * @param array  $user_ids User IDs to process.
+	 * @return string Modified redirect URL.
 	 */
 	public function handle_bulk_approval( $sendback, $action, $user_ids ) {
-		if ( $action === 'caelis_approve' ) {
+		if ( 'caelis_approve' === $action ) {
 			foreach ( $user_ids as $user_id ) {
 				$this->approve_user( $user_id );
 			}
 			$sendback = add_query_arg( 'caelis_approved', count( $user_ids ), $sendback );
-		} elseif ( $action === 'caelis_deny' ) {
+		} elseif ( 'caelis_deny' === $action ) {
 			foreach ( $user_ids as $user_id ) {
 				$this->deny_user( $user_id );
 			}
@@ -325,7 +337,7 @@ Caelis Team',
 						admin_url( 'users.php?action=caelis_approve&user=' . $user->ID ),
 						'caelis_approve_user_' . $user->ID
 					),
-					__( 'Approve', 'personal-crm' )
+					__( 'Approve', 'caelis' )
 				);
 			} else {
 				$actions['caelis_deny'] = sprintf(
@@ -334,7 +346,7 @@ Caelis Team',
 						admin_url( 'users.php?action=caelis_deny&user=' . $user->ID ),
 						'caelis_deny_user_' . $user->ID
 					),
-					__( 'Deny', 'personal-crm' )
+					__( 'Deny', 'caelis' )
 				);
 			}
 		}
@@ -350,18 +362,22 @@ Caelis Team',
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce verified below for specific actions.
 		if ( isset( $_GET['action'] ) && isset( $_GET['user'] ) && isset( $_GET['_wpnonce'] ) ) {
-			$action  = sanitize_text_field( $_GET['action'] );
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$action  = sanitize_text_field( wp_unslash( $_GET['action'] ) );
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$user_id = absint( $_GET['user'] );
-			$nonce   = sanitize_text_field( $_GET['_wpnonce'] );
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$nonce   = sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) );
 
-			if ( $action === 'caelis_approve' ) {
+			if ( 'caelis_approve' === $action ) {
 				if ( wp_verify_nonce( $nonce, 'caelis_approve_user_' . $user_id ) ) {
 					$this->approve_user( $user_id );
 					wp_redirect( admin_url( 'users.php?caelis_approved=1' ) );
 					exit;
 				}
-			} elseif ( $action === 'caelis_deny' ) {
+			} elseif ( 'caelis_deny' === $action ) {
 				if ( wp_verify_nonce( $nonce, 'caelis_deny_user_' . $user_id ) ) {
 					$this->deny_user( $user_id );
 					wp_redirect( admin_url( 'users.php?caelis_denied=1' ) );
@@ -370,27 +386,31 @@ Caelis Team',
 			}
 		}
 
-		// Show admin notices
+		// Show admin notices.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only, no action.
 		if ( isset( $_GET['caelis_approved'] ) ) {
 			add_action(
 				'admin_notices',
 				function () {
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 					$count = absint( $_GET['caelis_approved'] );
-					echo '<div class="notice notice-success is-dismissible"><p>' .
-					sprintf( _n( 'User approved.', '%d users approved.', $count, 'personal-crm' ), $count ) .
-					'</p></div>';
+					// translators: %d is the number of users approved.
+					$message = sprintf( _n( '%d user approved.', '%d users approved.', $count, 'caelis' ), $count );
+					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 				}
 			);
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only, no action.
 		if ( isset( $_GET['caelis_denied'] ) ) {
 			add_action(
 				'admin_notices',
 				function () {
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 					$count = absint( $_GET['caelis_denied'] );
-					echo '<div class="notice notice-success is-dismissible"><p>' .
-					sprintf( _n( 'User denied.', '%d users denied.', $count, 'personal-crm' ), $count ) .
-					'</p></div>';
+					// translators: %d is the number of users denied.
+					$message = sprintf( _n( '%d user denied.', '%d users denied.', $count, 'caelis' ), $count );
+					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 				}
 			);
 		}
