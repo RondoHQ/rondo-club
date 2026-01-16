@@ -72,7 +72,7 @@ Resume file: None
 
 ### Pending Todos
 
-28 todos in `.planning/todos/pending/`:
+29 todos in `.planning/todos/pending/`:
 1. ~~Add label management interface (ui)~~ — DONE in v3.4 Phase 37
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ — DONE in v3.3
 3. Add import from Twenty CRM (api)
@@ -103,6 +103,7 @@ Resume file: None
 28. ~~Review performance using react-best-practices skill (ui)~~ — DONE in v4.3 Phase 61 (no changes needed)
 29. Allow selecting Google Calendars to sync (ui)
 30. Check and configure Google Calendar sync date range (api)
+31. Split multi-class files and reorganize includes folder (refactoring)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
