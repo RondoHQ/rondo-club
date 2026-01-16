@@ -176,4 +176,18 @@
     <rule ref="Universal.ControlStructures.DisallowLonelyIf.Found">
         <severity>0</severity>
     </rule>
+
+    <!--
+        Yoda conditions disabled - prefer readable $var === 'value' style
+        over WordPress-mandated 'value' === $var style.
+    -->
+    <rule ref="WordPress.PHP.YodaConditions">
+        <severity>0</severity>
+    </rule>
+
+    <!--
+        Require modern short array syntax [] instead of array().
+        This is more concise and has been standard since PHP 5.4.
+    -->
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
 </ruleset>
