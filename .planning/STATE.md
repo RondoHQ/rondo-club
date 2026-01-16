@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** None — use `/gsd:discuss-milestone` to plan next work
+**Current focus:** v4.7 Dark Mode & Activity Polish
 
 ## Current Position
 
-Milestone: v4.6 Dashboard & Polish — SHIPPED
-Phase: 70 of 70 (UI Polish) — complete
-Plan: All plans complete
-Status: Milestone shipped, ready for next milestone
-Last activity: 2026-01-16 — v4.6 shipped
+Milestone: v4.7 Dark Mode & Activity Polish
+Phase: Not started (run /gsd:create-roadmap)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-01-16 — Milestone v4.7 started
 
-Progress: ██████████ 100% (v4.6 complete)
+Progress: ░░░░░░░░░░ 0% (roadmap needed)
 
 ## Completed Milestones
 

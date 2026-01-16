@@ -187,7 +187,16 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-No active requirements. Use `/gsd:discuss-milestone` to plan next work.
+**Current Milestone: v4.7 Dark Mode & Activity Polish**
+
+**Goal:** Comprehensive dark mode contrast fixes across modals and settings, plus activity type improvements and minor bug fixes.
+
+**Target features:**
+- [ ] Dark mode modal fixes (Work history, Address, Add date related people, Activity type button)
+- [ ] Settings dark mode fixes (Connections/CardDAV/Slack subtab headings contrast)
+- [ ] Activity type improvements (add "Dinner" and "Zoom" types, rename "Phone call" to "Phone")
+- [ ] Fix topbar + dropdown z-index on People screen
+- [ ] Fix missing space in person header job title ("at<Company>" → "at <Company>")
 
 ### Out of Scope
 
@@ -286,4 +295,4 @@ No active requirements. Use `/gsd:discuss-milestone` to plan next work.
 | Global class backslash prefix | PHP/WP classes (DateTime, WP_Error, etc.) need `\` in namespaced files | ✓ Good |
 
 ---
-*Last updated: 2026-01-16 — v4.5 Calendar Sync Control shipped*
+*Last updated: 2026-01-16 — v4.7 Dark Mode & Activity Polish started*
