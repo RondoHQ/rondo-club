@@ -24,10 +24,37 @@
 - ✅ [v4.3 Performance & Documentation](milestones/v4.3-performance-documentation.md) (Phases 61-63) — SHIPPED 2026-01-16
 - ✅ [v4.4 Code Organization](milestones/v4.4-code-organization.md) (Phases 64-66) — SHIPPED 2026-01-16
 - ✅ [v4.5 Calendar Sync Control](milestones/v4.5-calendar-sync-control.md) (Phases 67-68) — SHIPPED 2026-01-16
+- 🚧 **v4.6 Dashboard & Polish** - Phases 69-70 (in progress)
 
 ## Current Status
 
-**Current milestone:** Planning next milestone
+**Current milestone:** v4.6 Dashboard & Polish (Phases 69-70)
+
+---
+
+### 🚧 v4.6 Dashboard & Polish (In Progress)
+
+**Milestone Goal:** User-customizable dashboard layout with show/hide and drag-and-drop reorder, plus UI polish fixes.
+
+#### Phase 69: Dashboard Customization
+
+**Goal**: Add card visibility toggles and drag-and-drop reorder for all dashboard cards
+**Depends on**: v4.5 complete
+**Research**: Unlikely (internal React patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 69-01: TBD (run /gsd:plan-phase 69 to break down)
+
+#### Phase 70: UI Polish
+
+**Goal**: Delete button styling improvements and dark mode contrast fixes
+**Depends on**: Phase 69
+**Research**: Unlikely (internal styling patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 70-01: TBD (run /gsd:plan-phase 70 to break down)
 
 ---
 
@@ -633,5 +660,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.3 Performance & Documentation | 61-63 | 5/5 | Complete ✅ | 2026-01-16 |
 | v4.4 Code Organization | 64-66 | 6/6 | Complete ✅ | 2026-01-16 |
 | v4.5 Calendar Sync Control | 67-68 | 3/3 | Complete ✅ | 2026-01-16 |
+| v4.6 Dashboard & Polish | 69-70 | 0/? | In progress 🚧 | - |
 
 **Shipped: 24 milestones, 68 phases, 119 plans**
