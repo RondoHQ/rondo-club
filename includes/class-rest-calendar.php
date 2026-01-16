@@ -532,6 +532,9 @@ class Calendar extends Base {
 		if ( isset( $data['calendar_id'] ) ) {
 			$updates['calendar_id'] = sanitize_text_field( $data['calendar_id'] );
 		}
+		if ( isset( $data['calendar_name'] ) ) {
+			$updates['calendar_name'] = sanitize_text_field( $data['calendar_name'] );
+		}
 
 		// Handle credential updates (re-encrypt)
 		if ( ! empty( $data['credentials'] ) && is_array( $data['credentials'] ) ) {
