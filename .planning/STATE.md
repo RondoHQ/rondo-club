@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 
 Milestone: v4.4 Code Organization
 Phase: 66 of 66 (PSR-4 Autoloader)
-Plan: 3 of 4 complete
-Status: Plan 66-03 complete
-Last activity: 2026-01-16 — Completed 66-03-PLAN.md (import/export/data namespaces)
+Plan: 4 of 4 complete
+Status: Phase 66 complete
+Last activity: 2026-01-16 — Completed 66-04-PLAN.md (update references and finalize autoloader)
 
-Progress: ████████░░ 80% (2.75/3 phases)
+Progress: ██████████ 100% (3/3 phases)
 
 ## Completed Milestones
 
@@ -71,6 +71,11 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - **Cross-references updated immediately:** Updated 6 files that reference namespaced classes (VCard export, CredentialEncryption) to use fully qualified namespaces rather than waiting for Plan 04 class aliases.
 - **PRM_Workspace_Members unchanged:** Left reference in ICalFeed as-is since that class will be namespaced in a future batch.
 
+### Phase 66-04 Decisions
+
+- **Composer classmap added:** Added classmap alongside PSR-4 to support current `class-*.php` file naming convention during transition.
+- **WP-CLI kept using PRM_* CLI classes:** WP-CLI command classes (e.g., `PRM_Reminders_CLI_Command`) remain with original names since they're not part of the PSR-4 namespace structure.
+
 ## Roadmap Evolution
 
 - Milestone v4.3 complete: React performance review, installation documentation, WPCS compliance
@@ -80,7 +85,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Phase 66, Plan 03 complete, ready for Plan 04
+Stopped at: Phase 66 complete, milestone v4.4 ready for completion
 Resume file: None
 
 ## Accumulated Context
