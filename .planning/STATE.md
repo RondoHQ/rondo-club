@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 ## Current Position
 
 Milestone: v4.5 Calendar Sync Control
-Phase: 67 of 68 (Sync Range & Frequency)
-Plan: 02 COMPLETE
-Status: Phase 67 complete, ready for Phase 68
-Last activity: 2026-01-16 — Plan 67-02 completed (background sync frequency)
+Phase: 68 of 68 (Calendar Selection UI)
+Plan: 01 COMPLETE
+Status: Milestone complete, ready for completion
+Last activity: 2026-01-16 — Plan 68-01 completed (calendar selection UI)
 
-Progress: █████░░░░░ 50% (Phase 67/68 of v4.5)
+Progress: ██████████ 100% (Phase 68/68 of v4.5)
 
 ## Completed Milestones
 
@@ -94,7 +94,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Phase 67 Plan 02 complete (phase complete)
+Stopped at: Phase 68 Plan 01 complete (milestone complete)
 Resume file: None
 
 ## Accumulated Context
@@ -130,7 +130,7 @@ Resume file: None
 26. ~~Fix Today's meetings layout and timezone display (ui)~~ — DONE in v4.1 Phase 57
 27. Soften PersonDetail delete button style (ui)
 28. ~~Review performance using react-best-practices skill (ui)~~ — DONE in v4.3 Phase 61 (no changes needed)
-29. Allow selecting Google Calendars to sync (ui)
+29. ~~Allow selecting Google Calendars to sync (ui)~~ — DONE in v4.5 Phase 68-01
 30. ~~Check and configure Google Calendar sync date range (api)~~ — DONE in v4.5 Phase 67-01
 31. ~~Split multi-class files and reorganize includes folder (refactoring)~~ — DONE in v4.4 Phase 65-66
 
