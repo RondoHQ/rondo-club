@@ -49,23 +49,23 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DM-01 | TBD | Pending |
-| DM-02 | TBD | Pending |
-| DM-03 | TBD | Pending |
-| DM-04 | TBD | Pending |
-| DM-05 | TBD | Pending |
-| DM-06 | TBD | Pending |
-| DM-07 | TBD | Pending |
-| ACT-01 | TBD | Pending |
-| ACT-02 | TBD | Pending |
-| ACT-03 | TBD | Pending |
-| BUG-01 | TBD | Pending |
-| BUG-02 | TBD | Pending |
+| DM-01 | Phase 71 | Pending |
+| DM-02 | Phase 71 | Pending |
+| DM-03 | Phase 71 | Pending |
+| DM-04 | Phase 71 | Pending |
+| DM-05 | Phase 71 | Pending |
+| DM-06 | Phase 71 | Pending |
+| DM-07 | Phase 71 | Pending |
+| ACT-01 | Phase 72 | Pending |
+| ACT-02 | Phase 72 | Pending |
+| ACT-03 | Phase 72 | Pending |
+| BUG-01 | Phase 72 | Pending |
+| BUG-02 | Phase 72 | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12 ⚠️
+- Mapped to phases: 12
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-01-16*

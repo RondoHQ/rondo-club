@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 ## Current Position
 
 Milestone: v4.7 Dark Mode & Activity Polish
-Phase: Not started (run /gsd:create-roadmap)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-01-16 — Milestone v4.7 started
+Phase: 71 of 72 (Dark Mode Fixes)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-16 — Roadmap created (2 phases, 12 requirements)
 
-Progress: ░░░░░░░░░░ 0% (roadmap needed)
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -94,11 +94,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.5 created: Calendar sync control, 2 phases (Phase 67-68)
 - Milestone v4.5 complete: Per-connection sync settings, calendar selection UI
 - Milestone v4.6 created: Dashboard customization & UI polish, 2 phases (Phase 69-70)
+- Milestone v4.7 created: Dark Mode & Activity Polish, 2 phases (Phase 71-72)
 
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Phase 70 Plan 01 complete (milestone v4.6 complete)
+Stopped at: v4.7 roadmap created (2 phases)
 Resume file: None
 
 ## Accumulated Context
@@ -151,5 +152,4 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Milestone v4.6 complete: Update version numbers and deploy
-- Archive milestone v4.6 when ready
+- Run `/gsd:plan-phase 71` to plan Dark Mode Fixes phase
