@@ -248,6 +248,39 @@ class CalDAVProvider {
 	 * @throws Exception On sync errors
 	 */
 	public static function sync( int $user_id, array $connection ): array {
+		$connection_id = $connection['id'] ?? '';
+
+		// Prevent concurrent syncs for same connection (race condition fix)
+		$lock_key = 'prm_sync_lock_' . $user_id . '_' . $connection_id;
+		if ( get_transient( $lock_key ) ) {
+			// Another sync is in progress, skip this one
+			return [
+				'created' => 0,
+				'updated' => 0,
+				'total'   => 0,
+				'skipped' => true,
+			];
+		}
+		// Set lock for 5 minutes (sync should complete well within this)
+		set_transient( $lock_key, true, 5 * MINUTE_IN_SECONDS );
+
+		try {
+			return self::do_sync( $user_id, $connection );
+		} finally {
+			// Always release lock when done
+			delete_transient( $lock_key );
+		}
+	}
+
+	/**
+	 * Perform the actual sync (called by sync() with lock protection)
+	 *
+	 * @param int   $user_id    WordPress user ID
+	 * @param array $connection Connection from user meta (includes encrypted credentials)
+	 * @return array ['created' => int, 'updated' => int, 'total' => int]
+	 * @throws \Exception On sync errors
+	 */
+	private static function do_sync( int $user_id, array $connection ): array {
 		// Decrypt credentials
 		$credentials = \Caelis\Data\CredentialEncryption::decrypt( $connection['credentials'] );
 		if ( ! $credentials || empty( $credentials['url'] ) || empty( $credentials['username'] ) || empty( $credentials['password'] ) ) {

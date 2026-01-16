@@ -23,6 +23,39 @@ class GoogleProvider {
 	 * @throws Exception On API errors
 	 */
 	public static function sync( int $user_id, array $connection ): array {
+		$connection_id = $connection['id'] ?? '';
+
+		// Prevent concurrent syncs for same connection (race condition fix)
+		$lock_key = 'prm_sync_lock_' . $user_id . '_' . $connection_id;
+		if ( get_transient( $lock_key ) ) {
+			// Another sync is in progress, skip this one
+			return [
+				'created' => 0,
+				'updated' => 0,
+				'total'   => 0,
+				'skipped' => true,
+			];
+		}
+		// Set lock for 5 minutes (sync should complete well within this)
+		set_transient( $lock_key, true, 5 * MINUTE_IN_SECONDS );
+
+		try {
+			return self::do_sync( $user_id, $connection );
+		} finally {
+			// Always release lock when done
+			delete_transient( $lock_key );
+		}
+	}
+
+	/**
+	 * Perform the actual sync (called by sync() with lock protection)
+	 *
+	 * @param int   $user_id    WordPress user ID
+	 * @param array $connection Connection data from user meta
+	 * @return array Summary of sync results (created, updated, total)
+	 * @throws \Exception On API errors
+	 */
+	private static function do_sync( int $user_id, array $connection ): array {
 		// Get valid access token
 		$access_token = \PRM_Google_OAuth::get_access_token( $connection );
 		if ( ! $access_token ) {
