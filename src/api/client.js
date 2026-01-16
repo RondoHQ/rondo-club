@@ -246,6 +246,7 @@ export const prmApi = {
   updateCalendarConnection: (id, data) => api.put(`/prm/v1/calendar/connections/${id}`, data),
   deleteCalendarConnection: (id) => api.delete(`/prm/v1/calendar/connections/${id}`),
   triggerCalendarSync: (id) => api.post(`/prm/v1/calendar/connections/${id}/sync`),
+  getConnectionCalendars: (id) => api.get(`/prm/v1/calendar/connections/${id}/calendars`),
   getGoogleAuthUrl: () => api.get('/prm/v1/calendar/auth/google'),
   testCalDAVConnection: (credentials) => api.post('/prm/v1/calendar/auth/caldav/test', credentials),
 };

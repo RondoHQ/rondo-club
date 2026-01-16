@@ -847,6 +847,9 @@ function CalendarsTab() {
                   </div>
                   <div>
                     <p className="font-medium dark:text-gray-100">{connection.name}</p>
+                    {connection.calendar_id && connection.calendar_id !== 'primary' && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">{connection.calendar_id}</p>
+                    )}
                     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <span>{formatLastSync(connection.last_sync)}</span>
                       {connection.last_error && (
@@ -1164,6 +1167,11 @@ function EditConnectionModal({ connection, onSave, onClose }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  // Calendar selection state
+  const [calendars, setCalendars] = useState([]);
+  const [loadingCalendars, setLoadingCalendars] = useState(false);
+  const [selectedCalendarId, setSelectedCalendarId] = useState(connection.calendar_id || '');
+
   // CalDAV-specific fields
   const [url, setUrl] = useState('');
   const [username, setUsername] = useState('');
@@ -1173,6 +1181,27 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
   const isCalDAV = connection.provider === 'caldav';
   const isGoogle = connection.provider === 'google';
+
+  // Fetch available calendars when modal opens
+  useEffect(() => {
+    const fetchCalendars = async () => {
+      setLoadingCalendars(true);
+      try {
+        const response = await prmApi.getConnectionCalendars(connection.id);
+        setCalendars(response.data.calendars || []);
+        // Keep current selection if valid, otherwise default to current from API
+        if (!selectedCalendarId && response.data.current) {
+          setSelectedCalendarId(response.data.current);
+        }
+      } catch (err) {
+        // Silently fail - calendar list is optional enhancement
+        console.error('Failed to fetch calendars:', err);
+      } finally {
+        setLoadingCalendars(false);
+      }
+    };
+    fetchCalendars();
+  }, [connection.id]);
 
   const handleTestCalDAV = async () => {
     if (!url || !username || !password) {
@@ -1224,6 +1253,11 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         sync_to_days: syncToDays,
         sync_frequency: syncFrequency,
       };
+
+      // Include calendar_id if changed
+      if (selectedCalendarId && selectedCalendarId !== connection.calendar_id) {
+        data.calendar_id = selectedCalendarId;
+      }
 
       // Include CalDAV credentials if any were changed
       if (isCalDAV && url && username && password) {
@@ -1298,6 +1332,32 @@ function EditConnectionModal({ connection, onSave, onClose }) {
               placeholder="e.g., Work Calendar"
             />
           </div>
+
+          {/* Calendar selector - show when calendars loaded */}
+          {calendars.length > 0 && (
+            <div>
+              <label className="label mb-1">Calendar to sync</label>
+              <select
+                value={selectedCalendarId}
+                onChange={(e) => setSelectedCalendarId(e.target.value)}
+                className="input"
+              >
+                {calendars.map((cal) => (
+                  <option key={cal.id} value={cal.id}>
+                    {cal.name}{cal.primary ? ' (Primary)' : ''}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                Select which calendar to sync events from
+              </p>
+            </div>
+          )}
+          {loadingCalendars && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Loading available calendars...
+            </p>
+          )}
 
           {/* Sync enabled toggle */}
           <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
