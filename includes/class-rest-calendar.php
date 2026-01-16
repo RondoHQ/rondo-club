@@ -1004,8 +1004,8 @@ class Calendar extends Base {
 		$end_meta   = get_post_meta( $event->ID, '_end_time', true );
 
 		// Create DateTime objects in WordPress timezone (handles empty/invalid gracefully)
-		$start_datetime = new DateTime( $start_meta ?: 'now', $wp_timezone );
-		$end_datetime   = new DateTime( $end_meta ?: $start_meta ?: 'now', $wp_timezone );
+		$start_datetime = new \DateTime( $start_meta ?: 'now', $wp_timezone );
+		$end_datetime   = new \DateTime( $end_meta ?: $start_meta ?: 'now', $wp_timezone );
 
 		return [
 			'id'                     => $event->ID,
@@ -1188,8 +1188,8 @@ class Calendar extends Base {
 		$end_meta   = get_post_meta( $event->ID, '_end_time', true );
 
 		// Create DateTime objects in WordPress timezone (handles empty/invalid gracefully)
-		$start_datetime = new DateTime( $start_meta ?: 'now', $wp_timezone );
-		$end_datetime   = new DateTime( $end_meta ?: $start_meta ?: 'now', $wp_timezone );
+		$start_datetime = new \DateTime( $start_meta ?: 'now', $wp_timezone );
+		$end_datetime   = new \DateTime( $end_meta ?: $start_meta ?: 'now', $wp_timezone );
 
 		return [
 			'id'             => $event->ID,

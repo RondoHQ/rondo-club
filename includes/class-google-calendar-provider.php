@@ -37,10 +37,10 @@ class GoogleProvider {
 
 		// Calculate date range
 		$sync_from_days = isset( $connection['sync_from_days'] ) ? absint( $connection['sync_from_days'] ) : 90;
-		$start_date     = new DateTime();
+		$start_date     = new \DateTime();
 		$start_date->modify( "-{$sync_from_days} days" );
 
-		$end_date = new DateTime();
+		$end_date = new \DateTime();
 		$end_date->modify( '+30 days' );
 
 		// Determine which calendar to sync
@@ -308,7 +308,7 @@ class GoogleProvider {
 		$date_time = $event_time->getDateTime();
 		if ( $date_time ) {
 			// Parse and convert to site timezone
-			$dt = new DateTime( $date_time );
+			$dt = new \DateTime( $date_time );
 			$dt->setTimezone( wp_timezone() );
 			return $dt->format( 'Y-m-d H:i:s' );
 		}
