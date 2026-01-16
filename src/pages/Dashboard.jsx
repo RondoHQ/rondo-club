@@ -1,5 +1,5 @@
-import { useState, lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock, Settings } from 'lucide-react';
 import { useDashboard, useTodos, useUpdateTodo, useDashboardSettings, useUpdateDashboardSettings, DEFAULT_DASHBOARD_CARDS } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
@@ -343,13 +343,18 @@ export default function Dashboard() {
   const [todoToView, setTodoToView] = useState(null);
   const [showTodoModal, setShowTodoModal] = useState(false);
 
-  // State for customize modal
-  const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  // URL params for customize modal
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showCustomizeModal = searchParams.get('customize') === 'true';
+
+  const closeCustomizeModal = () => {
+    setSearchParams({});
+  };
 
   // Handle saving dashboard settings
   const handleSaveSettings = (settings) => {
     updateDashboardSettings.mutate(settings, {
-      onSuccess: () => setShowCustomizeModal(false),
+      onSuccess: () => closeCustomizeModal(),
     });
   };
 
@@ -703,32 +708,46 @@ export default function Dashboard() {
   // Filter cards to show based on visibility settings, maintaining order
   const orderedVisibleCards = cardOrder.filter((cardId) => visibleCards.includes(cardId));
 
-  // Separate stats from other cards (stats always renders full-width)
-  const showStats = orderedVisibleCards.includes('stats');
-  const otherCards = orderedVisibleCards.filter((id) => id !== 'stats');
+  // Group cards into segments for rendering - stats renders full-width, others in a grid
+  // This allows stats to appear in any position while maintaining its full-width layout
+  const renderCardSegments = () => {
+    const segments = [];
+    let currentGroup = [];
+
+    orderedVisibleCards.forEach((cardId) => {
+      if (cardId === 'stats') {
+        // If there are cards before stats, render them as a grid
+        if (currentGroup.length > 0) {
+          segments.push(
+            <div key={`grid-${segments.length}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {currentGroup.map((id) => cardRenderers[id]?.())}
+            </div>
+          );
+          currentGroup = [];
+        }
+        // Render stats full-width
+        segments.push(cardRenderers['stats']());
+      } else {
+        currentGroup.push(cardId);
+      }
+    });
+
+    // Render any remaining cards after stats
+    if (currentGroup.length > 0) {
+      segments.push(
+        <div key={`grid-${segments.length}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {currentGroup.map((id) => cardRenderers[id]?.())}
+        </div>
+      );
+    }
+
+    return segments;
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header with customize button */}
-      <div className="flex justify-end">
-        <button
-          onClick={() => setShowCustomizeModal(true)}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <Settings className="w-4 h-4" />
-          Customize
-        </button>
-      </div>
-
-      {/* Stats row - rendered separately if visible */}
-      {showStats && cardRenderers['stats']()}
-
-      {/* Other cards in a responsive grid */}
-      {otherCards.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {otherCards.map((cardId) => cardRenderers[cardId]?.())}
-        </div>
-      )}
+      {/* Render cards in segments respecting order */}
+      {renderCardSegments()}
 
       {/* Complete Todo Modal */}
       <CompleteTodoModal
@@ -774,7 +793,7 @@ export default function Dashboard() {
       {/* Dashboard Customize Modal */}
       <DashboardCustomizeModal
         isOpen={showCustomizeModal}
-        onClose={() => setShowCustomizeModal(false)}
+        onClose={closeCustomizeModal}
         settings={dashboardSettings}
         onSave={handleSaveSettings}
         isSaving={updateDashboardSettings.isPending}
