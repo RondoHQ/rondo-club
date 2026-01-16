@@ -506,7 +506,8 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddCompany, onAddDate }) {
 
 function Header({ onMenuClick, onAddTodo, onAddPerson, onAddCompany, onAddDate, onOpenSearch }) {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+
   // Get page title from location
   const getPageTitle = () => {
     const path = location.pathname;
@@ -519,7 +520,13 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddCompany, onAddDate, 
     if (path.startsWith('/settings')) return 'Settings';
     return '';
   };
-  
+
+  const isDashboard = location.pathname === '/';
+
+  const handleCustomizeClick = () => {
+    navigate('/?customize=true');
+  };
+
   return (
     <header className="sticky top-0 z-10 flex items-center h-16 px-4 bg-white border-b border-gray-200 lg:px-6 dark:bg-gray-800 dark:border-gray-700">
       {/* Mobile menu button */}
@@ -534,6 +541,17 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddCompany, onAddDate, 
       <h1 className="ml-2 text-lg font-semibold lg:ml-0 dark:text-gray-100">
         {getPageTitle()}
       </h1>
+
+      {/* Dashboard customize button */}
+      {isDashboard && (
+        <button
+          onClick={handleCustomizeClick}
+          className="ml-3 flex items-center gap-1.5 px-2 py-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+        >
+          <Settings className="w-4 h-4" />
+          <span className="hidden sm:inline">Customize</span>
+        </button>
+      )}
 
       {/* Spacer */}
       <div className="flex-1" />
@@ -677,29 +695,29 @@ export default function Layout({ children }) {
           </div>
         </div>
       )}
-      
+
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0">
-        <Header 
-          onMenuClick={() => setSidebarOpen(true)} 
+        <Header
+          onMenuClick={() => setSidebarOpen(true)}
           onAddTodo={() => setShowTodoModal(true)}
           onAddPerson={() => setShowPersonModal(true)}
           onAddCompany={() => setShowCompanyModal(true)}
           onAddDate={() => setShowDateModal(true)}
           onOpenSearch={() => setShowSearchModal(true)}
         />
-        
+
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
         </main>
       </div>
-      
+
       {/* Search Modal */}
       <SearchModal
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
       />
-      
+
       {/* Global Todo Modal (lazy loaded) */}
       <Suspense fallback={null}>
         <GlobalTodoModal
