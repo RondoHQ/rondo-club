@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v4.4 Code Organization - PHP codebase restructuring
+**Current focus:** Milestone v4.4 complete — ready for next milestone
 
 ## Current Position
 
-Milestone: v4.4 Code Organization
-Phase: 66 of 66 (PSR-4 Autoloader)
-Plan: 4 of 4 complete
-Status: Phase 66 complete
-Last activity: 2026-01-16 — Completed 66-04-PLAN.md (update references and finalize autoloader)
+Milestone: v4.4 Code Organization — SHIPPED 2026-01-16
+Phase: 66 of 66 (PSR-4 Autoloader) — Complete
+Plan: 6 of 6 complete
+Status: Milestone complete
+Last activity: 2026-01-16 — Shipped v4.4 Code Organization milestone
 
 Progress: ██████████ 100% (3/3 phases)
 
@@ -41,8 +41,9 @@ Progress: ██████████ 100% (3/3 phases)
 | v4.1 Bug Fixes & Polish | 56-57 | 3 | 2026-01-15 |
 | v4.2 Settings & Stability | 58-60 | 3 | 2026-01-15 |
 | v4.3 Performance & Documentation | 61-63 | 5 | 2026-01-16 |
+| v4.4 Code Organization | 64-66 | 6 | 2026-01-16 |
 
-**Total:** 20 milestones, 63 phases, 110 plans completed
+**Total:** 23 milestones, 66 phases, 116 plans completed
 
 ## Deferred Issues
 
@@ -123,7 +124,7 @@ Resume file: None
 28. ~~Review performance using react-best-practices skill (ui)~~ — DONE in v4.3 Phase 61 (no changes needed)
 29. Allow selecting Google Calendars to sync (ui)
 30. Check and configure Google Calendar sync date range (api)
-31. Split multi-class files and reorganize includes folder (refactoring)
+31. ~~Split multi-class files and reorganize includes folder (refactoring)~~ — DONE in v4.4 Phase 65-66
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework — PHPUnit done in v3.0 (Playwright deferred)
