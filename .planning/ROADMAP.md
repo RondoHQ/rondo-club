@@ -21,10 +21,37 @@
 - ✅ [v4.0 Calendar Integration](milestones/v4.0-calendar-integration.md) (Phases 47-55) — SHIPPED 2026-01-15
 - ✅ [v4.1 Bug Fixes & Polish](milestones/v4.1-bug-fixes-polish.md) (Phases 56-57) — SHIPPED 2026-01-15
 - ✅ [v4.2 Settings & Stability](milestones/v4.2-settings-stability.md) (Phases 58-60) — SHIPPED 2026-01-15
+- 🚧 **v4.3 Performance & Documentation** - Phases 61-62 (in progress)
 
 ## Current Status
 
-**Complete:** All planned milestones shipped. Use `/gsd:discuss-milestone` to plan next work.
+**In Progress:** v4.3 Performance & Documentation (Phases 61-62)
+
+---
+
+### 🚧 v4.3 Performance & Documentation (In Progress)
+
+**Milestone Goal:** Optimize React frontend performance and complete installation documentation.
+
+#### Phase 61: React Performance Review
+
+**Goal**: Use react-best-practices skill to analyze and optimize the frontend
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (following react-best-practices skill patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 61-01: TBD (run /gsd:plan-phase 61 to break down)
+
+#### Phase 62: Installation Documentation
+
+**Goal**: Add wp-config.php constants to README.md
+**Depends on**: Phase 61
+**Research**: Unlikely (documenting existing constants)
+**Plans**: TBD
+
+Plans:
+- [ ] 62-01: TBD (run /gsd:plan-phase 62 to break down)
 
 ---
 
@@ -533,5 +560,7 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.0 Calendar Integration | 47-55 | 11/11 | Complete ✅ | 2026-01-15 |
 | v4.1 Bug Fixes & Polish | 56-57 | 3/3 | Complete ✅ | 2026-01-15 |
 | v4.2 Settings & Stability | 58-60 | 3/3 | Complete ✅ | 2026-01-15 |
+| v4.3 Performance & Documentation | 61-62 | 0/? | In progress 🚧 | - |
 
 **Shipped: 20 milestones, 60 phases, 105 plans**
+**In Progress: 1 milestone, 2 phases**
