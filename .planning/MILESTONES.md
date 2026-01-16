@@ -1,5 +1,34 @@
 # Project Milestones: Caelis
 
+## v4.4 Code Organization (Shipped: 2026-01-16)
+
+**Delivered:** PHP codebase reorganization with PSR-4 namespaces, Composer autoloading, and one-class-per-file compliance.
+
+**Phases completed:** 64-66 (6 plans total)
+
+**Key accomplishments:**
+
+- Comprehensive codebase audit identifying 41 classes across 39 PHP files
+- Split notification channel classes into separate files (one-class-per-file compliance)
+- Added PSR-4 namespaces to 38 PHP classes across 9 namespace groups
+- Configured Composer autoloading with classmap for includes/ directory
+- Added 38 backward-compatible class aliases for migration period
+- Removed manual prm_autoloader() function (52 lines deleted)
+- Enabled PHPCS Generic.Files.OneClassPerFile rule
+
+**Stats:**
+
+- 61 files changed
+- +3,958 / -1,535 lines changed
+- 3 phases, 6 plans
+- 1 day from start to ship
+
+**Git range:** `8c90f0e` → `30ff0bd`
+
+**What's next:** To be determined
+
+---
+
 ## v4.2 Settings & Stability (Shipped: 2026-01-15)
 
 **Delivered:** DOM stability improvements with error boundary, settings restructure with Connections tab, and automatic calendar event re-matching when person emails change.
