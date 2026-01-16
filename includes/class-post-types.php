@@ -3,11 +3,13 @@
  * Custom Post Types Registration
  */
 
+namespace Caelis\Core;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Post_Types {
+class PostTypes {
 
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_post_types' ] );

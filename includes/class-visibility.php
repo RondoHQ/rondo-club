@@ -8,11 +8,13 @@
  * @since 1.44.0
  */
 
+namespace Caelis\Core;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Visibility {
+class Visibility {
 
 	/**
 	 * Visibility constants

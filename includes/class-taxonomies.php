@@ -3,11 +3,13 @@
  * Custom Taxonomies Registration
  */
 
+namespace Caelis\Core;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Taxonomies {
+class Taxonomies {
 
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_taxonomies' ] );

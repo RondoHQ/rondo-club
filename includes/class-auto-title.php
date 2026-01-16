@@ -3,11 +3,13 @@
  * Auto-generate post titles from ACF fields
  */
 
+namespace Caelis\Core;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_Auto_Title {
+class AutoTitle {
 
 	public function __construct() {
 		add_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );

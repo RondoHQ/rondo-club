@@ -5,11 +5,13 @@
  * Registers custom user role for Caelis users with minimal permissions
  */
 
+namespace Caelis\Core;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class PRM_User_Roles {
+class UserRoles {
 
 	const ROLE_NAME         = 'caelis_user';
 	const ROLE_DISPLAY_NAME = 'Caelis User';
