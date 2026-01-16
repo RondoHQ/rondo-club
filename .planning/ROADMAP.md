@@ -35,15 +35,16 @@
 
 **Milestone Goal:** Give users control over calendar sync behavior - date range limits, sync frequency, and calendar selection per connection.
 
-#### Phase 67: Sync Range & Frequency
+#### Phase 67: Sync Range & Frequency ✓
 
 **Goal**: Add settings for configuring how far back/forward to sync events and how often to sync
 **Depends on**: v4.4 complete
 **Research**: Unlikely (internal patterns)
-**Plans**: TBD
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 67-01: TBD (run /gsd:plan-phase 67 to break down)
+- [x] 67-01: Sync settings data model and UI
+- [x] 67-02: Background sync frequency enforcement
 
 #### Phase 68: Calendar Selection UI
 
@@ -632,6 +633,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.2 Settings & Stability | 58-60 | 3/3 | Complete ✅ | 2026-01-15 |
 | v4.3 Performance & Documentation | 61-63 | 5/5 | Complete ✅ | 2026-01-16 |
 | v4.4 Code Organization | 64-66 | 6/6 | Complete ✅ | 2026-01-16 |
-| v4.5 Calendar Sync Control | 67-68 | 0/? | In progress 🚧 | - |
+| v4.5 Calendar Sync Control | 67-68 | 2/? | In progress 🚧 | - |
 
 **Shipped: 23 milestones, 66 phases, 116 plans**
