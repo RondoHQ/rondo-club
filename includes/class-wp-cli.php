@@ -7,6 +7,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Import namespaced classes for WP-CLI commands
+use Caelis\Collaboration\Reminders;
+use Caelis\Notifications\EmailChannel;
+use Caelis\Notifications\SlackChannel;
+use Caelis\Calendar\Connections;
+use Caelis\Calendar\Matcher;
+use Caelis\Calendar\Sync;
+use Caelis\Calendar\GoogleProvider;
+use Caelis\Calendar\CalDAVProvider;
+use Caelis\Export\VCard;
+
 // Only load if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
@@ -37,7 +48,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		public function trigger( $args, $assoc_args ) {
 			WP_CLI::log( 'Processing daily reminders...' );
 
-			$reminders = new PRM_Reminders();
+			$reminders = new Reminders();
 
 			// Check if specific user ID is provided
 			$specific_user_id = isset( $assoc_args['user'] ) ? (int) $assoc_args['user'] : null;
@@ -152,8 +163,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				);
 
 				// Send via all enabled channels
-				$email_channel = new PRM_Email_Channel();
-				$slack_channel = new PRM_Slack_Channel();
+				$email_channel = new EmailChannel();
+				$slack_channel = new SlackChannel();
 
 				$user_notifications_sent = 0;
 
@@ -446,7 +457,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			// Generate vCard using the same method CardDAV uses
-			$vcard = \Caelis\Export\VCard::generate( $person );
+			$vcard = VCard::generate( $person );
 
 			if ( empty( $vcard ) ) {
 				WP_CLI::error( 'Failed to generate vCard.' );
@@ -500,7 +511,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			// Parse the vCard
-			$parsed = \Caelis\Export\VCard::parse( $vcard_data );
+			$parsed = VCard::parse( $vcard_data );
 
 			if ( empty( $parsed ) ) {
 				WP_CLI::error( 'Failed to parse vCard.' );
@@ -1555,7 +1566,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::log( 'Syncing all users (ignoring rate limiting)...' );
 				WP_CLI::log( '' );
 
-				$results = PRM_Calendar_Sync::force_sync_all();
+				$results = Sync::force_sync_all();
 
 				if ( empty( $results ) ) {
 					WP_CLI::warning( 'No users with calendar connections found.' );
@@ -1622,7 +1633,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::log( sprintf( 'Syncing calendars for user: %s (ID: %d)', $user->display_name, $specific_user_id ) );
 				WP_CLI::log( '' );
 
-				$connections = PRM_Calendar_Connections::get_user_connections( $specific_user_id );
+				$connections = Connections::get_user_connections( $specific_user_id );
 
 				if ( empty( $connections ) ) {
 					WP_CLI::warning( 'No calendar connections found for this user.' );
@@ -1643,15 +1654,15 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 					try {
 						if ( 'caldav' === $provider ) {
-							$result = PRM_CalDAV_Provider::sync( $specific_user_id, $connection );
+							$result = CalDAVProvider::sync( $specific_user_id, $connection );
 						} elseif ( 'google' === $provider ) {
-							$result = PRM_Google_Calendar_Provider::sync( $specific_user_id, $connection );
+							$result = GoogleProvider::sync( $specific_user_id, $connection );
 						} else {
 							WP_CLI::log( sprintf( '  [SKIP] Connection %s: unknown provider "%s"', $connection['id'], $provider ) );
 							continue;
 						}
 
-						PRM_Calendar_Connections::update_connection(
+						Connections::update_connection(
 							$specific_user_id,
 							$connection['id'],
 							[
@@ -1672,7 +1683,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						++$synced;
 
 					} catch ( Exception $e ) {
-						PRM_Calendar_Connections::update_connection(
+						Connections::update_connection(
 							$specific_user_id,
 							$connection['id'],
 							[
@@ -1694,7 +1705,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( 'Running background sync (rate-limited, one user)...' );
 			WP_CLI::log( '' );
 
-			$calendar_sync = new PRM_Calendar_Sync();
+			$calendar_sync = new Sync();
 			$calendar_sync->run_background_sync();
 
 			WP_CLI::success( 'Background sync completed. Check error log for details.' );
@@ -1716,7 +1727,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
 			WP_CLI::log( '' );
 
-			$status = PRM_Calendar_Sync::get_sync_status();
+			$status = Sync::get_sync_status();
 
 			// Cron schedule status
 			if ( $status['is_scheduled'] ) {
@@ -1756,7 +1767,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				foreach ( $user_ids as $user_id ) {
 					$user        = get_userdata( $user_id );
 					$user_name   = $user ? $user->display_name : 'Unknown';
-					$connections = PRM_Calendar_Connections::get_user_connections( (int) $user_id );
+					$connections = Connections::get_user_connections( (int) $user_id );
 
 					$enabled_count = 0;
 					foreach ( $connections as $conn ) {
@@ -1810,7 +1821,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( 'Running auto-logging for past meetings...' );
 			WP_CLI::log( '' );
 
-			$calendar_sync = new PRM_Calendar_Sync();
+			$calendar_sync = new Sync();
 			$calendar_sync->auto_log_past_meetings();
 
 			WP_CLI::success( 'Auto-logging complete. Check error log for details.' );
@@ -1849,10 +1860,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			WP_CLI::log( "Invalidating email cache for user {$user_id}..." );
-			PRM_Calendar_Matcher::invalidate_cache( $user_id );
+			Matcher::invalidate_cache( $user_id );
 
 			WP_CLI::log( "Re-matching calendar events for user {$user_id}..." );
-			$count = PRM_Calendar_Matcher::rematch_events_for_user( $user_id );
+			$count = Matcher::rematch_events_for_user( $user_id );
 
 			WP_CLI::success( "Re-matched {$count} calendar events for user {$user->display_name}." );
 		}

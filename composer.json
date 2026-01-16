@@ -11,7 +11,10 @@
     "autoload": {
         "psr-4": {
             "Caelis\\": "includes/"
-        }
+        },
+        "classmap": [
+            "includes/"
+        ]
     },
     "config": {
         "optimize-autoloader": true,
