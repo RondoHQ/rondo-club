@@ -86,6 +86,19 @@ class Calendar extends Base {
 						'type'     => 'integer',
 						'default'  => 90,
 					],
+					'sync_to_days'   => [
+						'required' => false,
+						'type'     => 'integer',
+						'default'  => 30,
+					],
+					'sync_frequency' => [
+						'required'          => false,
+						'type'              => 'integer',
+						'default'           => 15,
+						'validate_callback' => function ( $param ) {
+							return in_array( (int) $param, [ 15, 30, 60, 240, 1440 ], true );
+						},
+					],
 				],
 			]
 		);
@@ -151,6 +164,17 @@ class Calendar extends Base {
 					'sync_from_days' => [
 						'required' => false,
 						'type'     => 'integer',
+					],
+					'sync_to_days'   => [
+						'required' => false,
+						'type'     => 'integer',
+					],
+					'sync_frequency' => [
+						'required'          => false,
+						'type'              => 'integer',
+						'validate_callback' => function ( $param ) {
+							return in_array( (int) $param, [ 15, 30, 60, 240, 1440 ], true );
+						},
 					],
 				],
 			]
@@ -412,6 +436,8 @@ class Calendar extends Base {
 			'sync_enabled'   => isset( $data['sync_enabled'] ) ? (bool) $data['sync_enabled'] : true,
 			'auto_log'       => isset( $data['auto_log'] ) ? (bool) $data['auto_log'] : true,
 			'sync_from_days' => isset( $data['sync_from_days'] ) ? absint( $data['sync_from_days'] ) : 90,
+			'sync_to_days'   => isset( $data['sync_to_days'] ) ? absint( $data['sync_to_days'] ) : 30,
+			'sync_frequency' => isset( $data['sync_frequency'] ) ? absint( $data['sync_frequency'] ) : 15,
 			'last_sync'      => null,
 			'last_error'     => null,
 		];
@@ -476,6 +502,12 @@ class Calendar extends Base {
 		}
 		if ( isset( $data['sync_from_days'] ) ) {
 			$updates['sync_from_days'] = absint( $data['sync_from_days'] );
+		}
+		if ( isset( $data['sync_to_days'] ) ) {
+			$updates['sync_to_days'] = absint( $data['sync_to_days'] );
+		}
+		if ( isset( $data['sync_frequency'] ) ) {
+			$updates['sync_frequency'] = absint( $data['sync_frequency'] );
 		}
 		if ( isset( $data['calendar_id'] ) ) {
 			$updates['calendar_id'] = sanitize_text_field( $data['calendar_id'] );
@@ -672,6 +704,8 @@ class Calendar extends Base {
 				'sync_enabled'   => true,
 				'auto_log'       => true,
 				'sync_from_days' => 90,
+				'sync_to_days'   => 30,
+				'sync_frequency' => 15,
 				'last_sync'      => null,
 				'last_error'     => null,
 			];

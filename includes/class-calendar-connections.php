@@ -80,6 +80,8 @@ class Connections {
 				'sync_enabled'   => true,
 				'auto_log'       => true,
 				'sync_from_days' => 90,
+				'sync_to_days'   => 30,
+				'sync_frequency' => 15,
 				'last_sync'      => null,
 				'last_error'     => null,
 				'created_at'     => current_time( 'c' ),
