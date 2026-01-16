@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 ## Current Position
 
 Milestone: v4.6 Dashboard & Polish
-Phase: 69 of 70 (Dashboard Customization)
-Plan: 69-01 complete
-Status: Phase 69 complete, ready for Phase 70
-Last activity: 2026-01-16 — Phase 69 Plan 01 complete
+Phase: 70 of 70 (UI Polish)
+Plan: 70-01 complete
+Status: Phase 70 complete, milestone v4.6 complete
+Last activity: 2026-01-16 — Phase 70 Plan 01 complete
 
-Progress: █████░░░░░ 50% (Phase 69/70 of v4.6)
+Progress: ██████████ 100% (Phase 70/70 of v4.6)
 
 ## Completed Milestones
 
@@ -97,7 +97,7 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Phase 68 Plan 01 complete (milestone complete)
+Stopped at: Phase 70 Plan 01 complete (milestone v4.6 complete)
 Resume file: None
 
 ## Accumulated Context
@@ -131,7 +131,7 @@ Resume file: None
 24. ~~Match events against all person email addresses (api)~~ — DONE in v4.0 (already implemented in get_email_lookup)
 25. ~~Update favicon to match current color scheme (ui)~~ — DONE in v4.1 Phase 57
 26. ~~Fix Today's meetings layout and timezone display (ui)~~ — DONE in v4.1 Phase 57
-27. Soften PersonDetail delete button style (ui)
+27. ~~Soften PersonDetail delete button style (ui)~~ — DONE in v4.6 Phase 70-01
 28. ~~Review performance using react-best-practices skill (ui)~~ — DONE in v4.3 Phase 61 (no changes needed)
 29. ~~Allow selecting Google Calendars to sync (ui)~~ — DONE in v4.5 Phase 68-01
 30. ~~Check and configure Google Calendar sync date range (api)~~ — DONE in v4.5 Phase 67-01
@@ -150,5 +150,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Execute Phase 69 Plan 01: Dashboard Customization
-- Phase 70 will cover UI polish (delete button, dark mode tweaks)
+- Milestone v4.6 complete: Update version numbers and deploy
+- Archive milestone v4.6 when ready
