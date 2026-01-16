@@ -37,11 +37,13 @@ class GoogleProvider {
 
 		// Calculate date range
 		$sync_from_days = isset( $connection['sync_from_days'] ) ? absint( $connection['sync_from_days'] ) : 90;
-		$start_date     = new \DateTime();
+		$sync_to_days   = isset( $connection['sync_to_days'] ) ? absint( $connection['sync_to_days'] ) : 30;
+
+		$start_date = new \DateTime();
 		$start_date->modify( "-{$sync_from_days} days" );
 
 		$end_date = new \DateTime();
-		$end_date->modify( '+30 days' );
+		$end_date->modify( "+{$sync_to_days} days" );
 
 		// Determine which calendar to sync
 		$calendar_id = ! empty( $connection['calendar_id'] ) ? $connection['calendar_id'] : 'primary';
