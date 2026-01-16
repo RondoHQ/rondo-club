@@ -284,8 +284,9 @@ Global styles and component classes are in `src/index.css`:
 
 ## Documentation
 
-Comprehensive documentation is available in the `docs/` folder:
+Comprehensive documentation is available:
 
+- **[Configuration](#configuration)** - wp-config.php constants for integrations (in this document)
 - **[Relationships](docs/relationships.md)** - How the bidirectional relationship system works
 - **[Relationship Types](docs/relationship-types.md)** - Guide to configuring relationship types and inverse mappings
 - **[Architecture](docs/architecture.md)** - Technical architecture and extension points
