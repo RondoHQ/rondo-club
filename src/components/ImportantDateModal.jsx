@@ -40,7 +40,7 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading, currentP
           {selectedPeople.map(person => (
             <span
               key={person.id}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-300 rounded-full text-sm"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-200 rounded-full text-sm"
             >
               {getPersonName(person)}
               {person.id !== currentPersonId && (
