@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0] - 2026-01-17
+
+### Added
+- Dinner activity type for tracking dinner meetings
+- Zoom activity type for tracking video calls
+
+### Changed
+- Phone call activity type renamed to Phone for brevity
+
+### Fixed
+- Topbar z-index now stays above selection toolbar on People screen
+- Person header spacing between "at" and company name
+
 ## [4.5.0] - 2026-01-16
 
 ### Added
