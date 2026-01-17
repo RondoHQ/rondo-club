@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 
 Milestone: v4.7 Dark Mode & Activity Polish
 Phase: 71 of 72 (Dark Mode Fixes)
-Plan: 2 of 2 complete
-Status: Phase complete
-Last activity: 2026-01-16 — Completed 71-02-PLAN.md (Dark Mode Contrast Fixes)
+Plan: FIX complete (3/3 UAT issues resolved)
+Status: Phase complete - UAT fixes deployed
+Last activity: 2026-01-17 — Completed 71-FIX-PLAN.md (Dark Mode UAT Fixes)
 
 Progress: ██████████ 100%
 
@@ -89,6 +89,11 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 
 - **Dark mode contrast pattern:** Consistently use gray-300/gray-400 for better contrast in dark mode (not gray-400/gray-500).
 
+### Phase 71-FIX Decisions
+
+- **Accent text on semi-transparent backgrounds:** Use accent-200 (not accent-300/400) for text on dark:bg-accent-900/30.
+- **Solid backgrounds for badges:** Use dark:bg-accent-800 instead of transparent accent-900/30 for reliable contrast.
+
 ## Roadmap Evolution
 
 - Milestone v4.3 complete: React performance review, installation documentation, WPCS compliance
@@ -100,11 +105,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.6 created: Dashboard customization & UI polish, 2 phases (Phase 69-70)
 - Milestone v4.7 created: Dark Mode & Activity Polish, 2 phases (Phase 71-72)
 - Phase 71 complete: Dark Mode Fixes (2 plans completed)
+- Phase 71 FIX complete: 3 UAT issues resolved
 
 ## Session Continuity
 
-Last session: 2026-01-16T18:43:38Z
-Stopped at: Completed 71-02-PLAN.md
+Last session: 2026-01-17T00:23:37Z
+Stopped at: Completed 71-FIX-PLAN.md (UAT fixes)
 Resume file: None
 
 ## Accumulated Context
