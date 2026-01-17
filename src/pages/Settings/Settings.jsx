@@ -24,7 +24,8 @@ const TABS = [
 // Connections subtabs configuration
 const CONNECTION_SUBTABS = [
   { id: 'calendars', label: 'Calendars', icon: Calendar },
-  { id: 'carddav', label: 'CardDAV', icon: Users },
+  { id: 'contacts', label: 'Contacts', icon: Users },
+  { id: 'carddav', label: 'CardDAV', icon: Database },
   { id: 'slack', label: 'Slack', icon: MessageSquare },
 ];
 
@@ -92,6 +93,13 @@ export default function Settings() {
   const [reminderMessage, setReminderMessage] = useState('');
   const [reschedulingCron, setReschedulingCron] = useState(false);
   const [cronMessage, setCronMessage] = useState('');
+
+  // Google Contacts connection state
+  const [googleContactsStatus, setGoogleContactsStatus] = useState(null);
+  const [googleContactsLoading, setGoogleContactsLoading] = useState(true);
+  const [connectingGoogleContacts, setConnectingGoogleContacts] = useState(false);
+  const [disconnectingGoogleContacts, setDisconnectingGoogleContacts] = useState(false);
+  const [googleContactsMessage, setGoogleContactsMessage] = useState('');
 
   // Fetch Application Passwords and CardDAV URLs on mount
   useEffect(() => {
@@ -168,7 +176,22 @@ export default function Settings() {
       fetchSlackData();
     }
   }, [slackConnected]);
-  
+
+  // Fetch Google Contacts status on mount
+  useEffect(() => {
+    const fetchGoogleContactsStatus = async () => {
+      try {
+        const response = await prmApi.getGoogleContactsStatus();
+        setGoogleContactsStatus(response.data);
+      } catch {
+        // Status fetch failed silently
+      } finally {
+        setGoogleContactsLoading(false);
+      }
+    };
+    fetchGoogleContactsStatus();
+  }, []);
+
   // Handle OAuth callback messages from URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -196,6 +219,18 @@ export default function Settings() {
     if (googleConnected === 'google') {
       // Clean URL but keep tab and subtab for connections/calendars
       setSearchParams({ tab: 'connections', subtab: 'calendars' });
+    } else if (googleConnected === 'google-contacts') {
+      // Handle Google Contacts OAuth callback
+      setGoogleContactsMessage('Google Contacts connected successfully!');
+      // Refresh status
+      prmApi.getGoogleContactsStatus().then(response => {
+        setGoogleContactsStatus(response.data);
+      });
+      setSearchParams({ tab: 'connections', subtab: 'contacts' });
+    } else if (googleError && params.get('subtab') === 'contacts') {
+      // Show error on contacts subtab
+      setGoogleContactsMessage(`Connection failed: ${googleError}`);
+      setSearchParams({ tab: 'connections', subtab: 'contacts' });
     } else if (googleError && params.get('tab') === 'connections') {
       // Keep on connections/calendars to show error
       setSearchParams({ tab: 'connections', subtab: 'calendars' });
@@ -252,6 +287,34 @@ export default function Settings() {
       alert(error.response?.data?.message || 'Failed to save notification targets');
     } finally {
       setSavingSlackTargets(false);
+    }
+  };
+
+  const handleConnectGoogleContacts = async (readonly = true) => {
+    setConnectingGoogleContacts(true);
+    setGoogleContactsMessage('');
+    try {
+      const response = await prmApi.initiateGoogleContactsAuth(readonly);
+      if (response.data.auth_url) {
+        window.location.href = response.data.auth_url;
+      }
+    } catch (error) {
+      setGoogleContactsMessage(error.response?.data?.message || 'Failed to initiate connection');
+      setConnectingGoogleContacts(false);
+    }
+  };
+
+  const handleDisconnectGoogleContacts = async () => {
+    if (!confirm('Disconnect Google Contacts? This will stop syncing contacts.')) return;
+    setDisconnectingGoogleContacts(true);
+    try {
+      await prmApi.disconnectGoogleContacts();
+      setGoogleContactsStatus({ ...googleContactsStatus, connected: false });
+      setGoogleContactsMessage('Google Contacts disconnected.');
+    } catch (error) {
+      setGoogleContactsMessage(error.response?.data?.message || 'Failed to disconnect');
+    } finally {
+      setDisconnectingGoogleContacts(false);
     }
   };
 
@@ -440,6 +503,14 @@ export default function Settings() {
           handleToggleSlackTarget={handleToggleSlackTarget}
           handleSaveSlackTargets={handleSaveSlackTargets}
           savingSlackTargets={savingSlackTargets}
+          // Google Contacts props
+          googleContactsStatus={googleContactsStatus}
+          googleContactsLoading={googleContactsLoading}
+          connectingGoogleContacts={connectingGoogleContacts}
+          disconnectingGoogleContacts={disconnectingGoogleContacts}
+          googleContactsMessage={googleContactsMessage}
+          handleConnectGoogleContacts={handleConnectGoogleContacts}
+          handleDisconnectGoogleContacts={handleDisconnectGoogleContacts}
         />;
       case 'notifications':
         return <NotificationsTab
@@ -1863,7 +1934,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
   );
 }
 
-// ConnectionsTab Component - Container for Calendars, CardDAV, and Slack subtabs
+// ConnectionsTab Component - Container for Calendars, Contacts, CardDAV, and Slack subtabs
 function ConnectionsTab({
   activeSubtab, setActiveSubtab,
   // CardDAV props
@@ -1875,6 +1946,10 @@ function ConnectionsTab({
   slackConnected, slackWorkspaceName, handleConnectSlack, handleDisconnectSlack,
   disconnectingSlack, webhookTestMessage, slackChannels, slackUsers, slackTargets,
   loadingSlackData, handleToggleSlackTarget, handleSaveSlackTargets, savingSlackTargets,
+  // Google Contacts props
+  googleContactsStatus, googleContactsLoading, connectingGoogleContacts,
+  disconnectingGoogleContacts, googleContactsMessage,
+  handleConnectGoogleContacts, handleDisconnectGoogleContacts,
 }) {
   return (
     <div className="space-y-6">
@@ -1902,6 +1977,17 @@ function ConnectionsTab({
 
       {/* Subtab content */}
       {activeSubtab === 'calendars' && <ConnectionsCalendarsSubtab />}
+      {activeSubtab === 'contacts' && (
+        <ConnectionsContactsSubtab
+          googleContactsStatus={googleContactsStatus}
+          googleContactsLoading={googleContactsLoading}
+          connectingGoogleContacts={connectingGoogleContacts}
+          disconnectingGoogleContacts={disconnectingGoogleContacts}
+          googleContactsMessage={googleContactsMessage}
+          handleConnectGoogleContacts={handleConnectGoogleContacts}
+          handleDisconnectGoogleContacts={handleDisconnectGoogleContacts}
+        />
+      )}
       {activeSubtab === 'carddav' && (
         <ConnectionsCardDAVSubtab
           appPasswords={appPasswords}
@@ -1946,6 +2032,98 @@ function ConnectionsTab({
 function ConnectionsCalendarsSubtab() {
   // Reuse CalendarsTab directly since it's self-contained with its own state
   return <CalendarsTab />;
+}
+
+// ConnectionsContactsSubtab - Google Contacts connection management
+function ConnectionsContactsSubtab({
+  googleContactsStatus, googleContactsLoading, connectingGoogleContacts,
+  disconnectingGoogleContacts, googleContactsMessage,
+  handleConnectGoogleContacts, handleDisconnectGoogleContacts,
+}) {
+  const isConnected = googleContactsStatus?.connected;
+  const isConfigured = googleContactsStatus?.google_configured;
+
+  return (
+    <div className="card p-6">
+      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Google Contacts</h2>
+      <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
+        Sync your contacts with Google Contacts for seamless access across devices.
+      </p>
+
+      {googleContactsLoading ? (
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-200 rounded dark:bg-gray-700"></div>
+        </div>
+      ) : !isConfigured ? (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg dark:bg-yellow-900/20 dark:border-yellow-800">
+          <p className="text-sm text-yellow-800 dark:text-yellow-300">
+            Google integration is not configured. Contact your administrator to set up GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET.
+          </p>
+        </div>
+      ) : isConnected ? (
+        <div className="space-y-4">
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-900/20 dark:border-green-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-green-900 dark:text-green-300">Connected to Google Contacts</p>
+                {googleContactsStatus.email && (
+                  <p className="text-sm text-green-700 dark:text-green-400">{googleContactsStatus.email}</p>
+                )}
+                {googleContactsStatus.last_sync && (
+                  <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                    Last synced: {formatDistanceToNow(new Date(googleContactsStatus.last_sync), { addSuffix: true })}
+                  </p>
+                )}
+                {googleContactsStatus.contact_count > 0 && (
+                  <p className="text-xs text-green-600 dark:text-green-500">
+                    {googleContactsStatus.contact_count} contacts synced
+                  </p>
+                )}
+                {googleContactsStatus.access_mode && (
+                  <p className="text-xs text-green-600 dark:text-green-500">
+                    Access: {googleContactsStatus.access_mode === 'readwrite' ? 'Read & Write' : 'Read Only'}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={handleDisconnectGoogleContacts}
+                disabled={disconnectingGoogleContacts}
+                className="btn-secondary text-sm"
+              >
+                {disconnectingGoogleContacts ? 'Disconnecting...' : 'Disconnect'}
+              </button>
+            </div>
+          </div>
+          {googleContactsStatus.last_error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
+              <p className="text-sm text-red-700 dark:text-red-300">
+                Last sync error: {googleContactsStatus.last_error}
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <button
+            onClick={() => handleConnectGoogleContacts(false)}
+            disabled={connectingGoogleContacts}
+            className="btn-primary"
+          >
+            {connectingGoogleContacts ? 'Connecting...' : 'Connect Google Contacts'}
+          </button>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Grants read and write access to sync contacts bidirectionally.
+          </p>
+        </div>
+      )}
+
+      {googleContactsMessage && (
+        <p className={`mt-4 text-sm ${googleContactsMessage.includes('successfully') || googleContactsMessage.includes('disconnected') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+          {googleContactsMessage}
+        </p>
+      )}
+    </div>
+  );
 }
 
 // ConnectionsCardDAVSubtab - CardDAV sync configuration
