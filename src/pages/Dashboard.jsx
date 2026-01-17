@@ -1,10 +1,10 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock, Settings } from 'lucide-react';
+import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDashboard, useTodos, useUpdateTodo, useDashboardSettings, useUpdateDashboardSettings, DEFAULT_DASHBOARD_CARDS } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
-import { useTodayMeetings } from '@/hooks/useMeetings';
-import { format } from 'date-fns';
+import { useDateMeetings } from '@/hooks/useMeetings';
+import { format, addDays, subDays, isToday } from 'date-fns';
 import { APP_NAME } from '@/constants/app';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
@@ -316,15 +316,23 @@ export default function Dashboard() {
   const { data, isLoading, error } = useDashboard();
   const { data: openTodos } = useTodos('open');
   const { data: awaitingTodos } = useTodos('awaiting');
-  const { data: todayMeetingsData } = useTodayMeetings();
   const { data: dashboardSettings } = useDashboardSettings();
   const updateTodo = useUpdateTodo();
   const createActivity = useCreateActivity();
   const updateDashboardSettings = useUpdateDashboardSettings();
 
-  // Today's meetings data
-  const todayMeetings = todayMeetingsData?.meetings || [];
-  const hasCalendarConnections = todayMeetingsData?.has_connections ?? false;
+  // Date navigation state for meetings widget
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const { data: meetingsData } = useDateMeetings(selectedDate);
+
+  // Meetings data for selected date
+  const dateMeetings = meetingsData?.meetings || [];
+  const hasCalendarConnections = meetingsData?.has_connections ?? false;
+
+  // Date navigation handlers
+  const handlePrevDay = () => setSelectedDate(d => subDays(d, 1));
+  const handleNextDay = () => setSelectedDate(d => addDays(d, 1));
+  const handleToday = () => setSelectedDate(new Date());
 
   // State for complete todo flow
   const [todoToComplete, setTodoToComplete] = useState(null);
@@ -629,15 +637,36 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <CalendarClock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Today's meetings
+            {isToday(selectedDate) ? "Today's meetings" : format(selectedDate, 'EEEE, MMMM d')}
           </h2>
-          <Link to="/settings?tab=connections&subtab=calendars" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
-            Settings <ArrowRight className="w-4 h-4 ml-1" />
-          </Link>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handlePrevDay}
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              aria-label="Previous day"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {!isToday(selectedDate) && (
+              <button
+                onClick={handleToday}
+                className="px-2 py-1 text-xs font-medium text-accent-600 dark:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded transition-colors"
+              >
+                Today
+              </button>
+            )}
+            <button
+              onClick={handleNextDay}
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              aria-label="Next day"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700">
-          {todayMeetings.length > 0 ? (
-            todayMeetings.map((meeting) => (
+          {dateMeetings.length > 0 ? (
+            dateMeetings.map((meeting) => (
               <MeetingCard
                 key={meeting.id}
                 meeting={meeting}
@@ -648,7 +677,11 @@ export default function Dashboard() {
               />
             ))
           ) : (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No meetings scheduled for today</p>
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+              {isToday(selectedDate)
+                ? 'No meetings scheduled for today'
+                : `No meetings on ${format(selectedDate, 'MMMM d')}`}
+            </p>
           )}
         </div>
       </div>
