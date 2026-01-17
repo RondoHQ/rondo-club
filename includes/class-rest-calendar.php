@@ -1119,7 +1119,7 @@ class Calendar extends Base {
 
 		return [
 			'id'                     => $event->ID,
-			'title'                  => sanitize_text_field( $event->post_title ),
+			'title'                  => $event->post_title,
 			'start_time'             => $start_datetime->format( 'c' ), // ISO 8601 with timezone offset
 			'end_time'               => $end_datetime->format( 'c' ),   // ISO 8601 with timezone offset
 			'location'               => get_post_meta( $event->ID, '_location', true ),
@@ -1391,7 +1391,7 @@ class Calendar extends Base {
 
 		return [
 			'id'             => $event->ID,
-			'title'          => sanitize_text_field( $event->post_title ),
+			'title'          => $event->post_title,
 			'start_time'     => $start_datetime->format( 'c' ), // ISO 8601 with timezone offset
 			'end_time'       => $end_datetime->format( 'c' ),   // ISO 8601 with timezone offset
 			'all_day'        => (bool) get_post_meta( $event->ID, '_all_day', true ),
