@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.10.0] - 2026-01-17
+
+### Added
+- Manual sync trigger button in Google Contacts settings
+- Sync frequency dropdown (15min, hourly, 6 hours, daily)
+- Background sync status display showing last sync time
+- REST endpoints for sync trigger (/google-contacts/sync) and frequency update (/google-contacts/sync-frequency)
+- sync_frequency field in GoogleContactsConnection class
+- sync_user_manual() method in GoogleContactsSync for on-demand sync
+
 ## [4.9.0] - 2026-01-17
 
 ### Added
