@@ -399,6 +399,53 @@ class Calendar extends Base {
 				],
 			]
 		);
+
+		// ===== Meeting notes endpoints =====
+
+		// GET /prm/v1/calendar/events/{id}/notes - Get meeting notes
+		register_rest_route(
+			'prm/v1',
+			'/calendar/events/(?P<id>\d+)/notes',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_meeting_notes' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id' => [
+						'required'          => true,
+						'type'              => 'integer',
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param );
+						},
+					],
+				],
+			]
+		);
+
+		// PUT /prm/v1/calendar/events/{id}/notes - Update meeting notes
+		register_rest_route(
+			'prm/v1',
+			'/calendar/events/(?P<id>\d+)/notes',
+			[
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => [ $this, 'update_meeting_notes' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id'    => [
+						'required'          => true,
+						'type'              => 'integer',
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param );
+						},
+					],
+					'notes' => [
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'wp_kses_post',
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -1472,6 +1519,68 @@ class Calendar extends Base {
 			[
 				'calendars' => $calendars,
 				'current'   => $current_id,
+			]
+		);
+	}
+
+	/**
+	 * Get meeting notes for a calendar event
+	 *
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return WP_REST_Response|WP_Error Response with notes or error.
+	 */
+	public function get_meeting_notes( $request ) {
+		$event_id = absint( $request->get_param( 'id' ) );
+		$user_id  = get_current_user_id();
+
+		// Get and verify the event
+		$event = get_post( $event_id );
+		if ( ! $event || $event->post_type !== 'calendar_event' ) {
+			return new \WP_Error( 'not_found', __( 'Event not found.', 'caelis' ), [ 'status' => 404 ] );
+		}
+
+		// Verify ownership
+		if ( (int) $event->post_author !== $user_id ) {
+			return new \WP_Error( 'forbidden', __( 'You do not have permission to view this event.', 'caelis' ), [ 'status' => 403 ] );
+		}
+
+		$notes = get_post_meta( $event_id, '_meeting_notes', true );
+
+		return rest_ensure_response(
+			[
+				'notes' => $notes ?: '',
+			]
+		);
+	}
+
+	/**
+	 * Update meeting notes for a calendar event
+	 *
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return WP_REST_Response|WP_Error Response with success or error.
+	 */
+	public function update_meeting_notes( $request ) {
+		$event_id = absint( $request->get_param( 'id' ) );
+		$user_id  = get_current_user_id();
+		$notes    = $request->get_param( 'notes' );
+
+		// Get and verify the event
+		$event = get_post( $event_id );
+		if ( ! $event || $event->post_type !== 'calendar_event' ) {
+			return new \WP_Error( 'not_found', __( 'Event not found.', 'caelis' ), [ 'status' => 404 ] );
+		}
+
+		// Verify ownership
+		if ( (int) $event->post_author !== $user_id ) {
+			return new \WP_Error( 'forbidden', __( 'You do not have permission to edit this event.', 'caelis' ), [ 'status' => 403 ] );
+		}
+
+		update_post_meta( $event_id, '_meeting_notes', $notes );
+
+		return rest_ensure_response(
+			[
+				'success' => true,
+				'message' => __( 'Notes saved.', 'caelis' ),
 			]
 		);
 	}
