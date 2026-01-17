@@ -91,6 +91,7 @@ return array(
     'Caelis\\Collaboration\\Mentions' => $baseDir . '/includes/class-mentions.php',
     'Caelis\\Collaboration\\Reminders' => $baseDir . '/includes/class-reminders.php',
     'Caelis\\Collaboration\\WorkspaceMembers' => $baseDir . '/includes/class-workspace-members.php',
+    'Caelis\\Contacts\\GoogleContactsConnection' => $baseDir . '/includes/class-google-contacts-connection.php',
     'Caelis\\Core\\AccessControl' => $baseDir . '/includes/class-access-control.php',
     'Caelis\\Core\\AutoTitle' => $baseDir . '/includes/class-auto-title.php',
     'Caelis\\Core\\PostTypes' => $baseDir . '/includes/class-post-types.php',
