@@ -163,7 +163,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                         onClick={() => setActivityType(type.id)}
                         className={`flex flex-col items-center justify-center p-3 border-2 rounded-lg transition-colors ${
                           isSelected
-                            ? 'border-accent-600 bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+                            ? 'border-accent-600 bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-200'
                             : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300'
                         }`}
                         disabled={isLoading}
