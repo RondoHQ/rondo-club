@@ -847,9 +847,14 @@ function CalendarsTab() {
                   </div>
                   <div>
                     <p className="font-medium dark:text-gray-100">{connection.name}</p>
-                    {connection.calendar_id && connection.calendar_id !== 'primary' && (
+                    {/* Multi-calendar display */}
+                    {connection.calendar_ids?.length > 0 ? (
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        {connection.calendar_ids.length} calendar{connection.calendar_ids.length !== 1 ? 's' : ''} selected
+                      </p>
+                    ) : connection.calendar_id && connection.calendar_id !== 'primary' ? (
                       <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">{connection.calendar_name || connection.calendar_id}</p>
-                    )}
+                    ) : null}
                     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <span>{formatLastSync(connection.last_sync)}</span>
                       {connection.last_error && (
@@ -1167,10 +1172,15 @@ function EditConnectionModal({ connection, onSave, onClose }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Calendar selection state
+  // Multi-calendar selection state
   const [calendars, setCalendars] = useState([]);
   const [loadingCalendars, setLoadingCalendars] = useState(false);
-  const [selectedCalendarId, setSelectedCalendarId] = useState(connection.calendar_id || '');
+  // Initialize from calendar_ids array or fall back to single calendar_id
+  const [selectedCalendarIds, setSelectedCalendarIds] = useState(
+    connection.calendar_ids?.length > 0
+      ? connection.calendar_ids
+      : (connection.calendar_id ? [connection.calendar_id] : [])
+  );
 
   // CalDAV-specific fields
   const [url, setUrl] = useState('');
@@ -1189,9 +1199,13 @@ function EditConnectionModal({ connection, onSave, onClose }) {
       try {
         const response = await prmApi.getConnectionCalendars(connection.id);
         setCalendars(response.data.calendars || []);
-        // Keep current selection if valid, otherwise default to current from API
-        if (!selectedCalendarId && response.data.current) {
-          setSelectedCalendarId(response.data.current);
+        // Set initial selection from current_ids array (new format) or fall back to single current
+        if (selectedCalendarIds.length === 0) {
+          if (response.data.current_ids?.length > 0) {
+            setSelectedCalendarIds(response.data.current_ids);
+          } else if (response.data.current) {
+            setSelectedCalendarIds([response.data.current]);
+          }
         }
       } catch (err) {
         // Silently fail - calendar list is optional enhancement
@@ -1254,14 +1268,9 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         sync_frequency: syncFrequency,
       };
 
-      // Include calendar_id and calendar_name if changed
-      if (selectedCalendarId && selectedCalendarId !== connection.calendar_id) {
-        data.calendar_id = selectedCalendarId;
-        // Find the calendar name from the loaded calendars list
-        const selectedCal = calendars.find(cal => cal.id === selectedCalendarId);
-        if (selectedCal) {
-          data.calendar_name = selectedCal.name;
-        }
+      // Include calendar_ids array if we have selections (for Google connections)
+      if (isGoogle && selectedCalendarIds.length > 0) {
+        data.calendar_ids = selectedCalendarIds;
       }
 
       // Include CalDAV credentials if any were changed
@@ -1341,21 +1350,33 @@ function EditConnectionModal({ connection, onSave, onClose }) {
           {/* Calendar selector - show when calendars loaded */}
           {calendars.length > 0 && (
             <div>
-              <label className="label mb-1">Calendar to sync</label>
-              <select
-                value={selectedCalendarId}
-                onChange={(e) => setSelectedCalendarId(e.target.value)}
-                className="input"
-              >
+              <label className="label mb-1">Calendars to sync</label>
+              <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
                 {calendars.map((cal) => (
-                  <option key={cal.id} value={cal.id}>
-                    {cal.name}{cal.primary ? ' (Primary)' : ''}
-                  </option>
+                  <label key={cal.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedCalendarIds.includes(cal.id)}
+                      onChange={() => {
+                        setSelectedCalendarIds(prev =>
+                          prev.includes(cal.id)
+                            ? prev.filter(id => id !== cal.id)
+                            : [...prev, cal.id]
+                        );
+                      }}
+                      className="rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-gray-600 dark:bg-gray-800"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {cal.name}{cal.primary ? ' (Primary)' : ''}
+                    </span>
+                  </label>
                 ))}
-              </select>
-              <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-                Select which calendar to sync events from
-              </p>
+              </div>
+              {isGoogle && selectedCalendarIds.length === 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  Select at least one calendar to sync
+                </p>
+              )}
             </div>
           )}
           {loadingCalendars && (
@@ -1526,7 +1547,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || (isGoogle && calendars.length > 0 && selectedCalendarIds.length === 0)}
             className="btn-primary"
           >
             {saving ? 'Saving...' : 'Save'}
