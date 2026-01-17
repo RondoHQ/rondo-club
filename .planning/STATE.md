@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Seamless bidirectional sync between Caelis and Google Contacts with Caelis as source of truth
-**Current focus:** Phase 84 - Settings & Person UI (Complete)
+**Current focus:** v5.0 Google Contacts Sync (Complete)
 
 ## Current Position
 
 Milestone: v5.0 Google Contacts Sync
-Phase: 84 of 85 (Settings & Person UI)
-Plan: 02 of 02 (complete)
-Status: Phase complete
-Last activity: 2026-01-18 - Completed 84-02-PLAN.md
+Phase: 85 of 85 (Polish & CLI)
+Plan: 01 of 01 (complete)
+Status: Milestone complete
+Last activity: 2026-01-18 - Completed 85-01-PLAN.md, shipped v5.0.0
 
-Progress: [█████████░] ~90%
+Progress: [██████████] 100%
 
 ## Completed Milestones
 
@@ -47,7 +47,8 @@ Progress: [█████████░] ~90%
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4 | 2026-01-17 |
 | v4.8 Meeting Enhancements | 73-76 | 6 | 2026-01-17 |
 | v4.9 Dashboard & Calendar Polish | 77-78 | 4 | 2026-01-17 |
-**Total:** 29 milestones, 78 phases, 144 plans completed
+| v5.0 Google Contacts Sync | 79-85 | 9 | 2026-01-18 |
+**Total:** 30 milestones, 85 phases, 153 plans completed
 
 ## Accumulated Context
 
@@ -113,12 +114,13 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-18 00:23 UTC
-Stopped at: Completed 84-02-PLAN.md
+Last session: 2026-01-18 01:15 UTC
+Stopped at: Completed 85-01-PLAN.md, v5.0.0 shipped
 Resume file: None
 
 ## Next Steps
 
-- Phase 84 Settings & Person UI complete
-- Next: Phase 85 Polish & CLI
-- Then: v5.0 milestone complete
+- v5.0 Google Contacts Sync milestone complete
+- All phases (79-85) executed successfully
+- v5.0.0 deployed to production
+- Ready for next milestone planning
