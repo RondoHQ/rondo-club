@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Phase 73 — Meeting Detail Modal
+**Current focus:** Phase 74 — Add Person from Meeting
 
 ## Current Position
 
 Milestone: v4.8 Meeting Enhancements (Phases 73-75)
-Phase: 73 of 75 (Meeting Detail Modal)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-17 — Completed 73-02-PLAN.md
+Phase: 74 of 75 (Add Person from Meeting)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-17 — Phase 73 complete
 
 Progress: ███░░░░░░░ 33% (milestone: 1/3 phases)
 
@@ -172,7 +172,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Run `/gsd:discuss-milestone` to figure out what to build next
-- Then `/gsd:new-milestone` to update PROJECT.md with new goals
-- Then `/gsd:define-requirements` to scope what to build
-- Then `/gsd:create-roadmap` to plan how to build it
+- Run `/gsd:plan-phase 74` to plan Add Person from Meeting
+- Then `/gsd:execute-phase 74` to implement
+- Then continue to Phase 75 (Date Navigation)
