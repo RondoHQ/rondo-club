@@ -2245,6 +2245,23 @@ function ConnectionsContactsSubtab({
                     Access: {googleContactsStatus.access_mode === 'readwrite' ? 'Read & Write' : 'Read Only'}
                   </p>
                 )}
+                {/* Error indicator - show if last sync had errors */}
+                {googleContactsStatus.sync_history?.[0]?.errors > 0 ? (
+                  <details className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    <summary className="cursor-pointer hover:underline">
+                      {googleContactsStatus.sync_history[0].errors} error{googleContactsStatus.sync_history[0].errors !== 1 ? 's' : ''} in last sync
+                    </summary>
+                    {googleContactsStatus.last_error && (
+                      <p className="mt-1 pl-2 text-amber-700 dark:text-amber-300 text-xs">
+                        {googleContactsStatus.last_error}
+                      </p>
+                    )}
+                  </details>
+                ) : googleContactsStatus.last_error && !googleContactsImportResult ? (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    Warning: {googleContactsStatus.last_error}
+                  </p>
+                ) : null}
               </div>
               <div className="flex items-center gap-2">
                 {!googleContactsImporting && (
@@ -2456,11 +2473,41 @@ function ConnectionsContactsSubtab({
             )}
           </div>
 
-          {googleContactsStatus.last_error && !googleContactsImportResult && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
-              <p className="text-sm text-red-700 dark:text-red-300">
-                Last sync error: {googleContactsStatus.last_error}
-              </p>
+          {/* Sync History */}
+          {googleContactsStatus.sync_history?.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <details className="group">
+                <summary className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-accent-600 dark:hover:text-accent-400 flex items-center gap-1">
+                  <span>Sync History</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    ({googleContactsStatus.sync_history.length} recent)
+                  </span>
+                </summary>
+                <div className="mt-3 space-y-2">
+                  {googleContactsStatus.sync_history.map((entry, index) => (
+                    <div
+                      key={index}
+                      className="text-xs text-gray-600 dark:text-gray-400 flex items-center justify-between py-1 border-b border-gray-100 dark:border-gray-800 last:border-0"
+                    >
+                      <span>
+                        {formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true })}
+                      </span>
+                      <span className="flex items-center gap-3">
+                        {entry.pulled > 0 && <span>{entry.pulled} pulled</span>}
+                        {entry.pushed > 0 && <span>{entry.pushed} pushed</span>}
+                        {entry.errors > 0 && (
+                          <span className="text-amber-600 dark:text-amber-400">
+                            {entry.errors} error{entry.errors !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {entry.pulled === 0 && entry.pushed === 0 && entry.errors === 0 && (
+                          <span className="text-gray-400 dark:text-gray-500">No changes</span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </details>
             </div>
           )}
         </div>
