@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v5.0 Google Contacts Sync
 Phase: 83 of 85 (Conflict & Deletion)
-Plan: 02 of 03
+Plan: 02 of 03 (01 and 02 complete)
 Status: In progress
-Last activity: 2026-01-17 - Completed 83-02-PLAN.md (Deletion propagation)
+Last activity: 2026-01-17 - Completed 83-01-PLAN.md (Conflict detection)
 
 Progress: [███████░░░] ~75%
 
@@ -91,6 +91,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Use before_delete_post hook for deletion sync | Fires before meta deletion, only on permanent delete | 83-02 |
 | Treat 404 as success for Google deletion | Contact already deleted in Google is desired state | 83-02 |
 | Never block local deletion on API errors | Local operation must always complete | 83-02 |
+| Snapshot stored as _google_synced_fields post meta | Enables three-way conflict comparison | 83-01 |
+| Three-way comparison for conflict detection | Compare Google vs Caelis vs snapshot to detect actual conflicts | 83-01 |
+| Log conflicts as TYPE_ACTIVITY with sync_conflict type | Audit trail for automated conflict resolution | 83-01 |
 
 ### Pending Todos
 
@@ -106,12 +109,12 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-17 22:33 UTC
-Stopped at: Completed 83-02-PLAN.md (Deletion propagation)
+Last session: 2026-01-17 21:18 UTC
+Stopped at: Completed 83-01-PLAN.md (Conflict detection)
 Resume file: None
 
 ## Next Steps
 
-- Phase 83 Conflict & Deletion in progress (2/3 plans complete)
-- Next: 83-03 Conflict resolution with activity logging
+- Phase 83 Conflict & Deletion in progress (2/3 plans complete: 01 and 02)
+- Next: 83-03 Sync status display
 - Then: Phase 84 Settings & Person UI, Phase 85 Polish & CLI
