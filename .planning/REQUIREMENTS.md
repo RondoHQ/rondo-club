@@ -28,11 +28,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Export to Google
 
-- [ ] **EXPORT-01**: Push new Caelis contacts to Google Contacts
-- [ ] **EXPORT-02**: Reverse field mapping (Caelis person fields -> Google Contact format)
-- [ ] **EXPORT-03**: Upload photos to Google (base64 encoding)
-- [ ] **EXPORT-04**: Store returned resourceName as google_contact_id
-- [ ] **EXPORT-05**: Bulk export existing unlinked contacts to Google
+- [x] **EXPORT-01**: Push new Caelis contacts to Google Contacts
+- [x] **EXPORT-02**: Reverse field mapping (Caelis person fields -> Google Contact format)
+- [x] **EXPORT-03**: Upload photos to Google (base64 encoding)
+- [x] **EXPORT-04**: Store returned resourceName as google_contact_id
+- [x] **EXPORT-05**: Bulk export existing unlinked contacts to Google
 
 ### Ongoing Sync
 
@@ -122,11 +122,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IMPORT-07 | 80 | Complete |
 | IMPORT-08 | 80 | Complete |
 | IMPORT-09 | 80 | Complete |
-| EXPORT-01 | 81 | Pending |
-| EXPORT-02 | 81 | Pending |
-| EXPORT-03 | 81 | Pending |
-| EXPORT-04 | 81 | Pending |
-| EXPORT-05 | 81 | Pending |
+| EXPORT-01 | 81 | Complete |
+| EXPORT-02 | 81 | Complete |
+| EXPORT-03 | 81 | Complete |
+| EXPORT-04 | 81 | Complete |
+| EXPORT-05 | 81 | Complete |
 | SYNC-01 | 82 | Pending |
 | SYNC-02 | 82 | Pending |
 | SYNC-03 | 82 | Pending |
@@ -159,4 +159,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after Phase 80 completion*
+*Last updated: 2026-01-17 after Phase 81 completion*
