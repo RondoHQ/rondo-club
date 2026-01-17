@@ -1,5 +1,34 @@
 # Project Milestones: Caelis
 
+## v4.7 Dark Mode & Activity Polish (Shipped: 2026-01-17)
+
+**Delivered:** Comprehensive dark mode contrast fixes for modals and settings, activity type improvements (Dinner, Zoom), and UI bug fixes.
+
+**Phases completed:** 71-72 (4 plans total)
+
+**Key accomplishments:**
+
+- Dark mode support for WorkHistoryEditModal and AddressEditModal with proper contrast
+- Settings subtab button contrast improved (dark:text-gray-300)
+- Timeline component dark mode with 13 variants for activity labels
+- Added Dinner and Zoom activity types with proper icons
+- Renamed "Phone call" to "Phone" for consistency
+- Fixed topbar z-index layering (z-30) on People screen
+- Fixed person header spacing (" at " between job and company)
+
+**Stats:**
+
+- 28 files changed
+- +1,867 / -300 lines changed
+- 2 phases, 4 plans
+- 1 day from start to ship
+
+**Git range:** `3cc3967` → `3024544`
+
+**What's next:** To be determined
+
+---
+
 ## v4.4 Code Organization (Shipped: 2026-01-16)
 
 **Delivered:** PHP codebase reorganization with PSR-4 namespaces, Composer autoloading, and one-class-per-file compliance.
