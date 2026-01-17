@@ -141,7 +141,7 @@ Resume file: None
 
 ### Pending Todos
 
-29 todos in `.planning/todos/pending/`:
+38 todos in `.planning/todos/pending/`:
 1. ~~Add label management interface (ui)~~ - DONE in v3.4 Phase 37
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ - DONE in v3.3
 3. Add import from Twenty CRM (api)
@@ -179,6 +179,7 @@ Resume file: None
 35. ~~Add date navigation to meetings widget (ui)~~ - DONE in v4.8 Phase 75
 36. ~~Meeting detail modal with add person (ui)~~ - DONE in v4.8 Phase 73-74
 37. ~~Add email to existing person from meeting (ui)~~ - DONE in v4.8 Phase 76
+38. Fixed height for homepage widgets (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework - PHPUnit done in v3.0 (Playwright deferred)
