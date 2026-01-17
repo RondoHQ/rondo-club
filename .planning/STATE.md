@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v5.0 Google Contacts Sync
 Phase: 79 of 85 (OAuth Foundation)
-Plan: N/A (not yet planned)
-Status: Ready to plan
-Last activity: 2026-01-17 - Roadmap created for v5.0 milestone
+Plan: 01 of TBD
+Status: In progress
+Last activity: 2026-01-17 - Completed 79-01-PLAN.md (Backend OAuth infrastructure)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] ~10%
 
 ## Completed Milestones
 
@@ -47,14 +47,21 @@ Progress: [░░░░░░░░░░] 0%
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4 | 2026-01-17 |
 | v4.8 Meeting Enhancements | 73-76 | 6 | 2026-01-17 |
 | v4.9 Dashboard & Calendar Polish | 77-78 | 4 | 2026-01-17 |
-**Total:** 29 milestones, 78 phases, 140 plans completed
+**Total:** 29 milestones, 78 phases, 141 plans completed
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-No decisions yet for v5.0 milestone.
+
+**v5.0 Decisions:**
+| Decision | Rationale | Phase |
+|----------|-----------|-------|
+| Separate callback endpoint for contacts OAuth | Different post-auth behavior (redirect to subtab=contacts, set pending_import flag) | 79-01 |
+| User-level connection storage for contacts | Contacts sync is account-wide, unlike calendar which is per-resource | 79-01 |
+| No token revocation on disconnect | User may have Calendar connected with same Google account | 79-01 |
+| Pending import flag triggers Phase 80 auto-import | Decouple OAuth completion from import processing | 79-01 |
 
 ### Pending Todos
 
@@ -66,14 +73,14 @@ See `/gsd:check-todos` for full list.
 
 ### Blockers/Concerns
 
-None yet.
+None.
 
 ## Session Continuity
 
 Last session: 2026-01-17
-Stopped at: Roadmap created for v5.0 Google Contacts Sync
+Stopped at: Completed 79-01-PLAN.md
 Resume file: None
 
 ## Next Steps
 
-- Run `/gsd:plan-phase 79` to plan OAuth Foundation phase
+- Continue with Phase 79 - plan and execute frontend settings UI for Google Contacts
