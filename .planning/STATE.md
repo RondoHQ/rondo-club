@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v4.9 Dashboard & Calendar Polish
 Phase: 78 of 78 (Multi-Calendar Selection)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-17 — Phase 77-FIX complete
+Plan: 01 of 01 complete
+Status: Phase complete
+Last activity: 2026-01-17 — Completed 78-01-PLAN.md
 
-Progress: █████░░░░░ 50%
+Progress: ██████████ 100%
 
 ## Completed Milestones
 
@@ -46,7 +46,8 @@ Progress: █████░░░░░ 50%
 | v4.6 Dashboard & Polish | 69-70 | 2 | 2026-01-16 |
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4 | 2026-01-17 |
 | v4.8 Meeting Enhancements | 73-76 | 6 | 2026-01-17 |
-**Total:** 28 milestones, 77 phases, 136 plans completed
+| v4.9 Dashboard & Calendar Polish | 77-78 | 3 | 2026-01-17 |
+**Total:** 29 milestones, 78 phases, 139 plans completed
 
 ## Deferred Issues
 
@@ -143,11 +144,13 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.9 created: Dashboard & Calendar Polish (Phase 77+)
 - Phase 77 complete: Fixed Height Dashboard Widgets (1 plan + FIX plan)
 - Phase 77-FIX UAT passed: Events widget no longer jumps during date navigation
+- Phase 78 complete: Multi-Calendar Selection (1 plan)
+- Milestone v4.9 complete: Dashboard & Calendar Polish (Phases 77-78)
 
 ## Session Continuity
 
-Last session: 2026-01-17T13:10:00Z
-Stopped at: Completed 77-FIX-PLAN.md
+Last session: 2026-01-17T13:52:00Z
+Stopped at: Completed 78-01-PLAN.md
 Resume file: None
 
 ## Accumulated Context
@@ -207,5 +210,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Run `/gsd:plan-phase 78` to plan Multi-Calendar Selection
-- Or mark milestone v4.9 as complete if no Phase 78 needed
+- Tag release v4.9.0 and archive milestone
+- Identify next milestone from pending todos
+- Or start new work based on user needs
