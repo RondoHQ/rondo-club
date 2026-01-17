@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Seamless bidirectional sync between Caelis and Google Contacts with Caelis as source of truth
-**Current focus:** Phase 80 - Import from Google (Complete)
+**Current focus:** Phase 81 - Export to Google (In progress)
 
 ## Current Position
 
 Milestone: v5.0 Google Contacts Sync
-Phase: 80 of 85 (Import from Google) - Complete
-Plan: 03 of 03 (complete)
-Status: Phase complete
-Last activity: 2026-01-17 - Completed 80-03-PLAN.md (Frontend import UI)
+Phase: 81 of 85 (Export to Google)
+Plan: 01 of 03 (complete)
+Status: In progress
+Last activity: 2026-01-17 - Completed 81-01-PLAN.md (Core export class)
 
-Progress: [█████░░░░░] ~50%
+Progress: [█████░░░░░] ~52%
 
 ## Completed Milestones
 
@@ -47,7 +47,7 @@ Progress: [█████░░░░░] ~50%
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4 | 2026-01-17 |
 | v4.8 Meeting Enhancements | 73-76 | 6 | 2026-01-17 |
 | v4.9 Dashboard & Calendar Polish | 77-78 | 4 | 2026-01-17 |
-**Total:** 29 milestones, 78 phases, 142 plans completed
+**Total:** 29 milestones, 78 phases, 143 plans completed
 
 ## Accumulated Context
 
@@ -71,6 +71,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Return full stats object | Detailed UI feedback with all import counts | 80-02 |
 | Auto-import via useEffect on flag | Ensures import starts even if status already loaded | 80-03 |
 | Query invalidation after import | Refresh people, companies, dates, dashboard after import | 80-03 |
+| Mirror import class structure | Consistency and maintainability for export class | 81-01 |
+| Check readwrite access before export | User may only have readonly scope | 81-01 |
+| Retry on etag conflict | Google requires etag; conflicts need automatic handling | 81-01 |
 
 ### Pending Todos
 
@@ -86,12 +89,12 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-17
-Stopped at: Completed 80-03-PLAN.md (Phase 80 complete)
+Last session: 2026-01-17 21:14 UTC
+Stopped at: Completed 81-01-PLAN.md (Core export class)
 Resume file: None
 
 ## Next Steps
 
-- Phase 80 Import from Google complete (3/3 plans)
-- Next: Phase 81 Export to Google (research and planning needed)
-- Then: Phase 82 Delta Sync
+- Phase 81 Export to Google in progress (1/3 plans complete)
+- Next: 81-02 REST export endpoint and save_post hooks
+- Then: 81-03 Bulk export UI
