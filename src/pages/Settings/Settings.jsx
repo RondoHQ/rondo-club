@@ -1310,7 +1310,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 dark:bg-gray-800">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 dark:bg-gray-800">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold dark:text-gray-100">Edit Connection</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded dark:hover:bg-gray-700">
@@ -1347,38 +1347,94 @@ function EditConnectionModal({ connection, onSave, onClose }) {
             />
           </div>
 
-          {/* Calendar selector - show when calendars loaded */}
-          {calendars.length > 0 && (
-            <div>
-              <label className="label mb-1">Calendars to sync</label>
-              <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
-                {calendars.map((cal) => (
-                  <label key={cal.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedCalendarIds.includes(cal.id)}
-                      onChange={() => {
-                        setSelectedCalendarIds(prev =>
-                          prev.includes(cal.id)
-                            ? prev.filter(id => id !== cal.id)
-                            : [...prev, cal.id]
-                        );
-                      }}
-                      className="rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-gray-600 dark:bg-gray-800"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {cal.name}{cal.primary ? ' (Primary)' : ''}
-                    </span>
-                  </label>
-                ))}
+          {/* Two-column layout for Google connections with calendars */}
+          {isGoogle && calendars.length > 0 && (
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Left column: Calendar selection */}
+              <div>
+                <label className="label mb-1">Calendars to sync</label>
+                <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
+                  {calendars.map((cal) => (
+                    <label key={cal.id} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedCalendarIds.includes(cal.id)}
+                        onChange={() => {
+                          setSelectedCalendarIds(prev =>
+                            prev.includes(cal.id)
+                              ? prev.filter(id => id !== cal.id)
+                              : [...prev, cal.id]
+                          );
+                        }}
+                        className="rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-gray-600 dark:bg-gray-800"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {cal.name}{cal.primary ? ' (Primary)' : ''}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {selectedCalendarIds.length === 0 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    Select at least one calendar to sync
+                  </p>
+                )}
               </div>
-              {isGoogle && selectedCalendarIds.length === 0 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  Select at least one calendar to sync
-                </p>
-              )}
+
+              {/* Right column: Sync settings */}
+              <div className="space-y-3">
+                {/* Sync frequency dropdown */}
+                <div>
+                  <label className="label mb-1">Sync frequency</label>
+                  <select
+                    value={syncFrequency}
+                    onChange={(e) => setSyncFrequency(Number(e.target.value))}
+                    className="input"
+                  >
+                    {syncFrequencyOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sync from dropdown */}
+                <div>
+                  <label className="label mb-1">Sync events from</label>
+                  <select
+                    value={syncFromDays}
+                    onChange={(e) => setSyncFromDays(Number(e.target.value))}
+                    className="input"
+                  >
+                    {syncFromOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        Past {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sync to dropdown */}
+                <div>
+                  <label className="label mb-1">Sync events until</label>
+                  <select
+                    value={syncToDays}
+                    onChange={(e) => setSyncToDays(Number(e.target.value))}
+                    className="input"
+                  >
+                    {syncToOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        Next {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
           )}
+
+          {/* Loading state for calendars */}
           {loadingCalendars && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Loading available calendars...
@@ -1419,62 +1475,67 @@ function EditConnectionModal({ connection, onSave, onClose }) {
             </label>
           </div>
 
-          {/* Sync from dropdown */}
-          <div>
-            <label className="label mb-1">Sync events from</label>
-            <select
-              value={syncFromDays}
-              onChange={(e) => setSyncFromDays(Number(e.target.value))}
-              className="input"
-            >
-              {syncFromOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  Past {option.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-              Events older than this will not be synced
-            </p>
-          </div>
+          {/* Sync settings for non-Google or Google without calendars loaded */}
+          {(!isGoogle || calendars.length === 0) && !loadingCalendars && (
+            <>
+              {/* Sync from dropdown */}
+              <div>
+                <label className="label mb-1">Sync events from</label>
+                <select
+                  value={syncFromDays}
+                  onChange={(e) => setSyncFromDays(Number(e.target.value))}
+                  className="input"
+                >
+                  {syncFromOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      Past {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                  Events older than this will not be synced
+                </p>
+              </div>
 
-          {/* Sync to dropdown */}
-          <div>
-            <label className="label mb-1">Sync events until</label>
-            <select
-              value={syncToDays}
-              onChange={(e) => setSyncToDays(Number(e.target.value))}
-              className="input"
-            >
-              {syncToOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  Next {option.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-              Future events beyond this will not be synced
-            </p>
-          </div>
+              {/* Sync to dropdown */}
+              <div>
+                <label className="label mb-1">Sync events until</label>
+                <select
+                  value={syncToDays}
+                  onChange={(e) => setSyncToDays(Number(e.target.value))}
+                  className="input"
+                >
+                  {syncToOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      Next {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                  Future events beyond this will not be synced
+                </p>
+              </div>
 
-          {/* Sync frequency dropdown */}
-          <div>
-            <label className="label mb-1">Sync frequency</label>
-            <select
-              value={syncFrequency}
-              onChange={(e) => setSyncFrequency(Number(e.target.value))}
-              className="input"
-            >
-              {syncFrequencyOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-              How often to check for calendar updates
-            </p>
-          </div>
+              {/* Sync frequency dropdown */}
+              <div>
+                <label className="label mb-1">Sync frequency</label>
+                <select
+                  value={syncFrequency}
+                  onChange={(e) => setSyncFrequency(Number(e.target.value))}
+                  className="input"
+                >
+                  {syncFrequencyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                  How often to check for calendar updates
+                </p>
+              </div>
+            </>
+          )}
 
           {/* CalDAV credential update section */}
           {isCalDAV && (
