@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Seamless bidirectional sync between Caelis and Google Contacts with Caelis as source of truth
-**Current focus:** Phase 79 - OAuth Foundation
+**Current focus:** Phase 79 - OAuth Foundation (COMPLETE)
 
 ## Current Position
 
 Milestone: v5.0 Google Contacts Sync
-Phase: 79 of 85 (OAuth Foundation)
-Plan: 01 of TBD
-Status: In progress
-Last activity: 2026-01-17 - Completed 79-01-PLAN.md (Backend OAuth infrastructure)
+Phase: 79 of 85 (OAuth Foundation) - COMPLETE
+Plan: 02 of 02 (complete)
+Status: Phase complete
+Last activity: 2026-01-17 - Completed 79-02-PLAN.md (Frontend Settings UI)
 
-Progress: [█░░░░░░░░░] ~10%
+Progress: [██░░░░░░░░] ~20%
 
 ## Completed Milestones
 
@@ -62,6 +62,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | User-level connection storage for contacts | Contacts sync is account-wide, unlike calendar which is per-resource | 79-01 |
 | No token revocation on disconnect | User may have Calendar connected with same Google account | 79-01 |
 | Pending import flag triggers Phase 80 auto-import | Decouple OAuth completion from import processing | 79-01 |
+| Default to readwrite access mode | Bidirectional sync requires write access | 79-02 |
+| Add email scope to OAuth request | Reliable user identification in connected state display | 79-02 |
 
 ### Pending Todos
 
@@ -78,9 +80,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-17
-Stopped at: Completed 79-01-PLAN.md
+Stopped at: Completed 79-02-PLAN.md (Phase 79 complete)
 Resume file: None
 
 ## Next Steps
 
-- Continue with Phase 79 - plan and execute frontend settings UI for Google Contacts
+- Phase 79 OAuth Foundation is COMPLETE
+- Ready for Phase 80: Initial Import
+  - Backend has `has_pending_import` flag set after OAuth
+  - Phase 80 will implement automatic import trigger and manual import UI
