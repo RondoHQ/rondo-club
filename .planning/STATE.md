@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 ## Current Position
 
 Milestone: v4.9 Dashboard & Calendar Polish
-Phase: Not started (run /gsd:create-roadmap)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-01-17 — Milestone v4.9 started
+Phase: 77 of 78 (Fixed Height Dashboard Widgets)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-17 — Roadmap created
 
-Progress: Ready for `/gsd:define-requirements`
+Progress: ░░░░░░░░░░ 0%
 
 ## Completed Milestones
 
@@ -196,5 +196,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Run `/gsd:define-requirements` to define requirements for v4.9
-- Run `/gsd:create-roadmap` to create phases after requirements defined
+- Run `/gsd:plan-phase 77` to plan Fixed Height Dashboard Widgets
+- Run `/gsd:discuss-phase 77` to gather context first

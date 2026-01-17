@@ -45,29 +45,29 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ## Traceability
 
-Which phases cover which requirements. Updated by create-roadmap.
+Which phases cover which requirements.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DASH-01 | TBD | Pending |
-| DASH-02 | TBD | Pending |
-| DASH-03 | TBD | Pending |
-| DASH-04 | TBD | Pending |
-| DASH-05 | TBD | Pending |
-| DASH-06 | TBD | Pending |
-| DASH-07 | TBD | Pending |
-| DASH-08 | TBD | Pending |
-| CAL-01 | TBD | Pending |
-| CAL-02 | TBD | Pending |
-| CAL-03 | TBD | Pending |
-| CAL-04 | TBD | Pending |
-| CAL-05 | TBD | Pending |
+| DASH-01 | Phase 77 | Pending |
+| DASH-02 | Phase 77 | Pending |
+| DASH-03 | Phase 77 | Pending |
+| DASH-04 | Phase 77 | Pending |
+| DASH-05 | Phase 77 | Pending |
+| DASH-06 | Phase 77 | Pending |
+| DASH-07 | Phase 77 | Pending |
+| DASH-08 | Phase 77 | Pending |
+| CAL-01 | Phase 78 | Pending |
+| CAL-02 | Phase 78 | Pending |
+| CAL-03 | Phase 78 | Pending |
+| CAL-04 | Phase 78 | Pending |
+| CAL-05 | Phase 78 | Pending |
 
 **Coverage:**
 - v1 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13 (pending create-roadmap)
+- Mapped to phases: 13
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after initial definition*
+*Last updated: 2026-01-17 after roadmap creation*
