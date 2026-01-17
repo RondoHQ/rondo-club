@@ -912,4 +912,135 @@ class GoogleContactsExport {
 			'errors'           => [],
 		];
 	}
+
+	/**
+	 * Bulk export all contacts without a Google Contact ID for a user.
+	 *
+	 * Processes contacts sequentially to avoid rate limits.
+	 * Returns stats array with counts.
+	 *
+	 * @param callable|null $progress_callback Optional callback for progress updates.
+	 *                                         Receives (int $current, int $total, int $post_id).
+	 * @return array{total: int, exported: int, updated: int, skipped: int, failed: int, errors: array}
+	 */
+	public function bulk_export_unlinked( ?callable $progress_callback = null ): array {
+		$stats = [
+			'total'    => 0,
+			'exported' => 0,  // New contacts created in Google.
+			'updated'  => 0,  // Existing contacts updated (shouldn't happen for unlinked, but track it).
+			'skipped'  => 0,  // Already has google_contact_id (not unlinked).
+			'failed'   => 0,
+			'errors'   => [],
+		];
+
+		// Verify user has readwrite access.
+		$connection = GoogleContactsConnection::get_connection( $this->user_id );
+		if ( ! $connection || ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
+			$stats['errors'][] = __( 'Google Contacts is not connected with read-write access.', 'caelis' );
+			return $stats;
+		}
+
+		// Query all person posts for this user without _google_contact_id.
+		$args = [
+			'post_type'      => 'person',
+			'post_status'    => 'publish',
+			'author'         => $this->user_id,
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_query'     => [
+				'relation' => 'OR',
+				[
+					'key'     => '_google_contact_id',
+					'compare' => 'NOT EXISTS',
+				],
+				[
+					'key'     => '_google_contact_id',
+					'value'   => '',
+					'compare' => '=',
+				],
+			],
+		];
+
+		$query    = new \WP_Query( $args );
+		$post_ids = $query->posts;
+		$stats['total'] = count( $post_ids );
+
+		if ( $stats['total'] === 0 ) {
+			return $stats;
+		}
+
+		// Process sequentially to avoid rate limits.
+		foreach ( $post_ids as $index => $post_id ) {
+			// Progress callback.
+			if ( $progress_callback ) {
+				$progress_callback( $index + 1, $stats['total'], $post_id );
+			}
+
+			// Double-check this contact doesn't have a google_contact_id.
+			// (could have been exported in parallel by save hook).
+			$google_id = get_post_meta( $post_id, '_google_contact_id', true );
+			if ( ! empty( $google_id ) ) {
+				$stats['skipped']++;
+				continue;
+			}
+
+			try {
+				$result = $this->export_contact( $post_id );
+				if ( $result ) {
+					$stats['exported']++;
+				} else {
+					$stats['failed']++;
+					$stats['errors'][] = sprintf(
+						/* translators: %d: contact ID */
+						__( 'Failed to export contact ID %d.', 'caelis' ),
+						$post_id
+					);
+				}
+			} catch ( \Exception $e ) {
+				$stats['failed']++;
+				$stats['errors'][] = sprintf(
+					/* translators: 1: contact ID, 2: error message */
+					__( 'Error exporting contact ID %1$d: %2$s', 'caelis' ),
+					$post_id,
+					$e->getMessage()
+				);
+			}
+
+			// Small delay between requests to be nice to Google API.
+			// 100ms delay = max 10 requests/second, well under any rate limit.
+			usleep( 100000 );
+		}
+
+		return $stats;
+	}
+
+	/**
+	 * Get count of contacts without a Google Contact ID.
+	 *
+	 * @return int Count of unlinked contacts.
+	 */
+	public function get_unlinked_count(): int {
+		$args = [
+			'post_type'      => 'person',
+			'post_status'    => 'publish',
+			'author'         => $this->user_id,
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'meta_query'     => [
+				'relation' => 'OR',
+				[
+					'key'     => '_google_contact_id',
+					'compare' => 'NOT EXISTS',
+				],
+				[
+					'key'     => '_google_contact_id',
+					'value'   => '',
+					'compare' => '=',
+				],
+			],
+		];
+
+		$query = new \WP_Query( $args );
+		return $query->found_posts;
+	}
 }
