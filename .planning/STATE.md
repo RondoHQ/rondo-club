@@ -164,7 +164,7 @@ Resume file: None
 
 ### Pending Todos
 
-40 todos in `.planning/todos/pending/`:
+41 todos in `.planning/todos/pending/`:
 1. ~~Add label management interface (ui)~~ - DONE in v3.4 Phase 37
 2. ~~Todo detail modal with notes and multi-person support (ui)~~ - DONE in v3.3
 3. Add import from Twenty CRM (api)
@@ -205,6 +205,7 @@ Resume file: None
 38. ~~Fixed height for homepage widgets (ui)~~ - DONE in v4.9 Phase 77
 39. Remove calendar items when calendar unsynced (api)
 40. Prevent duplicate email addresses across people (api)
+41. Move calendar subscription box to Connections Calendars (ui)
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework - PHPUnit done in v3.0 (Playwright deferred)
