@@ -83,10 +83,12 @@ Plans:
   2. Changes in Caelis contacts appear in Google Contacts without manual action
   3. Sync runs automatically in background at configurable frequency
   4. Only changed contacts are synced (not full re-import every time)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 82-01: TBD
+- [ ] 82-01-PLAN.md — Core sync class with WP-Cron scheduling and round-robin user processing
+- [ ] 82-02-PLAN.md — Delta sync logic using syncToken for pull and post_modified for push
+- [ ] 82-03-PLAN.md — REST endpoint for manual sync and Settings UI for frequency control
 
 ### Phase 83: Conflict & Deletion
 **Goal**: Conflicts are detected and resolved, deletions are handled correctly
@@ -144,7 +146,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 | 79. OAuth Foundation | 2/2 | Complete | 2026-01-17 |
 | 80. Import from Google | 3/3 | Complete | 2026-01-17 |
 | 81. Export to Google | 3/3 | Complete | 2026-01-17 |
-| 82. Delta Sync | 0/TBD | Not started | - |
+| 82. Delta Sync | 0/3 | Not started | - |
 | 83. Conflict & Deletion | 0/TBD | Not started | - |
 | 84. Settings & Person UI | 0/TBD | Not started | - |
 | 85. Polish & CLI | 0/TBD | Not started | - |
