@@ -14,6 +14,11 @@
 
 **Goal:** Improve dashboard meeting card visual clarity with time-based styling and data cleanup
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 86-01-PLAN.md - Meeting card styling and data cleanup
+
 **Requirements covered:**
 - MEET-01: Past events display with dimmed/muted styling
 - MEET-02: Currently active event is visually highlighted
@@ -28,9 +33,10 @@
 5. All changes work correctly in both light and dark mode
 
 **Implementation notes:**
-- Frontend: React component styling changes in EventsWidget
-- Backend: WP-CLI or one-time migration to fix `&amp;` in existing event titles
+- Frontend: React component styling changes in MeetingCard (Dashboard.jsx)
+- Backend: WP-CLI command `wp prm event cleanup-titles` for data cleanup
 - No API changes needed
 
 ---
 *Roadmap created: 2026-01-18*
+*Plans created: 2026-01-18*
