@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Seamless bidirectional sync between Caelis and Google Contacts with Caelis as source of truth
-**Current focus:** Phase 84 - Settings & Person UI (In Progress)
+**Current focus:** Phase 84 - Settings & Person UI (Complete)
 
 ## Current Position
 
 Milestone: v5.0 Google Contacts Sync
 Phase: 84 of 85 (Settings & Person UI)
-Plan: 01 of 02 (complete)
-Status: In progress
-Last activity: 2026-01-18 - Completed 84-01-PLAN.md
+Plan: 02 of 02 (complete)
+Status: Phase complete
+Last activity: 2026-01-18 - Completed 84-02-PLAN.md
 
-Progress: [████████░░] ~85%
+Progress: [█████████░] ~90%
 
 ## Completed Milestones
 
@@ -96,6 +96,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Log conflicts as TYPE_ACTIVITY with sync_conflict type | Audit trail for automated conflict resolution | 83-01 |
 | Sync history stored in connection meta (last 10) | Efficient storage for UI display without unbounded growth | 84-01 |
 | google_contact_id returns null for unlinked | Clean API contract for frontend | 84-01 |
+| Error indicator using details/summary for collapsible view | Progressive disclosure without complex JS state | 84-02 |
+| Google link placement in header next to name | Subtle accessibility without crowding Contact Information card | 84-02 |
 
 ### Pending Todos
 
@@ -111,12 +113,12 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-18 00:00 UTC
-Stopped at: Completed 84-01-PLAN.md
+Last session: 2026-01-18 00:23 UTC
+Stopped at: Completed 84-02-PLAN.md
 Resume file: None
 
 ## Next Steps
 
-- Phase 84 Settings & Person UI in progress (1/2 plans complete)
-- Next: 84-02 Frontend UI implementation
-- Then: Phase 85 Polish & CLI
+- Phase 84 Settings & Person UI complete
+- Next: Phase 85 Polish & CLI
+- Then: v5.0 milestone complete
