@@ -43,6 +43,111 @@ class GoogleContactsExport {
 	private int $user_id;
 
 	/**
+	 * Initialize hooks for async export
+	 *
+	 * Called from functions.php to register save_post and cron hooks.
+	 */
+	public static function init(): void {
+		$instance = new self( 0 ); // User ID set per-save.
+		add_action( 'save_post_person', [ $instance, 'on_person_saved' ], 20, 3 );
+		add_action( 'caelis_google_contact_export', [ $instance, 'handle_async_export' ], 10, 2 );
+	}
+
+	/**
+	 * Handle person save to trigger async export
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @param bool     $update  Whether this is an update.
+	 */
+	public function on_person_saved( int $post_id, \WP_Post $post, bool $update ): void {
+		// Skip autosaves and revisions.
+		if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		// Skip non-published posts.
+		if ( $post->post_status !== 'publish' ) {
+			return;
+		}
+
+		// Get post author (the user who owns this contact).
+		$user_id = (int) $post->post_author;
+
+		// Check if user has Google Contacts connected with readwrite access.
+		$connection = GoogleContactsConnection::get_connection( $user_id );
+		if ( ! $connection || ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
+			return;
+		}
+
+		// Queue for async export.
+		$this->queue_export( $post_id, $user_id );
+	}
+
+	/**
+	 * Queue a contact export for async processing
+	 *
+	 * Uses WP-Cron to process exports in the background, following
+	 * the same pattern as calendar rematch in class-auto-title.php.
+	 *
+	 * @param int $post_id Post ID to export.
+	 * @param int $user_id User ID who owns the contact.
+	 */
+	private function queue_export( int $post_id, int $user_id ): void {
+		static $queued = [];
+
+		// Prevent duplicate scheduling in same request.
+		$key = $post_id . '-' . $user_id;
+		if ( isset( $queued[ $key ] ) ) {
+			return;
+		}
+		$queued[ $key ] = true;
+
+		// Clear any existing scheduled event.
+		$timestamp = wp_next_scheduled( 'caelis_google_contact_export', [ $post_id, $user_id ] );
+		if ( $timestamp ) {
+			wp_unschedule_event( $timestamp, 'caelis_google_contact_export', [ $post_id, $user_id ] );
+		}
+
+		// Schedule immediate execution.
+		wp_schedule_single_event( time(), 'caelis_google_contact_export', [ $post_id, $user_id ] );
+		spawn_cron();
+	}
+
+	/**
+	 * Handle async export cron job
+	 *
+	 * Called by WP-Cron to process a queued contact export.
+	 *
+	 * @param int $post_id Post ID to export.
+	 * @param int $user_id User ID who owns the contact.
+	 */
+	public function handle_async_export( int $post_id, int $user_id ): void {
+		// Verify post still exists and is published.
+		$post = get_post( $post_id );
+		if ( ! $post || $post->post_status !== 'publish' || $post->post_type !== 'person' ) {
+			return;
+		}
+
+		// Verify user still has readwrite access.
+		$connection = GoogleContactsConnection::get_connection( $user_id );
+		if ( ! $connection || ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
+			return;
+		}
+
+		try {
+			// Create exporter for this user.
+			$exporter = new self( $user_id );
+			$exporter->export_contact( $post_id );
+		} catch ( \Exception $e ) {
+			// Log error but don't throw - this is async.
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Google Contact export failed for post ' . $post_id . ': ' . $e->getMessage() );
+			}
+		}
+	}
+
+	/**
 	 * Google People Service instance
 	 *
 	 * @var PeopleService|null
@@ -75,13 +180,17 @@ class GoogleContactsExport {
 	 * Constructor
 	 *
 	 * @param int $user_id WordPress user ID performing the export.
+	 *                     Pass 0 when instantiating for hook registration only.
 	 */
 	public function __construct( int $user_id ) {
 		$this->user_id = $user_id;
 
-		// Increase limits for large exports.
-		@set_time_limit( 600 );
-		wp_raise_memory_limit( 'admin' );
+		// Skip heavy initialization for hook registration (user_id = 0).
+		if ( $user_id > 0 ) {
+			// Increase limits for large exports.
+			@set_time_limit( 600 );
+			wp_raise_memory_limit( 'admin' );
+		}
 	}
 
 	/**
