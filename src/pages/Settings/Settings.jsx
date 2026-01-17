@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, MessageSquare, Search, User, Link as LinkIcon } from 'lucide-react';
+import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, MessageSquare, Search, User, Link as LinkIcon, Loader2, CheckCircle } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from 'date-fns';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
@@ -31,6 +32,7 @@ const CONNECTION_SUBTABS = [
 
 export default function Settings() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const config = window.prmConfig || {};
   const isAdmin = config.isAdmin || false;
   const userId = config.userId;
@@ -100,6 +102,8 @@ export default function Settings() {
   const [connectingGoogleContacts, setConnectingGoogleContacts] = useState(false);
   const [disconnectingGoogleContacts, setDisconnectingGoogleContacts] = useState(false);
   const [googleContactsMessage, setGoogleContactsMessage] = useState('');
+  const [googleContactsImporting, setGoogleContactsImporting] = useState(false);
+  const [googleContactsImportResult, setGoogleContactsImportResult] = useState(null);
 
   // Fetch Application Passwords and CardDAV URLs on mount
   useEffect(() => {
@@ -236,7 +240,14 @@ export default function Settings() {
       setSearchParams({ tab: 'connections', subtab: 'calendars' });
     }
   }, []);
-  
+
+  // Auto-import when pending flag is set (after OAuth connection)
+  useEffect(() => {
+    if (googleContactsStatus?.has_pending_import && !googleContactsImporting && !googleContactsImportResult) {
+      handleImportGoogleContacts();
+    }
+  }, [googleContactsStatus?.has_pending_import]);
+
   const handleConnectSlack = async () => {
     try {
       const response = await apiClient.get('/prm/v1/slack/oauth/authorize');
@@ -311,10 +322,38 @@ export default function Settings() {
       await prmApi.disconnectGoogleContacts();
       setGoogleContactsStatus({ ...googleContactsStatus, connected: false });
       setGoogleContactsMessage('Google Contacts disconnected.');
+      setGoogleContactsImportResult(null);
     } catch (error) {
       setGoogleContactsMessage(error.response?.data?.message || 'Failed to disconnect');
     } finally {
       setDisconnectingGoogleContacts(false);
+    }
+  };
+
+  const handleImportGoogleContacts = async () => {
+    setGoogleContactsImporting(true);
+    setGoogleContactsImportResult(null);
+    setGoogleContactsMessage('Importing contacts from Google...');
+
+    try {
+      const response = await prmApi.triggerGoogleContactsImport();
+      setGoogleContactsImportResult(response.data);
+      setGoogleContactsMessage('');
+
+      // Refresh status to get updated contact count
+      const statusResponse = await prmApi.getGoogleContactsStatus();
+      setGoogleContactsStatus(statusResponse.data);
+
+      // Invalidate queries to refresh contact lists
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['dates'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    } catch (error) {
+      setGoogleContactsMessage(`Import failed: ${error.response?.data?.message || error.message}`);
+      setGoogleContactsImportResult(null);
+    } finally {
+      setGoogleContactsImporting(false);
     }
   };
 
