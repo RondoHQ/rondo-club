@@ -1534,10 +1534,10 @@ export default function PersonDetail() {
               {person.is_favorite && (
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
               )}
-              {/* View in Google Contacts link - only for synced contacts */}
-              {person.google_contact_id && (
+              {/* View in Google Contacts link - only for synced contacts with email */}
+              {person.google_contact_id && acf.contact_info?.find(c => c.contact_type === 'email')?.contact_value && (
                 <a
-                  href={`https://contacts.google.com/person/${person.google_contact_id}`}
+                  href={`https://contacts.google.com/${acf.contact_info.find(c => c.contact_type === 'email').contact_value}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-accent-600 dark:hover:text-accent-400"
