@@ -220,6 +220,7 @@ class GoogleContacts extends Base {
 			'connected_at'       => $connection['connected_at'] ?? null,
 			'sync_frequency'     => $connection['sync_frequency'] ?? GoogleContactsConnection::get_default_frequency(),
 			'sync_in_progress'   => false, // Future: track async imports
+			'sync_history'       => $connection['sync_history'] ?? [],
 		];
 
 		return rest_ensure_response( $response );
