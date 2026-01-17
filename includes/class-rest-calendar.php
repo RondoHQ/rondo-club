@@ -1109,6 +1109,101 @@ class Calendar extends Base {
 	}
 
 	/**
+	 * Build deduplicated attendees array from raw attendees and matched people data
+	 *
+	 * When a person has multiple email addresses and both appear in the attendee list,
+	 * this ensures they only appear once in the output (deduplicating by person_id).
+	 * Additional emails are stored in an 'emails' array on the matched attendee.
+	 *
+	 * @param array $raw_attendees      Array of raw attendee data [{email, name, status}]
+	 * @param array $matched_people_raw Array of matches [{person_id, attendee_email, ...}]
+	 * @return array Deduplicated attendees array, sorted with matched first
+	 */
+	private function build_deduplicated_attendees( array $raw_attendees, array $matched_people_raw ): array {
+		if ( empty( $raw_attendees ) ) {
+			return [];
+		}
+
+		// Build email lookup for matched people
+		$matched_emails = [];
+		if ( is_array( $matched_people_raw ) ) {
+			foreach ( $matched_people_raw as $match ) {
+				$email = strtolower( $match['attendee_email'] ?? '' );
+				if ( $email ) {
+					$matched_emails[ $email ] = $match;
+				}
+			}
+		}
+
+		$attendees       = [];
+		$seen_person_ids = []; // Track which person_ids we've already added
+
+		foreach ( $raw_attendees as $attendee ) {
+			$email = strtolower( $attendee['email'] ?? '' );
+			$match = $matched_emails[ $email ] ?? null;
+
+			if ( $match ) {
+				$person_id = $match['person_id'] ?? 0;
+
+				// Check if we've already added this person
+				if ( $person_id && isset( $seen_person_ids[ $person_id ] ) ) {
+					// Person already exists - add this email to their emails array
+					$existing_index = $seen_person_ids[ $person_id ];
+					if ( ! isset( $attendees[ $existing_index ]['emails'] ) ) {
+						$attendees[ $existing_index ]['emails'] = [ $attendees[ $existing_index ]['email'] ];
+					}
+					$attendees[ $existing_index ]['emails'][] = $attendee['email'] ?? '';
+					continue; // Skip adding duplicate entry
+				}
+
+				// First time seeing this person - add them
+				$attendee_data = [
+					'email'       => $attendee['email'] ?? '',
+					'name'        => $attendee['name'] ?? '',
+					'status'      => $attendee['status'] ?? '',
+					'matched'     => true,
+					'person_id'   => $person_id,
+					'person_name' => get_the_title( $person_id ),
+				];
+
+				// Get person thumbnail
+				$featured_image_id        = get_post_thumbnail_id( $person_id );
+				$attendee_data['thumbnail'] = $featured_image_id
+					? wp_get_attachment_image_url( $featured_image_id, 'thumbnail' )
+					: null;
+
+				// Track that we've seen this person
+				if ( $person_id ) {
+					$seen_person_ids[ $person_id ] = count( $attendees );
+				}
+
+				$attendees[] = $attendee_data;
+			} else {
+				// Unmatched attendee - always add
+				$attendees[] = [
+					'email'   => $attendee['email'] ?? '',
+					'name'    => $attendee['name'] ?? '',
+					'status'  => $attendee['status'] ?? '',
+					'matched' => false,
+				];
+			}
+		}
+
+		// Sort attendees: matched first, then alphabetically by name
+		usort(
+			$attendees,
+			function ( $a, $b ) {
+				if ( $a['matched'] !== $b['matched'] ) {
+					return $a['matched'] ? -1 : 1;
+				}
+				return strcasecmp( $a['name'] ?? '', $b['name'] ?? '' );
+			}
+		);
+
+		return $attendees;
+	}
+
+	/**
 	 * Format a calendar event for the meetings endpoint
 	 *
 	 * @param WP_Post $event     The calendar event post.
@@ -1136,66 +1231,24 @@ class Calendar extends Base {
 			}
 		}
 
-		// Get raw attendees and build full attendees array with matched status
+		// Get raw attendees and build deduplicated attendees array with matched status
 		$attendees_json  = get_post_meta( $event->ID, '_attendees', true );
 		$raw_attendees   = $attendees_json ? json_decode( $attendees_json, true ) : [];
 		$other_attendees = [];
-		$attendees       = [];
 
+		// Build deduplicated attendees (handles multiple emails per person)
+		$attendees = $this->build_deduplicated_attendees(
+			is_array( $raw_attendees ) ? $raw_attendees : [],
+			is_array( $matched_people_raw ) ? $matched_people_raw : []
+		);
+
+		// Build other_attendees for backward compatibility
 		if ( is_array( $raw_attendees ) ) {
-			// Build email lookup for matched people
-			$matched_emails = [];
-			if ( is_array( $matched_people_raw ) ) {
-				foreach ( $matched_people_raw as $match ) {
-					$email = strtolower( $match['attendee_email'] ?? '' );
-					if ( $email ) {
-						$matched_emails[ $email ] = $match;
-					}
-				}
-			}
-
 			foreach ( $raw_attendees as $attendee ) {
-				$email = strtolower( $attendee['email'] ?? '' );
-				$match = $matched_emails[ $email ] ?? null;
-
-				// Build full attendee data for MeetingDetailModal
-				$attendee_data = [
-					'email'   => $attendee['email'] ?? '',
-					'name'    => $attendee['name'] ?? '',
-					'status'  => $attendee['status'] ?? '',
-					'matched' => $match !== null,
-				];
-
-				if ( $match ) {
-					$matched_person_id              = $match['person_id'] ?? 0;
-					$attendee_data['person_id']     = $matched_person_id;
-					$attendee_data['person_name']   = get_the_title( $matched_person_id );
-
-					// Get person thumbnail
-					$featured_image_id          = get_post_thumbnail_id( $matched_person_id );
-					$attendee_data['thumbnail'] = $featured_image_id
-						? wp_get_attachment_image_url( $featured_image_id, 'thumbnail' )
-						: null;
-				}
-
-				$attendees[] = $attendee_data;
-
-				// Also build other_attendees for backward compatibility
 				if ( ! empty( $attendee['email'] ) && strtolower( $attendee['email'] ) !== strtolower( $matched_attendee_email ?? '' ) ) {
 					$other_attendees[] = $attendee['email'];
 				}
 			}
-
-			// Sort attendees: matched first, then alphabetically by name
-			usort(
-				$attendees,
-				function ( $a, $b ) {
-					if ( $a['matched'] !== $b['matched'] ) {
-						return $a['matched'] ? -1 : 1;
-					}
-					return strcasecmp( $a['name'] ?? '', $b['name'] ?? '' );
-				}
-			);
 		}
 
 		// Get connection name
@@ -1432,62 +1485,15 @@ class Calendar extends Base {
 			}
 		}
 
-		// Build full attendees array with matched status
+		// Build deduplicated attendees array with matched status
 		$attendees_json = get_post_meta( $event->ID, '_attendees', true );
 		$raw_attendees  = $attendees_json ? json_decode( $attendees_json, true ) : [];
-		$attendees      = [];
 
-		if ( is_array( $raw_attendees ) ) {
-			// Build email lookup for matched people
-			$matched_emails = [];
-			if ( is_array( $matched_people_raw ) ) {
-				foreach ( $matched_people_raw as $match ) {
-					$email = strtolower( $match['attendee_email'] ?? '' );
-					if ( $email ) {
-						$matched_emails[ $email ] = $match;
-					}
-				}
-			}
-
-			foreach ( $raw_attendees as $attendee ) {
-				$email = strtolower( $attendee['email'] ?? '' );
-				$match = $matched_emails[ $email ] ?? null;
-
-				$attendee_data = [
-					'email'   => $attendee['email'] ?? '',
-					'name'    => $attendee['name'] ?? '',
-					'status'  => $attendee['status'] ?? '',
-					'matched' => $match !== null,
-				];
-
-				if ( $match ) {
-					$person_id                    = $match['person_id'] ?? 0;
-					$attendee_data['person_id']   = $person_id;
-					$attendee_data['person_name'] = get_the_title( $person_id );
-
-					// Get person thumbnail
-					$featured_image_id          = get_post_thumbnail_id( $person_id );
-					$attendee_data['thumbnail'] = $featured_image_id
-						? wp_get_attachment_image_url( $featured_image_id, 'thumbnail' )
-						: null;
-				}
-
-				$attendees[] = $attendee_data;
-			}
-
-			// Sort attendees: matched first, then alphabetically by name
-			usort(
-				$attendees,
-				function ( $a, $b ) {
-					// Matched attendees come first
-					if ( $a['matched'] !== $b['matched'] ) {
-						return $a['matched'] ? -1 : 1;
-					}
-					// Then sort alphabetically by name
-					return strcasecmp( $a['name'] ?? '', $b['name'] ?? '' );
-				}
-			);
-		}
+		// Build deduplicated attendees (handles multiple emails per person)
+		$attendees = $this->build_deduplicated_attendees(
+			is_array( $raw_attendees ) ? $raw_attendees : [],
+			is_array( $matched_people_raw ) ? $matched_people_raw : []
+		);
 
 		// Get connection/calendar name
 		$connection_id = get_post_meta( $event->ID, '_connection_id', true );
