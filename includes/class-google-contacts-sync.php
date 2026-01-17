@@ -382,6 +382,8 @@ class GoogleContactsSync {
 				$result = $exporter->export_contact( $post->ID );
 				if ( $result ) {
 					++$stats['pushed'];
+					// Update field snapshot after successful export for conflict detection.
+					self::update_field_snapshot( $post->ID );
 				} else {
 					++$stats['failed'];
 					$stats['errors'][] = sprintf( 'Export failed for post %d', $post->ID );
@@ -397,6 +399,59 @@ class GoogleContactsSync {
 		}
 
 		return $stats;
+	}
+
+	/**
+	 * Update field snapshot for a contact after successful export
+	 *
+	 * Stores current field values for future conflict detection.
+	 * Called after export to ensure snapshot reflects what was pushed to Google.
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	public static function update_field_snapshot( int $post_id ): void {
+		$snapshot = [
+			'first_name'   => get_field( 'first_name', $post_id ) ?: '',
+			'last_name'    => get_field( 'last_name', $post_id ) ?: '',
+			'email'        => '',
+			'phone'        => '',
+			'organization' => '',
+		];
+
+		// Get primary email from contact_info repeater.
+		$contact_info = get_field( 'contact_info', $post_id ) ?: [];
+		foreach ( $contact_info as $info ) {
+			if ( 'email' === ( $info['contact_type'] ?? '' ) && ! empty( $info['contact_value'] ) ) {
+				$snapshot['email'] = strtolower( $info['contact_value'] );
+				break;
+			}
+		}
+
+		// Get primary phone from contact_info repeater.
+		foreach ( $contact_info as $info ) {
+			$type = $info['contact_type'] ?? '';
+			if ( in_array( $type, [ 'phone', 'mobile' ], true ) && ! empty( $info['contact_value'] ) ) {
+				$snapshot['phone'] = $info['contact_value'];
+				break;
+			}
+		}
+
+		// Get organization from work_history.
+		$work_history = get_field( 'work_history', $post_id ) ?: [];
+		foreach ( $work_history as $job ) {
+			if ( ! empty( $job['is_current'] ) && ! empty( $job['company'] ) ) {
+				$company_id             = is_object( $job['company'] ) ? $job['company']->ID : (int) $job['company'];
+				$snapshot['organization'] = get_the_title( $company_id );
+				break;
+			}
+		}
+		if ( empty( $snapshot['organization'] ) && ! empty( $work_history[0]['company'] ) ) {
+			$company_id             = is_object( $work_history[0]['company'] ) ? $work_history[0]['company']->ID : (int) $work_history[0]['company'];
+			$snapshot['organization'] = get_the_title( $company_id );
+		}
+
+		$snapshot['synced_at'] = current_time( 'c' );
+		update_post_meta( $post_id, '_google_synced_fields', $snapshot );
 	}
 
 	/**
