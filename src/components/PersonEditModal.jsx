@@ -6,12 +6,13 @@ import { wpApi, prmApi } from '@/api/client';
 import api from '@/api/client';
 import VisibilitySelector from '@/components/VisibilitySelector';
 
-export default function PersonEditModal({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
+export default function PersonEditModal({
+  isOpen,
+  onClose,
+  onSubmit,
   isLoading,
-  person = null // Pass person data for editing
+  person = null, // Pass person data for editing
+  prefillData = null // Pass prefillData for pre-filling from external context (e.g., meeting attendee)
 }) {
   const isEditing = !!person;
   
@@ -95,6 +96,23 @@ export default function PersonEditModal({
         // Load existing visibility settings
         setVisibility(person.acf?._visibility || 'private');
         setSelectedWorkspaces(person.acf?._assigned_workspaces || []);
+      } else if (prefillData) {
+        // Pre-fill mode - use provided data from external context (e.g., meeting attendee)
+        reset({
+          first_name: prefillData.first_name || '',
+          last_name: prefillData.last_name || '',
+          nickname: '',
+          gender: '',
+          pronouns: '',
+          email: prefillData.email || '',
+          phone: '',
+          phone_type: 'mobile',
+          birthday: '',
+          how_we_met: '',
+          is_favorite: false,
+        });
+        setVisibility('private');
+        setSelectedWorkspaces([]);
       } else {
         // Creating - reset to defaults
         reset({
@@ -115,7 +133,7 @@ export default function PersonEditModal({
         setSelectedWorkspaces([]);
       }
     }
-  }, [isOpen, person, reset]);
+  }, [isOpen, person, prefillData, reset]);
 
   // Handle vCard drag and drop
   const handleDrag = useCallback((e) => {

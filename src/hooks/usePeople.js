@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { decodeHtml } from '@/utils/formatters';
+import { meetingsKeys } from './useMeetings';
 
 // Query keys
 export const peopleKeys = {
@@ -213,6 +214,9 @@ export function useCreatePerson({ onSuccess } = {}) {
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      // Invalidate meetings to trigger re-matching of attendees
+      queryClient.invalidateQueries({ queryKey: meetingsKeys.today });
+      queryClient.invalidateQueries({ queryKey: ['person-meetings'] });
       // Call custom onSuccess if provided
       onSuccess?.(result);
     },
