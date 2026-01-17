@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v5.0 Google Contacts Sync
 Phase: 81 of 85 (Export to Google)
-Plan: 01 of 03 (complete)
+Plan: 02 of 03 (complete)
 Status: In progress
-Last activity: 2026-01-17 - Completed 81-01-PLAN.md (Core export class)
+Last activity: 2026-01-17 - Completed 81-02-PLAN.md (REST export endpoint & hooks)
 
-Progress: [█████░░░░░] ~52%
+Progress: [█████░░░░░] ~53%
 
 ## Completed Milestones
 
@@ -47,7 +47,7 @@ Progress: [█████░░░░░] ~52%
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4 | 2026-01-17 |
 | v4.8 Meeting Enhancements | 73-76 | 6 | 2026-01-17 |
 | v4.9 Dashboard & Calendar Polish | 77-78 | 4 | 2026-01-17 |
-**Total:** 29 milestones, 78 phases, 143 plans completed
+**Total:** 29 milestones, 78 phases, 144 plans completed
 
 ## Accumulated Context
 
@@ -74,6 +74,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Mirror import class structure | Consistency and maintainability for export class | 81-01 |
 | Check readwrite access before export | User may only have readonly scope | 81-01 |
 | Retry on etag conflict | Google requires etag; conflicts need automatic handling | 81-01 |
+| Async export via WP-Cron | Avoid blocking contact save operations | 81-02 |
+| Follow existing async pattern | Use same WP-Cron pattern as calendar rematch for consistency | 81-02 |
 
 ### Pending Todos
 
@@ -89,12 +91,12 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-17 21:14 UTC
-Stopped at: Completed 81-01-PLAN.md (Core export class)
+Last session: 2026-01-17 21:42 UTC
+Stopped at: Completed 81-02-PLAN.md (REST export endpoint & hooks)
 Resume file: None
 
 ## Next Steps
 
-- Phase 81 Export to Google in progress (1/3 plans complete)
-- Next: 81-02 REST export endpoint and save_post hooks
-- Then: 81-03 Bulk export UI
+- Phase 81 Export to Google in progress (2/3 plans complete)
+- Next: 81-03 Bulk export UI
+- Then: Phase 82 Sync Status & Monitoring
