@@ -20,6 +20,9 @@ class AutoTitle {
 		add_action( 'acf/save_post', [ $this, 'trigger_calendar_rematch' ], 25 );
 		add_action( 'rest_after_insert_person', [ $this, 'trigger_calendar_rematch_rest' ], 25, 2 );
 
+		// Handle async calendar rematch cron job
+		add_action( 'caelis_async_calendar_rematch', [ $this, 'handle_async_calendar_rematch' ] );
+
 		// Hide title field in admin for person CPT
 		add_filter( 'acf/prepare_field/name=_post_title', [ $this, 'hide_title_field' ] );
 
@@ -248,8 +251,8 @@ class AutoTitle {
 			return;
 		}
 
-		// Trigger calendar re-matching
-		\Caelis\Calendar\Matcher::on_person_saved( $post_id );
+		// Schedule async rematch - don't block the save
+		$this->schedule_calendar_rematch( $post_id );
 	}
 
 	/**
@@ -261,8 +264,47 @@ class AutoTitle {
 	 * @param WP_REST_Request $request Request object.
 	 */
 	public function trigger_calendar_rematch_rest( $post, $request ) {
-		// Trigger calendar re-matching
-		\Caelis\Calendar\Matcher::on_person_saved( $post->ID );
+		// Schedule async rematch - don't block the API response
+		$this->schedule_calendar_rematch( $post->ID );
+	}
+
+	/**
+	 * Schedule calendar rematch to run asynchronously
+	 *
+	 * Uses a static flag to prevent duplicate scheduling within the same request
+	 * (since both acf/save_post and rest_after_insert_person can fire).
+	 *
+	 * @param int $post_id Person post ID.
+	 */
+	private function schedule_calendar_rematch( int $post_id ): void {
+		static $scheduled = [];
+
+		// Prevent scheduling multiple times for the same person in one request
+		if ( isset( $scheduled[ $post_id ] ) ) {
+			return;
+		}
+		$scheduled[ $post_id ] = true;
+
+		// Clear any existing scheduled event for this person
+		$timestamp = wp_next_scheduled( 'caelis_async_calendar_rematch', [ $post_id ] );
+		if ( $timestamp ) {
+			wp_unschedule_event( $timestamp, 'caelis_async_calendar_rematch', [ $post_id ] );
+		}
+
+		// Schedule to run immediately (next cron tick)
+		wp_schedule_single_event( time(), 'caelis_async_calendar_rematch', [ $post_id ] );
+
+		// Trigger cron to run soon (non-blocking)
+		spawn_cron();
+	}
+
+	/**
+	 * Handle async calendar rematch cron job
+	 *
+	 * @param int $post_id Person post ID.
+	 */
+	public function handle_async_calendar_rematch( int $post_id ): void {
+		\Caelis\Calendar\Matcher::on_person_saved( $post_id );
 	}
 
 	/**
@@ -305,7 +347,9 @@ class AutoTitle {
 		}
 
 		// Get current post ID (for updates) or 0 (for creates)
-		$current_post_id = $request->get_param( 'id' ) ?: 0;
+		// For PUT/PATCH requests, the ID is in the URL params, not the request body
+		$url_params      = $request->get_url_params();
+		$current_post_id = isset( $url_params['id'] ) ? (int) $url_params['id'] : 0;
 		$user_id         = get_current_user_id();
 
 		// Check for duplicates
@@ -330,6 +374,8 @@ class AutoTitle {
 	/**
 	 * Find if any email in the list already belongs to another person
 	 *
+	 * Uses direct SQL query for performance - avoids loading all people and their ACF fields.
+	 *
 	 * @param array $emails          Array of email addresses to check.
 	 * @param int   $exclude_post_id Post ID to exclude (current person being edited).
 	 * @param int   $user_id         User ID to scope the check to.
@@ -340,19 +386,38 @@ class AutoTitle {
 			return null;
 		}
 
-		// Query all other people belonging to this user
-		$people = get_posts(
-			[
-				'post_type'      => 'person',
-				'author'         => $user_id,
-				'posts_per_page' => -1,
-				'post_status'    => 'publish',
-				'post__not_in'   => $exclude_post_id ? [ $exclude_post_id ] : [],
-			]
+		global $wpdb;
+
+		// Build placeholders for the IN clause
+		$placeholders = implode( ',', array_fill( 0, count( $emails ), '%s' ) );
+
+		// Find people that have any of these email values in their contact_info meta
+		// ACF stores repeater values as contact_info_0_contact_value, contact_info_1_contact_value, etc.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is safe
+		$sql = $wpdb->prepare(
+			"SELECT DISTINCT p.ID, p.post_title, pm.meta_value as email
+			 FROM {$wpdb->posts} p
+			 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			 WHERE p.post_type = 'person'
+			 AND p.post_status = 'publish'
+			 AND p.post_author = %d
+			 AND p.ID != %d
+			 AND pm.meta_key LIKE 'contact_info\_%%\_contact_value'
+			 AND pm.meta_value IN ($placeholders)
+			 LIMIT 10",
+			array_merge( [ $user_id, $exclude_post_id ], $emails )
 		);
 
-		foreach ( $people as $person ) {
-			$contact_info = get_field( 'contact_info', $person->ID );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Already prepared above
+		$potential_matches = $wpdb->get_results( $sql );
+
+		if ( empty( $potential_matches ) ) {
+			return null;
+		}
+
+		// Verify matches are actually email type (not some other contact type with same value)
+		foreach ( $potential_matches as $match ) {
+			$contact_info = get_field( 'contact_info', $match->ID );
 
 			if ( ! is_array( $contact_info ) ) {
 				continue;
@@ -362,17 +427,14 @@ class AutoTitle {
 				if (
 					isset( $contact['contact_type'] ) &&
 					$contact['contact_type'] === 'email' &&
-					! empty( $contact['contact_value'] )
+					! empty( $contact['contact_value'] ) &&
+					in_array( strtolower( trim( $contact['contact_value'] ) ), $emails, true )
 				) {
-					$existing_email = strtolower( trim( $contact['contact_value'] ) );
-
-					if ( in_array( $existing_email, $emails, true ) ) {
-						return [
-							'email'       => $existing_email,
-							'person_id'   => $person->ID,
-							'person_name' => $person->post_title,
-						];
-					}
+					return [
+						'email'       => strtolower( trim( $contact['contact_value'] ) ),
+						'person_id'   => $match->ID,
+						'person_name' => $match->post_title,
+					];
 				}
 			}
 		}
