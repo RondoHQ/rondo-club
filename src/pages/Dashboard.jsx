@@ -497,7 +497,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
               </div>
-              <div className="h-[35vh] overflow-y-auto">
+              <div className="h-[32vh] overflow-y-auto">
                 {[...Array(3)].map((_, j) => (
                   <div key={j} className="p-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
                     <div className="animate-pulse flex items-center">
@@ -617,7 +617,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {upcoming_reminders?.length > 0 ? (
             upcoming_reminders.map((reminder) => <ReminderCard key={reminder.id} reminder={reminder} />)
           ) : (
@@ -637,7 +637,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {dashboardTodos.length > 0 ? (
             dashboardTodos.map((todo) => <TodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />)
           ) : (
@@ -657,7 +657,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {dashboardAwaitingTodos.length > 0 ? (
             dashboardAwaitingTodos.map((todo) => <AwaitingTodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />)
           ) : (
@@ -698,7 +698,7 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {dateMeetings.length > 0 ? (
             dateMeetings.map((meeting) => (
               <MeetingCard
@@ -728,7 +728,7 @@ export default function Dashboard() {
             Recently contacted
           </h2>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {recently_contacted?.length > 0 ? (
             recently_contacted.map((person) => <PersonCard key={person.id} person={person} />)
           ) : (
@@ -748,7 +748,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {recent_people?.length > 0 ? (
             recent_people.map((person) => <PersonCard key={person.id} person={person} />)
           ) : (
@@ -767,7 +767,7 @@ export default function Dashboard() {
             Favorites
           </h2>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {favorites?.length > 0 ? (
             favorites.slice(0, 5).map((person) => <PersonCard key={person.id} person={person} hideStar={true} />)
           ) : (
@@ -818,7 +818,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 -mb-4 lg:-mb-6">
       {/* Render cards in segments respecting order */}
       {renderCardSegments()}
 
