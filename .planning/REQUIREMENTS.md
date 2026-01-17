@@ -16,15 +16,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Import from Google
 
-- [ ] **IMPORT-01**: Pull all contacts from user's Google Contacts via People API
-- [ ] **IMPORT-02**: Map Google Contact fields to Caelis person fields (names, emails, phones, addresses, URLs, biography)
-- [ ] **IMPORT-03**: Detect and handle duplicates (match by email first, then name)
-- [ ] **IMPORT-04**: Store google_contact_id (resourceName) on each imported person
-- [ ] **IMPORT-05**: Store google_etag for change detection
-- [ ] **IMPORT-06**: Track sync timestamp per contact
-- [ ] **IMPORT-07**: Sideload photos from Google to WordPress media library
-- [ ] **IMPORT-08**: Create birthday as important_date when present
-- [ ] **IMPORT-09**: Create company from organization data and link to work_history
+- [x] **IMPORT-01**: Pull all contacts from user's Google Contacts via People API
+- [x] **IMPORT-02**: Map Google Contact fields to Caelis person fields (names, emails, phones, addresses, URLs, biography)
+- [x] **IMPORT-03**: Detect and handle duplicates (match by email first, then name)
+- [x] **IMPORT-04**: Store google_contact_id (resourceName) on each imported person
+- [x] **IMPORT-05**: Store google_etag for change detection
+- [x] **IMPORT-06**: Track sync timestamp per contact
+- [x] **IMPORT-07**: Sideload photos from Google to WordPress media library
+- [x] **IMPORT-08**: Create birthday as important_date when present
+- [x] **IMPORT-09**: Create company from organization data and link to work_history
 
 ### Export to Google
 
@@ -109,19 +109,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| OAUTH-01 | 79 | Pending |
-| OAUTH-02 | 79 | Pending |
-| OAUTH-03 | 79 | Pending |
-| OAUTH-04 | 79 | Pending |
-| IMPORT-01 | 80 | Pending |
-| IMPORT-02 | 80 | Pending |
-| IMPORT-03 | 80 | Pending |
-| IMPORT-04 | 80 | Pending |
-| IMPORT-05 | 80 | Pending |
-| IMPORT-06 | 80 | Pending |
-| IMPORT-07 | 80 | Pending |
-| IMPORT-08 | 80 | Pending |
-| IMPORT-09 | 80 | Pending |
+| OAUTH-01 | 79 | Complete |
+| OAUTH-02 | 79 | Complete |
+| OAUTH-03 | 79 | Complete |
+| OAUTH-04 | 79 | Complete |
+| IMPORT-01 | 80 | Complete |
+| IMPORT-02 | 80 | Complete |
+| IMPORT-03 | 80 | Complete |
+| IMPORT-04 | 80 | Complete |
+| IMPORT-05 | 80 | Complete |
+| IMPORT-06 | 80 | Complete |
+| IMPORT-07 | 80 | Complete |
+| IMPORT-08 | 80 | Complete |
+| IMPORT-09 | 80 | Complete |
 | EXPORT-01 | 81 | Pending |
 | EXPORT-02 | 81 | Pending |
 | EXPORT-03 | 81 | Pending |
@@ -159,4 +159,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after roadmap creation*
+*Last updated: 2026-01-17 after Phase 80 completion*
