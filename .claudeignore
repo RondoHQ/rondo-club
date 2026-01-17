@@ -1,0 +1,7 @@
+.gitignore
+node_modules/
+vendor/
+dist/
+*.log
+.env*
+.git/
