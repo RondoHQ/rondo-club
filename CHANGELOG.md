@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-01-18
+
+### Added
+- Google Contacts bidirectional sync with Caelis as source of truth
+- OAuth connection for Google Contacts in Settings > Connections
+- Automatic import from Google Contacts with duplicate detection
+- Export Caelis contacts to Google Contacts
+- Delta sync using Google syncToken for efficient updates
+- Configurable sync frequency (15min, hourly, 6hr, daily)
+- Conflict detection with Caelis-wins resolution strategy
+- Sync history log in Settings showing recent sync operations
+- "View in Google Contacts" link on synced person profiles
+- WP-CLI commands for Google Contacts management:
+  - `wp caelis google-contacts sync --user-id=ID` - trigger sync
+  - `wp caelis google-contacts sync --user-id=ID --full` - full resync
+  - `wp caelis google-contacts status --user-id=ID` - check status
+  - `wp caelis google-contacts conflicts --user-id=ID` - list conflicts
+  - `wp caelis google-contacts unlink-all --user-id=ID` - reset sync
+
 ## [4.10.0] - 2026-01-17
 
 ### Added
