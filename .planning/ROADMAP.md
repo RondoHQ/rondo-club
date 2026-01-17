@@ -130,10 +130,10 @@ Plans:
   3. Admin can check sync status via WP-CLI
   4. Admin can list unresolved conflicts via WP-CLI
   5. Admin can unlink all contacts to reset sync state
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 85-01: TBD
+- [ ] 85-01-PLAN.md — WP-CLI commands for Google Contacts sync management
 
 ## Progress
 
@@ -148,7 +148,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 | 82. Delta Sync | 3/3 | Complete | 2026-01-17 |
 | 83. Conflict & Deletion | 2/2 | Complete | 2026-01-17 |
 | 84. Settings & Person UI | 2/2 | Complete | 2026-01-18 |
-| 85. Polish & CLI | 0/TBD | Not started | - |
+| 85. Polish & CLI | 0/1 | Planned | - |
 
 ---
 *Roadmap created: 2026-01-17*
