@@ -1,5 +1,34 @@
 # Project Milestones: Caelis
 
+## v5.0 Google Contacts Sync (Shipped: 2026-01-18)
+
+**Delivered:** Bidirectional Google Contacts synchronization with import, export, delta sync, conflict resolution (Caelis wins), and WP-CLI commands for administration.
+
+**Phases completed:** 79-85 (16 plans total)
+
+**Key accomplishments:**
+
+- Google Contacts OAuth with incremental scope addition (existing Calendar users can add Contacts without re-auth)
+- Import from Google with field mapping, email-based duplicate detection, and photo sideloading
+- Export to Google with reverse field mapping and etag conflict handling
+- Delta sync using Google syncToken for efficient change detection
+- Conflict resolution with Caelis-wins strategy and activity logging for audit
+- Settings UI with sync history viewer and "View in Google Contacts" link on person profiles
+- WP-CLI commands: sync, sync --full, status, conflicts, unlink-all
+
+**Stats:**
+
+- 73 files changed
+- +14,866 / -405 lines changed
+- 7 phases, 16 plans
+- 2 days from start to ship (2026-01-17 → 2026-01-18)
+
+**Git range:** `bfee084` → `fde800f`
+
+**What's next:** To be determined
+
+---
+
 ## v4.8 Meeting Enhancements (Shipped: 2026-01-17)
 
 **Delivered:** Meeting detail modal with attendees and notes, add person from meeting attendees, date navigation, and add-email-to-existing-person flow.

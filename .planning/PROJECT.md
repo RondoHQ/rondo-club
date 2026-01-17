@@ -213,30 +213,19 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Two-column EditConnectionModal layout (calendars left, sync settings right) — v4.9
 - Connection card shows "N calendars selected" count — v4.9
 
+**v5.0 Google Contacts Sync (shipped 2026-01-18):**
+- Google Contacts OAuth with incremental scope addition — v5.0
+- Import from Google with field mapping, duplicate detection, photo sideloading — v5.0
+- Export to Google with reverse field mapping and etag conflict handling — v5.0
+- Delta sync using Google syncToken for efficient change detection — v5.0
+- Conflict resolution with Caelis-wins strategy and activity logging — v5.0
+- Settings UI with sync history viewer — v5.0
+- "View in Google Contacts" link on person profiles — v5.0
+- WP-CLI commands: sync, sync --full, status, conflicts, unlink-all — v5.0
+
 ### Active
 
-**v5.0 Google Contacts Sync** — Two-way synchronization between Caelis and Google Contacts
-
-**Goal:** Replace manual CSV import/export with seamless API-based bidirectional sync, using existing Google OAuth infrastructure.
-
-**Target features:**
-- Extend Google OAuth to request Contacts scopes (incremental scope addition)
-- Full field mapping: names, photos, emails, phones, addresses, birthdays, organizations
-- Import all Google Contacts automatically on connect
-- Export Caelis contacts to Google Contacts
-- Delta sync using People API syncToken (only changed contacts)
-- Background sync via WP-Cron (configurable frequency)
-- Conflict resolution (newest wins by default)
-- Deletion handling: Caelis→Google propagates, Google→Caelis unlinks only
-- Settings UI with sync status, preferences, manual sync button
-- Person profile sync indicator with "View in Google" link
-- WP-CLI commands for sync operations
-
-**Key decisions:**
-- All contacts sync regardless of workspace visibility
-- Photos: Preserve existing on initial sync, propagate changes after
-- Caelis is source of truth (deletions in Google don't delete Caelis data)
-- Duplicate detection: email-first, then name matching
+(No active requirements — plan next milestone with `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -354,6 +343,12 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | get_calendar_ids() static helper | Centralizes backward compatibility for calendar format normalization | ✓ Good |
 | Two-column responsive modal layout | md:grid-cols-2 stacks on small screens, fits modal content | ✓ Good |
 | Wider modal for two columns | max-w-2xl accommodates two-column layout | ✓ Good |
+| Separate OAuth callback for contacts | Different post-auth behavior vs calendar (redirect to subtab, pending_import flag) | ✓ Good |
+| User-level connection for contacts | Contacts sync is account-wide, unlike calendar which is per-resource | ✓ Good |
+| Fill gaps only on import | Never overwrite existing Caelis data, only fill empty fields | ✓ Good |
+| Three-way conflict comparison | Compare Google vs Caelis vs snapshot to detect actual conflicts | ✓ Good |
+| Caelis wins by default | Source of truth design, deletions in Google only unlink in Caelis | ✓ Good |
+| Sync history in connection meta | Last 10 entries, efficient storage without unbounded growth | ✓ Good |
 
 ---
-*Last updated: 2026-01-17 — v5.0 Google Contacts Sync milestone started*
+*Last updated: 2026-01-18 — v5.0 Google Contacts Sync milestone complete*
