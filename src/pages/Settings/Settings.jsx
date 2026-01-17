@@ -14,7 +14,6 @@ import GoogleContactsImport from '@/components/import/GoogleContactsImport';
 const TABS = [
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'connections', label: 'Connections', icon: Share2 },
-  { id: 'sync', label: 'Sync', icon: Calendar },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'data', label: 'Data', icon: Database },
   { id: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
@@ -56,13 +55,7 @@ export default function Settings() {
   
   // Filter tabs based on admin status
   const visibleTabs = TABS.filter(tab => !tab.adminOnly || isAdmin);
-  
-  const [icalUrl, setIcalUrl] = useState('');
-  const [webcalUrl, setWebcalUrl] = useState('');
-  const [icalLoading, setIcalLoading] = useState(true);
-  const [icalCopied, setIcalCopied] = useState(false);
-  const [regenerating, setRegenerating] = useState(false);
-  
+
   // App Passwords state
   const [appPasswords, setAppPasswords] = useState([]);
   const [appPasswordsLoading, setAppPasswordsLoading] = useState(true);
@@ -98,23 +91,7 @@ export default function Settings() {
   const [reminderMessage, setReminderMessage] = useState('');
   const [reschedulingCron, setReschedulingCron] = useState(false);
   const [cronMessage, setCronMessage] = useState('');
-  
-  // Fetch iCal URL on mount
-  useEffect(() => {
-    const fetchIcalUrl = async () => {
-      try {
-        const response = await apiClient.get('/prm/v1/user/ical-url');
-        setIcalUrl(response.data.url);
-        setWebcalUrl(response.data.webcal_url);
-      } catch {
-        // iCal URL fetch failed silently
-      } finally {
-        setIcalLoading(false);
-      }
-    };
-    fetchIcalUrl();
-  }, []);
-  
+
   // Fetch Application Passwords and CardDAV URLs on mount
   useEffect(() => {
     const fetchAppPasswords = async () => {
@@ -276,17 +253,7 @@ export default function Settings() {
       setSavingSlackTargets(false);
     }
   };
-  
-  const copyIcalUrl = async () => {
-    try {
-      await navigator.clipboard.writeText(icalUrl);
-      setIcalCopied(true);
-      setTimeout(() => setIcalCopied(false), 2000);
-    } catch {
-      // Copy failed silently
-    }
-  };
-  
+
   const handleCreateAppPassword = async (e) => {
     e.preventDefault();
     if (!newPasswordName.trim()) return;
@@ -338,30 +305,13 @@ export default function Settings() {
   const formatDate = (dateString) => {
     if (!dateString) return 'Never';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
     });
   };
-  
-  const regenerateIcalToken = async () => {
-    if (!confirm('Are you sure you want to regenerate your calendar URL? Any existing calendar subscriptions will stop working until you update them with the new URL.')) {
-      return;
-    }
-    
-    setRegenerating(true);
-    try {
-      const response = await apiClient.post('/prm/v1/user/regenerate-ical-token');
-      setIcalUrl(response.data.url);
-      setWebcalUrl(response.data.webcal_url);
-    } catch {
-      // Token regeneration failed silently
-    } finally {
-      setRegenerating(false);
-    }
-  };
-  
+
   const toggleChannel = async (channelId) => {
     const newChannels = notificationChannels.includes(channelId)
       ? notificationChannels.filter(c => c !== channelId)
@@ -489,16 +439,6 @@ export default function Settings() {
           handleToggleSlackTarget={handleToggleSlackTarget}
           handleSaveSlackTargets={handleSaveSlackTargets}
           savingSlackTargets={savingSlackTargets}
-        />;
-      case 'sync':
-        return <SyncTab
-          icalUrl={icalUrl}
-          webcalUrl={webcalUrl}
-          icalLoading={icalLoading}
-          icalCopied={icalCopied}
-          copyIcalUrl={copyIcalUrl}
-          regenerateIcalToken={regenerateIcalToken}
-          regenerating={regenerating}
         />;
       case 'notifications':
         return <NotificationsTab
@@ -685,6 +625,13 @@ function CalendarsTab() {
   const [showAddModal, setShowAddModal] = useState(null); // 'google' | 'caldav' | null
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // iCal subscription state
+  const [icalUrl, setIcalUrl] = useState('');
+  const [webcalUrl, setWebcalUrl] = useState('');
+  const [icalLoading, setIcalLoading] = useState(true);
+  const [icalCopied, setIcalCopied] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+
   // Fetch connections on mount
   useEffect(() => {
     fetchConnections();
@@ -708,6 +655,22 @@ function CalendarsTab() {
       setTimeout(() => setError(''), 8000);
     }
   }, [searchParams, setSearchParams]);
+
+  // Fetch iCal URL on mount
+  useEffect(() => {
+    const fetchIcalUrl = async () => {
+      try {
+        const response = await apiClient.get('/prm/v1/user/ical-url');
+        setIcalUrl(response.data.url);
+        setWebcalUrl(response.data.webcal_url);
+      } catch {
+        // iCal URL fetch failed silently
+      } finally {
+        setIcalLoading(false);
+      }
+    };
+    fetchIcalUrl();
+  }, []);
 
   const fetchConnections = async () => {
     try {
@@ -774,6 +737,33 @@ function CalendarsTab() {
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (err) {
       throw err; // Let CalDAVModal handle the error
+    }
+  };
+
+  const copyIcalUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(icalUrl);
+      setIcalCopied(true);
+      setTimeout(() => setIcalCopied(false), 2000);
+    } catch {
+      // Clipboard access denied
+    }
+  };
+
+  const regenerateIcalToken = async () => {
+    if (!confirm('Are you sure you want to regenerate your calendar URL? Any existing calendar subscriptions will stop working until you update them with the new URL.')) {
+      return;
+    }
+
+    setRegenerating(true);
+    try {
+      const response = await apiClient.post('/prm/v1/user/regenerate-ical-token');
+      setIcalUrl(response.data.url);
+      setWebcalUrl(response.data.webcal_url);
+    } catch {
+      // Token regeneration failed silently
+    } finally {
+      setRegenerating(false);
     }
   };
 
@@ -946,6 +936,81 @@ function CalendarsTab() {
             </div>
           </button>
         </div>
+      </div>
+
+      {/* Important Dates Subscription */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Subscribe to important dates in your calendar</h2>
+        <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
+          Subscribe to your important dates in any calendar app (Apple Calendar, Google Calendar, Outlook, etc.)
+        </p>
+
+        {icalLoading ? (
+          <div className="animate-pulse">
+            <div className="h-10 bg-gray-200 rounded mb-3 dark:bg-gray-700"></div>
+            <div className="h-9 bg-gray-200 rounded w-24 dark:bg-gray-700"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="label mb-1">Your calendar feed URL</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={icalUrl}
+                  className="input flex-1 text-sm font-mono bg-gray-50 dark:bg-gray-800"
+                  onClick={(e) => e.target.select()}
+                />
+                <button
+                  onClick={copyIcalUrl}
+                  className="btn-secondary whitespace-nowrap"
+                  title="Copy URL"
+                >
+                  {icalCopied ? (
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Copied
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                      </svg>
+                      Copy
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <a href={webcalUrl} className="btn-primary">
+                <span className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Subscribe in calendar app
+                </span>
+              </a>
+
+              <button
+                onClick={regenerateIcalToken}
+                disabled={regenerating}
+                className="btn-secondary"
+              >
+                {regenerating ? 'Regenerating...' : 'Regenerate URL'}
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Keep this URL private. Anyone with access to it can see your important dates.
+              If you think it has been compromised, click "Regenerate URL" to get a new one.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* CalDAV Modal */}
@@ -1984,88 +2049,6 @@ function ConnectionsSlackSubtab({
           )}
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Connect your Slack workspace to receive daily reminder notifications. You'll be able to message channels or receive direct messages.
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Sync Tab Component - Calendar feed subscription only
-function SyncTab({
-  icalUrl, webcalUrl, icalLoading, icalCopied, copyIcalUrl,
-  regenerateIcalToken, regenerating,
-}) {
-  return (
-    <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Calendar subscription</h2>
-      <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-        Subscribe to your important dates in any calendar app (Apple Calendar, Google Calendar, Outlook, etc.)
-      </p>
-
-      {icalLoading ? (
-        <div className="animate-pulse">
-          <div className="h-10 bg-gray-200 rounded mb-3 dark:bg-gray-700"></div>
-          <div className="h-9 bg-gray-200 rounded w-24 dark:bg-gray-700"></div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div>
-            <label className="label mb-1">Your calendar feed URL</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                readOnly
-                value={icalUrl}
-                className="input flex-1 text-sm font-mono bg-gray-50 dark:bg-gray-800"
-                onClick={(e) => e.target.select()}
-              />
-              <button
-                onClick={copyIcalUrl}
-                className="btn-secondary whitespace-nowrap"
-                title="Copy URL"
-              >
-                {icalCopied ? (
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Copied
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                    </svg>
-                    Copy
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <a href={webcalUrl} className="btn-primary">
-              <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Subscribe in calendar app
-              </span>
-            </a>
-
-            <button
-              onClick={regenerateIcalToken}
-              disabled={regenerating}
-              className="btn-secondary"
-            >
-              {regenerating ? 'Regenerating...' : 'Regenerate URL'}
-            </button>
-          </div>
-
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Keep this URL private. Anyone with access to it can see your important dates.
-            If you think it has been compromised, click "Regenerate URL" to get a new one.
           </p>
         </div>
       )}
