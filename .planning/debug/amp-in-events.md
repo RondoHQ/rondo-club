@@ -47,7 +47,7 @@ fix: Removed sanitize_text_field() wrapper from $event->post_title in two locati
 - format_meeting_event() line 1122
 - format_today_meeting() line 1394
 
-verification: Need to deploy and verify on dashboard that meetings with & display correctly
+verification: Deployed to production, awaiting user verification. Commit cef3d90.
 
 files_changed:
 - includes/class-rest-calendar.php

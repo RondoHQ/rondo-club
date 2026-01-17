@@ -196,17 +196,17 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Topbar z-index fixed to z-30 (above selection toolbar z-20) — v4.7
 - Person header spacing fixed (" at " with trailing space) — v4.7
 
+**v4.8 Meeting Enhancements (shipped 2026-01-17):**
+- Meeting detail modal with title, time, location, description, attendees — v4.8
+- Meeting notes section with auto-save for meeting prep — v4.8
+- Add person from meeting attendees with name extraction — v4.8
+- Date navigation with prev/next/today buttons — v4.8
+- Add email to existing person choice popup — v4.8
+- Fixed HTML entity encoding in calendar event titles — v4.8
+
 ### Active
 
-**Current Milestone:** v4.8 Meeting Enhancements
-
-**Goal:** Improve calendar meeting experience with detailed views and navigation.
-
-**Target features:**
-- [ ] Meeting detail modal — click meeting to see full details (title, time, location, description, attendees)
-- [ ] Add person from meeting — identify non-Caelis attendees by email, quick-add to contacts
-- [ ] Date navigation on meetings widget — prev/next buttons to browse days, "Today" to return
-- [ ] Calendar bug fixes — fix duplicate events from future post status, ensure upsert finds existing events
+*No active milestone — run `/gsd:discuss-milestone` to plan next milestone*
 
 ### Out of Scope
 
@@ -306,6 +306,13 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Dark mode contrast pattern | Consistently use gray-300/gray-400 for better contrast (not gray-400/gray-500) | ✓ Good |
 | Solid background for dark mode selected states | Use dark:bg-accent-800 with dark:text-accent-100 (semi-transparent accent-900/30 unreliable) | ✓ Good |
 | Activity type ID preservation | Keep 'call' ID when renaming to "Phone" to preserve existing activity data | ✓ Good |
+| Inline popup over modal for attendee addition | Reduces friction for two-option choice | ✓ Good |
+| Case-insensitive duplicate email detection | Prevents duplicate emails regardless of case | ✓ Good |
+| Date parameter YYYY-MM-DD format | Standard ISO format, validated with regex | ✓ Good |
+| useTodayMeetings as alias to useDateMeetings | Backward compatibility with new date navigation | ✓ Good |
+| Lazy loading PersonEditModal in MeetingDetailModal | Avoids chunk size increase | ✓ Good |
+| prefillData prop pattern | Pass { first_name, last_name, email } for pre-filling forms from external context | ✓ Good |
+| Preserve ACF required fields on email addition | Include first_name, last_name when updating contact_info | ✓ Good |
 
 ---
-*Last updated: 2026-01-17 — v4.8 Meeting Enhancements milestone started*
+*Last updated: 2026-01-17 — v4.8 Meeting Enhancements milestone complete*
