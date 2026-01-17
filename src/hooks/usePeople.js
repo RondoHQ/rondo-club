@@ -283,6 +283,8 @@ export function useAddEmailToPerson() {
 
       await wpApi.updatePerson(personId, {
         acf: {
+          first_name: person.acf?.first_name || '',
+          last_name: person.acf?.last_name || '',
           contact_info: [...currentContacts, newContact],
         },
       });
