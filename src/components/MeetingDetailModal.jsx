@@ -1,15 +1,75 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { X, MapPin, Video, Clock, User, ChevronDown } from 'lucide-react';
+import { X, MapPin, Video, Clock, User, ChevronDown, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useMeetingNotes, useUpdateMeetingNotes } from '@/hooks/useMeetings';
+import { useCreatePerson } from '@/hooks/usePeople';
+
+const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
+
+/**
+ * Extract first/last name from attendee data
+ * Handles both display names ("John Doe") and email-only ("john.doe@example.com")
+ */
+function extractNameFromAttendee(attendee) {
+  // Prefer explicit name over email-derived name
+  if (attendee.name && !attendee.name.includes('@')) {
+    const parts = attendee.name.trim().split(/\s+/);
+    return {
+      first_name: parts[0] || '',
+      last_name: parts.slice(1).join(' ') || '',
+    };
+  }
+
+  // Fall back to email local part
+  if (attendee.email) {
+    const localPart = attendee.email.split('@')[0];
+    // Handle john.doe, john_doe, john-doe patterns
+    const nameParts = localPart.split(/[._-]/).map(
+      part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+    );
+    return {
+      first_name: nameParts[0] || '',
+      last_name: nameParts.slice(1).join(' ') || '',
+    };
+  }
+
+  return { first_name: '', last_name: '' };
+}
 
 export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
   // State for notes
   const [notes, setNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Person creation state
+  const [showPersonModal, setShowPersonModal] = useState(false);
+  const [personPrefill, setPersonPrefill] = useState(null);
+
+  const createPersonMutation = useCreatePerson({
+    onSuccess: () => {
+      setShowPersonModal(false);
+      setPersonPrefill(null);
+    },
+  });
+
+  // Handle add person button click
+  const handleAddPerson = (attendee) => {
+    const { first_name, last_name } = extractNameFromAttendee(attendee);
+    setPersonPrefill({
+      first_name,
+      last_name,
+      email: attendee.email || '',
+    });
+    setShowPersonModal(true);
+  };
+
+  // Handle person creation submit
+  const handleCreatePerson = async (data) => {
+    await createPersonMutation.mutateAsync(data);
+  };
 
   // Fetch existing notes
   const { data: notesData, isLoading: isLoadingNotes } = useMeetingNotes(meeting?.id);
@@ -144,7 +204,11 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
               </p>
               <div className="space-y-1">
                 {sortedAttendees.map((attendee, index) => (
-                  <AttendeeRow key={attendee.email || index} attendee={attendee} />
+                  <AttendeeRow
+                    key={attendee.email || index}
+                    attendee={attendee}
+                    onAddPerson={handleAddPerson}
+                  />
                 ))}
               </div>
             </div>
@@ -181,11 +245,27 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
           </button>
         </div>
       </div>
+
+      {/* Person creation modal */}
+      {showPersonModal && (
+        <Suspense fallback={null}>
+          <PersonEditModal
+            isOpen={showPersonModal}
+            onClose={() => {
+              setShowPersonModal(false);
+              setPersonPrefill(null);
+            }}
+            onSubmit={handleCreatePerson}
+            isLoading={createPersonMutation.isPending}
+            prefillData={personPrefill}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
 
-function AttendeeRow({ attendee }) {
+function AttendeeRow({ attendee, onAddPerson }) {
   const displayName = attendee.person_name || attendee.name || attendee.email || 'Unknown';
 
   const content = (
@@ -216,6 +296,21 @@ function AttendeeRow({ attendee }) {
           <p className="text-xs text-gray-500 dark:text-gray-500 truncate">{attendee.email}</p>
         )}
       </div>
+
+      {/* Add button for unmatched attendees */}
+      {!attendee.matched && onAddPerson && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onAddPerson(attendee);
+          }}
+          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+          title="Add as contact"
+        >
+          <UserPlus className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 
