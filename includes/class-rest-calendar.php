@@ -1205,9 +1205,21 @@ class Calendar extends Base {
 			);
 		}
 
-		// Get today's date range in site timezone
-		$today_start = current_time( 'Y-m-d' ) . ' 00:00:00';
-		$today_end   = current_time( 'Y-m-d' ) . ' 23:59:59';
+		// Get date parameter (optional, defaults to today)
+		$date_param  = $request->get_param( 'date' );
+		$target_date = current_time( 'Y-m-d' );
+
+		if ( $date_param ) {
+			// Sanitize and validate date format (YYYY-MM-DD)
+			$date_param = sanitize_text_field( $date_param );
+			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_param ) ) {
+				$target_date = $date_param;
+			}
+		}
+
+		// Get date range in site timezone
+		$today_start = $target_date . ' 00:00:00';
+		$today_end   = $target_date . ' 23:59:59';
 
 		// Query calendar events for today
 		// Include 'future' status because WordPress sets this for posts with future post_date

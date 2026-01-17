@@ -243,6 +243,7 @@ export const prmApi = {
   getPersonMeetings: (personId, params = {}) => api.get(`/prm/v1/people/${personId}/meetings`, { params }),
   logMeetingAsActivity: (eventId) => api.post(`/prm/v1/calendar/events/${eventId}/log`),
   getTodayMeetings: () => api.get('/prm/v1/calendar/today-meetings'),
+  getMeetingsForDate: (date) => api.get('/prm/v1/calendar/today-meetings', { params: { date } }),
 
   // Meeting notes
   getMeetingNotes: (eventId) => api.get(`/prm/v1/calendar/events/${eventId}/notes`),
