@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Seamless bidirectional sync between Caelis and Google Contacts with Caelis as source of truth
-**Current focus:** Phase 80 - Import from Google (In progress)
+**Current focus:** Phase 80 - Import from Google (Complete)
 
 ## Current Position
 
 Milestone: v5.0 Google Contacts Sync
-Phase: 80 of 85 (Import from Google)
-Plan: 02 of 03 (complete)
-Status: In progress
-Last activity: 2026-01-17 - Completed 80-02-PLAN.md (REST Endpoint and API Client)
+Phase: 80 of 85 (Import from Google) - Complete
+Plan: 03 of 03 (complete)
+Status: Phase complete
+Last activity: 2026-01-17 - Completed 80-03-PLAN.md (Frontend import UI)
 
-Progress: [███░░░░░░░] ~33%
+Progress: [█████░░░░░] ~50%
 
 ## Completed Milestones
 
@@ -69,6 +69,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Google IDs as post meta | Store _google_contact_id, _google_etag for future sync | 80-01 |
 | Synchronous import endpoint | Simpler implementation, async can be added later if needed | 80-02 |
 | Return full stats object | Detailed UI feedback with all import counts | 80-02 |
+| Auto-import via useEffect on flag | Ensures import starts even if status already loaded | 80-03 |
+| Query invalidation after import | Refresh people, companies, dates, dashboard after import | 80-03 |
 
 ### Pending Todos
 
@@ -85,11 +87,11 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-17
-Stopped at: Completed 80-02-PLAN.md
+Stopped at: Completed 80-03-PLAN.md (Phase 80 complete)
 Resume file: None
 
 ## Next Steps
 
-- Phase 80 Import from Google in progress (2/3 plans complete)
-- Next: 80-03-PLAN.md (Frontend import UI)
-- Then: Phase 81 Export to Google
+- Phase 80 Import from Google complete (3/3 plans)
+- Next: Phase 81 Export to Google (research and planning needed)
+- Then: Phase 82 Delta Sync
