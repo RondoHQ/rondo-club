@@ -60,6 +60,7 @@ No decisions yet for v5.0 milestone.
 
 2 active todos in `.planning/todos/pending/`:
 - Add import from Twenty CRM (api)
+- Debug add email to attendee from meeting view fails (api)
 
 See `/gsd:check-todos` for full list.
 
