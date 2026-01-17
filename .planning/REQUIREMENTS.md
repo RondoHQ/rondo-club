@@ -44,15 +44,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Conflict Resolution
 
-- [ ] **CONFLICT-01**: Detect conflicts when contact modified in both systems since last sync
-- [ ] **CONFLICT-02**: Default resolution strategy: Caelis wins
+- [x] **CONFLICT-01**: Detect conflicts when contact modified in both systems since last sync
+- [x] **CONFLICT-02**: Default resolution strategy: Caelis wins
 - [ ] **CONFLICT-03**: Configurable resolution strategies (caelis/google/newest/manual)
-- [ ] **CONFLICT-04**: Log all conflict resolutions for audit
+- [x] **CONFLICT-04**: Log all conflict resolutions for audit
 
 ### Deletion Handling
 
-- [ ] **DELETE-01**: When contact deleted in Caelis, delete corresponding contact in Google
-- [ ] **DELETE-02**: When contact deleted in Google, unlink in Caelis only (preserve Caelis data)
+- [x] **DELETE-01**: When contact deleted in Caelis, delete corresponding contact in Google
+- [x] **DELETE-02**: When contact deleted in Google, unlink in Caelis only (preserve Caelis data)
 
 ### Settings UI
 
@@ -132,12 +132,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SYNC-03 | 82 | Complete |
 | SYNC-04 | 82 | Complete |
 | SYNC-05 | 82 | Complete |
-| CONFLICT-01 | 83 | Pending |
-| CONFLICT-02 | 83 | Pending |
+| CONFLICT-01 | 83 | Complete |
+| CONFLICT-02 | 83 | Complete |
 | CONFLICT-03 | 83 | Pending |
-| CONFLICT-04 | 83 | Pending |
-| DELETE-01 | 83 | Pending |
-| DELETE-02 | 83 | Pending |
+| CONFLICT-04 | 83 | Complete |
+| DELETE-01 | 83 | Complete |
+| DELETE-02 | 83 | Complete |
 | SETTINGS-01 | 84 | Pending |
 | SETTINGS-02 | 84 | Pending |
 | SETTINGS-03 | 84 | Pending |
@@ -159,4 +159,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after Phase 82 completion*
+*Last updated: 2026-01-17 after Phase 83 completion*
