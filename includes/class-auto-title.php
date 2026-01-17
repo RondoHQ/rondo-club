@@ -18,7 +18,7 @@ class AutoTitle {
 		// Trigger calendar re-matching after person save (priority 25 = after title generation)
 		// Hook both acf/save_post (admin) and rest_after_insert_person (REST API)
 		add_action( 'acf/save_post', [ $this, 'trigger_calendar_rematch' ], 25 );
-		add_action( 'rest_after_insert_person', [ $this, 'trigger_calendar_rematch_rest' ], 25 );
+		add_action( 'rest_after_insert_person', [ $this, 'trigger_calendar_rematch_rest' ], 25, 2 );
 
 		// Hide title field in admin for person CPT
 		add_filter( 'acf/prepare_field/name=_post_title', [ $this, 'hide_title_field' ] );
