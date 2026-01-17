@@ -684,7 +684,7 @@ export default function Dashboard() {
             {!isToday(selectedDate) && (
               <button
                 onClick={handleToday}
-                className="px-2 py-1 text-xs font-medium text-accent-600 dark:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded transition-colors"
+                className="px-2 py-1 text-xs font-medium text-accent-600 dark:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-800 dark:hover:text-accent-100 rounded transition-colors"
               >
                 Today
               </button>
