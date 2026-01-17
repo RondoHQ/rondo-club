@@ -528,7 +528,7 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddCompany, onAddDate, 
   };
 
   return (
-    <header className="sticky top-0 z-10 flex items-center h-16 px-4 bg-white border-b border-gray-200 lg:px-6 dark:bg-gray-800 dark:border-gray-700">
+    <header className="sticky top-0 z-30 flex items-center h-16 px-4 bg-white border-b border-gray-200 lg:px-6 dark:bg-gray-800 dark:border-gray-700">
       {/* Mobile menu button */}
       <button
         onClick={onMenuClick}
