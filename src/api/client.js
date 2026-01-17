@@ -258,6 +258,8 @@ export const prmApi = {
   initiateGoogleContactsAuth: (readonly = true) => api.get('/prm/v1/google-contacts/auth', { params: { readonly } }),
   disconnectGoogleContacts: () => api.delete('/prm/v1/google-contacts'),
   triggerGoogleContactsImport: () => api.post('/prm/v1/google-contacts/import'),
+  getGoogleContactsUnlinkedCount: () => api.get('/prm/v1/google-contacts/unlinked-count'),
+  bulkExportGoogleContacts: () => api.post('/prm/v1/google-contacts/bulk-export'),
 
   // Calendar connections
   getCalendarConnections: () => api.get('/prm/v1/calendar/connections'),

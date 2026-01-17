@@ -104,6 +104,9 @@ export default function Settings() {
   const [googleContactsMessage, setGoogleContactsMessage] = useState('');
   const [googleContactsImporting, setGoogleContactsImporting] = useState(false);
   const [googleContactsImportResult, setGoogleContactsImportResult] = useState(null);
+  const [unlinkedCount, setUnlinkedCount] = useState(null);
+  const [isBulkExporting, setIsBulkExporting] = useState(false);
+  const [bulkExportResult, setBulkExportResult] = useState(null);
 
   // Fetch Application Passwords and CardDAV URLs on mount
   useEffect(() => {
@@ -195,6 +198,19 @@ export default function Settings() {
     };
     fetchGoogleContactsStatus();
   }, []);
+
+  // Fetch unlinked count when connected with readwrite
+  useEffect(() => {
+    if (googleContactsStatus?.connected && googleContactsStatus?.access_mode === 'readwrite') {
+      prmApi.getGoogleContactsUnlinkedCount()
+        .then(response => {
+          setUnlinkedCount(response.data.unlinked_count);
+        })
+        .catch(err => {
+          console.error('Failed to fetch unlinked count:', err);
+        });
+    }
+  }, [googleContactsStatus?.connected, googleContactsStatus?.access_mode]);
 
   // Handle OAuth callback messages from URL params
   useEffect(() => {
@@ -354,6 +370,25 @@ export default function Settings() {
       setGoogleContactsImportResult(null);
     } finally {
       setGoogleContactsImporting(false);
+    }
+  };
+
+  const handleBulkExportGoogleContacts = async () => {
+    setIsBulkExporting(true);
+    setBulkExportResult(null);
+
+    try {
+      const response = await prmApi.bulkExportGoogleContacts();
+      setBulkExportResult(response.data);
+      // Refresh unlinked count after export
+      setUnlinkedCount(0);
+    } catch (error) {
+      setBulkExportResult({
+        success: false,
+        message: error.response?.data?.message || 'Bulk export failed'
+      });
+    } finally {
+      setIsBulkExporting(false);
     }
   };
 
@@ -553,6 +588,12 @@ export default function Settings() {
           googleContactsImporting={googleContactsImporting}
           googleContactsImportResult={googleContactsImportResult}
           handleImportGoogleContacts={handleImportGoogleContacts}
+          // Google Contacts bulk export props
+          unlinkedCount={unlinkedCount}
+          isBulkExporting={isBulkExporting}
+          bulkExportResult={bulkExportResult}
+          handleBulkExportGoogleContacts={handleBulkExportGoogleContacts}
+          setBulkExportResult={setBulkExportResult}
         />;
       case 'notifications':
         return <NotificationsTab
@@ -1993,6 +2034,9 @@ function ConnectionsTab({
   disconnectingGoogleContacts, googleContactsMessage,
   handleConnectGoogleContacts, handleDisconnectGoogleContacts,
   googleContactsImporting, googleContactsImportResult, handleImportGoogleContacts,
+  // Google Contacts bulk export props
+  unlinkedCount, isBulkExporting, bulkExportResult,
+  handleBulkExportGoogleContacts, setBulkExportResult,
 }) {
   return (
     <div className="space-y-6">
@@ -2032,6 +2076,11 @@ function ConnectionsTab({
           googleContactsImporting={googleContactsImporting}
           googleContactsImportResult={googleContactsImportResult}
           handleImportGoogleContacts={handleImportGoogleContacts}
+          unlinkedCount={unlinkedCount}
+          isBulkExporting={isBulkExporting}
+          bulkExportResult={bulkExportResult}
+          handleBulkExportGoogleContacts={handleBulkExportGoogleContacts}
+          setBulkExportResult={setBulkExportResult}
         />
       )}
       {activeSubtab === 'carddav' && (
@@ -2086,6 +2135,8 @@ function ConnectionsContactsSubtab({
   disconnectingGoogleContacts, googleContactsMessage,
   handleConnectGoogleContacts, handleDisconnectGoogleContacts,
   googleContactsImporting, googleContactsImportResult, handleImportGoogleContacts,
+  unlinkedCount, isBulkExporting, bulkExportResult,
+  handleBulkExportGoogleContacts, setBulkExportResult,
 }) {
   const isConnected = googleContactsStatus?.connected;
   const isConfigured = googleContactsStatus?.google_configured;
@@ -2206,6 +2257,75 @@ function ConnectionsContactsSubtab({
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Bulk Export Section - only show when connected with readwrite */}
+          {googleContactsStatus.access_mode === 'readwrite' && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                    Bulk Export to Google
+                  </h4>
+                  {unlinkedCount !== null && unlinkedCount > 0 && !isBulkExporting && !bulkExportResult && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {unlinkedCount} contact{unlinkedCount !== 1 ? 's' : ''} not yet in Google
+                    </p>
+                  )}
+                  {unlinkedCount === 0 && !isBulkExporting && !bulkExportResult && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      All contacts are synced to Google
+                    </p>
+                  )}
+                </div>
+                {unlinkedCount > 0 && !isBulkExporting && !bulkExportResult && (
+                  <button
+                    onClick={handleBulkExportGoogleContacts}
+                    className="px-3 py-1.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                  >
+                    Export All
+                  </button>
+                )}
+              </div>
+
+              {/* Progress indicator */}
+              {isBulkExporting && (
+                <div className="mt-3">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Exporting contacts to Google...
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Results display */}
+              {bulkExportResult && (
+                <div className={`mt-3 p-3 rounded-md ${bulkExportResult.success ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                  <p className={`text-sm ${bulkExportResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
+                    {bulkExportResult.message}
+                  </p>
+                  {bulkExportResult.stats && (
+                    <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      <span className="inline-block mr-3">Exported: {bulkExportResult.stats.exported}</span>
+                      {bulkExportResult.stats.skipped > 0 && (
+                        <span className="inline-block mr-3">Skipped: {bulkExportResult.stats.skipped}</span>
+                      )}
+                      {bulkExportResult.stats.failed > 0 && (
+                        <span className="inline-block text-red-600 dark:text-red-400">Failed: {bulkExportResult.stats.failed}</span>
+                      )}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setBulkExportResult(null)}
+                    className="mt-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
