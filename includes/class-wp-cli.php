@@ -17,6 +17,10 @@ use Caelis\Calendar\Sync;
 use Caelis\Calendar\GoogleProvider;
 use Caelis\Calendar\CalDAVProvider;
 use Caelis\Export\VCard;
+use Caelis\Contacts\GoogleContactsSync;
+use Caelis\Contacts\GoogleContactsConnection;
+use Caelis\Import\GoogleContactsAPI;
+use Caelis\Collaboration\CommentTypes;
 
 // Only load if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -1870,8 +1874,404 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 
 	/**
+	 * Google Contacts WP-CLI Commands
+	 */
+	class PRM_Google_Contacts_CLI_Command {
+
+		/**
+		 * Sync Google Contacts for a user
+		 *
+		 * Triggers delta sync (changes since last sync) by default.
+		 * Use --full flag to trigger a complete resync of all contacts.
+		 *
+		 * ## OPTIONS
+		 *
+		 * --user-id=<user_id>
+		 * : The WordPress user ID to sync contacts for (required)
+		 *
+		 * [--full]
+		 * : Trigger a full resync (import all contacts instead of just changes)
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp caelis google-contacts sync --user-id=1
+		 *     wp caelis google-contacts sync --user-id=1 --full
+		 *
+		 * @when after_wp_load
+		 */
+		public function sync( $args, $assoc_args ) {
+			$user_id = isset( $assoc_args['user-id'] ) ? (int) $assoc_args['user-id'] : 0;
+
+			if ( ! $user_id ) {
+				WP_CLI::error( 'No user ID provided. Use --user-id=ID' );
+				return;
+			}
+
+			$user = get_userdata( $user_id );
+			if ( ! $user ) {
+				WP_CLI::error( sprintf( 'User with ID %d not found.', $user_id ) );
+				return;
+			}
+
+			// Check if user is connected to Google Contacts
+			if ( ! GoogleContactsConnection::is_connected( $user_id ) ) {
+				WP_CLI::error( sprintf( 'User %s (ID: %d) is not connected to Google Contacts.', $user->display_name, $user_id ) );
+				return;
+			}
+
+			$is_full = isset( $assoc_args['full'] );
+
+			WP_CLI::log(
+				sprintf(
+					'Starting %s sync for user: %s (ID: %d)',
+					$is_full ? 'full' : 'delta',
+					$user->display_name,
+					$user_id
+				)
+			);
+
+			try {
+				if ( $is_full ) {
+					// Full import using GoogleContactsAPI
+					$importer = new GoogleContactsAPI( $user_id );
+					$stats    = $importer->import_all();
+
+					WP_CLI::log( '' );
+					WP_CLI::log( 'Full Import Results:' );
+					WP_CLI::log( sprintf( '  Contacts imported: %d', $stats['contacts_imported'] ?? 0 ) );
+					WP_CLI::log( sprintf( '  Contacts updated: %d', $stats['contacts_updated'] ?? 0 ) );
+					WP_CLI::log( sprintf( '  Contacts skipped (no email): %d', $stats['contacts_no_email'] ?? 0 ) );
+					WP_CLI::log( sprintf( '  Companies created: %d', $stats['companies_created'] ?? 0 ) );
+					WP_CLI::log( sprintf( '  Dates created: %d', $stats['dates_created'] ?? 0 ) );
+					WP_CLI::log( sprintf( '  Photos imported: %d', $stats['photos_imported'] ?? 0 ) );
+
+					if ( ! empty( $stats['errors'] ) ) {
+						WP_CLI::log( '' );
+						WP_CLI::warning( sprintf( 'Errors encountered: %d', count( $stats['errors'] ) ) );
+						foreach ( $stats['errors'] as $error ) {
+							WP_CLI::log( sprintf( '  - %s', $error ) );
+						}
+					}
+				} else {
+					// Delta sync using GoogleContactsSync
+					$sync_service = new GoogleContactsSync();
+					$results      = $sync_service->sync_user_manual( $user_id );
+
+					WP_CLI::log( '' );
+					WP_CLI::log( 'Delta Sync Results:' );
+
+					if ( isset( $results['pull'] ) ) {
+						$pull = $results['pull'];
+						WP_CLI::log(
+							sprintf(
+								'  Pulled: %d imported, %d updated, %d unlinked',
+								$pull['contacts_imported'] ?? 0,
+								$pull['contacts_updated'] ?? 0,
+								$pull['contacts_unlinked'] ?? 0
+							)
+						);
+					}
+
+					if ( isset( $results['push'] ) ) {
+						$push = $results['push'];
+						WP_CLI::log(
+							sprintf(
+								'  Pushed: %d exported, %d failed, %d skipped',
+								$push['pushed'] ?? 0,
+								$push['failed'] ?? 0,
+								$push['skipped'] ?? 0
+							)
+						);
+					}
+				}
+
+				WP_CLI::success( 'Sync completed successfully.' );
+
+			} catch ( \Exception $e ) {
+				WP_CLI::error( sprintf( 'Sync failed: %s', $e->getMessage() ) );
+			}
+		}
+
+		/**
+		 * Show Google Contacts sync status for a user
+		 *
+		 * Displays connection details, sync history, and configuration.
+		 *
+		 * ## OPTIONS
+		 *
+		 * --user-id=<user_id>
+		 * : The WordPress user ID to check status for (required)
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp caelis google-contacts status --user-id=1
+		 *
+		 * @when after_wp_load
+		 */
+		public function status( $args, $assoc_args ) {
+			$user_id = isset( $assoc_args['user-id'] ) ? (int) $assoc_args['user-id'] : 0;
+
+			if ( ! $user_id ) {
+				WP_CLI::error( 'No user ID provided. Use --user-id=ID' );
+				return;
+			}
+
+			$user = get_userdata( $user_id );
+			if ( ! $user ) {
+				WP_CLI::error( sprintf( 'User with ID %d not found.', $user_id ) );
+				return;
+			}
+
+			$connection = GoogleContactsConnection::get_connection( $user_id );
+
+			WP_CLI::log( '' );
+			WP_CLI::log( '╔════════════════════════════════════════════════════════════╗' );
+			WP_CLI::log( '║         Google Contacts Status                             ║' );
+			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
+			WP_CLI::log( '' );
+
+			WP_CLI::log( sprintf( 'User: %s (ID: %d)', $user->display_name, $user_id ) );
+			WP_CLI::log( '' );
+
+			if ( ! $connection ) {
+				WP_CLI::warning( 'Not connected to Google Contacts.' );
+				return;
+			}
+
+			// Connection details
+			WP_CLI::log( 'Connection Details:' );
+			WP_CLI::log( sprintf( '  Connected Email: %s', $connection['email'] ?? 'Unknown' ) );
+			WP_CLI::log( sprintf( '  Access Mode: %s', $connection['access_mode'] ?? 'Unknown' ) );
+			WP_CLI::log( sprintf( '  Connected At: %s', $connection['connected_at'] ?? 'Unknown' ) );
+			WP_CLI::log( sprintf( '  Contact Count: %d', $connection['contact_count'] ?? 0 ) );
+			WP_CLI::log( '' );
+
+			// Sync status
+			WP_CLI::log( 'Sync Status:' );
+			WP_CLI::log( sprintf( '  Last Sync: %s', $connection['last_sync'] ?? 'Never' ) );
+			WP_CLI::log( sprintf( '  Sync Frequency: %d minutes', $connection['sync_frequency'] ?? GoogleContactsConnection::get_default_frequency() ) );
+
+			if ( ! empty( $connection['last_error'] ) ) {
+				WP_CLI::log( sprintf( '  Last Error: %s', $connection['last_error'] ) );
+			} else {
+				WP_CLI::log( '  Last Error: None' );
+			}
+
+			WP_CLI::log( '' );
+
+			// Sync history
+			$history = $connection['sync_history'] ?? [];
+			if ( ! empty( $history ) ) {
+				WP_CLI::log( 'Recent Sync History (last 10):' );
+				WP_CLI::log( '' );
+
+				$table_data = [];
+				foreach ( $history as $entry ) {
+					$table_data[] = [
+						'Timestamp'   => $entry['timestamp'] ?? 'Unknown',
+						'Pulled'      => $entry['pulled'] ?? 0,
+						'Pushed'      => $entry['pushed'] ?? 0,
+						'Errors'      => $entry['errors'] ?? 0,
+						'Duration'    => ( $entry['duration_ms'] ?? 0 ) . 'ms',
+					];
+				}
+
+				WP_CLI\Utils\format_items( 'table', $table_data, [ 'Timestamp', 'Pulled', 'Pushed', 'Errors', 'Duration' ] );
+			} else {
+				WP_CLI::log( 'No sync history available.' );
+			}
+
+			WP_CLI::log( '' );
+		}
+
+		/**
+		 * List unresolved sync conflicts for a user
+		 *
+		 * Shows contacts where data conflicted between Google and Caelis during sync.
+		 * Caelis wins all conflicts but they are logged for review.
+		 *
+		 * ## OPTIONS
+		 *
+		 * --user-id=<user_id>
+		 * : The WordPress user ID to check conflicts for (required)
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp caelis google-contacts conflicts --user-id=1
+		 *
+		 * @when after_wp_load
+		 */
+		public function conflicts( $args, $assoc_args ) {
+			$user_id = isset( $assoc_args['user-id'] ) ? (int) $assoc_args['user-id'] : 0;
+
+			if ( ! $user_id ) {
+				WP_CLI::error( 'No user ID provided. Use --user-id=ID' );
+				return;
+			}
+
+			$user = get_userdata( $user_id );
+			if ( ! $user ) {
+				WP_CLI::error( sprintf( 'User with ID %d not found.', $user_id ) );
+				return;
+			}
+
+			WP_CLI::log( '' );
+			WP_CLI::log( sprintf( 'Checking sync conflicts for user: %s (ID: %d)', $user->display_name, $user_id ) );
+			WP_CLI::log( '' );
+
+			// Get all person posts owned by this user
+			global $wpdb;
+			$person_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT ID FROM {$wpdb->posts}
+					WHERE post_type = 'person'
+					AND post_status = 'publish'
+					AND post_author = %d",
+					$user_id
+				)
+			);
+
+			if ( empty( $person_ids ) ) {
+				WP_CLI::warning( 'No contacts found for this user.' );
+				return;
+			}
+
+			// Query comments with sync_conflict activity type for these persons
+			$id_placeholders = implode( ',', array_fill( 0, count( $person_ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+			$conflicts = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT c.comment_ID, c.comment_post_ID, c.comment_content, c.comment_date
+					FROM {$wpdb->comments} c
+					INNER JOIN {$wpdb->commentmeta} cm ON c.comment_ID = cm.comment_id
+					WHERE c.comment_type = %s
+					AND cm.meta_key = 'activity_type'
+					AND cm.meta_value = 'sync_conflict'
+					AND c.comment_post_ID IN ({$id_placeholders})
+					ORDER BY c.comment_date DESC",
+					array_merge( [ CommentTypes::TYPE_ACTIVITY ], $person_ids )
+				)
+			);
+
+			if ( empty( $conflicts ) ) {
+				WP_CLI::warning( 'No sync conflicts found.' );
+				WP_CLI::log( '' );
+				WP_CLI::log( 'This is good! It means Caelis and Google Contacts data have not conflicted.' );
+				return;
+			}
+
+			WP_CLI::log( sprintf( 'Found %d conflict(s):', count( $conflicts ) ) );
+			WP_CLI::log( '' );
+
+			$table_data = [];
+			foreach ( $conflicts as $conflict ) {
+				$person_name = get_the_title( $conflict->comment_post_ID );
+				$table_data[] = [
+					'Person'  => $person_name,
+					'Date'    => $conflict->comment_date,
+					'Details' => wp_trim_words( $conflict->comment_content, 20 ),
+				];
+			}
+
+			WP_CLI\Utils\format_items( 'table', $table_data, [ 'Person', 'Date', 'Details' ] );
+
+			WP_CLI::log( '' );
+			WP_CLI::log( 'Note: Caelis is the source of truth. Conflicts are auto-resolved in favor of Caelis data.' );
+			WP_CLI::log( '' );
+		}
+
+		/**
+		 * Unlink all contacts from Google to reset sync state
+		 *
+		 * Removes Google metadata from all contacts owned by the user but preserves
+		 * all Caelis data. Useful to reset sync state for a fresh start.
+		 *
+		 * ## OPTIONS
+		 *
+		 * --user-id=<user_id>
+		 * : The WordPress user ID to unlink contacts for (required)
+		 *
+		 * [--yes]
+		 * : Skip confirmation prompt
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp caelis google-contacts unlink-all --user-id=1
+		 *     wp caelis google-contacts unlink-all --user-id=1 --yes
+		 *
+		 * @when after_wp_load
+		 */
+		public function unlink_all( $args, $assoc_args ) {
+			$user_id = isset( $assoc_args['user-id'] ) ? (int) $assoc_args['user-id'] : 0;
+
+			if ( ! $user_id ) {
+				WP_CLI::error( 'No user ID provided. Use --user-id=ID' );
+				return;
+			}
+
+			$user = get_userdata( $user_id );
+			if ( ! $user ) {
+				WP_CLI::error( sprintf( 'User with ID %d not found.', $user_id ) );
+				return;
+			}
+
+			// Get all person posts with Google contact ID that are owned by user
+			global $wpdb;
+			$linked_contacts = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT p.ID, pm.meta_value as google_id
+					FROM {$wpdb->posts} p
+					INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+					WHERE p.post_type = 'person'
+					AND p.post_status = 'publish'
+					AND p.post_author = %d
+					AND pm.meta_key = '_google_contact_id'",
+					$user_id
+				)
+			);
+
+			$count = count( $linked_contacts );
+
+			if ( 0 === $count ) {
+				WP_CLI::warning( 'No linked Google Contacts found for this user.' );
+				return;
+			}
+
+			WP_CLI::log( '' );
+			WP_CLI::log( sprintf( 'Found %d contact(s) linked to Google for user: %s (ID: %d)', $count, $user->display_name, $user_id ) );
+			WP_CLI::log( '' );
+
+			// Confirm unless --yes flag provided
+			if ( ! isset( $assoc_args['yes'] ) ) {
+				WP_CLI::confirm( 'This will remove all Google sync metadata from these contacts. Caelis data will be preserved. Continue?' );
+			}
+
+			WP_CLI::log( 'Unlinking contacts...' );
+
+			$unlinked = 0;
+			foreach ( $linked_contacts as $contact ) {
+				delete_post_meta( $contact->ID, '_google_contact_id' );
+				delete_post_meta( $contact->ID, '_google_etag' );
+				delete_post_meta( $contact->ID, '_google_last_import' );
+				delete_post_meta( $contact->ID, '_google_last_export' );
+				delete_post_meta( $contact->ID, '_google_synced_fields' );
+				++$unlinked;
+			}
+
+			// Clear sync token from connection to force full resync on next sync
+			GoogleContactsConnection::update_connection( $user_id, [ 'sync_token' => null ] );
+
+			WP_CLI::log( '' );
+			WP_CLI::success( sprintf( 'Unlinked %d contact(s). Sync token cleared.', $unlinked ) );
+			WP_CLI::log( '' );
+			WP_CLI::log( 'To re-sync, run: wp caelis google-contacts sync --user-id=' . $user_id . ' --full' );
+		}
+	}
+
+	/**
 	 * Register WP-CLI commands
 	 */
+	WP_CLI::add_command( 'caelis google-contacts', 'PRM_Google_Contacts_CLI_Command' );
 	WP_CLI::add_command( 'prm reminders', 'PRM_Reminders_CLI_Command' );
 	WP_CLI::add_command( 'prm migrate', 'PRM_Migration_CLI_Command' );
 	WP_CLI::add_command( 'prm vcard', 'PRM_VCard_CLI_Command' );
