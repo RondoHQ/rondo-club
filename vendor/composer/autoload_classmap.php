@@ -104,6 +104,7 @@ return array(
     'Caelis\\Export\\ICalFeed' => $baseDir . '/includes/class-ical-feed.php',
     'Caelis\\Export\\VCard' => $baseDir . '/includes/class-vcard-export.php',
     'Caelis\\Import\\GoogleContacts' => $baseDir . '/includes/class-google-contacts-import.php',
+    'Caelis\\Import\\GoogleContactsAPI' => $baseDir . '/includes/class-google-contacts-api-import.php',
     'Caelis\\Import\\Monica' => $baseDir . '/includes/class-monica-import.php',
     'Caelis\\Import\\VCard' => $baseDir . '/includes/class-vcard-import.php',
     'Caelis\\Notifications\\Channel' => $baseDir . '/includes/class-notification-channel.php',
