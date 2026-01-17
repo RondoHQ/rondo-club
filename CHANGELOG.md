@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.9.0] - 2026-01-17
+
+### Added
+- Multi-calendar selection for Google Calendar connections via checkbox UI
+- Sync events from multiple selected calendars in a single connection
+- Connection card shows "N calendars selected" for multi-calendar connections
+- Backend `get_calendar_ids()` helper normalizes old single-calendar to new array format
+
+### Changed
+- Calendar selector changed from dropdown to checkbox list
+- Save button disabled when no calendars selected for Google connections
+
 ## [4.8.0] - 2026-01-17
 
 ### Added
