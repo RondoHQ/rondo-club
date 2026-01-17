@@ -208,7 +208,7 @@ Resume file: None
 41. ~~Move calendar subscription box to Connections Calendars (ui)~~ - DONE
 42. ~~Add Google Calendar deeplink to meeting modals (ui)~~ - DONE
 43. ~~Meeting attendees show photos with profile links (ui)~~ - DONE
-44. Exclude current user from meeting attendees display (ui)
+44. ~~Exclude current user from meeting attendees display (ui)~~ - DONE
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework - PHPUnit done in v3.0 (Playwright deferred)
@@ -225,6 +225,7 @@ Completed todos in `.planning/todos/done/`:
 12. Prevent duplicate email addresses across people - Done
 13. Add Google Calendar deeplink to meeting modals - Done
 14. Meeting attendees show photos with profile links - Done
+15. Exclude current user from meeting attendees display - Done
 
 ## Next Steps
 
