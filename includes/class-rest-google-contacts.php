@@ -14,6 +14,7 @@ namespace Caelis\REST;
 use Caelis\Calendar\GoogleOAuth;
 use Caelis\Contacts\GoogleContactsConnection;
 use Caelis\Import\GoogleContactsAPI;
+use Caelis\Export\GoogleContactsExport;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -93,6 +94,26 @@ class GoogleContacts extends Base {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'trigger_import' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
+
+		// POST /prm/v1/google-contacts/export/{id} - Export single contact
+		register_rest_route(
+			'prm/v1',
+			'/google-contacts/export/(?P<id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'export_contact' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id' => [
+						'required'          => true,
+						'type'              => 'integer',
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && $param > 0;
+						},
+					],
+				],
 			]
 		);
 	}
@@ -345,6 +366,77 @@ class GoogleContacts extends Base {
 
 			return new \WP_Error(
 				'import_failed',
+				$e->getMessage(),
+				[ 'status' => 500 ]
+			);
+		}
+	}
+
+	/**
+	 * Export a single contact to Google
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response with export result or error.
+	 */
+	public function export_contact( $request ) {
+		$user_id = get_current_user_id();
+		$post_id = (int) $request->get_param( 'id' );
+
+		// Check if connected with readwrite access.
+		$connection = GoogleContactsConnection::get_connection( $user_id );
+		if ( ! $connection ) {
+			return new \WP_Error(
+				'not_connected',
+				__( 'Google Contacts is not connected.', 'caelis' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
+			return new \WP_Error(
+				'readonly_access',
+				__( 'Google Contacts is connected with read-only access. Please reconnect with read-write access to export contacts.', 'caelis' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		// Verify post exists and user owns it.
+		$post = get_post( $post_id );
+		if ( ! $post || $post->post_type !== 'person' ) {
+			return new \WP_Error(
+				'not_found',
+				__( 'Contact not found.', 'caelis' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Check ownership (non-admins can only export their own contacts).
+		if ( ! current_user_can( 'manage_options' ) && (int) $post->post_author !== $user_id ) {
+			return new \WP_Error(
+				'forbidden',
+				__( 'You do not have permission to export this contact.', 'caelis' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		try {
+			$exporter = new GoogleContactsExport( $user_id );
+			$result   = $exporter->export_contact( $post_id );
+
+			$google_id = get_post_meta( $post_id, '_google_contact_id', true );
+
+			return rest_ensure_response(
+				[
+					'success'           => $result,
+					'google_contact_id' => $google_id,
+					'message'           => $result
+						? __( 'Contact exported to Google successfully.', 'caelis' )
+						: __( 'Export failed. Check error logs for details.', 'caelis' ),
+				]
+			);
+		} catch ( \Exception $e ) {
+			return new \WP_Error(
+				'export_failed',
 				$e->getMessage(),
 				[ 'status' => 500 ]
 			);
