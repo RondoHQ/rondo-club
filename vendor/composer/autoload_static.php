@@ -447,6 +447,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Caelis\\Collaboration\\Reminders' => __DIR__ . '/../..' . '/includes/class-reminders.php',
         'Caelis\\Collaboration\\WorkspaceMembers' => __DIR__ . '/../..' . '/includes/class-workspace-members.php',
         'Caelis\\Contacts\\GoogleContactsConnection' => __DIR__ . '/../..' . '/includes/class-google-contacts-connection.php',
+        'Caelis\\Contacts\\GoogleContactsSync' => __DIR__ . '/../..' . '/includes/class-google-contacts-sync.php',
         'Caelis\\Core\\AccessControl' => __DIR__ . '/../..' . '/includes/class-access-control.php',
         'Caelis\\Core\\AutoTitle' => __DIR__ . '/../..' . '/includes/class-auto-title.php',
         'Caelis\\Core\\PostTypes' => __DIR__ . '/../..' . '/includes/class-post-types.php',

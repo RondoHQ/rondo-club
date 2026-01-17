@@ -36,11 +36,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Ongoing Sync
 
-- [ ] **SYNC-01**: Background sync via WP-Cron with configurable frequency (15min to daily)
-- [ ] **SYNC-02**: Delta sync using People API syncToken (only changed contacts)
-- [ ] **SYNC-03**: Detect changes in Google (new, modified, deleted contacts)
-- [ ] **SYNC-04**: Detect changes in Caelis (compare post_modified vs last_synced)
-- [ ] **SYNC-05**: Propagate changes bidirectionally
+- [x] **SYNC-01**: Background sync via WP-Cron with configurable frequency (15min to daily)
+- [x] **SYNC-02**: Delta sync using People API syncToken (only changed contacts)
+- [x] **SYNC-03**: Detect changes in Google (new, modified, deleted contacts)
+- [x] **SYNC-04**: Detect changes in Caelis (compare post_modified vs last_synced)
+- [x] **SYNC-05**: Propagate changes bidirectionally
 
 ### Conflict Resolution
 
@@ -127,11 +127,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXPORT-03 | 81 | Complete |
 | EXPORT-04 | 81 | Complete |
 | EXPORT-05 | 81 | Complete |
-| SYNC-01 | 82 | Pending |
-| SYNC-02 | 82 | Pending |
-| SYNC-03 | 82 | Pending |
-| SYNC-04 | 82 | Pending |
-| SYNC-05 | 82 | Pending |
+| SYNC-01 | 82 | Complete |
+| SYNC-02 | 82 | Complete |
+| SYNC-03 | 82 | Complete |
+| SYNC-04 | 82 | Complete |
+| SYNC-05 | 82 | Complete |
 | CONFLICT-01 | 83 | Pending |
 | CONFLICT-02 | 83 | Pending |
 | CONFLICT-03 | 83 | Pending |
@@ -159,4 +159,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after Phase 81 completion*
+*Last updated: 2026-01-17 after Phase 82 completion*
