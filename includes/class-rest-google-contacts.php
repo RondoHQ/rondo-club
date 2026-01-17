@@ -116,6 +116,28 @@ class GoogleContacts extends Base {
 				],
 			]
 		);
+
+		// POST /prm/v1/google-contacts/bulk-export - Export all unlinked contacts.
+		register_rest_route(
+			'prm/v1',
+			'/google-contacts/bulk-export',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'bulk_export' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
+
+		// GET /prm/v1/google-contacts/unlinked-count - Get count of unlinked contacts.
+		register_rest_route(
+			'prm/v1',
+			'/google-contacts/unlinked-count',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_unlinked_count' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
 	}
 
 	/**
@@ -441,6 +463,88 @@ class GoogleContacts extends Base {
 				[ 'status' => 500 ]
 			);
 		}
+	}
+
+	/**
+	 * Bulk export all unlinked contacts to Google.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response with export stats or error.
+	 */
+	public function bulk_export( $request ) {
+		$user_id = get_current_user_id();
+
+		// Check if connected with readwrite access.
+		$connection = GoogleContactsConnection::get_connection( $user_id );
+		if ( ! $connection ) {
+			return new \WP_Error(
+				'not_connected',
+				__( 'Google Contacts is not connected.', 'caelis' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
+			return new \WP_Error(
+				'readonly_access',
+				__( 'Google Contacts is connected with read-only access. Please reconnect with read-write access to export contacts.', 'caelis' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		// Increase time limit for bulk operation.
+		set_time_limit( 300 ); // 5 minutes.
+
+		try {
+			$exporter = new GoogleContactsExport( $user_id );
+			$stats    = $exporter->bulk_export_unlinked();
+
+			return rest_ensure_response(
+				[
+					'success' => true,
+					'stats'   => $stats,
+					'message' => sprintf(
+						/* translators: 1: exported count, 2: skipped count, 3: failed count, 4: total count */
+						__( 'Bulk export complete: %1$d exported, %2$d skipped, %3$d failed out of %4$d total.', 'caelis' ),
+						$stats['exported'],
+						$stats['skipped'],
+						$stats['failed'],
+						$stats['total']
+					),
+				]
+			);
+
+		} catch ( \Exception $e ) {
+			return new \WP_Error(
+				'bulk_export_failed',
+				$e->getMessage(),
+				[ 'status' => 500 ]
+			);
+		}
+	}
+
+	/**
+	 * Get count of unlinked contacts.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Response with unlinked count.
+	 */
+	public function get_unlinked_count( $request ) {
+		$user_id = get_current_user_id();
+
+		// Check if connected with readwrite access (needed to export).
+		$connection = GoogleContactsConnection::get_connection( $user_id );
+		$can_export = $connection && ( $connection['access_mode'] ?? '' ) === 'readwrite';
+
+		$exporter = new GoogleContactsExport( $user_id );
+		$count    = $exporter->get_unlinked_count();
+
+		return rest_ensure_response(
+			[
+				'unlinked_count' => $count,
+				'can_export'     => $can_export,
+			]
+		);
 	}
 
 	/**
