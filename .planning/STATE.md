@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Seamless bidirectional sync between Caelis and Google Contacts with Caelis as source of truth
-**Current focus:** Phase 83 - Conflict & Deletion (Complete)
+**Current focus:** Phase 84 - Settings & Person UI (In Progress)
 
 ## Current Position
 
 Milestone: v5.0 Google Contacts Sync
-Phase: 83 of 85 (Conflict & Deletion)
-Plan: 02 of 02 (complete)
-Status: Phase complete
-Last activity: 2026-01-17 - Completed Phase 83 execution
+Phase: 84 of 85 (Settings & Person UI)
+Plan: 01 of 02 (complete)
+Status: In progress
+Last activity: 2026-01-18 - Completed 84-01-PLAN.md
 
-Progress: [████████░░] ~80%
+Progress: [████████░░] ~85%
 
 ## Completed Milestones
 
@@ -94,6 +94,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Snapshot stored as _google_synced_fields post meta | Enables three-way conflict comparison | 83-01 |
 | Three-way comparison for conflict detection | Compare Google vs Caelis vs snapshot to detect actual conflicts | 83-01 |
 | Log conflicts as TYPE_ACTIVITY with sync_conflict type | Audit trail for automated conflict resolution | 83-01 |
+| Sync history stored in connection meta (last 10) | Efficient storage for UI display without unbounded growth | 84-01 |
+| google_contact_id returns null for unlinked | Clean API contract for frontend | 84-01 |
 
 ### Pending Todos
 
@@ -109,12 +111,12 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-17 23:30 UTC
-Stopped at: Completed Phase 83 execution
+Last session: 2026-01-18 00:00 UTC
+Stopped at: Completed 84-01-PLAN.md
 Resume file: None
 
 ## Next Steps
 
-- Phase 83 Conflict & Deletion complete (2/2 plans)
-- Next: Phase 84 Settings & Person UI
+- Phase 84 Settings & Person UI in progress (1/2 plans complete)
+- Next: 84-02 Frontend UI implementation
 - Then: Phase 85 Polish & CLI
