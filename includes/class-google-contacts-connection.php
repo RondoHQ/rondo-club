@@ -220,4 +220,29 @@ class GoogleContactsConnection {
 		}
 		return (int) $connection['sync_frequency'];
 	}
+
+	/**
+	 * Add sync history entry (keeps last 10)
+	 *
+	 * Records sync operation results for display in Settings UI.
+	 *
+	 * @param int   $user_id User ID.
+	 * @param array $entry   History entry with keys: timestamp, pulled, pushed, errors, duration_ms.
+	 */
+	public static function add_sync_history_entry( int $user_id, array $entry ): void {
+		$connection = self::get_connection( $user_id );
+		if ( ! $connection ) {
+			return;
+		}
+
+		$history = $connection['sync_history'] ?? [];
+
+		// Prepend new entry
+		array_unshift( $history, $entry );
+
+		// Keep only last 10
+		$history = array_slice( $history, 0, 10 );
+
+		self::update_connection( $user_id, [ 'sync_history' => $history ] );
+	}
 }

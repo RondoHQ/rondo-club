@@ -216,11 +216,15 @@ class GoogleContactsSync {
 			return null;
 		}
 
+		// Start timing for history entry
+		$start_time = microtime( true );
+
 		$has_write_access = ( $connection['access_mode'] ?? '' ) === 'readwrite';
 
 		$results = [
 			'pull_stats' => null,
 			'push_stats' => null,
+			'errors'     => [],
 		];
 
 		try {
@@ -266,6 +270,10 @@ class GoogleContactsSync {
 				)
 			);
 
+			// Calculate duration and record sync history
+			$end_time = microtime( true );
+			$this->record_sync_history( $user_id, $results, $start_time, $end_time );
+
 			return $results;
 
 		} catch ( \Exception $e ) {
@@ -304,6 +312,9 @@ class GoogleContactsSync {
 			throw new \Exception( __( 'Google Contacts is not connected.', 'caelis' ) );
 		}
 
+		// Start timing for history entry
+		$start_time = microtime( true );
+
 		$connection       = GoogleContactsConnection::get_connection( $user_id );
 		$has_write_access = ( $connection['access_mode'] ?? '' ) === 'readwrite';
 
@@ -325,6 +336,15 @@ class GoogleContactsSync {
 				'last_error' => null,
 			]
 		);
+
+		// Record sync history
+		$end_time = microtime( true );
+		$results  = [
+			'pull_stats' => $pull_stats,
+			'push_stats' => $push_stats,
+			'errors'     => [],
+		];
+		$this->record_sync_history( $user_id, $results, $start_time, $end_time );
 
 		return [
 			'pull' => $pull_stats,
@@ -399,6 +419,40 @@ class GoogleContactsSync {
 		}
 
 		return $stats;
+	}
+
+	/**
+	 * Record sync history entry
+	 *
+	 * Creates a history entry from sync results and stores it.
+	 *
+	 * @param int   $user_id    User ID.
+	 * @param array $results    Sync results with pull_stats and push_stats.
+	 * @param float $start_time Start time from microtime(true).
+	 * @param float $end_time   End time from microtime(true).
+	 */
+	private function record_sync_history( int $user_id, array $results, float $start_time, float $end_time ): void {
+		// Count errors from all sources
+		$error_count = 0;
+		if ( ! empty( $results['errors'] ) ) {
+			$error_count += count( $results['errors'] );
+		}
+		if ( ! empty( $results['pull_stats']['errors'] ) ) {
+			$error_count += count( $results['pull_stats']['errors'] );
+		}
+		if ( ! empty( $results['push_stats']['errors'] ) ) {
+			$error_count += count( $results['push_stats']['errors'] );
+		}
+
+		$history_entry = [
+			'timestamp'   => current_time( 'c' ),
+			'pulled'      => ( $results['pull_stats']['contacts_imported'] ?? 0 ) + ( $results['pull_stats']['contacts_updated'] ?? 0 ),
+			'pushed'      => $results['push_stats']['pushed'] ?? 0,
+			'errors'      => $error_count,
+			'duration_ms' => (int) ( ( $end_time - $start_time ) * 1000 ),
+		];
+
+		GoogleContactsConnection::add_sync_history_entry( $user_id, $history_entry );
 	}
 
 	/**
