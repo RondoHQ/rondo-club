@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 77-fixed-height-dashboard-widgets
 source: 77-01-SUMMARY.md
 started: 2026-01-17T14:00:00Z
@@ -57,5 +57,9 @@ skipped: 0
   reason: "User reported: no - when i click back and forth between days on the Events widget, it jumps."
   severity: major
   test: 6
-  artifacts: []
-  missing: []
+  root_cause: "useDateMeetings hook doesn't preserve previous data during fetch. When date changes, query key changes and data becomes undefined briefly, causing 'No meetings' empty state to flash and resize widget."
+  artifacts:
+    - path: "src/hooks/useMeetings.js"
+      issue: "useDateMeetings missing placeholderData option"
+  missing:
+    - "Add placeholderData: (prev) => prev to useDateMeetings hook to keep previous data visible during fetch"
