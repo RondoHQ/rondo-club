@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v5.0 Google Contacts Sync
 Phase: 82 of 85 (Delta Sync)
-Plan: 01 of 03 (complete)
+Plan: 02 of 03 (complete)
 Status: In progress
-Last activity: 2026-01-17 - Completed 82-01-PLAN.md (Cron scheduling infrastructure)
+Last activity: 2026-01-17 - Completed 82-02-PLAN.md (Delta sync logic)
 
-Progress: [██████░░░░] ~62%
+Progress: [██████░░░░] ~63%
 
 ## Completed Milestones
 
@@ -81,6 +81,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Check if cron schedule exists before adding | Calendar sync may have already registered 15-minute interval | 82-01 |
 | Default sync frequency of 60 minutes | Hourly balances freshness with API quota | 82-01 |
 | Placeholder sync_user implementation | Establishes infrastructure, Plan 02 adds actual delta logic | 82-01 |
+| Fall back to full import when syncToken missing/expired | Graceful degradation ensures sync always completes | 82-02 |
+| Remove Google meta but preserve Caelis data on unlink | User's data is valuable, only association is removed | 82-02 |
+| Only push linked contacts (with _google_contact_id) | Don't auto-create Google contacts for unlinked Caelis contacts | 82-02 |
+| Pull from Google first, then push local changes | Have latest Google state before pushing changes | 82-02 |
 
 ### Pending Todos
 
@@ -96,12 +100,12 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-17 21:47 UTC
-Stopped at: Completed 82-01-PLAN.md (Cron scheduling infrastructure)
+Last session: 2026-01-17 21:58 UTC
+Stopped at: Completed 82-02-PLAN.md (Delta sync logic)
 Resume file: None
 
 ## Next Steps
 
-- Phase 82 Delta Sync in progress (1/3 plans complete)
-- Next: 82-02-PLAN.md (Delta sync logic)
-- Then: 82-03-PLAN.md (Sync monitoring)
+- Phase 82 Delta Sync in progress (2/3 plans complete)
+- Next: 82-03-PLAN.md (Sync monitoring)
+- Then: Phase 83 (Conflict resolution)
