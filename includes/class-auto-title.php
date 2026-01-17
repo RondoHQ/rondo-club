@@ -16,7 +16,9 @@ class AutoTitle {
 		add_action( 'acf/save_post', [ $this, 'auto_generate_date_title' ], 20 );
 
 		// Trigger calendar re-matching after person save (priority 25 = after title generation)
+		// Hook both acf/save_post (admin) and rest_after_insert_person (REST API)
 		add_action( 'acf/save_post', [ $this, 'trigger_calendar_rematch' ], 25 );
+		add_action( 'rest_after_insert_person', [ $this, 'trigger_calendar_rematch_rest' ], 25 );
 
 		// Hide title field in admin for person CPT
 		add_filter( 'acf/prepare_field/name=_post_title', [ $this, 'hide_title_field' ] );
@@ -244,6 +246,19 @@ class AutoTitle {
 		}
 
 		// Trigger calendar re-matching
-		\PRM_Calendar_Matcher::on_person_saved( $post_id );
+		\Caelis\Calendar\Matcher::on_person_saved( $post_id );
+	}
+
+	/**
+	 * Trigger calendar re-matching from REST API insert
+	 *
+	 * Called via rest_after_insert_person hook when a person is created/updated via REST API.
+	 *
+	 * @param WP_Post         $post    Inserted or updated post object.
+	 * @param WP_REST_Request $request Request object.
+	 */
+	public function trigger_calendar_rematch_rest( $post, $request ) {
+		// Trigger calendar re-matching
+		\Caelis\Calendar\Matcher::on_person_saved( $post->ID );
 	}
 }
