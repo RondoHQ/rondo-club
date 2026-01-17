@@ -22,14 +22,14 @@ Requirements for v4.7 release. Each maps to roadmap phases.
 
 ### Activity Types
 
-- [ ] **ACT-01**: User can log activities with "Dinner" type
-- [ ] **ACT-02**: User can log activities with "Zoom" type
-- [ ] **ACT-03**: Activity type "Phone call" is renamed to "Phone"
+- [x] **ACT-01**: User can log activities with "Dinner" type
+- [x] **ACT-02**: User can log activities with "Zoom" type
+- [x] **ACT-03**: Activity type "Phone call" is renamed to "Phone"
 
 ### Bug Fixes
 
-- [ ] **BUG-01**: Topbar and dropdown menus layer correctly on People screen
-- [ ] **BUG-02**: Person header shows space between "at" and company name
+- [x] **BUG-01**: Topbar and dropdown menus layer correctly on People screen
+- [x] **BUG-02**: Person header shows space between "at" and company name
 
 ## v2 Requirements
 
@@ -56,11 +56,11 @@ Which phases cover which requirements. Updated by create-roadmap.
 | DM-05 | Phase 71 | Complete |
 | DM-06 | Phase 71 | Complete |
 | DM-07 | Phase 71 | Complete |
-| ACT-01 | Phase 72 | Pending |
-| ACT-02 | Phase 72 | Pending |
-| ACT-03 | Phase 72 | Pending |
-| BUG-01 | Phase 72 | Pending |
-| BUG-02 | Phase 72 | Pending |
+| ACT-01 | Phase 72 | Complete |
+| ACT-02 | Phase 72 | Complete |
+| ACT-03 | Phase 72 | Complete |
+| BUG-01 | Phase 72 | Complete |
+| BUG-02 | Phase 72 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -69,4 +69,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-16 after Phase 71 execution*
+*Last updated: 2026-01-17 after Phase 72 execution*

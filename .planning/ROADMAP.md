@@ -25,13 +25,13 @@
 - ✅ [v4.4 Code Organization](milestones/v4.4-code-organization.md) (Phases 64-66) — SHIPPED 2026-01-16
 - ✅ [v4.5 Calendar Sync Control](milestones/v4.5-calendar-sync-control.md) (Phases 67-68) — SHIPPED 2026-01-16
 - ✅ [v4.6 Dashboard & Polish](milestones/v4.6-dashboard-polish.md) (Phases 69-70) — SHIPPED 2026-01-16
-- 🚧 **v4.7 Dark Mode & Activity Polish** (Phases 71-72) — In Progress
+- ✅ [v4.7 Dark Mode & Activity Polish](milestones/v4.7-dark-mode-activity-polish.md) (Phases 71-72) — SHIPPED 2026-01-17
 
 ## Current Status
 
-**Current milestone:** v4.7 Dark Mode & Activity Polish (Phases 71-72)
+**Current milestone:** None — v4.7 complete, ready for next milestone
 
-### 🚧 v4.7 Dark Mode & Activity Polish (In Progress)
+### ✅ v4.7 Dark Mode & Activity Polish (Complete)
 
 **Milestone Goal:** Comprehensive dark mode contrast fixes across modals and settings, plus activity type improvements and minor bug fixes.
 
@@ -47,16 +47,16 @@
   5. Settings Connections subtab headings are readable in dark mode ✓
 **Plans**: 2/2 complete
 
-#### Phase 72: Activity & Bug Fixes
+#### Phase 72: Activity & Bug Fixes ✓
 **Goal**: Add activity types and fix UI bugs
 **Depends on**: Phase 71
 **Requirements**: ACT-01, ACT-02, ACT-03, BUG-01, BUG-02
 **Success Criteria** (what must be TRUE):
-  1. User can select "Dinner" and "Zoom" as activity types
-  2. "Phone call" activity type shows as "Phone"
-  3. Topbar stays above content on People screen
-  4. Person header displays "at Company" with proper spacing
-**Plans**: TBD
+  1. User can select "Dinner" and "Zoom" as activity types ✓
+  2. "Phone call" activity type shows as "Phone" ✓
+  3. Topbar stays above content on People screen ✓
+  4. Person header displays "at Company" with proper spacing ✓
+**Plans**: 1/1 complete
 
 ---
 
@@ -690,6 +690,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.4 Code Organization | 64-66 | 6/6 | Complete ✅ | 2026-01-16 |
 | v4.5 Calendar Sync Control | 67-68 | 3/3 | Complete ✅ | 2026-01-16 |
 | v4.6 Dashboard & Polish | 69-70 | 2/2 | Complete ✅ | 2026-01-16 |
-| v4.7 Dark Mode & Activity Polish | 71-72 | 0/TBD | In Progress 🚧 | - |
+| v4.7 Dark Mode & Activity Polish | 71-72 | 4/4 | Complete ✅ | 2026-01-17 |
 
-**Shipped: 25 milestones, 70 phases, 121 plans**
+**Shipped: 26 milestones, 72 phases, 125 plans**
