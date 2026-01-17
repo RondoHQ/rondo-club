@@ -1466,7 +1466,7 @@ export default function PersonDetail() {
                       {hasTitle ? job.job_title : 'Works'}
                       {hasCompany && (
                         <>
-                          <span className="text-gray-400 dark:text-gray-500"> at</span>
+                          <span className="text-gray-400 dark:text-gray-500"> at </span>
                           <Link
                             to={`/organizations/${job.company}`}
                             className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
