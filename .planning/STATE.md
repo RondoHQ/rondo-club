@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Planning next milestone
+**Current focus:** v4.8 Meeting Enhancements
 
 ## Current Position
 
-Milestone: None — v4.7 shipped, ready for next milestone
-Phase: 72 phases complete (v1.0-v4.7)
-Plan: Not started
-Status: Ready to plan next milestone
-Last activity: 2026-01-17 — v4.7 Dark Mode & Activity Polish shipped
+Milestone: v4.8 Meeting Enhancements
+Phase: Not started (run /gsd:create-roadmap)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-01-17 — v4.8 milestone started
 
-Progress: Ready for next milestone
+Progress: Milestone initialized, ready for roadmap
 
 ## Completed Milestones
 

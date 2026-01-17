@@ -198,7 +198,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-**Current Milestone:** None — v4.7 shipped, ready for next milestone planning
+**Current Milestone:** v4.8 Meeting Enhancements
+
+**Goal:** Improve calendar meeting experience with detailed views and navigation.
+
+**Target features:**
+- [ ] Meeting detail modal — click meeting to see full details (title, time, location, description, attendees)
+- [ ] Add person from meeting — identify non-Caelis attendees by email, quick-add to contacts
+- [ ] Date navigation on meetings widget — prev/next buttons to browse days, "Today" to return
+- [ ] Calendar bug fixes — fix duplicate events from future post status, ensure upsert finds existing events
 
 ### Out of Scope
 
@@ -300,4 +308,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Activity type ID preservation | Keep 'call' ID when renaming to "Phone" to preserve existing activity data | ✓ Good |
 
 ---
-*Last updated: 2026-01-17 — v4.7 Dark Mode & Activity Polish shipped*
+*Last updated: 2026-01-17 — v4.8 Meeting Enhancements milestone started*
