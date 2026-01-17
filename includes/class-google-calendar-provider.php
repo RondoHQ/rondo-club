@@ -15,6 +15,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 class GoogleProvider {
 
 	/**
+	 * Get calendar IDs from connection, handling both old and new formats
+	 *
+	 * Normalizes the connection data to always return an array of calendar IDs:
+	 * - New format: calendar_ids array stored directly
+	 * - Old format: single calendar_id string converted to array
+	 * - Default: ['primary'] if neither present
+	 *
+	 * @param array $connection Connection data from user meta
+	 * @return array Array of calendar IDs to sync
+	 */
+	public static function get_calendar_ids( array $connection ): array {
+		// New format: calendar_ids array
+		if ( ! empty( $connection['calendar_ids'] ) && is_array( $connection['calendar_ids'] ) ) {
+			return $connection['calendar_ids'];
+		}
+
+		// Old format: single calendar_id
+		if ( ! empty( $connection['calendar_id'] ) ) {
+			return [ $connection['calendar_id'] ];
+		}
+
+		// Default to primary calendar
+		return [ 'primary' ];
+	}
+
+	/**
 	 * Sync events from Google Calendar for a connection
 	 *
 	 * @param int   $user_id    WordPress user ID
@@ -50,6 +76,8 @@ class GoogleProvider {
 	/**
 	 * Perform the actual sync (called by sync() with lock protection)
 	 *
+	 * Loops through all selected calendars and aggregates results.
+	 *
 	 * @param int   $user_id    WordPress user ID
 	 * @param array $connection Connection data from user meta
 	 * @return array Summary of sync results (created, updated, total)
@@ -78,10 +106,57 @@ class GoogleProvider {
 		$end_date = new \DateTime();
 		$end_date->modify( "+{$sync_to_days} days" );
 
-		// Determine which calendar to sync
-		$calendar_id = ! empty( $connection['calendar_id'] ) ? $connection['calendar_id'] : 'primary';
+		// Get all calendars to sync (handles both old and new format)
+		$calendar_ids = self::get_calendar_ids( $connection );
 
-		// Fetch events from Google Calendar
+		// Aggregate results across all calendars
+		$total_created = 0;
+		$total_updated = 0;
+		$total_count   = 0;
+
+		// Sync each calendar
+		foreach ( $calendar_ids as $calendar_id ) {
+			$result = self::sync_single_calendar(
+				$user_id,
+				$connection,
+				$calendar_id,
+				$service,
+				$start_date,
+				$end_date
+			);
+
+			$total_created += $result['created'];
+			$total_updated += $result['updated'];
+			$total_count   += $result['total'];
+		}
+
+		return [
+			'created' => $total_created,
+			'updated' => $total_updated,
+			'total'   => $total_count,
+		];
+	}
+
+	/**
+	 * Sync events from a single calendar
+	 *
+	 * @param int                     $user_id     WordPress user ID
+	 * @param array                   $connection  Connection data
+	 * @param string                  $calendar_id Google Calendar ID to sync
+	 * @param \Google\Service\Calendar $service    Google Calendar service
+	 * @param \DateTime               $start_date  Start of sync window
+	 * @param \DateTime               $end_date    End of sync window
+	 * @return array Sync results (created, updated, total)
+	 * @throws \Exception On API errors
+	 */
+	private static function sync_single_calendar(
+		int $user_id,
+		array $connection,
+		string $calendar_id,
+		\Google\Service\Calendar $service,
+		\DateTime $start_date,
+		\DateTime $end_date
+	): array {
 		$created    = 0;
 		$updated    = 0;
 		$total      = 0;
@@ -105,7 +180,7 @@ class GoogleProvider {
 
 				foreach ( $events->getItems() as $event ) {
 					try {
-						$result = self::upsert_event( $user_id, $connection, $event );
+						$result = self::upsert_event( $user_id, $connection, $event, $calendar_id );
 						++$total;
 
 						if ( $result['action'] === 'created' ) {
@@ -113,7 +188,7 @@ class GoogleProvider {
 						} else {
 							++$updated;
 						}
-					} catch ( Exception $e ) {
+					} catch ( \Exception $e ) {
 						// Log error but continue with other events
 						error_log( 'PRM_Google_Calendar_Provider: Failed to upsert event ' . $event->getId() . ': ' . $e->getMessage() );
 					}
@@ -121,7 +196,7 @@ class GoogleProvider {
 
 				$page_token = $events->getNextPageToken();
 			} catch ( \Google\Service\Exception $e ) {
-				throw new \Exception( 'Google Calendar API error: ' . $e->getMessage() );
+				throw new \Exception( 'Google Calendar API error for calendar ' . $calendar_id . ': ' . $e->getMessage() );
 			}
 		} while ( $page_token );
 
@@ -157,12 +232,13 @@ class GoogleProvider {
 	/**
 	 * Upsert a single event into calendar_event CPT
 	 *
-	 * @param int    $user_id    WordPress user ID
-	 * @param array  $connection Connection data
-	 * @param object $event      Google Calendar event object
+	 * @param int    $user_id     WordPress user ID
+	 * @param array  $connection  Connection data
+	 * @param object $event       Google Calendar event object
+	 * @param string $calendar_id The calendar ID this event came from
 	 * @return array Result with post_id and action (created/updated)
 	 */
-	private static function upsert_event( int $user_id, array $connection, $event ): array {
+	private static function upsert_event( int $user_id, array $connection, $event, string $calendar_id = 'primary' ): array {
 		$event_uid     = $event->getId();
 		$connection_id = $connection['id'] ?? '';
 
@@ -231,7 +307,7 @@ class GoogleProvider {
 		// Update post meta
 		update_post_meta( $post_id, '_connection_id', $connection_id );
 		update_post_meta( $post_id, '_event_uid', $event_uid );
-		update_post_meta( $post_id, '_calendar_id', $connection['calendar_id'] ?? 'primary' );
+		update_post_meta( $post_id, '_calendar_id', $calendar_id );
 		update_post_meta( $post_id, '_start_time', $start_time );
 		update_post_meta( $post_id, '_end_time', $end_time );
 		update_post_meta( $post_id, '_all_day', $is_all_day ? '1' : '0' );
