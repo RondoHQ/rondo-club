@@ -10,16 +10,16 @@ requires:
     provides: Initial dark mode styling for Settings subtabs, QuickActivityModal, ImportantDateModal
 provides:
   - Improved dark mode contrast for accent-colored elements
-  - Pattern: use accent-200 text on semi-transparent accent backgrounds
-  - Pattern: use solid accent-800 background for badges in dark mode
+  - Pattern: use solid accent-800 background with accent-100 text for dark mode selections
+  - Eliminates semi-transparent accent backgrounds which cause contrast issues
 affects: [any-dark-mode-ui, accent-colored-components]
 
 # Tech tracking
 tech-stack:
   added: []
   patterns:
-    - "Dark mode contrast: Use accent-200 (not accent-300/400) for text on accent-900/30 backgrounds"
-    - "Dark mode badges: Use solid accent-800 (not accent-900/30) for better contrast"
+    - "Dark mode selections: Use solid accent-800 background with accent-100 text"
+    - "Avoid semi-transparent backgrounds (accent-900/30) for selected states in dark mode"
 
 key-files:
   modified:
@@ -28,12 +28,12 @@ key-files:
     - src/components/ImportantDateModal.jsx
 
 key-decisions:
-  - "Use accent-200 for text on semi-transparent dark backgrounds (consistent with 71-02 decision)"
-  - "Use solid accent-800 background instead of transparent accent-900/30 for badges"
+  - "Semi-transparent backgrounds (accent-900/30) don't work for dark mode selections"
+  - "Use solid accent-800 background with accent-100 text for all selected/active states"
 
 patterns-established:
-  - "Dark mode accent text: dark:text-accent-200 on semi-transparent backgrounds"
-  - "Dark mode accent badges: dark:bg-accent-800 with dark:text-accent-200"
+  - "Dark mode selections: dark:bg-accent-800 dark:text-accent-100"
+  - "Avoid semi-transparent accent backgrounds in dark mode"
 
 # Metrics
 duration: 2min
@@ -64,16 +64,16 @@ All three fixes committed atomically:
 1. **Tasks 1-3: Dark mode contrast fixes** - `56e5d7e` (fix)
 
 ## Files Modified
-- `src/pages/Settings/Settings.jsx` - Changed active subtab text from dark:text-accent-400 to dark:text-accent-200
-- `src/components/Timeline/QuickActivityModal.jsx` - Changed selected type text from dark:text-accent-300 to dark:text-accent-200
-- `src/components/ImportantDateModal.jsx` - Changed badge background from dark:bg-accent-900/30 to dark:bg-accent-800
+- `src/pages/Settings/Settings.jsx` - Changed from `dark:bg-accent-900/30 dark:text-accent-200` to `dark:bg-accent-800 dark:text-accent-100`
+- `src/components/Timeline/QuickActivityModal.jsx` - Changed from `dark:bg-accent-900/30 dark:text-accent-200` to `dark:bg-accent-800 dark:text-accent-100`
+- `src/components/ImportantDateModal.jsx` - Changed from `dark:bg-accent-800 dark:text-accent-200` to `dark:bg-accent-800 dark:text-accent-100`
 
 ## Decisions Made
-- **Use accent-200 consistently:** Both Settings and QuickActivityModal use the same fix pattern (accent-200 text) for consistency
-- **Solid background for badges:** ImportantDateModal badges use solid accent-800 instead of transparent background for reliable contrast
+- **Solid backgrounds only:** Semi-transparent backgrounds (accent-900/30) create unreliable contrast in dark mode
+- **Consistent pattern:** All three components now use solid `accent-800` background with `accent-100` text
 
 ## Deviations from Plan
-None - plan executed exactly as written.
+Initial fix (just changing text color) didn't work - semi-transparent backgrounds cause inherent contrast issues. Changed to solid backgrounds.
 
 ## Issues Encountered
 None.
