@@ -23,7 +23,7 @@ import { useCreatePerson } from '@/hooks/usePeople';
 import { useCreateDate } from '@/hooks/useDates';
 import { useCreateCompany } from '@/hooks/useCompanies';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
-import { useSearch } from '@/hooks/useDashboard';
+import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi, wpApi } from '@/api/client';
 import { APP_NAME } from '@/constants/app';
@@ -45,8 +45,19 @@ const navigation = [
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
-function Sidebar({ mobile = false, onClose }) {
+function Sidebar({ mobile = false, onClose, stats }) {
   const { logoutUrl } = useAuth();
+
+  // Map navigation items to their counts
+  const getCounts = (name) => {
+    if (!stats) return null;
+    switch (name) {
+      case 'People': return stats.total_people;
+      case 'Organizations': return stats.total_companies;
+      case 'Dates': return stats.total_dates;
+      default: return null;
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
@@ -62,28 +73,34 @@ function Sidebar({ mobile = false, onClose }) {
           </button>
         )}
       </div>
-      
+
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-        {navigation.map((item) => (
-          <NavLink
-            key={item.name}
-            to={item.href}
-            onClick={mobile ? onClose : undefined}
-            className={({ isActive }) =>
-              `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                isActive
-                  ? 'bg-accent-50 text-accent-700 dark:bg-gray-700 dark:text-accent-300'
-                  : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
-              }`
-            }
-          >
-            <item.icon className="w-5 h-5 mr-3" />
-            {item.name}
-          </NavLink>
-        ))}
+        {navigation.map((item) => {
+          const count = getCounts(item.name);
+          return (
+            <NavLink
+              key={item.name}
+              to={item.href}
+              onClick={mobile ? onClose : undefined}
+              className={({ isActive }) =>
+                `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-accent-50 text-accent-700 dark:bg-gray-700 dark:text-accent-300'
+                    : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
+                }`
+              }
+            >
+              <item.icon className="w-5 h-5 mr-3" />
+              {item.name}
+              {count !== null && count > 0 && (
+                <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{count}</span>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
-      
+
       {/* Logout */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <a
@@ -604,7 +621,11 @@ export default function Layout({ children }) {
   
   // Fetch people for date modal
   const { data: allPeople = [], isLoading: isPeopleLoading } = usePeople();
-  
+
+  // Fetch dashboard stats for navigation counts
+  const { data: dashboardData } = useDashboard();
+  const stats = dashboardData?.stats;
+
   // Update document title based on route
   useRouteTitle();
   
@@ -677,7 +698,7 @@ export default function Layout({ children }) {
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex lg:w-64 lg:flex-col">
-        <Sidebar />
+        <Sidebar stats={stats} />
       </div>
 
       {/* Mobile sidebar */}
@@ -691,7 +712,7 @@ export default function Layout({ children }) {
 
           {/* Sidebar */}
           <div className="fixed inset-y-0 left-0 flex flex-col w-64 bg-white dark:bg-gray-800">
-            <Sidebar mobile onClose={() => setSidebarOpen(false)} />
+            <Sidebar mobile onClose={() => setSidebarOpen(false)} stats={stats} />
           </div>
         </div>
       )}
