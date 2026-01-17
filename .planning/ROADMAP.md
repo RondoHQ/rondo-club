@@ -26,13 +26,13 @@
 - ✅ [v4.5 Calendar Sync Control](milestones/v4.5-calendar-sync-control.md) (Phases 67-68) — SHIPPED 2026-01-16
 - ✅ [v4.6 Dashboard & Polish](milestones/v4.6-dashboard-polish.md) (Phases 69-70) — SHIPPED 2026-01-16
 - ✅ [v4.7 Dark Mode & Activity Polish](milestones/v4.7-dark-mode-activity-polish.md) (Phases 71-72) — SHIPPED 2026-01-17
-- 🚧 **v4.8 Meeting Enhancements** (Phases 73-75) — In Progress
+- ✅ [v4.8 Meeting Enhancements](milestones/v4.8-meeting-enhancements.md) (Phases 73-76) — SHIPPED 2026-01-17
 
 ## Current Status
 
-**Current milestone:** v4.8 Meeting Enhancements (Phases 73-75)
+**Current milestone:** v4.8 Meeting Enhancements (Phases 73-76)
 
-### 🚧 v4.8 Meeting Enhancements (In Progress)
+### ✅ v4.8 Meeting Enhancements (Complete)
 
 **Milestone Goal:** Improve calendar meeting experience with detailed views and navigation.
 
@@ -66,6 +66,17 @@
   1. Prev/next buttons navigate between days ✓
   2. Today button returns to current day ✓
   3. Widget header shows selected date ✓
+**Plans**: 1/1 complete
+
+#### Phase 76: Add Email to Existing Person ✓
+**Goal**: User can add meeting attendee email to existing person instead of creating duplicate
+**Depends on**: Phase 74
+**Requirements**: EMAIL-01, EMAIL-02, EMAIL-03, EMAIL-04
+**Success Criteria** (what must be TRUE):
+  1. Clicking add shows choice popup: "Add to existing person" or "Create new person" ✓
+  2. "Add to existing" opens person search/select ✓
+  3. Selected person gets email added to their record ✓
+  4. "Create new" proceeds to current PersonEditModal flow ✓
 **Plans**: 1/1 complete
 
 ---
