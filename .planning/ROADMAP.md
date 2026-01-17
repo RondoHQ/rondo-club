@@ -35,10 +35,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. New users can connect Google Contacts in a single OAuth flow
   3. Google Contacts connection status displays in Settings > Connections
   4. Tokens are stored securely using existing Sodium encryption
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 79-01: TBD
+- [ ] 79-01-PLAN.md — Backend OAuth infrastructure (GoogleOAuth extension, connection storage, REST endpoints)
+- [ ] 79-02-PLAN.md — Frontend Settings UI (Contacts subtab, connect/disconnect flow)
 
 ### Phase 80: Import from Google
 **Goal**: Users can import all their Google Contacts into Caelis with proper field mapping
@@ -136,7 +137,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 79. OAuth Foundation | 0/TBD | Not started | - |
+| 79. OAuth Foundation | 0/2 | Planned | - |
 | 80. Import from Google | 0/TBD | Not started | - |
 | 81. Export to Google | 0/TBD | Not started | - |
 | 82. Delta Sync | 0/TBD | Not started | - |
