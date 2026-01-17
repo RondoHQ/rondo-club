@@ -12,6 +12,7 @@ import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import DashboardCustomizeModal from '@/components/DashboardCustomizeModal';
 
 const TodoModal = lazy(() => import('@/components/Timeline/TodoModal'));
+const MeetingDetailModal = lazy(() => import('@/components/MeetingDetailModal'));
 
 function StatCard({ title, value, icon: Icon, href }) {
   return (
@@ -233,12 +234,9 @@ function AwaitingTodoCard({ todo, onToggle, onView }) {
   );
 }
 
-function MeetingCard({ meeting }) {
+function MeetingCard({ meeting, onClick }) {
   // Format time display
   const startTime = format(new Date(meeting.start_time), 'h:mm a');
-
-  // Get first matched person for link target
-  const firstPerson = meeting.matched_people?.[0];
 
   // Card content shows: time, title, matched people avatars
   const cardContent = (
@@ -270,20 +268,15 @@ function MeetingCard({ meeting }) {
     </>
   );
 
-  // Link to first matched person if available
-  if (firstPerson?.person_id) {
-    return (
-      <Link to={`/people/${firstPerson.person_id}`}
-        className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-        {cardContent}
-      </Link>
-    );
-  }
-
+  // Always clickable button to open modal
   return (
-    <div className="flex items-center p-3 rounded-lg">
+    <button
+      type="button"
+      onClick={() => onClick(meeting)}
+      className="w-full flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+    >
       {cardContent}
-    </div>
+    </button>
   );
 }
 
@@ -342,6 +335,10 @@ export default function Dashboard() {
   // State for viewing/editing todos
   const [todoToView, setTodoToView] = useState(null);
   const [showTodoModal, setShowTodoModal] = useState(false);
+
+  // State for meeting detail modal
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
 
   // URL params for customize modal
   const [searchParams, setSearchParams] = useSearchParams();
@@ -640,7 +637,16 @@ export default function Dashboard() {
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {todayMeetings.length > 0 ? (
-            todayMeetings.map((meeting) => <MeetingCard key={meeting.id} meeting={meeting} />)
+            todayMeetings.map((meeting) => (
+              <MeetingCard
+                key={meeting.id}
+                meeting={meeting}
+                onClick={(m) => {
+                  setSelectedMeeting(m);
+                  setShowMeetingModal(true);
+                }}
+              />
+            ))
           ) : (
             <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No meetings scheduled for today</p>
           )}
@@ -787,6 +793,16 @@ export default function Dashboard() {
           onSubmit={handleUpdateTodo}
           isLoading={updateTodo.isPending}
           todo={todoToView}
+        />
+
+        {/* Meeting Detail Modal */}
+        <MeetingDetailModal
+          isOpen={showMeetingModal}
+          onClose={() => {
+            setShowMeetingModal(false);
+            setSelectedMeeting(null);
+          }}
+          meeting={selectedMeeting}
         />
       </Suspense>
 
