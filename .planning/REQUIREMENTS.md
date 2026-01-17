@@ -20,11 +20,11 @@ Requirements for v4.9 release. Each maps to roadmap phases.
 
 ### Calendar
 
-- [ ] **CAL-01**: User can select multiple calendars per Google Calendar connection
-- [ ] **CAL-02**: Selected calendars stored as array in connection settings
-- [ ] **CAL-03**: Sync logic iterates through all selected calendars
-- [ ] **CAL-04**: Connection card displays count of selected calendars
-- [ ] **CAL-05**: Existing single-calendar connections auto-migrate to array format
+- [x] **CAL-01**: User can select multiple calendars per Google Calendar connection
+- [x] **CAL-02**: Selected calendars stored as array in connection settings
+- [x] **CAL-03**: Sync logic iterates through all selected calendars
+- [x] **CAL-04**: Connection card displays count of selected calendars
+- [x] **CAL-05**: Existing single-calendar connections auto-migrate to array format
 
 ## v2 Requirements
 
@@ -57,11 +57,11 @@ Which phases cover which requirements.
 | DASH-06 | Phase 77 | Complete |
 | DASH-07 | Phase 77 | Complete |
 | DASH-08 | Phase 77 | Complete |
-| CAL-01 | Phase 78 | Pending |
-| CAL-02 | Phase 78 | Pending |
-| CAL-03 | Phase 78 | Pending |
-| CAL-04 | Phase 78 | Pending |
-| CAL-05 | Phase 78 | Pending |
+| CAL-01 | Phase 78 | Complete |
+| CAL-02 | Phase 78 | Complete |
+| CAL-03 | Phase 78 | Complete |
+| CAL-04 | Phase 78 | Complete |
+| CAL-05 | Phase 78 | Complete |
 
 **Coverage:**
 - v1 requirements: 13 total
