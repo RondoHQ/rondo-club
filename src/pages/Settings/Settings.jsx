@@ -550,6 +550,9 @@ export default function Settings() {
           googleContactsMessage={googleContactsMessage}
           handleConnectGoogleContacts={handleConnectGoogleContacts}
           handleDisconnectGoogleContacts={handleDisconnectGoogleContacts}
+          googleContactsImporting={googleContactsImporting}
+          googleContactsImportResult={googleContactsImportResult}
+          handleImportGoogleContacts={handleImportGoogleContacts}
         />;
       case 'notifications':
         return <NotificationsTab
@@ -1989,6 +1992,7 @@ function ConnectionsTab({
   googleContactsStatus, googleContactsLoading, connectingGoogleContacts,
   disconnectingGoogleContacts, googleContactsMessage,
   handleConnectGoogleContacts, handleDisconnectGoogleContacts,
+  googleContactsImporting, googleContactsImportResult, handleImportGoogleContacts,
 }) {
   return (
     <div className="space-y-6">
@@ -2025,6 +2029,9 @@ function ConnectionsTab({
           googleContactsMessage={googleContactsMessage}
           handleConnectGoogleContacts={handleConnectGoogleContacts}
           handleDisconnectGoogleContacts={handleDisconnectGoogleContacts}
+          googleContactsImporting={googleContactsImporting}
+          googleContactsImportResult={googleContactsImportResult}
+          handleImportGoogleContacts={handleImportGoogleContacts}
         />
       )}
       {activeSubtab === 'carddav' && (
@@ -2078,6 +2085,7 @@ function ConnectionsContactsSubtab({
   googleContactsStatus, googleContactsLoading, connectingGoogleContacts,
   disconnectingGoogleContacts, googleContactsMessage,
   handleConnectGoogleContacts, handleDisconnectGoogleContacts,
+  googleContactsImporting, googleContactsImportResult, handleImportGoogleContacts,
 }) {
   const isConnected = googleContactsStatus?.connected;
   const isConfigured = googleContactsStatus?.google_configured;
@@ -2124,16 +2132,84 @@ function ConnectionsContactsSubtab({
                   </p>
                 )}
               </div>
-              <button
-                onClick={handleDisconnectGoogleContacts}
-                disabled={disconnectingGoogleContacts}
-                className="btn-secondary text-sm"
-              >
-                {disconnectingGoogleContacts ? 'Disconnecting...' : 'Disconnect'}
-              </button>
+              <div className="flex items-center gap-2">
+                {!googleContactsImporting && (
+                  <button
+                    onClick={handleImportGoogleContacts}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent-700 dark:text-accent-300 hover:text-accent-800 dark:hover:text-accent-200"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Re-import
+                  </button>
+                )}
+                <button
+                  onClick={handleDisconnectGoogleContacts}
+                  disabled={disconnectingGoogleContacts || googleContactsImporting}
+                  className="btn-secondary text-sm"
+                >
+                  {disconnectingGoogleContacts ? 'Disconnecting...' : 'Disconnect'}
+                </button>
+              </div>
             </div>
           </div>
-          {googleContactsStatus.last_error && (
+
+          {/* Import Progress */}
+          {googleContactsImporting && (
+            <div className="flex items-center gap-2 text-accent-600 dark:text-accent-400">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Importing contacts from Google...</span>
+            </div>
+          )}
+
+          {/* Import Results */}
+          {googleContactsImportResult && (
+            <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-green-800 dark:text-green-200">
+                  <p className="font-medium">Import complete!</p>
+                  <ul className="mt-1 space-y-0.5">
+                    <li>{googleContactsImportResult.stats.contacts_imported} contacts imported</li>
+                    <li>{googleContactsImportResult.stats.contacts_updated} contacts updated</li>
+                    {googleContactsImportResult.stats.contacts_skipped > 0 && (
+                      <li>{googleContactsImportResult.stats.contacts_skipped} contacts skipped</li>
+                    )}
+                    {googleContactsImportResult.stats.contacts_no_email > 0 && (
+                      <li className="text-green-600 dark:text-green-300">
+                        {googleContactsImportResult.stats.contacts_no_email} skipped (no email)
+                      </li>
+                    )}
+                    {googleContactsImportResult.stats.companies_created > 0 && (
+                      <li>{googleContactsImportResult.stats.companies_created} organizations created</li>
+                    )}
+                    {googleContactsImportResult.stats.dates_created > 0 && (
+                      <li>{googleContactsImportResult.stats.dates_created} birthdays added</li>
+                    )}
+                    {googleContactsImportResult.stats.photos_imported > 0 && (
+                      <li>{googleContactsImportResult.stats.photos_imported} photos imported</li>
+                    )}
+                  </ul>
+                  {googleContactsImportResult.stats.errors?.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-700">
+                      <p className="font-medium text-amber-700 dark:text-amber-300">Warnings:</p>
+                      <ul className="list-disc list-inside">
+                        {googleContactsImportResult.stats.errors.slice(0, 5).map((error, i) => (
+                          <li key={i} className="text-amber-600 dark:text-amber-400">{error}</li>
+                        ))}
+                        {googleContactsImportResult.stats.errors.length > 5 && (
+                          <li className="text-amber-600 dark:text-amber-400">
+                            ...and {googleContactsImportResult.stats.errors.length - 5} more
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {googleContactsStatus.last_error && !googleContactsImportResult && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
               <p className="text-sm text-red-700 dark:text-red-300">
                 Last sync error: {googleContactsStatus.last_error}
@@ -2157,8 +2233,15 @@ function ConnectionsContactsSubtab({
       )}
 
       {googleContactsMessage && (
-        <p className={`mt-4 text-sm ${googleContactsMessage.includes('successfully') || googleContactsMessage.includes('disconnected') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-          {googleContactsMessage}
+        <p className={`mt-4 text-sm ${googleContactsMessage.includes('successfully') || googleContactsMessage.includes('disconnected') || googleContactsMessage.includes('Importing') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+          {googleContactsMessage.includes('Importing') ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {googleContactsMessage}
+            </span>
+          ) : (
+            googleContactsMessage
+          )}
         </p>
       )}
     </div>
