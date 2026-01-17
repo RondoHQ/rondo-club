@@ -731,7 +731,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <MessageCircle className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Recently contacted {recently_contacted?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({recently_contacted.length})</span>}
+            Recently contacted
           </h2>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
@@ -748,7 +748,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Users className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Recently edited {recent_people?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({recent_people.length})</span>}
+            Recently edited
           </h2>
           <Link to="/people" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
             View all <ArrowRight className="w-4 h-4 ml-1" />
