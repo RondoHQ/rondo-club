@@ -93,17 +93,18 @@ Plans:
 ### Phase 83: Conflict & Deletion
 **Goal**: Conflicts are detected and resolved, deletions are handled correctly
 **Depends on**: Phase 82
-**Requirements**: CONFLICT-01, CONFLICT-02, CONFLICT-03, CONFLICT-04, DELETE-01, DELETE-02
+**Requirements**: CONFLICT-01, CONFLICT-02, CONFLICT-04, DELETE-01, DELETE-02
 **Success Criteria** (what must be TRUE):
   1. When contact modified in both systems, conflict is detected
   2. Default resolution strategy (Caelis wins) is applied automatically
-  3. User can change conflict resolution strategy in settings
+  3. Conflict resolution is logged as activity entry for audit
   4. Deleting a contact in Caelis removes it from Google Contacts
   5. Deleting a contact in Google only unlinks it in Caelis (preserves Caelis data)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 83-01: TBD
+- [ ] 83-01-PLAN.md — Conflict detection and resolution with field snapshots and activity logging
+- [ ] 83-02-PLAN.md — Deletion propagation via WordPress hook to Google API
 
 ### Phase 84: Settings & Person UI
 **Goal**: Users can manage sync connection and view sync status per contact
@@ -147,7 +148,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 | 80. Import from Google | 3/3 | Complete | 2026-01-17 |
 | 81. Export to Google | 3/3 | Complete | 2026-01-17 |
 | 82. Delta Sync | 3/3 | Complete | 2026-01-17 |
-| 83. Conflict & Deletion | 0/TBD | Not started | - |
+| 83. Conflict & Deletion | 0/2 | Not started | - |
 | 84. Settings & Person UI | 0/TBD | Not started | - |
 | 85. Polish & CLI | 0/TBD | Not started | - |
 
