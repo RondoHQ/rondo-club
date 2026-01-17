@@ -822,8 +822,10 @@ class Calendar extends Base {
 		$user_id = get_current_user_id();
 
 		// Build query args
+		// Include 'future' status because WordPress sets this for posts with future post_date
 		$args = [
 			'post_type'      => 'calendar_event',
+			'post_status'    => [ 'publish', 'future' ],
 			'author'         => $user_id,
 			'posts_per_page' => 100,
 			'orderby'        => 'meta_value',
@@ -930,9 +932,11 @@ class Calendar extends Base {
 		$total_past     = 0;
 
 		// Query upcoming events
+		// Include 'future' status because WordPress sets this for posts with future post_date
 		if ( $show_upcoming ) {
 			$upcoming_args = [
 				'post_type'      => 'calendar_event',
+				'post_status'    => [ 'publish', 'future' ],
 				'author'         => $user_id,
 				'posts_per_page' => $limit,
 				'orderby'        => 'meta_value',
@@ -960,9 +964,11 @@ class Calendar extends Base {
 		}
 
 		// Query past events
+		// Include 'future' status for consistency (past events should be 'publish' but include 'future' just in case)
 		if ( $show_past ) {
 			$past_args = [
 				'post_type'      => 'calendar_event',
+				'post_status'    => [ 'publish', 'future' ],
 				'author'         => $user_id,
 				'posts_per_page' => $limit,
 				'orderby'        => 'meta_value',
@@ -1157,8 +1163,11 @@ class Calendar extends Base {
 		$today_end   = current_time( 'Y-m-d' ) . ' 23:59:59';
 
 		// Query calendar events for today
+		// Include 'future' status because WordPress sets this for posts with future post_date
+		// (we set post_date to event start_time, so future events have 'future' status)
 		$args = [
 			'post_type'      => 'calendar_event',
+			'post_status'    => [ 'publish', 'future' ],
 			'author'         => $user_id,
 			'posts_per_page' => 50, // Reasonable limit for one day
 			'orderby'        => 'meta_value',
