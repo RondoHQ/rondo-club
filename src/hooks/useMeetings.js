@@ -48,6 +48,7 @@ export function useDateMeetings(date) {
     enabled: !!date,
     staleTime: 5 * 60 * 1000, // 5 minutes - meetings don't change often
     refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new date
   });
 }
 
