@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 81: Export to Google** - Push Caelis contacts to Google with reverse field mapping
 - [x] **Phase 82: Delta Sync** - Background sync with syncToken-based change detection
 - [x] **Phase 83: Conflict & Deletion** - Conflict resolution strategies and deletion handling
-- [ ] **Phase 84: Settings & Person UI** - Connection management, sync preferences, and person detail integration
+- [x] **Phase 84: Settings & Person UI** - Connection management, sync preferences, and person detail integration
 - [ ] **Phase 85: Polish & CLI** - WP-CLI commands and final hardening
 
 ## Phase Details
@@ -117,8 +117,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 84-01-PLAN.md — Backend: REST field for google_contact_id, sync history storage and retrieval
-- [ ] 84-02-PLAN.md — Frontend: Error count display, sync history viewer, View in Google link
+- [x] 84-01-PLAN.md — Backend: REST field for google_contact_id, sync history storage and retrieval
+- [x] 84-02-PLAN.md — Frontend: Error count display, sync history viewer, View in Google link
 
 ### Phase 85: Polish & CLI
 **Goal**: Administrative CLI commands for sync management and final hardening
@@ -147,7 +147,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 | 81. Export to Google | 3/3 | Complete | 2026-01-17 |
 | 82. Delta Sync | 3/3 | Complete | 2026-01-17 |
 | 83. Conflict & Deletion | 2/2 | Complete | 2026-01-17 |
-| 84. Settings & Person UI | 0/2 | Not started | - |
+| 84. Settings & Person UI | 2/2 | Complete | 2026-01-18 |
 | 85. Polish & CLI | 0/TBD | Not started | - |
 
 ---

@@ -56,17 +56,17 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Settings UI
 
-- [ ] **SETTINGS-01**: Google Contacts connection card in Settings > Connections
-- [ ] **SETTINGS-02**: Connect and Disconnect buttons with OAuth flow
-- [ ] **SETTINGS-03**: Sync status display (last sync time, contacts synced count, error count)
-- [ ] **SETTINGS-04**: Manual "Sync Now" button to trigger immediate sync
-- [ ] **SETTINGS-05**: Sync frequency preference dropdown (15min, 1hr, 6hr, daily)
+- [x] **SETTINGS-01**: Google Contacts connection card in Settings > Connections
+- [x] **SETTINGS-02**: Connect and Disconnect buttons with OAuth flow
+- [x] **SETTINGS-03**: Sync status display (last sync time, contacts synced count, error count)
+- [x] **SETTINGS-04**: Manual "Sync Now" button to trigger immediate sync
+- [x] **SETTINGS-05**: Sync frequency preference dropdown (15min, 1hr, 6hr, daily)
 - [ ] **SETTINGS-06**: Conflict resolution strategy preference dropdown
-- [ ] **SETTINGS-07**: Sync history log viewer showing recent sync operations
+- [x] **SETTINGS-07**: Sync history log viewer showing recent sync operations
 
 ### Person Detail Integration
 
-- [ ] **PERSON-01**: "View in Google Contacts" link opening Google Contacts
+- [x] **PERSON-01**: "View in Google Contacts" link opening Google Contacts
 
 ### WP-CLI Commands
 
@@ -138,14 +138,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONFLICT-04 | 83 | Complete |
 | DELETE-01 | 83 | Complete |
 | DELETE-02 | 83 | Complete |
-| SETTINGS-01 | 84 | Pending |
-| SETTINGS-02 | 84 | Pending |
-| SETTINGS-03 | 84 | Pending |
-| SETTINGS-04 | 84 | Pending |
-| SETTINGS-05 | 84 | Pending |
+| SETTINGS-01 | 84 | Complete |
+| SETTINGS-02 | 84 | Complete |
+| SETTINGS-03 | 84 | Complete |
+| SETTINGS-04 | 84 | Complete |
+| SETTINGS-05 | 84 | Complete |
 | SETTINGS-06 | 84 | Pending |
-| SETTINGS-07 | 84 | Pending |
-| PERSON-01 | 84 | Pending |
+| SETTINGS-07 | 84 | Complete |
+| PERSON-01 | 84 | Complete |
 | CLI-01 | 85 | Pending |
 | CLI-02 | 85 | Pending |
 | CLI-03 | 85 | Pending |
@@ -159,4 +159,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after Phase 83 completion*
+*Last updated: 2026-01-18 after Phase 84 completion*
