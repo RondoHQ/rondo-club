@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 79: OAuth Foundation** - Extend Google OAuth for Contacts scope with incremental permission addition
 - [x] **Phase 80: Import from Google** - Pull all contacts with field mapping, duplicate detection, and photo sideloading
-- [ ] **Phase 81: Export to Google** - Push Caelis contacts to Google with reverse field mapping
+- [x] **Phase 81: Export to Google** - Push Caelis contacts to Google with reverse field mapping
 - [ ] **Phase 82: Delta Sync** - Background sync with syncToken-based change detection
 - [ ] **Phase 83: Conflict & Deletion** - Conflict resolution strategies and deletion handling
 - [ ] **Phase 84: Settings & Person UI** - Connection management, sync preferences, and person detail integration
@@ -70,9 +70,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 81-01-PLAN.md — Core export class with field mapping and Google API integration
-- [ ] 81-02-PLAN.md — Save hooks, async queue, and REST endpoint for single export
-- [ ] 81-03-PLAN.md — Bulk export for unlinked contacts with Settings UI
+- [x] 81-01-PLAN.md — Core export class with field mapping and Google API integration
+- [x] 81-02-PLAN.md — Save hooks, async queue, and REST endpoint for single export
+- [x] 81-03-PLAN.md — Bulk export for unlinked contacts with Settings UI
 
 ### Phase 82: Delta Sync
 **Goal**: Background sync detects and propagates changes in both directions
@@ -143,7 +143,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 |-------|----------------|--------|-----------|
 | 79. OAuth Foundation | 2/2 | Complete | 2026-01-17 |
 | 80. Import from Google | 3/3 | Complete | 2026-01-17 |
-| 81. Export to Google | 0/3 | Not started | - |
+| 81. Export to Google | 3/3 | Complete | 2026-01-17 |
 | 82. Delta Sync | 0/TBD | Not started | - |
 | 83. Conflict & Deletion | 0/TBD | Not started | - |
 | 84. Settings & Person UI | 0/TBD | Not started | - |
