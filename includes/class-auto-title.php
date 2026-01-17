@@ -26,6 +26,9 @@ class AutoTitle {
 		// Lowercase email addresses on save
 		add_filter( 'acf/update_value/key=field_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 		add_filter( 'acf/update_value/key=field_company_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
+
+		// Validate duplicate email addresses before save (REST API)
+		add_filter( 'rest_pre_insert_person', [ $this, 'validate_unique_emails_rest' ], 10, 2 );
 	}
 
 	/**
@@ -260,5 +263,120 @@ class AutoTitle {
 	public function trigger_calendar_rematch_rest( $post, $request ) {
 		// Trigger calendar re-matching
 		\Caelis\Calendar\Matcher::on_person_saved( $post->ID );
+	}
+
+	/**
+	 * Validate that email addresses are unique across people (REST API)
+	 *
+	 * Prevents saving a person if any of their email addresses already exist
+	 * on another person record belonging to the same user.
+	 *
+	 * @param stdClass        $prepared_post The prepared post data.
+	 * @param WP_REST_Request $request       The request object.
+	 * @return stdClass|WP_Error The prepared post or error if duplicate email found.
+	 */
+	public function validate_unique_emails_rest( $prepared_post, $request ) {
+		// Get the acf field from the request
+		$acf_fields = $request->get_param( 'acf' );
+
+		if ( empty( $acf_fields ) || ! isset( $acf_fields['contact_info'] ) ) {
+			return $prepared_post;
+		}
+
+		$contact_info = $acf_fields['contact_info'];
+		if ( ! is_array( $contact_info ) ) {
+			return $prepared_post;
+		}
+
+		// Extract email addresses from contact_info
+		$emails = [];
+		foreach ( $contact_info as $contact ) {
+			if (
+				isset( $contact['contact_type'] ) &&
+				$contact['contact_type'] === 'email' &&
+				! empty( $contact['contact_value'] )
+			) {
+				$emails[] = strtolower( trim( $contact['contact_value'] ) );
+			}
+		}
+
+		if ( empty( $emails ) ) {
+			return $prepared_post;
+		}
+
+		// Get current post ID (for updates) or 0 (for creates)
+		$current_post_id = $request->get_param( 'id' ) ?: 0;
+		$user_id         = get_current_user_id();
+
+		// Check for duplicates
+		$duplicate = $this->find_duplicate_email( $emails, $current_post_id, $user_id );
+
+		if ( $duplicate ) {
+			return new \WP_Error(
+				'duplicate_email',
+				sprintf(
+					/* translators: 1: email address, 2: person name */
+					__( 'The email address "%1$s" is already used by "%2$s". Each email address can only belong to one person.', 'caelis' ),
+					$duplicate['email'],
+					$duplicate['person_name']
+				),
+				[ 'status' => 400 ]
+			);
+		}
+
+		return $prepared_post;
+	}
+
+	/**
+	 * Find if any email in the list already belongs to another person
+	 *
+	 * @param array $emails          Array of email addresses to check.
+	 * @param int   $exclude_post_id Post ID to exclude (current person being edited).
+	 * @param int   $user_id         User ID to scope the check to.
+	 * @return array|null Array with 'email' and 'person_name' if duplicate found, null otherwise.
+	 */
+	private function find_duplicate_email( array $emails, int $exclude_post_id, int $user_id ): ?array {
+		if ( empty( $emails ) ) {
+			return null;
+		}
+
+		// Query all other people belonging to this user
+		$people = get_posts(
+			[
+				'post_type'      => 'person',
+				'author'         => $user_id,
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+				'post__not_in'   => $exclude_post_id ? [ $exclude_post_id ] : [],
+			]
+		);
+
+		foreach ( $people as $person ) {
+			$contact_info = get_field( 'contact_info', $person->ID );
+
+			if ( ! is_array( $contact_info ) ) {
+				continue;
+			}
+
+			foreach ( $contact_info as $contact ) {
+				if (
+					isset( $contact['contact_type'] ) &&
+					$contact['contact_type'] === 'email' &&
+					! empty( $contact['contact_value'] )
+				) {
+					$existing_email = strtolower( trim( $contact['contact_value'] ) );
+
+					if ( in_array( $existing_email, $emails, true ) ) {
+						return [
+							'email'       => $existing_email,
+							'person_id'   => $person->ID,
+							'person_name' => $person->post_title,
+						];
+					}
+				}
+			}
+		}
+
+		return null;
 	}
 }

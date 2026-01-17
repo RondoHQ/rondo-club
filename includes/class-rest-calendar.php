@@ -606,11 +606,17 @@ class Calendar extends Base {
 		}
 
 		// Handle multi-calendar selection (new format)
+		$removed_calendars = [];
 		if ( isset( $data['calendar_ids'] ) && is_array( $data['calendar_ids'] ) ) {
-			$updates['calendar_ids'] = array_map( 'sanitize_text_field', $data['calendar_ids'] );
+			$new_calendar_ids = array_map( 'sanitize_text_field', $data['calendar_ids'] );
+			$updates['calendar_ids'] = $new_calendar_ids;
 			// Clear old single-value fields to avoid confusion
 			$updates['calendar_id']   = '';
 			$updates['calendar_name'] = '';
+
+			// Detect removed calendars for cleanup
+			$old_calendar_ids  = \Caelis\Calendar\GoogleProvider::get_calendar_ids( $connection );
+			$removed_calendars = array_diff( $old_calendar_ids, $new_calendar_ids );
 		}
 
 		// Handle credential updates (re-encrypt)
@@ -620,7 +626,27 @@ class Calendar extends Base {
 
 		\PRM_Calendar_Connections::update_connection( $user_id, $id, $updates );
 
-		return rest_ensure_response( [ 'message' => __( 'Connection updated.', 'caelis' ) ] );
+		// Delete events from removed calendars
+		$deleted_count = 0;
+		if ( ! empty( $removed_calendars ) ) {
+			$deleted_count = $this->delete_events_for_calendars( $user_id, $id, $removed_calendars );
+		}
+
+		$message = __( 'Connection updated.', 'caelis' );
+		if ( $deleted_count > 0 ) {
+			$message = sprintf(
+				/* translators: %d: number of events deleted */
+				_n(
+					'Connection updated. %d event removed.',
+					'Connection updated. %d events removed.',
+					$deleted_count,
+					'caelis'
+				),
+				$deleted_count
+			);
+		}
+
+		return rest_ensure_response( [ 'message' => $message, 'events_deleted' => $deleted_count ] );
 	}
 
 	/**
@@ -1678,5 +1704,67 @@ class Calendar extends Base {
 				'message' => __( 'Notes saved.', 'caelis' ),
 			]
 		);
+	}
+
+	/**
+	 * Delete calendar events for specific calendar IDs
+	 *
+	 * Used when calendars are deselected from a connection to clean up
+	 * events that were synced from those calendars.
+	 *
+	 * @param int    $user_id       WordPress user ID.
+	 * @param string $connection_id Connection ID.
+	 * @param array  $calendar_ids  Array of calendar IDs to delete events for.
+	 * @return int Number of events deleted.
+	 */
+	private function delete_events_for_calendars( int $user_id, string $connection_id, array $calendar_ids ): int {
+		if ( empty( $calendar_ids ) ) {
+			return 0;
+		}
+
+		$deleted_count = 0;
+
+		foreach ( $calendar_ids as $calendar_id ) {
+			// Find all events from this calendar within this connection
+			$events = get_posts(
+				[
+					'post_type'      => 'calendar_event',
+					'post_status'    => [ 'publish', 'future' ],
+					'author'         => $user_id,
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+					'meta_query'     => [
+						'relation' => 'AND',
+						[
+							'key'   => '_connection_id',
+							'value' => $connection_id,
+						],
+						[
+							'key'   => '_calendar_id',
+							'value' => $calendar_id,
+						],
+					],
+				]
+			);
+
+			foreach ( $events as $event_id ) {
+				wp_delete_post( $event_id, true );
+				++$deleted_count;
+			}
+		}
+
+		if ( $deleted_count > 0 && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log(
+				sprintf(
+					'PRM_Calendar: Deleted %d events for user %d from connection %s (calendars: %s)',
+					$deleted_count,
+					$user_id,
+					$connection_id,
+					implode( ', ', $calendar_ids )
+				)
+			);
+		}
+
+		return $deleted_count;
 	}
 }
