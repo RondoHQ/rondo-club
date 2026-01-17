@@ -204,12 +204,18 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Add email to existing person choice popup — v4.8
 - Fixed HTML entity encoding in calendar event titles — v4.8
 
+**v4.9 Dashboard & Calendar Polish (shipped 2026-01-17):**
+- Fixed height dashboard widgets (280px) with internal scrolling — v4.9
+- 6 skeleton widgets during loading for layout stability — v4.9
+- placeholderData pattern prevents Events widget layout jump during date navigation — v4.9
+- Multi-calendar selection per Google Calendar connection via checkbox UI — v4.9
+- get_calendar_ids() static helper for backward-compatible calendar format normalization — v4.9
+- Two-column EditConnectionModal layout (calendars left, sync settings right) — v4.9
+- Connection card shows "N calendars selected" count — v4.9
+
 ### Active
 
-**v4.9 Dashboard & Calendar Polish:**
-
-- Fixed height dashboard widgets with internal scrolling — v4.9
-- Multi-calendar selection per Google Calendar connection — v4.9
+*(No active milestone)*
 
 ### Out of Scope
 
@@ -316,6 +322,12 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Lazy loading PersonEditModal in MeetingDetailModal | Avoids chunk size increase | ✓ Good |
 | prefillData prop pattern | Pass { first_name, last_name, email } for pre-filling forms from external context | ✓ Good |
 | Preserve ACF required fields on email addition | Include first_name, last_name when updating contact_info | ✓ Good |
+| 280px content height for dashboard widgets | Comfortably displays ~5 items while keeping widget size manageable | ✓ Good |
+| 6 skeleton widgets during loading | Shows typical dashboard layout for visual consistency | ✓ Good |
+| placeholderData for layout stability | TanStack Query v5 pattern preventing layout jump during date navigation | ✓ Good |
+| get_calendar_ids() static helper | Centralizes backward compatibility for calendar format normalization | ✓ Good |
+| Two-column responsive modal layout | md:grid-cols-2 stacks on small screens, fits modal content | ✓ Good |
+| Wider modal for two columns | max-w-2xl accommodates two-column layout | ✓ Good |
 
 ---
-*Last updated: 2026-01-17 — v4.9 Dashboard & Calendar Polish milestone started*
+*Last updated: 2026-01-17 — v4.9 Dashboard & Calendar Polish milestone shipped*

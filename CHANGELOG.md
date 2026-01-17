@@ -8,14 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.9.0] - 2026-01-17
 
 ### Added
+- Fixed height dashboard widgets (280px) with internal scrolling
+- 6 skeleton widgets shown during dashboard loading for layout stability
 - Multi-calendar selection for Google Calendar connections via checkbox UI
 - Sync events from multiple selected calendars in a single connection
 - Connection card shows "N calendars selected" for multi-calendar connections
 - Backend `get_calendar_ids()` helper normalizes old single-calendar to new array format
+- Two-column EditConnectionModal layout (calendar list left, sync settings right)
 
 ### Changed
 - Calendar selector changed from dropdown to checkbox list
 - Save button disabled when no calendars selected for Google connections
+- EditConnectionModal width increased (max-w-2xl) to accommodate two columns
+
+### Fixed
+- Events widget no longer jumps during date navigation (placeholderData pattern)
 
 ## [4.8.0] - 2026-01-17
 
