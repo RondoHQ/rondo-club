@@ -4,7 +4,8 @@ import { X, MapPin, Video, Clock, User, ChevronDown, UserPlus } from 'lucide-rea
 import { format } from 'date-fns';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useMeetingNotes, useUpdateMeetingNotes } from '@/hooks/useMeetings';
-import { useCreatePerson } from '@/hooks/usePeople';
+import { useCreatePerson, useAddEmailToPerson } from '@/hooks/usePeople';
+import AddAttendeePopup from '@/components/AddAttendeePopup';
 
 const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
 
@@ -48,6 +49,9 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
   const [showPersonModal, setShowPersonModal] = useState(false);
   const [personPrefill, setPersonPrefill] = useState(null);
 
+  // Popup state - which attendee has the popup open
+  const [popupAttendee, setPopupAttendee] = useState(null);
+
   const createPersonMutation = useCreatePerson({
     onSuccess: () => {
       setShowPersonModal(false);
@@ -55,15 +59,35 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
     },
   });
 
-  // Handle add person button click
+  const addEmailMutation = useAddEmailToPerson();
+
+  // Handle add person button click - opens the choice popup
   const handleAddPerson = (attendee) => {
-    const { first_name, last_name } = extractNameFromAttendee(attendee);
+    setPopupAttendee(attendee);
+  };
+
+  // Handle "Create new person" from popup
+  const handleCreateNew = () => {
+    const { first_name, last_name } = extractNameFromAttendee(popupAttendee);
     setPersonPrefill({
       first_name,
       last_name,
-      email: attendee.email || '',
+      email: popupAttendee.email || '',
     });
+    setPopupAttendee(null);
     setShowPersonModal(true);
+  };
+
+  // Handle selecting existing person from popup search
+  const handleSelectPerson = async (person) => {
+    if (!popupAttendee?.email) return;
+
+    await addEmailMutation.mutateAsync({
+      personId: person.id,
+      email: popupAttendee.email,
+    });
+
+    setPopupAttendee(null);
   };
 
   // Handle person creation submit
@@ -87,6 +111,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
   useEffect(() => {
     if (!isOpen) {
       setHasChanges(false);
+      setPopupAttendee(null);
     }
   }, [isOpen]);
 
@@ -208,6 +233,11 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
                     key={attendee.email || index}
                     attendee={attendee}
                     onAddPerson={handleAddPerson}
+                    isPopupOpen={popupAttendee?.email === attendee.email}
+                    onClosePopup={() => setPopupAttendee(null)}
+                    onCreateNew={handleCreateNew}
+                    onSelectPerson={handleSelectPerson}
+                    isAddingEmail={addEmailMutation.isPending}
                   />
                 ))}
               </div>
@@ -265,7 +295,15 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
   );
 }
 
-function AttendeeRow({ attendee, onAddPerson }) {
+function AttendeeRow({
+  attendee,
+  onAddPerson,
+  isPopupOpen,
+  onClosePopup,
+  onCreateNew,
+  onSelectPerson,
+  isAddingEmail
+}) {
   const displayName = attendee.person_name || attendee.name || attendee.email || 'Unknown';
 
   const content = (
@@ -326,5 +364,22 @@ function AttendeeRow({ attendee, onAddPerson }) {
     );
   }
 
-  return <div className="px-2 -mx-2">{content}</div>;
+  // For unmatched attendees, wrap with relative positioning for popup
+  return (
+    <div className="relative px-2 -mx-2">
+      {content}
+
+      {/* Choice/search popup */}
+      {isPopupOpen && (
+        <AddAttendeePopup
+          isOpen={true}
+          onClose={onClosePopup}
+          onCreateNew={onCreateNew}
+          onSelectPerson={onSelectPerson}
+          attendee={attendee}
+          isLoading={isAddingEmail}
+        />
+      )}
+    </div>
+  );
 }
