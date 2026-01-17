@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 ## Current Position
 
 Milestone: v4.9 Dashboard & Calendar Polish
-Phase: 77 of 78 (Fixed Height Dashboard Widgets)
-Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-01-17 — Completed 77-01-PLAN.md
+Phase: 78 of 78 (Multi-Calendar Selection)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-17 — Phase 77 complete
 
 Progress: █████░░░░░ 50%
 
@@ -46,7 +46,7 @@ Progress: █████░░░░░ 50%
 | v4.6 Dashboard & Polish | 69-70 | 2 | 2026-01-16 |
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4 | 2026-01-17 |
 | v4.8 Meeting Enhancements | 73-76 | 6 | 2026-01-17 |
-**Total:** 28 milestones, 76 phases, 135 plans completed
+**Total:** 28 milestones, 77 phases, 136 plans completed
 
 ## Deferred Issues
 
