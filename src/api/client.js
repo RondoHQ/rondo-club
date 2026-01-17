@@ -244,6 +244,10 @@ export const prmApi = {
   logMeetingAsActivity: (eventId) => api.post(`/prm/v1/calendar/events/${eventId}/log`),
   getTodayMeetings: () => api.get('/prm/v1/calendar/today-meetings'),
 
+  // Meeting notes
+  getMeetingNotes: (eventId) => api.get(`/prm/v1/calendar/events/${eventId}/notes`),
+  updateMeetingNotes: (eventId, notes) => api.put(`/prm/v1/calendar/events/${eventId}/notes`, { notes }),
+
   // Calendar connections
   getCalendarConnections: () => api.get('/prm/v1/calendar/connections'),
   createCalendarConnection: (data) => api.post('/prm/v1/calendar/connections', data),

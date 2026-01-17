@@ -7,6 +7,7 @@ export const meetingsKeys = {
   all: ['meetings'],
   today: ['meetings', 'today'],
   person: (personId) => ['person-meetings', personId],
+  notes: (eventId) => ['meeting-notes', eventId],
 };
 
 /**
@@ -61,6 +62,40 @@ export function useLogMeetingAsActivity() {
       queryClient.invalidateQueries({ queryKey: ['person-meetings'] });
       // Invalidate timeline queries - activities were created
       queryClient.invalidateQueries({ queryKey: peopleKeys.all });
+    },
+  });
+}
+
+/**
+ * Hook to fetch meeting notes for a specific event
+ *
+ * @param {number} eventId - The calendar event ID
+ * @returns {Object} TanStack Query result with { notes }
+ */
+export function useMeetingNotes(eventId) {
+  return useQuery({
+    queryKey: meetingsKeys.notes(eventId),
+    queryFn: async () => {
+      const response = await prmApi.getMeetingNotes(eventId);
+      return response.data;
+    },
+    enabled: !!eventId,
+  });
+}
+
+/**
+ * Hook to update meeting notes for a specific event
+ *
+ * @returns {Object} TanStack Query mutation object
+ */
+export function useUpdateMeetingNotes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ eventId, notes }) => prmApi.updateMeetingNotes(eventId, notes),
+    onSuccess: (data, variables) => {
+      // Invalidate the notes query for this event
+      queryClient.invalidateQueries({ queryKey: meetingsKeys.notes(variables.eventId) });
     },
   });
 }
