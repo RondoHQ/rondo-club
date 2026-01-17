@@ -257,6 +257,7 @@ export const prmApi = {
   getGoogleContactsStatus: () => api.get('/prm/v1/google-contacts/status'),
   initiateGoogleContactsAuth: (readonly = true) => api.get('/prm/v1/google-contacts/auth', { params: { readonly } }),
   disconnectGoogleContacts: () => api.delete('/prm/v1/google-contacts'),
+  triggerGoogleContactsImport: () => api.post('/prm/v1/google-contacts/import'),
 
   // Calendar connections
   getCalendarConnections: () => api.get('/prm/v1/calendar/connections'),
