@@ -30,6 +30,29 @@ class GoogleContacts extends Base {
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_action( 'rest_api_init', [ $this, 'register_person_rest_fields' ] );
+	}
+
+	/**
+	 * Register REST fields for person post type
+	 *
+	 * Exposes google_contact_id field to REST API for linked contacts.
+	 */
+	public function register_person_rest_fields() {
+		register_rest_field(
+			'person',
+			'google_contact_id',
+			[
+				'get_callback' => function ( $post ) {
+					return get_post_meta( $post['id'], '_google_contact_id', true ) ?: null;
+				},
+				'schema'       => [
+					'description' => 'Google Contacts resource name for this person',
+					'type'        => [ 'string', 'null' ],
+					'context'     => [ 'view', 'edit' ],
+				],
+			]
+		);
 	}
 
 	/**
