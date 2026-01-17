@@ -9,14 +9,14 @@ Requirements for v4.9 release. Each maps to roadmap phases.
 
 ### Dashboard
 
-- [ ] **DASH-01**: All dashboard widgets have consistent fixed heights
-- [ ] **DASH-02**: Widgets display internal scrollbar when content overflows
-- [ ] **DASH-03**: Dashboard layout remains stable during data loading and refresh
-- [ ] **DASH-04**: Stats row widgets have uniform height
-- [ ] **DASH-05**: Activity widget has fixed height with scroll
-- [ ] **DASH-06**: Meetings widget has fixed height with scroll
-- [ ] **DASH-07**: Todos widget has fixed height with scroll
-- [ ] **DASH-08**: Favorites widget has fixed height with scroll
+- [x] **DASH-01**: All dashboard widgets have consistent fixed heights
+- [x] **DASH-02**: Widgets display internal scrollbar when content overflows
+- [x] **DASH-03**: Dashboard layout remains stable during data loading and refresh
+- [x] **DASH-04**: Stats row widgets have uniform height
+- [x] **DASH-05**: Activity widget has fixed height with scroll
+- [x] **DASH-06**: Meetings widget has fixed height with scroll
+- [x] **DASH-07**: Todos widget has fixed height with scroll
+- [x] **DASH-08**: Favorites widget has fixed height with scroll
 
 ### Calendar
 
@@ -49,14 +49,14 @@ Which phases cover which requirements.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DASH-01 | Phase 77 | Pending |
-| DASH-02 | Phase 77 | Pending |
-| DASH-03 | Phase 77 | Pending |
-| DASH-04 | Phase 77 | Pending |
-| DASH-05 | Phase 77 | Pending |
-| DASH-06 | Phase 77 | Pending |
-| DASH-07 | Phase 77 | Pending |
-| DASH-08 | Phase 77 | Pending |
+| DASH-01 | Phase 77 | Complete |
+| DASH-02 | Phase 77 | Complete |
+| DASH-03 | Phase 77 | Complete |
+| DASH-04 | Phase 77 | Complete |
+| DASH-05 | Phase 77 | Complete |
+| DASH-06 | Phase 77 | Complete |
+| DASH-07 | Phase 77 | Complete |
+| DASH-08 | Phase 77 | Complete |
 | CAL-01 | Phase 78 | Pending |
 | CAL-02 | Phase 78 | Pending |
 | CAL-03 | Phase 78 | Pending |
