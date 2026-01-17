@@ -225,14 +225,14 @@ export function useCreatePerson({ onSuccess } = {}) {
 
 export function useUpdatePerson() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ id, data }) => wpApi.updatePerson(id, data),
     onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      
+
       // If relationships were updated, invalidate cache for related people
       if (data?.acf?.relationships) {
         const relationships = Array.isArray(data.acf.relationships) ? data.acf.relationships : [];
@@ -243,6 +243,62 @@ export function useUpdatePerson() {
           }
         });
       }
+    },
+  });
+}
+
+/**
+ * Add email address to existing person's contact_info.
+ * Fetches fresh person data, checks for duplicate, adds email, triggers calendar re-matching.
+ *
+ * @returns {Object} TanStack Query mutation object with mutate({ personId, email })
+ */
+export function useAddEmailToPerson() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ personId, email }) => {
+      // Fetch fresh person data to get current contact_info
+      const response = await wpApi.getPerson(personId, { _embed: true });
+      const person = response.data;
+
+      const currentContacts = person.acf?.contact_info || [];
+
+      // Check if email already exists (case-insensitive)
+      const emailExists = currentContacts.some(
+        c => c.contact_type === 'email' &&
+             c.contact_value.toLowerCase() === email.toLowerCase()
+      );
+
+      if (emailExists) {
+        return { alreadyExists: true, person: transformPerson(person) };
+      }
+
+      // Add new email
+      const newContact = {
+        contact_type: 'email',
+        contact_value: email.toLowerCase(),
+        contact_label: 'Email',
+      };
+
+      await wpApi.updatePerson(personId, {
+        acf: {
+          contact_info: [...currentContacts, newContact],
+        },
+      });
+
+      // Return updated person
+      const updated = await wpApi.getPerson(personId, { _embed: true });
+      return { alreadyExists: false, person: transformPerson(updated.data) };
+    },
+    onSuccess: (_, { personId }) => {
+      // Invalidate person detail and list caches
+      queryClient.invalidateQueries({ queryKey: peopleKeys.detail(personId) });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      // Invalidate meetings to trigger re-matching (email was added)
+      queryClient.invalidateQueries({ queryKey: meetingsKeys.today });
+      queryClient.invalidateQueries({ queryKey: meetingsKeys.date });
+      queryClient.invalidateQueries({ queryKey: ['person-meetings'] });
     },
   });
 }
