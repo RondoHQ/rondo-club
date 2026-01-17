@@ -2,10 +2,11 @@
 /**
  * Google OAuth Class
  *
- * Handles Google OAuth2 flow for calendar integration including:
+ * Handles Google OAuth2 flow for calendar and contacts integration including:
  * - Authorization URL generation
  * - OAuth callback handling
  * - Token storage and refresh
+ * - Incremental authorization for additional scopes
  */
 
 namespace Caelis\Calendar;
@@ -20,6 +21,16 @@ class GoogleOAuth {
 	 * Google Calendar readonly scope
 	 */
 	private const SCOPES = [ 'https://www.googleapis.com/auth/calendar.readonly' ];
+
+	/**
+	 * Google Contacts readonly scope (People API)
+	 */
+	public const CONTACTS_SCOPE_READONLY = 'https://www.googleapis.com/auth/contacts.readonly';
+
+	/**
+	 * Google Contacts read/write scope (People API)
+	 */
+	public const CONTACTS_SCOPE_READWRITE = 'https://www.googleapis.com/auth/contacts';
 
 	/**
 	 * Check if Google OAuth is configured
@@ -213,5 +224,134 @@ class GoogleOAuth {
 			'token_type'    => $token['token_type'] ?? 'Bearer',
 			'scope'         => $token['scope'] ?? implode( ' ', self::SCOPES ),
 		];
+	}
+
+	/**
+	 * Get Google API client configured for Contacts authorization
+	 *
+	 * Creates a client configured for Google Contacts (People API) scope with
+	 * incremental authorization enabled to preserve existing Calendar scopes.
+	 *
+	 * @param bool $include_granted_scopes Enable incremental auth to preserve existing scopes.
+	 * @param bool $readonly               Request read-only or read-write access.
+	 * @return \Google\Client|null Configured client or null if not configured.
+	 */
+	public static function get_contacts_client( bool $include_granted_scopes = true, bool $readonly = true ): ?\Google\Client {
+		if ( ! self::is_configured() ) {
+			return null;
+		}
+
+		$client = new \Google\Client();
+		$client->setClientId( GOOGLE_CALENDAR_CLIENT_ID );
+		$client->setClientSecret( GOOGLE_CALENDAR_CLIENT_SECRET );
+		$client->setRedirectUri( rest_url( 'prm/v1/google-contacts/callback' ) );
+
+		// Set contacts scope based on access mode
+		$scope = $readonly ? self::CONTACTS_SCOPE_READONLY : self::CONTACTS_SCOPE_READWRITE;
+		$client->setScopes( [ $scope ] );
+
+		// CRITICAL: Enable incremental authorization to preserve existing Calendar scopes
+		$client->setIncludeGrantedScopes( $include_granted_scopes );
+
+		$client->setAccessType( 'offline' );
+		$client->setPrompt( 'consent' ); // Ensure refresh token is returned
+
+		return $client;
+	}
+
+	/**
+	 * Generate OAuth authorization URL for Contacts scope
+	 *
+	 * @param int  $user_id  WordPress user ID.
+	 * @param bool $readonly Request read-only or read-write access.
+	 * @return string Authorization URL or empty string on failure.
+	 */
+	public static function get_contacts_auth_url( int $user_id, bool $readonly = true ): string {
+		$client = self::get_contacts_client( true, $readonly );
+		if ( ! $client ) {
+			return '';
+		}
+
+		// Create state with a random token stored in transient
+		// Use separate transient key to distinguish from calendar OAuth
+		$token = wp_generate_password( 32, false );
+		set_transient(
+			'google_contacts_oauth_' . $token,
+			[
+				'user_id'  => $user_id,
+				'readonly' => $readonly,
+			],
+			10 * MINUTE_IN_SECONDS
+		);
+
+		$client->setState( $token );
+
+		return $client->createAuthUrl();
+	}
+
+	/**
+	 * Exchange authorization code for tokens (contacts-specific)
+	 *
+	 * @param string $code     Authorization code from Google.
+	 * @param int    $user_id  WordPress user ID (for logging/verification).
+	 * @param bool   $readonly Whether readonly scope was requested.
+	 * @return array Token data array with access_token, refresh_token, expires_at, etc.
+	 * @throws Exception On token exchange failure.
+	 */
+	public static function handle_contacts_callback( string $code, int $user_id, bool $readonly = true ): array {
+		$client = self::get_contacts_client( true, $readonly );
+		if ( ! $client ) {
+			throw new \Exception( 'Google OAuth is not configured' );
+		}
+
+		// Exchange code for tokens
+		$token = $client->fetchAccessTokenWithAuthCode( $code );
+
+		if ( isset( $token['error'] ) ) {
+			throw new \Exception( $token['error_description'] ?? $token['error'] );
+		}
+
+		// Build token credential structure
+		return [
+			'access_token'  => $token['access_token'] ?? '',
+			'refresh_token' => $token['refresh_token'] ?? '',
+			'expires_at'    => time() + ( $token['expires_in'] ?? 3600 ),
+			'token_type'    => $token['token_type'] ?? 'Bearer',
+			'scope'         => $token['scope'] ?? '',
+			'id_token'      => $token['id_token'] ?? '',
+		];
+	}
+
+	/**
+	 * Check if credentials include any contacts scope
+	 *
+	 * @param array $credentials Token credentials with scope field.
+	 * @return bool True if contacts scope is present.
+	 */
+	public static function has_contacts_scope( array $credentials ): bool {
+		$scope_string = $credentials['scope'] ?? '';
+		$scopes       = explode( ' ', $scope_string );
+
+		return in_array( self::CONTACTS_SCOPE_READONLY, $scopes, true )
+			|| in_array( self::CONTACTS_SCOPE_READWRITE, $scopes, true );
+	}
+
+	/**
+	 * Get the contacts access mode from credentials
+	 *
+	 * @param array $credentials Token credentials with scope field.
+	 * @return string 'readwrite', 'readonly', or 'none'.
+	 */
+	public static function get_contacts_access_mode( array $credentials ): string {
+		$scope_string = $credentials['scope'] ?? '';
+		$scopes       = explode( ' ', $scope_string );
+
+		if ( in_array( self::CONTACTS_SCOPE_READWRITE, $scopes, true ) ) {
+			return 'readwrite';
+		}
+		if ( in_array( self::CONTACTS_SCOPE_READONLY, $scopes, true ) ) {
+			return 'readonly';
+		}
+		return 'none';
 	}
 }
