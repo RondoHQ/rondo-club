@@ -126,6 +126,8 @@ export function getActivityTypeIcon(type) {
     meeting: 'Users',
     coffee: 'Coffee',
     lunch: 'Utensils',
+    dinner: 'Utensils',
+    zoom: 'Video',
     note: 'FileText',
   };
 
@@ -139,12 +141,14 @@ export function getActivityTypeIcon(type) {
  */
 export function getActivityTypeLabel(type) {
   const labelMap = {
-    call: 'Phone call',
+    call: 'Phone',
     email: 'Email',
     chat: 'Chat',
     meeting: 'Meeting',
     coffee: 'Coffee',
     lunch: 'Lunch',
+    dinner: 'Dinner',
+    zoom: 'Zoom',
     note: 'Note',
   };
 
