@@ -48,15 +48,15 @@
   5. Modal includes notes section for meeting prep ✓
 **Plans**: 2/2 complete
 
-#### Phase 74: Add Person from Meeting
+#### Phase 74: Add Person from Meeting ✓
 **Goal**: User can add unknown meeting attendees as contacts
 **Depends on**: Phase 73
 **Requirements**: ADD-02, ADD-03, ADD-04
 **Success Criteria** (what must be TRUE):
-  1. Add button appears next to unknown attendees
-  2. Clicking add creates person pre-filled with name from email
-  3. Attendee list updates to show newly added person as known
-**Plans**: TBD
+  1. Add button appears next to unknown attendees ✓
+  2. Clicking add creates person pre-filled with name from email ✓
+  3. Attendee list updates to show newly added person as known ✓
+**Plans**: 1/1 complete
 
 #### Phase 75: Date Navigation
 **Goal**: User can browse meetings across days
