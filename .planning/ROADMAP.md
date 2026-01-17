@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 82: Delta Sync** - Background sync with syncToken-based change detection
 - [x] **Phase 83: Conflict & Deletion** - Conflict resolution strategies and deletion handling
 - [x] **Phase 84: Settings & Person UI** - Connection management, sync preferences, and person detail integration
-- [ ] **Phase 85: Polish & CLI** - WP-CLI commands and final hardening
+- [x] **Phase 85: Polish & CLI** - WP-CLI commands and final hardening
 
 ## Phase Details
 
@@ -133,7 +133,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 85-01-PLAN.md — WP-CLI commands for Google Contacts sync management
+- [x] 85-01-PLAN.md — WP-CLI commands for Google Contacts sync management
 
 ## Progress
 
@@ -148,7 +148,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 | 82. Delta Sync | 3/3 | Complete | 2026-01-17 |
 | 83. Conflict & Deletion | 2/2 | Complete | 2026-01-17 |
 | 84. Settings & Person UI | 2/2 | Complete | 2026-01-18 |
-| 85. Polish & CLI | 0/1 | Planned | - |
+| 85. Polish & CLI | 1/1 | Complete | 2026-01-18 |
 
 ---
 *Roadmap created: 2026-01-17*

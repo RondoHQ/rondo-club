@@ -70,11 +70,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### WP-CLI Commands
 
-- [ ] **CLI-01**: `wp caelis google-contacts sync --user-id=ID` trigger sync for user
-- [ ] **CLI-02**: `wp caelis google-contacts sync --user-id=ID --full` force full resync
-- [ ] **CLI-03**: `wp caelis google-contacts status --user-id=ID` check sync status
-- [ ] **CLI-04**: `wp caelis google-contacts conflicts --user-id=ID` list unresolved conflicts
-- [ ] **CLI-05**: `wp caelis google-contacts unlink-all --user-id=ID` unlink all contacts
+- [x] **CLI-01**: `wp caelis google-contacts sync --user-id=ID` trigger sync for user
+- [x] **CLI-02**: `wp caelis google-contacts sync --user-id=ID --full` force full resync
+- [x] **CLI-03**: `wp caelis google-contacts status --user-id=ID` check sync status
+- [x] **CLI-04**: `wp caelis google-contacts conflicts --user-id=ID` list unresolved conflicts
+- [x] **CLI-05**: `wp caelis google-contacts unlink-all --user-id=ID` unlink all contacts
 
 ## v2 Requirements
 
@@ -146,11 +146,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SETTINGS-06 | 84 | Pending |
 | SETTINGS-07 | 84 | Complete |
 | PERSON-01 | 84 | Complete |
-| CLI-01 | 85 | Pending |
-| CLI-02 | 85 | Pending |
-| CLI-03 | 85 | Pending |
-| CLI-04 | 85 | Pending |
-| CLI-05 | 85 | Pending |
+| CLI-01 | 85 | Complete |
+| CLI-02 | 85 | Complete |
+| CLI-03 | 85 | Complete |
+| CLI-04 | 85 | Complete |
+| CLI-05 | 85 | Complete |
 
 **Coverage:**
 - v1 requirements: 38 total
@@ -159,4 +159,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-18 after Phase 84 completion*
+*Last updated: 2026-01-18 after Phase 85 completion*
