@@ -51,6 +51,7 @@ class GoogleContactsExport {
 		$instance = new self( 0 ); // User ID set per-save.
 		add_action( 'save_post_person', [ $instance, 'on_person_saved' ], 20, 3 );
 		add_action( 'caelis_google_contact_export', [ $instance, 'handle_async_export' ], 10, 2 );
+		add_action( 'before_delete_post', [ $instance, 'on_person_deleted' ], 10, 2 );
 	}
 
 	/**
@@ -144,6 +145,120 @@ class GoogleContactsExport {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				error_log( 'Google Contact export failed for post ' . $post_id . ': ' . $e->getMessage() );
 			}
+		}
+	}
+
+	/**
+	 * Handle person permanent deletion
+	 *
+	 * Called via before_delete_post hook when a person is permanently deleted.
+	 * Uses before_delete_post (not delete_post) because:
+	 * 1. It fires BEFORE meta is deleted, so we can still read _google_contact_id
+	 * 2. It only fires on permanent delete (empty trash), not when trashing
+	 *
+	 * @param int      $post_id Post ID being deleted.
+	 * @param \WP_Post $post    Post object being deleted.
+	 */
+	public function on_person_deleted( int $post_id, \WP_Post $post ): void {
+		// Only handle person posts.
+		if ( $post->post_type !== 'person' ) {
+			return;
+		}
+
+		// Check if linked to Google.
+		$google_id = get_post_meta( $post_id, '_google_contact_id', true );
+		if ( empty( $google_id ) ) {
+			return; // Not linked, nothing to delete in Google.
+		}
+
+		// Get post author (the user who owns this contact).
+		$user_id = (int) $post->post_author;
+
+		// Verify user has Google Contacts connected with readwrite access.
+		$connection = GoogleContactsConnection::get_connection( $user_id );
+		if ( ! $connection || ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
+			return; // Can't delete without write access.
+		}
+
+		// Attempt to delete from Google (non-blocking).
+		$this->delete_google_contact( $google_id, $user_id );
+	}
+
+	/**
+	 * Delete a contact from Google Contacts
+	 *
+	 * Calls the Google People API deleteContact method.
+	 * Handles errors gracefully - never blocks local deletion.
+	 *
+	 * @param string $resource_name Google resource name (people/c123...).
+	 * @param int    $user_id       WordPress user ID.
+	 * @return bool True on success (including 404), false on failure.
+	 */
+	private function delete_google_contact( string $resource_name, int $user_id ): bool {
+		try {
+			// Create service for this user.
+			$credentials = GoogleContactsConnection::get_decrypted_credentials( $user_id );
+			if ( ! $credentials ) {
+				return false;
+			}
+
+			$client = GoogleOAuth::get_contacts_client( false, false );
+			if ( ! $client ) {
+				return false;
+			}
+
+			$client->setAccessToken( $credentials );
+
+			// Refresh token if expired.
+			if ( $client->isAccessTokenExpired() ) {
+				$refresh_token = $client->getRefreshToken();
+				if ( ! $refresh_token ) {
+					return false;
+				}
+				$client->fetchAccessTokenWithRefreshToken( $refresh_token );
+				GoogleContactsConnection::update_credentials( $user_id, $client->getAccessToken() );
+			}
+
+			$service = new PeopleService( $client );
+
+			// Delete the contact from Google.
+			// https://developers.google.com/people/api/rest/v1/people/deleteContact
+			$service->people->deleteContact( $resource_name );
+
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( sprintf( 'PRM: Deleted Google contact %s for user %d', $resource_name, $user_id ) );
+			}
+
+			return true;
+
+		} catch ( \Google\Service\Exception $e ) {
+			// 404 means already deleted - that's fine.
+			if ( $e->getCode() === 404 ) {
+				return true;
+			}
+
+			// Log error but don't throw - never block local deletion.
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( sprintf(
+					'PRM: Failed to delete Google contact %s: %s',
+					$resource_name,
+					$e->getMessage()
+				) );
+			}
+
+			return false;
+
+		} catch ( \Exception $e ) {
+			// Log any other error but don't throw.
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( sprintf(
+					'PRM: Exception deleting Google contact %s: %s',
+					$resource_name,
+					$e->getMessage()
+				) );
+			}
+
+			return false;
 		}
 	}
 
