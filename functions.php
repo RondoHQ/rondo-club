@@ -27,6 +27,7 @@ use Caelis\REST\Workspaces;
 use Caelis\REST\Slack;
 use Caelis\REST\ImportExport;
 use Caelis\REST\Calendar as RESTCalendar;
+use Caelis\REST\GoogleContacts as RESTGoogleContacts;
 use Caelis\Calendar\Connections;
 use Caelis\Calendar\Matcher;
 use Caelis\Calendar\Sync;
@@ -313,6 +314,7 @@ function prm_init() {
 		new Slack();
 		new ImportExport();
 		new RESTCalendar();
+		new RESTGoogleContacts();
 		new Monica();
 		new VCardImport();
 		new GoogleContacts();

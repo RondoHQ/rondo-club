@@ -500,7 +500,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="card">
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                 <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
               </div>
               <div className="h-[32vh] overflow-y-auto">
@@ -614,7 +614,7 @@ export default function Dashboard() {
     ),
     'reminders': () => (
       <div key="reminders" className="card">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Calendar className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
             Upcoming reminders {upcoming_reminders?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({upcoming_reminders.length})</span>}
@@ -634,7 +634,7 @@ export default function Dashboard() {
     ),
     'todos': () => (
       <div key="todos" className="card">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <CheckSquare className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
             Open todos {openTodos?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({openTodos.length})</span>}
@@ -654,7 +654,7 @@ export default function Dashboard() {
     ),
     'awaiting': () => (
       <div key="awaiting" className="card">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Clock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
             Awaiting response {awaitingTodos?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({awaitingTodos.length})</span>}
@@ -674,7 +674,7 @@ export default function Dashboard() {
     ),
     'meetings': () => hasCalendarConnections ? (
       <div key="meetings" className="card">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <CalendarClock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
             {isToday(selectedDate) ? "Today's meetings" : format(selectedDate, 'EEEE, MMMM d')} {dateMeetings.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({dateMeetings.length})</span>}
@@ -728,7 +728,7 @@ export default function Dashboard() {
     ) : null,
     'recent-contacted': () => (
       <div key="recent-contacted" className="card">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <MessageCircle className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
             Recently contacted
@@ -745,7 +745,7 @@ export default function Dashboard() {
     ),
     'recent-edited': () => (
       <div key="recent-edited" className="card">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Users className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
             Recently edited
@@ -767,7 +767,7 @@ export default function Dashboard() {
     ),
     'favorites': () => (
       <div key="favorites" className="card">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Star className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400 fill-current" />
             Favorites {favorites?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({favorites.length})</span>}
