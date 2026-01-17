@@ -16,14 +16,14 @@ const MeetingDetailModal = lazy(() => import('@/components/MeetingDetailModal'))
 
 function StatCard({ title, value, icon: Icon, href }) {
   return (
-    <Link to={href} className="card p-6 hover:shadow-md dark:hover:shadow-gray-900/50 transition-shadow">
+    <Link to={href} className="card p-4 hover:shadow-md dark:hover:shadow-gray-900/50 transition-shadow">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-          <p className="mt-1 text-3xl font-semibold dark:text-gray-50">{value}</p>
+          <p className="mt-1 text-2xl font-semibold dark:text-gray-50">{value}</p>
         </div>
-        <div className="p-3 bg-accent-50 dark:bg-gray-700 rounded-lg">
-          <Icon className="w-6 h-6 text-accent-600 dark:text-accent-400" />
+        <div className="p-2 bg-accent-50 dark:bg-gray-700 rounded-lg">
+          <Icon className="w-5 h-5 text-accent-600 dark:text-accent-400" />
         </div>
       </div>
     </Link>
@@ -481,10 +481,10 @@ export default function Dashboard() {
         {/* Stats skeleton - full width grid */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="card p-6">
+            <div key={i} className="card p-4">
               <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
-                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
               </div>
             </div>
           ))}
@@ -497,7 +497,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
               </div>
-              <div className="max-h-[280px] overflow-y-auto">
+              <div className="h-[35vh] overflow-y-auto">
                 {[...Array(3)].map((_, j) => (
                   <div key={j} className="p-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
                     <div className="animate-pulse flex items-center">
@@ -617,7 +617,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
           {upcoming_reminders?.length > 0 ? (
             upcoming_reminders.map((reminder) => <ReminderCard key={reminder.id} reminder={reminder} />)
           ) : (
@@ -637,7 +637,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
           {dashboardTodos.length > 0 ? (
             dashboardTodos.map((todo) => <TodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />)
           ) : (
@@ -657,7 +657,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
           {dashboardAwaitingTodos.length > 0 ? (
             dashboardAwaitingTodos.map((todo) => <AwaitingTodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />)
           ) : (
@@ -698,7 +698,7 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
           {dateMeetings.length > 0 ? (
             dateMeetings.map((meeting) => (
               <MeetingCard
@@ -728,7 +728,7 @@ export default function Dashboard() {
             Recently contacted
           </h2>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
           {recently_contacted?.length > 0 ? (
             recently_contacted.map((person) => <PersonCard key={person.id} person={person} />)
           ) : (
@@ -748,7 +748,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
           {recent_people?.length > 0 ? (
             recent_people.map((person) => <PersonCard key={person.id} person={person} />)
           ) : (
@@ -767,7 +767,7 @@ export default function Dashboard() {
             Favorites
           </h2>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[35vh] overflow-y-auto">
           {favorites?.length > 0 ? (
             favorites.slice(0, 5).map((person) => <PersonCard key={person.id} person={person} hideStar={true} />)
           ) : (
