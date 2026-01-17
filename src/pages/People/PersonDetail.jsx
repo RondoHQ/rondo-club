@@ -67,8 +67,23 @@ function getGenderSymbol(gender) {
   }
 }
 
+// Helper to get initials from a name or email
+function getInitials(name, email) {
+  if (name && !name.includes('@')) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+  if (email) {
+    return email[0].toUpperCase();
+  }
+  return '?';
+}
+
 // MeetingCard component for displaying meeting info
-function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick }) {
+function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick, currentPersonId }) {
   // Format the meeting date/time
   const startDate = meeting.start_time ? new Date(meeting.start_time) : null;
   const endDate = meeting.end_time ? new Date(meeting.end_time) : null;
@@ -148,14 +163,67 @@ function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick }) {
           </span>
         )}
 
-        {/* Other attendees */}
-        {meeting.other_attendees && meeting.other_attendees.length > 0 && (
-          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            <span className="font-medium">Also attending: </span>
-            {meeting.other_attendees.slice(0, 3).join(', ')}
-            {meeting.other_attendees.length > 3 && ` +${meeting.other_attendees.length - 3} more`}
-          </div>
-        )}
+        {/* Other attendees - show photos for matched, initials for unmatched */}
+        {meeting.attendees && meeting.attendees.length > 0 && (() => {
+          // Filter out the current person being viewed
+          const otherAttendees = meeting.attendees.filter(
+            att => !att.person_id || att.person_id !== parseInt(currentPersonId)
+          );
+          if (otherAttendees.length === 0) return null;
+
+          const displayedAttendees = otherAttendees.slice(0, 5);
+          const remainingCount = otherAttendees.length - 5;
+
+          return (
+            <div className="mt-2 flex items-center gap-1">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1">Also attending:</span>
+              <div className="flex -space-x-2">
+                {displayedAttendees.map((attendee, index) => {
+                  const displayName = attendee.person_name || attendee.name || attendee.email || 'Unknown';
+                  const initials = getInitials(attendee.name, attendee.email);
+
+                  const avatar = attendee.matched && attendee.thumbnail ? (
+                    <img
+                      src={attendee.thumbnail}
+                      alt={displayName}
+                      className="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 ring-2 ring-white dark:ring-gray-800 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                      {initials}
+                    </div>
+                  );
+
+                  // Wrap matched attendees in a Link
+                  if (attendee.matched && attendee.person_id) {
+                    return (
+                      <Link
+                        key={attendee.email || index}
+                        to={`/people/${attendee.person_id}`}
+                        title={displayName}
+                        className="hover:z-10 transition-transform hover:scale-110"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {avatar}
+                      </Link>
+                    );
+                  }
+
+                  return (
+                    <div key={attendee.email || index} title={displayName}>
+                      {avatar}
+                    </div>
+                  );
+                })}
+                {remainingCount > 0 && (
+                  <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-800 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                    +{remainingCount}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Low confidence warning */}
         {isLowConfidence && (
@@ -2252,6 +2320,7 @@ export default function PersonDetail() {
                       key={meeting.id}
                       meeting={meeting}
                       showLogButton={false}
+                      currentPersonId={id}
                       onClick={(m) => {
                         setSelectedMeeting(m);
                         setShowMeetingModal(true);
@@ -2274,6 +2343,7 @@ export default function PersonDetail() {
                       key={meeting.id}
                       meeting={meeting}
                       showLogButton={true}
+                      currentPersonId={id}
                       onLog={() => handleLogMeeting(meeting)}
                       isLogging={loggingMeetingId === meeting.id}
                       onClick={(m) => {
