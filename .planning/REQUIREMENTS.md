@@ -9,18 +9,18 @@ Requirements for v4.8 release. Each maps to roadmap phases.
 
 ### Meeting Detail Modal
 
-- [ ] **MTG-01**: User can click meeting to open detail modal
-- [ ] **MTG-02**: Modal displays meeting title, time, and duration
-- [ ] **MTG-03**: Modal displays meeting location (if present)
-- [ ] **MTG-04**: Modal displays meeting description (if present)
-- [ ] **MTG-05**: Modal displays list of attendees with avatars
-- [ ] **MTG-06**: Attendees in Caelis are visually distinguished from unknown attendees
-- [ ] **MTG-07**: User can click known attendee to navigate to their profile
-- [ ] **MTG-08**: Modal includes notes/prep section for user's meeting notes
+- [x] **MTG-01**: User can click meeting to open detail modal
+- [x] **MTG-02**: Modal displays meeting title, time, and duration
+- [x] **MTG-03**: Modal displays meeting location (if present)
+- [x] **MTG-04**: Modal displays meeting description (if present)
+- [x] **MTG-05**: Modal displays list of attendees with avatars
+- [x] **MTG-06**: Attendees in Caelis are visually distinguished from unknown attendees
+- [x] **MTG-07**: User can click known attendee to navigate to their profile
+- [x] **MTG-08**: Modal includes notes/prep section for user's meeting notes
 
 ### Add Person from Meeting
 
-- [ ] **ADD-01**: Unknown attendees are clearly identified in attendee list
+- [x] **ADD-01**: Unknown attendees are clearly identified in attendee list
 - [ ] **ADD-02**: User can click "Add" button next to unknown attendee
 - [ ] **ADD-03**: New person is pre-filled with name extracted from email
 - [ ] **ADD-04**: After adding, attendee updates to show as known
@@ -58,15 +58,15 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MTG-01 | Phase 73 | Pending |
-| MTG-02 | Phase 73 | Pending |
-| MTG-03 | Phase 73 | Pending |
-| MTG-04 | Phase 73 | Pending |
-| MTG-05 | Phase 73 | Pending |
-| MTG-06 | Phase 73 | Pending |
-| MTG-07 | Phase 73 | Pending |
-| MTG-08 | Phase 73 | Pending |
-| ADD-01 | Phase 73 | Pending |
+| MTG-01 | Phase 73 | Complete |
+| MTG-02 | Phase 73 | Complete |
+| MTG-03 | Phase 73 | Complete |
+| MTG-04 | Phase 73 | Complete |
+| MTG-05 | Phase 73 | Complete |
+| MTG-06 | Phase 73 | Complete |
+| MTG-07 | Phase 73 | Complete |
+| MTG-08 | Phase 73 | Complete |
+| ADD-01 | Phase 73 | Complete |
 | ADD-02 | Phase 74 | Pending |
 | ADD-03 | Phase 74 | Pending |
 | ADD-04 | Phase 74 | Pending |
