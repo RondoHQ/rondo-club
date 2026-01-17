@@ -246,9 +246,9 @@ class GoogleOAuth {
 		$client->setClientSecret( GOOGLE_CALENDAR_CLIENT_SECRET );
 		$client->setRedirectUri( rest_url( 'prm/v1/google-contacts/callback' ) );
 
-		// Set contacts scope based on access mode
-		$scope = $readonly ? self::CONTACTS_SCOPE_READONLY : self::CONTACTS_SCOPE_READWRITE;
-		$client->setScopes( [ $scope ] );
+		// Set contacts scope based on access mode, plus email for user identification
+		$contacts_scope = $readonly ? self::CONTACTS_SCOPE_READONLY : self::CONTACTS_SCOPE_READWRITE;
+		$client->setScopes( [ $contacts_scope, 'email' ] );
 
 		// CRITICAL: Enable incremental authorization to preserve existing Calendar scopes
 		$client->setIncludeGrantedScopes( $include_granted_scopes );

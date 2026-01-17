@@ -300,12 +300,21 @@ class GoogleContacts extends Base {
 		// Fallback: Make userinfo API call
 		if ( ! empty( $tokens['access_token'] ) ) {
 			$client = new \Google\Client();
+			$client->setClientId( GOOGLE_CALENDAR_CLIENT_ID );
+			$client->setClientSecret( GOOGLE_CALENDAR_CLIENT_SECRET );
 			$client->setAccessToken( $tokens );
 
-			$oauth2   = new \Google\Service\Oauth2( $client );
-			$userinfo = $oauth2->userinfo->get();
-
-			return $userinfo->getEmail() ?: '';
+			try {
+				$oauth2   = new \Google\Service\Oauth2( $client );
+				$userinfo = $oauth2->userinfo->get();
+				return $userinfo->getEmail() ?: '';
+			} catch ( \Exception $e ) {
+				// Log but don't fail - email is nice to have, not critical
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( 'Google Contacts: Failed to get user email: ' . $e->getMessage() );
+				}
+				return '';
+			}
 		}
 
 		return '';
@@ -328,12 +337,14 @@ class GoogleContacts extends Base {
 			ob_end_clean();
 		}
 
-		// Send headers and HTML redirect
+		// Send HTTP redirect header - most reliable method
+		header( 'Location: ' . $safe_url, true, 302 );
+
+		// Fallback HTML redirect if headers were already sent
 		header( 'Content-Type: text/html; charset=utf-8' );
 		header( 'Cache-Control: no-cache, no-store, must-revalidate' );
 		echo '<!DOCTYPE html><html><head>';
-		echo '<meta http-equiv="refresh" content="0;url=' . $safe_url . '">';
-		echo '<script>window.location.replace("' . esc_js( $url ) . '");</script>';
+		echo '<script>window.location.replace(' . wp_json_encode( $safe_url ) . ');</script>';
 		echo '</head><body>Redirecting...</body></html>';
 		exit;
 	}
