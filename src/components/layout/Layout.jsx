@@ -386,7 +386,7 @@ function SearchModal({ isOpen, onClose }) {
                             <img
                               src={company.thumbnail}
                               alt={company.name}
-                              className="w-8 h-8 rounded object-contain bg-white dark:bg-gray-700"
+                              className="w-8 h-8 rounded object-contain dark:bg-gray-700"
                             />
                           ) : (
                             <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center dark:bg-gray-700">

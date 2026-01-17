@@ -310,7 +310,7 @@ export default function CompanyEditModal({
                         <img
                           src={selectedParent._embedded['wp:featuredmedia'][0].source_url}
                           alt={getCompanyName(selectedParent)}
-                          className="w-6 h-6 rounded object-contain bg-white dark:bg-gray-600"
+                          className="w-6 h-6 rounded object-contain dark:bg-gray-600"
                         />
                       ) : (
                         <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
@@ -381,7 +381,7 @@ export default function CompanyEditModal({
                               <img
                                 src={c._embedded['wp:featuredmedia'][0].source_url}
                                 alt={getCompanyName(c)}
-                                className="w-6 h-6 rounded object-contain bg-white dark:bg-gray-600"
+                                className="w-6 h-6 rounded object-contain"
                               />
                             ) : (
                               <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
