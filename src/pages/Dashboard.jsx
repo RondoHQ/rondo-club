@@ -674,13 +674,6 @@ export default function Dashboard() {
             {isToday(selectedDate) ? "Today's meetings" : format(selectedDate, 'EEEE, MMMM d')}
           </h2>
           <div className="flex items-center gap-1">
-            <button
-              onClick={handlePrevDay}
-              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-              aria-label="Previous day"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
             {!isToday(selectedDate) && (
               <button
                 onClick={handleToday}
@@ -689,6 +682,13 @@ export default function Dashboard() {
                 Today
               </button>
             )}
+            <button
+              onClick={handlePrevDay}
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              aria-label="Previous day"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
             <button
               onClick={handleNextDay}
               className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
