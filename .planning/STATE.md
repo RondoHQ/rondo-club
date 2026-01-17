@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 
 Milestone: v4.7 Dark Mode & Activity Polish
 Phase: 71 of 72 (Dark Mode Fixes)
-Plan: FIX complete (3/3 UAT issues resolved)
-Status: Phase complete - UAT fixes deployed
-Last activity: 2026-01-17 — Completed 71-FIX-PLAN.md (Dark Mode UAT Fixes)
+Plan: FIX complete (3/3 UAT issues verified)
+Status: Phase 71 complete - all UAT passed
+Last activity: 2026-01-17 — Phase 71 UAT verified, all tests passed
 
 Progress: ██████████ 100%
 
@@ -91,8 +91,8 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 
 ### Phase 71-FIX Decisions
 
-- **Accent text on semi-transparent backgrounds:** Use accent-200 (not accent-300/400) for text on dark:bg-accent-900/30.
-- **Solid backgrounds for badges:** Use dark:bg-accent-800 instead of transparent accent-900/30 for reliable contrast.
+- **Semi-transparent backgrounds don't work:** accent-900/30 creates unreliable contrast in dark mode.
+- **Solid background pattern:** Use dark:bg-accent-800 with dark:text-accent-100 for all selected/active states.
 
 ## Roadmap Evolution
 
@@ -104,8 +104,8 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.5 complete: Per-connection sync settings, calendar selection UI
 - Milestone v4.6 created: Dashboard customization & UI polish, 2 phases (Phase 69-70)
 - Milestone v4.7 created: Dark Mode & Activity Polish, 2 phases (Phase 71-72)
-- Phase 71 complete: Dark Mode Fixes (2 plans completed)
-- Phase 71 FIX complete: 3 UAT issues resolved
+- Phase 71 complete: Dark Mode Fixes (2 plans + FIX plan completed)
+- Phase 71 FIX UAT passed: All 3 issues verified fixed
 
 ## Session Continuity
 
