@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v4.9 Dashboard & Calendar Polish
+**Current focus:** None (between milestones)
 
 ## Current Position
 
-Milestone: v4.9 Dashboard & Calendar Polish
-Phase: 78 of 78 (Multi-Calendar Selection)
-Plan: FIX complete
-Status: Phase complete (FIX applied)
-Last activity: 2026-01-17 — Completed 78-FIX-PLAN.md
+Milestone: None (v4.9 shipped)
+Phase: N/A
+Plan: N/A
+Status: Between milestones
+Last activity: 2026-01-17 — Shipped v4.9 Dashboard & Calendar Polish
 
-Progress: ██████████ 100%
+Progress: Ready for next milestone
 
 ## Completed Milestones
 
@@ -46,8 +46,8 @@ Progress: ██████████ 100%
 | v4.6 Dashboard & Polish | 69-70 | 2 | 2026-01-16 |
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4 | 2026-01-17 |
 | v4.8 Meeting Enhancements | 73-76 | 6 | 2026-01-17 |
-| v4.9 Dashboard & Calendar Polish | 77-78 | 3 | 2026-01-17 |
-**Total:** 29 milestones, 78 phases, 139 plans completed
+| v4.9 Dashboard & Calendar Polish | 77-78 | 4 | 2026-01-17 |
+**Total:** 29 milestones, 78 phases, 140 plans completed
 
 ## Deferred Issues
 
@@ -217,6 +217,6 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Tag release v4.9.0 and archive milestone
 - Identify next milestone from pending todos
 - Or start new work based on user needs
+- Run `/gsd:new-milestone` to begin next milestone
