@@ -48,13 +48,15 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User sees all Google Contacts appear in Caelis after connecting
   2. Contact details (name, email, phone, address, birthday) are correctly mapped
-  3. Duplicate contacts are detected by email/name and merged rather than duplicated
+  3. Duplicate contacts are detected by email and merged rather than duplicated
   4. Photos from Google appear on Caelis person profiles
   5. Work history is created from Google organization data
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 80-01: TBD
+- [ ] 80-01-PLAN.md — Backend API Import class with Google People API integration and field mapping
+- [ ] 80-02-PLAN.md — REST endpoint to trigger import and update API client
+- [ ] 80-03-PLAN.md — Frontend import UI with auto-trigger, progress, and results display
 
 ### Phase 81: Export to Google
 **Goal**: Users can push Caelis contacts to Google Contacts
@@ -138,7 +140,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 79. OAuth Foundation | 2/2 | Complete | 2026-01-17 |
-| 80. Import from Google | 0/TBD | Not started | - |
+| 80. Import from Google | 0/3 | Not started | - |
 | 81. Export to Google | 0/TBD | Not started | - |
 | 82. Delta Sync | 0/TBD | Not started | - |
 | 83. Conflict & Deletion | 0/TBD | Not started | - |
