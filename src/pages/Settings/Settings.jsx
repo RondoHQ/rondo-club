@@ -108,6 +108,11 @@ export default function Settings() {
   const [isBulkExporting, setIsBulkExporting] = useState(false);
   const [bulkExportResult, setBulkExportResult] = useState(null);
 
+  // Google Contacts sync state
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState(null);
+  const [syncSuccess, setSyncSuccess] = useState(null);
+
   // Fetch Application Passwords and CardDAV URLs on mount
   useEffect(() => {
     const fetchAppPasswords = async () => {
@@ -392,6 +397,42 @@ export default function Settings() {
     }
   };
 
+  const handleContactsSync = async () => {
+    setIsSyncing(true);
+    setSyncError(null);
+    setSyncSuccess(null);
+    try {
+      const response = await prmApi.triggerContactsSync();
+      const stats = response.data.stats;
+      const pullCount = stats?.pull?.contacts_imported || 0;
+      const pushedCount = stats?.push?.pushed || 0;
+      setSyncSuccess(`Sync completed: ${pullCount} imported, ${pushedCount} pushed`);
+      // Invalidate contacts status query to refresh last_sync display
+      queryClient.invalidateQueries({ queryKey: ['contacts-status'] });
+      // Refresh status
+      const statusResponse = await prmApi.getGoogleContactsStatus();
+      setGoogleContactsStatus(statusResponse.data);
+    } catch (error) {
+      setSyncError(error.response?.data?.message || 'Sync failed');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleFrequencyChange = async (e) => {
+    const frequency = parseInt(e.target.value, 10);
+    try {
+      await prmApi.updateContactsSyncFrequency(frequency);
+      // Update local state
+      setGoogleContactsStatus(prev => ({
+        ...prev,
+        sync_frequency: frequency,
+      }));
+    } catch (error) {
+      console.error('Failed to update sync frequency:', error);
+    }
+  };
+
   const handleCreateAppPassword = async (e) => {
     e.preventDefault();
     if (!newPasswordName.trim()) return;
@@ -594,6 +635,12 @@ export default function Settings() {
           bulkExportResult={bulkExportResult}
           handleBulkExportGoogleContacts={handleBulkExportGoogleContacts}
           setBulkExportResult={setBulkExportResult}
+          // Google Contacts sync props
+          isSyncing={isSyncing}
+          syncError={syncError}
+          syncSuccess={syncSuccess}
+          handleContactsSync={handleContactsSync}
+          handleFrequencyChange={handleFrequencyChange}
         />;
       case 'notifications':
         return <NotificationsTab
@@ -2037,6 +2084,8 @@ function ConnectionsTab({
   // Google Contacts bulk export props
   unlinkedCount, isBulkExporting, bulkExportResult,
   handleBulkExportGoogleContacts, setBulkExportResult,
+  // Google Contacts sync props
+  isSyncing, syncError, syncSuccess, handleContactsSync, handleFrequencyChange,
 }) {
   return (
     <div className="space-y-6">
@@ -2081,6 +2130,11 @@ function ConnectionsTab({
           bulkExportResult={bulkExportResult}
           handleBulkExportGoogleContacts={handleBulkExportGoogleContacts}
           setBulkExportResult={setBulkExportResult}
+          isSyncing={isSyncing}
+          syncError={syncError}
+          syncSuccess={syncSuccess}
+          handleContactsSync={handleContactsSync}
+          handleFrequencyChange={handleFrequencyChange}
         />
       )}
       {activeSubtab === 'carddav' && (
@@ -2129,6 +2183,14 @@ function ConnectionsCalendarsSubtab() {
   return <CalendarsTab />;
 }
 
+// Sync frequency options for UI
+const SYNC_FREQUENCY_OPTIONS = [
+  { value: 15, label: 'Every 15 minutes' },
+  { value: 60, label: 'Every hour' },
+  { value: 360, label: 'Every 6 hours' },
+  { value: 1440, label: 'Daily' },
+];
+
 // ConnectionsContactsSubtab - Google Contacts connection management
 function ConnectionsContactsSubtab({
   googleContactsStatus, googleContactsLoading, connectingGoogleContacts,
@@ -2137,6 +2199,7 @@ function ConnectionsContactsSubtab({
   googleContactsImporting, googleContactsImportResult, handleImportGoogleContacts,
   unlinkedCount, isBulkExporting, bulkExportResult,
   handleBulkExportGoogleContacts, setBulkExportResult,
+  isSyncing, syncError, syncSuccess, handleContactsSync, handleFrequencyChange,
 }) {
   const isConnected = googleContactsStatus?.connected;
   const isConfigured = googleContactsStatus?.google_configured;
@@ -2328,6 +2391,70 @@ function ConnectionsContactsSubtab({
               )}
             </div>
           )}
+
+          {/* Background Sync Section */}
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  Background Sync
+                </h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Automatically sync contacts in the background.
+                </p>
+              </div>
+              <button
+                onClick={handleContactsSync}
+                disabled={isSyncing || googleContactsImporting}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-accent-600 text-white hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50"
+              >
+                {isSyncing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4" />
+                    Sync Now
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Sync frequency dropdown */}
+            <div className="mt-3">
+              <label htmlFor="sync-frequency" className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Sync frequency
+              </label>
+              <select
+                id="sync-frequency"
+                value={googleContactsStatus?.sync_frequency || 60}
+                onChange={handleFrequencyChange}
+                className="input text-sm w-48"
+              >
+                {SYNC_FREQUENCY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sync success message */}
+            {syncSuccess && (
+              <div className="mt-3 p-2 rounded-md bg-green-50 dark:bg-green-900/20 text-sm text-green-800 dark:text-green-200">
+                {syncSuccess}
+              </div>
+            )}
+
+            {/* Sync error message */}
+            {syncError && (
+              <div className="mt-3 p-2 rounded-md bg-red-50 dark:bg-red-900/20 text-sm text-red-800 dark:text-red-200">
+                {syncError}
+              </div>
+            )}
+          </div>
 
           {googleContactsStatus.last_error && !googleContactsImportResult && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">

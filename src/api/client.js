@@ -260,6 +260,8 @@ export const prmApi = {
   triggerGoogleContactsImport: () => api.post('/prm/v1/google-contacts/import'),
   getGoogleContactsUnlinkedCount: () => api.get('/prm/v1/google-contacts/unlinked-count'),
   bulkExportGoogleContacts: () => api.post('/prm/v1/google-contacts/bulk-export'),
+  triggerContactsSync: () => api.post('/prm/v1/google-contacts/sync'),
+  updateContactsSyncFrequency: (frequency) => api.post('/prm/v1/google-contacts/sync-frequency', { frequency }),
 
   // Calendar connections
   getCalendarConnections: () => api.get('/prm/v1/calendar/connections'),
