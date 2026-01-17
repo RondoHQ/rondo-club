@@ -1220,13 +1220,19 @@ class Calendar extends Base {
 		$start_datetime = new \DateTime( $start_meta ?: 'now', $wp_timezone );
 		$end_datetime   = new \DateTime( $end_meta ?: $start_meta ?: 'now', $wp_timezone );
 
-		// Get Google event ID for deeplink (only for Google connections)
-		$google_event_id = null;
-		$calendar_id     = null;
+		// Get Google Calendar link for deeplink (only for Google connections)
+		$google_calendar_link = null;
 		if ( $connection ) {
 			if ( ( $connection['provider'] ?? '' ) === 'google' ) {
-				$google_event_id = get_post_meta( $event->ID, '_event_uid', true );
-				$calendar_id     = get_post_meta( $event->ID, '_calendar_id', true );
+				// First try stored html_link, then fall back to raw_data for existing events
+				$google_calendar_link = get_post_meta( $event->ID, '_html_link', true );
+				if ( empty( $google_calendar_link ) ) {
+					$raw_data = get_post_meta( $event->ID, '_raw_data', true );
+					if ( $raw_data ) {
+						$raw = json_decode( $raw_data, true );
+						$google_calendar_link = $raw['htmlLink'] ?? null;
+					}
+				}
 			}
 		}
 
@@ -1247,8 +1253,7 @@ class Calendar extends Base {
 			'calendar_name'          => $calendar_name,
 			'connection_id'          => $connection_id,
 			'logged_as_activity'     => (bool) get_post_meta( $event->ID, '_logged_as_activity', true ),
-			'google_event_id'        => $google_event_id,
-			'calendar_id'            => $calendar_id,
+			'google_calendar_link'   => $google_calendar_link,
 		];
 	}
 
@@ -1506,31 +1511,36 @@ class Calendar extends Base {
 		$start_datetime = new \DateTime( $start_meta ?: 'now', $wp_timezone );
 		$end_datetime   = new \DateTime( $end_meta ?: $start_meta ?: 'now', $wp_timezone );
 
-		// Get Google event ID for deeplink (only for Google connections)
-		$google_event_id = null;
-		$calendar_id     = null;
+		// Get Google Calendar link for deeplink (only for Google connections)
+		$google_calendar_link = null;
 		if ( $connection_id ) {
 			$connection = \PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
 			if ( $connection && ( $connection['provider'] ?? '' ) === 'google' ) {
-				$google_event_id = get_post_meta( $event->ID, '_event_uid', true );
-				$calendar_id     = get_post_meta( $event->ID, '_calendar_id', true );
+				// First try stored html_link, then fall back to raw_data for existing events
+				$google_calendar_link = get_post_meta( $event->ID, '_html_link', true );
+				if ( empty( $google_calendar_link ) ) {
+					$raw_data = get_post_meta( $event->ID, '_raw_data', true );
+					if ( $raw_data ) {
+						$raw = json_decode( $raw_data, true );
+						$google_calendar_link = $raw['htmlLink'] ?? null;
+					}
+				}
 			}
 		}
 
 		return [
-			'id'              => $event->ID,
-			'title'           => $event->post_title,
-			'start_time'      => $start_datetime->format( 'c' ), // ISO 8601 with timezone offset
-			'end_time'        => $end_datetime->format( 'c' ),   // ISO 8601 with timezone offset
-			'all_day'         => (bool) get_post_meta( $event->ID, '_all_day', true ),
-			'location'        => get_post_meta( $event->ID, '_location', true ),
-			'meeting_url'     => get_post_meta( $event->ID, '_meeting_url', true ),
-			'matched_people'  => $matched_people,
-			'attendees'       => $attendees,
-			'description'     => $event->post_content,
-			'calendar_name'   => $calendar_name,
-			'google_event_id' => $google_event_id,
-			'calendar_id'     => $calendar_id,
+			'id'                   => $event->ID,
+			'title'                => $event->post_title,
+			'start_time'           => $start_datetime->format( 'c' ), // ISO 8601 with timezone offset
+			'end_time'             => $end_datetime->format( 'c' ),   // ISO 8601 with timezone offset
+			'all_day'              => (bool) get_post_meta( $event->ID, '_all_day', true ),
+			'location'             => get_post_meta( $event->ID, '_location', true ),
+			'meeting_url'          => get_post_meta( $event->ID, '_meeting_url', true ),
+			'matched_people'       => $matched_people,
+			'attendees'            => $attendees,
+			'description'          => $event->post_content,
+			'calendar_name'        => $calendar_name,
+			'google_calendar_link' => $google_calendar_link,
 		];
 	}
 

@@ -10,46 +10,6 @@ import AddAttendeePopup from '@/components/AddAttendeePopup';
 const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
 
 /**
- * Generate Google Calendar deeplink URL
- *
- * Google Calendar uses abbreviated domain codes in the eid parameter:
- * - gmail.com → m
- * - group.calendar.google.com → g
- * - googlemail.com → m
- * - holiday.calendar.google.com → h
- * - import.calendar.google.com → i
- * - group.v.calendar.google.com → v
- *
- * @param {string} eventId - Google Calendar event ID
- * @param {string} calendarId - Google Calendar ID (email format)
- * @returns {string|null} - URL or null if params missing
- */
-function getGoogleCalendarUrl(eventId, calendarId) {
-  if (!eventId || !calendarId) return null;
-
-  // Apply domain abbreviation for compact encoding
-  let encodedCalendarId = calendarId;
-  const domainMap = {
-    '@gmail.com': '@m',
-    '@googlemail.com': '@m',
-    '@group.calendar.google.com': '@g',
-    '@holiday.calendar.google.com': '@h',
-    '@import.calendar.google.com': '@i',
-    '@group.v.calendar.google.com': '@v',
-  };
-
-  for (const [domain, abbrev] of Object.entries(domainMap)) {
-    if (calendarId.endsWith(domain)) {
-      encodedCalendarId = calendarId.replace(domain, abbrev);
-      break;
-    }
-  }
-
-  const eid = btoa(`${eventId} ${encodedCalendarId}`);
-  return `https://calendar.google.com/calendar/event?eid=${eid}`;
-}
-
-/**
  * Extract first/last name from attendee data
  * Handles both display names ("John Doe") and email-only ("john.doe@example.com")
  */
@@ -259,9 +219,9 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50 pr-4">{meeting.title}</h2>
           <div className="flex items-center gap-2 flex-shrink-0">
-            {meeting.google_event_id && meeting.calendar_id && (
+            {meeting.google_calendar_link && (
               <a
-                href={getGoogleCalendarUrl(meeting.google_event_id, meeting.calendar_id)}
+                href={meeting.google_calendar_link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-accent-600 dark:hover:text-accent-400"

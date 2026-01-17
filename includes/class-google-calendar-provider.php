@@ -316,6 +316,7 @@ class GoogleProvider {
 		update_post_meta( $post_id, '_organizer_email', sanitize_email( $organizer_email ) );
 		update_post_meta( $post_id, '_attendees', wp_json_encode( $attendees ) );
 		update_post_meta( $post_id, '_raw_data', wp_json_encode( $event->toSimpleObject() ) );
+		update_post_meta( $post_id, '_html_link', esc_url_raw( $event->getHtmlLink() ?? '' ) );
 
 		// Run contact matching
 		$matches = \PRM_Calendar_Matcher::match_attendees( $user_id, $attendees );
