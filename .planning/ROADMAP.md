@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 79: OAuth Foundation** - Extend Google OAuth for Contacts scope with incremental permission addition
 - [x] **Phase 80: Import from Google** - Pull all contacts with field mapping, duplicate detection, and photo sideloading
 - [x] **Phase 81: Export to Google** - Push Caelis contacts to Google with reverse field mapping
-- [ ] **Phase 82: Delta Sync** - Background sync with syncToken-based change detection
+- [x] **Phase 82: Delta Sync** - Background sync with syncToken-based change detection
 - [ ] **Phase 83: Conflict & Deletion** - Conflict resolution strategies and deletion handling
 - [ ] **Phase 84: Settings & Person UI** - Connection management, sync preferences, and person detail integration
 - [ ] **Phase 85: Polish & CLI** - WP-CLI commands and final hardening
@@ -86,9 +86,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 82-01-PLAN.md — Core sync class with WP-Cron scheduling and round-robin user processing
-- [ ] 82-02-PLAN.md — Delta sync logic using syncToken for pull and post_modified for push
-- [ ] 82-03-PLAN.md — REST endpoint for manual sync and Settings UI for frequency control
+- [x] 82-01-PLAN.md — Core sync class with WP-Cron scheduling and round-robin user processing
+- [x] 82-02-PLAN.md — Delta sync logic using syncToken for pull and post_modified for push
+- [x] 82-03-PLAN.md — REST endpoint for manual sync and Settings UI for frequency control
 
 ### Phase 83: Conflict & Deletion
 **Goal**: Conflicts are detected and resolved, deletions are handled correctly
@@ -146,7 +146,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 | 79. OAuth Foundation | 2/2 | Complete | 2026-01-17 |
 | 80. Import from Google | 3/3 | Complete | 2026-01-17 |
 | 81. Export to Google | 3/3 | Complete | 2026-01-17 |
-| 82. Delta Sync | 0/3 | Not started | - |
+| 82. Delta Sync | 3/3 | Complete | 2026-01-17 |
 | 83. Conflict & Deletion | 0/TBD | Not started | - |
 | 84. Settings & Person UI | 0/TBD | Not started | - |
 | 85. Polish & CLI | 0/TBD | Not started | - |
