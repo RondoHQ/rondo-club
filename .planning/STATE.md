@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Seamless bidirectional sync between Caelis and Google Contacts with Caelis as source of truth
-**Current focus:** Phase 82 - Delta Sync (Complete)
+**Current focus:** Phase 83 - Conflict & Deletion (In Progress)
 
 ## Current Position
 
 Milestone: v5.0 Google Contacts Sync
-Phase: 82 of 85 (Delta Sync)
-Plan: 03 of 03 (complete)
-Status: Phase complete
-Last activity: 2026-01-17 - Completed 82-03-PLAN.md (Sync monitoring)
+Phase: 83 of 85 (Conflict & Deletion)
+Plan: 02 of 03
+Status: In progress
+Last activity: 2026-01-17 - Completed 83-02-PLAN.md (Deletion propagation)
 
-Progress: [███████░░░] ~70%
+Progress: [███████░░░] ~75%
 
 ## Completed Milestones
 
@@ -88,6 +88,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Default sync frequency is 60 minutes (hourly) | Balances freshness with API quotas | 82-03 |
 | Manual sync bypasses frequency check | Allows immediate sync on user request | 82-03 |
 | Frequency options: 15min, hourly, 6hr, daily | Standard cron-like intervals | 82-03 |
+| Use before_delete_post hook for deletion sync | Fires before meta deletion, only on permanent delete | 83-02 |
+| Treat 404 as success for Google deletion | Contact already deleted in Google is desired state | 83-02 |
+| Never block local deletion on API errors | Local operation must always complete | 83-02 |
 
 ### Pending Todos
 
@@ -103,12 +106,12 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-17 22:07 UTC
-Stopped at: Completed 82-03-PLAN.md (Sync monitoring)
+Last session: 2026-01-17 22:33 UTC
+Stopped at: Completed 83-02-PLAN.md (Deletion propagation)
 Resume file: None
 
 ## Next Steps
 
-- Phase 82 Delta Sync complete (3/3 plans)
-- Next: Phase 83 Conflict & Deletion
+- Phase 83 Conflict & Deletion in progress (2/3 plans complete)
+- Next: 83-03 Conflict resolution with activity logging
 - Then: Phase 84 Settings & Person UI, Phase 85 Polish & CLI
