@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### OAuth Connection
 
-- [ ] **OAUTH-01**: Extend Google OAuth to request contacts scope
-- [ ] **OAUTH-02**: Support incremental scope addition (users with Calendar-only can add Contacts)
-- [ ] **OAUTH-03**: Store Google Contacts connection status in user meta
-- [ ] **OAUTH-04**: Display Google Contacts connection status in Settings > Connections
+- [x] **OAUTH-01**: Extend Google OAuth to request contacts scope
+- [x] **OAUTH-02**: Support incremental scope addition (users with Calendar-only can add Contacts)
+- [x] **OAUTH-03**: Store Google Contacts connection status in user meta
+- [x] **OAUTH-04**: Display Google Contacts connection status in Settings > Connections
 
 ### Import from Google
 

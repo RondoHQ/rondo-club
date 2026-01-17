@@ -16,7 +16,7 @@ Transform Caelis from manual CSV import/export to seamless bidirectional Google 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 79: OAuth Foundation** - Extend Google OAuth for Contacts scope with incremental permission addition
+- [x] **Phase 79: OAuth Foundation** - Extend Google OAuth for Contacts scope with incremental permission addition
 - [ ] **Phase 80: Import from Google** - Pull all contacts with field mapping, duplicate detection, and photo sideloading
 - [ ] **Phase 81: Export to Google** - Push Caelis contacts to Google with reverse field mapping
 - [ ] **Phase 82: Delta Sync** - Background sync with syncToken-based change detection
@@ -38,8 +38,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 79-01-PLAN.md — Backend OAuth infrastructure (GoogleOAuth extension, connection storage, REST endpoints)
-- [ ] 79-02-PLAN.md — Frontend Settings UI (Contacts subtab, connect/disconnect flow)
+- [x] 79-01-PLAN.md — Backend OAuth infrastructure (GoogleOAuth extension, connection storage, REST endpoints)
+- [x] 79-02-PLAN.md — Frontend Settings UI (Contacts subtab, connect/disconnect flow)
 
 ### Phase 80: Import from Google
 **Goal**: Users can import all their Google Contacts into Caelis with proper field mapping
@@ -137,7 +137,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 79. OAuth Foundation | 0/2 | Planned | - |
+| 79. OAuth Foundation | 2/2 | Complete | 2026-01-17 |
 | 80. Import from Google | 0/TBD | Not started | - |
 | 81. Export to Google | 0/TBD | Not started | - |
 | 82. Delta Sync | 0/TBD | Not started | - |
