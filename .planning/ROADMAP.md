@@ -109,18 +109,16 @@ Plans:
 ### Phase 84: Settings & Person UI
 **Goal**: Users can manage sync connection and view sync status per contact
 **Depends on**: Phase 83
-**Requirements**: SETTINGS-01, SETTINGS-02, SETTINGS-03, SETTINGS-04, SETTINGS-05, SETTINGS-06, SETTINGS-07, PERSON-01
+**Requirements**: SETTINGS-01, SETTINGS-03, SETTINGS-07, PERSON-01
 **Success Criteria** (what must be TRUE):
-  1. Google Contacts connection card appears in Settings > Connections
-  2. User can connect and disconnect Google Contacts
-  3. Sync status shows last sync time, contact count, and error count
-  4. Manual "Sync Now" button triggers immediate sync
-  5. User can configure sync frequency and conflict resolution strategy
-  6. Person detail page shows "View in Google Contacts" link for synced contacts
-**Plans**: TBD
+  1. Sync status shows error count when last sync had errors
+  2. Sync history log viewer shows recent sync operations
+  3. Person detail page shows "View in Google Contacts" link for synced contacts
+**Plans**: 2 plans
 
 Plans:
-- [ ] 84-01: TBD
+- [ ] 84-01-PLAN.md — Backend: REST field for google_contact_id, sync history storage and retrieval
+- [ ] 84-02-PLAN.md — Frontend: Error count display, sync history viewer, View in Google link
 
 ### Phase 85: Polish & CLI
 **Goal**: Administrative CLI commands for sync management and final hardening
@@ -149,7 +147,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 | 81. Export to Google | 3/3 | Complete | 2026-01-17 |
 | 82. Delta Sync | 3/3 | Complete | 2026-01-17 |
 | 83. Conflict & Deletion | 2/2 | Complete | 2026-01-17 |
-| 84. Settings & Person UI | 0/TBD | Not started | - |
+| 84. Settings & Person UI | 0/2 | Not started | - |
 | 85. Polish & CLI | 0/TBD | Not started | - |
 
 ---
