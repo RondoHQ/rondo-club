@@ -9,6 +9,7 @@
 namespace Caelis\Import;
 
 use Caelis\Calendar\GoogleOAuth;
+use Caelis\Collaboration\CommentTypes;
 use Caelis\Contacts\GoogleContactsConnection;
 use Google\Service\PeopleService;
 
@@ -336,6 +337,12 @@ class GoogleContactsAPI {
 		$existing_id = $this->find_by_email( $email );
 
 		if ( $existing_id ) {
+			// Detect and log conflicts before processing (for existing contacts).
+			$conflicts = $this->detect_field_conflicts( $existing_id, $person );
+			if ( ! empty( $conflicts ) ) {
+				$this->log_conflict_resolution( $existing_id, $conflicts );
+			}
+
 			// Link and fill gaps for existing person
 			$post_id = $existing_id;
 			++$this->stats['contacts_updated'];
@@ -952,6 +959,226 @@ class GoogleContactsAPI {
 		update_post_meta( $post_id, '_google_contact_id', $resource_name );
 		update_post_meta( $post_id, '_google_etag', $etag );
 		update_post_meta( $post_id, '_google_last_import', current_time( 'c' ) );
+
+		// Store field snapshot for future conflict detection.
+		$this->store_field_snapshot( $post_id );
+	}
+
+	/**
+	 * Get current field values for conflict detection snapshot
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array Field values keyed by field name.
+	 */
+	private function get_field_snapshot( int $post_id ): array {
+		$snapshot = [
+			'first_name'   => get_field( 'first_name', $post_id ) ?: '',
+			'last_name'    => get_field( 'last_name', $post_id ) ?: '',
+			'email'        => '',
+			'phone'        => '',
+			'organization' => '',
+		];
+
+		// Get primary email from contact_info repeater (first email type entry).
+		$contact_info = get_field( 'contact_info', $post_id ) ?: [];
+		foreach ( $contact_info as $info ) {
+			if ( 'email' === ( $info['contact_type'] ?? '' ) && ! empty( $info['contact_value'] ) ) {
+				$snapshot['email'] = strtolower( $info['contact_value'] );
+				break;
+			}
+		}
+
+		// Get primary phone from contact_info repeater (first phone/mobile type entry).
+		foreach ( $contact_info as $info ) {
+			$type = $info['contact_type'] ?? '';
+			if ( in_array( $type, [ 'phone', 'mobile' ], true ) && ! empty( $info['contact_value'] ) ) {
+				$snapshot['phone'] = $info['contact_value'];
+				break;
+			}
+		}
+
+		// Get organization from work_history (first entry with is_current=true or first entry).
+		$work_history = get_field( 'work_history', $post_id ) ?: [];
+		foreach ( $work_history as $job ) {
+			if ( ! empty( $job['is_current'] ) && ! empty( $job['company'] ) ) {
+				$company_id             = is_object( $job['company'] ) ? $job['company']->ID : (int) $job['company'];
+				$snapshot['organization'] = get_the_title( $company_id );
+				break;
+			}
+		}
+		// Fallback to first entry if no current job found.
+		if ( empty( $snapshot['organization'] ) && ! empty( $work_history[0]['company'] ) ) {
+			$company_id             = is_object( $work_history[0]['company'] ) ? $work_history[0]['company']->ID : (int) $work_history[0]['company'];
+			$snapshot['organization'] = get_the_title( $company_id );
+		}
+
+		return $snapshot;
+	}
+
+	/**
+	 * Store field snapshot for future conflict detection
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	private function store_field_snapshot( int $post_id ): void {
+		$snapshot              = $this->get_field_snapshot( $post_id );
+		$snapshot['synced_at'] = current_time( 'c' );
+		update_post_meta( $post_id, '_google_synced_fields', $snapshot );
+	}
+
+	/**
+	 * Detect field-level conflicts between Google and Caelis
+	 *
+	 * Compares Google values, Caelis values, and last-synced snapshot to determine
+	 * which fields were modified in both systems since last sync.
+	 *
+	 * @param int    $post_id      Post ID.
+	 * @param object $google_person Google Person object.
+	 * @return array Array of conflicts, each with field, google_value, caelis_value, kept_value.
+	 */
+	private function detect_field_conflicts( int $post_id, object $google_person ): array {
+		$conflicts = [];
+
+		// Get stored snapshot from last sync.
+		$snapshot = get_post_meta( $post_id, '_google_synced_fields', true ) ?: [];
+
+		// No snapshot means this is first sync, no conflicts possible.
+		if ( empty( $snapshot ) ) {
+			return $conflicts;
+		}
+
+		// Get current Caelis values.
+		$caelis_values = $this->get_field_snapshot( $post_id );
+
+		// Extract Google values from person object.
+		$google_values = $this->extract_google_field_values( $google_person );
+
+		// Fields to check for conflicts.
+		$fields = [ 'first_name', 'last_name', 'email', 'phone', 'organization' ];
+
+		foreach ( $fields as $field ) {
+			$snapshot_value = $snapshot[ $field ] ?? '';
+			$caelis_value   = $caelis_values[ $field ] ?? '';
+			$google_value   = $google_values[ $field ] ?? '';
+
+			// Conflict: both systems changed this field since last sync.
+			// (Google value differs from snapshot AND Caelis value differs from snapshot).
+			if ( $google_value !== $snapshot_value && $caelis_value !== $snapshot_value ) {
+				// Only log if values are actually different (not just both changed to same value).
+				if ( $google_value !== $caelis_value ) {
+					$conflicts[] = [
+						'field'        => $field,
+						'google_value' => $google_value,
+						'caelis_value' => $caelis_value,
+						'kept_value'   => $caelis_value, // Caelis wins.
+					];
+				}
+			}
+		}
+
+		return $conflicts;
+	}
+
+	/**
+	 * Extract field values from Google Person object
+	 *
+	 * @param object $google_person Google Person object.
+	 * @return array Field values keyed by field name.
+	 */
+	private function extract_google_field_values( object $google_person ): array {
+		$values = [
+			'first_name'   => '',
+			'last_name'    => '',
+			'email'        => '',
+			'phone'        => '',
+			'organization' => '',
+		];
+
+		// Names.
+		$names = $google_person->getNames() ?: [];
+		$name  = $names[0] ?? null;
+		if ( $name ) {
+			$values['first_name'] = $name->getGivenName() ?: '';
+			$values['last_name']  = $name->getFamilyName() ?: '';
+		}
+
+		// Primary email.
+		$emails = $google_person->getEmailAddresses() ?: [];
+		foreach ( $emails as $email ) {
+			$metadata = $email->getMetadata();
+			if ( $metadata && $metadata->getPrimary() ) {
+				$values['email'] = strtolower( $email->getValue() );
+				break;
+			}
+		}
+		if ( empty( $values['email'] ) && ! empty( $emails ) ) {
+			$values['email'] = strtolower( $emails[0]->getValue() );
+		}
+
+		// Primary phone.
+		$phones = $google_person->getPhoneNumbers() ?: [];
+		foreach ( $phones as $phone ) {
+			$metadata = $phone->getMetadata();
+			if ( $metadata && $metadata->getPrimary() ) {
+				$values['phone'] = $phone->getCanonicalForm() ?: $phone->getValue();
+				break;
+			}
+		}
+		if ( empty( $values['phone'] ) && ! empty( $phones ) ) {
+			$values['phone'] = $phones[0]->getCanonicalForm() ?: $phones[0]->getValue();
+		}
+
+		// Organization (first one).
+		$organizations = $google_person->getOrganizations() ?: [];
+		foreach ( $organizations as $org ) {
+			if ( $org->getName() ) {
+				$values['organization'] = $org->getName();
+				break;
+			}
+		}
+
+		return $values;
+	}
+
+	/**
+	 * Log conflict resolution as activity entry
+	 *
+	 * Creates an activity entry on the person showing which fields had conflicts
+	 * and that Caelis values were kept.
+	 *
+	 * @param int   $post_id   Post ID.
+	 * @param array $conflicts Array of conflicts from detect_field_conflicts().
+	 */
+	private function log_conflict_resolution( int $post_id, array $conflicts ): void {
+		if ( empty( $conflicts ) ) {
+			return;
+		}
+
+		// Format conflict details as bullet list.
+		$lines = [ 'Sync conflict resolved (Caelis wins):' ];
+		foreach ( $conflicts as $conflict ) {
+			$field_label  = ucfirst( str_replace( '_', ' ', $conflict['field'] ) );
+			$google_value = $conflict['google_value'] ?: '(empty)';
+			$caelis_value = $conflict['caelis_value'] ?: '(empty)';
+			$lines[]      = sprintf( '- %s: Google had "%s", kept "%s"', $field_label, $google_value, $caelis_value );
+		}
+		$content = implode( "\n", $lines );
+
+		// Create activity comment.
+		$comment_id = wp_insert_comment(
+			[
+				'comment_post_ID'  => $post_id,
+				'comment_content'  => $content,
+				'comment_type'     => CommentTypes::TYPE_ACTIVITY,
+				'user_id'          => $this->user_id,
+				'comment_approved' => 1,
+			]
+		);
+
+		if ( $comment_id ) {
+			update_comment_meta( $comment_id, 'activity_type', 'sync_conflict' );
+			update_comment_meta( $comment_id, 'activity_date', current_time( 'Y-m-d' ) );
+		}
 	}
 
 	/**
