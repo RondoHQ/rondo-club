@@ -290,6 +290,49 @@ class GoogleContactsSync {
 	}
 
 	/**
+	 * Manually sync a user's contacts (bypasses frequency check)
+	 *
+	 * Used by the REST API to trigger an immediate sync from Settings UI.
+	 *
+	 * @param int $user_id User ID to sync.
+	 * @return array Sync results with pull and push stats.
+	 * @throws \Exception On sync failure.
+	 */
+	public function sync_user_manual( int $user_id ): array {
+		// Check if user is connected.
+		if ( ! GoogleContactsConnection::is_connected( $user_id ) ) {
+			throw new \Exception( __( 'Google Contacts is not connected.', 'caelis' ) );
+		}
+
+		$connection       = GoogleContactsConnection::get_connection( $user_id );
+		$has_write_access = ( $connection['access_mode'] ?? '' ) === 'readwrite';
+
+		// Pull changes from Google.
+		$importer   = new GoogleContactsAPI( $user_id );
+		$pull_stats = $importer->import_delta();
+
+		// Push changes to Google (only for readwrite connections).
+		$push_stats = null;
+		if ( $has_write_access ) {
+			$push_stats = $this->push_changed_contacts( $user_id );
+		}
+
+		// Update last sync.
+		GoogleContactsConnection::update_connection(
+			$user_id,
+			[
+				'last_sync'  => current_time( 'c' ),
+				'last_error' => null,
+			]
+		);
+
+		return [
+			'pull' => $pull_stats,
+			'push' => $push_stats,
+		];
+	}
+
+	/**
 	 * Push contacts modified in Caelis since last export to Google
 	 *
 	 * @param int $user_id User ID.
