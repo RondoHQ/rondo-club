@@ -1,5 +1,33 @@
 # Project Milestones: Caelis
 
+## v4.8 Meeting Enhancements (Shipped: 2026-01-17)
+
+**Delivered:** Meeting detail modal with attendees and notes, add person from meeting attendees, date navigation, and add-email-to-existing-person flow.
+
+**Phases completed:** 73-76 (5 plans + 1 FIX total)
+
+**Key accomplishments:**
+
+- Meeting detail modal with title, time, location, description, and attendee list
+- Meeting notes section with auto-save for meeting prep
+- Add person from meeting - quick-add unknown attendees to contacts with name extraction
+- Date navigation with prev/next/today buttons for browsing meetings across days
+- Add email to existing person - choice popup to avoid duplicate contacts
+- Fixed HTML entity encoding bug in calendar event titles
+
+**Stats:**
+
+- 10 files changed
+- +1,322 / -306 lines changed
+- 4 phases, 5 plans (+ 1 FIX)
+- 1 day from start to ship
+
+**Git range:** `1c9dbe0` → `cef3d90`
+
+**What's next:** To be determined
+
+---
+
 ## v4.7 Dark Mode & Activity Polish (Shipped: 2026-01-17)
 
 **Delivered:** Comprehensive dark mode contrast fixes for modals and settings, activity type improvements (Dinner, Zoom), and UI bug fixes.

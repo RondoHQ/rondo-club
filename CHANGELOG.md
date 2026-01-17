@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.0] - 2026-01-17
+
+### Added
+- Meeting detail modal with full meeting information (title, time, location, description)
+- Meeting attendee list with avatars showing known vs unknown attendees
+- Meeting notes section with auto-save for meeting prep
+- Add person from meeting attendee with name extraction from email
+- Date navigation on meetings widget with prev/next/today buttons
+- Add email to existing person flow with choice popup to avoid duplicates
+
+### Fixed
+- HTML entity encoding (&amp;) in calendar event titles
+
 ## [4.7.0] - 2026-01-17
 
 ### Added
