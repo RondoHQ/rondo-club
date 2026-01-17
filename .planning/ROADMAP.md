@@ -38,14 +38,14 @@ This milestone delivers two polish features: fixed-height dashboard widgets for 
   3. Sync pulls events from all selected calendars
   4. Connection card displays count of selected calendars
   5. Existing single-calendar connections work without user action
-**Plans**: TBD
+**Plans**: 78-01 (Multi-Calendar Selection)
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 77 → 78
+Phases execute in numeric order: 77 -> 78
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 77. Fixed Height Dashboard Widgets | 1/1 | Complete | 2026-01-17 |
-| 78. Multi-Calendar Selection | 0/TBD | Not started | - |
+| 78. Multi-Calendar Selection | 0/1 | Not started | - |
