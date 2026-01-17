@@ -1251,6 +1251,63 @@ class Calendar extends Base {
 			}
 		}
 
+		// Build full attendees array with matched status
+		$attendees_json = get_post_meta( $event->ID, '_attendees', true );
+		$raw_attendees  = $attendees_json ? json_decode( $attendees_json, true ) : [];
+		$attendees      = [];
+
+		if ( is_array( $raw_attendees ) ) {
+			// Build email lookup for matched people
+			$matched_emails = [];
+			if ( is_array( $matched_people_raw ) ) {
+				foreach ( $matched_people_raw as $match ) {
+					$email = strtolower( $match['attendee_email'] ?? '' );
+					if ( $email ) {
+						$matched_emails[ $email ] = $match;
+					}
+				}
+			}
+
+			foreach ( $raw_attendees as $attendee ) {
+				$email = strtolower( $attendee['email'] ?? '' );
+				$match = $matched_emails[ $email ] ?? null;
+
+				$attendee_data = [
+					'email'   => $attendee['email'] ?? '',
+					'name'    => $attendee['name'] ?? '',
+					'status'  => $attendee['status'] ?? '',
+					'matched' => $match !== null,
+				];
+
+				if ( $match ) {
+					$person_id                    = $match['person_id'] ?? 0;
+					$attendee_data['person_id']   = $person_id;
+					$attendee_data['person_name'] = get_the_title( $person_id );
+
+					// Get person thumbnail
+					$featured_image_id          = get_post_thumbnail_id( $person_id );
+					$attendee_data['thumbnail'] = $featured_image_id
+						? wp_get_attachment_image_url( $featured_image_id, 'thumbnail' )
+						: null;
+				}
+
+				$attendees[] = $attendee_data;
+			}
+
+			// Sort attendees: matched first, then alphabetically by name
+			usort(
+				$attendees,
+				function ( $a, $b ) {
+					// Matched attendees come first
+					if ( $a['matched'] !== $b['matched'] ) {
+						return $a['matched'] ? -1 : 1;
+					}
+					// Then sort alphabetically by name
+					return strcasecmp( $a['name'] ?? '', $b['name'] ?? '' );
+				}
+			);
+		}
+
 		// Get connection/calendar name
 		$connection_id = get_post_meta( $event->ID, '_connection_id', true );
 		$calendar_name = '';
@@ -1282,6 +1339,8 @@ class Calendar extends Base {
 			'location'       => get_post_meta( $event->ID, '_location', true ),
 			'meeting_url'    => get_post_meta( $event->ID, '_meeting_url', true ),
 			'matched_people' => $matched_people,
+			'attendees'      => $attendees,
+			'description'    => $event->post_content,
 			'calendar_name'  => $calendar_name,
 		];
 	}
