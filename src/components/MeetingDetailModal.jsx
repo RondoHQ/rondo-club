@@ -1,0 +1,235 @@
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { X, MapPin, Video, Clock, User, ChevronDown } from 'lucide-react';
+import { format } from 'date-fns';
+import RichTextEditor from '@/components/RichTextEditor';
+import { useMeetingNotes, useUpdateMeetingNotes } from '@/hooks/useMeetings';
+
+export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
+  // State for notes
+  const [notes, setNotes] = useState('');
+  const [showNotes, setShowNotes] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Fetch existing notes
+  const { data: notesData, isLoading: isLoadingNotes } = useMeetingNotes(meeting?.id);
+  const updateNotes = useUpdateMeetingNotes();
+
+  // Initialize notes from fetched data
+  useEffect(() => {
+    if (notesData?.notes !== undefined) {
+      setNotes(notesData.notes);
+      setShowNotes(!!notesData.notes); // Auto-expand if notes exist
+    }
+  }, [notesData]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasChanges(false);
+    }
+  }, [isOpen]);
+
+  // Handle notes change with debounced auto-save
+  const handleNotesChange = useCallback((value) => {
+    setNotes(value);
+    setHasChanges(true);
+  }, []);
+
+  // Save notes on blur
+  const handleNotesSave = useCallback(() => {
+    if (hasChanges && meeting?.id) {
+      updateNotes.mutate({ eventId: meeting.id, notes });
+      setHasChanges(false);
+    }
+  }, [hasChanges, meeting?.id, notes, updateNotes]);
+
+  if (!isOpen || !meeting) return null;
+
+  // Parse times
+  const startDate = new Date(meeting.start_time);
+  const endDate = new Date(meeting.end_time);
+
+  // Calculate duration in minutes
+  const durationMs = endDate - startDate;
+  const durationMinutes = Math.round(durationMs / (1000 * 60));
+  const durationHours = Math.floor(durationMinutes / 60);
+  const durationMins = durationMinutes % 60;
+
+  let durationText = '';
+  if (durationHours > 0 && durationMins > 0) {
+    durationText = `${durationHours}h ${durationMins}m`;
+  } else if (durationHours > 0) {
+    durationText = durationHours === 1 ? '1 hour' : `${durationHours} hours`;
+  } else {
+    durationText = `${durationMins} min`;
+  }
+
+  // Format time display
+  const dateStr = format(startDate, 'EEEE, MMMM d, yyyy');
+  const timeStr = meeting.all_day
+    ? 'All day'
+    : `${format(startDate, 'h:mm a')} - ${format(endDate, 'h:mm a')} (${durationText})`;
+
+  // Sort attendees: matched first, then alphabetically
+  const sortedAttendees = [...(meeting.attendees || [])].sort((a, b) => {
+    if (a.matched !== b.matched) return b.matched - a.matched;
+    return (a.name || a.email || '').localeCompare(b.name || b.email || '');
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50 pr-4">{meeting.title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content - scrollable */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Date and time */}
+          <div className="flex items-start gap-3">
+            <Clock className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{dateStr}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{timeStr}</p>
+            </div>
+          </div>
+
+          {/* Location */}
+          {meeting.location && (
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-600 dark:text-gray-400">{meeting.location}</p>
+            </div>
+          )}
+
+          {/* Meeting URL */}
+          {meeting.meeting_url && (
+            <div className="flex items-start gap-3">
+              <Video className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+              <a
+                href={meeting.meeting_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-accent-600 dark:text-accent-400 hover:underline break-all"
+              >
+                Join meeting
+              </a>
+            </div>
+          )}
+
+          {/* Description from calendar */}
+          {meeting.description && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</p>
+              <div
+                className="text-sm text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: meeting.description }}
+              />
+            </div>
+          )}
+
+          {/* Attendees */}
+          {sortedAttendees.length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Attendees ({sortedAttendees.length})
+              </p>
+              <div className="space-y-1">
+                {sortedAttendees.map((attendee, index) => (
+                  <AttendeeRow key={attendee.email || index} attendee={attendee} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notes section - collapsible */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowNotes(!showNotes)}
+              className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 hover:text-gray-900 dark:hover:text-gray-100"
+            >
+              <ChevronDown className={`w-4 h-4 transition-transform ${showNotes ? '' : '-rotate-90'}`} />
+              Meeting notes
+              {updateNotes.isPending && <span className="text-xs text-gray-400 ml-2">Saving...</span>}
+            </button>
+            {showNotes && (
+              <RichTextEditor
+                value={notes}
+                onChange={handleNotesChange}
+                onBlur={handleNotesSave}
+                placeholder="Add meeting prep notes..."
+                disabled={isLoadingNotes}
+                minHeight="100px"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-end">
+          <button onClick={onClose} className="btn-secondary">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AttendeeRow({ attendee }) {
+  const displayName = attendee.person_name || attendee.name || attendee.email || 'Unknown';
+
+  const content = (
+    <div className="flex items-center gap-3 py-2">
+      {/* Avatar */}
+      {attendee.matched && attendee.thumbnail ? (
+        <img
+          src={attendee.thumbnail}
+          alt={displayName}
+          className="w-8 h-8 rounded-full object-cover"
+        />
+      ) : (
+        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+        </div>
+      )}
+
+      {/* Name and email */}
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm truncate ${
+          attendee.matched
+            ? 'font-medium text-accent-600 dark:text-accent-400'
+            : 'text-gray-600 dark:text-gray-400'
+        }`}>
+          {displayName}
+        </p>
+        {attendee.matched && attendee.email && attendee.email !== displayName && (
+          <p className="text-xs text-gray-500 dark:text-gray-500 truncate">{attendee.email}</p>
+        )}
+      </div>
+    </div>
+  );
+
+  // Wrap in Link only if matched
+  if (attendee.matched && attendee.person_id) {
+    return (
+      <Link
+        to={`/people/${attendee.person_id}`}
+        className="block rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors px-2 -mx-2"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className="px-2 -mx-2">{content}</div>;
+}
