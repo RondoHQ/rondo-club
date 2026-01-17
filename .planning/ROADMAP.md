@@ -46,7 +46,7 @@
   3. Modal shows attendee list with avatars
   4. Known attendees are visually distinguished and clickable to their profile
   5. Modal includes notes section for meeting prep
-**Plans**: TBD
+**Plans**: 1/2 complete
 
 #### Phase 74: Add Person from Meeting
 **Goal**: User can add unknown meeting attendees as contacts
@@ -731,6 +731,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.5 Calendar Sync Control | 67-68 | 3/3 | Complete ✅ | 2026-01-16 |
 | v4.6 Dashboard & Polish | 69-70 | 2/2 | Complete ✅ | 2026-01-16 |
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4/4 | Complete ✅ | 2026-01-17 |
-| v4.8 Meeting Enhancements | 73-75 | 0/TBD | In Progress 🚧 | - |
+| v4.8 Meeting Enhancements | 73-75 | 1/TBD | In Progress 🚧 | - |
 
 **Shipped: 26 milestones, 72 phases, 125 plans**
