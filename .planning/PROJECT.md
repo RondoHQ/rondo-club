@@ -215,13 +215,38 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-*(No active milestone)*
+**v5.0 Google Contacts Sync** — Two-way synchronization between Caelis and Google Contacts
+
+**Goal:** Replace manual CSV import/export with seamless API-based bidirectional sync, using existing Google OAuth infrastructure.
+
+**Target features:**
+- Extend Google OAuth to request Contacts scopes (incremental scope addition)
+- Full field mapping: names, photos, emails, phones, addresses, birthdays, organizations
+- Import all Google Contacts automatically on connect
+- Export Caelis contacts to Google Contacts
+- Delta sync using People API syncToken (only changed contacts)
+- Background sync via WP-Cron (configurable frequency)
+- Conflict resolution (newest wins by default)
+- Deletion handling: Caelis→Google propagates, Google→Caelis unlinks only
+- Settings UI with sync status, preferences, manual sync button
+- Person profile sync indicator with "View in Google" link
+- WP-CLI commands for sync operations
+
+**Key decisions:**
+- All contacts sync regardless of workspace visibility
+- Photos: Preserve existing on initial sync, propagate changes after
+- Caelis is source of truth (deletions in Google don't delete Caelis data)
+- Duplicate detection: email-first, then name matching
 
 ### Out of Scope
 
 - Mobile app — future consideration
 - Real-time updates (WebSockets) — future enhancement
-- External integrations beyond Slack — future milestone
+- Real-time Google sync (webhook-based) — will use polling/cron like Calendar
+- Multiple Google accounts simultaneously — future enhancement
+- Company/organization sync to Google Contact groups — contacts only
+- Two-way relationship sync — Google doesn't have relationship concepts
+- Contact group/label sync — future enhancement after core sync works
 
 ## Context
 
@@ -238,8 +263,9 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - `includes/class-post-types.php` — CPT registration (add workspace here)
 - `includes/class-taxonomies.php` — Taxonomy registration (add workspace_access here)
 
-**Reference Document:**
-- `Caelis-Multi-User-Project-Plan.md` — Detailed technical design for all phases
+**Reference Documents:**
+- `Caelis-Multi-User-Project-Plan.md` — Detailed technical design for multi-user phases
+- `.planning/milestones/v5.0-google-contacts-sync.md` — Technical design for Google Contacts sync
 
 ## Constraints
 
@@ -330,4 +356,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Wider modal for two columns | max-w-2xl accommodates two-column layout | ✓ Good |
 
 ---
-*Last updated: 2026-01-17 — v4.9 Dashboard & Calendar Polish milestone shipped*
+*Last updated: 2026-01-17 — v5.0 Google Contacts Sync milestone started*
