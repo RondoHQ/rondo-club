@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Seamless bidirectional sync between Caelis and Google Contacts with Caelis as source of truth
-**Current focus:** Phase 81 - Export to Google (Complete)
+**Current focus:** Phase 82 - Delta Sync (In Progress)
 
 ## Current Position
 
 Milestone: v5.0 Google Contacts Sync
-Phase: 81 of 85 (Export to Google)
-Plan: 03 of 03 (complete)
-Status: Phase complete
-Last activity: 2026-01-17 - Completed 81-03-PLAN.md (Bulk export UI)
+Phase: 82 of 85 (Delta Sync)
+Plan: 01 of 03 (complete)
+Status: In progress
+Last activity: 2026-01-17 - Completed 82-01-PLAN.md (Cron scheduling infrastructure)
 
-Progress: [██████░░░░] ~60%
+Progress: [██████░░░░] ~62%
 
 ## Completed Milestones
 
@@ -78,6 +78,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Follow existing async pattern | Use same WP-Cron pattern as calendar rematch for consistency | 81-02 |
 | Sequential bulk export with 100ms delay | Avoid Google API rate limits (max 10 req/sec) | 81-03 |
 | Progress callback parameter | Future CLI integration for Phase 85 | 81-03 |
+| Check if cron schedule exists before adding | Calendar sync may have already registered 15-minute interval | 82-01 |
+| Default sync frequency of 60 minutes | Hourly balances freshness with API quota | 82-01 |
+| Placeholder sync_user implementation | Establishes infrastructure, Plan 02 adds actual delta logic | 82-01 |
 
 ### Pending Todos
 
@@ -93,12 +96,12 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-17 21:57 UTC
-Stopped at: Completed 81-03-PLAN.md (Bulk export UI)
+Last session: 2026-01-17 21:47 UTC
+Stopped at: Completed 82-01-PLAN.md (Cron scheduling infrastructure)
 Resume file: None
 
 ## Next Steps
 
-- Phase 81 Export to Google complete (3/3 plans)
-- Next: Phase 82 Sync Status & Monitoring
-- Then: Phase 83 Conflict Resolution
+- Phase 82 Delta Sync in progress (1/3 plans complete)
+- Next: 82-02-PLAN.md (Delta sync logic)
+- Then: 82-03-PLAN.md (Sync monitoring)
