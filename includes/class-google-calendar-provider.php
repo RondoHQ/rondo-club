@@ -167,9 +167,11 @@ class GoogleProvider {
 		$connection_id = $connection['id'] ?? '';
 
 		// Check for existing event
+		// Include 'any' post_status because future events have 'future' status
 		$existing = get_posts(
 			[
 				'post_type'      => 'calendar_event',
+				'post_status'    => 'any',
 				'author'         => $user_id,
 				'meta_query'     => [
 					'relation' => 'AND',
