@@ -13,6 +13,7 @@ namespace Caelis\REST;
 
 use Caelis\Calendar\GoogleOAuth;
 use Caelis\Contacts\GoogleContactsConnection;
+use Caelis\Contacts\GoogleContactsSync;
 use Caelis\Import\GoogleContactsAPI;
 use Caelis\Export\GoogleContactsExport;
 
@@ -138,6 +139,39 @@ class GoogleContacts extends Base {
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
+
+		// POST /prm/v1/google-contacts/sync - Trigger manual sync.
+		register_rest_route(
+			'prm/v1',
+			'/google-contacts/sync',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'trigger_contacts_sync' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
+
+		// POST /prm/v1/google-contacts/sync-frequency - Update sync frequency.
+		register_rest_route(
+			'prm/v1',
+			'/google-contacts/sync-frequency',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'update_contacts_sync_frequency' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'frequency' => [
+						'required'          => true,
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'validate_callback' => function ( $value ) {
+							$valid = array_keys( GoogleContactsConnection::get_frequency_options() );
+							return in_array( (int) $value, $valid, true );
+						},
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -161,6 +195,7 @@ class GoogleContacts extends Base {
 			'last_error'         => $connection['last_error'] ?? null,
 			'has_pending_import' => GoogleContactsConnection::has_pending_import( $user_id ),
 			'connected_at'       => $connection['connected_at'] ?? null,
+			'sync_frequency'     => $connection['sync_frequency'] ?? GoogleContactsConnection::get_default_frequency(),
 			'sync_in_progress'   => false, // Future: track async imports
 		];
 
@@ -618,5 +653,84 @@ class GoogleContacts extends Base {
 		echo '<script>window.location.replace(' . wp_json_encode( $safe_url ) . ');</script>';
 		echo '</head><body>Redirecting...</body></html>';
 		exit;
+	}
+
+	/**
+	 * Trigger manual Google Contacts sync for current user
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error Response or error.
+	 */
+	public function trigger_contacts_sync( \WP_REST_Request $request ) {
+		$user_id = get_current_user_id();
+
+		// Check if user has Google Contacts connected.
+		$connection = GoogleContactsConnection::get_connection( $user_id );
+		if ( ! $connection || empty( $connection['credentials'] ) ) {
+			return new \WP_Error(
+				'not_connected',
+				__( 'Google Contacts is not connected.', 'caelis' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		try {
+			// Run delta sync.
+			$sync   = new GoogleContactsSync();
+			$result = $sync->sync_user_manual( $user_id );
+
+			return rest_ensure_response(
+				[
+					'success' => true,
+					'stats'   => $result,
+					'message' => __( 'Sync completed successfully.', 'caelis' ),
+				]
+			);
+		} catch ( \Exception $e ) {
+			return new \WP_Error(
+				'sync_failed',
+				$e->getMessage(),
+				[ 'status' => 500 ]
+			);
+		}
+	}
+
+	/**
+	 * Update Google Contacts sync frequency for current user
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error Response or error.
+	 */
+	public function update_contacts_sync_frequency( \WP_REST_Request $request ) {
+		$user_id   = get_current_user_id();
+		$frequency = $request->get_param( 'frequency' );
+
+		// Check if user has Google Contacts connected.
+		$connection = GoogleContactsConnection::get_connection( $user_id );
+		if ( ! $connection ) {
+			return new \WP_Error(
+				'not_connected',
+				__( 'Google Contacts is not connected.', 'caelis' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Update frequency.
+		GoogleContactsConnection::update_connection(
+			$user_id,
+			[
+				'sync_frequency' => $frequency,
+			]
+		);
+
+		$options = GoogleContactsConnection::get_frequency_options();
+
+		return rest_ensure_response(
+			[
+				'success'   => true,
+				'frequency' => $frequency,
+				'label'     => $options[ $frequency ] ?? '',
+			]
+		);
 	}
 }
