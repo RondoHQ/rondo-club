@@ -1092,15 +1092,15 @@ class Calendar extends Base {
 	 */
 	private function format_meeting_event( $event, $person_id, $user_id ) {
 		$matched_people_json = get_post_meta( $event->ID, '_matched_people', true );
-		$matched_people      = $matched_people_json ? json_decode( $matched_people_json, true ) : [];
+		$matched_people_raw  = $matched_people_json ? json_decode( $matched_people_json, true ) : [];
 
 		// Find the match info for this person
 		$match_type             = '';
 		$confidence             = 0;
 		$matched_attendee_email = null;
 
-		if ( is_array( $matched_people ) ) {
-			foreach ( $matched_people as $match ) {
+		if ( is_array( $matched_people_raw ) ) {
+			foreach ( $matched_people_raw as $match ) {
 				if ( isset( $match['person_id'] ) && $match['person_id'] === $person_id ) {
 					$match_type             = $match['match_type'] ?? '';
 					$confidence             = $match['confidence'] ?? 0;
@@ -1110,19 +1110,66 @@ class Calendar extends Base {
 			}
 		}
 
-		// Get attendees and filter out the matched person's email
+		// Get raw attendees and build full attendees array with matched status
 		$attendees_json  = get_post_meta( $event->ID, '_attendees', true );
-		$attendees       = $attendees_json ? json_decode( $attendees_json, true ) : [];
+		$raw_attendees   = $attendees_json ? json_decode( $attendees_json, true ) : [];
 		$other_attendees = [];
+		$attendees       = [];
 
-		if ( is_array( $attendees ) ) {
-			foreach ( $attendees as $attendee ) {
-				$email = $attendee['email'] ?? '';
-				// Exclude the matched person's email from other_attendees
-				if ( ! empty( $email ) && $email !== $matched_attendee_email ) {
-					$other_attendees[] = $email;
+		if ( is_array( $raw_attendees ) ) {
+			// Build email lookup for matched people
+			$matched_emails = [];
+			if ( is_array( $matched_people_raw ) ) {
+				foreach ( $matched_people_raw as $match ) {
+					$email = strtolower( $match['attendee_email'] ?? '' );
+					if ( $email ) {
+						$matched_emails[ $email ] = $match;
+					}
 				}
 			}
+
+			foreach ( $raw_attendees as $attendee ) {
+				$email = strtolower( $attendee['email'] ?? '' );
+				$match = $matched_emails[ $email ] ?? null;
+
+				// Build full attendee data for MeetingDetailModal
+				$attendee_data = [
+					'email'   => $attendee['email'] ?? '',
+					'name'    => $attendee['name'] ?? '',
+					'status'  => $attendee['status'] ?? '',
+					'matched' => $match !== null,
+				];
+
+				if ( $match ) {
+					$matched_person_id              = $match['person_id'] ?? 0;
+					$attendee_data['person_id']     = $matched_person_id;
+					$attendee_data['person_name']   = get_the_title( $matched_person_id );
+
+					// Get person thumbnail
+					$featured_image_id          = get_post_thumbnail_id( $matched_person_id );
+					$attendee_data['thumbnail'] = $featured_image_id
+						? wp_get_attachment_image_url( $featured_image_id, 'thumbnail' )
+						: null;
+				}
+
+				$attendees[] = $attendee_data;
+
+				// Also build other_attendees for backward compatibility
+				if ( ! empty( $attendee['email'] ) && strtolower( $attendee['email'] ) !== strtolower( $matched_attendee_email ?? '' ) ) {
+					$other_attendees[] = $attendee['email'];
+				}
+			}
+
+			// Sort attendees: matched first, then alphabetically by name
+			usort(
+				$attendees,
+				function ( $a, $b ) {
+					if ( $a['matched'] !== $b['matched'] ) {
+						return $a['matched'] ? -1 : 1;
+					}
+					return strcasecmp( $a['name'] ?? '', $b['name'] ?? '' );
+				}
+			);
 		}
 
 		// Get connection name
@@ -1159,6 +1206,8 @@ class Calendar extends Base {
 			'confidence'             => $confidence,
 			'matched_attendee_email' => $matched_attendee_email,
 			'other_attendees'        => $other_attendees,
+			'attendees'              => $attendees,
+			'description'            => $event->post_content,
 			'calendar_name'          => $calendar_name,
 			'connection_id'          => $connection_id,
 			'logged_as_activity'     => (bool) get_post_meta( $event->ID, '_logged_as_activity', true ),
