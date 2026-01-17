@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Seamless bidirectional sync between Caelis and Google Contacts with Caelis as source of truth
-**Current focus:** Phase 79 - OAuth Foundation (COMPLETE)
+**Current focus:** Phase 80 - Import from Google (In progress)
 
 ## Current Position
 
 Milestone: v5.0 Google Contacts Sync
-Phase: 79 of 85 (OAuth Foundation) - COMPLETE
-Plan: 02 of 02 (complete)
-Status: Phase complete
-Last activity: 2026-01-17 - Completed 79-02-PLAN.md (Frontend Settings UI)
+Phase: 80 of 85 (Import from Google)
+Plan: 01 of 03 (complete)
+Status: In progress
+Last activity: 2026-01-17 - Completed 80-01-PLAN.md (Backend API Import Class)
 
-Progress: [██░░░░░░░░] ~20%
+Progress: [██░░░░░░░░] ~22%
 
 ## Completed Milestones
 
@@ -47,7 +47,7 @@ Progress: [██░░░░░░░░] ~20%
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4 | 2026-01-17 |
 | v4.8 Meeting Enhancements | 73-76 | 6 | 2026-01-17 |
 | v4.9 Dashboard & Calendar Polish | 77-78 | 4 | 2026-01-17 |
-**Total:** 29 milestones, 78 phases, 141 plans completed
+**Total:** 29 milestones, 78 phases, 142 plans completed
 
 ## Accumulated Context
 
@@ -64,6 +64,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Pending import flag triggers Phase 80 auto-import | Decouple OAuth completion from import processing | 79-01 |
 | Default to readwrite access mode | Bidirectional sync requires write access | 79-02 |
 | Add email scope to OAuth request | Reliable user identification in connected state display | 79-02 |
+| Skip contacts without email | Match by email only - no name-based matching per CONTEXT.md | 80-01 |
+| Fill gaps only on duplicate match | Never overwrite existing Caelis data | 80-01 |
+| Google IDs as post meta | Store _google_contact_id, _google_etag for future sync | 80-01 |
 
 ### Pending Todos
 
@@ -80,12 +83,11 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-17
-Stopped at: Completed 79-02-PLAN.md (Phase 79 complete)
+Stopped at: Completed 80-01-PLAN.md
 Resume file: None
 
 ## Next Steps
 
-- Phase 79 OAuth Foundation is COMPLETE
-- Ready for Phase 80: Initial Import
-  - Backend has `has_pending_import` flag set after OAuth
-  - Phase 80 will implement automatic import trigger and manual import UI
+- Phase 80 Import from Google in progress (1/3 plans complete)
+- Next: 80-02-PLAN.md (REST API endpoint for import trigger)
+- Then: 80-03-PLAN.md (Frontend import UI)
