@@ -31,6 +31,13 @@ Requirements for v4.8 release. Each maps to roadmap phases.
 - [x] **NAV-02**: Meetings widget has "Today" button to return to current day
 - [x] **NAV-03**: Widget header shows the date being viewed
 
+### Add Email to Existing Person
+
+- [x] **EMAIL-01**: Clicking add shows choice popup with "Add to existing person" and "Create new person"
+- [x] **EMAIL-02**: "Add to existing" opens person search/select
+- [x] **EMAIL-03**: Selected person gets email added to their record
+- [x] **EMAIL-04**: "Create new" proceeds to current PersonEditModal flow
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -73,12 +80,16 @@ Which phases cover which requirements. Updated by create-roadmap.
 | NAV-01 | Phase 75 | Complete |
 | NAV-02 | Phase 75 | Complete |
 | NAV-03 | Phase 75 | Complete |
+| EMAIL-01 | Phase 76 | Complete |
+| EMAIL-02 | Phase 76 | Complete |
+| EMAIL-03 | Phase 76 | Complete |
+| EMAIL-04 | Phase 76 | Complete |
 
 **Coverage:**
-- v1 requirements: 15 total
-- Mapped to phases: 15 ✓
+- v1 requirements: 19 total
+- Mapped to phases: 19 ✓
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after roadmap creation*
+*Last updated: 2026-01-17 after Phase 76 completion*
