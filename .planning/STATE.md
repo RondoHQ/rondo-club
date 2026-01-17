@@ -13,7 +13,7 @@ Milestone: v4.9 Dashboard & Calendar Polish
 Phase: 78 of 78 (Multi-Calendar Selection)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-01-17 — Phase 77 complete
+Last activity: 2026-01-17 — Phase 77-FIX complete
 
 Progress: █████░░░░░ 50%
 
@@ -115,6 +115,10 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - **280px content height:** Chosen to comfortably display ~5 items while keeping widget size manageable
 - **6 skeleton widgets:** Shows typical dashboard layout during loading for visual consistency
 
+### Phase 77-FIX Decisions
+
+- **placeholderData for layout stability:** Used `placeholderData: (prev) => prev` in useDateMeetings hook to prevent layout jump during date navigation. This is the TanStack Query v5 pattern replacing deprecated `keepPreviousData: true`.
+
 ## Roadmap Evolution
 
 - Milestone v4.3 complete: React performance review, installation documentation, WPCS compliance
@@ -137,12 +141,13 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.8 complete: Meeting Enhancements (Phases 73-76)
 - Milestone v4.8 archived: Git tag v4.8 created, ROADMAP.md and REQUIREMENTS.md archived
 - Milestone v4.9 created: Dashboard & Calendar Polish (Phase 77+)
-- Phase 77 complete: Fixed Height Dashboard Widgets (1 plan)
+- Phase 77 complete: Fixed Height Dashboard Widgets (1 plan + FIX plan)
+- Phase 77-FIX UAT passed: Events widget no longer jumps during date navigation
 
 ## Session Continuity
 
-Last session: 2026-01-17T13:38:00Z
-Stopped at: Completed 77-01-PLAN.md
+Last session: 2026-01-17T13:10:00Z
+Stopped at: Completed 77-FIX-PLAN.md
 Resume file: None
 
 ## Accumulated Context
