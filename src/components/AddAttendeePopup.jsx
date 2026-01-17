@@ -141,7 +141,7 @@ export default function AddAttendeePopup({
           </div>
 
           {/* Search results */}
-          <div className="max-h-72 overflow-y-auto">
+          <div className="max-h-[50vh] overflow-y-auto">
             {!showResults ? (
               <div className="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                 Type at least 2 characters

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { X, MapPin, Video, Clock, User, ChevronDown, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
@@ -52,8 +52,38 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
   // Popup state - which attendee has the popup open
   const [popupAttendee, setPopupAttendee] = useState(null);
 
+  // Local attendee state - allows optimistic updates when email is added
+  const [localAttendees, setLocalAttendees] = useState(null);
+
+  // Track which attendee email we're creating a person for (ref to avoid closure issues)
+  const creatingForEmailRef = useRef(null);
+
+  // Reset local attendees when meeting changes
+  useEffect(() => {
+    setLocalAttendees(null);
+  }, [meeting?.id]);
+
   const createPersonMutation = useCreatePerson({
-    onSuccess: () => {
+    onSuccess: (createdPerson) => {
+      // Update local attendees to show the newly created person as matched
+      const emailToMatch = creatingForEmailRef.current;
+      if (emailToMatch) {
+        setLocalAttendees(current => {
+          const attendees = current || meeting?.attendees || [];
+          return attendees.map(att =>
+            att.email?.toLowerCase() === emailToMatch.toLowerCase()
+              ? {
+                  ...att,
+                  matched: true,
+                  person_id: createdPerson.id,
+                  person_name: `${createdPerson.acf?.first_name || ''} ${createdPerson.acf?.last_name || ''}`.trim(),
+                  thumbnail: createdPerson._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
+                }
+              : att
+          );
+        });
+        creatingForEmailRef.current = null;
+      }
       setShowPersonModal(false);
       setPersonPrefill(null);
     },
@@ -69,10 +99,12 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
   // Handle "Create new person" from popup
   const handleCreateNew = () => {
     const { first_name, last_name } = extractNameFromAttendee(popupAttendee);
+    const emailForCreation = popupAttendee.email || '';
+    creatingForEmailRef.current = emailForCreation;
     setPersonPrefill({
       first_name,
       last_name,
-      email: popupAttendee.email || '',
+      email: emailForCreation,
     });
     setPopupAttendee(null);
     setShowPersonModal(true);
@@ -82,10 +114,26 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
   const handleSelectPerson = async (person) => {
     if (!popupAttendee?.email) return;
 
+    const emailToAdd = popupAttendee.email;
+
     await addEmailMutation.mutateAsync({
       personId: person.id,
-      email: popupAttendee.email,
+      email: emailToAdd,
     });
+
+    // Update local attendees to show the person as matched
+    const currentAttendees = localAttendees || meeting?.attendees || [];
+    setLocalAttendees(currentAttendees.map(att =>
+      att.email?.toLowerCase() === emailToAdd.toLowerCase()
+        ? {
+            ...att,
+            matched: true,
+            person_id: person.id,
+            person_name: person.name,
+            thumbnail: person.thumbnail,
+          }
+        : att
+    ));
 
     setPopupAttendee(null);
   };
@@ -157,7 +205,9 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
     : `${format(startDate, 'h:mm a')} - ${format(endDate, 'h:mm a')} (${durationText})`;
 
   // Sort attendees: matched first, then alphabetically
-  const sortedAttendees = [...(meeting.attendees || [])].sort((a, b) => {
+  // Use localAttendees if available (after email was added), otherwise use meeting data
+  const attendeesSource = localAttendees || meeting.attendees || [];
+  const sortedAttendees = [...attendeesSource].sort((a, b) => {
     if (a.matched !== b.matched) return b.matched - a.matched;
     return (a.name || a.email || '').localeCompare(b.name || b.email || '');
   });

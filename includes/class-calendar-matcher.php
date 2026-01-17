@@ -168,7 +168,7 @@ class Matcher {
 				'post_type'      => 'calendar_event',
 				'author'         => $user_id,
 				'posts_per_page' => -1,
-				'post_status'    => 'publish',
+				'post_status'    => [ 'publish', 'future' ],
 				'meta_query'     => [
 					[
 						'key'     => '_attendees',
