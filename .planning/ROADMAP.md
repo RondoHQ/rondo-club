@@ -67,10 +67,12 @@ Plans:
   2. Caelis contact fields (name, email, phone, etc.) are correctly mapped to Google format
   3. Photos uploaded from Caelis appear in Google Contacts
   4. User can bulk export existing unlinked contacts to Google
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 81-01: TBD
+- [ ] 81-01-PLAN.md — Core export class with field mapping and Google API integration
+- [ ] 81-02-PLAN.md — Save hooks, async queue, and REST endpoint for single export
+- [ ] 81-03-PLAN.md — Bulk export for unlinked contacts with Settings UI
 
 ### Phase 82: Delta Sync
 **Goal**: Background sync detects and propagates changes in both directions
@@ -141,7 +143,7 @@ Phases execute in numeric order: 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85
 |-------|----------------|--------|-----------|
 | 79. OAuth Foundation | 2/2 | Complete | 2026-01-17 |
 | 80. Import from Google | 3/3 | Complete | 2026-01-17 |
-| 81. Export to Google | 0/TBD | Not started | - |
+| 81. Export to Google | 0/3 | Not started | - |
 | 82. Delta Sync | 0/TBD | Not started | - |
 | 83. Conflict & Deletion | 0/TBD | Not started | - |
 | 84. Settings & Person UI | 0/TBD | Not started | - |
