@@ -359,7 +359,7 @@ function OrganizationListRow({ company, workspaces, isSelected, onToggleSelectio
             <img
               src={company._embedded['wp:featuredmedia'][0].source_url}
               alt=""
-              className="w-8 h-8 rounded-lg object-contain bg-white"
+              className="w-8 h-8 rounded-lg"
             />
           ) : (
             <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">

@@ -257,7 +257,7 @@ export default function CompanyDetail() {
               <img 
                 src={company._embedded['wp:featuredmedia'][0].source_url}
                 alt={getCompanyName(company)}
-                className="w-24 h-24 rounded-lg object-contain bg-white"
+                className="w-24 h-24 rounded-lg object-contain"
               />
             ) : (
               <div className="w-24 h-24 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-600">
@@ -330,10 +330,10 @@ export default function CompanyDetail() {
                   <img
                     src={child._embedded['wp:featuredmedia'][0].source_url}
                     alt={getCompanyName(child)}
-                    className="w-10 h-10 rounded object-contain bg-white dark:bg-gray-700"
+                    className="w-10 h-10 rounded object-contain "
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
                     <Building2 className="w-5 h-5 text-gray-400" />
                   </div>
                 )}
