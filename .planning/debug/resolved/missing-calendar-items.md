@@ -1,8 +1,8 @@
 ---
-status: verifying
+status: resolved
 trigger: "Calendar items not showing for today on dashboard at cael.is"
 created: 2026-01-17T12:00:00Z
-updated: 2026-01-17T09:58:00Z
+updated: 2026-01-17T10:00:00Z
 ---
 
 ## Current Focus
