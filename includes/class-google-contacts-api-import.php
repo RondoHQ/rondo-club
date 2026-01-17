@@ -31,6 +31,7 @@ class GoogleContactsAPI {
 		'contacts_updated'  => 0,
 		'contacts_skipped'  => 0,
 		'contacts_no_email' => 0,
+		'contacts_unlinked' => 0,
 		'companies_created' => 0,
 		'dates_created'     => 0,
 		'photos_imported'   => 0,
@@ -68,9 +69,10 @@ class GoogleContactsAPI {
 	 */
 	public function import_all(): array {
 		$page_token = null;
+		$sync_token = null;
 
 		do {
-			$response    = $this->fetch_contacts( $page_token );
+			$response    = $this->fetch_contacts( $page_token, true );
 			$connections = $response->getConnections() ?: [];
 
 			foreach ( $connections as $person ) {
@@ -78,22 +80,178 @@ class GoogleContactsAPI {
 			}
 
 			$page_token = $response->getNextPageToken();
+
+			// Capture sync token from final response (only available on last page)
+			if ( ! $page_token && $response->getNextSyncToken() ) {
+				$sync_token = $response->getNextSyncToken();
+			}
 		} while ( $page_token );
 
-		// Update connection stats
-		GoogleContactsConnection::update_connection(
-			$this->user_id,
-			[
-				'last_sync'     => current_time( 'c' ),
-				'contact_count' => $this->stats['contacts_imported'] + $this->stats['contacts_updated'],
-				'last_error'    => null,
-			]
-		);
+		// Store sync token for future delta syncs
+		$connection_updates = [
+			'last_sync'     => current_time( 'c' ),
+			'contact_count' => $this->stats['contacts_imported'] + $this->stats['contacts_updated'],
+			'last_error'    => null,
+		];
+
+		if ( $sync_token ) {
+			$connection_updates['sync_token'] = $sync_token;
+		}
+
+		GoogleContactsConnection::update_connection( $this->user_id, $connection_updates );
 
 		// Clear pending import flag
 		GoogleContactsConnection::set_pending_import( $this->user_id, false );
 
 		return $this->stats;
+	}
+
+	/**
+	 * Import only changed contacts from Google using syncToken
+	 *
+	 * Uses Google's incremental sync mechanism to only fetch contacts that have
+	 * changed since the last sync. If no syncToken exists or token is expired,
+	 * falls back to full import.
+	 *
+	 * @return array Import statistics with keys: contacts_imported, contacts_updated, contacts_unlinked, etc.
+	 * @throws \Exception On API or authentication errors.
+	 */
+	public function import_delta(): array {
+		// Get stored syncToken
+		$connection = GoogleContactsConnection::get_connection( $this->user_id );
+		$sync_token = $connection['sync_token'] ?? null;
+
+		// No syncToken - fall back to full import
+		if ( empty( $sync_token ) ) {
+			return $this->import_all();
+		}
+
+		try {
+			$new_sync_token = null;
+			$page_token     = null;
+
+			do {
+				$response    = $this->fetch_contacts_delta( $sync_token, $page_token );
+				$connections = $response->getConnections() ?: [];
+
+				foreach ( $connections as $person ) {
+					// Check if contact was deleted in Google
+					$metadata = $person->getMetadata();
+					if ( $metadata && $metadata->getDeleted() ) {
+						$this->unlink_contact( $person->getResourceName() );
+						continue;
+					}
+
+					// Process contact normally
+					$this->process_contact( $person );
+				}
+
+				$page_token = $response->getNextPageToken();
+
+				// Capture sync token from final response
+				if ( ! $page_token && $response->getNextSyncToken() ) {
+					$new_sync_token = $response->getNextSyncToken();
+				}
+			} while ( $page_token );
+
+			// Update connection with new sync token
+			$connection_updates = [
+				'last_sync'  => current_time( 'c' ),
+				'last_error' => null,
+			];
+
+			if ( $new_sync_token ) {
+				$connection_updates['sync_token'] = $new_sync_token;
+			}
+
+			GoogleContactsConnection::update_connection( $this->user_id, $connection_updates );
+
+			return $this->stats;
+
+		} catch ( \Google\Service\Exception $e ) {
+			// Handle expired syncToken (410 Gone error)
+			if ( $e->getCode() === 410 ) {
+				// Clear expired token
+				GoogleContactsConnection::update_connection(
+					$this->user_id,
+					[ 'sync_token' => null ]
+				);
+
+				// Fall back to full sync
+				return $this->import_all();
+			}
+
+			throw $e;
+		}
+	}
+
+	/**
+	 * Fetch contacts delta from Google API using syncToken
+	 *
+	 * @param string      $sync_token Sync token from previous sync.
+	 * @param string|null $page_token Pagination token.
+	 * @return object ListConnectionsResponse.
+	 * @throws \Exception On API error.
+	 */
+	private function fetch_contacts_delta( string $sync_token, ?string $page_token = null ): object {
+		$service = $this->get_people_service();
+
+		$params = [
+			'personFields' => 'names,emailAddresses,phoneNumbers,addresses,organizations,birthdays,photos,urls,metadata',
+			'syncToken'    => $sync_token,
+			'pageSize'     => 100,
+		];
+
+		if ( $page_token ) {
+			$params['pageToken'] = $page_token;
+		}
+
+		return $service->people_connections->listPeopleConnections( 'people/me', $params );
+	}
+
+	/**
+	 * Unlink a contact that was deleted in Google
+	 *
+	 * Removes Google metadata from the Caelis person but preserves all other data.
+	 *
+	 * @param string $resource_name Google resource name (people/c123...).
+	 */
+	private function unlink_contact( string $resource_name ): void {
+		// Find person by Google contact ID
+		$posts = get_posts(
+			[
+				'post_type'   => 'person',
+				'author'      => $this->user_id,
+				'meta_key'    => '_google_contact_id',
+				'meta_value'  => $resource_name,
+				'numberposts' => 1,
+			]
+		);
+
+		if ( empty( $posts ) ) {
+			return;
+		}
+
+		$post_id = $posts[0]->ID;
+
+		// Remove Google-related meta but preserve Caelis data
+		delete_post_meta( $post_id, '_google_contact_id' );
+		delete_post_meta( $post_id, '_google_etag' );
+		delete_post_meta( $post_id, '_google_last_import' );
+		delete_post_meta( $post_id, '_google_last_export' );
+
+		++$this->stats['contacts_unlinked'];
+
+		// Log for debugging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log(
+				sprintf(
+					'PRM_Google_Contacts: Unlinked contact %d (was %s) - deleted in Google',
+					$post_id,
+					$resource_name
+				)
+			);
+		}
 	}
 
 	/**
@@ -138,17 +296,22 @@ class GoogleContactsAPI {
 	/**
 	 * Fetch contacts from Google API
 	 *
-	 * @param string|null $page_token Pagination token.
+	 * @param string|null $page_token         Pagination token.
+	 * @param bool        $request_sync_token Whether to request a sync token for future delta syncs.
 	 * @return object ListConnectionsResponse.
 	 * @throws \Exception On API error.
 	 */
-	private function fetch_contacts( ?string $page_token = null ): object {
+	private function fetch_contacts( ?string $page_token = null, bool $request_sync_token = false ): object {
 		$service = $this->get_people_service();
 
 		$params = [
 			'personFields' => 'names,emailAddresses,phoneNumbers,addresses,organizations,birthdays,photos,urls,metadata',
 			'pageSize'     => 100,
 		];
+
+		if ( $request_sync_token ) {
+			$params['requestSyncToken'] = true;
+		}
 
 		if ( $page_token ) {
 			$params['pageToken'] = $page_token;
