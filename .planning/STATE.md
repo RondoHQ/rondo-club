@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v4.9 Dashboard & Calendar Polish
 Phase: 77 of 78 (Fixed Height Dashboard Widgets)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-17 — Roadmap created
+Plan: 1 of 1 complete
+Status: Phase complete
+Last activity: 2026-01-17 — Completed 77-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █████░░░░░ 50%
 
 ## Completed Milestones
 
@@ -110,6 +110,11 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - **Inline popup over modal:** Used inline positioned popup below attendee row rather than opening another modal
 - **Case-insensitive duplicate check:** Email addresses compared case-insensitively and stored lowercase
 
+### Phase 77-01 Decisions
+
+- **280px content height:** Chosen to comfortably display ~5 items while keeping widget size manageable
+- **6 skeleton widgets:** Shows typical dashboard layout during loading for visual consistency
+
 ## Roadmap Evolution
 
 - Milestone v4.3 complete: React performance review, installation documentation, WPCS compliance
@@ -132,11 +137,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Milestone v4.8 complete: Meeting Enhancements (Phases 73-76)
 - Milestone v4.8 archived: Git tag v4.8 created, ROADMAP.md and REQUIREMENTS.md archived
 - Milestone v4.9 created: Dashboard & Calendar Polish (Phase 77+)
+- Phase 77 complete: Fixed Height Dashboard Widgets (1 plan)
 
 ## Session Continuity
 
-Last session: 2026-01-17T13:00:00Z
-Stopped at: Started milestone v4.9
+Last session: 2026-01-17T13:38:00Z
+Stopped at: Completed 77-01-PLAN.md
 Resume file: None
 
 ## Accumulated Context
@@ -181,7 +187,7 @@ Resume file: None
 35. ~~Add date navigation to meetings widget (ui)~~ - DONE in v4.8 Phase 75
 36. ~~Meeting detail modal with add person (ui)~~ - DONE in v4.8 Phase 73-74
 37. ~~Add email to existing person from meeting (ui)~~ - DONE in v4.8 Phase 76
-38. Fixed height for homepage widgets (ui)
+38. ~~Fixed height for homepage widgets (ui)~~ - DONE in v4.9 Phase 77
 
 Completed todos in `.planning/todos/done/`:
 1. Testing framework - PHPUnit done in v3.0 (Playwright deferred)
@@ -196,5 +202,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Run `/gsd:plan-phase 77` to plan Fixed Height Dashboard Widgets
-- Run `/gsd:discuss-phase 77` to gather context first
+- Run `/gsd:plan-phase 78` to plan Multi-Calendar Selection
+- Or mark milestone v4.9 as complete if no Phase 78 needed
