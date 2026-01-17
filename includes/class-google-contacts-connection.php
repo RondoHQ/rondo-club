@@ -16,6 +16,7 @@
  * - last_error: string|null - Last error message
  * - contact_count: int - Number of contacts synced
  * - sync_token: string|null - Google sync token for incremental sync
+ * - sync_frequency: int - Sync frequency in minutes (15, 60, 360, 1440)
  */
 
 namespace Caelis\Contacts;
@@ -181,5 +182,42 @@ class GoogleContactsConnection {
 				'last_error'  => null,
 			]
 		);
+	}
+
+	/**
+	 * Get the default sync frequency in minutes
+	 *
+	 * @return int Default frequency (60 = hourly)
+	 */
+	public static function get_default_frequency(): int {
+		return 60;
+	}
+
+	/**
+	 * Get available sync frequency options
+	 *
+	 * @return array Associative array of minutes => label
+	 */
+	public static function get_frequency_options(): array {
+		return [
+			15   => __( 'Every 15 minutes', 'caelis' ),
+			60   => __( 'Every hour', 'caelis' ),
+			360  => __( 'Every 6 hours', 'caelis' ),
+			1440 => __( 'Daily', 'caelis' ),
+		];
+	}
+
+	/**
+	 * Get sync frequency for a user
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return int Frequency in minutes.
+	 */
+	public static function get_sync_frequency( int $user_id ): int {
+		$connection = self::get_connection( $user_id );
+		if ( ! $connection || ! isset( $connection['sync_frequency'] ) ) {
+			return self::get_default_frequency();
+		}
+		return (int) $connection['sync_frequency'];
 	}
 }
