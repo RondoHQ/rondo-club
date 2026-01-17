@@ -459,6 +459,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Caelis\\Export\\ICalFeed' => __DIR__ . '/../..' . '/includes/class-ical-feed.php',
         'Caelis\\Export\\VCard' => __DIR__ . '/../..' . '/includes/class-vcard-export.php',
         'Caelis\\Import\\GoogleContacts' => __DIR__ . '/../..' . '/includes/class-google-contacts-import.php',
+        'Caelis\\Import\\GoogleContactsAPI' => __DIR__ . '/../..' . '/includes/class-google-contacts-api-import.php',
         'Caelis\\Import\\Monica' => __DIR__ . '/../..' . '/includes/class-monica-import.php',
         'Caelis\\Import\\VCard' => __DIR__ . '/../..' . '/includes/class-vcard-import.php',
         'Caelis\\Notifications\\Channel' => __DIR__ . '/../..' . '/includes/class-notification-channel.php',
