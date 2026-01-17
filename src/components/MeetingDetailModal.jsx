@@ -11,13 +11,41 @@ const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
 
 /**
  * Generate Google Calendar deeplink URL
+ *
+ * Google Calendar uses abbreviated domain codes in the eid parameter:
+ * - gmail.com → m
+ * - group.calendar.google.com → g
+ * - googlemail.com → m
+ * - holiday.calendar.google.com → h
+ * - import.calendar.google.com → i
+ * - group.v.calendar.google.com → v
+ *
  * @param {string} eventId - Google Calendar event ID
- * @param {string} calendarId - Google Calendar ID
+ * @param {string} calendarId - Google Calendar ID (email format)
  * @returns {string|null} - URL or null if params missing
  */
 function getGoogleCalendarUrl(eventId, calendarId) {
   if (!eventId || !calendarId) return null;
-  const eid = btoa(`${eventId} ${calendarId}`);
+
+  // Apply domain abbreviation for compact encoding
+  let encodedCalendarId = calendarId;
+  const domainMap = {
+    '@gmail.com': '@m',
+    '@googlemail.com': '@m',
+    '@group.calendar.google.com': '@g',
+    '@holiday.calendar.google.com': '@h',
+    '@import.calendar.google.com': '@i',
+    '@group.v.calendar.google.com': '@v',
+  };
+
+  for (const [domain, abbrev] of Object.entries(domainMap)) {
+    if (calendarId.endsWith(domain)) {
+      encodedCalendarId = calendarId.replace(domain, abbrev);
+      break;
+    }
+  }
+
+  const eid = btoa(`${eventId} ${encodedCalendarId}`);
   return `https://calendar.google.com/calendar/event?eid=${eid}`;
 }
 
