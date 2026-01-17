@@ -16,15 +16,12 @@ Currently we filter out the person being viewed on the person detail screen, but
 
 ## Solution
 
-This requires linking a WordPress user to their "person" record in the CRM. Options to explore:
+**Decision: Use user meta approach**
 
-1. **User meta approach**: Store `person_id` in WordPress user meta when a person record is linked to a user account
-2. **Person meta approach**: Store `user_id` in person post meta to link back to the WP user
-3. **Email matching**: Match the current user's email against person email addresses (simpler but less reliable if emails differ)
-
-Once the link exists:
-- API endpoints return the current user's person_id in context
-- Frontend filters out that person_id from attendee displays
-- Apply consistently to: PersonDetail MeetingCard, EventsWidget, MeetingDetailModal
-
-Need to discuss: Which linking approach is preferred? Email matching is simplest but may not work if user's WP email differs from their person record email.
+1. Store `person_id` in WordPress user meta: `update_user_meta($user_id, 'linked_person_id', $person_id)`
+2. Add UI in Settings to link current user to their person record (dropdown of people)
+3. Return `current_user_person_id` in initial config/bootstrap data (wpApiSettings or similar)
+4. Frontend filters out that person_id from attendee displays in:
+   - PersonDetail MeetingCard
+   - EventsWidget (dashboard)
+   - MeetingDetailModal
