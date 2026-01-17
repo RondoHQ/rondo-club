@@ -47,6 +47,7 @@ use Caelis\Import\GoogleContactsAPI;
 use Caelis\Export\VCard as VCardExport;
 use Caelis\Export\ICalFeed;
 use Caelis\Export\GoogleContactsExport;
+use Caelis\Contacts\GoogleContactsSync;
 use Caelis\CardDAV\Server as CardDAVServer;
 use Caelis\Data\InverseRelationships;
 use Caelis\Data\TodoMigration;
@@ -339,6 +340,9 @@ function prm_init() {
 	// Calendar sync - needs hooks registered for cron schedule filter
 	// Initialize on all requests to register cron_schedules filter
 	new Sync();
+
+	// Google Contacts sync - needs hooks registered for cron schedule filter
+	new GoogleContactsSync();
 
 	// iCal feed - also initialize on non-iCal requests for hook registration
 	// but we check for its specific request above for early return optimization
@@ -699,6 +703,10 @@ function prm_theme_activation() {
 	$calendar_sync = new Sync();
 	$calendar_sync->schedule_sync();
 
+	// Schedule Google Contacts background sync
+	$contacts_sync = new GoogleContactsSync();
+	$contacts_sync->schedule_sync();
+
 	// Also handle theme-specific rewrite rules
 	prm_theme_rewrite_rules();
 
@@ -721,6 +729,10 @@ function prm_theme_deactivation() {
 	// Clear calendar sync cron job
 	$calendar_sync = new Sync();
 	$calendar_sync->unschedule_sync();
+
+	// Clear Google Contacts sync cron job
+	$contacts_sync = new GoogleContactsSync();
+	$contacts_sync->unschedule_sync();
 
 	// Remove custom user role (must call directly since switch_theme hook already fired)
 	$user_roles = new UserRoles();
