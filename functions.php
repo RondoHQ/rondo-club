@@ -310,6 +310,9 @@ function prm_init() {
 		new CommentTypes();
 		new WorkspaceMembers();
 		new MentionNotifications();
+
+		// Initialize Google Contacts export hooks (save_post triggers cron job)
+		GoogleContactsExport::init();
 	}
 
 	// REST API classes - only for REST requests
