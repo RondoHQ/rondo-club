@@ -13,6 +13,7 @@ namespace Caelis\REST;
 
 use Caelis\Calendar\GoogleOAuth;
 use Caelis\Contacts\GoogleContactsConnection;
+use Caelis\Import\GoogleContactsAPI;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -83,6 +84,17 @@ class GoogleContacts extends Base {
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
+
+		// POST /prm/v1/google-contacts/import - Trigger import
+		register_rest_route(
+			'prm/v1',
+			'/google-contacts/import',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'trigger_import' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
 	}
 
 	/**
@@ -106,6 +118,7 @@ class GoogleContacts extends Base {
 			'last_error'         => $connection['last_error'] ?? null,
 			'has_pending_import' => GoogleContactsConnection::has_pending_import( $user_id ),
 			'connected_at'       => $connection['connected_at'] ?? null,
+			'sync_in_progress'   => false, // Future: track async imports
 		];
 
 		return rest_ensure_response( $response );
@@ -274,6 +287,68 @@ class GoogleContacts extends Base {
 				'message' => __( 'Google Contacts disconnected.', 'caelis' ),
 			]
 		);
+	}
+
+	/**
+	 * Trigger Google Contacts import
+	 *
+	 * Imports all contacts from the user's connected Google account.
+	 * This is a synchronous operation that returns when complete.
+	 *
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return WP_REST_Response|WP_Error Response with import stats or error.
+	 */
+	public function trigger_import( $request ) {
+		$user_id = get_current_user_id();
+
+		// Check if connected
+		if ( ! GoogleContactsConnection::is_connected( $user_id ) ) {
+			return new \WP_Error(
+				'not_connected',
+				__( 'Google Contacts is not connected. Please connect first.', 'caelis' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		try {
+			// Create importer and run
+			$importer = new GoogleContactsAPI( $user_id );
+			$stats    = $importer->import_all();
+
+			return rest_ensure_response(
+				[
+					'success' => true,
+					'stats'   => $stats,
+					'message' => sprintf(
+						/* translators: 1: number of contacts imported, 2: number updated, 3: number skipped */
+						__( 'Import complete: %1$d imported, %2$d updated, %3$d skipped', 'caelis' ),
+						$stats['contacts_imported'],
+						$stats['contacts_updated'],
+						$stats['contacts_skipped']
+					),
+				]
+			);
+
+		} catch ( \Exception $e ) {
+			// Log error
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Google Contacts import error: ' . $e->getMessage() );
+			}
+
+			// Store error in connection
+			GoogleContactsConnection::update_connection(
+				$user_id,
+				[
+					'last_error' => $e->getMessage(),
+				]
+			);
+
+			return new \WP_Error(
+				'import_failed',
+				$e->getMessage(),
+				[ 'status' => 500 ]
+			);
+		}
 	}
 
 	/**
