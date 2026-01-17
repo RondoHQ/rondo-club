@@ -285,6 +285,7 @@ export function useAddEmailToPerson() {
         acf: {
           first_name: person.acf?.first_name || '',
           last_name: person.acf?.last_name || '',
+          _visibility: person.acf?._visibility || 'private',
           contact_info: [...currentContacts, newContact],
         },
       });
