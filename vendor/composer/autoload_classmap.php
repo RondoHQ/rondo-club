@@ -101,6 +101,7 @@ return array(
     'Caelis\\Data\\CredentialEncryption' => $baseDir . '/includes/class-credential-encryption.php',
     'Caelis\\Data\\InverseRelationships' => $baseDir . '/includes/class-inverse-relationships.php',
     'Caelis\\Data\\TodoMigration' => $baseDir . '/includes/class-todo-migration.php',
+    'Caelis\\Export\\GoogleContactsExport' => $baseDir . '/includes/class-google-contacts-export.php',
     'Caelis\\Export\\ICalFeed' => $baseDir . '/includes/class-ical-feed.php',
     'Caelis\\Export\\VCard' => $baseDir . '/includes/class-vcard-export.php',
     'Caelis\\Import\\GoogleContacts' => $baseDir . '/includes/class-google-contacts-import.php',

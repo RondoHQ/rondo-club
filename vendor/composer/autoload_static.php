@@ -456,6 +456,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Caelis\\Data\\CredentialEncryption' => __DIR__ . '/../..' . '/includes/class-credential-encryption.php',
         'Caelis\\Data\\InverseRelationships' => __DIR__ . '/../..' . '/includes/class-inverse-relationships.php',
         'Caelis\\Data\\TodoMigration' => __DIR__ . '/../..' . '/includes/class-todo-migration.php',
+        'Caelis\\Export\\GoogleContactsExport' => __DIR__ . '/../..' . '/includes/class-google-contacts-export.php',
         'Caelis\\Export\\ICalFeed' => __DIR__ . '/../..' . '/includes/class-ical-feed.php',
         'Caelis\\Export\\VCard' => __DIR__ . '/../..' . '/includes/class-vcard-export.php',
         'Caelis\\Import\\GoogleContacts' => __DIR__ . '/../..' . '/includes/class-google-contacts-import.php',

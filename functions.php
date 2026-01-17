@@ -46,6 +46,7 @@ use Caelis\Import\GoogleContacts;
 use Caelis\Import\GoogleContactsAPI;
 use Caelis\Export\VCard as VCardExport;
 use Caelis\Export\ICalFeed;
+use Caelis\Export\GoogleContactsExport;
 use Caelis\CardDAV\Server as CardDAVServer;
 use Caelis\Data\InverseRelationships;
 use Caelis\Data\TodoMigration;
@@ -211,6 +212,9 @@ if ( ! class_exists( 'PRM_VCard_Export' ) ) {
 }
 if ( ! class_exists( 'PRM_ICal_Feed' ) ) {
 	class_alias( ICalFeed::class, 'PRM_ICal_Feed' );
+}
+if ( ! class_exists( 'PRM_Google_Contacts_Export' ) ) {
+	class_alias( GoogleContactsExport::class, 'PRM_Google_Contacts_Export' );
 }
 
 // CardDAV class
