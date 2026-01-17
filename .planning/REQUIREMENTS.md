@@ -29,7 +29,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Export to Google
 
 - [ ] **EXPORT-01**: Push new Caelis contacts to Google Contacts
-- [ ] **EXPORT-02**: Reverse field mapping (Caelis person fields → Google Contact format)
+- [ ] **EXPORT-02**: Reverse field mapping (Caelis person fields -> Google Contact format)
 - [ ] **EXPORT-03**: Upload photos to Google (base64 encoding)
 - [ ] **EXPORT-04**: Store returned resourceName as google_contact_id
 - [ ] **EXPORT-05**: Bulk export existing unlinked contacts to Google
@@ -109,54 +109,54 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| OAUTH-01 | TBD | Pending |
-| OAUTH-02 | TBD | Pending |
-| OAUTH-03 | TBD | Pending |
-| OAUTH-04 | TBD | Pending |
-| IMPORT-01 | TBD | Pending |
-| IMPORT-02 | TBD | Pending |
-| IMPORT-03 | TBD | Pending |
-| IMPORT-04 | TBD | Pending |
-| IMPORT-05 | TBD | Pending |
-| IMPORT-06 | TBD | Pending |
-| IMPORT-07 | TBD | Pending |
-| IMPORT-08 | TBD | Pending |
-| IMPORT-09 | TBD | Pending |
-| EXPORT-01 | TBD | Pending |
-| EXPORT-02 | TBD | Pending |
-| EXPORT-03 | TBD | Pending |
-| EXPORT-04 | TBD | Pending |
-| EXPORT-05 | TBD | Pending |
-| SYNC-01 | TBD | Pending |
-| SYNC-02 | TBD | Pending |
-| SYNC-03 | TBD | Pending |
-| SYNC-04 | TBD | Pending |
-| SYNC-05 | TBD | Pending |
-| CONFLICT-01 | TBD | Pending |
-| CONFLICT-02 | TBD | Pending |
-| CONFLICT-03 | TBD | Pending |
-| CONFLICT-04 | TBD | Pending |
-| DELETE-01 | TBD | Pending |
-| DELETE-02 | TBD | Pending |
-| SETTINGS-01 | TBD | Pending |
-| SETTINGS-02 | TBD | Pending |
-| SETTINGS-03 | TBD | Pending |
-| SETTINGS-04 | TBD | Pending |
-| SETTINGS-05 | TBD | Pending |
-| SETTINGS-06 | TBD | Pending |
-| SETTINGS-07 | TBD | Pending |
-| PERSON-01 | TBD | Pending |
-| CLI-01 | TBD | Pending |
-| CLI-02 | TBD | Pending |
-| CLI-03 | TBD | Pending |
-| CLI-04 | TBD | Pending |
-| CLI-05 | TBD | Pending |
+| OAUTH-01 | 79 | Pending |
+| OAUTH-02 | 79 | Pending |
+| OAUTH-03 | 79 | Pending |
+| OAUTH-04 | 79 | Pending |
+| IMPORT-01 | 80 | Pending |
+| IMPORT-02 | 80 | Pending |
+| IMPORT-03 | 80 | Pending |
+| IMPORT-04 | 80 | Pending |
+| IMPORT-05 | 80 | Pending |
+| IMPORT-06 | 80 | Pending |
+| IMPORT-07 | 80 | Pending |
+| IMPORT-08 | 80 | Pending |
+| IMPORT-09 | 80 | Pending |
+| EXPORT-01 | 81 | Pending |
+| EXPORT-02 | 81 | Pending |
+| EXPORT-03 | 81 | Pending |
+| EXPORT-04 | 81 | Pending |
+| EXPORT-05 | 81 | Pending |
+| SYNC-01 | 82 | Pending |
+| SYNC-02 | 82 | Pending |
+| SYNC-03 | 82 | Pending |
+| SYNC-04 | 82 | Pending |
+| SYNC-05 | 82 | Pending |
+| CONFLICT-01 | 83 | Pending |
+| CONFLICT-02 | 83 | Pending |
+| CONFLICT-03 | 83 | Pending |
+| CONFLICT-04 | 83 | Pending |
+| DELETE-01 | 83 | Pending |
+| DELETE-02 | 83 | Pending |
+| SETTINGS-01 | 84 | Pending |
+| SETTINGS-02 | 84 | Pending |
+| SETTINGS-03 | 84 | Pending |
+| SETTINGS-04 | 84 | Pending |
+| SETTINGS-05 | 84 | Pending |
+| SETTINGS-06 | 84 | Pending |
+| SETTINGS-07 | 84 | Pending |
+| PERSON-01 | 84 | Pending |
+| CLI-01 | 85 | Pending |
+| CLI-02 | 85 | Pending |
+| CLI-03 | 85 | Pending |
+| CLI-04 | 85 | Pending |
+| CLI-05 | 85 | Pending |
 
 **Coverage:**
 - v1 requirements: 38 total
-- Mapped to phases: 0
-- Unmapped: 38
+- Mapped to phases: 38
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after initial definition*
+*Last updated: 2026-01-17 after roadmap creation*
