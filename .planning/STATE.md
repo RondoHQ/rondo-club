@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v4.9 Dashboard & Calendar Polish
 Phase: 78 of 78 (Multi-Calendar Selection)
-Plan: 01 of 01 complete
-Status: Phase complete
-Last activity: 2026-01-17 — Completed 78-01-PLAN.md
+Plan: FIX complete
+Status: Phase complete (FIX applied)
+Last activity: 2026-01-17 — Completed 78-FIX-PLAN.md
 
 Progress: ██████████ 100%
 
@@ -145,12 +145,19 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Phase 77 complete: Fixed Height Dashboard Widgets (1 plan + FIX plan)
 - Phase 77-FIX UAT passed: Events widget no longer jumps during date navigation
 - Phase 78 complete: Multi-Calendar Selection (1 plan)
+- Phase 78-FIX complete: Two-column layout for EditConnectionModal
 - Milestone v4.9 complete: Dashboard & Calendar Polish (Phases 77-78)
+
+### Phase 78-FIX Decisions
+
+- **Wider modal:** Changed from max-w-md to max-w-2xl to accommodate two columns
+- **Responsive breakpoint:** Used md:grid-cols-2 so layout stacks on small screens
+- **Non-Google connections:** Keep single-column layout since they have fewer options
 
 ## Session Continuity
 
-Last session: 2026-01-17T13:52:00Z
-Stopped at: Completed 78-01-PLAN.md
+Last session: 2026-01-17T14:08:00Z
+Stopped at: Completed 78-FIX-PLAN.md
 Resume file: None
 
 ## Accumulated Context
