@@ -617,7 +617,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Calendar className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Upcoming reminders
+            Upcoming reminders {upcoming_reminders?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({upcoming_reminders.length})</span>}
           </h2>
           <Link to="/dates" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
             View all <ArrowRight className="w-4 h-4 ml-1" />
@@ -637,7 +637,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <CheckSquare className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Open todos
+            Open todos {openTodos?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({openTodos.length})</span>}
           </h2>
           <Link to="/todos" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
             View all <ArrowRight className="w-4 h-4 ml-1" />
@@ -657,7 +657,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Clock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Awaiting response
+            Awaiting response {awaitingTodos?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({awaitingTodos.length})</span>}
           </h2>
           <Link to="/todos?status=awaiting" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
             View all <ArrowRight className="w-4 h-4 ml-1" />
@@ -677,7 +677,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <CalendarClock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            {isToday(selectedDate) ? "Today's meetings" : format(selectedDate, 'EEEE, MMMM d')}
+            {isToday(selectedDate) ? "Today's meetings" : format(selectedDate, 'EEEE, MMMM d')} {dateMeetings.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({dateMeetings.length})</span>}
           </h2>
           <div className="flex items-center gap-1">
             {!isToday(selectedDate) && (
@@ -731,7 +731,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <MessageCircle className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Recently contacted
+            Recently contacted {recently_contacted?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({recently_contacted.length})</span>}
           </h2>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
@@ -748,7 +748,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Users className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Recently edited
+            Recently edited {recent_people?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({recent_people.length})</span>}
           </h2>
           <Link to="/people" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
             View all <ArrowRight className="w-4 h-4 ml-1" />
@@ -770,7 +770,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Star className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400 fill-current" />
-            Favorites
+            Favorites {favorites?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({favorites.length})</span>}
           </h2>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
