@@ -58,15 +58,15 @@
   3. Attendee list updates to show newly added person as known ✓
 **Plans**: 1/1 complete
 
-#### Phase 75: Date Navigation
+#### Phase 75: Date Navigation ✓
 **Goal**: User can browse meetings across days
 **Depends on**: Phase 74
 **Requirements**: NAV-01, NAV-02, NAV-03
 **Success Criteria** (what must be TRUE):
-  1. Prev/next buttons navigate between days
-  2. Today button returns to current day
-  3. Widget header shows selected date
-**Plans**: TBD
+  1. Prev/next buttons navigate between days ✓
+  2. Today button returns to current day ✓
+  3. Widget header shows selected date ✓
+**Plans**: 1/1 complete
 
 ---
 

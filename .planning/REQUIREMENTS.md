@@ -27,9 +27,9 @@ Requirements for v4.8 release. Each maps to roadmap phases.
 
 ### Date Navigation
 
-- [ ] **NAV-01**: Meetings widget has prev/next day navigation buttons
-- [ ] **NAV-02**: Meetings widget has "Today" button to return to current day
-- [ ] **NAV-03**: Widget header shows the date being viewed
+- [x] **NAV-01**: Meetings widget has prev/next day navigation buttons
+- [x] **NAV-02**: Meetings widget has "Today" button to return to current day
+- [x] **NAV-03**: Widget header shows the date being viewed
 
 ## v2 Requirements
 
@@ -70,9 +70,9 @@ Which phases cover which requirements. Updated by create-roadmap.
 | ADD-02 | Phase 74 | Complete |
 | ADD-03 | Phase 74 | Complete |
 | ADD-04 | Phase 74 | Complete |
-| NAV-01 | Phase 75 | Pending |
-| NAV-02 | Phase 75 | Pending |
-| NAV-03 | Phase 75 | Pending |
+| NAV-01 | Phase 75 | Complete |
+| NAV-02 | Phase 75 | Complete |
+| NAV-03 | Phase 75 | Complete |
 
 **Coverage:**
 - v1 requirements: 15 total
