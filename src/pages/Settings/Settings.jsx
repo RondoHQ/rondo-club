@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, MessageSquare } from 'lucide-react';
+import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, MessageSquare, Search, User, Link as LinkIcon } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
 import { prmApi } from '@/api/client';
 import { useTheme, COLOR_SCHEMES, ACCENT_COLORS } from '@/hooks/useTheme';
+import { useSearch } from '@/hooks/useDashboard';
 import MonicaImport from '@/components/import/MonicaImport';
 import VCardImport from '@/components/import/VCardImport';
 import GoogleContactsImport from '@/components/import/GoogleContactsImport';
@@ -511,6 +512,65 @@ export default function Settings() {
 function AppearanceTab() {
   const { colorScheme, setColorScheme, effectiveColorScheme, accentColor, setAccentColor } = useTheme();
 
+  // Profile link state
+  const [linkedPerson, setLinkedPerson] = useState(null);
+  const [loadingLinkedPerson, setLoadingLinkedPerson] = useState(true);
+  const [personSearchQuery, setPersonSearchQuery] = useState('');
+  const [showPersonSearch, setShowPersonSearch] = useState(false);
+  const [savingLinkedPerson, setSavingLinkedPerson] = useState(false);
+
+  // Search for people
+  const trimmedQuery = personSearchQuery.trim();
+  const { data: searchResults, isLoading: isSearching } = useSearch(trimmedQuery);
+  const peopleResults = searchResults?.people || [];
+  const showSearchResults = trimmedQuery.length >= 2;
+
+  // Fetch linked person on mount
+  useEffect(() => {
+    const fetchLinkedPerson = async () => {
+      try {
+        const response = await prmApi.getLinkedPerson();
+        setLinkedPerson(response.data.person || null);
+      } catch {
+        // No linked person or error
+        setLinkedPerson(null);
+      } finally {
+        setLoadingLinkedPerson(false);
+      }
+    };
+    fetchLinkedPerson();
+  }, []);
+
+  const handleSelectPerson = async (person) => {
+    setSavingLinkedPerson(true);
+    try {
+      const response = await prmApi.updateLinkedPerson(person.id);
+      setLinkedPerson(response.data.person);
+      setShowPersonSearch(false);
+      setPersonSearchQuery('');
+      // Update the global config so filtering works immediately
+      window.prmConfig.currentUserPersonId = person.id;
+    } catch {
+      alert('Failed to link person. Please try again.');
+    } finally {
+      setSavingLinkedPerson(false);
+    }
+  };
+
+  const handleUnlinkPerson = async () => {
+    setSavingLinkedPerson(true);
+    try {
+      await prmApi.updateLinkedPerson(null);
+      setLinkedPerson(null);
+      // Update the global config
+      window.prmConfig.currentUserPersonId = null;
+    } catch {
+      alert('Failed to unlink person. Please try again.');
+    } finally {
+      setSavingLinkedPerson(false);
+    }
+  };
+
   const colorSchemeOptions = [
     { id: 'light', label: 'Light', icon: Sun },
     { id: 'dark', label: 'Dark', icon: Moon },
@@ -610,6 +670,125 @@ function AppearanceTab() {
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
           Selected: <span className="font-medium capitalize">{accentColor}</span>
         </p>
+      </div>
+
+      {/* Profile link card */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100 flex items-center gap-2">
+          <LinkIcon className="w-5 h-5" />
+          Profile link
+        </h2>
+        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
+          Link your account to your person record. When linked, you will be hidden from meeting attendee lists since you already know you are attending.
+        </p>
+
+        {loadingLinkedPerson ? (
+          <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
+        ) : linkedPerson ? (
+          <div className="space-y-3">
+            {/* Currently linked person */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div className="flex items-center gap-3">
+                {linkedPerson.thumbnail ? (
+                  <img
+                    src={linkedPerson.thumbnail}
+                    alt={linkedPerson.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                  </div>
+                )}
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{linkedPerson.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Linked to your account</p>
+                </div>
+              </div>
+              <button
+                onClick={handleUnlinkPerson}
+                disabled={savingLinkedPerson}
+                className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
+              >
+                {savingLinkedPerson ? 'Unlinking...' : 'Unlink'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {showPersonSearch ? (
+              <div className="relative">
+                {/* Search input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={personSearchQuery}
+                    onChange={(e) => setPersonSearchQuery(e.target.value)}
+                    placeholder="Search for your person record..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm placeholder:text-gray-400 bg-white dark:bg-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
+                    autoFocus
+                  />
+                </div>
+
+                {/* Search results dropdown */}
+                {showSearchResults && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-64 overflow-y-auto z-10">
+                    {isSearching ? (
+                      <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">Searching...</div>
+                    ) : peopleResults.length === 0 ? (
+                      <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">No people found</div>
+                    ) : (
+                      peopleResults.map((person) => (
+                        <button
+                          key={person.id}
+                          onClick={() => handleSelectPerson(person)}
+                          disabled={savingLinkedPerson}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 text-left"
+                        >
+                          {person.thumbnail ? (
+                            <img
+                              src={person.thumbnail}
+                              alt={person.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                              <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                            </div>
+                          )}
+                          <span className="text-sm text-gray-900 dark:text-gray-100">{person.name}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {/* Cancel button */}
+                <button
+                  onClick={() => {
+                    setShowPersonSearch(false);
+                    setPersonSearchQuery('');
+                  }}
+                  className="mt-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowPersonSearch(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                <Search className="w-4 h-4" />
+                <span>Link to your person record</span>
+              </button>
+            )}
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Not linked yet. Search for your person record to link it to your account.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

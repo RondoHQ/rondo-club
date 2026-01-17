@@ -165,10 +165,17 @@ function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick, curren
 
         {/* Other attendees - show photos for matched, initials for unmatched */}
         {meeting.attendees && meeting.attendees.length > 0 && (() => {
-          // Filter out the current person being viewed
-          const otherAttendees = meeting.attendees.filter(
-            att => !att.person_id || att.person_id !== parseInt(currentPersonId)
-          );
+          // Filter out the current person being viewed and the current user's linked person
+          const currentUserPersonId = window.prmConfig?.currentUserPersonId;
+          const otherAttendees = meeting.attendees.filter(att => {
+            if (!att.person_id) return true; // Keep unmatched attendees
+            const personId = parseInt(att.person_id);
+            // Filter out the person being viewed
+            if (personId === parseInt(currentPersonId)) return false;
+            // Filter out the current user's linked person
+            if (currentUserPersonId && personId === currentUserPersonId) return false;
+            return true;
+          });
           if (otherAttendees.length === 0) return null;
 
           const displayedAttendees = otherAttendees.slice(0, 5);

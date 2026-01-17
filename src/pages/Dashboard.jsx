@@ -238,6 +238,12 @@ function MeetingCard({ meeting, onClick }) {
   // Format time display
   const startTime = format(new Date(meeting.start_time), 'h:mm a');
 
+  // Filter out current user from matched people
+  const currentUserPersonId = window.prmConfig?.currentUserPersonId;
+  const filteredMatchedPeople = (meeting.matched_people || []).filter(
+    person => !currentUserPersonId || person.person_id !== currentUserPersonId
+  );
+
   // Card content shows: time, title, matched people avatars
   const cardContent = (
     <>
@@ -250,9 +256,9 @@ function MeetingCard({ meeting, onClick }) {
           <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{meeting.location}</p>
         )}
       </div>
-      {meeting.matched_people?.length > 0 && (
+      {filteredMatchedPeople.length > 0 && (
         <div className="flex -space-x-2 ml-3 flex-shrink-0">
-          {meeting.matched_people.slice(0, 3).map((person) => (
+          {filteredMatchedPeople.slice(0, 3).map((person) => (
             person.thumbnail ? (
               <img key={person.person_id} src={person.thumbnail} alt={person.name} loading="lazy"
                 className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 object-cover" />

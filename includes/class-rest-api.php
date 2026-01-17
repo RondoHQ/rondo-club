@@ -209,6 +209,37 @@ class Api extends Base {
 			]
 		);
 
+		// Get user's linked person ID
+		register_rest_route(
+			'prm/v1',
+			'/user/linked-person',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_linked_person' ],
+				'permission_callback' => 'is_user_logged_in',
+			]
+		);
+
+		// Update user's linked person ID
+		register_rest_route(
+			'prm/v1',
+			'/user/linked-person',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'update_linked_person' ],
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => [
+					'person_id' => [
+						'required'          => false,
+						'validate_callback' => function ( $param ) {
+							// Allow null/0 to unlink, or a valid numeric person ID
+							return $param === null || $param === 0 || ( is_numeric( $param ) && $param > 0 );
+						},
+					],
+				],
+			]
+		);
+
 		// Search across all content
 		register_rest_route(
 			'prm/v1',
@@ -948,6 +979,107 @@ class Api extends Base {
 			[
 				'visible_cards' => $updated_visible,
 				'card_order'    => $updated_order,
+			]
+		);
+	}
+
+	/**
+	 * Get user's linked person ID
+	 *
+	 * Returns the person record linked to the current user.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_linked_person() {
+		$user_id   = get_current_user_id();
+		$person_id = (int) get_user_meta( $user_id, 'caelis_linked_person_id', true );
+
+		$response = [
+			'person_id' => $person_id ?: null,
+		];
+
+		// If linked, include basic person info
+		if ( $person_id ) {
+			$person = get_post( $person_id );
+			if ( $person && $person->post_type === 'person' && $person->post_status === 'publish' ) {
+				$first_name = get_field( 'first_name', $person_id ) ?: '';
+				$last_name  = get_field( 'last_name', $person_id ) ?: '';
+				$thumbnail  = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
+
+				$response['person'] = [
+					'id'        => $person_id,
+					'name'      => trim( $first_name . ' ' . $last_name ),
+					'thumbnail' => $thumbnail ?: null,
+				];
+			} else {
+				// Person no longer exists or is invalid - clear the link
+				$response['person_id'] = null;
+			}
+		}
+
+		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * Update user's linked person ID
+	 *
+	 * Links the current user to a person record.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_linked_person( $request ) {
+		$user_id   = get_current_user_id();
+		$person_id = $request->get_param( 'person_id' );
+
+		// Handle unlinking
+		if ( ! $person_id || $person_id === 0 ) {
+			delete_user_meta( $user_id, 'caelis_linked_person_id' );
+			return rest_ensure_response(
+				[
+					'success'   => true,
+					'person_id' => null,
+					'message'   => __( 'Person link removed.', 'caelis' ),
+				]
+			);
+		}
+
+		// Validate that the person exists and belongs to this user
+		$person = get_post( (int) $person_id );
+		if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' ) {
+			return new \WP_Error(
+				'invalid_person',
+				__( 'Invalid person ID.', 'caelis' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Check if the user owns this person record (or is admin)
+		if ( $person->post_author != $user_id && ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error(
+				'permission_denied',
+				__( 'You can only link to your own person records.', 'caelis' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		// Save the link
+		update_user_meta( $user_id, 'caelis_linked_person_id', (int) $person_id );
+
+		$first_name = get_field( 'first_name', $person_id ) ?: '';
+		$last_name  = get_field( 'last_name', $person_id ) ?: '';
+		$thumbnail  = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
+
+		return rest_ensure_response(
+			[
+				'success'   => true,
+				'person_id' => (int) $person_id,
+				'person'    => [
+					'id'        => (int) $person_id,
+					'name'      => trim( $first_name . ' ' . $last_name ),
+					'thumbnail' => $thumbnail ?: null,
+				],
+				'message'   => __( 'Person linked successfully.', 'caelis' ),
 			]
 		);
 	}
