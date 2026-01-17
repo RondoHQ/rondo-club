@@ -583,7 +583,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
           {upcoming_reminders?.length > 0 ? (
             upcoming_reminders.map((reminder) => <ReminderCard key={reminder.id} reminder={reminder} />)
           ) : (
@@ -603,7 +603,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
           {dashboardTodos.length > 0 ? (
             dashboardTodos.map((todo) => <TodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />)
           ) : (
@@ -623,7 +623,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
           {dashboardAwaitingTodos.length > 0 ? (
             dashboardAwaitingTodos.map((todo) => <AwaitingTodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />)
           ) : (
@@ -664,7 +664,7 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
           {dateMeetings.length > 0 ? (
             dateMeetings.map((meeting) => (
               <MeetingCard
@@ -694,13 +694,13 @@ export default function Dashboard() {
             Recently contacted
           </h2>
         </div>
-        {recently_contacted?.length > 0 ? (
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {recently_contacted.map((person) => <PersonCard key={person.id} person={person} />)}
-          </div>
-        ) : (
-          <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No recent activities yet</p>
-        )}
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
+          {recently_contacted?.length > 0 ? (
+            recently_contacted.map((person) => <PersonCard key={person.id} person={person} />)
+          ) : (
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No recent activities yet</p>
+          )}
+        </div>
       </div>
     ),
     'recent-edited': () => (
@@ -714,7 +714,7 @@ export default function Dashboard() {
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
           {recent_people?.length > 0 ? (
             recent_people.map((person) => <PersonCard key={person.id} person={person} />)
           ) : (
@@ -733,13 +733,13 @@ export default function Dashboard() {
             Favorites
           </h2>
         </div>
-        {favorites?.length > 0 ? (
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {favorites.slice(0, 5).map((person) => <PersonCard key={person.id} person={person} hideStar={true} />)}
-          </div>
-        ) : (
-          <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No favorites yet</p>
-        )}
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[280px] overflow-y-auto">
+          {favorites?.length > 0 ? (
+            favorites.slice(0, 5).map((person) => <PersonCard key={person.id} person={person} hideStar={true} />)
+          ) : (
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No favorites yet</p>
+          )}
+        </div>
       </div>
     ),
   };
