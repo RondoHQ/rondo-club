@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Seamless bidirectional sync between Caelis and Google Contacts with Caelis as source of truth
-**Current focus:** Phase 81 - Export to Google (In progress)
+**Current focus:** Phase 81 - Export to Google (Complete)
 
 ## Current Position
 
 Milestone: v5.0 Google Contacts Sync
 Phase: 81 of 85 (Export to Google)
-Plan: 02 of 03 (complete)
-Status: In progress
-Last activity: 2026-01-17 - Completed 81-02-PLAN.md (REST export endpoint & hooks)
+Plan: 03 of 03 (complete)
+Status: Phase complete
+Last activity: 2026-01-17 - Completed 81-03-PLAN.md (Bulk export UI)
 
-Progress: [█████░░░░░] ~53%
+Progress: [██████░░░░] ~60%
 
 ## Completed Milestones
 
@@ -76,6 +76,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Retry on etag conflict | Google requires etag; conflicts need automatic handling | 81-01 |
 | Async export via WP-Cron | Avoid blocking contact save operations | 81-02 |
 | Follow existing async pattern | Use same WP-Cron pattern as calendar rematch for consistency | 81-02 |
+| Sequential bulk export with 100ms delay | Avoid Google API rate limits (max 10 req/sec) | 81-03 |
+| Progress callback parameter | Future CLI integration for Phase 85 | 81-03 |
 
 ### Pending Todos
 
@@ -91,12 +93,12 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-17 21:42 UTC
-Stopped at: Completed 81-02-PLAN.md (REST export endpoint & hooks)
+Last session: 2026-01-17 21:57 UTC
+Stopped at: Completed 81-03-PLAN.md (Bulk export UI)
 Resume file: None
 
 ## Next Steps
 
-- Phase 81 Export to Google in progress (2/3 plans complete)
-- Next: 81-03 Bulk export UI
-- Then: Phase 82 Sync Status & Monitoring
+- Phase 81 Export to Google complete (3/3 plans)
+- Next: Phase 82 Sync Status & Monitoring
+- Then: Phase 83 Conflict Resolution
