@@ -43,6 +43,7 @@ use Caelis\Collaboration\Reminders;
 use Caelis\Import\Monica;
 use Caelis\Import\VCard as VCardImport;
 use Caelis\Import\GoogleContacts;
+use Caelis\Import\GoogleContactsAPI;
 use Caelis\Export\VCard as VCardExport;
 use Caelis\Export\ICalFeed;
 use Caelis\CardDAV\Server as CardDAVServer;
@@ -199,6 +200,9 @@ if ( ! class_exists( 'PRM_VCard_Import' ) ) {
 }
 if ( ! class_exists( 'PRM_Google_Contacts_Import' ) ) {
 	class_alias( GoogleContacts::class, 'PRM_Google_Contacts_Import' );
+}
+if ( ! class_exists( 'PRM_Google_Contacts_API_Import' ) ) {
+	class_alias( GoogleContactsAPI::class, 'PRM_Google_Contacts_API_Import' );
 }
 
 // Export classes
