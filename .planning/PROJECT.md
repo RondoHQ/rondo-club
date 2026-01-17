@@ -185,18 +185,20 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Sync lock to prevent duplicate events from race conditions — v4.5
 - User context in calendar matcher for CLI/cron access control — v4.5
 
+**v4.7 Dark Mode & Activity Polish (shipped 2026-01-17):**
+- Dark mode support for WorkHistoryEditModal and AddressEditModal — v4.7
+- Settings subtab button contrast improved (dark:text-gray-300) — v4.7
+- TimelineView dark mode with 13 variants for activity labels — v4.7
+- ImportantDateModal people badge contrast improved (dark:text-accent-200) — v4.7
+- QuickActivityModal selected button solid background pattern (dark:bg-accent-800) — v4.7
+- Dinner and Zoom activity types added with proper icons — v4.7
+- Phone call renamed to Phone (preserved call ID for existing data) — v4.7
+- Topbar z-index fixed to z-30 (above selection toolbar z-20) — v4.7
+- Person header spacing fixed (" at " with trailing space) — v4.7
+
 ### Active
 
-**Current Milestone: v4.7 Dark Mode & Activity Polish**
-
-**Goal:** Comprehensive dark mode contrast fixes across modals and settings, plus activity type improvements and minor bug fixes.
-
-**Target features:**
-- [ ] Dark mode modal fixes (Work history, Address, Add date related people, Activity type button)
-- [ ] Settings dark mode fixes (Connections/CardDAV/Slack subtab headings contrast)
-- [ ] Activity type improvements (add "Dinner" and "Zoom" types, rename "Phone call" to "Phone")
-- [ ] Fix topbar + dropdown z-index on People screen
-- [ ] Fix missing space in person header job title ("at<Company>" → "at <Company>")
+**Current Milestone:** None — v4.7 shipped, ready for next milestone planning
 
 ### Out of Scope
 
@@ -293,6 +295,9 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Composer classmap alongside PSR-4 | Supports current class-*.php naming during transition to standard PSR-4 | ✓ Good |
 | Backward-compatible class aliases | All PRM_* class names work via class_alias() for existing code | ✓ Good |
 | Global class backslash prefix | PHP/WP classes (DateTime, WP_Error, etc.) need `\` in namespaced files | ✓ Good |
+| Dark mode contrast pattern | Consistently use gray-300/gray-400 for better contrast (not gray-400/gray-500) | ✓ Good |
+| Solid background for dark mode selected states | Use dark:bg-accent-800 with dark:text-accent-100 (semi-transparent accent-900/30 unreliable) | ✓ Good |
+| Activity type ID preservation | Keep 'call' ID when renaming to "Phone" to preserve existing activity data | ✓ Good |
 
 ---
-*Last updated: 2026-01-16 — v4.7 Dark Mode & Activity Polish started*
+*Last updated: 2026-01-17 — v4.7 Dark Mode & Activity Polish shipped*

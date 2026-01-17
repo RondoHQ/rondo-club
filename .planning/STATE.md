@@ -2,20 +2,20 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-16)
+See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** v4.7 Dark Mode & Activity Polish
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v4.7 Dark Mode & Activity Polish
-Phase: 72 of 72 (Activity Bug Fixes)
-Plan: 01 of 01 complete
-Status: Milestone v4.7 complete
-Last activity: 2026-01-17 — Completed 72-01-PLAN.md, v4.7.0 released
+Milestone: None — v4.7 shipped, ready for next milestone
+Phase: 72 phases complete (v1.0-v4.7)
+Plan: Not started
+Status: Ready to plan next milestone
+Last activity: 2026-01-17 — v4.7 Dark Mode & Activity Polish shipped
 
-Progress: ██████████ 100%
+Progress: Ready for next milestone
 
 ## Completed Milestones
 
@@ -169,5 +169,7 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- v4.7 milestone complete - ready for next milestone planning
-- Consider creating v4.8 milestone for future features
+- Run `/gsd:discuss-milestone` to figure out what to build next
+- Then `/gsd:new-milestone` to update PROJECT.md with new goals
+- Then `/gsd:define-requirements` to scope what to build
+- Then `/gsd:create-roadmap` to plan how to build it
