@@ -206,7 +206,10 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-*No active milestone — run `/gsd:discuss-milestone` to plan next milestone*
+**v4.9 Dashboard & Calendar Polish:**
+
+- Fixed height dashboard widgets with internal scrolling — v4.9
+- Multi-calendar selection per Google Calendar connection — v4.9
 
 ### Out of Scope
 
@@ -315,4 +318,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Preserve ACF required fields on email addition | Include first_name, last_name when updating contact_info | ✓ Good |
 
 ---
-*Last updated: 2026-01-17 — v4.8 Meeting Enhancements milestone complete*
+*Last updated: 2026-01-17 — v4.9 Dashboard & Calendar Polish milestone started*

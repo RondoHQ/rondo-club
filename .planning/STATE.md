@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** Personal CRM with multi-user collaboration capabilities
-**Current focus:** Planning next milestone
+**Current focus:** v4.9 Dashboard & Calendar Polish
 
 ## Current Position
 
-Milestone: v4.8 Meeting Enhancements — SHIPPED 2026-01-17
-Phase: 76 phases complete across 28 milestones
-Plan: Ready for next milestone
-Status: Between milestones
-Last activity: 2026-01-17 - Completed v4.8, tagged, archived
+Milestone: v4.9 Dashboard & Calendar Polish
+Phase: Not started (run /gsd:create-roadmap)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-01-17 — Milestone v4.9 started
 
-Progress: Ready for `/gsd:discuss-milestone`
+Progress: Ready for `/gsd:define-requirements`
 
 ## Completed Milestones
 
@@ -131,11 +131,12 @@ See `.planning/PROJECT.md` Key Decisions table for full decision history.
 - Phase 76-FIX complete: Fixed ACF validation error, increased popup height
 - Milestone v4.8 complete: Meeting Enhancements (Phases 73-76)
 - Milestone v4.8 archived: Git tag v4.8 created, ROADMAP.md and REQUIREMENTS.md archived
+- Milestone v4.9 created: Dashboard & Calendar Polish (Phase 77+)
 
 ## Session Continuity
 
-Last session: 2026-01-17T12:45:00Z
-Stopped at: Completed v4.8 milestone, archived
+Last session: 2026-01-17T13:00:00Z
+Stopped at: Started milestone v4.9
 Resume file: None
 
 ## Accumulated Context
@@ -195,6 +196,5 @@ Completed todos in `.planning/todos/done/`:
 
 ## Next Steps
 
-- Run `/gsd:discuss-milestone` to discuss next milestone
-- Run `/gsd:new-milestone` to start new milestone
-- Run `/gsd:check-todos` to review pending todos (40 items)
+- Run `/gsd:define-requirements` to define requirements for v4.9
+- Run `/gsd:create-roadmap` to create phases after requirements defined
