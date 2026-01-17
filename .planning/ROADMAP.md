@@ -11,7 +11,7 @@ This milestone delivers two polish features: fixed-height dashboard widgets for 
 - v4.9 starts at Phase 77
 
 - [x] **Phase 77: Fixed Height Dashboard Widgets** - Consistent widget heights with internal scrolling
-- [ ] **Phase 78: Multi-Calendar Selection** - Select multiple Google calendars per connection
+- [x] **Phase 78: Multi-Calendar Selection** - Select multiple Google calendars per connection
 
 ## Phase Details
 
@@ -48,4 +48,4 @@ Phases execute in numeric order: 77 -> 78
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 77. Fixed Height Dashboard Widgets | 1/1 | Complete | 2026-01-17 |
-| 78. Multi-Calendar Selection | 0/1 | Not started | - |
+| 78. Multi-Calendar Selection | 1/1 | Complete | 2026-01-17 |
