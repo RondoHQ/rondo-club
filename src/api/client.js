@@ -253,6 +253,11 @@ export const prmApi = {
   getMeetingNotes: (eventId) => api.get(`/prm/v1/calendar/events/${eventId}/notes`),
   updateMeetingNotes: (eventId, notes) => api.put(`/prm/v1/calendar/events/${eventId}/notes`, { notes }),
 
+  // Google Contacts OAuth
+  getGoogleContactsStatus: () => api.get('/prm/v1/google-contacts/status'),
+  initiateGoogleContactsAuth: (readonly = true) => api.get('/prm/v1/google-contacts/auth', { params: { readonly } }),
+  disconnectGoogleContacts: () => api.delete('/prm/v1/google-contacts'),
+
   // Calendar connections
   getCalendarConnections: () => api.get('/prm/v1/calendar/connections'),
   createCalendarConnection: (data) => api.post('/prm/v1/calendar/connections', data),
