@@ -475,7 +475,8 @@ add_action( 'wp_enqueue_scripts', 'prm_theme_enqueue_assets' );
  * Get JavaScript configuration
  */
 function prm_get_js_config() {
-	$user = wp_get_current_user();
+	$user    = wp_get_current_user();
+	$user_id = get_current_user_id();
 
 	// Get build time from manifest file modification time.
 	// This ensures every build produces a unique timestamp.
@@ -488,21 +489,25 @@ function prm_get_js_config() {
 		$build_time = gmdate( 'c' );
 	}
 
+	// Get user's linked person ID (for filtering current user from attendee lists)
+	$linked_person_id = $user_id ? (int) get_user_meta( $user_id, 'caelis_linked_person_id', true ) : null;
+
 	return [
-		'apiUrl'     => rest_url(),
-		'nonce'      => wp_create_nonce( 'wp_rest' ),
-		'siteUrl'    => home_url(),
-		'siteName'   => get_bloginfo( 'name' ),
-		'userId'     => get_current_user_id(),
-		'userLogin'  => $user ? $user->user_login : '',
-		'isLoggedIn' => is_user_logged_in(),
-		'isAdmin'    => current_user_can( 'manage_options' ),
-		'loginUrl'   => wp_login_url(),
-		'logoutUrl'  => wp_logout_url( home_url() ),
-		'adminUrl'   => admin_url(),
-		'themeUrl'   => PRM_THEME_URL,
-		'version'    => wp_get_theme()->get( 'Version' ),
-		'buildTime'  => $build_time,
+		'apiUrl'              => rest_url(),
+		'nonce'               => wp_create_nonce( 'wp_rest' ),
+		'siteUrl'             => home_url(),
+		'siteName'            => get_bloginfo( 'name' ),
+		'userId'              => $user_id,
+		'userLogin'           => $user ? $user->user_login : '',
+		'isLoggedIn'          => is_user_logged_in(),
+		'isAdmin'             => current_user_can( 'manage_options' ),
+		'loginUrl'            => wp_login_url(),
+		'logoutUrl'           => wp_logout_url( home_url() ),
+		'adminUrl'            => admin_url(),
+		'themeUrl'            => PRM_THEME_URL,
+		'version'             => wp_get_theme()->get( 'Version' ),
+		'buildTime'           => $build_time,
+		'currentUserPersonId' => $linked_person_id ?: null,
 	];
 }
 

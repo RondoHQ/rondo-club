@@ -239,6 +239,10 @@ export const prmApi = {
   getDashboardSettings: () => api.get('/prm/v1/user/dashboard-settings'),
   updateDashboardSettings: (settings) => api.patch('/prm/v1/user/dashboard-settings', settings),
 
+  // Linked person (for filtering current user from attendee lists)
+  getLinkedPerson: () => api.get('/prm/v1/user/linked-person'),
+  updateLinkedPerson: (personId) => api.post('/prm/v1/user/linked-person', { person_id: personId }),
+
   // Person meetings
   getPersonMeetings: (personId, params = {}) => api.get(`/prm/v1/people/${personId}/meetings`, { params }),
   logMeetingAsActivity: (eventId) => api.post(`/prm/v1/calendar/events/${eventId}/log`),
