@@ -113,6 +113,7 @@ return array(
     'Caelis\\REST\\Base' => $baseDir . '/includes/class-rest-base.php',
     'Caelis\\REST\\Calendar' => $baseDir . '/includes/class-rest-calendar.php',
     'Caelis\\REST\\Companies' => $baseDir . '/includes/class-rest-companies.php',
+    'Caelis\\REST\\GoogleContacts' => $baseDir . '/includes/class-rest-google-contacts.php',
     'Caelis\\REST\\ImportExport' => $baseDir . '/includes/class-rest-import-export.php',
     'Caelis\\REST\\People' => $baseDir . '/includes/class-rest-people.php',
     'Caelis\\REST\\Slack' => $baseDir . '/includes/class-rest-slack.php',

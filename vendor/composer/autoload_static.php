@@ -468,6 +468,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Caelis\\REST\\Base' => __DIR__ . '/../..' . '/includes/class-rest-base.php',
         'Caelis\\REST\\Calendar' => __DIR__ . '/../..' . '/includes/class-rest-calendar.php',
         'Caelis\\REST\\Companies' => __DIR__ . '/../..' . '/includes/class-rest-companies.php',
+        'Caelis\\REST\\GoogleContacts' => __DIR__ . '/../..' . '/includes/class-rest-google-contacts.php',
         'Caelis\\REST\\ImportExport' => __DIR__ . '/../..' . '/includes/class-rest-import-export.php',
         'Caelis\\REST\\People' => __DIR__ . '/../..' . '/includes/class-rest-people.php',
         'Caelis\\REST\\Slack' => __DIR__ . '/../..' . '/includes/class-rest-slack.php',
