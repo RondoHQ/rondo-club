@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, lazy, Suspense } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, Star, Mail, Phone,
@@ -40,6 +40,7 @@ import AddressEditModal from '@/components/AddressEditModal';
 import WorkHistoryEditModal from '@/components/WorkHistoryEditModal';
 import PersonEditModal from '@/components/PersonEditModal';
 import ShareModal from '@/components/ShareModal';
+const MeetingDetailModal = lazy(() => import('@/components/MeetingDetailModal'));
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -67,7 +68,7 @@ function getGenderSymbol(gender) {
 }
 
 // MeetingCard component for displaying meeting info
-function MeetingCard({ meeting, showLogButton, onLog, isLogging }) {
+function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick }) {
   // Format the meeting date/time
   const startDate = meeting.start_time ? new Date(meeting.start_time) : null;
   const endDate = meeting.end_time ? new Date(meeting.end_time) : null;
@@ -86,11 +87,14 @@ function MeetingCard({ meeting, showLogButton, onLog, isLogging }) {
   const isLowConfidence = meeting.confidence && meeting.confidence < 80;
 
   return (
-    <div className="flex items-start p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <div
+      className={`flex items-start p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 ${onClick ? 'cursor-pointer hover:border-accent-300 dark:hover:border-accent-600 transition-colors' : ''}`}
+      onClick={onClick ? () => onClick(meeting) : undefined}
+    >
       {/* Calendar icon */}
       <div className="flex-shrink-0 mr-3">
-        <div className="w-10 h-10 rounded-lg bg-accent-100 dark:bg-accent-900/30 flex items-center justify-center">
-          <Calendar className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+        <div className="w-10 h-10 rounded-lg bg-accent-100 dark:bg-accent-800 flex items-center justify-center">
+          <Calendar className="w-5 h-5 text-accent-600 dark:text-accent-100" />
         </div>
       </div>
 
@@ -261,6 +265,10 @@ export default function PersonDetail() {
 
   // Meeting logging state
   const [loggingMeetingId, setLoggingMeetingId] = useState(null);
+
+  // Meeting detail modal state
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
 
   // Fetch available labels
   const { data: availableLabelsData } = useQuery({
@@ -2240,7 +2248,15 @@ export default function PersonDetail() {
               ) : meetings?.upcoming?.length > 0 ? (
                 <div className="space-y-3">
                   {meetings.upcoming.map(meeting => (
-                    <MeetingCard key={meeting.id} meeting={meeting} showLogButton={false} />
+                    <MeetingCard
+                      key={meeting.id}
+                      meeting={meeting}
+                      showLogButton={false}
+                      onClick={(m) => {
+                        setSelectedMeeting(m);
+                        setShowMeetingModal(true);
+                      }}
+                    />
                   ))}
                 </div>
               ) : (
@@ -2260,6 +2276,10 @@ export default function PersonDetail() {
                       showLogButton={true}
                       onLog={() => handleLogMeeting(meeting)}
                       isLogging={loggingMeetingId === meeting.id}
+                      onClick={(m) => {
+                        setSelectedMeeting(m);
+                        setShowMeetingModal(true);
+                      }}
                     />
                   ))}
                 </div>
@@ -2735,6 +2755,17 @@ export default function PersonDetail() {
         postId={person.id}
         postTitle={person.name || person.title?.rendered}
       />
+
+      <Suspense fallback={null}>
+        <MeetingDetailModal
+          isOpen={showMeetingModal}
+          onClose={() => {
+            setShowMeetingModal(false);
+            setSelectedMeeting(null);
+          }}
+          meeting={selectedMeeting}
+        />
+      </Suspense>
     </div>
   );
 }
