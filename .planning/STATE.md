@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Personal CRM with team collaboration and external integrations
-**Current focus:** Planning next milestone
+**Current focus:** v5.0.1 Meeting Card Polish
 
 ## Current Position
 
-Milestone: None active (v5.0 archived)
-Phase: Ready to start new milestone
+Milestone: v5.0.1 Meeting Card Polish
+Phase: 86 - Meeting Card Polish
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-01-18 - v5.0 milestone archived
+Last activity: 2026-01-18 - Milestone initialized
 
-Progress: [░░░░░░░░░░] 0% (new milestone)
+Progress: [░░░░░░░░░░] 0%
 
 ## Completed Milestones
 
@@ -56,7 +56,7 @@ Progress: [░░░░░░░░░░] 0% (new milestone)
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-(No active milestone decisions — see archived milestones for history)
+(No active milestone decisions yet)
 
 ### Pending Todos
 
@@ -73,11 +73,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: v5.0 milestone archived
+Stopped at: Milestone initialized
 Resume file: None
 
 ## Next Steps
 
-- v5.0 Google Contacts Sync milestone archived
-- Run `/gsd:new-milestone` to start next milestone
-- Pending todos: 2 (see `/gsd:check-todos`)
+- Run `/gsd:plan-phase 86` to create execution plan
+- Or `/gsd:discuss-phase 86` to gather context first
