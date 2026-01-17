@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { X, MapPin, Video, Clock, User, ChevronDown, UserPlus } from 'lucide-react';
+import { X, MapPin, Video, Clock, User, ChevronDown, UserPlus, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useMeetingNotes, useUpdateMeetingNotes } from '@/hooks/useMeetings';
@@ -8,6 +8,18 @@ import { useCreatePerson, useAddEmailToPerson } from '@/hooks/usePeople';
 import AddAttendeePopup from '@/components/AddAttendeePopup';
 
 const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
+
+/**
+ * Generate Google Calendar deeplink URL
+ * @param {string} eventId - Google Calendar event ID
+ * @param {string} calendarId - Google Calendar ID
+ * @returns {string|null} - URL or null if params missing
+ */
+function getGoogleCalendarUrl(eventId, calendarId) {
+  if (!eventId || !calendarId) return null;
+  const eid = btoa(`${eventId} ${calendarId}`);
+  return `https://calendar.google.com/calendar/event?eid=${eid}`;
+}
 
 /**
  * Extract first/last name from attendee data
@@ -218,12 +230,25 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50 pr-4">{meeting.title}</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {meeting.google_event_id && meeting.calendar_id && (
+              <a
+                href={getGoogleCalendarUrl(meeting.google_event_id, meeting.calendar_id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-accent-600 dark:hover:text-accent-400"
+                title="Open in Google Calendar"
+              >
+                <ExternalLink className="w-5 h-5" />
+              </a>
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content - scrollable */}

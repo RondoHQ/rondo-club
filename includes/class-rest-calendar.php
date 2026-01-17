@@ -1220,6 +1220,16 @@ class Calendar extends Base {
 		$start_datetime = new \DateTime( $start_meta ?: 'now', $wp_timezone );
 		$end_datetime   = new \DateTime( $end_meta ?: $start_meta ?: 'now', $wp_timezone );
 
+		// Get Google event ID for deeplink (only for Google connections)
+		$google_event_id = null;
+		$calendar_id     = null;
+		if ( $connection ) {
+			if ( ( $connection['provider'] ?? '' ) === 'google' ) {
+				$google_event_id = get_post_meta( $event->ID, '_event_uid', true );
+				$calendar_id     = get_post_meta( $event->ID, '_calendar_id', true );
+			}
+		}
+
 		return [
 			'id'                     => $event->ID,
 			'title'                  => $event->post_title,
@@ -1237,6 +1247,8 @@ class Calendar extends Base {
 			'calendar_name'          => $calendar_name,
 			'connection_id'          => $connection_id,
 			'logged_as_activity'     => (bool) get_post_meta( $event->ID, '_logged_as_activity', true ),
+			'google_event_id'        => $google_event_id,
+			'calendar_id'            => $calendar_id,
 		];
 	}
 
@@ -1494,18 +1506,31 @@ class Calendar extends Base {
 		$start_datetime = new \DateTime( $start_meta ?: 'now', $wp_timezone );
 		$end_datetime   = new \DateTime( $end_meta ?: $start_meta ?: 'now', $wp_timezone );
 
+		// Get Google event ID for deeplink (only for Google connections)
+		$google_event_id = null;
+		$calendar_id     = null;
+		if ( $connection_id ) {
+			$connection = \PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
+			if ( $connection && ( $connection['provider'] ?? '' ) === 'google' ) {
+				$google_event_id = get_post_meta( $event->ID, '_event_uid', true );
+				$calendar_id     = get_post_meta( $event->ID, '_calendar_id', true );
+			}
+		}
+
 		return [
-			'id'             => $event->ID,
-			'title'          => $event->post_title,
-			'start_time'     => $start_datetime->format( 'c' ), // ISO 8601 with timezone offset
-			'end_time'       => $end_datetime->format( 'c' ),   // ISO 8601 with timezone offset
-			'all_day'        => (bool) get_post_meta( $event->ID, '_all_day', true ),
-			'location'       => get_post_meta( $event->ID, '_location', true ),
-			'meeting_url'    => get_post_meta( $event->ID, '_meeting_url', true ),
-			'matched_people' => $matched_people,
-			'attendees'      => $attendees,
-			'description'    => $event->post_content,
-			'calendar_name'  => $calendar_name,
+			'id'              => $event->ID,
+			'title'           => $event->post_title,
+			'start_time'      => $start_datetime->format( 'c' ), // ISO 8601 with timezone offset
+			'end_time'        => $end_datetime->format( 'c' ),   // ISO 8601 with timezone offset
+			'all_day'         => (bool) get_post_meta( $event->ID, '_all_day', true ),
+			'location'        => get_post_meta( $event->ID, '_location', true ),
+			'meeting_url'     => get_post_meta( $event->ID, '_meeting_url', true ),
+			'matched_people'  => $matched_people,
+			'attendees'       => $attendees,
+			'description'     => $event->post_content,
+			'calendar_name'   => $calendar_name,
+			'google_event_id' => $google_event_id,
+			'calendar_id'     => $calendar_id,
 		];
 	}
 
