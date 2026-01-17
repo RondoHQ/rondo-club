@@ -67,6 +67,17 @@ class Calendar extends Base {
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
+					'calendar_ids'   => [
+						'required'          => false,
+						'type'              => 'array',
+						'items'             => [ 'type' => 'string' ],
+						'sanitize_callback' => function ( $value ) {
+							if ( ! is_array( $value ) ) {
+								return [];
+							}
+							return array_map( 'sanitize_text_field', $value );
+						},
+					],
 					'credentials'    => [
 						'required' => false,
 						'type'     => 'object',
@@ -148,6 +159,17 @@ class Calendar extends Base {
 						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
+					],
+					'calendar_ids'   => [
+						'required'          => false,
+						'type'              => 'array',
+						'items'             => [ 'type' => 'string' ],
+						'sanitize_callback' => function ( $value ) {
+							if ( ! is_array( $value ) ) {
+								return [];
+							}
+							return array_map( 'sanitize_text_field', $value );
+						},
 					],
 					'credentials'    => [
 						'required' => false,
@@ -581,6 +603,14 @@ class Calendar extends Base {
 		}
 		if ( isset( $data['calendar_name'] ) ) {
 			$updates['calendar_name'] = sanitize_text_field( $data['calendar_name'] );
+		}
+
+		// Handle multi-calendar selection (new format)
+		if ( isset( $data['calendar_ids'] ) && is_array( $data['calendar_ids'] ) ) {
+			$updates['calendar_ids'] = array_map( 'sanitize_text_field', $data['calendar_ids'] );
+			// Clear old single-value fields to avoid confusion
+			$updates['calendar_id']   = '';
+			$updates['calendar_name'] = '';
 		}
 
 		// Handle credential updates (re-encrypt)
@@ -1492,6 +1522,9 @@ class Calendar extends Base {
 		$calendars  = [];
 		$current_id = $connection['calendar_id'] ?? '';
 
+		// Get current calendar IDs (handles both old and new format)
+		$current_ids = \Caelis\Calendar\GoogleProvider::get_calendar_ids( $connection );
+
 		try {
 			if ( $provider === 'google' ) {
 				// Google: Use the new list_calendars method
@@ -1529,8 +1562,9 @@ class Calendar extends Base {
 
 		return rest_ensure_response(
 			[
-				'calendars' => $calendars,
-				'current'   => $current_id,
+				'calendars'   => $calendars,
+				'current'     => $current_id,
+				'current_ids' => $current_ids,
 			]
 		);
 	}
