@@ -1563,7 +1563,7 @@ function ConnectionsTab({
               onClick={() => setActiveSubtab(subtab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
                 ${isActive
-                  ? 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400'
+                  ? 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-200'
                   : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                 }`}
             >
