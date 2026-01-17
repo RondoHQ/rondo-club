@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v5.0 Google Contacts Sync
 Phase: 80 of 85 (Import from Google)
-Plan: 01 of 03 (complete)
+Plan: 02 of 03 (complete)
 Status: In progress
-Last activity: 2026-01-17 - Completed 80-01-PLAN.md (Backend API Import Class)
+Last activity: 2026-01-17 - Completed 80-02-PLAN.md (REST Endpoint and API Client)
 
-Progress: [██░░░░░░░░] ~22%
+Progress: [███░░░░░░░] ~33%
 
 ## Completed Milestones
 
@@ -67,6 +67,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | Skip contacts without email | Match by email only - no name-based matching per CONTEXT.md | 80-01 |
 | Fill gaps only on duplicate match | Never overwrite existing Caelis data | 80-01 |
 | Google IDs as post meta | Store _google_contact_id, _google_etag for future sync | 80-01 |
+| Synchronous import endpoint | Simpler implementation, async can be added later if needed | 80-02 |
+| Return full stats object | Detailed UI feedback with all import counts | 80-02 |
 
 ### Pending Todos
 
@@ -83,11 +85,11 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-17
-Stopped at: Completed 80-01-PLAN.md
+Stopped at: Completed 80-02-PLAN.md
 Resume file: None
 
 ## Next Steps
 
-- Phase 80 Import from Google in progress (1/3 plans complete)
-- Next: 80-02-PLAN.md (REST API endpoint for import trigger)
-- Then: 80-03-PLAN.md (Frontend import UI)
+- Phase 80 Import from Google in progress (2/3 plans complete)
+- Next: 80-03-PLAN.md (Frontend import UI)
+- Then: Phase 81 Export to Google
