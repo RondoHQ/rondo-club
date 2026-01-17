@@ -58,27 +58,27 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MTG-01 | TBD | Pending |
-| MTG-02 | TBD | Pending |
-| MTG-03 | TBD | Pending |
-| MTG-04 | TBD | Pending |
-| MTG-05 | TBD | Pending |
-| MTG-06 | TBD | Pending |
-| MTG-07 | TBD | Pending |
-| MTG-08 | TBD | Pending |
-| ADD-01 | TBD | Pending |
-| ADD-02 | TBD | Pending |
-| ADD-03 | TBD | Pending |
-| ADD-04 | TBD | Pending |
-| NAV-01 | TBD | Pending |
-| NAV-02 | TBD | Pending |
-| NAV-03 | TBD | Pending |
+| MTG-01 | Phase 73 | Pending |
+| MTG-02 | Phase 73 | Pending |
+| MTG-03 | Phase 73 | Pending |
+| MTG-04 | Phase 73 | Pending |
+| MTG-05 | Phase 73 | Pending |
+| MTG-06 | Phase 73 | Pending |
+| MTG-07 | Phase 73 | Pending |
+| MTG-08 | Phase 73 | Pending |
+| ADD-01 | Phase 73 | Pending |
+| ADD-02 | Phase 74 | Pending |
+| ADD-03 | Phase 74 | Pending |
+| ADD-04 | Phase 74 | Pending |
+| NAV-01 | Phase 75 | Pending |
+| NAV-02 | Phase 75 | Pending |
+| NAV-03 | Phase 75 | Pending |
 
 **Coverage:**
 - v1 requirements: 15 total
-- Mapped to phases: 0 (pending create-roadmap)
-- Unmapped: 15
+- Mapped to phases: 15 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-17*
-*Last updated: 2026-01-17 after initial definition*
+*Last updated: 2026-01-17 after roadmap creation*

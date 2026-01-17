@@ -26,12 +26,52 @@
 - ✅ [v4.5 Calendar Sync Control](milestones/v4.5-calendar-sync-control.md) (Phases 67-68) — SHIPPED 2026-01-16
 - ✅ [v4.6 Dashboard & Polish](milestones/v4.6-dashboard-polish.md) (Phases 69-70) — SHIPPED 2026-01-16
 - ✅ [v4.7 Dark Mode & Activity Polish](milestones/v4.7-dark-mode-activity-polish.md) (Phases 71-72) — SHIPPED 2026-01-17
+- 🚧 **v4.8 Meeting Enhancements** (Phases 73-75) — In Progress
 
 ## Current Status
 
-**Current milestone:** None — v4.7 complete, ready for next milestone
+**Current milestone:** v4.8 Meeting Enhancements (Phases 73-75)
 
-### ✅ v4.7 Dark Mode & Activity Polish (Complete)
+### 🚧 v4.8 Meeting Enhancements (In Progress)
+
+**Milestone Goal:** Improve calendar meeting experience with detailed views and navigation.
+
+#### Phase 73: Meeting Detail Modal
+**Goal**: User can click meeting to view full details and attendees
+**Depends on**: Phase 72
+**Requirements**: MTG-01, MTG-02, MTG-03, MTG-04, MTG-05, MTG-06, MTG-07, MTG-08, ADD-01
+**Success Criteria** (what must be TRUE):
+  1. User can click any meeting to open detail modal
+  2. Modal displays title, time, duration, location, and description
+  3. Modal shows attendee list with avatars
+  4. Known attendees are visually distinguished and clickable to their profile
+  5. Modal includes notes section for meeting prep
+**Plans**: TBD
+
+#### Phase 74: Add Person from Meeting
+**Goal**: User can add unknown meeting attendees as contacts
+**Depends on**: Phase 73
+**Requirements**: ADD-02, ADD-03, ADD-04
+**Success Criteria** (what must be TRUE):
+  1. Add button appears next to unknown attendees
+  2. Clicking add creates person pre-filled with name from email
+  3. Attendee list updates to show newly added person as known
+**Plans**: TBD
+
+#### Phase 75: Date Navigation
+**Goal**: User can browse meetings across days
+**Depends on**: Phase 74
+**Requirements**: NAV-01, NAV-02, NAV-03
+**Success Criteria** (what must be TRUE):
+  1. Prev/next buttons navigate between days
+  2. Today button returns to current day
+  3. Widget header shows selected date
+**Plans**: TBD
+
+---
+
+<details>
+<summary>✅ v4.7 Dark Mode & Activity Polish (Phases 71-72) — SHIPPED 2026-01-17</summary>
 
 **Milestone Goal:** Comprehensive dark mode contrast fixes across modals and settings, plus activity type improvements and minor bug fixes.
 
@@ -58,7 +98,7 @@
   4. Person header displays "at Company" with proper spacing ✓
 **Plans**: 1/1 complete
 
----
+</details>
 
 <details>
 <summary>✅ v4.6 Dashboard & Polish (Phases 69-70) — SHIPPED 2026-01-16</summary>
@@ -691,5 +731,6 @@ See [milestone archive](milestones/v1.0-tech-debt-cleanup.md) for full details.
 | v4.5 Calendar Sync Control | 67-68 | 3/3 | Complete ✅ | 2026-01-16 |
 | v4.6 Dashboard & Polish | 69-70 | 2/2 | Complete ✅ | 2026-01-16 |
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4/4 | Complete ✅ | 2026-01-17 |
+| v4.8 Meeting Enhancements | 73-75 | 0/TBD | In Progress 🚧 | - |
 
 **Shipped: 26 milestones, 72 phases, 125 plans**
