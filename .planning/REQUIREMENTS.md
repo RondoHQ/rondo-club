@@ -21,9 +21,9 @@ Requirements for v4.8 release. Each maps to roadmap phases.
 ### Add Person from Meeting
 
 - [x] **ADD-01**: Unknown attendees are clearly identified in attendee list
-- [ ] **ADD-02**: User can click "Add" button next to unknown attendee
-- [ ] **ADD-03**: New person is pre-filled with name extracted from email
-- [ ] **ADD-04**: After adding, attendee updates to show as known
+- [x] **ADD-02**: User can click "Add" button next to unknown attendee
+- [x] **ADD-03**: New person is pre-filled with name extracted from email
+- [x] **ADD-04**: After adding, attendee updates to show as known
 
 ### Date Navigation
 
@@ -67,9 +67,9 @@ Which phases cover which requirements. Updated by create-roadmap.
 | MTG-07 | Phase 73 | Complete |
 | MTG-08 | Phase 73 | Complete |
 | ADD-01 | Phase 73 | Complete |
-| ADD-02 | Phase 74 | Pending |
-| ADD-03 | Phase 74 | Pending |
-| ADD-04 | Phase 74 | Pending |
+| ADD-02 | Phase 74 | Complete |
+| ADD-03 | Phase 74 | Complete |
+| ADD-04 | Phase 74 | Complete |
 | NAV-01 | Phase 75 | Pending |
 | NAV-02 | Phase 75 | Pending |
 | NAV-03 | Phase 75 | Pending |
