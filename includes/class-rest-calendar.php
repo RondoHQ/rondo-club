@@ -752,7 +752,7 @@ class Calendar extends Base {
 		if ( ! \PRM_Google_OAuth::is_configured() ) {
 			return new \WP_Error(
 				'not_configured',
-				__( 'Google Calendar integration is not configured. Please add GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET to wp-config.php.', 'caelis' ),
+				__( 'Google Calendar integration is not configured. Please add GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to wp-config.php.', 'caelis' ),
 				[ 'status' => 400 ]
 			);
 		}

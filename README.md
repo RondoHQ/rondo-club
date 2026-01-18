@@ -51,8 +51,8 @@ wp config set CAELIS_SLACK_CLIENT_SECRET 'your-client-secret' --type=constant
 wp config set CAELIS_SLACK_SIGNING_SECRET 'your-signing-secret' --type=constant
 
 # Optional: Google integration (Calendar + Contacts)
-wp config set GOOGLE_CALENDAR_CLIENT_ID 'your-client-id.apps.googleusercontent.com' --type=constant
-wp config set GOOGLE_CALENDAR_CLIENT_SECRET 'your-client-secret' --type=constant
+wp config set GOOGLE_OAUTH_CLIENT_ID 'your-client-id.apps.googleusercontent.com' --type=constant
+wp config set GOOGLE_OAUTH_CLIENT_SECRET 'your-client-secret' --type=constant
 ```
 
 ### Configuration Constants Reference
@@ -63,8 +63,8 @@ wp config set GOOGLE_CALENDAR_CLIENT_SECRET 'your-client-secret' --type=constant
 | `CAELIS_SLACK_CLIENT_ID` | Slack OAuth app client ID | Optional | Slack API Dashboard |
 | `CAELIS_SLACK_CLIENT_SECRET` | Slack OAuth app client secret | Optional | Slack API Dashboard |
 | `CAELIS_SLACK_SIGNING_SECRET` | Slack webhook verification | Optional | Slack API Dashboard |
-| `GOOGLE_CALENDAR_CLIENT_ID` | Google OAuth client ID (Calendar + Contacts) | Optional | Google Cloud Console |
-| `GOOGLE_CALENDAR_CLIENT_SECRET` | Google OAuth client secret | Optional | Google Cloud Console |
+| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID (Calendar + Contacts) | Optional | Google Cloud Console |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret | Optional | Google Cloud Console |
 
 ### Encryption (Required)
 
@@ -115,11 +115,11 @@ Google OAuth credentials are shared between Calendar sync and Contacts sync.
      - `https://your-domain.com/wp-json/prm/v1/contacts/auth/google/callback`
 
 ```php
-define('GOOGLE_CALENDAR_CLIENT_ID', 'your-client-id.apps.googleusercontent.com');
-define('GOOGLE_CALENDAR_CLIENT_SECRET', 'your-client-secret');
+define('GOOGLE_OAUTH_CLIENT_ID', 'your-client-id.apps.googleusercontent.com');
+define('GOOGLE_OAUTH_CLIENT_SECRET', 'your-client-secret');
 ```
 
-**Note:** Despite the `CALENDAR` in the constant names (legacy naming), these credentials are used for both Calendar and Contacts sync. Scopes are requested incrementally when each feature is first used.
+**Note:** These credentials are shared between Calendar and Contacts sync. Scopes are requested incrementally when each feature is first used.
 
 ### CalDAV Integration (Optional)
 
@@ -146,8 +146,8 @@ define('CAELIS_SLACK_CLIENT_SECRET', 'abcdef1234567890abcdef1234567890');
 define('CAELIS_SLACK_SIGNING_SECRET', '1234abcd5678efgh9012ijkl3456mnop');
 
 // Optional: Google Integration (Calendar + Contacts)
-define('GOOGLE_CALENDAR_CLIENT_ID', '123456789-abc123def456.apps.googleusercontent.com');
-define('GOOGLE_CALENDAR_CLIENT_SECRET', 'GOCSPX-abcdefghijklmnop');
+define('GOOGLE_OAUTH_CLIENT_ID', '123456789-abc123def456.apps.googleusercontent.com');
+define('GOOGLE_OAUTH_CLIENT_SECRET', 'GOCSPX-abcdefghijklmnop');
 ```
 
 ## Development

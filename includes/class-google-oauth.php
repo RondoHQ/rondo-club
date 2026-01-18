@@ -38,10 +38,10 @@ class GoogleOAuth {
 	 * @return bool True if client ID and secret are configured
 	 */
 	public static function is_configured(): bool {
-		return defined( 'GOOGLE_CALENDAR_CLIENT_ID' )
-			&& ! empty( GOOGLE_CALENDAR_CLIENT_ID )
-			&& defined( 'GOOGLE_CALENDAR_CLIENT_SECRET' )
-			&& ! empty( GOOGLE_CALENDAR_CLIENT_SECRET );
+		return defined( 'GOOGLE_OAUTH_CLIENT_ID' )
+			&& ! empty( GOOGLE_OAUTH_CLIENT_ID )
+			&& defined( 'GOOGLE_OAUTH_CLIENT_SECRET' )
+			&& ! empty( GOOGLE_OAUTH_CLIENT_SECRET );
 	}
 
 	/**
@@ -55,8 +55,8 @@ class GoogleOAuth {
 		}
 
 		$client = new \Google\Client();
-		$client->setClientId( GOOGLE_CALENDAR_CLIENT_ID );
-		$client->setClientSecret( GOOGLE_CALENDAR_CLIENT_SECRET );
+		$client->setClientId( GOOGLE_OAUTH_CLIENT_ID );
+		$client->setClientSecret( GOOGLE_OAUTH_CLIENT_SECRET );
 		$client->setRedirectUri( self::get_redirect_uri() );
 		$client->setScopes( self::SCOPES );
 		$client->setAccessType( 'offline' );
@@ -242,8 +242,8 @@ class GoogleOAuth {
 		}
 
 		$client = new \Google\Client();
-		$client->setClientId( GOOGLE_CALENDAR_CLIENT_ID );
-		$client->setClientSecret( GOOGLE_CALENDAR_CLIENT_SECRET );
+		$client->setClientId( GOOGLE_OAUTH_CLIENT_ID );
+		$client->setClientSecret( GOOGLE_OAUTH_CLIENT_SECRET );
 		$client->setRedirectUri( rest_url( 'prm/v1/google-contacts/callback' ) );
 
 		// Set contacts scope based on access mode, plus email for user identification
