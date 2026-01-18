@@ -338,10 +338,18 @@ class Manager {
 
 		$group_key = $this->get_group_key( $post_type );
 
-		// Get all fields in the group.
-		$fields = acf_get_fields( $group_key );
+		// Get field group post ID directly from database.
+		// We can't use acf_get_field_group() because it returns ID=0 when
+		// the group is also loaded from JSON (which takes precedence).
+		$group_post = get_page_by_path( $group_key, OBJECT, 'acf-field-group' );
+		if ( ! $group_post ) {
+			return array();
+		}
 
-		// Handle false return (no fields or group doesn't exist).
+		// Get all fields in the group by post ID.
+		$fields = acf_get_fields( $group_post->ID );
+
+		// Handle false return (no fields).
 		if ( ! $fields ) {
 			return array();
 		}
