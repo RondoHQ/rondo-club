@@ -245,8 +245,10 @@ function MeetingCard({ meeting, onClick }) {
   // Format time display in 24h format
   const formattedTime = format(startTime, 'HH:mm');
 
-  // Filter out current user from matched people
-  const currentUserPersonId = window.prmConfig?.currentUserPersonId;
+  // Filter out current user from matched people (convert to number for type-safe comparison)
+  const currentUserPersonId = window.prmConfig?.currentUserPersonId
+    ? Number(window.prmConfig.currentUserPersonId)
+    : null;
   const filteredMatchedPeople = (meeting.matched_people || []).filter(
     person => !currentUserPersonId || person.person_id !== currentUserPersonId
   );
