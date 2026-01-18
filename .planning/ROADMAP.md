@@ -13,7 +13,7 @@ Transform Caelis into a flexible CRM with admin-defined custom fields for People
 - [x] **Phase 87: ACF Foundation** - PHP infrastructure for programmatic field group management
 - [x] **Phase 88: Settings UI** - Custom Fields subtab with add/edit/delete interface
 - [x] **Phase 89: Basic Field Types** - Text, Textarea, Number, Email, URL, Date, Select, Checkbox, True/False
-- [ ] **Phase 90: Extended Field Types** - Image, File, Link, Color, Relationship
+- [x] **Phase 90: Extended Field Types** - Image, File, Link, Color, Relationship
 - [ ] **Phase 91: Detail View Integration** - Custom Fields section on Person/Organization detail pages
 - [ ] **Phase 92: List View Integration** - Custom field columns with column configuration
 - [ ] **Phase 93: Search Integration** - Include custom fields in global search
@@ -84,8 +84,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 90-01-PLAN.md - Extend backend for extended type options (image, file, link, color, relationship)
-- [ ] 90-02-PLAN.md - Add extended type configuration UI to FieldFormPanel
+- [x] 90-01-PLAN.md - Extend backend for extended type options (image, file, link, color, relationship)
+- [x] 90-02-PLAN.md - Add extended type configuration UI to FieldFormPanel
 
 ### Phase 91: Detail View Integration
 **Goal**: Custom fields appear in dedicated section on Person and Organization detail pages
@@ -153,7 +153,7 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 | 87. ACF Foundation | 2/2 | Complete | 2026-01-18 |
 | 88. Settings UI | 2/2 | Complete | 2026-01-18 |
 | 89. Basic Field Types | 2/2 | Complete | 2026-01-18 |
-| 90. Extended Field Types | 0/2 | Not started | - |
+| 90. Extended Field Types | 2/2 | Complete | 2026-01-18 |
 | 91. Detail View Integration | 0/TBD | Not started | - |
 | 92. List View Integration | 0/TBD | Not started | - |
 | 93. Search Integration | 0/TBD | Not started | - |

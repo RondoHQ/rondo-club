@@ -29,11 +29,11 @@ Requirements for v6.0 release. Each maps to roadmap phases.
 - [x] **TYPE-07**: Select field type (single choice dropdown)
 - [x] **TYPE-08**: Checkbox field type (multiple choices)
 - [x] **TYPE-09**: True/False field type (boolean toggle)
-- [ ] **TYPE-10**: Image field type (upload with preview)
-- [ ] **TYPE-11**: File field type (upload with download link)
-- [ ] **TYPE-12**: Link field type (URL + display text)
-- [ ] **TYPE-13**: Color picker field type
-- [ ] **TYPE-14**: Relationship field type (link to People/Organizations)
+- [x] **TYPE-10**: Image field type (upload with preview)
+- [x] **TYPE-11**: File field type (upload with download link)
+- [x] **TYPE-12**: Link field type (URL + display text)
+- [x] **TYPE-13**: Color picker field type
+- [x] **TYPE-14**: Relationship field type (link to People/Organizations)
 
 ### Display
 
@@ -116,11 +116,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TYPE-07 | Phase 89 | Complete |
 | TYPE-08 | Phase 89 | Complete |
 | TYPE-09 | Phase 89 | Complete |
-| TYPE-10 | Phase 90 | Pending |
-| TYPE-11 | Phase 90 | Pending |
-| TYPE-12 | Phase 90 | Pending |
-| TYPE-13 | Phase 90 | Pending |
-| TYPE-14 | Phase 90 | Pending |
+| TYPE-10 | Phase 90 | Complete |
+| TYPE-11 | Phase 90 | Complete |
+| TYPE-12 | Phase 90 | Complete |
+| TYPE-13 | Phase 90 | Complete |
+| TYPE-14 | Phase 90 | Complete |
 | DISP-01 | Phase 91 | Pending |
 | DISP-02 | Phase 91 | Pending |
 | DISP-03 | Phase 91 | Pending |

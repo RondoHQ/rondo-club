@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Admin-defined custom fields for People and Organizations using ACF-native storage
-**Current focus:** v6.0 Custom Fields - Phase 90: Extended Field Types (complete)
+**Current focus:** v6.0 Custom Fields - Phase 91: Detail View Integration
 
 ## Current Position
 
 Milestone: v6.0 Custom Fields
-Phase: 90 of 94 (Extended Field Types) - COMPLETE
-Plan: 2 of 2 complete
-Status: Phase complete
-Last activity: 2026-01-18 - Completed 90-02-PLAN.md (Extended Field Types Settings UI)
+Phase: 91 of 94 (Detail View Integration)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-18 - Completed Phase 90 (Extended Field Types)
 
 Progress: [████░░░░░░] 50% (4/8 phases complete)
 
@@ -96,9 +96,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 90-02-PLAN.md (Extended Field Types Settings UI)
+Stopped at: Completed Phase 90 (Extended Field Types)
 Resume file: None
 
 ## Next Steps
 
-- Run `/gsd:execute-phase 91` to continue with Detail View Rendering
+- Run `/gsd:discuss-phase 91` to gather context for Detail View Integration phase
+- Or run `/gsd:plan-phase 91` to plan the phase directly
