@@ -283,7 +283,7 @@ class GoogleProvider {
 		// Build post data
 		$post_data = [
 			'post_type'    => 'calendar_event',
-			'post_title'   => sanitize_text_field( $event->getSummary() ?: '(No title)' ),
+			'post_title'   => html_entity_decode( sanitize_text_field( $event->getSummary() ?: '(No title)' ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 			'post_content' => sanitize_textarea_field( $event->getDescription() ?: '' ),
 			'post_author'  => $user_id,
 			'post_status'  => 'publish',
