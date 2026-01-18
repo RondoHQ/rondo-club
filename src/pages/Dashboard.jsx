@@ -235,8 +235,15 @@ function AwaitingTodoCard({ todo, onToggle, onView }) {
 }
 
 function MeetingCard({ meeting, onClick }) {
-  // Format time display
-  const startTime = format(new Date(meeting.start_time), 'h:mm a');
+  // Time-based status detection
+  const now = new Date();
+  const startTime = new Date(meeting.start_time);
+  const endTime = new Date(meeting.end_time);
+  const isPast = endTime < now;
+  const isNow = startTime <= now && now <= endTime;
+
+  // Format time display in 24h format
+  const formattedTime = format(startTime, 'HH:mm');
 
   // Filter out current user from matched people
   const currentUserPersonId = window.prmConfig?.currentUserPersonId;
@@ -247,8 +254,8 @@ function MeetingCard({ meeting, onClick }) {
   // Card content shows: time, title, matched people avatars
   const cardContent = (
     <>
-      <div className="text-sm font-medium text-accent-600 dark:text-accent-400 w-20 flex-shrink-0">
-        {meeting.all_day ? 'All day' : startTime}
+      <div className={`text-sm font-medium text-accent-600 dark:text-accent-400 w-20 flex-shrink-0 ${isNow ? 'font-semibold' : ''}`}>
+        {meeting.all_day ? 'All day' : formattedTime}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{meeting.title}</p>
@@ -274,12 +281,19 @@ function MeetingCard({ meeting, onClick }) {
     </>
   );
 
+  // Build conditional classes for time-based styling
+  const buttonClasses = [
+    'w-full flex items-center p-3 rounded-lg transition-colors text-left',
+    isPast ? 'opacity-50' : '',
+    isNow ? 'bg-accent-50 dark:bg-accent-900/30 ring-1 ring-accent-200 dark:ring-accent-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700',
+  ].filter(Boolean).join(' ');
+
   // Always clickable button to open modal
   return (
     <button
       type="button"
       onClick={() => onClick(meeting)}
-      className="w-full flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+      className={buttonClasses}
     >
       {cardContent}
     </button>
