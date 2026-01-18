@@ -65,10 +65,11 @@ Plans:
   6. Select field offers single-choice dropdown
   7. Checkbox field allows multiple selections
   8. True/False field renders as boolean toggle
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 89-01: TBD
+- [ ] 89-01-PLAN.md - Extend backend for type-specific options (min/max, choices, formats)
+- [ ] 89-02-PLAN.md - Add type-specific configuration UI to FieldFormPanel
 
 ### Phase 90: Extended Field Types
 **Goal**: Support 5 advanced field types for media, links, colors, and relationships
@@ -150,7 +151,7 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 |-------|----------------|--------|-----------|
 | 87. ACF Foundation | 2/2 | Complete | 2026-01-18 |
 | 88. Settings UI | 2/2 | Complete | 2026-01-18 |
-| 89. Basic Field Types | 0/TBD | Not started | - |
+| 89. Basic Field Types | 0/2 | Not started | - |
 | 90. Extended Field Types | 0/TBD | Not started | - |
 | 91. Detail View Integration | 0/TBD | Not started | - |
 | 92. List View Integration | 0/TBD | Not started | - |
