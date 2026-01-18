@@ -51,6 +51,7 @@ use Caelis\Contacts\GoogleContactsSync;
 use Caelis\CardDAV\Server as CardDAVServer;
 use Caelis\Data\InverseRelationships;
 use Caelis\Data\TodoMigration;
+use Caelis\CustomFields\Manager as CustomFieldsManager;
 
 define( 'PRM_THEME_DIR', get_template_directory() );
 define( 'PRM_THEME_URL', get_template_directory_uri() );
@@ -232,6 +233,11 @@ if ( ! class_exists( 'PRM_Todo_Migration' ) ) {
 }
 if ( ! class_exists( 'PRM_Credential_Encryption' ) ) {
 	class_alias( \Caelis\Data\CredentialEncryption::class, 'PRM_Credential_Encryption' );
+}
+
+// CustomFields classes
+if ( ! class_exists( 'PRM_Custom_Fields_Manager' ) ) {
+	class_alias( CustomFieldsManager::class, 'PRM_Custom_Fields_Manager' );
 }
 
 /**
