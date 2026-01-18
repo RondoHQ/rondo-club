@@ -243,8 +243,8 @@ function MeetingCard({ meeting, onClick }) {
   const isNow = startTime <= now && now <= endTime;
 
   // Format time display in 24h format
-  const formattedTime = format(startTime, 'HH:mm');
-
+  const formattedStartTime = format(startTime, 'HH:mm');
+  const formattedEndTime = format(endTime, 'HH:mm');
   // Filter out current user from matched people (convert to number for type-safe comparison)
   const currentUserPersonId = window.prmConfig?.currentUserPersonId
     ? Number(window.prmConfig.currentUserPersonId)
@@ -256,8 +256,8 @@ function MeetingCard({ meeting, onClick }) {
   // Card content shows: time, title, matched people avatars
   const cardContent = (
     <>
-      <div className={`text-sm font-medium text-accent-600 dark:text-accent-400 w-14 flex-shrink-0 ${isNow ? 'font-semibold' : ''}`}>
-        {meeting.all_day ? 'All day' : formattedTime}
+      <div className={`text-sm font-medium text-accent-600 dark:text-accent-400 w-15 flex-shrink-0 ${isNow ? 'font-semibold' : ''}`}>
+        {meeting.all_day ? 'All day' : <>{formattedStartTime}<br />{formattedEndTime}</>}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{meeting.title}</p>
