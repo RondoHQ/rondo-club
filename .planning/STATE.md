@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Admin-defined custom fields for People and Organizations using ACF-native storage
-**Current focus:** v6.0 Custom Fields - Phase 89: Basic Field Types
+**Current focus:** v6.0 Custom Fields - Phase 90: Extended Field Types
 
 ## Current Position
 
 Milestone: v6.0 Custom Fields
-Phase: 89 of 94 (Basic Field Types)
-Plan: 2 of 2 complete
-Status: Phase complete
-Last activity: 2026-01-18 - Completed 89-02-PLAN.md
+Phase: 90 of 94 (Extended Field Types)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-18 - Completed Phase 89 (Basic Field Types)
 
 Progress: [███░░░░░░░] 38% (3/8 phases complete)
 
@@ -95,11 +95,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 89-02-PLAN.md execution (Phase 89 complete)
+Stopped at: Completed Phase 89 (Basic Field Types)
 Resume file: None
 
 ## Next Steps
 
-- Phase 89 (Basic Field Types) complete
-- Run `/gsd:discuss-phase 90` to start Form Rendering phase
-- Or run `/gsd:plan` to see overall progress
+- Run `/gsd:discuss-phase 90` to gather context for Extended Field Types phase
+- Or run `/gsd:plan-phase 90` to plan the phase directly
