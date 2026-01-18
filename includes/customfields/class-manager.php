@@ -37,6 +37,7 @@ class Manager {
 	 * @var array
 	 */
 	private const UPDATABLE_PROPERTIES = array(
+		// Core properties.
 		'label',
 		'name',
 		'instructions',
@@ -44,6 +45,30 @@ class Manager {
 		'choices',
 		'default_value',
 		'placeholder',
+		// Number field options.
+		'min',
+		'max',
+		'step',
+		'prepend',
+		'append',
+		// Date field options.
+		'display_format',
+		'return_format',
+		'first_day',
+		// Select field options.
+		'allow_null',
+		'multiple',
+		'ui',
+		// Checkbox field options.
+		'layout',
+		'toggle',
+		'allow_custom',
+		'save_custom',
+		// Text/Textarea options.
+		'maxlength',
+		// True/False options.
+		'ui_on_text',
+		'ui_off_text',
 	);
 
 	/**
@@ -185,17 +210,17 @@ class Manager {
 			'required'     => $field_config['required'] ?? 0,
 		);
 
-		// Add type-specific settings - choices.
-		if ( isset( $field_config['choices'] ) ) {
-			$field['choices'] = $field_config['choices'];
-		}
-		// Add type-specific settings - default_value.
-		if ( isset( $field_config['default_value'] ) ) {
-			$field['default_value'] = $field_config['default_value'];
-		}
-		// Add type-specific settings - placeholder.
-		if ( isset( $field_config['placeholder'] ) ) {
-			$field['placeholder'] = $field_config['placeholder'];
+		// Add optional properties from UPDATABLE_PROPERTIES.
+		// These include type-specific settings (min, max, choices, etc.)
+		// that ACF handles based on the field type.
+		foreach ( self::UPDATABLE_PROPERTIES as $prop ) {
+			// Skip properties already set in core array.
+			if ( in_array( $prop, array( 'label', 'name', 'instructions', 'required' ), true ) ) {
+				continue;
+			}
+			if ( isset( $field_config[ $prop ] ) ) {
+				$field[ $prop ] = $field_config[ $prop ];
+			}
 		}
 
 		// Persist to database.
@@ -214,8 +239,8 @@ class Manager {
 	/**
 	 * Update an existing field.
 	 *
-	 * Only certain properties can be updated: label, name, instructions, required,
-	 * choices, default_value, placeholder. The key, type, and parent are immutable.
+	 * Only properties in UPDATABLE_PROPERTIES can be updated.
+	 * The key, type, and parent are immutable once created.
 	 *
 	 * @param string $field_key The field key to update.
 	 * @param array  $updates   Array of properties to update.
