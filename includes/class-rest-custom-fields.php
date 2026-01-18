@@ -205,6 +205,13 @@ class CustomFields extends WP_REST_Controller {
 			'maxlength',
 			// True/False options.
 			'ui_on_text', 'ui_off_text',
+			// Image/File field options.
+			'preview_size', 'library', 'min_width', 'max_width', 'min_height', 'max_height',
+			'min_size', 'max_size', 'mime_types',
+			// Relationship field options.
+			'post_type', 'filters',
+			// Color picker options.
+			'enable_opacity',
 		);
 		foreach ( $optional_params as $param ) {
 			if ( $request->has_param( $param ) ) {
@@ -267,6 +274,13 @@ class CustomFields extends WP_REST_Controller {
 			'maxlength',
 			// True/False options.
 			'ui_on_text', 'ui_off_text',
+			// Image/File field options.
+			'preview_size', 'library', 'min_width', 'max_width', 'min_height', 'max_height',
+			'min_size', 'max_size', 'mime_types',
+			// Relationship field options.
+			'post_type', 'filters',
+			// Color picker options.
+			'enable_opacity',
 		);
 		foreach ( $updatable_params as $param ) {
 			if ( $request->has_param( $param ) ) {
@@ -452,6 +466,59 @@ class CustomFields extends WP_REST_Controller {
 			'ui_off_text'    => array(
 				'type'        => 'string',
 				'description' => 'Text for OFF state (True/False field)',
+			),
+			// Image field options.
+			'preview_size'   => array(
+				'type'        => 'string',
+				'description' => 'Preview size in admin: thumbnail, medium, large (Image field)',
+			),
+			'library'        => array(
+				'type'        => 'string',
+				'description' => 'Media library filter: all or uploadedTo (Image/File field)',
+			),
+			'min_width'      => array(
+				'type'        => 'integer',
+				'description' => 'Minimum image width in pixels (Image field)',
+			),
+			'max_width'      => array(
+				'type'        => 'integer',
+				'description' => 'Maximum image width in pixels (Image field)',
+			),
+			'min_height'     => array(
+				'type'        => 'integer',
+				'description' => 'Minimum image height in pixels (Image field)',
+			),
+			'max_height'     => array(
+				'type'        => 'integer',
+				'description' => 'Maximum image height in pixels (Image field)',
+			),
+			'min_size'       => array(
+				'type'        => 'string',
+				'description' => 'Minimum file size e.g. 1MB (Image/File field)',
+			),
+			'max_size'       => array(
+				'type'        => 'string',
+				'description' => 'Maximum file size e.g. 5MB (Image/File field)',
+			),
+			'mime_types'     => array(
+				'type'        => 'string',
+				'description' => 'Allowed mime types comma-separated (Image/File field)',
+			),
+			// Relationship field options.
+			'post_type'      => array(
+				'type'        => 'array',
+				'description' => 'Allowed post types for relationship (Relationship field)',
+				'items'       => array( 'type' => 'string' ),
+			),
+			'filters'        => array(
+				'type'        => 'array',
+				'description' => 'Search filters to display (Relationship field)',
+				'items'       => array( 'type' => 'string' ),
+			),
+			// Color picker options.
+			'enable_opacity' => array(
+				'type'        => 'boolean',
+				'description' => 'Enable opacity/alpha slider (Color field)',
 			),
 		);
 	}
