@@ -39,6 +39,22 @@ npm run build
 
 Caelis uses PHP constants defined in `wp-config.php` for configuration. This is the standard WordPress approach and ensures settings are secure and environment-specific.
 
+### Quick Setup with WP-CLI
+
+```bash
+# Required: Generate and set encryption key
+wp config set CAELIS_ENCRYPTION_KEY "$(php -r 'echo bin2hex(random_bytes(16));')" --type=constant
+
+# Optional: Slack integration
+wp config set CAELIS_SLACK_CLIENT_ID 'your-client-id' --type=constant
+wp config set CAELIS_SLACK_CLIENT_SECRET 'your-client-secret' --type=constant
+wp config set CAELIS_SLACK_SIGNING_SECRET 'your-signing-secret' --type=constant
+
+# Optional: Google integration (Calendar + Contacts)
+wp config set GOOGLE_CALENDAR_CLIENT_ID 'your-client-id.apps.googleusercontent.com' --type=constant
+wp config set GOOGLE_CALENDAR_CLIENT_SECRET 'your-client-secret' --type=constant
+```
+
 ### Configuration Constants Reference
 
 | Constant | Purpose | Required | Generation/Source |
@@ -47,7 +63,7 @@ Caelis uses PHP constants defined in `wp-config.php` for configuration. This is 
 | `CAELIS_SLACK_CLIENT_ID` | Slack OAuth app client ID | Optional | Slack API Dashboard |
 | `CAELIS_SLACK_CLIENT_SECRET` | Slack OAuth app client secret | Optional | Slack API Dashboard |
 | `CAELIS_SLACK_SIGNING_SECRET` | Slack webhook verification | Optional | Slack API Dashboard |
-| `GOOGLE_CALENDAR_CLIENT_ID` | Google OAuth client ID | Optional | Google Cloud Console |
+| `GOOGLE_CALENDAR_CLIENT_ID` | Google OAuth client ID (Calendar + Contacts) | Optional | Google Cloud Console |
 | `GOOGLE_CALENDAR_CLIENT_SECRET` | Google OAuth client secret | Optional | Google Cloud Console |
 
 ### Encryption (Required)
@@ -79,23 +95,31 @@ define('CAELIS_SLACK_CLIENT_SECRET', 'your-client-secret');
 define('CAELIS_SLACK_SIGNING_SECRET', 'your-signing-secret');
 ```
 
-### Google Calendar Integration (Optional)
+### Google Integration (Optional)
 
-To sync events from Google Calendar:
+Google OAuth credentials are shared between Calendar sync and Contacts sync.
+
+**Setup steps:**
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create or select a project
-3. Enable the **Google Calendar API** (APIs & Services > Library)
+3. Enable APIs (APIs & Services > Library):
+   - **Google Calendar API** (for calendar sync)
+   - **Google People API** (for contacts sync)
 4. Configure **OAuth consent screen** (APIs & Services > OAuth consent screen)
-   - Add scope: `.../auth/calendar.readonly`
+   - Add scopes: `.../auth/calendar.readonly`, `.../auth/contacts`
 5. Create **OAuth 2.0 credentials** (APIs & Services > Credentials)
    - Application type: Web application
-   - Authorized redirect URI: `https://your-domain.com/wp-json/prm/v1/calendar/auth/google/callback`
+   - Authorized redirect URIs:
+     - `https://your-domain.com/wp-json/prm/v1/calendar/auth/google/callback`
+     - `https://your-domain.com/wp-json/prm/v1/contacts/auth/google/callback`
 
 ```php
 define('GOOGLE_CALENDAR_CLIENT_ID', 'your-client-id.apps.googleusercontent.com');
 define('GOOGLE_CALENDAR_CLIENT_SECRET', 'your-client-secret');
 ```
+
+**Note:** Despite the `CALENDAR` in the constant names (legacy naming), these credentials are used for both Calendar and Contacts sync. Scopes are requested incrementally when each feature is first used.
 
 ### CalDAV Integration (Optional)
 
@@ -121,7 +145,7 @@ define('CAELIS_SLACK_CLIENT_ID', '1234567890.1234567890');
 define('CAELIS_SLACK_CLIENT_SECRET', 'abcdef1234567890abcdef1234567890');
 define('CAELIS_SLACK_SIGNING_SECRET', '1234abcd5678efgh9012ijkl3456mnop');
 
-// Optional: Google Calendar Integration
+// Optional: Google Integration (Calendar + Contacts)
 define('GOOGLE_CALENDAR_CLIENT_ID', '123456789-abc123def456.apps.googleusercontent.com');
 define('GOOGLE_CALENDAR_CLIENT_SECRET', 'GOCSPX-abcdefghijklmnop');
 ```
