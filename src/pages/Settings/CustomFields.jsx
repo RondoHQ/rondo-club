@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Database, Plus, Trash2, Edit2, ShieldAlert } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Link } from 'react-router-dom';
+import FieldFormPanel from '@/components/FieldFormPanel';
+import DeleteFieldDialog from '@/components/DeleteFieldDialog';
 
 // Tab configuration
 const TABS = [
@@ -35,6 +37,7 @@ export default function CustomFields() {
   useDocumentTitle('Custom Fields - Settings');
   const config = window.prmConfig || {};
   const isAdmin = config.isAdmin || false;
+  const queryClient = useQueryClient();
 
   // Initialize tab from localStorage or default to 'person'
   const [activeTab, setActiveTab] = useState(() => {
@@ -42,10 +45,11 @@ export default function CustomFields() {
     return saved && (saved === 'person' || saved === 'company') ? saved : 'person';
   });
 
-  // State for edit/delete actions (will be wired to panel in Plan 02)
+  // State for panel and dialog
+  const [showPanel, setShowPanel] = useState(false);
   const [editingField, setEditingField] = useState(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(null);
-  const [showAddPanel, setShowAddPanel] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletingField, setDeletingField] = useState(null);
 
   // Persist tab selection
   useEffect(() => {
@@ -88,6 +92,36 @@ export default function CustomFields() {
     },
   });
 
+  // Create field mutation
+  const createMutation = useMutation({
+    mutationFn: async (data) => prmApi.createCustomField(activeTab, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['custom-fields', activeTab] });
+      setShowPanel(false);
+      setEditingField(null);
+    },
+  });
+
+  // Update field mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ fieldKey, data }) => prmApi.updateCustomField(activeTab, fieldKey, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['custom-fields', activeTab] });
+      setShowPanel(false);
+      setEditingField(null);
+    },
+  });
+
+  // Delete field mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (fieldKey) => prmApi.deleteCustomField(activeTab, fieldKey),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['custom-fields', activeTab] });
+      setShowDeleteDialog(false);
+      setDeletingField(null);
+    },
+  });
+
   // Determine which fields to show based on active tab
   const fields = activeTab === 'person' ? personFields : companyFields;
   const isLoading = activeTab === 'person' ? personFieldsLoading : companyFieldsLoading;
@@ -96,22 +130,53 @@ export default function CustomFields() {
     setActiveTab(tabId);
     // Reset state when switching tabs
     setEditingField(null);
-    setShowDeleteDialog(null);
+    setShowPanel(false);
+    setShowDeleteDialog(false);
+    setDeletingField(null);
   };
 
-  const handleEdit = (field) => {
+  const handleAddField = () => {
+    setEditingField(null);
+    setShowPanel(true);
+  };
+
+  const handleEditField = (field) => {
     setEditingField(field);
-    // Panel will be implemented in Plan 02
+    setShowPanel(true);
   };
 
-  const handleDelete = (field) => {
-    setShowDeleteDialog(field);
-    // Dialog will be implemented in Plan 02
+  const handleDeleteField = (field) => {
+    setDeletingField(field);
+    setShowDeleteDialog(true);
   };
 
-  const handleAdd = () => {
-    setShowAddPanel(true);
-    // Panel will be implemented in Plan 02
+  const handleClosePanel = () => {
+    setShowPanel(false);
+    setEditingField(null);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setShowDeleteDialog(false);
+    setDeletingField(null);
+  };
+
+  const handleSubmitField = async (data) => {
+    if (editingField) {
+      await updateMutation.mutateAsync({ fieldKey: editingField.key, data });
+    } else {
+      await createMutation.mutateAsync(data);
+    }
+  };
+
+  const handleArchiveField = async () => {
+    // Archive uses the DELETE endpoint (soft delete/deactivate)
+    await deleteMutation.mutateAsync(deletingField.key);
+  };
+
+  const handlePermanentDelete = async () => {
+    // For now, same as archive - API currently only supports soft delete (deactivate)
+    // Phase 94 may add hard delete option
+    await deleteMutation.mutateAsync(deletingField.key);
   };
 
   const getFieldTypeLabel = (type) => {
@@ -127,7 +192,7 @@ export default function CustomFields() {
             Custom Fields
           </h1>
           <button
-            onClick={handleAdd}
+            onClick={handleAddField}
             className="btn-primary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -207,14 +272,14 @@ export default function CustomFields() {
                         <td className="px-4 py-4 whitespace-nowrap text-right">
                           <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
-                              onClick={() => handleEdit(field)}
+                              onClick={() => handleEditField(field)}
                               className="p-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded"
                               title="Edit"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleDelete(field)}
+                              onClick={() => handleDeleteField(field)}
                               className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                               title="Delete"
                             >
@@ -231,6 +296,27 @@ export default function CustomFields() {
           </div>
         )}
       </div>
+
+      {/* Add/Edit Panel */}
+      <FieldFormPanel
+        isOpen={showPanel}
+        onClose={handleClosePanel}
+        onSubmit={handleSubmitField}
+        field={editingField}
+        postType={activeTab}
+        isSubmitting={createMutation.isPending || updateMutation.isPending}
+      />
+
+      {/* Delete Dialog */}
+      <DeleteFieldDialog
+        isOpen={showDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+        onArchive={handleArchiveField}
+        onDelete={handlePermanentDelete}
+        field={deletingField}
+        isDeleting={deleteMutation.isPending}
+        usageCount={0}
+      />
     </div>
   );
 }
