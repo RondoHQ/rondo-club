@@ -21,6 +21,7 @@ const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
 const Labels = lazy(() => import('@/pages/Settings/Labels'));
 const UserApproval = lazy(() => import('@/pages/Settings/UserApproval'));
+const CustomFields = lazy(() => import('@/pages/Settings/CustomFields'));
 const WorkspacesList = lazy(() => import('@/pages/Workspaces/WorkspacesList'));
 const WorkspaceDetail = lazy(() => import('@/pages/Workspaces/WorkspaceDetail'));
 const WorkspaceSettings = lazy(() => import('@/pages/Workspaces/WorkspaceSettings'));
@@ -199,6 +200,7 @@ function App() {
                   <Route path="/settings/relationship-types" element={<RelationshipTypes />} />
                   <Route path="/settings/labels" element={<Labels />} />
                   <Route path="/settings/user-approval" element={<UserApproval />} />
+                  <Route path="/settings/custom-fields" element={<CustomFields />} />
 
                   {/* Workspaces routes */}
                   <Route path="/workspaces" element={<WorkspacesList />} />
