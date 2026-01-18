@@ -19,6 +19,78 @@ const FIELD_TYPES = [
   { value: 'relationship', label: 'Relationship' },
 ];
 
+// Date format options
+const DATE_FORMATS = [
+  { value: 'd/m/Y', label: 'DD/MM/YYYY (31/12/2024)' },
+  { value: 'm/d/Y', label: 'MM/DD/YYYY (12/31/2024)' },
+  { value: 'Y-m-d', label: 'YYYY-MM-DD (2024-12-31)' },
+  { value: 'F j, Y', label: 'Month Day, Year (December 31, 2024)' },
+];
+
+// Week start day options
+const WEEK_START_OPTIONS = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+];
+
+// Default form state with all type-specific options
+const getDefaultFormData = () => ({
+  label: '',
+  type: 'text',
+  instructions: '',
+  // Number options
+  min: '',
+  max: '',
+  step: '',
+  prepend: '',
+  append: '',
+  // Date options
+  display_format: 'd/m/Y',
+  return_format: 'd/m/Y',
+  first_day: 1,
+  // Select/Checkbox options
+  choices: '',
+  allow_null: false,
+  multiple: false,
+  layout: 'vertical',
+  toggle: false,
+  // True/False options
+  ui: true,
+  ui_on_text: 'Yes',
+  ui_off_text: 'No',
+  // Text options
+  maxlength: '',
+  placeholder: '',
+  // Textarea options
+  rows: 4,
+});
+
+// Convert choices object to newline-separated string
+const choicesToString = (choices) => {
+  if (!choices || typeof choices !== 'object') return '';
+  return Object.entries(choices)
+    .map(([k, v]) => (k === v ? v : `${k} : ${v}`))
+    .join('\n');
+};
+
+// Convert newline-separated string to choices object
+const stringToChoices = (str) => {
+  const choicesObj = {};
+  str
+    .split('\n')
+    .filter((line) => line.trim())
+    .forEach((line) => {
+      if (line.includes(':')) {
+        const [key, ...rest] = line.split(':');
+        choicesObj[key.trim()] = rest.join(':').trim();
+      } else {
+        const trimmed = line.trim();
+        choicesObj[trimmed] = trimmed;
+      }
+    });
+  return choicesObj;
+};
+
 export default function FieldFormPanel({
   isOpen,
   onClose,
@@ -30,11 +102,7 @@ export default function FieldFormPanel({
   const isEditing = !!field;
   const labelInputRef = useRef(null);
 
-  const [formData, setFormData] = useState({
-    label: '',
-    type: 'text',
-    instructions: '',
-  });
+  const [formData, setFormData] = useState(getDefaultFormData());
   const [errors, setErrors] = useState({});
 
   // Reset form when opening/closing or when field changes
@@ -42,16 +110,38 @@ export default function FieldFormPanel({
     if (isOpen) {
       if (field) {
         setFormData({
+          ...getDefaultFormData(),
           label: field.label || '',
           type: field.type || 'text',
           instructions: field.instructions || '',
+          // Number options
+          min: field.min ?? '',
+          max: field.max ?? '',
+          step: field.step ?? '',
+          prepend: field.prepend || '',
+          append: field.append || '',
+          // Date options
+          display_format: field.display_format || 'd/m/Y',
+          return_format: field.return_format || 'd/m/Y',
+          first_day: field.first_day ?? 1,
+          // Select/Checkbox options
+          choices: choicesToString(field.choices),
+          allow_null: field.allow_null ?? false,
+          multiple: field.multiple ?? false,
+          layout: field.layout || 'vertical',
+          toggle: field.toggle ?? false,
+          // True/False options
+          ui: field.ui ?? true,
+          ui_on_text: field.ui_on_text || 'Yes',
+          ui_off_text: field.ui_off_text || 'No',
+          // Text options
+          maxlength: field.maxlength ?? '',
+          placeholder: field.placeholder || '',
+          // Textarea options
+          rows: field.rows ?? 4,
         });
       } else {
-        setFormData({
-          label: '',
-          type: 'text',
-          instructions: '',
-        });
+        setFormData(getDefaultFormData());
       }
       setErrors({});
       // Focus label input after panel opens
@@ -83,8 +173,24 @@ export default function FieldFormPanel({
   }, [isOpen, onClose]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: newValue };
+      // When type changes, reset type-specific options to defaults
+      if (name === 'type' && value !== prev.type) {
+        const defaults = getDefaultFormData();
+        return {
+          ...defaults,
+          label: prev.label,
+          type: value,
+          instructions: prev.instructions,
+        };
+      }
+      return updated;
+    });
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
@@ -99,6 +205,10 @@ export default function FieldFormPanel({
     if (!formData.type) {
       newErrors.type = 'Type is required';
     }
+    // Validate choices for select/checkbox
+    if (['select', 'checkbox'].includes(formData.type) && !formData.choices.trim()) {
+      newErrors.choices = 'At least one choice is required';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -107,14 +217,564 @@ export default function FieldFormPanel({
     e.preventDefault();
     if (!validate()) return;
 
-    await onSubmit({
+    const submitData = {
       label: formData.label.trim(),
       type: formData.type,
       instructions: formData.instructions.trim(),
-    });
+    };
+
+    // Add type-specific options based on type
+    if (formData.type === 'number') {
+      if (formData.min !== '') submitData.min = Number(formData.min);
+      if (formData.max !== '') submitData.max = Number(formData.max);
+      if (formData.step !== '') submitData.step = Number(formData.step);
+      if (formData.prepend) submitData.prepend = formData.prepend;
+      if (formData.append) submitData.append = formData.append;
+    }
+
+    if (formData.type === 'select' || formData.type === 'checkbox') {
+      const choicesObj = stringToChoices(formData.choices);
+      if (Object.keys(choicesObj).length > 0) {
+        submitData.choices = choicesObj;
+      }
+      if (formData.type === 'select') {
+        submitData.allow_null = formData.allow_null;
+      }
+      if (formData.type === 'checkbox') {
+        submitData.layout = formData.layout;
+        submitData.toggle = formData.toggle;
+      }
+    }
+
+    if (formData.type === 'date') {
+      submitData.display_format = formData.display_format;
+      submitData.return_format = formData.return_format;
+      submitData.first_day = Number(formData.first_day);
+    }
+
+    if (formData.type === 'true_false') {
+      submitData.ui = formData.ui;
+      submitData.ui_on_text = formData.ui_on_text;
+      submitData.ui_off_text = formData.ui_off_text;
+    }
+
+    if (formData.type === 'text') {
+      if (formData.maxlength !== '') submitData.maxlength = Number(formData.maxlength);
+      if (formData.placeholder) submitData.placeholder = formData.placeholder;
+      if (formData.prepend) submitData.prepend = formData.prepend;
+      if (formData.append) submitData.append = formData.append;
+    }
+
+    if (formData.type === 'textarea') {
+      if (formData.maxlength !== '') submitData.maxlength = Number(formData.maxlength);
+      if (formData.placeholder) submitData.placeholder = formData.placeholder;
+      if (formData.rows !== 4) submitData.rows = Number(formData.rows);
+    }
+
+    if (formData.type === 'email' || formData.type === 'url') {
+      if (formData.placeholder) submitData.placeholder = formData.placeholder;
+      if (formData.prepend) submitData.prepend = formData.prepend;
+    }
+
+    await onSubmit(submitData);
   };
 
   const postTypeLabel = postType === 'person' ? 'People' : 'Organizations';
+
+  // Common input styling
+  const inputClass =
+    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-accent-500 focus:border-accent-500';
+  const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
+  const hintClass = 'mt-1 text-xs text-gray-500 dark:text-gray-400';
+
+  // Render type-specific options
+  const renderTypeOptions = () => {
+    switch (formData.type) {
+      case 'text':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Text Options</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="maxlength" className={labelClass}>
+                  Max Length
+                </label>
+                <input
+                  id="maxlength"
+                  name="maxlength"
+                  type="number"
+                  min="0"
+                  value={formData.maxlength}
+                  onChange={handleChange}
+                  placeholder="No limit"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="placeholder" className={labelClass}>
+                  Placeholder
+                </label>
+                <input
+                  id="placeholder"
+                  name="placeholder"
+                  type="text"
+                  value={formData.placeholder}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="prepend" className={labelClass}>
+                  Prepend
+                </label>
+                <input
+                  id="prepend"
+                  name="prepend"
+                  type="text"
+                  value={formData.prepend}
+                  onChange={handleChange}
+                  placeholder='e.g., "$"'
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="append" className={labelClass}>
+                  Append
+                </label>
+                <input
+                  id="append"
+                  name="append"
+                  type="text"
+                  value={formData.append}
+                  onChange={handleChange}
+                  placeholder='e.g., "kg"'
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'textarea':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Textarea Options
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="maxlength" className={labelClass}>
+                  Max Length
+                </label>
+                <input
+                  id="maxlength"
+                  name="maxlength"
+                  type="number"
+                  min="0"
+                  value={formData.maxlength}
+                  onChange={handleChange}
+                  placeholder="No limit"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="rows" className={labelClass}>
+                  Rows
+                </label>
+                <input
+                  id="rows"
+                  name="rows"
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={formData.rows}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="placeholder" className={labelClass}>
+                Placeholder
+              </label>
+              <input
+                id="placeholder"
+                name="placeholder"
+                type="text"
+                value={formData.placeholder}
+                onChange={handleChange}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        );
+
+      case 'number':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Number Options</h4>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="min" className={labelClass}>
+                  Min
+                </label>
+                <input
+                  id="min"
+                  name="min"
+                  type="number"
+                  value={formData.min}
+                  onChange={handleChange}
+                  placeholder="No min"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="max" className={labelClass}>
+                  Max
+                </label>
+                <input
+                  id="max"
+                  name="max"
+                  type="number"
+                  value={formData.max}
+                  onChange={handleChange}
+                  placeholder="No max"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="step" className={labelClass}>
+                  Step
+                </label>
+                <input
+                  id="step"
+                  name="step"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={formData.step}
+                  onChange={handleChange}
+                  placeholder="1"
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="prepend" className={labelClass}>
+                  Prepend
+                </label>
+                <input
+                  id="prepend"
+                  name="prepend"
+                  type="text"
+                  value={formData.prepend}
+                  onChange={handleChange}
+                  placeholder='e.g., "$"'
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="append" className={labelClass}>
+                  Append
+                </label>
+                <input
+                  id="append"
+                  name="append"
+                  type="text"
+                  value={formData.append}
+                  onChange={handleChange}
+                  placeholder='e.g., "kg"'
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'email':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Email Options</h4>
+            <div>
+              <label htmlFor="placeholder" className={labelClass}>
+                Placeholder
+              </label>
+              <input
+                id="placeholder"
+                name="placeholder"
+                type="text"
+                value={formData.placeholder}
+                onChange={handleChange}
+                placeholder="e.g., name@example.com"
+                className={inputClass}
+              />
+            </div>
+          </div>
+        );
+
+      case 'url':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">URL Options</h4>
+            <div>
+              <label htmlFor="placeholder" className={labelClass}>
+                Placeholder
+              </label>
+              <input
+                id="placeholder"
+                name="placeholder"
+                type="text"
+                value={formData.placeholder}
+                onChange={handleChange}
+                placeholder="e.g., https://example.com"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="prepend" className={labelClass}>
+                Prepend
+              </label>
+              <input
+                id="prepend"
+                name="prepend"
+                type="text"
+                value={formData.prepend}
+                onChange={handleChange}
+                placeholder='e.g., "https://"'
+                className={inputClass}
+              />
+            </div>
+          </div>
+        );
+
+      case 'date':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Date Options</h4>
+            <div>
+              <label htmlFor="display_format" className={labelClass}>
+                Display Format
+              </label>
+              <select
+                id="display_format"
+                name="display_format"
+                value={formData.display_format}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                {DATE_FORMATS.map((fmt) => (
+                  <option key={fmt.value} value={fmt.value}>
+                    {fmt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="return_format" className={labelClass}>
+                Return Format
+              </label>
+              <select
+                id="return_format"
+                name="return_format"
+                value={formData.return_format}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                {DATE_FORMATS.map((fmt) => (
+                  <option key={fmt.value} value={fmt.value}>
+                    {fmt.label}
+                  </option>
+                ))}
+              </select>
+              <p className={hintClass}>Format used when storing/retrieving the date value</p>
+            </div>
+            <div>
+              <label htmlFor="first_day" className={labelClass}>
+                Week Starts On
+              </label>
+              <select
+                id="first_day"
+                name="first_day"
+                value={formData.first_day}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                {WEEK_START_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        );
+
+      case 'select':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Select Options</h4>
+            <div>
+              <label htmlFor="choices" className={labelClass}>
+                Choices <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="choices"
+                name="choices"
+                value={formData.choices}
+                onChange={handleChange}
+                rows={4}
+                placeholder={`Enter one choice per line:\nred : Red\ngreen : Green\nblue : Blue`}
+                className={`${inputClass} ${errors.choices ? 'border-red-500 dark:border-red-400' : ''}`}
+              />
+              <p className={hintClass}>
+                Use "value : label" format or just "label" (value will equal label)
+              </p>
+              {errors.choices && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.choices}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="allow_null"
+                name="allow_null"
+                type="checkbox"
+                checked={formData.allow_null}
+                onChange={handleChange}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+              />
+              <label htmlFor="allow_null" className="text-sm text-gray-700 dark:text-gray-300">
+                Allow null (empty option)
+              </label>
+            </div>
+          </div>
+        );
+
+      case 'checkbox':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Checkbox Options
+            </h4>
+            <div>
+              <label htmlFor="choices" className={labelClass}>
+                Choices <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="choices"
+                name="choices"
+                value={formData.choices}
+                onChange={handleChange}
+                rows={4}
+                placeholder={`Enter one choice per line:\noption1 : Option 1\noption2 : Option 2\noption3 : Option 3`}
+                className={`${inputClass} ${errors.choices ? 'border-red-500 dark:border-red-400' : ''}`}
+              />
+              <p className={hintClass}>
+                Use "value : label" format or just "label" (value will equal label)
+              </p>
+              {errors.choices && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.choices}</p>
+              )}
+            </div>
+            <div>
+              <label className={labelClass}>Layout</label>
+              <div className="flex gap-4 mt-1">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="layout"
+                    value="vertical"
+                    checked={formData.layout === 'vertical'}
+                    onChange={handleChange}
+                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Vertical</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="layout"
+                    value="horizontal"
+                    checked={formData.layout === 'horizontal'}
+                    onChange={handleChange}
+                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Horizontal</span>
+                </label>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="toggle"
+                name="toggle"
+                type="checkbox"
+                checked={formData.toggle}
+                onChange={handleChange}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+              />
+              <label htmlFor="toggle" className="text-sm text-gray-700 dark:text-gray-300">
+                Toggle All (allow select/deselect all)
+              </label>
+            </div>
+          </div>
+        );
+
+      case 'true_false':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              True/False Options
+            </h4>
+            <div className="flex items-center gap-2">
+              <input
+                id="ui"
+                name="ui"
+                type="checkbox"
+                checked={formData.ui}
+                onChange={handleChange}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+              />
+              <label htmlFor="ui" className="text-sm text-gray-700 dark:text-gray-300">
+                Display as toggle switch
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="ui_on_text" className={labelClass}>
+                  ON Text
+                </label>
+                <input
+                  id="ui_on_text"
+                  name="ui_on_text"
+                  type="text"
+                  value={formData.ui_on_text}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="ui_off_text" className={labelClass}>
+                  OFF Text
+                </label>
+                <input
+                  id="ui_off_text"
+                  name="ui_off_text"
+                  type="text"
+                  value={formData.ui_off_text}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
@@ -216,6 +876,9 @@ export default function FieldFormPanel({
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.type}</p>
                 )}
               </div>
+
+              {/* Type-specific options */}
+              {renderTypeOptions()}
 
               {/* Description/Instructions field */}
               <div>
