@@ -7,10 +7,10 @@
 
 ### Meeting Card Display
 
-- [ ] **MEET-01**: Past events display with dimmed/muted styling
-- [ ] **MEET-02**: Currently active event (now between start and end time) is visually highlighted
-- [ ] **MEET-03**: Event times display in 24h format instead of 12h AM/PM
-- [ ] **MEET-04**: Existing synced events have `&amp;` decoded to `&` in titles (data cleanup)
+- [x] **MEET-01**: Past events display with dimmed/muted styling
+- [x] **MEET-02**: Currently active event (now between start and end time) is visually highlighted
+- [x] **MEET-03**: Event times display in 24h format instead of 12h AM/PM
+- [x] **MEET-04**: Existing synced events have `&amp;` decoded to `&` in titles (data cleanup)
 
 ## Out of Scope
 
@@ -23,10 +23,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MEET-01 | Phase 86 | Pending |
-| MEET-02 | Phase 86 | Pending |
-| MEET-03 | Phase 86 | Pending |
-| MEET-04 | Phase 86 | Pending |
+| MEET-01 | Phase 86 | Complete |
+| MEET-02 | Phase 86 | Complete |
+| MEET-03 | Phase 86 | Complete |
+| MEET-04 | Phase 86 | Complete |
 
 **Coverage:**
 - v5.0.1 requirements: 4 total

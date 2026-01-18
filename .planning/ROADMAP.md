@@ -8,7 +8,7 @@
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 86 | Meeting Card Polish | MEET-01, MEET-02, MEET-03, MEET-04 | Pending |
+| 86 | Meeting Card Polish | MEET-01, MEET-02, MEET-03, MEET-04 | Complete |
 
 ## Phase 86: Meeting Card Polish
 
@@ -17,7 +17,7 @@
 **Plans:** 1 plan
 
 Plans:
-- [ ] 86-01-PLAN.md - Meeting card styling and data cleanup
+- [x] 86-01-PLAN.md - Meeting card styling and data cleanup
 
 **Requirements covered:**
 - MEET-01: Past events display with dimmed/muted styling
