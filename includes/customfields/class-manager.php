@@ -69,6 +69,21 @@ class Manager {
 		// True/False options.
 		'ui_on_text',
 		'ui_off_text',
+		// Image field options.
+		'preview_size',
+		'library',
+		'min_width',
+		'max_width',
+		'min_height',
+		'max_height',
+		'min_size',
+		'max_size',
+		'mime_types',
+		// Color picker field options.
+		'enable_opacity',
+		// Relationship field options.
+		'post_type',
+		'filters',
 	);
 
 	/**
