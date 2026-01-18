@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import Sketch from '@uiw/react-color-sketch';
 
 // Field type options
 const FIELD_TYPES = [
@@ -15,7 +16,7 @@ const FIELD_TYPES = [
   { value: 'image', label: 'Image' },
   { value: 'file', label: 'File' },
   { value: 'link', label: 'Link' },
-  { value: 'color', label: 'Color' },
+  { value: 'color_picker', label: 'Color' },
   { value: 'relationship', label: 'Relationship' },
 ];
 
@@ -63,6 +64,19 @@ const getDefaultFormData = () => ({
   placeholder: '',
   // Textarea options
   rows: 4,
+  // Image options
+  image_return_format: 'array',
+  preview_size: 'medium',
+  library: 'all',
+  // File options (uses library from above, has own return format)
+  file_return_format: 'array',
+  // Color options
+  default_color: '',
+  // Relationship options
+  relationship_post_types: ['person', 'company'],
+  relationship_min: 0,
+  relationship_max: 1,
+  relationship_return_format: 'object',
 });
 
 // Convert choices object to newline-separated string
@@ -109,6 +123,21 @@ export default function FieldFormPanel({
   useEffect(() => {
     if (isOpen) {
       if (field) {
+        // Determine return format field based on type
+        let imageReturnFormat = 'array';
+        let fileReturnFormat = 'array';
+        let relationshipReturnFormat = 'object';
+
+        if (field.type === 'image' && field.return_format) {
+          imageReturnFormat = field.return_format;
+        }
+        if (field.type === 'file' && field.return_format) {
+          fileReturnFormat = field.return_format;
+        }
+        if (field.type === 'relationship' && field.return_format) {
+          relationshipReturnFormat = field.return_format;
+        }
+
         setFormData({
           ...getDefaultFormData(),
           label: field.label || '',
@@ -139,6 +168,19 @@ export default function FieldFormPanel({
           placeholder: field.placeholder || '',
           // Textarea options
           rows: field.rows ?? 4,
+          // Image options
+          image_return_format: imageReturnFormat,
+          preview_size: field.preview_size || 'medium',
+          library: field.library || 'all',
+          // File options
+          file_return_format: fileReturnFormat,
+          // Color options
+          default_color: field.default_value || '',
+          // Relationship options
+          relationship_post_types: field.post_type || ['person', 'company'],
+          relationship_min: field.min ?? 0,
+          relationship_max: field.max ?? 1,
+          relationship_return_format: relationshipReturnFormat,
         });
       } else {
         setFormData(getDefaultFormData());
@@ -274,6 +316,33 @@ export default function FieldFormPanel({
     if (formData.type === 'email' || formData.type === 'url') {
       if (formData.placeholder) submitData.placeholder = formData.placeholder;
       if (formData.prepend) submitData.prepend = formData.prepend;
+    }
+
+    if (formData.type === 'image') {
+      submitData.return_format = formData.image_return_format;
+      submitData.preview_size = formData.preview_size;
+      submitData.library = formData.library;
+    }
+
+    if (formData.type === 'file') {
+      submitData.return_format = formData.file_return_format;
+      submitData.library = formData.library;
+    }
+
+    // Link type needs no special handling - stored as native ACF link
+
+    if (formData.type === 'color_picker') {
+      if (formData.default_color) {
+        submitData.default_value = formData.default_color;
+      }
+    }
+
+    if (formData.type === 'relationship') {
+      submitData.post_type = formData.relationship_post_types;
+      submitData.min = formData.relationship_min;
+      submitData.max = formData.relationship_max;
+      submitData.return_format = formData.relationship_return_format;
+      submitData.filters = ['search', 'post_type'];
     }
 
     await onSubmit(submitData);
@@ -767,6 +836,299 @@ export default function FieldFormPanel({
                   className={inputClass}
                 />
               </div>
+            </div>
+          </div>
+        );
+
+      case 'image':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Image Options</h4>
+            <div>
+              <label htmlFor="image_return_format" className={labelClass}>
+                Return Format
+              </label>
+              <select
+                id="image_return_format"
+                name="image_return_format"
+                value={formData.image_return_format}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                <option value="array">Image Array</option>
+                <option value="url">Image URL</option>
+                <option value="id">Image ID</option>
+              </select>
+              <p className={hintClass}>
+                Array returns full image data (URL, sizes, alt). URL returns just the image URL. ID
+                returns the attachment ID.
+              </p>
+            </div>
+            <div>
+              <label htmlFor="preview_size" className={labelClass}>
+                Preview Size
+              </label>
+              <select
+                id="preview_size"
+                name="preview_size"
+                value={formData.preview_size}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                <option value="thumbnail">Thumbnail (150x150)</option>
+                <option value="medium">Medium (300x300)</option>
+                <option value="large">Large (1024x1024)</option>
+                <option value="full">Full Size</option>
+              </select>
+              <p className={hintClass}>Size used when displaying the image preview in forms</p>
+            </div>
+            <div>
+              <label htmlFor="library" className={labelClass}>
+                Media Library
+              </label>
+              <select
+                id="library"
+                name="library"
+                value={formData.library}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                <option value="all">All media</option>
+                <option value="uploadedTo">Uploaded to this post</option>
+              </select>
+            </div>
+          </div>
+        );
+
+      case 'file':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">File Options</h4>
+            <div>
+              <label htmlFor="file_return_format" className={labelClass}>
+                Return Format
+              </label>
+              <select
+                id="file_return_format"
+                name="file_return_format"
+                value={formData.file_return_format}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                <option value="array">File Array</option>
+                <option value="url">File URL</option>
+                <option value="id">File ID</option>
+              </select>
+              <p className={hintClass}>
+                Array returns full file data (URL, filename, type). URL returns just the file URL.
+                ID returns the attachment ID.
+              </p>
+            </div>
+            <div>
+              <label htmlFor="library" className={labelClass}>
+                Media Library
+              </label>
+              <select
+                id="library"
+                name="library"
+                value={formData.library}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                <option value="all">All media</option>
+                <option value="uploadedTo">Uploaded to this post</option>
+              </select>
+            </div>
+          </div>
+        );
+
+      case 'link':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Link Options</h4>
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Link fields capture a URL and optional display text. Users can enter a URL and
+                customize the link text shown to viewers.
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                No additional configuration needed.
+              </p>
+            </div>
+          </div>
+        );
+
+      case 'color_picker':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Color Options</h4>
+            <div>
+              <label className={labelClass}>Default Color</label>
+              <div className="flex items-start gap-3 mt-2">
+                <div className="relative">
+                  <Sketch
+                    color={formData.default_color || '#000000'}
+                    disableAlpha={true}
+                    presetColors={false}
+                    onChange={(color) => {
+                      setFormData((prev) => ({ ...prev, default_color: color.hex }));
+                    }}
+                    style={{ boxShadow: 'none' }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-10 h-10 rounded border border-gray-300 dark:border-gray-600"
+                      style={{
+                        backgroundColor: formData.default_color || 'transparent',
+                        backgroundImage: !formData.default_color
+                          ? 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)'
+                          : 'none',
+                        backgroundSize: '8px 8px',
+                        backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={formData.default_color}
+                      onChange={(e) => {
+                        setFormData((prev) => ({ ...prev, default_color: e.target.value }));
+                      }}
+                      placeholder="#000000"
+                      className={`${inputClass} w-28`}
+                    />
+                    {formData.default_color && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, default_color: '' }))}
+                        className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <p className={`${hintClass} mt-2`}>
+                    Optional. Leave empty for no default color.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'relationship':
+        return (
+          <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Relationship Options
+            </h4>
+            <div>
+              <label className={labelClass}>Link to Post Types</label>
+              <div className="flex flex-col gap-2 mt-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.relationship_post_types.includes('person')}
+                    onChange={(e) => {
+                      setFormData((prev) => {
+                        const types = e.target.checked
+                          ? [...prev.relationship_post_types, 'person']
+                          : prev.relationship_post_types.filter((t) => t !== 'person');
+                        return { ...prev, relationship_post_types: types };
+                      });
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">People</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.relationship_post_types.includes('company')}
+                    onChange={(e) => {
+                      setFormData((prev) => {
+                        const types = e.target.checked
+                          ? [...prev.relationship_post_types, 'company']
+                          : prev.relationship_post_types.filter((t) => t !== 'company');
+                        return { ...prev, relationship_post_types: types };
+                      });
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Organizations</span>
+                </label>
+              </div>
+              <p className={hintClass}>Select which post types can be linked</p>
+            </div>
+            <div>
+              <label className={labelClass}>Cardinality</label>
+              <div className="flex gap-4 mt-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="cardinality"
+                    checked={formData.relationship_max === 1}
+                    onChange={() => {
+                      setFormData((prev) => ({ ...prev, relationship_max: 1 }));
+                    }}
+                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Single</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="cardinality"
+                    checked={formData.relationship_max !== 1}
+                    onChange={() => {
+                      setFormData((prev) => ({ ...prev, relationship_max: 0 }));
+                    }}
+                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Multiple</span>
+                </label>
+              </div>
+              {formData.relationship_max !== 1 && (
+                <div className="mt-3">
+                  <label htmlFor="relationship_max" className={labelClass}>
+                    Maximum Selections
+                  </label>
+                  <input
+                    id="relationship_max"
+                    type="number"
+                    min="0"
+                    value={formData.relationship_max}
+                    onChange={(e) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        relationship_max: parseInt(e.target.value) || 0,
+                      }));
+                    }}
+                    placeholder="0 = unlimited"
+                    className={`${inputClass} w-32`}
+                  />
+                  <p className={hintClass}>Leave at 0 for unlimited</p>
+                </div>
+              )}
+            </div>
+            <div>
+              <label htmlFor="relationship_return_format" className={labelClass}>
+                Return Format
+              </label>
+              <select
+                id="relationship_return_format"
+                name="relationship_return_format"
+                value={formData.relationship_return_format}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                <option value="object">Post Object</option>
+                <option value="id">Post ID</option>
+              </select>
+              <p className={hintClass}>
+                Object returns full post data. ID returns just the post ID.
+              </p>
             </div>
           </div>
         );
