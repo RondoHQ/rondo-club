@@ -192,7 +192,20 @@ class CustomFields extends WP_REST_Controller {
 		);
 
 		// Add optional params if present.
-		$optional_params = array( 'name', 'instructions', 'required', 'choices', 'default_value', 'placeholder' );
+		$optional_params = array(
+			// Core options.
+			'name', 'instructions', 'required', 'choices', 'default_value', 'placeholder',
+			// Number field options.
+			'min', 'max', 'step', 'prepend', 'append',
+			// Date field options.
+			'display_format', 'return_format', 'first_day',
+			// Select/Checkbox options.
+			'allow_null', 'multiple', 'ui', 'layout', 'toggle', 'allow_custom', 'save_custom',
+			// Text/Textarea options.
+			'maxlength',
+			// True/False options.
+			'ui_on_text', 'ui_off_text',
+		);
 		foreach ( $optional_params as $param ) {
 			if ( $request->has_param( $param ) ) {
 				$field_config[ $param ] = $request->get_param( $param );
@@ -241,7 +254,20 @@ class CustomFields extends WP_REST_Controller {
 		$updates   = array();
 
 		// Collect provided update params.
-		$updatable_params = array( 'label', 'name', 'instructions', 'required', 'choices', 'default_value', 'placeholder' );
+		$updatable_params = array(
+			// Core options.
+			'label', 'name', 'instructions', 'required', 'choices', 'default_value', 'placeholder',
+			// Number field options.
+			'min', 'max', 'step', 'prepend', 'append',
+			// Date field options.
+			'display_format', 'return_format', 'first_day',
+			// Select/Checkbox options.
+			'allow_null', 'multiple', 'ui', 'layout', 'toggle', 'allow_custom', 'save_custom',
+			// Text/Textarea options.
+			'maxlength',
+			// True/False options.
+			'ui_on_text', 'ui_off_text',
+		);
 		foreach ( $updatable_params as $param ) {
 			if ( $request->has_param( $param ) ) {
 				$updates[ $param ] = $request->get_param( $param );
@@ -314,39 +340,118 @@ class CustomFields extends WP_REST_Controller {
 	 */
 	protected function get_create_params(): array {
 		return array(
-			'label'         => array(
+			// Required parameters.
+			'label'          => array(
 				'type'        => 'string',
 				'required'    => true,
 				'description' => 'Field label displayed to users',
 			),
-			'type'          => array(
+			'type'           => array(
 				'type'        => 'string',
 				'required'    => true,
-				'description' => 'ACF field type (text, textarea, number, url, email, select, checkbox, radio, true_false)',
+				'description' => 'ACF field type (text, textarea, number, url, email, select, checkbox, radio, true_false, date)',
 			),
-			'name'          => array(
+			// Core optional parameters.
+			'name'           => array(
 				'type'        => 'string',
 				'description' => 'Field name (defaults to sanitized label)',
 			),
-			'instructions'  => array(
+			'instructions'   => array(
 				'type'        => 'string',
 				'description' => 'Help text displayed below field',
 			),
-			'required'      => array(
+			'required'       => array(
 				'type'        => 'boolean',
 				'default'     => false,
 				'description' => 'Whether field is required',
 			),
-			'choices'       => array(
+			'choices'        => array(
 				'type'        => 'object',
 				'description' => 'Choices for select/checkbox/radio fields',
 			),
-			'default_value' => array(
+			'default_value'  => array(
 				'description' => 'Default value for new posts',
 			),
-			'placeholder'   => array(
+			'placeholder'    => array(
 				'type'        => 'string',
 				'description' => 'Placeholder text for empty field',
+			),
+			// Number field options.
+			'min'            => array(
+				'type'        => 'number',
+				'description' => 'Minimum allowed value (Number field)',
+			),
+			'max'            => array(
+				'type'        => 'number',
+				'description' => 'Maximum allowed value (Number field)',
+			),
+			'step'           => array(
+				'type'        => 'number',
+				'description' => 'Step increment (Number field)',
+			),
+			'prepend'        => array(
+				'type'        => 'string',
+				'description' => 'Text displayed before input',
+			),
+			'append'         => array(
+				'type'        => 'string',
+				'description' => 'Text displayed after input',
+			),
+			// Date field options.
+			'display_format' => array(
+				'type'        => 'string',
+				'description' => 'Date display format (Date field)',
+			),
+			'return_format'  => array(
+				'type'        => 'string',
+				'description' => 'Date/Select/Checkbox return format',
+			),
+			'first_day'      => array(
+				'type'        => 'integer',
+				'description' => 'First day of week: 0=Sunday, 1=Monday (Date field)',
+			),
+			// Select/Checkbox options.
+			'allow_null'     => array(
+				'type'        => 'boolean',
+				'description' => 'Allow empty selection (Select field)',
+			),
+			'multiple'       => array(
+				'type'        => 'boolean',
+				'description' => 'Allow multiple selections (Select field)',
+			),
+			'ui'             => array(
+				'type'        => 'boolean',
+				'description' => 'Use enhanced UI (Select/True_False field)',
+			),
+			'layout'         => array(
+				'type'        => 'string',
+				'description' => 'Layout: vertical or horizontal (Checkbox field)',
+			),
+			'toggle'         => array(
+				'type'        => 'boolean',
+				'description' => 'Show toggle all checkbox (Checkbox field)',
+			),
+			'allow_custom'   => array(
+				'type'        => 'boolean',
+				'description' => 'Allow custom values (Checkbox field)',
+			),
+			'save_custom'    => array(
+				'type'        => 'boolean',
+				'description' => 'Save custom values to choices (Checkbox field)',
+			),
+			// Text/Textarea options.
+			'maxlength'      => array(
+				'type'        => 'integer',
+				'description' => 'Maximum character length (Text/Textarea field)',
+			),
+			// True/False options.
+			'ui_on_text'     => array(
+				'type'        => 'string',
+				'description' => 'Text for ON state (True/False field)',
+			),
+			'ui_off_text'    => array(
+				'type'        => 'string',
+				'description' => 'Text for OFF state (True/False field)',
 			),
 		);
 	}
