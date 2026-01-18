@@ -46,10 +46,11 @@ Plans:
   2. Admin can toggle between People and Organizations field lists
   3. Admin can add a new field via form/modal with type selector
   4. Admin can see list of existing fields with edit/delete actions
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 88-01: TBD
+- [ ] 88-01-PLAN.md - Custom fields page with API client, tab navigation, and field list
+- [ ] 88-02-PLAN.md - Add/edit slide-out panel and delete confirmation dialog
 
 ### Phase 89: Basic Field Types
 **Goal**: Support 9 fundamental field types for text, numbers, choices, and dates
@@ -148,7 +149,7 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 87. ACF Foundation | 2/2 | Complete | 2026-01-18 |
-| 88. Settings UI | 0/TBD | Not started | - |
+| 88. Settings UI | 0/2 | Planned | - |
 | 89. Basic Field Types | 0/TBD | Not started | - |
 | 90. Extended Field Types | 0/TBD | Not started | - |
 | 91. Detail View Integration | 0/TBD | Not started | - |
