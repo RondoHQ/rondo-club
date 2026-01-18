@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { X, MapPin, Video, Clock, User, ChevronDown, UserPlus, ExternalLink } from 'lucide-react';
+import { X, MapPin, Video, Clock, User, ChevronDown, UserPlus, ExternalLink, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useMeetingNotes, useUpdateMeetingNotes } from '@/hooks/useMeetings';
@@ -254,6 +254,14 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
               <p className="text-sm text-gray-600 dark:text-gray-400">{timeStr}</p>
             </div>
           </div>
+
+          {/* Calendar */}
+          {meeting.calendar_name && (
+            <div className="flex items-start gap-3">
+              <Calendar className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-600 dark:text-gray-400">{meeting.calendar_name}</p>
+            </div>
+          )}
 
           {/* Location */}
           {meeting.location && (
