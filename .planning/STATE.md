@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Personal CRM with team collaboration and external integrations
-**Current focus:** v5.0.1 Meeting Card Polish
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v5.0.1 Meeting Card Polish
-Phase: 86 - Meeting Card Polish
-Plan: 01 of 1 complete
-Status: Phase complete
-Last activity: 2026-01-18 - Completed 86-01-PLAN.md
+Milestone: v5.0.1 complete
+Phase: Ready to plan next milestone
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-18 — v5.0.1 milestone complete
 
-Progress: [##########] 100%
+Progress: Ready for /gsd:new-milestone
 
 ## Completed Milestones
 
@@ -48,17 +48,14 @@ Progress: [##########] 100%
 | v4.8 Meeting Enhancements | 73-76 | 6 | 2026-01-17 |
 | v4.9 Dashboard & Calendar Polish | 77-78 | 4 | 2026-01-17 |
 | v5.0 Google Contacts Sync | 79-85 | 16 | 2026-01-18 |
-**Total:** 30 milestones, 85 phases, 160 plans completed
+| v5.0.1 Meeting Card Polish | 86 | 1 | 2026-01-18 |
+**Total:** 31 milestones, 86 phases, 161 plans completed
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-
-| Phase | Decision | Rationale |
-|-------|----------|-----------|
-| 86-01 | WP-CLI uses cleanup_titles (underscore) | WP-CLI can access via both underscore and hyphen |
 
 ### Pending Todos
 
@@ -77,10 +74,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 86-01-PLAN.md
+Stopped at: v5.0.1 milestone complete
 Resume file: None
 
 ## Next Steps
 
-- Run `/gsd:audit-milestone` to verify requirements and cross-phase integration
-- Or `/gsd:complete-milestone` to skip audit and archive directly
+- Run `/gsd:new-milestone` to start the next milestone (questioning → research → requirements → roadmap)

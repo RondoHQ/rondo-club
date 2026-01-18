@@ -1,5 +1,33 @@
 # Project Milestones: Caelis
 
+## v5.0.1 Meeting Card Polish (Shipped: 2026-01-18)
+
+**Delivered:** Dashboard meeting card visual improvements with time-based styling, 24h format, calendar name display, and data cleanup for HTML-encoded titles.
+
+**Phases completed:** 86 (1 plan total)
+
+**Key accomplishments:**
+
+- 24h time format for meeting times (14:30 instead of 2:30 PM)
+- Past meetings dimmed with 50% opacity for visual hierarchy
+- Currently ongoing meetings highlighted with accent-colored ring
+- Calendar name displayed in meeting cards and detail modal
+- WP-CLI command `wp prm event cleanup_titles` for HTML entity fixes
+- 47 existing event titles cleaned up (`&amp;` → `&`)
+
+**Stats:**
+
+- 13 files changed
+- +687 / -272 lines changed
+- 1 phase, 1 plan, 3 tasks
+- Same day (2026-01-18)
+
+**Git range:** `e367889` → `22f21e8`
+
+**What's next:** To be determined
+
+---
+
 ## v5.0 Google Contacts Sync (Shipped: 2026-01-18)
 
 **Delivered:** Bidirectional Google Contacts synchronization with import, export, delta sync, conflict resolution (Caelis wins), and WP-CLI commands for administration.
