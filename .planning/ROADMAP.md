@@ -81,10 +81,11 @@ Plans:
   3. Link field captures URL and display text pair
   4. Color field provides color picker interface
   5. Relationship field links to People or Organizations with search
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 90-01: TBD
+- [ ] 90-01-PLAN.md - Extend backend for extended type options (image, file, link, color, relationship)
+- [ ] 90-02-PLAN.md - Add extended type configuration UI to FieldFormPanel
 
 ### Phase 91: Detail View Integration
 **Goal**: Custom fields appear in dedicated section on Person and Organization detail pages
@@ -152,7 +153,7 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 | 87. ACF Foundation | 2/2 | Complete | 2026-01-18 |
 | 88. Settings UI | 2/2 | Complete | 2026-01-18 |
 | 89. Basic Field Types | 2/2 | Complete | 2026-01-18 |
-| 90. Extended Field Types | 0/TBD | Not started | - |
+| 90. Extended Field Types | 0/2 | Not started | - |
 | 91. Detail View Integration | 0/TBD | Not started | - |
 | 92. List View Integration | 0/TBD | Not started | - |
 | 93. Search Integration | 0/TBD | Not started | - |
