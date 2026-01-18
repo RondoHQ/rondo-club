@@ -52,6 +52,7 @@ use Caelis\CardDAV\Server as CardDAVServer;
 use Caelis\Data\InverseRelationships;
 use Caelis\Data\TodoMigration;
 use Caelis\CustomFields\Manager as CustomFieldsManager;
+use Caelis\REST\CustomFields as RESTCustomFields;
 
 define( 'PRM_THEME_DIR', get_template_directory() );
 define( 'PRM_THEME_URL', get_template_directory_uri() );
@@ -239,6 +240,9 @@ if ( ! class_exists( 'PRM_Credential_Encryption' ) ) {
 if ( ! class_exists( 'PRM_Custom_Fields_Manager' ) ) {
 	class_alias( CustomFieldsManager::class, 'PRM_Custom_Fields_Manager' );
 }
+if ( ! class_exists( 'PRM_REST_Custom_Fields' ) ) {
+	class_alias( RESTCustomFields::class, 'PRM_REST_Custom_Fields' );
+}
 
 /**
  * Check if current request is a CardDAV request
@@ -333,6 +337,7 @@ function prm_init() {
 		new ImportExport();
 		new RESTCalendar();
 		new RESTGoogleContacts();
+		new RESTCustomFields();
 		new Monica();
 		new VCardImport();
 		new GoogleContacts();
