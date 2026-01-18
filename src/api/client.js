@@ -263,6 +263,12 @@ export const prmApi = {
   triggerContactsSync: () => api.post('/prm/v1/google-contacts/sync'),
   updateContactsSyncFrequency: (frequency) => api.post('/prm/v1/google-contacts/sync-frequency', { frequency }),
 
+  // Custom Fields management
+  getCustomFields: (postType) => api.get(`/prm/v1/custom-fields/${postType}`),
+  createCustomField: (postType, data) => api.post(`/prm/v1/custom-fields/${postType}`, data),
+  updateCustomField: (postType, fieldKey, data) => api.put(`/prm/v1/custom-fields/${postType}/${fieldKey}`, data),
+  deleteCustomField: (postType, fieldKey) => api.delete(`/prm/v1/custom-fields/${postType}/${fieldKey}`),
+
   // Calendar connections
   getCalendarConnections: () => api.get('/prm/v1/calendar/connections'),
   createCalendarConnection: (data) => api.post('/prm/v1/calendar/connections', data),
