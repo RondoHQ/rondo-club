@@ -1251,11 +1251,12 @@ class Calendar extends Base {
 			}
 		}
 
-		// Get connection name
+		// Get calendar name (specific calendar within connection) or fall back to connection name
 		$connection_id = get_post_meta( $event->ID, '_connection_id', true );
-		$calendar_name = '';
+		$calendar_name = get_post_meta( $event->ID, '_calendar_name', true );
 
-		if ( $connection_id ) {
+		// Fall back to connection name if no specific calendar name stored
+		if ( empty( $calendar_name ) && $connection_id ) {
 			$connection = \PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
 			if ( $connection ) {
 				$calendar_name = $connection['name'] ?? '';
@@ -1495,11 +1496,12 @@ class Calendar extends Base {
 			is_array( $matched_people_raw ) ? $matched_people_raw : []
 		);
 
-		// Get connection/calendar name
+		// Get calendar name (specific calendar within connection) or fall back to connection name
 		$connection_id = get_post_meta( $event->ID, '_connection_id', true );
-		$calendar_name = '';
+		$calendar_name = get_post_meta( $event->ID, '_calendar_name', true );
 
-		if ( $connection_id ) {
+		// Fall back to connection name if no specific calendar name stored
+		if ( empty( $calendar_name ) && $connection_id ) {
 			$connection = \PRM_Calendar_Connections::get_connection( $user_id, $connection_id );
 			if ( $connection ) {
 				$calendar_name = $connection['name'] ?? '';
