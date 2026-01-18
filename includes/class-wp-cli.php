@@ -2269,6 +2269,91 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 
 	/**
+	 * Calendar Event WP-CLI Commands
+	 */
+	class PRM_Event_CLI_Command {
+
+		/**
+		 * Clean up HTML entities in calendar event titles
+		 *
+		 * Decodes HTML entities like &amp; to & in all calendar event titles.
+		 * This fixes titles synced from Google Calendar that have encoded ampersands.
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--dry-run]
+		 * : Preview changes without making them
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp prm event cleanup-titles
+		 *     wp prm event cleanup-titles --dry-run
+		 *
+		 * @when after_wp_load
+		 */
+		public function cleanup_titles( $args, $assoc_args ) {
+			$dry_run = isset( $assoc_args['dry-run'] );
+
+			if ( $dry_run ) {
+				WP_CLI::log( 'DRY RUN MODE - No changes will be made' );
+			}
+
+			WP_CLI::log( 'Cleaning up HTML entities in calendar event titles...' );
+			WP_CLI::log( '' );
+
+			// Get all calendar events
+			global $wpdb;
+			$events = $wpdb->get_results(
+				"SELECT ID, post_title FROM {$wpdb->posts}
+				 WHERE post_type = 'calendar_event'
+				 AND post_status = 'publish'"
+			);
+
+			if ( empty( $events ) ) {
+				WP_CLI::warning( 'No calendar events found.' );
+				return;
+			}
+
+			WP_CLI::log( sprintf( 'Found %d calendar event(s) to check.', count( $events ) ) );
+			WP_CLI::log( '' );
+
+			$updated = 0;
+			$skipped = 0;
+
+			foreach ( $events as $event ) {
+				$original_title = $event->post_title;
+				$decoded_title  = html_entity_decode( $original_title, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+				// Skip if no change needed
+				if ( $original_title === $decoded_title ) {
+					++$skipped;
+					continue;
+				}
+
+				if ( $dry_run ) {
+					WP_CLI::log( sprintf( '[WOULD UPDATE] #%d: "%s" -> "%s"', $event->ID, $original_title, $decoded_title ) );
+				} else {
+					wp_update_post( [
+						'ID'         => $event->ID,
+						'post_title' => $decoded_title,
+					] );
+					WP_CLI::log( sprintf( '[UPDATED] #%d: "%s" -> "%s"', $event->ID, $original_title, $decoded_title ) );
+				}
+
+				++$updated;
+			}
+
+			WP_CLI::log( '' );
+
+			if ( $dry_run ) {
+				WP_CLI::success( sprintf( 'Would update %d event(s). Skipped %d (no changes needed).', $updated, $skipped ) );
+			} else {
+				WP_CLI::success( sprintf( 'Updated %d event(s). Skipped %d (no changes needed).', $updated, $skipped ) );
+			}
+		}
+	}
+
+	/**
 	 * Register WP-CLI commands
 	 */
 	WP_CLI::add_command( 'caelis google-contacts', 'PRM_Google_Contacts_CLI_Command' );
@@ -2281,4 +2366,5 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'prm dates', 'PRM_Dates_CLI_Command' );
 	WP_CLI::add_command( 'prm todos', 'PRM_Todos_CLI_Command' );
 	WP_CLI::add_command( 'prm calendar', 'PRM_Calendar_CLI_Command' );
+	WP_CLI::add_command( 'prm event', 'PRM_Event_CLI_Command' );
 }
