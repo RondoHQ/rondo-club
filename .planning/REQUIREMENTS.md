@@ -53,10 +53,10 @@ Requirements for v6.0 release. Each maps to roadmap phases.
 
 ### Settings UI
 
-- [ ] **SETT-01**: Custom Fields subtab in Settings
-- [ ] **SETT-02**: Toggle between People/Organizations field lists
-- [ ] **SETT-03**: Add Field form/modal with type selector
-- [ ] **SETT-04**: List view of existing fields with edit/delete actions
+- [x] **SETT-01**: Custom Fields subtab in Settings
+- [x] **SETT-02**: Toggle between People/Organizations field lists
+- [x] **SETT-03**: Add Field form/modal with type selector
+- [x] **SETT-04**: List view of existing fields with edit/delete actions
 - [ ] **SETT-05**: Drag-and-drop reordering of fields
 - [ ] **SETT-06**: "Show in list view" toggle per field
 - [ ] **SETT-07**: Column order configuration for list view fields
@@ -131,10 +131,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SRCH-01 | Phase 93 | Pending |
 | SRCH-02 | Phase 93 | Pending |
 | SRCH-03 | Phase 93 | Pending |
-| SETT-01 | Phase 88 | Pending |
-| SETT-02 | Phase 88 | Pending |
-| SETT-03 | Phase 88 | Pending |
-| SETT-04 | Phase 88 | Pending |
+| SETT-01 | Phase 88 | Complete |
+| SETT-02 | Phase 88 | Complete |
+| SETT-03 | Phase 88 | Complete |
+| SETT-04 | Phase 88 | Complete |
 | SETT-05 | Phase 94 | Pending |
 | SETT-06 | Phase 92 | Pending |
 | SETT-07 | Phase 92 | Pending |
