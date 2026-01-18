@@ -223,13 +223,16 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - "View in Google Contacts" link on person profiles — v5.0
 - WP-CLI commands: sync, sync --full, status, conflicts, unlink-all — v5.0
 
+**v5.0.1 Meeting Card Polish (shipped 2026-01-18):**
+- 24h time format for meeting times — v5.0.1
+- Past meetings dimmed with 50% opacity — v5.0.1
+- Current meetings highlighted with accent ring — v5.0.1
+- Calendar name displayed in meeting cards — v5.0.1
+- WP-CLI command for HTML entity cleanup — v5.0.1
+
 ### Active
 
-**v5.0.1 Meeting Card Polish:**
-- [ ] Dim past events — Muted styling for events that have ended
-- [ ] Highlight current event — Visual emphasis on event happening now (between start and end time)
-- [ ] 24h time format — Switch from 12h AM/PM to 24h display
-- [ ] Fix `&amp;` encoding — Data cleanup pass on existing synced events to decode HTML entities in titles
+(None — planning next milestone)
 
 ### Out of Scope
 
@@ -355,4 +358,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Sync history in connection meta | Last 10 entries, efficient storage without unbounded growth | ✓ Good |
 
 ---
-*Last updated: 2026-01-18 — v5.0.1 Meeting Card Polish milestone started*
+*Last updated: 2026-01-18 after v5.0.1 milestone*
