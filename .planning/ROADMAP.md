@@ -31,10 +31,11 @@ Transform Caelis into a flexible CRM with admin-defined custom fields for People
   3. PHP class can update an existing field definition (label, description, options)
   4. PHP class can deactivate a field definition without losing stored data
   5. Field key auto-generates from label and is stored correctly
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 87-01: TBD
+- [ ] 87-01-PLAN.md - Create CustomFields Manager class with CRUD operations
+- [ ] 87-02-PLAN.md - Create REST API endpoints for custom field management
 
 ### Phase 88: Settings UI
 **Goal**: Admin can manage custom field definitions through a Settings subtab
@@ -146,7 +147,7 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 87. ACF Foundation | 0/TBD | Not started | - |
+| 87. ACF Foundation | 0/2 | Planned | - |
 | 88. Settings UI | 0/TBD | Not started | - |
 | 89. Basic Field Types | 0/TBD | Not started | - |
 | 90. Extended Field Types | 0/TBD | Not started | - |
