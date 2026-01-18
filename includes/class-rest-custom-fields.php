@@ -91,7 +91,7 @@ class CustomFields extends WP_REST_Controller {
 		// Single item route: get, update, delete.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<post_type>person|company)/(?P<field_key>[a-z0-9_]+)',
+			'/' . $this->rest_base . '/(?P<post_type>person|company)/(?P<field_key>[a-z0-9_-]+)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -297,7 +297,7 @@ class CustomFields extends WP_REST_Controller {
 	 *
 	 * @return array Parameter definitions.
 	 */
-	protected function get_collection_params(): array {
+	public function get_collection_params(): array {
 		return array(
 			'include_inactive' => array(
 				'type'        => 'boolean',
