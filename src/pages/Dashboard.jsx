@@ -254,7 +254,7 @@ function MeetingCard({ meeting, onClick }) {
   // Card content shows: time, title, matched people avatars
   const cardContent = (
     <>
-      <div className={`text-sm font-medium text-accent-600 dark:text-accent-400 w-20 flex-shrink-0 ${isNow ? 'font-semibold' : ''}`}>
+      <div className={`text-sm font-medium text-accent-600 dark:text-accent-400 w-14 flex-shrink-0 ${isNow ? 'font-semibold' : ''}`}>
         {meeting.all_day ? 'All day' : formattedTime}
       </div>
       <div className="flex-1 min-w-0">
