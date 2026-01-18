@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 Milestone: v5.0.1 Meeting Card Polish
 Phase: 86 - Meeting Card Polish
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-18 - Milestone initialized
+Plan: 01 of 1 complete
+Status: Phase complete
+Last activity: 2026-01-18 - Completed 86-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [##########] 100%
 
 ## Completed Milestones
 
@@ -56,7 +56,9 @@ Progress: [░░░░░░░░░░] 0%
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-(No active milestone decisions yet)
+| Phase | Decision | Rationale |
+|-------|----------|-----------|
+| 86-01 | WP-CLI uses cleanup_titles (underscore) | WP-CLI can access via both underscore and hyphen |
 
 ### Pending Todos
 
@@ -73,10 +75,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Milestone initialized
+Stopped at: Completed 86-01-PLAN.md
 Resume file: None
 
 ## Next Steps
 
-- Run `/gsd:plan-phase 86` to create execution plan
-- Or `/gsd:discuss-phase 86` to gather context first
+- Phase 86 complete - ready to close v5.0.1 milestone
+- Run version bump and changelog update
