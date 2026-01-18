@@ -2306,7 +2306,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$events = $wpdb->get_results(
 				"SELECT ID, post_title FROM {$wpdb->posts}
 				 WHERE post_type = 'calendar_event'
-				 AND post_status = 'publish'"
+				 AND post_status IN ('publish', 'future')"
 			);
 
 			if ( empty( $events ) ) {
