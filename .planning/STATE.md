@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 Milestone: v6.0 Custom Fields
 Phase: 90 of 94 (Extended Field Types)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-18 - Completed Phase 89 (Basic Field Types)
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-01-18 - Completed 90-01-PLAN.md (Extended Field Types Backend)
 
 Progress: [███░░░░░░░] 38% (3/8 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6 (this milestone)
-- Average duration: 4.8 min
-- Total execution time: 30 min
+- Total plans completed: 7 (this milestone)
+- Average duration: 5.1 min
+- Total execution time: 36 min
 
 **By Phase:**
 
@@ -31,9 +31,10 @@ Progress: [███░░░░░░░] 38% (3/8 phases complete)
 | 87-acf-foundation | 2 | 14 min | 7 min |
 | 88-settings-ui | 2 | 7 min | 3.5 min |
 | 89-basic-field-types | 2 | 9 min | 4.5 min |
+| 90-extended-field-types | 1 | 6 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 7 min, 5 min, 2 min, 6 min, 3 min
+- Last 5 plans: 5 min, 2 min, 6 min, 3 min, 6 min
 - Trend: Stable velocity
 
 *Updated after each plan completion*
@@ -95,10 +96,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed Phase 89 (Basic Field Types)
+Stopped at: Completed 90-01-PLAN.md (Extended Field Types Backend)
 Resume file: None
 
 ## Next Steps
 
-- Run `/gsd:discuss-phase 90` to gather context for Extended Field Types phase
-- Or run `/gsd:plan-phase 90` to plan the phase directly
+- Run `/gsd:execute-plan .planning/phases/90-extended-field-types/90-02-PLAN.md` to continue with Settings UI for extended types
