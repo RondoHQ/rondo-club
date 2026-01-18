@@ -4,18 +4,37 @@
 
 See: .planning/PROJECT.md (updated 2026-01-18)
 
-**Core value:** Personal CRM with team collaboration and external integrations
-**Current focus:** Planning next milestone
+**Core value:** Admin-defined custom fields for People and Organizations using ACF-native storage
+**Current focus:** v6.0 Custom Fields - Phase 87: ACF Foundation
 
 ## Current Position
 
-Milestone: v5.0.1 complete
-Phase: Ready to plan next milestone
+Milestone: v6.0 Custom Fields
+Phase: 87 of 94 (ACF Foundation)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-01-18 — v5.0.1 milestone complete
+Last activity: 2026-01-18 — Roadmap created
 
-Progress: Ready for /gsd:new-milestone
+Progress: [░░░░░░░░░░] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0 (this milestone)
+- Average duration: -
+- Total execution time: -
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+**Recent Trend:**
+- Last 5 plans: -
+- Trend: -
+
+*Updated after each plan completion*
 
 ## Completed Milestones
 
@@ -49,7 +68,8 @@ Progress: Ready for /gsd:new-milestone
 | v4.9 Dashboard & Calendar Polish | 77-78 | 4 | 2026-01-17 |
 | v5.0 Google Contacts Sync | 79-85 | 16 | 2026-01-18 |
 | v5.0.1 Meeting Card Polish | 86 | 1 | 2026-01-18 |
-**Total:** 31 milestones, 86 phases, 161 plans completed
+
+**Total:** 28 milestones, 86 phases, 161 plans completed
 
 ## Accumulated Context
 
@@ -73,9 +93,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: v5.0.1 milestone complete
+Stopped at: v6.0 Custom Fields roadmap created
 Resume file: None
 
 ## Next Steps
 
-- Run `/gsd:new-milestone` to start the next milestone (questioning → research → requirements → roadmap)
+- Run `/gsd:plan-phase 87` to plan the ACF Foundation phase

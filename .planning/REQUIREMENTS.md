@@ -99,51 +99,51 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MGMT-01 | TBD | Pending |
-| MGMT-02 | TBD | Pending |
-| MGMT-03 | TBD | Pending |
-| MGMT-04 | TBD | Pending |
-| MGMT-05 | TBD | Pending |
-| MGMT-06 | TBD | Pending |
-| MGMT-07 | TBD | Pending |
-| MGMT-08 | TBD | Pending |
-| TYPE-01 | TBD | Pending |
-| TYPE-02 | TBD | Pending |
-| TYPE-03 | TBD | Pending |
-| TYPE-04 | TBD | Pending |
-| TYPE-05 | TBD | Pending |
-| TYPE-06 | TBD | Pending |
-| TYPE-07 | TBD | Pending |
-| TYPE-08 | TBD | Pending |
-| TYPE-09 | TBD | Pending |
-| TYPE-10 | TBD | Pending |
-| TYPE-11 | TBD | Pending |
-| TYPE-12 | TBD | Pending |
-| TYPE-13 | TBD | Pending |
-| TYPE-14 | TBD | Pending |
-| DISP-01 | TBD | Pending |
-| DISP-02 | TBD | Pending |
-| DISP-03 | TBD | Pending |
-| DISP-04 | TBD | Pending |
-| DISP-05 | TBD | Pending |
-| DISP-06 | TBD | Pending |
-| DISP-07 | TBD | Pending |
-| SRCH-01 | TBD | Pending |
-| SRCH-02 | TBD | Pending |
-| SRCH-03 | TBD | Pending |
-| SETT-01 | TBD | Pending |
-| SETT-02 | TBD | Pending |
-| SETT-03 | TBD | Pending |
-| SETT-04 | TBD | Pending |
-| SETT-05 | TBD | Pending |
-| SETT-06 | TBD | Pending |
-| SETT-07 | TBD | Pending |
+| MGMT-01 | Phase 87 | Pending |
+| MGMT-02 | Phase 87 | Pending |
+| MGMT-03 | Phase 87 | Pending |
+| MGMT-04 | Phase 87 | Pending |
+| MGMT-05 | Phase 94 | Pending |
+| MGMT-06 | Phase 87 | Pending |
+| MGMT-07 | Phase 94 | Pending |
+| MGMT-08 | Phase 94 | Pending |
+| TYPE-01 | Phase 89 | Pending |
+| TYPE-02 | Phase 89 | Pending |
+| TYPE-03 | Phase 89 | Pending |
+| TYPE-04 | Phase 89 | Pending |
+| TYPE-05 | Phase 89 | Pending |
+| TYPE-06 | Phase 89 | Pending |
+| TYPE-07 | Phase 89 | Pending |
+| TYPE-08 | Phase 89 | Pending |
+| TYPE-09 | Phase 89 | Pending |
+| TYPE-10 | Phase 90 | Pending |
+| TYPE-11 | Phase 90 | Pending |
+| TYPE-12 | Phase 90 | Pending |
+| TYPE-13 | Phase 90 | Pending |
+| TYPE-14 | Phase 90 | Pending |
+| DISP-01 | Phase 91 | Pending |
+| DISP-02 | Phase 91 | Pending |
+| DISP-03 | Phase 91 | Pending |
+| DISP-04 | Phase 91 | Pending |
+| DISP-05 | Phase 92 | Pending |
+| DISP-06 | Phase 92 | Pending |
+| DISP-07 | Phase 92 | Pending |
+| SRCH-01 | Phase 93 | Pending |
+| SRCH-02 | Phase 93 | Pending |
+| SRCH-03 | Phase 93 | Pending |
+| SETT-01 | Phase 88 | Pending |
+| SETT-02 | Phase 88 | Pending |
+| SETT-03 | Phase 88 | Pending |
+| SETT-04 | Phase 88 | Pending |
+| SETT-05 | Phase 94 | Pending |
+| SETT-06 | Phase 92 | Pending |
+| SETT-07 | Phase 92 | Pending |
 
 **Coverage:**
 - v1 requirements: 29 total
-- Mapped to phases: 0
-- Unmapped: 29
+- Mapped to phases: 29
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-18*
-*Last updated: 2026-01-18 after initial definition*
+*Last updated: 2026-01-18 after roadmap creation*
