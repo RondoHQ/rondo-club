@@ -239,7 +239,7 @@ class GoogleContacts extends Base {
 		if ( ! GoogleOAuth::is_configured() ) {
 			return new \WP_Error(
 				'not_configured',
-				__( 'Google integration is not configured. Please add GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET to wp-config.php.', 'caelis' ),
+				__( 'Google integration is not configured. Please add GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to wp-config.php.', 'caelis' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -630,8 +630,8 @@ class GoogleContacts extends Base {
 		// Fallback: Make userinfo API call
 		if ( ! empty( $tokens['access_token'] ) ) {
 			$client = new \Google\Client();
-			$client->setClientId( GOOGLE_CALENDAR_CLIENT_ID );
-			$client->setClientSecret( GOOGLE_CALENDAR_CLIENT_SECRET );
+			$client->setClientId( GOOGLE_OAUTH_CLIENT_ID );
+			$client->setClientSecret( GOOGLE_OAUTH_CLIENT_SECRET );
 			$client->setAccessToken( $tokens );
 
 			try {

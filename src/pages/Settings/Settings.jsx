@@ -2218,7 +2218,7 @@ function ConnectionsContactsSubtab({
       ) : !isConfigured ? (
         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg dark:bg-yellow-900/20 dark:border-yellow-800">
           <p className="text-sm text-yellow-800 dark:text-yellow-300">
-            Google integration is not configured. Contact your administrator to set up GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET.
+            Google integration is not configured. Contact your administrator to set up GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET.
           </p>
         </div>
       ) : isConnected ? (
