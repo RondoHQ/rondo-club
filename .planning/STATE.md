@@ -59,12 +59,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-5 active todos in `.planning/todos/pending/`:
+3 active todos in `.planning/todos/pending/`:
 - Add import from Twenty CRM (api)
-- Debug add email to attendee from meeting view fails (api)
 - Fix activity participant name readability in dark mode (ui)
 - Reorder activity types and rename Zoom to Video (ui)
-- Move deploy config to .env and create deploy script (tooling)
 
 See `/gsd:check-todos` for full list.
 
