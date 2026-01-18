@@ -977,7 +977,7 @@ class Calendar extends Base {
 
 				return [
 					'id'            => $post->ID,
-					'title'         => $post->post_title,
+					'title'         => html_entity_decode( $post->post_title, ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 					'description'   => $post->post_content,
 					'start_time'    => get_post_meta( $post->ID, '_start_time', true ),
 					'end_time'      => get_post_meta( $post->ID, '_end_time', true ),
@@ -1292,7 +1292,7 @@ class Calendar extends Base {
 
 		return [
 			'id'                     => $event->ID,
-			'title'                  => $event->post_title,
+			'title'                  => html_entity_decode( $event->post_title, ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 			'start_time'             => $start_datetime->format( 'c' ), // ISO 8601 with timezone offset
 			'end_time'               => $end_datetime->format( 'c' ),   // ISO 8601 with timezone offset
 			'location'               => get_post_meta( $event->ID, '_location', true ),
@@ -1538,7 +1538,7 @@ class Calendar extends Base {
 
 		return [
 			'id'                   => $event->ID,
-			'title'                => $event->post_title,
+			'title'                => html_entity_decode( $event->post_title, ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 			'start_time'           => $start_datetime->format( 'c' ), // ISO 8601 with timezone offset
 			'end_time'             => $end_datetime->format( 'c' ),   // ISO 8601 with timezone offset
 			'all_day'              => (bool) get_post_meta( $event->ID, '_all_day', true ),
