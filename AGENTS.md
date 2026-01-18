@@ -242,39 +242,19 @@ git push
 
 **ALWAYS deploy to production BEFORE asking for verification or UAT.** The user tests on production, not locally. Deploy after every phase execution, before presenting verification checklists.
 
-At the end of every milestone, also deploy the changes to the production server:
-
-If you did not update, add or remove any node modules, do this:
+Use the deployment script in `bin/deploy.sh`:
 
 ```bash
-# Sync dist folder with --delete to remove old build artifacts
-rsync -avz --delete -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/dist/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/dist/
+# Standard deploy (excludes node_modules)
+bin/deploy.sh
 
-# Sync remaining theme files (excludes .git, node_modules, and dist)
-rsync -avz --exclude='.git' --exclude='node_modules' --exclude='dist' -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
+# Deploy including node_modules (after npm install/update)
+bin/deploy.sh --with-node-modules
 ```
 
-If you _did_ update, add or remove node modules, do this:
+The script reads server credentials from `.env` (see `.env.example` for required variables). It:
+1. Syncs `dist/` folder with `--delete` to remove stale build artifacts
+2. Syncs remaining theme files (excluding `.git`, `node_modules`, `dist`)
+3. Clears WordPress and SiteGround caches
 
-```bash
-# Sync dist folder with --delete to remove old build artifacts
-rsync -avz --delete -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/dist/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/dist/
-
-# Sync remaining theme files including node_modules (excludes .git and dist)
-rsync -avz --exclude='.git' --exclude='dist' -e "ssh -p 18765" /Users/joostdevalk/Code/caelis/ u25-eninwxjgiulh@c1130624.sgvps.net:~/www/cael.is/public_html/wp-content/themes/caelis/
-```
-
-Then, in both cases, do this:
-
-```bash
-# Clear caches on production
-ssh u25-eninwxjgiulh@c1130624.sgvps.net -p 18765 "cd ~/www/cael.is/public_html && wp cache flush && wp sg purge"
-```
-
-**Production server details:**
-- Host: `c1130624.sgvps.net`
-- Port: `18765`
-- User: `u25-eninwxjgiulh`
-- WordPress path: `~/www/cael.is/public_html/`
-- Theme path: `~/www/cael.is/public_html/wp-content/themes/caelis/`
-- Production URL: `https://cael.is/`
+**Production URL:** See `DEPLOY_PRODUCTION_URL` in `.env`
