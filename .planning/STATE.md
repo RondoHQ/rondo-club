@@ -80,5 +80,5 @@ Resume file: None
 
 ## Next Steps
 
-- Phase 86 complete - ready to close v5.0.1 milestone
-- Run version bump and changelog update
+- Run `/gsd:audit-milestone` to verify requirements and cross-phase integration
+- Or `/gsd:complete-milestone` to skip audit and archive directly
