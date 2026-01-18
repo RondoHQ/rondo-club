@@ -9,12 +9,12 @@ Requirements for v6.0 release. Each maps to roadmap phases.
 
 ### Field Management
 
-- [ ] **MGMT-01**: Admin can create custom field definition for People
-- [ ] **MGMT-02**: Admin can create custom field definition for Organizations
-- [ ] **MGMT-03**: Admin can edit existing field definition (label, description, options)
-- [ ] **MGMT-04**: Admin can delete/deactivate field definition (data preserved)
+- [x] **MGMT-01**: Admin can create custom field definition for People
+- [x] **MGMT-02**: Admin can create custom field definition for Organizations
+- [x] **MGMT-03**: Admin can edit existing field definition (label, description, options)
+- [x] **MGMT-04**: Admin can delete/deactivate field definition (data preserved)
 - [ ] **MGMT-05**: Admin can reorder fields via drag-and-drop
-- [ ] **MGMT-06**: Field key auto-generates from label (editable)
+- [x] **MGMT-06**: Field key auto-generates from label (editable)
 - [ ] **MGMT-07**: Admin can set validation options (required, unique)
 - [ ] **MGMT-08**: Admin can set placeholder text for fields
 
@@ -99,12 +99,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MGMT-01 | Phase 87 | Pending |
-| MGMT-02 | Phase 87 | Pending |
-| MGMT-03 | Phase 87 | Pending |
-| MGMT-04 | Phase 87 | Pending |
+| MGMT-01 | Phase 87 | Complete |
+| MGMT-02 | Phase 87 | Complete |
+| MGMT-03 | Phase 87 | Complete |
+| MGMT-04 | Phase 87 | Complete |
 | MGMT-05 | Phase 94 | Pending |
-| MGMT-06 | Phase 87 | Pending |
+| MGMT-06 | Phase 87 | Complete |
 | MGMT-07 | Phase 94 | Pending |
 | MGMT-08 | Phase 94 | Pending |
 | TYPE-01 | Phase 89 | Pending |

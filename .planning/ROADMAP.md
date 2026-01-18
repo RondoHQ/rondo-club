@@ -10,7 +10,7 @@ Transform Caelis into a flexible CRM with admin-defined custom fields for People
 - Integer phases (87, 88, 89...): Planned milestone work
 - Decimal phases (87.1, 87.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 87: ACF Foundation** - PHP infrastructure for programmatic field group management
+- [x] **Phase 87: ACF Foundation** - PHP infrastructure for programmatic field group management
 - [ ] **Phase 88: Settings UI** - Custom Fields subtab with add/edit/delete interface
 - [ ] **Phase 89: Basic Field Types** - Text, Textarea, Number, Email, URL, Date, Select, Checkbox, True/False
 - [ ] **Phase 90: Extended Field Types** - Image, File, Link, Color, Relationship
@@ -34,8 +34,8 @@ Transform Caelis into a flexible CRM with admin-defined custom fields for People
 **Plans**: 2 plans
 
 Plans:
-- [ ] 87-01-PLAN.md - Create CustomFields Manager class with CRUD operations
-- [ ] 87-02-PLAN.md - Create REST API endpoints for custom field management
+- [x] 87-01-PLAN.md - Create CustomFields Manager class with CRUD operations
+- [x] 87-02-PLAN.md - Create REST API endpoints for custom field management
 
 ### Phase 88: Settings UI
 **Goal**: Admin can manage custom field definitions through a Settings subtab
@@ -147,7 +147,7 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 87. ACF Foundation | 0/2 | Planned | - |
+| 87. ACF Foundation | 2/2 | Complete | 2026-01-18 |
 | 88. Settings UI | 0/TBD | Not started | - |
 | 89. Basic Field Types | 0/TBD | Not started | - |
 | 90. Extended Field Types | 0/TBD | Not started | - |
