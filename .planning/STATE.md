@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Admin-defined custom fields for People and Organizations using ACF-native storage
-**Current focus:** v6.0 Custom Fields - Phase 88: Settings UI (Complete)
+**Current focus:** v6.0 Custom Fields - Phase 89: Basic Field Types
 
 ## Current Position
 
 Milestone: v6.0 Custom Fields
-Phase: 88 of 94 (Settings UI)
-Plan: 2 of 2 complete
-Status: Phase complete
-Last activity: 2026-01-18 - Completed 88-02-PLAN.md (Add/Edit Panel)
+Phase: 89 of 94 (Basic Field Types)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-18 - Completed Phase 88 (Settings UI)
 
 Progress: [██░░░░░░░░] 25% (2/8 phases complete)
 
@@ -99,5 +99,5 @@ Resume file: None
 
 ## Next Steps
 
-- Phase 88 complete - proceed to Phase 89: Field Rendering in Entity Edit Modals
-- Run `/gsd:create-plan 89` to create Phase 89 plan
+- Run `/gsd:discuss-phase 89` to gather context for Basic Field Types phase
+- Or run `/gsd:plan-phase 89` to plan the phase directly
