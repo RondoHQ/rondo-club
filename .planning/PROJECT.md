@@ -232,7 +232,14 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(None — planning next milestone)
+**v6.0 Custom Fields** — Admin-defined custom fields for People and Organizations
+
+- [ ] ACF-native field group management (no custom tables)
+- [ ] 14 field types: Text, Textarea, Number, Email, URL, Date, Select, Checkbox, True/False, Image, File, Link, Color Picker, Relationship
+- [ ] Settings subtab for custom field management (People/Org toggle)
+- [ ] Dedicated "Custom Fields" section on Person/Organization detail views
+- [ ] Custom field values included in global search
+- [ ] Admin-only field management, global visibility
 
 ### Out of Scope
 
@@ -262,6 +269,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 **Reference Documents:**
 - `Caelis-Multi-User-Project-Plan.md` — Detailed technical design for multi-user phases
 - `.planning/milestones/v5.0-google-contacts-sync.md` — Technical design for Google Contacts sync
+- `docs/prd/Custom-Fields-Implementation-Plan.md` — PRD for custom fields (adapted to ACF-native approach)
 
 ## Constraints
 
@@ -358,4 +366,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Sync history in connection meta | Last 10 entries, efficient storage without unbounded growth | ✓ Good |
 
 ---
-*Last updated: 2026-01-18 after v5.0.1 milestone*
+*Last updated: 2026-01-18 after starting v6.0 Custom Fields milestone*
