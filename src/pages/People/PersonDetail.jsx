@@ -40,6 +40,7 @@ import AddressEditModal from '@/components/AddressEditModal';
 import WorkHistoryEditModal from '@/components/WorkHistoryEditModal';
 import PersonEditModal from '@/components/PersonEditModal';
 import ShareModal from '@/components/ShareModal';
+import CustomFieldsSection from '@/components/CustomFieldsSection';
 const MeetingDetailModal = lazy(() => import('@/components/MeetingDetailModal'));
 import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -2119,6 +2120,21 @@ export default function PersonDetail() {
                 </p>
               )}
             </div>
+
+            {/* Custom Fields */}
+            <CustomFieldsSection
+              postType="person"
+              postId={parseInt(id)}
+              acfData={person?.acf}
+              onUpdate={(newAcfValues) => {
+                const acfData = sanitizePersonAcf(person.acf, newAcfValues);
+                updatePerson.mutateAsync({
+                  id,
+                  data: { acf: acfData },
+                });
+              }}
+              isUpdating={updatePerson.isPending}
+            />
           </div>
         )}
 
