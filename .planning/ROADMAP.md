@@ -112,10 +112,11 @@ Plans:
   3. Column values render appropriately (truncated text, icons, badges)
   4. Admin can toggle "Show in list view" per field in Settings
   5. Admin can configure column order for list view fields
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 92-01: TBD
+- [ ] 92-01-PLAN.md - Backend support for show_in_list_view and list_view_order field properties
+- [ ] 92-02-PLAN.md - FieldFormPanel settings, CustomFieldColumn component, and list view integration
 
 ### Phase 93: Search Integration
 **Goal**: Custom field values are included in global search results
@@ -156,6 +157,6 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 | 89. Basic Field Types | 2/2 | Complete | 2026-01-18 |
 | 90. Extended Field Types | 2/2 | Complete | 2026-01-18 |
 | 91. Detail View Integration | 2/2 | Complete | 2026-01-19 |
-| 92. List View Integration | 0/TBD | Not started | - |
+| 92. List View Integration | 0/2 | Planned | - |
 | 93. Search Integration | 0/TBD | Not started | - |
 | 94. Polish | 0/TBD | Not started | - |
