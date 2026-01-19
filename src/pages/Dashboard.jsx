@@ -287,7 +287,7 @@ function MeetingCard({ meeting, onClick }) {
   const buttonClasses = [
     'w-full flex items-center p-3 rounded-lg transition-colors text-left',
     isPast ? 'opacity-50' : '',
-    isNow ? 'bg-accent-50 dark:bg-accent-900/30 ring-1 ring-accent-200 dark:ring-accent-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700',
+    isNow ? 'bg-accent-50 dark:bg-accent-800 ring-1 ring-accent-200 dark:ring-accent-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700',
   ].filter(Boolean).join(' ');
 
   // Always clickable button to open modal
