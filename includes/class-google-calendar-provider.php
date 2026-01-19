@@ -195,6 +195,12 @@ class GoogleProvider {
 				$events = $service->events->listEvents( $calendar_id, $params );
 
 				foreach ( $events->getItems() as $event ) {
+					// Skip workingLocation events (e.g., "Working from home")
+					// These are location indicators, not actual meetings
+					if ( $event->getEventType() === 'workingLocation' ) {
+						continue;
+					}
+
 					try {
 						$result = self::upsert_event( $user_id, $connection, $event, $calendar_id, $calendar_name );
 						++$total;
