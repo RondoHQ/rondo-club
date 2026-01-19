@@ -256,13 +256,13 @@ function MeetingCard({ meeting, onClick }) {
   // Card content shows: time, title, matched people avatars
   const cardContent = (
     <>
-      <div className={`text-sm font-medium text-accent-600 dark:text-accent-400 w-16 flex-shrink-0 ${isNow ? 'font-semibold' : ''}`}>
+      <div className={`text-sm font-medium w-16 flex-shrink-0 ${isNow ? 'font-semibold text-accent-600 dark:text-white/90' : 'text-accent-600 dark:text-accent-400'}`}>
         {meeting.all_day ? 'All day' : <>{formattedStartTime} - <br />{formattedEndTime}</>}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium truncate ${isNow ? 'text-accent-900 dark:text-accent-100' : 'text-gray-900 dark:text-gray-50'}`}>{meeting.title}</p>
+        <p className={`text-sm font-medium truncate ${isNow ? 'text-accent-900 dark:text-white' : 'text-gray-900 dark:text-gray-50'}`}>{meeting.title}</p>
         {meeting.location && (
-          <p className={`text-xs truncate ${isNow ? 'text-accent-700 dark:text-accent-200' : 'text-gray-500 dark:text-gray-400'}`}>{meeting.location}</p>
+          <p className={`text-xs truncate ${isNow ? 'text-accent-700 dark:text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{meeting.location}</p>
         )}
       </div>
       {filteredMatchedPeople.length > 0 && (
