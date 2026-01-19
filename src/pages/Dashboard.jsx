@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDashboard, useTodos, useUpdateTodo, useDashboardSettings, useUpdateDashboardSettings, DEFAULT_DASHBOARD_CARDS } from '@/hooks/useDashboard';
@@ -291,11 +291,13 @@ function MeetingCard({ meeting, onClick }) {
   ].filter(Boolean).join(' ');
 
   // Always clickable button to open modal
+  // Add data-is-now for non-all-day meetings to enable auto-scroll
   return (
     <button
       type="button"
       onClick={() => onClick(meeting)}
       className={buttonClasses}
+      data-is-now={isNow && !meeting.all_day ? 'true' : undefined}
     >
       {cardContent}
     </button>
@@ -355,6 +357,24 @@ export default function Dashboard() {
   const handlePrevDay = () => setSelectedDate(d => subDays(d, 1));
   const handleNextDay = () => setSelectedDate(d => addDays(d, 1));
   const handleToday = () => setSelectedDate(new Date());
+
+  // Ref for meetings container to enable auto-scroll
+  const meetingsContainerRef = useRef(null);
+
+  // Auto-scroll to current meeting on load (only for today)
+  useEffect(() => {
+    if (!isToday(selectedDate) || !meetingsContainerRef.current) return;
+
+    // Small delay to ensure DOM is rendered
+    const timer = setTimeout(() => {
+      const nowMeeting = meetingsContainerRef.current?.querySelector('[data-is-now="true"]');
+      if (nowMeeting) {
+        nowMeeting.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [selectedDate, dateMeetings]);
 
   // State for complete todo flow
   const [todoToComplete, setTodoToComplete] = useState(null);
@@ -720,7 +740,7 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
+        <div ref={meetingsContainerRef} className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {dateMeetings.length > 0 ? (
             dateMeetings.map((meeting) => (
               <MeetingCard
