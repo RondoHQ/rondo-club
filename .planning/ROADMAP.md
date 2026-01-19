@@ -14,7 +14,7 @@ Transform Caelis into a flexible CRM with admin-defined custom fields for People
 - [x] **Phase 88: Settings UI** - Custom Fields subtab with add/edit/delete interface
 - [x] **Phase 89: Basic Field Types** - Text, Textarea, Number, Email, URL, Date, Select, Checkbox, True/False
 - [x] **Phase 90: Extended Field Types** - Image, File, Link, Color, Relationship
-- [ ] **Phase 91: Detail View Integration** - Custom Fields section on Person/Organization detail pages
+- [x] **Phase 91: Detail View Integration** - Custom Fields section on Person/Organization detail pages
 - [ ] **Phase 92: List View Integration** - Custom field columns with column configuration
 - [ ] **Phase 93: Search Integration** - Include custom fields in global search
 - [ ] **Phase 94: Polish** - Drag-and-drop reorder, validation, placeholders
@@ -99,8 +99,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 91-01-PLAN.md - Expose field metadata to non-admins via REST API
-- [ ] 91-02-PLAN.md - CustomFieldsSection component and detail page integration
+- [x] 91-01-PLAN.md - Expose field metadata to non-admins via REST API
+- [x] 91-02-PLAN.md - CustomFieldsSection component and detail page integration
 
 ### Phase 92: List View Integration
 **Goal**: Custom fields can appear as columns in People and Organizations list views
@@ -155,7 +155,7 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 | 88. Settings UI | 2/2 | Complete | 2026-01-18 |
 | 89. Basic Field Types | 2/2 | Complete | 2026-01-18 |
 | 90. Extended Field Types | 2/2 | Complete | 2026-01-18 |
-| 91. Detail View Integration | 0/2 | Planned | - |
+| 91. Detail View Integration | 2/2 | Complete | 2026-01-19 |
 | 92. List View Integration | 0/TBD | Not started | - |
 | 93. Search Integration | 0/TBD | Not started | - |
 | 94. Polish | 0/TBD | Not started | - |

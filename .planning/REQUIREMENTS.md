@@ -37,10 +37,10 @@ Requirements for v6.0 release. Each maps to roadmap phases.
 
 ### Display
 
-- [ ] **DISP-01**: Custom Fields section on Person detail view
-- [ ] **DISP-02**: Custom Fields section on Organization detail view
-- [ ] **DISP-03**: Inline editing of custom field values
-- [ ] **DISP-04**: Type-appropriate rendering (date pickers, file previews, color swatches, etc.)
+- [x] **DISP-01**: Custom Fields section on Person detail view
+- [x] **DISP-02**: Custom Fields section on Organization detail view
+- [x] **DISP-03**: Inline editing of custom field values
+- [x] **DISP-04**: Type-appropriate rendering (date pickers, file previews, color swatches, etc.)
 - [ ] **DISP-05**: Custom field columns in People list view
 - [ ] **DISP-06**: Custom field columns in Organizations list view
 - [ ] **DISP-07**: Type-appropriate column rendering (truncated text, icons, badges, etc.)
@@ -121,10 +121,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TYPE-12 | Phase 90 | Complete |
 | TYPE-13 | Phase 90 | Complete |
 | TYPE-14 | Phase 90 | Complete |
-| DISP-01 | Phase 91 | Pending |
-| DISP-02 | Phase 91 | Pending |
-| DISP-03 | Phase 91 | Pending |
-| DISP-04 | Phase 91 | Pending |
+| DISP-01 | Phase 91 | Complete |
+| DISP-02 | Phase 91 | Complete |
+| DISP-03 | Phase 91 | Complete |
+| DISP-04 | Phase 91 | Complete |
 | DISP-05 | Phase 92 | Pending |
 | DISP-06 | Phase 92 | Pending |
 | DISP-07 | Phase 92 | Pending |

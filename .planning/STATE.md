@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Admin-defined custom fields for People and Organizations using ACF-native storage
-**Current focus:** v6.0 Custom Fields - Phase 91: Detail View Integration
+**Current focus:** v6.0 Custom Fields - Phase 92: List View Integration
 
 ## Current Position
 
 Milestone: v6.0 Custom Fields
-Phase: 91 of 94 (Detail View Integration)
-Plan: 2 of 2 complete
-Status: Phase complete
-Last activity: 2026-01-19 - Completed 91-02-PLAN.md
+Phase: 92 of 94 (List View Integration)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-19 - Completed Phase 91 (Detail View Integration)
 
-Progress: [█████░░░░░] 63% (10/16 plans complete)
+Progress: [██████░░░░] 63% (5/8 phases complete)
 
 ## Performance Metrics
 
@@ -98,10 +98,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 91-02-PLAN.md (Phase 91 complete)
+Stopped at: Completed Phase 91 (Detail View Integration)
 Resume file: None
 
 ## Next Steps
 
-- Run `/gsd:execute-phase 92` to begin List View Integration phase
-- Phase 92: Custom field column display in People and Organizations list views
+- Run `/gsd:discuss-phase 92` to gather context for List View Integration phase
+- Or run `/gsd:plan-phase 92` to plan the phase directly
