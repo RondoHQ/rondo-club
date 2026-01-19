@@ -94,12 +94,13 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Person detail view shows "Custom Fields" section with all defined fields
   2. Organization detail view shows "Custom Fields" section with all defined fields
-  3. Field values can be edited inline (click to edit pattern)
+  3. Field values can be edited via modal (Caelis standard pattern)
   4. Each field type renders appropriately (date pickers, file previews, color swatches, etc.)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 91-01: TBD
+- [ ] 91-01-PLAN.md - Expose field metadata to non-admins via REST API
+- [ ] 91-02-PLAN.md - CustomFieldsSection component and detail page integration
 
 ### Phase 92: List View Integration
 **Goal**: Custom fields can appear as columns in People and Organizations list views
@@ -154,7 +155,7 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 | 88. Settings UI | 2/2 | Complete | 2026-01-18 |
 | 89. Basic Field Types | 2/2 | Complete | 2026-01-18 |
 | 90. Extended Field Types | 2/2 | Complete | 2026-01-18 |
-| 91. Detail View Integration | 0/TBD | Not started | - |
+| 91. Detail View Integration | 0/2 | Planned | - |
 | 92. List View Integration | 0/TBD | Not started | - |
 | 93. Search Integration | 0/TBD | Not started | - |
 | 94. Polish | 0/TBD | Not started | - |
