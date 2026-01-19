@@ -352,7 +352,7 @@ export default function CompanyEditModal({
                           setParentSearchQuery('');
                         }}
                         className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                          !selectedParentId ? 'bg-accent-50 dark:bg-accent-900/30' : ''
+                          !selectedParentId ? 'bg-accent-50 dark:bg-accent-800' : ''
                         }`}
                       >
                         <span className="text-sm text-gray-500 dark:text-gray-400 italic">No parent organization</span>
@@ -374,7 +374,7 @@ export default function CompanyEditModal({
                               setParentSearchQuery('');
                             }}
                             className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                              selectedParentId === String(c.id) ? 'bg-accent-50 dark:bg-accent-900/30' : ''
+                              selectedParentId === String(c.id) ? 'bg-accent-50 dark:bg-accent-800' : ''
                             }`}
                           >
                             {c._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (

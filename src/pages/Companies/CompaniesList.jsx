@@ -67,7 +67,7 @@ function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoadi
                   disabled={isLoading}
                   className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                     isSelected
-                      ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30'
+                      ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
                       : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                   }`}
                 >
@@ -166,7 +166,7 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isChecked
-                        ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30'
+                        ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
@@ -288,7 +288,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isChecked
-                        ? mode === 'add' ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30' : 'border-red-500 bg-red-50 dark:bg-red-900/30'
+                        ? mode === 'add' ? 'border-accent-500 bg-accent-50 dark:bg-accent-800' : 'border-red-500 bg-red-50 dark:bg-red-900/30'
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >

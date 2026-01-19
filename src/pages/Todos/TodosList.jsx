@@ -219,7 +219,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('open')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'open' ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              statusFilter === 'open' ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             Open
@@ -236,7 +236,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('completed')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'completed' ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              statusFilter === 'completed' ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             Completed
@@ -244,7 +244,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'all' ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              statusFilter === 'all' ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             All

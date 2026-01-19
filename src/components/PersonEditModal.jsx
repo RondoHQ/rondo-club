@@ -240,7 +240,7 @@ export default function PersonEditModal({
                 <div
                   className={`relative rounded-lg border-2 border-dashed p-3 text-center transition-colors ${
                     dragActive
-                      ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/30'
+                      ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
                       : vcardFile && !vcardError
                       ? 'border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/30'
                       : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'

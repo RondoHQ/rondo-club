@@ -81,7 +81,7 @@ export default function WorkspaceInviteAccept() {
       <div className="card p-8 max-w-md w-full mx-4">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-accent-100 dark:bg-accent-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-accent-100 dark:bg-accent-800 rounded-full flex items-center justify-center mx-auto mb-4">
             <Users className="w-8 h-8 text-accent-600 dark:text-accent-400" />
           </div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-50">

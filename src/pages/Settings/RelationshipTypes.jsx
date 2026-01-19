@@ -118,7 +118,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
                 type="button"
                 onClick={() => handleSelect(null)}
                 className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                  !value ? 'bg-accent-50 dark:bg-accent-900/30' : ''
+                  !value ? 'bg-accent-50 dark:bg-accent-800' : ''
                 }`}
               >
                 <span className="text-gray-500 dark:text-gray-400 italic">None (no inverse)</span>
@@ -129,7 +129,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
                   type="button"
                   onClick={() => handleSelect(type.id)}
                   className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-50 ${
-                    value === type.id.toString() ? 'bg-accent-50 dark:bg-accent-900/30' : ''
+                    value === type.id.toString() ? 'bg-accent-50 dark:bg-accent-800' : ''
                   }`}
                 >
                   {type.name}
