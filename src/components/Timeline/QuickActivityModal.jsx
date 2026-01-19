@@ -220,7 +220,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                     {getSelectedPeople().map((person) => (
                       <span
                         key={person.id}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 rounded-full text-sm"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300 rounded-full text-sm"
                       >
                         {person.name}
                         <button
@@ -273,7 +273,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                                 type="button"
                                 onClick={() => toggleParticipant(person.id)}
                                 className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-900 dark:text-gray-50 ${
-                                  isSelected ? 'bg-accent-50 dark:bg-accent-900/30' : ''
+                                  isSelected ? 'bg-accent-50 dark:bg-accent-800' : ''
                                 }`}
                               >
                                 <input

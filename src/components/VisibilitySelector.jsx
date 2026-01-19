@@ -79,7 +79,7 @@ export default function VisibilitySelector({
                   key={option.value}
                   type="button"
                   onClick={() => handleVisibilityChange(option.value)}
-                  className={`w-full flex items-start gap-3 p-2 rounded-md text-left hover:bg-gray-50 dark:hover:bg-gray-700 ${isSelected ? 'bg-accent-50 dark:bg-accent-900/30' : ''}`}
+                  className={`w-full flex items-start gap-3 p-2 rounded-md text-left hover:bg-gray-50 dark:hover:bg-gray-700 ${isSelected ? 'bg-accent-50 dark:bg-accent-800' : ''}`}
                 >
                   <Icon className={`w-4 h-4 mt-0.5 ${isSelected ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400'}`} />
                   <div className="flex-1">

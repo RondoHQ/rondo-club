@@ -88,7 +88,7 @@ export default function DeleteFieldDialog({
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900 dark:text-gray-50">
                     Archive Field
-                    <span className="ml-2 text-xs font-normal text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded">
+                    <span className="ml-2 text-xs font-normal text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-800 px-2 py-0.5 rounded">
                       Recommended
                     </span>
                   </h3>

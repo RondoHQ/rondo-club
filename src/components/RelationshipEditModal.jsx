@@ -118,7 +118,7 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
                 type="button"
                 onClick={() => handleSelect(person.id)}
                 className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-50 ${
-                  value === person.id ? 'bg-accent-50 dark:bg-accent-900/30' : ''
+                  value === person.id ? 'bg-accent-50 dark:bg-accent-800' : ''
                 }`}
               >
                 {getPersonName(person)}
