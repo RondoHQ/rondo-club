@@ -6,14 +6,14 @@ import { isRichTextEmpty } from '@/utils/richTextUtils';
 const RichTextEditor = lazy(() => import('@/components/RichTextEditor'));
 
 const ACTIVITY_TYPES = [
-  { id: 'call', label: 'Phone', icon: Phone },
   { id: 'email', label: 'Email', icon: Mail },
   { id: 'chat', label: 'Chat', icon: MessageCircle },
+  { id: 'call', label: 'Phone', icon: Phone },
+  { id: 'video', label: 'Video', icon: Video },
   { id: 'meeting', label: 'Meeting', icon: Users },
   { id: 'coffee', label: 'Coffee', icon: Coffee },
   { id: 'lunch', label: 'Lunch', icon: Utensils },
   { id: 'dinner', label: 'Dinner', icon: Utensils },
-  { id: 'zoom', label: 'Zoom', icon: Video },
   { id: 'note', label: 'Other', icon: FileText },
 ];
 

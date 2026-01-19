@@ -127,7 +127,8 @@ export function getActivityTypeIcon(type) {
     coffee: 'Coffee',
     lunch: 'Utensils',
     dinner: 'Utensils',
-    zoom: 'Video',
+    video: 'Video',
+    zoom: 'Video', // Legacy support for old activities
     note: 'FileText',
   };
 
@@ -148,7 +149,8 @@ export function getActivityTypeLabel(type) {
     coffee: 'Coffee',
     lunch: 'Lunch',
     dinner: 'Dinner',
-    zoom: 'Zoom',
+    video: 'Video',
+    zoom: 'Video', // Legacy support - display as Video
     note: 'Note',
   };
 
