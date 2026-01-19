@@ -25,11 +25,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * REST controller for custom field definitions.
  *
  * Endpoints:
- * - GET    /prm/v1/custom-fields/{post_type}           - List all fields
- * - POST   /prm/v1/custom-fields/{post_type}           - Create new field
- * - GET    /prm/v1/custom-fields/{post_type}/{key}     - Get single field
- * - PUT    /prm/v1/custom-fields/{post_type}/{key}     - Update field
- * - DELETE /prm/v1/custom-fields/{post_type}/{key}     - Deactivate field
+ * - GET    /prm/v1/custom-fields/{post_type}           - List all fields (admin)
+ * - POST   /prm/v1/custom-fields/{post_type}           - Create new field (admin)
+ * - GET    /prm/v1/custom-fields/{post_type}/{key}     - Get single field (admin)
+ * - PUT    /prm/v1/custom-fields/{post_type}/{key}     - Update field (admin)
+ * - DELETE /prm/v1/custom-fields/{post_type}/{key}     - Deactivate field (admin)
+ * - GET    /prm/v1/custom-fields/{post_type}/metadata  - Read-only field metadata (any logged-in user)
  */
 class CustomFields extends WP_REST_Controller {
 
@@ -111,6 +112,19 @@ class CustomFields extends WP_REST_Controller {
 				),
 			)
 		);
+
+		// Read-only metadata route for non-admin users (detail view display).
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<post_type>person|company)/metadata',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_field_metadata' ),
+					'permission_callback' => array( $this, 'get_field_metadata_permissions_check' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -164,6 +178,19 @@ class CustomFields extends WP_REST_Controller {
 	}
 
 	/**
+	 * Check if user can read field metadata.
+	 *
+	 * Any logged-in user can read field definitions. This is safe because
+	 * field definitions are structural metadata, not user data.
+	 *
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return bool True if user is logged in.
+	 */
+	public function get_field_metadata_permissions_check( $request ): bool {
+		return is_user_logged_in();
+	}
+
+	/**
 	 * Get all custom fields for a post type.
 	 *
 	 * @param WP_REST_Request $request The REST request object.
@@ -176,6 +203,75 @@ class CustomFields extends WP_REST_Controller {
 		$fields = $this->manager->get_fields( $post_type, $include_inactive );
 
 		return rest_ensure_response( $fields );
+	}
+
+	/**
+	 * Get field metadata for display purposes.
+	 *
+	 * Returns only the display-relevant properties of custom fields for use
+	 * in detail views. Available to any logged-in user.
+	 *
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return WP_REST_Response Response containing field metadata array.
+	 */
+	public function get_field_metadata( $request ): WP_REST_Response {
+		$post_type = $request->get_param( 'post_type' );
+		$fields    = $this->manager->get_fields( $post_type, false ); // Active fields only.
+
+		// Extract only display-relevant properties.
+		$metadata = array_map(
+			function ( $field ) {
+				$display_props = array(
+					'key'          => $field['key'],
+					'name'         => $field['name'],
+					'label'        => $field['label'],
+					'type'         => $field['type'],
+					'instructions' => $field['instructions'] ?? '',
+				);
+
+				// Add type-specific display properties.
+				// Select, Checkbox, Radio fields.
+				if ( isset( $field['choices'] ) ) {
+					$display_props['choices'] = $field['choices'];
+				}
+
+				// True/False fields.
+				if ( isset( $field['ui_on_text'] ) ) {
+					$display_props['ui_on_text'] = $field['ui_on_text'];
+				}
+				if ( isset( $field['ui_off_text'] ) ) {
+					$display_props['ui_off_text'] = $field['ui_off_text'];
+				}
+
+				// Date fields.
+				if ( isset( $field['display_format'] ) ) {
+					$display_props['display_format'] = $field['display_format'];
+				}
+
+				// Image, File, Relationship fields.
+				if ( isset( $field['return_format'] ) ) {
+					$display_props['return_format'] = $field['return_format'];
+				}
+
+				// Relationship fields - what post types it links to.
+				if ( isset( $field['post_type'] ) && 'relationship' === $field['type'] ) {
+					$display_props['post_type'] = $field['post_type'];
+				}
+
+				// Number fields.
+				if ( isset( $field['prepend'] ) ) {
+					$display_props['prepend'] = $field['prepend'];
+				}
+				if ( isset( $field['append'] ) ) {
+					$display_props['append'] = $field['append'];
+				}
+
+				return $display_props;
+			},
+			$fields
+		);
+
+		return rest_ensure_response( $metadata );
 	}
 
 	/**
