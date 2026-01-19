@@ -7,6 +7,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { getCompanyName, decodeHtml } from '@/utils/formatters';
 import CompanyEditModal from '@/components/CompanyEditModal';
 import ShareModal from '@/components/ShareModal';
+import CustomFieldsSection from '@/components/CustomFieldsSection';
 
 export default function CompanyDetail() {
   const { id } = useParams();
@@ -526,7 +527,21 @@ export default function CompanyDetail() {
           </div>
         </div>
       )}
-      
+
+      {/* Custom Fields */}
+      <CustomFieldsSection
+        postType="company"
+        postId={parseInt(id)}
+        acfData={company?.acf}
+        onUpdate={(newAcfValues) => {
+          updateCompany.mutateAsync({
+            id,
+            data: { acf: { ...company?.acf, ...newAcfValues } },
+          });
+        }}
+        isUpdating={updateCompany.isPending}
+      />
+
       <CompanyEditModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
