@@ -1,8 +1,8 @@
 ---
-status: verifying
+status: resolved
 trigger: "Meeting titles showing `&amp;` instead of `&` on dashboard meetings widget"
 created: 2026-01-18T12:00:00Z
-updated: 2026-01-18T12:15:00Z
+updated: 2026-01-18T12:20:00Z
 ---
 
 ## Current Focus
