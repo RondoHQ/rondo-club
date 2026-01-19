@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-18)
 
 Milestone: v6.0 Custom Fields
 Phase: 91 of 94 (Detail View Integration)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-18 - Completed Phase 90 (Extended Field Types)
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-01-19 - Completed 91-01-PLAN.md
 
-Progress: [████░░░░░░] 50% (4/8 phases complete)
+Progress: [████░░░░░░] 56% (9/16 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8 (this milestone)
-- Average duration: 4.9 min
-- Total execution time: 39 min
+- Total plans completed: 9 (this milestone)
+- Average duration: 4.6 min
+- Total execution time: 41 min
 
 **By Phase:**
 
@@ -32,9 +32,10 @@ Progress: [████░░░░░░] 50% (4/8 phases complete)
 | 88-settings-ui | 2 | 7 min | 3.5 min |
 | 89-basic-field-types | 2 | 9 min | 4.5 min |
 | 90-extended-field-types | 2 | 9 min | 4.5 min |
+| 91-detail-view-integration | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 2 min, 6 min, 3 min, 6 min, 3 min
+- Last 5 plans: 6 min, 3 min, 6 min, 3 min, 2 min
 - Trend: Stable velocity
 
 *Updated after each plan completion*
@@ -96,11 +97,11 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-18
-Stopped at: Completed Phase 90 (Extended Field Types)
+Last session: 2026-01-19
+Stopped at: Completed 91-01-PLAN.md
 Resume file: None
 
 ## Next Steps
 
-- Run `/gsd:discuss-phase 91` to gather context for Detail View Integration phase
-- Or run `/gsd:plan-phase 91` to plan the phase directly
+- Run `/gsd:execute-phase 91-02` to continue Detail View Integration phase
+- Plan 91-02: Display custom fields on Person and Organization detail views
