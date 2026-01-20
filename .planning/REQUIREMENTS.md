@@ -41,9 +41,9 @@ Requirements for v6.0 release. Each maps to roadmap phases.
 - [x] **DISP-02**: Custom Fields section on Organization detail view
 - [x] **DISP-03**: Inline editing of custom field values
 - [x] **DISP-04**: Type-appropriate rendering (date pickers, file previews, color swatches, etc.)
-- [ ] **DISP-05**: Custom field columns in People list view
-- [ ] **DISP-06**: Custom field columns in Organizations list view
-- [ ] **DISP-07**: Type-appropriate column rendering (truncated text, icons, badges, etc.)
+- [x] **DISP-05**: Custom field columns in People list view
+- [x] **DISP-06**: Custom field columns in Organizations list view
+- [x] **DISP-07**: Type-appropriate column rendering (truncated text, icons, badges, etc.)
 
 ### Search
 
@@ -58,8 +58,8 @@ Requirements for v6.0 release. Each maps to roadmap phases.
 - [x] **SETT-03**: Add Field form/modal with type selector
 - [x] **SETT-04**: List view of existing fields with edit/delete actions
 - [ ] **SETT-05**: Drag-and-drop reordering of fields
-- [ ] **SETT-06**: "Show in list view" toggle per field
-- [ ] **SETT-07**: Column order configuration for list view fields
+- [x] **SETT-06**: "Show in list view" toggle per field
+- [x] **SETT-07**: Column order configuration for list view fields
 
 ## v2 Requirements
 
@@ -125,9 +125,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISP-02 | Phase 91 | Complete |
 | DISP-03 | Phase 91 | Complete |
 | DISP-04 | Phase 91 | Complete |
-| DISP-05 | Phase 92 | Pending |
-| DISP-06 | Phase 92 | Pending |
-| DISP-07 | Phase 92 | Pending |
+| DISP-05 | Phase 92 | Complete |
+| DISP-06 | Phase 92 | Complete |
+| DISP-07 | Phase 92 | Complete |
 | SRCH-01 | Phase 93 | Pending |
 | SRCH-02 | Phase 93 | Pending |
 | SRCH-03 | Phase 93 | Pending |
@@ -136,8 +136,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SETT-03 | Phase 88 | Complete |
 | SETT-04 | Phase 88 | Complete |
 | SETT-05 | Phase 94 | Pending |
-| SETT-06 | Phase 92 | Pending |
-| SETT-07 | Phase 92 | Pending |
+| SETT-06 | Phase 92 | Complete |
+| SETT-07 | Phase 92 | Complete |
 
 **Coverage:**
 - v1 requirements: 29 total
