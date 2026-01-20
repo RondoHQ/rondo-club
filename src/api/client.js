@@ -268,6 +268,7 @@ export const prmApi = {
   createCustomField: (postType, data) => api.post(`/prm/v1/custom-fields/${postType}`, data),
   updateCustomField: (postType, fieldKey, data) => api.put(`/prm/v1/custom-fields/${postType}/${fieldKey}`, data),
   deleteCustomField: (postType, fieldKey) => api.delete(`/prm/v1/custom-fields/${postType}/${fieldKey}`),
+  reorderCustomFields: (postType, order) => api.put(`/prm/v1/custom-fields/${postType}/order`, { order }),
 
   // Custom Fields metadata (read-only, for display)
   getCustomFieldsMetadata: (postType) => api.get(`/prm/v1/custom-fields/${postType}/metadata`),

@@ -108,6 +108,27 @@ class CustomFields extends WP_REST_Controller {
 			)
 		);
 
+		// Reorder fields route.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<post_type>person|company)/order',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'reorder_items' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'order' => array(
+							'type'        => 'array',
+							'items'       => array( 'type' => 'string' ),
+							'required'    => true,
+							'description' => 'Array of field keys in desired order',
+						),
+					),
+				),
+			)
+		);
+
 		// Single item route: get, update, delete.
 		register_rest_route(
 			$this->namespace,
@@ -324,6 +345,8 @@ class CustomFields extends WP_REST_Controller {
 			'enable_opacity',
 			// List view display settings.
 			'show_in_list_view', 'list_view_order',
+			// Unique validation.
+			'unique',
 		);
 		foreach ( $optional_params as $param ) {
 			if ( $request->has_param( $param ) ) {
@@ -395,6 +418,8 @@ class CustomFields extends WP_REST_Controller {
 			'enable_opacity',
 			// List view display settings.
 			'show_in_list_view', 'list_view_order',
+			// Unique validation.
+			'unique',
 		);
 		foreach ( $updatable_params as $param ) {
 			if ( $request->has_param( $param ) ) {
@@ -444,6 +469,26 @@ class CustomFields extends WP_REST_Controller {
 				'field'   => $result,
 			)
 		);
+	}
+
+	/**
+	 * Reorder custom fields.
+	 *
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return WP_REST_Response|WP_Error Success response or error.
+	 */
+	public function reorder_items( $request ) {
+		$post_type = $request->get_param( 'post_type' );
+		$order     = $request->get_param( 'order' );
+
+		$result = $this->manager->reorder_fields( $post_type, $order );
+
+		if ( is_wp_error( $result ) ) {
+			$result->add_data( array( 'status' => 400 ) );
+			return $result;
+		}
+
+		return rest_ensure_response( array( 'success' => true ) );
 	}
 
 	/**
@@ -644,6 +689,12 @@ class CustomFields extends WP_REST_Controller {
 				'type'        => 'integer',
 				'default'     => 999,
 				'description' => 'Column order in list view (lower = leftmost)',
+			),
+			// Unique validation.
+			'unique' => array(
+				'type'        => 'boolean',
+				'default'     => false,
+				'description' => 'Enforce unique values per post type',
 			),
 		);
 	}
