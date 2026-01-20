@@ -1,7 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Database, Plus, Trash2, Edit2, ShieldAlert } from 'lucide-react';
+import { Database, Plus, Trash2, Edit2, ShieldAlert, GripVertical } from 'lucide-react';
 import { prmApi } from '@/api/client';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Link } from 'react-router-dom';
 import FieldFormPanel from '@/components/FieldFormPanel';
@@ -32,6 +49,75 @@ const FIELD_TYPE_LABELS = {
 };
 
 const STORAGE_KEY = 'caelis-custom-fields-tab';
+
+// Sortable field row component for drag-and-drop
+function SortableFieldRow({ field, onEdit, onDelete, getFieldTypeLabel }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.key });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`group hover:bg-gray-50 dark:hover:bg-gray-800 ${isDragging ? 'shadow-lg opacity-90 bg-white dark:bg-gray-900' : ''}`}
+    >
+      <td className="px-2 py-4 w-10">
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing touch-none"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+      </td>
+      <td className="px-4 py-4 whitespace-nowrap">
+        <div className="font-medium text-gray-900 dark:text-gray-100">
+          {field.label}
+          {field.required && <span className="text-red-500 ml-1">*</span>}
+        </div>
+        {field.instructions && (
+          <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+            {field.instructions}
+          </div>
+        )}
+      </td>
+      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+        {getFieldTypeLabel(field.type)}
+      </td>
+      <td className="px-4 py-4 whitespace-nowrap text-right">
+        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => onEdit(field)}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded"
+            title="Edit"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(field)}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+            title="Delete"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 export default function CustomFields() {
   useDocumentTitle('Custom Fields - Settings');
@@ -122,6 +208,37 @@ export default function CustomFields() {
     },
   });
 
+  // Reorder mutation with optimistic update
+  const reorderMutation = useMutation({
+    mutationFn: async (order) => prmApi.reorderCustomFields(activeTab, order),
+    onMutate: async (order) => {
+      await queryClient.cancelQueries({ queryKey: ['custom-fields', activeTab] });
+      const previousFields = queryClient.getQueryData(['custom-fields', activeTab]);
+      const reorderedFields = order.map(key => previousFields.find(f => f.key === key));
+      queryClient.setQueryData(['custom-fields', activeTab], reorderedFields);
+      return { previousFields };
+    },
+    onError: (err, order, context) => {
+      queryClient.setQueryData(['custom-fields', activeTab], context.previousFields);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['custom-fields', activeTab] });
+    },
+  });
+
+  // Drag-and-drop sensors configuration
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   // Determine which fields to show based on active tab
   const fields = activeTab === 'person' ? personFields : companyFields;
   const isLoading = activeTab === 'person' ? personFieldsLoading : companyFieldsLoading;
@@ -183,6 +300,16 @@ export default function CustomFields() {
     return FIELD_TYPE_LABELS[type] || type;
   };
 
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = fields.findIndex(f => f.key === active.id);
+      const newIndex = fields.findIndex(f => f.key === over.id);
+      const newOrder = arrayMove(fields, oldIndex, newIndex).map(f => f.key);
+      reorderMutation.mutate(newOrder);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="card p-6">
@@ -238,60 +365,45 @@ export default function CustomFields() {
                 No custom fields defined. Click 'Add Field' to create one.
               </p>
             ) : (
-              <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Label
-                      </th>
-                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        <span className="sr-only">Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                    {fields.map((field) => (
-                      <tr key={field.key} className="group hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900 dark:text-gray-100">
-                            {field.label}
-                          </div>
-                          {field.instructions && (
-                            <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                              {field.instructions}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {getFieldTypeLabel(field.type)}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-right">
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => handleEditField(field)}
-                              className="p-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded"
-                              title="Edit"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteField(field)}
-                              className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
+                      <tr>
+                        <th scope="col" className="px-2 py-3 w-10">
+                          <span className="sr-only">Reorder</span>
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Label
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Type
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <span className="sr-only">Actions</span>
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <SortableContext items={fields.map(f => f.key)} strategy={verticalListSortingStrategy}>
+                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                        {fields.map((field) => (
+                          <SortableFieldRow
+                            key={field.key}
+                            field={field}
+                            onEdit={handleEditField}
+                            onDelete={handleDeleteField}
+                            getFieldTypeLabel={getFieldTypeLabel}
+                          />
+                        ))}
+                      </tbody>
+                    </SortableContext>
+                  </table>
+                </div>
+              </DndContext>
             )}
           </div>
         )}
