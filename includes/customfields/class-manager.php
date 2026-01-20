@@ -84,6 +84,9 @@ class Manager {
 		// Relationship field options.
 		'post_type',
 		'filters',
+		// List view display settings.
+		'show_in_list_view',
+		'list_view_order',
 	);
 
 	/**
