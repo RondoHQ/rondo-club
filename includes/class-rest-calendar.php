@@ -1021,10 +1021,11 @@ class Calendar extends Base {
 
 		// Build base meta query to find events with this person matched
 		// _matched_people is a JSON array, we search for the person_id within it
+		// Include trailing comma to prevent partial ID matches (e.g., "person_id":31 matching "person_id":317)
 		$base_meta_query = [
 			[
 				'key'     => '_matched_people',
-				'value'   => '"person_id":' . $person_id,
+				'value'   => '"person_id":' . $person_id . ',',
 				'compare' => 'LIKE',
 			],
 		];
