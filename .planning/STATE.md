@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Admin-defined custom fields for People and Organizations using ACF-native storage
-**Current focus:** v6.0 Custom Fields - Phase 93: Search Integration
+**Current focus:** v6.0 Custom Fields - Phase 94: Polish
 
 ## Current Position
 
 Milestone: v6.0 Custom Fields
-Phase: 93 of 94 (Search Integration)
-Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-01-20 - Completed 93-01-PLAN.md (Custom Field Search Integration)
+Phase: 94 of 94 (Polish)
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-01-20 - Completed 94-01-PLAN.md (Backend Reorder and Validation)
 
-Progress: [███████░░░] 87.5% (7/8 phases complete)
+Progress: [████████░░] 93.75% (7.5/8 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13 (this milestone)
+- Total plans completed: 14 (this milestone)
 - Average duration: 4.2 min
-- Total execution time: 55 min
+- Total execution time: 59 min
 
 **By Phase:**
 
@@ -35,9 +35,10 @@ Progress: [███████░░░] 87.5% (7/8 phases complete)
 | 91-detail-view-integration | 2 | 6 min | 3 min |
 | 92-list-view-integration | 2 | 6 min | 3 min |
 | 93-search-integration | 1 | 4 min | 4 min |
+| 94-polish | 1 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 2 min, 4 min, 3 min, 3 min, 4 min
+- Last 5 plans: 4 min, 3 min, 3 min, 4 min, 4 min
 - Trend: Stable velocity
 
 *Updated after each plan completion*
@@ -83,10 +84,10 @@ Progress: [███████░░░] 87.5% (7/8 phases complete)
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-**Phase 93 decisions:**
-- Custom field matches score 30 (lower than name matches at 60-100, higher than general search at 20)
-- Company search refactored to use same scored pattern as People search
-- Searchable field types: text, textarea, email, url, number, select, checkbox
+**Phase 94 decisions:**
+- menu_order starts at 1, not 0 (ACF convention)
+- Unique validation scoped to current user's posts (per-user uniqueness)
+- Validation class placed in customfields directory for PSR-4 autoloading
 
 ### Pending Todos
 
@@ -104,11 +105,11 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed Phase 93 Plan 01 (Custom Field Search Integration)
+Stopped at: Completed Phase 94 Plan 01 (Backend Reorder and Validation)
 Resume file: None
 
 ## Next Steps
 
-- Phase 93 complete (Search Integration)
-- Run `/gsd:plan-phase 94` to plan the final phase (Filter/Sort Integration)
-- Or run `/gsd:discuss-phase 94` to gather context first
+- Plan 94-01 complete (Backend Reorder and Validation)
+- Continue with Plan 94-02 (Frontend UI)
+- Then v6.0 Custom Fields milestone complete
