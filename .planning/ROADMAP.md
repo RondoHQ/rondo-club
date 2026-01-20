@@ -126,10 +126,10 @@ Plans:
   1. Searching for text in a Text custom field returns matching People/Organizations
   2. Searching for an email in an Email custom field returns matching records
   3. Searching for a URL in a URL custom field returns matching records
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 93-01: TBD
+- [ ] 93-01-PLAN.md - Add custom field search to global_search() with helper methods and scoring
 
 ### Phase 94: Polish
 **Goal**: Complete field management UX with drag-and-drop ordering and validation options
@@ -158,5 +158,5 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 | 90. Extended Field Types | 2/2 | Complete | 2026-01-18 |
 | 91. Detail View Integration | 2/2 | Complete | 2026-01-19 |
 | 92. List View Integration | 2/2 | Complete | 2026-01-20 |
-| 93. Search Integration | 0/TBD | Not started | - |
+| 93. Search Integration | 0/1 | Not started | - |
 | 94. Polish | 0/TBD | Not started | - |
