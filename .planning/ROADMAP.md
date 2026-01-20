@@ -17,7 +17,7 @@ Transform Caelis into a flexible CRM with admin-defined custom fields for People
 - [x] **Phase 91: Detail View Integration** - Custom Fields section on Person/Organization detail pages
 - [x] **Phase 92: List View Integration** - Custom field columns with column configuration
 - [x] **Phase 93: Search Integration** - Include custom fields in global search
-- [ ] **Phase 94: Polish** - Drag-and-drop reorder, validation, placeholders
+- [x] **Phase 94: Polish** - Drag-and-drop reorder, validation, placeholders
 
 ## Phase Details
 
@@ -143,8 +143,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 94-01-PLAN.md - Backend: menu_order, reorder endpoint, unique validation
-- [ ] 94-02-PLAN.md - Frontend: drag-and-drop, required/unique toggles, placeholder expansion
+- [x] 94-01-PLAN.md - Backend: menu_order, reorder endpoint, unique validation
+- [x] 94-02-PLAN.md - Frontend: drag-and-drop, required/unique toggles, placeholder expansion
 
 ## Progress
 
@@ -160,4 +160,4 @@ Phases execute in numeric order: 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> 94
 | 91. Detail View Integration | 2/2 | Complete | 2026-01-19 |
 | 92. List View Integration | 2/2 | Complete | 2026-01-20 |
 | 93. Search Integration | 1/1 | Complete | 2026-01-20 |
-| 94. Polish | 0/2 | Not started | - |
+| 94. Polish | 2/2 | Complete | 2026-01-20 |

@@ -13,10 +13,10 @@ Requirements for v6.0 release. Each maps to roadmap phases.
 - [x] **MGMT-02**: Admin can create custom field definition for Organizations
 - [x] **MGMT-03**: Admin can edit existing field definition (label, description, options)
 - [x] **MGMT-04**: Admin can delete/deactivate field definition (data preserved)
-- [ ] **MGMT-05**: Admin can reorder fields via drag-and-drop
+- [x] **MGMT-05**: Admin can reorder fields via drag-and-drop
 - [x] **MGMT-06**: Field key auto-generates from label (editable)
-- [ ] **MGMT-07**: Admin can set validation options (required, unique)
-- [ ] **MGMT-08**: Admin can set placeholder text for fields
+- [x] **MGMT-07**: Admin can set validation options (required, unique)
+- [x] **MGMT-08**: Admin can set placeholder text for fields
 
 ### Field Types
 
@@ -57,7 +57,7 @@ Requirements for v6.0 release. Each maps to roadmap phases.
 - [x] **SETT-02**: Toggle between People/Organizations field lists
 - [x] **SETT-03**: Add Field form/modal with type selector
 - [x] **SETT-04**: List view of existing fields with edit/delete actions
-- [ ] **SETT-05**: Drag-and-drop reordering of fields
+- [x] **SETT-05**: Drag-and-drop reordering of fields
 - [x] **SETT-06**: "Show in list view" toggle per field
 - [x] **SETT-07**: Column order configuration for list view fields
 
@@ -103,10 +103,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MGMT-02 | Phase 87 | Complete |
 | MGMT-03 | Phase 87 | Complete |
 | MGMT-04 | Phase 87 | Complete |
-| MGMT-05 | Phase 94 | Pending |
+| MGMT-05 | Phase 94 | Complete |
 | MGMT-06 | Phase 87 | Complete |
-| MGMT-07 | Phase 94 | Pending |
-| MGMT-08 | Phase 94 | Pending |
+| MGMT-07 | Phase 94 | Complete |
+| MGMT-08 | Phase 94 | Complete |
 | TYPE-01 | Phase 89 | Complete |
 | TYPE-02 | Phase 89 | Complete |
 | TYPE-03 | Phase 89 | Complete |
@@ -135,7 +135,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SETT-02 | Phase 88 | Complete |
 | SETT-03 | Phase 88 | Complete |
 | SETT-04 | Phase 88 | Complete |
-| SETT-05 | Phase 94 | Pending |
+| SETT-05 | Phase 94 | Complete |
 | SETT-06 | Phase 92 | Complete |
 | SETT-07 | Phase 92 | Complete |
 
@@ -146,4 +146,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-18*
-*Last updated: 2026-01-18 after roadmap creation*
+*Last updated: 2026-01-20 after phase 94 completion - milestone complete*
