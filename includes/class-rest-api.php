@@ -1177,6 +1177,30 @@ class Api extends Base {
 			}
 		}
 
+		// Query 4: Custom field matches (score: 30)
+		$custom_field_names = $this->get_searchable_custom_fields( 'person' );
+		if ( ! empty( $custom_field_names ) ) {
+			$custom_meta_query = $this->build_custom_field_meta_query( $custom_field_names, $query );
+
+			$custom_field_matches = get_posts(
+				[
+					'post_type'      => 'person',
+					'posts_per_page' => 20,
+					'post_status'    => 'publish',
+					'meta_query'     => $custom_meta_query,
+				]
+			);
+
+			foreach ( $custom_field_matches as $person ) {
+				if ( ! isset( $people_results[ $person->ID ] ) ) {
+					$people_results[ $person->ID ] = [
+						'person' => $person,
+						'score'  => 30,
+					];
+				}
+			}
+		}
+
 		// Sort by score descending, take top 10
 		uasort(
 			$people_results,
@@ -1191,18 +1215,87 @@ class Api extends Base {
 			$results['people'][] = $this->format_person_summary( $item['person'] );
 		}
 
-		// Search companies
-		$companies = get_posts(
+		// Search companies with scoring (similar to people)
+		$company_results = [];
+
+		// Query 1: Name field matches (highest priority, score: 60)
+		$name_matches = get_posts(
+			[
+				'post_type'      => 'company',
+				'posts_per_page' => 20,
+				'post_status'    => 'publish',
+				'meta_query'     => [
+					[
+						'key'     => 'name',
+						'value'   => $query,
+						'compare' => 'LIKE',
+					],
+				],
+			]
+		);
+
+		foreach ( $name_matches as $company ) {
+			$company_results[ $company->ID ] = [
+				'company' => $company,
+				'score'   => 60,
+			];
+		}
+
+		// Query 2: General WordPress search (score: 20)
+		$general_company_matches = get_posts(
 			[
 				'post_type'      => 'company',
 				's'              => $query,
-				'posts_per_page' => 10,
+				'posts_per_page' => 20,
 				'post_status'    => 'publish',
 			]
 		);
 
-		foreach ( $companies as $company ) {
-			$results['companies'][] = $this->format_company_summary( $company );
+		foreach ( $general_company_matches as $company ) {
+			if ( ! isset( $company_results[ $company->ID ] ) ) {
+				$company_results[ $company->ID ] = [
+					'company' => $company,
+					'score'   => 20,
+				];
+			}
+		}
+
+		// Query 3: Custom field matches (score: 30)
+		$company_custom_fields = $this->get_searchable_custom_fields( 'company' );
+		if ( ! empty( $company_custom_fields ) ) {
+			$company_meta_query = $this->build_custom_field_meta_query( $company_custom_fields, $query );
+
+			$company_custom_matches = get_posts(
+				[
+					'post_type'      => 'company',
+					'posts_per_page' => 20,
+					'post_status'    => 'publish',
+					'meta_query'     => $company_meta_query,
+				]
+			);
+
+			foreach ( $company_custom_matches as $company ) {
+				if ( ! isset( $company_results[ $company->ID ] ) ) {
+					$company_results[ $company->ID ] = [
+						'company' => $company,
+						'score'   => 30,
+					];
+				}
+			}
+		}
+
+		// Sort by score descending, take top 10
+		uasort(
+			$company_results,
+			function ( $a, $b ) {
+				return $b['score'] - $a['score'];
+			}
+		);
+
+		$company_results = array_slice( $company_results, 0, 10, true );
+
+		foreach ( $company_results as $item ) {
+			$results['companies'][] = $this->format_company_summary( $item['company'] );
 		}
 
 		return rest_ensure_response( $results );
