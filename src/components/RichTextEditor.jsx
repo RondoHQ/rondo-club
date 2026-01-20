@@ -136,6 +136,7 @@ export default function RichTextEditor({
         heading: false, // Disable headings for notes/activities
         codeBlock: false, // Disable code blocks
         blockquote: false, // Disable blockquotes
+        link: false, // Disable - we add Link separately with custom config below
       }),
       Placeholder.configure({
         placeholder,
