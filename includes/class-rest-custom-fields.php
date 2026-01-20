@@ -67,6 +67,10 @@ class CustomFields extends WP_REST_Controller {
 
 	/**
 	 * Register REST routes.
+	 *
+	 * IMPORTANT: Route order matters! More specific routes (like /metadata) must be
+	 * registered BEFORE more general patterns (like /{field_key}) to ensure correct
+	 * routing. The field_key pattern [a-z0-9_-]+ would otherwise match "metadata".
 	 */
 	public function register_routes() {
 		// Collection route: list and create.
@@ -85,6 +89,21 @@ class CustomFields extends WP_REST_Controller {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => $this->get_create_params(),
+				),
+			)
+		);
+
+		// Read-only metadata route for non-admin users (detail view display).
+		// MUST be registered BEFORE the single item route to avoid "metadata"
+		// being matched by the field_key pattern.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<post_type>person|company)/metadata',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_field_metadata' ),
+					'permission_callback' => array( $this, 'get_field_metadata_permissions_check' ),
 				),
 			)
 		);
@@ -109,19 +128,6 @@ class CustomFields extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
-				),
-			)
-		);
-
-		// Read-only metadata route for non-admin users (detail view display).
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/(?P<post_type>person|company)/metadata',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_field_metadata' ),
-					'permission_callback' => array( $this, 'get_field_metadata_permissions_check' ),
 				),
 			)
 		);
