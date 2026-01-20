@@ -52,6 +52,7 @@ use Caelis\CardDAV\Server as CardDAVServer;
 use Caelis\Data\InverseRelationships;
 use Caelis\Data\TodoMigration;
 use Caelis\CustomFields\Manager as CustomFieldsManager;
+use Caelis\CustomFields\Validation as CustomFieldsValidation;
 use Caelis\REST\CustomFields as RESTCustomFields;
 
 define( 'PRM_THEME_DIR', get_template_directory() );
@@ -240,6 +241,9 @@ if ( ! class_exists( 'PRM_Credential_Encryption' ) ) {
 if ( ! class_exists( 'PRM_Custom_Fields_Manager' ) ) {
 	class_alias( CustomFieldsManager::class, 'PRM_Custom_Fields_Manager' );
 }
+if ( ! class_exists( 'PRM_Custom_Fields_Validation' ) ) {
+	class_alias( CustomFieldsValidation::class, 'PRM_Custom_Fields_Validation' );
+}
 if ( ! class_exists( 'PRM_REST_Custom_Fields' ) ) {
 	class_alias( RESTCustomFields::class, 'PRM_REST_Custom_Fields' );
 }
@@ -321,6 +325,9 @@ function prm_init() {
 		new CommentTypes();
 		new WorkspaceMembers();
 		new MentionNotifications();
+
+		// Initialize custom field validation (unique constraint).
+		new CustomFieldsValidation();
 
 		// Initialize Google Contacts export hooks (save_post triggers cron job)
 		GoogleContactsExport::init();
