@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] - 2026-01-20
+
+### Added
+- Custom Fields system for admin-defined fields on People and Organizations
+- Settings UI for creating, editing, and deleting custom fields
+- Support for 14 field types: Text, Textarea, Number, Email, URL, Date, Select, Checkbox, True/False, Image, File, Link, Color, Relationship
+- Drag-and-drop field reordering with optimistic updates
+- Required and unique field validation options
+- Custom field display in detail views with type-appropriate rendering
+- Custom field columns in list views (configurable per field)
+- Custom field search integration in People and Organizations
+- ACF-native storage using field groups and subfield patterns
+
 ## [5.0.0] - 2026-01-18
 
 ### Added
