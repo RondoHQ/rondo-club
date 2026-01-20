@@ -4,9 +4,10 @@ import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, 
 import { usePeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useQuery } from '@tanstack/react-query';
-import { wpApi } from '@/api/client';
+import { wpApi, prmApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
 import PersonEditModal from '@/components/PersonEditModal';
+import CustomFieldColumn from '@/components/CustomFieldColumn';
 
 // Helper function to get current company ID from person's work history
 function getCurrentCompanyId(person) {
@@ -29,7 +30,7 @@ function getCurrentCompanyId(person) {
   return jobsWithCompany.length > 0 ? jobsWithCompany[0].company : null;
 }
 
-function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSelection, isOdd }) {
+function PersonListRow({ person, companyName, workspaces, listViewFields, isSelected, onToggleSelection, isOdd }) {
   const assignedWorkspaces = person.acf?._assigned_workspaces || [];
   const workspaceNames = assignedWorkspaces
     .map(wsId => {
@@ -111,6 +112,11 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
           '-'
         )}
       </td>
+      {listViewFields.map(field => (
+        <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+          <CustomFieldColumn field={field} value={person.acf?.[field.name]} />
+        </td>
+      ))}
     </tr>
   );
 }
@@ -139,6 +145,22 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
 }
 
 function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
+  // Fetch custom field definitions for list view columns
+  const { data: customFields = [] } = useQuery({
+    queryKey: ['custom-fields-metadata', 'person'],
+    queryFn: async () => {
+      const response = await prmApi.getCustomFieldsMetadata('person');
+      return response.data;
+    },
+  });
+
+  // Filter to list-view-enabled fields, sorted by order
+  const listViewFields = useMemo(() => {
+    return customFields
+      .filter(f => f.show_in_list_view)
+      .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
+  }, [customFields]);
+
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -165,6 +187,15 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
             <SortableHeader field="organization" label="Organization" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="workspace" label="Workspace" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="labels" label="Labels" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            {listViewFields.map(field => (
+              <th
+                key={field.key}
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
+              >
+                {field.label}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -174,6 +205,7 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
               person={person}
               companyName={companyMap[person.id]}
               workspaces={workspaces}
+              listViewFields={listViewFields}
               isSelected={selectedIds.has(person.id)}
               onToggleSelection={onToggleSelection}
               isOdd={index % 2 === 1}

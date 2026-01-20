@@ -4,9 +4,10 @@ import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, A
 import { useQuery } from '@tanstack/react-query';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useCreateCompany, useBulkUpdateCompanies } from '@/hooks/useCompanies';
-import { wpApi } from '@/api/client';
+import { wpApi, prmApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
 import CompanyEditModal from '@/components/CompanyEditModal';
+import CustomFieldColumn from '@/components/CustomFieldColumn';
 
 // Bulk Visibility Modal Component for Organizations
 function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoading }) {
@@ -328,7 +329,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
   );
 }
 
-function OrganizationListRow({ company, workspaces, isSelected, onToggleSelection, isOdd }) {
+function OrganizationListRow({ company, workspaces, listViewFields, isSelected, onToggleSelection, isOdd }) {
   const assignedWorkspaces = company.acf?._assigned_workspaces || [];
   const workspaceNames = assignedWorkspaces
     .map(wsId => {
@@ -391,6 +392,11 @@ function OrganizationListRow({ company, workspaces, isSelected, onToggleSelectio
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
         {workspaceNames || '-'}
       </td>
+      {listViewFields.map(field => (
+        <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+          <CustomFieldColumn field={field} value={company.acf?.[field.name]} />
+        </td>
+      ))}
     </tr>
   );
 }
@@ -419,6 +425,22 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
 }
 
 function OrganizationListView({ companies, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
+  // Fetch custom field definitions for list view columns
+  const { data: customFields = [] } = useQuery({
+    queryKey: ['custom-fields-metadata', 'company'],
+    queryFn: async () => {
+      const response = await prmApi.getCustomFieldsMetadata('company');
+      return response.data;
+    },
+  });
+
+  // Filter to list-view-enabled fields, sorted by order
+  const listViewFields = useMemo(() => {
+    return customFields
+      .filter(f => f.show_in_list_view)
+      .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
+  }, [customFields]);
+
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -444,6 +466,15 @@ function OrganizationListView({ companies, workspaces, selectedIds, onToggleSele
             <SortableHeader field="industry" label="Industry" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="website" label="Website" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="workspace" label="Workspace" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            {listViewFields.map(field => (
+              <th
+                key={field.key}
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
+              >
+                {field.label}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -452,6 +483,7 @@ function OrganizationListView({ companies, workspaces, selectedIds, onToggleSele
               key={company.id}
               company={company}
               workspaces={workspaces}
+              listViewFields={listViewFields}
               isSelected={selectedIds.has(company.id)}
               onToggleSelection={onToggleSelection}
               isOdd={index % 2 === 1}
