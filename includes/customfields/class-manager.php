@@ -87,6 +87,10 @@ class Manager {
 		// List view display settings.
 		'show_in_list_view',
 		'list_view_order',
+		// Field ordering.
+		'menu_order',
+		// Unique validation.
+		'unique',
 	);
 
 	/**
@@ -421,6 +425,29 @@ class Manager {
 	 */
 	public function get_field( string $field_key ) {
 		return acf_get_field( $field_key );
+	}
+
+	/**
+	 * Reorder fields by setting menu_order.
+	 *
+	 * @param string $post_type  The post type.
+	 * @param array  $field_keys Array of field keys in desired order.
+	 * @return bool|WP_Error True on success, WP_Error on failure.
+	 */
+	public function reorder_fields( string $post_type, array $field_keys ) {
+		if ( ! $this->is_valid_post_type( $post_type ) ) {
+			return new WP_Error( 'invalid_post_type', 'Invalid post type.' );
+		}
+
+		foreach ( $field_keys as $menu_order => $field_key ) {
+			$field = acf_get_field( $field_key );
+			if ( $field ) {
+				$field['menu_order'] = $menu_order + 1; // Start at 1, not 0.
+				acf_update_field( $field );
+			}
+		}
+
+		return true;
 	}
 
 	/**
