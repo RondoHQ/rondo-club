@@ -122,7 +122,7 @@ function SearchableCountrySelector({ value, onChange, disabled }) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+          className="absolute z-20 w-full bottom-full mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
         >
           {filteredCountries.length > 0 ? (
             filteredCountries.map(country => (
