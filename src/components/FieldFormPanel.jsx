@@ -80,6 +80,9 @@ const getDefaultFormData = () => ({
   // List view options
   show_in_list_view: false,
   list_view_order: 999,
+  // Validation options
+  required: false,
+  unique: false,
 });
 
 // Convert choices object to newline-separated string
@@ -187,6 +190,9 @@ export default function FieldFormPanel({
           // List view options
           show_in_list_view: field.show_in_list_view ?? false,
           list_view_order: field.list_view_order ?? 999,
+          // Validation options
+          required: field.required ?? false,
+          unique: field.unique ?? false,
         });
       } else {
         setFormData(getDefaultFormData());
@@ -278,6 +284,7 @@ export default function FieldFormPanel({
       if (formData.step !== '') submitData.step = Number(formData.step);
       if (formData.prepend) submitData.prepend = formData.prepend;
       if (formData.append) submitData.append = formData.append;
+      if (formData.placeholder) submitData.placeholder = formData.placeholder;
     }
 
     if (formData.type === 'select' || formData.type === 'checkbox') {
@@ -287,6 +294,7 @@ export default function FieldFormPanel({
       }
       if (formData.type === 'select') {
         submitData.allow_null = formData.allow_null;
+        if (formData.placeholder) submitData.placeholder = formData.placeholder;
       }
       if (formData.type === 'checkbox') {
         submitData.layout = formData.layout;
@@ -356,6 +364,10 @@ export default function FieldFormPanel({
     if (formData.show_in_list_view) {
       submitData.list_view_order = Number(formData.list_view_order) || 999;
     }
+
+    // Validation options
+    submitData.required = formData.required;
+    submitData.unique = formData.unique;
 
     await onSubmit(submitData);
   };
@@ -572,6 +584,20 @@ export default function FieldFormPanel({
                 />
               </div>
             </div>
+            <div>
+              <label htmlFor="placeholder" className={labelClass}>
+                Placeholder
+              </label>
+              <input
+                id="placeholder"
+                name="placeholder"
+                type="text"
+                value={formData.placeholder}
+                onChange={handleChange}
+                placeholder="e.g., Enter amount"
+                className={inputClass}
+              />
+            </div>
           </div>
         );
 
@@ -729,6 +755,21 @@ export default function FieldFormPanel({
               <label htmlFor="allow_null" className="text-sm text-gray-700 dark:text-gray-300">
                 Allow null (empty option)
               </label>
+            </div>
+            <div>
+              <label htmlFor="placeholder" className={labelClass}>
+                Placeholder
+              </label>
+              <input
+                id="placeholder"
+                name="placeholder"
+                type="text"
+                value={formData.placeholder}
+                onChange={handleChange}
+                placeholder="e.g., Select an option..."
+                className={inputClass}
+              />
+              <p className={hintClass}>Shown when no option is selected</p>
             </div>
           </div>
         );
@@ -1253,6 +1294,42 @@ export default function FieldFormPanel({
 
               {/* Type-specific options */}
               {renderTypeOptions()}
+
+              {/* Validation Options */}
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Validation Options</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="required"
+                      name="required"
+                      type="checkbox"
+                      checked={formData.required}
+                      onChange={handleChange}
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                    />
+                    <label htmlFor="required" className="text-sm text-gray-700 dark:text-gray-300">
+                      Required field
+                    </label>
+                  </div>
+                  <p className={hintClass}>Users must provide a value when saving</p>
+
+                  <div className="flex items-center gap-2 mt-4">
+                    <input
+                      id="unique"
+                      name="unique"
+                      type="checkbox"
+                      checked={formData.unique}
+                      onChange={handleChange}
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                    />
+                    <label htmlFor="unique" className="text-sm text-gray-700 dark:text-gray-300">
+                      Unique value
+                    </label>
+                  </div>
+                  <p className={hintClass}>No two records can have the same value for this field</p>
+                </div>
+              </div>
 
               {/* Display Options */}
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
