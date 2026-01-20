@@ -77,6 +77,9 @@ const getDefaultFormData = () => ({
   relationship_min: 0,
   relationship_max: 1,
   relationship_return_format: 'object',
+  // List view options
+  show_in_list_view: false,
+  list_view_order: 999,
 });
 
 // Convert choices object to newline-separated string
@@ -181,6 +184,9 @@ export default function FieldFormPanel({
           relationship_min: field.min ?? 0,
           relationship_max: field.max ?? 1,
           relationship_return_format: relationshipReturnFormat,
+          // List view options
+          show_in_list_view: field.show_in_list_view ?? false,
+          list_view_order: field.list_view_order ?? 999,
         });
       } else {
         setFormData(getDefaultFormData());
@@ -343,6 +349,12 @@ export default function FieldFormPanel({
       submitData.max = formData.relationship_max;
       submitData.return_format = formData.relationship_return_format;
       submitData.filters = ['search', 'post_type'];
+    }
+
+    // List view settings
+    submitData.show_in_list_view = formData.show_in_list_view;
+    if (formData.show_in_list_view) {
+      submitData.list_view_order = Number(formData.list_view_order) || 999;
     }
 
     await onSubmit(submitData);
@@ -1241,6 +1253,45 @@ export default function FieldFormPanel({
 
               {/* Type-specific options */}
               {renderTypeOptions()}
+
+              {/* Display Options */}
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Display Options</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="show_in_list_view"
+                      name="show_in_list_view"
+                      type="checkbox"
+                      checked={formData.show_in_list_view}
+                      onChange={handleChange}
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                    />
+                    <label htmlFor="show_in_list_view" className="text-sm text-gray-700 dark:text-gray-300">
+                      Show as column in list view
+                    </label>
+                  </div>
+                  {formData.show_in_list_view && (
+                    <div>
+                      <label htmlFor="list_view_order" className={labelClass}>
+                        Column Order
+                      </label>
+                      <input
+                        id="list_view_order"
+                        name="list_view_order"
+                        type="number"
+                        min="1"
+                        max="999"
+                        value={formData.list_view_order}
+                        onChange={handleChange}
+                        placeholder="999"
+                        className={`${inputClass} w-24`}
+                      />
+                      <p className={hintClass}>Lower numbers appear first (1 = leftmost)</p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Description/Instructions field */}
               <div>
