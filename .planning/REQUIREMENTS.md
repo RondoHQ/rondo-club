@@ -47,9 +47,9 @@ Requirements for v6.0 release. Each maps to roadmap phases.
 
 ### Search
 
-- [ ] **SRCH-01**: Text custom field values included in global search
-- [ ] **SRCH-02**: Email custom field values included in global search
-- [ ] **SRCH-03**: URL custom field values included in global search
+- [x] **SRCH-01**: Text custom field values included in global search
+- [x] **SRCH-02**: Email custom field values included in global search
+- [x] **SRCH-03**: URL custom field values included in global search
 
 ### Settings UI
 
@@ -128,9 +128,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISP-05 | Phase 92 | Complete |
 | DISP-06 | Phase 92 | Complete |
 | DISP-07 | Phase 92 | Complete |
-| SRCH-01 | Phase 93 | Pending |
-| SRCH-02 | Phase 93 | Pending |
-| SRCH-03 | Phase 93 | Pending |
+| SRCH-01 | Phase 93 | Complete |
+| SRCH-02 | Phase 93 | Complete |
+| SRCH-03 | Phase 93 | Complete |
 | SETT-01 | Phase 88 | Complete |
 | SETT-02 | Phase 88 | Complete |
 | SETT-03 | Phase 88 | Complete |
