@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-18)
 
 **Core value:** Admin-defined custom fields for People and Organizations using ACF-native storage
-**Current focus:** v6.0 Custom Fields - Phase 94: Polish
+**Current focus:** v6.0 Custom Fields - COMPLETE
 
 ## Current Position
 
 Milestone: v6.0 Custom Fields
-Phase: 94 of 94 (Polish)
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-01-20 - Completed 94-01-PLAN.md (Backend Reorder and Validation)
+Phase: 94 of 94 (Polish) - COMPLETE
+Plan: 2 of 2 complete
+Status: Milestone complete
+Last activity: 2026-01-20 - Completed 94-02-PLAN.md (Frontend UI)
 
-Progress: [████████░░] 93.75% (7.5/8 phases complete)
+Progress: [██████████] 100% (8/8 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14 (this milestone)
+- Total plans completed: 15 (this milestone)
 - Average duration: 4.2 min
-- Total execution time: 59 min
+- Total execution time: 63 min
 
 **By Phase:**
 
@@ -35,10 +35,10 @@ Progress: [████████░░] 93.75% (7.5/8 phases complete)
 | 91-detail-view-integration | 2 | 6 min | 3 min |
 | 92-list-view-integration | 2 | 6 min | 3 min |
 | 93-search-integration | 1 | 4 min | 4 min |
-| 94-polish | 1 | 4 min | 4 min |
+| 94-polish | 2 | 8 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 4 min, 3 min, 3 min, 4 min, 4 min
+- Last 5 plans: 3 min, 3 min, 4 min, 4 min, 4 min
 - Trend: Stable velocity
 
 *Updated after each plan completion*
@@ -75,8 +75,9 @@ Progress: [████████░░] 93.75% (7.5/8 phases complete)
 | v4.9 Dashboard & Calendar Polish | 77-78 | 4 | 2026-01-17 |
 | v5.0 Google Contacts Sync | 79-85 | 16 | 2026-01-18 |
 | v5.0.1 Meeting Card Polish | 86 | 1 | 2026-01-18 |
+| v6.0 Custom Fields | 87-94 | 15 | 2026-01-20 |
 
-**Total:** 28 milestones, 86 phases, 164 plans completed
+**Total:** 29 milestones, 94 phases, 179 plans completed
 
 ## Accumulated Context
 
@@ -88,6 +89,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - menu_order starts at 1, not 0 (ACF convention)
 - Unique validation scoped to current user's posts (per-user uniqueness)
 - Validation class placed in customfields directory for PSR-4 autoloading
+- SortableFieldRow pattern for drag-drop in tables using dnd-kit
 
 ### Pending Todos
 
@@ -105,11 +107,11 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed Phase 94 Plan 01 (Backend Reorder and Validation)
+Stopped at: Completed v6.0 Custom Fields milestone
 Resume file: None
 
 ## Next Steps
 
-- Plan 94-01 complete (Backend Reorder and Validation)
-- Continue with Plan 94-02 (Frontend UI)
-- Then v6.0 Custom Fields milestone complete
+- v6.0 Custom Fields milestone complete
+- All custom field features shipped: ACF backend, Settings UI, all field types, detail view, list view, search, drag-drop reordering, validation
+- Ready for next milestone
