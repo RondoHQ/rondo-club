@@ -1654,6 +1654,67 @@ class Api extends Base {
 	}
 
 	/**
+	 * Get searchable custom field names for a post type.
+	 *
+	 * Retrieves active custom fields that contain user-searchable text content.
+	 * Fields like Image, File, Color, Relationship, Link, Date, True/False are excluded.
+	 *
+	 * @param string $post_type 'person' or 'company'.
+	 * @return array Array of field names (meta keys) to search.
+	 */
+	private function get_searchable_custom_fields( string $post_type ): array {
+		$manager = new \Caelis\CustomFields\Manager();
+		$fields  = $manager->get_fields( $post_type, false ); // Active only.
+
+		// Searchable field types (text-based content).
+		$searchable_types = array(
+			'text',
+			'textarea',
+			'email',
+			'url',
+			'number',
+			'select',
+			'checkbox',
+		);
+
+		$field_names = array();
+		foreach ( $fields as $field ) {
+			if ( in_array( $field['type'], $searchable_types, true ) ) {
+				$field_names[] = $field['name'];
+			}
+		}
+
+		return $field_names;
+	}
+
+	/**
+	 * Build meta_query array for custom field search.
+	 *
+	 * Creates an OR-relation meta query to search multiple custom fields.
+	 *
+	 * @param array  $field_names Array of field names to search.
+	 * @param string $query       Search query string.
+	 * @return array Meta query array for get_posts().
+	 */
+	private function build_custom_field_meta_query( array $field_names, string $query ): array {
+		if ( empty( $field_names ) ) {
+			return array();
+		}
+
+		$meta_query = array( 'relation' => 'OR' );
+
+		foreach ( $field_names as $field_name ) {
+			$meta_query[] = array(
+				'key'     => $field_name,
+				'value'   => $query,
+				'compare' => 'LIKE',
+			);
+		}
+
+		return $meta_query;
+	}
+
+	/**
 	 * Search users for sharing functionality
 	 *
 	 * @param WP_REST_Request $request The REST request object.
