@@ -455,6 +455,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Caelis\\Core\\UserRoles' => __DIR__ . '/../..' . '/includes/class-user-roles.php',
         'Caelis\\Core\\Visibility' => __DIR__ . '/../..' . '/includes/class-visibility.php',
         'Caelis\\CustomFields\\Manager' => __DIR__ . '/../..' . '/includes/customfields/class-manager.php',
+        'Caelis\\CustomFields\\Validation' => __DIR__ . '/../..' . '/includes/customfields/class-validation.php',
         'Caelis\\Data\\CredentialEncryption' => __DIR__ . '/../..' . '/includes/class-credential-encryption.php',
         'Caelis\\Data\\InverseRelationships' => __DIR__ . '/../..' . '/includes/class-inverse-relationships.php',
         'Caelis\\Data\\TodoMigration' => __DIR__ . '/../..' . '/includes/class-todo-migration.php',

@@ -100,6 +100,7 @@ return array(
     'Caelis\\Core\\UserRoles' => $baseDir . '/includes/class-user-roles.php',
     'Caelis\\Core\\Visibility' => $baseDir . '/includes/class-visibility.php',
     'Caelis\\CustomFields\\Manager' => $baseDir . '/includes/customfields/class-manager.php',
+    'Caelis\\CustomFields\\Validation' => $baseDir . '/includes/customfields/class-validation.php',
     'Caelis\\Data\\CredentialEncryption' => $baseDir . '/includes/class-credential-encryption.php',
     'Caelis\\Data\\InverseRelationships' => $baseDir . '/includes/class-inverse-relationships.php',
     'Caelis\\Data\\TodoMigration' => $baseDir . '/includes/class-todo-migration.php',
