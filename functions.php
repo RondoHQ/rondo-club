@@ -28,6 +28,7 @@ use Caelis\REST\Slack;
 use Caelis\REST\ImportExport;
 use Caelis\REST\Calendar as RESTCalendar;
 use Caelis\REST\GoogleContacts as RESTGoogleContacts;
+use Caelis\REST\Feedback as RESTFeedback;
 use Caelis\Calendar\Connections;
 use Caelis\Calendar\Matcher;
 use Caelis\Calendar\Sync;
@@ -146,6 +147,9 @@ if ( ! class_exists( 'PRM_REST_Import_Export' ) ) {
 }
 if ( ! class_exists( 'PRM_REST_Calendar' ) ) {
 	class_alias( RESTCalendar::class, 'PRM_REST_Calendar' );
+}
+if ( ! class_exists( 'PRM_REST_Feedback' ) ) {
+	class_alias( RESTFeedback::class, 'PRM_REST_Feedback' );
 }
 
 // Calendar classes
@@ -345,6 +349,7 @@ function prm_init() {
 		new RESTCalendar();
 		new RESTGoogleContacts();
 		new RESTCustomFields();
+		new RESTFeedback();
 		new Monica();
 		new VCardImport();
 		new GoogleContacts();
