@@ -29,19 +29,9 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
 fi
 
-# Source .env file (handle comments and empty lines)
+# Source .env file (using source for proper variable expansion)
 set -a
-while IFS='=' read -r key value; do
-    # Skip comments and empty lines
-    [[ $key =~ ^#.*$ ]] && continue
-    [[ -z $key ]] && continue
-    # Remove leading/trailing whitespace and export
-    key=$(echo "$key" | xargs)
-    value=$(echo "$value" | xargs)
-    if [ -n "$key" ] && [ -n "$value" ]; then
-        export "$key=$value"
-    fi
-done < "$ENV_FILE"
+source "$ENV_FILE"
 set +a
 
 # Validate required variables

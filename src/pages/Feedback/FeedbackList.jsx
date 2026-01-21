@@ -195,24 +195,24 @@ export default function FeedbackList() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   {/* Type badge */}
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[item.feedback_type]}`}>
-                    {item.feedback_type === 'bug' ? (
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[item.meta.feedback_type]}`}>
+                    {item.meta.feedback_type === 'bug' ? (
                       <Bug className="w-3 h-3" />
                     ) : (
                       <Lightbulb className="w-3 h-3" />
                     )}
-                    {typeLabels[item.feedback_type]}
+                    {typeLabels[item.meta.feedback_type]}
                   </span>
                   {/* Status badge */}
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[item.status]}`}>
-                    {statusLabels[item.status]}
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[item.meta.status]}`}>
+                    {statusLabels[item.meta.status]}
                   </span>
                 </div>
                 <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
                   {item.title}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {format(new Date(item.created_at), 'MMM d, yyyy')}
+                  {format(new Date(item.date), 'MMM d, yyyy')}
                 </p>
               </div>
             </Link>
