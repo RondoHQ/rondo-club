@@ -316,7 +316,9 @@ class CustomFields extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Created field or error.
 	 */
 	public function create_item( $request ) {
-		$post_type    = $request->get_param( 'post_type' );
+		// Use URL params explicitly to avoid conflict with body param 'post_type' (relationship field option).
+		$url_params = $request->get_url_params();
+		$post_type  = $url_params['post_type'];
 		$field_config = array(
 			'label' => $request->get_param( 'label' ),
 			'type'  => $request->get_param( 'type' ),
@@ -339,8 +341,8 @@ class CustomFields extends WP_REST_Controller {
 			// Image/File field options.
 			'preview_size', 'library', 'min_width', 'max_width', 'min_height', 'max_height',
 			'min_size', 'max_size', 'mime_types',
-			// Relationship field options.
-			'post_type', 'filters',
+			// Relationship field options (uses 'relation_post_types' to avoid conflict with URL param).
+			'relation_post_types', 'filters',
 			// Color picker options.
 			'enable_opacity',
 			// List view display settings.
@@ -352,6 +354,12 @@ class CustomFields extends WP_REST_Controller {
 			if ( $request->has_param( $param ) ) {
 				$field_config[ $param ] = $request->get_param( $param );
 			}
+		}
+
+		// Map relation_post_types back to post_type for ACF.
+		if ( isset( $field_config['relation_post_types'] ) ) {
+			$field_config['post_type'] = $field_config['relation_post_types'];
+			unset( $field_config['relation_post_types'] );
 		}
 
 		$result = $this->manager->create_field( $post_type, $field_config );
@@ -412,8 +420,8 @@ class CustomFields extends WP_REST_Controller {
 			// Image/File field options.
 			'preview_size', 'library', 'min_width', 'max_width', 'min_height', 'max_height',
 			'min_size', 'max_size', 'mime_types',
-			// Relationship field options.
-			'post_type', 'filters',
+			// Relationship field options (uses 'relation_post_types' to avoid conflict with URL param).
+			'relation_post_types', 'filters',
 			// Color picker options.
 			'enable_opacity',
 			// List view display settings.
@@ -425,6 +433,12 @@ class CustomFields extends WP_REST_Controller {
 			if ( $request->has_param( $param ) ) {
 				$updates[ $param ] = $request->get_param( $param );
 			}
+		}
+
+		// Map relation_post_types back to post_type for ACF.
+		if ( isset( $updates['relation_post_types'] ) ) {
+			$updates['post_type'] = $updates['relation_post_types'];
+			unset( $updates['relation_post_types'] );
 		}
 
 		$result = $this->manager->update_field( $field_key, $updates );
@@ -663,8 +677,8 @@ class CustomFields extends WP_REST_Controller {
 				'type'        => 'string',
 				'description' => 'Allowed mime types comma-separated (Image/File field)',
 			),
-			// Relationship field options.
-			'post_type'      => array(
+			// Relationship field options (uses 'relation_post_types' to avoid conflict with URL param 'post_type').
+			'relation_post_types' => array(
 				'type'        => 'array',
 				'description' => 'Allowed post types for relationship (Relationship field)',
 				'items'       => array( 'type' => 'string' ),
