@@ -14,7 +14,7 @@
 #   bin/get-feedback.sh | claude
 #
 
-set -e
+# Don't use set -e - we want to handle errors ourselves and log them
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,6 +23,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Lock file to prevent concurrent runs
 LOCK_FILE="/tmp/caelis-feedback-claude.lock"
 LOCK_CREATED=false
+SCRIPT_COMPLETED=false
 
 # Check if another instance is already running
 check_lock() {
@@ -47,13 +48,33 @@ create_lock() {
     LOCK_CREATED=true
 }
 
-# Remove lock file on exit (only if we created it)
+# Remove lock file on exit and log unexpected exits
 cleanup() {
+    local exit_code=$?
     if [ "$LOCK_CREATED" = true ]; then
+        if [ "$SCRIPT_COMPLETED" = false ]; then
+            # Script exited without completing - log this
+            # Log function may not be available yet, write directly
+            local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+            echo "[$timestamp] [ERROR] Script exited unexpectedly (exit code: $exit_code, signal: $TRAPPED_SIGNAL)" >> "$PROJECT_ROOT/logs/feedback-processor.log"
+        fi
         rm -f "$LOCK_FILE"
     fi
 }
+
+# Handle termination signals
+handle_signal() {
+    TRAPPED_SIGNAL="$1"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[$timestamp] [ERROR] Script received signal: $TRAPPED_SIGNAL" >> "$PROJECT_ROOT/logs/feedback-processor.log"
+    exit 1
+}
+
+TRAPPED_SIGNAL=""
 trap cleanup EXIT
+trap 'handle_signal SIGTERM' SIGTERM
+trap 'handle_signal SIGINT' SIGINT
+trap 'handle_signal SIGHUP' SIGHUP
 
 # Colors for stderr output
 RED='\033[0;31m'
@@ -224,6 +245,7 @@ fi
 if [ "$ITEM_COUNT" = "0" ] || [ "$ITEM_COUNT" = "null" ]; then
     log "INFO" "No feedback items found matching criteria"
     echo -e "${GREEN}No feedback items found matching your criteria.${NC}" >&2
+    SCRIPT_COMPLETED=true
     exit 0
 fi
 
@@ -240,6 +262,7 @@ echo -e "${GREEN}Retrieved feedback #${DISPLAY_ID}${NC}" >&2
 # Output based on format
 if [ "$OUTPUT_FORMAT" = "json" ]; then
     echo "$BODY" | jq .
+    SCRIPT_COMPLETED=true
     exit 0
 fi
 
@@ -400,10 +423,15 @@ if [ "$RUN_CLAUDE" = true ]; then
         fi
     else
         log "ERROR" "Claude session failed (exit code: $CLAUDE_EXIT)"
+        log "DEBUG" "Claude output was:"
+        echo "$CLAUDE_OUTPUT" >> "$LOG_FILE"
+        log "DEBUG" "--- End of Claude output ---"
         echo -e "${RED}Claude session failed (exit code: $CLAUDE_EXIT)${NC}" >&2
     fi
 
     log "INFO" "=== Script finished ==="
+    SCRIPT_COMPLETED=true
 else
     echo "$OUTPUT"
+    SCRIPT_COMPLETED=true
 fi
