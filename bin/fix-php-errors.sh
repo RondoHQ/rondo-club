@@ -104,6 +104,12 @@ set -a
 source "$ENV_FILE"
 set +a
 
+# Add HOMEBREW_PATH to PATH if set (needed for cron/launchd which don't have full PATH)
+# This ensures node, claude, and other homebrew binaries are found
+if [ -n "$HOMEBREW_PATH" ]; then
+    export PATH="$HOMEBREW_PATH:$PATH"
+fi
+
 # Validate required environment variables
 REQUIRED_VARS=(
     "DEPLOY_SSH_HOST"

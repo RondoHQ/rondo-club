@@ -110,6 +110,12 @@ set -a
 source "$ENV_FILE"
 set +a
 
+# Add HOMEBREW_PATH to PATH if set (needed for cron/launchd which don't have full PATH)
+# This ensures node, claude, and other homebrew binaries are found
+if [ -n "$HOMEBREW_PATH" ]; then
+    export PATH="$HOMEBREW_PATH:$PATH"
+fi
+
 # Validate required variables
 if [ -z "$CAELIS_API_URL" ] || [ -z "$CAELIS_API_USER" ] || [ -z "$CAELIS_API_PASSWORD" ]; then
     echo -e "${RED}Error: API credentials not configured in .env${NC}" >&2
