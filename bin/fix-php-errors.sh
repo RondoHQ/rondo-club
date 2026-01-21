@@ -191,13 +191,53 @@ fi
 LOG_SIZE=$(wc -c < "$TEMP_LOG" | tr -d ' ')
 log "INFO" "Fetched debug.log ($LOG_SIZE bytes)"
 
-# Step 2: Filter for Caelis-related errors
-echo -e "${YELLOW}Filtering for Caelis theme errors...${NC}" >&2
+# Step 2: Filter for Caelis-related errors from the last hour
+echo -e "${YELLOW}Filtering for Caelis theme errors (last hour only)...${NC}" >&2
+
+# Calculate cutoff time (1 hour ago)
+CUTOFF_TIME=$(date -v-1H +%s 2>/dev/null || date -d '1 hour ago' +%s)
+
+# Function to check if log timestamp is within the last hour
+# WordPress debug.log format: [21-Jan-2026 22:20:01 UTC]
+is_recent() {
+    local log_line="$1"
+    # Extract timestamp from log line
+    if [[ $log_line =~ \[([0-9]{2})-([A-Za-z]{3})-([0-9]{4})\ ([0-9]{2}):([0-9]{2}):([0-9]{2})\ UTC\] ]]; then
+        local day="${BASH_REMATCH[1]}"
+        local month="${BASH_REMATCH[2]}"
+        local year="${BASH_REMATCH[3]}"
+        local hour="${BASH_REMATCH[4]}"
+        local min="${BASH_REMATCH[5]}"
+        local sec="${BASH_REMATCH[6]}"
+
+        # Convert to epoch (macOS date format)
+        local log_epoch=$(date -j -f "%d-%b-%Y %H:%M:%S" "$day-$month-$year $hour:$min:$sec" +%s 2>/dev/null)
+
+        # Fallback for GNU date
+        if [ -z "$log_epoch" ]; then
+            log_epoch=$(date -d "$day $month $year $hour:$min:$sec UTC" +%s 2>/dev/null)
+        fi
+
+        if [ -n "$log_epoch" ] && [ "$log_epoch" -ge "$CUTOFF_TIME" ]; then
+            return 0  # Recent
+        fi
+    fi
+    return 1  # Not recent or couldn't parse
+}
 
 # Extract errors related to caelis theme path
 # WordPress debug.log format: [DD-Mon-YYYY HH:MM:SS UTC] PHP type: message in /path/file.php on line N
+TEMP_ALL_ERRORS=$(mktemp)
 grep -E "themes/caelis" "$TEMP_LOG" | \
-    grep -E "PHP (Fatal error|Parse error|Warning|Notice|Deprecated)" > "$TEMP_ERRORS" || true
+    grep -E "PHP (Fatal error|Parse error|Warning|Notice|Deprecated)" > "$TEMP_ALL_ERRORS" || true
+
+# Filter to only recent errors
+while IFS= read -r line; do
+    if is_recent "$line"; then
+        echo "$line" >> "$TEMP_ERRORS"
+    fi
+done < "$TEMP_ALL_ERRORS"
+rm -f "$TEMP_ALL_ERRORS"
 
 ERROR_COUNT=$(wc -l < "$TEMP_ERRORS" | tr -d ' ')
 
