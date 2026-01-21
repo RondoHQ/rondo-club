@@ -148,7 +148,17 @@ class Manager {
 			'show_in_rest'          => 1,
 		);
 
-		return acf_import_field_group( $field_group );
+		$result = acf_import_field_group( $field_group );
+
+		// Validate the result has an ID (required for field parent).
+		if ( ! $result || ! is_array( $result ) || ! isset( $result['ID'] ) ) {
+			return new WP_Error(
+				'field_group_create_failed',
+				'Failed to create field group in database.'
+			);
+		}
+
+		return $result;
 	}
 
 	/**
