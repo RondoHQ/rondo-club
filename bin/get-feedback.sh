@@ -116,6 +116,11 @@ if [ -n "$HOMEBREW_PATH" ]; then
     export PATH="$HOMEBREW_PATH:$PATH"
 fi
 
+# Ensure HOME is set (needed for Claude to find its config at ~/.claude/)
+if [ -n "$USER_HOME" ]; then
+    export HOME="$USER_HOME"
+fi
+
 # Validate required variables
 if [ -z "$CAELIS_API_URL" ] || [ -z "$CAELIS_API_USER" ] || [ -z "$CAELIS_API_PASSWORD" ]; then
     echo -e "${RED}Error: API credentials not configured in .env${NC}" >&2

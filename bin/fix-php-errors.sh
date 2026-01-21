@@ -110,6 +110,11 @@ if [ -n "$HOMEBREW_PATH" ]; then
     export PATH="$HOMEBREW_PATH:$PATH"
 fi
 
+# Ensure HOME is set (needed for Claude to find its config at ~/.claude/)
+if [ -n "$USER_HOME" ]; then
+    export HOME="$USER_HOME"
+fi
+
 # Validate required environment variables
 REQUIRED_VARS=(
     "DEPLOY_SSH_HOST"
