@@ -2,18 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-18)
+See: .planning/PROJECT.md (updated 2026-01-21)
 
-**Core value:** Admin-defined custom fields for People and Organizations using ACF-native storage
-**Current focus:** v6.0 Custom Fields - COMPLETE
+**Core value:** Personal CRM with team collaboration while maintaining relationship focus
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v6.0 Custom Fields
-Phase: 94 of 94 (Polish) - COMPLETE
-Plan: 2 of 2 complete
-Status: Milestone complete
-Last activity: 2026-01-20 - Completed 94-02-PLAN.md (Frontend UI)
+Milestone: v6.0 Custom Fields - COMPLETE
+Phase: 94 of 94 (Polish) - SHIPPED
+Status: Ready for next milestone
+Last activity: 2026-01-21 — v6.0 milestone archived
 
 Progress: [██████████] 100% (8/8 phases complete)
 
@@ -75,21 +74,15 @@ Progress: [██████████] 100% (8/8 phases complete)
 | v4.9 Dashboard & Calendar Polish | 77-78 | 4 | 2026-01-17 |
 | v5.0 Google Contacts Sync | 79-85 | 16 | 2026-01-18 |
 | v5.0.1 Meeting Card Polish | 86 | 1 | 2026-01-18 |
-| v6.0 Custom Fields | 87-94 | 15 | 2026-01-20 |
+| v6.0 Custom Fields | 87-94 | 15 | 2026-01-21 |
 
-**Total:** 29 milestones, 94 phases, 179 plans completed
+**Total:** 30 milestones, 94 phases, 179 plans completed
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-
-**Phase 94 decisions:**
-- menu_order starts at 1, not 0 (ACF convention)
-- Unique validation scoped to current user's posts (per-user uniqueness)
-- Validation class placed in customfields directory for PSR-4 autoloading
-- SortableFieldRow pattern for drag-drop in tables using dnd-kit
 
 ### Pending Todos
 
@@ -107,12 +100,12 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-20
+Last session: 2026-01-21
 Stopped at: Completed v6.0 Custom Fields milestone
 Resume file: None
 
 ## Next Steps
 
-- v6.0 Custom Fields milestone complete
-- All custom field features shipped: ACF backend, Settings UI, all field types, detail view, list view, search, drag-drop reordering, validation
-- Ready for next milestone
+- v6.0 Custom Fields milestone complete and archived
+- Run `/gsd:new-milestone` to start next milestone
+- Or work on pending todos with `/gsd:check-todos`

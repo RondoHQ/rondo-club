@@ -1,5 +1,34 @@
 # Project Milestones: Caelis
 
+## v6.0 Custom Fields (Shipped: 2026-01-21)
+
+**Delivered:** Admin-defined custom fields for People and Organizations with 14 field types, Settings UI, detail view integration, list view columns, and global search support.
+
+**Phases completed:** 87-94 (15 plans total)
+
+**Key accomplishments:**
+
+- ACF Foundation with PHP infrastructure for programmatic field group management
+- 14 field types: Text, Textarea, Number, Email, URL, Date, Select, Checkbox, True/False, Image, File, Link, Color Picker, Relationship
+- Settings UI with Custom Fields subtab, slide-out panels, and admin-only access
+- Detail View integration with CustomFieldsSection component and edit modal
+- List View columns with configurable show/hide and column ordering
+- Search integration with custom field values included in global search
+- Polish features: drag-and-drop reordering, required/unique validation, placeholder text
+
+**Stats:**
+
+- 115 files changed
+- +17,425 / -489 lines changed
+- 8 phases, 15 plans
+- 3 days (2026-01-18 → 2026-01-21)
+
+**Git range:** `5ada801` → `54ee300`
+
+**What's next:** To be determined
+
+---
+
 ## v5.0.1 Meeting Card Polish (Shipped: 2026-01-18)
 
 **Delivered:** Dashboard meeting card visual improvements with time-based styling, 24h format, calendar name display, and data cleanup for HTML-encoded titles.

@@ -230,16 +230,19 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Calendar name displayed in meeting cards — v5.0.1
 - WP-CLI command for HTML entity cleanup — v5.0.1
 
+**v6.0 Custom Fields (shipped 2026-01-21):**
+- ACF-native field group management (no custom tables) — v6.0
+- 14 field types: Text, Textarea, Number, Email, URL, Date, Select, Checkbox, True/False, Image, File, Link, Color Picker, Relationship — v6.0
+- Settings subtab for custom field management (People/Org toggle) — v6.0
+- Dedicated "Custom Fields" section on Person/Organization detail views — v6.0
+- Custom field values included in global search — v6.0
+- Admin-only field management, global visibility — v6.0
+- Custom field columns in list views with configurable show/hide — v6.0
+- Drag-and-drop field reordering, required/unique validation — v6.0
+
 ### Active
 
-**v6.0 Custom Fields** — Admin-defined custom fields for People and Organizations
-
-- [ ] ACF-native field group management (no custom tables)
-- [ ] 14 field types: Text, Textarea, Number, Email, URL, Date, Select, Checkbox, True/False, Image, File, Link, Color Picker, Relationship
-- [ ] Settings subtab for custom field management (People/Org toggle)
-- [ ] Dedicated "Custom Fields" section on Person/Organization detail views
-- [ ] Custom field values included in global search
-- [ ] Admin-only field management, global visibility
+(Next milestone to be defined)
 
 ### Out of Scope
 
@@ -364,6 +367,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Three-way conflict comparison | Compare Google vs Caelis vs snapshot to detect actual conflicts | ✓ Good |
 | Caelis wins by default | Source of truth design, deletions in Google only unlink in Caelis | ✓ Good |
 | Sync history in connection meta | Last 10 entries, efficient storage without unbounded growth | ✓ Good |
+| ACF-native field storage | Field groups per post type (group_custom_fields_{post_type}), no custom tables | ✓ Good |
+| Field key naming pattern | field_custom_{post_type}_{slug} for consistency and traceability | ✓ Good |
+| Soft delete via active flag | Preserve stored data when field definition is deactivated | ✓ Good |
+| Separate /metadata endpoint | Non-admin read access for field structure, admin-only for CRUD | ✓ Good |
+| Custom field search priority 30 | Lower than name matches (60-100), higher than general search (20) | ✓ Good |
+| menu_order starts at 1 | ACF convention, not 0-based | ✓ Good |
+| Unique validation per user | Scoped to current user's posts, not global uniqueness | ✓ Good |
+| SortableFieldRow with dnd-kit | Consistent drag-drop pattern for table rows in Settings | ✓ Good |
+| RelationshipItemCompact for list view | Async fetch for relationship names in compact column display | ✓ Good |
 
 ---
-*Last updated: 2026-01-18 after starting v6.0 Custom Fields milestone*
+*Last updated: 2026-01-21 after v6.0 Custom Fields milestone*
