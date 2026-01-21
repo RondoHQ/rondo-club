@@ -352,7 +352,7 @@ export default function FieldFormPanel({
     }
 
     if (formData.type === 'relationship') {
-      submitData.post_type = formData.relationship_post_types;
+      submitData.relation_post_types = formData.relationship_post_types;
       submitData.min = formData.relationship_min;
       submitData.max = formData.relationship_max;
       submitData.return_format = formData.relationship_return_format;

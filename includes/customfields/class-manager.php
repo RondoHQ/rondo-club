@@ -119,10 +119,17 @@ class Manager {
 
 		$group_key = $this->get_group_key( $post_type );
 
-		// Check if group already exists.
-		$existing = acf_get_field_group( $group_key );
-		if ( $existing ) {
-			return $existing;
+		// Check if group already exists in database.
+		// We must get the post ID directly because acf_get_field_group() returns ID=0
+		// when the group is also loaded from JSON (which takes precedence).
+		$group_post = get_page_by_path( $group_key, OBJECT, 'acf-field-group' );
+		if ( $group_post ) {
+			$existing = acf_get_field_group( $group_post->ID );
+			if ( $existing ) {
+				// Ensure we have the database ID, not 0.
+				$existing['ID'] = $group_post->ID;
+				return $existing;
+			}
 		}
 
 		// Create new field group.
