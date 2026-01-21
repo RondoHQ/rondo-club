@@ -3,8 +3,94 @@ import { useQuery } from '@tanstack/react-query';
 import { Pencil, ExternalLink, FileText, Link as LinkIcon, User, Building2 } from 'lucide-react';
 import { format, parse, isValid } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { prmApi } from '@/api/client';
+import { prmApi, wpApi } from '@/api/client';
+import { getPersonName, getCompanyName } from '@/utils/formatters';
 import CustomFieldsEditModal from './CustomFieldsEditModal';
+
+/**
+ * Component to display a relationship item, fetching details if needed
+ */
+function RelationshipItem({ itemId, allowedPostTypes }) {
+  // Fetch the item details
+  const { data: itemData, isLoading } = useQuery({
+    queryKey: ['relationship-item', itemId],
+    queryFn: async () => {
+      // Try person first if allowed
+      if (allowedPostTypes.includes('person')) {
+        try {
+          const response = await wpApi.getPerson(itemId, { _embed: true });
+          const thumbnail = response.data._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
+          return {
+            id: response.data.id,
+            type: 'person',
+            name: getPersonName(response.data),
+            thumbnail,
+          };
+        } catch {
+          // Not a person, try company
+        }
+      }
+
+      // Try company if allowed
+      if (allowedPostTypes.includes('company')) {
+        try {
+          const response = await wpApi.getCompany(itemId, { _embed: true });
+          const thumbnail = response.data._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
+          return {
+            id: response.data.id,
+            type: 'company',
+            name: getCompanyName(response.data),
+            thumbnail,
+          };
+        } catch {
+          // Not found
+        }
+      }
+
+      return null;
+    },
+    staleTime: 60000,
+  });
+
+  if (isLoading) {
+    return (
+      <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm">
+        Loading...
+      </span>
+    );
+  }
+
+  if (!itemData) {
+    return (
+      <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm text-gray-500">
+        #{itemId}
+      </span>
+    );
+  }
+
+  const linkPath = itemData.type === 'person' ? `/people/${itemData.id}` : `/companies/${itemData.id}`;
+  const IconComponent = itemData.type === 'person' ? User : Building2;
+
+  return (
+    <Link
+      to={linkPath}
+      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-medium transition-colors"
+    >
+      {itemData.thumbnail ? (
+        <img
+          src={itemData.thumbnail}
+          alt=""
+          className="w-6 h-6 rounded-full object-cover"
+        />
+      ) : (
+        <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+          <IconComponent className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+        </div>
+      )}
+      {itemData.name}
+    </Link>
+  );
+}
 
 // Convert PHP date format to date-fns format
 const phpToDateFnsFormat = (phpFormat) => {
@@ -260,6 +346,9 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
         // Ensure we're working with an array
         const items = Array.isArray(value) ? value : [value];
 
+        // Get allowed post types from field definition
+        const allowedPostTypes = field.post_type || ['person', 'company'];
+
         return (
           <div className="flex flex-wrap gap-2">
             {items.map((item, index) => {
@@ -268,28 +357,40 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
                 const postTypeSlug = item.post_type;
                 const linkPath = postTypeSlug === 'person' ? `/people/${item.ID}` : `/companies/${item.ID}`;
                 const IconComponent = postTypeSlug === 'person' ? User : Building2;
+                // ACF may include featured image in object format
+                const thumbnail = item.featured_image_url || item._embedded?.['wp:featuredmedia']?.[0]?.source_url;
 
                 return (
                   <Link
                     key={item.ID || index}
                     to={linkPath}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm transition-colors"
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-medium transition-colors"
                   >
-                    <IconComponent className="w-3 h-3" />
+                    {thumbnail ? (
+                      <img
+                        src={thumbnail}
+                        alt=""
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                        <IconComponent className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                      </div>
+                    )}
                     {item.post_title || `#${item.ID}`}
                   </Link>
                 );
               }
 
-              // Handle ID-only format - display without link since we don't know the type
-              if (typeof item === 'number') {
+              // Handle ID-only format - fetch details using RelationshipItem component
+              if (typeof item === 'number' || typeof item === 'string') {
+                const itemId = typeof item === 'string' ? parseInt(item, 10) : item;
                 return (
-                  <span
-                    key={item}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-sm"
-                  >
-                    #{item}
-                  </span>
+                  <RelationshipItem
+                    key={itemId}
+                    itemId={itemId}
+                    allowedPostTypes={allowedPostTypes}
+                  />
                 );
               }
 
