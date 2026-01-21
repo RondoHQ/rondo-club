@@ -27,6 +27,7 @@ class PostTypes {
 		$this->register_todo_statuses();
 		$this->register_todo_post_type();
 		$this->register_calendar_event_post_type();
+		$this->register_feedback_post_type();
 	}
 
 	/**
@@ -357,5 +358,48 @@ class PostTypes {
 		];
 
 		register_post_type( 'calendar_event', $args );
+	}
+
+	/**
+	 * Register Feedback CPT
+	 *
+	 * Used for collecting user feedback (bug reports and feature requests).
+	 * Not workspace-scoped - feedback is global per installation.
+	 */
+	private function register_feedback_post_type() {
+		$labels = [
+			'name'               => _x( 'Feedback', 'Post type general name', 'caelis' ),
+			'singular_name'      => _x( 'Feedback', 'Post type singular name', 'caelis' ),
+			'menu_name'          => _x( 'Feedback', 'Admin Menu text', 'caelis' ),
+			'add_new'            => __( 'Add New', 'caelis' ),
+			'add_new_item'       => __( 'Add New Feedback', 'caelis' ),
+			'edit_item'          => __( 'Edit Feedback', 'caelis' ),
+			'new_item'           => __( 'New Feedback', 'caelis' ),
+			'view_item'          => __( 'View Feedback', 'caelis' ),
+			'search_items'       => __( 'Search Feedback', 'caelis' ),
+			'not_found'          => __( 'No feedback found', 'caelis' ),
+			'not_found_in_trash' => __( 'No feedback found in Trash', 'caelis' ),
+			'all_items'          => __( 'All Feedback', 'caelis' ),
+		];
+
+		$args = [
+			'labels'             => $labels,
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'show_in_rest'       => true,
+			'rest_base'          => 'feedback',
+			'query_var'          => false,
+			'rewrite'            => false,
+			'capability_type'    => 'post',
+			'has_archive'        => false,
+			'hierarchical'       => false,
+			'menu_position'      => 26,
+			'menu_icon'          => 'dashicons-megaphone',
+			'supports'           => [ 'title', 'editor', 'author' ],
+		];
+
+		register_post_type( 'caelis_feedback', $args );
 	}
 }
