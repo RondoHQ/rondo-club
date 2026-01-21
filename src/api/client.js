@@ -282,4 +282,11 @@ export const prmApi = {
   getConnectionCalendars: (id) => api.get(`/prm/v1/calendar/connections/${id}/calendars`),
   getGoogleAuthUrl: () => api.get('/prm/v1/calendar/auth/google'),
   testCalDAVConnection: (credentials) => api.post('/prm/v1/calendar/auth/caldav/test', credentials),
+
+  // Feedback
+  getFeedbackList: (params) => api.get('/prm/v1/feedback', { params }),
+  getFeedback: (id) => api.get(`/prm/v1/feedback/${id}`),
+  createFeedback: (data) => api.post('/prm/v1/feedback', data),
+  updateFeedback: (id, data) => api.put(`/prm/v1/feedback/${id}`, data),
+  deleteFeedback: (id) => api.delete(`/prm/v1/feedback/${id}`),
 };
