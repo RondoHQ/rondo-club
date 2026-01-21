@@ -72,8 +72,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 97-01-PLAN.md — API client, TanStack Query hooks, and routing infrastructure
-- [ ] 97-02-PLAN.md — List view, detail view, and submission modal with conditional fields
+- [x] 97-01-PLAN.md — API client, TanStack Query hooks, and routing infrastructure
+- [x] 97-02-PLAN.md — List view, detail view, and submission modal with conditional fields
 
 **Success Criteria:**
 1. User can navigate to Feedback via sidebar menu
@@ -117,7 +117,7 @@ Plans:
 |-------|--------|--------------|------------|
 | Phase 1: Backend Foundation | Complete | FEED-01, FEED-02, FEED-03 | 100% |
 | Phase 2: REST API | Complete | FEED-04, FEED-05, FEED-06 | 100% |
-| Phase 3: Frontend Submission | Planned | FEED-07, FEED-08, FEED-09, FEED-10, FEED-11, FEED-12 | 0% |
+| Phase 3: Frontend Submission | Complete | FEED-07, FEED-08, FEED-09, FEED-10, FEED-11, FEED-12 | 100% |
 | Phase 4: Admin Management | Not Started | FEED-13, FEED-14, FEED-15, FEED-16, FEED-17 | 0% |
 
 ## Requirement Coverage
