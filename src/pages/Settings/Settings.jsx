@@ -3002,9 +3002,150 @@ const importTypes = [
   },
 ];
 
+// API Access Tab Component - Application password management
+function APIAccessTab({
+  appPasswords, appPasswordsLoading, config,
+  newPasswordName, setNewPasswordName, handleCreateAppPassword, creatingPassword,
+  newPassword, setNewPassword, copyNewPassword, passwordCopied,
+  handleDeleteAppPassword, formatDate,
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Application Passwords</h2>
+        <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
+          Create application passwords for API access from external tools and scripts.
+          These passwords work with the REST API and CardDAV sync.
+        </p>
+
+        {appPasswordsLoading ? (
+          <div className="animate-pulse">
+            <div className="h-10 bg-gray-200 rounded mb-3 dark:bg-gray-700"></div>
+            <div className="h-24 bg-gray-200 rounded dark:bg-gray-700"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Create password form */}
+            <form onSubmit={handleCreateAppPassword} className="flex gap-2">
+              <input
+                type="text"
+                value={newPasswordName}
+                onChange={(e) => setNewPasswordName(e.target.value)}
+                placeholder="Password name (e.g., My Script, Mobile App)"
+                className="input flex-1"
+                disabled={creatingPassword}
+              />
+              <button
+                type="submit"
+                disabled={creatingPassword || !newPasswordName.trim()}
+                className="btn-primary whitespace-nowrap"
+              >
+                {creatingPassword ? 'Creating...' : 'Create'}
+              </button>
+            </form>
+
+            {/* New password display modal */}
+            {newPassword && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                  <h3 className="text-lg font-semibold mb-2 dark:text-gray-100">Application Password Created</h3>
+                  <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
+                    Copy this password now. It won&apos;t be shown again.
+                  </p>
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="text"
+                      readOnly
+                      value={newPassword}
+                      className="input flex-1 font-mono text-sm bg-gray-50 dark:bg-gray-700"
+                      onClick={(e) => e.target.select()}
+                    />
+                    <button
+                      onClick={copyNewPassword}
+                      className="btn-primary flex items-center gap-2"
+                    >
+                      {passwordCopied ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copy
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setNewPassword(null)}
+                    className="btn-secondary w-full"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Existing passwords list */}
+            {appPasswords.length > 0 ? (
+              <div>
+                <h3 className="text-sm font-medium mb-2 dark:text-gray-200">Your application passwords</h3>
+                <div className="space-y-2">
+                  {appPasswords.map((password) => (
+                    <div
+                      key={password.uuid}
+                      className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+                    >
+                      <div>
+                        <p className="font-medium text-sm dark:text-gray-200">{password.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Created {formatDate(password.created)} · Last used {formatDate(password.last_used)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteAppPassword(password.uuid, password.name)}
+                        className="text-red-600 hover:text-red-700 text-sm font-medium dark:text-red-400 dark:hover:text-red-300"
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                No application passwords yet. Create one to start using the API.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* API information card */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">API Information</h2>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-gray-500 dark:text-gray-400">Username</label>
+            <p className="font-mono text-sm dark:text-gray-200">{config.userLogin || 'N/A'}</p>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-gray-400">REST API Base URL</label>
+            <p className="font-mono text-sm dark:text-gray-200">{window.location.origin}/wp-json/prm/v1/</p>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+            Use HTTP Basic Authentication with your username and an application password.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DataTab() {
   const [activeImportType, setActiveImportType] = useState('vcard');
-  
+
   const handleExport = (format) => {
     if (format === 'vcard') {
       window.location.href = '/wp-json/prm/v1/export/vcard';
