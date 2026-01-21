@@ -722,6 +722,7 @@ class Calendar extends Base {
 					'message' => __( 'Sync completed successfully.', 'caelis' ),
 					'created' => $result['created'],
 					'updated' => $result['updated'],
+					'deleted' => $result['deleted'] ?? 0,
 					'total'   => $result['total'],
 				]
 			);

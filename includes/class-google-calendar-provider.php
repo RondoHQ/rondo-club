@@ -161,7 +161,7 @@ class GoogleProvider {
 	 * @param \Google\Service\Calendar $service      Google Calendar service
 	 * @param \DateTime               $start_date    Start of sync window
 	 * @param \DateTime               $end_date      End of sync window
-	 * @return array Sync results (created, updated, total)
+	 * @return array Sync results (created, updated, deleted, total)
 	 * @throws \Exception On API errors
 	 */
 	private static function sync_single_calendar(
@@ -173,10 +173,11 @@ class GoogleProvider {
 		\DateTime $start_date,
 		\DateTime $end_date
 	): array {
-		$created    = 0;
-		$updated    = 0;
-		$total      = 0;
-		$page_token = null;
+		$created         = 0;
+		$updated         = 0;
+		$total           = 0;
+		$page_token      = null;
+		$seen_event_uids = []; // Track all UIDs seen from API
 
 		do {
 			try {
@@ -201,6 +202,9 @@ class GoogleProvider {
 						continue;
 					}
 
+					// Track this event UID as seen
+					$seen_event_uids[] = $event->getId();
+
 					try {
 						$result = self::upsert_event( $user_id, $connection, $event, $calendar_id, $calendar_name );
 						++$total;
@@ -222,11 +226,107 @@ class GoogleProvider {
 			}
 		} while ( $page_token );
 
+		// Delete local events that no longer exist in the source calendar
+		$deleted = self::delete_removed_events(
+			$user_id,
+			$connection['id'] ?? '',
+			$calendar_id,
+			$seen_event_uids,
+			$start_date,
+			$end_date
+		);
+
 		return [
 			'created' => $created,
 			'updated' => $updated,
+			'deleted' => $deleted,
 			'total'   => $total,
 		];
+	}
+
+	/**
+	 * Delete local events that no longer exist in the source calendar
+	 *
+	 * Finds all local events for this connection/calendar within the sync date range
+	 * and deletes any whose UIDs are not in the list of seen UIDs from the API.
+	 *
+	 * @param int       $user_id         WordPress user ID
+	 * @param string    $connection_id   Connection ID
+	 * @param string    $calendar_id     Calendar ID
+	 * @param array     $seen_event_uids Array of event UIDs that exist in source
+	 * @param \DateTime $start_date      Start of sync window
+	 * @param \DateTime $end_date        End of sync window
+	 * @return int Number of events deleted
+	 */
+	private static function delete_removed_events(
+		int $user_id,
+		string $connection_id,
+		string $calendar_id,
+		array $seen_event_uids,
+		\DateTime $start_date,
+		\DateTime $end_date
+	): int {
+		if ( empty( $connection_id ) ) {
+			return 0;
+		}
+
+		// Query all local events for this connection/calendar within the sync date range
+		$local_events = get_posts(
+			[
+				'post_type'      => 'calendar_event',
+				'post_status'    => [ 'publish', 'future' ],
+				'author'         => $user_id,
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					'relation' => 'AND',
+					[
+						'key'   => '_connection_id',
+						'value' => $connection_id,
+					],
+					[
+						'key'   => '_calendar_id',
+						'value' => $calendar_id,
+					],
+					[
+						'key'     => '_start_time',
+						'value'   => $start_date->format( 'Y-m-d H:i:s' ),
+						'compare' => '>=',
+						'type'    => 'DATETIME',
+					],
+					[
+						'key'     => '_start_time',
+						'value'   => $end_date->format( 'Y-m-d H:i:s' ),
+						'compare' => '<=',
+						'type'    => 'DATETIME',
+					],
+				],
+			]
+		);
+
+		$deleted = 0;
+
+		foreach ( $local_events as $event_id ) {
+			$event_uid = get_post_meta( $event_id, '_event_uid', true );
+
+			// If this event's UID is not in the list of seen UIDs, it was deleted
+			if ( ! in_array( $event_uid, $seen_event_uids, true ) ) {
+				wp_delete_post( $event_id, true ); // Force delete (bypass trash)
+				++$deleted;
+
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log(
+						sprintf(
+							'PRM_Google_Calendar_Provider: Deleted event %d (UID: %s) - no longer exists in source calendar',
+							$event_id,
+							$event_uid
+						)
+					);
+				}
+			}
+		}
+
+		return $deleted;
 	}
 
 	/**
