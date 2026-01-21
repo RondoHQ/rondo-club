@@ -103,16 +103,16 @@ export default function FeedbackDetail() {
           <div className="flex-1">
             {/* Badges */}
             <div className="flex items-center gap-2 mb-3">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[feedback.feedback_type]}`}>
-                {feedback.feedback_type === 'bug' ? (
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[feedback.meta.feedback_type]}`}>
+                {feedback.meta.feedback_type === 'bug' ? (
                   <Bug className="w-3 h-3" />
                 ) : (
                   <Lightbulb className="w-3 h-3" />
                 )}
-                {typeLabels[feedback.feedback_type]}
+                {typeLabels[feedback.meta.feedback_type]}
               </span>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[feedback.status]}`}>
-                {statusLabels[feedback.status]}
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[feedback.meta.status]}`}>
+                {statusLabels[feedback.meta.status]}
               </span>
             </div>
 
@@ -144,89 +144,89 @@ export default function FeedbackDetail() {
       </div>
 
       {/* Bug-specific fields */}
-      {feedback.feedback_type === 'bug' && (
+      {feedback.meta.feedback_type === 'bug' && (
         <div className="card p-6 space-y-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Bug Details</h2>
 
-          {feedback.steps_to_reproduce && (
+          {feedback.meta.steps_to_reproduce && (
             <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Steps to Reproduce</h3>
               <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {feedback.steps_to_reproduce}
+                {feedback.meta.steps_to_reproduce}
               </p>
             </div>
           )}
 
-          {feedback.expected_behavior && (
+          {feedback.meta.expected_behavior && (
             <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Expected Behavior</h3>
               <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {feedback.expected_behavior}
+                {feedback.meta.expected_behavior}
               </p>
             </div>
           )}
 
-          {feedback.actual_behavior && (
+          {feedback.meta.actual_behavior && (
             <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Actual Behavior</h3>
               <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {feedback.actual_behavior}
+                {feedback.meta.actual_behavior}
               </p>
             </div>
           )}
 
-          {!feedback.steps_to_reproduce && !feedback.expected_behavior && !feedback.actual_behavior && (
+          {!feedback.meta.steps_to_reproduce && !feedback.meta.expected_behavior && !feedback.meta.actual_behavior && (
             <p className="text-gray-500 dark:text-gray-400 text-sm italic">No additional bug details provided.</p>
           )}
         </div>
       )}
 
       {/* Feature request field */}
-      {feedback.feedback_type === 'feature_request' && feedback.use_case && (
+      {feedback.meta.feedback_type === 'feature_request' && feedback.meta.use_case && (
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Use Case</h2>
           <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-            {feedback.use_case}
+            {feedback.meta.use_case}
           </p>
         </div>
       )}
 
       {/* System info */}
-      {(feedback.browser_info || feedback.app_version || feedback.url_context) && (
+      {(feedback.meta.browser_info || feedback.meta.app_version || feedback.meta.url_context) && (
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">System Information</h2>
           <div className="space-y-3">
-            {feedback.browser_info && (
+            {feedback.meta.browser_info && (
               <div className="flex items-start gap-3">
                 <Monitor className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Browser</h3>
                   <p className="text-gray-700 dark:text-gray-300 text-sm break-all">
-                    {feedback.browser_info}
+                    {feedback.meta.browser_info}
                   </p>
                 </div>
               </div>
             )}
 
-            {feedback.app_version && (
+            {feedback.meta.app_version && (
               <div className="flex items-start gap-3">
                 <Clock className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">App Version</h3>
                   <p className="text-gray-700 dark:text-gray-300 text-sm">
-                    {feedback.app_version}
+                    {feedback.meta.app_version}
                   </p>
                 </div>
               </div>
             )}
 
-            {feedback.url_context && (
+            {feedback.meta.url_context && (
               <div className="flex items-start gap-3">
                 <LinkIcon className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">URL Context</h3>
                   <p className="text-gray-700 dark:text-gray-300 text-sm break-all">
-                    {feedback.url_context}
+                    {feedback.meta.url_context}
                   </p>
                 </div>
               </div>
@@ -236,14 +236,14 @@ export default function FeedbackDetail() {
       )}
 
       {/* Attachments */}
-      {feedback.attachments && feedback.attachments.length > 0 && (
+      {feedback.meta.attachments && feedback.meta.attachments.length > 0 && (
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Paperclip className="w-5 h-5" />
             Attachments
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {feedback.attachments.map((attachment, index) => (
+            {feedback.meta.attachments.map((attachment, index) => (
               <a
                 key={attachment.id || index}
                 href={attachment.url}
@@ -273,30 +273,30 @@ export default function FeedbackDetail() {
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Metadata</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {feedback.author_name && (
+          {feedback.author?.name && (
             <div className="flex items-center gap-3">
               <User className="w-5 h-5 text-gray-400" />
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Submitted by</h3>
-                <p className="text-gray-700 dark:text-gray-300">{feedback.author_name}</p>
+                <p className="text-gray-700 dark:text-gray-300">{feedback.author.name}</p>
               </div>
             </div>
           )}
 
-          {feedback.created_at && (
+          {feedback.date && (
             <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Submitted on</h3>
               <p className="text-gray-700 dark:text-gray-300">
-                {format(new Date(feedback.created_at), 'MMM d, yyyy \'at\' h:mm a')}
+                {format(new Date(feedback.date), 'MMM d, yyyy \'at\' h:mm a')}
               </p>
             </div>
           )}
 
-          {feedback.modified_at && feedback.modified_at !== feedback.created_at && (
+          {feedback.modified && feedback.modified !== feedback.date && (
             <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Last updated</h3>
               <p className="text-gray-700 dark:text-gray-300">
-                {format(new Date(feedback.modified_at), 'MMM d, yyyy \'at\' h:mm a')}
+                {format(new Date(feedback.modified), 'MMM d, yyyy \'at\' h:mm a')}
               </p>
             </div>
           )}
