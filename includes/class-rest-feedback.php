@@ -110,7 +110,7 @@ class Feedback extends Base {
 			'status'   => [
 				'default'           => '',
 				'validate_callback' => function ( $param ) {
-					return empty( $param ) || in_array( $param, [ 'new', 'in_progress', 'resolved', 'declined' ], true );
+					return empty( $param ) || in_array( $param, [ 'new', 'approved', 'in_progress', 'resolved', 'declined' ], true );
 				},
 			],
 			'priority' => [
@@ -319,7 +319,10 @@ class Feedback extends Base {
 
 		// Save ACF fields
 		update_field( 'feedback_type', $feedback_type, $post_id );
-		update_field( 'status', $request->get_param( 'status' ) ?? 'new', $post_id );
+
+		// Determine default status: admins get 'approved', regular users get 'new'
+		$default_status = current_user_can( 'manage_options' ) ? 'approved' : 'new';
+		update_field( 'status', $request->get_param( 'status' ) ?? $default_status, $post_id );
 		update_field( 'priority', $request->get_param( 'priority' ) ?? 'medium', $post_id );
 
 		// Optional context fields
@@ -446,11 +449,11 @@ class Feedback extends Base {
 			);
 		}
 
-		if ( $new_status !== null && ! in_array( $new_status, [ 'new', 'in_progress', 'resolved', 'declined' ], true ) ) {
+		if ( $new_status !== null && ! in_array( $new_status, [ 'new', 'approved', 'in_progress', 'resolved', 'declined' ], true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid status.', 'caelis' ),
-				[ 'status' => 400, 'params' => [ 'status' => 'Must be "new", "in_progress", "resolved", or "declined"' ] ]
+				[ 'status' => 400, 'params' => [ 'status' => 'Must be "new", "approved", "in_progress", "resolved", or "declined"' ] ]
 			);
 		}
 
