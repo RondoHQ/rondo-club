@@ -1,4 +1,44 @@
 import { format } from 'date-fns';
+import { useQuery } from '@tanstack/react-query';
+import { wpApi } from '@/api/client';
+import { getPersonName, getCompanyName } from '@/utils/formatters';
+
+/**
+ * Compact relationship item for list view - fetches name if only ID is available
+ */
+function RelationshipItemCompact({ itemId, allowedPostTypes }) {
+  const { data: itemData, isLoading } = useQuery({
+    queryKey: ['relationship-item', itemId],
+    queryFn: async () => {
+      // Try person first if allowed
+      if (allowedPostTypes.includes('person')) {
+        try {
+          const response = await wpApi.getPerson(itemId);
+          return { name: getPersonName(response.data) };
+        } catch {
+          // Not a person, try company
+        }
+      }
+
+      // Try company if allowed
+      if (allowedPostTypes.includes('company')) {
+        try {
+          const response = await wpApi.getCompany(itemId);
+          return { name: getCompanyName(response.data) };
+        } catch {
+          // Not found
+        }
+      }
+
+      return null;
+    },
+    staleTime: 60000,
+  });
+
+  if (isLoading) return <span className="text-gray-400">...</span>;
+  if (!itemData) return <span className="text-gray-400">#{itemId}</span>;
+  return <span>{itemData.name}</span>;
+}
 
 export default function CustomFieldColumn({ field, value }) {
   if (value === null || value === undefined || value === '') {
@@ -86,12 +126,33 @@ export default function CustomFieldColumn({ field, value }) {
     case 'relationship': {
       const items = Array.isArray(value) ? value : (value ? [value] : []);
       if (items.length === 0 || !items[0]) return <span className="text-gray-400 dark:text-gray-500 italic">-</span>;
+
+      const allowedPostTypes = field.post_type || ['person', 'company'];
+
       if (items.length === 1) {
         const item = items[0];
-        const name = typeof item === 'object' ? (item.post_title || item.title?.rendered) : `#${item}`;
-        return <span className="truncate block max-w-32" title={name}>{name}</span>;
+        // If it's an object with post_title, use that directly
+        if (typeof item === 'object' && item !== null) {
+          const name = item.post_title || item.title?.rendered || `#${item.ID || item.id}`;
+          return <span className="truncate block max-w-32" title={name}>{name}</span>;
+        }
+        // If it's just an ID, fetch the name
+        const itemId = typeof item === 'string' ? parseInt(item, 10) : item;
+        return (
+          <span className="truncate block max-w-32">
+            <RelationshipItemCompact itemId={itemId} allowedPostTypes={allowedPostTypes} />
+          </span>
+        );
       }
-      return <span title={items.map(i => typeof i === 'object' ? (i.post_title || i.title?.rendered) : `#${i}`).join(', ')}>{items.length} linked</span>;
+
+      // Multiple items - show count with names in tooltip if available
+      const names = items.map(i => {
+        if (typeof i === 'object' && i !== null) {
+          return i.post_title || i.title?.rendered || `#${i.ID || i.id}`;
+        }
+        return `#${i}`;
+      });
+      return <span title={names.join(', ')}>{items.length} linked</span>;
     }
 
     case 'file': {
