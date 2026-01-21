@@ -119,6 +119,7 @@ return array(
     'Caelis\\REST\\Calendar' => $baseDir . '/includes/class-rest-calendar.php',
     'Caelis\\REST\\Companies' => $baseDir . '/includes/class-rest-companies.php',
     'Caelis\\REST\\CustomFields' => $baseDir . '/includes/class-rest-custom-fields.php',
+    'Caelis\\REST\\Feedback' => $baseDir . '/includes/class-rest-feedback.php',
     'Caelis\\REST\\GoogleContacts' => $baseDir . '/includes/class-rest-google-contacts.php',
     'Caelis\\REST\\ImportExport' => $baseDir . '/includes/class-rest-import-export.php',
     'Caelis\\REST\\People' => $baseDir . '/includes/class-rest-people.php',
