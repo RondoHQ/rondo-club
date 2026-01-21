@@ -304,9 +304,9 @@ format_feedback_for_claude() {
     echo ""
     echo "IMPORTANT: When you're done, end your response with one of these status lines:"
     echo "- STATUS: RESOLVED - if you fixed the issue and deployed"
-    echo "- STATUS: IN_PROGRESS - if you made progress but more work is needed"
-    echo "- STATUS: NEEDS_INFO - if you need more information to proceed"
     echo "- STATUS: DECLINED - if this isn't something that should be fixed"
+    echo ""
+    echo "If you cannot fully resolve the issue, do NOT include a status line - the item will remain in the queue for the next run."
 }
 
 # Update feedback status via API
@@ -338,18 +338,16 @@ update_feedback_status() {
 }
 
 # Parse Claude's response for status
+# Only resolved and declined are valid final statuses
+# If no status or incomplete, item stays in queue for next run
 parse_claude_status() {
     local response="$1"
 
     # Look for STATUS: lines (case insensitive)
     if echo "$response" | grep -qi "STATUS:.*RESOLVED"; then
         echo "resolved"
-    elif echo "$response" | grep -qi "STATUS:.*IN_PROGRESS"; then
-        echo "in_progress"
     elif echo "$response" | grep -qi "STATUS:.*DECLINED"; then
         echo "declined"
-    elif echo "$response" | grep -qi "STATUS:.*NEEDS_INFO"; then
-        echo "needs_info"
     else
         # Fallback: check for deployment indicators
         if echo "$response" | grep -qi "deployed\|deployment complete"; then
@@ -388,16 +386,14 @@ if [ "$RUN_CLAUDE" = true ]; then
         echo -e "${GREEN}Claude session completed.${NC}" >&2
 
         # Parse status from Claude's response
+        # Only resolved/declined updates status; otherwise item stays in queue
         NEW_STATUS=$(parse_claude_status "$CLAUDE_OUTPUT")
 
-        if [ -n "$NEW_STATUS" ] && [ "$NEW_STATUS" != "needs_info" ]; then
+        if [ -n "$NEW_STATUS" ]; then
             update_feedback_status "$CURRENT_FEEDBACK_ID" "$NEW_STATUS"
-        elif [ "$NEW_STATUS" = "needs_info" ]; then
-            log "INFO" "Claude needs more information, status not changed"
-            echo -e "${YELLOW}Claude needs more information. Status not changed.${NC}" >&2
         else
-            log "WARN" "No status indicator found in Claude's response"
-            echo -e "${YELLOW}No status indicator found in Claude's response.${NC}" >&2
+            log "INFO" "No final status - feedback remains in queue for next run"
+            echo -e "${YELLOW}No final status. Feedback remains in queue for next run.${NC}" >&2
         fi
     else
         log "ERROR" "Claude session failed (exit code: $CLAUDE_EXIT)"
