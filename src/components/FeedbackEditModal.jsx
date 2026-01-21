@@ -6,6 +6,7 @@ import { wpApi } from '@/api/client';
 // Status options
 const statusOptions = [
   { value: 'new', label: 'New' },
+  { value: 'approved', label: 'Approved' },
   { value: 'in_progress', label: 'In Progress' },
   { value: 'resolved', label: 'Resolved' },
   { value: 'declined', label: 'Declined' },

@@ -134,7 +134,7 @@ if ! command -v jq &> /dev/null; then
 fi
 
 # Default values
-STATUS="new"
+STATUS="approved"
 TYPE=""
 FEEDBACK_ID=""
 OUTPUT_FORMAT="claude"
@@ -176,7 +176,8 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Options:"
             echo "  --run              Pipe output directly to Claude Code (use for cron)"
-            echo "  --status=STATUS    Filter by status: new, in_progress, resolved, declined"
+            echo "  --status=STATUS    Filter by status: new, approved, in_progress, resolved, declined"
+            echo "                     (default: approved)"
             echo "                     (default: new)"
             echo "  --type=TYPE        Filter by type: bug, feature_request"
             echo "  --id=ID            Get specific feedback item by ID"
