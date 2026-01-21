@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Bug, Lightbulb, Clock, User, Monitor, Link as LinkIcon, Paperclip } from 'lucide-react';
-import { useFeedback } from '@/hooks/useFeedback';
+import { ArrowLeft, Bug, Lightbulb, Clock, User, Monitor, Link as LinkIcon, Paperclip, Pencil } from 'lucide-react';
+import { useFeedback, useUpdateFeedback } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from 'date-fns';
+import FeedbackEditModal from '@/components/FeedbackEditModal';
 
 // Status badge colors (same as FeedbackList)
 const statusColors = {
@@ -35,7 +37,20 @@ const typeLabels = {
 export default function FeedbackDetail() {
   const { id } = useParams();
   const { data: feedback, isLoading, error } = useFeedback(id);
+  const updateFeedback = useUpdateFeedback();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   useDocumentTitle(feedback?.title || 'Feedback');
+
+  const handleEditSubmit = (data) => {
+    updateFeedback.mutate(
+      { id, data },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false);
+        },
+      }
+    );
+  };
 
   if (isLoading) {
     return (
@@ -104,6 +119,15 @@ export default function FeedbackDetail() {
               {feedback.title}
             </h1>
           </div>
+
+          {/* Edit button */}
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Pencil className="w-4 h-4" />
+            Edit
+          </button>
         </div>
       </div>
 
@@ -276,6 +300,15 @@ export default function FeedbackDetail() {
           )}
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <FeedbackEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={handleEditSubmit}
+        isLoading={updateFeedback.isPending}
+        feedback={feedback}
+      />
     </div>
   );
 }
