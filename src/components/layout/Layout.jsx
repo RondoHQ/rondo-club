@@ -16,7 +16,8 @@ import {
   CheckSquare,
   Plus,
   Command,
-  UsersRound
+  UsersRound,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatePerson } from '@/hooks/usePeople';
@@ -42,6 +43,7 @@ const navigation = [
   { name: 'Dates', href: '/dates', icon: Calendar },
   { name: 'Todos', href: '/todos', icon: CheckSquare },
   { name: 'Workspaces', href: '/workspaces', icon: UsersRound },
+  { name: 'Feedback', href: '/feedback', icon: MessageSquare },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
