@@ -359,12 +359,121 @@ class CalDAVProvider {
 			}
 
 			// Parse response and upsert events
-			return self::process_calendar_report( $user_id, $connection, $response['body'] );
+			$result = self::process_calendar_report( $user_id, $connection, $response['body'] );
 
-		} catch ( Exception $e ) {
+			// Delete local events that no longer exist in the source calendar
+			$deleted = self::delete_removed_events(
+				$user_id,
+				$connection['id'] ?? '',
+				$connection['calendar_id'] ?? '',
+				$result['seen_uids'],
+				$start_date,
+				$end_date
+			);
+
+			return [
+				'created' => $result['created'],
+				'updated' => $result['updated'],
+				'deleted' => $deleted,
+				'total'   => $result['total'],
+			];
+
+		} catch ( \Exception $e ) {
 			error_log( 'PRM_CalDAV_Provider: Sync failed: ' . $e->getMessage() );
 			throw new \Exception( sprintf( __( 'Sync failed: %s', 'caelis' ), $e->getMessage() ) );
 		}
+	}
+
+	/**
+	 * Delete local events that no longer exist in the source calendar
+	 *
+	 * Finds all local events for this connection/calendar within the sync date range
+	 * and deletes any whose UIDs are not in the list of seen UIDs from the API.
+	 *
+	 * @param int       $user_id         WordPress user ID
+	 * @param string    $connection_id   Connection ID
+	 * @param string    $calendar_id     Calendar ID
+	 * @param array     $seen_event_uids Array of event UIDs that exist in source
+	 * @param \DateTime $start_date      Start of sync window
+	 * @param \DateTime $end_date        End of sync window
+	 * @return int Number of events deleted
+	 */
+	private static function delete_removed_events(
+		int $user_id,
+		string $connection_id,
+		string $calendar_id,
+		array $seen_event_uids,
+		\DateTime $start_date,
+		\DateTime $end_date
+	): int {
+		if ( empty( $connection_id ) ) {
+			return 0;
+		}
+
+		// Build meta query - calendar_id may be empty for single-calendar connections
+		$meta_query = [
+			'relation' => 'AND',
+			[
+				'key'   => '_connection_id',
+				'value' => $connection_id,
+			],
+			[
+				'key'     => '_start_time',
+				'value'   => $start_date->format( 'Y-m-d H:i:s' ),
+				'compare' => '>=',
+				'type'    => 'DATETIME',
+			],
+			[
+				'key'     => '_start_time',
+				'value'   => $end_date->format( 'Y-m-d H:i:s' ),
+				'compare' => '<=',
+				'type'    => 'DATETIME',
+			],
+		];
+
+		// Only filter by calendar_id if one is set
+		if ( ! empty( $calendar_id ) ) {
+			$meta_query[] = [
+				'key'   => '_calendar_id',
+				'value' => $calendar_id,
+			];
+		}
+
+		// Query all local events for this connection/calendar within the sync date range
+		$local_events = get_posts(
+			[
+				'post_type'      => 'calendar_event',
+				'post_status'    => [ 'publish', 'future' ],
+				'author'         => $user_id,
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_query'     => $meta_query,
+			]
+		);
+
+		$deleted = 0;
+
+		foreach ( $local_events as $event_id ) {
+			$event_uid = get_post_meta( $event_id, '_event_uid', true );
+
+			// If this event's UID is not in the list of seen UIDs, it was deleted
+			if ( ! in_array( $event_uid, $seen_event_uids, true ) ) {
+				wp_delete_post( $event_id, true ); // Force delete (bypass trash)
+				++$deleted;
+
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log(
+						sprintf(
+							'PRM_CalDAV_Provider: Deleted event %d (UID: %s) - no longer exists in source calendar',
+							$event_id,
+							$event_uid
+						)
+					);
+				}
+			}
+		}
+
+		return $deleted;
 	}
 
 	/**
@@ -373,15 +482,16 @@ class CalDAVProvider {
 	 * @param int    $user_id    WordPress user ID
 	 * @param array  $connection Connection data
 	 * @param string $xml_body   Response XML containing calendar data
-	 * @return array ['created' => int, 'updated' => int, 'total' => int]
+	 * @return array ['created' => int, 'updated' => int, 'deleted' => int, 'total' => int, 'seen_uids' => array]
 	 */
 	private static function process_calendar_report( int $user_id, array $connection, string $xml_body ): array {
-		$created = 0;
-		$updated = 0;
-		$total   = 0;
+		$created         = 0;
+		$updated         = 0;
+		$total           = 0;
+		$seen_event_uids = []; // Track all UIDs seen from API
 
 		try {
-			$xml = new SimpleXMLElement( $xml_body );
+			$xml = new \SimpleXMLElement( $xml_body );
 			$xml->registerXPathNamespace( 'd', 'DAV:' );
 			$xml->registerXPathNamespace( 'c', 'urn:ietf:params:xml:ns:caldav' );
 
@@ -406,6 +516,11 @@ class CalDAVProvider {
 
 					// Process all VEVENTs in this calendar object
 					foreach ( $vcalendar->VEVENT as $vevent ) {
+						// Track this event UID as seen
+						if ( isset( $vevent->UID ) ) {
+							$seen_event_uids[] = (string) $vevent->UID;
+						}
+
 						try {
 							$result = self::upsert_event( $user_id, $connection, $vevent );
 							++$total;
@@ -415,22 +530,23 @@ class CalDAVProvider {
 							} else {
 								++$updated;
 							}
-						} catch ( Exception $e ) {
+						} catch ( \Exception $e ) {
 							error_log( 'PRM_CalDAV_Provider: Failed to upsert event: ' . $e->getMessage() );
 						}
 					}
-				} catch ( Exception $e ) {
+				} catch ( \Exception $e ) {
 					error_log( 'PRM_CalDAV_Provider: Failed to parse iCalendar: ' . $e->getMessage() );
 				}
 			}
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			error_log( 'PRM_CalDAV_Provider: Failed to parse REPORT response: ' . $e->getMessage() );
 		}
 
 		return [
-			'created' => $created,
-			'updated' => $updated,
-			'total'   => $total,
+			'created'   => $created,
+			'updated'   => $updated,
+			'total'     => $total,
+			'seen_uids' => $seen_event_uids,
 		];
 	}
 

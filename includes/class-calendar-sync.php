@@ -196,12 +196,13 @@ class Sync {
 
 				error_log(
 					sprintf(
-						'PRM_Calendar_Sync: Synced connection %s for user %d - %d events (%d created, %d updated) [freq: %d min]',
+						'PRM_Calendar_Sync: Synced connection %s for user %d - %d events (%d created, %d updated, %d deleted) [freq: %d min]',
 						$connection_id,
 						$user_id,
 						$result['total'] ?? 0,
 						$result['created'] ?? 0,
 						$result['updated'] ?? 0,
+						$result['deleted'] ?? 0,
 						$connection['sync_frequency'] ?? 15
 					)
 				);
@@ -586,6 +587,7 @@ class Sync {
 						'status'  => 'success',
 						'created' => $result['created'] ?? 0,
 						'updated' => $result['updated'] ?? 0,
+						'deleted' => $result['deleted'] ?? 0,
 						'total'   => $result['total'] ?? 0,
 					];
 
