@@ -393,6 +393,9 @@ if [ "$RUN_CLAUDE" = true ]; then
             update_feedback_status "$CURRENT_FEEDBACK_ID" "$NEW_STATUS"
         else
             log "INFO" "No final status - feedback remains in queue for next run"
+            log "DEBUG" "Claude output was:"
+            echo "$CLAUDE_OUTPUT" >> "$LOG_FILE"
+            log "DEBUG" "--- End of Claude output ---"
             echo -e "${YELLOW}No final status. Feedback remains in queue for next run.${NC}" >&2
         fi
     else
