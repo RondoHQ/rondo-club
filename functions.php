@@ -7,6 +7,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Reconstruct Authorization header from PHP_AUTH_* variables.
+ *
+ * Some Apache/CGI configurations strip the Authorization header before it reaches PHP,
+ * but still populate PHP_AUTH_USER and PHP_AUTH_PW. WordPress REST API Application
+ * Password authentication only looks for the Authorization header, not these variables.
+ *
+ * This fix reconstructs the header so WordPress can authenticate REST API requests.
+ */
+if ( ! isset( $_SERVER['HTTP_AUTHORIZATION'] ) && isset( $_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'] ) ) {
+	$_SERVER['HTTP_AUTHORIZATION'] = 'Basic ' . base64_encode( $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'] );
+}
+
 // Load Composer autoloader for PSR-4 classes and CardDAV support
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
