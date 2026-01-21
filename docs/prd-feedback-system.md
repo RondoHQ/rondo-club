@@ -64,50 +64,44 @@ Create a new custom post type `caelis_feedback` with the following characteristi
 
 ### 3. User Interface
 
-#### 3.1 Feedback Button
+#### 3.1 Navigation
 
-Add a persistent feedback button in the application UI:
+Add a "Feedback" menu item to the main sidebar navigation:
 
-- **Location**: Fixed position, bottom-right corner (or in the user menu)
-- **Icon**: Bug icon with dropdown or modal trigger
-- **Visibility**: All logged-in users
+- **Location**: Main sidebar, below existing menu items (e.g., after Settings)
+- **Icon**: MessageSquarePlus or similar from Lucide
+- **Label**: "Feedback"
+- **Route**: `/feedback`
 
-#### 3.2 Feedback Modal
+#### 3.2 Feedback Page
 
-A modal dialog for submitting feedback:
+A dedicated page for viewing and submitting feedback:
 
-```
-┌─────────────────────────────────────────────────┐
-│ Submit Feedback                              ✕  │
-├─────────────────────────────────────────────────┤
-│                                                 │
-│ Type: ○ Bug Report  ○ Feature Request           │
-│                                                 │
-│ Title *                                         │
-│ ┌─────────────────────────────────────────────┐ │
-│ │                                             │ │
-│ └─────────────────────────────────────────────┘ │
-│                                                 │
-│ Description *                                   │
-│ ┌─────────────────────────────────────────────┐ │
-│ │                                             │ │
-│ │                                             │ │
-│ │                                             │ │
-│ └─────────────────────────────────────────────┘ │
-│                                                 │
-│ [Bug-specific fields shown when type=bug]       │
-│ [Feature-specific fields shown when type=feat]  │
-│                                                 │
-│ Attachments (optional)                          │
-│ ┌─────────────────────────────────────────────┐ │
-│ │  Drop files or click to upload              │ │
-│ └─────────────────────────────────────────────┘ │
-│                                                 │
-│ ☑ Include system info (browser, version, URL)   │
-│                                                 │
-│                        [Cancel]  [Submit]       │
-└─────────────────────────────────────────────────┘
-```
+**List View** (`/feedback`)
+
+- Displays all feedback submitted by the current user
+- Tabs or filter to switch between "All", "Bugs", "Feature Requests"
+- Each item shows: title, type badge, status badge, date
+- "New Feedback" button in page header
+- Click item to view details
+
+**Detail View** (`/feedback/:id`)
+
+- Full feedback details
+- Edit capability for own submissions
+- Status indicator (read-only for non-admins)
+
+**New/Edit Form** (`/feedback/new` or modal)
+
+- Type selector: Bug Report / Feature Request
+- Title field (required)
+- Description field with rich text (required)
+- Conditional fields based on type:
+  - **Bug**: Steps to reproduce, expected behavior, actual behavior
+  - **Feature Request**: Use case
+- File attachments (drag & drop)
+- Checkbox: "Include system info (browser, version, current page)"
+- Submit / Cancel buttons
 
 #### 3.3 Confirmation
 
@@ -297,25 +291,24 @@ Create `acf-json/group_feedback_fields.json`:
 
 ### 2. Frontend Components
 
-#### 2.1 FeedbackButton Component
+#### 2.1 Feedback Page
 
 ```
-src/components/FeedbackButton.jsx
+src/pages/Feedback/
+├── index.jsx           # Main page with list view
+├── FeedbackDetail.jsx  # Single feedback view
+└── FeedbackForm.jsx    # New/edit form (inline or modal)
 ```
 
-- Floating action button
-- Opens feedback modal on click
-
-#### 2.2 FeedbackModal Component
-
-```
-src/components/modals/FeedbackModal.jsx
-```
-
-- Form with dynamic fields based on type
+- List view with filtering by type/status
+- Detail view for individual items
+- Form with dynamic fields based on feedback type
 - File upload for attachments
 - System info capture (opt-in)
-- Submission handling
+
+#### 2.2 Navigation Update
+
+Add route to `App.jsx` and menu item to sidebar component.
 
 #### 2.3 API Client Extension
 

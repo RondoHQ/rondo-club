@@ -242,7 +242,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(Next milestone to be defined)
+**v6.1 Feedback System**
+
+- [ ] caelis_feedback custom post type with ACF fields (type, status, priority, context)
+- [ ] REST API endpoints under prm/v1/feedback with CRUD operations
+- [ ] Application password authentication support for API access
+- [ ] Frontend feedback page with list view, detail view, and submission form
+- [ ] Admin management UI in Caelis for status changes and ordering
+- [ ] Settings UI for managing application passwords
+- [ ] System info capture (browser, version, current page) on opt-in
 
 ### Out of Scope
 
@@ -253,6 +261,10 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Company/organization sync to Google Contact groups — contacts only
 - Two-way relationship sync — Google doesn't have relationship concepts
 - Contact group/label sync — future enhancement after core sync works
+- Public-facing feedback portal — internal use only
+- Voting/upvoting system — can be added later
+- Email notifications on feedback status change — deferred to future version
+- Integration with external issue trackers (GitHub, Jira) — API access sufficient
 
 ## Context
 
