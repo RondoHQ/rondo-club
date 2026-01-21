@@ -144,23 +144,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
   );
 }
 
-function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
-  // Fetch custom field definitions for list view columns
-  const { data: customFields = [] } = useQuery({
-    queryKey: ['custom-fields-metadata', 'person'],
-    queryFn: async () => {
-      const response = await prmApi.getCustomFieldsMetadata('person');
-      return response.data;
-    },
-  });
-
-  // Filter to list-view-enabled fields, sorted by order
-  const listViewFields = useMemo(() => {
-    return customFields
-      .filter(f => f.show_in_list_view)
-      .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
-  }, [customFields]);
-
+function PersonListView({ people, companyMap, workspaces, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -188,13 +172,14 @@ function PersonListView({ people, companyMap, workspaces, selectedIds, onToggleS
             <SortableHeader field="workspace" label="Workspace" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="labels" label="Labels" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
-              <th
+              <SortableHeader
                 key={field.key}
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider bg-gray-50 dark:bg-gray-800"
-              >
-                {field.label}
-              </th>
+                field={`custom_${field.name}`}
+                label={field.label}
+                currentSortField={sortField}
+                currentSortOrder={sortOrder}
+                onSort={onSort}
+              />
             ))}
           </tr>
         </thead>
@@ -712,6 +697,22 @@ export default function PeopleList() {
   // Labels with IDs for the bulk modal
   const availableLabelsWithIds = labelsData || [];
 
+  // Fetch custom field definitions for list view columns
+  const { data: customFields = [] } = useQuery({
+    queryKey: ['custom-fields-metadata', 'person'],
+    queryFn: async () => {
+      const response = await prmApi.getCustomFieldsMetadata('person');
+      return response.data;
+    },
+  });
+
+  // Filter to list-view-enabled fields, sorted by order
+  const listViewFields = useMemo(() => {
+    return customFields
+      .filter(f => f.show_in_list_view)
+      .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
+  }, [customFields]);
+
   // Fetch all companies for bulk organization modal (sorted alphabetically)
   const { data: allCompaniesData } = useQuery({
     queryKey: ['companies', 'all'],
@@ -1000,6 +1001,39 @@ export default function PeopleList() {
         return sortOrder === 'asc' ? comparison : -comparison;
       }
 
+      if (sortField.startsWith('custom_')) {
+        // Handle custom field sorting
+        const fieldName = sortField.replace('custom_', '');
+        const fieldMeta = listViewFields.find(f => f.name === fieldName);
+        valueA = a.acf?.[fieldName];
+        valueB = b.acf?.[fieldName];
+
+        // Handle different field types
+        if (fieldMeta?.type === 'number') {
+          valueA = parseFloat(valueA) || 0;
+          valueB = parseFloat(valueB) || 0;
+          return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+        }
+
+        if (fieldMeta?.type === 'date') {
+          valueA = valueA ? new Date(valueA).getTime() : 0;
+          valueB = valueB ? new Date(valueB).getTime() : 0;
+          return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+        }
+
+        // Text comparison for other types
+        valueA = String(valueA || '').toLowerCase();
+        valueB = String(valueB || '').toLowerCase();
+
+        // Empty values sort last
+        if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
+        if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
+        if (!valueA && !valueB) return 0;
+
+        const comparison = valueA.localeCompare(valueB);
+        return sortOrder === 'asc' ? comparison : -comparison;
+      }
+
       // Default: first_name or last_name
       if (sortField === 'first_name') {
         valueA = (a.acf?.first_name || a.first_name || '').toLowerCase();
@@ -1025,7 +1059,7 @@ export default function PeopleList() {
       const comparison = valueA.localeCompare(valueB);
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [filteredAndSortedPeople, sortField, sortOrder, personCompanyMap, workspaces]);
+  }, [filteredAndSortedPeople, sortField, sortOrder, personCompanyMap, workspaces, listViewFields]);
 
   return (
     <div className="space-y-4">
@@ -1437,6 +1471,7 @@ export default function PeopleList() {
           people={sortedPeople}
           companyMap={personCompanyMap}
           workspaces={workspaces}
+          listViewFields={listViewFields}
           selectedIds={selectedIds}
           onToggleSelection={toggleSelection}
           onToggleSelectAll={toggleSelectAll}

@@ -424,23 +424,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
   );
 }
 
-function OrganizationListView({ companies, workspaces, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
-  // Fetch custom field definitions for list view columns
-  const { data: customFields = [] } = useQuery({
-    queryKey: ['custom-fields-metadata', 'company'],
-    queryFn: async () => {
-      const response = await prmApi.getCustomFieldsMetadata('company');
-      return response.data;
-    },
-  });
-
-  // Filter to list-view-enabled fields, sorted by order
-  const listViewFields = useMemo(() => {
-    return customFields
-      .filter(f => f.show_in_list_view)
-      .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
-  }, [customFields]);
-
+function OrganizationListView({ companies, workspaces, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -467,13 +451,14 @@ function OrganizationListView({ companies, workspaces, selectedIds, onToggleSele
             <SortableHeader field="website" label="Website" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="workspace" label="Workspace" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
-              <th
+              <SortableHeader
                 key={field.key}
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider bg-gray-50 dark:bg-gray-800"
-              >
-                {field.label}
-              </th>
+                field={`custom_${field.name}`}
+                label={field.label}
+                currentSortField={sortField}
+                currentSortOrder={sortOrder}
+                onSort={onSort}
+              />
             ))}
           </tr>
         </thead>
@@ -537,6 +522,22 @@ export default function CompaniesList() {
     },
   });
   const companyLabels = companyLabelsData || [];
+
+  // Fetch custom field definitions for list view columns
+  const { data: customFields = [] } = useQuery({
+    queryKey: ['custom-fields-metadata', 'company'],
+    queryFn: async () => {
+      const response = await prmApi.getCustomFieldsMetadata('company');
+      return response.data;
+    },
+  });
+
+  // Filter to list-view-enabled fields, sorted by order
+  const listViewFields = useMemo(() => {
+    return customFields
+      .filter(f => f.show_in_list_view)
+      .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
+  }, [customFields]);
 
   // Create company mutation
   const createCompanyMutation = useCreateCompany({
@@ -660,6 +661,29 @@ export default function CompaniesList() {
       } else if (sortField === 'workspace') {
         valueA = getCompanyWorkspaceNames(a).toLowerCase();
         valueB = getCompanyWorkspaceNames(b).toLowerCase();
+      } else if (sortField.startsWith('custom_')) {
+        // Handle custom field sorting
+        const fieldName = sortField.replace('custom_', '');
+        const fieldMeta = listViewFields.find(f => f.name === fieldName);
+        valueA = a.acf?.[fieldName];
+        valueB = b.acf?.[fieldName];
+
+        // Handle different field types
+        if (fieldMeta?.type === 'number') {
+          valueA = parseFloat(valueA) || 0;
+          valueB = parseFloat(valueB) || 0;
+          return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+        }
+
+        if (fieldMeta?.type === 'date') {
+          valueA = valueA ? new Date(valueA).getTime() : 0;
+          valueB = valueB ? new Date(valueB).getTime() : 0;
+          return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+        }
+
+        // Text comparison for other types
+        valueA = String(valueA || '').toLowerCase();
+        valueB = String(valueB || '').toLowerCase();
       } else {
         valueA = (a.title?.rendered || a.title || '').toLowerCase();
         valueB = (b.title?.rendered || b.title || '').toLowerCase();
@@ -673,7 +697,7 @@ export default function CompaniesList() {
       const comparison = valueA.localeCompare(valueB);
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [filteredCompanies, sortField, sortOrder, workspaces]);
+  }, [filteredCompanies, sortField, sortOrder, workspaces, listViewFields]);
 
   // Computed selection state
   const isAllSelected = sortedCompanies.length > 0 &&
@@ -964,6 +988,7 @@ export default function CompaniesList() {
         <OrganizationListView
           companies={sortedCompanies}
           workspaces={workspaces}
+          listViewFields={listViewFields}
           selectedIds={selectedIds}
           onToggleSelection={toggleSelection}
           onToggleSelectAll={toggleSelectAll}
