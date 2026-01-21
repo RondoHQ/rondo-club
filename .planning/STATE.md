@@ -86,11 +86,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-4 active todos in `.planning/todos/pending/`:
+1 active todo in `.planning/todos/pending/`:
 - Add import from Twenty CRM (api)
-- Fix activity participant name readability in dark mode (ui)
-- Ignore all-day events when scrolling to current event (ui)
-- Scroll to next meeting when no current meeting (ui)
 
 See `/gsd:check-todos` for full list.
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDashboard, useTodos, useUpdateTodo, useDashboardSettings, useUpdateDashboardSettings, DEFAULT_DASHBOARD_CARDS } from '@/hooks/useDashboard';
@@ -234,7 +234,7 @@ function AwaitingTodoCard({ todo, onToggle, onView }) {
   );
 }
 
-function MeetingCard({ meeting, onClick }) {
+function MeetingCard({ meeting, onClick, isNext }) {
   // Time-based status detection
   const now = new Date();
   const startTime = new Date(meeting.start_time);
@@ -291,13 +291,14 @@ function MeetingCard({ meeting, onClick }) {
   ].filter(Boolean).join(' ');
 
   // Always clickable button to open modal
-  // Add data-is-now for non-all-day meetings to enable auto-scroll
+  // Add data-is-now for current meetings, data-is-next for next upcoming (both exclude all-day)
   return (
     <button
       type="button"
       onClick={() => onClick(meeting)}
       className={buttonClasses}
       data-is-now={isNow && !meeting.all_day ? 'true' : undefined}
+      data-is-next={isNext ? 'true' : undefined}
     >
       {cardContent}
     </button>
@@ -353,6 +354,18 @@ export default function Dashboard() {
   const dateMeetings = meetingsData?.meetings || [];
   const hasCalendarConnections = meetingsData?.has_connections ?? false;
 
+  // Find the next upcoming meeting (first non-all-day meeting that starts in the future)
+  const now = new Date();
+  const nextMeetingId = useMemo(() => {
+    if (!isToday(selectedDate)) return null;
+    const nextMeeting = dateMeetings.find(m => {
+      if (m.all_day) return false;
+      const startTime = new Date(m.start_time);
+      return startTime > now;
+    });
+    return nextMeeting?.id || null;
+  }, [dateMeetings, selectedDate]);
+
   // Date navigation handlers
   const handlePrevDay = () => setSelectedDate(d => subDays(d, 1));
   const handleNextDay = () => setSelectedDate(d => addDays(d, 1));
@@ -361,15 +374,20 @@ export default function Dashboard() {
   // Ref for meetings container to enable auto-scroll
   const meetingsContainerRef = useRef(null);
 
-  // Auto-scroll to current meeting on load (only for today)
+  // Auto-scroll to current or next meeting on load (only for today)
   useEffect(() => {
     if (!isToday(selectedDate) || !meetingsContainerRef.current) return;
 
     // Small delay to ensure DOM is rendered
     const timer = setTimeout(() => {
-      const nowMeeting = meetingsContainerRef.current?.querySelector('[data-is-now="true"]');
-      if (nowMeeting) {
-        nowMeeting.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // First try to find a current meeting
+      let targetMeeting = meetingsContainerRef.current?.querySelector('[data-is-now="true"]');
+      // If no current meeting, scroll to the next upcoming meeting
+      if (!targetMeeting) {
+        targetMeeting = meetingsContainerRef.current?.querySelector('[data-is-next="true"]');
+      }
+      if (targetMeeting) {
+        targetMeeting.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }, 100);
 
@@ -746,6 +764,7 @@ export default function Dashboard() {
               <MeetingCard
                 key={meeting.id}
                 meeting={meeting}
+                isNext={meeting.id === nextMeetingId}
                 onClick={(m) => {
                   setSelectedMeeting(m);
                   setShowMeetingModal(true);
