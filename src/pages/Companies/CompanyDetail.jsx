@@ -4,7 +4,7 @@ import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch, TrendingUp
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { getCompanyName, decodeHtml } from '@/utils/formatters';
+import { getCompanyName, decodeHtml, sanitizeCompanyAcf } from '@/utils/formatters';
 import CompanyEditModal from '@/components/CompanyEditModal';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
@@ -534,10 +534,8 @@ export default function CompanyDetail() {
         postId={parseInt(id)}
         acfData={company?.acf}
         onUpdate={(newAcfValues) => {
-          updateCompany.mutateAsync({
-            id,
-            data: { acf: { ...company?.acf, ...newAcfValues } },
-          });
+          const acfData = sanitizeCompanyAcf(company?.acf, newAcfValues);
+          updateCompany.mutateAsync({ acf: acfData });
         }}
         isUpdating={updateCompany.isPending}
       />

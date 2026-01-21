@@ -127,7 +127,26 @@ export function sanitizePersonAcf(acfData, overrides = {}) {
   
   // Apply overrides
   Object.assign(sanitized, overrides);
-  
+
+  return sanitized;
+}
+
+export function sanitizeCompanyAcf(acfData, overrides = {}) {
+  // Fields that are repeaters and should always be arrays
+  const repeaterFields = ['contact_info'];
+
+  const sanitized = { ...acfData };
+
+  // Ensure repeater fields are arrays
+  repeaterFields.forEach(field => {
+    if (!Array.isArray(sanitized[field])) {
+      sanitized[field] = [];
+    }
+  });
+
+  // Apply overrides
+  Object.assign(sanitized, overrides);
+
   return sanitized;
 }
 
