@@ -166,12 +166,12 @@ Add Settings subtab for API access:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FEED-01 | Phase 1 | Pending |
-| FEED-02 | Phase 1 | Pending |
-| FEED-03 | Phase 1 | Pending |
-| FEED-04 | Phase 2 | Pending |
-| FEED-05 | Phase 2 | Pending |
-| FEED-06 | Phase 2 | Pending |
+| FEED-01 | Phase 1 | Complete |
+| FEED-02 | Phase 1 | Complete |
+| FEED-03 | Phase 1 | Complete |
+| FEED-04 | Phase 2 | Complete |
+| FEED-05 | Phase 2 | Complete |
+| FEED-06 | Phase 2 | Complete |
 | FEED-07 | Phase 3 | Pending |
 | FEED-08 | Phase 3 | Pending |
 | FEED-09 | Phase 3 | Pending |
