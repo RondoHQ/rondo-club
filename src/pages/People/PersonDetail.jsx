@@ -1535,19 +1535,6 @@ export default function PersonDetail() {
               {person.is_favorite && (
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
               )}
-              {/* View in Google Contacts link - only for synced contacts with email */}
-              {person.google_contact_id && acf.contact_info?.find(c => c.contact_type === 'email')?.contact_value && (
-                <a
-                  href={`https://contacts.google.com/${acf.contact_info.find(c => c.contact_type === 'email').contact_value}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-accent-600 dark:hover:text-accent-400"
-                  title="View in Google Contacts"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  <span>Google</span>
-                </a>
-              )}
             </div>
             {currentPositions.length > 0 && (
               <p className="text-base text-gray-600 dark:text-gray-300">
@@ -1856,6 +1843,20 @@ export default function PersonDetail() {
               <p className="text-sm text-gray-500 text-center py-4">
                 No contact information yet. <button onClick={() => setShowContactModal(true)} className="text-accent-600 hover:underline">Add some</button>
               </p>
+            )}
+            {/* View in Google Contacts link - only for synced contacts with email */}
+            {person.google_contact_id && acf.contact_info?.find(c => c.contact_type === 'email')?.contact_value && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <a
+                  href={`https://contacts.google.com/${acf.contact_info.find(c => c.contact_type === 'email').contact_value}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>View in Google Contacts</span>
+                </a>
+              </div>
             )}
             </div>
           )}
