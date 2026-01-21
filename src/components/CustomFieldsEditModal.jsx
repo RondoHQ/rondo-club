@@ -269,14 +269,24 @@ function RelationshipInput({ value = [], onChange, postTypes = ['person', 'compa
       if (!searchQuery || searchQuery.length < 2) return [];
 
       const response = await prmApi.search(searchQuery);
-      const results = response.data || [];
+      const data = response.data || {};
 
-      // Filter by allowed post types
-      return results.filter((item) => {
-        if (postTypes.includes('person') && item.type === 'person') return true;
-        if (postTypes.includes('company') && item.type === 'company') return true;
-        return false;
-      });
+      // Flatten response and add type property
+      const results = [];
+
+      if (postTypes.includes('person') && data.people) {
+        data.people.forEach((item) => {
+          results.push({ ...item, type: 'person' });
+        });
+      }
+
+      if (postTypes.includes('company') && data.companies) {
+        data.companies.forEach((item) => {
+          results.push({ ...item, type: 'company' });
+        });
+      }
+
+      return results;
     },
     enabled: searchQuery.length >= 2,
     staleTime: 30000,
@@ -399,7 +409,7 @@ function RelationshipInput({ value = [], onChange, postTypes = ['person', 'compa
 
           {/* Dropdown */}
           {showDropdown && searchQuery.length >= 2 && (
-            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
               {isSearching ? (
                 <div className="p-3 text-sm text-gray-500 text-center">Searching...</div>
               ) : searchResults.length === 0 ? (
@@ -714,7 +724,7 @@ export default function CustomFieldsEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Edit custom fields</h2>
