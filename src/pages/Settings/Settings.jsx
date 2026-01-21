@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, MessageSquare, Search, User, Link as LinkIcon, Loader2, CheckCircle } from 'lucide-react';
+import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, MessageSquare, Search, User, Link as LinkIcon, Loader2, CheckCircle, Key, Copy } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from 'date-fns';
 import { APP_NAME } from '@/constants/app';
@@ -17,6 +17,7 @@ const TABS = [
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'connections', label: 'Connections', icon: Share2 },
   { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'api-access', label: 'API Access', icon: Key },
   { id: 'data', label: 'Data', icon: Database },
   { id: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
   { id: 'about', label: 'About', icon: Info },
@@ -655,6 +656,22 @@ export default function Settings() {
           mentionNotifications={mentionNotifications}
           handleMentionNotificationsChange={handleMentionNotificationsChange}
           savingMentionPref={savingMentionPref}
+        />;
+      case 'api-access':
+        return <APIAccessTab
+          appPasswords={appPasswords}
+          appPasswordsLoading={appPasswordsLoading}
+          config={config}
+          newPasswordName={newPasswordName}
+          setNewPasswordName={setNewPasswordName}
+          handleCreateAppPassword={handleCreateAppPassword}
+          creatingPassword={creatingPassword}
+          newPassword={newPassword}
+          setNewPassword={setNewPassword}
+          copyNewPassword={copyNewPassword}
+          passwordCopied={passwordCopied}
+          handleDeleteAppPassword={handleDeleteAppPassword}
+          formatDate={formatDate}
         />;
       case 'data':
         return <DataTab />;
@@ -3134,6 +3151,13 @@ function AdminTab({
           >
             <p className="font-medium">Custom fields</p>
             <p className="text-sm text-gray-500">Define custom data fields for people and organizations</p>
+          </Link>
+          <Link
+            to="/settings/feedback"
+            className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:border-gray-600"
+          >
+            <p className="font-medium dark:text-gray-100">Feedback management</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">View and manage all user feedback</p>
           </Link>
         </div>
       </div>
