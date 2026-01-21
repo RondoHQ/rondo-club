@@ -17,6 +17,11 @@ This milestone adds a feedback system to Caelis, enabling users to submit bug re
 - FEED-02: ACF field group for feedback metadata (type, status, priority, context fields)
 - FEED-03: Feedback statuses (new, in_progress, resolved, declined)
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 95-01-PLAN.md — Register CPT and create ACF field group
+
 **Success Criteria:**
 1. User can create a feedback post in WordPress admin with all required fields
 2. Feedback posts store type (bug/feature_request), status, priority, and context fields
@@ -99,7 +104,7 @@ This milestone adds a feedback system to Caelis, enabling users to submit bug re
 
 | Phase | Status | Requirements | Completion |
 |-------|--------|--------------|------------|
-| Phase 1: Backend Foundation | Not Started | FEED-01, FEED-02, FEED-03 | 0% |
+| Phase 1: Backend Foundation | Planned | FEED-01, FEED-02, FEED-03 | 0% |
 | Phase 2: REST API | Not Started | FEED-04, FEED-05, FEED-06 | 0% |
 | Phase 3: Frontend Submission | Not Started | FEED-07, FEED-08, FEED-09, FEED-10, FEED-11, FEED-12 | 0% |
 | Phase 4: Admin Management | Not Started | FEED-13, FEED-14, FEED-15, FEED-16, FEED-17 | 0% |
