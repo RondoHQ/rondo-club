@@ -41,6 +41,11 @@ Plans:
 - FEED-05: Application password authentication support
 - FEED-06: Permission model (own feedback + admin access to all)
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 96-01-PLAN.md — Create Feedback REST API with CRUD endpoints and permissions
+
 **Success Criteria:**
 1. User can create feedback via `POST /wp-json/prm/v1/feedback` with application password auth
 2. User can list their own feedback via `GET /wp-json/prm/v1/feedback`
@@ -105,7 +110,7 @@ Plans:
 | Phase | Status | Requirements | Completion |
 |-------|--------|--------------|------------|
 | Phase 1: Backend Foundation | Complete | FEED-01, FEED-02, FEED-03 | 100% |
-| Phase 2: REST API | Not Started | FEED-04, FEED-05, FEED-06 | 0% |
+| Phase 2: REST API | Planned | FEED-04, FEED-05, FEED-06 | 0% |
 | Phase 3: Frontend Submission | Not Started | FEED-07, FEED-08, FEED-09, FEED-10, FEED-11, FEED-12 | 0% |
 | Phase 4: Admin Management | Not Started | FEED-13, FEED-14, FEED-15, FEED-16, FEED-17 | 0% |
 
