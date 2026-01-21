@@ -399,7 +399,9 @@ if [ "$RUN_CLAUDE" = true ]; then
     # Run Claude and capture output
     # --dangerously-skip-permissions allows autonomous operation without prompts
     # --print outputs response and exits (for piped input)
-    CLAUDE_OUTPUT=$(echo "$OUTPUT" | claude --print --dangerously-skip-permissions 2>&1)
+    # Use CLAUDE_PATH from .env if set, otherwise fall back to 'claude' in PATH
+    CLAUDE_BIN="${CLAUDE_PATH:-claude}"
+    CLAUDE_OUTPUT=$(echo "$OUTPUT" | "$CLAUDE_BIN" --print --dangerously-skip-permissions 2>&1)
     CLAUDE_EXIT=$?
 
     # Display Claude's output
