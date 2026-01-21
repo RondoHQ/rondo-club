@@ -589,21 +589,10 @@ export default function Settings() {
         return <ConnectionsTab
           activeSubtab={activeSubtab}
           setActiveSubtab={setActiveSubtab}
+          setActiveTab={setActiveTab}
           // CardDAV props
-          appPasswords={appPasswords}
-          appPasswordsLoading={appPasswordsLoading}
           carddavUrls={carddavUrls}
           config={config}
-          newPasswordName={newPasswordName}
-          setNewPasswordName={setNewPasswordName}
-          handleCreateAppPassword={handleCreateAppPassword}
-          creatingPassword={creatingPassword}
-          newPassword={newPassword}
-          setNewPassword={setNewPassword}
-          copyNewPassword={copyNewPassword}
-          passwordCopied={passwordCopied}
-          handleDeleteAppPassword={handleDeleteAppPassword}
-          formatDate={formatDate}
           copyCarddavUrl={copyCarddavUrl}
           // Slack props
           slackConnected={slackConnected}
@@ -2083,12 +2072,9 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
 // ConnectionsTab Component - Container for Calendars, Contacts, CardDAV, and Slack subtabs
 function ConnectionsTab({
-  activeSubtab, setActiveSubtab,
+  activeSubtab, setActiveSubtab, setActiveTab,
   // CardDAV props
-  appPasswords, appPasswordsLoading, carddavUrls, config,
-  newPasswordName, setNewPasswordName, handleCreateAppPassword, creatingPassword,
-  newPassword, setNewPassword, copyNewPassword, passwordCopied,
-  handleDeleteAppPassword, formatDate, copyCarddavUrl,
+  carddavUrls, config, copyCarddavUrl,
   // Slack props
   slackConnected, slackWorkspaceName, handleConnectSlack, handleDisconnectSlack,
   disconnectingSlack, webhookTestMessage, slackChannels, slackUsers, slackTargets,
@@ -2156,21 +2142,10 @@ function ConnectionsTab({
       )}
       {activeSubtab === 'carddav' && (
         <ConnectionsCardDAVSubtab
-          appPasswords={appPasswords}
-          appPasswordsLoading={appPasswordsLoading}
           carddavUrls={carddavUrls}
           config={config}
-          newPasswordName={newPasswordName}
-          setNewPasswordName={setNewPasswordName}
-          handleCreateAppPassword={handleCreateAppPassword}
-          creatingPassword={creatingPassword}
-          newPassword={newPassword}
-          setNewPassword={setNewPassword}
-          copyNewPassword={copyNewPassword}
-          passwordCopied={passwordCopied}
-          handleDeleteAppPassword={handleDeleteAppPassword}
-          formatDate={formatDate}
           copyCarddavUrl={copyCarddavUrl}
+          setActiveTab={setActiveTab}
         />
       )}
       {activeSubtab === 'slack' && (
@@ -2559,12 +2534,9 @@ function ConnectionsContactsSubtab({
   );
 }
 
-// ConnectionsCardDAVSubtab - CardDAV sync configuration
+// ConnectionsCardDAVSubtab - CardDAV sync configuration (URLs only, passwords managed in API Access tab)
 function ConnectionsCardDAVSubtab({
-  appPasswords, appPasswordsLoading, carddavUrls, config,
-  newPasswordName, setNewPasswordName, handleCreateAppPassword, creatingPassword,
-  newPassword, setNewPassword, copyNewPassword, passwordCopied,
-  handleDeleteAppPassword, formatDate, copyCarddavUrl,
+  carddavUrls, config, copyCarddavUrl, setActiveTab,
 }) {
   return (
     <div className="card p-6">
@@ -2573,136 +2545,64 @@ function ConnectionsCardDAVSubtab({
         Sync your contacts with apps like Apple Contacts, Android Contacts, or Thunderbird using CardDAV.
       </p>
 
-      {appPasswordsLoading ? (
-        <div className="animate-pulse">
-          <div className="h-10 bg-gray-200 rounded mb-3 dark:bg-gray-700"></div>
-          <div className="h-24 bg-gray-200 rounded dark:bg-gray-700"></div>
-        </div>
-      ) : (
+      {carddavUrls ? (
         <div className="space-y-4">
-          {carddavUrls && (
-            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
-              <h3 className="font-medium text-sm dark:text-gray-200">Connection details</h3>
-              <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400">Server URL (for most apps)</label>
-                <div className="flex gap-2 mt-1">
-                  <input
-                    type="text"
-                    readOnly
-                    value={carddavUrls.addressbook}
-                    className="input flex-1 text-xs font-mono bg-white dark:bg-gray-700"
-                    onClick={(e) => e.target.select()}
-                  />
-                  <button
-                    onClick={() => copyCarddavUrl(carddavUrls.addressbook)}
-                    className="btn-secondary text-xs px-2"
-                    title="Copy URL"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400">Username</label>
-                <div className="flex gap-2 mt-1">
-                  <input
-                    type="text"
-                    readOnly
-                    value={config.userLogin || ''}
-                    className="input flex-1 text-xs font-mono bg-white dark:bg-gray-700"
-                    onClick={(e) => e.target.select()}
-                  />
-                  <button
-                    onClick={() => copyCarddavUrl(config.userLogin)}
-                    className="btn-secondary text-xs px-2"
-                    title="Copy username"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Use one of the app passwords below instead of your regular password.
-              </p>
-            </div>
-          )}
-
-          <form onSubmit={handleCreateAppPassword} className="flex gap-2">
-            <input
-              type="text"
-              value={newPasswordName}
-              onChange={(e) => setNewPasswordName(e.target.value)}
-              placeholder="Password name (e.g., iPhone Contacts)"
-              className="input flex-1"
-              disabled={creatingPassword}
-            />
-            <button
-              type="submit"
-              disabled={creatingPassword || !newPasswordName.trim()}
-              className="btn-primary whitespace-nowrap"
-            >
-              {creatingPassword ? 'Creating...' : 'Create password'}
-            </button>
-          </form>
-
-          {newPassword && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-900/20 dark:border-green-800">
-              <p className="text-sm text-green-800 font-medium mb-2 dark:text-green-300">
-                Your new app password (copy it now, it won&apos;t be shown again):
-              </p>
-              <div className="flex gap-2">
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
+            <h3 className="font-medium text-sm dark:text-gray-200">Connection details</h3>
+            <div>
+              <label className="text-xs text-gray-500 dark:text-gray-400">Server URL (for most apps)</label>
+              <div className="flex gap-2 mt-1">
                 <input
                   type="text"
                   readOnly
-                  value={newPassword}
-                  className="input flex-1 font-mono text-sm bg-white dark:bg-gray-700"
+                  value={carddavUrls.addressbook}
+                  className="input flex-1 text-xs font-mono bg-white dark:bg-gray-700"
                   onClick={(e) => e.target.select()}
                 />
-                <button onClick={copyNewPassword} className="btn-primary whitespace-nowrap">
-                  {passwordCopied ? 'Copied!' : 'Copy'}
+                <button
+                  onClick={() => copyCarddavUrl(carddavUrls.addressbook)}
+                  className="btn-secondary text-xs px-2"
+                  title="Copy URL"
+                >
+                  Copy
                 </button>
               </div>
-              <button
-                onClick={() => setNewPassword(null)}
-                className="text-xs text-green-700 mt-2 hover:underline dark:text-green-400"
-              >
-                I&apos;ve saved this password, hide it
-              </button>
             </div>
-          )}
-
-          {appPasswords.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium mb-2 dark:text-gray-200">Your app passwords</h3>
-              <div className="space-y-2">
-                {appPasswords.map((password) => (
-                  <div
-                    key={password.uuid}
-                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700"
-                  >
-                    <div>
-                      <p className="font-medium text-sm dark:text-gray-200">{password.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Created {formatDate(password.created)} · Last used {formatDate(password.last_used)}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteAppPassword(password.uuid, password.name)}
-                      className="text-red-600 hover:text-red-700 text-sm font-medium dark:text-red-400 dark:hover:text-red-300"
-                    >
-                      Revoke
-                    </button>
-                  </div>
-                ))}
+              <label className="text-xs text-gray-500 dark:text-gray-400">Username</label>
+              <div className="flex gap-2 mt-1">
+                <input
+                  type="text"
+                  readOnly
+                  value={config.userLogin || ''}
+                  className="input flex-1 text-xs font-mono bg-white dark:bg-gray-700"
+                  onClick={(e) => e.target.select()}
+                />
+                <button
+                  onClick={() => copyCarddavUrl(config.userLogin)}
+                  className="btn-secondary text-xs px-2"
+                  title="Copy username"
+                >
+                  Copy
+                </button>
               </div>
             </div>
-          )}
+          </div>
 
-          {appPasswords.length === 0 && !newPassword && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              No app passwords yet. Create one to start syncing your contacts.
-            </p>
-          )}
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Application passwords for CardDAV are managed in{' '}
+            <button
+              onClick={() => setActiveTab('api-access')}
+              className="text-accent-600 dark:text-accent-400 hover:underline"
+            >
+              Settings &gt; API Access
+            </button>
+            .
+          </p>
+        </div>
+      ) : (
+        <div className="animate-pulse">
+          <div className="h-24 bg-gray-200 rounded dark:bg-gray-700"></div>
         </div>
       )}
     </div>
