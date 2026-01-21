@@ -399,6 +399,81 @@ Add to Settings page:
 
 ## Appendix
 
+### CLI Automation Script
+
+The `bin/get-feedback.sh` script provides automated feedback processing via Claude Code.
+
+**Key Features:**
+
+- Fetches oldest feedback item (by default, status: `approved`)
+- Can pipe to Claude Code or run Claude directly with `--run`
+- Loop mode (`--loop`) processes all feedback items until queue is empty
+- Updates feedback status based on Claude's response (`resolved` or `declined`)
+- Prevents concurrent runs via lock file
+- Logs all activity to `logs/feedback-processor.log`
+
+**Usage:**
+
+```bash
+# Interactive mode - pipe to Claude
+bin/get-feedback.sh | claude
+
+# Autonomous mode - run Claude directly
+bin/get-feedback.sh --run
+
+# Loop mode - process all items until done
+bin/get-feedback.sh --loop
+
+# Filter by type
+bin/get-feedback.sh --type=bug --loop
+
+# Get specific feedback item
+bin/get-feedback.sh --id=123
+```
+
+**Loop Mode:**
+
+The `--loop` flag enables continuous processing:
+
+1. Fetches oldest feedback item with matching criteria (default: `approved` status)
+2. Runs Claude Code to analyze and fix the issue
+3. Updates feedback status based on Claude's response:
+   - `STATUS: RESOLVED` → marks as resolved
+   - `STATUS: DECLINED` → marks as declined
+   - No status → item remains in queue for next run
+4. Repeats until no more items match criteria
+5. Logs progress: "Processing item #1", "Processing item #2", etc.
+
+**Status Workflow:**
+
+Claude must end its response with one of these lines:
+- `STATUS: RESOLVED` - Issue fixed and deployed
+- `STATUS: DECLINED` - Issue won't be fixed (explain why)
+
+If no status line is present, the item remains in the queue.
+
+**Cron Setup:**
+
+Add to crontab for automated processing:
+
+```bash
+# Process all approved feedback daily at 2 AM
+0 2 * * * /path/to/caelis/bin/get-feedback.sh --loop
+
+# Process bugs every 6 hours
+0 */6 * * * /path/to/caelis/bin/get-feedback.sh --type=bug --loop
+```
+
+**Environment Variables:**
+
+Required in `.env`:
+- `CAELIS_API_URL` - WordPress site URL
+- `CAELIS_API_USER` - WordPress username
+- `CAELIS_API_PASSWORD` - Application password
+- `CLAUDE_PATH` - Path to Claude Code binary (optional, defaults to `claude`)
+- `HOMEBREW_PATH` - Homebrew bin path for cron (optional)
+- `USER_HOME` - User home directory for cron (optional)
+
 ### Example API Usage
 
 **Creating feedback with curl:**

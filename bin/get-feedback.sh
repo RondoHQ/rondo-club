@@ -150,6 +150,7 @@ TYPE=""
 FEEDBACK_ID=""
 OUTPUT_FORMAT="claude"
 RUN_CLAUDE=false
+LOOP_MODE=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -174,6 +175,11 @@ while [[ $# -gt 0 ]]; do
             RUN_CLAUDE=true
             shift
             ;;
+        --loop)
+            LOOP_MODE=true
+            RUN_CLAUDE=true  # Loop mode requires running Claude
+            shift
+            ;;
         --json)
             OUTPUT_FORMAT="json"
             shift
@@ -187,6 +193,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Options:"
             echo "  --run              Pipe output directly to Claude Code (use for cron)"
+            echo "  --loop             Process all feedback items one by one until none left (implies --run)"
             echo "  --status=STATUS    Filter by status: new, approved, in_progress, resolved, declined"
             echo "                     (default: approved)"
             echo "                     (default: new)"
@@ -198,6 +205,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Examples:"
             echo "  bin/get-feedback.sh --run                # Fetch and run Claude (for cron)"
+            echo "  bin/get-feedback.sh --loop               # Process all feedback items until done"
             echo "  bin/get-feedback.sh                      # Get oldest new feedback"
             echo "  bin/get-feedback.sh --type=bug           # Get oldest new bug"
             echo "  bin/get-feedback.sh | claude             # Pipe to Claude Code"
@@ -217,7 +225,24 @@ if [ "$RUN_CLAUDE" = true ]; then
     create_lock
 fi
 
-# Build API URL - fetch 1 item, oldest first
+# Loop mode: process items until none left
+if [ "$LOOP_MODE" = true ]; then
+    log "INFO" "Starting loop mode - will process all feedback items"
+    echo -e "${GREEN}Loop mode enabled - processing all feedback items${NC}" >&2
+    LOOP_COUNTER=0
+fi
+
+# Main loop - runs once normally, loops when LOOP_MODE=true
+while true; do
+    # In loop mode, increment counter and log progress
+    if [ "$LOOP_MODE" = true ]; then
+        LOOP_COUNTER=$((LOOP_COUNTER + 1))
+        echo "" >&2
+        echo -e "${GREEN}=== Processing item #${LOOP_COUNTER} ===${NC}" >&2
+        log "INFO" "Loop iteration #${LOOP_COUNTER}"
+    fi
+
+    # Build API URL - fetch 1 item, oldest first
 API_BASE="${CAELIS_API_URL}/wp-json/prm/v1/feedback"
 
 if [ -n "$FEEDBACK_ID" ]; then
@@ -256,9 +281,16 @@ fi
 
 if [ "$ITEM_COUNT" = "0" ] || [ "$ITEM_COUNT" = "null" ]; then
     log "INFO" "No feedback items found matching criteria"
-    echo -e "${GREEN}No feedback items found matching your criteria.${NC}" >&2
-    SCRIPT_COMPLETED=true
-    exit 0
+    if [ "$LOOP_MODE" = true ]; then
+        echo -e "${GREEN}No more feedback items. Processed ${LOOP_COUNTER} items total.${NC}" >&2
+        log "INFO" "Loop completed - processed ${LOOP_COUNTER} items"
+        SCRIPT_COMPLETED=true
+        break
+    else
+        echo -e "${GREEN}No feedback items found matching your criteria.${NC}" >&2
+        SCRIPT_COMPLETED=true
+        exit 0
+    fi
 fi
 
 # Get the feedback ID for display
@@ -445,7 +477,18 @@ if [ "$RUN_CLAUDE" = true ]; then
 
     log "INFO" "=== Script finished ==="
     SCRIPT_COMPLETED=true
+
+    # In loop mode, continue to next item; otherwise break
+    if [ "$LOOP_MODE" = true ]; then
+        echo -e "${YELLOW}Checking for next feedback item...${NC}" >&2
+        sleep 1  # Brief pause between items
+    else
+        break
+    fi
 else
+    # Non-Claude output mode (pipes, JSON, etc)
     echo "$OUTPUT"
     SCRIPT_COMPLETED=true
+    break
 fi
+done  # End of main loop
