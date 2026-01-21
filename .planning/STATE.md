@@ -86,8 +86,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-1 active todo in `.planning/todos/pending/`:
+2 active todos in `.planning/todos/pending/`:
 - Add import from Twenty CRM (api)
+- Make custom field columns sortable (ui)
 
 See `/gsd:check-todos` for full list.
 
