@@ -10,31 +10,32 @@ See: .planning/PROJECT.md (updated 2026-01-21)
 ## Current Position
 
 Milestone: v6.1 Feedback System
-Phase: 95 of 98 (Backend Foundation) - NOT STARTED
-Status: Ready to plan phase 95
-Last activity: 2026-01-21 — Roadmap created
+Phase: 95 of 98 (Backend Foundation) - IN PROGRESS
+Plan: 1 of 1 complete
+Status: Plan 95-01 complete
+Last activity: 2026-01-21 - Completed 95-01-PLAN.md (CPT and ACF Field Group)
 
-Progress: [░░░░░░░░░░] 0% (0/4 phases complete)
+Progress: [██░░░░░░░░] 25% (1/4 phases in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0 (this milestone)
-- Average duration: N/A
-- Total execution time: 0 min
+- Total plans completed: 1 (this milestone)
+- Average duration: 5 min
+- Total execution time: 5 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 95-backend-foundation | - | - | - |
+| 95-backend-foundation | 1/1 | 5 min | 5 min |
 | 96-rest-api | - | - | - |
 | 97-frontend-submission | - | - | - |
 | 98-admin-management | - | - | - |
 
 **Recent Trend:**
-- Last 5 plans: N/A
-- Trend: New milestone
+- Last 5 plans: 5 min
+- Trend: Starting new milestone
 
 *Updated after each plan completion*
 
@@ -80,6 +81,10 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases complete)
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
+Recent decisions from Phase 95:
+- Use ACF select field for feedback status (simpler than custom post statuses)
+- Feedback is global scope (not workspace-scoped)
+
 ### Pending Todos
 
 2 active todos in `.planning/todos/pending/`:
@@ -95,10 +100,11 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-21
-Stopped at: Created v6.1 Feedback System roadmap
+Stopped at: Completed 95-01-PLAN.md (CPT and ACF Field Group)
 Resume file: None
 
 ## Next Steps
 
-- Run `/gsd:plan-phase 95` to plan Backend Foundation phase
+- Phase 95 complete - ready for Phase 96 (REST API)
+- Run `/gsd:plan-phase 96` to plan REST API phase
 - Or run `/gsd:progress` to see milestone overview
