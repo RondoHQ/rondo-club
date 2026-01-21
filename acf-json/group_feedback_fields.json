@@ -1,0 +1,195 @@
+{
+    "key": "group_feedback_fields",
+    "title": "Feedback Fields",
+    "fields": [
+        {
+            "key": "field_feedback_type",
+            "label": "Type",
+            "name": "feedback_type",
+            "type": "select",
+            "instructions": "",
+            "required": 1,
+            "choices": {
+                "bug": "Bug Report",
+                "feature_request": "Feature Request"
+            },
+            "default_value": "",
+            "return_format": "value",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 0
+        },
+        {
+            "key": "field_feedback_status",
+            "label": "Status",
+            "name": "status",
+            "type": "select",
+            "instructions": "",
+            "required": 1,
+            "choices": {
+                "new": "New",
+                "in_progress": "In Progress",
+                "resolved": "Resolved",
+                "declined": "Declined"
+            },
+            "default_value": "new",
+            "return_format": "value",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 0
+        },
+        {
+            "key": "field_feedback_priority",
+            "label": "Priority",
+            "name": "priority",
+            "type": "select",
+            "instructions": "",
+            "required": 0,
+            "choices": {
+                "low": "Low",
+                "medium": "Medium",
+                "high": "High",
+                "critical": "Critical"
+            },
+            "default_value": "medium",
+            "return_format": "value",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 0
+        },
+        {
+            "key": "field_feedback_browser_info",
+            "label": "Browser Info",
+            "name": "browser_info",
+            "type": "text",
+            "instructions": "Browser and OS information (auto-captured)",
+            "required": 0
+        },
+        {
+            "key": "field_feedback_app_version",
+            "label": "App Version",
+            "name": "app_version",
+            "type": "text",
+            "instructions": "Caelis version at time of submission",
+            "required": 0
+        },
+        {
+            "key": "field_feedback_url_context",
+            "label": "URL Context",
+            "name": "url_context",
+            "type": "text",
+            "instructions": "Page URL where feedback was submitted",
+            "required": 0
+        },
+        {
+            "key": "field_feedback_steps_to_reproduce",
+            "label": "Steps to Reproduce",
+            "name": "steps_to_reproduce",
+            "type": "textarea",
+            "instructions": "Describe the steps to reproduce this issue",
+            "required": 0,
+            "rows": 4,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_feedback_type",
+                        "operator": "==",
+                        "value": "bug"
+                    }
+                ]
+            ]
+        },
+        {
+            "key": "field_feedback_expected_behavior",
+            "label": "Expected Behavior",
+            "name": "expected_behavior",
+            "type": "textarea",
+            "instructions": "What did you expect to happen?",
+            "required": 0,
+            "rows": 4,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_feedback_type",
+                        "operator": "==",
+                        "value": "bug"
+                    }
+                ]
+            ]
+        },
+        {
+            "key": "field_feedback_actual_behavior",
+            "label": "Actual Behavior",
+            "name": "actual_behavior",
+            "type": "textarea",
+            "instructions": "What actually happened?",
+            "required": 0,
+            "rows": 4,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_feedback_type",
+                        "operator": "==",
+                        "value": "bug"
+                    }
+                ]
+            ]
+        },
+        {
+            "key": "field_feedback_use_case",
+            "label": "Use Case",
+            "name": "use_case",
+            "type": "textarea",
+            "instructions": "Describe how you would use this feature",
+            "required": 0,
+            "rows": 4,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_feedback_type",
+                        "operator": "==",
+                        "value": "feature_request"
+                    }
+                ]
+            ]
+        },
+        {
+            "key": "field_feedback_attachments",
+            "label": "Attachments",
+            "name": "attachments",
+            "type": "gallery",
+            "instructions": "Screenshots or other files related to this feedback",
+            "required": 0,
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all",
+            "min": 0,
+            "max": 50
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "caelis_feedback"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": [
+        "excerpt",
+        "discussion",
+        "comments",
+        "slug"
+    ],
+    "active": true,
+    "show_in_rest": 1
+}
