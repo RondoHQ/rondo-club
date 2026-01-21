@@ -17,6 +17,8 @@ const CompaniesList = lazy(() => import('@/pages/Companies/CompaniesList'));
 const CompanyDetail = lazy(() => import('@/pages/Companies/CompanyDetail'));
 const DatesList = lazy(() => import('@/pages/Dates/DatesList'));
 const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
+const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
+const FeedbackDetail = lazy(() => import('@/pages/Feedback/FeedbackDetail'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
 const Labels = lazy(() => import('@/pages/Settings/Labels'));
@@ -194,6 +196,10 @@ function App() {
 
                   {/* Todos routes */}
                   <Route path="/todos" element={<TodosList />} />
+
+                  {/* Feedback routes */}
+                  <Route path="/feedback" element={<FeedbackList />} />
+                  <Route path="/feedback/:id" element={<FeedbackDetail />} />
 
                   {/* Settings */}
                   <Route path="/settings" element={<Settings />} />
