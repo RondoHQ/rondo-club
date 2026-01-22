@@ -394,7 +394,7 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
           <EditableCustomFieldColumn
             field={field}
             value={company.acf?.[field.name]}
-            onSave={(fieldName, newValue) => onUpdateField(company.id, fieldName, newValue)}
+            onSave={(fieldName, newValue) => onUpdateField(company.id, fieldName, newValue, company.acf)}
             isLoading={isUpdating}
           />
         </td>
@@ -508,9 +508,13 @@ export default function CompaniesList() {
 
   // Mutation for updating single company field inline
   const updateFieldMutation = useMutation({
-    mutationFn: async ({ companyId, fieldName, value }) => {
+    mutationFn: async ({ companyId, fieldName, value, existingAcf }) => {
+      // Merge with existing ACF data to preserve required fields like _visibility
       const response = await wpApi.updateCompany(companyId, {
-        acf: { [fieldName]: value }
+        acf: {
+          ...existingAcf,
+          [fieldName]: value
+        }
       });
       return response.data;
     },
@@ -520,8 +524,8 @@ export default function CompaniesList() {
   });
 
   // Handler for inline field updates
-  const handleUpdateField = async (companyId, fieldName, newValue) => {
-    await updateFieldMutation.mutateAsync({ companyId, fieldName, value: newValue });
+  const handleUpdateField = async (companyId, fieldName, newValue, existingAcf) => {
+    await updateFieldMutation.mutateAsync({ companyId, fieldName, value: newValue, existingAcf });
   };
 
   // Get current user ID from prmConfig
