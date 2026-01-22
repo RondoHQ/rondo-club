@@ -9,12 +9,6 @@
             "type": "url"
         },
         {
-            "key": "field_company_industry",
-            "label": "Industry",
-            "name": "industry",
-            "type": "text"
-        },
-        {
             "key": "field_company_contact_info",
             "label": "Contact Information",
             "name": "contact_info",

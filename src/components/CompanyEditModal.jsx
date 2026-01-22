@@ -56,7 +56,6 @@ export default function CompanyEditModal({
     defaultValues: {
       title: '',
       website: '',
-      industry: '',
     },
   });
 
@@ -142,7 +141,6 @@ export default function CompanyEditModal({
         reset({
           title: decodeHtml(company.title?.rendered || ''),
           website: company.acf?.website || '',
-          industry: company.acf?.industry || '',
         });
         // Set parent company if exists
         setSelectedParentId(company.parent ? String(company.parent) : '');
@@ -155,7 +153,6 @@ export default function CompanyEditModal({
         reset({
           title: '',
           website: '',
-          industry: '',
         });
         setSelectedParentId('');
         setSelectedInvestors([]);
@@ -283,17 +280,6 @@ export default function CompanyEditModal({
               />
             </div>
 
-            {/* Industry */}
-            <div>
-              <label className="label">Industry</label>
-              <input
-                {...register('industry')}
-                className="input"
-                placeholder="Technology"
-                disabled={isLoading}
-              />
-            </div>
-            
             {/* Parent company selection */}
             <div>
               <label className="label">Parent organization</label>
