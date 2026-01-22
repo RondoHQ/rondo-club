@@ -1,13 +1,14 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, ChevronDown, Lock, Users, Tag, Check } from 'lucide-react';
+import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, ChevronDown, Lock, Users, Tag, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useCreateCompany, useBulkUpdateCompanies } from '@/hooks/useCompanies';
 import { wpApi, prmApi } from '@/api/client';
 import { getCompanyName } from '@/utils/formatters';
 import CompanyEditModal from '@/components/CompanyEditModal';
-import EditableCustomFieldColumn from '@/components/EditableCustomFieldColumn';
+import CustomFieldColumn from '@/components/CustomFieldColumn';
+import InlineFieldInput from '@/components/InlineFieldInput';
 
 // Bulk Visibility Modal Component for Organizations
 function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoading }) {
@@ -329,7 +330,38 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
   );
 }
 
-function OrganizationListRow({ company, workspaces, listViewFields, isSelected, onToggleSelection, isOdd, onUpdateField, isUpdating }) {
+function OrganizationListRow({ company, workspaces, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit }) {
+  // Local state for edited field values
+  const [editedFields, setEditedFields] = useState({});
+
+  // Reset edited fields when entering/exiting edit mode
+  useEffect(() => {
+    if (isEditing) {
+      // Initialize with current values
+      const initialValues = {};
+      listViewFields.forEach(field => {
+        initialValues[field.name] = company.acf?.[field.name] ?? '';
+      });
+      setEditedFields(initialValues);
+    } else {
+      setEditedFields({});
+    }
+  }, [isEditing, company.acf, listViewFields]);
+
+  const handleFieldChange = (fieldName, value) => {
+    setEditedFields(prev => ({ ...prev, [fieldName]: value }));
+  };
+
+  const handleSave = () => {
+    onSaveRow(company.id, editedFields, company.acf);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      onCancelEdit();
+    }
+  };
+
   const assignedWorkspaces = company.acf?._assigned_workspaces || [];
   const workspaceNames = assignedWorkspaces
     .map(wsId => {
@@ -341,7 +373,10 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
     .join(', ');
 
   return (
-    <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'}`}>
+    <tr
+      className={`group hover:bg-gray-100 dark:hover:bg-gray-700 ${isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'} ${isEditing ? 'ring-2 ring-accent-500 ring-inset' : ''}`}
+      onKeyDown={isEditing ? handleKeyDown : undefined}
+    >
       <td className="pl-4 pr-2 py-3 w-10">
         <button
           onClick={(e) => { e.preventDefault(); onToggleSelection(company.id); }}
@@ -391,14 +426,53 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
       </td>
       {listViewFields.map(field => (
         <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-          <EditableCustomFieldColumn
-            field={field}
-            value={company.acf?.[field.name]}
-            onSave={(fieldName, newValue) => onUpdateField(company.id, fieldName, newValue, company.acf)}
-            isLoading={isUpdating}
-          />
+          {isEditing ? (
+            <InlineFieldInput
+              field={field}
+              value={editedFields[field.name]}
+              onChange={handleFieldChange}
+              disabled={isUpdating}
+            />
+          ) : (
+            <CustomFieldColumn field={field} value={company.acf?.[field.name]} />
+          )}
         </td>
       ))}
+      {/* Actions column */}
+      <td className="px-2 py-3 whitespace-nowrap text-sm">
+        {isEditing ? (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleSave}
+              disabled={isUpdating}
+              className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20 rounded"
+              title="Save (Enter)"
+            >
+              {isUpdating ? (
+                <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+            </button>
+            <button
+              onClick={onCancelEdit}
+              disabled={isUpdating}
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700 rounded"
+              title="Cancel (Esc)"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => onStartEdit(company.id)}
+            className="p-1.5 text-gray-400 hover:text-accent-600 hover:bg-accent-50 dark:hover:text-accent-400 dark:hover:bg-accent-900/20 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Edit row"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+        )}
+      </td>
     </tr>
   );
 }
@@ -426,7 +500,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
   );
 }
 
-function OrganizationListView({ companies, workspaces, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort, onUpdateField, isUpdating }) {
+function OrganizationListView({ companies, workspaces, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort, onSaveRow, isUpdating, editingRowId, onStartEdit, onCancelEdit }) {
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -461,6 +535,8 @@ function OrganizationListView({ companies, workspaces, listViewFields, selectedI
                 onSort={onSort}
               />
             ))}
+            {/* Actions column header */}
+            <th scope="col" className="w-20 px-2 bg-gray-50 dark:bg-gray-800"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -473,8 +549,11 @@ function OrganizationListView({ companies, workspaces, listViewFields, selectedI
               isSelected={selectedIds.has(company.id)}
               onToggleSelection={onToggleSelection}
               isOdd={index % 2 === 1}
-              onUpdateField={onUpdateField}
-              isUpdating={isUpdating}
+              onSaveRow={onSaveRow}
+              isUpdating={isUpdating && editingRowId === company.id}
+              isEditing={editingRowId === company.id}
+              onStartEdit={onStartEdit}
+              onCancelEdit={onCancelEdit}
             />
           ))}
         </tbody>
@@ -497,6 +576,7 @@ export default function CompaniesList() {
   const [showBulkVisibilityModal, setShowBulkVisibilityModal] = useState(false);
   const [showBulkWorkspaceModal, setShowBulkWorkspaceModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [editingRowId, setEditingRowId] = useState(null);
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
   const bulkDropdownRef = useRef(null);
@@ -506,26 +586,36 @@ export default function CompaniesList() {
   const bulkUpdateMutation = useBulkUpdateCompanies();
   const queryClient = useQueryClient();
 
-  // Mutation for updating single company field inline
-  const updateFieldMutation = useMutation({
-    mutationFn: async ({ companyId, fieldName, value, existingAcf }) => {
-      // Merge with existing ACF data to preserve required fields like _visibility
+  // Mutation for updating row custom fields
+  const updateRowMutation = useMutation({
+    mutationFn: async ({ companyId, editedFields, existingAcf }) => {
+      // Merge edited fields with existing ACF data to preserve required fields like _visibility
       const response = await wpApi.updateCompany(companyId, {
         acf: {
           ...existingAcf,
-          [fieldName]: value
+          ...editedFields
         }
       });
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
+      setEditingRowId(null);
     },
   });
 
-  // Handler for inline field updates
-  const handleUpdateField = async (companyId, fieldName, newValue, existingAcf) => {
-    await updateFieldMutation.mutateAsync({ companyId, fieldName, value: newValue, existingAcf });
+  // Handler for saving all edited fields in a row
+  const handleSaveRow = async (companyId, editedFields, existingAcf) => {
+    await updateRowMutation.mutateAsync({ companyId, editedFields, existingAcf });
+  };
+
+  // Row edit mode handlers
+  const handleStartEdit = (companyId) => {
+    setEditingRowId(companyId);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRowId(null);
   };
 
   // Get current user ID from prmConfig
@@ -1026,8 +1116,11 @@ export default function CompaniesList() {
               setSortOrder('asc');
             }
           }}
-          onUpdateField={handleUpdateField}
-          isUpdating={updateFieldMutation.isPending}
+          onSaveRow={handleSaveRow}
+          isUpdating={updateRowMutation.isPending}
+          editingRowId={editingRowId}
+          onStartEdit={handleStartEdit}
+          onCancelEdit={handleCancelEdit}
         />
       )}
       
