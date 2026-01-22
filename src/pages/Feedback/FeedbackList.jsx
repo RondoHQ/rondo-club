@@ -41,7 +41,7 @@ export default function FeedbackList() {
 
   // Filter state
   const [typeFilter, setTypeFilter] = useState(''); // '' | 'bug' | 'feature_request'
-  const [statusFilter, setStatusFilter] = useState(''); // '' | 'new' | 'in_progress' | 'resolved' | 'declined'
+  const [statusFilter, setStatusFilter] = useState('open'); // 'open' | '' | 'new' | 'approved' | 'in_progress' | 'resolved' | 'declined'
   const [showModal, setShowModal] = useState(false);
 
   // Fetch feedback with filters
@@ -130,6 +130,16 @@ export default function FeedbackList() {
         {/* Status filter */}
         <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5">
           <button
+            onClick={() => setStatusFilter('open')}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              statusFilter === 'open'
+                ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            All Open
+          </button>
+          <button
             onClick={() => setStatusFilter('')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               statusFilter === ''
@@ -137,7 +147,7 @@ export default function FeedbackList() {
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
-            All Status
+            All
           </button>
           <button
             onClick={() => setStatusFilter('new')}
