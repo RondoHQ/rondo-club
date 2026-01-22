@@ -149,7 +149,6 @@ export default function CompanyDetail() {
         parent: data.parentId || 0,
         acf: {
           website: data.website,
-          industry: data.industry,
           investors: data.investors || [],
           // Use visibility values from the form, fall back to existing values
           _visibility: data.visibility || company.acf?._visibility || 'private',
@@ -297,7 +296,6 @@ export default function CompanyDetail() {
               </Link>
             )}
             <h1 className="text-2xl font-bold">{getCompanyName(company)}</h1>
-            {acf.industry && <p className="text-gray-500 dark:text-gray-400">{acf.industry}</p>}
             {acf.website && (
               <a 
                 href={acf.website} 

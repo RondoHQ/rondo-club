@@ -374,9 +374,6 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
           {getCompanyName(company)}
         </Link>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-        {company.acf?.industry || '-'}
-      </td>
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 max-w-48">
         {company.acf?.website ? (
           <a
@@ -447,7 +444,6 @@ function OrganizationListView({ companies, workspaces, listViewFields, selectedI
             </th>
             <th scope="col" className="w-10 px-2 bg-gray-50 dark:bg-gray-800"></th>
             <SortableHeader field="name" label="Name" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="industry" label="Industry" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="website" label="Website" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="workspace" label="Workspace" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
@@ -652,9 +648,6 @@ export default function CompaniesList() {
       if (sortField === 'name') {
         valueA = (a.title?.rendered || a.title || '').toLowerCase();
         valueB = (b.title?.rendered || b.title || '').toLowerCase();
-      } else if (sortField === 'industry') {
-        valueA = (a.acf?.industry || '').toLowerCase();
-        valueB = (b.acf?.industry || '').toLowerCase();
       } else if (sortField === 'website') {
         valueA = (a.acf?.website || '').toLowerCase();
         valueB = (b.acf?.website || '').toLowerCase();
@@ -742,7 +735,6 @@ export default function CompaniesList() {
               className="text-sm border-0 bg-transparent dark:text-gray-200 focus:ring-0 focus:outline-none cursor-pointer"
             >
               <option value="name">Name</option>
-              <option value="industry">Industry</option>
               <option value="website">Website</option>
               <option value="workspace">Workspace</option>
             </select>
