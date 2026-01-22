@@ -110,7 +110,7 @@ class Feedback extends Base {
 			'status'   => [
 				'default'           => '',
 				'validate_callback' => function ( $param ) {
-					return empty( $param ) || in_array( $param, [ 'new', 'approved', 'in_progress', 'resolved', 'declined' ], true );
+					return empty( $param ) || in_array( $param, [ 'new', 'approved', 'in_progress', 'resolved', 'declined', 'open' ], true );
 				},
 			],
 			'priority' => [
@@ -216,11 +216,20 @@ class Feedback extends Base {
 
 		$status = $request->get_param( 'status' );
 		if ( ! empty( $status ) ) {
-			$meta_query[] = [
-				'key'     => 'status',
-				'value'   => $status,
-				'compare' => '=',
-			];
+			if ( $status === 'open' ) {
+				// "open" is a pseudo-status that matches new, approved, and in_progress
+				$meta_query[] = [
+					'key'     => 'status',
+					'value'   => [ 'resolved', 'declined' ],
+					'compare' => 'NOT IN',
+				];
+			} else {
+				$meta_query[] = [
+					'key'     => 'status',
+					'value'   => $status,
+					'compare' => '=',
+				];
+			}
 		}
 
 		$priority = $request->get_param( 'priority' );
