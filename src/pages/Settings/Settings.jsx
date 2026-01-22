@@ -17,7 +17,6 @@ const TABS = [
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'connections', label: 'Connections', icon: Share2 },
   { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'api-access', label: 'API Access', icon: Key },
   { id: 'data', label: 'Data', icon: Database },
   { id: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
   { id: 'about', label: 'About', icon: Info },
@@ -29,6 +28,7 @@ const CONNECTION_SUBTABS = [
   { id: 'contacts', label: 'Contacts', icon: Users },
   { id: 'carddav', label: 'CardDAV', icon: Database },
   { id: 'slack', label: 'Slack', icon: MessageSquare },
+  { id: 'api-access', label: 'API Access', icon: Key },
 ];
 
 export default function Settings() {
@@ -631,6 +631,19 @@ export default function Settings() {
           syncSuccess={syncSuccess}
           handleContactsSync={handleContactsSync}
           handleFrequencyChange={handleFrequencyChange}
+          // API Access props
+          appPasswords={appPasswords}
+          appPasswordsLoading={appPasswordsLoading}
+          newPasswordName={newPasswordName}
+          setNewPasswordName={setNewPasswordName}
+          handleCreateAppPassword={handleCreateAppPassword}
+          creatingPassword={creatingPassword}
+          newPassword={newPassword}
+          setNewPassword={setNewPassword}
+          copyNewPassword={copyNewPassword}
+          passwordCopied={passwordCopied}
+          handleDeleteAppPassword={handleDeleteAppPassword}
+          formatDate={formatDate}
         />;
       case 'notifications':
         return <NotificationsTab
@@ -645,22 +658,6 @@ export default function Settings() {
           mentionNotifications={mentionNotifications}
           handleMentionNotificationsChange={handleMentionNotificationsChange}
           savingMentionPref={savingMentionPref}
-        />;
-      case 'api-access':
-        return <APIAccessTab
-          appPasswords={appPasswords}
-          appPasswordsLoading={appPasswordsLoading}
-          config={config}
-          newPasswordName={newPasswordName}
-          setNewPasswordName={setNewPasswordName}
-          handleCreateAppPassword={handleCreateAppPassword}
-          creatingPassword={creatingPassword}
-          newPassword={newPassword}
-          setNewPassword={setNewPassword}
-          copyNewPassword={copyNewPassword}
-          passwordCopied={passwordCopied}
-          handleDeleteAppPassword={handleDeleteAppPassword}
-          formatDate={formatDate}
         />;
       case 'data':
         return <DataTab />;
@@ -2089,6 +2086,10 @@ function ConnectionsTab({
   handleBulkExportGoogleContacts, setBulkExportResult,
   // Google Contacts sync props
   isSyncing, syncError, syncSuccess, handleContactsSync, handleFrequencyChange,
+  // API Access props
+  appPasswords, appPasswordsLoading, newPasswordName, setNewPasswordName,
+  handleCreateAppPassword, creatingPassword, newPassword, setNewPassword,
+  copyNewPassword, passwordCopied, handleDeleteAppPassword, formatDate,
 }) {
   return (
     <div className="space-y-6">
@@ -2163,6 +2164,23 @@ function ConnectionsTab({
           handleToggleSlackTarget={handleToggleSlackTarget}
           handleSaveSlackTargets={handleSaveSlackTargets}
           savingSlackTargets={savingSlackTargets}
+        />
+      )}
+      {activeSubtab === 'api-access' && (
+        <APIAccessTab
+          appPasswords={appPasswords}
+          appPasswordsLoading={appPasswordsLoading}
+          config={config}
+          newPasswordName={newPasswordName}
+          setNewPasswordName={setNewPasswordName}
+          handleCreateAppPassword={handleCreateAppPassword}
+          creatingPassword={creatingPassword}
+          newPassword={newPassword}
+          setNewPassword={setNewPassword}
+          copyNewPassword={copyNewPassword}
+          passwordCopied={passwordCopied}
+          handleDeleteAppPassword={handleDeleteAppPassword}
+          formatDate={formatDate}
         />
       )}
     </div>
