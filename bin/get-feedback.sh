@@ -110,6 +110,8 @@ set -a
 source "$ENV_FILE"
 set +a
 
+log "DEBUG" "After source .env - HOME=$HOME, HOMEBREW_PATH=$HOMEBREW_PATH, USER_HOME=$USER_HOME"
+
 # Add HOMEBREW_PATH to PATH if set (needed for cron/launchd which don't have full PATH)
 # This ensures node, claude, and other homebrew binaries are found
 if [ -n "$HOMEBREW_PATH" ]; then
@@ -120,6 +122,8 @@ fi
 if [ -n "$USER_HOME" ]; then
     export HOME="$USER_HOME"
 fi
+
+log "DEBUG" "After env setup - HOME=$HOME, PATH=${PATH:0:80}..."
 
 # Validate required variables
 if [ -z "$CAELIS_API_URL" ] || [ -z "$CAELIS_API_USER" ] || [ -z "$CAELIS_API_PASSWORD" ]; then
@@ -444,6 +448,12 @@ if [ "$RUN_CLAUDE" = true ]; then
     # --print outputs response and exits (for piped input)
     # Use CLAUDE_PATH from .env if set, otherwise fall back to 'claude' in PATH
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
+
+    # Debug: Log environment state before Claude invocation
+    log "DEBUG" "Environment before Claude: HOME=$HOME, PATH=${PATH:0:100}..."
+    log "DEBUG" "Claude binary: $CLAUDE_BIN (exists: $([ -x "$CLAUDE_BIN" ] && echo yes || echo no))"
+    log "DEBUG" "OAuth token set: $([ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && echo yes || echo no)"
+
     CLAUDE_OUTPUT=$(echo "$OUTPUT" | "$CLAUDE_BIN" --print --dangerously-skip-permissions 2>&1)
     CLAUDE_EXIT=$?
 
