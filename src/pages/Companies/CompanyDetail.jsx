@@ -54,39 +54,56 @@ export default function CompanyDetail() {
     },
   });
   
-  // Fetch investor details (investors is now array of IDs)
+  // Get investor details from embedded data (already included in company response)
   const investorIds = company?.acf?.investors || [];
-  const { data: investorDetails = [] } = useQuery({
-    queryKey: ['company-investors', id, investorIds],
+
+  // Extract featured_media IDs from embedded posts for thumbnail fetching
+  const embeddedPosts = company?._embedded?.['acf:post'] || [];
+  const mediaIds = useMemo(() => {
+    return embeddedPosts
+      .filter(p => investorIds.includes(p.id) && p.featured_media)
+      .map(p => p.featured_media);
+  }, [embeddedPosts, investorIds]);
+
+  // Fetch thumbnails for investors (embedded posts don't include nested media)
+  const { data: mediaItems = [] } = useQuery({
+    queryKey: ['investor-media', mediaIds.join(',')],
     queryFn: async () => {
-      if (!investorIds.length) return [];
-      
-      // Fetch all people and companies, then filter by IDs
-      const [peopleRes, companiesRes] = await Promise.all([
-        wpApi.getPeople({ per_page: 100, include: investorIds.join(','), _embed: true }),
-        wpApi.getCompanies({ per_page: 100, include: investorIds.join(','), _embed: true }),
-      ]);
-      
-      const people = (peopleRes.data || []).map(p => ({
-        id: p.id,
-        type: 'person',
-        name: decodeHtml(p.title?.rendered || ''),
-        thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url,
-      }));
-      
-      const companies = (companiesRes.data || []).map(c => ({
-        id: c.id,
-        type: 'company',
-        name: getCompanyName(c),
-        thumbnail: c._embedded?.['wp:featuredmedia']?.[0]?.source_url,
-      }));
-      
-      // Combine and sort by original order
-      const all = [...people, ...companies];
-      return investorIds.map(iid => all.find(i => i.id === iid)).filter(Boolean);
+      if (!mediaIds.length) return [];
+      const response = await wpApi.getMedia({ include: mediaIds.join(','), per_page: 100 });
+      return response.data;
     },
-    enabled: investorIds.length > 0,
+    enabled: mediaIds.length > 0,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes - media URLs rarely change
   });
+
+  // Build investor details with thumbnails
+  const investorDetails = useMemo(() => {
+    if (!investorIds.length || !embeddedPosts.length) return [];
+
+    // Create a map of media ID to source URL
+    const mediaMap = new Map(mediaItems.map(m => [m.id, m.source_url]));
+
+    // Map investors in the order they appear in investorIds
+    return investorIds.map(investorId => {
+      const post = embeddedPosts.find(p => p.id === investorId);
+      if (!post) return null;
+
+      const isPerson = post.type === 'person';
+      const thumbnail = post.featured_media
+        ? mediaMap.get(post.featured_media)
+        : post.acf?.photo_gallery?.[0]?.url;
+
+      return {
+        id: post.id,
+        type: isPerson ? 'person' : 'company',
+        name: isPerson
+          ? decodeHtml(post.title?.rendered || '')
+          : getCompanyName(post),
+        thumbnail,
+      };
+    }).filter(Boolean);
+  }, [investorIds, embeddedPosts, mediaItems]);
   
   // Fetch companies that this company has invested in
   const { data: investments = [] } = useQuery({
@@ -113,6 +130,7 @@ export default function CompanyDetail() {
       queryClient.invalidateQueries({ queryKey: ['company', id] });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['company-investors', id] });
+      queryClient.invalidateQueries({ queryKey: ['company-investors-edit', parseInt(id)] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
