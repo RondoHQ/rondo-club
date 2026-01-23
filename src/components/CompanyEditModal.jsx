@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, ChevronDown, Building2, Search, User, TrendingUp } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { wpApi } from '@/api/client';
+import { wpApi, prmApi } from '@/api/client';
 import { getCompanyName, decodeHtml } from '@/utils/formatters';
 import VisibilitySelector from '@/components/VisibilitySelector';
 
@@ -23,6 +23,7 @@ export default function CompanyEditModal({
   // State for investors dropdown
   const [isInvestorsDropdownOpen, setIsInvestorsDropdownOpen] = useState(false);
   const [investorsSearchQuery, setInvestorsSearchQuery] = useState('');
+  const [debouncedInvestorsQuery, setDebouncedInvestorsQuery] = useState('');
   const [selectedInvestors, setSelectedInvestors] = useState([]);
 
   // Visibility state
@@ -42,7 +43,7 @@ export default function CompanyEditModal({
     enabled: isOpen,
   });
   
-  // Fetch all people for investors
+  // Fetch all people for investors (used for loading existing investors)
   const { data: allPeople = [], isLoading: isLoadingPeople } = useQuery({
     queryKey: ['people', 'all'],
     queryFn: async () => {
@@ -50,6 +51,24 @@ export default function CompanyEditModal({
       return response.data;
     },
     enabled: isOpen,
+  });
+
+  // Debounce investor search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedInvestorsQuery(investorsSearchQuery.trim());
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [investorsSearchQuery]);
+
+  // Server-side search for investors when query length >= 2
+  const { data: searchResults, isLoading: isSearching } = useQuery({
+    queryKey: ['investor-search', debouncedInvestorsQuery],
+    queryFn: async () => {
+      const response = await prmApi.search(debouncedInvestorsQuery);
+      return response.data;
+    },
+    enabled: isOpen && debouncedInvestorsQuery.length >= 2,
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -91,41 +110,63 @@ export default function CompanyEditModal({
   // Combined list of people and companies for investor selection (excluding self)
   const availableInvestors = useMemo(() => {
     const query = investorsSearchQuery.toLowerCase().trim();
-    
-    // Map people to a common format
-    const people = allPeople.map(p => ({
-      id: p.id,
-      type: 'person',
-      name: decodeHtml(p.title?.rendered || ''),
-      thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url,
-    }));
-    
-    // Map companies to a common format (exclude self)
-    const companies = allCompanies
-      .filter(c => !isEditing || c.id !== company?.id)
-      .map(c => ({
-        id: c.id,
-        type: 'company',
-        name: getCompanyName(c),
-        thumbnail: c._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+    let combined = [];
+
+    // Use server-side search results when available (query length >= 2)
+    if (query.length >= 2 && searchResults) {
+      // Map search results to common format
+      const people = (searchResults.people || []).map(p => ({
+        id: p.id,
+        type: 'person',
+        name: p.name || '',
+        thumbnail: p.thumbnail,
       }));
-    
-    // Combine and filter by search query
-    let combined = [...people, ...companies];
-    
-    if (query) {
-      combined = combined.filter(item => 
-        item.name?.toLowerCase().includes(query)
-      );
+
+      const companies = (searchResults.companies || [])
+        .filter(c => !isEditing || c.id !== company?.id)
+        .map(c => ({
+          id: c.id,
+          type: 'company',
+          name: c.name || '',
+          thumbnail: c.thumbnail,
+        }));
+
+      combined = [...people, ...companies];
+    } else if (query.length < 2) {
+      // For short queries or no query, use client-side data (first 100 of each)
+      const people = allPeople.map(p => ({
+        id: p.id,
+        type: 'person',
+        name: decodeHtml(p.title?.rendered || ''),
+        thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+      }));
+
+      const companies = allCompanies
+        .filter(c => !isEditing || c.id !== company?.id)
+        .map(c => ({
+          id: c.id,
+          type: 'company',
+          name: getCompanyName(c),
+          thumbnail: c._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+        }));
+
+      combined = [...people, ...companies];
+
+      // Filter client-side for short queries (1 character)
+      if (query.length === 1) {
+        combined = combined.filter(item =>
+          item.name?.toLowerCase().includes(query)
+        );
+      }
     }
-    
+
     // Filter out already selected investors
     const selectedKeys = selectedInvestors.map(inv => `${inv.type}-${inv.id}`);
     combined = combined.filter(item => !selectedKeys.includes(`${item.type}-${item.id}`));
-    
+
     // Sort alphabetically
     return combined.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  }, [allPeople, allCompanies, investorsSearchQuery, selectedInvestors, company, isEditing]);
+  }, [allPeople, allCompanies, investorsSearchQuery, searchResults, selectedInvestors, company, isEditing]);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -163,39 +204,58 @@ export default function CompanyEditModal({
     }
   }, [isOpen, company, reset]);
   
-  // Load existing investors when company and all data is available
+  // Fetch existing investors directly by their IDs (not limited to first 100)
+  // Include IDs in query key to ensure refetch when investors change
+  const investorIds = company?.acf?.investors || [];
+  const investorIdsKey = investorIds.join(',');
+  const { data: existingInvestors = [], isSuccess: investorsLoaded } = useQuery({
+    queryKey: ['company-investors-edit', company?.id, investorIdsKey],
+    queryFn: async ({ queryKey }) => {
+      // Extract IDs from query key to avoid closure issues
+      const idsString = queryKey[2];
+      const ids = idsString ? idsString.split(',').map(Number) : [];
+      if (!ids.length) return [];
+
+      // Fetch people and companies by specific IDs
+      const [peopleRes, companiesRes] = await Promise.all([
+        wpApi.getPeople({ per_page: 100, include: idsString, _embed: true }),
+        wpApi.getCompanies({ per_page: 100, include: idsString, _embed: true }),
+      ]);
+
+      const people = (peopleRes.data || []).map(p => ({
+        id: p.id,
+        type: 'person',
+        name: decodeHtml(p.title?.rendered || ''),
+        thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+      }));
+
+      const companies = (companiesRes.data || []).map(c => ({
+        id: c.id,
+        type: 'company',
+        name: getCompanyName(c),
+        thumbnail: c._embedded?.['wp:featuredmedia']?.[0]?.source_url,
+      }));
+
+      // Combine and sort by original order
+      const all = [...people, ...companies];
+      return ids.map(iid => all.find(i => i.id === iid)).filter(Boolean);
+    },
+    enabled: isOpen && !!company?.id && investorIds.length > 0,
+    staleTime: 0, // Always refetch when modal opens
+  });
+
+  // Load existing investors when fetched, or reset when creating new
   useEffect(() => {
-    if (isOpen && company?.acf?.investors?.length > 0 && allPeople.length > 0 && allCompanies.length > 0) {
-      const investorIds = company.acf.investors;
-      const investors = investorIds.map(investorId => {
-        // Check if it's a person
-        const person = allPeople.find(p => p.id === investorId);
-        if (person) {
-          return {
-            id: person.id,
-            type: 'person',
-            name: decodeHtml(person.title?.rendered || ''),
-            thumbnail: person._embedded?.['wp:featuredmedia']?.[0]?.source_url,
-          };
-        }
-        // Check if it's a company
-        const comp = allCompanies.find(c => c.id === investorId);
-        if (comp) {
-          return {
-            id: comp.id,
-            type: 'company',
-            name: getCompanyName(comp),
-            thumbnail: comp._embedded?.['wp:featuredmedia']?.[0]?.source_url,
-          };
-        }
-        return null;
-      }).filter(Boolean);
-      
-      setSelectedInvestors(investors);
+    if (isOpen && company && investorsLoaded) {
+      setSelectedInvestors(existingInvestors);
+    } else if (isOpen && company && investorIds.length === 0) {
+      // Company has no investors
+      setSelectedInvestors([]);
     } else if (isOpen && !company) {
+      // Creating new company
       setSelectedInvestors([]);
     }
-  }, [isOpen, company, allPeople, allCompanies]);
+  }, [isOpen, company, investorsLoaded, existingInvestors, investorIds.length]);
   
   // Close parent dropdown when clicking outside
   useEffect(() => {
@@ -466,9 +526,9 @@ export default function CompanyEditModal({
                     </div>
 
                     <div className="overflow-y-auto max-h-48">
-                      {(isLoadingCompanies || isLoadingPeople) ? (
+                      {(isLoadingCompanies || isLoadingPeople || isSearching) ? (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          Loading...
+                          {isSearching ? 'Searching...' : 'Loading...'}
                         </div>
                       ) : availableInvestors.length > 0 ? (
                         availableInvestors.map((item) => (
@@ -506,7 +566,9 @@ export default function CompanyEditModal({
                         ))
                       ) : (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          {investorsSearchQuery ? 'No results found' : 'No people or organizations available'}
+                          {investorsSearchQuery.length >= 2
+                            ? 'No results found'
+                            : 'No people or organizations available'}
                         </div>
                       )}
                     </div>

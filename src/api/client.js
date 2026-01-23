@@ -80,6 +80,7 @@ export const wpApi = {
   getDateTypes: () => api.get('/wp/v2/date_type', { params: { per_page: 100 } }),
   
   // Media
+  getMedia: (params) => api.get('/wp/v2/media', { params }),
   uploadMedia: (file) => {
     const formData = new FormData();
     formData.append('file', file);
