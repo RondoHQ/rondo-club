@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Convert entire Stadion interface to Dutch with proper terminology (Leden, Teams, Commissies)
-**Current focus:** Phase 106 - Global UI Elements (next phase)
+**Current focus:** Phase 106 - Global UI Elements
 
 ## Current Position
 
 Milestone: v7.0 Dutch Localization
-Phase: 105 of 106 (Instellingen - Settings)
-Plan: 7 of 7 in phase 105
-Status: Phase complete, goal verified ✓
-Last activity: 2026-01-25 - Completed Phase 105 (Settings fully translated to Dutch)
+Phase: 106 of 106 (Global UI Elements)
+Plan: 2 of N in phase 106
+Status: In progress
+Last activity: 2026-01-25 - Completed 106-02-PLAN.md (Person Detail Modals translated)
 
-Progress: [████████████] 100% (17/17 plans complete)
+Progress: [████████████] In progress
 
 ## Performance Metrics
 
@@ -69,12 +69,13 @@ Progress: [████████████] 100% (17/17 plans complete)
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-Recent decisions (105-06, 105-07):
+Recent decisions (105-06, 105-07, 106-02):
 - Use 'Nooit' for null dates instead of 'Never'
 - Use nl-NL locale with day-month order for Dutch date formatting
 - Update message condition checks to use Dutch keywords for color coding
 - Use 'Synchronisatie voltooid' for sync completion messages
 - Use 'Koppel Slack om in te schakelen' for disconnected Slack state
+- Use 'Kan bekijken/Kan bewerken' for permission display in share modal
 
 ### Pending Todos
 
@@ -97,5 +98,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 105-07-PLAN.md - Final English strings gap closure (Phase 105 complete)
+Stopped at: Completed 106-02-PLAN.md - Person Detail Modals translated to Dutch
 Resume file: None
