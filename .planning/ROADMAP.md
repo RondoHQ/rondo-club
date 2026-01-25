@@ -103,14 +103,15 @@ Plans:
   1. Dates page title and list headers are in Dutch
   2. Date form labels are in Dutch (Titel, Type, Jaarlijks terugkerend, Datum, Gerelateerde personen)
   3. Date type labels are in Dutch (Verjaardag, Huwelijk, Herdenking)
-  4. Todos page title and filter tabs are in Dutch (Alle, Open, Wachtend, Voltooid)
+  4. Todos page title and filter tabs are in Dutch (Alle, Te doen, Openstaand, Afgerond)
   5. Todo action buttons and status labels are in Dutch
   6. Todo form labels are in Dutch
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 104-01: Translate important dates pages
-- [ ] 104-02: Translate todos pages
+- [ ] 104-01-PLAN.md — Translate DatesList.jsx, ImportantDateModal.jsx, and date types
+- [ ] 104-02-PLAN.md — Translate TodosList.jsx and CompleteTodoModal.jsx
+- [ ] 104-03-PLAN.md — Translate TodoModal.jsx and GlobalTodoModal.jsx
 
 ### Phase 105: Instellingen (Settings)
 **Goal**: All settings pages display entirely in Dutch
@@ -156,10 +157,10 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 | 101. Dashboard | 1/1 | ✓ Complete | 2026-01-25 |
 | 102. Leden (People) | 2/2 | ✓ Complete | 2026-01-25 |
 | 103. Teams & Commissies | 3/3 | ✓ Complete | 2026-01-25 |
-| 104. Datums & Taken | 0/2 | Not started | - |
+| 104. Datums & Taken | 0/3 | Not started | - |
 | 105. Instellingen (Settings) | 0/2 | Not started | - |
 | 106. Global UI Elements | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 (Phase 103 complete)*
+*Last updated: 2026-01-25 (Phase 104 planned)*
