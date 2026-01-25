@@ -41,15 +41,15 @@ Requirements for Dutch localization. Direct string replacement approach (no i18n
 
 ### Dates (Datums)
 
-- [ ] **DATE-01**: Translate page title and list headers
-- [ ] **DATE-02**: Translate date form labels (Titel, Type, Jaarlijks terugkerend, Datum, Gerelateerde personen)
-- [ ] **DATE-03**: Translate date type labels (Verjaardag, Huwelijk, Herdenking)
+- [x] **DATE-01**: Translate page title and list headers
+- [x] **DATE-02**: Translate date form labels (Titel, Type, Jaarlijks terugkerend, Datum, Gerelateerde personen)
+- [x] **DATE-03**: Translate date type labels (Verjaardag, Huwelijk, Herdenking)
 
 ### Todos (Taken)
 
-- [ ] **TODO-01**: Translate page title and filter tabs (Alle, Open, Wachtend, Voltooid)
-- [ ] **TODO-02**: Translate action buttons and status labels
-- [ ] **TODO-03**: Translate todo form labels
+- [x] **TODO-01**: Translate page title and filter tabs (Alle, Te doen, Openstaand, Afgerond)
+- [x] **TODO-02**: Translate action buttons and status labels
+- [x] **TODO-03**: Translate todo form labels
 
 ### Settings (Instellingen)
 
@@ -109,12 +109,12 @@ None for this milestone - focused solely on Dutch translation.
 | TEAM-03 | Phase 103 | Complete |
 | COMM-01 | Phase 103 | Complete |
 | COMM-02 | Phase 103 | Complete |
-| DATE-01 | Phase 104 | Pending |
-| DATE-02 | Phase 104 | Pending |
-| DATE-03 | Phase 104 | Pending |
-| TODO-01 | Phase 104 | Pending |
-| TODO-02 | Phase 104 | Pending |
-| TODO-03 | Phase 104 | Pending |
+| DATE-01 | Phase 104 | Complete |
+| DATE-02 | Phase 104 | Complete |
+| DATE-03 | Phase 104 | Complete |
+| TODO-01 | Phase 104 | Complete |
+| TODO-02 | Phase 104 | Complete |
+| TODO-03 | Phase 104 | Complete |
 | SET-01 | Phase 105 | Pending |
 | SET-02 | Phase 105 | Pending |
 | SET-03 | Phase 105 | Pending |
@@ -134,4 +134,4 @@ None for this milestone - focused solely on Dutch translation.
 
 ---
 *Requirements defined: 2026-01-25*
-*Last updated: 2026-01-25 (Phase 103 complete)*
+*Last updated: 2026-01-25 (Phase 104 complete)*

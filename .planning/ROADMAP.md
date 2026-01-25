@@ -15,7 +15,7 @@ This milestone transforms the entire Stadion frontend from English to Dutch. Sta
 - [x] **Phase 101: Dashboard** - Translate stats, widgets, empty states, messages
 - [x] **Phase 102: Leden (People)** - Translate people pages and forms
 - [x] **Phase 103: Teams & Commissies** - Translate teams and commissies pages
-- [ ] **Phase 104: Datums & Taken** - Translate important dates and todos
+- [x] **Phase 104: Datums & Taken** - Translate important dates and todos
 - [ ] **Phase 105: Instellingen (Settings)** - Translate all settings pages
 - [ ] **Phase 106: Global UI** - Translate buttons, states, placeholders, dialogs
 
@@ -109,9 +109,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 104-01-PLAN.md — Translate DatesList.jsx, ImportantDateModal.jsx, and date types
-- [ ] 104-02-PLAN.md — Translate TodosList.jsx and CompleteTodoModal.jsx
-- [ ] 104-03-PLAN.md — Translate TodoModal.jsx and GlobalTodoModal.jsx
+- [x] 104-01-PLAN.md — Translate DatesList.jsx, ImportantDateModal.jsx, and date types
+- [x] 104-02-PLAN.md — Translate TodosList.jsx and CompleteTodoModal.jsx
+- [x] 104-03-PLAN.md — Translate TodoModal.jsx and GlobalTodoModal.jsx
 
 ### Phase 105: Instellingen (Settings)
 **Goal**: All settings pages display entirely in Dutch
@@ -157,10 +157,10 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 | 101. Dashboard | 1/1 | ✓ Complete | 2026-01-25 |
 | 102. Leden (People) | 2/2 | ✓ Complete | 2026-01-25 |
 | 103. Teams & Commissies | 3/3 | ✓ Complete | 2026-01-25 |
-| 104. Datums & Taken | 0/3 | Not started | - |
+| 104. Datums & Taken | 3/3 | ✓ Complete | 2026-01-25 |
 | 105. Instellingen (Settings) | 0/2 | Not started | - |
 | 106. Global UI Elements | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 (Phase 104 planned)*
+*Last updated: 2026-01-25 (Phase 104 complete)*
