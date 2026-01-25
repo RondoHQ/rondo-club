@@ -301,7 +301,7 @@ export default function TeamEditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit organization' : 'Add organization'}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Team bewerken' : 'Nieuw team'}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -313,13 +313,13 @@ export default function TeamEditModal({
         
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Organization name */}
+            {/* Team name */}
             <div>
-              <label className="label">Organization name *</label>
+              <label className="label">Naam *</label>
               <input
-                {...register('title', { required: 'Organization name is required' })}
+                {...register('title', { required: 'Naam is verplicht' })}
                 className="input"
-                placeholder="Acme Inc."
+                placeholder="Voorbeeld BV"
                 disabled={isLoading}
                 autoFocus
               />
@@ -340,9 +340,10 @@ export default function TeamEditModal({
               />
             </div>
 
-            {/* Parent team selection */}
+            {/* Parent team selection - HIDDEN per CONTEXT.md */}
+            {false && (
             <div>
-              <label className="label">Parent organization</label>
+              <label className="label">Hoofdteam</label>
               <div className="relative" ref={parentDropdownRef}>
                 <button
                   type="button"
@@ -366,7 +367,7 @@ export default function TeamEditModal({
                       <span className="text-gray-900 dark:text-gray-50">{getTeamName(selectedParent)}</span>
                     </div>
                   ) : (
-                    <span className="text-gray-400 dark:text-gray-500">No parent organization</span>
+                    <span className="text-gray-400 dark:text-gray-500">Geen hoofdteam</span>
                   )}
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -381,7 +382,7 @@ export default function TeamEditModal({
                           type="text"
                           value={parentSearchQuery}
                           onChange={(e) => setParentSearchQuery(e.target.value)}
-                          placeholder="Search organizations..."
+                          placeholder="Teams zoeken..."
                           className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
                           autoFocus
                         />
@@ -401,13 +402,13 @@ export default function TeamEditModal({
                           !selectedParentId ? 'bg-accent-50 dark:bg-accent-800' : ''
                         }`}
                       >
-                        <span className="text-sm text-gray-500 dark:text-gray-400 italic">No parent organization</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 italic">Geen hoofdteam</span>
                       </button>
 
                       {/* Teams list */}
                       {isLoadingTeams ? (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          Loading...
+                          Laden...
                         </div>
                       ) : availableParentTeams.length > 0 ? (
                         availableParentTeams.map((c) => (
@@ -439,26 +440,24 @@ export default function TeamEditModal({
                         ))
                       ) : (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          No organizations found
+                          Geen teams gevonden
                         </div>
                       )}
                     </div>
                   </div>
                 )}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Select if this organization is a subsidiary or division of another
-              </p>
             </div>
+            )}
 
-            {/* Investors selection */}
+            {/* Sponsors selection */}
             <div>
               <label className="label flex items-center">
                 <TrendingUp className="w-4 h-4 mr-2" />
-                Investors
+                Sponsoren
               </label>
 
-              {/* Selected investors */}
+              {/* Selected sponsors */}
               {selectedInvestors.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-2">
                   {selectedInvestors.map((investor) => (
@@ -496,7 +495,7 @@ export default function TeamEditModal({
                   ))}
                 </div>
               )}
-              
+
               <div className="relative" ref={investorsDropdownRef}>
                 <button
                   type="button"
@@ -504,7 +503,7 @@ export default function TeamEditModal({
                   className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                   disabled={isLoadingTeams || isLoadingPeople || isLoading}
                 >
-                  <span className="text-gray-400 dark:text-gray-500">Add investor...</span>
+                  <span className="text-gray-400 dark:text-gray-500">Sponsor toevoegen...</span>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isInvestorsDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -518,7 +517,7 @@ export default function TeamEditModal({
                           type="text"
                           value={investorsSearchQuery}
                           onChange={(e) => setInvestorsSearchQuery(e.target.value)}
-                          placeholder="Search people and organizations..."
+                          placeholder="Leden en teams zoeken..."
                           className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
                           autoFocus
                         />
@@ -528,7 +527,7 @@ export default function TeamEditModal({
                     <div className="overflow-y-auto max-h-48">
                       {(isLoadingTeams || isLoadingPeople || isSearching) ? (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          {isSearching ? 'Searching...' : 'Loading...'}
+                          {isSearching ? 'Zoeken...' : 'Laden...'}
                         </div>
                       ) : availableInvestors.length > 0 ? (
                         availableInvestors.map((item) => (
@@ -559,7 +558,7 @@ export default function TeamEditModal({
                             <div className="flex-1 min-w-0">
                               <span className="text-sm text-gray-900 dark:text-gray-50 truncate block">{item.name}</span>
                               <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {item.type === 'person' ? 'Person' : 'Organization'}
+                                {item.type === 'person' ? 'Lid' : 'Team'}
                               </span>
                             </div>
                           </button>
@@ -567,8 +566,8 @@ export default function TeamEditModal({
                       ) : (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
                           {investorsSearchQuery.length >= 2
-                            ? 'No results found'
-                            : 'No people or organizations available'}
+                            ? 'Geen resultaten gevonden'
+                            : 'Geen leden of teams beschikbaar'}
                         </div>
                       )}
                     </div>
@@ -576,7 +575,7 @@ export default function TeamEditModal({
                 )}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Select people or organizations that have invested in this team
+                Selecteer leden of teams die dit team sponsoren
               </p>
             </div>
 
@@ -599,14 +598,14 @@ export default function TeamEditModal({
               className="btn-secondary"
               disabled={isLoading}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={isLoading}
             >
-              {isLoading ? 'Saving...' : (isEditing ? 'Save changes' : 'Create organization')}
+              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Team aanmaken')}
             </button>
           </div>
         </form>
