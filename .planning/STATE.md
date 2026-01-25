@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 
 Milestone: v7.0 Dutch Localization
 Phase: 105 of 106 (Instellingen - Settings)
-Plan: 4 of 5 in current phase
+Plan: 3 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-25 - Completed 105-04-PLAN.md (Settings subpages: Labels, UserApproval, RelationshipTypes, CustomFields, FeedbackManagement)
+Last activity: 2026-01-25 - Completed 105-02-PLAN.md (Connections & API Access translation)
 
-Progress: [██████████░] 93% (14/15 plans complete)
+Progress: [██████████░] 87% (13/15 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14 (this milestone)
+- Total plans completed: 13 (this milestone)
 - Plans total: 15 planned
-- Current phase: 105 (Instellingen - Settings) - 4 of 5 plans complete
+- Current phase: 105 (Instellingen - Settings) - 3 of 5 plans complete
 
 *Updated after each plan completion*
 
@@ -90,5 +90,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 105-04-PLAN.md (Settings subpages translation: Labels, UserApproval, RelationshipTypes, CustomFields, FeedbackManagement)
+Stopped at: Completed 105-02-PLAN.md (Connections & API Access translation)
 Resume file: None
