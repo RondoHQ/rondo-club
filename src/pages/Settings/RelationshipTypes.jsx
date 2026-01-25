@@ -100,7 +100,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
               setIsOpen(true);
             }}
             onFocus={() => setIsOpen(true)}
-            placeholder="Search for a relationship type..."
+            placeholder="Zoek een relatietype..."
             className="input"
           />
         )}
@@ -121,7 +121,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
                   !value ? 'bg-accent-50 dark:bg-accent-800' : ''
                 }`}
               >
-                <span className="text-gray-500 dark:text-gray-400 italic">None (no inverse)</span>
+                <span className="text-gray-500 dark:text-gray-400 italic">Geen (geen omgekeerd)</span>
               </button>
               {filteredTypes.map(type => (
                 <button
@@ -137,7 +137,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
               ))}
             </>
           ) : (
-            <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">No relationship types found</p>
+            <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">Geen relatietypes gevonden</p>
           )}
         </div>
       )}
@@ -146,29 +146,29 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
 }
 
 export default function RelationshipTypes() {
-  useDocumentTitle('Relationship Types - Settings');
+  useDocumentTitle('Relatietypes - Instellingen');
   const queryClient = useQueryClient();
   const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
-  
+
   // Check if user is admin
   if (!isAdmin) {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="card p-8 text-center">
           <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
-          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Access Denied</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Toegang geweigerd</h1>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            You don't have permission to manage relationship types. This feature is only available to administrators.
+            Je hebt geen toestemming om relatietypes te beheren. Deze functie is alleen beschikbaar voor beheerders.
           </p>
           <Link to="/settings" className="btn-primary">
-            Back to Settings
+            Terug naar Instellingen
           </Link>
         </div>
       </div>
     );
   }
-  
+
   // Fetch relationship types
   const { data: relationshipTypes = [], isLoading } = useQuery({
     queryKey: ['relationship-types'],
@@ -177,28 +177,28 @@ export default function RelationshipTypes() {
       return response.data;
     },
   });
-  
+
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState('');
   const [editingInverse, setEditingInverse] = useState('');
   const [newName, setNewName] = useState('');
   const [newInverse, setNewInverse] = useState('');
   const [isAdding, setIsAdding] = useState(false);
-  
+
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, name, inverseId }) => {
       const data = {
         name: name,
       };
-      
+
       // Include ACF field if inverse is set
       if (inverseId) {
         data.acf = {
           inverse_relationship_type: parseInt(inverseId, 10),
         };
       }
-      
+
       return wpApi.updateRelationshipType(id, data);
     },
     onSuccess: () => {
@@ -208,21 +208,21 @@ export default function RelationshipTypes() {
       setEditingInverse('');
     },
   });
-  
+
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async ({ name, inverseId }) => {
       const data = {
         name: name,
       };
-      
+
       // Include ACF field if inverse is set
       if (inverseId) {
         data.acf = {
           inverse_relationship_type: parseInt(inverseId, 10),
         };
       }
-      
+
       return wpApi.createRelationshipType(data);
     },
     onSuccess: () => {
@@ -232,7 +232,7 @@ export default function RelationshipTypes() {
       setIsAdding(false);
     },
   });
-  
+
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id) => wpApi.deleteRelationshipType(id),
@@ -240,93 +240,93 @@ export default function RelationshipTypes() {
       queryClient.invalidateQueries({ queryKey: ['relationship-types'] });
     },
   });
-  
+
   // Restore defaults mutation
   const restoreDefaultsMutation = useMutation({
     mutationFn: () => wpApi.restoreRelationshipTypeDefaults(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['relationship-types'] });
-      alert('Default relationship type configurations have been restored.');
+      alert('Standaard relatietype-configuraties zijn hersteld.');
     },
     onError: () => {
-      alert('Failed to restore defaults. Please try again.');
+      alert('Kan standaardwaarden niet herstellen. Probeer het opnieuw.');
     },
   });
-  
+
   // Restore defaults button component
   function RestoreDefaultsButton() {
     return (
       <button
         onClick={() => {
-          if (window.confirm('This will restore all default inverse mappings and gender-dependent settings. Continue?')) {
+          if (window.confirm('Dit zal alle standaard omgekeerde koppelingen en geslachtsafhankelijke instellingen herstellen. Doorgaan?')) {
             restoreDefaultsMutation.mutate();
           }
         }}
         disabled={restoreDefaultsMutation.isPending}
         className="btn-secondary flex items-center gap-2"
-        title="Restore default inverse mappings and gender-dependent settings"
+        title="Standaard omgekeerde koppelingen en geslachtsafhankelijke instellingen herstellen"
       >
         {restoreDefaultsMutation.isPending ? (
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
         ) : (
           <RotateCcw className="w-4 h-4" />
         )}
-        <span className="hidden md:inline">Restore Defaults</span>
+        <span className="hidden md:inline">Standaardwaarden herstellen</span>
       </button>
     );
   }
-  
+
   const handleEdit = (type) => {
     setEditingId(type.id);
     setEditingName(type.name);
     // Handle ACF field - could be ID directly or nested object
     const inverseId = type.acf?.inverse_relationship_type;
     setEditingInverse(
-      inverseId 
+      inverseId
         ? (typeof inverseId === 'object' ? inverseId.toString() : inverseId.toString())
         : ''
     );
   };
-  
+
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingName('');
     setEditingInverse('');
   };
-  
+
   const handleSave = () => {
     if (!editingName.trim()) {
-      alert('Name is required');
+      alert('Naam is verplicht');
       return;
     }
-    
+
     updateMutation.mutate({
       id: editingId,
       name: editingName.trim(),
       inverseId: editingInverse || null,
     });
   };
-  
+
   const handleCreate = () => {
     if (!newName.trim()) {
-      alert('Name is required');
+      alert('Naam is verplicht');
       return;
     }
-    
+
     createMutation.mutate({
       name: newName.trim(),
       inverseId: newInverse || null,
     });
   };
-  
+
   const handleDelete = (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
+    if (!window.confirm(`Weet je zeker dat je "${name}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
       return;
     }
-    
+
     deleteMutation.mutate(id);
   };
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -334,12 +334,12 @@ export default function RelationshipTypes() {
       </div>
     );
   }
-  
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="card p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold dark:text-gray-50">Relationship Types</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-50">Relatietypes</h1>
           <div className="flex gap-2">
             {!isAdding && (
               <>
@@ -349,7 +349,7 @@ export default function RelationshipTypes() {
                   className="btn-primary flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="hidden md:inline">Add Relationship Type</span>
+                  <span className="hidden md:inline">Relatietype toevoegen</span>
                 </button>
               </>
             )}
@@ -359,28 +359,28 @@ export default function RelationshipTypes() {
         {/* Add new form */}
         {isAdding && (
           <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-            <h3 className="font-semibold dark:text-gray-50 mb-4">Add New Relationship Type</h3>
+            <h3 className="font-semibold dark:text-gray-50 mb-4">Nieuw relatietype toevoegen</h3>
             <div className="space-y-4">
               <div>
-                <label className="label">Name *</label>
+                <label className="label">Naam *</label>
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   className="input"
-                  placeholder="e.g., Parent, Spouse, Colleague"
+                  placeholder="bijv. Ouder, Partner, Collega"
                 />
               </div>
               <div>
-                <label className="label">Inverse Relationship Type</label>
+                <label className="label">Omgekeerd relatietype</label>
                 <SearchableRelationshipTypeSelector
                   value={newInverse}
                   onChange={setNewInverse}
                   relationshipTypes={relationshipTypes}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Select the inverse relationship type. For example, if this is "Parent", select "Child".
-                  If this is "Spouse" or "Acquaintance", select the same type (e.g., "Spouse" → "Spouse").
+                  Selecteer het omgekeerde relatietype. Als dit bijvoorbeeld "Ouder" is, selecteer dan "Kind".
+                  Als dit "Partner" of "Kennis" is, selecteer dan hetzelfde type (bijv. "Partner" → "Partner").
                 </p>
               </div>
               <div className="flex gap-2">
@@ -394,7 +394,7 @@ export default function RelationshipTypes() {
                   ) : (
                     <Save className="w-4 h-4" />
                   )}
-                  <span className="hidden md:inline">Save</span>
+                  <span className="hidden md:inline">Opslaan</span>
                 </button>
                 <button
                   onClick={() => {
@@ -404,17 +404,17 @@ export default function RelationshipTypes() {
                   }}
                   className="btn-secondary"
                 >
-                  Cancel
+                  Annuleren
                 </button>
               </div>
             </div>
           </div>
         )}
-        
+
         {/* List of relationship types */}
         <div className="space-y-2">
           {relationshipTypes.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">No relationship types found.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">Geen relatietypes gevonden.</p>
           ) : (
             relationshipTypes.map((type) => {
               const isEditing = editingId === type.id;
@@ -437,7 +437,7 @@ export default function RelationshipTypes() {
                   {isEditing ? (
                     <div className="space-y-4">
                       <div>
-                        <label className="label">Name *</label>
+                        <label className="label">Naam *</label>
                         <input
                           type="text"
                           value={editingName}
@@ -446,7 +446,7 @@ export default function RelationshipTypes() {
                         />
                       </div>
                       <div>
-                        <label className="label">Inverse Relationship Type</label>
+                        <label className="label">Omgekeerd relatietype</label>
                         <SearchableRelationshipTypeSelector
                           value={editingInverse}
                           onChange={setEditingInverse}
@@ -454,8 +454,8 @@ export default function RelationshipTypes() {
                           currentTypeId={type.id}
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Select the inverse relationship type. For example, if this is "Parent", select "Child".
-                          If this is "Spouse" or "Acquaintance", select the same type (e.g., "Spouse" → "Spouse").
+                          Selecteer het omgekeerde relatietype. Als dit bijvoorbeeld "Ouder" is, selecteer dan "Kind".
+                          Als dit "Partner" of "Kennis" is, selecteer dan hetzelfde type (bijv. "Partner" → "Partner").
                         </p>
                       </div>
                       <div className="flex gap-2">
@@ -469,14 +469,14 @@ export default function RelationshipTypes() {
                           ) : (
                             <Save className="w-4 h-4" />
                           )}
-                          <span className="hidden md:inline">Save</span>
+                          <span className="hidden md:inline">Opslaan</span>
                         </button>
                         <button
                           onClick={handleCancelEdit}
                           className="btn-secondary flex items-center gap-2"
                         >
                           <X className="w-4 h-4" />
-                          <span className="hidden md:inline">Cancel</span>
+                          <span className="hidden md:inline">Annuleren</span>
                         </button>
                       </div>
                     </div>
@@ -486,25 +486,25 @@ export default function RelationshipTypes() {
                         <div className="font-medium dark:text-gray-50">{type.name}</div>
                         {inverseType && (
                           <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Inverse: <span className="font-medium">{inverseType.name}</span>
+                            Omgekeerd: <span className="font-medium">{inverseType.name}</span>
                           </div>
                         )}
                         {!inverseType && type.acf?.inverse_relationship_type === null && (
-                          <div className="text-sm text-gray-400 dark:text-gray-500 mt-1 italic">No inverse relationship</div>
+                          <div className="text-sm text-gray-400 dark:text-gray-500 mt-1 italic">Geen omgekeerd relatietype</div>
                         )}
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEdit(type)}
                           className="p-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded"
-                          title="Edit"
+                          title="Bewerken"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(type.id, type.name)}
                           className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                          title="Delete"
+                          title="Verwijderen"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -520,4 +520,3 @@ export default function RelationshipTypes() {
     </div>
   );
 }
-

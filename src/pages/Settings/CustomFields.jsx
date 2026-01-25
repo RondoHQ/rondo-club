@@ -26,8 +26,8 @@ import DeleteFieldDialog from '@/components/DeleteFieldDialog';
 
 // Tab configuration
 const TABS = [
-  { id: 'person', label: 'People Fields' },
-  { id: 'team', label: 'Organization Fields' },
+  { id: 'person', label: 'Ledenvelden' },
+  { id: 'team', label: 'Organisatievelden' },
 ];
 
 // Field type display labels
@@ -78,7 +78,7 @@ function SortableFieldRow({ field, onEdit, onDelete, getFieldTypeLabel }) {
           {...attributes}
           {...listeners}
           className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing touch-none"
-          aria-label="Drag to reorder"
+          aria-label="Sleep om te herordenen"
         >
           <GripVertical className="w-4 h-4" />
         </button>
@@ -102,14 +102,14 @@ function SortableFieldRow({ field, onEdit, onDelete, getFieldTypeLabel }) {
           <button
             onClick={() => onEdit(field)}
             className="p-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded"
-            title="Edit"
+            title="Bewerken"
           >
             <Edit2 className="w-4 h-4" />
           </button>
           <button
             onClick={() => onDelete(field)}
             className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-            title="Delete"
+            title="Verwijderen"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -120,7 +120,7 @@ function SortableFieldRow({ field, onEdit, onDelete, getFieldTypeLabel }) {
 }
 
 export default function CustomFields() {
-  useDocumentTitle('Custom Fields - Settings');
+  useDocumentTitle('Aangepaste velden - Instellingen');
   const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
   const queryClient = useQueryClient();
@@ -148,12 +148,12 @@ export default function CustomFields() {
       <div className="max-w-2xl mx-auto">
         <div className="card p-8 text-center">
           <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
-          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Access Denied</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Toegang geweigerd</h1>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            You don't have permission to manage custom fields. This feature is only available to administrators.
+            Je hebt geen toestemming om aangepaste velden te beheren. Deze functie is alleen beschikbaar voor beheerders.
           </p>
           <Link to="/settings" className="btn-primary">
-            Back to Settings
+            Terug naar Instellingen
           </Link>
         </div>
       </div>
@@ -316,14 +316,14 @@ export default function CustomFields() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Database className="w-6 h-6" />
-            Custom Fields
+            Aangepaste velden
           </h1>
           <button
             onClick={handleAddField}
             className="btn-primary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            <span className="hidden md:inline">Add Field</span>
+            <span className="hidden md:inline">Veld toevoegen</span>
           </button>
         </div>
 
@@ -362,7 +362,7 @@ export default function CustomFields() {
           <div className="space-y-2">
             {fields.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                No custom fields defined. Click 'Add Field' to create one.
+                Geen aangepaste velden gedefinieerd. Klik op 'Veld toevoegen' om er een te maken.
               </p>
             ) : (
               <DndContext
@@ -375,7 +375,7 @@ export default function CustomFields() {
                     <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
                         <th scope="col" className="px-2 py-3 w-10">
-                          <span className="sr-only">Reorder</span>
+                          <span className="sr-only">Herordenen</span>
                         </th>
                         <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Label
@@ -384,7 +384,7 @@ export default function CustomFields() {
                           Type
                         </th>
                         <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          <span className="sr-only">Actions</span>
+                          <span className="sr-only">Acties</span>
                         </th>
                       </tr>
                     </thead>

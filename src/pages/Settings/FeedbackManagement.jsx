@@ -7,36 +7,36 @@ import { format } from '@/utils/dateFormat';
 
 // Status options with badge colors
 const STATUS_OPTIONS = [
-  { value: 'new', label: 'New', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
-  { value: 'in_progress', label: 'In Progress', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
-  { value: 'resolved', label: 'Resolved', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
-  { value: 'declined', label: 'Declined', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' },
+  { value: 'new', label: 'Nieuw', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+  { value: 'in_progress', label: 'In behandeling', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+  { value: 'resolved', label: 'Opgelost', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+  { value: 'declined', label: 'Afgewezen', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' },
 ];
 
 // Priority options with text colors
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low', color: 'text-gray-600 dark:text-gray-400' },
-  { value: 'medium', label: 'Medium', color: 'text-blue-600 dark:text-blue-400' },
-  { value: 'high', label: 'High', color: 'text-orange-600 dark:text-orange-400' },
-  { value: 'critical', label: 'Critical', color: 'text-red-600 dark:text-red-400' },
+  { value: 'low', label: 'Laag', color: 'text-gray-600 dark:text-gray-400' },
+  { value: 'medium', label: 'Gemiddeld', color: 'text-blue-600 dark:text-blue-400' },
+  { value: 'high', label: 'Hoog', color: 'text-orange-600 dark:text-orange-400' },
+  { value: 'critical', label: 'Kritiek', color: 'text-red-600 dark:text-red-400' },
 ];
 
 // Type filter options
 const TYPE_OPTIONS = [
-  { value: '', label: 'All Types' },
+  { value: '', label: 'Alle types' },
   { value: 'bug', label: 'Bugs' },
-  { value: 'feature_request', label: 'Features' },
+  { value: 'feature_request', label: 'Functies' },
 ];
 
 // Status filter options (includes "all" option)
 const STATUS_FILTER_OPTIONS = [
-  { value: '', label: 'All Statuses' },
+  { value: '', label: 'Alle statussen' },
   ...STATUS_OPTIONS,
 ];
 
 // Priority filter options (includes "all" option)
 const PRIORITY_FILTER_OPTIONS = [
-  { value: '', label: 'All Priorities' },
+  { value: '', label: 'Alle prioriteiten' },
   ...PRIORITY_OPTIONS,
 ];
 
@@ -46,12 +46,12 @@ function AccessDenied() {
     <div className="max-w-2xl mx-auto">
       <div className="card p-8 text-center">
         <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
-        <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Access Denied</h1>
+        <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Toegang geweigerd</h1>
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          You don&apos;t have permission to manage feedback. This feature is only available to administrators.
+          Je hebt geen toestemming om feedback te beheren. Deze functie is alleen beschikbaar voor beheerders.
         </p>
         <Link to="/settings" className="btn-primary">
-          Back to Settings
+          Terug naar Instellingen
         </Link>
       </div>
     </div>
@@ -78,7 +78,7 @@ function SortableHeader({ field, label, currentField, currentOrder, onSort }) {
 function TypeBadge({ type }) {
   const typeConfig = {
     bug: { label: 'Bug', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
-    feature_request: { label: 'Feature', className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
+    feature_request: { label: 'Functie', className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
   };
   const config = typeConfig[type] || { label: type, className: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' };
 
@@ -90,7 +90,7 @@ function TypeBadge({ type }) {
 }
 
 export default function FeedbackManagement() {
-  useDocumentTitle('Feedback Management - Settings');
+  useDocumentTitle('Feedbackbeheer - Instellingen');
   const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
 
@@ -156,9 +156,9 @@ export default function FeedbackManagement() {
           className="btn-secondary flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="hidden md:inline">Back to Settings</span>
+          <span className="hidden md:inline">Terug naar Instellingen</span>
         </Link>
-        <h1 className="text-2xl font-semibold dark:text-gray-50">Feedback Management</h1>
+        <h1 className="text-2xl font-semibold dark:text-gray-50">Feedbackbeheer</h1>
       </div>
 
       {/* Filters */}
@@ -202,7 +202,7 @@ export default function FeedbackManagement() {
 
           <div className="flex items-center gap-2">
             <label htmlFor="priorityFilter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Priority:
+              Prioriteit:
             </label>
             <select
               id="priorityFilter"
@@ -223,7 +223,7 @@ export default function FeedbackManagement() {
       {/* Feedback table */}
       {feedback.length === 0 ? (
         <div className="card p-8 text-center">
-          <p className="text-gray-600 dark:text-gray-300">No feedback found matching your filters.</p>
+          <p className="text-gray-600 dark:text-gray-300">Geen feedback gevonden met deze filters.</p>
         </div>
       ) : (
         <div className="card overflow-hidden">
@@ -236,13 +236,13 @@ export default function FeedbackManagement() {
                   </th>
                   <SortableHeader
                     field="title"
-                    label="Title"
+                    label="Titel"
                     currentField={sortField}
                     currentOrder={sortOrder}
                     onSort={handleSort}
                   />
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
-                    Author
+                    Auteur
                   </th>
                   <SortableHeader
                     field="status"
@@ -253,20 +253,20 @@ export default function FeedbackManagement() {
                   />
                   <SortableHeader
                     field="priority"
-                    label="Priority"
+                    label="Prioriteit"
                     currentField={sortField}
                     currentOrder={sortOrder}
                     onSort={handleSort}
                   />
                   <SortableHeader
                     field="date"
-                    label="Date"
+                    label="Datum"
                     currentField={sortField}
                     currentOrder={sortOrder}
                     onSort={handleSort}
                   />
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
-                    Actions
+                    Acties
                   </th>
                 </tr>
               </thead>
@@ -290,7 +290,7 @@ export default function FeedbackManagement() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {item.author_name || 'Unknown'}
+                          {item.author_name || 'Onbekend'}
                         </span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
@@ -328,7 +328,7 @@ export default function FeedbackManagement() {
                           className="inline-flex items-center gap-1 text-sm text-accent-600 dark:text-accent-400 hover:text-accent-800 dark:hover:text-accent-300"
                         >
                           <Eye className="w-4 h-4" />
-                          View
+                          Bekijken
                         </Link>
                       </td>
                     </tr>
@@ -342,7 +342,7 @@ export default function FeedbackManagement() {
 
       {/* Summary */}
       <div className="text-sm text-gray-500 dark:text-gray-400">
-        Showing {feedback.length} feedback item{feedback.length !== 1 ? 's' : ''}
+        {feedback.length} feedback-item{feedback.length !== 1 ? 's' : ''} weergegeven
       </div>
     </div>
   );
