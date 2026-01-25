@@ -41,7 +41,7 @@ export default function WorkspaceCreateModal({ isOpen, onClose }) {
         <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Create Workspace</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Werkruimte aanmaken</h2>
             <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
               <X className="w-5 h-5" />
             </button>
@@ -52,13 +52,13 @@ export default function WorkspaceCreateModal({ isOpen, onClose }) {
             <div className="px-6 py-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Workspace Name *
+                  Werkruimte naam *
                 </label>
                 <input
                   type="text"
-                  {...register('title', { required: 'Name is required' })}
+                  {...register('title', { required: 'Naam is verplicht' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
-                  placeholder="e.g., Sales Team"
+                  placeholder="bijv. Verkoop team"
                 />
                 {errors.title && (
                   <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
@@ -67,13 +67,13 @@ export default function WorkspaceCreateModal({ isOpen, onClose }) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
+                  Beschrijving
                 </label>
                 <textarea
                   {...register('description')}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
-                  placeholder="What's this workspace for?"
+                  placeholder="Waar is deze werkruimte voor?"
                 />
               </div>
             </div>
@@ -81,14 +81,14 @@ export default function WorkspaceCreateModal({ isOpen, onClose }) {
             {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button type="button" onClick={onClose} className="btn-secondary">
-                Cancel
+                Annuleren
               </button>
               <button
                 type="submit"
                 disabled={createMutation.isPending}
                 className="btn-primary"
               >
-                {createMutation.isPending ? 'Creating...' : 'Create Workspace'}
+                {createMutation.isPending ? 'Aanmaken...' : 'Werkruimte aanmaken'}
               </button>
             </div>
           </form>
