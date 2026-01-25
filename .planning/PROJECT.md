@@ -240,17 +240,26 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Custom field columns in list views with configurable show/hide — v6.0
 - Drag-and-drop field reordering, required/unique validation — v6.0
 
+**v6.1 Feedback System (shipped 2026-01-21):**
+- stadion_feedback custom post type with ACF fields (type, status, priority, context) — v6.1
+- REST API endpoints under stadion/v1/feedback with CRUD operations — v6.1
+- Application password authentication support for API access — v6.1
+- Frontend feedback page with list view, detail view, and submission form — v6.1
+- Admin management UI in Stadion for status changes and ordering — v6.1
+- Settings UI for managing application passwords — v6.1
+- System info capture (browser, version, current page) on opt-in — v6.1
+
 ### Active
 
-**v6.1 Feedback System**
+**v7.0 Dutch Localization**
 
-- [ ] stadion_feedback custom post type with ACF fields (type, status, priority, context)
-- [ ] REST API endpoints under stadion/v1/feedback with CRUD operations
-- [ ] Application password authentication support for API access
-- [ ] Frontend feedback page with list view, detail view, and submission form
-- [ ] Admin management UI in Stadion for status changes and ordering
-- [ ] Settings UI for managing application passwords
-- [ ] System info capture (browser, version, current page) on opt-in
+- [ ] Translate all navigation labels to Dutch (Leden, Teams, Commissies, etc.)
+- [ ] Translate all buttons, form labels, and placeholders
+- [ ] Translate all messages, notifications, and error states
+- [ ] Translate dashboard widgets and stats
+- [ ] Translate settings pages and modals
+- [ ] Rename People→Leden, Organizations→Commissies throughout the codebase
+- [ ] Update singular/plural forms (Lid/Leden, Team/Teams, Commissie/Commissies)
 
 ### Out of Scope
 
@@ -390,4 +399,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | RelationshipItemCompact for list view | Async fetch for relationship names in compact column display | ✓ Good |
 
 ---
-*Last updated: 2026-01-21 after v6.0 Custom Fields milestone*
+*Last updated: 2026-01-25 after v7.0 Dutch Localization milestone started*
