@@ -14,6 +14,58 @@ const typeIcons = {
   default: Calendar,
 };
 
+// Date type translations (Dutch labels for date type slugs/names)
+const DATE_TYPE_LABELS = {
+  'birthday': 'Verjaardag',
+  'wedding': 'Trouwdag',
+  'marriage': 'Huwelijk',
+  'memorial': 'Herdenking',
+  'other': 'Overig',
+  'first-met': 'Eerste ontmoeting',
+  'new-relationship': 'Nieuwe relatie',
+  'engagement': 'Verloving',
+  'expecting-a-baby': 'Verwacht een baby',
+  'new-child': 'Nieuw kind',
+  'new-family-member': 'Nieuw familielid',
+  'new-pet': 'Nieuw huisdier',
+  'end-of-relationship': 'Einde relatie',
+  'loss-of-a-loved-one': 'Verlies van een geliefde',
+  'new-job': 'Nieuwe baan',
+  'retirement': 'Pensioen',
+  'new-school': 'Nieuwe school',
+  'study-abroad': 'Studie in buitenland',
+  'volunteer-work': 'Vrijwilligerswerk',
+  'published-book-or-paper': 'Boek of paper gepubliceerd',
+  'military-service': 'Militaire dienst',
+  'moved': 'Verhuisd',
+  'bought-a-home': 'Huis gekocht',
+  'home-improvement': 'Verbouwing',
+  'holidays': 'Vakantie',
+  'new-vehicle': 'Nieuw voertuig',
+  'new-roommate': 'Nieuwe huisgenoot',
+  'overcame-an-illness': 'Ziekte overwonnen',
+  'quit-a-habit': 'Gewoonte gestopt',
+  'new-eating-habits': 'Nieuwe eetgewoontes',
+  'weight-loss': 'Afgevallen',
+  'surgery': 'Operatie',
+  'new-sport': 'Nieuwe sport',
+  'new-hobby': 'Nieuwe hobby',
+  'new-instrument': 'Nieuw instrument',
+  'new-language': 'Nieuwe taal',
+  'travel': 'Reis',
+  'achievement-or-award': 'Prestatie of prijs',
+  'first-word': 'Eerste woord',
+  'first-kiss': 'Eerste kus',
+  'died': 'Overleden',
+};
+
+// Helper function to translate date type
+const getDateTypeLabel = (dateType) => {
+  if (!dateType) return '';
+  const normalized = dateType.toLowerCase().replace(/\s+/g, '-');
+  return DATE_TYPE_LABELS[normalized] || DATE_TYPE_LABELS[dateType.toLowerCase()] || dateType;
+};
+
 function PersonDateEntry({ person, dateType }) {
   return (
     <div className="flex items-center gap-3 py-2">
@@ -31,7 +83,7 @@ function PersonDateEntry({ person, dateType }) {
           </div>
         )}
         <span className="font-medium truncate">{person.name}</span>
-        <span className="text-sm text-gray-500 dark:text-gray-400 capitalize flex-shrink-0">{dateType}</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400 capitalize flex-shrink-0">{getDateTypeLabel(dateType)}</span>
       </Link>
     </div>
   );
@@ -126,11 +178,11 @@ export default function DatesList() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-gray-600 dark:text-gray-400">
-          {dates?.length || 0} upcoming dates
+          {dates?.length || 0} aankomende datums
         </p>
         <button onClick={() => setShowDateModal(true)} className="btn-primary">
           <Plus className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Add date</span>
+          <span className="hidden md:inline">Datum toevoegen</span>
         </button>
       </div>
       
@@ -144,7 +196,7 @@ export default function DatesList() {
       {/* Error */}
       {error && (
         <div className="card p-6 text-center">
-          <p className="text-red-600 dark:text-red-400">Failed to load dates.</p>
+          <p className="text-red-600 dark:text-red-400">Datums konden niet worden geladen.</p>
         </div>
       )}
       
@@ -152,11 +204,11 @@ export default function DatesList() {
       {!isLoading && !error && dates?.length === 0 && (
         <div className="card p-12 text-center">
           <Calendar className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-1">No important dates</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">Add birthdays, anniversaries, and more.</p>
+          <h3 className="text-lg font-medium mb-1">Geen belangrijke datums</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Voeg verjaardagen, trouwdagen en meer toe.</p>
           <button onClick={() => setShowDateModal(true)} className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Add date</span>
+            <span className="hidden md:inline">Datum toevoegen</span>
           </button>
         </div>
       )}
