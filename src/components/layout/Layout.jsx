@@ -38,14 +38,14 @@ import { usePeople } from '@/hooks/usePeople';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'People', href: '/people', icon: Users },
+  { name: 'Leden', href: '/people', icon: Users },
   { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
-  { name: 'Dates', href: '/dates', icon: Calendar },
-  { name: 'Todos', href: '/todos', icon: CheckSquare },
+  { name: 'Datums', href: '/dates', icon: Calendar },
+  { name: 'Taken', href: '/todos', icon: CheckSquare },
   { name: 'Workspaces', href: '/workspaces', icon: UsersRound },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Instellingen', href: '/settings', icon: Settings },
 ];
 
 function Sidebar({ mobile = false, onClose, stats }) {
@@ -55,9 +55,9 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const getCounts = (name) => {
     if (!stats) return null;
     switch (name) {
-      case 'People': return stats.total_people;
-      case 'Organizations': return stats.total_teams;
-      case 'Dates': return stats.total_dates;
+      case 'Leden': return stats.total_people;
+      case 'Teams': return stats.total_teams;
+      case 'Datums': return stats.total_dates;
       default: return null;
     }
   };
@@ -111,7 +111,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
           className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700"
         >
           <LogOut className="w-5 h-5 mr-3" />
-          Log Out
+          Uitloggen
         </a>
       </div>
     </div>
