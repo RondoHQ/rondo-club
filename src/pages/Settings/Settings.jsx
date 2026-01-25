@@ -2774,9 +2774,9 @@ function NotificationsTab({
 }) {
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Notifications</h2>
+      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Meldingen</h2>
       <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-        Choose how you want to receive daily reminders about your important dates.
+        Kies hoe je dagelijkse herinneringen wilt ontvangen over je belangrijke datums.
       </p>
 
       {notificationsLoading ? (
@@ -2789,8 +2789,8 @@ function NotificationsTab({
           {/* Email channel */}
           <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
             <div>
-              <p className="font-medium dark:text-gray-200">Email</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Receive daily digest emails</p>
+              <p className="font-medium dark:text-gray-200">E-mail</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Ontvang dagelijkse samenvattingen per e-mail</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
