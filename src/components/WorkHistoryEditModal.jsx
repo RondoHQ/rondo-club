@@ -12,7 +12,7 @@ function TeamSelector({ value, onChange, teams, isLoading }) {
       className="input"
       disabled={isLoading}
     >
-      <option value="">Select an organization...</option>
+      <option value="">Selecteer een organisatie...</option>
       {teams.map(team => (
         <option key={team.id} value={team.id}>
           {team.title?.rendered || team.title}
@@ -104,7 +104,7 @@ export default function WorkHistoryEditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit work history' : 'Add work history'}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Werkgeschiedenis bewerken' : 'Werkgeschiedenis toevoegen'}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -118,7 +118,7 @@ export default function WorkHistoryEditModal({
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Team */}
             <div>
-              <label className="label">Organization</label>
+              <label className="label">Organisatie</label>
               <Controller
                 name="team"
                 control={control}
@@ -135,23 +135,23 @@ export default function WorkHistoryEditModal({
 
             {/* Job Title */}
             <div>
-              <label className="label">Job title</label>
+              <label className="label">Functie</label>
               <input
                 {...register('job_title')}
                 className="input"
-                placeholder="e.g., Software Engineer"
+                placeholder="bijv. Software Engineer"
                 disabled={isLoading}
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="label">Description</label>
+              <label className="label">Beschrijving</label>
               <textarea
                 {...register('description')}
                 className="input"
                 rows={3}
-                placeholder="Job description, responsibilities, achievements..."
+                placeholder="Functiebeschrijving, verantwoordelijkheden, prestaties..."
                 disabled={isLoading}
               />
             </div>
@@ -159,7 +159,7 @@ export default function WorkHistoryEditModal({
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Start date</label>
+                <label className="label">Startdatum</label>
                 <input
                   type="date"
                   {...register('start_date')}
@@ -169,7 +169,7 @@ export default function WorkHistoryEditModal({
               </div>
               
               <div>
-                <label className="label">End date</label>
+                <label className="label">Einddatum</label>
                 <input
                   type="date"
                   {...register('end_date')}
@@ -189,7 +189,7 @@ export default function WorkHistoryEditModal({
                 disabled={isLoading}
               />
               <label htmlFor="is_current" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                Currently works here
+                Werkt hier momenteel
               </label>
             </div>
           </div>
@@ -201,14 +201,14 @@ export default function WorkHistoryEditModal({
               className="btn-secondary"
               disabled={isLoading}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={isLoading}
             >
-              {isLoading ? 'Saving...' : (isEditing ? 'Save changes' : 'Add work history')}
+              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Werkgeschiedenis toevoegen')}
             </button>
           </div>
         </form>
