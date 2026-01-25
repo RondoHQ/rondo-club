@@ -238,7 +238,7 @@ export default function Settings() {
       // Clean URL but keep tab and subtab for connections/slack
       navigate('/settings/connections/slack', { replace: true });
     } else if (slackError) {
-      setWebhookTestMessage(`Slack-verbinding failed: ${slackError}`);
+      setWebhookTestMessage(`Slack-verbinding mislukt: ${slackError}`);
       navigate('/settings/connections/slack', { replace: true });
     }
 
@@ -977,7 +977,7 @@ function AppearanceTab() {
                   }}
                   className="mt-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 >
-                  Cancel
+                  Annuleren
                 </button>
               </div>
             ) : (
@@ -1235,12 +1235,12 @@ function CalendarsTab() {
                       {connection.last_error && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs dark:bg-red-900/30 dark:text-red-400">
                           <AlertCircle className="w-3 h-3" />
-                          Error
+                          Fout
                         </span>
                       )}
                       {!connection.sync_enabled && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs dark:bg-gray-700 dark:text-gray-400">
-                          Paused
+                          Gepauzeerd
                         </span>
                       )}
                     </div>
@@ -1595,14 +1595,14 @@ function CalDAVModal({ onSave, onClose }) {
 
         <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
           <button onClick={onClose} className="btn-secondary">
-            Cancel
+            Annuleren
           </button>
           <button
             onClick={handleSave}
             disabled={saving || !tested || calendars.length === 0}
             className="btn-primary"
           >
-            {saving ? 'Opslaan...' : 'Save'}
+            {saving ? 'Opslaan...' : 'Opslaan'}
           </button>
         </div>
       </div>
@@ -1658,7 +1658,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         }
       } catch (err) {
         // Silently fail - agenda-lijst is optional enhancement
-        console.error('Failed to fetch agendas:', err);
+        console.error('Kan agenda\'s niet ophalen:', err);
       } finally {
         setLoadingCalendars(false);
       }
@@ -1719,7 +1719,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
       // Include agenda_ids array if we have selections (for Google connections)
       if (isGoogle && selectedCalendarIds.length > 0) {
-        data.calendar_ids = geselecteerdCalendarIds;
+        data.calendar_ids = selectedCalendarIds;
       }
 
       // Include CalDAV credentials if any were changed
@@ -1768,7 +1768,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         </div>
 
         <div className="p-4 space-y-4">
-          {fout && (
+          {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
               {error}
             </div>
@@ -1779,7 +1779,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
             <span className="capitalize font-medium">{connection.provider}</span>
             {isGoogle && (
               <span className="text-xs text-gray-400">
-                (credentials managed via Google OAuth)
+                (inloggegevens beheerd via Google OAuth)
               </span>
             )}
           </div>
@@ -1796,12 +1796,12 @@ function EditConnectionModal({ connection, onSave, onClose }) {
             />
           </div>
 
-          {/* Two-column layout for Google connections with agendas */}
-          {isGoogle && agendas.length > 0 && (
+          {/* Two-column layout for Google connections with calendars */}
+          {isGoogle && calendars.length > 0 && (
             <div className="grid md:grid-cols-2 gap-4">
               {/* Left column: Calendar selection */}
               <div>
-                <label className="label mb-1">Agenda's om te synchroniseren</label>
+                <label className="label mb-1">Agenda&apos;s om te synchroniseren</label>
                 <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
                   {calendars.map((cal) => (
                     <label key={cal.id} className="flex items-center gap-2 cursor-pointer">
@@ -1886,7 +1886,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
           {/* Loading state for agenda's */}
           {loadingCalendars && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Beschikbare agenda's laden...
+              Beschikbare agenda&apos;s laden...
             </p>
           )}
 
@@ -1924,12 +1924,12 @@ function EditConnectionModal({ connection, onSave, onClose }) {
             </label>
           </div>
 
-          {/* Sync settings for non-Google or Google without agendas loaded */}
-          {(!isGoogle || agendas.length === 0) && !loadingCalendars && (
+          {/* Sync settings for non-Google or Google without calendars loaded */}
+          {(!isGoogle || calendars.length === 0) && !loadingCalendars && (
             <>
               {/* Sync from dropdown */}
               <div>
-                <label className="label mb-1">Sync events from</label>
+                <label className="label mb-1">Synchroniseer vanaf</label>
                 <select
                   value={syncFromDays}
                   onChange={(e) => setSyncFromDays(Number(e.target.value))}
@@ -1937,7 +1937,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                 >
                   {syncFromOptions.map((option) => (
                     <option key={option.value} value={option.value}>
-                      Past {option.label}
+                      Afgelopen {option.label}
                     </option>
                   ))}
                 </select>
@@ -1948,7 +1948,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
               {/* Sync to dropdown */}
               <div>
-                <label className="label mb-1">Sync events until</label>
+                <label className="label mb-1">Synchroniseer tot</label>
                 <select
                   value={syncToDays}
                   onChange={(e) => setSyncToDays(Number(e.target.value))}
@@ -1956,7 +1956,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                 >
                   {syncToOptions.map((option) => (
                     <option key={option.value} value={option.value}>
-                      Next {option.label}
+                      Komende {option.label}
                     </option>
                   ))}
                 </select>
@@ -1980,7 +1980,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-                  How often to check for agenda updates
+                  Hoe vaak te controleren op agenda-updates
                 </p>
               </div>
             </>
@@ -2053,14 +2053,14 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
         <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
           <button onClick={onClose} className="btn-secondary">
-            Cancel
+            Annuleren
           </button>
           <button
             onClick={handleSave}
-            disabled={saving || (isGoogle && agendas.length > 0 && geselecteerdCalendarIds.length === 0)}
+            disabled={saving || (isGoogle && calendars.length > 0 && selectedCalendarIds.length === 0)}
             className="btn-primary"
           >
-            {saving ? 'Opslaan...' : 'Save'}
+            {saving ? 'Opslaan...' : 'Opslaan'}
           </button>
         </div>
       </div>
@@ -2289,7 +2289,7 @@ function ConnectionsContactsSubtab({
                   disabled={disconnectingGoogleContacts || googleContactsImporting}
                   className="btn-secondary text-sm"
                 >
-                  {disconnectingGoogleContacts ? 'Ontkoppelen...' : 'Disconnect'}
+                  {disconnectingGoogleContacts ? 'Ontkoppelen...' : 'Ontkoppelen'}
                 </button>
               </div>
             </div>
@@ -2328,7 +2328,7 @@ function ConnectionsContactsSubtab({
                       <li>{googleContactsImportResult.stats.dates_created} verjaardagen toegevoegd</li>
                     )}
                     {googleContactsImportResult.stats.photos_imported > 0 && (
-                      <li>{googleContactsImportResult.stats.photos_imported} foto's geïmporteerd</li>
+                      <li>{googleContactsImportResult.stats.photos_imported} foto&apos;s geïmporteerd</li>
                     )}
                   </ul>
                   {googleContactsImportResult.stats.fouts?.length > 0 && (
@@ -2538,8 +2538,8 @@ function ConnectionsContactsSubtab({
       )}
 
       {googleContactsMessage && (
-        <p className={`mt-4 text-sm ${googleContactsMessage.includes('successfully') || googleContactsMessage.includes('disconnected') || googleContactsMessage.includes('Importing') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-          {googleContactsMessage.includes('Importing') ? (
+        <p className={`mt-4 text-sm ${googleContactsMessage.includes('succesvol') || googleContactsMessage.includes('ontkoppeld') || googleContactsMessage.includes('importeren') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+          {googleContactsMessage.includes('importeren') ? (
             <span className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               {googleContactsMessage}
@@ -2583,7 +2583,7 @@ function ConnectionsCardDAVSubtab({
                   className="btn-secondary text-xs px-2"
                   title="URL kopiëren"
                 >
-                  Copy
+                  Kopiëren
                 </button>
               </div>
             </div>
@@ -2602,7 +2602,7 @@ function ConnectionsCardDAVSubtab({
                   className="btn-secondary text-xs px-2"
                   title="Gebruikersnaam kopiëren"
                 >
-                  Copy
+                  Kopiëren
                 </button>
               </div>
             </div>
@@ -2638,7 +2638,7 @@ function ConnectionsSlackSubtab({
     <div className="card p-6">
       <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Slack-verbinding</h2>
       <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-        Koppel je Slack-workspace om meldingen te ontvangen en Slack-commando's te gebruiken.
+        Koppel je Slack-workspace om meldingen te ontvangen en Slack-commando&apos;s te gebruiken.
       </p>
 
       {slackConnected ? (
@@ -2656,13 +2656,13 @@ function ConnectionsSlackSubtab({
                 disabled={disconnectingSlack}
                 className="btn-secondary text-sm"
               >
-                {disconnectingSlack ? 'Ontkoppelen...' : 'Disconnect'}
+                {disconnectingSlack ? 'Ontkoppelen...' : 'Ontkoppelen'}
               </button>
             </div>
           </div>
 
           {webhookTestMessage && (
-            <p className={`text-sm ${webhookTestMessage.includes('successfully') || webhookTestMessage.includes('disconnected') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            <p className={`text-sm ${webhookTestMessage.includes('succesvol') || webhookTestMessage.includes('ontkoppeld') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
               {webhookTestMessage}
             </p>
           )}
@@ -2752,7 +2752,7 @@ function ConnectionsSlackSubtab({
             Slack koppelen
           </button>
           {webhookTestMessage && (
-            <p className={`text-sm ${webhookTestMessage.includes('successfully') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            <p className={`text-sm ${webhookTestMessage.includes('succesvol') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
               {webhookTestMessage}
             </p>
           )}
@@ -2934,7 +2934,7 @@ function APIAccessTab({
         <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Applicatiewachtwoorden</h2>
         <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
           Maak applicatiewachtwoorden aan voor API-toegang vanuit externe tools en scripts.
-          These passwords work with the REST API and CardDAV-synchronisatie.
+          Deze wachtwoorden werken met de REST API en CardDAV-synchronisatie.
         </p>
 
         {appPasswordsLoading ? (
@@ -2959,7 +2959,7 @@ function APIAccessTab({
                 disabled={creatingPassword || !newPasswordName.trim()}
                 className="btn-primary whitespace-nowrap"
               >
-                {creatingPassword ? 'Aanmaken...' : 'Create'}
+                {creatingPassword ? 'Aanmaken...' : 'Aanmaken'}
               </button>
             </form>
 
@@ -2986,12 +2986,12 @@ function APIAccessTab({
                       {passwordCopied ? (
                         <>
                           <Check className="w-4 h-4" />
-                          Copied
+                          Gekopieerd
                         </>
                       ) : (
                         <>
                           <Copy className="w-4 h-4" />
-                          Copy
+                          Kopiëren
                         </>
                       )}
                     </button>
@@ -3000,7 +3000,7 @@ function APIAccessTab({
                     onClick={() => setNewPassword(null)}
                     className="btn-secondary w-full"
                   >
-                    Done
+                    Klaar
                   </button>
                 </div>
               </div>
@@ -3026,7 +3026,7 @@ function APIAccessTab({
                         onClick={() => handleDeleteAppPassword(password.uuid, password.name)}
                         className="text-red-600 hover:text-red-700 text-sm font-medium dark:text-red-400 dark:hover:text-red-300"
                       >
-                        Revoke
+                        Intrekken
                       </button>
                     </div>
                   ))}
@@ -3054,7 +3054,7 @@ function APIAccessTab({
             <p className="font-mono text-sm dark:text-gray-200">{window.location.origin}/wp-json/stadion/v1/</p>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-            Use HTTP Basic Authentication with your username and an application password.
+            Gebruik HTTP Basic Authentication met je gebruikersnaam en een applicatiewachtwoord.
           </p>
         </div>
       </div>
