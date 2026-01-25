@@ -166,7 +166,7 @@ function UserMenu() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors dark:hover:bg-gray-700"
-        aria-label="User menu"
+        aria-label="Gebruikersmenu"
       >
         {user.avatar_url ? (
           <img
@@ -193,7 +193,7 @@ function UserMenu() {
               onClick={() => setIsOpen(false)}
             >
               <User className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">Edit profile</span>
+              <span className="hidden md:inline">Profiel bewerken</span>
             </a>
             {user.is_admin && (
               <a
@@ -204,7 +204,7 @@ function UserMenu() {
                 onClick={() => setIsOpen(false)}
               >
                 <Settings className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">WordPress admin</span>
+                <span className="hidden md:inline">WordPress beheer</span>
               </a>
             )}
           </div>
@@ -304,7 +304,7 @@ function SearchModal({ isOpen, onClose }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search people & organizations..."
+              placeholder="Zoek leden en teams..."
               className="flex-1 px-4 py-4 text-lg outline-none placeholder:text-gray-400 bg-transparent dark:text-gray-100"
               autoComplete="off"
             />
@@ -319,12 +319,12 @@ function SearchModal({ isOpen, onClose }) {
             {!showResults ? (
               <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                 <Search className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm">Type at least 2 characters to search</p>
+                <p className="text-sm">Typ minimaal 2 tekens om te zoeken</p>
               </div>
             ) : isSearchLoading ? (
               <div className="px-4 py-8 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 mx-auto"></div>
-                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Searching...</p>
+                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Zoeken...</p>
               </div>
             ) : hasResults ? (
               <div className="py-2">
@@ -332,7 +332,7 @@ function SearchModal({ isOpen, onClose }) {
                 {safeResults.people && safeResults.people.length > 0 && (
                   <div className="px-2">
                     <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">
-                      People
+                      Leden
                     </div>
                     {safeResults.people.map((person, index) => {
                       const globalIndex = index;
@@ -372,7 +372,7 @@ function SearchModal({ isOpen, onClose }) {
                 {safeResults.teams && safeResults.teams.length > 0 && (
                   <div className="px-2 mt-2">
                     <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">
-                      Organizations
+                      Teams
                     </div>
                     {safeResults.teams.map((team, index) => {
                       const globalIndex = (safeResults.people?.length || 0) + index;
@@ -410,7 +410,7 @@ function SearchModal({ isOpen, onClose }) {
               </div>
             ) : (
               <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                <p className="text-sm">No results found for "{searchQuery}"</p>
+                <p className="text-sm">Geen resultaten gevonden voor "{searchQuery}"</p>
               </div>
             )}
           </div>
@@ -480,8 +480,8 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddTeam, onAddDate }) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center w-9 h-9 rounded-lg bg-accent-600 hover:bg-accent-700 text-white transition-colors"
-        aria-label="Quick add"
-        title="Quick add"
+        aria-label="Snelle actie"
+        title="Snelle actie"
       >
         <Plus className="w-5 h-5" />
       </button>
@@ -494,28 +494,28 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddTeam, onAddDate }) {
               className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <User className="w-4 h-4 mr-3 text-gray-400" />
-              New Person
+              Nieuw lid
             </button>
             <button
               onClick={handleAddTeam}
               className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <Building2 className="w-4 h-4 mr-3 text-gray-400" />
-              New Organization
+              Nieuw team
             </button>
             <button
               onClick={handleAddTodo}
               className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <CheckSquare className="w-4 h-4 mr-3 text-gray-400" />
-              New Todo
+              Nieuwe taak
             </button>
             <button
               onClick={handleAddDate}
               className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <Calendar className="w-4 h-4 mr-3 text-gray-400" />
-              New Date
+              Nieuwe datum
             </button>
           </div>
         </div>
@@ -532,13 +532,13 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddTeam, onAddDate, onO
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
-    if (path.startsWith('/people')) return 'People';
+    if (path.startsWith('/people')) return 'Leden';
     if (path.startsWith('/teams')) return 'Teams';
     if (path.startsWith('/commissies')) return 'Commissies';
-    if (path.startsWith('/dates')) return 'Important Dates';
-    if (path.startsWith('/todos')) return 'Todos';
+    if (path.startsWith('/dates')) return 'Datums';
+    if (path.startsWith('/todos')) return 'Taken';
     if (path.startsWith('/workspaces')) return 'Workspaces';
-    if (path.startsWith('/settings')) return 'Settings';
+    if (path.startsWith('/settings')) return 'Instellingen';
     return '';
   };
 
@@ -570,7 +570,7 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddTeam, onAddDate, onO
           className="ml-3 flex items-center gap-1.5 px-2 py-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
         >
           <Settings className="w-4 h-4" />
-          <span className="hidden sm:inline">Customize</span>
+          <span className="hidden sm:inline">Aanpassen</span>
         </button>
       )}
 
@@ -581,11 +581,11 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddTeam, onAddDate, onO
       <button
         onClick={onOpenSearch}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-400"
-        aria-label="Search"
-        title="Search (Cmd+K)"
+        aria-label="Zoeken"
+        title="Zoeken (Cmd+K)"
       >
         <Search className="w-4 h-4" />
-        <span className="hidden sm:inline text-sm">Search...</span>
+        <span className="hidden sm:inline text-sm">Zoek...</span>
         <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">
           <Command className="w-3 h-3" />K
         </kbd>
