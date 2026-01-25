@@ -54,14 +54,14 @@ Plans:
 **Depends on**: Phase 100
 **Requirements**: DASH-01, DASH-02, DASH-03, DASH-04
 **Success Criteria** (what must be TRUE):
-  1. Stat cards show Dutch labels (Totaal leden, Teams, Evenementen, Open taken, Wachtend)
-  2. Widget titles are in Dutch (Komende herinneringen, Open taken, Wachtend op reactie, Afspraken vandaag)
+  1. Stat cards show Dutch labels (Totaal leden, Teams, Evenementen, Open taken, Openstaand)
+  2. Widget titles are in Dutch (Komende herinneringen, Open taken, Openstaand, Afspraken vandaag)
   3. Empty states and welcome messages display in Dutch
   4. Error messages and update banners are in Dutch
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 101-01: Translate dashboard components
+- [ ] 101-01-PLAN.md — Translate Dashboard.jsx and DashboardCustomizeModal.jsx to Dutch
 
 ### Phase 102: Leden (People)
 **Goal**: People pages display entirely in Dutch
@@ -152,7 +152,7 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 |-------|----------------|--------|-----------|
 | 99. Date Formatting Foundation | 2/2 | ✓ Complete | 2026-01-25 |
 | 100. Navigation & Layout | 1/1 | ✓ Complete | 2026-01-25 |
-| 101. Dashboard | 0/1 | Not started | - |
+| 101. Dashboard | 0/1 | Ready to execute | - |
 | 102. Leden (People) | 0/2 | Not started | - |
 | 103. Teams & Commissies | 0/2 | Not started | - |
 | 104. Datums & Taken | 0/2 | Not started | - |
