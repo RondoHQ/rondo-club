@@ -369,7 +369,7 @@ export default function PersonDetail() {
   
   // Update document title with person's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
-  useDocumentTitle(person?.name || person?.title?.rendered || person?.title || 'Person');
+  useDocumentTitle(person?.name || person?.title?.rendered || person?.title || 'Lid');
 
   // Find birthday from person dates
   // date_type is an array of term names from the API
@@ -1864,7 +1864,7 @@ export default function PersonDetail() {
                   setShowDateModal(true);
                 }}
                 className="btn-secondary text-sm"
-                title="Add important date"
+                title="Belangrijke datum toevoegen"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -1905,14 +1905,14 @@ export default function PersonDetail() {
                             setShowDateModal(true);
                           }}
                           className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title="Edit date"
+                          title="Datum bewerken"
                         >
                           <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                         </button>
                         <button
                           onClick={() => handleDeleteDate(date.id)}
                           className="p-1 hover:bg-red-50 rounded"
-                          title="Delete date"
+                          title="Datum verwijderen"
                         >
                           <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
                         </button>
@@ -1940,7 +1940,7 @@ export default function PersonDetail() {
                       setShowAddressModal(true);
                     }}
                     className="btn-secondary text-sm"
-                    title="Add address"
+                    title="Adres toevoegen"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -1982,14 +1982,14 @@ export default function PersonDetail() {
                                 setShowAddressModal(true);
                               }}
                               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                              title="Edit address"
+                              title="Adres bewerken"
                             >
                               <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                             </button>
                             <button
                               onClick={() => handleDeleteAddress(index)}
                               className="p-1 hover:bg-red-50 rounded"
-                              title="Delete address"
+                              title="Adres verwijderen"
                             >
                               <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
                             </button>
@@ -2031,7 +2031,7 @@ export default function PersonDetail() {
                     to={`/people/${id}/family-tree`}
                     className="btn-secondary text-sm"
                   >
-                    View family tree
+                    Bekijk stamboom
                   </Link>
                   <button
                     onClick={() => {
@@ -2040,7 +2040,7 @@ export default function PersonDetail() {
                       setShowRelationshipModal(true);
                     }}
                     className="btn-secondary text-sm"
-                    title="Add relationship"
+                    title="Relatie toevoegen"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -2077,7 +2077,7 @@ export default function PersonDetail() {
                             <p className="text-sm font-medium">
                               {decodeHtml(rel.person_name) || `Person #${rel.related_person}`}
                               {personDeceasedMap[rel.related_person] && (
-                                <span className="text-gray-400 ml-1" title="Deceased">†</span>
+                                <span className="text-gray-400 ml-1" title="Overleden">†</span>
                               )}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
@@ -2092,14 +2092,14 @@ export default function PersonDetail() {
                               setShowRelationshipModal(true);
                             }}
                             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                            title="Edit relationship"
+                            title="Relatie bewerken"
                           >
                             <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                           </button>
                           <button
                             onClick={() => handleDeleteRelationship(originalIndex)}
                             className="p-1 hover:bg-red-50 rounded"
-                            title="Delete relationship"
+                            title="Relatie verwijderen"
                           >
                             <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
                           </button>
@@ -2136,23 +2136,23 @@ export default function PersonDetail() {
         {activeTab === 'timeline' && (
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Timeline</h2>
+              <h2 className="font-semibold">Tijdlijn</h2>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowNoteModal(true)}
                   className="btn-secondary text-sm"
-                  title="Add note"
+                  title="Notitie toevoegen"
                 >
                   <StickyNote className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Note</span>
+                  <span className="hidden md:inline">Notitie</span>
                 </button>
                 <button
                   onClick={() => setShowActivityModal(true)}
                   className="btn-secondary text-sm"
-                  title="Add activity"
+                  title="Activiteit toevoegen"
                 >
                   <MessageCircle className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Activity</span>
+                  <span className="hidden md:inline">Activiteit</span>
                 </button>
               </div>
             </div>
@@ -2182,7 +2182,7 @@ export default function PersonDetail() {
                   setShowWorkHistoryModal(true);
                 }}
                 className="btn-secondary text-sm"
-                title="Add work history"
+                title="Werkgeschiedenis toevoegen"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -2219,7 +2219,7 @@ export default function PersonDetail() {
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           {job.start_date && format(new Date(job.start_date), 'MMM yyyy')}
                           {' - '}
-                          {job.is_current ? 'Present' : job.end_date ? format(new Date(job.end_date), 'MMM yyyy') : ''}
+                          {job.is_current ? 'Heden' : job.end_date ? format(new Date(job.end_date), 'MMM yyyy') : ''}
                         </p>
                         {job.description && (
                           <p className="text-sm text-gray-600 mt-1">{job.description}</p>
@@ -2234,14 +2234,14 @@ export default function PersonDetail() {
                             setShowWorkHistoryModal(true);
                           }}
                           className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title="Edit work history"
+                          title="Werkgeschiedenis bewerken"
                         >
                           <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                         </button>
                         <button
                           onClick={() => handleDeleteWorkHistory(originalIndex)}
                           className="p-1 hover:bg-red-50 rounded"
-                          title="Delete work history"
+                          title="Werkgeschiedenis verwijderen"
                         >
                           <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
                         </button>
@@ -2342,7 +2342,7 @@ export default function PersonDetail() {
             <div className="card p-6">
               <h2 className="font-semibold mb-4">Aankomende afspraken</h2>
               {meetingsLoading ? (
-                <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+                <div className="text-gray-500 dark:text-gray-400">Laden...</div>
               ) : meetings?.upcoming?.length > 0 ? (
                 <div className="space-y-3">
                   {meetings.upcoming.map(meeting => (
@@ -2425,7 +2425,7 @@ export default function PersonDetail() {
                         <button
                           onClick={() => handleToggleTodo(todo)}
                           className="mt-0.5 mr-2 flex-shrink-0"
-                          title={todo.status === 'completed' ? 'Reopen' : todo.status === 'awaiting' ? 'Mark complete' : 'Complete'}
+                          title={todo.status === 'completed' ? 'Heropenen' : todo.status === 'awaiting' ? 'Markeer als voltooid' : 'Voltooien'}
                         >
                           {todo.status === 'completed' ? (
                             <CheckSquare2 className="w-5 h-5 text-accent-600" />
@@ -2516,14 +2516,14 @@ export default function PersonDetail() {
                               setShowTodoModal(true);
                             }}
                             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                            title="Edit todo"
+                            title="Taak bewerken"
                           >
                             <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                           </button>
                           <button
                             onClick={() => handleDeleteTodo(todo.id)}
                             className="p-1 hover:bg-red-50 rounded"
-                            title="Delete todo"
+                            title="Taak verwijderen"
                           >
                             <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
                           </button>
@@ -2546,7 +2546,7 @@ export default function PersonDetail() {
       <button
         onClick={() => setShowMobileTodos(true)}
         className="fixed bottom-6 right-6 z-40 lg:hidden bg-accent-600 hover:bg-accent-700 text-white rounded-full p-4 shadow-lg transition-colors"
-        title="View todos"
+        title="Taken bekijken"
       >
         <CheckSquare2 className="w-6 h-6" />
         {openTodosCount > 0 && (
@@ -2573,7 +2573,7 @@ export default function PersonDetail() {
             {/* Header */}
             <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2">
-                <h2 className="font-semibold text-lg">Todos</h2>
+                <h2 className="font-semibold text-lg">Taken</h2>
                 {openTodosCount > 0 && (
                   <span className="bg-accent-100 text-accent-700 text-xs font-medium px-2 py-0.5 rounded-full">
                     {openTodosCount}
@@ -2595,7 +2595,7 @@ export default function PersonDetail() {
                 <button
                   onClick={() => setShowMobileTodos(false)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-                  title="Close"
+                  title="Sluiten"
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
@@ -2613,7 +2613,7 @@ export default function PersonDetail() {
                         <button
                           onClick={() => handleToggleTodo(todo)}
                           className="mt-0.5 mr-2 flex-shrink-0"
-                          title={todo.status === 'completed' ? 'Reopen' : todo.status === 'awaiting' ? 'Mark complete' : 'Complete'}
+                          title={todo.status === 'completed' ? 'Heropenen' : todo.status === 'awaiting' ? 'Markeer als voltooid' : 'Voltooien'}
                         >
                           {todo.status === 'completed' ? (
                             <CheckSquare2 className="w-5 h-5 text-accent-600" />
@@ -2705,14 +2705,14 @@ export default function PersonDetail() {
                               setShowMobileTodos(false);
                             }}
                             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                            title="Edit todo"
+                            title="Taak bewerken"
                           >
                             <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                           </button>
                           <button
                             onClick={() => handleDeleteTodo(todo.id)}
                             className="p-1 hover:bg-red-50 rounded"
-                            title="Delete todo"
+                            title="Taak verwijderen"
                           >
                             <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
                           </button>
