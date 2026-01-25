@@ -8,13 +8,13 @@ const RichTextEditor = lazy(() => import('@/components/RichTextEditor'));
 const ACTIVITY_TYPES = [
   { id: 'email', label: 'Email', icon: Mail },
   { id: 'chat', label: 'Chat', icon: MessageCircle },
-  { id: 'call', label: 'Phone', icon: Phone },
-  { id: 'video', label: 'Video', icon: Video },
-  { id: 'meeting', label: 'Meeting', icon: Users },
-  { id: 'coffee', label: 'Coffee', icon: Coffee },
+  { id: 'call', label: 'Telefoon', icon: Phone },
+  { id: 'video', label: 'Videogesprek', icon: Video },
+  { id: 'meeting', label: 'Vergadering', icon: Users },
+  { id: 'coffee', label: 'Koffie', icon: Coffee },
   { id: 'lunch', label: 'Lunch', icon: Utensils },
-  { id: 'dinner', label: 'Dinner', icon: Utensils },
-  { id: 'note', label: 'Other', icon: FileText },
+  { id: 'dinner', label: 'Diner', icon: Utensils },
+  { id: 'note', label: 'Overig', icon: FileText },
 ];
 
 export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoading, personId, initialData = null, activity = null }) {
@@ -135,7 +135,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit activity' : 'Add activity'}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Activiteit bewerken' : 'Activiteit toevoegen'}</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -152,7 +152,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
               {/* Quick activity type buttons */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Activity type
+                  Type activiteit
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {ACTIVITY_TYPES.map((type) => {
@@ -182,7 +182,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="activity-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Date
+                    Datum
                   </label>
                   <input
                     id="activity-date"
@@ -195,7 +195,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                 </div>
                 <div>
                   <label htmlFor="activity-time" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Time
+                    Tijd
                   </label>
                   <input
                     id="activity-time"
@@ -211,7 +211,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
               {/* Participants */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Participants (optional)
+                  Deelnemers (optioneel)
                 </label>
 
                 {/* Selected participants */}
@@ -244,7 +244,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left text-sm text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
                     disabled={isLoading}
                   >
-                    {selectedParticipants.length === 0 ? 'Add participants...' : 'Add more participants...'}
+                    {selectedParticipants.length === 0 ? 'Deelnemers toevoegen...' : 'Meer deelnemers toevoegen...'}
                   </button>
 
                   {showParticipantSelect && (
@@ -252,7 +252,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                       <div className="p-2 border-b border-gray-200 dark:border-gray-700">
                         <input
                           type="text"
-                          placeholder="Search people..."
+                          placeholder="Personen zoeken..."
                           value={participantSearch}
                           onChange={(e) => setParticipantSearch(e.target.value)}
                           className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50"
@@ -262,7 +262,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                       <div className="max-h-48 overflow-y-auto">
                         {filteredPeople.length === 0 ? (
                           <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">
-                            No people found
+                            Geen personen gevonden
                           </div>
                         ) : (
                           filteredPeople.map((person) => {
@@ -310,7 +310,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
             {/* Right column - Description - 2/3 width on desktop */}
             <div className="flex flex-col md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Description
+                Beschrijving
               </label>
               <div className="flex-1">
                 <Suspense fallback={
@@ -319,7 +319,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                   <RichTextEditor
                     value={content}
                     onChange={setContent}
-                    placeholder="What happened? Add your call notes, chat summary, meeting notes..."
+                    placeholder="Wat is er gebeurd? Voeg je gespreksnotities toe..."
                     disabled={isLoading}
                     minHeight="280px"
                   />
@@ -335,14 +335,14 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
               className="btn-secondary"
               disabled={isLoading}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={isLoading || isRichTextEmpty(content)}
             >
-              {isLoading ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save' : 'Add activity')}
+              {isLoading ? (isEditing ? 'Opslaan...' : 'Toevoegen...') : (isEditing ? 'Opslaan' : 'Activiteit toevoegen')}
             </button>
           </div>
         </form>
