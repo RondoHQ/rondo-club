@@ -149,7 +149,7 @@ export default function Settings() {
       setSlackUsers(channelsResponse.data.users || []);
       setSlackTargets(targetsResponse.data.targets || []);
     } catch {
-      setWebhookTestMessage('Failed to load Slack channels and users. Please try refreshing the page.');
+      setWebhookTestMessage('Kan Slack-kanalen en -gebruikers niet laden. Ververs de pagina.');
     } finally {
       setLoadingSlackData(false);
     }
@@ -214,7 +214,7 @@ export default function Settings() {
           setUnlinkedCount(response.data.unlinked_count);
         })
         .catch(err => {
-          console.fout('Failed to fetch unlinked count:', err);
+          console.error('Kan ontkoppeld aantal niet ophalen:', err);
         });
     }
   }, [googleContactsStatus?.connected, googleContactsStatus?.access_mode]);
@@ -256,7 +256,7 @@ export default function Settings() {
       navigate('/settings/connections/contacts', { replace: true });
     } else if (googleError && params.get('subtab') === 'contacts') {
       // Show fout on contacts subtab
-      setGoogleContactsMessage(`Connection failed: ${googleError}`);
+      setGoogleContactsMessage(`Verbinding mislukt: ${googleError}`);
       navigate('/settings/connections/contacts', { replace: true });
     } else if (googleError && params.get('tab') === 'connections') {
       // Keep on connections/calendars to show fout
@@ -276,7 +276,7 @@ export default function Settings() {
       const response = await apiClient.get('/stadion/v1/slack/oauth/authorize');
       window.location.href = response.data.oauth_url;
     } catch (fout) {
-      alert(fout.response?.data?.message || 'Failed to connect Slack');
+      alert(fout.response?.data?.message || 'Kan Slack niet verbinden');
     }
   };
   
@@ -298,7 +298,7 @@ export default function Settings() {
         await toggleChannel('slack');
       }
     } catch (fout) {
-      alert(fout.response?.data?.message || 'Failed to disconnect Slack');
+      alert(fout.response?.data?.message || 'Kan Slack niet ontkoppelen');
     } finally {
       setDisconnectingSlack(false);
     }
@@ -318,7 +318,7 @@ export default function Settings() {
       setWebhookTestMessage('Meldingsdoelen succesvol opgeslagen');
       setTimeout(() => setWebhookTestMessage(''), 3000);
     } catch (fout) {
-      alert(fout.response?.data?.message || 'Failed to save notification targets');
+      alert(fout.response?.data?.message || 'Kan meldingsdoelen niet opslaan');
     } finally {
       setSavingSlackTargets(false);
     }
@@ -333,7 +333,7 @@ export default function Settings() {
         window.location.href = response.data.auth_url;
       }
     } catch (fout) {
-      setGoogleContactsMessage(fout.response?.data?.message || 'Failed to initiate connection');
+      setGoogleContactsMessage(fout.response?.data?.message || 'Kan verbinding niet starten');
       setConnectingGoogleContacts(false);
     }
   };
@@ -347,7 +347,7 @@ export default function Settings() {
       setGoogleContactsMessage('Google Contacten ontkoppeld.');
       setGoogleContactsImportResult(null);
     } catch (fout) {
-      setGoogleContactsMessage(fout.response?.data?.message || 'Failed to disconnect');
+      setGoogleContactsMessage(fout.response?.data?.message || 'Kan niet ontkoppelen');
     } finally {
       setDisconnectingGoogleContacts(false);
     }
@@ -415,7 +415,7 @@ export default function Settings() {
       const statusResponse = await prmApi.getGoogleContactsStatus();
       setGoogleContactsStatus(statusResponse.data);
     } catch (fout) {
-      setSyncError(fout.response?.data?.message || 'Sync failed');
+      setSyncError(fout.response?.data?.message || 'Synchronisatie mislukt');
     } finally {
       setIsSyncing(false);
     }
@@ -431,7 +431,7 @@ export default function Settings() {
         sync_frequency: frequency,
       }));
     } catch (fout) {
-      console.fout('Failed to update sync frequency:', fout);
+      console.error('Kan synchronisatiefrequentie niet bijwerken:', fout);
     }
   };
 
@@ -446,7 +446,7 @@ export default function Settings() {
       setAppPasswords([...appPasswords, response.data]);
       setNewPasswordName('');
     } catch (fout) {
-      alert(fout.response?.data?.message || 'Failed to create app password');
+      alert(fout.response?.data?.message || 'Kan applicatiewachtwoord niet aanmaken');
     } finally {
       setCreatingPassword(false);
     }
@@ -461,7 +461,7 @@ export default function Settings() {
       await prmApi.deleteAppPassword(userId, uuid);
       setAppPasswords(appPasswords.filter(p => p.uuid !== uuid));
     } catch (fout) {
-      alert(fout.response?.data?.message || 'Failed to revoke app password');
+      alert(fout.response?.data?.message || 'Kan applicatiewachtwoord niet intrekken');
     }
   };
   
@@ -484,11 +484,11 @@ export default function Settings() {
   };
   
   const formatDate = (dateString) => {
-    if (!dateString) return 'Never';
+    if (!dateString) return 'Nooit';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
+    return date.toLocaleDateString('nl-NL', {
       day: 'numeric',
+      month: 'short',
       year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
     });
   };
@@ -503,7 +503,7 @@ export default function Settings() {
       await prmApi.updateNotificationChannels(newChannels);
       setNotificationChannels(newChannels);
     } catch (fout) {
-      alert(fout.response?.data?.message || 'Failed to update notification channels');
+      alert(fout.response?.data?.message || 'Kan meldingskanalen niet bijwerken');
     } finally {
       setSavingChannels(false);
     }
@@ -522,7 +522,7 @@ export default function Settings() {
     try {
       await prmApi.updateNotificationTime(roundedTime);
     } catch (fout) {
-      alert(fout.response?.data?.message || 'Failed to update notification time');
+      alert(fout.response?.data?.message || 'Kan meldingstijd niet bijwerken');
       const response = await prmApi.getNotificationChannels();
       setNotificationTime(response.data.notification_time || '09:00');
     } finally {
@@ -538,7 +538,7 @@ export default function Settings() {
     try {
       await prmApi.updateMentionNotifications(preference);
     } catch (fout) {
-      alert(fout.response?.data?.message || 'Failed to update mention notification preference');
+      alert(fout.response?.data?.message || 'Kan vermeldingsvoorkeur niet bijwerken');
       setMentionNotifications(previousValue);
     } finally {
       setSavingMentionPref(false);
@@ -557,7 +557,7 @@ export default function Settings() {
       const response = await prmApi.triggerReminders();
       setReminderMessage(response.data.message || 'Reminders triggered successfully.');
     } catch (fout) {
-      setReminderMessage(fout.response?.data?.message || 'Failed to trigger reminders. Please check server logs.');
+      setReminderMessage(fout.response?.data?.message || 'Kan herinneringen niet versturen. Controleer de serverlogboeken.');
     } finally {
       setTriggeringReminders(false);
     }
@@ -575,7 +575,7 @@ export default function Settings() {
       const response = await prmApi.rescheduleCronJobs();
       setCronMessage(response.data.message || 'Cron jobs rescheduled successfully.');
     } catch (fout) {
-      setCronMessage(fout.response?.data?.message || 'Failed to reschedule cron jobs. Please check server logs.');
+      setCronMessage(fout.response?.data?.message || 'Kan cron-taken niet herplannen. Controleer de serverlogboeken.');
     } finally {
       setReschedulingCron(false);
     }
