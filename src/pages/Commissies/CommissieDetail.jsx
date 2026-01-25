@@ -147,15 +147,15 @@ export default function CommissieDetail() {
   }, [commissie, navigate]);
   
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this organization?')) {
+    if (!window.confirm('Weet je zeker dat je deze commissie wilt verwijderen?')) {
       return;
     }
-    
+
     try {
       await deleteCommissie.mutateAsync();
       // Navigation will happen in onSuccess callback
     } catch {
-      alert('Failed to delete organization. Please try again.');
+      alert('Commissie kon niet worden verwijderd. Probeer het opnieuw.');
     }
   };
   
@@ -177,7 +177,7 @@ export default function CommissieDetail() {
       await updateCommissie.mutateAsync(payload);
       setShowEditModal(false);
     } catch {
-      alert('Failed to save organization. Please try again.');
+      alert('Commissie kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSaving(false);
     }
@@ -230,8 +230,8 @@ export default function CommissieDetail() {
   if (error || !commissie) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-red-600 dark:text-red-400">Failed to load organization.</p>
-        <Link to="/commissies" className="btn-secondary mt-4">Back to organizations</Link>
+        <p className="text-red-600 dark:text-red-400">Commissie kon niet worden geladen.</p>
+        <Link to="/commissies" className="btn-secondary mt-4">Terug naar commissies</Link>
       </div>
     );
   }
@@ -249,20 +249,20 @@ export default function CommissieDetail() {
       <div className="flex items-center justify-between">
         <Link to="/commissies" className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to organizations</span>
+          <span className="hidden md:inline">Terug naar commissies</span>
         </Link>
         <div className="flex gap-2">
-          <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Share">
+          <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Delen">
             <Share2 className="w-4 h-4 mr-2" />
-            Share
+            Delen
           </button>
           <button onClick={() => setShowEditModal(true)} className="btn-secondary">
             <Edit className="w-4 h-4 mr-2" />
-            Edit
+            Bewerken
           </button>
           <button onClick={handleDelete} className="btn-danger-outline">
             <Trash2 className="w-4 h-4 mr-2" />
-            Delete
+            Verwijderen
           </button>
         </div>
       </div>
@@ -310,7 +310,7 @@ export default function CommissieDetail() {
                 className="text-sm text-accent-600 dark:text-accent-400 hover:underline flex items-center mb-1"
               >
                 <GitBranch className="w-3 h-3 mr-1" />
-                Subsidiary of {getCommissieName(parentCommissie)}
+                Subcommissie van {getCommissieName(parentCommissie)}
               </Link>
             )}
             <h1 className="text-2xl font-bold">{getCommissieName(commissie)}</h1>
@@ -334,7 +334,7 @@ export default function CommissieDetail() {
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <GitBranch className="w-5 h-5 mr-2" />
-            Subsidiaries
+            Subcommissies
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {childCommissies.map((child) => (
@@ -371,7 +371,7 @@ export default function CommissieDetail() {
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2" />
-            Current employees
+            Leden
           </h2>
           
           {employees?.current?.length > 0 ? (
@@ -399,7 +399,7 @@ export default function CommissieDetail() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No current employees.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Geen leden.</p>
           )}
         </div>
         
@@ -407,7 +407,7 @@ export default function CommissieDetail() {
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2" />
-            Former employees
+            Voormalige leden
           </h2>
           
           {employees?.former?.length > 0 ? (
@@ -435,7 +435,7 @@ export default function CommissieDetail() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No former employees.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Geen voormalige leden.</p>
           )}
         </div>
       </div>
@@ -445,7 +445,7 @@ export default function CommissieDetail() {
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" />
-            Investors
+            Sponsoren
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {investorDetails.map((investor) => {
@@ -479,7 +479,7 @@ export default function CommissieDetail() {
                   <div className="ml-3">
                     <p className="text-sm font-medium">{investor.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {isPerson ? 'Person' : 'Organization'}
+                      {isPerson ? 'Lid' : 'Commissie'}
                     </p>
                   </div>
                 </Link>
@@ -494,7 +494,7 @@ export default function CommissieDetail() {
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" />
-            Invested in
+            Investeert in
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {investments.map((commissie) => (
@@ -530,7 +530,7 @@ export default function CommissieDetail() {
       {/* Contact info */}
       {acf.contact_info?.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4">Contact information</h2>
+          <h2 className="font-semibold mb-4">Contactgegevens</h2>
           <div className="space-y-3">
             {acf.contact_info.map((contact, index) => (
               <div key={index}>
