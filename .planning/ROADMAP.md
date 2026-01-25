@@ -13,7 +13,7 @@ This milestone transforms the entire Stadion frontend from English to Dutch. Sta
 - [x] **Phase 99: Date Formatting Foundation** - Configure Dutch locale for date-fns
 - [x] **Phase 100: Navigation & Layout** - Translate sidebar, quick actions, user menu, search
 - [x] **Phase 101: Dashboard** - Translate stats, widgets, empty states, messages
-- [ ] **Phase 102: Leden (People)** - Translate people pages and forms
+- [x] **Phase 102: Leden (People)** - Translate people pages and forms
 - [ ] **Phase 103: Teams & Commissies** - Translate teams and commissies pages
 - [ ] **Phase 104: Datums & Taken** - Translate important dates and todos
 - [ ] **Phase 105: Instellingen (Settings)** - Translate all settings pages
@@ -75,8 +75,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 102-01-PLAN.md — Translate PeopleList.jsx (headers, columns, filters, bulk actions)
-- [ ] 102-02-PLAN.md — Translate PersonEditModal.jsx and PersonDetail.jsx (form, sections, tabs)
+- [x] 102-01-PLAN.md — Translate PeopleList.jsx (headers, columns, filters, bulk actions)
+- [x] 102-02-PLAN.md — Translate PersonEditModal.jsx and PersonDetail.jsx (form, sections, tabs)
 
 ### Phase 103: Teams & Commissies
 **Goal**: Teams and Commissies pages display entirely in Dutch
@@ -153,7 +153,7 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 | 99. Date Formatting Foundation | 2/2 | ✓ Complete | 2026-01-25 |
 | 100. Navigation & Layout | 1/1 | ✓ Complete | 2026-01-25 |
 | 101. Dashboard | 1/1 | ✓ Complete | 2026-01-25 |
-| 102. Leden (People) | 0/2 | Not started | - |
+| 102. Leden (People) | 2/2 | ✓ Complete | 2026-01-25 |
 | 103. Teams & Commissies | 0/2 | Not started | - |
 | 104. Datums & Taken | 0/2 | Not started | - |
 | 105. Instellingen (Settings) | 0/2 | Not started | - |
@@ -161,4 +161,4 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25*
+*Last updated: 2026-01-25 (Phase 102 complete)*
