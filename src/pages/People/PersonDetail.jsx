@@ -407,16 +407,16 @@ export default function PersonDetail() {
   }) : [];
   
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this person?')) {
+    if (!window.confirm('Weet je zeker dat je dit lid wilt verwijderen?')) {
       return;
     }
-    
+
     try {
       await deletePerson.mutateAsync(id);
       // Navigation will happen in onSuccess callback
       navigate('/people');
     } catch {
-      alert('Failed to delete person. Please try again.');
+      alert('Lid kon niet worden verwijderd. Probeer het opnieuw.');
     }
   };
 
@@ -1373,8 +1373,8 @@ export default function PersonDetail() {
   if (error || !person) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-red-600 dark:text-red-400">Failed to load person.</p>
-        <Link to="/people" className="btn-secondary mt-4">Back to people</Link>
+        <p className="text-red-600 dark:text-red-400">Lid kon niet worden geladen.</p>
+        <Link to="/people" className="btn-secondary mt-4">Terug naar leden</Link>
       </div>
     );
   }
@@ -1460,24 +1460,24 @@ export default function PersonDetail() {
       <div className="flex items-center justify-between">
         <Link to="/people" className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to people</span>
+          <span className="hidden md:inline">Terug naar leden</span>
         </Link>
         <div className="flex gap-2">
           <button onClick={handleExportVCard} className="btn-secondary">
             <Download className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Export vCard</span>
+            <span className="hidden md:inline">Exporteer vCard</span>
           </button>
-          <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Share">
+          <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Delen">
             <Share2 className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Share</span>
+            <span className="hidden md:inline">Delen</span>
           </button>
           <button onClick={() => setShowPersonEditModal(true)} className="btn-secondary">
             <Edit className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Edit</span>
+            <span className="hidden md:inline">Bewerken</span>
           </button>
           <button onClick={handleDelete} className="btn-danger-outline">
             <Trash2 className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Delete</span>
+            <span className="hidden md:inline">Verwijderen</span>
           </button>
         </div>
       </div>
@@ -1540,10 +1540,10 @@ export default function PersonDetail() {
                   return (
                     <span key={idx}>
                       {idx > 0 && ', '}
-                      {hasTitle ? job.job_title : 'Works'}
+                      {hasTitle ? job.job_title : 'Werkt'}
                       {hasTeam && (
                         <>
-                          <span className="text-gray-400 dark:text-gray-500"> at </span>
+                          <span className="text-gray-400 dark:text-gray-500"> bij </span>
                           <Link
                             to={`/organizations/${job.team}`}
                             className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
@@ -1566,7 +1566,7 @@ export default function PersonDetail() {
                 {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
                 {acf.pronouns && <span>{acf.pronouns}</span>}
                 {(getGenderSymbol(acf.gender) || acf.pronouns) && <span>&nbsp;—&nbsp;</span>}
-                <span>Died {format(deathDateValue, deathYearUnknown ? 'MMMM d' : 'MMMM d, yyyy')}{age !== null && ` at age ${age}`}</span>
+                <span>Overleden op {format(deathDateValue, deathYearUnknown ? 'd MMMM' : 'd MMMM yyyy')}{age !== null && ` op ${age}-jarige leeftijd`}</span>
               </p>
             )}
             {!isDeceased && (getGenderSymbol(acf.gender) || acf.pronouns || age !== null) && (
@@ -1575,7 +1575,7 @@ export default function PersonDetail() {
                 {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
                 {acf.pronouns && <span>{acf.pronouns}</span>}
                 {(getGenderSymbol(acf.gender) || acf.pronouns) && age !== null && <span>&nbsp;—&nbsp;</span>}
-                {age !== null && <span>{age} years old</span>}
+                {age !== null && <span>{age} jaar</span>}
               </p>
             )}
             <div>
@@ -1590,7 +1590,7 @@ export default function PersonDetail() {
                       <button
                         onClick={() => handleRemoveLabel(label)}
                         className="opacity-0 group-hover/label:opacity-100 transition-opacity hover:bg-gray-200 dark:bg-gray-600 rounded-full p-0.5"
-                        title="Remove label"
+                        title="Label verwijderen"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -1604,7 +1604,7 @@ export default function PersonDetail() {
                       className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 transition-colors"
                     >
                       <Plus className="w-3 h-3 mr-1" />
-                      Add label
+                      Label toevoegen
                     </button>
                   )
                 ) : (
@@ -1616,7 +1616,7 @@ export default function PersonDetail() {
                       autoFocus
                       disabled={availableLabelsToAdd.length === 0}
                     >
-                      <option value="">Select a label...</option>
+                      <option value="">Selecteer een label...</option>
                       {availableLabelsToAdd.map(label => (
                         <option key={label.id} value={label.id}>
                           {label.name}
@@ -1628,7 +1628,7 @@ export default function PersonDetail() {
                       disabled={!selectedLabelToAdd}
                       className="text-xs px-2 py-1 bg-accent-600 text-white rounded hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Add
+                      Toevoegen
                     </button>
                     <button
                       onClick={() => {
@@ -1637,7 +1637,7 @@ export default function PersonDetail() {
                       }}
                       className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                     >
-                      Cancel
+                      Annuleren
                     </button>
                   </div>
                 )}
@@ -1685,7 +1685,7 @@ export default function PersonDetail() {
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
-            Profile
+            Profiel
           </button>
           <button
             onClick={() => setActiveTab('timeline')}
@@ -1695,7 +1695,7 @@ export default function PersonDetail() {
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
-            Timeline
+            Tijdlijn
           </button>
           <button
             onClick={() => setActiveTab('work')}
@@ -1705,7 +1705,7 @@ export default function PersonDetail() {
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
-            Work
+            Werk
           </button>
           <button
             onClick={() => setActiveTab('meetings')}
@@ -1715,7 +1715,7 @@ export default function PersonDetail() {
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
-            Meetings
+            Afspraken
             {meetings?.total_upcoming > 0 && (
               <span className="ml-1 text-xs bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-100 px-1.5 py-0.5 rounded-full">
                 {meetings.total_upcoming}
