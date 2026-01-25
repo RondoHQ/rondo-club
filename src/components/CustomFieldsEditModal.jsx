@@ -115,7 +115,7 @@ function MediaInput({ value, onChange, type = 'image', onRemove }) {
       }
     } catch (error) {
       console.error('Failed to upload file:', error);
-      alert('Failed to upload file. Please try again.');
+      alert('Bestand uploaden mislukt. Probeer het opnieuw.');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -169,7 +169,7 @@ function MediaInput({ value, onChange, type = 'image', onRemove }) {
           className="btn-secondary text-sm inline-flex items-center gap-1"
         >
           <Upload className="w-4 h-4" />
-          {isUploading ? 'Uploading...' : value ? 'Replace' : 'Upload'}
+          {isUploading ? 'Uploaden...' : value ? 'Vervangen' : 'Uploaden'}
         </button>
         <input
           ref={fileInputRef}
@@ -233,7 +233,7 @@ function ColorPickerInput({ value, onChange }) {
             onClick={() => onChange('')}
             className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            Clear
+            Wissen
           </button>
         )}
       </div>
@@ -401,7 +401,7 @@ function RelationshipInput({ value = [], onChange, postTypes = ['person', 'team'
                 setShowDropdown(true);
               }}
               onFocus={() => setShowDropdown(true)}
-              placeholder="Search to add..."
+              placeholder="Zoeken om toe te voegen..."
               className="input pl-9 w-full"
             />
           </div>
@@ -410,9 +410,9 @@ function RelationshipInput({ value = [], onChange, postTypes = ['person', 'team'
           {showDropdown && searchQuery.length >= 2 && (
             <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
               {isSearching ? (
-                <div className="p-3 text-sm text-gray-500 text-center">Searching...</div>
+                <div className="p-3 text-sm text-gray-500 text-center">Zoeken...</div>
               ) : searchResults.length === 0 ? (
-                <div className="p-3 text-sm text-gray-500 text-center">No results found</div>
+                <div className="p-3 text-sm text-gray-500 text-center">Geen resultaten gevonden</div>
               ) : (
                 searchResults
                   .filter((item) => !value.includes(item.id))
@@ -438,7 +438,7 @@ function RelationshipInput({ value = [], onChange, postTypes = ['person', 'team'
                         )}
                         <span className="text-sm">{decodeHtml(item.name)}</span>
                         <span className="text-xs text-gray-400 ml-auto">
-                          {item.type === 'person' ? 'Person' : 'Organization'}
+                          {item.type === 'person' ? 'Lid' : 'Team'}
                         </span>
                       </button>
                     );
@@ -577,7 +577,7 @@ export default function CustomFieldsEditModal({
       case 'select':
         return (
           <select {...register(field.name)} className={inputClass}>
-            {field.allow_null && <option value="">Select...</option>}
+            {field.allow_null && <option value="">Selecteer...</option>}
             {Object.entries(field.choices || {}).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -636,7 +636,7 @@ export default function CustomFieldsEditModal({
                   />
                 </button>
                 <span className="text-sm">
-                  {value ? (field.ui_on_text || 'Yes') : (field.ui_off_text || 'No')}
+                  {value ? (field.ui_on_text || 'Ja') : (field.ui_off_text || 'Nee')}
                 </span>
               </label>
             )}
@@ -677,7 +677,7 @@ export default function CustomFieldsEditModal({
             <input
               type="text"
               {...register(`${field.name}.title`)}
-              placeholder="Link text (optional)"
+              placeholder="Linktekst (optioneel)"
               className={inputClass}
             />
           </div>
@@ -726,7 +726,7 @@ export default function CustomFieldsEditModal({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Edit custom fields</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Aangepaste velden bewerken</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -760,14 +760,14 @@ export default function CustomFieldsEditModal({
               className="btn-secondary"
               disabled={isLoading}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={isLoading}
             >
-              {isLoading ? 'Saving...' : 'Save changes'}
+              {isLoading ? 'Opslaan...' : 'Wijzigingen opslaan'}
             </button>
           </div>
         </form>
