@@ -14,14 +14,14 @@ export default function VisibilitySelector({
   const visibilityOptions = [
     {
       value: 'private',
-      label: 'Private',
-      description: 'Only you can see this',
+      label: 'Prive',
+      description: 'Alleen jij kunt dit zien',
       icon: Lock
     },
     {
       value: 'workspace',
       label: 'Workspace',
-      description: 'Share with workspace members',
+      description: 'Deel met workspace-leden',
       icon: Users
     },
   ];
@@ -49,7 +49,7 @@ export default function VisibilitySelector({
   return (
     <div className="relative">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-        Visibility
+        Zichtbaarheid
       </label>
 
       {/* Dropdown trigger */}
@@ -98,13 +98,13 @@ export default function VisibilitySelector({
           {value === 'workspace' && (
             <div className="p-2">
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 px-2">
-                Select Workspaces
+                Selecteer workspaces
               </div>
               {isLoading ? (
-                <div className="px-2 py-3 text-sm text-gray-500 dark:text-gray-400">Loading workspaces...</div>
+                <div className="px-2 py-3 text-sm text-gray-500 dark:text-gray-400">Workspaces laden...</div>
               ) : availableWorkspaces.length === 0 ? (
                 <div className="px-2 py-3 text-sm text-gray-500 dark:text-gray-400">
-                  No workspaces available. Create one first.
+                  Geen workspaces beschikbaar. Maak er eerst een aan.
                 </div>
               ) : (
                 <div className="max-h-48 overflow-y-auto">
@@ -122,7 +122,7 @@ export default function VisibilitySelector({
                         </div>
                         <div className="flex-1">
                           <div className="text-sm text-gray-900 dark:text-gray-50">{workspace.title}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{workspace.member_count} members</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{workspace.member_count} leden</div>
                         </div>
                       </button>
                     );
@@ -140,7 +140,7 @@ export default function VisibilitySelector({
                 onClick={() => setIsOpen(false)}
                 className="w-full px-3 py-2 text-sm font-medium text-accent-600 dark:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded-md"
               >
-                Done
+                Klaar
               </button>
             </div>
           )}
@@ -150,7 +150,7 @@ export default function VisibilitySelector({
       {/* Selected workspaces summary */}
       {value === 'workspace' && workspaces.length > 0 && !isOpen && (
         <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Shared with {workspaces.length} workspace{workspaces.length !== 1 ? 's' : ''}
+          Gedeeld met {workspaces.length} workspace{workspaces.length !== 1 ? 's' : ''}
         </div>
       )}
     </div>
