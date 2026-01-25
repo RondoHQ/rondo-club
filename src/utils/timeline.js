@@ -32,7 +32,6 @@ export function groupTimelineByDate(timeline) {
       return;
     }
 
-    const itemDate = parseISO(item.created);
     // Combine activity_date and activity_time if both exist
     let displayDateStr = item.activity_date || item.created;
     if (item.activity_date && item.activity_time) {
