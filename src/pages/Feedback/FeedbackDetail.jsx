@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Bug, Lightbulb, Clock, User, Monitor, Link as LinkIcon, Paperclip, Pencil } from 'lucide-react';
 import { useFeedback, useUpdateFeedback } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 import FeedbackEditModal from '@/components/FeedbackEditModal';
 
 // Status badge colors (same as FeedbackList)

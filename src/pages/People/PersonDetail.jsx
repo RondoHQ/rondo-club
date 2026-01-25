@@ -42,7 +42,7 @@ import PersonEditModal from '@/components/PersonEditModal';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 const MeetingDetailModal = lazy(() => import('@/components/MeetingDetailModal'));
-import { format, differenceInYears } from 'date-fns';
+import { format, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';

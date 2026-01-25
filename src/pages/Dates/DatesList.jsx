@@ -4,7 +4,7 @@ import { Plus, Calendar, Gift, Heart, Star } from 'lucide-react';
 import { useReminders } from '@/hooks/useDashboard';
 import { usePeople } from '@/hooks/usePeople';
 import { useCreateDate } from '@/hooks/useDates';
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 import ImportantDateModal from '@/components/ImportantDateModal';
 
 const typeIcons = {

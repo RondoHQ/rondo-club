@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MessageSquare, Bug, Lightbulb, Plus, Clock } from 'lucide-react';
 import { useFeedbackList, useCreateFeedback } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 import FeedbackModal from '@/components/FeedbackModal';
 
 // Status badge colors
