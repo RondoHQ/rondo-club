@@ -2615,7 +2615,7 @@ function ConnectionsCardDAVSubtab({
               onClick={() => setActiveTab('api-access')}
               className="text-accent-600 dark:text-accent-400 hover:underline"
             >
-              Instellingen Instellingen Settings &gt; API Accessgt; API-toeganggt; API-toegang
+              Instellingen &gt; API-toegang
             </button>
             .
           </p>
