@@ -40,14 +40,14 @@ Plans:
 **Depends on**: Phase 99
 **Requirements**: NAV-01, NAV-02, NAV-03, NAV-04
 **Success Criteria** (what must be TRUE):
-  1. Sidebar shows Dutch labels (Dashboard, Leden, Teams, Commissies, Datums, Taken, Werkruimtes, Feedback, Instellingen)
+  1. Sidebar shows Dutch labels (Dashboard, Leden, Teams, Commissies, Datums, Taken, Workspaces, Feedback, Instellingen)
   2. Quick actions menu shows Dutch labels (Nieuw lid, Nieuw team, Nieuwe taak, Nieuwe datum)
-  3. User menu shows Dutch labels (Profiel bewerken, WordPress admin, Uitloggen)
+  3. User menu shows Dutch labels (Profiel bewerken, WordPress beheer, Uitloggen)
   4. Search modal placeholder and labels are in Dutch
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 100-01: Translate navigation components
+- [ ] 100-01-PLAN.md — Translate all navigation and layout strings in Layout.jsx
 
 ### Phase 101: Dashboard
 **Goal**: Dashboard displays entirely in Dutch
