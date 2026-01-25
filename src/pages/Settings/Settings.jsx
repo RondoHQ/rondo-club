@@ -915,7 +915,7 @@ function AppearanceTab() {
                 disabled={savingLinkedPerson}
                 className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
               >
-                {savingLinkedPerson ? 'Ontkoppelen...' : 'Unlink'}
+                {savingLinkedPerson ? 'Ontkoppelen...' : 'Ontkoppelen'}
               </button>
             </div>
           </div>
@@ -2834,7 +2834,7 @@ function NotificationsTab({
 
           {/* Notification time */}
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <label className="label mb-1">Notification time (UTC)</label>
+            <label className="label mb-1">Meldingstijd (UTC)</label>
             <input
               type="time"
               value={notificationTime}
