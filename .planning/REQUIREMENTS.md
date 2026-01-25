@@ -16,17 +16,17 @@ Requirements for Dutch localization. Direct string replacement approach (no i18n
 
 ### Dashboard
 
-- [ ] **DASH-01**: Translate stat card labels (Totaal leden, Teams, Evenementen, Open taken, Wachtend)
-- [ ] **DASH-02**: Translate widget titles (Komende herinneringen, Open taken, Wachtend op reactie, Afspraken vandaag, etc.)
-- [ ] **DASH-03**: Translate empty states and welcome messages
-- [ ] **DASH-04**: Translate error messages and update banner
+- [x] **DASH-01**: Translate stat card labels (Totaal leden, Teams, Evenementen, Open taken, Wachtend)
+- [x] **DASH-02**: Translate widget titles (Komende herinneringen, Open taken, Wachtend op reactie, Afspraken vandaag, etc.)
+- [x] **DASH-03**: Translate empty states and welcome messages
+- [x] **DASH-04**: Translate error messages and update banner
 
 ### People (Leden)
 
-- [ ] **LEDEN-01**: Translate page title and list headers (Voornaam, Achternaam, Team, Werkruimte, Labels)
-- [ ] **LEDEN-02**: Translate person form labels (Voornaam, Achternaam, Bijnaam, Geslacht, E-mail, Telefoon, etc.)
-- [ ] **LEDEN-03**: Translate gender options (Man, Vrouw, Non-binair, Anders, Zeg ik liever niet)
-- [ ] **LEDEN-04**: Translate vCard import messages
+- [x] **LEDEN-01**: Translate page title and list headers (Voornaam, Achternaam, Team, Werkruimte, Labels)
+- [x] **LEDEN-02**: Translate person form labels (Voornaam, Achternaam, Bijnaam, Geslacht, E-mail, Telefoon, etc.)
+- [x] **LEDEN-03**: Translate gender options (Man, Vrouw, Non-binair, Anders, Zeg ik liever niet)
+- [x] **LEDEN-04**: Translate vCard import messages
 
 ### Teams
 
@@ -96,14 +96,14 @@ None for this milestone - focused solely on Dutch translation.
 | NAV-02 | Phase 100 | Complete |
 | NAV-03 | Phase 100 | Complete |
 | NAV-04 | Phase 100 | Complete |
-| DASH-01 | Phase 101 | Pending |
-| DASH-02 | Phase 101 | Pending |
-| DASH-03 | Phase 101 | Pending |
-| DASH-04 | Phase 101 | Pending |
-| LEDEN-01 | Phase 102 | Pending |
-| LEDEN-02 | Phase 102 | Pending |
-| LEDEN-03 | Phase 102 | Pending |
-| LEDEN-04 | Phase 102 | Pending |
+| DASH-01 | Phase 101 | Complete |
+| DASH-02 | Phase 101 | Complete |
+| DASH-03 | Phase 101 | Complete |
+| DASH-04 | Phase 101 | Complete |
+| LEDEN-01 | Phase 102 | Complete |
+| LEDEN-02 | Phase 102 | Complete |
+| LEDEN-03 | Phase 102 | Complete |
+| LEDEN-04 | Phase 102 | Complete |
 | TEAM-01 | Phase 103 | Pending |
 | TEAM-02 | Phase 103 | Pending |
 | TEAM-03 | Phase 103 | Pending |
@@ -134,4 +134,4 @@ None for this milestone - focused solely on Dutch translation.
 
 ---
 *Requirements defined: 2026-01-25*
-*Last updated: 2026-01-25 after roadmap creation*
+*Last updated: 2026-01-25 (Phase 102 complete)*
