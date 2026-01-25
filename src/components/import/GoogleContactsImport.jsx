@@ -33,7 +33,7 @@ export default function GoogleContactsImport() {
     onError: (error) => {
       setValidationResult({
         valid: false,
-        error: error.response?.data?.message || 'Failed to validate file',
+        error: error.response?.data?.message || 'Bestand valideren mislukt',
       });
     },
   });
@@ -87,7 +87,7 @@ export default function GoogleContactsImport() {
     if (!selectedFile.name.endsWith('.csv')) {
       setValidationResult({
         valid: false,
-        error: 'Please select a CSV file',
+        error: 'Selecteer een CSV-bestand',
       });
       return;
     }
@@ -125,14 +125,14 @@ export default function GoogleContactsImport() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold dark:text-gray-50">Import from Google Contacts</h2>
+      <h2 className="text-lg font-semibold dark:text-gray-50">Importeren van Google Contacten</h2>
       <p className="text-sm text-gray-600 dark:text-gray-300">
-        Import contacts from a Google Contacts CSV export. To export from Google:
+        Importeer contacten vanuit een Google Contacten CSV-export. Om te exporteren vanuit Google:
       </p>
       <ol className="text-sm text-gray-600 dark:text-gray-300 list-decimal list-inside space-y-1 ml-2">
-        <li>Go to <a href="https://contacts.google.com" target="_blank" rel="noopener noreferrer" className="text-accent-600 dark:text-accent-400 hover:underline">contacts.google.com</a></li>
-        <li>Click "Export" in the left sidebar</li>
-        <li>Select "Google CSV" format and click "Export"</li>
+        <li>Ga naar <a href="https://contacts.google.com" target="_blank" rel="noopener noreferrer" className="text-accent-600 dark:text-accent-400 hover:underline">contacts.google.com</a></li>
+        <li>Klik op "Exporteren" in de linker zijbalk</li>
+        <li>Selecteer het "Google CSV" formaat en klik op "Exporteren"</li>
       </ol>
 
       {importMutation.isSuccess ? (
@@ -140,18 +140,18 @@ export default function GoogleContactsImport() {
           <div className="flex items-start gap-3">
             <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
             <div className="flex-1">
-              <h3 className="font-medium text-green-900 dark:text-green-300">Import Complete</h3>
+              <h3 className="font-medium text-green-900 dark:text-green-300">Import voltooid</h3>
               <div className="mt-2 text-sm text-green-800 dark:text-green-200 space-y-1">
-                <p>Contacts imported: {importMutation.data.stats.contacts_imported}</p>
-                <p>Contacts updated: {importMutation.data.stats.contacts_updated}</p>
-                <p>Contacts skipped: {importMutation.data.stats.contacts_skipped}</p>
-                <p>Organizations created: {importMutation.data.stats.teams_created}</p>
-                <p>Birthdays created: {importMutation.data.stats.dates_created}</p>
-                <p>Notes created: {importMutation.data.stats.notes_created}</p>
-                <p>Photos imported: {importMutation.data.stats.photos_imported}</p>
+                <p>Contacten geïmporteerd: {importMutation.data.stats.contacts_imported}</p>
+                <p>Contacten bijgewerkt: {importMutation.data.stats.contacts_updated}</p>
+                <p>Contacten overgeslagen: {importMutation.data.stats.contacts_skipped}</p>
+                <p>Organisaties aangemaakt: {importMutation.data.stats.teams_created}</p>
+                <p>Verjaardagen aangemaakt: {importMutation.data.stats.dates_created}</p>
+                <p>Notities aangemaakt: {importMutation.data.stats.notes_created}</p>
+                <p>Foto's geïmporteerd: {importMutation.data.stats.photos_imported}</p>
                 {importMutation.data.stats.errors?.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-800">
-                    <p className="font-medium">Errors:</p>
+                    <p className="font-medium">Fouten:</p>
                     <ul className="list-disc list-inside">
                       {importMutation.data.stats.errors.map((error, i) => (
                         <li key={i}>{error}</li>
@@ -164,7 +164,7 @@ export default function GoogleContactsImport() {
                 onClick={reset}
                 className="mt-3 text-sm text-green-700 dark:text-green-300 hover:text-green-800 dark:hover:text-green-200 font-medium"
               >
-                Import another file
+                Een ander bestand importeren
               </button>
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function GoogleContactsImport() {
             {validateMutation.isPending ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 text-accent-600 dark:text-accent-400 animate-spin" />
-                <p className="text-gray-600 dark:text-gray-300">Validating file...</p>
+                <p className="text-gray-600 dark:text-gray-300">Bestand valideren...</p>
               </div>
             ) : file ? (
               <div className="flex flex-col items-center gap-2">
@@ -209,9 +209,9 @@ export default function GoogleContactsImport() {
               <div className="flex flex-col items-center gap-2">
                 <Upload className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                 <p className="text-gray-600 dark:text-gray-300">
-                  Drag and drop your Google Contacts CSV here, or click to browse
+                  Sleep je Google Contacten CSV hierheen of klik om te bladeren
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Supports Google CSV format</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Ondersteunt Google CSV formaat</p>
               </div>
             )}
           </div>
@@ -229,34 +229,34 @@ export default function GoogleContactsImport() {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="font-medium text-green-900 dark:text-green-300">File validated successfully</h3>
+                    <h3 className="font-medium text-green-900 dark:text-green-300">Bestand succesvol gevalideerd</h3>
                     <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <div className="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
                         <Users className="h-4 w-4" />
-                        <span>{validationResult.summary.contacts} contacts</span>
+                        <span>{validationResult.summary.contacts} contacten</span>
                       </div>
                       {validationResult.summary.teams_count > 0 && (
                         <div className="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
                           <Building2 className="h-4 w-4" />
-                          <span>{validationResult.summary.teams_count} organizations</span>
+                          <span>{validationResult.summary.teams_count} organisaties</span>
                         </div>
                       )}
                       {validationResult.summary.birthdays > 0 && (
                         <div className="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
                           <Cake className="h-4 w-4" />
-                          <span>{validationResult.summary.birthdays} birthdays</span>
+                          <span>{validationResult.summary.birthdays} verjaardagen</span>
                         </div>
                       )}
                       {validationResult.summary.notes > 0 && (
                         <div className="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
                           <StickyNote className="h-4 w-4" />
-                          <span>{validationResult.summary.notes} notes</span>
+                          <span>{validationResult.summary.notes} notities</span>
                         </div>
                       )}
                       {validationResult.summary.photos > 0 && (
                         <div className="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
                           <Image className="h-4 w-4" />
-                          <span>{validationResult.summary.photos} photos</span>
+                          <span>{validationResult.summary.photos} foto's</span>
                         </div>
                       )}
                     </div>
@@ -266,7 +266,7 @@ export default function GoogleContactsImport() {
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
                   <div>
-                    <h3 className="font-medium text-red-900 dark:text-red-300">Validation failed</h3>
+                    <h3 className="font-medium text-red-900 dark:text-red-300">Validatie mislukt</h3>
                     <p className="text-sm text-red-700 dark:text-red-200 mt-1">{validationResult.error}</p>
                   </div>
                 </div>
@@ -281,10 +281,10 @@ export default function GoogleContactsImport() {
                 <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <h3 className="font-medium text-amber-900 dark:text-amber-300">
-                    {duplicates.length} contact{duplicates.length > 1 ? 's' : ''} may already exist
+                    {duplicates.length} contact{duplicates.length > 1 ? 'en' : ''} bestaa{duplicates.length > 1 ? 'n' : 't'} mogelijk al
                   </h3>
                   <p className="text-sm text-amber-700 dark:text-amber-200 mt-1">
-                    Choose how to handle each potential duplicate:
+                    Kies hoe elk mogelijk duplicaat moet worden afgehandeld:
                   </p>
                   
                   <div className="mt-4 space-y-4">
@@ -313,12 +313,12 @@ export default function GoogleContactsImport() {
                 {importMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="hidden md:inline">Importing...</span>
+                    <span className="hidden md:inline">Importeren...</span>
                   </>
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    <span className="hidden md:inline">Start Import</span>
+                    <span className="hidden md:inline">Start import</span>
                   </>
                 )}
               </button>
@@ -327,7 +327,7 @@ export default function GoogleContactsImport() {
                 disabled={importMutation.isPending}
                 className="btn-secondary"
               >
-                Cancel
+                Annuleren
               </button>
             </div>
           )}
@@ -338,9 +338,9 @@ export default function GoogleContactsImport() {
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
                 <div>
-                  <h3 className="font-medium text-red-900 dark:text-red-300">Import failed</h3>
+                  <h3 className="font-medium text-red-900 dark:text-red-300">Import mislukt</h3>
                   <p className="text-sm text-red-700 dark:text-red-200 mt-1">
-                    {importMutation.error.response?.data?.message || 'An error occurred during import'}
+                    {importMutation.error.response?.data?.message || 'Er is een fout opgetreden tijdens het importeren'}
                   </p>
                 </div>
               </div>
@@ -361,7 +361,7 @@ function DuplicateCard({ duplicate, decision, onDecision }) {
       <div className="flex flex-col sm:flex-row gap-4">
         {/* CSV contact info */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">From CSV</p>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Uit CSV</p>
           <p className="font-medium text-gray-900 dark:text-gray-50 truncate">{duplicate.csv_name}</p>
           {duplicate.csv_org && (
             <p className="text-sm text-gray-600 dark:text-gray-300 truncate">{duplicate.csv_org}</p>
@@ -378,7 +378,7 @@ function DuplicateCard({ duplicate, decision, onDecision }) {
 
         {/* Existing contact info */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Existing Contact</p>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Bestaand contact</p>
           <div className="flex items-start gap-3">
             {duplicate.existing_photo ? (
               <img
@@ -418,7 +418,7 @@ function DuplicateCard({ duplicate, decision, onDecision }) {
           }`}
         >
           <RefreshCw className="h-4 w-4" />
-          Update existing
+          Bestaande bijwerken
         </button>
         <button
           type="button"
@@ -430,7 +430,7 @@ function DuplicateCard({ duplicate, decision, onDecision }) {
           }`}
         >
           <UserPlus className="h-4 w-4" />
-          Create new
+          Nieuwe aanmaken
         </button>
         <button
           type="button"
@@ -442,7 +442,7 @@ function DuplicateCard({ duplicate, decision, onDecision }) {
           }`}
         >
           <SkipForward className="h-4 w-4" />
-          Skip
+          Overslaan
         </button>
       </div>
     </div>
