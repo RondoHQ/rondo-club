@@ -4,25 +4,25 @@
 
 See: .planning/PROJECT.md (updated 2026-01-25)
 
-**Core value:** Convert entire Stadion interface to Dutch with proper terminology (Leden, Teams, Commissies)
-**Current focus:** Milestone v7.0 complete - ready for audit
+**Core value:** Personal CRM with multi-user workspaces, Dutch-localized interface
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v7.0 Dutch Localization
-Phase: 106 of 106 (Global UI Elements)
-Plan: 5 of 5 in phase 106
-Status: Milestone complete, all phases verified ✓
-Last activity: 2026-01-25 - Completed Phase 106 (Global UI Elements - Dutch localization complete)
+Milestone: v7.0 Dutch Localization — SHIPPED
+Phase: N/A (milestone complete, ready for next milestone)
+Plan: N/A
+Status: Ready for /gsd:new-milestone
+Last activity: 2026-01-25 — v7.0 milestone archived
 
-Progress: [████████████] 100% (22/22 plans complete in milestone v7.0)
+Progress: Milestone v7.0 complete. Run /gsd:new-milestone to start next milestone.
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22 (this milestone)
+- Total plans completed: 22 (milestone v7.0)
 - Phases: 8 (99-106)
-- Current milestone: v7.0 Dutch Localization - COMPLETE
+- Current milestone: v7.0 Dutch Localization - SHIPPED
 
 *Updated after each plan completion*
 
@@ -60,8 +60,9 @@ Progress: [████████████] 100% (22/22 plans complete in m
 | v5.0.1 Meeting Card Polish | 86 | 1 | 2026-01-18 |
 | v6.0 Custom Fields | 87-94 | 15 | 2026-01-21 |
 | v6.1 Feedback System | 95-98 | 6 | 2026-01-21 |
+| v7.0 Dutch Localization | 99-106 | 22 | 2026-01-25 |
 
-**Total:** 31 milestones, 98 phases, 187 plans completed
+**Total:** 32 milestones, 106 phases, 209 plans completed
 
 ## Accumulated Context
 
@@ -69,15 +70,13 @@ Progress: [████████████] 100% (22/22 plans complete in m
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-Recent decisions (phase 106):
-- Use 'Kan bekijken/Kan bewerken' for permission display in share modal
-- Use 'werkruimte' (compound) for workspace terminology
-- Use 'Beheerder/Lid/Kijker' for Admin/Member/Viewer workspace roles
-- Use 'Gevarenzone' for Danger Zone
-- Field type labels: Tekst, Tekstveld, Nummer, Datum, Selectie, Selectievakje, Ja/Nee, Afbeelding, Bestand, Kleur, Relatie
-- Boolean defaults use Ja/Nee (not Yes/No)
-- Activity types: Telefoon, Videogesprek, Vergadering, Koffie, Diner, Overig
-- Contact types: Telefoon, Mobiel, Agenda link, Overig
+Recent decisions (v7.0 milestone):
+- Dutch locale via dateFormat.js wrapper - all dates formatted in Dutch
+- Loan words kept (Dashboard, Workspaces, Feedback) - common English terms
+- Informal tone (je/jij) - warm, friendly UI
+- "Leden" terminology (not Personen) - consistent naming
+- "Openstaand" for awaiting (not Wachtend) - dashboard and todos
+- Mixed terminology for activity types - keep international terms
 
 ### Pending Todos
 
@@ -100,7 +99,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed Phase 106 - v7.0 Dutch Localization milestone complete
+Stopped at: v7.0 milestone archived
 Resume file: None
 
-Note: Milestone v7.0 complete. Ready for /gsd:audit-milestone or /gsd:complete-milestone.
+Note: v7.0 complete. Run /gsd:new-milestone to start next milestone.
