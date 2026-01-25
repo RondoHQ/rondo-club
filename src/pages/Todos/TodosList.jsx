@@ -13,7 +13,7 @@ import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 
 export default function TodosList() {
-  useDocumentTitle('Todos');
+  useDocumentTitle('Taken');
 
   // Filter state - now matches API status values
   const [statusFilter, setStatusFilter] = useState('open'); // 'all' | 'open' | 'awaiting' | 'completed'
@@ -123,7 +123,7 @@ export default function TodosList() {
       setTodoToComplete(null);
       setActivityInitialData(null);
     } catch {
-      alert('Failed to create activity. Please try again.');
+      alert('Activiteit kon niet worden aangemaakt. Probeer het opnieuw.');
     }
   };
 
@@ -147,7 +147,7 @@ export default function TodosList() {
   };
 
   const handleDeleteTodo = async (todoId) => {
-    if (!window.confirm('Are you sure you want to delete this todo?')) {
+    if (!window.confirm('Weet je zeker dat je deze taak wilt verwijderen?')) {
       return;
     }
 
@@ -157,23 +157,23 @@ export default function TodosList() {
   // Get the appropriate header text based on filter
   const getHeaderText = () => {
     const labels = {
-      all: 'All todos',
-      open: 'Open todos',
-      awaiting: 'Awaiting response',
-      completed: 'Completed todos',
+      all: 'Alle taken',
+      open: 'Te doen',
+      awaiting: 'Openstaand',
+      completed: 'Afgeronde taken',
     };
-    return labels[statusFilter] || 'Todos';
+    return labels[statusFilter] || 'Taken';
   };
 
   // Get appropriate empty state message
   const getEmptyMessage = () => {
     const messages = {
-      all: 'No todos found',
-      open: 'No open todos',
-      awaiting: 'No todos awaiting response',
-      completed: 'No completed todos',
+      all: 'Geen taken gevonden',
+      open: 'Geen open taken',
+      awaiting: 'Geen openstaande taken',
+      completed: 'Geen afgeronde taken',
     };
-    return messages[statusFilter] || 'No todos found';
+    return messages[statusFilter] || 'Geen taken gevonden';
   };
 
   // Get the icon for the header
@@ -199,14 +199,14 @@ export default function TodosList() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold">Todos</h1>
+        <h1 className="text-2xl font-bold">Taken</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowGlobalTodoModal(true)}
             className="btn-primary text-sm flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Add todo
+            Taak toevoegen
           </button>
         </div>
       </div>
@@ -220,7 +220,7 @@ export default function TodosList() {
               statusFilter === 'open' ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
-            Open
+            Te doen
           </button>
           <button
             onClick={() => setStatusFilter('awaiting')}
@@ -229,7 +229,7 @@ export default function TodosList() {
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
-            Awaiting
+            Openstaand
           </button>
           <button
             onClick={() => setStatusFilter('completed')}
@@ -237,7 +237,7 @@ export default function TodosList() {
               statusFilter === 'completed' ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
-            Completed
+            Afgerond
           </button>
           <button
             onClick={() => setStatusFilter('all')}
@@ -245,7 +245,7 @@ export default function TodosList() {
               statusFilter === 'all' ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
-            All
+            Alle
           </button>
         </div>
       </div>
@@ -280,7 +280,7 @@ export default function TodosList() {
             <p className="text-gray-500 dark:text-gray-400">{getEmptyMessage()}</p>
             {statusFilter === 'open' && (
               <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                Create todos from a person's detail page or click "Add todo"
+                Maak taken aan vanaf een ledenpagina of klik op "Taak toevoegen"
               </p>
             )}
           </div>
@@ -369,9 +369,9 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
 
   // Get title for the toggle button
   const getToggleTitle = () => {
-    if (todo.status === 'completed') return 'Reopen todo';
-    if (todo.status === 'awaiting') return 'Mark as complete';
-    return 'Complete todo';
+    if (todo.status === 'completed') return 'Taak heropenen';
+    if (todo.status === 'awaiting') return 'Markeren als afgerond';
+    return 'Taak afronden';
   };
 
   return (
@@ -451,8 +451,8 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
           {/* Due date - only show prominently for open todos */}
           {todo.due_date && todo.status === 'open' && (
             <span className={`text-xs ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-              Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
-              {isOverdue && ' (overdue)'}
+              Deadline: {format(new Date(todo.due_date), 'MMM d, yyyy')}
+              {isOverdue && ' (te laat)'}
             </span>
           )}
 
@@ -460,7 +460,7 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
           {todo.status === 'awaiting' && awaitingDays !== null && (
             <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${getAwaitingUrgencyClass(awaitingDays)}`}>
               <Clock className="w-3 h-3" />
-              {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
+              {awaitingDays === 0 ? 'Wacht sinds vandaag' : `Wacht ${awaitingDays}d`}
             </span>
           )}
         </div>
@@ -472,7 +472,7 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
           <button
             onClick={() => onReopen(todo)}
             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-            title="Reopen todo"
+            title="Taak heropenen"
           >
             <RotateCcw className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
           </button>
@@ -480,14 +480,14 @@ function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
         <button
           onClick={() => onEdit(todo)}
           className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-          title="Edit todo"
+          title="Taak bewerken"
         >
           <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
         </button>
         <button
           onClick={() => onDelete(todo.id)}
           className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-          title="Delete todo"
+          title="Taak verwijderen"
         >
           <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600 dark:hover:text-red-400" />
         </button>
