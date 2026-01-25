@@ -281,7 +281,7 @@ export default function Settings() {
   };
   
   const handleDisconnectSlack = async () => {
-    if (!confirm('Are you sure you want to disconnect Slack? You will stop receiving Slack notifications.')) {
+    if (!confirm('Weet je zeker dat je Slack wilt ontkoppelen? Je ontvangt dan geen Slack-meldingen meer.')) {
       return;
     }
     
@@ -339,7 +339,7 @@ export default function Settings() {
   };
 
   const handleDisconnectGoogleContacts = async () => {
-    if (!confirm('Disconnect Google Contacts? This will stop syncing contacts.')) return;
+    if (!confirm('Google Contacten ontkoppelen? Hiermee stopt de synchronisatie.')) return;
     setDisconnectingGoogleContacts(true);
     try {
       await prmApi.disconnectGoogleContacts();
@@ -373,7 +373,7 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ['dates'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     } catch (fout) {
-      setGoogleContactsMessage(`Import failed: ${fout.response?.data?.message || fout.message}`);
+      setGoogleContactsMessage(`Import mislukt: ${fout.response?.data?.message || fout.message}`);
       setGoogleContactsImportResult(null);
     } finally {
       setGoogleContactsImporting(false);
@@ -453,7 +453,7 @@ export default function Settings() {
   };
   
   const handleDeleteAppPassword = async (uuid, name) => {
-    if (!confirm(`Are you sure you want to revoke the app password "${name}"? Any devices using this password will no longer be able to sync.`)) {
+    if (!confirm(`Weet je zeker dat je het applicatiewachtwoord "${name}" wilt intrekken? Apparaten die dit wachtwoord gebruiken kunnen niet meer synchroniseren.`)) {
       return;
     }
     
@@ -546,7 +546,7 @@ export default function Settings() {
   };
   
   const handleTriggerReminders = async () => {
-    if (!confirm('This will send reminder emails for all reminders due today. Continue?')) {
+    if (!confirm('Dit verstuurt herinneringsmails voor alle herinneringen van vandaag. Doorgaan?')) {
       return;
     }
     
@@ -555,7 +555,7 @@ export default function Settings() {
     
     try {
       const response = await prmApi.triggerReminders();
-      setReminderMessage(response.data.message || 'Reminders triggered successfully.');
+      setReminderMessage(response.data.message || 'Herinneringen succesvol verstuurd.');
     } catch (fout) {
       setReminderMessage(fout.response?.data?.message || 'Kan herinneringen niet versturen. Controleer de serverlogboeken.');
     } finally {
@@ -564,7 +564,7 @@ export default function Settings() {
   };
   
   const handleRescheduleCron = async () => {
-    if (!confirm('This will reschedule all user reminder cron jobs based on their notification time preferences. Continue?')) {
+    if (!confirm('Dit herplant alle cron-taken op basis van de meldingsvoorkeuren van gebruikers. Doorgaan?')) {
       return;
     }
     
@@ -573,7 +573,7 @@ export default function Settings() {
     
     try {
       const response = await prmApi.rescheduleCronJobs();
-      setCronMessage(response.data.message || 'Cron jobs rescheduled successfully.');
+      setCronMessage(response.data.message || 'Cron-taken succesvol herplant.');
     } catch (fout) {
       setCronMessage(fout.response?.data?.message || 'Kan cron-taken niet herplannen. Controleer de serverlogboeken.');
     } finally {
@@ -1028,7 +1028,7 @@ function CalendarsTab() {
     const foutParam = params.get('fout');
 
     if (connected === 'google') {
-      setSuccessMessage('Google Calendar connected successfully!');
+      setSuccessMessage('Google Agenda succesvol verbonden!');
       // Refresh connections list
       fetchConnections();
       // Clean URL
@@ -1062,7 +1062,7 @@ function CalendarsTab() {
       const response = await prmApi.getCalendarConnections();
       setConnections(response.data || []);
     } catch (err) {
-      setError('Failed to load agenda connections.');
+      setError('Kan agendakoppelingen niet laden.');
     } finally {
       setLoading(false);
     }
@@ -1074,10 +1074,10 @@ function CalendarsTab() {
       if (response.data?.auth_url) {
         window.location.href = response.data.auth_url;
       } else {
-        setError('Failed to get authorization URL.');
+        setError('Kan autorisatie-URL niet ophalen.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to connect Google Calendar.');
+      setError(err.response?.data?.message || 'Kan Google Agenda niet verbinden.');
     }
   };
 
@@ -1090,7 +1090,7 @@ function CalendarsTab() {
       // Refresh connections to update last_sync
       fetchConnections();
     } catch (err) {
-      setError(err.response?.data?.message || 'Sync failed.');
+      setError(err.response?.data?.message || 'Synchronisatie mislukt.');
       setTimeout(() => setError(''), 8000);
     } finally {
       setSyncing(prev => ({ ...prev, [connectionId]: false }));
@@ -1098,17 +1098,17 @@ function CalendarsTab() {
   };
 
   const handleDelete = async (connectionId, connectionName) => {
-    if (!confirm(`Are you sure you want to delete "${connectionName}"? All synced events from this agenda will also be deleted.`)) {
+    if (!confirm(`Weet je zeker dat je "${connectionName}" wilt verwijderen? Alle gesynchroniseerde afspraken worden ook verwijderd.`)) {
       return;
     }
 
     try {
       await prmApi.deleteCalendarConnection(connectionId);
       setConnections(prev => prev.filter(c => c.id !== connectionId));
-      setSuccessMessage('Connection deleted successfully.');
+      setSuccessMessage('Koppeling succesvol verwijderd.');
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete connection.');
+      setError(err.response?.data?.message || 'Kan koppeling niet verwijderen.');
       setTimeout(() => setError(''), 8000);
     }
   };
@@ -1117,7 +1117,7 @@ function CalendarsTab() {
     try {
       await prmApi.createCalendarConnection(data);
       setShowAddModal(null);
-      setSuccessMessage('CalDAV agenda connected successfully!');
+      setSuccessMessage('CalDAV-agenda succesvol verbonden!');
       fetchConnections();
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (err) {
@@ -1136,7 +1136,7 @@ function CalendarsTab() {
   };
 
   const regenerateIcalToken = async () => {
-    if (!confirm('Are you sure you want to regenerate your agenda URL? Any existing agenda subscriptions will stop working until you update them with the new URL.')) {
+    if (!confirm('Weet je zeker dat je de agenda-URL opnieuw wilt genereren? Bestaande abonnementen werken niet meer totdat je ze bijwerkt met de nieuwe URL.')) {
       return;
     }
 
@@ -1276,7 +1276,7 @@ function CalendarsTab() {
           </div>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No agenda connections yet. Add one below to start syncing your meetings.
+            Nog geen agendakoppelingen. Voeg er hieronder een toe om je afspraken te synchroniseren.
           </p>
         )}
       </div>
@@ -1300,7 +1300,7 @@ function CalendarsTab() {
             <div className="flex-1">
               <p className="font-medium dark:text-gray-100">Google Agenda koppelen</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Sign in with your Google account
+                Inloggen met je Google-account
               </p>
             </div>
             <ExternalLink className="w-5 h-5 text-gray-400" />
@@ -1325,9 +1325,9 @@ function CalendarsTab() {
 
       {/* Important Dates Subscription */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Subscribe to important dates in your agenda</h2>
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Abonneer op belangrijke datums in je agenda</h2>
         <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-          Subscribe to your important dates in any agenda app (Apple Calendar, Google Calendar, Outlook, etc.)
+          Abonneer op je belangrijke datums in elke agenda-app (Apple Agenda, Google Agenda, Outlook, etc.)
         </p>
 
         {icalLoading ? (
@@ -1338,7 +1338,7 @@ function CalendarsTab() {
         ) : (
           <div className="space-y-4">
             <div>
-              <label className="label mb-1">Your agenda feed URL</label>
+              <label className="label mb-1">Je agenda-feed-URL</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -1357,14 +1357,14 @@ function CalendarsTab() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Copied
+                      Gekopieerd
                     </span>
                   ) : (
                     <span className="flex items-center gap-1">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                       </svg>
-                      Copy
+                      Kopiëren
                     </span>
                   )}
                 </button>
@@ -1377,7 +1377,7 @@ function CalendarsTab() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  Subscribe in agenda app
+                  Abonneren in agenda-app
                 </span>
               </a>
 
@@ -1386,13 +1386,12 @@ function CalendarsTab() {
                 disabled={regenerating}
                 className="btn-secondary"
               >
-                {regenerating ? 'Opnieuw genereren...' : 'Regenerate URL'}
+                {regenerating ? 'Opnieuw genereren...' : 'URL opnieuw genereren'}
               </button>
             </div>
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Keep this URL private. Anyone with access to it can see your important dates.
-              If you think it has been compromised, click "Regenerate URL" to get a new one.
+              Houd deze URL privé. Iedereen met toegang kan je belangrijke datums zien. Als je denkt dat de URL is uitgelekt, klik dan op "URL opnieuw genereren" voor een nieuwe.
             </p>
           </div>
         )}
@@ -1413,7 +1412,7 @@ function CalendarsTab() {
           onSave={async (id, data) => {
             await prmApi.updateCalendarConnection(id, data);
             setShowAddModal(null);
-            setSuccessMessage('Connection updated successfully.');
+            setSuccessMessage('Koppeling succesvol bijgewerkt.');
             fetchConnections();
             setTimeout(() => setSuccessMessage(''), 5000);
           }}
