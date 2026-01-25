@@ -55,7 +55,7 @@ function RelationshipItem({ itemId, allowedPostTypes }) {
   if (isLoading) {
     return (
       <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm">
-        Loading...
+        Laden...
       </span>
     );
   }
@@ -161,7 +161,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
   const renderFieldValue = (field, value) => {
     // Handle null/undefined/empty values
     if (value === null || value === undefined || value === '') {
-      return <span className="text-gray-400 dark:text-gray-500 italic">Not set</span>;
+      return <span className="text-gray-400 dark:text-gray-500 italic">Niet ingesteld</span>;
     }
 
     switch (field.type) {
@@ -227,15 +227,15 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
       case 'checkbox': {
         // Checkbox values are arrays
         if (!Array.isArray(value) || value.length === 0) {
-          return <span className="text-gray-400 dark:text-gray-500 italic">None selected</span>;
+          return <span className="text-gray-400 dark:text-gray-500 italic">Niets geselecteerd</span>;
         }
         return <span>{value.join(', ')}</span>;
       }
 
       case 'true_false': {
         const displayText = value
-          ? (field.ui_on_text || 'Yes')
-          : (field.ui_off_text || 'No');
+          ? (field.ui_on_text || 'Ja')
+          : (field.ui_off_text || 'Nee');
         return (
           <span className={value ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
             {displayText}
@@ -254,11 +254,11 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
           imageUrl = value.sizes?.thumbnail || value.url;
         } else if (typeof value === 'number') {
           // ID-only format - can't display without fetching
-          return <span className="text-gray-500">Image #{value}</span>;
+          return <span className="text-gray-500">Afbeelding #{value}</span>;
         }
 
         if (!imageUrl) {
-          return <span className="text-gray-400 dark:text-gray-500 italic">Not set</span>;
+          return <span className="text-gray-400 dark:text-gray-500 italic">Niet ingesteld</span>;
         }
 
         return (
@@ -273,20 +273,20 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
       case 'file': {
         // Handle different return formats: ID, URL, or object
         let fileUrl = null;
-        let filename = 'Download file';
+        let filename = 'Bestand downloaden';
 
         if (typeof value === 'string') {
           fileUrl = value;
-          filename = value.split('/').pop() || 'Download file';
+          filename = value.split('/').pop() || 'Bestand downloaden';
         } else if (typeof value === 'object' && value !== null) {
           fileUrl = value.url;
-          filename = value.filename || value.title || 'Download file';
+          filename = value.filename || value.title || 'Bestand downloaden';
         } else if (typeof value === 'number') {
-          return <span className="text-gray-500">File #{value}</span>;
+          return <span className="text-gray-500">Bestand #{value}</span>;
         }
 
         if (!fileUrl) {
-          return <span className="text-gray-400 dark:text-gray-500 italic">Not set</span>;
+          return <span className="text-gray-400 dark:text-gray-500 italic">Niet ingesteld</span>;
         }
 
         return (
@@ -305,7 +305,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
       case 'link': {
         // Link fields return object with url, title, target
         if (typeof value !== 'object' || !value?.url) {
-          return <span className="text-gray-400 dark:text-gray-500 italic">Not set</span>;
+          return <span className="text-gray-400 dark:text-gray-500 italic">Niet ingesteld</span>;
         }
 
         return (
@@ -323,7 +323,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
 
       case 'color_picker': {
         if (!value || typeof value !== 'string') {
-          return <span className="text-gray-400 dark:text-gray-500 italic">Not set</span>;
+          return <span className="text-gray-400 dark:text-gray-500 italic">Niet ingesteld</span>;
         }
 
         return (
@@ -340,7 +340,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
       case 'relationship': {
         // Relationship values can be IDs or objects depending on return_format
         if (!value || (Array.isArray(value) && value.length === 0)) {
-          return <span className="text-gray-400 dark:text-gray-500 italic">None linked</span>;
+          return <span className="text-gray-400 dark:text-gray-500 italic">Niet gekoppeld</span>;
         }
 
         // Ensure we're working with an array
@@ -427,13 +427,13 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
     <>
       <div className="card p-6 break-inside-avoid mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold">Custom fields</h2>
+          <h2 className="font-semibold">Aangepaste velden</h2>
           <button
             onClick={() => setShowModal(true)}
             className="btn-secondary text-sm"
           >
             <Pencil className="w-4 h-4 md:mr-1" />
-            <span className="hidden md:inline">Edit</span>
+            <span className="hidden md:inline">Bewerken</span>
           </button>
         </div>
 

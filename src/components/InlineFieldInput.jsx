@@ -85,7 +85,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled, onK
           className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
           disabled={disabled}
         >
-          {field.allow_null !== false && <option value="">-- Select --</option>}
+          {field.allow_null !== false && <option value="">-- Selecteer --</option>}
           {field.choices && Object.entries(field.choices).map(([key, label]) => (
             <option key={key} value={key}>{label}</option>
           ))}
@@ -101,8 +101,8 @@ export default function InlineFieldInput({ field, value, onChange, disabled, onK
           className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
           disabled={disabled}
         >
-          <option value="0">{field.ui_off_text || 'No'}</option>
-          <option value="1">{field.ui_on_text || 'Yes'}</option>
+          <option value="0">{field.ui_off_text || 'Nee'}</option>
+          <option value="1">{field.ui_on_text || 'Ja'}</option>
         </select>
       );
 
