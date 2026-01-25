@@ -1,4 +1,4 @@
-import { format, formatDistanceToNow, isToday, isYesterday, isThisWeek, parseISO } from 'date-fns';
+import { format, formatDistanceToNow, isToday, isYesterday, isThisWeek, parseISO } from '@/utils/dateFormat';
 
 /**
  * Group timeline items by date buckets
@@ -94,20 +94,19 @@ export function formatTimelineDate(dateString) {
   try {
     const date = parseISO(dateString);
     const hasTime = dateString.includes('T') && dateString.length > 10;
-    const timeFormat = hasTime ? ' at HH:mm' : '';
 
-    // If it's today, show relative time
+    // If it's today, show relative time (automatically Dutch via locale)
     if (isToday(date)) {
       return formatDistanceToNow(date, { addSuffix: true });
     }
-    
-    // If it's yesterday, show "Yesterday" with optional time
+
+    // If it's yesterday, show "gisteren" with optional time
     if (isYesterday(date)) {
-      return hasTime ? format(date, `'Yesterday' 'at' HH:mm`) : 'Yesterday';
+      return hasTime ? format(date, "'gisteren om' HH:mm") : 'gisteren';
     }
 
-    // Otherwise show formatted date with optional time
-    return format(date, hasTime ? `MMM d, yyyy 'at' HH:mm` : 'MMM d, yyyy');
+    // Otherwise show formatted date with optional time (Dutch format: day month year)
+    return format(date, hasTime ? "d MMM yyyy 'om' HH:mm" : 'd MMM yyyy');
   } catch (error) {
     return dateString;
   }
