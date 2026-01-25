@@ -1,7 +1,9 @@
-<!-- Personal CRM system built as a WordPress theme with React SPA frontend -->
+<!-- Sports team management system built as a WordPress theme with React SPA frontend -->
 # Stadion
 
-A React-powered WordPress theme for personal relationship management. This theme provides a modern, single-page application interface for managing contacts, teams, and important dates.
+A React-powered WordPress theme for sports team management. This theme provides a modern, single-page application interface for managing people, teams (synced from Sportlink), and important dates.
+
+Stadion is a fork of [Caelis](https://github.com/jdevalk/caelis), adapted for sports club administration.
 
 ## Requirements
 
