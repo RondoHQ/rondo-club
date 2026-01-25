@@ -32,7 +32,7 @@ const MenuBar = ({ editor }) => {
 
   const setLink = () => {
     const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('Enter URL:', previousUrl);
+    const url = window.prompt('Voer URL in:', previousUrl);
 
     if (url === null) return;
 
@@ -51,7 +51,7 @@ const MenuBar = ({ editor }) => {
       <MenuButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
-        title="Bold (Cmd+B)"
+        title="Vet (Cmd+B)"
       >
         <Bold className="w-4 h-4" />
       </MenuButton>
@@ -59,7 +59,7 @@ const MenuBar = ({ editor }) => {
       <MenuButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive('italic')}
-        title="Italic (Cmd+I)"
+        title="Cursief (Cmd+I)"
       >
         <Italic className="w-4 h-4" />
       </MenuButton>
@@ -69,7 +69,7 @@ const MenuBar = ({ editor }) => {
       <MenuButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive('bulletList')}
-        title="Bullet list"
+        title="Opsommingslijst"
       >
         <List className="w-4 h-4" />
       </MenuButton>
@@ -77,7 +77,7 @@ const MenuBar = ({ editor }) => {
       <MenuButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         isActive={editor.isActive('orderedList')}
-        title="Numbered list"
+        title="Genummerde lijst"
       >
         <ListOrdered className="w-4 h-4" />
       </MenuButton>
@@ -87,7 +87,7 @@ const MenuBar = ({ editor }) => {
       <MenuButton
         onClick={setLink}
         isActive={editor.isActive('link')}
-        title="Add link"
+        title="Link toevoegen"
       >
         <LinkIcon className="w-4 h-4" />
       </MenuButton>
@@ -95,7 +95,7 @@ const MenuBar = ({ editor }) => {
       {editor.isActive('link') && (
         <MenuButton
           onClick={() => editor.chain().focus().unsetLink().run()}
-          title="Remove link"
+          title="Link verwijderen"
         >
           <Unlink className="w-4 h-4" />
         </MenuButton>
@@ -106,7 +106,7 @@ const MenuBar = ({ editor }) => {
       <MenuButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
-        title="Undo (Cmd+Z)"
+        title="Ongedaan maken (Cmd+Z)"
       >
         <Undo className="w-4 h-4" />
       </MenuButton>
@@ -114,7 +114,7 @@ const MenuBar = ({ editor }) => {
       <MenuButton
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
-        title="Redo (Cmd+Shift+Z)"
+        title="Opnieuw (Cmd+Shift+Z)"
       >
         <Redo className="w-4 h-4" />
       </MenuButton>
@@ -125,7 +125,7 @@ const MenuBar = ({ editor }) => {
 export default function RichTextEditor({ 
   value = '', 
   onChange, 
-  placeholder = 'Write something...', 
+  placeholder = 'Schrijf iets...', 
   disabled = false,
   minHeight = '120px',
   autoFocus = false,
