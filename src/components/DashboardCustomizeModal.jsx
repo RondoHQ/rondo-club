@@ -21,14 +21,14 @@ import { DEFAULT_DASHBOARD_CARDS } from '@/hooks/useDashboard';
 
 // Card definitions with labels and descriptions
 const CARD_DEFINITIONS = {
-  'stats': { label: 'Statistics', description: 'People, organizations, events counts' },
-  'reminders': { label: 'Upcoming Reminders', description: 'Important dates coming up' },
-  'todos': { label: 'Open Todos', description: 'Tasks to complete' },
-  'awaiting': { label: 'Awaiting Response', description: 'Waiting for replies' },
-  'meetings': { label: "Today's Meetings", description: 'Calendar events for today' },
-  'recent-contacted': { label: 'Recently Contacted', description: 'Recent activity contacts' },
-  'recent-edited': { label: 'Recently Edited', description: 'Recently modified people' },
-  'favorites': { label: 'Favorites', description: 'Starred contacts' },
+  'stats': { label: 'Statistieken', description: 'Aantallen van leden, teams en evenementen' },
+  'reminders': { label: 'Komende herinneringen', description: 'Aankomende belangrijke datums' },
+  'todos': { label: 'Open taken', description: 'Taken om af te ronden' },
+  'awaiting': { label: 'Openstaand', description: 'Wachten op reacties' },
+  'meetings': { label: 'Afspraken vandaag', description: 'Agenda-items voor vandaag' },
+  'recent-contacted': { label: 'Recent gecontacteerd', description: 'Contacten met recente activiteit' },
+  'recent-edited': { label: 'Recent bewerkt', description: 'Recent gewijzigde leden' },
+  'favorites': { label: 'Favorieten', description: 'Favoriete contacten' },
 };
 
 function SortableCard({ id, isVisible, onToggleVisibility }) {
@@ -61,7 +61,7 @@ function SortableCard({ id, isVisible, onToggleVisibility }) {
         {...attributes}
         {...listeners}
         className="touch-none p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
-        aria-label="Drag to reorder"
+        aria-label="Slepen om te sorteren"
       >
         <GripVertical className="w-5 h-5" />
       </button>
@@ -174,10 +174,10 @@ export default function DashboardCustomizeModal({
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-                Customize Dashboard
+                Dashboard aanpassen
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Show, hide, and reorder cards
+                Toon, verberg en sorteer kaarten
               </p>
             </div>
             <button
@@ -218,7 +218,7 @@ export default function DashboardCustomizeModal({
               className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
             >
               <RotateCcw className="w-4 h-4" />
-              Reset to defaults
+              Herstel standaard
             </button>
             <div className="flex gap-3">
               <button
@@ -226,7 +226,7 @@ export default function DashboardCustomizeModal({
                 onClick={onClose}
                 className="btn-secondary"
               >
-                Cancel
+                Annuleer
               </button>
               <button
                 type="button"
@@ -234,7 +234,7 @@ export default function DashboardCustomizeModal({
                 disabled={isSaving}
                 className="btn-primary"
               >
-                {isSaving ? 'Saving...' : 'Save'}
+                {isSaving ? 'Bezig met opslaan...' : 'Opslaan'}
               </button>
             </div>
           </div>
