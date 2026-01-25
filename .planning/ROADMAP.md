@@ -16,7 +16,7 @@ This milestone transforms the entire Stadion frontend from English to Dutch. Sta
 - [x] **Phase 102: Leden (People)** - Translate people pages and forms
 - [x] **Phase 103: Teams & Commissies** - Translate teams and commissies pages
 - [x] **Phase 104: Datums & Taken** - Translate important dates and todos
-- [ ] **Phase 105: Instellingen (Settings)** - Translate all settings pages
+- [x] **Phase 105: Instellingen (Settings)** - Translate all settings pages
 - [ ] **Phase 106: Global UI** - Translate buttons, states, placeholders, dialogs
 
 ## Phase Details
@@ -124,7 +124,7 @@ Plans:
   4. Notification preferences are in Dutch
   5. Import/export labels are in Dutch
   6. Admin settings are in Dutch
-**Plans**: 6 plans
+**Plans**: 7 plans
 
 Plans:
 - [x] 105-01-PLAN.md — Translate Settings tabs config, AppearanceTab, CalendarsTab
@@ -132,7 +132,8 @@ Plans:
 - [x] 105-03-PLAN.md — Translate NotificationsTab, DataTab, AdminTab, AboutTab
 - [x] 105-04-PLAN.md — Translate Settings subpages (Labels, UserApproval, RelationshipTypes, CustomFields, FeedbackManagement)
 - [x] 105-05-PLAN.md — Translate import components and document titles
-- [ ] 105-06-PLAN.md — Gap closure: Translate error/success messages and confirmation dialogs
+- [x] 105-06-PLAN.md — Gap closure: Translate error/success messages and confirmation dialogs
+- [x] 105-07-PLAN.md — Gap closure: Translate final 7 English strings
 
 ### Phase 106: Global UI Elements
 **Goal**: All common UI elements display in Dutch
@@ -162,9 +163,9 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 | 102. Leden (People) | 2/2 | ✓ Complete | 2026-01-25 |
 | 103. Teams & Commissies | 3/3 | ✓ Complete | 2026-01-25 |
 | 104. Datums & Taken | 3/3 | ✓ Complete | 2026-01-25 |
-| 105. Instellingen (Settings) | 5/6 | Gap closure needed | - |
+| 105. Instellingen (Settings) | 7/7 | ✓ Complete | 2026-01-25 |
 | 106. Global UI Elements | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 (Phase 105 gap closure plan added)*
+*Last updated: 2026-01-25 (Phase 105 complete)*
