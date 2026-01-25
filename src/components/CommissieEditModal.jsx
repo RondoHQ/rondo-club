@@ -301,7 +301,7 @@ export default function CommissieEditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit commissie' : 'Add commissie'}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Commissie bewerken' : 'Nieuwe commissie'}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -315,11 +315,11 @@ export default function CommissieEditModal({
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Commissie name */}
             <div>
-              <label className="label">Commissie name *</label>
+              <label className="label">Naam *</label>
               <input
-                {...register('title', { required: 'Commissie name is required' })}
+                {...register('title', { required: 'Naam is verplicht' })}
                 className="input"
-                placeholder="Commissie name"
+                placeholder="Commissienaam"
                 disabled={isLoading}
                 autoFocus
               />
@@ -342,7 +342,7 @@ export default function CommissieEditModal({
 
             {/* Parent commissie selection */}
             <div>
-              <label className="label">Parent commissie</label>
+              <label className="label">Hoofdcommissie</label>
               <div className="relative" ref={parentDropdownRef}>
                 <button
                   type="button"
@@ -366,7 +366,7 @@ export default function CommissieEditModal({
                       <span className="text-gray-900 dark:text-gray-50">{getCommissieName(selectedParent)}</span>
                     </div>
                   ) : (
-                    <span className="text-gray-400 dark:text-gray-500">No parent commissie</span>
+                    <span className="text-gray-400 dark:text-gray-500">Geen hoofdcommissie</span>
                   )}
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -381,7 +381,7 @@ export default function CommissieEditModal({
                           type="text"
                           value={parentSearchQuery}
                           onChange={(e) => setParentSearchQuery(e.target.value)}
-                          placeholder="Search commissies..."
+                          placeholder="Commissies zoeken..."
                           className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
                           autoFocus
                         />
@@ -401,13 +401,13 @@ export default function CommissieEditModal({
                           !selectedParentId ? 'bg-accent-50 dark:bg-accent-800' : ''
                         }`}
                       >
-                        <span className="text-sm text-gray-500 dark:text-gray-400 italic">No parent commissie</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 italic">Geen hoofdcommissie</span>
                       </button>
 
                       {/* Commissies list */}
                       {isLoadingCommissies ? (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          Loading...
+                          Laden...
                         </div>
                       ) : availableParentCommissies.length > 0 ? (
                         availableParentCommissies.map((c) => (
@@ -439,7 +439,7 @@ export default function CommissieEditModal({
                         ))
                       ) : (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          No commissies found
+                          Geen commissies gevonden
                         </div>
                       )}
                     </div>
@@ -447,7 +447,7 @@ export default function CommissieEditModal({
                 )}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Select if this commissie is a sub-commissie of another
+                Selecteer als dit een subcommissie is
               </p>
             </div>
 
@@ -455,7 +455,7 @@ export default function CommissieEditModal({
             <div>
               <label className="label flex items-center">
                 <TrendingUp className="w-4 h-4 mr-2" />
-                Investors
+                Sponsoren
               </label>
 
               {/* Selected investors */}
@@ -504,7 +504,7 @@ export default function CommissieEditModal({
                   className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                   disabled={isLoadingCommissies || isLoadingPeople || isLoading}
                 >
-                  <span className="text-gray-400 dark:text-gray-500">Add investor...</span>
+                  <span className="text-gray-400 dark:text-gray-500">Sponsor toevoegen...</span>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isInvestorsDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -518,7 +518,7 @@ export default function CommissieEditModal({
                           type="text"
                           value={investorsSearchQuery}
                           onChange={(e) => setInvestorsSearchQuery(e.target.value)}
-                          placeholder="Search people and commissies..."
+                          placeholder="Leden en commissies zoeken..."
                           className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
                           autoFocus
                         />
@@ -528,7 +528,7 @@ export default function CommissieEditModal({
                     <div className="overflow-y-auto max-h-48">
                       {(isLoadingCommissies || isLoadingPeople || isSearching) ? (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          {isSearching ? 'Searching...' : 'Loading...'}
+                          {isSearching ? 'Zoeken...' : 'Laden...'}
                         </div>
                       ) : availableInvestors.length > 0 ? (
                         availableInvestors.map((item) => (
@@ -559,7 +559,7 @@ export default function CommissieEditModal({
                             <div className="flex-1 min-w-0">
                               <span className="text-sm text-gray-900 dark:text-gray-50 truncate block">{item.name}</span>
                               <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {item.type === 'person' ? 'Person' : 'Commissie'}
+                                {item.type === 'person' ? 'Lid' : 'Commissie'}
                               </span>
                             </div>
                           </button>
@@ -567,8 +567,8 @@ export default function CommissieEditModal({
                       ) : (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
                           {investorsSearchQuery.length >= 2
-                            ? 'No results found'
-                            : 'No people or commissies available'}
+                            ? 'Geen resultaten gevonden'
+                            : 'Geen leden of commissies beschikbaar'}
                         </div>
                       )}
                     </div>
@@ -576,7 +576,7 @@ export default function CommissieEditModal({
                 )}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Select people or commissies that have invested in this commissie
+                Selecteer leden of commissies die deze commissie sponsoren
               </p>
             </div>
 
@@ -599,14 +599,14 @@ export default function CommissieEditModal({
               className="btn-secondary"
               disabled={isLoading}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={isLoading}
             >
-              {isLoading ? 'Saving...' : (isEditing ? 'Save changes' : 'Create commissie')}
+              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Commissie aanmaken')}
             </button>
           </div>
         </form>
