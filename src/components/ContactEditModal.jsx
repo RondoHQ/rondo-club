@@ -4,10 +4,10 @@ import { X, Plus, Trash2 } from 'lucide-react';
 
 const CONTACT_TYPES = [
   { value: 'email', label: 'Email' },
-  { value: 'phone', label: 'Phone' },
-  { value: 'mobile', label: 'Mobile' },
+  { value: 'phone', label: 'Telefoon' },
+  { value: 'mobile', label: 'Mobiel' },
   { value: 'website', label: 'Website' },
-  { value: 'calendar', label: 'Calendar link' },
+  { value: 'calendar', label: 'Agenda link' },
   { value: 'linkedin', label: 'LinkedIn' },
   { value: 'twitter', label: 'Twitter' },
   { value: 'bluesky', label: 'Bluesky' },
@@ -15,7 +15,7 @@ const CONTACT_TYPES = [
   { value: 'instagram', label: 'Instagram' },
   { value: 'facebook', label: 'Facebook' },
   { value: 'slack', label: 'Slack' },
-  { value: 'other', label: 'Other' },
+  { value: 'other', label: 'Overig' },
 ];
 
 export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading, contactInfo = [] }) {
@@ -69,7 +69,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Edit contact details</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Contactgegevens bewerken</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -83,7 +83,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
           <div className="flex-1 overflow-y-auto p-4">
             {fields.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                No contact details yet. Click "Add contact detail" to add one.
+                Nog geen contactgegevens. Klik op "Contactgegeven toevoegen" om er een toe te voegen.
               </p>
             ) : (
               <div className="space-y-3">
@@ -91,7 +91,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                 <div className="hidden md:grid md:grid-cols-12 gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 px-1">
                   <div className="col-span-3">Type</div>
                   <div className="col-span-3">Label</div>
-                  <div className="col-span-5">Value</div>
+                  <div className="col-span-5">Waarde</div>
                   <div className="col-span-1"></div>
                 </div>
 
@@ -108,7 +108,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                         className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                         disabled={isLoading}
                       >
-                        <option value="">Select type...</option>
+                        <option value="">Selecteer type...</option>
                         {CONTACT_TYPES.map(type => (
                           <option key={type.value} value={type.value}>
                             {type.label}
@@ -122,7 +122,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                       <label className="md:hidden text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Label</label>
                       <input
                         {...register(`contacts.${index}.contact_label`)}
-                        placeholder="e.g., Work"
+                        placeholder="bijv. Werk"
                         className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                         disabled={isLoading}
                       />
@@ -130,10 +130,10 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
 
                     {/* Value */}
                     <div className="md:col-span-5">
-                      <label className="md:hidden text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Value</label>
+                      <label className="md:hidden text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Waarde</label>
                       <input
                         {...register(`contacts.${index}.contact_value`, { required: true })}
-                        placeholder="e.g., john@example.com"
+                        placeholder="bijv. jan@voorbeeld.nl"
                         className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                         disabled={isLoading}
                       />
@@ -145,7 +145,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                         type="button"
                         onClick={() => remove(index)}
                         className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
-                        title="Remove"
+                        title="Verwijderen"
                         disabled={isLoading}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -164,7 +164,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
               disabled={isLoading}
             >
               <Plus className="w-4 h-4" />
-              Add contact detail
+              Contactgegeven toevoegen
             </button>
           </div>
 
@@ -176,14 +176,14 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
               className="btn-secondary"
               disabled={isLoading}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={isLoading}
             >
-              {isLoading ? 'Saving...' : 'Save changes'}
+              {isLoading ? 'Opslaan...' : 'Wijzigingen opslaan'}
             </button>
           </div>
         </form>
