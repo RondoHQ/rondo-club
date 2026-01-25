@@ -105,7 +105,7 @@ function PersonListRow({ person, teamName, workspaces, listViewFields, isSelecte
               </span>
             ))}
             {person.labels.length > 3 && (
-              <span className="text-xs text-gray-400 dark:text-gray-500">+{person.labels.length - 3} more</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">+{person.labels.length - 3} meer</span>
             )}
           </div>
         ) : (
@@ -166,9 +166,9 @@ function PersonListView({ people, teamMap, workspaces, listViewFields, selectedI
               </button>
             </th>
             <th scope="col" className="w-10 px-2 bg-gray-50 dark:bg-gray-800"></th>
-            <SortableHeader field="first_name" label="First Name" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="last_name" label="Last Name" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="organization" label="Organization" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="first_name" label="Voornaam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="last_name" label="Achternaam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="organization" label="Team" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="workspace" label="Workspace" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="labels" label="Labels" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
@@ -218,14 +218,14 @@ function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoadi
   const visibilityOptions = [
     {
       value: 'private',
-      label: 'Private',
-      description: 'Only you can see these contacts',
+      label: 'Privé',
+      description: 'Alleen jij kunt deze leden zien',
       icon: Lock
     },
     {
       value: 'workspace',
       label: 'Workspace',
-      description: 'Share with workspace members',
+      description: 'Deel met workspace-leden',
       icon: Users
     },
   ];
@@ -234,7 +234,7 @@ function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoadi
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-          <h2 className="text-lg font-semibold dark:text-gray-50">Change Visibility</h2>
+          <h2 className="text-lg font-semibold dark:text-gray-50">Zichtbaarheid wijzigen</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -246,7 +246,7 @@ function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoadi
 
         <div className="p-4 space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Select visibility for {selectedCount} {selectedCount === 1 ? 'person' : 'people'}:
+            Kies zichtbaarheid voor {selectedCount} {selectedCount === 1 ? 'lid' : 'leden'}:
           </p>
 
           <div className="space-y-2">
@@ -286,7 +286,7 @@ function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoadi
             className="btn-secondary"
             disabled={isLoading}
           >
-            Cancel
+            Annuleren
           </button>
           <button
             type="button"
@@ -294,7 +294,7 @@ function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoadi
             className="btn-primary"
             disabled={isLoading}
           >
-            {isLoading ? 'Applying...' : `Apply to ${selectedCount} ${selectedCount === 1 ? 'person' : 'people'}`}
+            {isLoading ? 'Toepassen...' : `Toepassen op ${selectedCount} ${selectedCount === 1 ? 'lid' : 'leden'}`}
           </button>
         </div>
       </div>
@@ -327,7 +327,7 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-          <h2 className="text-lg font-semibold dark:text-gray-50">Assign to Workspace</h2>
+          <h2 className="text-lg font-semibold dark:text-gray-50">Toewijzen aan workspace</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -339,14 +339,14 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
 
         <div className="p-4 space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Select workspaces for {selectedCount} {selectedCount === 1 ? 'person' : 'people'}:
+            Selecteer workspaces voor {selectedCount} {selectedCount === 1 ? 'lid' : 'leden'}:
           </p>
 
           {workspaces.length === 0 ? (
             <div className="text-center py-6 text-gray-500 dark:text-gray-400">
               <Users className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
-              <p className="text-sm">No workspaces available.</p>
-              <p className="text-xs">Create a workspace first to use this feature.</p>
+              <p className="text-sm">Geen workspaces beschikbaar.</p>
+              <p className="text-xs">Maak eerst een workspace aan om deze functie te gebruiken.</p>
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -371,7 +371,7 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
                     </div>
                     <div className="flex-1">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{workspace.title}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{workspace.member_count} members</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{workspace.member_count} leden</div>
                     </div>
                   </button>
                 );
@@ -387,7 +387,7 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
             className="btn-secondary"
             disabled={isLoading}
           >
-            Cancel
+            Annuleren
           </button>
           <button
             type="button"
@@ -395,7 +395,7 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
             className="btn-primary"
             disabled={isLoading || workspaces.length === 0}
           >
-            {isLoading ? 'Assigning...' : `Assign to ${selectedCount} ${selectedCount === 1 ? 'person' : 'people'}`}
+            {isLoading ? 'Toewijzen...' : `Toewijzen aan ${selectedCount} ${selectedCount === 1 ? 'lid' : 'leden'}`}
           </button>
         </div>
       </div>
@@ -427,7 +427,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-          <h2 className="text-lg font-semibold dark:text-gray-50">Set Organization</h2>
+          <h2 className="text-lg font-semibold dark:text-gray-50">Team instellen</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" disabled={isLoading}>
             <X className="w-5 h-5" />
           </button>
@@ -435,13 +435,13 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
 
         <div className="p-4 space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Set current organization for {selectedCount} {selectedCount === 1 ? 'person' : 'people'}:
+            Stel huidig team in voor {selectedCount} {selectedCount === 1 ? 'lid' : 'leden'}:
           </p>
 
           {/* Search input */}
           <input
             type="text"
-            placeholder="Search organizations..."
+            placeholder="Teams zoeken..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg text-sm focus:ring-accent-500 focus:border-accent-500"
@@ -460,8 +460,8 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
           >
             <X className={`w-5 h-5 ${selectedTeamId === 'clear' ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'}`} />
             <div className="flex-1">
-              <div className="text-sm font-medium text-gray-900 dark:text-gray-50">Clear organization</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Remove current organization from selected people</div>
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-50">Team verwijderen</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Verwijder huidig team van geselecteerde leden</div>
             </div>
             {selectedTeamId === 'clear' && <Check className="w-5 h-5 text-accent-600 dark:text-accent-400" />}
           </button>
@@ -470,7 +470,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {filteredTeams.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                {searchQuery ? 'No organizations match your search' : 'No organizations found'}
+                {searchQuery ? 'Geen teams gevonden voor je zoekopdracht' : 'Geen teams gevonden'}
               </p>
             ) : (
               filteredTeams.map((team) => {
@@ -501,7 +501,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
 
         <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <button type="button" onClick={onClose} className="btn-secondary" disabled={isLoading}>
-            Cancel
+            Annuleren
           </button>
           <button
             type="button"
@@ -509,7 +509,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
             className="btn-primary"
             disabled={isLoading || selectedTeamId === null}
           >
-            {isLoading ? 'Applying...' : `Apply to ${selectedCount} ${selectedCount === 1 ? 'person' : 'people'}`}
+            {isLoading ? 'Toepassen...' : `Toepassen op ${selectedCount} ${selectedCount === 1 ? 'lid' : 'leden'}`}
           </button>
         </div>
       </div>
@@ -544,7 +544,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-          <h2 className="text-lg font-semibold dark:text-gray-50">Manage Labels</h2>
+          <h2 className="text-lg font-semibold dark:text-gray-50">Labels beheren</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" disabled={isLoading}>
             <X className="w-5 h-5" />
           </button>
@@ -552,7 +552,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
 
         <div className="p-4 space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            {mode === 'add' ? 'Add' : 'Remove'} labels for {selectedCount} {selectedCount === 1 ? 'person' : 'people'}:
+            {mode === 'add' ? 'Voeg labels toe aan' : 'Verwijder labels van'} {selectedCount} {selectedCount === 1 ? 'lid' : 'leden'}:
           </p>
 
           {/* Mode toggle */}
@@ -564,7 +564,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
                 mode === 'add' ? 'bg-accent-100 dark:bg-accent-900/50 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
-              Add Labels
+              Labels toevoegen
             </button>
             <button
               type="button"
@@ -573,7 +573,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
                 mode === 'remove' ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
-              Remove Labels
+              Labels verwijderen
             </button>
           </div>
 
@@ -581,8 +581,8 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
           {(!labels || labels.length === 0) ? (
             <div className="text-center py-6 text-gray-500 dark:text-gray-400">
               <Tag className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
-              <p className="text-sm">No labels available.</p>
-              <p className="text-xs">Create labels first to use this feature.</p>
+              <p className="text-sm">Geen labels beschikbaar.</p>
+              <p className="text-xs">Maak eerst labels aan om deze functie te gebruiken.</p>
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -617,7 +617,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
 
         <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <button type="button" onClick={onClose} className="btn-secondary" disabled={isLoading}>
-            Cancel
+            Annuleren
           </button>
           <button
             type="button"
@@ -626,8 +626,8 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
             disabled={isLoading || selectedLabelIds.length === 0}
           >
             {isLoading
-              ? (mode === 'add' ? 'Adding...' : 'Removing...')
-              : `${mode === 'add' ? 'Add' : 'Remove'} ${selectedLabelIds.length} ${selectedLabelIds.length === 1 ? 'label' : 'labels'}`
+              ? (mode === 'add' ? 'Toevoegen...' : 'Verwijderen...')
+              : `${selectedLabelIds.length} label${selectedLabelIds.length === 1 ? '' : 's'} ${mode === 'add' ? 'toevoegen' : 'verwijderen'}`
             }
           </button>
         </div>
@@ -1073,10 +1073,10 @@ export default function PeopleList() {
               onChange={(e) => setSortField(e.target.value)}
               className="text-sm border-0 bg-transparent dark:text-gray-200 focus:ring-0 focus:outline-none cursor-pointer"
             >
-              <option value="first_name">First name</option>
-              <option value="last_name">Last name</option>
-              <option value="modified">Last modified</option>
-              <option value="organization">Organization</option>
+              <option value="first_name">Voornaam</option>
+              <option value="last_name">Achternaam</option>
+              <option value="modified">Laatst gewijzigd</option>
+              <option value="organization">Team</option>
               <option value="workspace">Workspace</option>
               <option value="labels">Labels</option>
             </select>
@@ -1084,7 +1084,7 @@ export default function PeopleList() {
             <button
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-              title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+              title={`Sorteer ${sortOrder === 'asc' ? 'aflopend' : 'oplopend'}`}
             >
               {sortOrder === 'asc' ? (
                 <ArrowUp className="w-4 h-4 text-gray-600 dark:text-gray-300" />
@@ -1135,7 +1135,7 @@ export default function PeopleList() {
                       </div>
                       <div className="flex items-center">
                         <Star className="w-4 h-4 mr-2 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Favorites only</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Alleen favorieten</span>
                       </div>
                     </label>
                   </div>
@@ -1178,14 +1178,14 @@ export default function PeopleList() {
                   {availableBirthYears.length > 0 && (
                     <div>
                       <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                        Birth year
+                        Geboortejaar
                       </h3>
                       <select
                         value={selectedBirthYear}
                         onChange={(e) => setSelectedBirthYear(e.target.value)}
                         className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
                       >
-                        <option value="">All years</option>
+                        <option value="">Alle jaren</option>
                         {availableBirthYears.map(year => (
                           <option key={year} value={year}>{year}</option>
                         ))}
@@ -1196,31 +1196,31 @@ export default function PeopleList() {
                   {/* Last Modified Filter */}
                   <div>
                     <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      Last modified
+                      Laatst gewijzigd
                     </h3>
                     <select
                       value={lastModifiedFilter}
                       onChange={(e) => setLastModifiedFilter(e.target.value)}
                       className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
                     >
-                      <option value="">Any time</option>
-                      <option value="7">Last 7 days</option>
-                      <option value="30">Last 30 days</option>
-                      <option value="90">Last 90 days</option>
-                      <option value="365">Last year</option>
+                      <option value="">Alle tijden</option>
+                      <option value="7">Laatste 7 dagen</option>
+                      <option value="30">Laatste 30 dagen</option>
+                      <option value="90">Laatste 90 dagen</option>
+                      <option value="365">Laatste jaar</option>
                     </select>
                   </div>
 
                   {/* Ownership Filter */}
                   <div>
                     <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      Ownership
+                      Eigenaar
                     </h3>
                     <div className="space-y-1">
                       {[
-                        { value: 'all', label: 'All Contacts' },
-                        { value: 'mine', label: 'My Contacts' },
-                        { value: 'shared', label: 'Shared with Me' },
+                        { value: 'all', label: 'Alle leden' },
+                        { value: 'mine', label: 'Mijn leden' },
+                        { value: 'shared', label: 'Gedeeld met mij' },
                       ].map(option => (
                         <label
                           key={option.value}
@@ -1260,7 +1260,7 @@ export default function PeopleList() {
                         onChange={(e) => setSelectedWorkspaceFilter(e.target.value)}
                         className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
                       >
-                        <option value="">All Workspaces</option>
+                        <option value="">Alle workspaces</option>
                         {workspaces.map(ws => (
                           <option key={ws.id} value={ws.id}>{ws.title}</option>
                         ))}
@@ -1274,7 +1274,7 @@ export default function PeopleList() {
                       onClick={clearFilters}
                       className="w-full text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
                     >
-                      Clear all filters
+                      Alle filters wissen
                     </button>
                   )}
                 </div>
@@ -1288,7 +1288,7 @@ export default function PeopleList() {
               {showFavoritesOnly && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-900/50 text-accent-800 dark:text-accent-200 rounded-full text-xs">
                   <Star className="w-3 h-3" />
-                  Favorites
+                  Favorieten
                   <button
                     onClick={() => setShowFavoritesOnly(false)}
                     className="hover:text-accent-600 dark:hover:text-accent-300"
@@ -1313,7 +1313,7 @@ export default function PeopleList() {
               ))}
               {selectedBirthYear && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Born {selectedBirthYear}
+                  Geboren {selectedBirthYear}
                   <button
                     onClick={() => setSelectedBirthYear('')}
                     className="hover:text-gray-600 dark:hover:text-gray-300"
@@ -1324,9 +1324,9 @@ export default function PeopleList() {
               )}
               {lastModifiedFilter && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Modified: {lastModifiedFilter === '7' ? 'Last 7 days' :
-                             lastModifiedFilter === '30' ? 'Last 30 days' :
-                             lastModifiedFilter === '90' ? 'Last 90 days' : 'Last year'}
+                  Gewijzigd: {lastModifiedFilter === '7' ? 'laatste 7 dagen' :
+                             lastModifiedFilter === '30' ? 'laatste 30 dagen' :
+                             lastModifiedFilter === '90' ? 'laatste 90 dagen' : 'laatste jaar'}
                   <button
                     onClick={() => setLastModifiedFilter('')}
                     className="hover:text-gray-600 dark:hover:text-gray-300"
@@ -1337,7 +1337,7 @@ export default function PeopleList() {
               )}
               {ownershipFilter !== 'all' && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-900/50 text-accent-800 dark:text-accent-200 rounded-full text-xs">
-                  {ownershipFilter === 'mine' ? 'My Contacts' : 'Shared with Me'}
+                  {ownershipFilter === 'mine' ? 'Mijn leden' : 'Gedeeld met mij'}
                   <button onClick={() => setOwnershipFilter('all')} className="hover:text-accent-600 dark:hover:text-accent-300">
                     <X className="w-3 h-3" />
                   </button>
@@ -1356,7 +1356,7 @@ export default function PeopleList() {
           
           <button onClick={() => setShowPersonModal(true)} className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Add person</span>
+            <span className="hidden md:inline">Lid toevoegen</span>
           </button>
         </div>
       </div>
@@ -1371,7 +1371,7 @@ export default function PeopleList() {
       {/* Error state */}
       {error && (
         <div className="card p-6 text-center">
-          <p className="text-red-600 dark:text-red-400">Failed to load people.</p>
+          <p className="text-red-600 dark:text-red-400">Leden konden niet worden geladen.</p>
         </div>
       )}
 
@@ -1381,13 +1381,13 @@ export default function PeopleList() {
           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">No people found</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">Geen leden gevonden</h3>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
-            Get started by adding your first person.
+            Voeg je eerste lid toe om te beginnen.
           </p>
           <button onClick={() => setShowPersonModal(true)} className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Add person</span>
+            <span className="hidden md:inline">Lid toevoegen</span>
           </button>
         </div>
       )}
@@ -1396,7 +1396,7 @@ export default function PeopleList() {
       {selectedIds.size > 0 && (
         <div className="sticky top-0 z-20 flex items-center justify-between bg-accent-50 dark:bg-accent-800 border border-accent-200 dark:border-accent-700 rounded-lg px-4 py-2 shadow-sm">
           <span className="text-sm text-accent-800 dark:text-accent-200 font-medium">
-            {selectedIds.size} {selectedIds.size === 1 ? 'person' : 'people'} selected
+            {selectedIds.size} {selectedIds.size === 1 ? 'lid' : 'leden'} geselecteerd
           </span>
           <div className="flex items-center gap-3">
             {/* Bulk Actions Dropdown */}
@@ -1405,7 +1405,7 @@ export default function PeopleList() {
                 onClick={() => setShowBulkDropdown(!showBulkDropdown)}
                 className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-accent-700 dark:text-accent-200 bg-white dark:bg-gray-800 border border-accent-300 dark:border-accent-600 rounded-md hover:bg-accent-50 dark:hover:bg-gray-700"
               >
-                Actions
+                Acties
                 <ChevronDown className={`w-4 h-4 transition-transform ${showBulkDropdown ? 'rotate-180' : ''}`} />
               </button>
               {showBulkDropdown && (
@@ -1419,7 +1419,7 @@ export default function PeopleList() {
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Lock className="w-4 h-4" />
-                      Change visibility...
+                      Zichtbaarheid wijzigen...
                     </button>
                     <button
                       onClick={() => {
@@ -1429,7 +1429,7 @@ export default function PeopleList() {
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Users className="w-4 h-4" />
-                      Assign to workspace...
+                      Toewijzen aan workspace...
                     </button>
                     <button
                       onClick={() => {
@@ -1439,7 +1439,7 @@ export default function PeopleList() {
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Building2 className="w-4 h-4" />
-                      Set organization...
+                      Team instellen...
                     </button>
                     <button
                       onClick={() => {
@@ -1449,7 +1449,7 @@ export default function PeopleList() {
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Tag className="w-4 h-4" />
-                      Manage labels...
+                      Labels beheren...
                     </button>
                   </div>
                 </div>
@@ -1459,7 +1459,7 @@ export default function PeopleList() {
               onClick={clearSelection}
               className="text-sm text-accent-600 dark:text-accent-400 hover:text-accent-800 dark:hover:text-accent-300 font-medium"
             >
-              Clear selection
+              Selectie wissen
             </button>
           </div>
         </div>
@@ -1496,12 +1496,12 @@ export default function PeopleList() {
           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <Filter className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">No people match your filters</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">Geen leden vinden die aan je filters voldoen</h3>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
-            Try adjusting your filters to see more results.
+            Pas je filters aan om meer resultaten te zien.
           </p>
           <button onClick={clearFilters} className="btn-secondary">
-            Clear filters
+            Filters wissen
           </button>
         </div>
       )}
