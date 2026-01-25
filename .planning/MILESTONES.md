@@ -1,5 +1,33 @@
 # Project Milestones: Stadion
 
+## v7.0 Dutch Localization (Shipped: 2026-01-25)
+
+**Delivered:** Complete Dutch translation of the entire Stadion React frontend, including navigation, dashboard, entity pages (Leden, Teams, Commissies, Datums, Taken), settings, and all global UI elements.
+
+**Phases completed:** 99-106 (22 plans total)
+
+**Key accomplishments:**
+
+- Dutch date formatting foundation with centralized dateFormat.js utility and nl locale for all date displays
+- Complete navigation translation (Leden, Teams, Commissies, Datums, Taken, Instellingen) with proper Dutch gender agreement
+- Dashboard fully localized with Dutch stat labels, widget titles, empty states, and messages
+- Entity pages translated: People (Leden), Teams, Commissies with forms, modals, and validation messages
+- Settings pages completed: all 6 tabs (Weergave, Koppelingen, Meldingen, Gegevens, Beheer, Info) fully translated
+- Global UI elements finished: buttons, dialogs, activity types, contact types, and rich text editor tooltips
+
+**Stats:**
+
+- 131 files changed
+- +15,887 / -2,108 lines changed
+- 8 phases, 22 plans
+- Same day (2026-01-25)
+
+**Git range:** `c20bf2d` → `f9e59c9`
+
+**What's next:** To be determined
+
+---
+
 ## v6.0 Custom Fields (Shipped: 2026-01-21)
 
 **Delivered:** Admin-defined custom fields for People and Teams with 14 field types, Settings UI, detail view integration, list view columns, and global search support.

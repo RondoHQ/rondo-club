@@ -249,17 +249,18 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Settings UI for managing application passwords — v6.1
 - System info capture (browser, version, current page) on opt-in — v6.1
 
+**v7.0 Dutch Localization (shipped 2026-01-25):**
+- Dutch date formatting foundation with centralized dateFormat.js utility — v7.0
+- Complete navigation translation (Leden, Teams, Commissies, Datums, Taken, Instellingen) — v7.0
+- Dashboard fully localized with Dutch stat labels, widget titles, empty states — v7.0
+- Entity pages translated: Leden, Teams, Commissies with forms and modals — v7.0
+- Settings pages completed: all 6 tabs (Weergave, Koppelingen, Meldingen, Gegevens, Beheer, Info) — v7.0
+- Global UI elements: buttons, dialogs, activity types, contact types, rich text editor — v7.0
+- 36 localization requirements delivered across 8 phases (99-106) — v7.0
+
 ### Active
 
-**v7.0 Dutch Localization**
-
-- [ ] Translate all navigation labels to Dutch (Leden, Teams, Commissies, etc.)
-- [ ] Translate all buttons, form labels, and placeholders
-- [ ] Translate all messages, notifications, and error states
-- [ ] Translate dashboard widgets and stats
-- [ ] Translate settings pages and modals
-- [ ] Rename People→Leden, Organizations→Commissies throughout the codebase
-- [ ] Update singular/plural forms (Lid/Leden, Team/Teams, Commissie/Commissies)
+(No active requirements - ready for next milestone)
 
 ### Out of Scope
 
@@ -399,4 +400,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | RelationshipItemCompact for list view | Async fetch for relationship names in compact column display | ✓ Good |
 
 ---
-*Last updated: 2026-01-25 after v7.0 Dutch Localization milestone started*
+*Last updated: 2026-01-25 after v7.0 Dutch Localization milestone shipped*
