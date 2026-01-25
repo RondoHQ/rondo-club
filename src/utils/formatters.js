@@ -150,3 +150,37 @@ export function sanitizeTeamAcf(acfData, overrides = {}) {
   return sanitized;
 }
 
+/**
+ * Get the display name for a commissie from various object formats
+ * Handles WordPress REST API response format and decoded values
+ *
+ * @param {Object} commissie - Commissie object (from API or transformed)
+ * @returns {string} Decoded commissie name
+ */
+export function getCommissieName(commissie) {
+  if (!commissie) return '';
+
+  // Handle various formats WordPress might return
+  const rawName = commissie.title?.rendered || commissie.title || commissie.name || '';
+  return decodeHtml(rawName);
+}
+
+export function sanitizeCommissieAcf(acfData, overrides = {}) {
+  // Fields that are repeaters and should always be arrays
+  const repeaterFields = ['contact_info'];
+
+  const sanitized = { ...acfData };
+
+  // Ensure repeater fields are arrays
+  repeaterFields.forEach(field => {
+    if (!Array.isArray(sanitized[field])) {
+      sanitized[field] = [];
+    }
+  });
+
+  // Apply overrides
+  Object.assign(sanitized, overrides);
+
+  return sanitized;
+}
+

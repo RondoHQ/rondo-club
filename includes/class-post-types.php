@@ -23,6 +23,7 @@ class PostTypes {
 		$this->register_workspace_invite_post_type();
 		$this->register_person_post_type();
 		$this->register_team_post_type();
+		$this->register_commissie_post_type();
 		$this->register_important_date_post_type();
 		$this->register_todo_statuses();
 		$this->register_todo_post_type();
@@ -190,6 +191,48 @@ class PostTypes {
 		];
 
 		register_post_type( 'team', $args );
+	}
+
+	/**
+	 * Register Commissie CPT
+	 *
+	 * Commissies (committees) are synced from Sportlink and are read-only in this system.
+	 */
+	private function register_commissie_post_type() {
+		$labels = [
+			'name'               => _x( 'Commissies', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Commissie', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'Commissies', 'Admin Menu text', 'stadion' ),
+			'add_new'            => __( 'Add New', 'stadion' ),
+			'add_new_item'       => __( 'Add New Commissie', 'stadion' ),
+			'edit_item'          => __( 'Edit Commissie', 'stadion' ),
+			'new_item'           => __( 'New Commissie', 'stadion' ),
+			'view_item'          => __( 'View Commissie', 'stadion' ),
+			'search_items'       => __( 'Search Commissies', 'stadion' ),
+			'not_found'          => __( 'No commissies found', 'stadion' ),
+			'not_found_in_trash' => __( 'No commissies found in Trash', 'stadion' ),
+			'all_items'          => __( 'All Commissies', 'stadion' ),
+		];
+
+		$args = [
+			'labels'             => $labels,
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'show_in_rest'       => true,
+			'rest_base'          => 'commissies',
+			'query_var'          => false,
+			'rewrite'            => false, // Disable rewrite rules - React Router handles routing
+			'capability_type'    => 'post',
+			'has_archive'        => false,
+			'hierarchical'       => true, // Enable parent-child relationships
+			'menu_position'      => 7,
+			'menu_icon'          => 'dashicons-businessperson',
+			'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
+		];
+
+		register_post_type( 'commissie', $args );
 	}
 
 	/**

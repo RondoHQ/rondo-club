@@ -35,6 +35,7 @@ use Stadion\Core\UserRoles;
 use Stadion\REST\Api;
 use Stadion\REST\People;
 use Stadion\REST\Teams;
+use Stadion\REST\Commissies;
 use Stadion\REST\Todos;
 use Stadion\REST\Workspaces;
 use Stadion\REST\Slack;
@@ -145,6 +146,9 @@ if ( ! class_exists( 'STADION_REST_People' ) ) {
 }
 if ( ! class_exists( 'STADION_REST_Teams' ) ) {
 	class_alias( Teams::class, 'STADION_REST_Teams' );
+}
+if ( ! class_exists( 'STADION_REST_Commissies' ) ) {
+	class_alias( Commissies::class, 'STADION_REST_Commissies' );
 }
 if ( ! class_exists( 'STADION_REST_Todos' ) ) {
 	class_alias( Todos::class, 'STADION_REST_Todos' );
@@ -355,6 +359,7 @@ function stadion_init() {
 		new Api();
 		new People();
 		new Teams();
+		new Commissies();
 		new Workspaces();
 		new Todos();
 		new Slack();
@@ -623,7 +628,8 @@ function stadion_redirect_backend_urls() {
 	// Map post types to frontend routes
 	$route_map = [
 		'person'         => 'people',
-		'team'        => 'teams',
+		'team'           => 'teams',
+		'commissie'      => 'commissies',
 		'important_date' => 'dates',
 	];
 
@@ -671,6 +677,7 @@ function stadion_theme_template_redirect() {
 	$app_routes = [
 		'people',
 		'teams',
+		'commissies',
 		'dates',
 		'settings',
 		'login',

@@ -97,6 +97,7 @@ class Taxonomies {
 	public function register_taxonomies() {
 		$this->register_person_label_taxonomy();
 		$this->register_team_label_taxonomy();
+		$this->register_commissie_label_taxonomy();
 		$this->register_relationship_type_taxonomy();
 		$this->register_date_type_taxonomy();
 		$this->register_workspace_access_taxonomy();
@@ -104,7 +105,7 @@ class Taxonomies {
 
 	/**
 	 * Register Workspace Access Taxonomy
-	 * Used to link people, teams, and important dates to workspaces.
+	 * Used to link people, teams, commissies, and important dates to workspaces.
 	 * Terms are auto-created when workspaces are created (Phase 8).
 	 */
 	private function register_workspace_access_taxonomy() {
@@ -130,7 +131,7 @@ class Taxonomies {
 			'rewrite'           => false, // No frontend permalinks needed
 		];
 
-		register_taxonomy( 'workspace_access', [ 'person', 'team', 'important_date' ], $args );
+		register_taxonomy( 'workspace_access', [ 'person', 'team', 'commissie', 'important_date' ], $args );
 	}
 
 	/**
@@ -189,6 +190,35 @@ class Taxonomies {
 		];
 
 		register_taxonomy( 'team_label', [ 'team' ], $args );
+	}
+
+	/**
+	 * Register Commissie Label Taxonomy
+	 */
+	private function register_commissie_label_taxonomy() {
+		$labels = [
+			'name'          => _x( 'Commissie Labels', 'taxonomy general name', 'stadion' ),
+			'singular_name' => _x( 'Commissie Label', 'taxonomy singular name', 'stadion' ),
+			'search_items'  => __( 'Search Commissie Labels', 'stadion' ),
+			'all_items'     => __( 'All Commissie Labels', 'stadion' ),
+			'edit_item'     => __( 'Edit Commissie Label', 'stadion' ),
+			'update_item'   => __( 'Update Commissie Label', 'stadion' ),
+			'add_new_item'  => __( 'Add New Commissie Label', 'stadion' ),
+			'new_item_name' => __( 'New Commissie Label Name', 'stadion' ),
+			'menu_name'     => __( 'Labels', 'stadion' ),
+		];
+
+		$args = [
+			'hierarchical'      => false,
+			'labels'            => $labels,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'show_in_rest'      => true,
+			'query_var'         => true,
+			'rewrite'           => [ 'slug' => 'commissie-label' ],
+		];
+
+		register_taxonomy( 'commissie_label', [ 'commissie' ], $args );
 	}
 
 	/**

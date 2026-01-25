@@ -15,6 +15,8 @@ const PersonDetail = lazy(() => import('@/pages/People/PersonDetail'));
 const FamilyTree = lazy(() => import('@/pages/People/FamilyTree'));
 const TeamsList = lazy(() => import('@/pages/Teams/TeamsList'));
 const TeamDetail = lazy(() => import('@/pages/Teams/TeamDetail'));
+const CommissiesList = lazy(() => import('@/pages/Commissies/CommissiesList'));
+const CommissieDetail = lazy(() => import('@/pages/Commissies/CommissieDetail'));
 const DatesList = lazy(() => import('@/pages/Dates/DatesList'));
 const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
 const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
@@ -191,6 +193,10 @@ function App() {
                   {/* Teams routes */}
                   <Route path="/teams" element={<TeamsList />} />
                   <Route path="/teams/:id" element={<TeamDetail />} />
+
+                  {/* Commissies routes */}
+                  <Route path="/commissies" element={<CommissiesList />} />
+                  <Route path="/commissies/:id" element={<CommissieDetail />} />
 
                   {/* Dates routes */}
                   <Route path="/dates" element={<DatesList />} />
