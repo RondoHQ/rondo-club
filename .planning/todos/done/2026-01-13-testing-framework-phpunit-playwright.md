@@ -34,7 +34,7 @@ Set up dual testing infrastructure:
 
 **Playwright for E2E frontend:**
 - Test user authentication flow
-- Test person/organization CRUD operations
+- Test person/team CRUD operations
 - Test bulk actions and selection
 - Test visibility and sharing modals
 - Test important date workflows

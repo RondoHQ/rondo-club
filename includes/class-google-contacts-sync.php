@@ -493,15 +493,15 @@ class GoogleContactsSync {
 		// Get organization from work_history.
 		$work_history = get_field( 'work_history', $post_id ) ?: [];
 		foreach ( $work_history as $job ) {
-			if ( ! empty( $job['is_current'] ) && ! empty( $job['company'] ) ) {
-				$company_id             = is_object( $job['company'] ) ? $job['company']->ID : (int) $job['company'];
-				$snapshot['organization'] = get_the_title( $company_id );
+			if ( ! empty( $job['is_current'] ) && ! empty( $job['team'] ) ) {
+				$team_id             = is_object( $job['team'] ) ? $job['team']->ID : (int) $job['team'];
+				$snapshot['organization'] = get_the_title( $team_id );
 				break;
 			}
 		}
-		if ( empty( $snapshot['organization'] ) && ! empty( $work_history[0]['company'] ) ) {
-			$company_id             = is_object( $work_history[0]['company'] ) ? $work_history[0]['company']->ID : (int) $work_history[0]['company'];
-			$snapshot['organization'] = get_the_title( $company_id );
+		if ( empty( $snapshot['organization'] ) && ! empty( $work_history[0]['team'] ) ) {
+			$team_id             = is_object( $work_history[0]['team'] ) ? $work_history[0]['team']->ID : (int) $work_history[0]['team'];
+			$snapshot['organization'] = get_the_title( $team_id );
 		}
 
 		$snapshot['synced_at'] = current_time( 'c' );

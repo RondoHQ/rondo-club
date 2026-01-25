@@ -19,7 +19,7 @@ score: 5/5 must-haves verified
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
 | 1 | PHP class can create a custom field definition for People that persists in database | VERIFIED | `create_field('person', [...])` calls `acf_update_field()` with `parent = group['ID']` (line 202) |
-| 2 | PHP class can create a custom field definition for Organizations that persists in database | VERIFIED | `create_field('company', [...])` works identically; `SUPPORTED_POST_TYPES = ['person', 'company']` (line 31) |
+| 2 | PHP class can create a custom field definition for Teams that persists in database | VERIFIED | `create_field('team', [...])` works identically; `SUPPORTED_POST_TYPES = ['person', 'team']` (line 31) |
 | 3 | PHP class can update an existing field definition (label, description, options) | VERIFIED | `update_field()` method at line 224 updates UPDATABLE_PROPERTIES including label, instructions, choices |
 | 4 | PHP class can deactivate a field definition without losing stored data | VERIFIED | `deactivate_field()` sets `$field['active'] = 0` (line 276) - ACF does not render but wp_postmeta preserved |
 | 5 | Field key auto-generates from label and is stored correctly | VERIFIED | `generate_field_key()` at line 114 uses `sanitize_title()` + unique suffix if duplicate |

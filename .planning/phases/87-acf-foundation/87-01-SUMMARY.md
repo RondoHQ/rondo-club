@@ -47,7 +47,7 @@ completed: 2026-01-18
 
 # Phase 87 Plan 01: Custom Fields Manager Summary
 
-**ACF database persistence Manager class with CRUD operations for person/company custom field definitions**
+**ACF database persistence Manager class with CRUD operations for person/team custom field definitions**
 
 ## Performance
 

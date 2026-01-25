@@ -181,7 +181,7 @@ class SearchDashboardTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test search across custom post types (person and company).
+	 * Test search across custom post types (person and team).
 	 */
 	public function test_search_across_post_types(): void {
 		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
@@ -195,8 +195,8 @@ class SearchDashboardTest extends StadionTestCase {
 			]
 		);
 
-		// Create company
-		$company_id = $this->createOrganization(
+		// Create team
+		$team_id = $this->createOrganization(
 			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Acme Corp',
@@ -214,9 +214,9 @@ class SearchDashboardTest extends StadionTestCase {
 		$people_ids = array_column( $data['people'], 'id' );
 		$this->assertContains( $person_id, $people_ids, 'Search should return Acme Employee' );
 
-		// Check companies results
-		$company_ids = array_column( $data['companies'], 'id' );
-		$this->assertContains( $company_id, $company_ids, 'Search should return Acme Corp' );
+		// Check teams results
+		$team_ids = array_column( $data['teams'], 'id' );
+		$this->assertContains( $team_id, $team_ids, 'Search should return Acme Corp' );
 	}
 
 	/**
@@ -305,17 +305,17 @@ class SearchDashboardTest extends StadionTestCase {
 			]
 		);
 
-		// Create 2 companies
+		// Create 2 teams
 		$this->createOrganization(
 			[
 				'post_author' => $alice_id,
-				'post_title'  => 'Company 1',
+				'post_title'  => 'Team 1',
 			]
 		);
 		$this->createOrganization(
 			[
 				'post_author' => $alice_id,
-				'post_title'  => 'Company 2',
+				'post_title'  => 'Team 2',
 			]
 		);
 
@@ -337,7 +337,7 @@ class SearchDashboardTest extends StadionTestCase {
 		$data = $response->get_data();
 		$this->assertArrayHasKey( 'stats', $data );
 		$this->assertEquals( 3, $data['stats']['total_people'], 'Dashboard should report 3 people' );
-		$this->assertEquals( 2, $data['stats']['total_companies'], 'Dashboard should report 2 companies' );
+		$this->assertEquals( 2, $data['stats']['total_teams'], 'Dashboard should report 2 teams' );
 		$this->assertEquals( 5, $data['stats']['total_dates'], 'Dashboard should report 5 dates' );
 	}
 
@@ -397,7 +397,7 @@ class SearchDashboardTest extends StadionTestCase {
 
 		$data = $response->get_data();
 		$this->assertEquals( 0, $data['stats']['total_people'], 'New user should see 0 people' );
-		$this->assertEquals( 0, $data['stats']['total_companies'], 'New user should see 0 companies' );
+		$this->assertEquals( 0, $data['stats']['total_teams'], 'New user should see 0 teams' );
 		$this->assertEquals( 0, $data['stats']['total_dates'], 'New user should see 0 dates' );
 	}
 

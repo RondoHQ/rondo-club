@@ -106,7 +106,7 @@ The following contact fields are synced:
 - Email addresses
 - Phone numbers (mobile, work, home)
 - Physical addresses (street, city, state/province, postal code, country)
-- Organization and job title (from current work history)
+- Team and job title (from current work history)
 - Birthday (from important dates)
 - Profile photo
 - URLs (website, LinkedIn, Twitter, etc.)

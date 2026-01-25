@@ -16,7 +16,7 @@ Currently, todos are implemented as a custom comment type (stored in `wp_comment
 
 To-dos would benefit from being a full post type so they can:
 - Have their own comment threads (notes, updates, discussions)
-- Link to people/organizations via ACF relationships
+- Link to people/teams via ACF relationships
 - Support richer metadata
 
 ## Solution

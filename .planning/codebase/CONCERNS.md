@@ -66,12 +66,12 @@
 
 ## Performance Bottlenecks
 
-**N+1 Query Pattern for Company Names:**
-- Problem: Loads company names separately for each job in work history
+**N+1 Query Pattern for Team Names:**
+- Problem: Loads team names separately for each job in work history
 - Files: `src/pages/People/PersonDetail.jsx:905-912`
 - Measurement: Not measured, but creates multiple API calls
-- Cause: `useQueries()` with array of company IDs
-- Improvement path: Embed company data in person response or batch load
+- Cause: `useQueries()` with array of team IDs
+- Improvement path: Embed team data in person response or batch load
 
 **Pagination Without Upper Limit:**
 - Problem: `usePeople()` loads ALL people by looping through pages

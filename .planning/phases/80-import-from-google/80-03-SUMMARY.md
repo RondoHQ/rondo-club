@@ -29,7 +29,7 @@ key-files:
 
 key-decisions:
   - "Auto-import on pending flag: Import starts automatically when has_pending_import is true"
-  - "Query invalidation: Refresh people, companies, dates, and dashboard after import"
+  - "Query invalidation: Refresh people, teams, dates, and dashboard after import"
   - "Results persist: Import results stay visible until next import or page reload"
 
 patterns-established:
@@ -58,10 +58,10 @@ completed: 2026-01-17
 - Import auto-triggers when `has_pending_import` flag is set after OAuth
 - Progress indicator shows "Importing contacts from Google..." during sync
 - Results summary displays imported, updated, and skipped counts
-- Optional stats (no email, companies created, dates created, photos) shown when applicable
+- Optional stats (no email, teams created, dates created, photos) shown when applicable
 - Error warnings section for any import issues
 - Re-import button for manual re-sync at any time
-- Query invalidation refreshes people, companies, dates, and dashboard data
+- Query invalidation refreshes people, teams, dates, and dashboard data
 
 ## Task Commits
 
@@ -78,8 +78,8 @@ Each task was committed atomically:
 ## Decisions Made
 
 - **Auto-import via useEffect:** Separate useEffect watches `has_pending_import` flag and triggers import automatically when true - ensures import starts even if status is already loaded
-- **Query invalidation:** After successful import, invalidate people, companies, dates, and dashboard queries so all lists refresh with new data
-- **Conditional results display:** Only show stats that have non-zero values (e.g., hide "companies created" if none were created)
+- **Query invalidation:** After successful import, invalidate people, teams, dates, and dashboard queries so all lists refresh with new data
+- **Conditional results display:** Only show stats that have non-zero values (e.g., hide "teams created" if none were created)
 
 ## Deviations from Plan
 

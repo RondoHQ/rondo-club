@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase integrates custom fields into the People and Organizations list views as additional columns. The Stadion codebase has well-established list view patterns in `PeopleList.jsx` and `CompaniesList.jsx` that use table-based layouts with sortable headers, row selection, and filtering. Custom field definitions are already accessible via the REST API (`/stadion/v1/custom-fields/{post_type}/metadata`), and custom field values are exposed through ACF's REST API integration in the `acf` object of person/company responses.
+This phase integrates custom fields into the People and Teams list views as additional columns. The Stadion codebase has well-established list view patterns in `PeopleList.jsx` and `TeamsList.jsx` that use table-based layouts with sortable headers, row selection, and filtering. Custom field definitions are already accessible via the REST API (`/stadion/v1/custom-fields/{post_type}/metadata`), and custom field values are exposed through ACF's REST API integration in the `acf` object of person/team responses.
 
 The implementation requires:
 1. Settings to enable "show in list view" per field (stored in field definition)
@@ -14,7 +14,7 @@ The implementation requires:
 3. Extending list view components to render custom field columns dynamically
 4. Type-appropriate rendering for narrow column widths (truncation, icons, badges)
 
-**Primary recommendation:** Add `show_in_list_view` boolean and `list_view_order` integer to field definitions (stored via ACF Manager). Create a `CustomFieldColumn` component that handles type-specific rendering for constrained widths. Extend `PersonListView` and `OrganizationListView` to render enabled custom field columns after built-in columns.
+**Primary recommendation:** Add `show_in_list_view` boolean and `list_view_order` integer to field definitions (stored via ACF Manager). Create a `CustomFieldColumn` component that handles type-specific rendering for constrained widths. Extend `PersonListView` and `TeamListView` to render enabled custom field columns after built-in columns.
 
 ## Standard Stack
 
@@ -36,16 +36,16 @@ All column rendering can be implemented with existing libraries. The patterns fr
 
 ### Existing List View Structure
 
-The People list (`PeopleList.jsx`) and Companies list (`CompaniesList.jsx`) share identical patterns:
+The People list (`PeopleList.jsx`) and Teams list (`TeamsList.jsx`) share identical patterns:
 
 ```
-PeopleList / CompaniesList
+PeopleList / TeamsList
 ├── Header (sort controls, filter dropdown, add button)
 ├── Selection toolbar (when items selected)
-└── PersonListView / OrganizationListView
+└── PersonListView / TeamListView
     └── <table>
         ├── <thead> with SortableHeader components
-        └── <tbody> with PersonListRow / OrganizationListRow components
+        └── <tbody> with PersonListRow / TeamListRow components
 ```
 
 ### Pattern 1: SortableHeader Component
@@ -78,7 +78,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
 **Example:**
 ```jsx
 // Source: PeopleList.jsx lines 32-116
-function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSelection, isOdd }) {
+function PersonListRow({ person, teamName, workspaces, isSelected, onToggleSelection, isOdd }) {
   return (
     <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'}`}>
       {/* Selection checkbox */}
@@ -87,7 +87,7 @@ function PersonListRow({ person, companyName, workspaces, isSelected, onToggleSe
       <td className="w-10 px-2 py-3">...</td>
       {/* Name columns */}
       <td className="px-4 py-3 whitespace-nowrap">...</td>
-      {/* Organization column */}
+      {/* Team column */}
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">...</td>
       {/* Labels column */}
       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">...</td>
@@ -145,8 +145,8 @@ src/
 ├── pages/
 │   ├── People/
 │   │   └── PeopleList.jsx             # MODIFY: add custom field columns
-│   ├── Companies/
-│   │   └── CompaniesList.jsx          # MODIFY: add custom field columns
+│   ├── Teams/
+│   │   └── TeamsList.jsx          # MODIFY: add custom field columns
 │   └── Settings/
 │       └── CustomFields.jsx           # MODIFY: show list view column config
 ```
@@ -200,7 +200,7 @@ Problems that look simple but have existing solutions:
 
 ### Pitfall 5: Data Loading Performance
 **What goes wrong:** List views become slow when many custom fields enabled.
-**Why it happens:** Each person/company already includes all ACF data, but rendering many columns is slow.
+**Why it happens:** Each person/team already includes all ACF data, but rendering many columns is slow.
 **How to avoid:** Virtual scrolling for very large lists, or limit custom field columns to 4-5 max.
 **Warning signs:** Noticeable lag when scrolling or filtering.
 
@@ -427,9 +427,9 @@ Simpler: show numeric input for order when "show in list view" is checked. Lower
 | Column config in UI preferences | Column config in field definitions | This phase | Admin-controlled, consistent for all users |
 
 **Current in Stadion:**
-- List views have fixed columns (name, organization, workspace, labels)
+- List views have fixed columns (name, team, workspace, labels)
 - No user column customization exists
-- All data already available via ACF in person/company responses
+- All data already available via ACF in person/team responses
 
 ## Open Questions
 
@@ -448,7 +448,7 @@ Things that couldn't be fully resolved:
 3. **Sort Implementation for Custom Fields**
    - What we know: Existing sort is client-side in JavaScript
    - What's unclear: Custom field sort should follow same pattern
-   - Recommendation: Add custom field sort cases to existing `sortedPeople`/`sortedCompanies` useMemo
+   - Recommendation: Add custom field sort cases to existing `sortedPeople`/`sortedTeams` useMemo
 
 ## Files to Modify
 
@@ -464,14 +464,14 @@ Things that couldn't be fully resolved:
 | `src/components/FieldFormPanel.jsx` | Add "Show in list view" checkbox and order input |
 | `src/components/CustomFieldColumn.jsx` | NEW: Compact column renderer |
 | `src/pages/People/PeopleList.jsx` | Add custom field columns to table |
-| `src/pages/Companies/CompaniesList.jsx` | Add custom field columns to table |
+| `src/pages/Teams/TeamsList.jsx` | Add custom field columns to table |
 | `src/pages/Settings/CustomFields.jsx` | Show column order config (optional) |
 
 ## Sources
 
 ### Primary (HIGH confidence)
 - `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` - List view structure, SortableHeader pattern
-- `/Users/joostdevalk/Code/stadion/src/pages/Companies/CompaniesList.jsx` - Organization list view patterns
+- `/Users/joostdevalk/Code/stadion/src/pages/Teams/TeamsList.jsx` - Team list view patterns
 - `/Users/joostdevalk/Code/stadion/src/components/CustomFieldsSection.jsx` - Type-specific rendering (Phase 91)
 - `/Users/joostdevalk/Code/stadion/src/components/FieldFormPanel.jsx` - Field form patterns
 - `/Users/joostdevalk/Code/stadion/includes/customfields/class-manager.php` - Field storage, updatable properties

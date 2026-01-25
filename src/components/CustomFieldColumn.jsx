@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
-import { getPersonName, getCompanyName } from '@/utils/formatters';
+import { getPersonName, getTeamName } from '@/utils/formatters';
 
 /**
  * Compact relationship item for list view - fetches name if only ID is available
@@ -16,15 +16,15 @@ function RelationshipItemCompact({ itemId, allowedPostTypes }) {
           const response = await wpApi.getPerson(itemId);
           return { name: getPersonName(response.data) };
         } catch {
-          // Not a person, try company
+          // Not a person, try team
         }
       }
 
-      // Try company if allowed
-      if (allowedPostTypes.includes('company')) {
+      // Try team if allowed
+      if (allowedPostTypes.includes('team')) {
         try {
-          const response = await wpApi.getCompany(itemId);
-          return { name: getCompanyName(response.data) };
+          const response = await wpApi.getTeam(itemId);
+          return { name: getTeamName(response.data) };
         } catch {
           // Not found
         }
@@ -127,7 +127,7 @@ export default function CustomFieldColumn({ field, value }) {
       const items = Array.isArray(value) ? value : (value ? [value] : []);
       if (items.length === 0 || !items[0]) return <span className="text-gray-400 dark:text-gray-500 italic">-</span>;
 
-      const allowedPostTypes = field.post_type || ['person', 'company'];
+      const allowedPostTypes = field.post_type || ['person', 'team'];
 
       if (items.length === 1) {
         const item = items[0];

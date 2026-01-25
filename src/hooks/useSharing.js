@@ -4,7 +4,7 @@ import { prmApi } from '@/api/client';
 /**
  * Get shares for a post
  *
- * @param {string} postType - 'people' or 'companies'
+ * @param {string} postType - 'people' or 'teams'
  * @param {number} postId - The post ID
  */
 export function useShares(postType, postId) {

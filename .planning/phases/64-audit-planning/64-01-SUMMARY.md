@@ -2,7 +2,7 @@
 phase: 64
 plan: 01
 subsystem: infrastructure
-tags: [php, refactoring, psr-4, autoloading, code-organization]
+tags: [php, refactoring, psr-4, autoloading, code-team]
 requires: []
 provides: [audit-document, folder-structure-design, namespace-hierarchy, migration-plan]
 affects: [phase-65, phase-66]

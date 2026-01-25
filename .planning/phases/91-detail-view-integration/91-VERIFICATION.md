@@ -7,7 +7,7 @@ score: 4/4 must-haves verified
 
 # Phase 91: Detail View Integration Verification Report
 
-**Phase Goal:** Custom fields appear in dedicated section on Person and Organization detail pages
+**Phase Goal:** Custom fields appear in dedicated section on Person and Team detail pages
 **Verified:** 2026-01-19T13:42:27Z
 **Status:** passed
 **Re-verification:** No - initial verification
@@ -19,7 +19,7 @@ score: 4/4 must-haves verified
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
 | 1 | Person detail view shows "Custom Fields" section with all defined fields | VERIFIED | `CustomFieldsSection` imported at line 43 and rendered at line 2125 in `PersonDetail.jsx` |
-| 2 | Organization detail view shows "Custom Fields" section with all defined fields | VERIFIED | `CustomFieldsSection` imported at line 10 and rendered at line 532 in `CompanyDetail.jsx` |
+| 2 | Team detail view shows "Custom Fields" section with all defined fields | VERIFIED | `CustomFieldsSection` imported at line 10 and rendered at line 532 in `TeamDetail.jsx` |
 | 3 | Field values can be edited via modal (Stadion standard pattern) | VERIFIED | `CustomFieldsEditModal` component (768 lines) with full form handling, called from `CustomFieldsSection` at line 354-363 |
 | 4 | Each field type renders appropriately (date pickers, file previews, color swatches, etc.) | VERIFIED | `renderFieldValue` function (lines 75-306) and `renderFieldInput` function (lines 512-713) handle all 14 field types |
 
@@ -40,17 +40,17 @@ score: 4/4 must-haves verified
 |------|----|-----|--------|---------|
 | `CustomFieldsSection.jsx` | `/stadion/v1/custom-fields/{post_type}/metadata` | `useQuery` with `prmApi.getCustomFieldsMetadata` | WIRED | Lines 66-72: `prmApi.getCustomFieldsMetadata(postType)` in queryFn |
 | `PersonDetail.jsx` | `CustomFieldsSection` | import and render | WIRED | Import at line 43, render at line 2125-2137 with all props including `onUpdate` callback |
-| `CompanyDetail.jsx` | `CustomFieldsSection` | import and render | WIRED | Import at line 10, render at line 532-543 with all props including `onUpdate` callback |
+| `TeamDetail.jsx` | `CustomFieldsSection` | import and render | WIRED | Import at line 10, render at line 532-543 with all props including `onUpdate` callback |
 | `CustomFieldsSection` | `CustomFieldsEditModal` | import and conditional render | WIRED | Import at line 7, rendered at lines 353-364 with `showModal` state |
 | `PersonDetail onUpdate` | `updatePerson.mutateAsync` | callback function | WIRED | Lines 2129-2135: calls `updatePerson.mutateAsync` with sanitized ACF data |
-| `CompanyDetail onUpdate` | `updateCompany.mutateAsync` | callback function | WIRED | Lines 536-540: calls `updateCompany.mutateAsync` with merged ACF data |
+| `TeamDetail onUpdate` | `updateTeam.mutateAsync` | callback function | WIRED | Lines 536-540: calls `updateTeam.mutateAsync` with merged ACF data |
 
 ### Requirements Coverage
 
 | Requirement | Status | Notes |
 |-------------|--------|-------|
 | DISP-01: Custom Fields section on Person detail view | SATISFIED | Section rendered in Profile tab |
-| DISP-02: Custom Fields section on Organization detail view | SATISFIED | Section rendered after Contact info |
+| DISP-02: Custom Fields section on Team detail view | SATISFIED | Section rendered after Contact info |
 | DISP-03: Inline editing of custom field values | SATISFIED | Modal-based editing via CustomFieldsEditModal |
 | DISP-04: Type-appropriate rendering | SATISFIED | All 14 field types render appropriately (text, email with mailto, url with external link icon, date with format, select, checkbox as comma-separated, true_false with ui_on/off_text, image with thumbnail, file with download link, link with icon, color_picker with swatch, relationship with links to related posts) |
 
@@ -69,8 +69,8 @@ Scanned files for TODO, FIXME, placeholder patterns, console.log-only handlers, 
 **Expected:** Section shows all defined custom fields with appropriate rendering for each type
 **Why human:** Visual layout verification and real data rendering
 
-### 2. Custom Fields Display on Organization Detail
-**Test:** Navigate to an Organization detail page that has custom fields defined, verify the "Custom fields" section appears
+### 2. Custom Fields Display on Team Detail
+**Test:** Navigate to an Team detail page that has custom fields defined, verify the "Custom fields" section appears
 **Expected:** Section shows all defined custom fields with appropriate rendering for each type
 **Why human:** Visual layout verification and real data rendering
 
@@ -85,7 +85,7 @@ Scanned files for TODO, FIXME, placeholder patterns, console.log-only handlers, 
 **Why human:** Visual verification of type-specific rendering
 
 ### 5. Section Hides When No Fields Defined
-**Test:** View Person/Organization that has no custom fields defined
+**Test:** View Person/Team that has no custom fields defined
 **Expected:** Custom Fields section does not appear at all
 **Why human:** Verifying absence of UI element
 
@@ -97,7 +97,7 @@ No gaps found. All observable truths are verified:
 2. **CustomFieldsSection component:** Fully implemented (367 lines) with type-appropriate rendering for all 14 ACF field types
 3. **CustomFieldsEditModal component:** Fully implemented (768 lines) with form inputs for all 14 field types using react-hook-form with Controller pattern
 4. **PersonDetail integration:** Component properly imported and rendered with working onUpdate callback to `updatePerson.mutateAsync`
-5. **CompanyDetail integration:** Component properly imported and rendered with working onUpdate callback to `updateCompany.mutateAsync`
+5. **TeamDetail integration:** Component properly imported and rendered with working onUpdate callback to `updateTeam.mutateAsync`
 6. **Build verification:** `npm run build` passes successfully with CustomFieldsSection compiled to dedicated chunk
 
 ---

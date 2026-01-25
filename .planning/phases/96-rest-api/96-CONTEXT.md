@@ -46,7 +46,7 @@ Build REST API endpoints for feedback CRUD operations under `stadion/v1/feedback
 ### Claude's Discretion
 - Exact endpoint path structure (e.g., `/feedback` vs `/feedbacks`)
 - Schema endpoint implementation details
-- Internal helper methods and code organization
+- Internal helper methods and code team
 
 </decisions>
 

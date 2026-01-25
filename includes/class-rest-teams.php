@@ -1,8 +1,8 @@
 <?php
 /**
- * Companies REST API Endpoints
+ * Teams REST API Endpoints
  *
- * Handles REST API endpoints related to companies domain.
+ * Handles REST API endpoints related to teams domain.
  */
 
 namespace Stadion\REST;
@@ -11,31 +11,31 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Companies extends Base {
+class Teams extends Base {
 
 	/**
 	 * Constructor
 	 *
-	 * Register routes for company endpoints.
+	 * Register routes for team endpoints.
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	/**
-	 * Register custom REST routes for companies domain
+	 * Register custom REST routes for teams domain
 	 */
 	public function register_routes() {
 		// People by company
 		register_rest_route(
 			'stadion/v1',
-			'/companies/(?P<company_id>\d+)/people',
+			'/teams/(?P<team_id>\d+)/people',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_people_by_company' ],
 				'permission_callback' => '__return_true',
 				'args'                => [
-					'company_id' => [
+					'team_id' => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
@@ -44,16 +44,16 @@ class Companies extends Base {
 			]
 		);
 
-		// Set company logo (featured image) - by media ID
+		// Set team logo (featured image) - by media ID
 		register_rest_route(
 			'stadion/v1',
-			'/companies/(?P<company_id>\d+)/logo',
+			'/teams/(?P<team_id>\d+)/logo',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'set_company_logo' ],
 				'permission_callback' => [ $this, 'check_company_edit_permission' ],
 				'args'                => [
-					'company_id' => [
+					'team_id' => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
@@ -68,16 +68,16 @@ class Companies extends Base {
 			]
 		);
 
-		// Upload company logo with proper filename
+		// Upload team logo with proper filename
 		register_rest_route(
 			'stadion/v1',
-			'/companies/(?P<company_id>\d+)/logo/upload',
+			'/teams/(?P<team_id>\d+)/logo/upload',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'upload_company_logo' ],
 				'permission_callback' => [ $this, 'check_company_edit_permission' ],
 				'args'                => [
-					'company_id' => [
+					'team_id' => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
@@ -89,7 +89,7 @@ class Companies extends Base {
 		// Sharing endpoints
 		register_rest_route(
 			'stadion/v1',
-			'/companies/(?P<id>\d+)/shares',
+			'/teams/(?P<id>\d+)/shares',
 			[
 				[
 					'methods'             => \WP_REST_Server::READABLE,
@@ -106,7 +106,7 @@ class Companies extends Base {
 
 		register_rest_route(
 			'stadion/v1',
-			'/companies/(?P<id>\d+)/shares/(?P<user_id>\d+)',
+			'/teams/(?P<id>\d+)/shares/(?P<user_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'remove_share' ],
@@ -114,13 +114,13 @@ class Companies extends Base {
 			]
 		);
 
-		// Bulk update companies
+		// Bulk update teams
 		register_rest_route(
 			'stadion/v1',
-			'/companies/bulk-update',
+			'/teams/bulk-update',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'bulk_update_companies' ],
+				'callback'            => [ $this, 'bulk_update_teams' ],
 				'permission_callback' => [ $this, 'check_bulk_update_permission' ],
 				'args'                => [
 					'ids'     => [
@@ -203,26 +203,26 @@ class Companies extends Base {
 	}
 
 	/**
-	 * Get people who work/worked at a company
+	 * Get people who work/worked at a team
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response|WP_Error Response containing current and former employees.
 	 */
 	public function get_people_by_company( $request ) {
-		$company_id = (int) $request->get_param( 'company_id' );
+		$team_id = (int) $request->get_param( 'team_id' );
 		$user_id    = get_current_user_id();
 
-		// Check if user can access this company
+		// Check if user can access this team
 		$access_control = new \STADION_Access_Control();
-		if ( ! current_user_can( 'manage_options' ) && ! $access_control->user_can_access_post( $company_id, $user_id ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! $access_control->user_can_access_post( $team_id, $user_id ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to access this company.', 'stadion' ),
+				__( 'You do not have permission to access this team.', 'stadion' ),
 				[ 'status' => 403 ]
 			);
 		}
 
-		// Get all people (if you can see the company, you can see who works there)
+		// Get all people (if you can see the team, you can see who works there)
 		// Don't rely on meta_query with ACF repeater fields - filter in PHP instead
 		$people = get_posts(
 			[
@@ -243,12 +243,12 @@ class Companies extends Base {
 				continue;
 			}
 
-			// Find the relevant work history entry for this company
+			// Find the relevant work history entry for this team
 			foreach ( $work_history as $job ) {
 				// Ensure type consistency for comparison
-				$job_company_id = isset( $job['company'] ) ? (int) $job['company'] : 0;
+				$job_team_id = isset( $job['team'] ) ? (int) $job['team'] : 0;
 
-				if ( $job_company_id === $company_id ) {
+				if ( $job_team_id === $team_id ) {
 					$person_data               = $this->format_person_summary( $person );
 					$person_data['job_title']  = $job['job_title'] ?? '';
 					$person_data['start_date'] = $job['start_date'] ?? '';
@@ -302,19 +302,19 @@ class Companies extends Base {
 	}
 
 	/**
-	 * Set company logo (featured image) by media ID
+	 * Set team logo (featured image) by media ID
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response|WP_Error Response with logo info or error.
 	 */
 	public function set_company_logo( $request ) {
-		$company_id = (int) $request->get_param( 'company_id' );
+		$team_id = (int) $request->get_param( 'team_id' );
 		$media_id   = (int) $request->get_param( 'media_id' );
 
-		// Verify company exists
-		$company = get_post( $company_id );
-		if ( ! $company || $company->post_type !== 'company' ) {
-			return new \WP_Error( 'company_not_found', __( 'Company not found.', 'stadion' ), [ 'status' => 404 ] );
+		// Verify team exists
+		$team = get_post( $team_id );
+		if ( ! $team || $team->post_type !== 'team' ) {
+			return new \WP_Error( 'company_not_found', __( 'Team not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Verify media exists
@@ -324,35 +324,35 @@ class Companies extends Base {
 		}
 
 		// Set as featured image
-		$result = set_post_thumbnail( $company_id, $media_id );
+		$result = set_post_thumbnail( $team_id, $media_id );
 
 		if ( ! $result ) {
-			return new \WP_Error( 'set_thumbnail_failed', __( 'Failed to set company logo.', 'stadion' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'set_thumbnail_failed', __( 'Failed to set team logo.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
 			[
 				'success'       => true,
 				'media_id'      => $media_id,
-				'thumbnail_url' => get_the_post_thumbnail_url( $company_id, 'thumbnail' ),
-				'full_url'      => get_the_post_thumbnail_url( $company_id, 'full' ),
+				'thumbnail_url' => get_the_post_thumbnail_url( $team_id, 'thumbnail' ),
+				'full_url'      => get_the_post_thumbnail_url( $team_id, 'full' ),
 			]
 		);
 	}
 
 	/**
-	 * Upload company logo with proper filename based on company name
+	 * Upload team logo with proper filename based on company name
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response|WP_Error Response with attachment info or error.
 	 */
 	public function upload_company_logo( $request ) {
-		$company_id = (int) $request->get_param( 'company_id' );
+		$team_id = (int) $request->get_param( 'team_id' );
 
-		// Verify company exists
-		$company = get_post( $company_id );
-		if ( ! $company || $company->post_type !== 'company' ) {
-			return new \WP_Error( 'company_not_found', __( 'Company not found.', 'stadion' ), [ 'status' => 404 ] );
+		// Verify team exists
+		$team = get_post( $team_id );
+		if ( ! $team || $team->post_type !== 'team' ) {
+			return new \WP_Error( 'company_not_found', __( 'Team not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Check for uploaded file
@@ -370,8 +370,8 @@ class Companies extends Base {
 		}
 
 		// Get company name for filename
-		$company_name = $company->post_title;
-		$name_slug    = sanitize_title( strtolower( trim( $company_name ) ) );
+		$team_name = $team->post_title;
+		$name_slug    = sanitize_title( strtolower( trim( $team_name ) ) );
 
 		// Get file extension
 		$extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
@@ -380,7 +380,7 @@ class Companies extends Base {
 		}
 
 		// Generate filename
-		$filename = ! empty( $name_slug ) ? $name_slug . '-logo.' . $extension : 'company-' . $company_id . '.' . $extension;
+		$filename = ! empty( $name_slug ) ? $name_slug . '-logo.' . $extension : 'company-' . $team_id . '.' . $extension;
 
 		// Load required files
 		require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -397,22 +397,22 @@ class Companies extends Base {
 		];
 
 		// Handle the upload
-		$attachment_id = media_handle_sideload( $file_array, $company_id, sprintf( '%s Logo', $company_name ) );
+		$attachment_id = media_handle_sideload( $file_array, $team_id, sprintf( '%s Logo', $team_name ) );
 
 		if ( is_wp_error( $attachment_id ) ) {
 			return new \WP_Error( 'upload_failed', $attachment_id->get_error_message(), [ 'status' => 500 ] );
 		}
 
 		// Set as featured image
-		set_post_thumbnail( $company_id, $attachment_id );
+		set_post_thumbnail( $team_id, $attachment_id );
 
 		return rest_ensure_response(
 			[
 				'success'       => true,
 				'attachment_id' => $attachment_id,
 				'filename'      => $filename,
-				'thumbnail_url' => get_the_post_thumbnail_url( $company_id, 'thumbnail' ),
-				'full_url'      => get_the_post_thumbnail_url( $company_id, 'full' ),
+				'thumbnail_url' => get_the_post_thumbnail_url( $team_id, 'thumbnail' ),
+				'full_url'      => get_the_post_thumbnail_url( $team_id, 'full' ),
 			]
 		);
 	}
@@ -431,7 +431,7 @@ class Companies extends Base {
 		$post_id = $request->get_param( 'id' );
 		$post    = get_post( $post_id );
 
-		if ( ! $post || $post->post_type !== 'company' ) {
+		if ( ! $post || $post->post_type !== 'team' ) {
 			return false;
 		}
 
@@ -551,7 +551,7 @@ class Companies extends Base {
 	}
 
 	/**
-	 * Check if current user can bulk update the specified companies
+	 * Check if current user can bulk update the specified teams
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return bool|WP_Error True if permitted, WP_Error otherwise.
@@ -572,10 +572,10 @@ class Companies extends Base {
 		foreach ( $ids as $post_id ) {
 			$post = get_post( $post_id );
 
-			if ( ! $post || $post->post_type !== 'company' ) {
+			if ( ! $post || $post->post_type !== 'team' ) {
 				return new \WP_Error(
 					'rest_invalid_id',
-					sprintf( __( 'Company with ID %d not found.', 'stadion' ), $post_id ),
+					sprintf( __( 'Team with ID %d not found.', 'stadion' ), $post_id ),
 					[ 'status' => 404 ]
 				);
 			}
@@ -594,15 +594,15 @@ class Companies extends Base {
 	}
 
 	/**
-	 * Bulk update multiple companies
+	 * Bulk update multiple teams
 	 *
 	 * Updates visibility, workspace assignments, and/or labels
-	 * for multiple companies at once.
+	 * for multiple teams at once.
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response Response with updated/failed arrays.
 	 */
-	public function bulk_update_companies( $request ) {
+	public function bulk_update_teams( $request ) {
 		$ids     = $request->get_param( 'ids' );
 		$updates = $request->get_param( 'updates' );
 
@@ -648,13 +648,13 @@ class Companies extends Base {
 				// Add labels if provided (append, don't replace)
 				if ( ! empty( $updates['labels_add'] ) ) {
 					$term_ids = array_map( 'intval', $updates['labels_add'] );
-					wp_set_object_terms( $post_id, $term_ids, 'company_label', true );
+					wp_set_object_terms( $post_id, $term_ids, 'team_label', true );
 				}
 
 				// Remove labels if provided
 				if ( ! empty( $updates['labels_remove'] ) ) {
 					$term_ids = array_map( 'intval', $updates['labels_remove'] );
-					wp_remove_object_terms( $post_id, $term_ids, 'company_label' );
+					wp_remove_object_terms( $post_id, $term_ids, 'team_label' );
 				}
 
 				$updated[] = $post_id;

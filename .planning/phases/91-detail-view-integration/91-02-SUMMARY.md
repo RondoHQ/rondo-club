@@ -29,7 +29,7 @@ key-files:
     - src/components/CustomFieldsEditModal.jsx
   modified:
     - src/pages/People/PersonDetail.jsx
-    - src/pages/Companies/CompanyDetail.jsx
+    - src/pages/Teams/TeamDetail.jsx
 
 key-decisions:
   - "Section hides completely when no custom fields defined (via return null)"
@@ -47,7 +47,7 @@ completed: 2026-01-19
 
 # Phase 91 Plan 02: Display Custom Fields on Detail Views Summary
 
-**CustomFieldsSection and edit modal with type-appropriate rendering for all 14 ACF field types on Person and Organization detail pages**
+**CustomFieldsSection and edit modal with type-appropriate rendering for all 14 ACF field types on Person and Team detail pages**
 
 ## Performance
 
@@ -60,7 +60,7 @@ completed: 2026-01-19
 ## Accomplishments
 - Created CustomFieldsSection component displaying all custom field types appropriately
 - Created CustomFieldsEditModal with inputs for all 14 field types
-- Integrated into PersonDetail.jsx (Profile tab) and CompanyDetail.jsx
+- Integrated into PersonDetail.jsx (Profile tab) and TeamDetail.jsx
 - Section auto-hides when no custom fields are defined
 
 ## Task Commits
@@ -69,18 +69,18 @@ Each task was committed atomically:
 
 1. **Task 1: Create CustomFieldsSection component** - `66b5d4f` (feat)
 2. **Task 2: Create CustomFieldsEditModal component** - `6f50664` (feat)
-3. **Task 3: Integrate into PersonDetail and CompanyDetail** - `0525f6c` (feat)
+3. **Task 3: Integrate into PersonDetail and TeamDetail** - `0525f6c` (feat)
 
 ## Files Created/Modified
 - `src/components/CustomFieldsSection.jsx` - Displays custom fields with type-appropriate rendering
 - `src/components/CustomFieldsEditModal.jsx` - Modal for editing all custom field values
 - `src/pages/People/PersonDetail.jsx` - Added CustomFieldsSection at end of Profile tab
-- `src/pages/Companies/CompanyDetail.jsx` - Added CustomFieldsSection after Contact info
+- `src/pages/Teams/TeamDetail.jsx` - Added CustomFieldsSection after Contact info
 
 ## Decisions Made
 - Section returns null when no custom fields defined (hides completely vs showing empty state)
 - Used wpApi.uploadMedia for image/file uploads (consistent with existing codebase)
-- RelationshipInput fetches selected item details by trying person first, then company
+- RelationshipInput fetches selected item details by trying person first, then team
 - Date parsing handles multiple formats (ISO, d/m/Y, m/d/Y) for flexibility
 
 ## Deviations from Plan

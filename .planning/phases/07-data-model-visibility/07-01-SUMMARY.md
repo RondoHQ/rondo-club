@@ -28,7 +28,7 @@ Added `register_workspace_post_type()` method with:
 
 Added `register_workspace_access_taxonomy()` method with:
 - Taxonomy slug: `workspace_access`
-- Object types: `['person', 'company', 'important_date']`
+- Object types: `['person', 'team', 'important_date']`
 - `hierarchical: false` (tags, not categories)
 - `show_ui: true`, `show_admin_column: false`
 - `show_in_rest: true` (needed for React API calls)
@@ -41,7 +41,7 @@ Added `register_workspace_access_taxonomy()` method with:
 - [x] `/wp/v2/workspaces` REST endpoint returns `[]` (empty array, not 404)
 - [x] `/wp/v2/workspace_access` REST endpoint returns `[]` (empty array, not 404)
 - [x] No PHP errors in debug log
-- [x] Existing functionality unchanged (person, company, important_date)
+- [x] Existing functionality unchanged (person, team, important_date)
 
 ## Files Modified
 

@@ -10,7 +10,7 @@ requires:
     provides: completed milestone v3.1
 provides:
   - Current position display in PersonDetail header
-  - Job title + company link format
+  - Job title + team link format
 affects: [person-profile-enhancements]
 
 # Tech tracking
@@ -27,8 +27,8 @@ key-files:
 
 key-decisions:
   - "Filter is_current from sortedWorkHistory using useMemo (reuses existing sorted data)"
-  - "Show 'Works at Company' when job title is missing but company exists"
-  - "Skip positions that have neither title nor company"
+  - "Show 'Works at Team' when job title is missing but team exists"
+  - "Skip positions that have neither title nor team"
 
 patterns-established:
   - "Header enhancement pattern: derive display data from existing state"
@@ -42,7 +42,7 @@ completed: 2026-01-14
 
 # Phase 29 Plan 01: Add Role/Job Display to Person Header
 
-**Display current position (job title + company) in PersonDetail header with clickable company link**
+**Display current position (job title + team) in PersonDetail header with clickable team link**
 
 ## Performance
 
@@ -56,8 +56,8 @@ completed: 2026-01-14
 
 - Added `currentPositions` useMemo to filter jobs where `is_current` is true
 - Display current position below name, before nickname/demographics
-- Format: "Job Title at Company" with Company as clickable link
-- Handles edge cases: multiple positions (comma-separated), title-only, company-only
+- Format: "Job Title at Team" with Team as clickable link
+- Handles edge cases: multiple positions (comma-separated), title-only, team-only
 
 ## Task Commits
 
@@ -73,9 +73,9 @@ completed: 2026-01-14
 
 1. **Reuse sortedWorkHistory** - Instead of creating a separate filter, derive currentPositions from the existing sorted work history. Efficient and keeps data consistent.
 
-2. **"Works at Company" fallback** - When job title is missing but company exists, show "Works at Company" instead of just the company name. Provides better context.
+2. **"Works at Team" fallback** - When job title is missing but team exists, show "Works at Team" instead of just the team name. Provides better context.
 
-3. **Skip empty positions** - If a position has neither title nor linked company, skip it entirely rather than showing empty content.
+3. **Skip empty positions** - If a position has neither title nor linked team, skip it entirely rather than showing empty content.
 
 ## Deviations from Plan
 

@@ -20,7 +20,7 @@
 npm run lint                              # ESLint checks
 ```
 
-## Test File Organization
+## Test File Team
 
 **Location:**
 - No test files exist
@@ -48,7 +48,7 @@ src/
 
 **Current:** Not applicable (no tests)
 
-**Recommended Suite Organization:**
+**Recommended Suite Team:**
 ```javascript
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -198,7 +198,7 @@ export default defineConfig({
 **Priority Test Areas:**
 
 1. **Utility Functions:** `src/utils/formatters.js`
-   - `decodeHtml()`, `getPersonName()`, `getCompanyName()`
+   - `decodeHtml()`, `getPersonName()`, `getTeamName()`
    - Pure functions, easy to test
 
 2. **API Client:** `src/api/client.js`

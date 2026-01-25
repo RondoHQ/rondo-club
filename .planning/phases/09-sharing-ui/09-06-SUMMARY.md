@@ -8,7 +8,7 @@ completed_at: 2026-01-13
 # Phase 9 Plan 06 Summary: Visibility and Workspace Filtering in List Views
 
 ## Objective
-Add visibility and workspace filtering to People and Companies list views, enabling users to filter contacts by ownership (All, My Contacts, Shared with Me) and by workspace membership.
+Add visibility and workspace filtering to People and Teams list views, enabling users to filter contacts by ownership (All, My Contacts, Shared with Me) and by workspace membership.
 
 ## Tasks Completed
 
@@ -34,8 +34,8 @@ Enhanced the existing filter dropdown in PeopleList.jsx with:
 - Updated `hasActiveFilters` to include new filters
 - Updated `clearFilters` to reset new filters
 
-### Task 2: Add visibility/ownership filter to CompaniesList
-Applied the same filtering pattern to CompaniesList.jsx:
+### Task 2: Add visibility/ownership filter to TeamsList
+Applied the same filtering pattern to TeamsList.jsx:
 
 **State and hooks:**
 - Added `isFilterOpen`, `ownershipFilter`, `selectedWorkspaceFilter` state
@@ -49,20 +49,20 @@ Applied the same filtering pattern to CompaniesList.jsx:
 - "No results match your filters" empty state with clear filters button
 
 **Filtering logic:**
-- Renamed `sortedCompanies` to `filteredAndSortedCompanies`
+- Renamed `sortedTeams` to `filteredAndSortedTeams`
 - Added ownership and workspace filtering to useMemo
 - Added click-outside handler for dropdown
 
 ## Files Modified
 - `src/pages/People/PeopleList.jsx` - Added ownership/workspace filtering
-- `src/pages/Companies/CompaniesList.jsx` - Added full filter system with ownership/workspace
+- `src/pages/Teams/TeamsList.jsx` - Added full filter system with ownership/workspace
 
 ## Verification
 - [x] `npm run build` succeeds
 - [x] PeopleList has ownership filter (All/My/Shared)
 - [x] PeopleList has workspace filter dropdown
-- [x] CompaniesList has ownership filter
-- [x] CompaniesList has workspace filter
+- [x] TeamsList has ownership filter
+- [x] TeamsList has workspace filter
 - [x] Filter chips display and can be cleared
 - [x] Clear all filters resets everything
 - [x] Deployed to production
@@ -79,7 +79,7 @@ Applied the same filtering pattern to CompaniesList.jsx:
 - Filtering is client-side based on `author` field and `acf._assigned_workspaces`
 - Workspace filter only appears if user has workspaces
 - The ownership filter uses author ID comparison for "My" vs "Shared" distinction
-- CompaniesList now has a full filter system similar to PeopleList
+- TeamsList now has a full filter system similar to PeopleList
 
 ## Phase 9 Status
 With this plan complete, Phase 9: Sharing UI & Permissions Interface is now complete. All plans executed:

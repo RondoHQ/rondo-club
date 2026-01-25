@@ -8,14 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [6.0.0] - 2026-01-20
 
 ### Added
-- Custom Fields system for admin-defined fields on People and Organizations
+- Custom Fields system for admin-defined fields on People and Teams
 - Settings UI for creating, editing, and deleting custom fields
 - Support for 14 field types: Text, Textarea, Number, Email, URL, Date, Select, Checkbox, True/False, Image, File, Link, Color, Relationship
 - Drag-and-drop field reordering with optimistic updates
 - Required and unique field validation options
 - Custom field display in detail views with type-appropriate rendering
 - Custom field columns in list views (configurable per field)
-- Custom field search integration in People and Organizations
+- Custom field search integration in People and Teams
 - ACF-native storage using field groups and subfield patterns
 
 ## [5.0.0] - 2026-01-18
@@ -90,7 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Topbar z-index now stays above selection toolbar on People screen
-- Person header spacing between "at" and company name
+- Person header spacing between "at" and team name
 
 ## [4.5.0] - 2026-01-16
 
@@ -204,26 +204,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Reduced initial bundle from 460 KB to 50 KB via modal lazy loading
-- GlobalTodoModal, PersonEditModal, CompanyEditModal, and ImportantDateModal now load on demand
+- GlobalTodoModal, PersonEditModal, TeamEditModal, and ImportantDateModal now load on demand
 - TipTap editor (~370 KB) only loads when opening modals that need it
 - Initial load improved from ~767 KB to ~400 KB total
 
 ## [3.4.0] - 2026-01-14
 
 ### Added
-- Labels CRUD interface at `/settings/labels` with tabbed UI for person and company labels
+- Labels CRUD interface at `/settings/labels` with tabbed UI for person and team labels
 - 8 new API methods for label management (getPersonLabels, createPersonLabel, etc.)
 - Awaiting todos count in dashboard stats (5-column grid layout)
 - Build-time based refresh detection using manifest.json mtime
 
 ### Changed
-- Organizations list website URLs are now clickable blue links opening in new tab
+- Teams list website URLs are now clickable blue links opening in new tab
 - Slack contact details simplified to show only label as clickable link
 - Timeline panel on person profile now uses full 2-column width on desktop
 - Dashboard stats grid expanded from 4 to 5 columns on desktop
 
 ### Removed
-- Labels column from Organizations list (column, sorting, bulk action removed)
+- Labels column from Teams list (column, sorting, bulk action removed)
 
 ## [3.3.0] - 2026-01-14
 
@@ -251,7 +251,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.79.0] - 2026-01-14
 
 ### Added
-- Current position (job title + company) display in PersonDetail header
+- Current position (job title + team) display in PersonDetail header
 - Persistent todos sidebar visible across all PersonDetail tabs
 - Mobile todos floating action button (FAB) for screens below lg breakpoint
 - Mobile todos slide-up panel with full CRUD functionality
@@ -366,8 +366,8 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.71.1] - 2026-01-13
 
 ### Fixed
-- Organization edit now properly saves visibility and workspace changes
-  - Form was passing visibility values but handleSaveCompany was ignoring them
+- Team edit now properly saves visibility and workspace changes
+  - Form was passing visibility values but handleSaveTeam was ignoring them
   - Now uses form values instead of just preserving existing values
 
 ## [1.71.0] - 2026-01-13
@@ -394,37 +394,37 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.70.0] - 2026-01-13
 
 ### Added
-- Bulk actions for Organizations list view
+- Bulk actions for Teams list view
   - Bulk visibility change (private/workspace)
   - Bulk workspace assignment
   - Bulk label management (add/remove mode toggle)
-- Actions dropdown in Organizations selection toolbar
-- Bulk update REST endpoint for companies (`POST /stadion/v1/companies/bulk-update`)
-- `useBulkUpdateCompanies` hook for React components
+- Actions dropdown in Teams selection toolbar
+- Bulk update REST endpoint for teams (`POST /stadion/v1/teams/bulk-update`)
+- `useBulkUpdateTeams` hook for React components
 
 ### Changed
-- Organizations now have full bulk action parity with People list view
+- Teams now have full bulk action parity with People list view
 
 ## [1.69.0] - 2026-01-13
 
 ### Added
-- Organizations list view with tabular layout (replacing card grid)
+- Teams list view with tabular layout (replacing card grid)
   - Columns: checkbox, logo, name, industry, website, workspace, labels
   - SortableHeader component for clickable column sorting
   - Selection checkboxes with select all/none functionality
   - Sticky table header and selection toolbar
   - Alternating row colors for better readability
-- Header sort controls for Organizations
+- Header sort controls for Teams
   - Sort field dropdown (Name, Industry, Website, Workspace, Labels)
   - Sort direction toggle button
 
 ### Changed
-- Organizations page now uses list view instead of card grid
-- Organizations data includes company labels for display
+- Teams page now uses list view instead of card grid
+- Teams data includes team labels for display
 
 ### Removed
-- CompanyCard component (replaced by OrganizationListRow)
-- Grid-based card layout for organizations
+- TeamCard component (replaced by TeamListRow)
+- Grid-based card layout for teams
 
 ## [1.68.0] - 2026-01-13
 
@@ -441,10 +441,10 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.67.0] - 2026-01-13
 
 ### Added
-- Bulk organization assignment modal in list view Actions dropdown
-  - Search/filter organizations by name
-  - Select organization to assign to all selected people
-  - "Clear organization" option to remove current organization
+- Bulk team assignment modal in list view Actions dropdown
+  - Search/filter teams by name
+  - Select team to assign to all selected people
+  - "Clear team" option to remove current team
 - Bulk labels management modal in list view Actions dropdown
   - Add/Remove mode toggle for label operations
   - Multi-select labels for batch operations
@@ -454,8 +454,8 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.66.1] - 2026-01-13
 
 ### Added
-- Extended bulk-update endpoint with organization and label support
-  - `organization_id`: Set current organization for selected people (or clear with null)
+- Extended bulk-update endpoint with team and label support
+  - `team_id`: Set current team for selected people (or clear with null)
   - `labels_add`: Add person labels to selected people in bulk
   - `labels_remove`: Remove person labels from selected people in bulk
 
@@ -476,8 +476,8 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - Split Name column into separate First Name and Last Name columns in list view
 - Labels column in list view displaying person labels as styled pills
 - Zebra striping on list view rows for improved readability
-- Extended sorting options: Organization, Workspace, and Labels
-  - Organization sorting uses company name (empty sorts last)
+- Extended sorting options: Team, Workspace, and Labels
+  - Team sorting uses team name (empty sorts last)
   - Workspace sorting uses workspace names (empty sorts last)
   - Labels sorting uses first label name (empty sorts last)
 
@@ -531,7 +531,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Added
 - List view for People screen with tabular layout
   - Toggle between card view and list view using LayoutGrid/List icons
-  - Table displays Name (with avatar, deceased marker, favorite star), Organization, and Workspace columns
+  - Table displays Name (with avatar, deceased marker, favorite star), Team, and Workspace columns
   - Rows link to person detail page
 - Multi-select infrastructure for bulk operations
   - Checkbox selection for individual rows and select all/none
@@ -558,7 +558,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Added
 - Multi-user migration WP-CLI command for upgrading existing installations
-  - `wp prm multiuser migrate` sets visibility to "private" on all existing contacts, companies, and important dates
+  - `wp prm multiuser migrate` sets visibility to "private" on all existing contacts, teams, and important dates
   - `wp prm multiuser migrate --dry-run` previews changes without making them
   - `wp prm multiuser validate` checks migration status and reports any posts missing visibility
   - User-friendly output with progress, summary, and next steps guidance
@@ -582,7 +582,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.59.1] - 2026-01-13
 
 ### Fixed
-- Company editing now includes visibility fields in REST API payload to satisfy ACF required field validation
+- Team editing now includes visibility fields in REST API payload to satisfy ACF required field validation
 
 ## [1.59.0] - 2026-01-13
 
@@ -643,11 +643,11 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.57.0] - 2026-01-13
 
 ### Changed
-- Refactored company creation into shared `useCreateCompany` hook in `useCompanies.js` (DRY principle)
-- Updated CompaniesList.jsx and Layout.jsx to use shared hook
+- Refactored team creation into shared `useCreateTeam` hook in `useTeams.js` (DRY principle)
+- Updated TeamsList.jsx and Layout.jsx to use shared hook
 
 ### Fixed
-- Add missing `_visibility` and `_assigned_workspaces` fields to company quick-add in Layout.jsx
+- Add missing `_visibility` and `_assigned_workspaces` fields to team quick-add in Layout.jsx
 
 ## [1.56.0] - 2026-01-13
 
@@ -685,13 +685,13 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.53.0] - 2026-01-13
 
 ### Added
-- ShareModal component for sharing contacts/companies with specific users
+- ShareModal component for sharing contacts/teams with specific users
 - `useSharing.js` hook with `useShares`, `useAddShare`, `useRemoveShare`, `useUserSearch` hooks
 - Share REST endpoints for People (`/stadion/v1/people/{id}/shares`)
-- Share REST endpoints for Companies (`/stadion/v1/companies/{id}/shares`)
+- Share REST endpoints for Teams (`/stadion/v1/teams/{id}/shares`)
 - User search endpoint (`/stadion/v1/users/search`) for finding users to share with
 - Share button in PersonDetail page header
-- Share button in CompanyDetail page header
+- Share button in TeamDetail page header
 
 ## [1.52.0] - 2026-01-13
 
@@ -707,17 +707,17 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.51.0] - 2026-01-13
 
 ### Added
-- `VisibilitySelector` component for setting visibility (private/workspace) on contacts and companies
+- `VisibilitySelector` component for setting visibility (private/workspace) on contacts and teams
 - Visibility controls integrated into PersonEditModal (add and edit modes)
-- Visibility controls integrated into CompanyEditModal (add and edit modes)
-- Visibility and workspace assignment fields included in person/company create payloads
+- Visibility controls integrated into TeamEditModal (add and edit modes)
+- Visibility and workspace assignment fields included in person/team create payloads
 
 ## [1.50.0] - 2026-01-13
 
 ### Added
 - Ownership filter (All/My Contacts/Shared with Me) to People list
-- Ownership filter (All/My Organizations/Shared with Me) to Companies list
-- Workspace filter dropdown to People and Companies lists
+- Ownership filter (All/My Teams/Shared with Me) to Teams list
+- Workspace filter dropdown to People and Teams lists
 - Filter chips for active ownership and workspace filters
 - "No results match your filters" empty state with clear filters button
 
@@ -785,7 +785,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - Query helpers to get user workspaces, workspace members, and role checks
 - Automatic workspace owner membership: workspace creators are auto-added as admin members
 - Protection against removing workspace owner from membership
-- ACF visibility field group for Person, Company, and Important Date post types
+- ACF visibility field group for Person, Team, and Important Date post types
 - Visibility options: private (default), workspace, and shared with specific users
 - `STADION_Visibility` helper class for managing visibility and sharing
 - Share management methods: add_share, remove_share, get_shares, user_has_share
@@ -949,7 +949,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - Timeline tab contains: Todos, Timeline (activities/notes)
 - Work tab contains: Work history, Investments, Colleagues
 - "Events" section renamed to "Important dates"
-- Removed three-column grid layout in favor of cleaner tab-based organization
+- Removed three-column grid layout in favor of cleaner tab-based team
 
 ## [1.38.1] - 2026-01-09
 
@@ -961,7 +961,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.38.0] - 2026-01-09
 
 ### Added
-- Colleagues card on PersonDetail page - shows current employees from the same company/companies
+- Colleagues card on PersonDetail page - shows current employees from the same team/teams
 - Colleagues are only displayed if the person has a current job (no end date)
 - Colleagues sorted alphabetically with job title displayed
 
@@ -976,17 +976,17 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.36.0] - 2026-01-09
 
 ### Added
-- CompanyEditModal now supports full editing with all fields (parent company, investors)
-- Parent company selector with searchable dropdown in CompanyEditModal
-- Investors multi-select (people and organizations) in CompanyEditModal
+- TeamEditModal now supports full editing with all fields (parent team, investors)
+- Parent team selector with searchable dropdown in TeamEditModal
+- Investors multi-select (people and teams) in TeamEditModal
 
 ### Changed
-- CompanyDetail "Edit" button now opens CompanyEditModal instead of navigating to separate page
-- Logo upload remains on CompanyDetail page (hover over logo to upload)
+- TeamDetail "Edit" button now opens TeamEditModal instead of navigating to separate page
+- Logo upload remains on TeamDetail page (hover over logo to upload)
 
 ### Removed
-- CompanyForm.jsx removed - all organization creation/editing now via CompanyEditModal
-- Routes `/companies/new` and `/companies/:id/edit` removed
+- TeamForm.jsx removed - all team creation/editing now via TeamEditModal
+- Routes `/teams/new` and `/teams/:id/edit` removed
 
 ## [1.35.0] - 2026-01-09
 
@@ -1008,13 +1008,13 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Added
 - PersonEditModal: Quick add person from header + button, People list, and empty states
-- CompanyEditModal: Quick add organization from header + button, Organizations list, and empty states
+- TeamEditModal: Quick add team from header + button, Teams list, and empty states
 - All "Add" buttons throughout the app now open modals instead of navigating to separate pages
 
 ### Changed
-- Header + button now opens modals for Person, Organization, Todo, and Date creation
+- Header + button now opens modals for Person, Team, Todo, and Date creation
 - People list "Add person" button now opens modal
-- Organizations list "Add organization" button now opens modal
+- Teams list "Add team" button now opens modal
 - Dates list "Add date" button now opens modal
 
 ## [1.33.0] - 2026-01-09
@@ -1092,7 +1092,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.27.2] - 2026-01-09
 
 ### Changed
-- Organizations in "Add work history" form are now sorted alphabetically
+- Teams in "Add work history" form are now sorted alphabetically
 
 ## [1.27.1] - 2026-01-09
 
@@ -1121,7 +1121,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.26.2] - 2026-01-08
 
 ### Fixed
-- Dashboard now live-updates when creating, editing, or deleting contacts and organizations (no hard reload needed)
+- Dashboard now live-updates when creating, editing, or deleting contacts and teams (no hard reload needed)
 
 ## [1.26.1] - 2026-01-08
 
@@ -1213,7 +1213,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.24.7] - 2026-01-07
 
 ### Added
-- Click-to-upload logo on company detail page (hover over logo to see camera icon, click to upload)
+- Click-to-upload logo on team detail page (hover over logo to see camera icon, click to upload)
 
 ## [1.24.6] - 2026-01-07
 
@@ -1317,27 +1317,27 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.21.0] - 2026-01-07
 
 ### Added
-- "Investments" section on person detail page showing companies they've invested in
-- "Invested in" section on company detail page showing companies they've invested in
+- "Investments" section on person detail page showing teams they've invested in
+- "Invested in" section on team detail page showing teams they've invested in
 - New REST API endpoint `/stadion/v1/investments/{id}` to query reverse investor relationships
 
 ## [1.20.2] - 2026-01-07
 
 ### Fixed
 - Investors field now saves and loads properly (changed from ACF relationship to post_object field type)
-- Existing investors now appear when editing an organization
+- Existing investors now appear when editing an team
 
 ## [1.20.1] - 2026-01-07
 
 ### Fixed
-- Investor names now display correctly on organization detail page (was showing "Organization" instead of actual names)
+- Investor names now display correctly on team detail page (was showing "Team" instead of actual names)
 
 ## [1.20.0] - 2026-01-07
 
 ### Added
-- New "Investors" field for organizations allowing both people and companies to be listed as investors
-- Investors section displayed on organization detail page with links to people/companies
-- Multi-select investor picker in organization form with search
+- New "Investors" field for teams allowing both people and teams to be listed as investors
+- Investors section displayed on team detail page with links to people/teams
+- Multi-select investor picker in team form with search
 
 ## [1.19.3] - 2026-01-07
 
@@ -1372,10 +1372,10 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.17.0] - 2026-01-07
 
 ### Added
-- Organizations can now have parent organizations (hierarchical structure)
-- Parent organization selector in organization form with searchable dropdown
-- Subsidiaries section on organization detail page showing child organizations
-- "Subsidiary of" link displayed on organization header when organization has a parent
+- Teams can now have parent teams (hierarchical structure)
+- Parent team selector in team form with searchable dropdown
+- Subsidiaries section on team detail page showing child teams
+- "Subsidiary of" link displayed on team header when team has a parent
 
 ## [1.16.1] - 2026-01-07
 
@@ -1386,7 +1386,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Added
 - Collapsible search bar in header - opens on click for cleaner UI
-- Quick Add menu (+) in header for creating new Person, Organization, Todo, or Date
+- Quick Add menu (+) in header for creating new Person, Team, Todo, or Date
 - Global Todo creation with person dropdown - accessible from header and Todos page
 - "Add todo" button on Todos list page
 
@@ -1409,7 +1409,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Changed
 - Dashboard layout reorganized: Row 1 has Upcoming reminders + Open todos, Row 2 has Favorites + Recently edited people
-- Stats row now shows 4 cards (People, Organizations, Events, Open todos)
+- Stats row now shows 4 cards (People, Teams, Events, Open todos)
 - Todos page shows all open todos with ability to toggle completion, edit, and delete
 - Todos are sorted by due date (earliest first), with completed todos at the bottom
 
@@ -1572,7 +1572,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.11.1] - 2026-01-04
 
 ### Changed
-- Search functionality now only searches People and Organizations - dates removed from search as they have a dedicated Dates page
+- Search functionality now only searches People and Teams - dates removed from search as they have a dedicated Dates page
 
 ## [1.11.0] - 2026-01-04
 
@@ -1625,7 +1625,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Added
 - Added ability to delete user accounts from the admin approval screen
 - Delete button available for both unapproved/denied users and approved users
-- When a user is deleted, all their related data (people, organizations, dates) is automatically deleted
+- When a user is deleted, all their related data (people, teams, dates) is automatically deleted
 - Added WordPress hook to clean up user posts when user is deleted via any method
 
 ### Changed
@@ -1640,9 +1640,9 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.8.0] - 2026-01-04
 
 ### Changed
-- Renamed "Companies" to "Organizations" throughout the user interface
+- Renamed "Teams" to "Teams" throughout the user interface
 - Updated all user-facing labels, navigation items, page titles, and form labels
-- Post type slug (`company`) and API endpoints (`/wp/v2/companies`) remain unchanged for backward compatibility
+- Post type slug (`team`) and API endpoints (`/wp/v2/teams`) remain unchanged for backward compatibility
 - Updated documentation to reflect the new terminology
 
 ## [1.7.1] - 2026-01-04
@@ -1756,19 +1756,19 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.4.7] - 2026-01-04
 
 ### Changed
-- Changed company logo backgrounds from gray to white for better visibility
+- Changed team logo backgrounds from gray to white for better visibility
 
 ## [1.4.6] - 2026-01-04
 
 ### Changed
-- Increased company logo size in work history from 10x10 to 20x20 (2x bigger)
-- Increased company logo size on company detail page from 16x16 to 24x24 (1.5x bigger)
+- Increased team logo size in work history from 10x10 to 20x20 (2x bigger)
+- Increased team logo size on team detail page from 16x16 to 24x24 (1.5x bigger)
 
 ## [1.4.5] - 2026-01-04
 
 ### Changed
-- Changed company logo display from `object-cover` to `object-contain` so logos are fully visible without cropping
-- Added light gray background to company logo containers for better visibility
+- Changed team logo display from `object-cover` to `object-contain` so logos are fully visible without cropping
+- Added light gray background to team logo containers for better visibility
 
 ## [1.4.4] - 2026-01-04
 
@@ -1825,14 +1825,14 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Added
 - Custom "Stadion User" role automatically created on theme activation
-- Role has minimal permissions: can create/edit/delete their own people and companies, upload files
+- Role has minimal permissions: can create/edit/delete their own people and teams, upload files
 - Role cannot access WordPress admin settings, manage users, or install plugins/themes
 - Role is automatically removed on theme deactivation (users reassigned to Subscriber)
 
 ## [1.3.0] - 2026-01-04
 
 ### Removed
-- Removed sharing functionality - the `shared_with` ACF field has been removed from all post types (person, company, important_date)
+- Removed sharing functionality - the `shared_with` ACF field has been removed from all post types (person, team, important_date)
 - Users can now only see posts they created themselves
 - Removed sharing tab from person fields in ACF
 - Removed all sharing-related logic from access control, reminders, and import classes
@@ -1845,16 +1845,16 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.2.7] - 2026-01-04
 
 ### Changed
-- Administrators are now restricted on the frontend - they can only see and access people/companies/dates they created themselves
+- Administrators are now restricted on the frontend - they can only see and access people/teams/dates they created themselves
 - Administrators still have full access in the WordPress admin area for system management
 - This ensures data privacy is maintained even for administrators when using the frontend React SPA
 
 ## [1.2.6] - 2026-01-04
 
 ### Fixed
-- Person and company deletion now properly redirects to list page after successful deletion
+- Person and team deletion now properly redirects to list page after successful deletion
 - Added error handling for deletion operations with user feedback
-- Trashed people and companies can no longer be accessed - users are automatically redirected to the list page
+- Trashed people and teams can no longer be accessed - users are automatically redirected to the list page
 - Access control now filters out trashed posts in REST API responses
 - Deletion now uses force delete to permanently remove items instead of moving to trash
 
@@ -1875,7 +1875,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Added
 - vCard export: Export individual person contacts as vCard (.vcf) files
 - Export button in PersonDetail page to download contact as vCard
-- vCard export includes: name, nickname, email, phone, mobile, address, website, social media links, organization, job title, and birthday
+- vCard export includes: name, nickname, email, phone, mobile, address, website, social media links, team, job title, and birthday
 - Compatible with Apple Contacts, Outlook, Android, and other vCard-compatible applications
 
 ## [1.2.2] - 2026-01-04
@@ -1922,10 +1922,10 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Fixed
 - Google Contacts import now supports both old and new Google CSV export formats
 - Added support for "First Name"/"Last Name" columns (new format) alongside "Given Name"/"Family Name" (old format)
-- Added support for "Organization Name"/"Organization Title" columns (new format) alongside "Organization 1 - Name"/"Organization 1 - Title" (old format)
+- Added support for "Team Name"/"Team Title" columns (new format) alongside "Team 1 - Name"/"Team 1 - Title" (old format)
 - Added support for "E-mail X - Label"/"Phone X - Label" columns (new format) alongside "E-mail X - Type"/"Phone X - Type" (old format)
 - Added support for `--MM-DD` birthday format (dates without year)
-- Added Organization Department import (appended to job title)
+- Added Team Department import (appended to job title)
 - Improved label formatting to handle Google's special prefixes (e.g., "* Other", "* Work")
 
 ## [1.1.4] - 2026-01-04
@@ -1948,15 +1948,15 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Changed
 - DRY refactor: Created shared `src/utils/formatters.js` utility module
-- Added `decodeHtml()`, `getCompanyName()`, `getPersonName()`, and `getPersonInitial()` utility functions
+- Added `decodeHtml()`, `getTeamName()`, `getPersonName()`, and `getPersonInitial()` utility functions
 - Removed 7 duplicate `decodeHtml` function definitions across codebase
-- All company and person name display now uses consistent utility functions
+- All team and person name display now uses consistent utility functions
 
 ## [1.1.1] - 2026-01-04
 
 ### Fixed
-- Company names now properly decode HTML entities (e.g., "Twynstra &amp; Gudde" now displays as "Twynstra & Gudde")
-- Fixed on People list, Companies list, Company detail page, and Person detail work history
+- Team names now properly decode HTML entities (e.g., "Twynstra &amp; Gudde" now displays as "Twynstra & Gudde")
+- Fixed on People list, Teams list, Team detail page, and Person detail work history
 
 ## [1.1.0] - 2026-01-04
 
@@ -1964,7 +1964,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - vCard import: Import contacts from vCard (.vcf) files exported from Apple Contacts, Outlook, Android, or any vCard-compatible app
 - Google Contacts import: Import contacts from Google Contacts CSV export files
 - Import page: New tabbed interface for selecting between vCard, Google Contacts, and Monica CRM import methods
-- Both imports support: names, nicknames, phone numbers, emails, addresses, websites/social media, organizations with job titles, birthdays, notes, and photos (vCard only)
+- Both imports support: names, nicknames, phone numbers, emails, addresses, websites/social media, teams with job titles, birthdays, notes, and photos (vCard only)
 - Duplicate detection: Contacts with matching names are updated instead of duplicated
 - Multi-contact support: vCard files containing multiple contacts are fully supported
 
@@ -1996,7 +1996,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.0.121] - 2026-01-04
 
 ### Fixed
-- Dashboard statistics now respect access control: new users see only their own people/companies/dates counts, not totals from all users
+- Dashboard statistics now respect access control: new users see only their own people/teams/dates counts, not totals from all users
 - Fixed `wp_count_posts()` bypassing access control by using `get_accessible_post_ids()` for non-admin users
 
 ## [1.0.120] - 2026-01-04
@@ -2040,8 +2040,8 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.0.114] - 2026-01-04
 
 ### Fixed
-- Photo uploads now use properly named files based on person/company name instead of original filename
-- New REST API endpoints: `/stadion/v1/people/{id}/photo` and `/stadion/v1/companies/{id}/logo/upload`
+- Photo uploads now use properly named files based on person/team name instead of original filename
+- New REST API endpoints: `/stadion/v1/people/{id}/photo` and `/stadion/v1/teams/{id}/logo/upload`
 - Files are saved as `{sanitized-name}.{ext}` (e.g., `john-doe.jpg`) for consistent file paths
 
 ## [1.0.113] - 2026-01-04
@@ -2471,7 +2471,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.0.62] - 2024-12-19
 
 ### Changed
-- Companies list: Companies are now sorted alphabetically by name
+- Teams list: Teams are now sorted alphabetically by name
 
 ## [1.0.61] - 2024-12-19
 
@@ -2481,29 +2481,29 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.0.60] - 2024-12-19
 
 ### Fixed
-- Company form: Fixed `getCompany` API method to accept params (including `_embed`), ensuring logos display on company list and in work history
-- Company form: Added explicit query refetching after logo upload to ensure embedded media data is refreshed
+- Team form: Fixed `getTeam` API method to accept params (including `_embed`), ensuring logos display on team list and in work history
+- Team form: Added explicit query refetching after logo upload to ensure embedded media data is refreshed
 
 ## [1.0.59] - 2024-12-19
 
 ### Fixed
-- Company form: Created custom REST endpoint to set company logo using WordPress `set_post_thumbnail()` function, ensuring featured image is properly saved
+- Team form: Created custom REST endpoint to set team logo using WordPress `set_post_thumbnail()` function, ensuring featured image is properly saved
 
 ## [1.0.58] - 2024-12-19
 
 ### Fixed
-- Company form: Fixed logo upload payload structure - featured_media now properly saved
+- Team form: Fixed logo upload payload structure - featured_media now properly saved
 
 ## [1.0.57] - 2024-12-19
 
 ### Fixed
-- Company detail: Logo now properly loads and displays on company detail page
+- Team detail: Logo now properly loads and displays on team detail page
 
 ## [1.0.56] - 2024-12-19
 
 ### Added
-- Company form: Logo upload functionality when editing a company
-- Person detail: Company logos now displayed in work history section instead of generic icon
+- Team form: Logo upload functionality when editing a team
+- Person detail: Team logos now displayed in work history section instead of generic icon
 
 ## [1.0.55] - 2024-12-19
 
@@ -2606,7 +2606,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.0.39] - 2024-12-19
 
 ### Fixed
-- Company detail: Employees with end dates in the future are now correctly shown as current employees, not former
+- Team detail: Employees with end dates in the future are now correctly shown as current employees, not former
 
 ## [1.0.38] - 2024-12-19
 
@@ -2680,34 +2680,34 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.0.28] - 2024-12-19
 
 ### Changed
-- Company detail: Removed person-level access control restriction - if you can view a company, you can see all its employees
-- Company detail: Now checks company access instead of filtering employees by person-level access permissions
+- Team detail: Removed person-level access control restriction - if you can view a team, you can see all its employees
+- Team detail: Now checks team access instead of filtering employees by person-level access permissions
 
 ## [1.0.27] - 2024-12-19
 
 ### Fixed
-- Company detail: Fixed company people query by removing unreliable meta_query with ACF repeater fields and filtering in PHP instead
-- Company detail: Now properly finds people by checking work_history using ACF's get_field() function which handles repeater fields correctly
+- Team detail: Fixed team people query by removing unreliable meta_query with ACF repeater fields and filtering in PHP instead
+- Team detail: Now properly finds people by checking work_history using ACF's get_field() function which handles repeater fields correctly
 
 ## [1.0.26] - 2024-12-19
 
 ### Fixed
-- Company detail: Fixed bug where employees weren't showing due to missing admin check in access control filtering
-- Company detail: Fixed type comparison issue between company IDs (string vs integer) that prevented matching work history entries
+- Team detail: Fixed bug where employees weren't showing due to missing admin check in access control filtering
+- Team detail: Fixed type comparison issue between team IDs (string vs integer) that prevented matching work history entries
 
 ## [1.0.25] - 2024-12-19
 
 ### Changed
-- Performance: Optimized company people query to apply access control filtering early, reducing query scope
-- Performance: People list now batches company fetches into a single API call instead of individual queries (fixes N+1 query problem)
+- Performance: Optimized team people query to apply access control filtering early, reducing query scope
+- Performance: People list now batches team fetches into a single API call instead of individual queries (fixes N+1 query problem)
 - Performance: Made `get_accessible_post_ids` method public in access control class for reuse in optimized queries
 
 ## [1.0.24] - 2024-12-19
 
 ### Changed
-- Company detail: Reorganized employee display into two separate sections: "Current Employees" and "Former Employees"
-- Company detail: Each section now has its own card for better visual separation
-- Company detail: Improved empty states for both current and former employee sections
+- Team detail: Reorganized employee display into two separate sections: "Current Employees" and "Former Employees"
+- Team detail: Each section now has its own card for better visual separation
+- Team detail: Improved empty states for both current and former employee sections
 
 ## [1.0.23] - 2024-12-19
 
@@ -2716,7 +2716,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - People list: Added lazy loading for person thumbnails to improve page load performance
 - Dashboard: Added lazy loading for person thumbnails in Recent People and Reminders sections
 - Dates list: Added lazy loading for person thumbnails
-- Company detail: Added lazy loading for employee thumbnails
+- Team detail: Added lazy loading for employee thumbnails
 
 ## [1.0.22] - 2024-12-19
 
@@ -2766,7 +2766,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Changed
 - People list: People are now sorted alphabetically by last name (with first name as secondary sort)
-- People list: Company name is now displayed below each person's name (shows current company or most recent)
+- People list: Team name is now displayed below each person's name (shows current team or most recent)
 
 ## [1.0.13] - 2024-12-19
 
@@ -2811,7 +2811,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Changed
 - Person detail page: Work History section now always visible (even when empty)
-- Person detail page: Company names now displayed instead of "View Company" link in work history
+- Person detail page: Team names now displayed instead of "View Team" link in work history
 - Person detail page: Added "Add Work History" button to Work History section
 
 ### Added
@@ -2842,7 +2842,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.0.4] - 2024-12-19
 
 ### Fixed
-- Fixed 404 errors when navigating to individual person, company, or date pages
+- Fixed 404 errors when navigating to individual person, team, or date pages
 - WordPress now properly serves index.php for all app routes, allowing React Router to handle routing
 - Disabled rewrite rules for custom post types to prevent URL conflicts
 - Fixed React error #310 ("Rendered more hooks than during the previous render") by removing `useParams()` from `useRouteTitle` hook
@@ -2865,7 +2865,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Fixed
 - Page title now updates dynamically based on current route instead of always showing "Page not found"
-- Document title now shows appropriate page names (Dashboard, People, Companies, etc.) and entity names for detail pages
+- Document title now shows appropriate page names (Dashboard, People, Teams, etc.) and entity names for detail pages
 
 ## [1.0.1] - 2024-12-19
 

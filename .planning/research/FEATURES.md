@@ -52,7 +52,7 @@ Features that set Stadion apart. Not expected, but valued.
 | **Conflict queue with manual resolution** | Let users review when both sides changed | High | Most CRMs auto-overwrite without notice |
 | **Per-contact sync control** | Toggle sync on/off for individual contacts | Low | Privacy control for sensitive contacts |
 | **Sync audit log** | Full history of what synced when | Medium | Enterprise-grade accountability |
-| **Work history auto-creation** | Create companies from Google organization data | Medium | Reduces manual data entry |
+| **Work history auto-creation** | Create teams from Google team data | Medium | Reduces manual data entry |
 | **Graceful deletion handling** | Unlink vs propagate delete as user choice | Medium | Prevents accidental data loss |
 | **View in Google Contacts link** | One-click to see contact in Google | Low | Nice UX touch |
 | **Sync from "Other Contacts"** | Access contacts auto-created from email replies | Low | Many users have more contacts there than in "My Contacts" |
@@ -200,7 +200,7 @@ What other CRMs do.
 - Configurable sync preferences
 
 **Less Annoying CRM:**
-- Honest about limitations: "Only default contact/company fields sync - custom fields will not sync"
+- Honest about limitations: "Only default contact/team fields sync - custom fields will not sync"
 - Warns users about conflict overwrites
 
 ### Stadion Positioning

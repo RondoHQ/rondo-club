@@ -13,7 +13,7 @@ provides:
   - Email-based duplicate detection for person matching
   - Photo sideloading to WordPress media library
   - Birthday creation as important_date posts
-  - Work history creation with company linking
+  - Work history creation with team linking
 affects: [80-02 frontend import UI, 81-export-to-google, future sync phases]
 
 # Tech tracking
@@ -64,7 +64,7 @@ completed: 2026-01-17
 - Email-based duplicate detection searching ACF contact_info repeater
 - Photo sideloading with Google URL size parameter handling
 - Birthday creation as important_date posts with date_type taxonomy
-- Work history creation with automatic company lookup/creation
+- Work history creation with automatic team lookup/creation
 - Token refresh handling integrated with GoogleOAuth infrastructure
 
 ## Task Commits

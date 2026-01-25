@@ -1,6 +1,6 @@
 # Access Control
 
-This document describes the row-level security system that controls who can see and edit contacts, companies, and dates in Stadion.
+This document describes the row-level security system that controls who can see and edit contacts, teams, and dates in Stadion.
 
 ## Overview
 
@@ -61,7 +61,7 @@ The access control system is implemented in `includes/class-access-control.php` 
 Access control applies to these post types:
 
 - `person` - Contact records
-- `company` - Company records
+- `team` - Team records
 - `important_date` - Important date records
 
 Standard WordPress posts and pages are not affected.
@@ -324,7 +324,7 @@ Stadion automatically creates a custom user role called **"Stadion User"** (`sta
 - Access WordPress admin settings
 - Install plugins or themes
 - Edit themes or plugins
-- Access any WordPress admin areas outside of People, Companies, and Dates
+- Access any WordPress admin areas outside of People, Teams, and Dates
 
 The role is automatically registered on theme activation and removed on theme deactivation (users are reassigned to Subscriber role).
 

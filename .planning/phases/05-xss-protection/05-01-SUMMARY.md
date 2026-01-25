@@ -51,7 +51,7 @@ completed: 2026-01-13
 ## Accomplishments
 
 - Added three protected sanitization helper methods to STADION_REST_Base class
-- Updated format_person_summary, format_company_summary, and format_date to use sanitization
+- Updated format_person_summary, format_team_summary, and format_date to use sanitization
 - Sanitized remaining response fields in get_all_todos() and get_investments()
 
 ## Task Commits

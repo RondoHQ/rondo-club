@@ -19,7 +19,7 @@ score: 4/4 must-haves verified
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
 | 1 | New Stadion contact appears in user's Google Contacts after sync | VERIFIED | `on_person_saved()` hook triggers `queue_export()` which schedules `stadion_google_contact_export` cron job. `export_contact()` calls `create_google_contact()` which uses People API `createContact()`. Lines 52-148, 254-316 |
-| 2 | Stadion contact fields (name, email, phone, etc.) are correctly mapped to Google format | VERIFIED | Complete field mapping methods: `build_name()` (540-559), `build_email_addresses()` (567-595), `build_phone_numbers()` (603-638), `build_urls()` (646-683), `build_addresses()` (691-741), `build_organizations()` (749-794). All use Google API objects (Name, EmailAddress, PhoneNumber, Address, Organization, Url) |
+| 2 | Stadion contact fields (name, email, phone, etc.) are correctly mapped to Google format | VERIFIED | Complete field mapping methods: `build_name()` (540-559), `build_email_addresses()` (567-595), `build_phone_numbers()` (603-638), `build_urls()` (646-683), `build_addresses()` (691-741), `build_teams()` (749-794). All use Google API objects (Name, EmailAddress, PhoneNumber, Address, Team, Url) |
 | 3 | Photos uploaded from Stadion appear in Google Contacts | VERIFIED | `upload_photo()` method (443-489) reads featured image via `get_post_thumbnail_id()`, base64 encodes it, and calls `updateContactPhoto()` API. Called after both create (309) and update (356) operations |
 | 4 | User can bulk export existing unlinked contacts to Google | VERIFIED | REST endpoint `POST /stadion/v1/google-contacts/bulk-export` (120-129), Settings UI bulk export button (2263-2330 in Settings.jsx), `bulk_export_unlinked()` method (926-1015) with sequential processing and 100ms delay |
 
@@ -50,7 +50,7 @@ score: 4/4 must-haves verified
 | Requirement | Status | Supporting Evidence |
 |-------------|--------|---------------------|
 | EXPORT-01: Push new Stadion contacts to Google | SATISFIED | `create_google_contact()` uses `createContact()` API |
-| EXPORT-02: Reverse field mapping | SATISFIED | All `build_*()` methods (name, email, phone, url, address, organization) |
+| EXPORT-02: Reverse field mapping | SATISFIED | All `build_*()` methods (name, email, phone, url, address, team) |
 | EXPORT-03: Upload photos to Google | SATISFIED | `upload_photo()` with base64 encoding and `updateContactPhoto()` |
 | EXPORT-04: Store returned resourceName | SATISFIED | `store_google_ids()` saves `_google_contact_id`, `_google_etag`, `_google_last_export` meta |
 | EXPORT-05: Bulk export unlinked contacts | SATISFIED | `bulk_export_unlinked()` + REST endpoint + Settings UI |
@@ -97,7 +97,7 @@ No stub patterns, TODO comments, or placeholder content found in phase-modified 
 Phase 81 (Export to Google) has been verified as **PASSED**. All four success criteria from the ROADMAP are met:
 
 1. **Auto-export on save** - Implemented via `save_post_person` hook with async WP-Cron processing
-2. **Field mapping** - Complete reverse mapping of all contact fields (names, emails, phones, URLs, addresses, organizations)
+2. **Field mapping** - Complete reverse mapping of all contact fields (names, emails, phones, URLs, addresses, teams)
 3. **Photo upload** - Featured image upload via base64 encoding to Google People API
 4. **Bulk export** - REST endpoint and Settings UI for exporting all unlinked contacts
 

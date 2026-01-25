@@ -55,7 +55,7 @@ completed: 2026-01-14
 - Main bundle reduced from 460.83 KB to 49.53 KB (89% reduction)
 - TipTap editor (~370 KB) now only loads when opening modals
 - Initial page load reduced from ~767 KB to ~400 KB total
-- All four quick-add modals (Person, Organization, Todo, Date) properly lazy loaded
+- All four quick-add modals (Person, Team, Todo, Date) properly lazy loaded
 
 ## Task Commits
 
@@ -80,7 +80,7 @@ Each task was committed atomically:
 | RichTextEditor-*.js | (in main) | 370.93 KB | (extracted) |
 | GlobalTodoModal-*.js | (in main) | 6.18 KB | (extracted) |
 | PersonEditModal-*.js | (in main) | 8.93 KB | (extracted) |
-| CompanyEditModal-*.js | (in main) | 11.96 KB | (extracted) |
+| TeamEditModal-*.js | (in main) | 11.96 KB | (extracted) |
 | ImportantDateModal-*.js | (in main) | 7.20 KB | (extracted) |
 
 ## Decisions Made

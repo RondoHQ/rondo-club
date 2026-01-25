@@ -22,7 +22,7 @@ score: 5/5 must-haves verified
 | 2 | Contact details (name, email, phone, address, birthday) are correctly mapped | VERIFIED | Field mapping methods exist: `import_names()` (line 338), `import_contact_info()` (line 375), `import_addresses()` (line 444), `import_birthday()` (line 571) |
 | 3 | Duplicate contacts are detected by email and merged rather than duplicated | VERIFIED | `find_by_email()` (line 271) searches ACF contact_info repeater; fill-gaps-only pattern in all import methods (check `get_field()` before `update_field()`) |
 | 4 | Photos from Google appear on Stadion person profiles | VERIFIED | `import_photo()` (line 665) calls `sideload_image()` (line 718) with WordPress media library integration |
-| 5 | Work history is created from Google organization data | VERIFIED | `import_work_history()` (line 498) calls `get_or_create_company()` (line 750) and creates work_history ACF entries |
+| 5 | Work history is created from Google team data | VERIFIED | `import_work_history()` (line 498) calls `get_or_create_team()` (line 750) and creates work_history ACF entries |
 
 **Score:** 5/5 truths verified
 
@@ -57,7 +57,7 @@ score: 5/5 must-haves verified
 | IMPORT-06: Track sync timestamp | SATISFIED | `store_google_ids()` saves `_google_last_import` |
 | IMPORT-07: Sideload photos | SATISFIED | `import_photo()` + `sideload_image()` |
 | IMPORT-08: Create birthday as important_date | SATISFIED | `import_birthday()` creates important_date posts |
-| IMPORT-09: Create company from organization data | SATISFIED | `import_work_history()` + `get_or_create_company()` |
+| IMPORT-09: Create team from team data | SATISFIED | `import_work_history()` + `get_or_create_team()` |
 
 ### Anti-Patterns Found
 
@@ -99,11 +99,11 @@ Phase 80 "Import from Google" is fully implemented and verified:
 - Email-based duplicate detection with fill-gaps-only pattern
 - Photo sideloading to WordPress media library
 - Birthday creation as `important_date` posts with taxonomy
-- Company creation/linking in `work_history`
+- Team creation/linking in `work_history`
 
 **API:**
 - REST endpoint `POST /stadion/v1/google-contacts/import` triggers import
-- Returns detailed stats (imported, updated, skipped, photos, dates, companies)
+- Returns detailed stats (imported, updated, skipped, photos, dates, teams)
 - Error handling stores last_error for UI feedback
 
 **Frontend:**

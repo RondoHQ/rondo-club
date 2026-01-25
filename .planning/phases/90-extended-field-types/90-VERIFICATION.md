@@ -22,7 +22,7 @@ score: 5/5 must-haves verified
 | 2 | File field allows upload with download link display | VERIFIED | Backend: `return_format`, `library`, `min_size`, `max_size`, `mime_types` in UPDATABLE_PROPERTIES (lines 56, 74, 79-81). Frontend: case 'file' in renderTypeOptions() (lines 903-943) with return format and library selectors. REST API: file params (lines 495-506). |
 | 3 | Link field captures URL and display text pair | VERIFIED | Backend: link type handled natively by ACF (no special options needed). Frontend: case 'link' in renderTypeOptions() (lines 945-959) shows informational text explaining native ACF handling. |
 | 4 | Color field provides color picker interface | VERIFIED | Backend: `enable_opacity` in UPDATABLE_PROPERTIES (line 83). Frontend: case 'color_picker' in renderTypeOptions() (lines 961-1018) with @uiw/react-color-sketch Sketch component. package.json: "@uiw/react-color-sketch": "^2.9.2" (line 22). |
-| 5 | Relationship field links to People or Organizations with search | VERIFIED | Backend: `post_type`, `filters` in UPDATABLE_PROPERTIES (lines 85-86). Frontend: case 'relationship' in renderTypeOptions() (lines 1020-1134) with post type checkboxes (person, company), cardinality selection (single/multiple), and return format. REST API: post_type and filters params (lines 508-517). |
+| 5 | Relationship field links to People or Teams with search | VERIFIED | Backend: `post_type`, `filters` in UPDATABLE_PROPERTIES (lines 85-86). Frontend: case 'relationship' in renderTypeOptions() (lines 1020-1134) with post type checkboxes (person, team), cardinality selection (single/multiple), and return format. REST API: post_type and filters params (lines 508-517). |
 
 **Score:** 5/5 truths verified
 
@@ -70,7 +70,7 @@ No TODO, FIXME, or stub patterns detected in the implementation files.
 **Why human:** Requires actual file upload and visual verification of preview rendering
 
 ### 2. File Field Upload Flow
-**Test:** Create a File field for Organizations, test file upload functionality (once Phase 91 is complete)
+**Test:** Create a File field for Teams, test file upload functionality (once Phase 91 is complete)
 **Expected:** Media library opens, file can be selected/uploaded, download link displays
 **Why human:** Requires actual file upload and browser behavior verification
 
@@ -85,11 +85,11 @@ No TODO, FIXME, or stub patterns detected in the implementation files.
 **Why human:** Touch/click interaction and visual rendering verification
 
 ### 5. Relationship Field Selection
-**Test:** Create a Relationship field linking to People and Organizations, test selection interface (once Phase 91 is complete)
-**Expected:** Can search and select People/Organizations, single/multiple cardinality works correctly
+**Test:** Create a Relationship field linking to People and Teams, test selection interface (once Phase 91 is complete)
+**Expected:** Can search and select People/Teams, single/multiple cardinality works correctly
 **Why human:** Search interface and selection behavior needs interactive testing
 
-**Note:** Full human verification will be more comprehensive after Phase 91 (Detail View Integration) when fields can actually be rendered and edited on Person/Organization pages. Current human verification focuses on Settings UI configuration.
+**Note:** Full human verification will be more comprehensive after Phase 91 (Detail View Integration) when fields can actually be rendered and edited on Person/Team pages. Current human verification focuses on Settings UI configuration.
 
 ### Gaps Summary
 
@@ -103,7 +103,7 @@ No gaps found. All 5 observable truths are verified:
 
 4. **Color field** - Backend supports enable_opacity. Frontend integrates @uiw/react-color-sketch with Sketch component, hex input, and preview swatch.
 
-5. **Relationship field** - Backend supports post_type array and filters. Frontend provides post type checkboxes (People, Organizations), cardinality selection (single/multiple with optional max), and return format selector.
+5. **Relationship field** - Backend supports post_type array and filters. Frontend provides post type checkboxes (People, Teams), cardinality selection (single/multiple with optional max), and return format selector.
 
 All artifacts exist, are substantive (2294 total lines across key files), and are properly wired together.
 

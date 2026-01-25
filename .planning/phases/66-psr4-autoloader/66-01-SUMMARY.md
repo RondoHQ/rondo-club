@@ -26,7 +26,7 @@ All converted to `Stadion\REST` namespace:
 | class-rest-base.php | STADION_REST_Base | Stadion\REST\Base |
 | class-rest-api.php | STADION_REST_API | Stadion\REST\Api |
 | class-rest-people.php | STADION_REST_People | Stadion\REST\People |
-| class-rest-companies.php | STADION_REST_Companies | Stadion\REST\Companies |
+| class-rest-teams.php | STADION_REST_Teams | Stadion\REST\Teams |
 | class-rest-todos.php | STADION_REST_Todos | Stadion\REST\Todos |
 | class-rest-workspaces.php | STADION_REST_Workspaces | Stadion\REST\Workspaces |
 | class-rest-slack.php | STADION_REST_Slack | Stadion\REST\Slack |

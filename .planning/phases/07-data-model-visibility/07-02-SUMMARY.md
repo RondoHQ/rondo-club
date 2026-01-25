@@ -2,7 +2,7 @@
 
 ## Overview
 
-Added visibility and sharing post meta fields to Person, Company, and Important Date post types to enable contacts to be marked as private, workspace-visible, or shared with specific users.
+Added visibility and sharing post meta fields to Person, Team, and Important Date post types to enable contacts to be marked as private, workspace-visible, or shared with specific users.
 
 ## Changes Made
 
@@ -13,7 +13,7 @@ Added visibility and sharing post meta fields to Person, Company, and Important 
 Created ACF field group with:
 - Group key: `group_visibility_settings`
 - Title: "Visibility Settings"
-- Location: Person OR Company OR Important Date post types
+- Location: Person OR Team OR Important Date post types
 - Position: side (sidebar)
 - Menu order: 100 (after main content)
 
@@ -65,7 +65,7 @@ Added `STADION_Visibility` to autoloader in `functions.php`.
 ## Verification
 
 - [x] ACF field group JSON file created with correct structure
-- [x] Field group targets all three post types (person, company, important_date)
+- [x] Field group targets all three post types (person, team, important_date)
 - [x] Visibility field in sidebar position
 - [x] STADION_Visibility class has no PHP syntax errors
 - [x] Class properly added to autoloader
@@ -82,7 +82,7 @@ Added `STADION_Visibility` to autoloader in `functions.php`.
 
 ## Commits
 
-1. `feat(07-02): add visibility ACF field group for Person/Company/Important Date` (a63fdcb)
+1. `feat(07-02): add visibility ACF field group for Person/Team/Important Date` (a63fdcb)
 2. `feat(07-02): add STADION_Visibility helper class for visibility and sharing` (7f21620)
 
 ## Next Steps

@@ -8,7 +8,7 @@
 
 This phase extends the custom fields system built in Phase 89 with five advanced field types: Image, File, Link, Color, and Relationship. The existing custom fields infrastructure (Manager class, REST API, Settings UI) provides a solid foundation that needs extension rather than replacement.
 
-The approach leverages ACF's native field types which are already well-integrated with WordPress. Image and File fields use ACF's built-in types with media attachment storage. Link fields use ACF's link type returning URL/title/target arrays. Color fields use ACF's color_picker with hex-only format. Relationship fields use ACF's post_object type configured for People and Organizations.
+The approach leverages ACF's native field types which are already well-integrated with WordPress. Image and File fields use ACF's built-in types with media attachment storage. Link fields use ACF's link type returning URL/title/target arrays. Color fields use ACF's color_picker with hex-only format. Relationship fields use ACF's post_object type configured for People and Teams.
 
 **Primary recommendation:** Extend the existing Manager class with new field type configurations and the FieldFormPanel with type-specific options for each extended type. Use WordPress REST API for media uploads (direct to /wp/v2/media), ACF's native field types for all storage, and @uiw/react-color for the color picker UI.
 
@@ -111,7 +111,7 @@ The Phase 89 implementation provides:
 ```php
 [
     'type' => 'post_object',
-    'post_type' => ['person', 'company'],  // Both types always
+    'post_type' => ['person', 'team'],  // Both types always
     'return_format' => 'id',  // Returns post ID(s)
     'multiple' => 0,  // 0 = single, 1 = multiple (configurable)
     'allow_null' => 1,
@@ -181,7 +181,7 @@ Problems that look simple but have existing solutions:
 | Color picker UI | Custom color input/canvas | @uiw/react-color-sketch | Complex UI, accessibility, touch support |
 | File upload handling | Custom upload endpoint | /wp/v2/media REST endpoint | Handles all WP media processing |
 | File type icons | Custom icon mapping | lucide-react File/Image icons or mime-type detection | Standard icon library already in use |
-| Relationship search | Custom entity search | Existing prmApi.search() endpoint | Already searches People and Organizations |
+| Relationship search | Custom entity search | Existing prmApi.search() endpoint | Already searches People and Teams |
 | Image preview | Custom preview component | HTML img tag with attachment URL | ACF returns full image data |
 
 **Key insight:** ACF already handles all the complex field storage, validation, and retrieval. The work is in UI components and connecting them to ACF field configurations.
@@ -305,12 +305,12 @@ const handleFileUpload = async (file) => {
 ### Relationship Selector Pattern
 ```javascript
 // Based on existing PeopleSelector in ImportantDateModal.jsx
-// Extend to search both People and Organizations
+// Extend to search both People and Teams
 const searchEntities = async (query) => {
   const response = await prmApi.search(query);
   return [
     ...response.data.people.map(p => ({ ...p, type: 'person' })),
-    ...response.data.companies.map(c => ({ ...c, type: 'company' })),
+    ...response.data.teams.map(c => ({ ...c, type: 'team' })),
   ];
 };
 ```

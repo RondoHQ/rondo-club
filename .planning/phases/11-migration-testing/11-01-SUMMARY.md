@@ -9,7 +9,7 @@
 - **Commit**: eb6ec1b
 - **Changes**: Added `STADION_MultiUser_CLI_Command` class with `migrate` subcommand that:
   - Displays welcome message explaining the migration
-  - Sets visibility to "private" on all person, company, and important_date posts without visibility
+  - Sets visibility to "private" on all person, team, and important_date posts without visibility
   - Shows progress per post type and summary with counts
   - Supports `--dry-run` flag to preview changes without applying them
   - Provides next steps guidance after migration
@@ -18,7 +18,7 @@
 - **Status**: Complete
 - **Commit**: eb6ec1b (same commit, both tasks in same file)
 - **Changes**: Added `validate` subcommand that:
-  - Checks all person, company, and important_date posts for `_visibility` meta
+  - Checks all person, team, and important_date posts for `_visibility` meta
   - Reports counts with [OK] or [!] status per post type
   - Returns success if all posts have visibility, warning if some missing
   - Suggests running migrate command if validation fails

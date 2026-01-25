@@ -69,7 +69,7 @@ stadion/
 - Purpose: Route page components
 - Contains: Full page views for each route
 - Key files: `Dashboard.jsx`, `Login.jsx`
-- Subdirectories: `People/`, `Companies/`, `Dates/`, `Todos/`, `Settings/`
+- Subdirectories: `People/`, `Teams/`, `Dates/`, `Todos/`, `Settings/`
 
 **src/utils/**
 - Purpose: Pure utility functions
@@ -137,7 +137,7 @@ stadion/
 **Directories:**
 - lowercase for all directories
 - Plural for collections (`components/`, `hooks/`, `pages/`)
-- PascalCase for page subdirectories (`People/`, `Companies/`)
+- PascalCase for page subdirectories (`People/`, `Teams/`)
 
 **Special Patterns:**
 - `*Modal.jsx` - Modal dialog components

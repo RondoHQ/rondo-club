@@ -867,20 +867,20 @@ class GoogleContactsExport {
 
 		foreach ( $work_history as $job ) {
 			// Get company name.
-			$company    = $job['company'] ?? null;
-			$company_id = is_object( $company ) ? $company->ID : (int) $company;
+			$team    = $job['team'] ?? null;
+			$team_id = is_object( $team ) ? $team->ID : (int) $team;
 
-			if ( ! $company_id ) {
+			if ( ! $team_id ) {
 				continue;
 			}
 
-			$company_name = get_the_title( $company_id );
-			if ( empty( $company_name ) ) {
+			$team_name = get_the_title( $team_id );
+			if ( empty( $team_name ) ) {
 				continue;
 			}
 
 			$org = new Organization();
-			$org->setName( $company_name );
+			$org->setName( $team_name );
 
 			$job_title = $job['job_title'] ?? '';
 			if ( ! empty( $job_title ) ) {

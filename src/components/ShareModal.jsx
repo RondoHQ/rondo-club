@@ -5,7 +5,7 @@ import { useShares, useAddShare, useRemoveShare, useUserSearch } from '@/hooks/u
 export default function ShareModal({
   isOpen,
   onClose,
-  postType,  // 'people' or 'companies'
+  postType,  // 'people' or 'teams'
   postId,
   postTitle, // For display purposes
 }) {

@@ -11,7 +11,7 @@ use WP_REST_Server;
 /**
  * Tests for WordPress REST API CRUD operations on CPTs.
  *
- * Verifies that standard REST API endpoints work correctly for person, company,
+ * Verifies that standard REST API endpoints work correctly for person, team,
  * and important_date post types with proper access control and ACF field handling.
  */
 class CptCrudTest extends StadionTestCase {
@@ -353,19 +353,19 @@ class CptCrudTest extends StadionTestCase {
 	}
 
 	// =========================================================================
-	// Task 2: Test CRUD for company and important_date CPTs
+	// Task 2: Test CRUD for team and important_date CPTs
 	// =========================================================================
 
 	/**
-	 * Test company CREATE via POST.
+	 * Test team CREATE via POST.
 	 */
-	public function test_company_create_via_rest_api(): void {
+	public function test_team_create_via_rest_api(): void {
 		$user_id = $this->createApprovedStadionUser( 'creator' );
 		wp_set_current_user( $user_id );
 
 		$response = $this->restRequest(
 			'POST',
-			'/wp/v2/companies',
+			'/wp/v2/teams',
 			[
 				'title'  => 'Acme Corp',
 				'status' => 'publish',
@@ -383,27 +383,27 @@ class CptCrudTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test company READ as owner vs non-owner.
+	 * Test team READ as owner vs non-owner.
 	 */
-	public function test_company_read_access_control(): void {
+	public function test_team_read_access_control(): void {
 		$owner_id = $this->createApprovedStadionUser( 'owner' );
 		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		wp_set_current_user( $owner_id );
-		$company_id = $this->createOrganization(
+		$team_id = $this->createOrganization(
 			[
-				'post_title'  => 'Owner Company',
+				'post_title'  => 'Owner Team',
 				'post_author' => $owner_id,
 			]
 		);
 
 		// Owner can read
-		$response = $this->restRequest( 'GET', '/wp/v2/companies/' . $company_id );
-		$this->assertEquals( 200, $response->get_status(), 'Owner should read company' );
+		$response = $this->restRequest( 'GET', '/wp/v2/teams/' . $team_id );
+		$this->assertEquals( 200, $response->get_status(), 'Owner should read team' );
 
 		// Non-owner denied
 		wp_set_current_user( $other_id );
-		$response = $this->restRequest( 'GET', '/wp/v2/companies/' . $company_id );
+		$response = $this->restRequest( 'GET', '/wp/v2/teams/' . $team_id );
 		$status   = $response->get_status();
 		$this->assertTrue(
 			in_array( $status, [ 403, 401 ], true ) || $response->get_data()['code'] === 'rest_forbidden',
@@ -412,14 +412,14 @@ class CptCrudTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test company UPDATE access control.
+	 * Test team UPDATE access control.
 	 */
-	public function test_company_update_access_control(): void {
+	public function test_team_update_access_control(): void {
 		$owner_id = $this->createApprovedStadionUser( 'owner' );
 		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		wp_set_current_user( $owner_id );
-		$company_id = $this->createOrganization(
+		$team_id = $this->createOrganization(
 			[
 				'post_title'  => 'Original Corp',
 				'post_author' => $owner_id,
@@ -429,7 +429,7 @@ class CptCrudTest extends StadionTestCase {
 		// Owner can update
 		$response = $this->restRequest(
 			'PATCH',
-			'/wp/v2/companies/' . $company_id,
+			'/wp/v2/teams/' . $team_id,
 			[
 				'title' => 'Updated Corp',
 			]
@@ -440,7 +440,7 @@ class CptCrudTest extends StadionTestCase {
 		wp_set_current_user( $other_id );
 		$response = $this->restRequest(
 			'PATCH',
-			'/wp/v2/companies/' . $company_id,
+			'/wp/v2/teams/' . $team_id,
 			[
 				'title' => 'Hacked Corp',
 			]
@@ -449,16 +449,16 @@ class CptCrudTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test company DELETE as owner.
+	 * Test team DELETE as owner.
 	 *
 	 * Note: Returns 404 due to access control filter (see person delete test comment).
 	 * The important assertion is that the post is actually trashed.
 	 */
-	public function test_company_delete_as_owner(): void {
+	public function test_team_delete_as_owner(): void {
 		$owner_id = $this->createApprovedStadionUser( 'owner' );
 
 		wp_set_current_user( $owner_id );
-		$company_id = $this->createOrganization(
+		$team_id = $this->createOrganization(
 			[
 				'post_title'  => 'Delete Corp',
 				'post_author' => $owner_id,
@@ -466,11 +466,11 @@ class CptCrudTest extends StadionTestCase {
 		);
 
 		// Verify exists before delete
-		$pre_post = get_post( $company_id );
+		$pre_post = get_post( $team_id );
 		$this->assertEquals( 'publish', $pre_post->post_status );
 
 		// Owner can delete
-		$response = $this->restRequest( 'DELETE', '/wp/v2/companies/' . $company_id );
+		$response = $this->restRequest( 'DELETE', '/wp/v2/teams/' . $team_id );
 		$status   = $response->get_status();
 		$this->assertTrue(
 			in_array( $status, [ 200, 404 ], true ),
@@ -478,19 +478,19 @@ class CptCrudTest extends StadionTestCase {
 		);
 
 		// Verify post is trashed
-		$post = get_post( $company_id );
+		$post = get_post( $team_id );
 		$this->assertEquals( 'trash', $post->post_status, 'Post should be trashed' );
 	}
 
 	/**
-	 * Test company DELETE denied for non-owner.
+	 * Test team DELETE denied for non-owner.
 	 */
-	public function test_company_delete_denied_for_non_owner(): void {
+	public function test_team_delete_denied_for_non_owner(): void {
 		$owner_id = $this->createApprovedStadionUser( 'owner' );
 		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		wp_set_current_user( $owner_id );
-		$company_id = $this->createOrganization(
+		$team_id = $this->createOrganization(
 			[
 				'post_title'  => 'Delete Corp',
 				'post_author' => $owner_id,
@@ -499,7 +499,7 @@ class CptCrudTest extends StadionTestCase {
 
 		// Non-owner denied (gets 404 because access control filters the post)
 		wp_set_current_user( $other_id );
-		$response = $this->restRequest( 'DELETE', '/wp/v2/companies/' . $company_id );
+		$response = $this->restRequest( 'DELETE', '/wp/v2/teams/' . $team_id );
 		$status   = $response->get_status();
 		$this->assertTrue(
 			in_array( $status, [ 403, 401, 404 ], true ),
@@ -507,7 +507,7 @@ class CptCrudTest extends StadionTestCase {
 		);
 
 		// Verify still exists
-		$post = get_post( $company_id );
+		$post = get_post( $team_id );
 		$this->assertEquals( 'publish', $post->post_status );
 	}
 
@@ -710,13 +710,13 @@ class CptCrudTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test company ACF fields appear in REST response.
+	 * Test team ACF fields appear in REST response.
 	 */
-	public function test_company_acf_fields_in_rest_response(): void {
+	public function test_team_acf_fields_in_rest_response(): void {
 		$user_id = $this->createApprovedStadionUser( 'acfuser' );
 		wp_set_current_user( $user_id );
 
-		$company_id = $this->createOrganization(
+		$team_id = $this->createOrganization(
 			[
 				'post_title'  => 'ACF Corp',
 				'post_author' => $user_id,
@@ -727,7 +727,7 @@ class CptCrudTest extends StadionTestCase {
 			]
 		);
 
-		$response = $this->restRequest( 'GET', '/wp/v2/companies/' . $company_id );
+		$response = $this->restRequest( 'GET', '/wp/v2/teams/' . $team_id );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -817,13 +817,13 @@ class CptCrudTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test company ACF field update via REST.
+	 * Test team ACF field update via REST.
 	 */
-	public function test_company_acf_field_update_via_rest(): void {
+	public function test_team_acf_field_update_via_rest(): void {
 		$user_id = $this->createApprovedStadionUser( 'acfupdater' );
 		wp_set_current_user( $user_id );
 
-		$company_id = $this->createOrganization(
+		$team_id = $this->createOrganization(
 			[
 				'post_title'  => 'Update Corp',
 				'post_author' => $user_id,
@@ -836,7 +836,7 @@ class CptCrudTest extends StadionTestCase {
 
 		$response = $this->restRequest(
 			'PATCH',
-			'/wp/v2/companies/' . $company_id,
+			'/wp/v2/teams/' . $team_id,
 			[
 				'acf' => [
 					'website' => 'https://new.com',
@@ -845,8 +845,8 @@ class CptCrudTest extends StadionTestCase {
 		);
 
 		$this->assertEquals( 200, $response->get_status() );
-		$this->assertEquals( 'https://new.com', get_field( 'website', $company_id ) );
-		$this->assertEquals( 'Finance', get_field( 'industry', $company_id ), 'industry should be unchanged' );
+		$this->assertEquals( 'https://new.com', get_field( 'website', $team_id ) );
+		$this->assertEquals( 'Finance', get_field( 'industry', $team_id ), 'industry should be unchanged' );
 	}
 
 	/**

@@ -10,7 +10,7 @@ files:
 
 ## Problem
 
-The current Settings/Admin page structure needs reorganization. Currently calendars and contacts sync are separate top-level concerns, but they should be grouped under a unified "Connections" concept.
+The current Settings/Admin page structure needs reteam. Currently calendars and contacts sync are separate top-level concerns, but they should be grouped under a unified "Connections" concept.
 
 Current structure:
 - Settings with various tabs including Calendars, Contacts/Sync

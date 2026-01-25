@@ -61,7 +61,7 @@ completed: 2026-01-17
 - Added Zoom activity type for tracking video calls
 - Renamed Phone call to Phone for brevity across all views
 - Fixed topbar z-index to stay above selection toolbar on People screen
-- Fixed person header spacing between "at" and company name
+- Fixed person header spacing between "at" and team name
 - Released version 4.7.0 and deployed to production
 
 ## Task Commits

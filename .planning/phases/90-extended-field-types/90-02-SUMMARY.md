@@ -95,7 +95,7 @@ None - no external service configuration required.
 
 ## Next Phase Readiness
 - Settings UI complete for all 14 field types (9 basic + 5 extended)
-- Ready for Phase 91: Detail View Rendering (rendering custom field values on Person/Organization detail pages)
+- Ready for Phase 91: Detail View Rendering (rendering custom field values on Person/Team detail pages)
 - No blockers
 
 ---

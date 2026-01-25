@@ -63,7 +63,7 @@ Progress: [██████████] 100% (4/4 phases complete)
 | v4.1 Bug Fixes & Polish | 56-57 | 3 | 2026-01-15 |
 | v4.2 Settings & Stability | 58-60 | 3 | 2026-01-15 |
 | v4.3 Performance & Documentation | 61-63 | 5 | 2026-01-16 |
-| v4.4 Code Organization | 64-66 | 6 | 2026-01-16 |
+| v4.4 Code Team | 64-66 | 6 | 2026-01-16 |
 | v4.5 Calendar Sync Control | 67-68 | 3 | 2026-01-16 |
 | v4.6 Dashboard & Polish | 69-70 | 2 | 2026-01-16 |
 | v4.7 Dark Mode & Activity Polish | 71-72 | 4 | 2026-01-17 |

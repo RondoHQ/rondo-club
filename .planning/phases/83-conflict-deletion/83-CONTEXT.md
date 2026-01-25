@@ -17,7 +17,7 @@ Detect conflicts when contacts are modified in both Stadion and Google since the
 - Conflict occurs only when the SAME field is modified in both systems since last sync
 - Compare actual field values directly (not hashes)
 - Store "last synced" snapshot of field values to detect what changed
-- Track all synced fields: name, email, phone, address, birthday, organization
+- Track all synced fields: name, email, phone, address, birthday, team
 
 ### Resolution strategy
 - Fixed strategy: Stadion always wins (no user configuration)

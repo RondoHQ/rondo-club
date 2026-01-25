@@ -20,7 +20,7 @@ class GoogleContacts {
 		'contacts_imported' => 0,
 		'contacts_updated'  => 0,
 		'contacts_skipped'  => 0,
-		'companies_created' => 0,
+		'teams_created' => 0,
 		'dates_created'     => 0,
 		'notes_created'     => 0,
 		'photos_imported'   => 0,
@@ -28,9 +28,9 @@ class GoogleContacts {
 	];
 
 	/**
-	 * Company name to ID mapping
+	 * Team name to ID mapping
 	 */
-	private array $company_map = [];
+	private array $team_map = [];
 
 	/**
 	 * CSV column headers
@@ -193,8 +193,8 @@ class GoogleContacts {
 		$work_history = get_field( 'work_history', $post_id );
 		if ( ! empty( $work_history ) ) {
 			foreach ( $work_history as $job ) {
-				if ( ! empty( $job['is_current'] ) && ! empty( $job['company'] ) ) {
-					$organization = get_the_title( $job['company'] );
+				if ( ! empty( $job['is_current'] ) && ! empty( $job['team'] ) ) {
+					$organization = get_the_title( $job['team'] );
 					break;
 				}
 			}
@@ -232,7 +232,7 @@ class GoogleContacts {
 	 */
 	private function get_import_summary( array $contacts ): array {
 		$valid_contacts = 0;
-		$companies      = [];
+		$teams      = [];
 		$birthdays      = 0;
 		$notes          = 0;
 		$photos         = 0;
@@ -250,7 +250,7 @@ class GoogleContacts {
 			// Support both old format (Organization 1 - Name) and new format (Organization Name)
 			$org = $this->get_field( $contact, [ 'Organization 1 - Name', 'Organization Name' ] );
 			if ( ! empty( $org ) ) {
-				$companies[ $org ] = true;
+				$teams[ $org ] = true;
 			}
 
 			if ( ! empty( $contact['Birthday'] ) ) {
@@ -268,7 +268,7 @@ class GoogleContacts {
 
 		return [
 			'contacts'        => $valid_contacts,
-			'companies_count' => count( $companies ),
+			'teams_count' => count( $teams ),
 			'birthdays'       => $birthdays,
 			'notes'           => $notes,
 			'photos'          => $photos,
@@ -454,12 +454,12 @@ class GoogleContacts {
 		$department = $this->get_field( $contact, [ 'Organization 1 - Department', 'Organization Department' ] );
 
 		if ( ! empty( $org_name ) || ! empty( $job_title ) ) {
-			$company_id = null;
+			$team_id = null;
 			if ( ! empty( $org_name ) ) {
-				$company_id = $this->get_or_create_company( $org_name );
+				$team_id = $this->get_or_create_company( $org_name );
 			}
 
-			if ( $company_id || $job_title ) {
+			if ( $team_id || $job_title ) {
 				// Combine job title and department if both exist
 				$full_title = $job_title;
 				if ( ! empty( $department ) && ! empty( $job_title ) ) {
@@ -470,7 +470,7 @@ class GoogleContacts {
 
 				$work_history = [
 					[
-						'company'    => $company_id,
+						'team'    => $team_id,
 						'job_title'  => $full_title,
 						'is_current' => true,
 					],
@@ -890,24 +890,24 @@ class GoogleContacts {
 	}
 
 	/**
-	 * Get or create a company
+	 * Get or create a team
 	 */
 	private function get_or_create_company( string $name ): int {
-		if ( isset( $this->company_map[ $name ] ) ) {
-			return $this->company_map[ $name ];
+		if ( isset( $this->team_map[ $name ] ) ) {
+			return $this->team_map[ $name ];
 		}
 
-		// Check if company exists
-		$existing = get_page_by_title( $name, OBJECT, 'company' );
+		// Check if team exists
+		$existing = get_page_by_title( $name, OBJECT, 'team' );
 		if ( $existing ) {
-			$this->company_map[ $name ] = $existing->ID;
+			$this->team_map[ $name ] = $existing->ID;
 			return $existing->ID;
 		}
 
 		// Create new company
 		$post_id = wp_insert_post(
 			[
-				'post_type'   => 'company',
+				'post_type'   => 'team',
 				'post_status' => 'publish',
 				'post_title'  => $name,
 				'post_author' => get_current_user_id(),
@@ -915,8 +915,8 @@ class GoogleContacts {
 		);
 
 		if ( ! is_wp_error( $post_id ) ) {
-			$this->company_map[ $name ] = $post_id;
-			++$this->stats['companies_created'];
+			$this->team_map[ $name ] = $post_id;
+			++$this->stats['teams_created'];
 			return $post_id;
 		}
 

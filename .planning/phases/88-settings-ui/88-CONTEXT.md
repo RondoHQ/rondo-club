@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Admin interface for managing custom field definitions through a Settings subtab. Users can view existing fields, add new fields, edit field properties, and delete/archive fields. Separate field lists for People and Organizations.
+Admin interface for managing custom field definitions through a Settings subtab. Users can view existing fields, add new fields, edit field properties, and delete/archive fields. Separate field lists for People and Teams.
 
 </domain>
 
@@ -26,7 +26,7 @@ Admin interface for managing custom field definitions through a Settings subtab.
 - Form fields: Label (required), Type (required), Description (optional)
 
 ### Entity toggle
-- Tab bar to switch between "People Fields" and "Organization Fields"
+- Tab bar to switch between "People Fields" and "Team Fields"
 - Tab bar positioned below the subtab header, above the field list
 - Generic "Add Field" button (adds to currently selected entity)
 - Remember last selected tab when returning to the page

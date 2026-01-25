@@ -133,7 +133,7 @@ The following items need manual testing because they involve actual Google Conta
 ### Conflict Detection Implementation
 - Three-way comparison correctly implemented: Google value vs Stadion value vs snapshot value
 - Only logs actual conflicts (both changed AND to different values)
-- Field names tracked: first_name, last_name, email, phone, organization
+- Field names tracked: first_name, last_name, email, phone, team
 - Snapshot stored in `_google_synced_fields` post meta with `synced_at` timestamp
 - Snapshot updated after both import (store_google_ids) and export (push_changed_contacts)
 

@@ -41,7 +41,7 @@ export default function VCardImport() {
     onSuccess: () => {
       // Invalidate all relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['people'] });
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
       queryClient.invalidateQueries({ queryKey: ['dates'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
@@ -121,7 +121,7 @@ export default function VCardImport() {
                 <p>Contacts updated: {importMutation.data.stats.contacts_updated}</p>
                 <p>Contacts skipped: {importMutation.data.stats.contacts_skipped}</p>
                 <p>Photos imported: {importMutation.data.stats.photos_imported}</p>
-                <p>Organizations created: {importMutation.data.stats.companies_created}</p>
+                <p>Organizations created: {importMutation.data.stats.teams_created}</p>
                 <p>Birthdays created: {importMutation.data.stats.dates_created}</p>
                 <p>Notes created: {importMutation.data.stats.notes_created}</p>
                 {importMutation.data.stats.errors?.length > 0 && (
@@ -210,10 +210,10 @@ export default function VCardImport() {
                         <Users className="h-4 w-4" />
                         <span>{validationResult.summary.contacts} contacts</span>
                       </div>
-                      {validationResult.summary.companies_count > 0 && (
+                      {validationResult.summary.teams_count > 0 && (
                         <div className="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
                           <Building2 className="h-4 w-4" />
-                          <span>{validationResult.summary.companies_count} organizations</span>
+                          <span>{validationResult.summary.teams_count} organizations</span>
                         </div>
                       )}
                       {validationResult.summary.birthdays > 0 && (

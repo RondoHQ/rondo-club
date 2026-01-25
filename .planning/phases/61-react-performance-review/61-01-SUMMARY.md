@@ -94,9 +94,9 @@ const filteredAndSortedPeople = useMemo(() => {
   // Complex filtering logic
 }, [people, showFavoritesOnly, selectedLabels, ...]);
 
-const companyMap = useMemo(() => {
-  // Company lookup map
-}, [companiesData]);
+const teamMap = useMemo(() => {
+  // Team lookup map
+}, [teamsData]);
 ```
 
 ### 7. useCallback for Stable References (MEDIUM - Already Implemented)
@@ -125,17 +125,17 @@ All images use native lazy loading:
 Batch fetching instead of N+1 queries in PeopleList:
 
 ```jsx
-// Batch fetch all companies at once instead of individual queries
-const { data: companiesData } = useQuery({
-  queryKey: ['companies', 'batch', companyIds.sort().join(',')],
+// Batch fetch all teams at once instead of individual queries
+const { data: teamsData } = useQuery({
+  queryKey: ['teams', 'batch', teamIds.sort().join(',')],
   queryFn: async () => {
-    const response = await wpApi.getCompanies({
+    const response = await wpApi.getTeams({
       per_page: 100,
-      include: companyIds.join(','),
+      include: teamIds.join(','),
     });
     return response.data;
   },
-  enabled: companyIds.length > 0,
+  enabled: teamIds.length > 0,
 });
 ```
 
@@ -214,5 +214,5 @@ The Stadion frontend codebase demonstrates excellent React performance practices
 - `/src/pages/People/PeopleList.jsx` - List rendering patterns
 - `/src/pages/Settings/Settings.jsx` - Tab component patterns
 - `/src/components/PersonEditModal.jsx` - Modal patterns
-- `/src/components/CompanyEditModal.jsx` - Form patterns
+- `/src/components/TeamEditModal.jsx` - Form patterns
 - `/vite.config.js` - Build configuration

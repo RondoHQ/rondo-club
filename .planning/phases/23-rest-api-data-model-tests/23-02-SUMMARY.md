@@ -82,14 +82,14 @@ Each task was committed atomically:
 ### Search (/stadion/v1/search)
 - `test_search_returns_matching_person` - Basic search functionality
 - `test_search_isolation_between_users` - User A cannot see User B's contacts
-- `test_search_across_post_types` - Returns both people and companies
+- `test_search_across_post_types` - Returns both people and teams
 - `test_search_validation_empty_query` - Empty query returns 400
 - `test_search_validation_single_character` - Min 2 chars required
 - `test_search_blocked_for_unapproved_user` - 403 for unapproved
 - `test_search_blocked_for_logged_out_user` - 401 for logged out
 
 ### Dashboard (/stadion/v1/dashboard)
-- `test_dashboard_returns_correct_counts` - Accurate people/companies/dates counts
+- `test_dashboard_returns_correct_counts` - Accurate people/teams/dates counts
 - `test_dashboard_isolation_between_users` - Users see only their own counts
 - `test_dashboard_empty_for_new_user` - New user gets zero counts
 - `test_dashboard_blocked_for_unapproved_user` - 403 for unapproved

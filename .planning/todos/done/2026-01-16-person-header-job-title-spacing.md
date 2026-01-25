@@ -8,14 +8,14 @@ files:
 
 ## Problem
 
-In the person header, the job title and company display is missing a space. It currently shows:
+In the person header, the job title and team display is missing a space. It currently shows:
 
-"<Job title> at<Company>"
+"<Job title> at<Team>"
 
 Instead of:
 
-"<Job title> at <Company>"
+"<Job title> at <Team>"
 
 ## Solution
 
-Find the job title / company display in PersonDetail.jsx header section and add the missing space after "at".
+Find the job title / team display in PersonDetail.jsx header section and add the missing space after "at".

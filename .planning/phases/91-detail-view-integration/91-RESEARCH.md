@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase integrates custom fields into the Person and Organization detail pages. The Stadion codebase already has established patterns for displaying sections on detail pages, editing via modals, and handling ACF data through the REST API. Custom field values are already exposed through ACF's native REST API integration (`show_in_rest: 1` on the field group), so field values are accessible in the `acf` object of person/company responses.
+This phase integrates custom fields into the Person and Team detail pages. The Stadion codebase already has established patterns for displaying sections on detail pages, editing via modals, and handling ACF data through the REST API. Custom field values are already exposed through ACF's native REST API integration (`show_in_rest: 1` on the field group), so field values are accessible in the `acf` object of person/team responses.
 
 The implementation requires:
 1. A new "Custom Fields" section component for detail pages
@@ -14,7 +14,7 @@ The implementation requires:
 3. Type-specific display renderers for the 14 field types
 4. Type-specific input components for editing
 
-**Primary recommendation:** Create a reusable `CustomFieldsSection` component that renders in both PersonDetail and CompanyDetail, with a corresponding `CustomFieldsEditModal` that handles all field types. This matches existing Stadion patterns.
+**Primary recommendation:** Create a reusable `CustomFieldsSection` component that renders in both PersonDetail and TeamDetail, with a corresponding `CustomFieldsEditModal` that handles all field types. This matches existing Stadion patterns.
 
 ## Standard Stack
 
@@ -103,7 +103,7 @@ src/
 ```
 
 ### Pattern 3: ACF Data Access Pattern
-**What:** Custom fields are in `person.acf` or `company.acf` object
+**What:** Custom fields are in `person.acf` or `team.acf` object
 **When to use:** Reading/writing custom field values
 **Example:**
 ```jsx
@@ -139,7 +139,7 @@ const { data: personFields = [], isLoading } = useQuery({
 ```
 
 ### Anti-Patterns to Avoid
-- **Direct state mutation:** Always use `updatePerson.mutateAsync` or `updateCompany.mutateAsync`
+- **Direct state mutation:** Always use `updatePerson.mutateAsync` or `updateTeam.mutateAsync`
 - **Inline editing without confirmation:** Existing patterns use modals, not click-to-edit inline
 - **Bypassing ACF:** Always use `acf` object, never raw post meta
 - **Creating new API endpoints for standard updates:** Use existing `/wp/v2/people/{id}` with `acf` payload
@@ -155,7 +155,7 @@ Problems that look simple but have existing solutions:
 | File/Image upload | Custom upload UI | Existing `prmApi.uploadPersonPhoto` pattern | Handles WordPress media library |
 | Form validation | Custom validation | `react-hook-form` | Already used for all forms |
 | API caching | Custom state | TanStack Query | Already manages all server state |
-| Person/Company search | Custom search | Existing autocomplete patterns | Used in RelationshipEditModal |
+| Person/Team search | Custom search | Existing autocomplete patterns | Used in RelationshipEditModal |
 
 **Key insight:** Every UI pattern needed already exists in Stadion. The main work is type-specific rendering.
 
@@ -187,9 +187,9 @@ Problems that look simple but have existing solutions:
 
 **Resolution:** The field definitions are needed to display values properly (to get label, type, etc.). However, the `/stadion/v1/custom-fields/{post_type}` endpoint requires `manage_options`. We have two options:
 1. Create a new read-only endpoint for non-admins
-2. Include field definitions in the person/company REST response
+2. Include field definitions in the person/team REST response
 
-**Recommendation:** Add field definitions to the REST response via a new `rest_prepare_person/company` filter. This keeps all data in one request and avoids permission complexity.
+**Recommendation:** Add field definitions to the REST response via a new `rest_prepare_person/team` filter. This keeps all data in one request and avoids permission complexity.
 
 ### Pitfall 5: Relationship Field Display
 **What goes wrong:** Relationship fields store post IDs, but we need names/thumbnails for display.
@@ -293,7 +293,7 @@ function FieldDisplay({ field, value }) {
             const postId = typeof item === 'object' ? item.ID : item;
             const name = typeof item === 'object' ? item.post_title : `#${item}`;
             return (
-              <Link key={i} to={`/people/${postId}`} // or /companies/ based on post_type
+              <Link key={i} to={`/people/${postId}`} // or /teams/ based on post_type
                 className="text-accent-600 dark:text-accent-400 hover:underline">
                 {name}
               </Link>
@@ -345,7 +345,7 @@ Things that couldn't be fully resolved:
 1. **Field Definition Access for Non-Admins**
    - What we know: Currently `/stadion/v1/custom-fields/{post_type}` requires `manage_options`
    - What's unclear: Non-admins need field definitions to display values properly
-   - Recommendation: Add field definitions to person/company REST response via `rest_prepare` filter, OR create read-only endpoint for field metadata (label, type, choices only)
+   - Recommendation: Add field definitions to person/team REST response via `rest_prepare` filter, OR create read-only endpoint for field metadata (label, type, choices only)
 
 2. **Section Ordering**
    - What we know: Custom fields should appear on Profile tab
@@ -361,7 +361,7 @@ Things that couldn't be fully resolved:
 
 ### Primary (HIGH confidence)
 - `/Users/joostdevalk/Code/stadion/src/pages/People/PersonDetail.jsx` - Detail page structure, section patterns
-- `/Users/joostdevalk/Code/stadion/src/pages/Companies/CompanyDetail.jsx` - Organization detail patterns
+- `/Users/joostdevalk/Code/stadion/src/pages/Teams/TeamDetail.jsx` - Team detail patterns
 - `/Users/joostdevalk/Code/stadion/src/components/FieldFormPanel.jsx` - Field type options, form patterns
 - `/Users/joostdevalk/Code/stadion/src/components/ContactEditModal.jsx` - Modal editing pattern
 - `/Users/joostdevalk/Code/stadion/includes/customfields/class-manager.php` - Field storage, types

@@ -73,7 +73,7 @@ const getDefaultFormData = () => ({
   // Color options
   default_color: '',
   // Relationship options
-  relationship_post_types: ['person', 'company'],
+  relationship_post_types: ['person', 'team'],
   relationship_min: 0,
   relationship_max: 1,
   relationship_return_format: 'object',
@@ -183,7 +183,7 @@ export default function FieldFormPanel({
           // Color options
           default_color: field.default_value || '',
           // Relationship options
-          relationship_post_types: field.post_type || ['person', 'company'],
+          relationship_post_types: field.post_type || ['person', 'team'],
           relationship_min: field.min ?? 0,
           relationship_max: field.max ?? 1,
           relationship_return_format: relationshipReturnFormat,
@@ -1098,12 +1098,12 @@ export default function FieldFormPanel({
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={formData.relationship_post_types.includes('company')}
+                    checked={formData.relationship_post_types.includes('team')}
                     onChange={(e) => {
                       setFormData((prev) => {
                         const types = e.target.checked
-                          ? [...prev.relationship_post_types, 'company']
-                          : prev.relationship_post_types.filter((t) => t !== 'company');
+                          ? [...prev.relationship_post_types, 'team']
+                          : prev.relationship_post_types.filter((t) => t !== 'team');
                         return { ...prev, relationship_post_types: types };
                       });
                     }}

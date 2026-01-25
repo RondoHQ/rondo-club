@@ -20,8 +20,8 @@ result: pass
 expected: Create two custom fields with list_view_order 1 and 2. Enable both for list view. Field with order 1 appears before field with order 2 in the list.
 result: pass
 
-### 3. Organizations List Integration
-expected: Create a custom field for Organizations with "Show in list view" enabled. Add a value to an organization. Navigate to Organizations list. Custom field column appears with the value displayed.
+### 3. Teams List Integration
+expected: Create a custom field for Teams with "Show in list view" enabled. Add a value to an team. Navigate to Teams list. Custom field column appears with the value displayed.
 result: pass
 note: Initial test with relationship field showed `#<ID>` instead of name. Fixed in CustomFieldColumn.jsx to fetch relationship names asynchronously.
 

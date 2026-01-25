@@ -11,7 +11,7 @@ files:
 Currently, event/meeting matching may only check against a person's primary email address. A person can have multiple email addresses (work, personal, etc.), and the matching logic should check all of them when linking calendar events to people.
 
 Example scenario:
-1. Person has work email work@company.com and personal email personal@gmail.com
+1. Person has work email work@team.com and personal email personal@gmail.com
 2. Calendar event has attendee personal@gmail.com
 3. Matching should find this person even though personal@gmail.com isn't their primary email
 

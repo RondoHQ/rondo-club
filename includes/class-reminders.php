@@ -213,7 +213,7 @@ class Reminders {
 		// Get contacts in these workspaces
 		$contacts = get_posts(
 			[
-				'post_type'      => [ 'person', 'company' ],
+				'post_type'      => [ 'person', 'team' ],
 				'posts_per_page' => -1,
 				'tax_query'      => [
 					[
@@ -261,7 +261,7 @@ class Reminders {
 				'author'     => $author->display_name,
 				'post_title' => $post->post_title,
 				'post_type'  => $post->post_type,
-				'post_url'   => home_url( ( $post->post_type === 'person' ? '/people/' : '/companies/' ) . $post->ID ),
+				'post_url'   => home_url( ( $post->post_type === 'person' ? '/people/' : '/teams/' ) . $post->ID ),
 				'preview'    => wp_trim_words( wp_strip_all_tags( $comment->comment_content ), 20 ),
 				'date'       => $comment->comment_date,
 			];

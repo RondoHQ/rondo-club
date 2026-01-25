@@ -84,16 +84,16 @@ class VCard {
 		// Find current job
 		foreach ( $work_history as $job ) {
 			if ( ! empty( $job['is_current'] ) ) {
-				$company_name = '';
-				if ( ! empty( $job['company'] ) ) {
-					$company = get_post( $job['company'] );
-					if ( $company ) {
-						$company_name = $company->post_title;
+				$team_name = '';
+				if ( ! empty( $job['team'] ) ) {
+					$team = get_post( $job['team'] );
+					if ( $team ) {
+						$team_name = $team->post_title;
 					}
 				}
 				return [
 					'title' => $job['job_title'] ?? '',
-					'org'   => $company_name,
+					'org'   => $team_name,
 				];
 			}
 		}
@@ -110,16 +110,16 @@ class VCard {
 
 		if ( ! empty( $work_history[0] ) ) {
 			$job          = $work_history[0];
-			$company_name = '';
-			if ( ! empty( $job['company'] ) ) {
-				$company = get_post( $job['company'] );
-				if ( $company ) {
-					$company_name = $company->post_title;
+			$team_name = '';
+			if ( ! empty( $job['team'] ) ) {
+				$team = get_post( $job['team'] );
+				if ( $team ) {
+					$team_name = $team->post_title;
 				}
 			}
 			return [
 				'title' => $job['job_title'] ?? '',
-				'org'   => $company_name,
+				'org'   => $team_name,
 			];
 		}
 

@@ -385,7 +385,7 @@ Each accent color has been validated for sufficient contrast:
 2. Do we need to handle themed exports (PDF reports, email templates)?
    - **Recommendation:** Keep exports in a neutral/brand style for consistency
 
-3. Should organization admins be able to enforce a specific theme?
+3. Should team admins be able to enforce a specific theme?
    - **Recommendation:** Defer to v2; focus on individual preferences first
 
 ---

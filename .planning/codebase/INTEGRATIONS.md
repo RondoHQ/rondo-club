@@ -5,7 +5,7 @@
 ## APIs & External Services
 
 **WordPress REST API:**
-- Standard endpoints: `/wp/v2/` for posts, people, companies, dates
+- Standard endpoints: `/wp/v2/` for posts, people, teams, dates
 - Custom namespace: `/stadion/v1/` for dashboard, search, reminders, user management
 - Client: `src/api/client.js` (Axios with nonce handling)
 
@@ -34,14 +34,14 @@
 
 **Databases:**
 - WordPress MySQL/MariaDB - Primary data store
-- Custom post types: person, company, important_date
-- Custom taxonomies: person_label, company_label, relationship_type, date_type
+- Custom post types: person, team, important_date
+- Custom taxonomies: person_label, team_label, relationship_type, date_type
 - Custom fields via ACF Pro
 
 **File Storage:**
 - WordPress Media Library for photos and logos
 - Photo upload: `/stadion/v1/people/{personId}/photo`
-- Logo upload: `/stadion/v1/companies/{companyId}/logo/upload`
+- Logo upload: `/stadion/v1/teams/{teamId}/logo/upload`
 
 **Caching:**
 - React Query client-side caching for API responses

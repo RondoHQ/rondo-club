@@ -326,7 +326,7 @@ function EmptyState() {
           Add Your First Person
         </Link>
         <Link
-          to="/companies/new"
+          to="/teams/new"
           className="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
@@ -603,7 +603,7 @@ export default function Dashboard() {
   }
   
   const { stats, recent_people, upcoming_reminders, favorites, recently_contacted } = data || {};
-  const totalItems = (stats?.total_people || 0) + (stats?.total_companies || 0) + (stats?.total_dates || 0);
+  const totalItems = (stats?.total_people || 0) + (stats?.total_teams || 0) + (stats?.total_dates || 0);
   const isEmpty = totalItems === 0;
   
   if (isEmpty) {
@@ -621,7 +621,7 @@ export default function Dashboard() {
             title="Organizations"
             value={0}
             icon={Building2}
-            href="/companies"
+            href="/teams"
           />
           <StatCard
             title="Events"
@@ -658,7 +658,7 @@ export default function Dashboard() {
     'stats': () => (
       <div key="stats" className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Total people" value={stats?.total_people || 0} icon={Users} href="/people" />
-        <StatCard title="Organizations" value={stats?.total_companies || 0} icon={Building2} href="/companies" />
+        <StatCard title="Organizations" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
         <StatCard title="Events" value={stats?.total_dates || 0} icon={Calendar} href="/dates" />
         <StatCard title="Open todos" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
         <StatCard title="Awaiting" value={stats?.awaiting_todos_count || 0} icon={Clock} href="/todos?status=awaiting" />

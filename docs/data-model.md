@@ -57,7 +57,7 @@ Represents individual contacts in the CRM.
 
 | Field | Key | Type | Description |
 |-------|-----|------|-------------|
-| Organization | `company` | post_object | Link to Organization post |
+| Team | `team` | post_object | Link to Team post |
 | Job Title | `job_title` | text | Position title |
 | Description | `description` | textarea | Role description |
 | Start Date | `start_date` | date_picker | Employment start (Y-m-d) |
@@ -74,25 +74,25 @@ Represents individual contacts in the CRM.
 
 ---
 
-### Organization (`company`)
+### Team (`team`)
 
-Represents organizations where contacts work. Note: The post type slug remains `company` for backward compatibility, but the user-facing label is "Organization".
+Represents teams where contacts work. Note: The post type slug remains `team` for backward compatibility, but the user-facing label is "Team".
 
 | Property | Value |
 |----------|-------|
-| REST Base | `/wp/v2/companies` |
+| REST Base | `/wp/v2/teams` |
 | Menu Icon | `dashicons-building` |
 | Supports | title, editor, thumbnail, author |
 | Public | No (private, accessed via REST API) |
 
-**ACF Fields** (from `acf-json/group_company_fields.json`):
+**ACF Fields** (from `acf-json/group_team_fields.json`):
 
 | Field | Key | Type | Description |
 |-------|-----|------|-------------|
-| Website | `website` | url | Organization website URL |
+| Website | `website` | url | Team website URL |
 | Industry | `industry` | text | Industry or sector |
-| Contact Info | `contact_info` | repeater | Organization contact methods |
-| Investors | `investors` | relationship | People or organizations that have invested in this company |
+| Contact Info | `contact_info` | repeater | Team contact methods |
+| Investors | `investors` | relationship | People or teams that have invested in this team |
 
 **Contact Info Sub-fields:**
 
@@ -145,14 +145,14 @@ Tags for categorizing people.
 
 ---
 
-### Organization Label (`company_label`)
+### Team Label (`team_label`)
 
-Tags for categorizing organizations.
+Tags for categorizing teams.
 
 | Property | Value |
 |----------|-------|
 | Hierarchical | No (tag-like) |
-| Attached To | company |
+| Attached To | team |
 | REST Enabled | Yes |
 
 **Example labels:** Clients, Vendors, Partners, Past Employers
@@ -241,7 +241,7 @@ Represents collaborative workspaces for multi-user features (Phase 7+).
 
 ## Visibility Settings
 
-All three main post types (Person, Organization, Important Date) include visibility settings.
+All three main post types (Person, Team, Important Date) include visibility settings.
 
 **ACF Fields** (from `acf-json/group_visibility_settings.json`):
 
@@ -299,7 +299,7 @@ ACF field groups are version-controlled in `acf-json/`:
 | File | Purpose |
 |------|---------|
 | `group_person_fields.json` | Person post type fields |
-| `group_company_fields.json` | Organization post type fields |
+| `group_team_fields.json` | Team post type fields |
 | `group_important_date_fields.json` | Important date post type fields |
 | `group_relationship_type_fields.json` | Relationship type taxonomy fields |
 | `group_visibility_settings.json` | Visibility settings for all main post types |

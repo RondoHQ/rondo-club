@@ -11,7 +11,7 @@ requires:
     provides: Dark mode foundation (CSS base, Layout, Settings toggle)
 provides:
   - Dark mode CSS variants for all main page components
-  - Dashboard, People, Companies, Dates, Todos pages render correctly in dark mode
+  - Dashboard, People, Teams, Dates, Todos pages render correctly in dark mode
   - Login page dark mode support
 affects: [44-03, 44-04]
 
@@ -30,8 +30,8 @@ key-files:
     - src/pages/Login.jsx
     - src/pages/People/PeopleList.jsx
     - src/pages/People/PersonDetail.jsx
-    - src/pages/Companies/CompaniesList.jsx
-    - src/pages/Companies/CompanyDetail.jsx
+    - src/pages/Teams/TeamsList.jsx
+    - src/pages/Teams/TeamDetail.jsx
     - src/pages/Dates/DatesList.jsx
     - src/pages/Todos/TodosList.jsx
 
@@ -54,7 +54,7 @@ completed: 2026-01-15
 
 # Phase 44 Plan 02: Core Pages Dark Mode Summary
 
-**Dark mode CSS variants added to all main page components - Dashboard, People, Companies, Dates, Todos, and Login pages**
+**Dark mode CSS variants added to all main page components - Dashboard, People, Teams, Dates, Todos, and Login pages**
 
 ## Performance
 
@@ -70,8 +70,8 @@ completed: 2026-01-15
 - Login page renders correctly in dark mode (loading spinner, redirect message)
 - PeopleList page dark mode complete (table rows, headers, bulk action modals, filter dropdown, selection toolbar)
 - PersonDetail page dark mode complete (header, profile section, timeline, tabs, all card components)
-- CompaniesList page dark mode complete (table rows, modals, filters, sort controls)
-- CompanyDetail page dark mode complete (header, subsidiaries, employees, investors, investments, contact info)
+- TeamsList page dark mode complete (table rows, modals, filters, sort controls)
+- TeamDetail page dark mode complete (header, subsidiaries, employees, investors, investments, contact info)
 - DatesList page dark mode complete (date cards with urgency colors, month groupings, empty state)
 - TodosList page dark mode complete (status filter tabs, todo items, urgency indicators, action buttons)
 
@@ -81,7 +81,7 @@ Each task was committed atomically:
 
 1. **Task 1: Add dark mode to Dashboard and Login pages** - `2bff184` (feat)
 2. **Task 2: Add dark mode to People pages** - `f287548` (feat)
-3. **Task 3: Add dark mode to Companies, Dates, and Todos pages** - `cd04cbc` (feat)
+3. **Task 3: Add dark mode to Teams, Dates, and Todos pages** - `cd04cbc` (feat)
 
 ## Files Modified
 
@@ -89,8 +89,8 @@ Each task was committed atomically:
 - `src/pages/Login.jsx` - Dark background, spinner, and text colors
 - `src/pages/People/PeopleList.jsx` - Table styling, bulk modals, filters, selection toolbar
 - `src/pages/People/PersonDetail.jsx` - Header, profile, timeline, tabs, all sections
-- `src/pages/Companies/CompaniesList.jsx` - Table rows, modals, filters, sort controls
-- `src/pages/Companies/CompanyDetail.jsx` - Header, subsidiaries, employees, investors sections
+- `src/pages/Teams/TeamsList.jsx` - Table rows, modals, filters, sort controls
+- `src/pages/Teams/TeamDetail.jsx` - Header, subsidiaries, employees, investors sections
 - `src/pages/Dates/DatesList.jsx` - Date cards, urgency colors, month headers
 - `src/pages/Todos/TodosList.jsx` - Filter tabs, todo items, status indicators, action buttons
 

@@ -9,9 +9,9 @@ requires:
   - phase: existing
     provides: RelationshipTypes.jsx pattern, wpApi structure
 provides:
-  - Full CRUD interface for person_label and company_label taxonomies
+  - Full CRUD interface for person_label and team_label taxonomies
   - Labels management page at /settings/labels
-affects: [person-detail, company-detail, people-list, companies-list]
+affects: [person-detail, team-detail, people-list, teams-list]
 
 # Tech tracking
 tech-stack:
@@ -29,7 +29,7 @@ key-files:
 
 key-decisions:
   - "Followed RelationshipTypes.jsx pattern for consistency"
-  - "Used tabbed interface to manage both person and company labels in one page"
+  - "Used tabbed interface to manage both person and team labels in one page"
   - "Display usage count for each label"
 
 patterns-established:
@@ -44,7 +44,7 @@ completed: 2026-01-14
 
 # Phase 37 Plan 01: Label Management Summary
 
-**Full CRUD interface for person and company labels with tabbed Settings page, admin-only access, and usage count display**
+**Full CRUD interface for person and team labels with tabbed Settings page, admin-only access, and usage count display**
 
 ## Performance
 
@@ -55,11 +55,11 @@ completed: 2026-01-14
 - **Files modified:** 4
 
 ## Accomplishments
-- Added 8 new API methods for person and company label CRUD operations
+- Added 8 new API methods for person and team label CRUD operations
 - Created Labels.jsx management page with tabbed interface
 - Integrated Labels page into Settings with route and navigation link
 - Admin-only access with appropriate warning for non-admins
-- Display label usage count showing how many people/organizations use each label
+- Display label usage count showing how many people/teams use each label
 
 ## Task Commits
 
@@ -70,14 +70,14 @@ Each task was committed atomically:
 3. **Task 3: Add route and navigation link** - `3ab7096` (feat)
 
 ## Files Created/Modified
-- `src/api/client.js` - Added CRUD methods for person_label and company_label taxonomies
+- `src/api/client.js` - Added CRUD methods for person_label and team_label taxonomies
 - `src/pages/Settings/Labels.jsx` - New Labels management component with tabbed UI
 - `src/App.jsx` - Added lazy import and route for Labels page
 - `src/pages/Settings/Settings.jsx` - Added Labels link in Admin tab Configuration section
 
 ## Decisions Made
 - Followed RelationshipTypes.jsx pattern for consistency with existing codebase
-- Used tabbed interface (People Labels / Organization Labels) for compact UX
+- Used tabbed interface (People Labels / Team Labels) for compact UX
 - Included usage count to help admins understand label popularity before deletion
 
 ## Deviations from Plan

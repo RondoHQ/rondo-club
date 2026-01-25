@@ -21,7 +21,7 @@ class VCard {
 		'contacts_imported' => 0,
 		'contacts_updated'  => 0,
 		'contacts_skipped'  => 0,
-		'companies_created' => 0,
+		'teams_created' => 0,
 		'dates_created'     => 0,
 		'notes_created'     => 0,
 		'photos_imported'   => 0,
@@ -29,9 +29,9 @@ class VCard {
 	];
 
 	/**
-	 * Company name to ID mapping
+	 * Team name to ID mapping
 	 */
-	private array $company_map = [];
+	private array $team_map = [];
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
@@ -189,7 +189,7 @@ class VCard {
 	 */
 	private function get_import_summary( array $vcards ): array {
 		$contacts  = 0;
-		$companies = [];
+		$teams = [];
 		$birthdays = 0;
 		$photos    = 0;
 		$notes     = 0;
@@ -199,7 +199,7 @@ class VCard {
 				++$contacts;
 			}
 			if ( ! empty( $vcard['org'] ) ) {
-				$companies[ $vcard['org'] ] = true;
+				$teams[ $vcard['org'] ] = true;
 			}
 			if ( ! empty( $vcard['bday'] ) ) {
 				++$birthdays;
@@ -214,7 +214,7 @@ class VCard {
 
 		return [
 			'contacts'        => $contacts,
-			'companies_count' => count( $companies ),
+			'teams_count' => count( $teams ),
 			'birthdays'       => $birthdays,
 			'photos'          => $photos,
 			'notes'           => $notes,
@@ -764,12 +764,12 @@ class VCard {
 
 		// Handle company/work history (add to existing, don't replace)
 		if ( ! empty( $vcard['org'] ) || ! empty( $vcard['title'] ) ) {
-			$company_id = null;
+			$team_id = null;
 			if ( ! empty( $vcard['org'] ) ) {
-				$company_id = $this->get_or_create_company( $vcard['org'] );
+				$team_id = $this->get_or_create_company( $vcard['org'] );
 			}
 
-			if ( $company_id || $vcard['title'] ) {
+			if ( $team_id || $vcard['title'] ) {
 				$existing_work_history = [];
 				if ( $is_update ) {
 					$existing_work_history = get_field( 'work_history', $post_id ) ?: [];
@@ -778,7 +778,7 @@ class VCard {
 				// Check if this work history entry already exists
 				$work_exists = false;
 				foreach ( $existing_work_history as $existing_job ) {
-					if ( $existing_job['company'] == $company_id &&
+					if ( $existing_job['team'] == $team_id &&
 						$existing_job['job_title'] == $vcard['title'] ) {
 						$work_exists = true;
 						break;
@@ -790,7 +790,7 @@ class VCard {
 						$existing_work_history,
 						[
 							[
-								'company'    => $company_id,
+								'team'    => $team_id,
 								'job_title'  => $vcard['title'],
 								'is_current' => true,
 							],
@@ -1186,24 +1186,24 @@ class VCard {
 	}
 
 	/**
-	 * Get or create a company
+	 * Get or create a team
 	 */
 	private function get_or_create_company( string $name ): int {
-		if ( isset( $this->company_map[ $name ] ) ) {
-			return $this->company_map[ $name ];
+		if ( isset( $this->team_map[ $name ] ) ) {
+			return $this->team_map[ $name ];
 		}
 
-		// Check if company exists
-		$existing = get_page_by_title( $name, OBJECT, 'company' );
+		// Check if team exists
+		$existing = get_page_by_title( $name, OBJECT, 'team' );
 		if ( $existing ) {
-			$this->company_map[ $name ] = $existing->ID;
+			$this->team_map[ $name ] = $existing->ID;
 			return $existing->ID;
 		}
 
 		// Create new company
 		$post_id = wp_insert_post(
 			[
-				'post_type'   => 'company',
+				'post_type'   => 'team',
 				'post_status' => 'publish',
 				'post_title'  => $name,
 				'post_author' => get_current_user_id(),
@@ -1211,8 +1211,8 @@ class VCard {
 		);
 
 		if ( ! is_wp_error( $post_id ) ) {
-			$this->company_map[ $name ] = $post_id;
-			++$this->stats['companies_created'];
+			$this->team_map[ $name ] = $post_id;
+			++$this->stats['teams_created'];
 			return $post_id;
 		}
 

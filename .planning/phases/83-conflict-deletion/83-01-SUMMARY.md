@@ -56,7 +56,7 @@ completed: 2026-01-17
 
 ## Accomplishments
 
-- Field snapshot storage capturing first_name, last_name, email, phone, organization values
+- Field snapshot storage capturing first_name, last_name, email, phone, team values
 - Three-way conflict detection comparing Google, Stadion, and last-synced snapshot values
 - Activity entry creation for detected conflicts showing which fields conflicted and resolutions
 - Bidirectional snapshot updates ensuring accuracy for both import and export flows

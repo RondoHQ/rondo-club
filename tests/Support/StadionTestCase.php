@@ -45,7 +45,7 @@ abstract class StadionTestCase extends WPTestCase {
 	}
 
 	/**
-	 * Create an organization (company) post.
+	 * Create an organization (team) post.
 	 *
 	 * @param array $args Post arguments
 	 * @param array $acf ACF field values
@@ -53,7 +53,7 @@ abstract class StadionTestCase extends WPTestCase {
 	 */
 	protected function createOrganization( array $args = [], array $acf = [] ): int {
 		$defaults = [
-			'post_type'   => 'company',
+			'post_type'   => 'team',
 			'post_status' => 'publish',
 			'post_author' => get_current_user_id() ?: 1,
 		];

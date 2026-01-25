@@ -4,12 +4,12 @@ import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch, TrendingUp
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { getCompanyName, decodeHtml, sanitizeCompanyAcf } from '@/utils/formatters';
-import CompanyEditModal from '@/components/CompanyEditModal';
+import { getTeamName, decodeHtml, sanitizeTeamAcf } from '@/utils/formatters';
+import TeamEditModal from '@/components/TeamEditModal';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 
-export default function CompanyDetail() {
+export default function TeamDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -19,46 +19,46 @@ export default function CompanyDetail() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  const { data: company, isLoading, error } = useQuery({
-    queryKey: ['company', id],
+  const { data: team, isLoading, error } = useQuery({
+    queryKey: ['team', id],
     queryFn: async () => {
-      const response = await wpApi.getCompany(id, { _embed: true });
+      const response = await wpApi.getTeam(id, { _embed: true });
       return response.data;
     },
   });
   
   const { data: employees } = useQuery({
-    queryKey: ['company-people', id],
+    queryKey: ['team-people', id],
     queryFn: async () => {
-      const response = await prmApi.getCompanyPeople(id);
+      const response = await prmApi.getTeamPeople(id);
       return response.data;
     },
   });
   
-  // Fetch parent company if exists
-  const { data: parentCompany } = useQuery({
-    queryKey: ['company', company?.parent],
+  // Fetch parent team if exists
+  const { data: parentTeam } = useQuery({
+    queryKey: ['team', team?.parent],
     queryFn: async () => {
-      const response = await wpApi.getCompany(company.parent, { _embed: true });
+      const response = await wpApi.getTeam(team.parent, { _embed: true });
       return response.data;
     },
-    enabled: !!company?.parent,
+    enabled: !!team?.parent,
   });
   
-  // Fetch child companies (subsidiaries)
-  const { data: childCompanies = [] } = useQuery({
-    queryKey: ['company-children', id],
+  // Fetch child teams (subsidiaries)
+  const { data: childTeams = [] } = useQuery({
+    queryKey: ['team-children', id],
     queryFn: async () => {
-      const response = await wpApi.getCompanies({ parent: id, per_page: 100, _embed: true });
+      const response = await wpApi.getTeams({ parent: id, per_page: 100, _embed: true });
       return response.data;
     },
   });
   
-  // Get investor details from embedded data (already included in company response)
-  const investorIds = company?.acf?.investors || [];
+  // Get investor details from embedded data (already included in team response)
+  const investorIds = team?.acf?.investors || [];
 
   // Extract featured_media IDs from embedded posts for thumbnail fetching
-  const embeddedPosts = company?._embedded?.['acf:post'] || [];
+  const embeddedPosts = team?._embedded?.['acf:post'] || [];
   const mediaIds = useMemo(() => {
     return embeddedPosts
       .filter(p => investorIds.includes(p.id) && p.featured_media)
@@ -96,16 +96,16 @@ export default function CompanyDetail() {
 
       return {
         id: post.id,
-        type: isPerson ? 'person' : 'company',
+        type: isPerson ? 'person' : 'team',
         name: isPerson
           ? decodeHtml(post.title?.rendered || '')
-          : getCompanyName(post),
+          : getTeamName(post),
         thumbnail,
       };
     }).filter(Boolean);
   }, [investorIds, embeddedPosts, mediaItems]);
   
-  // Fetch companies that this company has invested in
+  // Fetch teams that this team has invested in
   const { data: investments = [] } = useQuery({
     queryKey: ['investments', id],
     queryFn: async () => {
@@ -115,36 +115,36 @@ export default function CompanyDetail() {
     enabled: !!id,
   });
   
-  const deleteCompany = useMutation({
-    mutationFn: () => wpApi.deleteCompany(id, { force: true }),
+  const deleteTeam = useMutation({
+    mutationFn: () => wpApi.deleteTeam(id, { force: true }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      navigate('/companies');
+      navigate('/teams');
     },
   });
   
-  const updateCompany = useMutation({
-    mutationFn: (data) => wpApi.updateCompany(id, data),
+  const updateTeam = useMutation({
+    mutationFn: (data) => wpApi.updateTeam(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['company', id] });
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
-      queryClient.invalidateQueries({ queryKey: ['company-investors', id] });
-      queryClient.invalidateQueries({ queryKey: ['company-investors-edit', parseInt(id)] });
+      queryClient.invalidateQueries({ queryKey: ['team', id] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.invalidateQueries({ queryKey: ['team-investors', id] });
+      queryClient.invalidateQueries({ queryKey: ['team-investors-edit', parseInt(id)] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
   
-  // Update document title with company's name - MUST be called before early returns
+  // Update document title with team's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
-  useDocumentTitle(getCompanyName(company) || 'Organization');
+  useDocumentTitle(getTeamName(team) || 'Organization');
   
-  // Redirect if company is trashed
+  // Redirect if team is trashed
   useEffect(() => {
-    if (company?.status === 'trash') {
-      navigate('/companies', { replace: true });
+    if (team?.status === 'trash') {
+      navigate('/teams', { replace: true });
     }
-  }, [company, navigate]);
+  }, [team, navigate]);
   
   const handleDelete = async () => {
     if (!window.confirm('Are you sure you want to delete this organization?')) {
@@ -152,14 +152,14 @@ export default function CompanyDetail() {
     }
     
     try {
-      await deleteCompany.mutateAsync();
+      await deleteTeam.mutateAsync();
       // Navigation will happen in onSuccess callback
     } catch {
       alert('Failed to delete organization. Please try again.');
     }
   };
   
-  const handleSaveCompany = async (data) => {
+  const handleSaveTeam = async (data) => {
     setIsSaving(true);
     try {
       const payload = {
@@ -169,12 +169,12 @@ export default function CompanyDetail() {
           website: data.website,
           investors: data.investors || [],
           // Use visibility values from the form, fall back to existing values
-          _visibility: data.visibility || company.acf?._visibility || 'private',
-          _assigned_workspaces: data.assigned_workspaces || company.acf?._assigned_workspaces || [],
+          _visibility: data.visibility || team.acf?._visibility || 'private',
+          _assigned_workspaces: data.assigned_workspaces || team.acf?._assigned_workspaces || [],
         },
       };
 
-      await updateCompany.mutateAsync(payload);
+      await updateTeam.mutateAsync(payload);
       setShowEditModal(false);
     } catch {
       alert('Failed to save organization. Please try again.');
@@ -203,11 +203,11 @@ export default function CompanyDetail() {
     setIsUploadingLogo(true);
 
     try {
-      await prmApi.uploadCompanyLogo(id, file);
+      await prmApi.uploadTeamLogo(id, file);
 
-      // Invalidate queries to refresh company data
-      queryClient.invalidateQueries({ queryKey: ['company', id] });
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      // Invalidate queries to refresh team data
+      queryClient.invalidateQueries({ queryKey: ['team', id] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
     } catch {
       alert('Failed to upload logo. Please try again.');
     } finally {
@@ -227,27 +227,27 @@ export default function CompanyDetail() {
     );
   }
   
-  if (error || !company) {
+  if (error || !team) {
     return (
       <div className="card p-6 text-center">
         <p className="text-red-600 dark:text-red-400">Failed to load organization.</p>
-        <Link to="/companies" className="btn-secondary mt-4">Back to organizations</Link>
+        <Link to="/teams" className="btn-secondary mt-4">Back to organizations</Link>
       </div>
     );
   }
   
-  // Don't render if company is trashed (redirect will happen)
-  if (company.status === 'trash') {
+  // Don't render if team is trashed (redirect will happen)
+  if (team.status === 'trash') {
     return null;
   }
   
-  const acf = company.acf || {};
+  const acf = team.acf || {};
   
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link to="/companies" className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+        <Link to="/teams" className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
           <span className="hidden md:inline">Back to organizations</span>
         </Link>
@@ -267,14 +267,14 @@ export default function CompanyDetail() {
         </div>
       </div>
       
-      {/* Company header */}
+      {/* Team header */}
       <div className="card p-6">
         <div className="flex items-center gap-4">
           <div className="relative group">
-            {company._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
+            {team._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
               <img 
-                src={company._embedded['wp:featuredmedia'][0].source_url}
-                alt={getCompanyName(company)}
+                src={team._embedded['wp:featuredmedia'][0].source_url}
+                alt={getTeamName(team)}
                 className="w-24 h-24 rounded-lg object-contain"
               />
             ) : (
@@ -303,17 +303,17 @@ export default function CompanyDetail() {
             />
           </div>
           <div>
-            {/* Parent company link */}
-            {parentCompany && (
+            {/* Parent team link */}
+            {parentTeam && (
               <Link 
-                to={`/companies/${parentCompany.id}`}
+                to={`/teams/${parentTeam.id}`}
                 className="text-sm text-accent-600 dark:text-accent-400 hover:underline flex items-center mb-1"
               >
                 <GitBranch className="w-3 h-3 mr-1" />
-                Subsidiary of {getCompanyName(parentCompany)}
+                Subsidiary of {getTeamName(parentTeam)}
               </Link>
             )}
-            <h1 className="text-2xl font-bold">{getCompanyName(company)}</h1>
+            <h1 className="text-2xl font-bold">{getTeamName(team)}</h1>
             {acf.website && (
               <a 
                 href={acf.website} 
@@ -330,23 +330,23 @@ export default function CompanyDetail() {
       </div>
       
       {/* Subsidiaries */}
-      {childCompanies.length > 0 && (
+      {childTeams.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <GitBranch className="w-5 h-5 mr-2" />
             Subsidiaries
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {childCompanies.map((child) => (
+            {childTeams.map((child) => (
               <Link
                 key={child.id}
-                to={`/companies/${child.id}`}
+                to={`/teams/${child.id}`}
                 className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
               >
                 {child._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
                   <img
                     src={child._embedded['wp:featuredmedia'][0].source_url}
-                    alt={getCompanyName(child)}
+                    alt={getTeamName(child)}
                     className="w-10 h-10 rounded object-contain "
                   />
                 ) : (
@@ -355,7 +355,7 @@ export default function CompanyDetail() {
                   </div>
                 )}
                 <div className="ml-3">
-                  <p className="text-sm font-medium">{getCompanyName(child)}</p>
+                  <p className="text-sm font-medium">{getTeamName(child)}</p>
                   {child.acf?.industry && (
                     <p className="text-xs text-gray-500 dark:text-gray-400">{child.acf.industry}</p>
                   )}
@@ -452,7 +452,7 @@ export default function CompanyDetail() {
               const isPerson = investor.type === 'person';
               const linkPath = isPerson 
                 ? `/people/${investor.id}` 
-                : `/companies/${investor.id}`;
+                : `/teams/${investor.id}`;
               
               return (
                 <Link
@@ -489,7 +489,7 @@ export default function CompanyDetail() {
         </div>
       )}
       
-      {/* Invested in (companies this organization has invested in) */}
+      {/* Invested in (teams this organization has invested in) */}
       {investments.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
@@ -497,16 +497,16 @@ export default function CompanyDetail() {
             Invested in
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {investments.map((company) => (
+            {investments.map((team) => (
               <Link
-                key={company.id}
-                to={`/companies/${company.id}`}
+                key={team.id}
+                to={`/teams/${team.id}`}
                 className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
               >
-                {company.thumbnail ? (
+                {team.thumbnail ? (
                   <img
-                    src={company.thumbnail}
-                    alt={company.name}
+                    src={team.thumbnail}
+                    alt={team.name}
                     loading="lazy"
                     className="w-10 h-10 object-contain rounded"
                   />
@@ -516,9 +516,9 @@ export default function CompanyDetail() {
                   </div>
                 )}
                 <div className="ml-3">
-                  <p className="text-sm font-medium">{company.name}</p>
-                  {company.industry && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{company.industry}</p>
+                  <p className="text-sm font-medium">{team.name}</p>
+                  {team.industry && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{team.industry}</p>
                   )}
                 </div>
               </Link>
@@ -546,30 +546,30 @@ export default function CompanyDetail() {
 
       {/* Custom Fields */}
       <CustomFieldsSection
-        postType="company"
+        postType="team"
         postId={parseInt(id)}
-        acfData={company?.acf}
+        acfData={team?.acf}
         onUpdate={(newAcfValues) => {
-          const acfData = sanitizeCompanyAcf(company?.acf, newAcfValues);
-          updateCompany.mutateAsync({ acf: acfData });
+          const acfData = sanitizeTeamAcf(team?.acf, newAcfValues);
+          updateTeam.mutateAsync({ acf: acfData });
         }}
-        isUpdating={updateCompany.isPending}
+        isUpdating={updateTeam.isPending}
       />
 
-      <CompanyEditModal
+      <TeamEditModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        onSubmit={handleSaveCompany}
+        onSubmit={handleSaveTeam}
         isLoading={isSaving}
-        company={company}
+        team={team}
       />
 
       <ShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
-        postType="companies"
-        postId={company.id}
-        postTitle={getCompanyName(company)}
+        postType="teams"
+        postId={team.id}
+        postTitle={getTeamName(team)}
       />
     </div>
   );

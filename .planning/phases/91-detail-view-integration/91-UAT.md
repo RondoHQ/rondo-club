@@ -12,8 +12,8 @@ updated: 2026-01-21T00:00:00Z
 
 ## Tests
 
-### 1. Custom Fields Display on Organization Detail
-expected: Navigate to an Organization detail page. The "Custom Fields" section appears showing all defined custom fields with appropriate rendering for each type.
+### 1. Custom Fields Display on Team Detail
+expected: Navigate to an Team detail page. The "Custom Fields" section appears showing all defined custom fields with appropriate rendering for each type.
 result: pass
 
 ### 2. Custom Fields Display on Person Detail
@@ -32,7 +32,7 @@ result: pass
 note: Enhanced relationship chips to show logo/thumbnail with larger size
 
 ### 5. Section Hides When No Fields Defined
-expected: View a Person or Organization that has no custom fields defined for its type. The Custom Fields section should not appear at all.
+expected: View a Person or Team that has no custom fields defined for its type. The Custom Fields section should not appear at all.
 result: pass
 
 ## Summary

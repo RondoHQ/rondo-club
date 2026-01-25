@@ -16,10 +16,10 @@ export function useDocumentTitle(title) {
 
 /**
  * Extract route ID from pathname
- * Examples: /people/123 -> '123', /companies/456/edit -> '456'
+ * Examples: /people/123 -> '123', /teams/456/edit -> '456'
  */
 function extractRouteId(pathname) {
-  const match = pathname.match(/\/(?:people|companies|dates)\/(\d+)/);
+  const match = pathname.match(/\/(?:people|teams|dates)\/(\d+)/);
   return match ? match[1] : null;
 }
 
@@ -56,10 +56,10 @@ export function useRouteTitle(customTitle = null) {
         } else {
           title = 'People';
         }
-      } else if (path.startsWith('/companies')) {
-        if (path === '/companies' || path === '/companies/') {
+      } else if (path.startsWith('/teams')) {
+        if (path === '/teams' || path === '/teams/') {
           title = 'Organizations';
-        } else if (path === '/companies/new') {
+        } else if (path === '/teams/new') {
           title = 'New organization';
         } else if (path.endsWith('/edit')) {
           title = 'Edit organization';

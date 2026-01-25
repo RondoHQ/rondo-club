@@ -5,32 +5,32 @@ import { usePeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeop
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
-import { getCompanyName } from '@/utils/formatters';
+import { getTeamName } from '@/utils/formatters';
 import PersonEditModal from '@/components/PersonEditModal';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 
-// Helper function to get current company ID from person's work history
-function getCurrentCompanyId(person) {
+// Helper function to get current team ID from person's work history
+function getCurrentTeamId(person) {
   const workHistory = person.acf?.work_history || [];
   if (workHistory.length === 0) return null;
   
   // First, try to find current position
-  const currentJob = workHistory.find(job => job.is_current && job.company);
-  if (currentJob) return currentJob.company;
+  const currentJob = workHistory.find(job => job.is_current && job.team);
+  if (currentJob) return currentJob.team;
   
   // Otherwise, get the most recent (by start_date)
-  const jobsWithCompany = workHistory
-    .filter(job => job.company)
+  const jobsWithTeam = workHistory
+    .filter(job => job.team)
     .sort((a, b) => {
       const dateA = a.start_date ? new Date(a.start_date) : new Date(0);
       const dateB = b.start_date ? new Date(b.start_date) : new Date(0);
       return dateB - dateA; // Most recent first
     });
   
-  return jobsWithCompany.length > 0 ? jobsWithCompany[0].company : null;
+  return jobsWithTeam.length > 0 ? jobsWithTeam[0].team : null;
 }
 
-function PersonListRow({ person, companyName, workspaces, listViewFields, isSelected, onToggleSelection, isOdd }) {
+function PersonListRow({ person, teamName, workspaces, listViewFields, isSelected, onToggleSelection, isOdd }) {
   const assignedWorkspaces = person.acf?._assigned_workspaces || [];
   const workspaceNames = assignedWorkspaces
     .map(wsId => {
@@ -88,7 +88,7 @@ function PersonListRow({ person, companyName, workspaces, listViewFields, isSele
         {person.last_name || '-'}
       </td>
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-        {companyName || '-'}
+        {teamName || '-'}
       </td>
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
         {workspaceNames || '-'}
@@ -144,7 +144,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
   );
 }
 
-function PersonListView({ people, companyMap, workspaces, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
+function PersonListView({ people, teamMap, workspaces, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -188,7 +188,7 @@ function PersonListView({ people, companyMap, workspaces, listViewFields, select
             <PersonListRow
               key={person.id}
               person={person}
-              companyName={companyMap[person.id]}
+              teamName={teamMap[person.id]}
               workspaces={workspaces}
               listViewFields={listViewFields}
               isSelected={selectedIds.has(person.id)}
@@ -404,23 +404,23 @@ function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubm
 }
 
 // Bulk Organization Modal Component
-function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSubmit, isLoading }) {
-  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit, isLoading }) {
+  const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Reset when modal opens
   useEffect(() => {
     if (isOpen) {
-      setSelectedCompanyId(null);
+      setSelectedTeamId(null);
       setSearchQuery('');
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  // Filter companies by search query
-  const filteredCompanies = (companies || []).filter(company =>
-    company.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter teams by search query
+  const filteredTeams = (teams || []).filter(team =>
+    team.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -450,36 +450,36 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
           {/* Option to clear organization */}
           <button
             type="button"
-            onClick={() => setSelectedCompanyId('clear')}
+            onClick={() => setSelectedTeamId('clear')}
             disabled={isLoading}
             className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
-              selectedCompanyId === 'clear'
+              selectedTeamId === 'clear'
                 ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
                 : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
-            <X className={`w-5 h-5 ${selectedCompanyId === 'clear' ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'}`} />
+            <X className={`w-5 h-5 ${selectedTeamId === 'clear' ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'}`} />
             <div className="flex-1">
               <div className="text-sm font-medium text-gray-900 dark:text-gray-50">Clear organization</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Remove current organization from selected people</div>
             </div>
-            {selectedCompanyId === 'clear' && <Check className="w-5 h-5 text-accent-600 dark:text-accent-400" />}
+            {selectedTeamId === 'clear' && <Check className="w-5 h-5 text-accent-600 dark:text-accent-400" />}
           </button>
 
-          {/* Company list */}
+          {/* Team list */}
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {filteredCompanies.length === 0 ? (
+            {filteredTeams.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
                 {searchQuery ? 'No organizations match your search' : 'No organizations found'}
               </p>
             ) : (
-              filteredCompanies.map((company) => {
-                const isSelected = selectedCompanyId === company.id;
+              filteredTeams.map((team) => {
+                const isSelected = selectedTeamId === team.id;
                 return (
                   <button
-                    key={company.id}
+                    key={team.id}
                     type="button"
-                    onClick={() => setSelectedCompanyId(company.id)}
+                    onClick={() => setSelectedTeamId(team.id)}
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isSelected
@@ -489,7 +489,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
                   >
                     <Building2 className={`w-5 h-5 ${isSelected ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'}`} />
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{company.name}</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{team.name}</div>
                     </div>
                     {isSelected && <Check className="w-5 h-5 text-accent-600 dark:text-accent-400" />}
                   </button>
@@ -505,9 +505,9 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, companies, onSu
           </button>
           <button
             type="button"
-            onClick={() => onSubmit(selectedCompanyId === 'clear' ? null : selectedCompanyId)}
+            onClick={() => onSubmit(selectedTeamId === 'clear' ? null : selectedTeamId)}
             className="btn-primary"
-            disabled={isLoading || selectedCompanyId === null}
+            disabled={isLoading || selectedTeamId === null}
           >
             {isLoading ? 'Applying...' : `Apply to ${selectedCount} ${selectedCount === 1 ? 'person' : 'people'}`}
           </button>
@@ -713,15 +713,15 @@ export default function PeopleList() {
       .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
   }, [customFields]);
 
-  // Fetch all companies for bulk organization modal (sorted alphabetically)
-  const { data: allCompaniesData } = useQuery({
-    queryKey: ['companies', 'all'],
+  // Fetch all teams for bulk organization modal (sorted alphabetically)
+  const { data: allTeamsData } = useQuery({
+    queryKey: ['teams', 'all'],
     queryFn: async () => {
-      const response = await wpApi.getCompanies({ per_page: 100 });
+      const response = await wpApi.getTeams({ per_page: 100 });
       return response.data
-        .map(company => ({
-          id: company.id,
-          name: getCompanyName(company),
+        .map(team => ({
+          id: team.id,
+          name: getTeamName(team),
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
     },
@@ -889,53 +889,53 @@ export default function PeopleList() {
     setSelectedIds(new Set());
   }, [showFavoritesOnly, selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, selectedWorkspaceFilter, people]);
 
-  // Collect all company IDs
-  const companyIds = useMemo(() => {
+  // Collect all team IDs
+  const teamIds = useMemo(() => {
     if (!filteredAndSortedPeople) return [];
     const ids = filteredAndSortedPeople
-      .map(person => getCurrentCompanyId(person))
+      .map(person => getCurrentTeamId(person))
       .filter(Boolean);
     // Remove duplicates
     return [...new Set(ids)];
   }, [filteredAndSortedPeople]);
 
-  // Batch fetch all companies at once instead of individual queries
-  const { data: companiesData } = useQuery({
-    queryKey: ['companies', 'batch', companyIds.sort().join(',')],
+  // Batch fetch all teams at once instead of individual queries
+  const { data: teamsData } = useQuery({
+    queryKey: ['teams', 'batch', teamIds.sort().join(',')],
     queryFn: async () => {
-      if (companyIds.length === 0) return [];
-      // Fetch all companies in one request
-      const response = await wpApi.getCompanies({ 
+      if (teamIds.length === 0) return [];
+      // Fetch all teams in one request
+      const response = await wpApi.getTeams({ 
         per_page: 100,
-        include: companyIds.join(','),
+        include: teamIds.join(','),
       });
       return response.data;
     },
-    enabled: companyIds.length > 0,
+    enabled: teamIds.length > 0,
   });
 
-  // Create a map of company ID to company name
-  const companyMap = useMemo(() => {
+  // Create a map of team ID to team name
+  const teamMap = useMemo(() => {
     const map = {};
-    if (companiesData) {
-      companiesData.forEach(company => {
-        map[company.id] = getCompanyName(company);
+    if (teamsData) {
+      teamsData.forEach(team => {
+        map[team.id] = getTeamName(team);
       });
     }
     return map;
-  }, [companiesData]);
+  }, [teamsData]);
 
-  // Create a map of person ID to company name
-  const personCompanyMap = useMemo(() => {
+  // Create a map of person ID to team name
+  const personTeamMap = useMemo(() => {
     const map = {};
     filteredAndSortedPeople.forEach(person => {
-      const companyId = getCurrentCompanyId(person);
-      if (companyId && companyMap[companyId]) {
-        map[person.id] = companyMap[companyId];
+      const teamId = getCurrentTeamId(person);
+      if (teamId && teamMap[teamId]) {
+        map[person.id] = teamMap[teamId];
       }
     });
     return map;
-  }, [filteredAndSortedPeople, companyMap]);
+  }, [filteredAndSortedPeople, teamMap]);
 
   // Helper to get workspace names for a person (used in sorting)
   const getPersonWorkspaceNames = (person) => {
@@ -966,9 +966,9 @@ export default function PeopleList() {
       }
 
       if (sortField === 'organization') {
-        // Sort by company name (from personCompanyMap)
-        valueA = (personCompanyMap[a.id] || '').toLowerCase();
-        valueB = (personCompanyMap[b.id] || '').toLowerCase();
+        // Sort by team name (from personTeamMap)
+        valueA = (personTeamMap[a.id] || '').toLowerCase();
+        valueB = (personTeamMap[b.id] || '').toLowerCase();
         // Empty values sort last
         if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
         if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
@@ -1059,7 +1059,7 @@ export default function PeopleList() {
       const comparison = valueA.localeCompare(valueB);
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [filteredAndSortedPeople, sortField, sortOrder, personCompanyMap, workspaces, listViewFields]);
+  }, [filteredAndSortedPeople, sortField, sortOrder, personTeamMap, workspaces, listViewFields]);
 
   return (
     <div className="space-y-4">
@@ -1469,7 +1469,7 @@ export default function PeopleList() {
       {!isLoading && !error && sortedPeople?.length > 0 && (
         <PersonListView
           people={sortedPeople}
-          companyMap={personCompanyMap}
+          teamMap={personTeamMap}
           workspaces={workspaces}
           listViewFields={listViewFields}
           selectedIds={selectedIds}
@@ -1562,13 +1562,13 @@ export default function PeopleList() {
         isOpen={showBulkOrganizationModal}
         onClose={() => setShowBulkOrganizationModal(false)}
         selectedCount={selectedIds.size}
-        companies={allCompaniesData || []}
-        onSubmit={async (companyId) => {
+        teams={allTeamsData || []}
+        onSubmit={async (teamId) => {
           setBulkActionLoading(true);
           try {
             await bulkUpdateMutation.mutateAsync({
               ids: Array.from(selectedIds),
-              updates: { organization_id: companyId }
+              updates: { organization_id: teamId }
             });
             clearSelection();
             setShowBulkOrganizationModal(false);

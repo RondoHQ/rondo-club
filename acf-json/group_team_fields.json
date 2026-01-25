@@ -1,15 +1,15 @@
 {
-    "key": "group_company_fields",
-    "title": "Company Fields",
+    "key": "group_team_fields",
+    "title": "Team Fields",
     "fields": [
         {
-            "key": "field_company_website",
+            "key": "field_team_website",
             "label": "Website",
             "name": "website",
             "type": "url"
         },
         {
-            "key": "field_company_contact_info",
+            "key": "field_team_contact_info",
             "label": "Contact Information",
             "name": "contact_info",
             "type": "repeater",
@@ -17,7 +17,7 @@
             "button_label": "Add Contact Method",
             "sub_fields": [
                 {
-                    "key": "field_company_contact_type",
+                    "key": "field_team_contact_type",
                     "label": "Type",
                     "name": "contact_type",
                     "type": "select",
@@ -32,7 +32,7 @@
                     }
                 },
                 {
-                    "key": "field_company_contact_label",
+                    "key": "field_team_contact_label",
                     "label": "Label",
                     "name": "contact_label",
                     "type": "text",
@@ -42,7 +42,7 @@
                     }
                 },
                 {
-                    "key": "field_company_contact_value",
+                    "key": "field_team_contact_value",
                     "label": "Value",
                     "name": "contact_value",
                     "type": "text",
@@ -51,20 +51,6 @@
                     }
                 }
             ]
-        },
-        {
-            "key": "field_company_investors",
-            "label": "Investors",
-            "name": "investors",
-            "type": "post_object",
-            "instructions": "Select people or companies that have invested in this company",
-            "post_type": [
-                "person",
-                "company"
-            ],
-            "multiple": 1,
-            "return_format": "id",
-            "allow_null": 1
         }
     ],
     "location": [
@@ -72,7 +58,7 @@
             {
                 "param": "post_type",
                 "operator": "==",
-                "value": "company"
+                "value": "team"
             }
         ]
     ],

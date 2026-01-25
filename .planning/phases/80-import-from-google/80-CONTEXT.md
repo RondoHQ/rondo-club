@@ -23,7 +23,7 @@ Pull all contacts from user's Google Contacts into Stadion with proper field map
 
 ### Field mapping
 - Multiple emails/phones: Import all into ACF repeater fields
-- Organization data: Create/find company post, add work_history entry with title
+- Team data: Create/find team post, add work_history entry with title
 - Google notes field: Skip (not imported)
 - Google contact groups/labels: Skip (not imported)
 - Birthday: Create as important_date (from requirements)

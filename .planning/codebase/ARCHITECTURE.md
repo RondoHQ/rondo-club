@@ -105,7 +105,7 @@
 
 **Modal Components:**
 - Purpose: CRUD operations in overlay dialogs
-- Examples: `PersonEditModal`, `CompanyEditModal`, `ImportantDateModal`
+- Examples: `PersonEditModal`, `TeamEditModal`, `ImportantDateModal`
 - Pattern: Controlled component with props for state, callbacks for actions
 - Location: `src/components/*Modal.jsx`
 

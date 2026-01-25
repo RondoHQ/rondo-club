@@ -186,9 +186,9 @@ class People extends Base {
 									if ( ! is_numeric( $org_id ) ) {
 										return false;
 									}
-									// Validate organization exists as published company post
+									// Validate organization exists as published team post
 									$org = get_post( (int) $org_id );
-									if ( ! $org || $org->post_type !== 'company' || $org->post_status !== 'publish' ) {
+									if ( ! $org || $org->post_type !== 'team' || $org->post_status !== 'publish' ) {
 										return false;
 									}
 								}
@@ -726,7 +726,7 @@ class People extends Base {
 	 * Supported updates:
 	 * - visibility: Change privacy setting (private, workspace, shared)
 	 * - assigned_workspaces: Array of workspace post IDs to assign
-	 * - organization_id: Company post ID to set as current employer (null to clear)
+	 * - organization_id: Team post ID to set as current employer (null to clear)
 	 * - labels_add: Array of person_label term IDs to add
 	 * - labels_remove: Array of person_label term IDs to remove
 	 *
@@ -790,20 +790,20 @@ class People extends Base {
 						}
 						unset( $job ); // Unset reference to avoid issues
 					} else {
-						// Check if company already exists in work history
+						// Check if team already exists in work history
 						$found = false;
 						foreach ( $work_history as &$job ) {
-							$job['is_current'] = ( $job['company'] == $org_id );
-							if ( $job['company'] == $org_id ) {
+							$job['is_current'] = ( $job['team'] == $org_id );
+							if ( $job['team'] == $org_id ) {
 								$found = true;
 							}
 						}
 						unset( $job ); // Unset reference to avoid issues
 
-						// If company not in history, add new entry
+						// If team not in history, add new entry
 						if ( ! $found ) {
 							$work_history[] = [
-								'company'    => $org_id,
+								'team'    => $org_id,
 								'title'      => '',
 								'start_date' => '',
 								'end_date'   => '',

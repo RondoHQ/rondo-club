@@ -43,7 +43,7 @@
 | REST endpoints | `includes/class-rest-api.php`, `includes/class-rest-base.php` | Extend Base class |
 | ACF fields | `acf-json/` directory | JSON sync for version control |
 | Frontend pages | `src/pages/` directory | React component per feature |
-| Settings subtabs | Existing Settings page | Tab-based organization |
+| Settings subtabs | Existing Settings page | Tab-based team |
 
 ### Technical Notes
 

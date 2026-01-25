@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 // Tab configuration
 const TABS = [
   { id: 'person', label: 'People Labels' },
-  { id: 'company', label: 'Organization Labels' },
+  { id: 'team', label: 'Organization Labels' },
 ];
 
 export default function Labels() {
@@ -50,19 +50,19 @@ export default function Labels() {
     },
   });
 
-  // Fetch company labels
-  const { data: companyLabels = [], isLoading: companyLabelsLoading } = useQuery({
-    queryKey: ['company-labels'],
+  // Fetch team labels
+  const { data: teamLabels = [], isLoading: teamLabelsLoading } = useQuery({
+    queryKey: ['team-labels'],
     queryFn: async () => {
-      const response = await wpApi.getCompanyLabels();
+      const response = await wpApi.getTeamLabels();
       return response.data;
     },
   });
 
   // Determine which labels to show based on active tab
-  const labels = activeTab === 'person' ? personLabels : companyLabels;
-  const isLoading = activeTab === 'person' ? personLabelsLoading : companyLabelsLoading;
-  const queryKey = activeTab === 'person' ? 'person-labels' : 'company-labels';
+  const labels = activeTab === 'person' ? personLabels : teamLabels;
+  const isLoading = activeTab === 'person' ? personLabelsLoading : teamLabelsLoading;
+  const queryKey = activeTab === 'person' ? 'person-labels' : 'team-labels';
   const entityName = activeTab === 'person' ? 'people' : 'organizations';
 
   // Create mutation
@@ -70,7 +70,7 @@ export default function Labels() {
     mutationFn: async (name) => {
       const apiMethod = activeTab === 'person'
         ? wpApi.createPersonLabel
-        : wpApi.createCompanyLabel;
+        : wpApi.createTeamLabel;
       return apiMethod({ name });
     },
     onSuccess: () => {
@@ -85,7 +85,7 @@ export default function Labels() {
     mutationFn: async ({ id, name }) => {
       const apiMethod = activeTab === 'person'
         ? wpApi.updatePersonLabel
-        : wpApi.updateCompanyLabel;
+        : wpApi.updateTeamLabel;
       return apiMethod(id, { name });
     },
     onSuccess: () => {
@@ -100,7 +100,7 @@ export default function Labels() {
     mutationFn: async (id) => {
       const apiMethod = activeTab === 'person'
         ? wpApi.deletePersonLabel
-        : wpApi.deleteCompanyLabel;
+        : wpApi.deleteTeamLabel;
       return apiMethod(id);
     },
     onSuccess: () => {

@@ -22,7 +22,7 @@ score: 5/5 must-haves verified
 | 2 | User can select Zoom as activity type in QuickActivityModal | VERIFIED | Line 16: `{ id: 'zoom', label: 'Zoom', icon: Video }`; Video imported line 2 |
 | 3 | Phone call activity type displays as Phone (shortened) | VERIFIED | QuickActivityModal line 9: `label: 'Phone'`; timeline.js line 144: `call: 'Phone'` |
 | 4 | Topbar stays above content and dropdowns on People screen | VERIFIED | Layout.jsx line 531: `z-30` class on header |
-| 5 | Person header shows at Company with proper spacing | VERIFIED | PersonDetail.jsx line 1469: `> at </span>` (trailing space) |
+| 5 | Person header shows at Team with proper spacing | VERIFIED | PersonDetail.jsx line 1469: `> at </span>` (trailing space) |
 
 **Score:** 5/5 truths verified
 
@@ -83,8 +83,8 @@ None detected. No TODO/FIXME comments, no placeholder content, no empty implemen
 **Why human:** Z-index stacking behavior during scroll
 
 #### 4. Person Header Spacing
-**Test:** View a person who has a current job at a company
-**Expected:** "Title at CompanyName" with proper spacing between "at" and company
+**Test:** View a person who has a current job at a team
+**Expected:** "Title at TeamName" with proper spacing between "at" and team
 **Why human:** Visual spacing verification
 
 ## Summary

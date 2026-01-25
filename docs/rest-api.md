@@ -38,15 +38,15 @@ These endpoints are provided by WordPress with access control applied:
 | PUT | `/wp/v2/people/{id}` | Update person |
 | DELETE | `/wp/v2/people/{id}` | Delete person |
 
-### Companies
+### Teams
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/wp/v2/companies` | List all accessible companies |
-| GET | `/wp/v2/companies/{id}` | Get single company |
-| POST | `/wp/v2/companies` | Create new company |
-| PUT | `/wp/v2/companies/{id}` | Update company |
-| DELETE | `/wp/v2/companies/{id}` | Delete company |
+| GET | `/wp/v2/teams` | List all accessible teams |
+| GET | `/wp/v2/teams/{id}` | Get single team |
+| POST | `/wp/v2/teams` | Create new team |
+| PUT | `/wp/v2/teams/{id}` | Update team |
+| DELETE | `/wp/v2/teams/{id}` | Delete team |
 
 ### Important Dates
 
@@ -63,7 +63,7 @@ These endpoints are provided by WordPress with access control applied:
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/wp/v2/person_label` | List person labels |
-| GET | `/wp/v2/company_label` | List company labels |
+| GET | `/wp/v2/team_label` | List team labels |
 | GET | `/wp/v2/relationship_type` | List relationship types |
 | GET | `/wp/v2/date_type` | List date types |
 
@@ -86,7 +86,7 @@ Returns summary statistics and recent activity for the dashboard.
 {
   "stats": {
     "total_people": 150,
-    "total_companies": 45,
+    "total_teams": 45,
     "total_dates": 200
   },
   "recent_people": [
@@ -138,7 +138,7 @@ This endpoint is called periodically by the frontend to detect when a new versio
 
 **GET** `/stadion/v1/search`
 
-Search across people, companies, and dates.
+Search across people, teams, and dates.
 
 **Permission:** Logged in users only
 
@@ -154,7 +154,7 @@ Search across people, companies, and dates.
   "people": [
     { "id": 1, "name": "John Doe", "thumbnail": "...", "is_favorite": true, "labels": [] }
   ],
-  "companies": [
+  "teams": [
     { "id": 2, "name": "Acme Corp", "thumbnail": "...", "website": "https://...", "labels": [] }
   ],
   "dates": [
@@ -198,13 +198,13 @@ Get upcoming important dates with reminders.
 
 ---
 
-### People by Company
+### People by Team
 
-**GET** `/stadion/v1/companies/{company_id}/people`
+**GET** `/stadion/v1/teams/{team_id}/people`
 
-Get all people who work or worked at a company.
+Get all people who work or worked at a team.
 
-**Permission:** Must have access to the company
+**Permission:** Must have access to the team
 
 **Response:**
 ```json
@@ -344,13 +344,13 @@ If no Gravatar exists:
 
 ---
 
-### Company Logo Upload
+### Team Logo Upload
 
-**POST** `/stadion/v1/companies/{company_id}/logo/upload`
+**POST** `/stadion/v1/teams/{team_id}/logo/upload`
 
-Upload and set a company's logo. The filename is automatically generated from the company name.
+Upload and set a team's logo. The filename is automatically generated from the team name.
 
-**Permission:** Must be able to edit the company
+**Permission:** Must be able to edit the team
 
 **Content-Type:** `multipart/form-data`
 
@@ -370,13 +370,13 @@ Upload and set a company's logo. The filename is automatically generated from th
 
 ---
 
-### Set Company Logo (by Media ID)
+### Set Team Logo (by Media ID)
 
-**POST** `/stadion/v1/companies/{company_id}/logo`
+**POST** `/stadion/v1/teams/{team_id}/logo`
 
-Set a company's logo from an existing media library item.
+Set a team's logo from an existing media library item.
 
-**Permission:** Must be able to edit the company
+**Permission:** Must be able to edit the team
 
 **Body:**
 ```json
@@ -667,11 +667,11 @@ Remove sharing from a user.
 
 ---
 
-### Direct Sharing (Companies)
+### Direct Sharing (Teams)
 
-**GET** `/stadion/v1/companies/{id}/shares`
+**GET** `/stadion/v1/teams/{id}/shares`
 
-Get list of users a company is shared with.
+Get list of users a team is shared with.
 
 **Permission:** Must be post owner
 
@@ -679,9 +679,9 @@ Get list of users a company is shared with.
 
 ---
 
-**POST** `/stadion/v1/companies/{id}/shares`
+**POST** `/stadion/v1/teams/{id}/shares`
 
-Share a company with another user.
+Share a team with another user.
 
 **Permission:** Must be post owner
 
@@ -689,7 +689,7 @@ Share a company with another user.
 
 ---
 
-**DELETE** `/stadion/v1/companies/{id}/shares/{user_id}`
+**DELETE** `/stadion/v1/teams/{id}/shares/{user_id}`
 
 Remove sharing from a user.
 

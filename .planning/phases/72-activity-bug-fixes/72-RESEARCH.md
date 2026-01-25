@@ -105,7 +105,7 @@ Current z-index usage in the application:
 
 ### Spacing Pattern
 
-**BUG-02 Issue:** Missing space between "at" and company name in person header.
+**BUG-02 Issue:** Missing space between "at" and team name in person header.
 
 Current code (line 1469):
 ```jsx

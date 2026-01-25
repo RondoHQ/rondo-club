@@ -14,7 +14,7 @@ requires:
     provides: Detail pages and layout accent color updates
 provides:
   - Accent colors for all Timeline components (TimelineView, modals)
-  - Accent colors for all edit modals (Person, Company, Contact, Date, etc.)
+  - Accent colors for all edit modals (Person, Team, Contact, Date, etc.)
   - Accent colors for Workspace pages (Detail, Settings, InviteAccept)
   - Accent colors for Import wizards (vCard, Google, Monica)
 affects: [ui-theming, component-updates]
@@ -33,7 +33,7 @@ key-files:
     - src/components/Timeline/GlobalTodoModal.jsx
     - src/components/Timeline/CompleteTodoModal.jsx
     - src/components/PersonEditModal.jsx
-    - src/components/CompanyEditModal.jsx
+    - src/components/TeamEditModal.jsx
     - src/components/ContactEditModal.jsx
     - src/components/ImportantDateModal.jsx
     - src/components/RelationshipEditModal.jsx
@@ -103,7 +103,7 @@ Each task was committed atomically:
 
 ### Edit Modals
 - `src/components/PersonEditModal.jsx` - vCard drop zone, spinner, checkbox
-- `src/components/CompanyEditModal.jsx` - Focus rings, dropdown selection
+- `src/components/TeamEditModal.jsx` - Focus rings, dropdown selection
 - `src/components/ContactEditModal.jsx` - Focus rings on inputs
 - `src/components/ImportantDateModal.jsx` - People selector chips, checkboxes
 - `src/components/RelationshipEditModal.jsx` - Person selector, add link

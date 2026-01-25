@@ -34,7 +34,7 @@ use Stadion\Core\Visibility;
 use Stadion\Core\UserRoles;
 use Stadion\REST\Api;
 use Stadion\REST\People;
-use Stadion\REST\Companies;
+use Stadion\REST\Teams;
 use Stadion\REST\Todos;
 use Stadion\REST\Workspaces;
 use Stadion\REST\Slack;
@@ -143,8 +143,8 @@ if ( ! class_exists( 'STADION_REST_Base' ) ) {
 if ( ! class_exists( 'STADION_REST_People' ) ) {
 	class_alias( People::class, 'STADION_REST_People' );
 }
-if ( ! class_exists( 'STADION_REST_Companies' ) ) {
-	class_alias( Companies::class, 'STADION_REST_Companies' );
+if ( ! class_exists( 'STADION_REST_Teams' ) ) {
+	class_alias( Teams::class, 'STADION_REST_Teams' );
 }
 if ( ! class_exists( 'STADION_REST_Todos' ) ) {
 	class_alias( Todos::class, 'STADION_REST_Todos' );
@@ -354,7 +354,7 @@ function stadion_init() {
 	if ( $is_rest ) {
 		new Api();
 		new People();
-		new Companies();
+		new Teams();
 		new Workspaces();
 		new Todos();
 		new Slack();
@@ -623,7 +623,7 @@ function stadion_redirect_backend_urls() {
 	// Map post types to frontend routes
 	$route_map = [
 		'person'         => 'people',
-		'company'        => 'companies',
+		'team'        => 'teams',
 		'important_date' => 'dates',
 	];
 
@@ -667,10 +667,10 @@ function stadion_theme_template_redirect() {
 	$path = trim( $request_uri, '/' );
 
 	// If this is a request for our app routes, serve index.php
-	// This includes: /, /people, /people/:id, /companies, /companies/:id, /dates, /dates/:id, /settings, /login
+	// This includes: /, /people, /people/:id, /teams, /teams/:id, /dates, /dates/:id, /settings, /login
 	$app_routes = [
 		'people',
-		'companies',
+		'teams',
 		'dates',
 		'settings',
 		'login',

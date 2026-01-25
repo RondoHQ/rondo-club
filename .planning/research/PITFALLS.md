@@ -138,7 +138,7 @@ Issues specific to Google People API behavior.
 
 **Prevention:**
 - Always include `personFields` parameter in read operations
-- Create a constant with all fields you need: `names,emailAddresses,phoneNumbers,addresses,birthdays,organizations,photos,memberships`
+- Create a constant with all fields you need: `names,emailAddresses,phoneNumbers,addresses,birthdays,teams,photos,memberships`
 - Document which fields Stadion uses and sync that list
 
 **Detection:** 400 errors mentioning "personFields mask is required"

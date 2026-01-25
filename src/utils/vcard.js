@@ -48,22 +48,22 @@ function formatVCardDate(date) {
 /**
  * Gets the current job title and organization from work history
  * @param {Array} workHistory - Work history array
- * @param {Object} companyMap - Map of company ID to company name
+ * @param {Object} teamMap - Map of team ID to team name
  * @returns {Object} - {title: string, org: string}
  */
-function getCurrentJob(workHistory, companyMap = {}) {
+function getCurrentJob(workHistory, teamMap = {}) {
   if (!workHistory || !Array.isArray(workHistory)) {
     return { title: '', org: '' };
   }
   
   const currentJob = workHistory.find(job => job.is_current);
   if (currentJob) {
-    const companyName = currentJob.company && companyMap[currentJob.company] 
-      ? companyMap[currentJob.company].name || companyMap[currentJob.company]
+    const teamName = currentJob.team && teamMap[currentJob.team] 
+      ? teamMap[currentJob.team].name || teamMap[currentJob.team]
       : '';
     return {
       title: currentJob.job_title || '',
-      org: companyName,
+      org: teamName,
     };
   }
   
@@ -73,12 +73,12 @@ function getCurrentJob(workHistory, companyMap = {}) {
     .sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
   
   if (sorted.length > 0) {
-    const companyName = sorted[0].company && companyMap[sorted[0].company]
-      ? companyMap[sorted[0].company].name || companyMap[sorted[0].company]
+    const teamName = sorted[0].team && teamMap[sorted[0].team]
+      ? teamMap[sorted[0].team].name || teamMap[sorted[0].team]
       : '';
     return {
       title: sorted[0].job_title || '',
-      org: companyName,
+      org: teamName,
     };
   }
   
@@ -89,7 +89,7 @@ function getCurrentJob(workHistory, companyMap = {}) {
  * Generates vCard 3.0 format from person data
  * @param {Object} person - Person object from API
  * @param {Object} options - Optional parameters
- * @param {Object} options.companyMap - Map of company ID to company data/name
+ * @param {Object} options.teamMap - Map of team ID to team data/name
  * @param {Array} options.personDates - Array of person dates (for birthday)
  * @returns {string} - vCard content
  */
@@ -98,7 +98,7 @@ export function generateVCard(person, options = {}) {
     throw new Error('Person data is required');
   }
 
-  const { companyMap = {}, personDates = [] } = options;
+  const { teamMap = {}, personDates = [] } = options;
   const acf = person.acf || {};
   const lines = [];
   
@@ -185,7 +185,7 @@ export function generateVCard(person, options = {}) {
   }
   
   // Organization and title from work history
-  const { title, org } = getCurrentJob(acf.work_history, companyMap);
+  const { title, org } = getCurrentJob(acf.work_history, teamMap);
   if (org) {
     lines.push(`ORG:${escapeVCardValue(org)}`);
   }
@@ -236,7 +236,7 @@ export function generateVCard(person, options = {}) {
  * @param {Object} person - Person object from API
  * @param {Object} options - Optional parameters
  * @param {string} options.filename - Optional filename (defaults to person name)
- * @param {Object} options.companyMap - Map of company ID to company data/name
+ * @param {Object} options.teamMap - Map of team ID to team data/name
  * @param {Array} options.personDates - Array of person dates (for birthday)
  */
 export function downloadVCard(person, options = {}) {

@@ -113,8 +113,8 @@ $updated = $service->people->updateContact(
     $google_contact_id,
     $person,
     [
-        'updatePersonFields' => 'names,emailAddresses,phoneNumbers,addresses,organizations',
-        'personFields' => 'names,emailAddresses,phoneNumbers,addresses,organizations,metadata'
+        'updatePersonFields' => 'names,emailAddresses,phoneNumbers,addresses,teams',
+        'personFields' => 'names,emailAddresses,phoneNumbers,addresses,teams,metadata'
     ]
 );
 // Store new etag for next update
@@ -254,8 +254,8 @@ $updated = $service->people->updateContact(
     $google_contact_id,
     $person,
     [
-        'updatePersonFields' => 'names,emailAddresses,phoneNumbers,addresses,organizations',
-        'personFields' => 'names,emailAddresses,phoneNumbers,addresses,organizations,metadata'
+        'updatePersonFields' => 'names,emailAddresses,phoneNumbers,addresses,teams',
+        'personFields' => 'names,emailAddresses,phoneNumbers,addresses,teams,metadata'
     ]
 );
 
@@ -331,7 +331,7 @@ Based on the import class and ACF fields, here is the reverse mapping:
 | `contact_info` (phone/mobile) | `PhoneNumber[]` | Multiple allowed, type from contact_type |
 | `contact_info` (website, linkedin, etc) | `Url[]` | Multiple allowed |
 | `addresses` | `Address[]` | Multiple allowed |
-| `work_history` | `Organization[]` | Multiple allowed, includes title |
+| `work_history` | `Team[]` | Multiple allowed, includes title |
 | Featured image | `updateContactPhoto` | Separate API call |
 | Birthday (from important_date) | `Birthday` | Singleton, optional |
 

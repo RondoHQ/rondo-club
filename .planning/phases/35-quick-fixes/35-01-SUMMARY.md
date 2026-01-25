@@ -2,14 +2,14 @@
 phase: 35-quick-fixes
 plan: 01
 subsystem: ui
-tags: [react, wordpress, version-check, organizations-list, contact-display]
+tags: [react, wordpress, version-check, teams-list, contact-display]
 
 # Dependency graph
 requires:
   - phase: 34
     provides: Todo enhancement foundation
 provides:
-  - Clickable website links in Organizations list
+  - Clickable website links in Teams list
   - Simplified Slack contact display
   - Build-time based refresh detection
 affects: [ui-polish, deployment]
@@ -23,7 +23,7 @@ tech-stack:
 key-files:
   created: []
   modified:
-    - src/pages/Companies/CompaniesList.jsx
+    - src/pages/Teams/TeamsList.jsx
     - src/pages/People/PersonDetail.jsx
     - src/hooks/useVersionCheck.js
     - functions.php
@@ -59,8 +59,8 @@ completed: 2026-01-14
 
 ## Accomplishments
 
-- Website URLs in Organizations list are now clickable blue links opening in new tab
-- Labels column completely removed from Organizations list (column, sorting, bulk action)
+- Website URLs in Teams list are now clickable blue links opening in new tab
+- Labels column completely removed from Teams list (column, sorting, bulk action)
 - Slack contact details now show only the label as a clickable link (no URL visible)
 - Refresh detection now uses build timestamps instead of version numbers
 
@@ -68,13 +68,13 @@ completed: 2026-01-14
 
 Each task was committed atomically:
 
-1. **Task 1: Make company website clickable and remove labels column** - `88cc3e4` (feat)
+1. **Task 1: Make team website clickable and remove labels column** - `88cc3e4` (feat)
 2. **Task 2: Simplify Slack contact details display** - `a30865c` (feat)
 3. **Task 3: Switch to build timestamps for refresh detection** - `c0d9dce` (feat)
 
 ## Files Created/Modified
 
-- `src/pages/Companies/CompaniesList.jsx` - Website as clickable link, removed labels column/sorting/bulk action
+- `src/pages/Teams/TeamsList.jsx` - Website as clickable link, removed labels column/sorting/bulk action
 - `src/pages/People/PersonDetail.jsx` - Slack contacts show label only as link
 - `src/hooks/useVersionCheck.js` - Compare buildTime instead of version
 - `functions.php` - Add buildTime to stadionConfig from manifest mtime
@@ -84,7 +84,7 @@ Each task was committed atomically:
 ## Decisions Made
 
 - Use manifest.json file modification time as the build timestamp (reliable, auto-updates on every build)
-- Keep BulkLabelsModal component definition in CompaniesList.jsx for potential future use
+- Keep BulkLabelsModal component definition in TeamsList.jsx for potential future use
 - Display version number in refresh banner for user clarity, but compare build times internally
 
 ## Deviations from Plan

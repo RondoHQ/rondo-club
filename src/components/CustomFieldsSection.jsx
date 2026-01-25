@@ -4,7 +4,7 @@ import { Pencil, ExternalLink, FileText, Link as LinkIcon, User, Building2 } fro
 import { format, parse, isValid } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { prmApi, wpApi } from '@/api/client';
-import { getPersonName, getCompanyName } from '@/utils/formatters';
+import { getPersonName, getTeamName } from '@/utils/formatters';
 import CustomFieldsEditModal from './CustomFieldsEditModal';
 
 /**
@@ -27,19 +27,19 @@ function RelationshipItem({ itemId, allowedPostTypes }) {
             thumbnail,
           };
         } catch {
-          // Not a person, try company
+          // Not a person, try team
         }
       }
 
-      // Try company if allowed
-      if (allowedPostTypes.includes('company')) {
+      // Try team if allowed
+      if (allowedPostTypes.includes('team')) {
         try {
-          const response = await wpApi.getCompany(itemId, { _embed: true });
+          const response = await wpApi.getTeam(itemId, { _embed: true });
           const thumbnail = response.data._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
           return {
             id: response.data.id,
-            type: 'company',
-            name: getCompanyName(response.data),
+            type: 'team',
+            name: getTeamName(response.data),
             thumbnail,
           };
         } catch {
@@ -68,7 +68,7 @@ function RelationshipItem({ itemId, allowedPostTypes }) {
     );
   }
 
-  const linkPath = itemData.type === 'person' ? `/people/${itemData.id}` : `/companies/${itemData.id}`;
+  const linkPath = itemData.type === 'person' ? `/people/${itemData.id}` : `/teams/${itemData.id}`;
   const IconComponent = itemData.type === 'person' ? User : Building2;
 
   return (
@@ -139,7 +139,7 @@ const parseDate = (dateStr) => {
  * Displays custom fields section on detail pages
  *
  * @param {Object} props
- * @param {'person'|'company'} props.postType - The post type
+ * @param {'person'|'team'} props.postType - The post type
  * @param {number} props.postId - The post ID
  * @param {Object} props.acfData - The ACF data object from the post
  * @param {Function} props.onUpdate - Callback after successful save, receives updated ACF data
@@ -347,7 +347,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
         const items = Array.isArray(value) ? value : [value];
 
         // Get allowed post types from field definition
-        const allowedPostTypes = field.post_type || ['person', 'company'];
+        const allowedPostTypes = field.post_type || ['person', 'team'];
 
         return (
           <div className="flex flex-wrap gap-2">
@@ -355,7 +355,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
               // Handle object format (post_type, ID, post_title available)
               if (typeof item === 'object' && item !== null) {
                 const postTypeSlug = item.post_type;
-                const linkPath = postTypeSlug === 'person' ? `/people/${item.ID}` : `/companies/${item.ID}`;
+                const linkPath = postTypeSlug === 'person' ? `/people/${item.ID}` : `/teams/${item.ID}`;
                 const IconComponent = postTypeSlug === 'person' ? User : Building2;
                 // ACF may include featured image in object format
                 const thumbnail = item.featured_image_url || item._embedded?.['wp:featuredmedia']?.[0]?.source_url;

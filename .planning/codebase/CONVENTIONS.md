@@ -41,7 +41,7 @@
 - Strict mode: `--max-warnings 0`
 - Plugins: `react`, `react-hooks`, `react-refresh`
 
-## Import Organization
+## Import Team
 
 **Order:**
 1. React and React libraries (`react`, `react-router-dom`)

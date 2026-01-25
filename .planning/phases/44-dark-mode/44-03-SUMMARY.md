@@ -12,7 +12,7 @@ provides:
   - Modal containers with dark mode (bg-gray-800)
   - Form inputs with dark backgrounds (bg-gray-700)
   - Dropdown menus with dark borders and hover states
-  - People/company chips with dark variants
+  - People/team chips with dark variants
   - RichTextEditor dark mode support
 affects: [44-04]
 
@@ -25,7 +25,7 @@ key-files:
   created: []
   modified:
     - src/components/PersonEditModal.jsx
-    - src/components/CompanyEditModal.jsx
+    - src/components/TeamEditModal.jsx
     - src/components/ImportantDateModal.jsx
     - src/components/Timeline/TodoModal.jsx
     - src/components/Timeline/GlobalTodoModal.jsx
@@ -67,7 +67,7 @@ completed: 2026-01-15
 - **Files modified:** 13
 
 ## Accomplishments
-- All entity edit modals (Person, Company, ImportantDate) have full dark mode support
+- All entity edit modals (Person, Team, ImportantDate) have full dark mode support
 - Timeline modals (Todo, GlobalTodo, Note, QuickActivity, CompleteTodo) have dark mode
 - Remaining modals (Contact, Relationship, Share) have dark mode
 - Shared components (VisibilitySelector, RichTextEditor) have dark mode
@@ -77,13 +77,13 @@ completed: 2026-01-15
 
 Each task was committed atomically:
 
-1. **Task 1: Person/Company/Date Edit Modals** - `7b790dd` (feat)
+1. **Task 1: Person/Team/Date Edit Modals** - `7b790dd` (feat)
 2. **Task 2: Timeline and Todo Modals** - `9cf3c50` (feat)
 3. **Task 3: Remaining Modals and Shared Components** - `803e65d` (feat)
 
 ## Files Created/Modified
 - `src/components/PersonEditModal.jsx` - vCard import area, form fields, checkbox, footer
-- `src/components/CompanyEditModal.jsx` - Parent dropdown, investor chips, search inputs
+- `src/components/TeamEditModal.jsx` - Parent dropdown, investor chips, search inputs
 - `src/components/ImportantDateModal.jsx` - People selector dropdown, checkboxes
 - `src/components/Timeline/TodoModal.jsx` - View mode labels, edit form, people dropdown
 - `src/components/Timeline/GlobalTodoModal.jsx` - Modal container, person chips, form fields

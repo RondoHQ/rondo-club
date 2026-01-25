@@ -369,7 +369,7 @@ export default function Settings() {
 
       // Invalidate queries to refresh contact lists
       queryClient.invalidateQueries({ queryKey: ['people'] });
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
       queryClient.invalidateQueries({ queryKey: ['dates'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     } catch (error) {
@@ -2322,8 +2322,8 @@ function ConnectionsContactsSubtab({
                         {googleContactsImportResult.stats.contacts_no_email} skipped (no email)
                       </li>
                     )}
-                    {googleContactsImportResult.stats.companies_created > 0 && (
-                      <li>{googleContactsImportResult.stats.companies_created} organizations created</li>
+                    {googleContactsImportResult.stats.teams_created > 0 && (
+                      <li>{googleContactsImportResult.stats.teams_created} organizations created</li>
                     )}
                     {googleContactsImportResult.stats.dates_created > 0 && (
                       <li>{googleContactsImportResult.stats.dates_created} birthdays added</li>

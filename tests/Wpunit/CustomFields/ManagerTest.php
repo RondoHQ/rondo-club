@@ -46,7 +46,7 @@ class ManagerTest extends StadionTestCase {
 	 * Remove test field groups.
 	 */
 	private function cleanup_test_fields(): void {
-		foreach ( array( 'person', 'company' ) as $post_type ) {
+		foreach ( array( 'person', 'team' ) as $post_type ) {
 			$group = acf_get_field_group( 'group_custom_fields_' . $post_type );
 			if ( $group ) {
 				acf_delete_field_group( $group['ID'] );
@@ -67,13 +67,13 @@ class ManagerTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test ensure_field_group creates a group for company post type.
+	 * Test ensure_field_group creates a group for team post type.
 	 */
-	public function test_ensure_field_group_creates_for_company(): void {
-		$group = $this->manager->ensure_field_group( 'company' );
+	public function test_ensure_field_group_creates_for_team(): void {
+		$group = $this->manager->ensure_field_group( 'team' );
 
 		$this->assertIsArray( $group );
-		$this->assertEquals( 'group_custom_fields_company', $group['key'] );
+		$this->assertEquals( 'group_custom_fields_team', $group['key'] );
 	}
 
 	/**

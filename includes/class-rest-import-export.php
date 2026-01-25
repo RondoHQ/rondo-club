@@ -72,13 +72,13 @@ class ImportExport extends Base {
 			return new \WP_Error( 'no_contacts', __( 'No contacts to export.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
-		// Get companies for work history
-		$company_ids = $access_control->get_accessible_post_ids( 'company', $user_id );
-		$company_map = [];
-		foreach ( $company_ids as $company_id ) {
-			$company = get_post( $company_id );
-			if ( $company ) {
-				$company_map[ $company_id ] = $company->post_title;
+		// Get teams for work history
+		$team_ids = $access_control->get_accessible_post_ids( 'team', $user_id );
+		$team_map = [];
+		foreach ( $team_ids as $team_id ) {
+			$team = get_post( $team_id );
+			if ( $team ) {
+				$team_map[ $team_id ] = $team->post_title;
 			}
 		}
 
@@ -110,7 +110,7 @@ class ImportExport extends Base {
 			}
 
 			// Generate vCard
-			$vcard = $this->generate_vcard_from_person( $person_data, $company_map, $person_dates );
+			$vcard = $this->generate_vcard_from_person( $person_data, $team_map, $person_dates );
 			if ( $vcard ) {
 				$vcards[] = $vcard;
 			}
@@ -290,12 +290,12 @@ class ImportExport extends Base {
 				}
 
 				if ( $current_job ) {
-					$company_id = $current_job['company'] ?? null;
-					if ( $company_id ) {
-						$company = get_post( $company_id );
-						if ( $company ) {
+					$team_id = $current_job['team'] ?? null;
+					if ( $team_id ) {
+						$team = get_post( $team_id );
+						if ( $team ) {
 							$row[48] = 'Work'; // Organization Type
-							$row[49] = $company->post_title; // Organization Name
+							$row[49] = $team->post_title; // Organization Name
 						}
 					}
 					$row[51] = $current_job['job_title'] ?? ''; // Title
@@ -336,11 +336,11 @@ class ImportExport extends Base {
 	 * Generate vCard from person data
 	 *
 	 * @param array $person_data Person data from REST API.
-	 * @param array $company_map Map of company IDs to names.
+	 * @param array $team_map Map of company IDs to names.
 	 * @param array $person_dates Array of person's important dates.
 	 * @return string vCard content.
 	 */
-	private function generate_vcard_from_person( $person_data, $company_map = [], $person_dates = [] ) {
+	private function generate_vcard_from_person( $person_data, $team_map = [], $person_dates = [] ) {
 		$acf   = $person_data['acf'] ?? [];
 		$lines = [];
 
@@ -418,9 +418,9 @@ class ImportExport extends Base {
 			}
 
 			if ( $current_job ) {
-				$company_id = $current_job['company'] ?? null;
-				if ( $company_id && isset( $company_map[ $company_id ] ) ) {
-					$lines[] = 'ORG:' . $this->escape_vcard_value( $company_map[ $company_id ] );
+				$team_id = $current_job['team'] ?? null;
+				if ( $team_id && isset( $team_map[ $team_id ] ) ) {
+					$lines[] = 'ORG:' . $this->escape_vcard_value( $team_map[ $team_id ] );
 				}
 				if ( ! empty( $current_job['job_title'] ) ) {
 					$lines[] = 'TITLE:' . $this->escape_vcard_value( $current_job['job_title'] );

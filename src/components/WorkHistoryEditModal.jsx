@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 
-function CompanySelector({ value, onChange, companies, isLoading }) {
+function TeamSelector({ value, onChange, teams, isLoading }) {
   return (
     <select
       value={value || ''}
@@ -13,9 +13,9 @@ function CompanySelector({ value, onChange, companies, isLoading }) {
       disabled={isLoading}
     >
       <option value="">Select an organization...</option>
-      {companies.map(company => (
-        <option key={company.id} value={company.id}>
-          {company.title?.rendered || company.title}
+      {teams.map(team => (
+        <option key={team.id} value={team.id}>
+          {team.title?.rendered || team.title}
         </option>
       ))}
     </select>
@@ -31,27 +31,27 @@ export default function WorkHistoryEditModal({
 }) {
   const isEditing = !!workHistoryItem;
 
-  // Fetch companies for the selector
-  const { data: companiesData = [], isLoading: isCompaniesLoading } = useQuery({
-    queryKey: ['companies', 'all'],
+  // Fetch teams for the selector
+  const { data: teamsData = [], isLoading: isTeamsLoading } = useQuery({
+    queryKey: ['teams', 'all'],
     queryFn: async () => {
-      const response = await wpApi.getCompanies({ per_page: 100 });
+      const response = await wpApi.getTeams({ per_page: 100 });
       return response.data;
     },
   });
   
-  // Sort companies alphabetically by title
-  const companies = useMemo(() => {
-    return [...companiesData].sort((a, b) => {
+  // Sort teams alphabetically by title
+  const teams = useMemo(() => {
+    return [...teamsData].sort((a, b) => {
       const titleA = (a.title?.rendered || a.title || '').toLowerCase();
       const titleB = (b.title?.rendered || b.title || '').toLowerCase();
       return titleA.localeCompare(titleB);
     });
-  }, [companiesData]);
+  }, [teamsData]);
 
   const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm({
     defaultValues: {
-      company: null,
+      team: null,
       job_title: '',
       description: '',
       start_date: '',
@@ -67,7 +67,7 @@ export default function WorkHistoryEditModal({
     if (isOpen) {
       if (workHistoryItem) {
         reset({
-          company: workHistoryItem.company || null,
+          team: workHistoryItem.team || null,
           job_title: workHistoryItem.job_title || '',
           description: workHistoryItem.description || '',
           start_date: workHistoryItem.start_date || '',
@@ -76,7 +76,7 @@ export default function WorkHistoryEditModal({
         });
       } else {
         reset({
-          company: null,
+          team: null,
           job_title: '',
           description: '',
           start_date: '',
@@ -91,7 +91,7 @@ export default function WorkHistoryEditModal({
 
   const handleFormSubmit = (data) => {
     onSubmit({
-      company: data.company || null,
+      team: data.team || null,
       job_title: data.job_title || '',
       description: data.description || '',
       start_date: data.start_date || '',
@@ -116,18 +116,18 @@ export default function WorkHistoryEditModal({
         
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Company */}
+            {/* Team */}
             <div>
               <label className="label">Organization</label>
               <Controller
-                name="company"
+                name="team"
                 control={control}
                 render={({ field }) => (
-                  <CompanySelector
+                  <TeamSelector
                     value={field.value}
                     onChange={field.onChange}
-                    companies={companies}
-                    isLoading={isCompaniesLoading || isLoading}
+                    teams={teams}
+                    isLoading={isTeamsLoading || isLoading}
                   />
                 )}
               />

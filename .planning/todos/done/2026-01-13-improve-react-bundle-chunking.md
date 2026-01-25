@@ -48,7 +48,7 @@ build: {
 ```javascript
 // Lazy load page components
 const PeopleList = lazy(() => import('./pages/People/PeopleList'));
-const CompanyDetail = lazy(() => import('./pages/Companies/CompanyDetail'));
+const TeamDetail = lazy(() => import('./pages/Teams/TeamDetail'));
 ```
 
 **3. Component-level splitting:**

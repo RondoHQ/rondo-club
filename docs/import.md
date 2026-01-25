@@ -35,7 +35,7 @@ vCard is a universal standard format supported by virtually all contact manageme
 | `TEL` | `contact_info` (phone/mobile) |
 | `EMAIL` | `contact_info` (email) |
 | `ADR` | `contact_info` (address) |
-| `ORG` | Creates Company + `work_history` |
+| `ORG` | Creates Team + `work_history` |
 | `TITLE` | `work_history.job_title` |
 | `BDAY` | Creates `important_date` (birthday) |
 | `PHOTO` | Post thumbnail |
@@ -69,8 +69,8 @@ Export from Google Contacts using the "Google CSV" format.
 | `Phone 1 - Value` (through 5) | `contact_info` (phone/mobile) |
 | `Address 1 - Formatted` (through 3) | `contact_info` (address) |
 | `Website 1 - Value` (through 3) | `contact_info` (website/social) |
-| `Organization 1 - Name` or `Organization Name` | Creates Company |
-| `Organization 1 - Title` or `Organization Title` | `work_history.job_title` |
+| `Team 1 - Name` or `Team Name` | Creates Team |
+| `Team 1 - Title` or `Team Title` | `work_history.job_title` |
 | `Birthday` | Creates `important_date` (birthday) |
 | `Photo` | Profile photo (sideloaded from URL) |
 | `Notes` | Creates note (comment) |
@@ -105,7 +105,7 @@ file: <vCard file>
   "version": "vcard",
   "summary": {
     "contacts": 25,
-    "companies_count": 8,
+    "teams_count": 8,
     "birthdays": 15,
     "photos": 20,
     "notes": 10
@@ -129,7 +129,7 @@ file: <vCard file>
     "contacts_imported": 20,
     "contacts_updated": 5,
     "contacts_skipped": 0,
-    "companies_created": 8,
+    "teams_created": 8,
     "dates_created": 15,
     "notes_created": 10,
     "photos_imported": 18,
@@ -155,7 +155,7 @@ file: <CSV file>
   "version": "google-contacts",
   "summary": {
     "contacts": 25,
-    "companies_count": 8,
+    "teams_count": 8,
     "birthdays": 15,
     "photos": 12,
     "notes": 10
@@ -193,7 +193,7 @@ decisions: {"3": "merge", "7": "new", "12": "skip"}
     "contacts_imported": 18,
     "contacts_updated": 5,
     "contacts_skipped": 2,
-    "companies_created": 8,
+    "teams_created": 8,
     "dates_created": 15,
     "notes_created": 10,
     "photos_imported": 10,
@@ -241,7 +241,7 @@ flowchart TD
         CreateUpdate{Exists & merge?}
         Create[Create new person]
         Update[Update existing person]
-        Company[Create/link company]
+        Team[Create/link team]
         ContactInfo[Save contact info]
         Birthday[Create birthday date]
         Photo[Import photo]
@@ -263,9 +263,9 @@ flowchart TD
     FindExisting --> CreateUpdate
     CreateUpdate -->|No| Create
     CreateUpdate -->|Yes| Update
-    Create --> Company
-    Update --> Company
-    Company --> ContactInfo
+    Create --> Team
+    Update --> Team
+    Team --> ContactInfo
     ContactInfo --> Birthday
     Birthday --> Photo
     Photo --> Note
@@ -305,7 +305,7 @@ Google Contacts import provides **user-controlled duplicate handling**:
   "version": "google-contacts",
   "summary": {
     "contacts": 25,
-    "companies_count": 8,
+    "teams_count": 8,
     "birthdays": 15,
     "photos": 20,
     "notes": 10
@@ -415,9 +415,9 @@ Common operations used across import classes:
 private function find_existing_person($first_name, $last_name): ?int
 ```
 
-**Get or create company**:
+**Get or create team**:
 ```php
-private function get_or_create_company($name): int
+private function get_or_create_team($name): int
 ```
 
 **Import birthday**:

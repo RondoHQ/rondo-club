@@ -101,7 +101,7 @@ None - no external service configuration required.
 
 - Foundation complete: toggling dark class now produces visible changes in Layout and base components
 - Users can control color scheme preference via Settings > Appearance
-- Ready for 44-02 to add dark mode to core pages (Dashboard, People, Companies, etc.)
+- Ready for 44-02 to add dark mode to core pages (Dashboard, People, Teams, etc.)
 
 ---
 *Phase: 44-dark-mode*

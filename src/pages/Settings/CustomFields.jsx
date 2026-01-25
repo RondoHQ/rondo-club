@@ -27,7 +27,7 @@ import DeleteFieldDialog from '@/components/DeleteFieldDialog';
 // Tab configuration
 const TABS = [
   { id: 'person', label: 'People Fields' },
-  { id: 'company', label: 'Organization Fields' },
+  { id: 'team', label: 'Organization Fields' },
 ];
 
 // Field type display labels
@@ -128,7 +128,7 @@ export default function CustomFields() {
   // Initialize tab from localStorage or default to 'person'
   const [activeTab, setActiveTab] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved && (saved === 'person' || saved === 'company') ? saved : 'person';
+    return saved && (saved === 'person' || saved === 'team') ? saved : 'person';
   });
 
   // State for panel and dialog
@@ -169,11 +169,11 @@ export default function CustomFields() {
     },
   });
 
-  // Fetch company fields
-  const { data: companyFields = [], isLoading: companyFieldsLoading } = useQuery({
-    queryKey: ['custom-fields', 'company'],
+  // Fetch team fields
+  const { data: teamFields = [], isLoading: teamFieldsLoading } = useQuery({
+    queryKey: ['custom-fields', 'team'],
     queryFn: async () => {
-      const response = await prmApi.getCustomFields('company');
+      const response = await prmApi.getCustomFields('team');
       return response.data;
     },
   });
@@ -240,8 +240,8 @@ export default function CustomFields() {
   );
 
   // Determine which fields to show based on active tab
-  const fields = activeTab === 'person' ? personFields : companyFields;
-  const isLoading = activeTab === 'person' ? personFieldsLoading : companyFieldsLoading;
+  const fields = activeTab === 'person' ? personFields : teamFields;
+  const isLoading = activeTab === 'person' ? personFieldsLoading : teamFieldsLoading;
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);

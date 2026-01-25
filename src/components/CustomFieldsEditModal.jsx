@@ -5,7 +5,7 @@ import { format, parse, isValid } from 'date-fns';
 import Sketch from '@uiw/react-color-sketch';
 import { wpApi, prmApi } from '@/api/client';
 import { useQuery } from '@tanstack/react-query';
-import { decodeHtml, getPersonName, getCompanyName } from '@/utils/formatters';
+import { decodeHtml, getPersonName, getTeamName } from '@/utils/formatters';
 
 /**
  * Build default form values from field definitions and current values
@@ -257,7 +257,7 @@ function ColorPickerInput({ value, onChange }) {
 /**
  * Relationship field input with search
  */
-function RelationshipInput({ value = [], onChange, postTypes = ['person', 'company'], max = 0 }) {
+function RelationshipInput({ value = [], onChange, postTypes = ['person', 'team'], max = 0 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const containerRef = useRef(null);
@@ -280,9 +280,9 @@ function RelationshipInput({ value = [], onChange, postTypes = ['person', 'compa
         });
       }
 
-      if (postTypes.includes('company') && data.companies) {
-        data.companies.forEach((item) => {
-          results.push({ ...item, type: 'company' });
+      if (postTypes.includes('team') && data.teams) {
+        data.teams.forEach((item) => {
+          results.push({ ...item, type: 'team' });
         });
       }
 
@@ -313,12 +313,12 @@ function RelationshipInput({ value = [], onChange, postTypes = ['person', 'compa
           });
         } catch {
           try {
-            // Try company
-            const companyResponse = await wpApi.getCompany(id);
+            // Try team
+            const teamResponse = await wpApi.getTeam(id);
             items.push({
-              id: companyResponse.data.id,
-              type: 'company',
-              name: getCompanyName(companyResponse.data),
+              id: teamResponse.data.id,
+              type: 'team',
+              name: getTeamName(teamResponse.data),
             });
           } catch {
             // Item not found, skip
@@ -704,7 +704,7 @@ export default function CustomFieldsEditModal({
               <RelationshipInput
                 value={value}
                 onChange={onChange}
-                postTypes={field.post_type || ['person', 'company']}
+                postTypes={field.post_type || ['person', 'team']}
                 max={field.max || 0}
               />
             )}

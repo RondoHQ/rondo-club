@@ -26,7 +26,7 @@ key-files:
 
 key-decisions:
   - "Initialize WP_REST_Server in set_up() to ensure routes are registered"
-  - "Manually instantiate STADION_REST_People and STADION_REST_Companies for proper route registration"
+  - "Manually instantiate STADION_REST_People and STADION_REST_Teams for proper route registration"
   - "Use rest_do_request() for testing REST endpoints vs. direct method calls"
 
 patterns-established:
@@ -43,7 +43,7 @@ completed: 2026-01-13
 
 # Phase 23 Plan 03: RelationshipsSharesTest Summary
 
-**21 tests covering CPT relationships, sharing endpoints, and bulk update operations for people and companies**
+**21 tests covering CPT relationships, sharing endpoints, and bulk update operations for people and teams**
 
 ## Performance
 
@@ -56,13 +56,13 @@ completed: 2026-01-13
 ## Accomplishments
 
 - Created RelationshipsSharesTest with 21 comprehensive tests
-- Tested person-company relationships via `/stadion/v1/companies/{id}/people`
+- Tested person-team relationships via `/stadion/v1/teams/{id}/people`
 - Tested person-dates relationships via `/stadion/v1/people/{id}/dates`
 - Verified computed fields (is_deceased, birth_year) in person REST responses
-- Tested complete sharing lifecycle (add/get/remove) for people and companies
+- Tested complete sharing lifecycle (add/get/remove) for people and teams
 - Verified share permission levels (view/edit) and updates
 - Tested bulk update visibility, workspace assignment, labels for people
-- Tested bulk update visibility, labels for companies
+- Tested bulk update visibility, labels for teams
 - Verified authorization checks deny updates to others' posts
 
 ## Task Commits
@@ -79,8 +79,8 @@ Both tasks implemented in a single test file, committed atomically:
 
 ### Task 1: CPT Relationships (7 tests)
 
-1. `test_company_people_endpoint_returns_employees` - Person-company relationship
-2. `test_company_people_endpoint_distinguishes_current_former` - Current vs former employees
+1. `test_team_people_endpoint_returns_employees` - Person-team relationship
+2. `test_team_people_endpoint_distinguishes_current_former` - Current vs former employees
 3. `test_person_dates_endpoint_returns_linked_dates` - Person-dates relationship
 4. `test_person_computed_fields_is_deceased` - Computed is_deceased field
 5. `test_person_computed_fields_birth_year` - Computed birth_year field
@@ -93,7 +93,7 @@ Both tasks implemented in a single test file, committed atomically:
 8. `test_people_share_get` - Get shares for person
 9. `test_people_share_remove` - Remove share from person
 10. `test_share_permission_update` - Update share permission level
-11. `test_companies_share_lifecycle` - Full share lifecycle for companies
+11. `test_teams_share_lifecycle` - Full share lifecycle for teams
 12. `test_share_endpoint_denies_non_owner` - Authorization check for shares
 13. `test_cannot_share_with_self` - Prevent self-sharing
 
@@ -103,14 +103,14 @@ Both tasks implemented in a single test file, committed atomically:
 16. `test_people_bulk_update_add_labels` - Bulk add labels to people
 17. `test_people_bulk_update_remove_labels` - Bulk remove labels from people
 18. `test_people_bulk_update_authorization_denied` - Bulk update authorization
-19. `test_companies_bulk_update_visibility` - Bulk visibility for companies
-20. `test_companies_bulk_update_add_labels` - Bulk add labels to companies
-21. `test_companies_bulk_update_authorization_denied` - Bulk update auth for companies
+19. `test_teams_bulk_update_visibility` - Bulk visibility for teams
+20. `test_teams_bulk_update_add_labels` - Bulk add labels to teams
+21. `test_teams_bulk_update_authorization_denied` - Bulk update auth for teams
 
 ## Decisions Made
 
 - **REST Server Initialization:** Required manually instantiating WP_REST_Server and triggering rest_api_init hook because test environment doesn't automatically detect REST requests
-- **Route Registration:** Explicitly created STADION_REST_People and STADION_REST_Companies instances in set_up() to ensure routes are registered before tests run
+- **Route Registration:** Explicitly created STADION_REST_People and STADION_REST_Teams instances in set_up() to ensure routes are registered before tests run
 
 ## Deviations from Plan
 

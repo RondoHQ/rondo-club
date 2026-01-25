@@ -8,20 +8,20 @@ completed_at: 2026-01-13
 # Phase 9 Plan 03 Summary: ShareModal Component for Direct Sharing
 
 ## Objective
-Create ShareModal component for sharing contacts/companies with specific users, enabling direct person-to-person sharing (separate from workspace sharing).
+Create ShareModal component for sharing contacts/teams with specific users, enabling direct person-to-person sharing (separate from workspace sharing).
 
 ## Tasks Completed
 
 ### Task 1: Add share REST endpoints to backend
-Added sharing endpoints to both `STADION_REST_People` and `STADION_REST_Companies` classes:
+Added sharing endpoints to both `STADION_REST_People` and `STADION_REST_Teams` classes:
 
 **Routes registered:**
 - `GET /stadion/v1/people/{id}/shares` - Get list of users a person is shared with
 - `POST /stadion/v1/people/{id}/shares` - Share person with a user
 - `DELETE /stadion/v1/people/{id}/shares/{user_id}` - Remove share from a user
-- `GET /stadion/v1/companies/{id}/shares` - Get list of users a company is shared with
-- `POST /stadion/v1/companies/{id}/shares` - Share company with a user
-- `DELETE /stadion/v1/companies/{id}/shares/{user_id}` - Remove share from a user
+- `GET /stadion/v1/teams/{id}/shares` - Get list of users a team is shared with
+- `POST /stadion/v1/teams/{id}/shares` - Share team with a user
+- `DELETE /stadion/v1/teams/{id}/shares/{user_id}` - Remove share from a user
 
 **User search endpoint in `STADION_REST_API`:**
 - `GET /stadion/v1/users/search?q={query}` - Search users by name/email (excludes current user)
@@ -68,11 +68,11 @@ Created `src/components/ShareModal.jsx` with:
 **Props:**
 - `isOpen` - Modal visibility control
 - `onClose` - Close handler
-- `postType` - 'people' or 'companies'
+- `postType` - 'people' or 'teams'
 - `postId` - ID of the post being shared
 - `postTitle` - Display title for the modal
 
-### Task 4: Add Share button to PersonDetail and CompanyDetail pages
+### Task 4: Add Share button to PersonDetail and TeamDetail pages
 Updated both pages with:
 
 **PersonDetail.jsx:**
@@ -82,7 +82,7 @@ Updated both pages with:
 - Added Share button in header (between Export vCard and Edit)
 - Added ShareModal at end of component
 
-**CompanyDetail.jsx:**
+**TeamDetail.jsx:**
 - Added `Share2` icon import
 - Added `ShareModal` component import
 - Added `showShareModal` state
@@ -91,12 +91,12 @@ Updated both pages with:
 
 ## Files Modified
 - `includes/class-rest-people.php` - Added share endpoints and handlers
-- `includes/class-rest-companies.php` - Added share endpoints and handlers
+- `includes/class-rest-teams.php` - Added share endpoints and handlers
 - `includes/class-rest-api.php` - Added user search endpoint
 - `src/hooks/useSharing.js` - Created new hook file
 - `src/components/ShareModal.jsx` - Created new component
 - `src/pages/People/PersonDetail.jsx` - Added Share button and modal
-- `src/pages/Companies/CompanyDetail.jsx` - Added Share button and modal
+- `src/pages/Teams/TeamDetail.jsx` - Added Share button and modal
 - `docs/rest-api.md` - Added sharing endpoints documentation
 - `docs/frontend-architecture.md` - Added useSharing hook documentation
 
@@ -106,7 +106,7 @@ Updated both pages with:
 - ShareModal opens and displays correctly
 - User search returns results
 - Add/remove shares work correctly
-- Works for both People and Companies
+- Works for both People and Teams
 
 ## Commit
 - Hash: `4eed4ce` (included in docs(09-04) commit)

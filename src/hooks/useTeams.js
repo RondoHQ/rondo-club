@@ -2,14 +2,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 
 /**
- * Create a new company/organization.
+ * Create a new team/organization.
  * Handles payload building with all required ACF fields.
  *
  * @param {Object} options - Hook options
- * @param {Function} options.onSuccess - Called with created company data after successful creation
+ * @param {Function} options.onSuccess - Called with created team data after successful creation
  * @returns {Object} TanStack Query mutation object
  */
-export function useCreateCompany({ onSuccess } = {}) {
+export function useCreateTeam({ onSuccess } = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -27,11 +27,11 @@ export function useCreateCompany({ onSuccess } = {}) {
         },
       };
 
-      const response = await wpApi.createCompany(payload);
+      const response = await wpApi.createTeam(payload);
       return response.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       // Call custom onSuccess if provided
       onSuccess?.(result);
@@ -40,22 +40,22 @@ export function useCreateCompany({ onSuccess } = {}) {
 }
 
 /**
- * Bulk update multiple companies at once.
- * Updates visibility, workspace assignments, and/or labels for selected companies.
+ * Bulk update multiple teams at once.
+ * Updates visibility, workspace assignments, and/or labels for selected teams.
  *
  * @returns {Object} TanStack Query mutation object with mutate({ ids, updates })
  */
-export function useBulkUpdateCompanies() {
+export function useBulkUpdateTeams() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ ids, updates }) => {
-      const response = await prmApi.bulkUpdateCompanies(ids, updates);
+      const response = await prmApi.bulkUpdateTeams(ids, updates);
       return response.data;
     },
     onSuccess: async () => {
-      // Refetch companies list to show updated data immediately
-      await queryClient.refetchQueries({ queryKey: ['companies'] });
+      // Refetch teams list to show updated data immediately
+      await queryClient.refetchQueries({ queryKey: ['teams'] });
     },
   });
 }
