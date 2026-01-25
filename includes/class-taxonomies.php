@@ -344,6 +344,12 @@ class Taxonomies {
 	 * Includes inverse mappings and gender-dependent settings
 	 */
 	public function setup_default_relationship_configurations() {
+		// ACF must be loaded for get_field/update_field to work
+		// During theme activation, ACF may not be ready yet
+		if ( ! function_exists( 'get_field' ) ) {
+			return;
+		}
+
 		// Get all relationship type terms by slug
 		$types     = [];
 		$all_terms = get_terms(
