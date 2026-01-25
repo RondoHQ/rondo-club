@@ -10,30 +10,14 @@ export default function UserApproval() {
   const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
 
-  // Check if user is admin
-  if (!isAdmin) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <div className="card p-8 text-center">
-          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
-          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Toegang geweigerd</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Je hebt geen toestemming om gebruikersgoedkeuringen te beheren. Deze functie is alleen beschikbaar voor beheerders.
-          </p>
-          <Link to="/settings" className="btn-primary">
-            Terug naar Instellingen
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
+  // All hooks must be called before any conditional returns
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
       const response = await prmApi.getUsers();
       return response.data;
     },
+    enabled: isAdmin, // Only fetch if user is admin
   });
 
   const approveMutation = useMutation({
@@ -74,6 +58,24 @@ export default function UserApproval() {
       deleteMutation.mutate(userId);
     }
   };
+
+  // Check if user is admin (after all hooks)
+  if (!isAdmin) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="card p-8 text-center">
+          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
+          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Toegang geweigerd</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Je hebt geen toestemming om gebruikersgoedkeuringen te beheren. Deze functie is alleen beschikbaar voor beheerders.
+          </p>
+          <Link to="/settings" className="btn-primary">
+            Terug naar Instellingen
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
