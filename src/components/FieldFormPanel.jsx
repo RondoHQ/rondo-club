@@ -4,20 +4,20 @@ import Sketch from '@uiw/react-color-sketch';
 
 // Field type options
 const FIELD_TYPES = [
-  { value: 'text', label: 'Text' },
-  { value: 'textarea', label: 'Textarea' },
-  { value: 'number', label: 'Number' },
+  { value: 'text', label: 'Tekst' },
+  { value: 'textarea', label: 'Tekstveld' },
+  { value: 'number', label: 'Nummer' },
   { value: 'email', label: 'Email' },
   { value: 'url', label: 'URL' },
-  { value: 'date', label: 'Date' },
-  { value: 'select', label: 'Select' },
-  { value: 'checkbox', label: 'Checkbox' },
-  { value: 'true_false', label: 'True/False' },
-  { value: 'image', label: 'Image' },
-  { value: 'file', label: 'File' },
+  { value: 'date', label: 'Datum' },
+  { value: 'select', label: 'Selectie' },
+  { value: 'checkbox', label: 'Selectievakje' },
+  { value: 'true_false', label: 'Ja/Nee' },
+  { value: 'image', label: 'Afbeelding' },
+  { value: 'file', label: 'Bestand' },
   { value: 'link', label: 'Link' },
-  { value: 'color_picker', label: 'Color' },
-  { value: 'relationship', label: 'Relationship' },
+  { value: 'color_picker', label: 'Kleur' },
+  { value: 'relationship', label: 'Relatie' },
 ];
 
 // Date format options
@@ -30,8 +30,8 @@ const DATE_FORMATS = [
 
 // Week start day options
 const WEEK_START_OPTIONS = [
-  { value: 0, label: 'Sunday' },
-  { value: 1, label: 'Monday' },
+  { value: 0, label: 'Zondag' },
+  { value: 1, label: 'Maandag' },
 ];
 
 // Default form state with all type-specific options
@@ -57,8 +57,8 @@ const getDefaultFormData = () => ({
   toggle: false,
   // True/False options
   ui: true,
-  ui_on_text: 'Yes',
-  ui_off_text: 'No',
+  ui_on_text: 'Ja',
+  ui_off_text: 'Nee',
   // Text options
   maxlength: '',
   placeholder: '',
@@ -167,8 +167,8 @@ export default function FieldFormPanel({
           toggle: field.toggle ?? false,
           // True/False options
           ui: field.ui ?? true,
-          ui_on_text: field.ui_on_text || 'Yes',
-          ui_off_text: field.ui_off_text || 'No',
+          ui_on_text: field.ui_on_text || 'Ja',
+          ui_off_text: field.ui_off_text || 'Nee',
           // Text options
           maxlength: field.maxlength ?? '',
           placeholder: field.placeholder || '',
@@ -254,14 +254,14 @@ export default function FieldFormPanel({
   const validate = () => {
     const newErrors = {};
     if (!formData.label.trim()) {
-      newErrors.label = 'Label is required';
+      newErrors.label = 'Naam is verplicht';
     }
     if (!formData.type) {
-      newErrors.type = 'Type is required';
+      newErrors.type = 'Type is verplicht';
     }
     // Validate choices for select/checkbox
     if (['select', 'checkbox'].includes(formData.type) && !formData.choices.trim()) {
-      newErrors.choices = 'At least one choice is required';
+      newErrors.choices = 'Minimaal één keuze is verplicht';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -372,7 +372,7 @@ export default function FieldFormPanel({
     await onSubmit(submitData);
   };
 
-  const postTypeLabel = postType === 'person' ? 'People' : 'Organizations';
+  const postTypeLabel = postType === 'person' ? 'Leden' : 'Teams';
 
   // Common input styling
   const inputClass =
@@ -386,11 +386,11 @@ export default function FieldFormPanel({
       case 'text':
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Text Options</h4>
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Tekstopties</h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="maxlength" className={labelClass}>
-                  Max Length
+                  Maximale lengte
                 </label>
                 <input
                   id="maxlength"
@@ -399,13 +399,13 @@ export default function FieldFormPanel({
                   min="0"
                   value={formData.maxlength}
                   onChange={handleChange}
-                  placeholder="No limit"
+                  placeholder="Geen limiet"
                   className={inputClass}
                 />
               </div>
               <div>
                 <label htmlFor="placeholder" className={labelClass}>
-                  Placeholder
+                  Plaatshouder
                 </label>
                 <input
                   id="placeholder"
@@ -420,7 +420,7 @@ export default function FieldFormPanel({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="prepend" className={labelClass}>
-                  Prepend
+                  Voorvoegsel
                 </label>
                 <input
                   id="prepend"
@@ -428,13 +428,13 @@ export default function FieldFormPanel({
                   type="text"
                   value={formData.prepend}
                   onChange={handleChange}
-                  placeholder='e.g., "$"'
+                  placeholder='bijv. "$"'
                   className={inputClass}
                 />
               </div>
               <div>
                 <label htmlFor="append" className={labelClass}>
-                  Append
+                  Achtervoegsel
                 </label>
                 <input
                   id="append"
@@ -442,7 +442,7 @@ export default function FieldFormPanel({
                   type="text"
                   value={formData.append}
                   onChange={handleChange}
-                  placeholder='e.g., "kg"'
+                  placeholder='bijv. "kg"'
                   className={inputClass}
                 />
               </div>
@@ -454,12 +454,12 @@ export default function FieldFormPanel({
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Textarea Options
+              Tekstveld opties
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="maxlength" className={labelClass}>
-                  Max Length
+                  Maximale lengte
                 </label>
                 <input
                   id="maxlength"
@@ -468,13 +468,13 @@ export default function FieldFormPanel({
                   min="0"
                   value={formData.maxlength}
                   onChange={handleChange}
-                  placeholder="No limit"
+                  placeholder="Geen limiet"
                   className={inputClass}
                 />
               </div>
               <div>
                 <label htmlFor="rows" className={labelClass}>
-                  Rows
+                  Rijen
                 </label>
                 <input
                   id="rows"
@@ -490,7 +490,7 @@ export default function FieldFormPanel({
             </div>
             <div>
               <label htmlFor="placeholder" className={labelClass}>
-                Placeholder
+                Plaatshouder
               </label>
               <input
                 id="placeholder"
@@ -507,7 +507,7 @@ export default function FieldFormPanel({
       case 'number':
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Number Options</h4>
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Nummeropties</h4>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label htmlFor="min" className={labelClass}>
@@ -519,7 +519,7 @@ export default function FieldFormPanel({
                   type="number"
                   value={formData.min}
                   onChange={handleChange}
-                  placeholder="No min"
+                  placeholder="Geen min"
                   className={inputClass}
                 />
               </div>
@@ -533,13 +533,13 @@ export default function FieldFormPanel({
                   type="number"
                   value={formData.max}
                   onChange={handleChange}
-                  placeholder="No max"
+                  placeholder="Geen max"
                   className={inputClass}
                 />
               </div>
               <div>
                 <label htmlFor="step" className={labelClass}>
-                  Step
+                  Stap
                 </label>
                 <input
                   id="step"
@@ -557,7 +557,7 @@ export default function FieldFormPanel({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="prepend" className={labelClass}>
-                  Prepend
+                  Voorvoegsel
                 </label>
                 <input
                   id="prepend"
@@ -565,13 +565,13 @@ export default function FieldFormPanel({
                   type="text"
                   value={formData.prepend}
                   onChange={handleChange}
-                  placeholder='e.g., "$"'
+                  placeholder='bijv. "$"'
                   className={inputClass}
                 />
               </div>
               <div>
                 <label htmlFor="append" className={labelClass}>
-                  Append
+                  Achtervoegsel
                 </label>
                 <input
                   id="append"
@@ -579,14 +579,14 @@ export default function FieldFormPanel({
                   type="text"
                   value={formData.append}
                   onChange={handleChange}
-                  placeholder='e.g., "kg"'
+                  placeholder='bijv. "kg"'
                   className={inputClass}
                 />
               </div>
             </div>
             <div>
               <label htmlFor="placeholder" className={labelClass}>
-                Placeholder
+                Plaatshouder
               </label>
               <input
                 id="placeholder"
@@ -594,7 +594,7 @@ export default function FieldFormPanel({
                 type="text"
                 value={formData.placeholder}
                 onChange={handleChange}
-                placeholder="e.g., Enter amount"
+                placeholder="bijv. Voer bedrag in"
                 className={inputClass}
               />
             </div>
@@ -604,10 +604,10 @@ export default function FieldFormPanel({
       case 'email':
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Email Options</h4>
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Email opties</h4>
             <div>
               <label htmlFor="placeholder" className={labelClass}>
-                Placeholder
+                Plaatshouder
               </label>
               <input
                 id="placeholder"
@@ -615,7 +615,7 @@ export default function FieldFormPanel({
                 type="text"
                 value={formData.placeholder}
                 onChange={handleChange}
-                placeholder="e.g., name@example.com"
+                placeholder="bijv. naam@voorbeeld.nl"
                 className={inputClass}
               />
             </div>
@@ -625,10 +625,10 @@ export default function FieldFormPanel({
       case 'url':
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">URL Options</h4>
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">URL opties</h4>
             <div>
               <label htmlFor="placeholder" className={labelClass}>
-                Placeholder
+                Plaatshouder
               </label>
               <input
                 id="placeholder"
@@ -636,13 +636,13 @@ export default function FieldFormPanel({
                 type="text"
                 value={formData.placeholder}
                 onChange={handleChange}
-                placeholder="e.g., https://example.com"
+                placeholder="bijv. https://voorbeeld.nl"
                 className={inputClass}
               />
             </div>
             <div>
               <label htmlFor="prepend" className={labelClass}>
-                Prepend
+                Voorvoegsel
               </label>
               <input
                 id="prepend"
@@ -650,7 +650,7 @@ export default function FieldFormPanel({
                 type="text"
                 value={formData.prepend}
                 onChange={handleChange}
-                placeholder='e.g., "https://"'
+                placeholder='bijv. "https://"'
                 className={inputClass}
               />
             </div>
@@ -660,10 +660,10 @@ export default function FieldFormPanel({
       case 'date':
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Date Options</h4>
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Datumopties</h4>
             <div>
               <label htmlFor="display_format" className={labelClass}>
-                Display Format
+                Weergaveformaat
               </label>
               <select
                 id="display_format"
@@ -681,7 +681,7 @@ export default function FieldFormPanel({
             </div>
             <div>
               <label htmlFor="return_format" className={labelClass}>
-                Return Format
+                Opslagformaat
               </label>
               <select
                 id="return_format"
@@ -696,11 +696,11 @@ export default function FieldFormPanel({
                   </option>
                 ))}
               </select>
-              <p className={hintClass}>Format used when storing/retrieving the date value</p>
+              <p className={hintClass}>Formaat voor opslag/ophalen van de datumwaarde</p>
             </div>
             <div>
               <label htmlFor="first_day" className={labelClass}>
-                Week Starts On
+                Week begint op
               </label>
               <select
                 id="first_day"
@@ -722,10 +722,10 @@ export default function FieldFormPanel({
       case 'select':
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Select Options</h4>
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Selectie opties</h4>
             <div>
               <label htmlFor="choices" className={labelClass}>
-                Choices <span className="text-red-500">*</span>
+                Keuzes <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="choices"
@@ -733,11 +733,11 @@ export default function FieldFormPanel({
                 value={formData.choices}
                 onChange={handleChange}
                 rows={4}
-                placeholder={`Enter one choice per line:\nred : Red\ngreen : Green\nblue : Blue`}
+                placeholder={`Voer één keuze per regel in:\nrood : Rood\ngroen : Groen\nblauw : Blauw`}
                 className={`${inputClass} ${errors.choices ? 'border-red-500 dark:border-red-400' : ''}`}
               />
               <p className={hintClass}>
-                Use "value : label" format or just "label" (value will equal label)
+                Gebruik "waarde : label" formaat of alleen "label" (waarde wordt gelijk aan label)
               </p>
               {errors.choices && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.choices}</p>
@@ -753,12 +753,12 @@ export default function FieldFormPanel({
                 className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
               />
               <label htmlFor="allow_null" className="text-sm text-gray-700 dark:text-gray-300">
-                Allow null (empty option)
+                Lege optie toestaan
               </label>
             </div>
             <div>
               <label htmlFor="placeholder" className={labelClass}>
-                Placeholder
+                Plaatshouder
               </label>
               <input
                 id="placeholder"
@@ -766,10 +766,10 @@ export default function FieldFormPanel({
                 type="text"
                 value={formData.placeholder}
                 onChange={handleChange}
-                placeholder="e.g., Select an option..."
+                placeholder="bijv. Selecteer een optie..."
                 className={inputClass}
               />
-              <p className={hintClass}>Shown when no option is selected</p>
+              <p className={hintClass}>Getoond wanneer geen optie is geselecteerd</p>
             </div>
           </div>
         );
@@ -778,11 +778,11 @@ export default function FieldFormPanel({
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Checkbox Options
+              Selectievakje opties
             </h4>
             <div>
               <label htmlFor="choices" className={labelClass}>
-                Choices <span className="text-red-500">*</span>
+                Keuzes <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="choices"
@@ -790,18 +790,18 @@ export default function FieldFormPanel({
                 value={formData.choices}
                 onChange={handleChange}
                 rows={4}
-                placeholder={`Enter one choice per line:\noption1 : Option 1\noption2 : Option 2\noption3 : Option 3`}
+                placeholder={`Voer één keuze per regel in:\noptie1 : Optie 1\noptie2 : Optie 2\noptie3 : Optie 3`}
                 className={`${inputClass} ${errors.choices ? 'border-red-500 dark:border-red-400' : ''}`}
               />
               <p className={hintClass}>
-                Use "value : label" format or just "label" (value will equal label)
+                Gebruik "waarde : label" formaat of alleen "label" (waarde wordt gelijk aan label)
               </p>
               {errors.choices && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.choices}</p>
               )}
             </div>
             <div>
-              <label className={labelClass}>Layout</label>
+              <label className={labelClass}>Weergave</label>
               <div className="flex gap-4 mt-1">
                 <label className="flex items-center gap-2">
                   <input
@@ -812,7 +812,7 @@ export default function FieldFormPanel({
                     onChange={handleChange}
                     className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Vertical</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Verticaal</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -823,7 +823,7 @@ export default function FieldFormPanel({
                     onChange={handleChange}
                     className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Horizontal</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Horizontaal</span>
                 </label>
               </div>
             </div>
@@ -837,7 +837,7 @@ export default function FieldFormPanel({
                 className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
               />
               <label htmlFor="toggle" className="text-sm text-gray-700 dark:text-gray-300">
-                Toggle All (allow select/deselect all)
+                Alles aan/uit (selecteer/deselecteer alles)
               </label>
             </div>
           </div>
@@ -847,7 +847,7 @@ export default function FieldFormPanel({
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              True/False Options
+              Ja/Nee opties
             </h4>
             <div className="flex items-center gap-2">
               <input
@@ -859,13 +859,13 @@ export default function FieldFormPanel({
                 className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
               />
               <label htmlFor="ui" className="text-sm text-gray-700 dark:text-gray-300">
-                Display as toggle switch
+                Weergeven als schakelaar
               </label>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="ui_on_text" className={labelClass}>
-                  ON Text
+                  AAN tekst
                 </label>
                 <input
                   id="ui_on_text"
@@ -878,7 +878,7 @@ export default function FieldFormPanel({
               </div>
               <div>
                 <label htmlFor="ui_off_text" className={labelClass}>
-                  OFF Text
+                  UIT tekst
                 </label>
                 <input
                   id="ui_off_text"
@@ -896,10 +896,10 @@ export default function FieldFormPanel({
       case 'image':
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Image Options</h4>
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Afbeelding opties</h4>
             <div>
               <label htmlFor="image_return_format" className={labelClass}>
-                Return Format
+                Retourformaat
               </label>
               <select
                 id="image_return_format"
@@ -908,18 +908,18 @@ export default function FieldFormPanel({
                 onChange={handleChange}
                 className={inputClass}
               >
-                <option value="array">Image Array</option>
-                <option value="url">Image URL</option>
-                <option value="id">Image ID</option>
+                <option value="array">Afbeelding array</option>
+                <option value="url">Afbeelding URL</option>
+                <option value="id">Afbeelding ID</option>
               </select>
               <p className={hintClass}>
-                Array returns full image data (URL, sizes, alt). URL returns just the image URL. ID
-                returns the attachment ID.
+                Array retourneert volledige afbeeldingsdata (URL, formaten, alt). URL retourneert alleen de URL. ID
+                retourneert de bijlage-ID.
               </p>
             </div>
             <div>
               <label htmlFor="preview_size" className={labelClass}>
-                Preview Size
+                Voorbeeldformaat
               </label>
               <select
                 id="preview_size"
@@ -928,16 +928,16 @@ export default function FieldFormPanel({
                 onChange={handleChange}
                 className={inputClass}
               >
-                <option value="thumbnail">Thumbnail (150x150)</option>
+                <option value="thumbnail">Miniatuur (150x150)</option>
                 <option value="medium">Medium (300x300)</option>
-                <option value="large">Large (1024x1024)</option>
-                <option value="full">Full Size</option>
+                <option value="large">Groot (1024x1024)</option>
+                <option value="full">Volledig formaat</option>
               </select>
-              <p className={hintClass}>Size used when displaying the image preview in forms</p>
+              <p className={hintClass}>Formaat voor voorbeeldweergave in formulieren</p>
             </div>
             <div>
               <label htmlFor="library" className={labelClass}>
-                Media Library
+                Mediabibliotheek
               </label>
               <select
                 id="library"
@@ -946,8 +946,8 @@ export default function FieldFormPanel({
                 onChange={handleChange}
                 className={inputClass}
               >
-                <option value="all">All media</option>
-                <option value="uploadedTo">Uploaded to this post</option>
+                <option value="all">Alle media</option>
+                <option value="uploadedTo">Geüpload naar dit bericht</option>
               </select>
             </div>
           </div>
@@ -956,10 +956,10 @@ export default function FieldFormPanel({
       case 'file':
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">File Options</h4>
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Bestand opties</h4>
             <div>
               <label htmlFor="file_return_format" className={labelClass}>
-                Return Format
+                Retourformaat
               </label>
               <select
                 id="file_return_format"
@@ -968,18 +968,18 @@ export default function FieldFormPanel({
                 onChange={handleChange}
                 className={inputClass}
               >
-                <option value="array">File Array</option>
-                <option value="url">File URL</option>
-                <option value="id">File ID</option>
+                <option value="array">Bestand array</option>
+                <option value="url">Bestand URL</option>
+                <option value="id">Bestand ID</option>
               </select>
               <p className={hintClass}>
-                Array returns full file data (URL, filename, type). URL returns just the file URL.
-                ID returns the attachment ID.
+                Array retourneert volledige bestandsdata (URL, bestandsnaam, type). URL retourneert alleen de URL.
+                ID retourneert de bijlage-ID.
               </p>
             </div>
             <div>
               <label htmlFor="library" className={labelClass}>
-                Media Library
+                Mediabibliotheek
               </label>
               <select
                 id="library"
@@ -988,8 +988,8 @@ export default function FieldFormPanel({
                 onChange={handleChange}
                 className={inputClass}
               >
-                <option value="all">All media</option>
-                <option value="uploadedTo">Uploaded to this post</option>
+                <option value="all">Alle media</option>
+                <option value="uploadedTo">Geüpload naar dit bericht</option>
               </select>
             </div>
           </div>
@@ -998,14 +998,14 @@ export default function FieldFormPanel({
       case 'link':
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Link Options</h4>
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Link opties</h4>
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Link fields capture a URL and optional display text. Users can enter a URL and
-                customize the link text shown to viewers.
+                Linkvelden leggen een URL en optionele weergavetekst vast. Gebruikers kunnen een URL invoeren en
+                de linktekst aanpassen die aan bezoekers wordt getoond.
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                No additional configuration needed.
+                Geen extra configuratie nodig.
               </p>
             </div>
           </div>
@@ -1014,9 +1014,9 @@ export default function FieldFormPanel({
       case 'color_picker':
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Color Options</h4>
+            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Kleur opties</h4>
             <div>
-              <label className={labelClass}>Default Color</label>
+              <label className={labelClass}>Standaardkleur</label>
               <div className="flex items-start gap-3 mt-2">
                 <div className="relative">
                   <Sketch
@@ -1057,12 +1057,12 @@ export default function FieldFormPanel({
                         onClick={() => setFormData((prev) => ({ ...prev, default_color: '' }))}
                         className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                       >
-                        Clear
+                        Wissen
                       </button>
                     )}
                   </div>
                   <p className={`${hintClass} mt-2`}>
-                    Optional. Leave empty for no default color.
+                    Optioneel. Leeg laten voor geen standaardkleur.
                   </p>
                 </div>
               </div>
@@ -1074,10 +1074,10 @@ export default function FieldFormPanel({
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Relationship Options
+              Relatie opties
             </h4>
             <div>
-              <label className={labelClass}>Link to Post Types</label>
+              <label className={labelClass}>Koppelen aan berichttypen</label>
               <div className="flex flex-col gap-2 mt-2">
                 <label className="flex items-center gap-2">
                   <input
@@ -1093,7 +1093,7 @@ export default function FieldFormPanel({
                     }}
                     className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">People</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Leden</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -1109,13 +1109,13 @@ export default function FieldFormPanel({
                     }}
                     className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Organizations</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Teams</span>
                 </label>
               </div>
-              <p className={hintClass}>Select which post types can be linked</p>
+              <p className={hintClass}>Selecteer welke berichttypen kunnen worden gekoppeld</p>
             </div>
             <div>
-              <label className={labelClass}>Cardinality</label>
+              <label className={labelClass}>Kardinaliteit</label>
               <div className="flex gap-4 mt-2">
                 <label className="flex items-center gap-2">
                   <input
@@ -1127,7 +1127,7 @@ export default function FieldFormPanel({
                     }}
                     className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Single</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Enkelvoudig</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -1139,13 +1139,13 @@ export default function FieldFormPanel({
                     }}
                     className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Multiple</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Meervoudig</span>
                 </label>
               </div>
               {formData.relationship_max !== 1 && (
                 <div className="mt-3">
                   <label htmlFor="relationship_max" className={labelClass}>
-                    Maximum Selections
+                    Maximale selecties
                   </label>
                   <input
                     id="relationship_max"
@@ -1158,16 +1158,16 @@ export default function FieldFormPanel({
                         relationship_max: parseInt(e.target.value) || 0,
                       }));
                     }}
-                    placeholder="0 = unlimited"
+                    placeholder="0 = onbeperkt"
                     className={`${inputClass} w-32`}
                   />
-                  <p className={hintClass}>Leave at 0 for unlimited</p>
+                  <p className={hintClass}>Laat op 0 voor onbeperkt</p>
                 </div>
               )}
             </div>
             <div>
               <label htmlFor="relationship_return_format" className={labelClass}>
-                Return Format
+                Retourformaat
               </label>
               <select
                 id="relationship_return_format"
@@ -1176,11 +1176,11 @@ export default function FieldFormPanel({
                 onChange={handleChange}
                 className={inputClass}
               >
-                <option value="object">Post Object</option>
-                <option value="id">Post ID</option>
+                <option value="object">Bericht object</option>
+                <option value="id">Bericht ID</option>
               </select>
               <p className={hintClass}>
-                Object returns full post data. ID returns just the post ID.
+                Object retourneert volledige berichtdata. ID retourneert alleen de bericht-ID.
               </p>
             </div>
           </div>
@@ -1212,10 +1212,10 @@ export default function FieldFormPanel({
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-                {isEditing ? 'Edit Field' : 'Add Field'}
+                {isEditing ? 'Veld bewerken' : 'Veld toevoegen'}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {postTypeLabel} custom field
+                Aangepast veld voor {postTypeLabel}
               </p>
             </div>
             <button
@@ -1235,7 +1235,7 @@ export default function FieldFormPanel({
                   htmlFor="field-label"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  Label <span className="text-red-500">*</span>
+                  Veldnaam <span className="text-red-500">*</span>
                 </label>
                 <input
                   ref={labelInputRef}
@@ -1244,7 +1244,7 @@ export default function FieldFormPanel({
                   type="text"
                   value={formData.label}
                   onChange={handleChange}
-                  placeholder="e.g., LinkedIn Profile"
+                  placeholder="bijv. LinkedIn Profiel"
                   className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 ${
                     errors.label
                       ? 'border-red-500 dark:border-red-400'
@@ -1284,7 +1284,7 @@ export default function FieldFormPanel({
                 </select>
                 {isEditing && (
                   <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">
-                    Field type cannot be changed after creation
+                    Veldtype kan niet worden gewijzigd na aanmaken
                   </p>
                 )}
                 {errors.type && (
@@ -1297,7 +1297,7 @@ export default function FieldFormPanel({
 
               {/* Validation Options */}
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Validation Options</h4>
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Validatie opties</h4>
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <input
@@ -1309,10 +1309,10 @@ export default function FieldFormPanel({
                       className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
                     />
                     <label htmlFor="required" className="text-sm text-gray-700 dark:text-gray-300">
-                      Required field
+                      Verplicht veld
                     </label>
                   </div>
-                  <p className={hintClass}>Users must provide a value when saving</p>
+                  <p className={hintClass}>Gebruikers moeten een waarde invullen bij opslaan</p>
 
                   <div className="flex items-center gap-2 mt-4">
                     <input
@@ -1324,16 +1324,16 @@ export default function FieldFormPanel({
                       className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
                     />
                     <label htmlFor="unique" className="text-sm text-gray-700 dark:text-gray-300">
-                      Unique value
+                      Unieke waarde
                     </label>
                   </div>
-                  <p className={hintClass}>No two records can have the same value for this field</p>
+                  <p className={hintClass}>Geen twee records kunnen dezelfde waarde hebben voor dit veld</p>
                 </div>
               </div>
 
               {/* Display Options */}
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Display Options</h4>
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Weergave opties</h4>
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <input
@@ -1345,13 +1345,13 @@ export default function FieldFormPanel({
                       className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
                     />
                     <label htmlFor="show_in_list_view" className="text-sm text-gray-700 dark:text-gray-300">
-                      Show as column in list view
+                      Tonen als kolom in lijstweergave
                     </label>
                   </div>
                   {formData.show_in_list_view && (
                     <div>
                       <label htmlFor="list_view_order" className={labelClass}>
-                        Column Order
+                        Kolomvolgorde
                       </label>
                       <input
                         id="list_view_order"
@@ -1364,7 +1364,7 @@ export default function FieldFormPanel({
                         placeholder="999"
                         className={`${inputClass} w-24`}
                       />
-                      <p className={hintClass}>Lower numbers appear first (1 = leftmost)</p>
+                      <p className={hintClass}>Lagere nummers verschijnen eerst (1 = meest links)</p>
                     </div>
                   )}
                 </div>
@@ -1376,7 +1376,7 @@ export default function FieldFormPanel({
                   htmlFor="field-instructions"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  Description
+                  Beschrijving
                 </label>
                 <textarea
                   id="field-instructions"
@@ -1384,7 +1384,7 @@ export default function FieldFormPanel({
                   value={formData.instructions}
                   onChange={handleChange}
                   rows={3}
-                  placeholder="Help text shown to users when filling in this field"
+                  placeholder="Helptekst getoond aan gebruikers bij invullen van dit veld"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
                 />
               </div>
@@ -1398,7 +1398,7 @@ export default function FieldFormPanel({
                 className="btn-secondary"
                 disabled={isSubmitting}
               >
-                Cancel
+                Annuleren
               </button>
               <button
                 type="submit"
@@ -1423,7 +1423,7 @@ export default function FieldFormPanel({
                     />
                   </svg>
                 )}
-                {isSubmitting ? 'Saving...' : 'Save'}
+                {isSubmitting ? 'Opslaan...' : 'Opslaan'}
               </button>
             </div>
           </form>
