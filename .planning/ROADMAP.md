@@ -118,17 +118,20 @@ Plans:
 **Depends on**: Phase 104
 **Requirements**: SET-01, SET-02, SET-03, SET-04, SET-05, SET-06
 **Success Criteria** (what must be TRUE):
-  1. Settings tab labels are in Dutch (Uiterlijk, Verbindingen, Meldingen, Gegevens, Beheer, Over)
+  1. Settings tab labels are in Dutch (Weergave, Koppelingen, Meldingen, Gegevens, Beheer, Info)
   2. Appearance settings are in Dutch (Thema: Licht/Donker/Systeem)
   3. Connections subtabs and settings are in Dutch
   4. Notification preferences are in Dutch
   5. Import/export labels are in Dutch
   6. Admin settings are in Dutch
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 105-01: Translate settings navigation
-- [ ] 105-02: Translate settings content panels
+- [ ] 105-01-PLAN.md — Translate Settings tabs config, AppearanceTab, CalendarsTab
+- [ ] 105-02-PLAN.md — Translate Connections subtabs (Contacts, CardDAV, Slack, API Access)
+- [ ] 105-03-PLAN.md — Translate NotificationsTab, DataTab, AdminTab, AboutTab
+- [ ] 105-04-PLAN.md — Translate Settings subpages (Labels, UserApproval, RelationshipTypes, CustomFields, FeedbackManagement)
+- [ ] 105-05-PLAN.md — Translate import components and document titles
 
 ### Phase 106: Global UI Elements
 **Goal**: All common UI elements display in Dutch
@@ -158,9 +161,9 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 | 102. Leden (People) | 2/2 | ✓ Complete | 2026-01-25 |
 | 103. Teams & Commissies | 3/3 | ✓ Complete | 2026-01-25 |
 | 104. Datums & Taken | 3/3 | ✓ Complete | 2026-01-25 |
-| 105. Instellingen (Settings) | 0/2 | Not started | - |
+| 105. Instellingen (Settings) | 0/5 | Not started | - |
 | 106. Global UI Elements | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 (Phase 104 complete)*
+*Last updated: 2026-01-25 (Phase 105 planned)*
