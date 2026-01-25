@@ -128,7 +128,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Add todo</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Taak toevoegen</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -142,7 +142,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
           {/* People selection - multi-person */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              People <span className="text-red-500 dark:text-red-400">*</span>
+              Leden <span className="text-red-500 dark:text-red-400">*</span>
             </label>
 
             {/* Selected persons as chips */}
@@ -187,7 +187,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
                 disabled={createTodo.isPending}
               >
                 <Plus className="w-4 h-4" />
-                Add person
+                Lid toevoegen
               </button>
 
               {isPersonDropdownOpen && (
@@ -200,7 +200,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
                         type="text"
                         value={personSearchQuery}
                         onChange={(e) => setPersonSearchQuery(e.target.value)}
-                        placeholder="Search people..."
+                        placeholder="Leden zoeken..."
                         className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
                         autoFocus
                       />
@@ -211,7 +211,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
                   <div className="overflow-y-auto max-h-48">
                     {isPeopleLoading ? (
                       <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                        Loading...
+                        Laden...
                       </div>
                     ) : filteredPeople.length > 0 ? (
                       filteredPeople
@@ -239,7 +239,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
                         ))
                     ) : (
                       <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                        No people found
+                        Geen leden gevonden
                       </div>
                     )}
                   </div>
@@ -251,7 +251,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
           {/* Description */}
           <div className="mb-4">
             <label htmlFor="todo-content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description <span className="text-red-500 dark:text-red-400">*</span>
+              Beschrijving <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <textarea
               id="todo-content"
@@ -259,7 +259,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
               onChange={(e) => setContent(e.target.value)}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-              placeholder="What needs to be done?"
+              placeholder="Wat moet er gedaan worden?"
               disabled={createTodo.isPending}
             />
           </div>
@@ -267,7 +267,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
           {/* Due date */}
           <div className="mb-4">
             <label htmlFor="todo-due-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Due date (optional)
+              Deadline (optioneel)
             </label>
             <input
               id="todo-due-date"
@@ -287,13 +287,13 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
               className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 hover:text-gray-900 dark:hover:text-gray-100"
             >
               <ChevronDown className={`w-4 h-4 transition-transform ${showNotes ? '' : '-rotate-90'}`} />
-              Notes (optional)
+              Notities (optioneel)
             </button>
             {showNotes && (
               <RichTextEditor
                 value={notes}
                 onChange={setNotes}
-                placeholder="Add detailed notes..."
+                placeholder="Voeg gedetailleerde notities toe..."
                 disabled={createTodo.isPending}
                 minHeight="80px"
               />
@@ -307,14 +307,14 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
               className="btn-secondary"
               disabled={createTodo.isPending}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={createTodo.isPending || !content.trim() || selectedPersonIds.length === 0}
             >
-              {createTodo.isPending ? 'Adding...' : 'Add todo'}
+              {createTodo.isPending ? 'Toevoegen...' : 'Taak toevoegen'}
             </button>
           </div>
         </form>
