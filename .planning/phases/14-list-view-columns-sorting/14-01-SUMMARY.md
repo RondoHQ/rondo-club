@@ -9,11 +9,11 @@ requires:
   - phase: 12-list-view-selection
     provides: List view table structure, PersonListRow component
   - phase: 13-bulk-actions
-    provides: Selection infrastructure, personCompanyMap lookup
+    provides: Selection infrastructure, personTeamMap lookup
 provides:
   - Split First Name/Last Name columns in list view
   - Labels column with pill styling
-  - Extended sorting (Organization, Workspace, Labels)
+  - Extended sorting (Team, Workspace, Labels)
   - Zebra striping for table rows
 affects: [15-extended-bulk-actions]
 
@@ -30,7 +30,7 @@ key-files:
     - src/pages/People/PeopleList.jsx
 
 key-decisions:
-  - "Split sorting into separate useMemo after personCompanyMap is available for organization sorting"
+  - "Split sorting into separate useMemo after personTeamMap is available for team sorting"
   - "Empty values (no org/workspace/labels) sort last to keep populated records prominent"
   - "Limited labels display to 3 with '+N more' indicator to prevent row height explosion"
 
@@ -47,7 +47,7 @@ completed: 2026-01-13
 
 # Phase 14 Plan 01: List View Columns & Sorting Summary
 
-**Split name columns, added labels column with pill display, and extended sorting to Organization/Workspace/Labels**
+**Split name columns, added labels column with pill display, and extended sorting to Team/Workspace/Labels**
 
 ## Performance
 
@@ -62,7 +62,7 @@ completed: 2026-01-13
 - Split single Name column into First Name and Last Name columns
 - Added Labels column displaying up to 3 labels as styled pills with overflow indicator
 - Added zebra striping (odd rows bg-gray-50) for easier visual scanning
-- Extended sort dropdown with Organization, Workspace, and Labels options
+- Extended sort dropdown with Team, Workspace, and Labels options
 - Implemented sorting that handles empty values (sort last)
 
 ## Task Commits
@@ -71,7 +71,7 @@ Each task was committed atomically:
 
 1. **Task 1: Split Name column into First Name and Last Name columns** - `fcd38e0` (feat)
 2. **Task 2: Add Labels column to table** - `c2923ed` (feat)
-3. **Task 3: Add Organization and Workspace sorting options** - `60393d8` (feat)
+3. **Task 3: Add Team and Workspace sorting options** - `60393d8` (feat)
 
 **Version bump:** `bdca0b0` (chore: bump version to 1.65.0)
 
@@ -81,8 +81,8 @@ Each task was committed atomically:
 
 ## Decisions Made
 
-- **Two-stage sorting architecture:** Separated filtering (filteredAndSortedPeople) from sorting (sortedPeople) to allow organization sorting to use personCompanyMap which is computed after company data is fetched
-- **Empty values sort last:** When sorting by Organization, Workspace, or Labels, empty values are pushed to the end regardless of sort direction - keeps populated records prominent
+- **Two-stage sorting architecture:** Separated filtering (filteredAndSortedPeople) from sorting (sortedPeople) to allow team sorting to use personTeamMap which is computed after team data is fetched
+- **Empty values sort last:** When sorting by Team, Workspace, or Labels, empty values are pushed to the end regardless of sort direction - keeps populated records prominent
 - **Labels display limit:** Limited to 3 labels with "+N more" indicator to prevent row height explosion in list view
 
 ## Deviations from Plan
@@ -96,7 +96,7 @@ None - plan executed exactly as written.
 ## Next Phase Readiness
 
 Ready for Phase 15: Extended Bulk Actions
-- List view now has all 6 columns (checkbox, first name, last name, organization, workspace, labels)
+- List view now has all 6 columns (checkbox, first name, last name, team, workspace, labels)
 - All columns are sortable
 - Selection infrastructure from Phase 12/13 remains intact
 

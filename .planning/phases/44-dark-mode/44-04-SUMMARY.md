@@ -44,7 +44,7 @@
 
 ## Notes
 
-- The plan mentioned BulkVisibilityModal.jsx, BulkWorkspaceModal.jsx, BulkLabelsModal.jsx, and BulkOrganizationModal.jsx as separate files, but these components are defined inline within PeopleList.jsx and CompaniesList.jsx, which were already updated in plan 44-02
+- The plan mentioned BulkVisibilityModal.jsx, BulkWorkspaceModal.jsx, BulkLabelsModal.jsx, and BulkTeamModal.jsx as separate files, but these components are defined inline within PeopleList.jsx and TeamsList.jsx, which were already updated in plan 44-02
 - All components now have consistent dark mode support following the established pattern (dark: variants for text, backgrounds, borders)
 - Build verified successful with `npm run build`
 
@@ -52,6 +52,6 @@
 
 Plan 44-04 completes Phase 44 (Dark Mode). All 4 plans in this phase are now complete:
 - 44-01: Theme Infrastructure (Tailwind config, useTheme hook, REST API)
-- 44-02: Core Pages (Dashboard, People, Organizations, Dates, Settings, Person/Company Detail)
+- 44-02: Core Pages (Dashboard, People, Teams, Dates, Settings, Person/Team Detail)
 - 44-03: Modal Components (All modals and overlays)
 - 44-04: Utility Components (Workspaces, Settings sub-pages, Import wizards)

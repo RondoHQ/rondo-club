@@ -10,7 +10,7 @@ requires:
     provides: Dashboard awaiting response section
 provides:
   - Awaiting checkbox toggle in Dashboard
-  - Email normalization on save for person and company
+  - Email normalization on save for person and team
 affects: []
 
 # Tech tracking
@@ -53,7 +53,7 @@ completed: 2026-01-14
 
 - Added clickable checkbox to awaiting todos in Dashboard that marks them as complete
 - Email addresses in contact_info are automatically lowercased on save
-- Works for both person and company post types
+- Works for both person and team post types
 
 ## Task Commits
 

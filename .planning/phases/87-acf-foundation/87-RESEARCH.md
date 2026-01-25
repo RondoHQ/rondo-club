@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase establishes PHP infrastructure for managing custom field definitions programmatically via ACF Pro. The goal is to allow admins to create, update, and deactivate custom fields for People and Organizations through the React frontend, with all data persisted to the WordPress database using ACF-native storage patterns.
+This phase establishes PHP infrastructure for managing custom field definitions programmatically via ACF Pro. The goal is to allow admins to create, update, and deactivate custom fields for People and Teams through the React frontend, with all data persisted to the WordPress database using ACF-native storage patterns.
 
 ACF Pro provides two distinct approaches for field management:
 1. **Local registration** (`acf_add_local_field_group()`) - Runtime-only, not editable in admin UI
@@ -14,7 +14,7 @@ ACF Pro provides two distinct approaches for field management:
 
 For this use case, we need **database persistence** because users create custom fields dynamically at runtime, and these must survive theme updates and be manageable without code changes.
 
-**Primary recommendation:** Use `acf_import_field_group()` for creating new field groups and `acf_update_field_group()` for updates. Store custom field definitions in a dedicated ACF field group per target post type (one for `person`, one for `company`).
+**Primary recommendation:** Use `acf_import_field_group()` for creating new field groups and `acf_update_field_group()` for updates. Store custom field definitions in a dedicated ACF field group per target post type (one for `person`, one for `team`).
 
 ## Standard Stack
 
@@ -56,7 +56,7 @@ includes/
 ```
 
 ### Pattern 1: Field Group per Post Type
-**What:** Create one dynamic ACF field group for People custom fields, one for Organizations
+**What:** Create one dynamic ACF field group for People custom fields, one for Teams
 **When to use:** Always - keeps custom fields separate from built-in ACF JSON field groups
 **Example:**
 ```php

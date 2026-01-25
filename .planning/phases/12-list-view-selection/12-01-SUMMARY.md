@@ -36,7 +36,7 @@ completed: 2026-01-13
 
 # Phase 12 Plan 01: List View & Selection Summary
 
-**Card/list view toggle with tabular list view showing Name, Organization, Workspace columns and checkbox multi-selection infrastructure**
+**Card/list view toggle with tabular list view showing Name, Team, Workspace columns and checkbox multi-selection infrastructure**
 
 ## Performance
 
@@ -49,8 +49,8 @@ completed: 2026-01-13
 ## Accomplishments
 
 - View mode toggle with card/list options using LayoutGrid and List icons
-- PersonListView table component with Name, Organization, Workspace columns
-- PersonListRow component with avatar, deceased marker, favorite star, company, workspace
+- PersonListView table component with Name, Team, Workspace columns
+- PersonListRow component with avatar, deceased marker, favorite star, team, workspace
 - Checkbox selection infrastructure with Set-based state management
 - Selection toolbar showing count and clear button
 - Auto-clear selection when filters or data change

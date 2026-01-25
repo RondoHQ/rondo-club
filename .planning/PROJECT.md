@@ -14,7 +14,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 <!-- Existing functionality from codebase that must continue working -->
 
-- Personal CRM with people, companies, dates management — existing
+- Personal CRM with people, teams, dates management — existing
 - WordPress theme with React SPA frontend — existing
 - REST API communication (wp/v2 + stadion/v1 namespaces) — existing
 - Slack integration for notifications (OAuth, webhooks) — existing
@@ -50,7 +50,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 **v2.1 Bulk Operations (shipped 2026-01-13):**
 - Card/list view toggle for people screen — v2.1
-- Tabular list view with Name, Organization, Workspace columns — v2.1
+- Tabular list view with Name, Team, Workspace columns — v2.1
 - Checkbox multi-selection with Set-based state — v2.1
 - Bulk update REST endpoint `/stadion/v1/people/bulk-update` — v2.1
 - Bulk visibility change modal (Private/Workspace) — v2.1
@@ -61,16 +61,16 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Labels column with styled pills — v2.2
 - SortableHeader component with click sorting — v2.2
 - Sticky table header and selection toolbar — v2.2
-- BulkOrganizationModal with search and clear — v2.2
+- BulkTeamModal with search and clear — v2.2
 - BulkLabelsModal with add/remove mode — v2.2
 
 **v2.3 List View Unification (shipped 2026-01-13):**
 - Removed card view from People, list-only UI — v2.3
 - Dedicated image column in People list — v2.3
-- Organizations list view with sortable columns — v2.3
-- Organizations selection and bulk action infrastructure — v2.3
-- Bulk visibility, workspace, labels for Organizations — v2.3
-- Full parity between People and Organizations list views — v2.3
+- Teams list view with sortable columns — v2.3
+- Teams selection and bulk action infrastructure — v2.3
+- Bulk visibility, workspace, labels for Teams — v2.3
+- Full parity between People and Teams list views — v2.3
 
 **v2.5 Performance (shipped 2026-01-13):**
 - Vite manual chunks for vendor (React) and utils (date-fns, etc.) — v2.5
@@ -92,7 +92,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - 25 PHPUnit tests for todo functionality (145 total) — v3.1
 
 **v3.2 Person Profile Polish (shipped 2026-01-14):**
-- Current position (job title + company) display in person header — v3.2
+- Current position (job title + team) display in person header — v3.2
 - Persistent todos sidebar on PersonDetail page (visible across all tabs) — v3.2
 - Mobile todos access via floating action button + slide-up panel — v3.2
 - 3-column grid layout for equal-width content columns — v3.2
@@ -107,8 +107,8 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - WP-CLI migration: `wp prm todos migrate-persons` — v3.3
 
 **v3.4 UI Polish (shipped 2026-01-14):**
-- Clickable website links in Organizations list — v3.4
-- Labels column removed from Organizations list — v3.4
+- Clickable website links in Teams list — v3.4
+- Labels column removed from Teams list — v3.4
 - Simplified Slack contact display (label only, clickable) — v3.4
 - Build-time based refresh detection (manifest.json mtime) — v3.4
 - Awaiting todos count in dashboard stats (5-column grid) — v3.4
@@ -166,7 +166,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Short array syntax enforced across entire codebase ([] instead of array()) — v4.3
 - Yoda conditions disabled for improved readability — v4.3
 
-**v4.4 Code Organization (shipped 2026-01-16):**
+**v4.4 Code Team (shipped 2026-01-16):**
 - Comprehensive codebase audit identifying 41 classes across 39 PHP files — v4.4
 - Split notification channel classes into separate files (one-class-per-file compliance) — v4.4
 - PSR-4 namespaces added to 38 PHP classes across 9 namespace groups — v4.4
@@ -234,7 +234,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - ACF-native field group management (no custom tables) — v6.0
 - 14 field types: Text, Textarea, Number, Email, URL, Date, Select, Checkbox, True/False, Image, File, Link, Color Picker, Relationship — v6.0
 - Settings subtab for custom field management (People/Org toggle) — v6.0
-- Dedicated "Custom Fields" section on Person/Organization detail views — v6.0
+- Dedicated "Custom Fields" section on Person/Team detail views — v6.0
 - Custom field values included in global search — v6.0
 - Admin-only field management, global visibility — v6.0
 - Custom field columns in list views with configurable show/hide — v6.0
@@ -258,7 +258,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Real-time updates (WebSockets) — future enhancement
 - Real-time Google sync (webhook-based) — will use polling/cron like Calendar
 - Multiple Google accounts simultaneously — future enhancement
-- Company/organization sync to Google Contact groups — contacts only
+- Team/team sync to Google Contact groups — contacts only
 - Two-way relationship sync — Google doesn't have relationship concepts
 - Contact group/label sync — future enhancement after core sync works
 - Public-facing feedback portal — internal use only
@@ -270,7 +270,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 **Codebase State (post v1.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA
-- REST API split into domain-specific classes (Base, People, Companies, Slack, Import/Export)
+- REST API split into domain-specific classes (Base, People, Teams, Slack, Import/Export)
 - Security hardened (sodium encryption, XSS protection, webhook validation)
 - Production code cleaned up (no console.error, documented env vars)
 - Full codebase map available in `.planning/codebase/`

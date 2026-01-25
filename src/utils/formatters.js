@@ -17,17 +17,17 @@ export function decodeHtml(html) {
 }
 
 /**
- * Get the display name for a company from various object formats
+ * Get the display name for a team from various object formats
  * Handles WordPress REST API response format and decoded values
  * 
- * @param {Object} company - Company object (from API or transformed)
- * @returns {string} Decoded company name
+ * @param {Object} team - Team object (from API or transformed)
+ * @returns {string} Decoded team name
  */
-export function getCompanyName(company) {
-  if (!company) return '';
+export function getTeamName(team) {
+  if (!team) return '';
   
   // Handle various formats WordPress might return
-  const rawName = company.title?.rendered || company.title || company.name || '';
+  const rawName = team.title?.rendered || team.title || team.name || '';
   return decodeHtml(rawName);
 }
 
@@ -131,7 +131,7 @@ export function sanitizePersonAcf(acfData, overrides = {}) {
   return sanitized;
 }
 
-export function sanitizeCompanyAcf(acfData, overrides = {}) {
+export function sanitizeTeamAcf(acfData, overrides = {}) {
   // Fields that are repeaters and should always be arrays
   const repeaterFields = ['contact_info'];
 

@@ -3,19 +3,19 @@ import { useForm } from 'react-hook-form';
 import { X, ChevronDown, Building2, Search, User, TrendingUp } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
-import { getCompanyName, decodeHtml } from '@/utils/formatters';
+import { getTeamName, decodeHtml } from '@/utils/formatters';
 import VisibilitySelector from '@/components/VisibilitySelector';
 
-export default function CompanyEditModal({ 
+export default function TeamEditModal({ 
   isOpen, 
   onClose, 
   onSubmit, 
   isLoading,
-  company = null // Pass company data for editing
+  team = null // Pass team data for editing
 }) {
-  const isEditing = !!company;
+  const isEditing = !!team;
   
-  // State for parent company dropdown
+  // State for parent team dropdown
   const [isParentDropdownOpen, setIsParentDropdownOpen] = useState(false);
   const [parentSearchQuery, setParentSearchQuery] = useState('');
   const [selectedParentId, setSelectedParentId] = useState('');
@@ -33,11 +33,11 @@ export default function CompanyEditModal({
   const parentDropdownRef = useRef(null);
   const investorsDropdownRef = useRef(null);
   
-  // Fetch all companies for parent selection and investors
-  const { data: allCompanies = [], isLoading: isLoadingCompanies } = useQuery({
-    queryKey: ['companies', 'all'],
+  // Fetch all teams for parent selection and investors
+  const { data: allTeams = [], isLoading: isLoadingTeams } = useQuery({
+    queryKey: ['teams', 'all'],
     queryFn: async () => {
-      const response = await wpApi.getCompanies({ per_page: 100, _embed: true });
+      const response = await wpApi.getTeams({ per_page: 100, _embed: true });
       return response.data;
     },
     enabled: isOpen,
@@ -78,36 +78,36 @@ export default function CompanyEditModal({
     },
   });
 
-  // Filter companies for parent dropdown (exclude self and children)
-  const availableParentCompanies = useMemo(() => {
+  // Filter teams for parent dropdown (exclude self and children)
+  const availableParentTeams = useMemo(() => {
     const query = parentSearchQuery.toLowerCase().trim();
-    let filtered = allCompanies.filter(c => {
+    let filtered = allTeams.filter(c => {
       // Exclude self
-      if (isEditing && c.id === company?.id) return false;
-      // Exclude companies that have this company as parent (prevents circular references)
-      if (isEditing && c.parent === company?.id) return false;
+      if (isEditing && c.id === team?.id) return false;
+      // Exclude teams that have this team as parent (prevents circular references)
+      if (isEditing && c.parent === team?.id) return false;
       return true;
     });
     
     if (query) {
       filtered = filtered.filter(c => 
-        getCompanyName(c)?.toLowerCase().includes(query)
+        getTeamName(c)?.toLowerCase().includes(query)
       );
     }
     
     // Sort alphabetically
     return [...filtered].sort((a, b) => 
-      (getCompanyName(a) || '').localeCompare(getCompanyName(b) || '')
+      (getTeamName(a) || '').localeCompare(getTeamName(b) || '')
     );
-  }, [allCompanies, parentSearchQuery, company, isEditing]);
+  }, [allTeams, parentSearchQuery, team, isEditing]);
   
-  // Get selected parent company details
+  // Get selected parent team details
   const selectedParent = useMemo(() => 
-    allCompanies.find(c => c.id === parseInt(selectedParentId)),
-    [allCompanies, selectedParentId]
+    allTeams.find(c => c.id === parseInt(selectedParentId)),
+    [allTeams, selectedParentId]
   );
   
-  // Combined list of people and companies for investor selection (excluding self)
+  // Combined list of people and teams for investor selection (excluding self)
   const availableInvestors = useMemo(() => {
     const query = investorsSearchQuery.toLowerCase().trim();
     let combined = [];
@@ -122,16 +122,16 @@ export default function CompanyEditModal({
         thumbnail: p.thumbnail,
       }));
 
-      const companies = (searchResults.companies || [])
-        .filter(c => !isEditing || c.id !== company?.id)
+      const teams = (searchResults.teams || [])
+        .filter(c => !isEditing || c.id !== team?.id)
         .map(c => ({
           id: c.id,
-          type: 'company',
+          type: 'team',
           name: c.name || '',
           thumbnail: c.thumbnail,
         }));
 
-      combined = [...people, ...companies];
+      combined = [...people, ...teams];
     } else if (query.length < 2) {
       // For short queries or no query, use client-side data (first 100 of each)
       const people = allPeople.map(p => ({
@@ -141,16 +141,16 @@ export default function CompanyEditModal({
         thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url,
       }));
 
-      const companies = allCompanies
-        .filter(c => !isEditing || c.id !== company?.id)
+      const teams = allTeams
+        .filter(c => !isEditing || c.id !== team?.id)
         .map(c => ({
           id: c.id,
-          type: 'company',
-          name: getCompanyName(c),
+          type: 'team',
+          name: getTeamName(c),
           thumbnail: c._embedded?.['wp:featuredmedia']?.[0]?.source_url,
         }));
 
-      combined = [...people, ...companies];
+      combined = [...people, ...teams];
 
       // Filter client-side for short queries (1 character)
       if (query.length === 1) {
@@ -166,7 +166,7 @@ export default function CompanyEditModal({
 
     // Sort alphabetically
     return combined.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  }, [allPeople, allCompanies, investorsSearchQuery, searchResults, selectedInvestors, company, isEditing]);
+  }, [allPeople, allTeams, investorsSearchQuery, searchResults, selectedInvestors, team, isEditing]);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -177,18 +177,18 @@ export default function CompanyEditModal({
       setParentSearchQuery('');
       setInvestorsSearchQuery('');
 
-      if (company) {
+      if (team) {
         // Editing - populate with existing data
         reset({
-          title: decodeHtml(company.title?.rendered || ''),
-          website: company.acf?.website || '',
+          title: decodeHtml(team.title?.rendered || ''),
+          website: team.acf?.website || '',
         });
-        // Set parent company if exists
-        setSelectedParentId(company.parent ? String(company.parent) : '');
+        // Set parent team if exists
+        setSelectedParentId(team.parent ? String(team.parent) : '');
         // Investors will be loaded via separate effect
         // Load existing visibility settings
-        setVisibility(company.acf?._visibility || 'private');
-        setSelectedWorkspaces(company.acf?._assigned_workspaces || []);
+        setVisibility(team.acf?._visibility || 'private');
+        setSelectedWorkspaces(team.acf?._assigned_workspaces || []);
       } else {
         // Creating - reset to defaults
         reset({
@@ -202,24 +202,24 @@ export default function CompanyEditModal({
         setSelectedWorkspaces([]);
       }
     }
-  }, [isOpen, company, reset]);
+  }, [isOpen, team, reset]);
   
   // Fetch existing investors directly by their IDs (not limited to first 100)
   // Include IDs in query key to ensure refetch when investors change
-  const investorIds = company?.acf?.investors || [];
+  const investorIds = team?.acf?.investors || [];
   const investorIdsKey = investorIds.join(',');
   const { data: existingInvestors = [], isSuccess: investorsLoaded } = useQuery({
-    queryKey: ['company-investors-edit', company?.id, investorIdsKey],
+    queryKey: ['team-investors-edit', team?.id, investorIdsKey],
     queryFn: async ({ queryKey }) => {
       // Extract IDs from query key to avoid closure issues
       const idsString = queryKey[2];
       const ids = idsString ? idsString.split(',').map(Number) : [];
       if (!ids.length) return [];
 
-      // Fetch people and companies by specific IDs
-      const [peopleRes, companiesRes] = await Promise.all([
+      // Fetch people and teams by specific IDs
+      const [peopleRes, teamsRes] = await Promise.all([
         wpApi.getPeople({ per_page: 100, include: idsString, _embed: true }),
-        wpApi.getCompanies({ per_page: 100, include: idsString, _embed: true }),
+        wpApi.getTeams({ per_page: 100, include: idsString, _embed: true }),
       ]);
 
       const people = (peopleRes.data || []).map(p => ({
@@ -229,33 +229,33 @@ export default function CompanyEditModal({
         thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url,
       }));
 
-      const companies = (companiesRes.data || []).map(c => ({
+      const teams = (teamsRes.data || []).map(c => ({
         id: c.id,
-        type: 'company',
-        name: getCompanyName(c),
+        type: 'team',
+        name: getTeamName(c),
         thumbnail: c._embedded?.['wp:featuredmedia']?.[0]?.source_url,
       }));
 
       // Combine and sort by original order
-      const all = [...people, ...companies];
+      const all = [...people, ...teams];
       return ids.map(iid => all.find(i => i.id === iid)).filter(Boolean);
     },
-    enabled: isOpen && !!company?.id && investorIds.length > 0,
+    enabled: isOpen && !!team?.id && investorIds.length > 0,
     staleTime: 0, // Always refetch when modal opens
   });
 
   // Load existing investors when fetched, or reset when creating new
   useEffect(() => {
-    if (isOpen && company && investorsLoaded) {
+    if (isOpen && team && investorsLoaded) {
       setSelectedInvestors(existingInvestors);
-    } else if (isOpen && company && investorIds.length === 0) {
-      // Company has no investors
+    } else if (isOpen && team && investorIds.length === 0) {
+      // Team has no investors
       setSelectedInvestors([]);
-    } else if (isOpen && !company) {
-      // Creating new company
+    } else if (isOpen && !team) {
+      // Creating new team
       setSelectedInvestors([]);
     }
-  }, [isOpen, company, investorsLoaded, existingInvestors, investorIds.length]);
+  }, [isOpen, team, investorsLoaded, existingInvestors, investorIds.length]);
   
   // Close parent dropdown when clicking outside
   useEffect(() => {
@@ -340,7 +340,7 @@ export default function CompanyEditModal({
               />
             </div>
 
-            {/* Parent company selection */}
+            {/* Parent team selection */}
             <div>
               <label className="label">Parent organization</label>
               <div className="relative" ref={parentDropdownRef}>
@@ -348,14 +348,14 @@ export default function CompanyEditModal({
                   type="button"
                   onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
                   className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                  disabled={isLoadingCompanies || isLoading}
+                  disabled={isLoadingTeams || isLoading}
                 >
                   {selectedParent ? (
                     <div className="flex items-center gap-2">
                       {selectedParent._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
                         <img
                           src={selectedParent._embedded['wp:featuredmedia'][0].source_url}
-                          alt={getCompanyName(selectedParent)}
+                          alt={getTeamName(selectedParent)}
                           className="w-6 h-6 rounded object-contain dark:bg-gray-600"
                         />
                       ) : (
@@ -363,7 +363,7 @@ export default function CompanyEditModal({
                           <Building2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         </div>
                       )}
-                      <span className="text-gray-900 dark:text-gray-50">{getCompanyName(selectedParent)}</span>
+                      <span className="text-gray-900 dark:text-gray-50">{getTeamName(selectedParent)}</span>
                     </div>
                   ) : (
                     <span className="text-gray-400 dark:text-gray-500">No parent organization</span>
@@ -404,13 +404,13 @@ export default function CompanyEditModal({
                         <span className="text-sm text-gray-500 dark:text-gray-400 italic">No parent organization</span>
                       </button>
 
-                      {/* Companies list */}
-                      {isLoadingCompanies ? (
+                      {/* Teams list */}
+                      {isLoadingTeams ? (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
                           Loading...
                         </div>
-                      ) : availableParentCompanies.length > 0 ? (
-                        availableParentCompanies.map((c) => (
+                      ) : availableParentTeams.length > 0 ? (
+                        availableParentTeams.map((c) => (
                           <button
                             key={c.id}
                             type="button"
@@ -426,7 +426,7 @@ export default function CompanyEditModal({
                             {c._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
                               <img
                                 src={c._embedded['wp:featuredmedia'][0].source_url}
-                                alt={getCompanyName(c)}
+                                alt={getTeamName(c)}
                                 className="w-6 h-6 rounded object-contain"
                               />
                             ) : (
@@ -434,7 +434,7 @@ export default function CompanyEditModal({
                                 <Building2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                               </div>
                             )}
-                            <span className="text-sm text-gray-900 dark:text-gray-50 truncate">{getCompanyName(c)}</span>
+                            <span className="text-sm text-gray-900 dark:text-gray-50 truncate">{getTeamName(c)}</span>
                           </button>
                         ))
                       ) : (
@@ -502,7 +502,7 @@ export default function CompanyEditModal({
                   type="button"
                   onClick={() => setIsInvestorsDropdownOpen(!isInvestorsDropdownOpen)}
                   className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                  disabled={isLoadingCompanies || isLoadingPeople || isLoading}
+                  disabled={isLoadingTeams || isLoadingPeople || isLoading}
                 >
                   <span className="text-gray-400 dark:text-gray-500">Add investor...</span>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isInvestorsDropdownOpen ? 'rotate-180' : ''}`} />
@@ -526,7 +526,7 @@ export default function CompanyEditModal({
                     </div>
 
                     <div className="overflow-y-auto max-h-48">
-                      {(isLoadingCompanies || isLoadingPeople || isSearching) ? (
+                      {(isLoadingTeams || isLoadingPeople || isSearching) ? (
                         <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
                           {isSearching ? 'Searching...' : 'Loading...'}
                         </div>
@@ -576,7 +576,7 @@ export default function CompanyEditModal({
                 )}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Select people or organizations that have invested in this company
+                Select people or organizations that have invested in this team
               </p>
             </div>
 

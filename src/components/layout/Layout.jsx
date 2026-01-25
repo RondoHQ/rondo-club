@@ -22,7 +22,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatePerson } from '@/hooks/usePeople';
 import { useCreateDate } from '@/hooks/useDates';
-import { useCreateCompany } from '@/hooks/useCompanies';
+import { useCreateTeam } from '@/hooks/useTeams';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -32,14 +32,14 @@ import { APP_NAME } from '@/constants/app';
 // These pull in TipTap editor (~370 KB) which should only load when needed
 const GlobalTodoModal = lazy(() => import('@/components/Timeline/GlobalTodoModal'));
 const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
-const CompanyEditModal = lazy(() => import('@/components/CompanyEditModal'));
+const TeamEditModal = lazy(() => import('@/components/TeamEditModal'));
 const ImportantDateModal = lazy(() => import('@/components/ImportantDateModal'));
 import { usePeople } from '@/hooks/usePeople';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'People', href: '/people', icon: Users },
-  { name: 'Organizations', href: '/companies', icon: Building2 },
+  { name: 'Organizations', href: '/teams', icon: Building2 },
   { name: 'Dates', href: '/dates', icon: Calendar },
   { name: 'Todos', href: '/todos', icon: CheckSquare },
   { name: 'Workspaces', href: '/workspaces', icon: UsersRound },
@@ -55,7 +55,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (!stats) return null;
     switch (name) {
       case 'People': return stats.total_people;
-      case 'Organizations': return stats.total_companies;
+      case 'Organizations': return stats.total_teams;
       case 'Dates': return stats.total_dates;
       default: return null;
     }
@@ -224,10 +224,10 @@ function SearchModal({ isOpen, onClose }) {
   const { data: searchResults, isLoading: isSearchLoading } = useSearch(trimmedQuery);
   
   // Safe results
-  const safeResults = searchResults || { people: [], companies: [] };
+  const safeResults = searchResults || { people: [], teams: [] };
   const allResults = [
     ...(safeResults.people || []).map(p => ({ ...p, type: 'person' })),
-    ...(safeResults.companies || []).map(c => ({ ...c, type: 'company' })),
+    ...(safeResults.teams || []).map(c => ({ ...c, type: 'team' })),
   ];
   const hasResults = allResults.length > 0;
   const showResults = searchQuery.trim().length >= 2;
@@ -276,8 +276,8 @@ function SearchModal({ isOpen, onClose }) {
     onClose();
     if (type === 'person') {
       navigate(`/people/${id}`);
-    } else if (type === 'company') {
-      navigate(`/companies/${id}`);
+    } else if (type === 'team') {
+      navigate(`/teams/${id}`);
     }
   };
   
@@ -368,26 +368,26 @@ function SearchModal({ isOpen, onClose }) {
                 )}
 
                 {/* Organizations results */}
-                {safeResults.companies && safeResults.companies.length > 0 && (
+                {safeResults.teams && safeResults.teams.length > 0 && (
                   <div className="px-2 mt-2">
                     <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">
                       Organizations
                     </div>
-                    {safeResults.companies.map((company, index) => {
+                    {safeResults.teams.map((team, index) => {
                       const globalIndex = (safeResults.people?.length || 0) + index;
                       const isSelected = selectedIndex === globalIndex;
                       return (
                         <button
-                          key={company.id}
-                          onClick={() => handleResultClick('company', company.id)}
+                          key={team.id}
+                          onClick={() => handleResultClick('team', team.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
                             isSelected ? 'bg-accent-50 text-accent-900 dark:bg-accent-700 dark:text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
-                          {company.thumbnail ? (
+                          {team.thumbnail ? (
                             <img
-                              src={company.thumbnail}
-                              alt={company.name}
+                              src={team.thumbnail}
+                              alt={team.name}
                               className="w-8 h-8 rounded object-contain dark:bg-gray-700"
                             />
                           ) : (
@@ -396,7 +396,7 @@ function SearchModal({ isOpen, onClose }) {
                             </div>
                           )}
                           <span className="text-sm font-medium flex-1 truncate">
-                            {company.name}
+                            {team.name}
                           </span>
                           {isSelected && (
                             <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">Enter</kbd>
@@ -434,7 +434,7 @@ function SearchModal({ isOpen, onClose }) {
   );
 }
 
-function QuickAddMenu({ onAddTodo, onAddPerson, onAddCompany, onAddDate }) {
+function QuickAddMenu({ onAddTodo, onAddPerson, onAddTeam, onAddDate }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   
@@ -464,9 +464,9 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddCompany, onAddDate }) {
     onAddPerson();
   };
   
-  const handleAddCompany = () => {
+  const handleAddTeam = () => {
     setIsOpen(false);
-    onAddCompany();
+    onAddTeam();
   };
   
   const handleAddDate = () => {
@@ -496,7 +496,7 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddCompany, onAddDate }) {
               New Person
             </button>
             <button
-              onClick={handleAddCompany}
+              onClick={handleAddTeam}
               className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <Building2 className="w-4 h-4 mr-3 text-gray-400" />
@@ -523,7 +523,7 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddCompany, onAddDate }) {
   );
 }
 
-function Header({ onMenuClick, onAddTodo, onAddPerson, onAddCompany, onAddDate, onOpenSearch }) {
+function Header({ onMenuClick, onAddTodo, onAddPerson, onAddTeam, onAddDate, onOpenSearch }) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -532,7 +532,7 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddCompany, onAddDate, 
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people')) return 'People';
-    if (path.startsWith('/companies')) return 'Organizations';
+    if (path.startsWith('/teams')) return 'Organizations';
     if (path.startsWith('/dates')) return 'Important Dates';
     if (path.startsWith('/todos')) return 'Todos';
     if (path.startsWith('/workspaces')) return 'Workspaces';
@@ -594,7 +594,7 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddCompany, onAddDate, 
         <QuickAddMenu 
           onAddTodo={onAddTodo} 
           onAddPerson={onAddPerson}
-          onAddCompany={onAddCompany}
+          onAddTeam={onAddTeam}
           onAddDate={onAddDate}
         />
       </div>
@@ -612,10 +612,10 @@ export default function Layout({ children }) {
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showPersonModal, setShowPersonModal] = useState(false);
-  const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [showTeamModal, setShowTeamModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [isCreatingPerson, setIsCreatingPerson] = useState(false);
-  const [isCreatingCompany, setIsCreatingCompany] = useState(false);
+  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [isCreatingDate, setIsCreatingDate] = useState(false);
   
   const navigate = useNavigate();
@@ -639,11 +639,11 @@ export default function Layout({ children }) {
     },
   });
   
-  // Create company mutation
-  const createCompanyMutation = useCreateCompany({
+  // Create team mutation
+  const createTeamMutation = useCreateTeam({
     onSuccess: (result) => {
-      setShowCompanyModal(false);
-      navigate(`/companies/${result.id}`);
+      setShowTeamModal(false);
+      navigate(`/teams/${result.id}`);
     },
   });
   
@@ -662,13 +662,13 @@ export default function Layout({ children }) {
     }
   };
   
-  // Handle creating company
-  const handleCreateCompany = async (data) => {
-    setIsCreatingCompany(true);
+  // Handle creating team
+  const handleCreateTeam = async (data) => {
+    setIsCreatingTeam(true);
     try {
-      await createCompanyMutation.mutateAsync(data);
+      await createTeamMutation.mutateAsync(data);
     } finally {
-      setIsCreatingCompany(false);
+      setIsCreatingTeam(false);
     }
   };
   
@@ -725,7 +725,7 @@ export default function Layout({ children }) {
           onMenuClick={() => setSidebarOpen(true)}
           onAddTodo={() => setShowTodoModal(true)}
           onAddPerson={() => setShowPersonModal(true)}
-          onAddCompany={() => setShowCompanyModal(true)}
+          onAddTeam={() => setShowTeamModal(true)}
           onAddDate={() => setShowDateModal(true)}
           onOpenSearch={() => setShowSearchModal(true)}
         />
@@ -759,13 +759,13 @@ export default function Layout({ children }) {
         />
       </Suspense>
 
-      {/* Company Modal (lazy loaded) */}
+      {/* Team Modal (lazy loaded) */}
       <Suspense fallback={null}>
-        <CompanyEditModal
-          isOpen={showCompanyModal}
-          onClose={() => setShowCompanyModal(false)}
-          onSubmit={handleCreateCompany}
-          isLoading={isCreatingCompany}
+        <TeamEditModal
+          isOpen={showTeamModal}
+          onClose={() => setShowTeamModal(false)}
+          onSubmit={handleCreateTeam}
+          isLoading={isCreatingTeam}
         />
       </Suspense>
 

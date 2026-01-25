@@ -255,7 +255,7 @@ DELETE /stadion/v1/calendar/events/{id}/match/{pid}  # Remove person match
       "meeting_url": "https://meet.google.com/abc-xyz",
       "match_type": "email_exact",
       "matched_attendee": "john@example.com",
-      "other_attendees": ["jane@company.com", "bob@company.com"],
+      "other_attendees": ["jane@team.com", "bob@team.com"],
       "calendar": "Work Calendar"
     }
   ],

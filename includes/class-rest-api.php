@@ -281,7 +281,7 @@ class Api extends Base {
 			]
 		);
 
-		// Get companies where a person or company is an investor
+		// Get teams where a person or company is an investor
 		register_rest_route(
 			'stadion/v1',
 			'/investments/(?P<investor_id>\d+)',
@@ -1085,14 +1085,14 @@ class Api extends Base {
 	}
 
 	/**
-	 * Global search across people, companies, and dates
+	 * Global search across people, teams, and dates
 	 */
 	public function global_search( $request ) {
 		$query = sanitize_text_field( $request->get_param( 'q' ) );
 
 		$results = [
 			'people'    => [],
-			'companies' => [],
+			'teams' => [],
 		];
 
 		// Search people with scoring to prioritize first name matches
@@ -1215,13 +1215,13 @@ class Api extends Base {
 			$results['people'][] = $this->format_person_summary( $item['person'] );
 		}
 
-		// Search companies with scoring (similar to people)
-		$company_results = [];
+		// Search teams with scoring (similar to people)
+		$team_results = [];
 
 		// Query 1: Name field matches (highest priority, score: 60)
 		$name_matches = get_posts(
 			[
-				'post_type'      => 'company',
+				'post_type'      => 'team',
 				'posts_per_page' => 20,
 				'post_status'    => 'publish',
 				'meta_query'     => [
@@ -1234,9 +1234,9 @@ class Api extends Base {
 			]
 		);
 
-		foreach ( $name_matches as $company ) {
-			$company_results[ $company->ID ] = [
-				'company' => $company,
+		foreach ( $name_matches as $team ) {
+			$team_results[ $team->ID ] = [
+				'team' => $team,
 				'score'   => 60,
 			];
 		}
@@ -1244,40 +1244,40 @@ class Api extends Base {
 		// Query 2: General WordPress search (score: 20)
 		$general_company_matches = get_posts(
 			[
-				'post_type'      => 'company',
+				'post_type'      => 'team',
 				's'              => $query,
 				'posts_per_page' => 20,
 				'post_status'    => 'publish',
 			]
 		);
 
-		foreach ( $general_company_matches as $company ) {
-			if ( ! isset( $company_results[ $company->ID ] ) ) {
-				$company_results[ $company->ID ] = [
-					'company' => $company,
+		foreach ( $general_company_matches as $team ) {
+			if ( ! isset( $team_results[ $team->ID ] ) ) {
+				$team_results[ $team->ID ] = [
+					'team' => $team,
 					'score'   => 20,
 				];
 			}
 		}
 
 		// Query 3: Custom field matches (score: 30)
-		$company_custom_fields = $this->get_searchable_custom_fields( 'company' );
-		if ( ! empty( $company_custom_fields ) ) {
-			$company_meta_query = $this->build_custom_field_meta_query( $company_custom_fields, $query );
+		$team_custom_fields = $this->get_searchable_custom_fields( 'team' );
+		if ( ! empty( $team_custom_fields ) ) {
+			$team_meta_query = $this->build_custom_field_meta_query( $team_custom_fields, $query );
 
-			$company_custom_matches = get_posts(
+			$team_custom_matches = get_posts(
 				[
-					'post_type'      => 'company',
+					'post_type'      => 'team',
 					'posts_per_page' => 20,
 					'post_status'    => 'publish',
-					'meta_query'     => $company_meta_query,
+					'meta_query'     => $team_meta_query,
 				]
 			);
 
-			foreach ( $company_custom_matches as $company ) {
-				if ( ! isset( $company_results[ $company->ID ] ) ) {
-					$company_results[ $company->ID ] = [
-						'company' => $company,
+			foreach ( $team_custom_matches as $team ) {
+				if ( ! isset( $team_results[ $team->ID ] ) ) {
+					$team_results[ $team->ID ] = [
+						'team' => $team,
 						'score'   => 30,
 					];
 				}
@@ -1286,16 +1286,16 @@ class Api extends Base {
 
 		// Sort by score descending, take top 10
 		uasort(
-			$company_results,
+			$team_results,
 			function ( $a, $b ) {
 				return $b['score'] - $a['score'];
 			}
 		);
 
-		$company_results = array_slice( $company_results, 0, 10, true );
+		$team_results = array_slice( $team_results, 0, 10, true );
 
-		foreach ( $company_results as $item ) {
-			$results['companies'][] = $this->format_company_summary( $item['company'] );
+		foreach ( $team_results as $item ) {
+			$results['teams'][] = $this->format_company_summary( $item['team'] );
 		}
 
 		return rest_ensure_response( $results );
@@ -1337,11 +1337,11 @@ class Api extends Base {
 		// For regular users, count only their accessible posts
 		if ( current_user_can( 'manage_options' ) ) {
 			$total_people    = wp_count_posts( 'person' )->publish;
-			$total_companies = wp_count_posts( 'company' )->publish;
+			$total_teams = wp_count_posts( 'team' )->publish;
 			$total_dates     = wp_count_posts( 'important_date' )->publish;
 		} else {
 			$total_people    = count( $access_control->get_accessible_post_ids( 'person', $user_id ) );
-			$total_companies = count( $access_control->get_accessible_post_ids( 'company', $user_id ) );
+			$total_teams = count( $access_control->get_accessible_post_ids( 'team', $user_id ) );
 			$total_dates     = count( $access_control->get_accessible_post_ids( 'important_date', $user_id ) );
 		}
 
@@ -1388,7 +1388,7 @@ class Api extends Base {
 			[
 				'stats'              => [
 					'total_people'         => $total_people,
-					'total_companies'      => $total_companies,
+					'total_teams'      => $total_teams,
 					'total_dates'          => $total_dates,
 					'open_todos_count'     => $open_todos_count,
 					'awaiting_todos_count' => $awaiting_todos_count,
@@ -1494,25 +1494,25 @@ class Api extends Base {
 		return $recently_contacted;
 	}
 	/**
-	 * Get companies where a person or company is listed as an investor
+	 * Get teams where a person or company is listed as an investor
 	 */
 	public function get_investments( $request ) {
 		$investor_id = (int) $request->get_param( 'investor_id' );
 		$user_id     = get_current_user_id();
 
-		// Get all companies accessible by this user
+		// Get all teams accessible by this user
 		$access_control       = new \STADION_Access_Control();
-		$accessible_companies = $access_control->get_accessible_post_ids( 'company', $user_id );
+		$accessible_teams = $access_control->get_accessible_post_ids( 'team', $user_id );
 
-		if ( empty( $accessible_companies ) ) {
+		if ( empty( $accessible_teams ) ) {
 			return rest_ensure_response( [] );
 		}
 
-		// Query companies where this ID appears in the investors field
-		$companies = get_posts(
+		// Query teams where this ID appears in the investors field
+		$teams = get_posts(
 			[
-				'post_type'      => 'company',
-				'post__in'       => $accessible_companies,
+				'post_type'      => 'team',
+				'post__in'       => $accessible_teams,
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
 				'meta_query'     => [
@@ -1526,10 +1526,10 @@ class Api extends Base {
 		);
 
 		// Also check with serialized format (ACF stores as serialized array)
-		$companies_serialized = get_posts(
+		$teams_serialized = get_posts(
 			[
-				'post_type'      => 'company',
-				'post__in'       => $accessible_companies,
+				'post_type'      => 'team',
+				'post__in'       => $accessible_teams,
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
 				'meta_query'     => [
@@ -1543,27 +1543,27 @@ class Api extends Base {
 		);
 
 		// Merge and dedupe
-		$all_companies    = array_merge( $companies, $companies_serialized );
+		$all_teams    = array_merge( $teams, $teams_serialized );
 		$seen_ids         = [];
-		$unique_companies = [];
-		foreach ( $all_companies as $company ) {
-			if ( ! in_array( $company->ID, $seen_ids ) ) {
-				$seen_ids[]         = $company->ID;
-				$unique_companies[] = $company;
+		$unique_teams = [];
+		foreach ( $all_teams as $team ) {
+			if ( ! in_array( $team->ID, $seen_ids ) ) {
+				$seen_ids[]         = $team->ID;
+				$unique_teams[] = $team;
 			}
 		}
 
 		// Format response
 		$investments = [];
-		foreach ( $unique_companies as $company ) {
-			$thumbnail_id  = get_post_thumbnail_id( $company->ID );
+		foreach ( $unique_teams as $team ) {
+			$thumbnail_id  = get_post_thumbnail_id( $team->ID );
 			$thumbnail_url = $thumbnail_id ? wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' ) : '';
 
 			$investments[] = [
-				'id'        => $company->ID,
-				'name'      => $this->sanitize_text( $company->post_title ),
-				'industry'  => $this->sanitize_text( get_field( 'industry', $company->ID ) ),
-				'website'   => $this->sanitize_url( get_field( 'website', $company->ID ) ),
+				'id'        => $team->ID,
+				'name'      => $this->sanitize_text( $team->post_title ),
+				'industry'  => $this->sanitize_text( get_field( 'industry', $team->ID ) ),
+				'website'   => $this->sanitize_url( get_field( 'website', $team->ID ) ),
 				'thumbnail' => $this->sanitize_url( $thumbnail_url ),
 			];
 		}
@@ -1728,7 +1728,7 @@ class Api extends Base {
 	 * Delete all posts belonging to a user
 	 */
 	private function delete_user_posts( $user_id ) {
-		$post_types = [ 'person', 'company', 'important_date' ];
+		$post_types = [ 'person', 'team', 'important_date' ];
 
 		foreach ( $post_types as $post_type ) {
 			$posts = get_posts(
@@ -1752,7 +1752,7 @@ class Api extends Base {
 	 * Retrieves active custom fields that contain user-searchable text content.
 	 * Fields like Image, File, Color, Relationship, Link, Date, True/False are excluded.
 	 *
-	 * @param string $post_type 'person' or 'company'.
+	 * @param string $post_type 'person' or 'team'.
 	 * @return array Array of field names (meta keys) to search.
 	 */
 	private function get_searchable_custom_fields( string $post_type ): array {

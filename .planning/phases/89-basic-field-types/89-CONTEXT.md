@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Support 9 fundamental field types for People and Organizations custom fields: Text, Textarea, Number, Email, URL, Date, Select, Checkbox, and True/False. Each type must render appropriately for data entry, validate input, and display stored values correctly.
+Support 9 fundamental field types for People and Teams custom fields: Text, Textarea, Number, Email, URL, Date, Select, Checkbox, and True/False. Each type must render appropriately for data entry, validate input, and display stored values correctly.
 
 </domain>
 

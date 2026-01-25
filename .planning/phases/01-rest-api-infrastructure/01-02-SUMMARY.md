@@ -9,7 +9,7 @@ requires: [01-01]
 provides:
   - Verified backward compatibility of REST API after base class extraction
   - Documented infrastructure metrics for progress tracking
-affects: [02-rest-api-people-companies, 03-rest-api-integrations]
+affects: [02-rest-api-people-teams, 03-rest-api-integrations]
 
 # Tech tracking
 tech-stack:
@@ -81,7 +81,7 @@ All expected endpoints confirmed registered:
 - `/todos` (authenticated)
 - `/reminders` (authenticated)
 - `/people/{id}/*` (authenticated)
-- `/companies/{id}/*` (authenticated)
+- `/teams/{id}/*` (authenticated)
 - `/slack/*` (various)
 - `/export/vcard` (authenticated)
 - `/export/google-csv` (authenticated)
@@ -117,7 +117,7 @@ None.
 
 ## Next Phase Readiness
 - Phase 1 complete: Base class infrastructure established and verified
-- Ready for Phase 2: People & Companies endpoint extraction
+- Ready for Phase 2: People & Teams endpoint extraction
 - Ready for Phase 3: Integration endpoint extraction
 - All 37 routes documented and working
 

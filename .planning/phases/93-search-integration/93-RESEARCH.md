@@ -110,7 +110,7 @@ $custom_field_matches = get_posts([
             'compare' => 'LIKE',
         ],
         [
-            'key'     => 'company_email',
+            'key'     => 'team_email',
             'value'   => $query,
             'compare' => 'LIKE',
         ],
@@ -164,11 +164,11 @@ Problems that look simple but have existing solutions:
 **How to avoid:** Limit to ~20 fields max in a single OR query. For typical CRM use (5-15 custom fields), this is not an issue.
 **Warning signs:** Search taking >1 second with many custom fields defined.
 
-### Pitfall 5: Empty Results for Companies
-**What goes wrong:** Company custom fields not searched.
-**Why it happens:** Only implementing for People, forgetting Organizations use the same pattern.
+### Pitfall 5: Empty Results for Teams
+**What goes wrong:** Team custom fields not searched.
+**Why it happens:** Only implementing for People, forgetting Teams use the same pattern.
 **How to avoid:** Apply same logic to both post types in global_search().
-**Warning signs:** Custom field search works for People but not Organizations.
+**Warning signs:** Custom field search works for People but not Teams.
 
 ## Code Examples
 
@@ -177,7 +177,7 @@ Problems that look simple but have existing solutions:
 /**
  * Get searchable custom field names for a post type.
  *
- * @param string $post_type 'person' or 'company'.
+ * @param string $post_type 'person' or 'team'.
  * @return array Array of field names (meta keys) to search.
  */
 private function get_searchable_custom_fields( string $post_type ): array {
@@ -260,7 +260,7 @@ if ( ! empty( $custom_field_names ) ) {
     }
 }
 
-// For companies, add similar logic after existing company search
+// For teams, add similar logic after existing team search
 ```
 
 ## State of the Art

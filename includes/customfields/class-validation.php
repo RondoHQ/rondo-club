@@ -75,7 +75,7 @@ class Validation {
 		if ( strpos( $field['key'], 'field_custom_person_' ) === 0 ) {
 			$post_type = 'person';
 		} elseif ( strpos( $field['key'], 'field_custom_company_' ) === 0 ) {
-			$post_type = 'company';
+			$post_type = 'team';
 		}
 
 		if ( ! $post_type ) {

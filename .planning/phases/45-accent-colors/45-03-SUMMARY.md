@@ -24,7 +24,7 @@ key-files:
     - src/pages/People/PersonDetail.jsx
     - src/pages/People/FamilyTree.jsx
     - src/components/family-tree/PersonNode.jsx
-    - src/pages/Companies/CompanyDetail.jsx
+    - src/pages/Teams/TeamDetail.jsx
     - src/components/layout/Layout.jsx
     - src/pages/Settings/Settings.jsx
 
@@ -41,7 +41,7 @@ completed: 2026-01-15
 
 # Phase 45-03: Detail Pages & Layout Accent Colors Summary
 
-**PersonDetail, CompanyDetail, FamilyTree, Layout, and Settings pages migrated to accent-* colors for user-selectable theming**
+**PersonDetail, TeamDetail, FamilyTree, Layout, and Settings pages migrated to accent-* colors for user-selectable theming**
 
 ## Performance
 
@@ -62,14 +62,14 @@ completed: 2026-01-15
 Each task was committed atomically:
 
 1. **Task 1: Update PersonDetail and FamilyTree pages** - `352b320` (feat)
-2. **Task 2: Update CompanyDetail and Layout** - `47fae37` (feat)
+2. **Task 2: Update TeamDetail and Layout** - `47fae37` (feat)
 3. **Task 3: Update Settings page (non-Appearance sections)** - `61d39cd` (feat)
 
 ## Files Created/Modified
 - `src/pages/People/PersonDetail.jsx` - Tab navigation, links, badges, buttons migrated to accent-*
 - `src/pages/People/FamilyTree.jsx` - Loading spinner migrated to accent-*
 - `src/components/family-tree/PersonNode.jsx` - Hover border migrated to accent-*
-- `src/pages/Companies/CompanyDetail.jsx` - Tab navigation and links migrated to accent-*
+- `src/pages/Teams/TeamDetail.jsx` - Tab navigation and links migrated to accent-*
 - `src/components/layout/Layout.jsx` - Sidebar, search, quick add, user menu migrated to accent-*
 - `src/pages/Settings/Settings.jsx` - Tab navigation and toggle switches migrated to accent-*
 

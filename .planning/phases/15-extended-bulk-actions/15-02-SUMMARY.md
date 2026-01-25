@@ -7,11 +7,11 @@ tags: [react, bulk-operations, modals, lucide]
 # Dependency graph
 requires:
   - phase: 15-01
-    provides: bulk-update endpoint with organization_id, labels_add, labels_remove
+    provides: bulk-update endpoint with team_id, labels_add, labels_remove
 provides:
-  - BulkOrganizationModal component
+  - BulkTeamModal component
   - BulkLabelsModal component
-  - Extended Actions dropdown with organization and label operations
+  - Extended Actions dropdown with team and label operations
 affects: [people-management, bulk-operations]
 
 # Tech tracking
@@ -27,11 +27,11 @@ key-files:
     - src/pages/People/PeopleList.jsx
 
 key-decisions:
-  - "Organizations sorted alphabetically in modal for better UX"
+  - "Teams sorted alphabetically in modal for better UX"
   - "Labels modal uses mode toggle (add/remove) rather than separate modals"
 
 patterns-established:
-  - "BulkOrganizationModal: search + select pattern with clear option"
+  - "BulkTeamModal: search + select pattern with clear option"
   - "BulkLabelsModal: mode toggle + multi-select pattern"
 
 issues-created: []
@@ -43,7 +43,7 @@ completed: 2026-01-13
 
 # Phase 15 Plan 02: Frontend UI Modals Summary
 
-**BulkOrganizationModal and BulkLabelsModal for list view bulk operations with search, mode toggle, and multi-select patterns**
+**BulkTeamModal and BulkLabelsModal for list view bulk operations with search, mode toggle, and multi-select patterns**
 
 ## Performance
 
@@ -55,28 +55,28 @@ completed: 2026-01-13
 
 ## Accomplishments
 
-- BulkOrganizationModal with search/filter, organization selection, and clear option
+- BulkTeamModal with search/filter, team selection, and clear option
 - BulkLabelsModal with add/remove mode toggle and multi-select labels
-- Organizations sorted alphabetically in modal for better UX
-- Extended Actions dropdown with "Set organization..." and "Manage labels..." items
+- Teams sorted alphabetically in modal for better UX
+- Extended Actions dropdown with "Set team..." and "Manage labels..." items
 - Full integration with Phase 15-01 backend endpoint
 
 ## Task Commits
 
 Each task was committed atomically:
 
-1. **Task 1: BulkOrganizationModal** - `1a34279` (feat)
+1. **Task 1: BulkTeamModal** - `1a34279` (feat)
 2. **Task 2: BulkLabelsModal + version 1.67.0** - `6357e01` (feat)
 
-**Checkpoint fix:** `3db0b78` (fix - alphabetical organization sorting)
+**Checkpoint fix:** `3db0b78` (fix - alphabetical team sorting)
 
 ## Files Created/Modified
 
-- `src/pages/People/PeopleList.jsx` - Added BulkOrganizationModal, BulkLabelsModal components, state variables, menu items, and submit handlers
+- `src/pages/People/PeopleList.jsx` - Added BulkTeamModal, BulkLabelsModal components, state variables, menu items, and submit handlers
 
 ## Decisions Made
 
-- Organizations sorted alphabetically in modal (feedback during verification)
+- Teams sorted alphabetically in modal (feedback during verification)
 - Labels modal uses mode toggle pattern rather than separate add/remove modals for simpler UX
 - Both modals follow established inline component pattern from BulkVisibilityModal and BulkWorkspaceModal
 
@@ -84,12 +84,12 @@ Each task was committed atomically:
 
 ### Auto-fixed Issues
 
-**1. [Rule 1 - Bug] Sort organizations alphabetically in modal**
+**1. [Rule 1 - Bug] Sort teams alphabetically in modal**
 - **Found during:** Checkpoint verification
-- **Issue:** Organizations displayed in arbitrary order, making it difficult to find specific ones
-- **Fix:** Added `.sort((a, b) => a.name.localeCompare(b.name))` to allCompaniesData query
+- **Issue:** Teams displayed in arbitrary order, making it difficult to find specific ones
+- **Fix:** Added `.sort((a, b) => a.name.localeCompare(b.name))` to allTeamsData query
 - **Files modified:** src/pages/People/PeopleList.jsx
-- **Verification:** Modal now shows organizations A-Z
+- **Verification:** Modal now shows teams A-Z
 - **Committed in:** 3db0b78
 
 ---
@@ -104,7 +104,7 @@ None - implementation followed established patterns from existing bulk modals.
 ## Next Phase Readiness
 
 - Phase 15 complete - all bulk actions now available
-- ISS-003 resolved (bulk edit for Organizations and Labels)
+- ISS-003 resolved (bulk edit for Teams and Labels)
 - v2.2 List View Polish milestone complete
 
 ---

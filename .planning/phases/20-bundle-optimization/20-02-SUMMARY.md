@@ -40,8 +40,8 @@ Implement route-based lazy loading with React.lazy() and Suspense for all page c
 | PeopleList | 32.35 KB | 7.03 KB |
 | PersonDetail | 129.93 KB | 37.77 KB |
 | FamilyTree | 534.59 KB | 162.19 KB |
-| CompaniesList | 23.41 KB | 5.73 KB |
-| CompanyDetail | 12.51 KB | 3.41 KB |
+| TeamsList | 23.41 KB | 5.73 KB |
+| TeamDetail | 12.51 KB | 3.41 KB |
 | DatesList | 3.83 KB | 1.48 KB |
 | TodosList | 6.69 KB | 2.24 KB |
 | Settings | 58.03 KB | 12.14 KB |
@@ -58,7 +58,7 @@ Implement route-based lazy loading with React.lazy() and Suspense for all page c
 | Chunk | Raw Size | Gzipped | Used By |
 |-------|----------|---------|---------|
 | QuickActivityModal | 383.45 KB | 121.30 KB | Dashboard, PersonDetail, TodosList |
-| ShareModal | 6.32 KB | 2.06 KB | PersonDetail, CompanyDetail |
+| ShareModal | 6.32 KB | 2.06 KB | PersonDetail, TeamDetail |
 | TodoModal | 2.98 KB | 1.28 KB | PersonDetail, TodosList |
 
 ## Comparison to Baseline

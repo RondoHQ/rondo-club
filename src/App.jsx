@@ -13,8 +13,8 @@ const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const PeopleList = lazy(() => import('@/pages/People/PeopleList'));
 const PersonDetail = lazy(() => import('@/pages/People/PersonDetail'));
 const FamilyTree = lazy(() => import('@/pages/People/FamilyTree'));
-const CompaniesList = lazy(() => import('@/pages/Companies/CompaniesList'));
-const CompanyDetail = lazy(() => import('@/pages/Companies/CompanyDetail'));
+const TeamsList = lazy(() => import('@/pages/Teams/TeamsList'));
+const TeamDetail = lazy(() => import('@/pages/Teams/TeamDetail'));
 const DatesList = lazy(() => import('@/pages/Dates/DatesList'));
 const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
 const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
@@ -188,9 +188,9 @@ function App() {
                   <Route path="/people/:id/family-tree" element={<FamilyTree />} />
                   <Route path="/people/:id" element={<PersonDetail />} />
 
-                  {/* Companies routes */}
-                  <Route path="/companies" element={<CompaniesList />} />
-                  <Route path="/companies/:id" element={<CompanyDetail />} />
+                  {/* Teams routes */}
+                  <Route path="/teams" element={<TeamsList />} />
+                  <Route path="/teams/:id" element={<TeamDetail />} />
 
                   {/* Dates routes */}
                   <Route path="/dates" element={<DatesList />} />

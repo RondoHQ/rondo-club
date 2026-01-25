@@ -9,11 +9,11 @@ files:
 
 ## Problem
 
-The dashboard widgets (People, Organizations, Events, Todos) show their content but the headings don't indicate the total count of items. Adding counts to the widget headings would give users a quick overview of their data at a glance.
+The dashboard widgets (People, Teams, Events, Todos) show their content but the headings don't indicate the total count of items. Adding counts to the widget headings would give users a quick overview of their data at a glance.
 
 Example desired format:
 - People (42)
-- Organizations (15)
+- Teams (15)
 - Events (8)
 - Todos (3)
 

@@ -5,7 +5,7 @@ subsystem: frontend
 tags: [custom-fields, list-view, columns, react]
 dependency-graph:
   requires: [92-01]
-  provides: [custom-field-columns-people, custom-field-columns-organizations]
+  provides: [custom-field-columns-people, custom-field-columns-teams]
   affects: []
 tech-stack:
   added: []
@@ -16,7 +16,7 @@ key-files:
   modified:
     - src/components/FieldFormPanel.jsx
     - src/pages/People/PeopleList.jsx
-    - src/pages/Companies/CompaniesList.jsx
+    - src/pages/Teams/TeamsList.jsx
 decisions:
   - decision: "Non-sortable custom field columns"
     rationale: "Keep initial implementation simple; sorting can be added later"
@@ -31,7 +31,7 @@ metrics:
 
 # Phase 92 Plan 02: Custom Field Column Integration Summary
 
-**One-liner:** Custom field columns in People and Organizations list views with type-appropriate compact rendering.
+**One-liner:** Custom field columns in People and Teams list views with type-appropriate compact rendering.
 
 ## What Was Built
 
@@ -59,7 +59,7 @@ Created compact column renderer supporting all 14 field types:
 - **Empty values:** Gray italic dash "-"
 
 ### 3. List View Integration (Task 3)
-Updated both PeopleList and CompaniesList to:
+Updated both PeopleList and TeamsList to:
 - Fetch custom field metadata via `prmApi.getCustomFieldsMetadata()`
 - Filter to `show_in_list_view === true` fields
 - Sort by `list_view_order`
@@ -82,7 +82,7 @@ Updated both PeopleList and CompaniesList to:
 | `src/components/FieldFormPanel.jsx` | Added show_in_list_view and list_view_order to form state, submit data, and UI |
 | `src/components/CustomFieldColumn.jsx` | NEW: Compact type-aware column renderer |
 | `src/pages/People/PeopleList.jsx` | Added custom field column fetching and rendering |
-| `src/pages/Companies/CompaniesList.jsx` | Added custom field column fetching and rendering |
+| `src/pages/Teams/TeamsList.jsx` | Added custom field column fetching and rendering |
 
 ## Verification Results
 
@@ -100,7 +100,7 @@ None - plan executed exactly as written.
 ## Success Criteria Met
 
 - [x] DISP-05: Custom field columns appear in People list when enabled
-- [x] DISP-06: Custom field columns appear in Organizations list when enabled
+- [x] DISP-06: Custom field columns appear in Teams list when enabled
 - [x] DISP-07: Column values render type-appropriately (truncated, icons, badges)
 - [x] SETT-06: Admin can toggle "Show in list view" per field
 - [x] SETT-07: Admin can configure column order for list view fields

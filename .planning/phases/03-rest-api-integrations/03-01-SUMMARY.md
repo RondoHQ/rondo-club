@@ -5,7 +5,7 @@ subsystem: api
 tags: [rest-api, php, wordpress, slack, refactoring]
 
 # Dependency graph
-requires: [01-rest-api-infrastructure, 02-rest-api-people-companies]
+requires: [01-rest-api-infrastructure, 02-rest-api-people-teams]
 provides:
   - STADION_REST_Slack class with all Slack integration endpoints
   - 10 routes extracted: OAuth, disconnect, status, commands, events, channels, targets (GET/POST), webhook

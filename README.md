@@ -1,7 +1,7 @@
 <!-- Personal CRM system built as a WordPress theme with React SPA frontend -->
 # Stadion
 
-A React-powered WordPress theme for personal relationship management. This theme provides a modern, single-page application interface for managing contacts, companies, and important dates.
+A React-powered WordPress theme for personal relationship management. This theme provides a modern, single-page application interface for managing contacts, teams, and important dates.
 
 ## Requirements
 
@@ -181,7 +181,7 @@ stadion-theme/
 │   │   ├── Dashboard.jsx
 │   │   ├── Login.jsx
 │   │   ├── People/
-│   │   ├── Companies/
+│   │   ├── Teams/
 │   │   ├── Dates/
 │   │   └── Settings/
 │   ├── stores/         # Zustand stores (if needed)
@@ -256,7 +256,7 @@ window.stadionConfig = {
 The theme uses two API namespaces:
 
 ### WordPress REST API (`/wp/v2/`)
-- Standard CRUD for people, companies, dates
+- Standard CRUD for people, teams, dates
 - Built-in WordPress authentication
 - ACF fields included in responses
 
@@ -265,7 +265,7 @@ The theme uses two API namespaces:
 - Timeline (notes + activities)
 - Global search
 - Upcoming reminders
-- Company employees
+- Team employees
 
 ## Authentication
 

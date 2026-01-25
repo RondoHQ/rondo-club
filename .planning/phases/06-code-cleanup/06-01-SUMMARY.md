@@ -20,7 +20,7 @@ Removed all 48 console.error() calls from 11 React files:
 | src/pages/People/PersonDetail.jsx | 17 |
 | src/pages/People/PeopleList.jsx | 2 |
 | src/pages/People/FamilyTree.jsx | 1 |
-| src/pages/Companies/CompanyDetail.jsx | 3 |
+| src/pages/Teams/TeamDetail.jsx | 3 |
 | src/pages/Settings/Settings.jsx | 17 |
 | src/pages/Todos/TodosList.jsx | 1 |
 
@@ -53,7 +53,7 @@ Removed all 48 console.error() calls from 11 React files:
 - src/pages/People/PersonDetail.jsx
 - src/pages/People/PeopleList.jsx
 - src/pages/People/FamilyTree.jsx
-- src/pages/Companies/CompanyDetail.jsx
+- src/pages/Teams/TeamDetail.jsx
 - src/pages/Settings/Settings.jsx
 - src/pages/Todos/TodosList.jsx
 - style.css

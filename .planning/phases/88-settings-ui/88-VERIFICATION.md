@@ -20,7 +20,7 @@ gaps: []
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
 | 1 | Custom Fields subtab appears in Settings | VERIFIED | Navigation link added to Admin tab Configuration section (commit 015e929) |
-| 2 | Admin can toggle between People and Organizations field lists | VERIFIED | Tab navigation with TABS array, localStorage persistence, separate queries |
+| 2 | Admin can toggle between People and Teams field lists | VERIFIED | Tab navigation with TABS array, localStorage persistence, separate queries |
 | 3 | Admin can add a new field via form/modal with type selector | VERIFIED | FieldFormPanel (281 lines) with 14 field types, wired to createMutation |
 | 4 | Admin can see list of existing fields with edit/delete actions | VERIFIED | Table with hover actions for Edit/Delete, DeleteFieldDialog with archive/permanent options |
 
@@ -60,8 +60,8 @@ gaps: []
 ### Human Verification Required
 
 ### 1. Tab Navigation Persistence
-**Test:** Navigate to Custom Fields, select "Organization Fields" tab, navigate away and return
-**Expected:** "Organization Fields" tab should still be selected
+**Test:** Navigate to Custom Fields, select "Team Fields" tab, navigate away and return
+**Expected:** "Team Fields" tab should still be selected
 **Why human:** Requires browser localStorage interaction
 
 ### 2. Add Field Flow

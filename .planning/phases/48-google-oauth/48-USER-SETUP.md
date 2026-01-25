@@ -28,7 +28,7 @@ Complete these items for Google Calendar integration to function. Claude automat
 
 - [ ] **Configure OAuth consent screen**
   - Location: Google Cloud Console -> APIs & Services -> OAuth consent screen
-  - User type: External (or Internal for Google Workspace organizations)
+  - User type: External (or Internal for Google Workspace teams)
   - App name: Stadion (or your preferred name)
   - User support email: Your email
   - Scopes: Add `.../auth/calendar.readonly`

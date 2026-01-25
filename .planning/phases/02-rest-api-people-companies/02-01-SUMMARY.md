@@ -1,5 +1,5 @@
 ---
-phase: 02-rest-api-people-companies
+phase: 02-rest-api-people-teams
 plan: 01
 subsystem: api
 tags: [rest-api, php, wordpress, inheritance, refactoring]
@@ -10,7 +10,7 @@ provides:
   - STADION_REST_People class with people-specific REST endpoints
   - Extracted routes: /dates, /gravatar, /photo
   - Extracted filters: expand_person_relationships, add_person_computed_fields
-affects: [02-02-company-endpoints, 03-rest-api-integrations]
+affects: [02-02-team-endpoints, 03-rest-api-integrations]
 
 # Tech tracking
 tech-stack:
@@ -36,7 +36,7 @@ duration: 8min
 completed: 2026-01-13
 ---
 
-# Phase 2: REST API People & Companies - Plan 01 Summary
+# Phase 2: REST API People & Teams - Plan 01 Summary
 
 **Extract people-related REST API endpoints into dedicated STADION_REST_People class**
 
@@ -85,10 +85,10 @@ None.
 
 ## Next Phase Readiness
 
-- Pattern established for Phase 02-02 (company endpoints extraction)
+- Pattern established for Phase 02-02 (team endpoints extraction)
 - STADION_REST_Base inheritance proven to work for domain-specific classes
-- Ready to extract company-related endpoints following same approach
+- Ready to extract team-related endpoints following same approach
 
 ---
-*Phase: 02-rest-api-people-companies*
+*Phase: 02-rest-api-people-teams*
 *Completed: 2026-01-13*

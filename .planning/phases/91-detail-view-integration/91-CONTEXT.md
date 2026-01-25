@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Custom fields appear in a dedicated section on Person and Organization detail pages. Users can view and edit custom field values inline. Each field type renders appropriately for its data type.
+Custom fields appear in a dedicated section on Person and Team detail pages. Users can view and edit custom field values inline. Each field type renders appropriately for its data type.
 
 </domain>
 

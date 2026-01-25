@@ -32,7 +32,7 @@ key-decisions:
   - "All endpoints use existing access control via STADION_Access_Control"
 
 patterns-established:
-  - "Todo REST class follows same pattern as STADION_REST_People, STADION_REST_Companies"
+  - "Todo REST class follows same pattern as STADION_REST_People, STADION_REST_Teams"
 
 issues-created: []
 

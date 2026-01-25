@@ -35,7 +35,7 @@ Support 5 advanced field types for media, links, colors, and relationships: Imag
 - Manual hex text input: Claude's discretion
 
 ### Relationship Field
-- Can link to People and Organizations only (not configurable per field)
+- Can link to People and Teams only (not configurable per field)
 - Cardinality configurable per field (single or multiple)
 - Search-as-you-type dropdown for selection
 - Display as chip/badge with entity name (clickable to navigate)

@@ -1,4 +1,4 @@
-# PHP Codebase Audit: v4.4 Code Organization
+# PHP Codebase Audit: v4.4 Code Team
 
 **Date:** 2026-01-16
 **Phase:** 64 (Audit & Planning)
@@ -70,7 +70,7 @@ includes/
 ├── class-rest-api.php          # Legacy REST endpoints
 ├── class-rest-base.php         # Abstract REST controller
 ├── class-rest-calendar.php
-├── class-rest-companies.php
+├── class-rest-teams.php
 ├── class-rest-import-export.php
 ├── class-rest-people.php
 ├── class-rest-slack.php
@@ -105,7 +105,7 @@ includes/
 | `STADION_REST_Base` | class-rest-base.php | 227 | Abstract base controller |
 | `STADION_REST_API` | class-rest-api.php | 1178 | Legacy endpoints (dashboard, search) |
 | `STADION_REST_People` | class-rest-people.php | 774 | People CRUD |
-| `STADION_REST_Companies` | class-rest-companies.php | 601 | Companies CRUD |
+| `STADION_REST_Teams` | class-rest-teams.php | 601 | Teams CRUD |
 | `STADION_REST_Todos` | class-rest-todos.php | 492 | Todos CRUD |
 | `STADION_REST_Workspaces` | class-rest-workspaces.php | 1238 | Workspaces CRUD |
 | `STADION_REST_Slack` | class-rest-slack.php | 714 | Slack integration |
@@ -193,7 +193,7 @@ includes/                        includes/
                                  │   ├── Base.php
                                  │   ├── Api.php           # Legacy endpoints
                                  │   ├── People.php
-                                 │   ├── Companies.php
+                                 │   ├── Teams.php
                                  │   ├── Todos.php
                                  │   ├── Workspaces.php
                                  │   ├── Slack.php
@@ -261,7 +261,7 @@ includes/                        includes/
 | `STADION_REST_Base` | `Stadion\REST\Base` | `rest/Base.php` |
 | `STADION_REST_API` | `Stadion\REST\Api` | `rest/Api.php` |
 | `STADION_REST_People` | `Stadion\REST\People` | `rest/People.php` |
-| `STADION_REST_Companies` | `Stadion\REST\Companies` | `rest/Companies.php` |
+| `STADION_REST_Teams` | `Stadion\REST\Teams` | `rest/Teams.php` |
 | `STADION_REST_Todos` | `Stadion\REST\Todos` | `rest/Todos.php` |
 | `STADION_REST_Workspaces` | `Stadion\REST\Workspaces` | `rest/Workspaces.php` |
 | `STADION_REST_Slack` | `Stadion\REST\Slack` | `rest/Slack.php` |

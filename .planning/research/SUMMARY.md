@@ -44,7 +44,7 @@ Stadion already has everything needed. The existing `google/apiclient ^2.15` inc
 - Per-contact sync toggle (privacy control for sensitive contacts)
 - Configurable conflict resolution strategies
 - Sync audit log for accountability
-- Work history auto-creation from Google organization data
+- Work history auto-creation from Google team data
 
 **Defer (v2+):**
 - Contact group/label sync (complex mapping, unclear requirements)

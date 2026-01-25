@@ -318,7 +318,7 @@ const formatDate = (date) => {
 // Not currently exposed via API - needs to be added
 [
   { email: "john@example.com", name: "John Doe", status: "accepted" },
-  { email: "unknown@company.com", name: "Unknown Person", status: "accepted" }
+  { email: "unknown@team.com", name: "Unknown Person", status: "accepted" }
 ]
 ```
 

@@ -56,7 +56,7 @@ completed: 2026-01-13
 ## Accomplishments
 
 - Created CptCrudTest with 24 comprehensive tests and 73 assertions
-- Verified CRUD operations (Create, Read, Update, Delete) for person, company, and important_date CPTs
+- Verified CRUD operations (Create, Read, Update, Delete) for person, team, and important_date CPTs
 - Confirmed ACF fields appear in REST responses under 'acf' key
 - Confirmed ACF fields can be updated via REST PATCH requests
 - Verified access control integration - non-owners get 403/404 for all operations
@@ -83,8 +83,8 @@ Both tasks were combined in a single commit as they share the same test file:
 - Delete as owner (trashes post)
 - Delete denied for non-owner
 
-### Company CRUD (6 tests)
-- Create via POST /wp/v2/companies
+### Team CRUD (6 tests)
+- Create via POST /wp/v2/teams
 - Read access control (owner vs non-owner)
 - Update access control
 - Delete as owner
@@ -99,7 +99,7 @@ Both tasks were combined in a single commit as they share the same test file:
 
 ### ACF Fields (4 tests)
 - Person ACF fields in REST response (first_name, last_name, nickname)
-- Company ACF fields in REST response (website, industry)
+- Team ACF fields in REST response (website, industry)
 - Important Date ACF fields in REST response (date_value, is_recurring)
 - ACF field updates via REST PATCH
 
@@ -137,7 +137,7 @@ None beyond the auto-fixed deviations above.
 
 - [x] `vendor/bin/codecept run Wpunit CptCrudTest` passes all tests
 - [x] Person CRUD tested (create/read/update/delete)
-- [x] Company CRUD tested
+- [x] Team CRUD tested
 - [x] Important Date CRUD tested
 - [x] ACF fields appear in REST responses
 - [x] Access control enforced for all operations

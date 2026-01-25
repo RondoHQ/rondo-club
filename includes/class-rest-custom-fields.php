@@ -76,7 +76,7 @@ class CustomFields extends WP_REST_Controller {
 		// Collection route: list and create.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<post_type>person|company)',
+			'/' . $this->rest_base . '/(?P<post_type>person|team)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -98,7 +98,7 @@ class CustomFields extends WP_REST_Controller {
 		// being matched by the field_key pattern.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<post_type>person|company)/metadata',
+			'/' . $this->rest_base . '/(?P<post_type>person|team)/metadata',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -111,7 +111,7 @@ class CustomFields extends WP_REST_Controller {
 		// Reorder fields route.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<post_type>person|company)/order',
+			'/' . $this->rest_base . '/(?P<post_type>person|team)/order',
 			array(
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
@@ -132,7 +132,7 @@ class CustomFields extends WP_REST_Controller {
 		// Single item route: get, update, delete.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<post_type>person|company)/(?P<field_key>[a-z0-9_-]+)',
+			'/' . $this->rest_base . '/(?P<post_type>person|team)/(?P<field_key>[a-z0-9_-]+)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,

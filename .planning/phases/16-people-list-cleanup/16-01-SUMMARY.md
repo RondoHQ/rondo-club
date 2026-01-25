@@ -12,7 +12,7 @@ provides:
   - List-only view for People (no card view toggle)
   - Dedicated image column before First Name
   - Proper First Name header alignment
-affects: [17-organizations-list-view]
+affects: [17-teams-list-view]
 
 # Tech tracking
 tech-stack:
@@ -91,7 +91,7 @@ None
 - Phase 16 complete (single plan phase)
 - ISS-006 resolved: Card view removed, list view is only option
 - ISS-007 resolved: Image in dedicated column, First Name alignment fixed
-- Ready for Phase 17: Organizations List View
+- Ready for Phase 17: Teams List View
 
 ---
 *Phase: 16-people-list-cleanup*

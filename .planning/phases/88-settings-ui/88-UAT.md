@@ -17,7 +17,7 @@ expected: Navigate to Settings. In the Admin tab, under Configuration, click "Cu
 result: pass
 
 ### 2. Tab Navigation
-expected: Page shows tabs for "People Fields" and "Organization Fields". Clicking each tab switches the field list. Switching tabs and refreshing the page preserves your last selection.
+expected: Page shows tabs for "People Fields" and "Team Fields". Clicking each tab switches the field list. Switching tabs and refreshing the page preserves your last selection.
 result: pass
 
 ### 3. Add Field Panel

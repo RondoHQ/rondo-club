@@ -45,8 +45,8 @@ Lazy load heavy third-party libraries (vis-network, TipTap) that are only used i
 | PeopleList | 32.35 KB | 7.03 KB |
 | PersonDetail | 130.49 KB | 38.02 KB |
 | FamilyTree | 9.01 KB | 3.72 KB |
-| CompaniesList | 23.41 KB | 5.73 KB |
-| CompanyDetail | 12.51 KB | 3.41 KB |
+| TeamsList | 23.41 KB | 5.73 KB |
+| TeamDetail | 12.51 KB | 3.41 KB |
 | DatesList | 3.83 KB | 1.48 KB |
 | TodosList | 6.66 KB | 2.23 KB |
 | Settings | 58.03 KB | 12.14 KB |

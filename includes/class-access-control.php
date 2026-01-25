@@ -16,7 +16,7 @@ class AccessControl {
 	/**
 	 * Post types that should have access control
 	 */
-	private $controlled_post_types = [ 'person', 'company', 'important_date', 'stadion_todo' ];
+	private $controlled_post_types = [ 'person', 'team', 'important_date', 'stadion_todo' ];
 
 	/**
 	 * Check if we're on the frontend (not admin area)

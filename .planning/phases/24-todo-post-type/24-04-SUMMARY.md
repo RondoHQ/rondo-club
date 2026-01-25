@@ -35,7 +35,7 @@ Update PHPUnit tests to cover the new todo CPT system, verify dashboard integrat
 
 1. **Keep existing tests in SearchDashboardTest.php** - Rather than removing the todo tests from SearchDashboardTest.php, we updated them to work with the new CPT system. This maintains test coverage for the `/stadion/v1/todos` endpoint from multiple test classes.
 
-2. **Create dedicated TodoCptTest.php** - Added comprehensive tests specifically for the todo CPT in a new test class for clearer organization.
+2. **Create dedicated TodoCptTest.php** - Added comprehensive tests specifically for the todo CPT in a new test class for clearer team.
 
 ## Files Changed
 

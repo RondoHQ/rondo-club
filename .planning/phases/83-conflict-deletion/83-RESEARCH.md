@@ -64,7 +64,7 @@ $snapshot = [
     'email'        => $this->get_primary_email_value($post_id),
     'phone'        => $this->get_primary_phone_value($post_id),
     'address'      => $this->get_primary_address_value($post_id),
-    'organization' => $this->get_current_organization($post_id),
+    'team' => $this->get_current_team($post_id),
     'birthday'     => $this->get_birthday_value($post_id),
     'synced_at'    => current_time('c'),
 ];

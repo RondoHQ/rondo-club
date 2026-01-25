@@ -7,7 +7,7 @@ files: []
 
 ## Problem
 
-Currently there's no way for users to create, edit, or delete labels (taxonomies) in the Stadion frontend. Labels for people (`person_label`) and organizations (`company_label`) can only be managed through the WordPress admin.
+Currently there's no way for users to create, edit, or delete labels (taxonomies) in the Stadion frontend. Labels for people (`person_label`) and teams (`team_label`) can only be managed through the WordPress admin.
 
 This creates friction for users who want to organize their contacts with custom labels.
 

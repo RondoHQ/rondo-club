@@ -95,7 +95,7 @@ class UserRoles {
 	 * Get capabilities for Stadion User role
 	 *
 	 * Minimal permissions needed to:
-	 * - Create, edit, and delete their own people and companies
+	 * - Create, edit, and delete their own people and teams
 	 * - Upload files (for photos and logos)
 	 * - Read content (required for WordPress)
 	 */
@@ -423,7 +423,7 @@ Stadion Team',
 	 * This is called by WordPress before the user is actually deleted
 	 */
 	public function delete_user_posts( $user_id ) {
-		$post_types = [ 'person', 'company', 'important_date' ];
+		$post_types = [ 'person', 'team', 'important_date' ];
 
 		foreach ( $post_types as $post_type ) {
 			$posts = get_posts(

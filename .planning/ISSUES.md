@@ -8,11 +8,11 @@ None
 
 ## Closed Enhancements
 
-### ISS-008: Organizations should use list interface like People
+### ISS-008: Teams should use list interface like People
 
 - **Discovered:** Post v2.2 completion (2026-01-13)
 - **Closed:** Phase 17 (2026-01-13)
-- **Resolution:** Transformed Organizations from card grid to tabular list view with OrganizationListRow and OrganizationListView components. Added columns (checkbox, logo, name, industry, website, workspace, labels), SortableHeader for column sorting, selection state with select all/none, header sort controls (dropdown + direction toggle), and sticky selection toolbar.
+- **Resolution:** Transformed Teams from card grid to tabular list view with TeamListRow and TeamListView components. Added columns (checkbox, logo, name, industry, website, workspace, labels), SortableHeader for column sorting, selection state with select all/none, header sort controls (dropdown + direction toggle), and sticky selection toolbar.
 
 ### ISS-007: Move person image to its own column without header label
 
@@ -26,17 +26,17 @@ None
 - **Closed:** Phase 16 (2026-01-13)
 - **Resolution:** Deleted PersonCard component (~53 lines), removed viewMode state and localStorage persistence, removed view toggle UI. List view is now the only view.
 
-### ISS-003: Extend bulk edit to support Organizations and Labels
+### ISS-003: Extend bulk edit to support Teams and Labels
 
 - **Discovered:** Post Phase 13 completion (2026-01-13)
 - **Closed:** Phase 15 (2026-01-13)
-- **Resolution:** Extended bulk-update endpoint with organization_id, labels_add, labels_remove parameters. Created BulkOrganizationModal with search/filter and clear option. Created BulkLabelsModal with add/remove mode toggle for multi-select label management.
+- **Resolution:** Extended bulk-update endpoint with team_id, labels_add, labels_remove parameters. Created BulkTeamModal with search/filter and clear option. Created BulkLabelsModal with add/remove mode toggle for multi-select label management.
 
-### ISS-001: Add sorting by Organization and Workspace in list view
+### ISS-001: Add sorting by Team and Workspace in list view
 
 - **Discovered:** Phase 13 Task 3 checkpoint (2026-01-13)
 - **Closed:** Phase 14-01 (2026-01-13)
-- **Resolution:** Added Organization, Workspace, and Labels sorting options to dropdown. Empty values sort last.
+- **Resolution:** Added Team, Workspace, and Labels sorting options to dropdown. Empty values sort last.
 
 ### ISS-002: Add Label column to list view with sorting
 

@@ -19,7 +19,7 @@ tech-stack:
   added: []
   patterns:
     - WP_REST_Controller extension for custom endpoints
-    - Route pattern with post_type enum validation (person|company)
+    - Route pattern with post_type enum validation (person|team)
     - Soft delete via DELETE endpoint calling deactivate_field()
 
 key-files:

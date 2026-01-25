@@ -28,7 +28,7 @@ class Manager {
 	/**
 	 * Supported post types for custom fields.
 	 */
-	const SUPPORTED_POST_TYPES = array( 'person', 'company' );
+	const SUPPORTED_POST_TYPES = array( 'person', 'team' );
 
 	/**
 	 * Properties that can be updated on existing fields.

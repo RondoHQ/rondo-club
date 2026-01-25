@@ -5,7 +5,7 @@ status: passed
 score: 5/5 must-haves verified
 human_verification:
   - test: "Search for text in a custom Text field"
-    expected: "Person/Organization with that text in custom field appears in search results"
+    expected: "Person/Team with that text in custom field appears in search results"
     why_human: "Requires actual data with custom field values to test"
   - test: "Search for email address stored in Email custom field"
     expected: "Record with matching email in custom field appears in search results"
@@ -14,7 +14,7 @@ human_verification:
     expected: "Record with matching URL in custom field appears in search results"
     why_human: "Requires actual data with custom field values to test"
   - test: "Verify custom field matches appear after name matches"
-    expected: "Name matches (first, last for Person; name for Company) appear above custom field matches"
+    expected: "Name matches (first, last for Person; name for Team) appear above custom field matches"
     why_human: "Requires visual inspection of search result ordering"
 ---
 
@@ -33,8 +33,8 @@ human_verification:
 |---|-------|--------|----------|
 | 1 | Searching for text that exists in a Text custom field returns matching People | VERIFIED | `global_search()` calls `get_searchable_custom_fields('person')` (line 1181), which includes 'text' in searchable types (line 1764) |
 | 2 | Searching for text that exists in an Email custom field returns matching People | VERIFIED | `get_searchable_custom_fields()` includes 'email' in searchable types (line 1766), meta query built with LIKE comparison (line 1803) |
-| 3 | Searching for text that exists in a URL custom field returns matching Organizations | VERIFIED | `global_search()` calls `get_searchable_custom_fields('company')` (line 1264), which includes 'url' in searchable types (line 1767) |
-| 4 | Custom field matches score lower than name matches in search results | VERIFIED | Custom field score = 30 (lines 1198, 1281); Name scores = 60-100 for Person (lines 1123-1127), 60 for Company (line 1240) |
+| 3 | Searching for text that exists in a URL custom field returns matching Teams | VERIFIED | `global_search()` calls `get_searchable_custom_fields('team')` (line 1264), which includes 'url' in searchable types (line 1767) |
+| 4 | Custom field matches score lower than name matches in search results | VERIFIED | Custom field score = 30 (lines 1198, 1281); Name scores = 60-100 for Person (lines 1123-1127), 60 for Team (line 1240) |
 | 5 | Only active custom fields are searched | VERIFIED | `get_fields($post_type, false)` called with `include_inactive = false` (line 1760), Manager filters inactive fields (lines 401-410) |
 
 **Score:** 5/5 truths verified
@@ -56,9 +56,9 @@ human_verification:
   - No stub patterns (TODO/FIXME/placeholder) in search-related code
   - Full PHPDoc documentation present
 - **Level 3 (Wired):** WIRED
-  - `get_searchable_custom_fields()` called from `global_search()` for 'person' (line 1181) and 'company' (line 1264)
+  - `get_searchable_custom_fields()` called from `global_search()` for 'person' (line 1181) and 'team' (line 1264)
   - `build_custom_field_meta_query()` called when custom fields exist (lines 1183, 1266)
-  - Results integrated into people_results and company_results arrays with score 30
+  - Results integrated into people_results and team_results arrays with score 30
 
 ### Key Link Verification
 
@@ -75,7 +75,7 @@ The `get_searchable_custom_fields()` method properly:
 4. Returns field names (meta keys) for use in meta queries
 
 The Manager's `get_fields()` method:
-1. Validates post type against supported types ('person', 'company')
+1. Validates post type against supported types ('person', 'team')
 2. Retrieves field group from database
 3. Gets all fields via `acf_get_fields()`
 4. Filters out inactive fields when `include_inactive = false`
@@ -113,14 +113,14 @@ The following items require manual testing with actual data:
 
 ### 2. Email Custom Field Search
 
-**Test:** Create a custom Email field for People (e.g., "Work Email"). Add a value (e.g., "john@company.com") to a person record. Search for "company.com" in the global search.
+**Test:** Create a custom Email field for People (e.g., "Work Email"). Add a value (e.g., "john@team.com") to a person record. Search for "team.com" in the global search.
 **Expected:** The person record appears in search results.
 **Why human:** Requires actual data with custom field values to verify end-to-end functionality.
 
 ### 3. URL Custom Field Search
 
-**Test:** Create a custom URL field for Organizations (e.g., "LinkedIn Page"). Add a value (e.g., "linkedin.com/company/acme") to an organization record. Search for "acme" in the global search.
-**Expected:** The organization record appears in search results.
+**Test:** Create a custom URL field for Teams (e.g., "LinkedIn Page"). Add a value (e.g., "linkedin.com/team/acme") to an team record. Search for "acme" in the global search.
+**Expected:** The team record appears in search results.
 **Why human:** Requires actual data with custom field values to verify end-to-end functionality.
 
 ### 4. Search Result Ordering
@@ -139,14 +139,14 @@ The implementation correctly:
 
 2. **Integrates into global_search()** with proper scoring:
    - Query 4 for People (line 1180): Custom field matches with score 30
-   - Query 3 for Companies (line 1263): Custom field matches with score 30
+   - Query 3 for Teams (line 1263): Custom field matches with score 30
 
 3. **Respects field activity status**:
    - Calls `get_fields($post_type, false)` to exclude inactive fields
 
 4. **Maintains search priority**:
    - Name matches: 60-100 (first name exact = 100, starts with = 80, contains = 60)
-   - Company name: 60
+   - Team name: 60
    - Last name: 40
    - Custom fields: 30
    - General WordPress search: 20

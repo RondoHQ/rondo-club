@@ -17,7 +17,7 @@ class Monica {
 	 * Monica ID to WordPress ID mapping
 	 */
 	private array $contact_map         = [];
-	private array $company_map         = [];
+	private array $team_map         = [];
 	private array $photo_map           = [];
 	private array $relationship_types  = [];
 	private array $contact_field_types = [];
@@ -36,7 +36,7 @@ class Monica {
 		'contacts_imported'     => 0,
 		'contacts_updated'      => 0,
 		'contacts_skipped'      => 0,
-		'companies_created'     => 0,
+		'teams_created'     => 0,
 		'relationships_created' => 0,
 		'dates_created'         => 0,
 		'notes_created'         => 0,
@@ -132,12 +132,12 @@ class Monica {
 
 		// Count non-partial contacts
 		$contact_count = 0;
-		$companies     = [];
+		$teams     = [];
 		foreach ( $contacts as $contact ) {
 			if ( empty( $contact['is_partial'] ) || $contact['is_partial'] == '0' ) {
 				++$contact_count;
-				if ( ! empty( $contact['company'] ) ) {
-					$companies[ $contact['company'] ] = true;
+				if ( ! empty( $contact['team'] ) ) {
+					$teams[ $contact['team'] ] = true;
 				}
 			}
 		}
@@ -149,7 +149,7 @@ class Monica {
 			'reminders'       => count( $special_dates ),
 			'life_events'     => count( $life_events ),
 			'photos'          => count( $photos ),
-			'companies_count' => count( $companies ),
+			'teams_count' => count( $teams ),
 		];
 	}
 
@@ -475,19 +475,19 @@ class Monica {
 		}
 
 		// Handle company/work history
-		if ( ! empty( $contact['company'] ) || ! empty( $contact['job'] ) ) {
-			$company_name = $contact['company'] ?? '';
+		if ( ! empty( $contact['team'] ) || ! empty( $contact['job'] ) ) {
+			$team_name = $contact['team'] ?? '';
 			$job_title    = $contact['job'] ?? '';
 
-			$company_id = null;
-			if ( ! empty( $company_name ) ) {
-				$company_id = $this->get_or_create_company( $company_name );
+			$team_id = null;
+			if ( ! empty( $team_name ) ) {
+				$team_id = $this->get_or_create_company( $team_name );
 			}
 
-			if ( $company_id || $job_title ) {
+			if ( $team_id || $job_title ) {
 				$work_history = [
 					[
-						'company'    => $company_id,
+						'team'    => $team_id,
 						'job_title'  => $job_title,
 						'is_current' => true,
 					],
@@ -1209,24 +1209,24 @@ class Monica {
 	}
 
 	/**
-	 * Get or create a company
+	 * Get or create a team
 	 */
 	private function get_or_create_company( string $name ): int {
-		if ( isset( $this->company_map[ $name ] ) ) {
-			return $this->company_map[ $name ];
+		if ( isset( $this->team_map[ $name ] ) ) {
+			return $this->team_map[ $name ];
 		}
 
-		// Check if company exists
-		$existing = get_page_by_title( $name, OBJECT, 'company' );
+		// Check if team exists
+		$existing = get_page_by_title( $name, OBJECT, 'team' );
 		if ( $existing ) {
-			$this->company_map[ $name ] = $existing->ID;
+			$this->team_map[ $name ] = $existing->ID;
 			return $existing->ID;
 		}
 
 		// Create new company
 		$post_id = wp_insert_post(
 			[
-				'post_type'   => 'company',
+				'post_type'   => 'team',
 				'post_status' => 'publish',
 				'post_title'  => $name,
 				'post_author' => get_current_user_id(),
@@ -1234,8 +1234,8 @@ class Monica {
 		);
 
 		if ( ! is_wp_error( $post_id ) ) {
-			$this->company_map[ $name ] = $post_id;
-			++$this->stats['companies_created'];
+			$this->team_map[ $name ] = $post_id;
+			++$this->stats['teams_created'];
 			return $post_id;
 		}
 

@@ -9,8 +9,8 @@ requires: []
 provides:
   - Abstract STADION_REST_Base class with shared permission and formatting methods
   - Inheritance structure for domain-specific REST classes
-  - 8 shared methods: check_user_approved, check_admin_permission, check_person_access, check_person_edit_permission, check_company_edit_permission, format_person_summary, format_company_summary, format_date
-affects: [02-rest-api-people-companies, 03-rest-api-integrations]
+  - 8 shared methods: check_user_approved, check_admin_permission, check_person_access, check_person_edit_permission, check_team_edit_permission, format_person_summary, format_team_summary, format_date
+affects: [02-rest-api-people-teams, 03-rest-api-integrations]
 
 # Tech tracking
 tech-stack:
@@ -83,7 +83,7 @@ None - plan executed exactly as written.
 None.
 
 ## Next Phase Readiness
-- Base class infrastructure complete for Phase 2 (People & Companies extraction)
+- Base class infrastructure complete for Phase 2 (People & Teams extraction)
 - STADION_REST_API already extends STADION_REST_Base, ready for further method extraction
 - Inheritance pattern established for domain-specific REST classes
 

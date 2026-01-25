@@ -96,7 +96,7 @@ class Taxonomies {
 	 */
 	public function register_taxonomies() {
 		$this->register_person_label_taxonomy();
-		$this->register_company_label_taxonomy();
+		$this->register_team_label_taxonomy();
 		$this->register_relationship_type_taxonomy();
 		$this->register_date_type_taxonomy();
 		$this->register_workspace_access_taxonomy();
@@ -104,7 +104,7 @@ class Taxonomies {
 
 	/**
 	 * Register Workspace Access Taxonomy
-	 * Used to link people, companies, and important dates to workspaces.
+	 * Used to link people, teams, and important dates to workspaces.
 	 * Terms are auto-created when workspaces are created (Phase 8).
 	 */
 	private function register_workspace_access_taxonomy() {
@@ -130,7 +130,7 @@ class Taxonomies {
 			'rewrite'           => false, // No frontend permalinks needed
 		];
 
-		register_taxonomy( 'workspace_access', [ 'person', 'company', 'important_date' ], $args );
+		register_taxonomy( 'workspace_access', [ 'person', 'team', 'important_date' ], $args );
 	}
 
 	/**
@@ -163,18 +163,18 @@ class Taxonomies {
 	}
 
 	/**
-	 * Register Company Label Taxonomy
+	 * Register Team Label Taxonomy
 	 */
-	private function register_company_label_taxonomy() {
+	private function register_team_label_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Company Labels', 'taxonomy general name', 'stadion' ),
-			'singular_name' => _x( 'Company Label', 'taxonomy singular name', 'stadion' ),
-			'search_items'  => __( 'Search Company Labels', 'stadion' ),
-			'all_items'     => __( 'All Company Labels', 'stadion' ),
-			'edit_item'     => __( 'Edit Company Label', 'stadion' ),
-			'update_item'   => __( 'Update Company Label', 'stadion' ),
-			'add_new_item'  => __( 'Add New Company Label', 'stadion' ),
-			'new_item_name' => __( 'New Company Label Name', 'stadion' ),
+			'name'          => _x( 'Team Labels', 'taxonomy general name', 'stadion' ),
+			'singular_name' => _x( 'Team Label', 'taxonomy singular name', 'stadion' ),
+			'search_items'  => __( 'Search Team Labels', 'stadion' ),
+			'all_items'     => __( 'All Team Labels', 'stadion' ),
+			'edit_item'     => __( 'Edit Team Label', 'stadion' ),
+			'update_item'   => __( 'Update Team Label', 'stadion' ),
+			'add_new_item'  => __( 'Add New Team Label', 'stadion' ),
+			'new_item_name' => __( 'New Team Label Name', 'stadion' ),
 			'menu_name'     => __( 'Labels', 'stadion' ),
 		];
 
@@ -185,10 +185,10 @@ class Taxonomies {
 			'show_admin_column' => true,
 			'show_in_rest'      => true,
 			'query_var'         => true,
-			'rewrite'           => [ 'slug' => 'company-label' ],
+			'rewrite'           => [ 'slug' => 'team-label' ],
 		];
 
-		register_taxonomy( 'company_label', [ 'company' ], $args );
+		register_taxonomy( 'team_label', [ 'team' ], $args );
 	}
 
 	/**

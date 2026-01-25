@@ -47,12 +47,12 @@ export const wpApi = {
   updatePerson: (id, data) => api.put(`/wp/v2/people/${id}`, data),
   deletePerson: (id, params = {}) => api.delete(`/wp/v2/people/${id}`, { params }),
   
-  // Companies
-  getCompanies: (params) => api.get('/wp/v2/companies', { params }),
-  getCompany: (id, params = {}) => api.get(`/wp/v2/companies/${id}`, { params }),
-  createCompany: (data) => api.post('/wp/v2/companies', data),
-  updateCompany: (id, data) => api.put(`/wp/v2/companies/${id}`, data),
-  deleteCompany: (id, params = {}) => api.delete(`/wp/v2/companies/${id}`, { params }),
+  // Teams
+  getTeams: (params) => api.get('/wp/v2/teams', { params }),
+  getTeam: (id, params = {}) => api.get(`/wp/v2/teams/${id}`, { params }),
+  createTeam: (data) => api.post('/wp/v2/teams', data),
+  updateTeam: (id, data) => api.put(`/wp/v2/teams/${id}`, data),
+  deleteTeam: (id, params = {}) => api.delete(`/wp/v2/teams/${id}`, { params }),
   
   // Important Dates
   getDates: (params) => api.get('/wp/v2/important-dates', { params }),
@@ -67,10 +67,10 @@ export const wpApi = {
   updatePersonLabel: (id, data) => api.post(`/wp/v2/person_label/${id}`, data),
   deletePersonLabel: (id) => api.delete(`/wp/v2/person_label/${id}?force=true`),
 
-  getCompanyLabels: () => api.get('/wp/v2/company_label', { params: { per_page: 100, _fields: 'id,name,slug,count' } }),
-  createCompanyLabel: (data) => api.post('/wp/v2/company_label', data),
-  updateCompanyLabel: (id, data) => api.post(`/wp/v2/company_label/${id}`, data),
-  deleteCompanyLabel: (id) => api.delete(`/wp/v2/company_label/${id}?force=true`),
+  getTeamLabels: () => api.get('/wp/v2/team_label', { params: { per_page: 100, _fields: 'id,name,slug,count' } }),
+  createTeamLabel: (data) => api.post('/wp/v2/team_label', data),
+  updateTeamLabel: (id, data) => api.post(`/wp/v2/team_label/${id}`, data),
+  deleteTeamLabel: (id) => api.delete(`/wp/v2/team_label/${id}?force=true`),
 
   getRelationshipTypes: () => api.get('/wp/v2/relationship_type', { params: { per_page: 100, _fields: 'id,name,slug,acf' } }),
   createRelationshipType: (data) => api.post('/wp/v2/relationship_type', data),
@@ -103,7 +103,7 @@ export const prmApi = {
 
   // Bulk operations
   bulkUpdatePeople: (ids, updates) => api.post('/stadion/v1/people/bulk-update', { ids, updates }),
-  bulkUpdateCompanies: (ids, updates) => api.post('/stadion/v1/companies/bulk-update', { ids, updates }),
+  bulkUpdateTeams: (ids, updates) => api.post('/stadion/v1/teams/bulk-update', { ids, updates }),
   
   // Current user
   getCurrentUser: () => api.get('/stadion/v1/user/me'),
@@ -159,7 +159,7 @@ export const prmApi = {
   getAllTodos: (status = 'open') =>
     api.get('/stadion/v1/todos', { params: { status } }),
   
-  // Investments (companies where entity is an investor)
+  // Investments (teams where entity is an investor)
   getInvestments: (investorId) => api.get(`/stadion/v1/investments/${investorId}`),
   getPersonTodos: (personId) => api.get(`/stadion/v1/people/${personId}/todos`),
   createTodo: (personId, data) => 
@@ -168,9 +168,9 @@ export const prmApi = {
     api.put(`/stadion/v1/todos/${todoId}`, data),
   deleteTodo: (todoId) => api.delete(`/stadion/v1/todos/${todoId}`),
   
-  // Company-specific
-  getCompanyPeople: (companyId) => api.get(`/stadion/v1/companies/${companyId}/people`),
-  setCompanyLogo: (companyId, mediaId) => api.post(`/stadion/v1/companies/${companyId}/logo`, { media_id: mediaId }),
+  // Team-specific
+  getTeamPeople: (teamId) => api.get(`/stadion/v1/teams/${teamId}/people`),
+  setTeamLogo: (teamId, mediaId) => api.post(`/stadion/v1/teams/${teamId}/logo`, { media_id: mediaId }),
   
   // Photo uploads with proper naming
   uploadPersonPhoto: (personId, file) => {
@@ -180,10 +180,10 @@ export const prmApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  uploadCompanyLogo: (companyId, file) => {
+  uploadTeamLogo: (teamId, file) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post(`/stadion/v1/companies/${companyId}/logo/upload`, formData, {
+    return api.post(`/stadion/v1/teams/${teamId}/logo/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

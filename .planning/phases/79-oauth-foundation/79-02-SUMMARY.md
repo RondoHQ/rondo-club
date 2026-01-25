@@ -19,7 +19,7 @@ affects: [80-initial-import, 81-ongoing-sync, frontend-contacts-sync]
 tech-stack:
   added: []
   patterns:
-    - "Subtab-based connection organization in Settings (Calendars, CardDAV, Slack, Contacts)"
+    - "Subtab-based connection team in Settings (Calendars, CardDAV, Slack, Contacts)"
     - "OAuth callback param handling with URL cleanup"
     - "Connection status polling with useEffect"
 

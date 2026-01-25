@@ -33,16 +33,16 @@ class GoogleContactsAPI {
 		'contacts_skipped'  => 0,
 		'contacts_no_email' => 0,
 		'contacts_unlinked' => 0,
-		'companies_created' => 0,
+		'teams_created' => 0,
 		'dates_created'     => 0,
 		'photos_imported'   => 0,
 		'errors'            => [],
 	];
 
 	/**
-	 * Company name to ID mapping cache
+	 * Team name to ID mapping cache
 	 */
-	private array $company_map = [];
+	private array $team_map = [];
 
 	/**
 	 * Google People Service instance
@@ -670,11 +670,11 @@ class GoogleContactsAPI {
 		$added    = false;
 
 		// Build set of existing company IDs
-		$existing_company_ids = [];
+		$existing_team_ids = [];
 		foreach ( $existing as $job ) {
-			if ( ! empty( $job['company'] ) ) {
-				$company_id                          = is_object( $job['company'] ) ? $job['company']->ID : (int) $job['company'];
-				$existing_company_ids[ $company_id ] = true;
+			if ( ! empty( $job['team'] ) ) {
+				$team_id                          = is_object( $job['team'] ) ? $job['team']->ID : (int) $job['team'];
+				$existing_team_ids[ $team_id ] = true;
 			}
 		}
 
@@ -685,8 +685,8 @@ class GoogleContactsAPI {
 				continue;
 			}
 
-			$company_id = $this->get_or_create_company( $org_name );
-			if ( ! $company_id || isset( $existing_company_ids[ $company_id ] ) ) {
+			$team_id = $this->get_or_create_company( $org_name );
+			if ( ! $team_id || isset( $existing_team_ids[ $team_id ] ) ) {
 				continue;
 			}
 
@@ -715,14 +715,14 @@ class GoogleContactsAPI {
 			}
 
 			$existing[] = [
-				'company'    => $company_id,
+				'team'    => $team_id,
 				'job_title'  => $org->getTitle() ?? '',
 				'is_current' => (bool) $org->getCurrent(),
 				'start_date' => $start_date,
 				'end_date'   => $end_date,
 			];
 
-			$existing_company_ids[ $company_id ] = true;
+			$existing_team_ids[ $team_id ] = true;
 			$added                               = true;
 		}
 
@@ -912,27 +912,27 @@ class GoogleContactsAPI {
 	}
 
 	/**
-	 * Get or create a company by name
+	 * Get or create a team by name
 	 *
-	 * @param string $name Company name.
-	 * @return int Company post ID.
+	 * @param string $name Team name.
+	 * @return int Team post ID.
 	 */
 	private function get_or_create_company( string $name ): int {
-		if ( isset( $this->company_map[ $name ] ) ) {
-			return $this->company_map[ $name ];
+		if ( isset( $this->team_map[ $name ] ) ) {
+			return $this->team_map[ $name ];
 		}
 
-		// Check if company exists
-		$existing = get_page_by_title( $name, OBJECT, 'company' );
+		// Check if team exists
+		$existing = get_page_by_title( $name, OBJECT, 'team' );
 		if ( $existing ) {
-			$this->company_map[ $name ] = $existing->ID;
+			$this->team_map[ $name ] = $existing->ID;
 			return $existing->ID;
 		}
 
 		// Create new company
 		$post_id = wp_insert_post(
 			[
-				'post_type'   => 'company',
+				'post_type'   => 'team',
 				'post_status' => 'publish',
 				'post_title'  => $name,
 				'post_author' => $this->user_id,
@@ -940,8 +940,8 @@ class GoogleContactsAPI {
 		);
 
 		if ( ! is_wp_error( $post_id ) ) {
-			$this->company_map[ $name ] = $post_id;
-			++$this->stats['companies_created'];
+			$this->team_map[ $name ] = $post_id;
+			++$this->stats['teams_created'];
 			return $post_id;
 		}
 
@@ -1000,16 +1000,16 @@ class GoogleContactsAPI {
 		// Get organization from work_history (first entry with is_current=true or first entry).
 		$work_history = get_field( 'work_history', $post_id ) ?: [];
 		foreach ( $work_history as $job ) {
-			if ( ! empty( $job['is_current'] ) && ! empty( $job['company'] ) ) {
-				$company_id             = is_object( $job['company'] ) ? $job['company']->ID : (int) $job['company'];
-				$snapshot['organization'] = get_the_title( $company_id );
+			if ( ! empty( $job['is_current'] ) && ! empty( $job['team'] ) ) {
+				$team_id             = is_object( $job['team'] ) ? $job['team']->ID : (int) $job['team'];
+				$snapshot['organization'] = get_the_title( $team_id );
 				break;
 			}
 		}
 		// Fallback to first entry if no current job found.
-		if ( empty( $snapshot['organization'] ) && ! empty( $work_history[0]['company'] ) ) {
-			$company_id             = is_object( $work_history[0]['company'] ) ? $work_history[0]['company']->ID : (int) $work_history[0]['company'];
-			$snapshot['organization'] = get_the_title( $company_id );
+		if ( empty( $snapshot['organization'] ) && ! empty( $work_history[0]['team'] ) ) {
+			$team_id             = is_object( $work_history[0]['team'] ) ? $work_history[0]['team']->ID : (int) $work_history[0]['team'];
+			$snapshot['organization'] = get_the_title( $team_id );
 		}
 
 		return $snapshot;

@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, ChevronDown, Lock, Users, Tag, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
-import { useCreateCompany, useBulkUpdateCompanies } from '@/hooks/useCompanies';
+import { useCreateTeam, useBulkUpdateTeams } from '@/hooks/useTeams';
 import { wpApi, prmApi } from '@/api/client';
-import { getCompanyName } from '@/utils/formatters';
-import CompanyEditModal from '@/components/CompanyEditModal';
+import { getTeamName } from '@/utils/formatters';
+import TeamEditModal from '@/components/TeamEditModal';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
 
@@ -330,7 +330,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
   );
 }
 
-function OrganizationListRow({ company, workspaces, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit }) {
+function OrganizationListRow({ team, workspaces, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit }) {
   // Local state for edited field values (includes name, website, workspace, and custom fields)
   const [editedFields, setEditedFields] = useState({});
 
@@ -338,27 +338,27 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
   useEffect(() => {
     if (isEditing) {
       // Initialize with current values for core fields and custom fields
-      const assignedWorkspaces = company.acf?._assigned_workspaces || [];
+      const assignedWorkspaces = team.acf?._assigned_workspaces || [];
       const initialValues = {
-        _name: company.title?.rendered || company.title || '',
-        _website: company.acf?.website || '',
+        _name: team.title?.rendered || team.title || '',
+        _website: team.acf?.website || '',
         _workspace: assignedWorkspaces.length > 0 ? String(assignedWorkspaces[0]) : '',
       };
       listViewFields.forEach(field => {
-        initialValues[field.name] = company.acf?.[field.name] ?? '';
+        initialValues[field.name] = team.acf?.[field.name] ?? '';
       });
       setEditedFields(initialValues);
     } else {
       setEditedFields({});
     }
-  }, [isEditing, company.acf, company.title, listViewFields]);
+  }, [isEditing, team.acf, team.title, listViewFields]);
 
   const handleFieldChange = (fieldName, value) => {
     setEditedFields(prev => ({ ...prev, [fieldName]: value }));
   };
 
   const handleSave = () => {
-    onSaveRow(company.id, editedFields, company.acf);
+    onSaveRow(team.id, editedFields, team.acf);
   };
 
   const handleKeyDown = (e) => {
@@ -372,7 +372,7 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
     }
   };
 
-  const assignedWorkspaces = company.acf?._assigned_workspaces || [];
+  const assignedWorkspaces = team.acf?._assigned_workspaces || [];
   const workspaceNames = assignedWorkspaces
     .map(wsId => {
       const numId = typeof wsId === 'string' ? parseInt(wsId, 10) : wsId;
@@ -389,7 +389,7 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
     >
       <td className="pl-4 pr-2 py-3 w-10">
         <button
-          onClick={(e) => { e.preventDefault(); onToggleSelection(company.id); }}
+          onClick={(e) => { e.preventDefault(); onToggleSelection(team.id); }}
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
           {isSelected ? (
@@ -400,10 +400,10 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
         </button>
       </td>
       <td className="w-10 px-2 py-3">
-        <Link to={`/companies/${company.id}`} className="flex items-center justify-center">
-          {company._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
+        <Link to={`/teams/${team.id}`} className="flex items-center justify-center">
+          {team._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
             <img
-              src={company._embedded['wp:featuredmedia'][0].source_url}
+              src={team._embedded['wp:featuredmedia'][0].source_url}
               alt=""
               className="w-8 h-8 rounded-lg"
             />
@@ -414,7 +414,7 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
           )}
         </Link>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap" onDoubleClick={() => !isEditing && onStartEdit(company.id)}>
+      <td className="px-4 py-3 whitespace-nowrap" onDoubleClick={() => !isEditing && onStartEdit(team.id)}>
         {isEditing ? (
           <input
             type="text"
@@ -427,7 +427,7 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
           />
         ) : (
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50 cursor-pointer">
-            {getCompanyName(company)}
+            {getTeamName(team)}
           </span>
         )}
       </td>
@@ -442,18 +442,18 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
             placeholder="https://..."
             disabled={isUpdating}
           />
-        ) : company.acf?.website ? (
+        ) : team.acf?.website ? (
           <a
-            href={company.acf.website.startsWith('http') ? company.acf.website : `https://${company.acf.website}`}
+            href={team.acf.website.startsWith('http') ? team.acf.website : `https://${team.acf.website}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-accent-600 dark:text-accent-400 hover:underline truncate block"
           >
-            {company.acf.website}
+            {team.acf.website}
           </a>
         ) : '-'}
       </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(company.id)}>
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(team.id)}>
         {isEditing ? (
           <select
             value={editedFields._workspace ?? ''}
@@ -472,7 +472,7 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
         )}
       </td>
       {listViewFields.map(field => (
-        <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(company.id)}>
+        <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(team.id)}>
           {isEditing ? (
             <InlineFieldInput
               field={field}
@@ -483,7 +483,7 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
             />
           ) : (
             <span className="cursor-pointer">
-              <CustomFieldColumn field={field} value={company.acf?.[field.name]} />
+              <CustomFieldColumn field={field} value={team.acf?.[field.name]} />
             </span>
           )}
         </td>
@@ -515,7 +515,7 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
           </div>
         ) : (
           <button
-            onClick={() => onStartEdit(company.id)}
+            onClick={() => onStartEdit(team.id)}
             className="p-1.5 text-gray-400 hover:text-accent-600 hover:bg-accent-50 dark:hover:text-accent-400 dark:hover:bg-accent-900/20 rounded opacity-0 group-hover:opacity-100 transition-opacity"
             title="Edit row"
           >
@@ -550,7 +550,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
   );
 }
 
-function OrganizationListView({ companies, workspaces, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort, onSaveRow, isUpdating, editingRowId, onStartEdit, onCancelEdit }) {
+function OrganizationListView({ teams, workspaces, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort, onSaveRow, isUpdating, editingRowId, onStartEdit, onCancelEdit }) {
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -590,18 +590,18 @@ function OrganizationListView({ companies, workspaces, listViewFields, selectedI
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-          {companies.map((company, index) => (
+          {teams.map((team, index) => (
             <OrganizationListRow
-              key={company.id}
-              company={company}
+              key={team.id}
+              team={team}
               workspaces={workspaces}
               listViewFields={listViewFields}
-              isSelected={selectedIds.has(company.id)}
+              isSelected={selectedIds.has(team.id)}
               onToggleSelection={onToggleSelection}
               isOdd={index % 2 === 1}
               onSaveRow={onSaveRow}
-              isUpdating={isUpdating && editingRowId === company.id}
-              isEditing={editingRowId === company.id}
+              isUpdating={isUpdating && editingRowId === team.id}
+              isEditing={editingRowId === team.id}
               onStartEdit={onStartEdit}
               onCancelEdit={onCancelEdit}
             />
@@ -612,13 +612,13 @@ function OrganizationListView({ companies, workspaces, listViewFields, selectedI
   );
 }
 
-export default function CompaniesList() {
+export default function TeamsList() {
   const [search, setSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all', 'mine', 'shared'
   const [selectedWorkspaceFilter, setSelectedWorkspaceFilter] = useState('');
-  const [showCompanyModal, setShowCompanyModal] = useState(false);
-  const [isCreatingCompany, setIsCreatingCompany] = useState(false);
+  const [showTeamModal, setShowTeamModal] = useState(false);
+  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -633,7 +633,7 @@ export default function CompaniesList() {
   const navigate = useNavigate();
 
   const { data: workspaces = [] } = useWorkspaces();
-  const bulkUpdateMutation = useBulkUpdateCompanies();
+  const bulkUpdateMutation = useBulkUpdateTeams();
   const queryClient = useQueryClient();
 
   // Mutation for updating row custom fields
@@ -642,7 +642,7 @@ export default function CompaniesList() {
   const arrayTypeAcfFields = ['contact_info', 'investors', '_assigned_workspaces'];
 
   const updateRowMutation = useMutation({
-    mutationFn: async ({ companyId, editedFields, existingAcf }) => {
+    mutationFn: async ({ teamId, editedFields, existingAcf }) => {
       // Extract core fields (prefixed with _) from custom fields
       const { _name, _website, _workspace, ...customFields } = editedFields;
 
@@ -679,17 +679,17 @@ export default function CompaniesList() {
         updatePayload.title = _name;
       }
 
-      const response = await wpApi.updateCompany(companyId, updatePayload);
+      const response = await wpApi.updateTeam(teamId, updatePayload);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
       setEditingRowId(null);
     },
   });
 
   // Handler for saving all edited fields in a row
-  const handleSaveRow = async (companyId, editedFields, existingAcf) => {
+  const handleSaveRow = async (teamId, editedFields, existingAcf) => {
     // Convert empty strings to null for number fields (REST API requires number or null)
     const processedFields = { ...editedFields };
     listViewFields.forEach(field => {
@@ -697,12 +697,12 @@ export default function CompaniesList() {
         processedFields[field.name] = null;
       }
     });
-    await updateRowMutation.mutateAsync({ companyId, editedFields: processedFields, existingAcf });
+    await updateRowMutation.mutateAsync({ teamId, editedFields: processedFields, existingAcf });
   };
 
   // Row edit mode handlers
-  const handleStartEdit = (companyId) => {
-    setEditingRowId(companyId);
+  const handleStartEdit = (teamId) => {
+    setEditingRowId(teamId);
   };
 
   const handleCancelEdit = () => {
@@ -712,29 +712,29 @@ export default function CompaniesList() {
   // Get current user ID from stadionConfig
   const currentUserId = window.stadionConfig?.userId;
 
-  const { data: companies, isLoading, error } = useQuery({
-    queryKey: ['companies', search],
+  const { data: teams, isLoading, error } = useQuery({
+    queryKey: ['teams', search],
     queryFn: async () => {
-      const response = await wpApi.getCompanies({ search, per_page: 100, _embed: true });
+      const response = await wpApi.getTeams({ search, per_page: 100, _embed: true });
       return response.data;
     },
   });
 
-  // Fetch company labels
-  const { data: companyLabelsData } = useQuery({
-    queryKey: ['company-labels'],
+  // Fetch team labels
+  const { data: teamLabelsData } = useQuery({
+    queryKey: ['team-labels'],
     queryFn: async () => {
-      const response = await wpApi.getCompanyLabels();
+      const response = await wpApi.getTeamLabels();
       return response.data;
     },
   });
-  const companyLabels = companyLabelsData || [];
+  const teamLabels = teamLabelsData || [];
 
   // Fetch custom field definitions for list view columns
   const { data: customFields = [] } = useQuery({
-    queryKey: ['custom-fields-metadata', 'company'],
+    queryKey: ['custom-fields-metadata', 'team'],
     queryFn: async () => {
-      const response = await prmApi.getCustomFieldsMetadata('company');
+      const response = await prmApi.getCustomFieldsMetadata('team');
       return response.data;
     },
   });
@@ -746,20 +746,20 @@ export default function CompaniesList() {
       .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
   }, [customFields]);
 
-  // Create company mutation
-  const createCompanyMutation = useCreateCompany({
+  // Create team mutation
+  const createTeamMutation = useCreateTeam({
     onSuccess: (result) => {
-      setShowCompanyModal(false);
-      navigate(`/companies/${result.id}`);
+      setShowTeamModal(false);
+      navigate(`/teams/${result.id}`);
     },
   });
 
-  const handleCreateCompany = async (data) => {
-    setIsCreatingCompany(true);
+  const handleCreateTeam = async (data) => {
+    setIsCreatingTeam(true);
     try {
-      await createCompanyMutation.mutateAsync(data);
+      await createTeamMutation.mutateAsync(data);
     } finally {
-      setIsCreatingCompany(false);
+      setIsCreatingTeam(false);
     }
   };
 
@@ -797,13 +797,13 @@ export default function CompaniesList() {
   };
 
   // Selection helper functions
-  const toggleSelection = (companyId) => {
+  const toggleSelection = (teamId) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(companyId)) {
-        next.delete(companyId);
+      if (next.has(teamId)) {
+        next.delete(teamId);
       } else {
-        next.add(companyId);
+        next.add(teamId);
       }
       return next;
     });
@@ -811,9 +811,9 @@ export default function CompaniesList() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  // Helper to get workspace names for a company (used in sorting)
-  const getCompanyWorkspaceNames = (company) => {
-    const assignedWorkspaces = company.acf?._assigned_workspaces || [];
+  // Helper to get workspace names for a team (used in sorting)
+  const getTeamWorkspaceNames = (team) => {
+    const assignedWorkspaces = team.acf?._assigned_workspaces || [];
     return assignedWorkspaces
       .map(wsId => {
         const numId = typeof wsId === 'string' ? parseInt(wsId, 10) : wsId;
@@ -825,35 +825,35 @@ export default function CompaniesList() {
   };
 
 
-  // Filter companies
-  const filteredCompanies = useMemo(() => {
-    if (!companies) return [];
+  // Filter teams
+  const filteredTeams = useMemo(() => {
+    if (!teams) return [];
 
-    let filtered = [...companies];
+    let filtered = [...teams];
 
     // Apply ownership filter
     if (ownershipFilter === 'mine') {
-      filtered = filtered.filter(company => company.author === currentUserId);
+      filtered = filtered.filter(team => team.author === currentUserId);
     } else if (ownershipFilter === 'shared') {
-      filtered = filtered.filter(company => company.author !== currentUserId);
+      filtered = filtered.filter(team => team.author !== currentUserId);
     }
 
     // Apply workspace filter
     if (selectedWorkspaceFilter) {
-      filtered = filtered.filter(company => {
-        const assignedWorkspaces = company.acf?._assigned_workspaces || [];
+      filtered = filtered.filter(team => {
+        const assignedWorkspaces = team.acf?._assigned_workspaces || [];
         return assignedWorkspaces.includes(parseInt(selectedWorkspaceFilter));
       });
     }
 
     return filtered;
-  }, [companies, ownershipFilter, selectedWorkspaceFilter, currentUserId]);
+  }, [teams, ownershipFilter, selectedWorkspaceFilter, currentUserId]);
 
-  // Sort filtered companies
-  const sortedCompanies = useMemo(() => {
-    if (!filteredCompanies) return [];
+  // Sort filtered teams
+  const sortedTeams = useMemo(() => {
+    if (!filteredTeams) return [];
 
-    return [...filteredCompanies].sort((a, b) => {
+    return [...filteredTeams].sort((a, b) => {
       let valueA, valueB;
 
       if (sortField === 'name') {
@@ -863,8 +863,8 @@ export default function CompaniesList() {
         valueA = (a.acf?.website || '').toLowerCase();
         valueB = (b.acf?.website || '').toLowerCase();
       } else if (sortField === 'workspace') {
-        valueA = getCompanyWorkspaceNames(a).toLowerCase();
-        valueB = getCompanyWorkspaceNames(b).toLowerCase();
+        valueA = getTeamWorkspaceNames(a).toLowerCase();
+        valueB = getTeamWorkspaceNames(b).toLowerCase();
       } else if (sortField.startsWith('custom_')) {
         // Handle custom field sorting
         const fieldName = sortField.replace('custom_', '');
@@ -901,26 +901,26 @@ export default function CompaniesList() {
       const comparison = valueA.localeCompare(valueB);
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [filteredCompanies, sortField, sortOrder, workspaces, listViewFields]);
+  }, [filteredTeams, sortField, sortOrder, workspaces, listViewFields]);
 
   // Computed selection state
-  const isAllSelected = sortedCompanies.length > 0 &&
-    selectedIds.size === sortedCompanies.length;
+  const isAllSelected = sortedTeams.length > 0 &&
+    selectedIds.size === sortedTeams.length;
   const isSomeSelected = selectedIds.size > 0 &&
-    selectedIds.size < sortedCompanies.length;
+    selectedIds.size < sortedTeams.length;
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === sortedCompanies.length) {
+    if (selectedIds.size === sortedTeams.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(sortedCompanies.map(c => c.id)));
+      setSelectedIds(new Set(sortedTeams.map(c => c.id)));
     }
   };
 
   // Clear selection when filters change
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [ownershipFilter, selectedWorkspaceFilter, companies]);
+  }, [ownershipFilter, selectedWorkspaceFilter, teams]);
   
   return (
     <div className="space-y-4">
@@ -1077,7 +1077,7 @@ export default function CompaniesList() {
             </div>
           )}
 
-          <button onClick={() => setShowCompanyModal(true)} className="btn-primary">
+          <button onClick={() => setShowTeamModal(true)} className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Add organization</span>
           </button>
@@ -1099,7 +1099,7 @@ export default function CompaniesList() {
       )}
       
       {/* Empty - no organizations at all */}
-      {!isLoading && !error && companies?.length === 0 && (
+      {!isLoading && !error && teams?.length === 0 && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-6 h-6 text-gray-400 dark:text-gray-500" />
@@ -1109,7 +1109,7 @@ export default function CompaniesList() {
             {search ? 'Try a different search.' : 'Add your first organization.'}
           </p>
           {!search && (
-            <button onClick={() => setShowCompanyModal(true)} className="btn-primary">
+            <button onClick={() => setShowTeamModal(true)} className="btn-primary">
               <Plus className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Add organization</span>
             </button>
@@ -1118,7 +1118,7 @@ export default function CompaniesList() {
       )}
 
       {/* No results with filters */}
-      {!isLoading && !error && companies?.length > 0 && sortedCompanies?.length === 0 && (
+      {!isLoading && !error && teams?.length > 0 && sortedTeams?.length === 0 && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <Filter className="w-6 h-6 text-gray-400 dark:text-gray-500" />
@@ -1187,9 +1187,9 @@ export default function CompaniesList() {
       )}
 
       {/* Organizations list */}
-      {!isLoading && !error && sortedCompanies?.length > 0 && (
+      {!isLoading && !error && sortedTeams?.length > 0 && (
         <OrganizationListView
-          companies={sortedCompanies}
+          teams={sortedTeams}
           workspaces={workspaces}
           listViewFields={listViewFields}
           selectedIds={selectedIds}
@@ -1215,12 +1215,12 @@ export default function CompaniesList() {
         />
       )}
       
-      {/* Company Modal */}
-      <CompanyEditModal
-        isOpen={showCompanyModal}
-        onClose={() => setShowCompanyModal(false)}
-        onSubmit={handleCreateCompany}
-        isLoading={isCreatingCompany}
+      {/* Team Modal */}
+      <TeamEditModal
+        isOpen={showTeamModal}
+        onClose={() => setShowTeamModal(false)}
+        onSubmit={handleCreateTeam}
+        isLoading={isCreatingTeam}
       />
 
       {/* Bulk Visibility Modal */}

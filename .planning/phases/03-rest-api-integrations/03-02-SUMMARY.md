@@ -92,7 +92,7 @@ The monolithic class-rest-api.php has been significantly reduced across all phas
 - STADION_REST_Base (abstract base)
 - STADION_REST_API (remaining general endpoints)
 - STADION_REST_People (people-specific endpoints)
-- STADION_REST_Companies (company-specific endpoints)
+- STADION_REST_Teams (team-specific endpoints)
 - STADION_REST_Slack (Slack integration endpoints)
 - STADION_REST_Import_Export (export and CardDAV endpoints)
 

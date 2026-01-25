@@ -22,7 +22,7 @@ class PostTypes {
 		$this->register_workspace_post_type();
 		$this->register_workspace_invite_post_type();
 		$this->register_person_post_type();
-		$this->register_company_post_type();
+		$this->register_team_post_type();
 		$this->register_important_date_post_type();
 		$this->register_todo_statuses();
 		$this->register_todo_post_type();
@@ -151,22 +151,24 @@ class PostTypes {
 	}
 
 	/**
-	 * Register Company CPT
+	 * Register Team CPT
+	 *
+	 * Teams are synced from Sportlink and are read-only in this system.
 	 */
-	private function register_company_post_type() {
+	private function register_team_post_type() {
 		$labels = [
-			'name'               => _x( 'Organizations', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Organization', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'Organizations', 'Admin Menu text', 'stadion' ),
+			'name'               => _x( 'Teams', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Team', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'Teams', 'Admin Menu text', 'stadion' ),
 			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Organization', 'stadion' ),
-			'edit_item'          => __( 'Edit Organization', 'stadion' ),
-			'new_item'           => __( 'New Organization', 'stadion' ),
-			'view_item'          => __( 'View Organization', 'stadion' ),
-			'search_items'       => __( 'Search Organizations', 'stadion' ),
-			'not_found'          => __( 'No organizations found', 'stadion' ),
-			'not_found_in_trash' => __( 'No organizations found in Trash', 'stadion' ),
-			'all_items'          => __( 'All Organizations', 'stadion' ),
+			'add_new_item'       => __( 'Add New Team', 'stadion' ),
+			'edit_item'          => __( 'Edit Team', 'stadion' ),
+			'new_item'           => __( 'New Team', 'stadion' ),
+			'view_item'          => __( 'View Team', 'stadion' ),
+			'search_items'       => __( 'Search Teams', 'stadion' ),
+			'not_found'          => __( 'No teams found', 'stadion' ),
+			'not_found_in_trash' => __( 'No teams found in Trash', 'stadion' ),
+			'all_items'          => __( 'All Teams', 'stadion' ),
 		];
 
 		$args = [
@@ -176,18 +178,18 @@ class PostTypes {
 			'show_ui'            => true,
 			'show_in_menu'       => true,
 			'show_in_rest'       => true,
-			'rest_base'          => 'companies',
+			'rest_base'          => 'teams',
 			'query_var'          => false,
 			'rewrite'            => false, // Disable rewrite rules - React Router handles routing
 			'capability_type'    => 'post',
 			'has_archive'        => false,
 			'hierarchical'       => true, // Enable parent-child relationships
 			'menu_position'      => 6,
-			'menu_icon'          => 'dashicons-building',
+			'menu_icon'          => 'dashicons-groups',
 			'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
 		];
 
-		register_post_type( 'company', $args );
+		register_post_type( 'team', $args );
 	}
 
 	/**

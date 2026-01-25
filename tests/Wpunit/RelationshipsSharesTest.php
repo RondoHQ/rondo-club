@@ -8,7 +8,7 @@ use STADION_Visibility;
 use STADION_Workspace_Members;
 use STADION_User_Roles;
 use STADION_REST_People;
-use STADION_REST_Companies;
+use STADION_REST_Teams;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -17,9 +17,9 @@ use WP_REST_Server;
  * Tests for CPT relationships, sharing endpoints, and bulk update operations.
  *
  * Covers:
- * - Person-company relationship via work_history
+ * - Person-team relationship via work_history
  * - Person-dates relationship via related_people
- * - Sharing endpoints for people and companies
+ * - Sharing endpoints for people and teams
  * - Bulk update operations with ownership checks
  */
 class RelationshipsSharesTest extends StadionTestCase {
@@ -39,11 +39,11 @@ class RelationshipsSharesTest extends StadionTestCase {
 	private STADION_REST_People $rest_people;
 
 	/**
-	 * REST Companies handler.
+	 * REST Teams handler.
 	 *
-	 * @var STADION_REST_Companies
+	 * @var STADION_REST_Teams
 	 */
-	private STADION_REST_Companies $rest_companies;
+	private STADION_REST_Teams $rest_teams;
 
 	protected function set_up(): void {
 		parent::set_up();
@@ -51,7 +51,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 
 		// Manually initialize REST API classes for testing
 		$this->rest_people    = new STADION_REST_People();
-		$this->rest_companies = new STADION_REST_Companies();
+		$this->rest_teams = new STADION_REST_Teams();
 
 		// Initialize the REST server and register routes
 		global $wp_rest_server;
@@ -137,15 +137,15 @@ class RelationshipsSharesTest extends StadionTestCase {
 	// =========================================================================
 
 	/**
-	 * Test person-company relationship endpoint.
-	 * GET /stadion/v1/companies/{id}/people should return people working at the company.
+	 * Test person-team relationship endpoint.
+	 * GET /stadion/v1/teams/{id}/people should return people working at the team.
 	 */
-	public function test_company_people_endpoint_returns_employees(): void {
+	public function test_team_people_endpoint_returns_employees(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel1' ] );
 		wp_set_current_user( $alice_id );
 
-		// Create company "Acme Corp"
-		$company_id = $this->createOrganization(
+		// Create team "Acme Corp"
+		$team_id = $this->createOrganization(
 			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Acme Corp',
@@ -164,10 +164,10 @@ class RelationshipsSharesTest extends StadionTestCase {
 			]
 		);
 
-		// Set work_history to link person to company
+		// Set work_history to link person to team
 		$work_history = [
 			[
-				'company'    => $company_id,
+				'team'    => $team_id,
 				'job_title'  => 'Engineer',
 				'start_date' => '2020-01-01',
 				'end_date'   => '',
@@ -176,8 +176,8 @@ class RelationshipsSharesTest extends StadionTestCase {
 		];
 		update_field( 'work_history', $work_history, $person_id );
 
-		// GET /stadion/v1/companies/{id}/people
-		$response = $this->restRequest( 'GET', '/stadion/v1/companies/' . $company_id . '/people' );
+		// GET /stadion/v1/teams/{id}/people
+		$response = $this->restRequest( 'GET', '/stadion/v1/teams/' . $team_id . '/people' );
 
 		$this->assertEquals( 200, $response->get_status(), 'Response should be 200 OK' );
 
@@ -192,14 +192,14 @@ class RelationshipsSharesTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test person-company relationship with former employees.
+	 * Test person-team relationship with former employees.
 	 */
-	public function test_company_people_endpoint_distinguishes_current_former(): void {
+	public function test_team_people_endpoint_distinguishes_current_former(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel2' ] );
 		wp_set_current_user( $alice_id );
 
-		// Create company
-		$company_id = $this->createOrganization(
+		// Create team
+		$team_id = $this->createOrganization(
 			[
 				'post_author' => $alice_id,
 				'post_title'  => 'TechCorp',
@@ -217,7 +217,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 			'work_history',
 			[
 				[
-					'company'    => $company_id,
+					'team'    => $team_id,
 					'job_title'  => 'Developer',
 					'start_date' => '2023-01-01',
 					'end_date'   => '',
@@ -238,7 +238,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 			'work_history',
 			[
 				[
-					'company'    => $company_id,
+					'team'    => $team_id,
 					'job_title'  => 'Manager',
 					'start_date' => '2020-01-01',
 					'end_date'   => '2022-12-31',
@@ -248,7 +248,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 			$former_person_id
 		);
 
-		$response = $this->restRequest( 'GET', '/stadion/v1/companies/' . $company_id . '/people' );
+		$response = $this->restRequest( 'GET', '/stadion/v1/teams/' . $team_id . '/people' );
 		$data     = $response->get_data();
 
 		$this->assertCount( 1, $data['current'], 'Should have 1 current employee' );
@@ -555,26 +555,26 @@ class RelationshipsSharesTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test sharing endpoint for companies.
-	 * POST/GET/DELETE /stadion/v1/companies/{id}/shares
+	 * Test sharing endpoint for teams.
+	 * POST/GET/DELETE /stadion/v1/teams/{id}/shares
 	 */
-	public function test_companies_share_lifecycle(): void {
+	public function test_teams_share_lifecycle(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share5' ] );
 		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_share5' ] );
 		wp_set_current_user( $alice_id );
 
-		// Create company as Alice
-		$company_id = $this->createOrganization(
+		// Create team as Alice
+		$team_id = $this->createOrganization(
 			[
 				'post_author' => $alice_id,
-				'post_title'  => 'Shared Company',
+				'post_title'  => 'Shared Team',
 			]
 		);
 
 		// POST share
 		$add_response = $this->restRequest(
 			'POST',
-			'/stadion/v1/companies/' . $company_id . '/shares',
+			'/stadion/v1/teams/' . $team_id . '/shares',
 			[
 				'user_id'    => $bob_id,
 				'permission' => 'view',
@@ -583,17 +583,17 @@ class RelationshipsSharesTest extends StadionTestCase {
 		$this->assertEquals( 200, $add_response->get_status(), 'Add share should return 200' );
 
 		// GET shares
-		$get_response = $this->restRequest( 'GET', '/stadion/v1/companies/' . $company_id . '/shares' );
+		$get_response = $this->restRequest( 'GET', '/stadion/v1/teams/' . $team_id . '/shares' );
 		$shares       = $get_response->get_data();
 		$this->assertCount( 1, $shares, 'Should have 1 share' );
 		$this->assertEquals( $bob_id, $shares[0]['user_id'], 'Share should be with Bob' );
 
 		// DELETE share
-		$del_response = $this->restRequest( 'DELETE', '/stadion/v1/companies/' . $company_id . '/shares/' . $bob_id );
+		$del_response = $this->restRequest( 'DELETE', '/stadion/v1/teams/' . $team_id . '/shares/' . $bob_id );
 		$this->assertEquals( 200, $del_response->get_status(), 'Delete share should return 200' );
 
 		// Verify share removed
-		$get_response2 = $this->restRequest( 'GET', '/stadion/v1/companies/' . $company_id . '/shares' );
+		$get_response2 = $this->restRequest( 'GET', '/stadion/v1/teams/' . $team_id . '/shares' );
 		$this->assertCount( 0, $get_response2->get_data(), 'Should have no shares after removal' );
 	}
 
@@ -805,32 +805,32 @@ class RelationshipsSharesTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test bulk update for companies - visibility change.
+	 * Test bulk update for teams - visibility change.
 	 */
-	public function test_companies_bulk_update_visibility(): void {
+	public function test_teams_bulk_update_visibility(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk6' ] );
 		wp_set_current_user( $alice_id );
 
-		// Create 2 companies
-		$company1_id = $this->createOrganization(
+		// Create 2 teams
+		$team1_id = $this->createOrganization(
 			[
 				'post_author' => $alice_id,
-				'post_title'  => 'Company 1',
+				'post_title'  => 'Team 1',
 			]
 		);
-		$company2_id = $this->createOrganization(
+		$team2_id = $this->createOrganization(
 			[
 				'post_author' => $alice_id,
-				'post_title'  => 'Company 2',
+				'post_title'  => 'Team 2',
 			]
 		);
 
 		// Bulk update visibility
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/companies/bulk-update',
+			'/stadion/v1/teams/bulk-update',
 			[
-				'ids'     => [ $company1_id, $company2_id ],
+				'ids'     => [ $team1_id, $team2_id ],
 				'updates' => [
 					'visibility' => 'shared',
 				],
@@ -841,31 +841,31 @@ class RelationshipsSharesTest extends StadionTestCase {
 		$this->assertTrue( $response->get_data()['success'] );
 
 		// Verify visibility changed
-		$this->assertEquals( 'shared', STADION_Visibility::get_visibility( $company1_id ) );
-		$this->assertEquals( 'shared', STADION_Visibility::get_visibility( $company2_id ) );
+		$this->assertEquals( 'shared', STADION_Visibility::get_visibility( $team1_id ) );
+		$this->assertEquals( 'shared', STADION_Visibility::get_visibility( $team2_id ) );
 	}
 
 	/**
-	 * Test bulk update for companies - add labels.
+	 * Test bulk update for teams - add labels.
 	 */
-	public function test_companies_bulk_update_add_labels(): void {
+	public function test_teams_bulk_update_add_labels(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk7' ] );
 		wp_set_current_user( $alice_id );
 
-		// Create a company label term
-		$label_term = wp_insert_term( 'Partner', 'company_label' );
+		// Create a team label term
+		$label_term = wp_insert_term( 'Partner', 'team_label' );
 		$label_id   = $label_term['term_id'];
 
-		// Create companies
-		$company1_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
-		$company2_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
+		// Create teams
+		$team1_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
+		$team2_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
 
 		// Bulk add label
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/companies/bulk-update',
+			'/stadion/v1/teams/bulk-update',
 			[
-				'ids'     => [ $company1_id, $company2_id ],
+				'ids'     => [ $team1_id, $team2_id ],
 				'updates' => [
 					'labels_add' => [ $label_id ],
 				],
@@ -876,40 +876,40 @@ class RelationshipsSharesTest extends StadionTestCase {
 		$this->assertTrue( $response->get_data()['success'] );
 
 		// Verify labels added
-		$company1_labels = wp_get_object_terms( $company1_id, 'company_label', [ 'fields' => 'ids' ] );
-		$company2_labels = wp_get_object_terms( $company2_id, 'company_label', [ 'fields' => 'ids' ] );
+		$team1_labels = wp_get_object_terms( $team1_id, 'team_label', [ 'fields' => 'ids' ] );
+		$team2_labels = wp_get_object_terms( $team2_id, 'team_label', [ 'fields' => 'ids' ] );
 
-		$this->assertContains( $label_id, $company1_labels );
-		$this->assertContains( $label_id, $company2_labels );
+		$this->assertContains( $label_id, $team1_labels );
+		$this->assertContains( $label_id, $team2_labels );
 	}
 
 	/**
-	 * Test bulk update for companies - authorization denied for other users' companies.
+	 * Test bulk update for teams - authorization denied for other users' teams.
 	 */
-	public function test_companies_bulk_update_authorization_denied(): void {
+	public function test_teams_bulk_update_authorization_denied(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk8' ] );
 		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_bulk8' ] );
 
-		// Alice creates companies
+		// Alice creates teams
 		wp_set_current_user( $alice_id );
-		$company1_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
-		$company2_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
+		$team1_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
+		$team2_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
 
-		// Bob tries to bulk update Alice's companies
+		// Bob tries to bulk update Alice's teams
 		wp_set_current_user( $bob_id );
 
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/companies/bulk-update',
+			'/stadion/v1/teams/bulk-update',
 			[
-				'ids'     => [ $company1_id, $company2_id ],
+				'ids'     => [ $team1_id, $team2_id ],
 				'updates' => [
 					'visibility' => 'workspace',
 				],
 			]
 		);
 
-		$this->assertEquals( 403, $response->get_status(), 'Bob should be denied access to Alice\'s companies' );
+		$this->assertEquals( 403, $response->get_status(), 'Bob should be denied access to Alice\'s teams' );
 	}
 
 	/**

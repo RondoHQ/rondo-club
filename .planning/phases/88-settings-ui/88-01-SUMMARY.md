@@ -11,7 +11,7 @@ requires:
 provides:
   - Custom Fields settings page at /settings/custom-fields
   - API client methods for custom fields CRUD
-  - Tab navigation for People/Organization field lists
+  - Tab navigation for People/Team field lists
 affects: [88-02, 89]
 
 # Tech tracking
@@ -60,7 +60,7 @@ completed: 2026-01-18
 
 - Added custom fields CRUD methods to API client
 - Created CustomFields.jsx settings page with admin access control
-- Implemented People/Organizations tab navigation with localStorage persistence
+- Implemented People/Teams tab navigation with localStorage persistence
 - Built field list table with hover actions for Edit/Delete
 - Added route at /settings/custom-fields
 
@@ -100,7 +100,7 @@ None - no external service configuration required.
 ## Next Phase Readiness
 
 - CustomFields page accessible at /settings/custom-fields
-- Tab navigation functional for People/Organization fields
+- Tab navigation functional for People/Team fields
 - Edit/Delete hover actions ready for wiring in Plan 02
 - Ready for Add/Edit panel implementation (Plan 02)
 

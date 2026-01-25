@@ -99,7 +99,7 @@ Each task was committed atomically:
 ### Deferred Enhancements
 
 Logged to .planning/ISSUES.md for future consideration:
-- ISS-001: Add sorting by Organization and Workspace columns (discovered during checkpoint)
+- ISS-001: Add sorting by Team and Workspace columns (discovered during checkpoint)
 
 ---
 

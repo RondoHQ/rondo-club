@@ -115,13 +115,13 @@ abstract class Base {
 	}
 
 	/**
-	 * Check if user can edit a company
+	 * Check if user can edit a team
 	 *
-	 * Permission callback for company edit endpoints.
-	 * Verifies user is approved and has edit capability for the company post.
+	 * Permission callback for team edit endpoints.
+	 * Verifies user is approved and has edit capability for the team post.
 	 *
 	 * @param WP_REST_Request $request The REST request object.
-	 * @return bool True if user can edit the company, false otherwise.
+	 * @return bool True if user can edit the team, false otherwise.
 	 */
 	public function check_company_edit_permission( $request ) {
 		if ( ! is_user_logged_in() ) {
@@ -133,15 +133,15 @@ abstract class Base {
 			return false;
 		}
 
-		$company_id = $request->get_param( 'company_id' );
-		$company    = get_post( $company_id );
+		$team_id = $request->get_param( 'team_id' );
+		$team    = get_post( $team_id );
 
-		if ( ! $company || $company->post_type !== 'company' ) {
+		if ( ! $team || $team->post_type !== 'team' ) {
 			return false;
 		}
 
-		// Check if user can edit this company
-		return current_user_can( 'edit_post', $company_id );
+		// Check if user can edit this team
+		return current_user_can( 'edit_post', $team_id );
 	}
 
 	/**
@@ -217,11 +217,11 @@ abstract class Base {
 	}
 
 	/**
-	 * Format company for summary response
+	 * Format team for summary response
 	 *
-	 * Returns a minimal representation of a company for list views and relationships.
+	 * Returns a minimal representation of a team for list views and relationships.
 	 *
-	 * @param WP_Post $post The company post object.
+	 * @param WP_Post $post The team post object.
 	 * @return array Formatted company data.
 	 */
 	protected function format_company_summary( $post ) {
@@ -230,7 +230,7 @@ abstract class Base {
 			'name'      => $this->sanitize_text( $post->post_title ),
 			'thumbnail' => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
 			'website'   => $this->sanitize_url( get_field( 'website', $post->ID ) ),
-			'labels'    => wp_get_post_terms( $post->ID, 'company_label', [ 'fields' => 'names' ] ),
+			'labels'    => wp_get_post_terms( $post->ID, 'team_label', [ 'fields' => 'names' ] ),
 		];
 	}
 

@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Include custom field values in global search results. Users searching for text that exists in custom fields should find matching People/Organizations. Creating new search UI or filtering options is out of scope.
+Include custom field values in global search results. Users searching for text that exists in custom fields should find matching People/Teams. Creating new search UI or filtering options is out of scope.
 
 </domain>
 

@@ -46,7 +46,7 @@ import { format, differenceInYears } from 'date-fns';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, getCompanyName, sanitizePersonAcf } from '@/utils/formatters';
+import { decodeHtml, getTeamName, sanitizePersonAcf } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import { stripHtmlTags } from '@/utils/richTextUtils';
@@ -284,7 +284,7 @@ export default function PersonDetail() {
   const deleteTodo = useDeleteTodo();
   const { data: allPeople, isLoading: isPeopleLoading } = usePeople();
   
-  // Fetch companies where this person is an investor
+  // Fetch teams where this person is an investor
   const { data: investments = [] } = useQuery({
     queryKey: ['investments', id],
     queryFn: async () => {
@@ -592,7 +592,7 @@ export default function PersonDetail() {
       const workHistory = [...(person.acf?.work_history || [])];
       
       const workHistoryItem = {
-        company: data.company || null,
+        team: data.team || null,
         job_title: data.job_title || '',
         description: data.description || '',
         start_date: data.start_date || '',
@@ -1123,7 +1123,7 @@ export default function PersonDetail() {
     
     try {
       downloadVCard(person, {
-        companyMap,
+        teamMap,
         personDates: personDates || [],
       });
     } catch {
@@ -1131,43 +1131,43 @@ export default function PersonDetail() {
     }
   };
 
-  // Fetch company names for work history entries
-  const companyIds = person?.acf?.work_history
-    ?.map(job => job.company)
+  // Fetch team names for work history entries
+  const teamIds = person?.acf?.work_history
+    ?.map(job => job.team)
     .filter(Boolean) || [];
   
-  const companyQueries = useQueries({
-    queries: companyIds.map(companyId => ({
-      queryKey: ['company', companyId],
+  const teamQueries = useQueries({
+    queries: teamIds.map(teamId => ({
+      queryKey: ['team', teamId],
       queryFn: async () => {
-        const response = await wpApi.getCompany(companyId, { _embed: true });
+        const response = await wpApi.getTeam(teamId, { _embed: true });
         return response.data;
       },
-      enabled: !!companyId,
+      enabled: !!teamId,
     })),
   });
 
-  // Get current job company IDs (jobs without end_date)
-  const currentJobCompanyIds = useMemo(() => {
+  // Get current job team IDs (jobs without end_date)
+  const currentJobTeamIds = useMemo(() => {
     if (!person?.acf?.work_history) return [];
     return person.acf.work_history
-      .filter(job => !job.end_date && job.company)
-      .map(job => job.company);
+      .filter(job => !job.end_date && job.team)
+      .map(job => job.team);
   }, [person?.acf?.work_history]);
 
   // Fetch colleagues for current jobs
   const colleagueQueries = useQueries({
-    queries: currentJobCompanyIds.map(companyId => ({
-      queryKey: ['company-people', companyId],
+    queries: currentJobTeamIds.map(teamId => ({
+      queryKey: ['team-people', teamId],
       queryFn: async () => {
-        const response = await prmApi.getCompanyPeople(companyId);
-        return { companyId, ...response.data };
+        const response = await prmApi.getTeamPeople(teamId);
+        return { teamId, ...response.data };
       },
-      enabled: !!companyId,
+      enabled: !!teamId,
     })),
   });
 
-  // Process colleagues data - combine all current employees from all companies, excluding self
+  // Process colleagues data - combine all current employees from all teams, excluding self
   const colleagues = useMemo(() => {
     const colleagueMap = new Map();
     
@@ -1176,16 +1176,16 @@ export default function PersonDetail() {
         query.data.current.forEach(employee => {
           // Exclude the current person
           if (employee.id !== parseInt(id)) {
-            // If already in map, just add the company; otherwise create new entry
+            // If already in map, just add the team; otherwise create new entry
             if (colleagueMap.has(employee.id)) {
               const existing = colleagueMap.get(employee.id);
-              if (!existing.companies.includes(query.data.companyId)) {
-                existing.companies.push(query.data.companyId);
+              if (!existing.teams.includes(query.data.teamId)) {
+                existing.teams.push(query.data.teamId);
               }
             } else {
               colleagueMap.set(employee.id, {
                 ...employee,
-                companies: [query.data.companyId],
+                teams: [query.data.teamId],
               });
             }
           }
@@ -1272,13 +1272,13 @@ export default function PersonDetail() {
     });
   }, [person?.acf?.relationships, personAgeMap]);
 
-  // Create a map of company ID to company data (name and logo)
-  const companyMap = {};
-  companyQueries.forEach((query, index) => {
+  // Create a map of team ID to team data (name and logo)
+  const teamMap = {};
+  teamQueries.forEach((query, index) => {
     if (query.data) {
-      const companyId = companyIds[index];
-      companyMap[companyId] = {
-        name: getCompanyName(query.data),
+      const teamId = teamIds[index];
+      teamMap[teamId] = {
+        name: getTeamName(query.data),
         logo: query.data._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
               query.data._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url ||
               null,
@@ -1533,22 +1533,22 @@ export default function PersonDetail() {
               <p className="text-base text-gray-600 dark:text-gray-300">
                 {currentPositions.map((job, idx) => {
                   const hasTitle = !!job.job_title;
-                  const hasCompany = job.company && companyMap[job.company];
+                  const hasTeam = job.team && teamMap[job.team];
 
-                  if (!hasTitle && !hasCompany) return null;
+                  if (!hasTitle && !hasTeam) return null;
 
                   return (
                     <span key={idx}>
                       {idx > 0 && ', '}
                       {hasTitle ? job.job_title : 'Works'}
-                      {hasCompany && (
+                      {hasTeam && (
                         <>
                           <span className="text-gray-400 dark:text-gray-500"> at </span>
                           <Link
-                            to={`/organizations/${job.company}`}
+                            to={`/organizations/${job.team}`}
                             className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
                           >
-                            {companyMap[job.company].name}
+                            {teamMap[job.team].name}
                           </Link>
                         </>
                       )}
@@ -2190,15 +2190,15 @@ export default function PersonDetail() {
             {sortedWorkHistory?.length > 0 ? (
               <div className="space-y-4">
                 {sortedWorkHistory.map((job, index) => {
-                  const companyData = job.company ? companyMap[job.company] : null;
+                  const teamData = job.team ? teamMap[job.team] : null;
                   const originalIndex = job.originalIndex;
                   
                   return (
                     <div key={originalIndex} className="flex items-start group">
-                      {companyData?.logo ? (
+                      {teamData?.logo ? (
                         <img
-                          src={companyData.logo}
-                          alt={companyData.name}
+                          src={teamData.logo}
+                          alt={teamData.name}
                           className="w-20 h-20 rounded-lg object-contain mr-3 flex-shrink-0"
                         />
                       ) : (
@@ -2208,12 +2208,12 @@ export default function PersonDetail() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium">{job.job_title}</p>
-                        {job.company && companyData && (
+                        {job.team && teamData && (
                           <Link 
-                            to={`/companies/${job.company}`}
+                            to={`/teams/${job.team}`}
                             className="text-sm text-accent-600 hover:underline"
                           >
-                            {companyData.name}
+                            {teamData.name}
                           </Link>
                         )}
                         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -2265,16 +2265,16 @@ export default function PersonDetail() {
                 Investments
               </h2>
               <div className="space-y-3">
-                {investments.map((company) => (
+                {investments.map((team) => (
                   <Link
-                    key={company.id}
-                    to={`/companies/${company.id}`}
+                    key={team.id}
+                    to={`/teams/${team.id}`}
                     className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
                   >
-                    {company.thumbnail ? (
+                    {team.thumbnail ? (
                       <img
-                        src={company.thumbnail}
-                        alt={company.name}
+                        src={team.thumbnail}
+                        alt={team.name}
                         className="w-12 h-12 rounded-lg object-contain border border-gray-200"
                       />
                     ) : (
@@ -2283,9 +2283,9 @@ export default function PersonDetail() {
                       </div>
                     )}
                     <div className="ml-3">
-                      <p className="text-sm font-medium group-hover:text-accent-600">{company.name}</p>
-                      {company.industry && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{company.industry}</p>
+                      <p className="text-sm font-medium group-hover:text-accent-600">{team.name}</p>
+                      {team.industry && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{team.industry}</p>
                       )}
                     </div>
                   </Link>

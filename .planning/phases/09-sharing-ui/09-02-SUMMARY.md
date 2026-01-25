@@ -8,7 +8,7 @@ completed_at: 2026-01-13
 # Phase 9 Plan 02 Summary: VisibilitySelector Component Integration
 
 ## Objective
-Create VisibilitySelector component and integrate it into Person and Company edit flows to allow users to set visibility (private/workspace) when creating or editing contacts and companies.
+Create VisibilitySelector component and integrate it into Person and Team edit flows to allow users to set visibility (private/workspace) when creating or editing contacts and teams.
 
 ## Tasks Completed
 
@@ -31,17 +31,17 @@ Modified `/src/components/PersonEditModal.jsx`:
 - Added VisibilitySelector to form between "How we met" and "Favorite" fields
 - Updated `handleFormSubmit` to include visibility and assigned_workspaces in submitted data
 
-### Task 3: Integrate VisibilitySelector into CompanyEditModal
-Modified `/src/components/CompanyEditModal.jsx`:
+### Task 3: Integrate VisibilitySelector into TeamEditModal
+Modified `/src/components/TeamEditModal.jsx`:
 - Added import for VisibilitySelector component
 - Added state variables: `visibility` and `selectedWorkspaces`
-- Updated useEffect to load existing visibility settings when editing a company
-- Reset visibility to 'private' and clear workspaces when creating new company
+- Updated useEffect to load existing visibility settings when editing a team
+- Reset visibility to 'private' and clear workspaces when creating new team
 - Added VisibilitySelector to form after the Investors section
 - Updated `handleFormSubmit` to include visibility and assigned_workspaces in submitted data
 
 ### Task 4: Update Create Payloads
-The create payloads in PeopleList.jsx and CompaniesList.jsx were already updated in a previous phase (09-06) to include:
+The create payloads in PeopleList.jsx and TeamsList.jsx were already updated in a previous phase (09-06) to include:
 - `_visibility: data.visibility || 'private'`
 - `_assigned_workspaces: data.assigned_workspaces || []`
 
@@ -51,7 +51,7 @@ The create payloads in PeopleList.jsx and CompaniesList.jsx were already updated
 |------|---------|
 | `src/components/VisibilitySelector.jsx` | Created new component (154 lines) |
 | `src/components/PersonEditModal.jsx` | Added visibility import, state, form field, and submit handling |
-| `src/components/CompanyEditModal.jsx` | Added visibility import, state, form field, and submit handling |
+| `src/components/TeamEditModal.jsx` | Added visibility import, state, form field, and submit handling |
 
 ## Verification
 - `npm run build` - Passed (built successfully)
@@ -69,7 +69,7 @@ The create payloads in PeopleList.jsx and CompaniesList.jsx were already updated
 - Caches cleared successfully
 
 ## Deviations
-- The PeopleList.jsx and CompaniesList.jsx visibility payload changes were already committed in phase 09-06, so those files were not included in this commit
+- The PeopleList.jsx and TeamsList.jsx visibility payload changes were already committed in phase 09-06, so those files were not included in this commit
 - Skipped checkpoint task per instructions
 
 ## Notes

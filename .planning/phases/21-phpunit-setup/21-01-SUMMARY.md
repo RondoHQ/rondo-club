@@ -38,7 +38,7 @@ key-decisions:
 
 patterns-established:
   - "StadionTestCase as base class for all theme tests"
-  - "Factory helpers: createPerson(), createOrganization(), createStadionUser(), createImportantDate()"
+  - "Factory helpers: createPerson(), createTeam(), createStadionUser(), createImportantDate()"
   - "Smoke tests verify environment before writing feature tests"
 
 issues-created: []
@@ -129,7 +129,7 @@ None beyond the blocking issues resolved above.
 
 - PHPUnit infrastructure complete and working
 - StadionTestCase base class ready for Phase 22 access control tests
-- Factory helpers available: createPerson(), createOrganization(), createStadionUser(), createImportantDate()
+- Factory helpers available: createPerson(), createTeam(), createStadionUser(), createImportantDate()
 - Test database `stadion_test` configured with transaction rollback isolation
 
 ---

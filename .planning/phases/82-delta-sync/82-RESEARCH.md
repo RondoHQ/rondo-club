@@ -222,7 +222,7 @@ Verified patterns from official sources and existing codebase:
 ```php
 // Source: https://developers.google.com/people/api/rest/v1/people.connections/list
 $params = [
-    'personFields'     => 'names,emailAddresses,phoneNumbers,addresses,organizations,photos,metadata',
+    'personFields'     => 'names,emailAddresses,phoneNumbers,addresses,teams,photos,metadata',
     'pageSize'         => 100,
     'requestSyncToken' => true,
 ];

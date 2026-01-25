@@ -1,14 +1,14 @@
 ---
 created: 2026-01-14T20:17
-title: Make company website link clickable in list
+title: Make team website link clickable in list
 area: ui
 files:
-  - src/pages/Organizations.jsx
+  - src/pages/Teams.jsx
 ---
 
 ## Problem
 
-In the companies/organizations list view, the website field is displayed as plain text. Users cannot click it to open the website directly.
+In the teams/teams list view, the website field is displayed as plain text. Users cannot click it to open the website directly.
 
 ## Solution
 

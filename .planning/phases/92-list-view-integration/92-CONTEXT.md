@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Custom fields can appear as columns in People and Organizations list views. Admin can toggle visibility and configure column order. Creating new field types or changing detail view behavior is out of scope.
+Custom fields can appear as columns in People and Teams list views. Admin can toggle visibility and configure column order. Creating new field types or changing detail view behavior is out of scope.
 
 </domain>
 

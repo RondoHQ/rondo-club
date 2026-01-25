@@ -8,7 +8,7 @@
 
 This phase implements one-directional import of Google Contacts into Stadion via the Google People API. Phase 79 has already established the OAuth connection infrastructure including token storage, refresh handling, and a `has_pending_import` flag mechanism.
 
-The codebase has extensive prior art for contact imports (Monica CRM, Google Contacts CSV, vCard) that establishes clear patterns for: batch processing, photo sideloading, company creation/matching, birthday as important_date, and field mapping to ACF repeater fields.
+The codebase has extensive prior art for contact imports (Monica CRM, Google Contacts CSV, vCard) that establishes clear patterns for: batch processing, photo sideloading, team creation/matching, birthday as important_date, and field mapping to ACF repeater fields.
 
 Key decisions from CONTEXT.md: match by email only (skip contacts without email), fill gaps only (never overwrite existing Stadion data), import all emails/phones to repeaters, skip notes/labels.
 
@@ -21,7 +21,7 @@ Key decisions from CONTEXT.md: match by email only (skip contacts without email)
 
 ### Request Configuration
 ```php
-$personFields = 'names,emailAddresses,phoneNumbers,addresses,organizations,birthdays,photos,biographies,urls,metadata';
+$personFields = 'names,emailAddresses,phoneNumbers,addresses,teams,birthdays,photos,biographies,urls,metadata';
 $pageSize = 100; // Valid: 1-1000, default 100
 ```
 
@@ -87,7 +87,7 @@ $pageSize = 100; // Valid: 1-1000, default 100
 }
 ```
 
-**organizations** (array)
+**teams** (array)
 ```json
 {
   "name": "Acme Inc",
@@ -178,25 +178,25 @@ Per CONTEXT.md: **Skip biographies/notes** - not imported.
 | Field Key | Field Name | Type |
 |-----------|------------|------|
 | `field_work_history` | `work_history` | repeater |
-| `field_work_company` | `company` | post_object (company CPT) |
+| `field_work_team` | `team` | post_object (team CPT) |
 | `field_work_job_title` | `job_title` | text |
 | `field_work_description` | `description` | textarea |
 | `field_work_start_date` | `start_date` | date_picker |
 | `field_work_end_date` | `end_date` | date_picker |
 | `field_work_is_current` | `is_current` | true_false |
 
-## Stadion Company Data Model
+## Stadion Team Data Model
 
-### ACF Fields (from group_company_fields.json)
+### ACF Fields (from group_team_fields.json)
 
 | Field Key | Field Name | Type |
 |-----------|------------|------|
-| `field_company_website` | `website` | url |
-| `field_company_industry` | `industry` | text |
-| `field_company_contact_info` | `contact_info` | repeater |
+| `field_team_website` | `website` | url |
+| `field_team_industry` | `industry` | text |
+| `field_team_contact_info` | `contact_info` | repeater |
 
-**Company Matching Strategy:**
-Per existing imports, companies are matched by exact title using `get_page_by_title($name, OBJECT, 'company')`.
+**Team Matching Strategy:**
+Per existing imports, teams are matched by exact title using `get_page_by_title($name, OBJECT, 'team')`.
 
 ## Important Date Structure
 
@@ -335,7 +335,7 @@ $photo_url .= (strpos($photo_url, '?') !== false ? '&' : '?') . 'sz=400';
 | `emailAddresses[]` | `contact_info[]` with type=email | All emails |
 | `phoneNumbers[]` | `contact_info[]` with type=phone/mobile | Map type |
 | `addresses[]` | `addresses[]` | All addresses |
-| `organizations[]` | `work_history[]` + company lookup/create | All orgs |
+| `teams[]` | `work_history[]` + team lookup/create | All orgs |
 | `birthdays[0].date` | `important_date` post | Only first, as birthday |
 | `photos[0].url` | Featured image | Only if no existing photo |
 | `biographies[]` | **SKIP** | Per CONTEXT.md |
@@ -418,7 +418,7 @@ private array $stats = [
     'contacts_imported' => 0,
     'contacts_updated' => 0,
     'contacts_skipped' => 0,
-    'companies_created' => 0,
+    'teams_created' => 0,
     'dates_created' => 0,
     'photos_imported' => 0,
     'errors' => [],
@@ -448,7 +448,7 @@ namespace Stadion\Import;
 
 class GoogleContactsAPI {
     private array $stats = [...];
-    private array $company_map = []; // name => ID cache
+    private array $team_map = []; // name => ID cache
 
     // Entry points
     public function import_all(int $user_id): array;
@@ -471,7 +471,7 @@ class GoogleContactsAPI {
     private function import_photo(int $post_id, object $person, string $full_name): void;
 
     // Helpers
-    private function get_or_create_company(string $name, int $user_id): int;
+    private function get_or_create_team(string $name, int $user_id): int;
     private function store_google_ids(int $post_id, string $resource_name, string $etag): void;
 }
 ```
@@ -552,7 +552,7 @@ use Google\Service\PeopleService\ListConnectionsResponse;
 |---------|-------------|-----|
 | Image sideloading | `media_handle_sideload()` | Handles MIME detection, attachment metadata, all edge cases |
 | Token refresh | GoogleOAuth pattern | Already handles refresh, error states |
-| Company matching | `get_page_by_title()` | Established pattern in all imports |
+| Team matching | `get_page_by_title()` | Established pattern in all imports |
 | Email search in repeater | Direct meta query | ACF stores repeater with numbered keys |
 
 ## Common Pitfalls
@@ -574,7 +574,7 @@ use Google\Service\PeopleService\ListConnectionsResponse;
 **Solution:** Use standard page size (100), don't parallelize requests.
 
 ### 5. Partial Data in Google Contacts
-**Problem:** Contact may have name but no email, or only company.
+**Problem:** Contact may have name but no email, or only team.
 **Solution:** Per CONTEXT.md, skip contacts without email entirely.
 
 ## Sources

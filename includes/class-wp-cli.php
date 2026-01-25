@@ -584,7 +584,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * ## OPTIONS
 		 *
 		 * [--post-type=<type>]
-		 * : Post type to update (person, company, important_date, or all). Default: all
+		 * : Post type to update (person, team, important_date, or all). Default: all
 		 *
 		 * [--dry-run]
 		 * : Preview changes without making them
@@ -594,7 +594,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *     wp prm visibility set-defaults
 		 *     wp prm visibility set-defaults --dry-run
 		 *     wp prm visibility set-defaults --post-type=person
-		 *     wp prm visibility set-defaults --post-type=company
+		 *     wp prm visibility set-defaults --post-type=team
 		 *     wp prm visibility set-defaults --post-type=important_date
 		 *
 		 * @when after_wp_load
@@ -610,11 +610,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			// Determine which post types to process.
 			$post_types = [];
 			if ( 'all' === $post_type ) {
-				$post_types = [ 'person', 'company', 'important_date' ];
-			} elseif ( in_array( $post_type, [ 'person', 'company', 'important_date' ] ) ) {
+				$post_types = [ 'person', 'team', 'important_date' ];
+			} elseif ( in_array( $post_type, [ 'person', 'team', 'important_date' ] ) ) {
 				$post_types = [ $post_type ];
 			} else {
-				WP_CLI::error( 'Invalid post type. Use: person, company, important_date, or all' );
+				WP_CLI::error( 'Invalid post type. Use: person, team, important_date, or all' );
 				return;
 			}
 
@@ -722,7 +722,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * Migrate existing Stadion installation to multi-user system
 		 *
 		 * This command sets default visibility on all existing contacts,
-		 * companies, and important dates, enabling the multi-user features
+		 * teams, and important dates, enabling the multi-user features
 		 * while preserving the existing single-user behavior (all private).
 		 *
 		 * ## OPTIONS
@@ -747,7 +747,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '' );
 			WP_CLI::log( 'This migration will:' );
 			WP_CLI::log( '  1. Set visibility to "private" on all contacts without visibility' );
-			WP_CLI::log( '  2. Set visibility to "private" on all companies without visibility' );
+			WP_CLI::log( '  2. Set visibility to "private" on all teams without visibility' );
 			WP_CLI::log( '  3. Set visibility to "private" on all important dates without visibility' );
 			WP_CLI::log( '' );
 			WP_CLI::log( 'This preserves single-user behavior: all your data remains private' );
@@ -767,7 +767,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '' );
 
 			// We need to call the internal method directly, so we'll replicate the logic
-			$post_types = [ 'person', 'company', 'important_date' ];
+			$post_types = [ 'person', 'team', 'important_date' ];
 			$results    = [];
 
 			foreach ( $post_types as $post_type ) {
@@ -785,7 +785,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$total_skipped = 0;
 
 			foreach ( $results as $type => $result ) {
-				$label  = 'person' === $type ? 'People' : ( 'company' === $type ? 'Companies' : 'Important Dates' );
+				$label  = 'person' === $type ? 'People' : ( 'team' === $type ? 'Teams' : 'Important Dates' );
 				$action = $dry_run ? 'Would update' : 'Updated';
 				WP_CLI::log(
 					sprintf(
@@ -830,7 +830,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		/**
 		 * Validate multi-user migration status
 		 *
-		 * Checks that all contacts, companies, and important dates have
+		 * Checks that all contacts, teams, and important dates have
 		 * visibility set. Reports counts and provides guidance if migration
 		 * is incomplete.
 		 *
@@ -845,7 +845,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( 'Validating multi-user migration status...' );
 			WP_CLI::log( '' );
 
-			$post_types    = [ 'person', 'company', 'important_date' ];
+			$post_types    = [ 'person', 'team', 'important_date' ];
 			$all_valid     = true;
 			$total_with    = 0;
 			$total_without = 0;
@@ -876,7 +876,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					}
 				}
 
-				$label = 'person' === $post_type ? 'People' : ( 'company' === $post_type ? 'Companies' : 'Important Dates' );
+				$label = 'person' === $post_type ? 'People' : ( 'team' === $post_type ? 'Teams' : 'Important Dates' );
 
 				if ( $without_visibility > 0 ) {
 					WP_CLI::log(
@@ -949,7 +949,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				)
 			);
 
-			$label = 'person' === $post_type ? 'people' : ( 'company' === $post_type ? 'companies' : 'important dates' );
+			$label = 'person' === $post_type ? 'people' : ( 'team' === $post_type ? 'teams' : 'important dates' );
 
 			if ( empty( $post_ids ) ) {
 				WP_CLI::log( sprintf( 'No %s found.', $label ) );
@@ -1941,7 +1941,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					WP_CLI::log( sprintf( '  Contacts imported: %d', $stats['contacts_imported'] ?? 0 ) );
 					WP_CLI::log( sprintf( '  Contacts updated: %d', $stats['contacts_updated'] ?? 0 ) );
 					WP_CLI::log( sprintf( '  Contacts skipped (no email): %d', $stats['contacts_no_email'] ?? 0 ) );
-					WP_CLI::log( sprintf( '  Companies created: %d', $stats['companies_created'] ?? 0 ) );
+					WP_CLI::log( sprintf( '  Teams created: %d', $stats['teams_created'] ?? 0 ) );
 					WP_CLI::log( sprintf( '  Dates created: %d', $stats['dates_created'] ?? 0 ) );
 					WP_CLI::log( sprintf( '  Photos imported: %d', $stats['photos_imported'] ?? 0 ) );
 

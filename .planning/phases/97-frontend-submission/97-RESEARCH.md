@@ -8,7 +8,7 @@
 
 This phase implements the frontend UI for submitting and viewing feedback within the Stadion React SPA. The backend REST API at `/stadion/v1/feedback` is already complete (Phase 96), so this phase focuses purely on React components, routing, API integration, and user experience.
 
-The codebase has well-established patterns for list pages (TodosList, DatesList, PeopleList), detail views (PersonDetail, CompanyDetail), modal forms (PersonEditModal, CompanyEditModal), and TanStack Query hooks (usePeople, useTodos, useDashboard). The frontend implementation should follow these existing patterns exactly.
+The codebase has well-established patterns for list pages (TodosList, DatesList, PeopleList), detail views (PersonDetail, TeamDetail), modal forms (PersonEditModal, TeamEditModal), and TanStack Query hooks (usePeople, useTodos, useDashboard). The frontend implementation should follow these existing patterns exactly.
 
 Key UI requirements include:
 - Navigation via sidebar menu item

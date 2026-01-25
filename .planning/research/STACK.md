@@ -74,7 +74,7 @@ use Google\Service\PeopleService\EmailAddress;
 use Google\Service\PeopleService\PhoneNumber;
 use Google\Service\PeopleService\Address;
 use Google\Service\PeopleService\Birthday;
-use Google\Service\PeopleService\Organization;
+use Google\Service\PeopleService\Team;
 use Google\Service\PeopleService\Photo;
 ```
 
@@ -145,7 +145,7 @@ use Google\Service\PeopleService\Photo;
 **PHP implementation pattern:**
 ```php
 $params = [
-    'personFields' => 'metadata,names,emailAddresses,phoneNumbers,addresses,birthdays,organizations,photos,biographies,nicknames,urls',
+    'personFields' => 'metadata,names,emailAddresses,phoneNumbers,addresses,birthdays,teams,photos,biographies,nicknames,urls',
     'pageSize' => 1000,
     'requestSyncToken' => true,
 ];
@@ -347,7 +347,7 @@ Handle these Google API errors:
 | `phoneNumbers[]` | `contact_info` repeater | type: 'phone'/'mobile' |
 | `addresses[]` | `addresses` repeater | Full address mapping |
 | `birthdays[0]` | Create `important_date` post | type: 'birthday' |
-| `organizations[0]` | `work_history` repeater | May create company |
+| `teams[0]` | `work_history` repeater | May create team |
 | `photos[0].url` | `_thumbnail_id` | Sideload to media |
 | `biographies[0].value` | `story` | WYSIWYG field |
 | `urls[]` | `contact_info` repeater | Detect type from URL |

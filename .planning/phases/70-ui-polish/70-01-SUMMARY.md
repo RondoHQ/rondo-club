@@ -10,7 +10,7 @@ requires:
     provides: dashboard customization foundation
 provides:
   - btn-danger-outline CSS class for softer delete buttons
-  - Updated PersonDetail and CompanyDetail with outline delete styling
+  - Updated PersonDetail and TeamDetail with outline delete styling
 affects: []
 
 # Tech tracking
@@ -24,7 +24,7 @@ key-files:
   modified:
     - src/index.css
     - src/pages/People/PersonDetail.jsx
-    - src/pages/Companies/CompanyDetail.jsx
+    - src/pages/Teams/TeamDetail.jsx
 
 key-decisions:
   - "Keep btn-danger solid for critical admin actions (UserApproval)"
@@ -41,7 +41,7 @@ completed: 2026-01-16
 
 # Phase 70 Plan 01: Soften Delete Button Summary
 
-**Added btn-danger-outline CSS class with red border/text and subtle hover fill for softer delete buttons on PersonDetail and CompanyDetail**
+**Added btn-danger-outline CSS class with red border/text and subtle hover fill for softer delete buttons on PersonDetail and TeamDetail**
 
 ## Performance
 
@@ -55,7 +55,7 @@ completed: 2026-01-16
 - Created btn-danger-outline CSS class with transparent background, red border, and red text
 - Added hover state that fills with subtle red (red-50 light mode, red-900/30 dark mode)
 - Full dark mode support with appropriate color adjustments
-- Updated delete buttons on PersonDetail and CompanyDetail pages
+- Updated delete buttons on PersonDetail and TeamDetail pages
 - Preserved solid btn-danger for critical admin actions in UserApproval
 
 ## Task Commits
@@ -63,15 +63,15 @@ completed: 2026-01-16
 Each task was committed atomically:
 
 1. **Task 1: Add btn-danger-outline class to CSS** - `b98b9c3` (style)
-2. **Task 2: Update delete buttons in PersonDetail and CompanyDetail** - `68afea5` (feat)
+2. **Task 2: Update delete buttons in PersonDetail and TeamDetail** - `68afea5` (feat)
 
 ## Files Created/Modified
 - `src/index.css` - Added btn-danger-outline class definition
 - `src/pages/People/PersonDetail.jsx` - Changed delete button to use btn-danger-outline
-- `src/pages/Companies/CompanyDetail.jsx` - Changed delete button to use btn-danger-outline
+- `src/pages/Teams/TeamDetail.jsx` - Changed delete button to use btn-danger-outline
 
 ## Decisions Made
-- **Outline for entity deletes:** Using outline style for PersonDetail and CompanyDetail delete buttons de-emphasizes these secondary actions while maintaining clear destructive intent
+- **Outline for entity deletes:** Using outline style for PersonDetail and TeamDetail delete buttons de-emphasizes these secondary actions while maintaining clear destructive intent
 - **Solid for admin actions:** UserApproval.jsx buttons (reject user, deny access) remain solid red because they're critical admin operations that should be prominent
 
 ## Deviations from Plan

@@ -33,14 +33,14 @@ Phase 9 delivered the complete frontend for the multi-user sharing and workspace
 ### Visibility Controls (09-02)
 - `VisibilitySelector` component with Private/Workspace toggle
 - Workspace multi-select for shared visibility
-- Integrated into PersonEditModal and CompanyEditModal
+- Integrated into PersonEditModal and TeamEditModal
 - Default visibility is "private" for all new contacts
 
 ### Direct Sharing (09-03)
-- Share REST endpoints for people and companies
+- Share REST endpoints for people and teams
 - User search endpoint for finding share targets
 - `ShareModal` component with user search and permission levels
-- Share buttons added to PersonDetail and CompanyDetail pages
+- Share buttons added to PersonDetail and TeamDetail pages
 
 ### Workspace Management (09-04, 09-05)
 - `WorkspacesList` page with grid layout and create modal
@@ -52,7 +52,7 @@ Phase 9 delivered the complete frontend for the multi-user sharing and workspace
 ### List Filtering (09-06)
 - Ownership filter: All/My Contacts/Shared with Me
 - Workspace filter dropdown
-- Applied to both PeopleList and CompaniesList
+- Applied to both PeopleList and TeamsList
 - Filter chips with clear functionality
 
 ## Files Created
@@ -77,7 +77,7 @@ Phase 9 delivered the complete frontend for the multi-user sharing and workspace
 
 ### Backend (PHP)
 - `includes/class-rest-people.php` - Added share endpoints
-- `includes/class-rest-companies.php` - Added share endpoints
+- `includes/class-rest-teams.php` - Added share endpoints
 - `includes/class-rest-api.php` - Added user search endpoint
 
 ### Frontend (React)
@@ -85,11 +85,11 @@ Phase 9 delivered the complete frontend for the multi-user sharing and workspace
 - `src/App.jsx` - Added workspace and invite routes
 - `src/components/layout/Layout.jsx` - Added Workspaces navigation
 - `src/components/PersonEditModal.jsx` - Added VisibilitySelector
-- `src/components/CompanyEditModal.jsx` - Added VisibilitySelector
+- `src/components/TeamEditModal.jsx` - Added VisibilitySelector
 - `src/pages/People/PeopleList.jsx` - Added visibility/workspace filters
-- `src/pages/Companies/CompaniesList.jsx` - Added visibility/workspace filters
+- `src/pages/Teams/TeamsList.jsx` - Added visibility/workspace filters
 - `src/pages/People/PersonDetail.jsx` - Added Share button
-- `src/pages/Companies/CompanyDetail.jsx` - Added Share button
+- `src/pages/Teams/TeamDetail.jsx` - Added Share button
 
 ## Routes Added
 

@@ -2,7 +2,7 @@
 
 ## v6.0 Custom Fields (Shipped: 2026-01-21)
 
-**Delivered:** Admin-defined custom fields for People and Organizations with 14 field types, Settings UI, detail view integration, list view columns, and global search support.
+**Delivered:** Admin-defined custom fields for People and Teams with 14 field types, Settings UI, detail view integration, list view columns, and global search support.
 
 **Phases completed:** 87-94 (15 plans total)
 
@@ -128,7 +128,7 @@
 - Added Dinner and Zoom activity types with proper icons
 - Renamed "Phone call" to "Phone" for consistency
 - Fixed topbar z-index layering (z-30) on People screen
-- Fixed person header spacing (" at " between job and company)
+- Fixed person header spacing (" at " between job and team)
 
 **Stats:**
 
@@ -143,9 +143,9 @@
 
 ---
 
-## v4.4 Code Organization (Shipped: 2026-01-16)
+## v4.4 Code Team (Shipped: 2026-01-16)
 
-**Delivered:** PHP codebase reorganization with PSR-4 namespaces, Composer autoloading, and one-class-per-file compliance.
+**Delivered:** PHP codebase reteam with PSR-4 namespaces, Composer autoloading, and one-class-per-file compliance.
 
 **Phases completed:** 64-66 (6 plans total)
 
@@ -291,7 +291,7 @@
 
 **Key accomplishments:**
 
-- Current position (job title + company) display in person header
+- Current position (job title + team) display in person header
 - Persistent todos sidebar visible across all PersonDetail tabs
 - Mobile todos access via floating action button + slide-up panel
 - 3-column grid layout for equal-width content columns
@@ -322,7 +322,7 @@
 
 ## v2.3 List View Unification (Shipped: 2026-01-13)
 
-**Delivered:** Unified list view experience across People and Organizations, removing card view and ensuring consistent UX with full bulk action parity.
+**Delivered:** Unified list view experience across People and Teams, removing card view and ensuring consistent UX with full bulk action parity.
 
 **Phases completed:** 16-18 (3 plans total)
 
@@ -330,10 +330,10 @@
 
 - Removed card view toggle from People, list view is now the only option
 - Added dedicated image column to People list for proper alignment
-- Built Organizations list view with columns (logo, name, industry, website, workspace, labels)
-- Added sortable columns and selection infrastructure to Organizations
-- Created bulk actions for Organizations: visibility, workspace assignment, label management
-- Full parity between People and Organizations list views
+- Built Teams list view with columns (logo, name, industry, website, workspace, labels)
+- Added sortable columns and selection infrastructure to Teams
+- Created bulk actions for Teams: visibility, workspace assignment, label management
+- Full parity between People and Teams list views
 
 **Stats:**
 
@@ -362,8 +362,8 @@
 - Labels column with styled pills
 - Clickable SortableHeader component with sort indicators
 - Sticky table header and selection toolbar
-- Organization, Workspace, Labels sorting options
-- BulkOrganizationModal with search and clear option
+- Team, Workspace, Labels sorting options
+- BulkTeamModal with search and clear option
 - BulkLabelsModal with add/remove mode toggle
 
 **Issues closed:** ISS-001, ISS-002, ISS-003, ISS-004, ISS-005
@@ -381,7 +381,7 @@
 **Key accomplishments:**
 
 - Card/list view toggle for people screen
-- Tabular list view with Name, Organization, Workspace columns
+- Tabular list view with Name, Team, Workspace columns
 - Checkbox multi-selection infrastructure
 - Bulk update REST endpoint with ownership validation
 - Bulk visibility and workspace assignment modals
@@ -426,7 +426,7 @@
 
 **Key accomplishments:**
 
-- Split class-rest-api.php into 5 domain-specific classes (Base, People, Companies, Slack, Import/Export)
+- Split class-rest-api.php into 5 domain-specific classes (Base, People, Teams, Slack, Import/Export)
 - Implemented sodium encryption for Slack tokens with fallback
 - Added server-side XSS protection using WordPress native wp_kses functions
 - Removed 48 console.error() calls from 11 React files

@@ -31,9 +31,9 @@ class SmokeTest extends StadionTestCase {
 		$this->assertNotNull( $post_type, 'Person post type should be registered' );
 	}
 
-	public function test_company_post_type_is_registered(): void {
-		$post_type = get_post_type_object( 'company' );
-		$this->assertNotNull( $post_type, 'Company post type should be registered' );
+	public function test_team_post_type_is_registered(): void {
+		$post_type = get_post_type_object( 'team' );
+		$this->assertNotNull( $post_type, 'Team post type should be registered' );
 	}
 
 	public function test_important_date_post_type_is_registered(): void {

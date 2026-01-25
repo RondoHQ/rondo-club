@@ -13,7 +13,7 @@ The transition is seamless: existing single-user data remains private until expl
 
 ## Workspaces
 
-Workspaces are shared spaces where team members can collaborate on contacts. Think of them as "teams" or "groups" within your organization.
+Workspaces are shared spaces where team members can collaborate on contacts. Think of them as "teams" or "groups" within your team.
 
 ### Creating a Workspace
 

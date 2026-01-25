@@ -25,7 +25,7 @@ key-files:
 
 key-decisions:
   - "Cast DB results to integers for assertions (wpdb returns strings)"
-  - "Test all three controlled post types (person, company, important_date) individually"
+  - "Test all three controlled post types (person, team, important_date) individually"
   - "Test both positive (author access) and negative (non-author denied) cases"
 
 patterns-established:
@@ -57,7 +57,7 @@ completed: 2026-01-13
 - Created UserIsolationTest with 18 comprehensive tests and 46 assertions
 - Verified user_can_access_post() correctly enforces author-based access control
 - Verified query filtering (WP_Query, REST API) restricts results to user's own posts
-- Covered all three controlled post types: person, company, important_date
+- Covered all three controlled post types: person, team, important_date
 - Tested edge cases: unapproved users, trashed posts, logged-out users
 
 ## Task Commits

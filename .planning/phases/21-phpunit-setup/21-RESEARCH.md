@@ -417,11 +417,11 @@ abstract class StadionTestCase extends WPTestCase {
     }
 
     /**
-     * Create an organization (company) post.
+     * Create an team (team) post.
      */
-    protected function createOrganization(array $args = [], array $acf = []): int {
+    protected function createTeam(array $args = [], array $acf = []): int {
         $defaults = [
-            'post_type'   => 'company',  // Post type slug
+            'post_type'   => 'team',  // Post type slug
             'post_status' => 'publish',
             'post_author' => get_current_user_id(),
         ];

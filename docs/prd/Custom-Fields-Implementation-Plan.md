@@ -1,12 +1,12 @@
 # Custom Fields Implementation Plan
 
-**Stadion CRM - Global Custom Fields for Person & Organization**
+**Stadion CRM - Global Custom Fields for Person & Team**
 
 ---
 
 ## Scope
 
-- **Object types:** Person and Organization only (for now)
+- **Object types:** Person and Team only (for now)
 - **Visibility:** Global across entire install (not per-user or per-workspace)
 - **UI location:** New 'Custom Fields' settings pages linked from Admin tab
 - **Admin only:** Only administrators can create/edit/delete custom fields
@@ -20,7 +20,7 @@ New custom table: `wp_stadion_custom_fields`
 | Column | Type | Description |
 |--------|------|-------------|
 | id | BIGINT PK | Auto-increment primary key |
-| object_type | VARCHAR(50) | 'person' or 'company' |
+| object_type | VARCHAR(50) | 'person' or 'team' |
 | field_key | VARCHAR(100) | Unique key within object type (e.g., 'linkedin_url') |
 | field_type | VARCHAR(50) | text, textarea, number, date, boolean, select, url, email |
 | label | VARCHAR(255) | Display label shown in UI |
@@ -72,7 +72,7 @@ POST   /stadion/v1/custom-fields/reorder            # Reorder fields { ids: [3,1
 
 ```
 GET    /stadion/v1/schema/person    # Get person schema (standard + custom fields)
-GET    /stadion/v1/schema/company   # Get company schema (standard + custom fields)
+GET    /stadion/v1/schema/team   # Get team schema (standard + custom fields)
 ```
 
 Schema endpoints return combined standard ACF fields + custom fields for form rendering.
@@ -112,7 +112,7 @@ Schema endpoints return combined standard ACF fields + custom fields for form re
 ### 3.1 New Settings Pages
 
 - `/settings/people-fields` - Custom Fields for People
-- `/settings/company-fields` - Custom Fields for Organizations
+- `/settings/team-fields` - Custom Fields for Teams
 
 Linked from Admin tab in main Settings, similar to Labels and Relationship Types.
 
@@ -138,7 +138,7 @@ Follow existing Labels.jsx pattern:
 
 ### 3.4 Dynamic Field Rendering in Detail Views
 
-Update PersonDetail.jsx and CompanyDetail.jsx to:
+Update PersonDetail.jsx and TeamDetail.jsx to:
 
 1. Fetch custom field definitions on mount
 2. Render custom fields in a 'Custom Fields' section
@@ -196,11 +196,11 @@ class STADION_Custom_Fields_Integration {
     public function __construct() {
         // Hook into REST response preparation
         add_filter('rest_prepare_person', [$this, 'add_custom_fields'], 10, 3);
-        add_filter('rest_prepare_company', [$this, 'add_custom_fields'], 10, 3);
+        add_filter('rest_prepare_team', [$this, 'add_custom_fields'], 10, 3);
 
         // Hook into REST update to save custom field values
         add_action('rest_after_insert_person', [$this, 'save_custom_fields'], 10, 2);
-        add_action('rest_after_insert_company', [$this, 'save_custom_fields'], 10, 2);
+        add_action('rest_after_insert_team', [$this, 'save_custom_fields'], 10, 2);
     }
 
     public function add_custom_fields($response, $post, $request) {

@@ -4,7 +4,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 ## Project Overview
 
-**Stadion** is a personal CRM system built as a WordPress theme with integrated backend functionality and a modern React SPA frontend. Tracks contacts, organizations, important dates, and interactions with user-specific access control.
+**Stadion** is a personal CRM system built as a WordPress theme with integrated backend functionality and a modern React SPA frontend. Tracks contacts, teams, important dates, and interactions with user-specific access control.
 
 **Tech Stack:**
 - Backend: WordPress 6.0+, PHP 8.0+, ACF Pro (required)
@@ -42,7 +42,7 @@ Entry point: `functions.php`
 - Registers activation/deactivation hooks for rewrites and cron via theme activation hooks
 
 **Key classes:**
-- `STADION_Post_Types` - Registers Person, Organization, Important Date CPTs
+- `STADION_Post_Types` - Registers Person, Team, Important Date CPTs
 - `STADION_Taxonomies` - Registers labels and relationship types
 - `STADION_Auto_Title` - Auto-generates post titles
 - `STADION_Access_Control` - Row-level user data filtering at query and REST levels
@@ -65,7 +65,7 @@ Entry point: `src/main.jsx`
 - `App.jsx` - Routing with ProtectedRoute wrapper
 - `api/client.js` - Axios client with WordPress nonce injection
 - `hooks/` - Custom hooks (useAuth, usePeople, useDashboard)
-- `pages/` - Route components for People, Organizations, Dates, Settings
+- `pages/` - Route components for People, Teams, Dates, Settings
 
 **State management:**
 - TanStack Query for server state/caching
@@ -73,18 +73,18 @@ Entry point: `src/main.jsx`
 - Zustand available for client state
 
 **API client uses two namespaces:**
-- `/wp/v2/` - Standard WordPress REST (people, organizations, important-dates)
+- `/wp/v2/` - Standard WordPress REST (people, teams, important-dates)
 - `/stadion/v1/` - Custom endpoints (dashboard, search, timeline)
 
 ## Data Model
 
 **Custom Post Types:**
 - `person` - Contact records with relationships, work history, photo gallery
-- `company` - Organizations with logo, industry, contact info (post type slug remains `company` for backward compatibility)
+- `team` - Teams with logo, industry, contact info (post type slug remains `team` for backward compatibility)
 - `important_date` - Recurring dates linked to people (reminders sent via daily digest)
 
 **Taxonomies:**
-- `person_label`, `company_label` - Tags
+- `person_label`, `team_label` - Tags
 - `relationship_type` - Relationship classifications
 - `date_type` - Date categorization
 
@@ -98,7 +98,7 @@ Entry point: `src/main.jsx`
 ## User Roles
 
 - **Stadion User** - Custom role created automatically on theme activation
-  - Minimal permissions: can create/edit/delete their own people and organizations, upload files
+  - Minimal permissions: can create/edit/delete their own people and teams, upload files
   - Cannot access WordPress admin settings, manage other users, or install plugins/themes
   - Role is automatically removed on theme deactivation (users reassigned to Subscriber)
 

@@ -240,14 +240,14 @@
         },
         {
             "key": "field_person_work",
-            "label": "Work History",
+            "label": "Team History",
             "name": "",
             "type": "tab",
             "placement": "top"
         },
         {
             "key": "field_work_history",
-            "label": "Work History",
+            "label": "Team History",
             "name": "work_history",
             "type": "repeater",
             "layout": "block",
@@ -255,10 +255,10 @@
             "sub_fields": [
                 {
                     "key": "field_work_company",
-                    "label": "Company",
+                    "label": "Team",
                     "name": "company",
                     "type": "post_object",
-                    "post_type": ["company"],
+                    "post_type": ["team"],
                     "return_format": "id",
                     "allow_null": 1,
                     "wrapper": {

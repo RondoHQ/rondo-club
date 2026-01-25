@@ -9,7 +9,7 @@ requires:
   - phase: 87-acf-foundation
     provides: CustomFields Manager with get_fields() method
 provides:
-  - Custom field search in global_search() for People and Organizations
+  - Custom field search in global_search() for People and Teams
   - Scored search results with custom field matches at priority 30
   - Helper methods for building custom field meta queries
 affects: [search, global-search]
@@ -28,7 +28,7 @@ key-files:
 
 key-decisions:
   - "Custom field matches score 30 (lower than name matches at 60-100, higher than general search at 20)"
-  - "Company search refactored to use same scored pattern as People search for consistency"
+  - "Team search refactored to use same scored pattern as People search for consistency"
   - "Searchable field types: text, textarea, email, url, number, select, checkbox"
 
 patterns-established:
@@ -42,7 +42,7 @@ completed: 2026-01-20
 
 # Phase 93 Plan 01: Custom Field Search Integration Summary
 
-**Extended global search to include custom field values with scored priority, enabling users to find People and Organizations by searching content in any text-based custom field**
+**Extended global search to include custom field values with scored priority, enabling users to find People and Teams by searching content in any text-based custom field**
 
 ## Performance
 
@@ -53,8 +53,8 @@ completed: 2026-01-20
 - **Files modified:** 1
 
 ## Accomplishments
-- Added custom field search to global search for both People and Organizations
-- Refactored company search to use same scored pattern as people search
+- Added custom field search to global search for both People and Teams
+- Refactored team search to use same scored pattern as people search
 - Created reusable helper methods for custom field search functionality
 - Custom field matches properly prioritized (score 30) below name matches (60) but above general search (20)
 
@@ -70,7 +70,7 @@ Each task was committed atomically:
 
 ## Decisions Made
 - Custom field matches score 30 (between name matches at 60-100 and general search at 20)
-- Refactored company search to use same scored approach as people for consistency
+- Refactored team search to use same scored approach as people for consistency
 - Searchable types limited to text-based content: text, textarea, email, url, number, select, checkbox
 - Excluded non-searchable types: image, file, color, relationship, link, date, true/false
 

@@ -161,7 +161,7 @@ class GoogleContactsMapper {
 | `phoneNumbers[]` | `contact_info[]` (type: phone/mobile) | ACF repeater |
 | `addresses[]` | `addresses[]` | ACF repeater |
 | `birthdays[0]` | `important_date` CPT | Link via `related_people` |
-| `organizations[0]` | `work_history[]` | Create company if needed |
+| `teams[0]` | `work_history[]` | Create team if needed |
 | `biographies[0].value` | `story` | ACF WYSIWYG |
 
 #### 4. GoogleContactsConflict (Conflict Resolution)

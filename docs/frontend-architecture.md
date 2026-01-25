@@ -27,7 +27,7 @@ src/
 │   └── app.js            # Application-wide constants
 ├── hooks/                # Custom React hooks
 ├── pages/                # Route page components
-│   ├── Companies/
+│   ├── Teams/
 │   ├── Dates/
 │   ├── People/
 │   ├── Settings/
@@ -82,10 +82,10 @@ Main routing component:
 | `/people/:personId/contact/new` | `ContactDetailForm` | Add contact method |
 | `/people/:personId/work-history/new` | `WorkHistoryForm` | Add work history |
 | `/people/:personId/relationship/new` | `RelationshipForm` | Add relationship |
-| `/companies` | `CompaniesList` | Company list |
-| `/companies/new` | `CompanyForm` | Create company |
-| `/companies/:id` | `CompanyDetail` | View company |
-| `/companies/:id/edit` | `CompanyForm` | Edit company |
+| `/teams` | `TeamsList` | Team list |
+| `/teams/new` | `TeamForm` | Create team |
+| `/teams/:id` | `TeamDetail` | View team |
+| `/teams/:id/edit` | `TeamForm` | Edit team |
 | `/dates` | `DatesList` | Important dates list |
 | `/dates/new` | `DateForm` | Create date |
 | `/dates/:id/edit` | `DateForm` | Edit date |
@@ -145,7 +145,7 @@ wpApi.getPerson(id, params)
 wpApi.createPerson(data)
 wpApi.updatePerson(id, data)
 wpApi.deletePerson(id)
-// ... similar for companies, dates, taxonomies
+// ... similar for teams, dates, taxonomies
 ```
 
 **`prmApi`** - Custom PRM endpoints:
@@ -336,7 +336,7 @@ const { hasUpdate, currentVersion, latestVersion, reload, checkVersion } = useVe
 | Function | Purpose |
 |----------|---------|
 | `decodeHtml(html)` | Decode HTML entities |
-| `getCompanyName(company)` | Get decoded company name |
+| `getTeamName(team)` | Get decoded team name |
 | `getPersonName(person)` | Get decoded person name |
 | `getPersonInitial(person)` | Get first initial for avatars |
 | `sanitizePersonAcf(acfData, overrides)` | Sanitize ACF data for API |
