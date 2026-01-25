@@ -2218,9 +2218,9 @@ function ConnectionsContactsSubtab({
 
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Google Contacts</h2>
+      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Google Contacten</h2>
       <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-        Sync your contacts with Google Contacts for seamless access across devices.
+        Synchroniseer je contacten met Google Contacten voor naadloze toegang op al je apparaten.
       </p>
 
       {googleContactsLoading ? (
