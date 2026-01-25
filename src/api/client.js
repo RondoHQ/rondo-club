@@ -53,7 +53,14 @@ export const wpApi = {
   createTeam: (data) => api.post('/wp/v2/teams', data),
   updateTeam: (id, data) => api.put(`/wp/v2/teams/${id}`, data),
   deleteTeam: (id, params = {}) => api.delete(`/wp/v2/teams/${id}`, { params }),
-  
+
+  // Commissies
+  getCommissies: (params) => api.get('/wp/v2/commissies', { params }),
+  getCommissie: (id, params = {}) => api.get(`/wp/v2/commissies/${id}`, { params }),
+  createCommissie: (data) => api.post('/wp/v2/commissies', data),
+  updateCommissie: (id, data) => api.put(`/wp/v2/commissies/${id}`, data),
+  deleteCommissie: (id, params = {}) => api.delete(`/wp/v2/commissies/${id}`, { params }),
+
   // Important Dates
   getDates: (params) => api.get('/wp/v2/important-dates', { params }),
   getDate: (id) => api.get(`/wp/v2/important-dates/${id}`),
@@ -71,6 +78,11 @@ export const wpApi = {
   createTeamLabel: (data) => api.post('/wp/v2/team_label', data),
   updateTeamLabel: (id, data) => api.post(`/wp/v2/team_label/${id}`, data),
   deleteTeamLabel: (id) => api.delete(`/wp/v2/team_label/${id}?force=true`),
+
+  getCommissieLabels: () => api.get('/wp/v2/commissie_label', { params: { per_page: 100, _fields: 'id,name,slug,count' } }),
+  createCommissieLabel: (data) => api.post('/wp/v2/commissie_label', data),
+  updateCommissieLabel: (id, data) => api.post(`/wp/v2/commissie_label/${id}`, data),
+  deleteCommissieLabel: (id) => api.delete(`/wp/v2/commissie_label/${id}?force=true`),
 
   getRelationshipTypes: () => api.get('/wp/v2/relationship_type', { params: { per_page: 100, _fields: 'id,name,slug,acf' } }),
   createRelationshipType: (data) => api.post('/wp/v2/relationship_type', data),
@@ -104,7 +116,8 @@ export const prmApi = {
   // Bulk operations
   bulkUpdatePeople: (ids, updates) => api.post('/stadion/v1/people/bulk-update', { ids, updates }),
   bulkUpdateTeams: (ids, updates) => api.post('/stadion/v1/teams/bulk-update', { ids, updates }),
-  
+  bulkUpdateCommissies: (ids, updates) => api.post('/stadion/v1/commissies/bulk-update', { ids, updates }),
+
   // Current user
   getCurrentUser: () => api.get('/stadion/v1/user/me'),
   
@@ -171,7 +184,11 @@ export const prmApi = {
   // Team-specific
   getTeamPeople: (teamId) => api.get(`/stadion/v1/teams/${teamId}/people`),
   setTeamLogo: (teamId, mediaId) => api.post(`/stadion/v1/teams/${teamId}/logo`, { media_id: mediaId }),
-  
+
+  // Commissie-specific
+  getCommissiePeople: (commissieId) => api.get(`/stadion/v1/commissies/${commissieId}/people`),
+  setCommissieLogo: (commissieId, mediaId) => api.post(`/stadion/v1/commissies/${commissieId}/logo`, { media_id: mediaId }),
+
   // Photo uploads with proper naming
   uploadPersonPhoto: (personId, file) => {
     const formData = new FormData();

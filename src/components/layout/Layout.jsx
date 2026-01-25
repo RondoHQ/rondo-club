@@ -39,7 +39,8 @@ import { usePeople } from '@/hooks/usePeople';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'People', href: '/people', icon: Users },
-  { name: 'Organizations', href: '/teams', icon: Building2 },
+  { name: 'Teams', href: '/teams', icon: Building2 },
+  { name: 'Commissies', href: '/commissies', icon: UsersRound },
   { name: 'Dates', href: '/dates', icon: Calendar },
   { name: 'Todos', href: '/todos', icon: CheckSquare },
   { name: 'Workspaces', href: '/workspaces', icon: UsersRound },
@@ -532,7 +533,8 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddTeam, onAddDate, onO
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people')) return 'People';
-    if (path.startsWith('/teams')) return 'Organizations';
+    if (path.startsWith('/teams')) return 'Teams';
+    if (path.startsWith('/commissies')) return 'Commissies';
     if (path.startsWith('/dates')) return 'Important Dates';
     if (path.startsWith('/todos')) return 'Todos';
     if (path.startsWith('/workspaces')) return 'Workspaces';

@@ -1,0 +1,79 @@
+{
+    "key": "group_commissie_fields",
+    "title": "Commissie Fields",
+    "fields": [
+        {
+            "key": "field_commissie_website",
+            "label": "Website",
+            "name": "website",
+            "type": "url"
+        },
+        {
+            "key": "field_commissie_contact_info",
+            "label": "Contact Information",
+            "name": "contact_info",
+            "type": "repeater",
+            "layout": "table",
+            "button_label": "Add Contact Method",
+            "sub_fields": [
+                {
+                    "key": "field_commissie_contact_type",
+                    "label": "Type",
+                    "name": "contact_type",
+                    "type": "select",
+                    "choices": {
+                        "phone": "Phone",
+                        "email": "Email",
+                        "address": "Address",
+                        "other": "Other"
+                    },
+                    "wrapper": {
+                        "width": "25"
+                    }
+                },
+                {
+                    "key": "field_commissie_contact_label",
+                    "label": "Label",
+                    "name": "contact_label",
+                    "type": "text",
+                    "placeholder": "e.g., Chair, Secretary",
+                    "wrapper": {
+                        "width": "25"
+                    }
+                },
+                {
+                    "key": "field_commissie_contact_value",
+                    "label": "Value",
+                    "name": "contact_value",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "50"
+                    }
+                }
+            ]
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "commissie"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": [
+        "excerpt",
+        "discussion",
+        "comments",
+        "slug",
+        "author"
+    ],
+    "active": true,
+    "show_in_rest": 1
+}
