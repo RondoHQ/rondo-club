@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { X, User, ChevronDown, Search, Plus, Pencil } from 'lucide-react';
 import RichTextEditor from '@/components/RichTextEditor';
 import { usePeople } from '@/hooks/usePeople';
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 
 export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo = null }) {
   const [content, setContent] = useState('');

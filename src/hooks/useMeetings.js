@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 import { prmApi } from '@/api/client';
 import { peopleKeys } from './usePeople';
 

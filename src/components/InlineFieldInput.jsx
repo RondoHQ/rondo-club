@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 
 /**
  * Simple inline input for a custom field.

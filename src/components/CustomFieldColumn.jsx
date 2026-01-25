@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { getPersonName, getTeamName } from '@/utils/formatters';
