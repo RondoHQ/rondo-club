@@ -149,7 +149,7 @@ function TodoCard({ todo, onToggle, onView }) {
           onToggle(todo);
         }}
         className="mt-0.5 mr-3 flex-shrink-0"
-        title={todo.status === 'completed' ? 'Reopen' : 'Complete'}
+        title={todo.status === 'completed' ? 'Heropenen' : 'Voltooien'}
       >
         {todo.status === 'completed' ? (
           <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
@@ -180,7 +180,7 @@ function TodoCard({ todo, onToggle, onView }) {
       {todo.due_date && todo.status === 'open' && (
         <div className={`ml-3 text-xs text-right flex-shrink-0 ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
           <div>{format(new Date(todo.due_date), 'd MMM')}</div>
-          {isOverdue && <div className="text-red-600 dark:text-red-300">overdue</div>}
+          {isOverdue && <div className="text-red-600 dark:text-red-300">achterstallig</div>}
         </div>
       )}
     </button>
@@ -204,7 +204,7 @@ function AwaitingTodoCard({ todo, onToggle, onView }) {
           onToggle(todo);
         }}
         className="mt-0.5 mr-3 flex-shrink-0"
-        title="Mark as complete"
+        title="Markeren als voltooid"
       >
         <CheckSquare className="w-5 h-5 text-orange-500 dark:text-orange-400" />
       </button>
@@ -257,7 +257,7 @@ function MeetingCard({ meeting, onClick, isNext }) {
   const cardContent = (
     <>
       <div className={`text-sm font-medium w-16 flex-shrink-0 ${isNow ? 'font-semibold text-accent-600 dark:text-white/90' : 'text-accent-600 dark:text-accent-400'}`}>
-        {meeting.all_day ? 'All day' : <>{formattedStartTime} - <br />{formattedEndTime}</>}
+        {meeting.all_day ? 'Hele dag' : <>{formattedStartTime} - <br />{formattedEndTime}</>}
       </div>
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium truncate ${isNow ? 'text-accent-900 dark:text-white' : 'text-gray-900 dark:text-gray-50'}`}>{meeting.title}</p>
@@ -313,9 +313,9 @@ function EmptyState() {
           <Sparkles className="w-12 h-12 text-accent-600 dark:text-accent-400" />
         </div>
       </div>
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-2">Welcome to {APP_NAME}!</h2>
+      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-2">Welkom bij {APP_NAME}!</h2>
       <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-md mx-auto">
-        Get started by adding your first contact, organization, or important date. Your dashboard will populate as you add more information.
+        Begin met het toevoegen van je eerste lid, team of datum. Je dashboard vult zich naarmate je meer informatie toevoegt.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
@@ -323,14 +323,14 @@ function EmptyState() {
           className="inline-flex items-center px-6 py-3 bg-accent-600 text-white rounded-lg hover:bg-accent-700 dark:hover:bg-accent-500 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
-          Add Your First Person
+          Voeg je eerste lid toe
         </Link>
         <Link
           to="/teams/new"
           className="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
-          Add Your First Organization
+          Voeg je eerste team toe
         </Link>
       </div>
     </div>
@@ -511,7 +511,7 @@ export default function Dashboard() {
       setTodoToComplete(null);
       setActivityInitialData(null);
     } catch {
-      alert('Failed to create activity. Please try again.');
+      alert('Activiteit aanmaken mislukt. Probeer het opnieuw.');
     }
   };
 
@@ -584,16 +584,16 @@ export default function Dashboard() {
         <div className="text-red-600 dark:text-red-400 mb-2">
           {isNetworkError ? (
             <>
-              <p className="font-medium mb-1">Failed to load dashboard data</p>
+              <p className="font-medium mb-1">Dashboard data kon niet worden geladen</p>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Please check your connection and try refreshing the page.
+                Controleer je verbinding en ververs de pagina.
               </p>
             </>
           ) : (
             <>
-              <p className="font-medium mb-1">Unable to load dashboard</p>
+              <p className="font-medium mb-1">Dashboard kon niet worden geladen</p>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                {error?.response?.data?.message || 'An error occurred while loading your data.'}
+                {error?.response?.data?.message || 'Er is een fout opgetreden bij het laden van je gegevens.'}
               </p>
             </>
           )}
@@ -612,31 +612,31 @@ export default function Dashboard() {
         {/* Stats - still show them even when empty */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard
-            title="Total people"
+            title="Totaal leden"
             value={0}
             icon={Users}
             href="/people"
           />
           <StatCard
-            title="Organizations"
+            title="Teams"
             value={0}
             icon={Building2}
             href="/teams"
           />
           <StatCard
-            title="Events"
+            title="Evenementen"
             value={0}
             icon={Calendar}
             href="/dates"
           />
           <StatCard
-            title="Open todos"
+            title="Open taken"
             value={0}
             icon={CheckSquare}
             href="/todos"
           />
           <StatCard
-            title="Awaiting"
+            title="Openstaand"
             value={0}
             icon={Clock}
             href="/todos?status=awaiting"
@@ -657,11 +657,11 @@ export default function Dashboard() {
   const cardRenderers = {
     'stats': () => (
       <div key="stats" className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard title="Total people" value={stats?.total_people || 0} icon={Users} href="/people" />
-        <StatCard title="Organizations" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
-        <StatCard title="Events" value={stats?.total_dates || 0} icon={Calendar} href="/dates" />
-        <StatCard title="Open todos" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
-        <StatCard title="Awaiting" value={stats?.awaiting_todos_count || 0} icon={Clock} href="/todos?status=awaiting" />
+        <StatCard title="Totaal leden" value={stats?.total_people || 0} icon={Users} href="/people" />
+        <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
+        <StatCard title="Evenementen" value={stats?.total_dates || 0} icon={Calendar} href="/dates" />
+        <StatCard title="Open taken" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
+        <StatCard title="Openstaand" value={stats?.awaiting_todos_count || 0} icon={Clock} href="/todos?status=awaiting" />
       </div>
     ),
     'reminders': () => (
@@ -669,17 +669,17 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Calendar className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Upcoming reminders {upcoming_reminders?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({upcoming_reminders.length})</span>}
+            Komende herinneringen {upcoming_reminders?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({upcoming_reminders.length})</span>}
           </h2>
           <Link to="/dates" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
-            View all <ArrowRight className="w-4 h-4 ml-1" />
+            Bekijk alles <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {upcoming_reminders?.length > 0 ? (
             upcoming_reminders.map((reminder) => <ReminderCard key={reminder.id} reminder={reminder} />)
           ) : (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No upcoming reminders</p>
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">Geen komende herinneringen</p>
           )}
         </div>
       </div>
@@ -689,17 +689,17 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <CheckSquare className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Open todos {openTodos?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({openTodos.length})</span>}
+            Open taken {openTodos?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({openTodos.length})</span>}
           </h2>
           <Link to="/todos" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
-            View all <ArrowRight className="w-4 h-4 ml-1" />
+            Bekijk alles <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {dashboardTodos.length > 0 ? (
             dashboardTodos.map((todo) => <TodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />)
           ) : (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No open todos</p>
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">Geen open taken</p>
           )}
         </div>
       </div>
@@ -709,17 +709,17 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Clock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Awaiting response {awaitingTodos?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({awaitingTodos.length})</span>}
+            Openstaand {awaitingTodos?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({awaitingTodos.length})</span>}
           </h2>
           <Link to="/todos?status=awaiting" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
-            View all <ArrowRight className="w-4 h-4 ml-1" />
+            Bekijk alles <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {dashboardAwaitingTodos.length > 0 ? (
             dashboardAwaitingTodos.map((todo) => <AwaitingTodoCard key={todo.id} todo={todo} onToggle={handleToggleTodo} onView={handleViewTodo} />)
           ) : (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No awaiting responses</p>
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">Geen openstaande reacties</p>
           )}
         </div>
       </div>
@@ -729,7 +729,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <CalendarClock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            {isToday(selectedDate) ? "Today's meetings" : format(selectedDate, 'EEEE d MMMM')} {dateMeetings.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({dateMeetings.length})</span>}
+            {isToday(selectedDate) ? "Afspraken vandaag" : format(selectedDate, 'EEEE d MMMM')} {dateMeetings.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({dateMeetings.length})</span>}
           </h2>
           <div className="flex items-center gap-1">
             {!isToday(selectedDate) && (
@@ -737,7 +737,7 @@ export default function Dashboard() {
                 onClick={handleToday}
                 className="px-2 py-1 text-xs font-medium text-accent-600 dark:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-800 dark:hover:text-accent-100 rounded transition-colors"
               >
-                Today
+                Vandaag
               </button>
             )}
             <button
@@ -772,8 +772,8 @@ export default function Dashboard() {
           ) : (
             <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
               {isToday(selectedDate)
-                ? 'No meetings scheduled for today'
-                : `No meetings on ${format(selectedDate, 'd MMMM')}`}
+                ? 'Geen afspraken gepland voor vandaag'
+                : `Geen afspraken op ${format(selectedDate, 'd MMMM')}`}
             </p>
           )}
         </div>
@@ -784,14 +784,14 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <MessageCircle className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Recently contacted
+            Recent gecontacteerd
           </h2>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {recently_contacted?.length > 0 ? (
             recently_contacted.map((person) => <PersonCard key={person.id} person={person} />)
           ) : (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No recent activities yet</p>
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">Nog geen recente activiteiten</p>
           )}
         </div>
       </div>
@@ -801,10 +801,10 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Users className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            Recently edited
+            Recent bewerkt
           </h2>
           <Link to="/people" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center">
-            View all <ArrowRight className="w-4 h-4 ml-1" />
+            Bekijk alles <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
@@ -812,7 +812,7 @@ export default function Dashboard() {
             recent_people.map((person) => <PersonCard key={person.id} person={person} />)
           ) : (
             <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-              No people yet. <Link to="/people/new" className="text-accent-600 dark:text-accent-400">Add someone</Link>
+              Nog geen leden. <Link to="/people/new" className="text-accent-600 dark:text-accent-400">Voeg iemand toe</Link>
             </p>
           )}
         </div>
@@ -823,14 +823,14 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <Star className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400 fill-current" />
-            Favorites {favorites?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({favorites.length})</span>}
+            Favorieten {favorites?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({favorites.length})</span>}
           </h2>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
           {favorites?.length > 0 ? (
             favorites.slice(0, 5).map((person) => <PersonCard key={person.id} person={person} hideStar={true} />)
           ) : (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">No favorites yet</p>
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">Nog geen favorieten</p>
           )}
         </div>
       </div>
