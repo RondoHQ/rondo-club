@@ -26,8 +26,8 @@ key-files:
     - includes/class-wp-cli.php
 
 key-decisions:
-  - "Use 'caelis' namespace for CLI commands (not 'prm') per requirements spec"
-  - "Follow existing PRM_Calendar_CLI_Command pattern for consistency"
+  - "Use 'stadion' namespace for CLI commands (not 'prm') per requirements spec"
+  - "Follow existing STADION_Calendar_CLI_Command pattern for consistency"
 
 patterns-established:
   - "Google Contacts CLI pattern: all commands require --user-id for user context"
@@ -50,29 +50,29 @@ completed: 2026-01-18
 - **Files modified:** 4
 
 ## Accomplishments
-- Added 5 WP-CLI commands for Google Contacts administration under `wp caelis google-contacts`
+- Added 5 WP-CLI commands for Google Contacts administration under `wp stadion google-contacts`
 - Sync command with delta and full resync options
 - Status command showing connection details, sync history, and configuration
 - Conflicts command listing unresolved sync conflicts with details
-- Unlink-all command to reset sync state while preserving Caelis data
+- Unlink-all command to reset sync state while preserving Stadion data
 - Version bumped to 5.0.0 completing the Google Contacts Sync milestone
 
 ## Task Commits
 
 Each task was committed atomically:
 
-1. **Task 1: Create PRM_Google_Contacts_CLI_Command class with all 5 commands** - `d1c7dc8` (feat)
+1. **Task 1: Create STADION_Google_Contacts_CLI_Command class with all 5 commands** - `d1c7dc8` (feat)
 2. **Task 2: Update version, changelog, and deploy** - `eaea033` (feat)
 
 ## Files Created/Modified
-- `includes/class-wp-cli.php` - Added PRM_Google_Contacts_CLI_Command class with sync, status, conflicts, unlink_all methods
+- `includes/class-wp-cli.php` - Added STADION_Google_Contacts_CLI_Command class with sync, status, conflicts, unlink_all methods
 - `style.css` - Version bump to 5.0.0
 - `package.json` - Version bump to 5.0.0
 - `CHANGELOG.md` - Added v5.0.0 release notes documenting Google Contacts Sync milestone
 
 ## Decisions Made
-- Used `caelis` namespace (not `prm`) for the CLI command per the requirements specification
-- Followed existing PRM_Calendar_CLI_Command pattern for consistency with other CLI commands
+- Used `stadion` namespace (not `prm`) for the CLI command per the requirements specification
+- Followed existing STADION_Calendar_CLI_Command pattern for consistency with other CLI commands
 - All commands require `--user-id` parameter to specify which user's contacts to manage
 
 ## Deviations from Plan

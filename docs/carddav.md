@@ -1,6 +1,6 @@
 # CardDAV Sync
 
-Caelis includes a built-in CardDAV server that allows you to sync your contacts with apps like Apple Contacts, Android Contacts (via DAVx5), Thunderbird, and other CardDAV-compatible applications.
+Stadion includes a built-in CardDAV server that allows you to sync your contacts with apps like Apple Contacts, Android Contacts (via DAVx5), Thunderbird, and other CardDAV-compatible applications.
 
 ## Overview
 
@@ -12,7 +12,7 @@ CardDAV is an address book client/server protocol designed to allow users to acc
 
 For security reasons, CardDAV uses WordPress Application Passwords instead of your main account password.
 
-1. Log in to Caelis
+1. Log in to Stadion
 2. Go to **Settings**
 3. Find the **CardDAV Sync** section
 4. Enter a name for your app password (e.g., "iPhone Contacts")
@@ -24,7 +24,7 @@ For security reasons, CardDAV uses WordPress Application Passwords instead of yo
 In the CardDAV Sync section of Settings, you'll find:
 
 - **Server URL**: The CardDAV server address
-- **Username**: Your Caelis username
+- **Username**: Your Stadion username
 
 ### Step 3: Configure Your Device
 
@@ -34,7 +34,7 @@ In the CardDAV Sync section of Settings, you'll find:
 2. Click **Add Other Account** → **CardDAV account**
 3. Enter:
    - **Account Type**: Manual
-   - **Username**: Your Caelis username
+   - **Username**: Your Stadion username
    - **Password**: Your app password
    - **Server Address**: The server URL from Settings
 4. Click **Sign In**
@@ -45,7 +45,7 @@ In the CardDAV Sync section of Settings, you'll find:
 2. Tap **Add Account** → **Other** → **Add CardDAV Account**
 3. Enter:
    - **Server**: The server URL from Settings
-   - **Username**: Your Caelis username
+   - **Username**: Your Stadion username
    - **Password**: Your app password
 4. Tap **Next**
 
@@ -56,7 +56,7 @@ In the CardDAV Sync section of Settings, you'll find:
 3. Select **Login with URL and user name**
 4. Enter:
    - **Base URL**: The server URL from Settings
-   - **User name**: Your Caelis username
+   - **User name**: Your Stadion username
    - **Password**: Your app password
 5. Tap **Login**
 6. Select your address book to sync
@@ -69,8 +69,8 @@ In the CardDAV Sync section of Settings, you'll find:
 4. Click **Account actions** → **Add new account** → **CalDAV & CardDAV**
 5. Select **Manual configuration**
 6. Enter:
-   - **Account name**: Caelis (or any name you prefer)
-   - **User name**: Your Caelis username
+   - **Account name**: Stadion (or any name you prefer)
+   - **User name**: Your Stadion username
    - **CardDAV server address**: The server URL from Settings
 7. Click **Add account**
 8. Enter your app password when prompted
@@ -89,12 +89,12 @@ In the CardDAV Sync section of Settings, you'll find:
 ### Authentication
 
 - **Method**: HTTP Basic Authentication
-- **Username**: Your Caelis username
+- **Username**: Your Stadion username
 - **Password**: A WordPress Application Password (not your main account password)
 
 ### Sync Features
 
-- **Bidirectional sync**: Changes made in Caelis appear in your devices, and vice versa
+- **Bidirectional sync**: Changes made in Stadion appear in your devices, and vice versa
 - **Sync tokens**: Efficient incremental sync - only changed contacts are transferred
 - **Conflict resolution**: Most recent change wins
 
@@ -114,7 +114,7 @@ The following contact fields are synced:
 ### Data Access
 
 - Each user only sees their own contacts
-- CardDAV access respects the same permissions as the Caelis web interface
+- CardDAV access respects the same permissions as the Stadion web interface
 - Admins cannot access other users' contacts via CardDAV
 
 ## Security Best Practices
@@ -129,7 +129,7 @@ The following contact fields are synced:
 ### "Authentication failed"
 
 - Verify you're using an app password from Settings, not your main account password
-- Check that the username matches your Caelis username exactly (case-sensitive)
+- Check that the username matches your Stadion username exactly (case-sensitive)
 - Ensure the server URL is correct and includes the full path
 - WordPress 6.8+ uses BLAKE2b hashing for app passwords - ensure your site is updated
 
@@ -142,7 +142,7 @@ The following contact fields are synced:
 ### Contacts not appearing
 
 - Wait a few minutes for the initial sync to complete
-- Check that you have contacts in Caelis
+- Check that you have contacts in Stadion
 - Try forcing a sync in your CardDAV app
 
 ### Sync conflicts

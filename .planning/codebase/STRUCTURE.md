@@ -5,7 +5,7 @@
 ## Directory Layout
 
 ```
-caelis/
+stadion/
 ├── index.php              # WordPress template (React mount point)
 ├── functions.php          # Theme setup & class initialization
 ├── style.css              # Theme header (version metadata)
@@ -143,7 +143,7 @@ caelis/
 - `*Modal.jsx` - Modal dialog components
 - `use*.js` - React hooks
 - `class-*.php` - PHP service classes
-- `PRM_*` - PHP class name prefix
+- `STADION_*` - PHP class name prefix
 
 ## Where to Add New Code
 
@@ -172,7 +172,7 @@ caelis/
 
 **New PHP Service:**
 - Implementation: `includes/class-{service-name}.php`
-- Instantiation: Add to `prm_init()` in `functions.php`
+- Instantiation: Add to `stadion_init()` in `functions.php`
 
 ## Special Directories
 

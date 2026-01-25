@@ -6,11 +6,11 @@
 
 ## Summary
 
-This phase implements one-directional import of Google Contacts into Caelis via the Google People API. Phase 79 has already established the OAuth connection infrastructure including token storage, refresh handling, and a `has_pending_import` flag mechanism.
+This phase implements one-directional import of Google Contacts into Stadion via the Google People API. Phase 79 has already established the OAuth connection infrastructure including token storage, refresh handling, and a `has_pending_import` flag mechanism.
 
 The codebase has extensive prior art for contact imports (Monica CRM, Google Contacts CSV, vCard) that establishes clear patterns for: batch processing, photo sideloading, company creation/matching, birthday as important_date, and field mapping to ACF repeater fields.
 
-Key decisions from CONTEXT.md: match by email only (skip contacts without email), fill gaps only (never overwrite existing Caelis data), import all emails/phones to repeaters, skip notes/labels.
+Key decisions from CONTEXT.md: match by email only (skip contacts without email), fill gaps only (never overwrite existing Stadion data), import all emails/phones to repeaters, skip notes/labels.
 
 **Primary recommendation:** Build a new `GoogleContactsAPIImport` class following the established import patterns, triggered via REST endpoint that checks `has_pending_import` flag or manual trigger.
 
@@ -139,7 +139,7 @@ Per CONTEXT.md: **Skip biographies/notes** - not imported.
 
 ### Source: [Google People API Person Resource](https://developers.google.com/people/api/rest/v1/people#Person)
 
-## Caelis Person Data Model
+## Stadion Person Data Model
 
 ### ACF Fields Structure (from group_person_fields.json)
 
@@ -185,7 +185,7 @@ Per CONTEXT.md: **Skip biographies/notes** - not imported.
 | `field_work_end_date` | `end_date` | date_picker |
 | `field_work_is_current` | `is_current` | true_false |
 
-## Caelis Company Data Model
+## Stadion Company Data Model
 
 ### ACF Fields (from group_company_fields.json)
 
@@ -240,7 +240,7 @@ wp_set_post_terms($date_post_id, [$term_id], 'date_type');
 
 ### OAuth Classes
 
-**`Caelis\Calendar\GoogleOAuth`** (`includes/class-google-oauth.php`)
+**`Stadion\Calendar\GoogleOAuth`** (`includes/class-google-oauth.php`)
 - `is_configured()` - Checks GOOGLE_CALENDAR_CLIENT_ID/SECRET
 - `get_contacts_client($include_granted_scopes, $readonly)` - Returns configured Google\Client for contacts
 - `get_contacts_auth_url($user_id, $readonly)` - Generates OAuth URL
@@ -248,9 +248,9 @@ wp_set_post_terms($date_post_id, [$term_id], 'date_type');
 - `CONTACTS_SCOPE_READONLY = 'https://www.googleapis.com/auth/contacts.readonly'`
 - `CONTACTS_SCOPE_READWRITE = 'https://www.googleapis.com/auth/contacts'`
 
-**`Caelis\Contacts\GoogleContactsConnection`** (`includes/class-google-contacts-connection.php`)
-- `META_KEY = '_prm_google_contacts_connection'`
-- `PENDING_IMPORT_KEY = '_prm_google_contacts_pending_import'`
+**`Stadion\Contacts\GoogleContactsConnection`** (`includes/class-google-contacts-connection.php`)
+- `META_KEY = '_stadion_google_contacts_connection'`
+- `PENDING_IMPORT_KEY = '_stadion_google_contacts_pending_import'`
 - `get_connection($user_id)` - Returns connection array
 - `is_connected($user_id)` - Returns bool
 - `get_decrypted_credentials($user_id)` - Returns decrypted OAuth tokens
@@ -274,10 +274,10 @@ wp_set_post_terms($date_post_id, [$term_id], 'date_type');
 ```
 
 ### REST Endpoints (`includes/class-rest-google-contacts.php`)
-- `GET /prm/v1/google-contacts/status` - Connection status
-- `GET /prm/v1/google-contacts/auth` - Initiate OAuth
-- `GET /prm/v1/google-contacts/callback` - OAuth callback (public)
-- `DELETE /prm/v1/google-contacts` - Disconnect
+- `GET /stadion/v1/google-contacts/status` - Connection status
+- `GET /stadion/v1/google-contacts/auth` - Initiate OAuth
+- `GET /stadion/v1/google-contacts/callback` - OAuth callback (public)
+- `DELETE /stadion/v1/google-contacts` - Disconnect
 
 ## WordPress Photo Sideloading
 
@@ -326,7 +326,7 @@ $photo_url .= (strpos($photo_url, '?') !== false ? '&' : '?') . 'sz=400';
 
 ## Field Mapping Table
 
-| Google Field | Caelis Field | Notes |
+| Google Field | Stadion Field | Notes |
 |--------------|--------------|-------|
 | `names[0].givenName` | `first_name` | Use primary or first |
 | `names[0].familyName` | `last_name` | |
@@ -444,7 +444,7 @@ do {
 
 ### Recommended Class Structure
 ```php
-namespace Caelis\Import;
+namespace Stadion\Import;
 
 class GoogleContactsAPI {
     private array $stats = [...];
@@ -479,8 +479,8 @@ class GoogleContactsAPI {
 ### REST Endpoint Extension
 Add to `class-rest-google-contacts.php`:
 ```php
-// POST /prm/v1/google-contacts/import - Trigger import
-register_rest_route('prm/v1', '/google-contacts/import', [
+// POST /stadion/v1/google-contacts/import - Trigger import
+register_rest_route('stadion/v1', '/google-contacts/import', [
     'methods' => 'POST',
     'callback' => [$this, 'trigger_import'],
     'permission_callback' => [$this, 'check_user_approved'],
@@ -491,7 +491,7 @@ register_rest_route('prm/v1', '/google-contacts/import', [
 
 ### 1. Email-Only Matching (CONTEXT.md Decision)
 - Skip any contact without at least one emailAddress
-- Match existing Caelis contacts by email only
+- Match existing Stadion contacts by email only
 - When match found: link to existing, fill empty fields only
 - Never overwrite existing data
 
@@ -580,22 +580,22 @@ use Google\Service\PeopleService\ListConnectionsResponse;
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/caelis/acf-json/group_person_fields.json` - ACF field structure
-- `/Users/joostdevalk/Code/caelis/includes/class-google-oauth.php` - OAuth handling
-- `/Users/joostdevalk/Code/caelis/includes/class-google-contacts-connection.php` - Connection storage
-- `/Users/joostdevalk/Code/caelis/includes/class-google-contacts-import.php` - CSV import patterns
+- `/Users/joostdevalk/Code/stadion/acf-json/group_person_fields.json` - ACF field structure
+- `/Users/joostdevalk/Code/stadion/includes/class-google-oauth.php` - OAuth handling
+- `/Users/joostdevalk/Code/stadion/includes/class-google-contacts-connection.php` - Connection storage
+- `/Users/joostdevalk/Code/stadion/includes/class-google-contacts-import.php` - CSV import patterns
 - [Google People API - people.connections.list](https://developers.google.com/people/api/rest/v1/people.connections/list)
 - [Google People API - Person Resource](https://developers.google.com/people/api/rest/v1/people#Person)
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/caelis/includes/class-monica-import.php` - Batch import patterns
-- `/Users/joostdevalk/Code/caelis/includes/class-vcard-import.php` - Photo sideloading patterns
+- `/Users/joostdevalk/Code/stadion/includes/class-monica-import.php` - Batch import patterns
+- `/Users/joostdevalk/Code/stadion/includes/class-vcard-import.php` - Photo sideloading patterns
 
 ## Metadata
 
 **Confidence breakdown:**
 - Google API structure: HIGH - Official documentation verified
-- Caelis data model: HIGH - Direct codebase inspection
+- Stadion data model: HIGH - Direct codebase inspection
 - Import patterns: HIGH - Multiple existing implementations
 - Photo sideloading: HIGH - Established WordPress patterns
 

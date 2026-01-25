@@ -48,7 +48,7 @@ const FIELD_TYPE_LABELS = {
   relationship: 'Relationship',
 };
 
-const STORAGE_KEY = 'caelis-custom-fields-tab';
+const STORAGE_KEY = 'stadion-custom-fields-tab';
 
 // Sortable field row component for drag-and-drop
 function SortableFieldRow({ field, onEdit, onDelete, getFieldTypeLabel }) {
@@ -121,7 +121,7 @@ function SortableFieldRow({ field, onEdit, onDelete, getFieldTypeLabel }) {
 
 export default function CustomFields() {
   useDocumentTitle('Custom Fields - Settings');
-  const config = window.prmConfig || {};
+  const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
   const queryClient = useQueryClient();
 

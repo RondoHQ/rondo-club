@@ -6,7 +6,7 @@
  * Supports vCard versions 2.1, 3.0, and 4.0.
  */
 
-namespace Caelis\Import;
+namespace Stadion\Import;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -42,7 +42,7 @@ class VCard {
 	 */
 	public function register_routes() {
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/import/vcard',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -52,7 +52,7 @@ class VCard {
 		);
 
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/import/vcard/validate',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -62,7 +62,7 @@ class VCard {
 		);
 
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/import/vcard/parse',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -86,18 +86,18 @@ class VCard {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Check if it's a valid vCard file
 		if ( strpos( $vcf_content, 'BEGIN:VCARD' ) === false ) {
-			return new \WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Parse vCards to get summary
@@ -121,25 +121,25 @@ class VCard {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Check if it's a valid vCard file
 		if ( strpos( $vcf_content, 'BEGIN:VCARD' ) === false ) {
-			return new \WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_format', __( 'Invalid vCard format. File must contain BEGIN:VCARD.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Parse vCards and get the first one
 		$vcards = $this->parse_vcards( $vcf_content );
 
 		if ( empty( $vcards ) ) {
-			return new \WP_Error( 'no_contacts', __( 'No contacts found in file.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_contacts', __( 'No contacts found in file.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Get the first contact
@@ -232,13 +232,13 @@ class VCard {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		$vcf_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $vcf_content ) ) {
-			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Parse and import vCards
@@ -992,7 +992,7 @@ class VCard {
 			return;
 		}
 
-		$title = sprintf( __( "%s's Birthday", 'caelis' ), $full_name );
+		$title = sprintf( __( "%s's Birthday", 'stadion' ), $full_name );
 
 		$date_post_id = wp_insert_post(
 			[
@@ -1032,7 +1032,7 @@ class VCard {
 			[
 				'comment_post_ID'  => $post_id,
 				'comment_content'  => $content,
-				'comment_type'     => \PRM_Comment_Types::TYPE_NOTE,
+				'comment_type'     => \STADION_Comment_Types::TYPE_NOTE,
 				'user_id'          => get_current_user_id(),
 				'comment_approved' => 1,
 				'comment_date'     => current_time( 'mysql' ),

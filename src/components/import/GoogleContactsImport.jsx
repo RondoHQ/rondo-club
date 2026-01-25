@@ -14,7 +14,7 @@ export default function GoogleContactsImport() {
     mutationFn: async (file) => {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await api.post('/prm/v1/import/google-contacts/validate', formData, {
+      const response = await api.post('/stadion/v1/import/google-contacts/validate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
@@ -43,7 +43,7 @@ export default function GoogleContactsImport() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('decisions', JSON.stringify(decisions));
-      const response = await api.post('/prm/v1/import/google-contacts', formData, {
+      const response = await api.post('/stadion/v1/import/google-contacts', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;

@@ -11,9 +11,9 @@ Researched the wp-browser ecosystem for setting up PHPUnit testing in a WordPres
 
 Key finding: wp-browser version 4 is the current standard (4.5.10 as of Nov 2025), requiring PHP 8.0+ and Codeception 5.x. For themes, the recommended approach is to use the WPLoader module in integration test mode (`loadOnly: false`) which provides database transaction rollback between tests, automatic WordPress environment cleanup, and factory methods for creating test fixtures.
 
-Critical consideration: Caelis is a theme (not a plugin), has ACF Pro as a required dependency, and needs to test custom REST API endpoints, access control, and CPT relationships. The wp-browser setup should point to the existing WordPress installation rather than downloading a fresh one.
+Critical consideration: Stadion is a theme (not a plugin), has ACF Pro as a required dependency, and needs to test custom REST API endpoints, access control, and CPT relationships. The wp-browser setup should point to the existing WordPress installation rather than downloading a fresh one.
 
-**Primary recommendation:** Use wp-browser 4.x with WPLoader module configured for the existing WordPress installation. Create a dedicated `caelis_test` database. Configure ACF Pro activation in tests. Focus on wpunit test type for integration testing of REST API and access control.
+**Primary recommendation:** Use wp-browser 4.x with WPLoader module configured for the existing WordPress installation. Create a dedicated `stadion_test` database. Configure ACF Pro activation in tests. Focus on wpunit test type for integration testing of REST API and access control.
 </research_summary>
 
 <standard_stack>
@@ -55,14 +55,14 @@ wp-browser pulls in all required Codeception dependencies automatically.
 
 ### Recommended Project Structure
 ```
-caelis/
+stadion/
 ├── tests/
 │   ├── .env                    # Test environment config (gitignored)
 │   ├── .env.testing           # Template for .env (committed)
 │   ├── Support/
 │   │   ├── Helper/
 │   │   │   └── Wpunit.php     # Custom helper methods
-│   │   └── CaelisTestCase.php # Base test case with ACF setup
+│   │   └── StadionTestCase.php # Base test case with ACF setup
 │   └── Wpunit/
 │       ├── AccessControl/
 │       │   ├── UserIsolationTest.php
@@ -95,13 +95,13 @@ suites:
       config:
         WPLoader:
           wpRootFolder: "/path/to/wordpress"  # Not theme path!
-          dbUrl: "mysql://root:password@localhost/caelis_test"
+          dbUrl: "mysql://root:password@localhost/stadion_test"
           tablePrefix: "wp_"
-          domain: "caelis.test"
-          adminEmail: "admin@caelis.test"
+          domain: "stadion.test"
+          adminEmail: "admin@stadion.test"
           plugins:
             - advanced-custom-fields-pro/acf.php
-          theme: caelis
+          theme: stadion
           loadOnly: false
 ```
 
@@ -115,7 +115,7 @@ namespace Tests\Support;
 
 use lucatume\WPBrowser\TestCase\WPTestCase;
 
-abstract class CaelisTestCase extends WPTestCase {
+abstract class StadionTestCase extends WPTestCase {
 
     protected function setUp(): void {
         parent::setUp();
@@ -155,11 +155,11 @@ abstract class CaelisTestCase extends WPTestCase {
 <?php
 namespace Tests\Wpunit\RestApi;
 
-use Tests\Support\CaelisTestCase;
+use Tests\Support\StadionTestCase;
 use WP_REST_Request;
 use WP_REST_Server;
 
-class PeopleEndpointTest extends CaelisTestCase {
+class PeopleEndpointTest extends StadionTestCase {
 
     private WP_REST_Server $server;
 
@@ -180,8 +180,8 @@ class PeopleEndpointTest extends CaelisTestCase {
 
     public function test_user_can_only_see_own_people(): void {
         // Create two users
-        $user1 = self::factory()->user->create(['role' => 'caelis_user']);
-        $user2 = self::factory()->user->create(['role' => 'caelis_user']);
+        $user1 = self::factory()->user->create(['role' => 'stadion_user']);
+        $user2 = self::factory()->user->create(['role' => 'stadion_user']);
 
         // Create people owned by user1
         wp_set_current_user($user1);
@@ -232,7 +232,7 @@ Problems that look simple but have existing solutions:
 ### Pitfall 1: Database Gets Wiped
 **What goes wrong:** Running tests destroys development database
 **Why it happens:** WPLoader drops and recreates the database on first run
-**How to avoid:** ALWAYS use a dedicated test database (e.g., `caelis_test`), never point to dev database
+**How to avoid:** ALWAYS use a dedicated test database (e.g., `stadion_test`), never point to dev database
 **Warning signs:** Running `vendor/bin/codecept run` and seeing "Database tables created..."
 
 ### Pitfall 2: ACF Fields Not Available in Tests
@@ -262,7 +262,7 @@ Problems that look simple but have existing solutions:
 ### Pitfall 5: Custom Post Types Not Registered
 **What goes wrong:** `WP_Query` for 'person' returns empty, REST endpoints 404
 **Why it happens:** Theme's `init` hooks haven't fired when tests run
-**How to avoid:** Configure `theme: caelis` in WPLoader to activate the theme; CPTs register on `init`
+**How to avoid:** Configure `theme: stadion` in WPLoader to activate the theme; CPTs register on `init`
 **Warning signs:** `get_post_type_object('person')` returns null in tests
 
 ### Pitfall 6: REST Routes Not Available
@@ -279,7 +279,7 @@ Verified patterns from official sources:
 
 ### codeception.yml Configuration
 ```yaml
-# Source: wp-browser docs + Caelis-specific adaptations
+# Source: wp-browser docs + Stadion-specific adaptations
 namespace: Tests
 support_namespace: Support
 actor_suffix: Tester
@@ -305,10 +305,10 @@ suites:
           dbUrl: "%TEST_DB_URL%"
           tablePrefix: "wp_"
           domain: "%WP_DOMAIN%"
-          adminEmail: "admin@caelis.test"
+          adminEmail: "admin@stadion.test"
           plugins:
             - advanced-custom-fields-pro/acf.php
-          theme: caelis
+          theme: stadion
           loadOnly: false
           configFile: ""
 ```
@@ -322,26 +322,26 @@ suites:
 WP_ROOT_FOLDER=/Users/joostdevalk/Code/wordpress
 
 # Test database (WILL BE DROPPED AND RECREATED)
-TEST_DB_URL=mysql://root:password@localhost/caelis_test
+TEST_DB_URL=mysql://root:password@localhost/stadion_test
 
 # Domain for test requests
-WP_DOMAIN=caelis.test
+WP_DOMAIN=stadion.test
 ```
 
 ### Access Control Test
 ```php
 <?php
-// Source: WordPress core test patterns + Caelis access control logic
+// Source: WordPress core test patterns + Stadion access control logic
 namespace Tests\Wpunit\AccessControl;
 
-use Tests\Support\CaelisTestCase;
+use Tests\Support\StadionTestCase;
 
-class UserIsolationTest extends CaelisTestCase {
+class UserIsolationTest extends StadionTestCase {
 
     public function test_users_cannot_see_others_contacts(): void {
         // Arrange: Create two users with their own contacts
-        $alice = self::factory()->user->create(['role' => 'caelis_user']);
-        $bob = self::factory()->user->create(['role' => 'caelis_user']);
+        $alice = self::factory()->user->create(['role' => 'stadion_user']);
+        $bob = self::factory()->user->create(['role' => 'stadion_user']);
 
         wp_set_current_user($alice);
         $alice_contact = $this->createPerson(['post_title' => 'Alice Contact']);
@@ -363,7 +363,7 @@ class UserIsolationTest extends CaelisTestCase {
     public function test_admin_sees_own_data_in_frontend(): void {
         // Arrange: Create admin user and another user
         $admin = self::factory()->user->create(['role' => 'administrator']);
-        $user = self::factory()->user->create(['role' => 'caelis_user']);
+        $user = self::factory()->user->create(['role' => 'stadion_user']);
 
         wp_set_current_user($user);
         $user_contact = $this->createPerson(['post_title' => 'User Contact']);
@@ -376,7 +376,7 @@ class UserIsolationTest extends CaelisTestCase {
         ]);
 
         // Assert: Admin only sees their own (none in this case)
-        // Based on Caelis access control: admins are restricted like regular users on frontend
+        // Based on Stadion access control: admins are restricted like regular users on frontend
         $this->assertEquals(0, $query->found_posts);
     }
 }
@@ -390,7 +390,7 @@ namespace Tests\Support;
 
 use lucatume\WPBrowser\TestCase\WPTestCase;
 
-abstract class CaelisTestCase extends WPTestCase {
+abstract class StadionTestCase extends WPTestCase {
 
     /**
      * Create a person post with optional ACF fields.
@@ -436,10 +436,10 @@ abstract class CaelisTestCase extends WPTestCase {
     }
 
     /**
-     * Create a Caelis User (custom role).
+     * Create a Stadion User (custom role).
      */
-    protected function createCaelisUser(array $args = []): int {
-        $defaults = ['role' => 'caelis_user'];
+    protected function createStadionUser(array $args = []): int {
+        $defaults = ['role' => 'stadion_user'];
         return self::factory()->user->create(array_merge($defaults, $args));
     }
 }
@@ -480,12 +480,12 @@ Things that couldn't be fully resolved:
    - Recommendation: Configure WPLoader `wpRootFolder` to point to existing WP install where ACF Pro is already installed
 
 2. **Test Database Location**
-   - What we know: Need a dedicated `caelis_test` database that gets dropped/recreated
+   - What we know: Need a dedicated `stadion_test` database that gets dropped/recreated
    - What's unclear: Should this be local MySQL or could use Docker for isolation?
-   - Recommendation: Start with local MySQL (`caelis_test`), consider Docker for CI later
+   - Recommendation: Start with local MySQL (`stadion_test`), consider Docker for CI later
 
-3. **Caelis User Role in Tests**
-   - What we know: Theme registers `caelis_user` role on activation
+3. **Stadion User Role in Tests**
+   - What we know: Theme registers `stadion_user` role on activation
    - What's unclear: Will WPLoader activation trigger role registration before tests run?
    - Recommendation: Verify role exists in first test; if not, investigate theme activation sequence
 </open_questions>
@@ -523,7 +523,7 @@ Things that couldn't be fully resolved:
 - Standard stack: HIGH - verified with Packagist, official docs
 - Architecture: HIGH - from official documentation and WordPress core patterns
 - Pitfalls: HIGH - documented in GitHub issues and official troubleshooting
-- Code examples: HIGH - adapted from official sources with Caelis-specific context
+- Code examples: HIGH - adapted from official sources with Stadion-specific context
 
 **Research date:** 2026-01-13
 **Valid until:** 2026-02-13 (30 days - wp-browser ecosystem stable)

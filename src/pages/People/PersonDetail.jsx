@@ -167,7 +167,7 @@ function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick, curren
         {/* Other attendees - show photos for matched, initials for unmatched */}
         {meeting.attendees && meeting.attendees.length > 0 && (() => {
           // Filter out the current person being viewed and the current user's linked person
-          const currentUserPersonId = window.prmConfig?.currentUserPersonId;
+          const currentUserPersonId = window.stadionConfig?.currentUserPersonId;
           const otherAttendees = meeting.attendees.filter(att => {
             if (!att.person_id) return true; // Keep unmatched attendees
             const personId = parseInt(att.person_id);
@@ -890,17 +890,10 @@ export default function PersonDetail() {
       return;
     }
 
-    // If awaiting, mark as complete
+    // If awaiting, show the complete modal (without awaiting option)
     if (todo.status === 'awaiting') {
-      try {
-        await updateTodo.mutateAsync({
-          todoId: todo.id,
-          data: { status: 'completed' },
-          personId: id,
-        });
-      } catch {
-        alert('Failed to complete todo. Please try again.');
-      }
+      setTodoToComplete(todo);
+      setShowCompleteModal(true);
       return;
     }
 
@@ -2773,6 +2766,7 @@ export default function PersonDetail() {
             onAwaiting={handleMarkAwaiting}
             onComplete={handleJustComplete}
             onCompleteAsActivity={handleCompleteAsActivity}
+            hideAwaitingOption={todoToComplete?.status === 'awaiting'}
           />
           
           <TodoModal

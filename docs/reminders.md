@@ -4,7 +4,7 @@ This document describes the daily digest reminder system that notifies users abo
 
 ## Overview
 
-Caelis includes an automated reminder system that:
+Stadion includes an automated reminder system that:
 - Runs via **per-user WordPress cron jobs** at each user's preferred notification time
 - Sends a **daily digest** email/notification listing:
   - Important dates **today** + todos due today (including overdue)
@@ -24,7 +24,7 @@ Caelis includes an automated reminder system that:
 ```
 
 Each user has an individual cron job scheduled at their preferred notification time:
-- **Cron Hook:** `prm_user_reminder` (with user ID as argument)
+- **Cron Hook:** `stadion_user_reminder` (with user ID as argument)
 - **Schedule:** Daily recurring at user's preferred time (default: 09:00 UTC)
 - **Arguments:** `[$user_id]`
 
@@ -63,28 +63,28 @@ Each user receives one notification per day containing:
 
 ### Classes
 
-**PRM_Reminders** (`includes/class-reminders.php`)
+**STADION_Reminders** (`includes/class-reminders.php`)
 - Main orchestrator for reminder processing
 - Generates weekly digests per user
 - Coordinates notification channels
 
-**PRM_Notification_Channel** (`includes/class-notification-channels.php`)
+**STADION_Notification_Channel** (`includes/class-notification-channels.php`)
 - Abstract base class for notification channels
 - Defines interface: `send()`, `is_enabled_for_user()`, `get_user_config()`
 
-**PRM_Email_Channel** (`includes/class-notification-channels.php`)
+**STADION_Email_Channel** (`includes/class-notification-channels.php`)
 - Email notification implementation
 - Formats digest as plain text email
 
-**PRM_Slack_Channel** (`includes/class-notification-channels.php`)
+**STADION_Slack_Channel** (`includes/class-notification-channels.php`)
 - Slack webhook notification implementation
 - Formats digest as Slack message blocks
 
 ### Cron Configuration
 
-**Per-User Cron Hook:** `prm_user_reminder` (with user ID argument)
+**Per-User Cron Hook:** `stadion_user_reminder` (with user ID argument)
 
-**Scheduling** (in `PRM_Reminders` class):
+**Scheduling** (in `STADION_Reminders` class):
 ```php
 // Schedule individual user's cron at their preferred time
 $reminders->schedule_user_reminder($user_id);
@@ -93,7 +93,7 @@ $reminders->schedule_user_reminder($user_id);
 $reminders->schedule_all_user_reminders();
 ```
 
-**Legacy Cron Hook:** `prm_daily_reminder_check` (deprecated, kept for backward compatibility)
+**Legacy Cron Hook:** `stadion_daily_reminder_check` (deprecated, kept for backward compatibility)
 
 ## Key Methods
 
@@ -107,10 +107,10 @@ Schedules a cron job for a specific user at their preferred notification time.
 **Returns:** `true` on success, `WP_Error` on failure
 
 **Behavior:**
-- Gets user's preferred time from `caelis_notification_time` user meta (default: `09:00`)
+- Gets user's preferred time from `stadion_notification_time` user meta (default: `09:00`)
 - Calculates next occurrence (if time passed today, schedules for tomorrow)
 - Unschedules any existing cron for this user
-- Schedules new daily recurring cron with `prm_user_reminder` hook
+- Schedules new daily recurring cron with `stadion_user_reminder` hook
 
 ### `unschedule_user_reminder($user_id)`
 
@@ -225,11 +225,11 @@ Background maintenance task that runs with reminders:
 
 ### Email Channel
 
-**User Meta:** `caelis_notification_channels` (array containing `'email'`)
+**User Meta:** `stadion_notification_channels` (array containing `'email'`)
 
 **Email Format:**
 ```
-Subject: [Caelis] Your Reminders & Todos - June 15, 2025
+Subject: [Stadion] Your Reminders & Todos - June 15, 2025
 
 Hello User,
 
@@ -255,7 +255,7 @@ Here are your important dates and to-dos for this week:
 ☐ Schedule meeting (June 18, 2025)
   → Friend
 
-Visit Caelis to see more details.
+Visit Stadion to see more details.
 
 https://your-site.com
 ```
@@ -263,17 +263,17 @@ https://your-site.com
 ### Slack Channel
 
 **User Meta:**
-- `caelis_notification_channels` (array containing `'slack'`)
-- `caelis_slack_bot_token` (Bot token from OAuth)
-- `caelis_slack_workspace_id` (Workspace ID)
-- `caelis_slack_workspace_name` (Workspace name)
-- `caelis_slack_user_id` (User's Slack ID for DMs)
-- `caelis_slack_targets` (Array of channel/user IDs to send to)
+- `stadion_notification_channels` (array containing `'slack'`)
+- `stadion_slack_bot_token` (Bot token from OAuth)
+- `stadion_slack_workspace_id` (Workspace ID)
+- `stadion_slack_workspace_name` (Workspace name)
+- `stadion_slack_user_id` (User's Slack ID for DMs)
+- `stadion_slack_targets` (Array of channel/user IDs to send to)
 
 **Slack Format:**
 - Uses Slack Block Kit format with `chat.postMessage` API
 - Section blocks for each date category (Today, Tomorrow, Rest of the week)
-- Links person names to their Caelis profile
+- Links person names to their Stadion profile
 
 **OAuth Configuration:**
 - Users connect Slack via OAuth flow in Settings
@@ -288,16 +288,16 @@ Users can enable/disable notification channels in Settings:
 2. **Slack** - Requires OAuth connection
 
 **User Meta Keys:**
-- `caelis_notification_channels` - Array of enabled channels: `['email', 'slack']`
-- `caelis_notification_time` - Preferred notification time in HH:MM format, 5-minute increments (default: `09:00`)
-- `caelis_slack_bot_token` - Slack bot token (from OAuth)
-- `caelis_slack_targets` - Array of Slack channel/user IDs for notifications
+- `stadion_notification_channels` - Array of enabled channels: `['email', 'slack']`
+- `stadion_notification_time` - Preferred notification time in HH:MM format, 5-minute increments (default: `09:00`)
+- `stadion_slack_bot_token` - Slack bot token (from OAuth)
+- `stadion_slack_targets` - Array of Slack channel/user IDs for notifications
 
 ## REST API Integration
 
 ### Get Upcoming Reminders
 
-**GET** `/prm/v1/reminders`
+**GET** `/stadion/v1/reminders`
 
 **Parameters:**
 - `days_ahead` - Days to look ahead (default: 30, max: 365)
@@ -322,7 +322,7 @@ Users can enable/disable notification channels in Settings:
 
 ### Trigger Reminders Manually (Admin Only)
 
-**POST** `/prm/v1/reminders/trigger`
+**POST** `/stadion/v1/reminders/trigger`
 
 **Response:**
 ```json
@@ -336,7 +336,7 @@ Users can enable/disable notification channels in Settings:
 
 ### Reschedule All Cron Jobs (Admin Only)
 
-**POST** `/prm/v1/reminders/reschedule-cron`
+**POST** `/stadion/v1/reminders/reschedule-cron`
 
 Reschedules all user reminder cron jobs based on their notification time preferences.
 
@@ -351,7 +351,7 @@ Reschedules all user reminder cron jobs based on their notification time prefere
 
 ### Get Cron Status (Admin Only)
 
-**GET** `/prm/v1/reminders/cron-status`
+**GET** `/stadion/v1/reminders/cron-status`
 
 Returns status of all user reminder cron jobs.
 
@@ -377,7 +377,7 @@ Returns status of all user reminder cron jobs.
 
 ### Get Notification Channels
 
-**GET** `/prm/v1/user/notification-channels`
+**GET** `/stadion/v1/user/notification-channels`
 
 **Response:**
 ```json
@@ -389,7 +389,7 @@ Returns status of all user reminder cron jobs.
 
 ### Update Notification Channels
 
-**POST** `/prm/v1/user/notification-channels`
+**POST** `/stadion/v1/user/notification-channels`
 
 **Body:**
 ```json
@@ -400,7 +400,7 @@ Returns status of all user reminder cron jobs.
 
 ### Update Notification Time
 
-**POST** `/prm/v1/user/notification-time`
+**POST** `/stadion/v1/user/notification-time`
 
 **Body:**
 ```json
@@ -445,12 +445,12 @@ This sends reminders for all users who have dates occurring today.
 wp cron event list
 ```
 
-Look for `prm_user_reminder` events in the output. Each user should have their own scheduled event.
+Look for `stadion_user_reminder` events in the output. Each user should have their own scheduled event.
 
 **Check specific user's cron (PHP):**
 ```php
 $user_id = 123;
-$next_run = wp_next_scheduled('prm_user_reminder', [$user_id]);
+$next_run = wp_next_scheduled('stadion_user_reminder', [$user_id]);
 if ($next_run) {
     echo "User $user_id next reminder: " . date('Y-m-d H:i:s', $next_run);
 } else {
@@ -498,7 +498,7 @@ Slack connection is established via OAuth in Settings. After connecting:
 
 ### Cron Not Running
 
-**Server cron requirement:** Caelis requires a real server cron job that triggers WordPress cron every 5 minutes for precise notification timing:
+**Server cron requirement:** Stadion requires a real server cron job that triggers WordPress cron every 5 minutes for precise notification timing:
 
 ```bash
 # crontab -e
@@ -527,15 +527,15 @@ wp prm reminders trigger --user=123
 
 To add a new notification channel:
 
-1. Create a new class extending `PRM_Notification_Channel` in `includes/class-notification-channels.php`
+1. Create a new class extending `STADION_Notification_Channel` in `includes/class-notification-channels.php`
 2. Implement required methods: `send()`, `is_enabled_for_user()`, `get_user_config()`, `get_channel_id()`, `get_channel_name()`
-3. Register the channel in `PRM_Reminders` constructor
+3. Register the channel in `STADION_Reminders` constructor
 4. Add UI toggle in Settings page
 5. Add REST API endpoint if needed for configuration
 
 **Example:**
 ```php
-class PRM_Telegram_Channel extends PRM_Notification_Channel {
+class STADION_Telegram_Channel extends STADION_Notification_Channel {
     public function get_channel_id() {
         return 'telegram';
     }

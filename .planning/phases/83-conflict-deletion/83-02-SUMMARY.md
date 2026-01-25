@@ -11,7 +11,7 @@ requires:
   - phase: 79-connect-google
     provides: GoogleContactsConnection credential storage
 provides:
-  - Deletion propagation from Caelis to Google Contacts
+  - Deletion propagation from Stadion to Google Contacts
   - before_delete_post hook for person post type
   - delete_google_contact() method with error handling
 affects: [83-03, 84-settings-ui, 85-polish]
@@ -44,7 +44,7 @@ completed: 2026-01-17
 
 # Phase 83 Plan 02: Deletion Propagation Summary
 
-**Caelis-to-Google deletion propagation via WordPress before_delete_post hook with graceful error handling**
+**Stadion-to-Google deletion propagation via WordPress before_delete_post hook with graceful error handling**
 
 ## Performance
 
@@ -96,7 +96,7 @@ None - no external service configuration required.
 
 - Deletion propagation complete
 - Combined with 83-01 (conflict detection), Phase 83 is ready for conflict resolution in 83-03
-- Sync integrity maintained: Caelis as source of truth for deletions
+- Sync integrity maintained: Stadion as source of truth for deletions
 
 ---
 *Phase: 83-conflict-deletion*

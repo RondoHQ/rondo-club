@@ -14,7 +14,7 @@ const TABS = [
 export default function Labels() {
   useDocumentTitle('Labels - Settings');
   const queryClient = useQueryClient();
-  const config = window.prmConfig || {};
+  const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
 
   const [activeTab, setActiveTab] = useState('person');

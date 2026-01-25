@@ -10,10 +10,10 @@
 Researched the ecosystem for implementing collaborative features in a WordPress/React CRM. The phase requires @mentions in notes with notifications, workspace iCal feeds, activity digests, and per-workspace notification preferences.
 
 **Key findings:**
-- Caelis already has robust notification infrastructure (`PRM_Notification_Channel`, `PRM_Email_Channel`, `PRM_Slack_Channel`)
-- Existing per-user cron scheduling via `PRM_Reminders` can be extended for workspace digests
-- Existing iCal feed (`PRM_ICal_Feed`) uses manual generation - works well, no need for sabre/vobject
-- Notes system (`PRM_Comment_Types`) stores content in `wp_comments` with meta - ideal for adding mention metadata
+- Stadion already has robust notification infrastructure (`STADION_Notification_Channel`, `STADION_Email_Channel`, `STADION_Slack_Channel`)
+- Existing per-user cron scheduling via `STADION_Reminders` can be extended for workspace digests
+- Existing iCal feed (`STADION_ICal_Feed`) uses manual generation - works well, no need for sabre/vobject
+- Notes system (`STADION_Comment_Types`) stores content in `wp_comments` with meta - ideal for adding mention metadata
 - **react-mentions** is the standard library for @mention UI in React textareas
 
 **Primary recommendation:** Extend existing notification and comment infrastructure rather than introducing new systems. Use react-mentions for frontend, store mentioned user IDs in comment meta, trigger notifications via existing channels.
@@ -22,7 +22,7 @@ Researched the ecosystem for implementing collaborative features in a WordPress/
 <standard_stack>
 ## Standard Stack
 
-### Core (Already in Caelis)
+### Core (Already in Stadion)
 | Library | Version | Purpose | Why Standard |
 |---------|---------|---------|--------------|
 | WordPress comments | WP core | Note/activity storage | Native, versioned, queryable |
@@ -35,13 +35,13 @@ Researched the ecosystem for implementing collaborative features in a WordPress/
 | react-mentions | 4.4.10 | @mention autocomplete in textarea | 7+ years maintained, 180+ dependents |
 | DOMPurify | 3.x | XSS sanitization for rendered mentions | Industry standard, already conceptually used server-side |
 
-### Supporting (Already in Caelis)
+### Supporting (Already in Stadion)
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| PRM_Notification_Channel | custom | Abstract notification base | Extend for new notification types |
-| PRM_Email_Channel | custom | Email digest delivery | Reuse for workspace digests |
-| PRM_Slack_Channel | custom | Slack notifications | Extend for @mention alerts |
-| PRM_ICal_Feed | custom | Manual iCal generation | Extend for workspace feeds |
+| STADION_Notification_Channel | custom | Abstract notification base | Extend for new notification types |
+| STADION_Email_Channel | custom | Email digest delivery | Reuse for workspace digests |
+| STADION_Slack_Channel | custom | Slack notifications | Extend for @mention alerts |
+| STADION_ICal_Feed | custom | Manual iCal generation | Extend for workspace feeds |
 
 ### Alternatives Considered
 | Instead of | Could Use | Tradeoff |
@@ -125,21 +125,21 @@ function NoteInput({ value, onChange, workspaceId }) {
 **Example:**
 ```php
 // In class-comment-types.php create_note()
-do_action('prm_user_mentioned', $comment_id, $mentioned_user_ids, $author_id);
+do_action('stadion_user_mentioned', $comment_id, $mentioned_user_ids, $author_id);
 
 // In class-mention-notifications.php
-add_action('prm_user_mentioned', [$this, 'send_mention_notification'], 10, 3);
+add_action('stadion_user_mentioned', [$this, 'send_mention_notification'], 10, 3);
 ```
 
 ### Pattern 4: Workspace iCal Feed Extension
-**What:** Extend existing PRM_ICal_Feed with workspace scope
+**What:** Extend existing STADION_ICal_Feed with workspace scope
 **When to use:** Workspace calendar subscriptions
 **Example:**
 ```php
 // Add rewrite rule
 add_rewrite_rule(
     '^workspace/([0-9]+)/calendar/([a-f0-9]+)\.ics$',
-    'index.php?prm_workspace_ical=1&prm_workspace_id=$matches[1]&prm_ical_token=$matches[2]',
+    'index.php?stadion_workspace_ical=1&stadion_workspace_id=$matches[1]&stadion_ical_token=$matches[2]',
     'top'
 );
 ```
@@ -158,12 +158,12 @@ add_rewrite_rule(
 |---------|-------------|-------------|-----|
 | @mention UI | Custom textarea with regex | react-mentions | Autocomplete, keyboard nav, mobile support |
 | Mention parsing | Custom regex | react-mentions markup serializer | Handles edge cases, escaping, cursor position |
-| iCal format | String concatenation | Existing PRM_ICal_Feed patterns | RFC compliance, escaping, timezone handling |
-| Email HTML | Inline styles manually | Existing PRM_Email_Channel | Already handles formatting, from name/email |
-| Notification routing | Custom notification system | Extend PRM_Notification_Channel | Multi-channel support, user preferences |
+| iCal format | String concatenation | Existing STADION_ICal_Feed patterns | RFC compliance, escaping, timezone handling |
+| Email HTML | Inline styles manually | Existing STADION_Email_Channel | Already handles formatting, from name/email |
+| Notification routing | Custom notification system | Extend STADION_Notification_Channel | Multi-channel support, user preferences |
 | Cron scheduling | Custom scheduling | wp_schedule_event | WordPress handles persistence, deduplication |
 
-**Key insight:** Caelis already has 80% of the notification infrastructure. The @mentions feature is primarily:
+**Key insight:** Stadion already has 80% of the notification infrastructure. The @mentions feature is primarily:
 1. A UI component (react-mentions)
 2. Comment meta storage for mentioned user IDs
 3. A hook that triggers existing notification channels
@@ -215,7 +215,7 @@ Don't rebuild what exists.
 **What goes wrong:** Workspace digests sent at wrong times for different user timezones
 **Why it happens:** Using workspace-level schedule instead of per-user schedule
 **How to avoid:**
-- Continue using per-user cron (already implemented in PRM_Reminders)
+- Continue using per-user cron (already implemented in STADION_Reminders)
 - Include workspace activity in user's existing digest
 - Don't create separate workspace-level cron jobs
 **Warning signs:** Users in different timezones getting digests at odd hours
@@ -224,7 +224,7 @@ Don't rebuild what exists.
 <code_examples>
 ## Code Examples
 
-Verified patterns from official sources and existing Caelis code:
+Verified patterns from official sources and existing Stadion code:
 
 ### react-mentions Basic Setup
 ```jsx
@@ -257,8 +257,8 @@ function MentionableTextarea({ value, onChange }) {
 
 ### Parse Mentions from Stored Content (PHP)
 ```php
-// Source: Caelis pattern, react-mentions markup format
-class PRM_Mentions {
+// Source: Stadion pattern, react-mentions markup format
+class STADION_Mentions {
     /**
      * Parse user IDs from mention markup
      * Markup format: @[Display Name](user_id)
@@ -292,10 +292,10 @@ class PRM_Mentions {
 
 ### Notification Hook Integration (PHP)
 ```php
-// Source: Existing PRM_Notification_Channel pattern
-class PRM_Mention_Notifications {
+// Source: Existing STADION_Notification_Channel pattern
+class STADION_Mention_Notifications {
     public function __construct() {
-        add_action('prm_user_mentioned', [$this, 'queue_mention_notification'], 10, 3);
+        add_action('stadion_user_mentioned', [$this, 'queue_mention_notification'], 10, 3);
     }
 
     public function queue_mention_notification($comment_id, $mentioned_user_ids, $author_id) {
@@ -304,7 +304,7 @@ class PRM_Mention_Notifications {
             if ($user_id === $author_id) continue;
 
             // Check user preference
-            $pref = get_user_meta($user_id, 'caelis_mention_notifications', true);
+            $pref = get_user_meta($user_id, 'stadion_mention_notifications', true);
             if ($pref === 'never') continue;
 
             if ($pref === 'immediate') {
@@ -320,22 +320,22 @@ class PRM_Mention_Notifications {
 
 ### Workspace iCal Feed Extension (PHP)
 ```php
-// Source: Existing PRM_ICal_Feed pattern
+// Source: Existing STADION_ICal_Feed pattern
 // Add to register_rewrite_rules()
 add_rewrite_rule(
     '^workspace/(?P<workspace_id>\d+)/calendar/(?P<token>[a-f0-9]+)\.ics$',
-    'index.php?prm_workspace_ical=1&prm_workspace_id=$matches[1]&prm_ical_token=$matches[2]',
+    'index.php?stadion_workspace_ical=1&stadion_workspace_id=$matches[1]&stadion_ical_token=$matches[2]',
     'top'
 );
 
 // In handle_feed_request()
-if (get_query_var('prm_workspace_ical')) {
-    $workspace_id = get_query_var('prm_workspace_id');
-    $token = get_query_var('prm_ical_token');
+if (get_query_var('stadion_workspace_ical')) {
+    $workspace_id = get_query_var('stadion_workspace_id');
+    $token = get_query_var('stadion_ical_token');
 
     // Verify token belongs to workspace member
     $user_id = $this->get_user_by_token($token);
-    if (!$user_id || !PRM_Workspace_Members::is_member($workspace_id, $user_id)) {
+    if (!$user_id || !STADION_Workspace_Members::is_member($workspace_id, $user_id)) {
         status_header(403);
         exit('Access denied');
     }
@@ -388,7 +388,7 @@ if (get_query_var('prm_workspace_ical')) {
 ## Sources
 
 ### Primary (HIGH confidence)
-- Caelis codebase: `class-notification-channels.php`, `class-reminders.php`, `class-ical-feed.php`, `class-comment-types.php`
+- Stadion codebase: `class-notification-channels.php`, `class-reminders.php`, `class-ical-feed.php`, `class-comment-types.php`
 - [react-mentions npm](https://www.npmjs.com/package/react-mentions) - official documentation
 - [sabre/vobject documentation](https://sabre.io/vobject/icalendar/) - iCal patterns (not used but referenced)
 
@@ -406,15 +406,15 @@ if (get_query_var('prm_workspace_ical')) {
 
 **Research scope:**
 - Core technology: WordPress comments, wp_cron, React
-- Ecosystem: react-mentions, existing Caelis notification infrastructure
+- Ecosystem: react-mentions, existing Stadion notification infrastructure
 - Patterns: Mention parsing, notification queuing, iCal extension
 - Pitfalls: Notification spam, XSS, performance, permissions
 
 **Confidence breakdown:**
-- Standard stack: HIGH - extends existing Caelis code
+- Standard stack: HIGH - extends existing Stadion code
 - Architecture: HIGH - follows established WordPress/React patterns
 - Pitfalls: HIGH - based on real notification system challenges
-- Code examples: HIGH - from Caelis codebase and official docs
+- Code examples: HIGH - from Stadion codebase and official docs
 
 **Research date:** 2026-01-13
 **Valid until:** 2026-02-13 (30 days - WordPress ecosystem stable)

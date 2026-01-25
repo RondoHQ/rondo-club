@@ -20,7 +20,7 @@ score: 4/4 must-haves verified
 |---|-------|--------|----------|
 | 1 | Person detail view shows "Custom Fields" section with all defined fields | VERIFIED | `CustomFieldsSection` imported at line 43 and rendered at line 2125 in `PersonDetail.jsx` |
 | 2 | Organization detail view shows "Custom Fields" section with all defined fields | VERIFIED | `CustomFieldsSection` imported at line 10 and rendered at line 532 in `CompanyDetail.jsx` |
-| 3 | Field values can be edited via modal (Caelis standard pattern) | VERIFIED | `CustomFieldsEditModal` component (768 lines) with full form handling, called from `CustomFieldsSection` at line 354-363 |
+| 3 | Field values can be edited via modal (Stadion standard pattern) | VERIFIED | `CustomFieldsEditModal` component (768 lines) with full form handling, called from `CustomFieldsSection` at line 354-363 |
 | 4 | Each field type renders appropriately (date pickers, file previews, color swatches, etc.) | VERIFIED | `renderFieldValue` function (lines 75-306) and `renderFieldInput` function (lines 512-713) handle all 14 field types |
 
 **Score:** 4/4 truths verified
@@ -32,13 +32,13 @@ score: 4/4 must-haves verified
 | `includes/class-rest-custom-fields.php` | Read-only metadata endpoint | VERIFIED | `get_field_metadata` method at line 217-275, `get_field_metadata_permissions_check` at line 189-191 using `is_user_logged_in()` |
 | `src/components/CustomFieldsSection.jsx` | Reusable section component (min 150 lines) | VERIFIED | 367 lines, exports default function, fetches metadata via `useQuery`, renders all 14 field types |
 | `src/components/CustomFieldsEditModal.jsx` | Modal for editing (min 200 lines) | VERIFIED | 768 lines, exports default function, uses react-hook-form with Controller pattern for complex fields |
-| `src/api/client.js` | `getCustomFieldsMetadata` method | VERIFIED | Method at line 273: `getCustomFieldsMetadata: (postType) => api.get(\`/prm/v1/custom-fields/${postType}/metadata\`)` |
+| `src/api/client.js` | `getCustomFieldsMetadata` method | VERIFIED | Method at line 273: `getCustomFieldsMetadata: (postType) => api.get(\`/stadion/v1/custom-fields/${postType}/metadata\`)` |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| `CustomFieldsSection.jsx` | `/prm/v1/custom-fields/{post_type}/metadata` | `useQuery` with `prmApi.getCustomFieldsMetadata` | WIRED | Lines 66-72: `prmApi.getCustomFieldsMetadata(postType)` in queryFn |
+| `CustomFieldsSection.jsx` | `/stadion/v1/custom-fields/{post_type}/metadata` | `useQuery` with `prmApi.getCustomFieldsMetadata` | WIRED | Lines 66-72: `prmApi.getCustomFieldsMetadata(postType)` in queryFn |
 | `PersonDetail.jsx` | `CustomFieldsSection` | import and render | WIRED | Import at line 43, render at line 2125-2137 with all props including `onUpdate` callback |
 | `CompanyDetail.jsx` | `CustomFieldsSection` | import and render | WIRED | Import at line 10, render at line 532-543 with all props including `onUpdate` callback |
 | `CustomFieldsSection` | `CustomFieldsEditModal` | import and conditional render | WIRED | Import at line 7, rendered at lines 353-364 with `showModal` state |
@@ -93,7 +93,7 @@ Scanned files for TODO, FIXME, placeholder patterns, console.log-only handlers, 
 
 No gaps found. All observable truths are verified:
 
-1. **REST API endpoint:** `/prm/v1/custom-fields/{post_type}/metadata` endpoint exists with proper `is_user_logged_in()` permission check, returning display-relevant field properties
+1. **REST API endpoint:** `/stadion/v1/custom-fields/{post_type}/metadata` endpoint exists with proper `is_user_logged_in()` permission check, returning display-relevant field properties
 2. **CustomFieldsSection component:** Fully implemented (367 lines) with type-appropriate rendering for all 14 ACF field types
 3. **CustomFieldsEditModal component:** Fully implemented (768 lines) with form inputs for all 14 field types using react-hook-form with Controller pattern
 4. **PersonDetail integration:** Component properly imported and rendered with working onUpdate callback to `updatePerson.mutateAsync`

@@ -62,7 +62,7 @@ Each task was committed atomically:
 
 ## Files Created/Modified
 - `src/pages/Dashboard.jsx` - Restructured to 3-row layout: Row 1 (Reminders/Todos/Awaiting), Row 2 (Meetings/Recently Contacted/Recently Edited), Row 3 (Favorites)
-- `functions.php` - Commented out prm_theme_add_favicon() to let React manage favicon dynamically
+- `functions.php` - Commented out stadion_theme_add_favicon() to let React manage favicon dynamically
 
 ## Decisions Made
 - **Favicon management**: Removed PHP static favicon output entirely. React's useTheme.js now creates and manages the favicon link element on mount with the user's accent color. This allows instant updates when the accent color changes.

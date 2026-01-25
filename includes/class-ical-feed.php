@@ -6,7 +6,7 @@
  * authenticated via a secret token URL.
  */
 
-namespace Caelis\Export;
+namespace Stadion\Export;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -17,7 +17,7 @@ class ICalFeed {
 	/**
 	 * User meta key for storing the iCal token
 	 */
-	const TOKEN_META_KEY = 'prm_ical_token';
+	const TOKEN_META_KEY = 'stadion_ical_token';
 
 	/**
 	 * Token length in bytes (will be hex encoded to double this)
@@ -38,14 +38,14 @@ class ICalFeed {
 		// Personal calendar feed
 		add_rewrite_rule(
 			'^calendar/([a-f0-9]+)\.ics$',
-			'index.php?prm_ical_feed=1&prm_ical_token=$matches[1]',
+			'index.php?stadion_ical_feed=1&stadion_ical_token=$matches[1]',
 			'top'
 		);
 
 		// Workspace calendar feed
 		add_rewrite_rule(
 			'^workspace/([0-9]+)/calendar/([a-f0-9]+)\.ics$',
-			'index.php?prm_workspace_ical=1&prm_workspace_id=$matches[1]&prm_ical_token=$matches[2]',
+			'index.php?stadion_workspace_ical=1&stadion_workspace_id=$matches[1]&stadion_ical_token=$matches[2]',
 			'top'
 		);
 	}
@@ -54,10 +54,10 @@ class ICalFeed {
 	 * Add custom query vars
 	 */
 	public function add_query_vars( $vars ) {
-		$vars[] = 'prm_ical_feed';
-		$vars[] = 'prm_ical_token';
-		$vars[] = 'prm_workspace_ical';
-		$vars[] = 'prm_workspace_id';
+		$vars[] = 'stadion_ical_feed';
+		$vars[] = 'stadion_ical_token';
+		$vars[] = 'stadion_workspace_ical';
+		$vars[] = 'stadion_workspace_id';
 		return $vars;
 	}
 
@@ -66,17 +66,17 @@ class ICalFeed {
 	 */
 	public function handle_feed_request() {
 		// Handle workspace calendar feed first
-		if ( get_query_var( 'prm_workspace_ical' ) ) {
+		if ( get_query_var( 'stadion_workspace_ical' ) ) {
 			$this->handle_workspace_feed();
 			exit;
 		}
 
 		// Handle personal calendar feed
-		if ( ! get_query_var( 'prm_ical_feed' ) ) {
+		if ( ! get_query_var( 'stadion_ical_feed' ) ) {
 			return;
 		}
 
-		$token = get_query_var( 'prm_ical_token' );
+		$token = get_query_var( 'stadion_ical_token' );
 
 		if ( empty( $token ) ) {
 			status_header( 400 );
@@ -102,7 +102,7 @@ class ICalFeed {
 	public function register_rest_routes() {
 		// Get iCal feed URL
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/user/ical-url',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -113,7 +113,7 @@ class ICalFeed {
 
 		// Regenerate iCal token
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/user/regenerate-ical-token',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -197,7 +197,7 @@ class ICalFeed {
 				'success'    => true,
 				'url'        => $url,
 				'webcal_url' => str_replace( [ 'https://', 'http://' ], 'webcal://', $url ),
-				'message'    => __( 'Your calendar URL has been regenerated. Update any calendar subscriptions with the new URL.', 'caelis' ),
+				'message'    => __( 'Your calendar URL has been regenerated. Update any calendar subscriptions with the new URL.', 'stadion' ),
 			]
 		);
 	}
@@ -211,7 +211,7 @@ class ICalFeed {
 
 		// Set headers
 		header( 'Content-Type: text/calendar; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="caelis.ics"' );
+		header( 'Content-Disposition: attachment; filename="stadion.ics"' );
 		header( 'Cache-Control: no-cache, must-revalidate' );
 		header( 'Pragma: no-cache' );
 
@@ -283,7 +283,7 @@ class ICalFeed {
 		// Calendar header
 		$lines[] = 'BEGIN:VCALENDAR';
 		$lines[] = 'VERSION:2.0';
-		$lines[] = 'PRODID:-//Caelis//' . $site_name . '//EN';
+		$lines[] = 'PRODID:-//Stadion//' . $site_name . '//EN';
 		$lines[] = 'CALSCALE:GREGORIAN';
 		$lines[] = 'METHOD:PUBLISH';
 		$lines[] = 'X-WR-CALNAME:' . $this->escape_ical_text( $site_name . ' - Important Dates' );
@@ -377,8 +377,8 @@ class ICalFeed {
 	 * Handle workspace iCal feed request
 	 */
 	private function handle_workspace_feed() {
-		$workspace_id = intval( get_query_var( 'prm_workspace_id' ) );
-		$token        = sanitize_text_field( get_query_var( 'prm_ical_token' ) );
+		$workspace_id = intval( get_query_var( 'stadion_workspace_id' ) );
+		$token        = sanitize_text_field( get_query_var( 'stadion_ical_token' ) );
 
 		// Verify token belongs to a valid user
 		$user_id = $this->get_user_by_token( $token );
@@ -397,7 +397,7 @@ class ICalFeed {
 		}
 
 		// Verify user is a member of the workspace
-		if ( ! \PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
+		if ( ! \STADION_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
 			status_header( 403 );
 			echo 'Access denied - not a workspace member';
 			exit;
@@ -534,7 +534,7 @@ class ICalFeed {
 	private function output_workspace_ical( $dates, $workspace_name ) {
 		// Set headers
 		header( 'Content-Type: text/calendar; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="caelis-workspace.ics"' );
+		header( 'Content-Disposition: attachment; filename="stadion-workspace.ics"' );
 		header( 'Cache-Control: no-cache, must-revalidate' );
 		header( 'Pragma: no-cache' );
 
@@ -560,10 +560,10 @@ class ICalFeed {
 		// Calendar header
 		$lines[] = 'BEGIN:VCALENDAR';
 		$lines[] = 'VERSION:2.0';
-		$lines[] = 'PRODID:-//Caelis//' . $workspace_name . '//EN';
+		$lines[] = 'PRODID:-//Stadion//' . $workspace_name . '//EN';
 		$lines[] = 'CALSCALE:GREGORIAN';
 		$lines[] = 'METHOD:PUBLISH';
-		$lines[] = 'X-WR-CALNAME:' . $this->escape_ical_text( 'Caelis - ' . $workspace_name );
+		$lines[] = 'X-WR-CALNAME:' . $this->escape_ical_text( 'Stadion - ' . $workspace_name );
 		$lines[] = 'X-WR-TIMEZONE:UTC';
 
 		// Add events

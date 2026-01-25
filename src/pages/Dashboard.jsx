@@ -246,8 +246,8 @@ function MeetingCard({ meeting, onClick, isNext }) {
   const formattedStartTime = format(startTime, 'HH:mm');
   const formattedEndTime = format(endTime, 'HH:mm');
   // Filter out current user from matched people (convert to number for type-safe comparison)
-  const currentUserPersonId = window.prmConfig?.currentUserPersonId
-    ? Number(window.prmConfig.currentUserPersonId)
+  const currentUserPersonId = window.stadionConfig?.currentUserPersonId
+    ? Number(window.stadionConfig.currentUserPersonId)
     : null;
   const filteredMatchedPeople = (meeting.matched_people || []).filter(
     person => !currentUserPersonId || person.person_id !== currentUserPersonId
@@ -435,12 +435,10 @@ export default function Dashboard() {
       return;
     }
 
-    // If awaiting, mark as completed directly
+    // If awaiting, show the complete modal (without awaiting option)
     if (todo.status === 'awaiting') {
-      updateTodo.mutate({
-        todoId: todo.id,
-        data: { status: 'completed' },
-      });
+      setTodoToComplete(todo);
+      setShowCompleteModal(true);
       return;
     }
 
@@ -894,6 +892,7 @@ export default function Dashboard() {
         onAwaiting={handleMarkAwaiting}
         onComplete={handleJustComplete}
         onCompleteAsActivity={handleCompleteAsActivity}
+        hideAwaitingOption={todoToComplete?.status === 'awaiting'}
       />
       
       {/* Activity Modal (for converting todo to activity) */}

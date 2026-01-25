@@ -1,15 +1,15 @@
 # Project Research Summary
 
-**Project:** Caelis v5.0 - Google Contacts Two-Way Sync
+**Project:** Stadion v5.0 - Google Contacts Two-Way Sync
 **Domain:** Personal CRM - Google Contacts Integration
 **Researched:** 2026-01-17
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Google Contacts bidirectional sync is a well-established integration pattern with clear user expectations and comprehensive official documentation. Caelis is uniquely positioned to implement this because the core infrastructure already exists: the `google/apiclient` library is installed, OAuth token encryption (Sodium) is working, and WP-Cron background sync patterns are proven in the Calendar integration. **No new Composer dependencies are required** - only OAuth scope expansion and new PHP classes following established patterns.
+Google Contacts bidirectional sync is a well-established integration pattern with clear user expectations and comprehensive official documentation. Stadion is uniquely positioned to implement this because the core infrastructure already exists: the `google/apiclient` library is installed, OAuth token encryption (Sodium) is working, and WP-Cron background sync patterns are proven in the Calendar integration. **No new Composer dependencies are required** - only OAuth scope expansion and new PHP classes following established patterns.
 
-The recommended approach is to treat Caelis as the source of truth, implement comprehensive field mapping (not just basic name/email/phone like most CRMs), and use Google's syncToken mechanism for efficient delta synchronization. The user's stated preferences (Caelis wins conflicts, photos preserve on initial sync, deletions propagate from Caelis but only unlink from Google) align perfectly with industry best practices for a CRM-centric workflow.
+The recommended approach is to treat Stadion as the source of truth, implement comprehensive field mapping (not just basic name/email/phone like most CRMs), and use Google's syncToken mechanism for efficient delta synchronization. The user's stated preferences (Stadion wins conflicts, photos preserve on initial sync, deletions propagate from Stadion but only unlink from Google) align perfectly with industry best practices for a CRM-centric workflow.
 
 Key risks center on OAuth configuration (testing mode 7-day token expiry), API behavior (syncToken expiration, ETag conflicts, write propagation delays), and WordPress constraints (WP-Cron timeouts). All are mitigable with proper error handling, chunked processing, and following the documented patterns. The 8-phase architecture research provides a clear build order with explicit dependencies.
 
@@ -17,7 +17,7 @@ Key risks center on OAuth configuration (testing mode 7-day token expiry), API b
 
 ### Recommended Stack
 
-Caelis already has everything needed. The existing `google/apiclient ^2.15` includes `Google_Service_PeopleService` for all People API operations. The OAuth flow, Sodium-based token encryption, and WP-Cron patterns transfer directly from Calendar integration.
+Stadion already has everything needed. The existing `google/apiclient ^2.15` includes `Google_Service_PeopleService` for all People API operations. The OAuth flow, Sodium-based token encryption, and WP-Cron patterns transfer directly from Calendar integration.
 
 **Core technologies:**
 - **google/apiclient (existing):** Google API PHP client - already installed, provides People API service classes
@@ -39,7 +39,7 @@ Caelis already has everything needed. The existing `google/apiclient ^2.15` incl
 - Disconnect option that removes tokens but preserves data
 
 **Should have (competitive differentiation):**
-- Clear source of truth model ("Caelis wins" by default)
+- Clear source of truth model ("Stadion wins" by default)
 - Delta sync with syncToken (only sync changes, not full re-import)
 - Per-contact sync toggle (privacy control for sensitive contacts)
 - Configurable conflict resolution strategies
@@ -54,13 +54,13 @@ Caelis already has everything needed. The existing `google/apiclient ^2.15` incl
 
 ### Architecture Approach
 
-The architecture follows existing Caelis patterns under a new `Caelis\Contacts` namespace. Five core classes handle distinct responsibilities: GoogleContactsProvider (API client with rate limiting), GoogleContactsSync (orchestrator with state management), GoogleContactsMapper (bidirectional field mapping), GoogleContactsConflict (conflict detection and resolution), and REST\GoogleContacts (API endpoints for UI). This separation enables isolated testing and matches the proven Calendar architecture.
+The architecture follows existing Stadion patterns under a new `Stadion\Contacts` namespace. Five core classes handle distinct responsibilities: GoogleContactsProvider (API client with rate limiting), GoogleContactsSync (orchestrator with state management), GoogleContactsMapper (bidirectional field mapping), GoogleContactsConflict (conflict detection and resolution), and REST\GoogleContacts (API endpoints for UI). This separation enables isolated testing and matches the proven Calendar architecture.
 
 **Major components:**
 1. **GoogleContactsProvider** - Low-level API operations, error handling, rate limiting with exponential backoff
 2. **GoogleContactsSync** - Sync orchestration, WP-Cron scheduling, lock management, state tracking
-3. **GoogleContactsMapper** - Bidirectional field mapping, single source of truth for Google<->Caelis conversion
-4. **GoogleContactsConflict** - Conflict detection, resolution strategies (newest/caelis/google/manual wins)
+3. **GoogleContactsMapper** - Bidirectional field mapping, single source of truth for Google<->Stadion conversion
+4. **GoogleContactsConflict** - Conflict detection, resolution strategies (newest/stadion/google/manual wins)
 5. **REST\GoogleContacts** - REST API endpoints for connection management, sync triggers, conflict resolution UI
 
 ### Critical Pitfalls
@@ -87,14 +87,14 @@ Based on research, suggested phase structure:
 
 ### Phase 2: One-Way Import
 **Rationale:** Import-only allows validating field mapping, duplicate detection, and API behavior before tackling bidirectional complexity.
-**Delivers:** Full sync of Google contacts to Caelis, field mapping, duplicate detection, photo sideloading
-**Uses:** GoogleContactsProvider, GoogleContactsMapper (Google->Caelis direction)
+**Delivers:** Full sync of Google contacts to Stadion, field mapping, duplicate detection, photo sideloading
+**Uses:** GoogleContactsProvider, GoogleContactsMapper (Google->Stadion direction)
 **Implements:** Basic sync infrastructure, personFields mask, pagination handling
 
 ### Phase 3: One-Way Export
-**Rationale:** Export depends on working import (field mapping tested) and establishes the Caelis->Google direction.
-**Delivers:** Create new Caelis contacts in Google, link existing contacts, bulk export
-**Uses:** GoogleContactsMapper (Caelis->Google direction), ETag for conflict prevention
+**Rationale:** Export depends on working import (field mapping tested) and establishes the Stadion->Google direction.
+**Delivers:** Create new Stadion contacts in Google, link existing contacts, bulk export
+**Uses:** GoogleContactsMapper (Stadion->Google direction), ETag for conflict prevention
 **Implements:** Contact creation in Google, resourceName tracking
 
 ### Phase 4: Delta Sync
@@ -107,7 +107,7 @@ Based on research, suggested phase structure:
 **Rationale:** With bidirectional delta sync working, conflicts become possible and must be handled explicitly.
 **Delivers:** Conflict detection, resolution strategies, manual conflict queue, audit logging
 **Uses:** GoogleContactsConflict class
-**Implements:** "Caelis wins" default strategy, field-level merge option
+**Implements:** "Stadion wins" default strategy, field-level merge option
 
 ### Phase 6: Settings UI
 **Rationale:** Backend must be complete before exposing configuration options to users.
@@ -139,23 +139,23 @@ Phases likely needing deeper research during planning:
 - **Phase 5 (Conflict Resolution):** Conflict merge algorithms, field-level comparison logic
 
 Phases with standard patterns (skip research-phase):
-- **Phase 1 (OAuth):** Well-documented Google OAuth, existing Caelis patterns
+- **Phase 1 (OAuth):** Well-documented Google OAuth, existing Stadion patterns
 - **Phase 3 (Export):** Reverse of import, same API patterns
 - **Phase 4 (Delta Sync):** Google's syncToken is well-documented, follow existing Calendar pattern
-- **Phase 6-8 (UI/Polish):** Standard React patterns, Caelis UI conventions established
+- **Phase 6-8 (UI/Polish):** Standard React patterns, Stadion UI conventions established
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Official Google documentation, existing Caelis implementation proves patterns work |
+| Stack | HIGH | Official Google documentation, existing Stadion implementation proves patterns work |
 | Features | HIGH | Multiple CRM comparisons, user community feedback, clear competitive landscape |
-| Architecture | HIGH | Based on existing Caelis patterns + official Google API documentation |
+| Architecture | HIGH | Based on existing Stadion patterns + official Google API documentation |
 | Pitfalls | HIGH | Official documentation warnings + verified community reports of issues |
 
 **Overall confidence:** HIGH
 
-All research derives from official Google documentation (People API docs, OAuth docs) or verified Caelis codebase patterns. Competitive analysis used multiple CRM documentation sources that agree on user expectations.
+All research derives from official Google documentation (People API docs, OAuth docs) or verified Stadion codebase patterns. Competitive analysis used multiple CRM documentation sources that agree on user expectations.
 
 ### Gaps to Address
 

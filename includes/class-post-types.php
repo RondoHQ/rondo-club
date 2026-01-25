@@ -3,7 +3,7 @@
  * Custom Post Types Registration
  */
 
-namespace Caelis\Core;
+namespace Stadion\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -35,18 +35,18 @@ class PostTypes {
 	 */
 	private function register_workspace_post_type() {
 		$labels = [
-			'name'               => _x( 'Workspaces', 'Post type general name', 'caelis' ),
-			'singular_name'      => _x( 'Workspace', 'Post type singular name', 'caelis' ),
-			'menu_name'          => _x( 'Workspaces', 'Admin Menu text', 'caelis' ),
-			'add_new'            => __( 'Add New', 'caelis' ),
-			'add_new_item'       => __( 'Add New Workspace', 'caelis' ),
-			'edit_item'          => __( 'Edit Workspace', 'caelis' ),
-			'new_item'           => __( 'New Workspace', 'caelis' ),
-			'view_item'          => __( 'View Workspace', 'caelis' ),
-			'search_items'       => __( 'Search Workspaces', 'caelis' ),
-			'not_found'          => __( 'No workspaces found', 'caelis' ),
-			'not_found_in_trash' => __( 'No workspaces found in Trash', 'caelis' ),
-			'all_items'          => __( 'All Workspaces', 'caelis' ),
+			'name'               => _x( 'Workspaces', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Workspace', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'Workspaces', 'Admin Menu text', 'stadion' ),
+			'add_new'            => __( 'Add New', 'stadion' ),
+			'add_new_item'       => __( 'Add New Workspace', 'stadion' ),
+			'edit_item'          => __( 'Edit Workspace', 'stadion' ),
+			'new_item'           => __( 'New Workspace', 'stadion' ),
+			'view_item'          => __( 'View Workspace', 'stadion' ),
+			'search_items'       => __( 'Search Workspaces', 'stadion' ),
+			'not_found'          => __( 'No workspaces found', 'stadion' ),
+			'not_found_in_trash' => __( 'No workspaces found in Trash', 'stadion' ),
+			'all_items'          => __( 'All Workspaces', 'stadion' ),
 		];
 
 		$args = [
@@ -78,18 +78,18 @@ class PostTypes {
 	 */
 	private function register_workspace_invite_post_type() {
 		$labels = [
-			'name'               => _x( 'Workspace Invites', 'Post type general name', 'caelis' ),
-			'singular_name'      => _x( 'Workspace Invite', 'Post type singular name', 'caelis' ),
-			'menu_name'          => _x( 'Invites', 'Admin Menu text', 'caelis' ),
-			'add_new'            => __( 'Add New', 'caelis' ),
-			'add_new_item'       => __( 'Add New Invite', 'caelis' ),
-			'edit_item'          => __( 'Edit Invite', 'caelis' ),
-			'new_item'           => __( 'New Invite', 'caelis' ),
-			'view_item'          => __( 'View Invite', 'caelis' ),
-			'search_items'       => __( 'Search Invites', 'caelis' ),
-			'not_found'          => __( 'No invites found', 'caelis' ),
-			'not_found_in_trash' => __( 'No invites found in Trash', 'caelis' ),
-			'all_items'          => __( 'All Invites', 'caelis' ),
+			'name'               => _x( 'Workspace Invites', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Workspace Invite', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'Invites', 'Admin Menu text', 'stadion' ),
+			'add_new'            => __( 'Add New', 'stadion' ),
+			'add_new_item'       => __( 'Add New Invite', 'stadion' ),
+			'edit_item'          => __( 'Edit Invite', 'stadion' ),
+			'new_item'           => __( 'New Invite', 'stadion' ),
+			'view_item'          => __( 'View Invite', 'stadion' ),
+			'search_items'       => __( 'Search Invites', 'stadion' ),
+			'not_found'          => __( 'No invites found', 'stadion' ),
+			'not_found_in_trash' => __( 'No invites found in Trash', 'stadion' ),
+			'all_items'          => __( 'All Invites', 'stadion' ),
 		];
 
 		$args = [
@@ -115,18 +115,18 @@ class PostTypes {
 	 */
 	private function register_person_post_type() {
 		$labels = [
-			'name'               => _x( 'People', 'Post type general name', 'caelis' ),
-			'singular_name'      => _x( 'Person', 'Post type singular name', 'caelis' ),
-			'menu_name'          => _x( 'People', 'Admin Menu text', 'caelis' ),
-			'add_new'            => __( 'Add New', 'caelis' ),
-			'add_new_item'       => __( 'Add New Person', 'caelis' ),
-			'edit_item'          => __( 'Edit Person', 'caelis' ),
-			'new_item'           => __( 'New Person', 'caelis' ),
-			'view_item'          => __( 'View Person', 'caelis' ),
-			'search_items'       => __( 'Search People', 'caelis' ),
-			'not_found'          => __( 'No people found', 'caelis' ),
-			'not_found_in_trash' => __( 'No people found in Trash', 'caelis' ),
-			'all_items'          => __( 'All People', 'caelis' ),
+			'name'               => _x( 'People', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Person', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'People', 'Admin Menu text', 'stadion' ),
+			'add_new'            => __( 'Add New', 'stadion' ),
+			'add_new_item'       => __( 'Add New Person', 'stadion' ),
+			'edit_item'          => __( 'Edit Person', 'stadion' ),
+			'new_item'           => __( 'New Person', 'stadion' ),
+			'view_item'          => __( 'View Person', 'stadion' ),
+			'search_items'       => __( 'Search People', 'stadion' ),
+			'not_found'          => __( 'No people found', 'stadion' ),
+			'not_found_in_trash' => __( 'No people found in Trash', 'stadion' ),
+			'all_items'          => __( 'All People', 'stadion' ),
 		];
 
 		$args = [
@@ -155,18 +155,18 @@ class PostTypes {
 	 */
 	private function register_company_post_type() {
 		$labels = [
-			'name'               => _x( 'Organizations', 'Post type general name', 'caelis' ),
-			'singular_name'      => _x( 'Organization', 'Post type singular name', 'caelis' ),
-			'menu_name'          => _x( 'Organizations', 'Admin Menu text', 'caelis' ),
-			'add_new'            => __( 'Add New', 'caelis' ),
-			'add_new_item'       => __( 'Add New Organization', 'caelis' ),
-			'edit_item'          => __( 'Edit Organization', 'caelis' ),
-			'new_item'           => __( 'New Organization', 'caelis' ),
-			'view_item'          => __( 'View Organization', 'caelis' ),
-			'search_items'       => __( 'Search Organizations', 'caelis' ),
-			'not_found'          => __( 'No organizations found', 'caelis' ),
-			'not_found_in_trash' => __( 'No organizations found in Trash', 'caelis' ),
-			'all_items'          => __( 'All Organizations', 'caelis' ),
+			'name'               => _x( 'Organizations', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Organization', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'Organizations', 'Admin Menu text', 'stadion' ),
+			'add_new'            => __( 'Add New', 'stadion' ),
+			'add_new_item'       => __( 'Add New Organization', 'stadion' ),
+			'edit_item'          => __( 'Edit Organization', 'stadion' ),
+			'new_item'           => __( 'New Organization', 'stadion' ),
+			'view_item'          => __( 'View Organization', 'stadion' ),
+			'search_items'       => __( 'Search Organizations', 'stadion' ),
+			'not_found'          => __( 'No organizations found', 'stadion' ),
+			'not_found_in_trash' => __( 'No organizations found in Trash', 'stadion' ),
+			'all_items'          => __( 'All Organizations', 'stadion' ),
 		];
 
 		$args = [
@@ -195,18 +195,18 @@ class PostTypes {
 	 */
 	private function register_important_date_post_type() {
 		$labels = [
-			'name'               => _x( 'Important Dates', 'Post type general name', 'caelis' ),
-			'singular_name'      => _x( 'Important Date', 'Post type singular name', 'caelis' ),
-			'menu_name'          => _x( 'Dates', 'Admin Menu text', 'caelis' ),
-			'add_new'            => __( 'Add New', 'caelis' ),
-			'add_new_item'       => __( 'Add New Date', 'caelis' ),
-			'edit_item'          => __( 'Edit Date', 'caelis' ),
-			'new_item'           => __( 'New Date', 'caelis' ),
-			'view_item'          => __( 'View Date', 'caelis' ),
-			'search_items'       => __( 'Search Dates', 'caelis' ),
-			'not_found'          => __( 'No dates found', 'caelis' ),
-			'not_found_in_trash' => __( 'No dates found in Trash', 'caelis' ),
-			'all_items'          => __( 'All Dates', 'caelis' ),
+			'name'               => _x( 'Important Dates', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Important Date', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'Dates', 'Admin Menu text', 'stadion' ),
+			'add_new'            => __( 'Add New', 'stadion' ),
+			'add_new_item'       => __( 'Add New Date', 'stadion' ),
+			'edit_item'          => __( 'Edit Date', 'stadion' ),
+			'new_item'           => __( 'New Date', 'stadion' ),
+			'view_item'          => __( 'View Date', 'stadion' ),
+			'search_items'       => __( 'Search Dates', 'stadion' ),
+			'not_found'          => __( 'No dates found', 'stadion' ),
+			'not_found_in_trash' => __( 'No dates found in Trash', 'stadion' ),
+			'all_items'          => __( 'All Dates', 'stadion' ),
 		];
 
 		$args = [
@@ -238,38 +238,38 @@ class PostTypes {
 	 */
 	private function register_todo_statuses() {
 		register_post_status(
-			'prm_open',
+			'stadion_open',
 			[
-				'label'                     => _x( 'Open', 'Todo status', 'caelis' ),
+				'label'                     => _x( 'Open', 'Todo status', 'stadion' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Open <span class="count">(%s)</span>', 'Open <span class="count">(%s)</span>', 'caelis' ),
+				'label_count'               => _n_noop( 'Open <span class="count">(%s)</span>', 'Open <span class="count">(%s)</span>', 'stadion' ),
 			]
 		);
 
 		register_post_status(
-			'prm_awaiting',
+			'stadion_awaiting',
 			[
-				'label'                     => _x( 'Awaiting Response', 'Todo status', 'caelis' ),
+				'label'                     => _x( 'Awaiting Response', 'Todo status', 'stadion' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Awaiting <span class="count">(%s)</span>', 'Awaiting <span class="count">(%s)</span>', 'caelis' ),
+				'label_count'               => _n_noop( 'Awaiting <span class="count">(%s)</span>', 'Awaiting <span class="count">(%s)</span>', 'stadion' ),
 			]
 		);
 
 		register_post_status(
-			'prm_completed',
+			'stadion_completed',
 			[
-				'label'                     => _x( 'Completed', 'Todo status', 'caelis' ),
+				'label'                     => _x( 'Completed', 'Todo status', 'stadion' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Completed <span class="count">(%s)</span>', 'Completed <span class="count">(%s)</span>', 'caelis' ),
+				'label_count'               => _n_noop( 'Completed <span class="count">(%s)</span>', 'Completed <span class="count">(%s)</span>', 'stadion' ),
 			]
 		);
 	}
@@ -283,18 +283,18 @@ class PostTypes {
 	 */
 	private function register_todo_post_type() {
 		$labels = [
-			'name'               => _x( 'Todos', 'Post type general name', 'caelis' ),
-			'singular_name'      => _x( 'Todo', 'Post type singular name', 'caelis' ),
-			'menu_name'          => _x( 'Todos', 'Admin Menu text', 'caelis' ),
-			'add_new'            => __( 'Add New', 'caelis' ),
-			'add_new_item'       => __( 'Add New Todo', 'caelis' ),
-			'edit_item'          => __( 'Edit Todo', 'caelis' ),
-			'new_item'           => __( 'New Todo', 'caelis' ),
-			'view_item'          => __( 'View Todo', 'caelis' ),
-			'search_items'       => __( 'Search Todos', 'caelis' ),
-			'not_found'          => __( 'No todos found', 'caelis' ),
-			'not_found_in_trash' => __( 'No todos found in Trash', 'caelis' ),
-			'all_items'          => __( 'All Todos', 'caelis' ),
+			'name'               => _x( 'Todos', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Todo', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'Todos', 'Admin Menu text', 'stadion' ),
+			'add_new'            => __( 'Add New', 'stadion' ),
+			'add_new_item'       => __( 'Add New Todo', 'stadion' ),
+			'edit_item'          => __( 'Edit Todo', 'stadion' ),
+			'new_item'           => __( 'New Todo', 'stadion' ),
+			'view_item'          => __( 'View Todo', 'stadion' ),
+			'search_items'       => __( 'Search Todos', 'stadion' ),
+			'not_found'          => __( 'No todos found', 'stadion' ),
+			'not_found_in_trash' => __( 'No todos found in Trash', 'stadion' ),
+			'all_items'          => __( 'All Todos', 'stadion' ),
 		];
 
 		$args = [
@@ -315,7 +315,7 @@ class PostTypes {
 			'supports'           => [ 'title', 'editor', 'author' ],
 		];
 
-		register_post_type( 'prm_todo', $args );
+		register_post_type( 'stadion_todo', $args );
 	}
 
 	/**
@@ -327,18 +327,18 @@ class PostTypes {
 	 */
 	private function register_calendar_event_post_type() {
 		$labels = [
-			'name'               => _x( 'Calendar Events', 'Post type general name', 'caelis' ),
-			'singular_name'      => _x( 'Calendar Event', 'Post type singular name', 'caelis' ),
-			'menu_name'          => _x( 'Calendar Events', 'Admin Menu text', 'caelis' ),
-			'add_new'            => __( 'Add New', 'caelis' ),
-			'add_new_item'       => __( 'Add New Event', 'caelis' ),
-			'edit_item'          => __( 'Edit Event', 'caelis' ),
-			'new_item'           => __( 'New Event', 'caelis' ),
-			'view_item'          => __( 'View Event', 'caelis' ),
-			'search_items'       => __( 'Search Events', 'caelis' ),
-			'not_found'          => __( 'No events found', 'caelis' ),
-			'not_found_in_trash' => __( 'No events found in Trash', 'caelis' ),
-			'all_items'          => __( 'All Events', 'caelis' ),
+			'name'               => _x( 'Calendar Events', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Calendar Event', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'Calendar Events', 'Admin Menu text', 'stadion' ),
+			'add_new'            => __( 'Add New', 'stadion' ),
+			'add_new_item'       => __( 'Add New Event', 'stadion' ),
+			'edit_item'          => __( 'Edit Event', 'stadion' ),
+			'new_item'           => __( 'New Event', 'stadion' ),
+			'view_item'          => __( 'View Event', 'stadion' ),
+			'search_items'       => __( 'Search Events', 'stadion' ),
+			'not_found'          => __( 'No events found', 'stadion' ),
+			'not_found_in_trash' => __( 'No events found in Trash', 'stadion' ),
+			'all_items'          => __( 'All Events', 'stadion' ),
 		];
 
 		$args = [
@@ -368,18 +368,18 @@ class PostTypes {
 	 */
 	private function register_feedback_post_type() {
 		$labels = [
-			'name'               => _x( 'Feedback', 'Post type general name', 'caelis' ),
-			'singular_name'      => _x( 'Feedback', 'Post type singular name', 'caelis' ),
-			'menu_name'          => _x( 'Feedback', 'Admin Menu text', 'caelis' ),
-			'add_new'            => __( 'Add New', 'caelis' ),
-			'add_new_item'       => __( 'Add New Feedback', 'caelis' ),
-			'edit_item'          => __( 'Edit Feedback', 'caelis' ),
-			'new_item'           => __( 'New Feedback', 'caelis' ),
-			'view_item'          => __( 'View Feedback', 'caelis' ),
-			'search_items'       => __( 'Search Feedback', 'caelis' ),
-			'not_found'          => __( 'No feedback found', 'caelis' ),
-			'not_found_in_trash' => __( 'No feedback found in Trash', 'caelis' ),
-			'all_items'          => __( 'All Feedback', 'caelis' ),
+			'name'               => _x( 'Feedback', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Feedback', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'Feedback', 'Admin Menu text', 'stadion' ),
+			'add_new'            => __( 'Add New', 'stadion' ),
+			'add_new_item'       => __( 'Add New Feedback', 'stadion' ),
+			'edit_item'          => __( 'Edit Feedback', 'stadion' ),
+			'new_item'           => __( 'New Feedback', 'stadion' ),
+			'view_item'          => __( 'View Feedback', 'stadion' ),
+			'search_items'       => __( 'Search Feedback', 'stadion' ),
+			'not_found'          => __( 'No feedback found', 'stadion' ),
+			'not_found_in_trash' => __( 'No feedback found in Trash', 'stadion' ),
+			'all_items'          => __( 'All Feedback', 'stadion' ),
 		];
 
 		$args = [
@@ -400,6 +400,6 @@ class PostTypes {
 			'supports'           => [ 'title', 'editor', 'author' ],
 		];
 
-		register_post_type( 'caelis_feedback', $args );
+		register_post_type( 'stadion_feedback', $args );
 	}
 }

@@ -6,7 +6,7 @@
  * Uses transient-based caching for performance.
  */
 
-namespace Caelis\Calendar;
+namespace Stadion\Calendar;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -17,7 +17,7 @@ class Matcher {
 	/**
 	 * Transient key prefix for email lookup cache
 	 */
-	const CACHE_PREFIX = 'prm_email_lookup_';
+	const CACHE_PREFIX = 'stadion_email_lookup_';
 
 	/**
 	 * Cache expiration time (24 hours)
@@ -209,7 +209,7 @@ class Matcher {
 		}
 
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( "PRM_Calendar_Matcher: Re-matched {$count} calendar events for user {$user_id}" );
+			error_log( "STADION_Calendar_Matcher: Re-matched {$count} calendar events for user {$user_id}" );
 		}
 
 		return $count;

@@ -28,7 +28,7 @@ Mistakes that cause rewrites, data loss, or major integration failures.
 **Detection:**
 - Error logs showing `google.rpc.ErrorInfo` with reason `EXPIRED_SYNC_TOKEN`
 - Sync jobs completing without processing any records
-- Users reporting Google changes not appearing in Caelis
+- Users reporting Google changes not appearing in Stadion
 
 **Phase to address:** Phase 1 (Core Sync Infrastructure)
 
@@ -44,7 +44,7 @@ Mistakes that cause rewrites, data loss, or major integration failures.
 
 **Consequences:**
 - Updates silently fail in batch operations
-- Data becomes inconsistent between Caelis and Google
+- Data becomes inconsistent between Stadion and Google
 - Users manually edit in Google, sync overwrites their changes
 - Intermittent failures that are hard to reproduce
 
@@ -139,7 +139,7 @@ Issues specific to Google People API behavior.
 **Prevention:**
 - Always include `personFields` parameter in read operations
 - Create a constant with all fields you need: `names,emailAddresses,phoneNumbers,addresses,birthdays,organizations,photos,memberships`
-- Document which fields Caelis uses and sync that list
+- Document which fields Stadion uses and sync that list
 
 **Detection:** 400 errors mentioning "personFields mask is required"
 
@@ -433,11 +433,11 @@ How to avoid data loss or corruption.
 - Implement your own duplicate detection before create
 - Search by email/phone before creating new contacts
 - Store Google resourceName mapping to prevent re-creates
-- Use unique identifier (Caelis person ID) in clientData field
+- Use unique identifier (Stadion person ID) in clientData field
 
 **Detection:**
 - Users reporting duplicates
-- Multiple resourceNames mapping to same Caelis person
+- Multiple resourceNames mapping to same Stadion person
 
 **Phase to address:** Phase 2 (Sync Logic)
 
@@ -453,13 +453,13 @@ How to avoid data loss or corruption.
 
 **Prevention:**
 - Check `PersonMetadata.deleted` on every synced contact
-- Implement deletion handling: remove mapping, optionally soft-delete in Caelis
+- Implement deletion handling: remove mapping, optionally soft-delete in Stadion
 - Test deletion sync path explicitly
 
 **Detection:**
 - Deleted contacts reappearing
 - Mapping table growing indefinitely
-- Ghost contacts in Caelis
+- Ghost contacts in Stadion
 
 **Phase to address:** Phase 2 (Deletion Sync)
 
@@ -528,7 +528,7 @@ Bidirectional sync specific issues.
 - Users lose trust in sync
 
 **Prevention:**
-- Define clear source of truth (spec says Caelis is master)
+- Define clear source of truth (spec says Stadion is master)
 - Track last-modified timestamps on both sides
 - Implement conflict detection: if both modified since last sync, flag for review
 - Consider field-level merging for non-conflicting changes
@@ -569,14 +569,14 @@ Bidirectional sync specific issues.
 
 ### Pitfall 22: Sync Loop - Changes Ping-Pong Between Systems
 
-**What goes wrong:** Change in Caelis syncs to Google, detected as Google change, syncs back to Caelis, triggers sync to Google... infinite loop.
+**What goes wrong:** Change in Stadion syncs to Google, detected as Google change, syncs back to Stadion, triggers sync to Google... infinite loop.
 
 **Why it happens:** No mechanism to recognize your own changes coming back.
 
 **Prevention:**
 - Track origin of each change (local vs remote)
 - Store sync timestamps to ignore changes we just made
-- Use clientData field to mark Caelis-originated contacts
+- Use clientData field to mark Stadion-originated contacts
 - Compare content, not just timestamps, to detect real changes
 - Implement change deduplication window (ignore changes within N seconds of our write)
 
@@ -599,7 +599,7 @@ Bidirectional sync specific issues.
 | Initial Sync | SyncToken not stored | MEDIUM | Persist with timestamp |
 | Delta Sync | ETag conflicts | HIGH | Always fetch fresh before update |
 | Delta Sync | Propagation delays | MEDIUM | Don't rely on read-after-write |
-| Conflict Resolution | No clear winner | CRITICAL | Caelis is source of truth |
+| Conflict Resolution | No clear winner | CRITICAL | Stadion is source of truth |
 | Conflict Resolution | Sync loops | HIGH | Track change origin |
 | Photo Sync | Separate API required | MEDIUM | Use updateContactPhoto |
 | Deletion Sync | Markers not processed | MEDIUM | Check PersonMetadata.deleted |

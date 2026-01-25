@@ -4,11 +4,11 @@
  *
  * Provides static helper methods for managing post visibility and sharing.
  *
- * @package Caelis
+ * @package Stadion
  * @since 1.44.0
  */
 
-namespace Caelis\Core;
+namespace Stadion\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

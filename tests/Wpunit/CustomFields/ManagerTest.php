@@ -4,19 +4,19 @@
  *
  * Tests CRUD operations for ACF custom field definitions.
  *
- * @package Caelis\Tests\CustomFields
+ * @package Stadion\Tests\CustomFields
  */
 
 namespace Tests\Wpunit\CustomFields;
 
-use Caelis\CustomFields\Manager;
-use Tests\Support\CaelisTestCase;
+use Stadion\CustomFields\Manager;
+use Tests\Support\StadionTestCase;
 use WP_Error;
 
 /**
  * Test class for CustomFields Manager.
  */
-class ManagerTest extends CaelisTestCase {
+class ManagerTest extends StadionTestCase {
 
 	/**
 	 * Manager instance.

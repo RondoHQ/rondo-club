@@ -64,7 +64,7 @@ human_verification:
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| `includes/class-rest-api.php` | `includes/customfields/class-manager.php` | `Manager::get_fields()` | WIRED | Line 1759: `$manager = new \Caelis\CustomFields\Manager();` followed by `$manager->get_fields($post_type, false)` on line 1760 |
+| `includes/class-rest-api.php` | `includes/customfields/class-manager.php` | `Manager::get_fields()` | WIRED | Line 1759: `$manager = new \Stadion\CustomFields\Manager();` followed by `$manager->get_fields($post_type, false)` on line 1760 |
 
 **Link Analysis:**
 

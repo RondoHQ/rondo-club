@@ -1,4 +1,4 @@
-# Project Milestones: Caelis
+# Project Milestones: Stadion
 
 ## v6.0 Custom Fields (Shipped: 2026-01-21)
 
@@ -59,7 +59,7 @@
 
 ## v5.0 Google Contacts Sync (Shipped: 2026-01-18)
 
-**Delivered:** Bidirectional Google Contacts synchronization with import, export, delta sync, conflict resolution (Caelis wins), and WP-CLI commands for administration.
+**Delivered:** Bidirectional Google Contacts synchronization with import, export, delta sync, conflict resolution (Stadion wins), and WP-CLI commands for administration.
 
 **Phases completed:** 79-85 (16 plans total)
 
@@ -69,7 +69,7 @@
 - Import from Google with field mapping, email-based duplicate detection, and photo sideloading
 - Export to Google with reverse field mapping and etag conflict handling
 - Delta sync using Google syncToken for efficient change detection
-- Conflict resolution with Caelis-wins strategy and activity logging for audit
+- Conflict resolution with Stadion-wins strategy and activity logging for audit
 - Settings UI with sync history viewer and "View in Google Contacts" link on person profiles
 - WP-CLI commands: sync, sync --full, status, conflicts, unlink-all
 
@@ -156,7 +156,7 @@
 - Added PSR-4 namespaces to 38 PHP classes across 9 namespace groups
 - Configured Composer autoloading with classmap for includes/ directory
 - Added 38 backward-compatible class aliases for migration period
-- Removed manual prm_autoloader() function (52 lines deleted)
+- Removed manual stadion_autoloader() function (52 lines deleted)
 - Enabled PHPCS Generic.Files.OneClassPerFile rule
 
 **Stats:**
@@ -309,8 +309,8 @@
 
 **Key accomplishments:**
 
-- prm_todo custom post type (migrated from comments)
-- WordPress post statuses (prm_open, prm_awaiting, prm_completed)
+- stadion_todo custom post type (migrated from comments)
+- WordPress post statuses (stadion_open, stadion_awaiting, stadion_completed)
 - Awaiting response tracking with timestamps and aging indicators
 - Filter UI (Open/Awaiting/Completed tabs) across all views
 - WP-CLI migration: `wp prm migrate-todos`

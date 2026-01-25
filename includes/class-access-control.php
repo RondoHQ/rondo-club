@@ -5,7 +5,7 @@
  * Users can only see posts they created themselves.
  */
 
-namespace Caelis\Core;
+namespace Stadion\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -16,7 +16,7 @@ class AccessControl {
 	/**
 	 * Post types that should have access control
 	 */
-	private $controlled_post_types = [ 'person', 'company', 'important_date', 'prm_todo' ];
+	private $controlled_post_types = [ 'person', 'company', 'important_date', 'stadion_todo' ];
 
 	/**
 	 * Check if we're on the frontend (not admin area)
@@ -33,7 +33,7 @@ class AccessControl {
 		add_filter( 'rest_person_query', [ $this, 'filter_rest_query' ], 10, 2 );
 		add_filter( 'rest_company_query', [ $this, 'filter_rest_query' ], 10, 2 );
 		add_filter( 'rest_important_date_query', [ $this, 'filter_rest_query' ], 10, 2 );
-		add_filter( 'rest_prm_todo_query', [ $this, 'filter_rest_query' ], 10, 2 );
+		add_filter( 'rest_stadion_todo_query', [ $this, 'filter_rest_query' ], 10, 2 );
 
 		// Check single post access
 		add_filter( 'the_posts', [ $this, 'filter_single_post_access' ], 10, 2 );
@@ -42,13 +42,13 @@ class AccessControl {
 		add_filter( 'rest_prepare_person', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_company', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_important_date', [ $this, 'filter_rest_single_access' ], 10, 3 );
-		add_filter( 'rest_prepare_prm_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
+		add_filter( 'rest_prepare_stadion_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
 
 		// Convert workspace post IDs to term IDs when saving via REST API
 		add_action( 'rest_after_insert_person', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
 		add_action( 'rest_after_insert_company', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
 		add_action( 'rest_after_insert_important_date', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
-		add_action( 'rest_after_insert_prm_todo', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
+		add_action( 'rest_after_insert_stadion_todo', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
 
 		// Convert term IDs back to workspace post IDs when loading
 		add_filter( 'acf/load_value/name=_assigned_workspaces', [ $this, 'convert_term_ids_to_workspace_ids' ], 10, 3 );
@@ -145,7 +145,7 @@ class AccessControl {
 
 		// Check if user is approved (admins are always approved)
 		if ( ! user_can( $user_id, 'manage_options' ) ) {
-			if ( ! \PRM_User_Roles::is_user_approved( $user_id ) ) {
+			if ( ! \STADION_User_Roles::is_user_approved( $user_id ) ) {
 				return false;
 			}
 		}
@@ -172,22 +172,22 @@ class AccessControl {
 		}
 
 		// 2. Check direct shares first (overrides visibility)
-		if ( \PRM_Visibility::user_has_share( $post_id, $user_id ) ) {
+		if ( \STADION_Visibility::user_has_share( $post_id, $user_id ) ) {
 			return true;
 		}
 
 		// 3. Check visibility
-		$visibility = \PRM_Visibility::get_visibility( $post_id );
+		$visibility = \STADION_Visibility::get_visibility( $post_id );
 
 		// Private = only author (already checked above), no shares (checked above)
-		if ( $visibility === \PRM_Visibility::VISIBILITY_PRIVATE ) {
+		if ( $visibility === \STADION_Visibility::VISIBILITY_PRIVATE ) {
 			return false;
 		}
 
 		// 4. Workspace visibility check
-		if ( $visibility === \PRM_Visibility::VISIBILITY_WORKSPACE ) {
+		if ( $visibility === \STADION_Visibility::VISIBILITY_WORKSPACE ) {
 			// Get user's workspace IDs
-			$user_workspace_ids = \PRM_Workspace_Members::get_user_workspace_ids( $user_id );
+			$user_workspace_ids = \STADION_Workspace_Members::get_user_workspace_ids( $user_id );
 
 			if ( ! empty( $user_workspace_ids ) ) {
 				// Check if post has any matching workspace_access terms
@@ -233,16 +233,16 @@ class AccessControl {
 		}
 
 		// Workspace role
-		$visibility = \PRM_Visibility::get_visibility( $post_id );
-		if ( $visibility === \PRM_Visibility::VISIBILITY_WORKSPACE ) {
-			$user_workspace_ids = \PRM_Workspace_Members::get_user_workspace_ids( $user_id );
+		$visibility = \STADION_Visibility::get_visibility( $post_id );
+		if ( $visibility === \STADION_Visibility::VISIBILITY_WORKSPACE ) {
+			$user_workspace_ids = \STADION_Workspace_Members::get_user_workspace_ids( $user_id );
 			$post_terms         = wp_get_post_terms( $post_id, 'workspace_access', [ 'fields' => 'slugs' ] );
 
 			if ( ! is_wp_error( $post_terms ) ) {
 				foreach ( $post_terms as $slug ) {
 					$workspace_id = (int) str_replace( 'workspace-', '', $slug );
 					if ( in_array( $workspace_id, $user_workspace_ids ) ) {
-						$role = \PRM_Workspace_Members::get_user_role( $workspace_id, $user_id );
+						$role = \STADION_Workspace_Members::get_user_role( $workspace_id, $user_id );
 						if ( $role ) {
 							return $role; // 'admin', 'member', or 'viewer'
 						}
@@ -252,7 +252,7 @@ class AccessControl {
 		}
 
 		// Direct share permission
-		$share_permission = \PRM_Visibility::get_share_permission( $post_id, $user_id );
+		$share_permission = \STADION_Visibility::get_share_permission( $post_id, $user_id );
 		if ( $share_permission ) {
 			return $share_permission; // 'edit' or 'view'
 		}
@@ -286,7 +286,7 @@ class AccessControl {
 
 		// Check if user is approved (admins are always approved)
 		if ( ! current_user_can( 'manage_options' ) ) {
-			if ( ! \PRM_User_Roles::is_user_approved( $user_id ) ) {
+			if ( ! \STADION_User_Roles::is_user_approved( $user_id ) ) {
 				// Unapproved user - show nothing
 				$query->set( 'post__in', [ 0 ] );
 				return;
@@ -322,8 +322,8 @@ class AccessControl {
 
 		// Determine valid post statuses based on post type
 		$valid_statuses = [ 'publish' ];
-		if ( $post_type === 'prm_todo' ) {
-			$valid_statuses = [ 'prm_open', 'prm_awaiting', 'prm_completed' ];
+		if ( $post_type === 'stadion_todo' ) {
+			$valid_statuses = [ 'stadion_open', 'stadion_awaiting', 'stadion_completed' ];
 		}
 		$status_placeholders = implode( ',', array_fill( 0, count( $valid_statuses ), '%s' ) );
 
@@ -340,7 +340,7 @@ class AccessControl {
 		);
 
 		// 2. Workspace-visible posts where user is member
-		$workspace_ids   = \PRM_Workspace_Members::get_user_workspace_ids( $user_id );
+		$workspace_ids   = \STADION_Workspace_Members::get_user_workspace_ids( $user_id );
 		$workspace_posts = [];
 
 		if ( ! empty( $workspace_ids ) ) {
@@ -411,7 +411,7 @@ class AccessControl {
 
 		// Check if user is approved (admins are always approved)
 		if ( ! user_can( $user_id, 'manage_options' ) ) {
-			if ( ! \PRM_User_Roles::is_user_approved( $user_id ) ) {
+			if ( ! \STADION_User_Roles::is_user_approved( $user_id ) ) {
 				// Unapproved user - show nothing
 				$args['post__in'] = [ 0 ];
 				return $args;
@@ -474,10 +474,10 @@ class AccessControl {
 
 		// Check if user is approved (admins are always approved)
 		if ( ! user_can( $user_id, 'manage_options' ) ) {
-			if ( ! \PRM_User_Roles::is_user_approved( $user_id ) ) {
+			if ( ! \STADION_User_Roles::is_user_approved( $user_id ) ) {
 				return new \WP_Error(
 					'rest_forbidden',
-					__( 'Your account is pending approval. Please contact an administrator.', 'caelis' ),
+					__( 'Your account is pending approval. Please contact an administrator.', 'stadion' ),
 					[ 'status' => 403 ]
 				);
 			}
@@ -487,7 +487,7 @@ class AccessControl {
 		if ( $post->post_status === 'trash' ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'This item has been deleted.', 'caelis' ),
+				__( 'This item has been deleted.', 'stadion' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -495,7 +495,7 @@ class AccessControl {
 		if ( ! $this->user_can_access_post( $post->ID, $user_id ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to access this item.', 'caelis' ),
+				__( 'You do not have permission to access this item.', 'stadion' ),
 				[ 'status' => 403 ]
 			);
 		}

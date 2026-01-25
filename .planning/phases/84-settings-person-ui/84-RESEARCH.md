@@ -21,13 +21,13 @@ This research investigates what exists vs what needs to be built for Phase 84. T
 | SETTINGS-03 | PARTIAL - Shows last_sync and contact_count, missing error count | `Settings.jsx:2233-2242` |
 | SETTINGS-04 | COMPLETE - "Sync Now" button exists and works | `handleContactsSync`, line 2406-2422 |
 | SETTINGS-05 | COMPLETE - Frequency dropdown exists | `SYNC_FREQUENCY_OPTIONS`, line 2425-2441 |
-| SETTINGS-06 | NOT BUILT - Conflict resolution dropdown | Backend defaults to "Caelis wins", no UI toggle |
+| SETTINGS-06 | NOT BUILT - Conflict resolution dropdown | Backend defaults to "Stadion wins", no UI toggle |
 | SETTINGS-07 | NOT BUILT - Sync history log viewer | No backend storage for history |
 | PERSON-01 | NOT BUILT - "View in Google Contacts" link | `_google_contact_id` exists in post meta, not exposed to frontend |
 
 ### Backend Data Available
 
-From `/prm/v1/google-contacts/status` (class-rest-google-contacts.php:183-200):
+From `/stadion/v1/google-contacts/status` (class-rest-google-contacts.php:183-200):
 
 ```php
 $response = [
@@ -151,9 +151,9 @@ From `MeetingCard` in PersonDetail.jsx (line 139-149):
 
 ### SETTINGS-06: Conflict Resolution Strategy
 
-**CONTEXT.md decision:** "Conflict resolution: default 'Caelis wins' strategy is automatic - no user-facing toggle needed"
+**CONTEXT.md decision:** "Conflict resolution: default 'Stadion wins' strategy is automatic - no user-facing toggle needed"
 
-**Recommendation:** Skip this requirement per user decision. Backend already defaults to Caelis wins.
+**Recommendation:** Skip this requirement per user decision. Backend already defaults to Stadion wins.
 
 ### SETTINGS-07: Sync History Log
 
@@ -226,7 +226,7 @@ Recommended placement: In the contact info section header, as a small external l
 
 **How to avoid:** The `_google_contact_id` is user-specific (each user has their own Google connection). Only expose to the contact owner via `get_callback` permission check.
 
-**Actually:** Since Caelis already has per-user access control at the query level (PRM_Access_Control), users can only see their own contacts. The google_contact_id on a contact they can see is inherently theirs. No additional permission check needed.
+**Actually:** Since Stadion already has per-user access control at the query level (STADION_Access_Control), users can only see their own contacts. The google_contact_id on a contact they can see is inherently theirs. No additional permission check needed.
 
 ### Pitfall 3: Sync History Memory
 
@@ -335,9 +335,9 @@ GoogleContactsConnection::update_connection($user_id, [
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/caelis/src/pages/Settings/Settings.jsx` - Existing ConnectionsContactsSubtab implementation
-- `/Users/joostdevalk/Code/caelis/includes/class-rest-google-contacts.php` - Status endpoint response structure
-- `/Users/joostdevalk/Code/caelis/includes/class-google-contacts-connection.php` - Connection storage model
+- `/Users/joostdevalk/Code/stadion/src/pages/Settings/Settings.jsx` - Existing ConnectionsContactsSubtab implementation
+- `/Users/joostdevalk/Code/stadion/includes/class-rest-google-contacts.php` - Status endpoint response structure
+- `/Users/joostdevalk/Code/stadion/includes/class-google-contacts-connection.php` - Connection storage model
 
 ### Secondary (MEDIUM confidence)
 - Google Contacts URL format verified via browser testing pattern `https://contacts.google.com/person/people/c*`
@@ -361,12 +361,12 @@ GoogleContactsConnection::update_connection($user_id, [
 
 1. **Backend: REST field for google_contact_id** - `register_rest_field` on `person` post type
 2. **Backend: Sync history storage** - Add `sync_history` array to connection, update after sync
-3. **Backend: Return sync_history in status** - Extend `/prm/v1/google-contacts/status` response
+3. **Backend: Return sync_history in status** - Extend `/stadion/v1/google-contacts/status` response
 4. **Frontend: Error count display** - Add collapsible error details to existing status card
 5. **Frontend: Sync history viewer** - Collapsible section with list of recent syncs
 6. **Frontend: View in Google link** - Small external link on PersonDetail page
 
 **What NOT to build:**
-- SETTINGS-06 (conflict resolution dropdown) - User decided "Caelis wins" is automatic, no toggle needed
+- SETTINGS-06 (conflict resolution dropdown) - User decided "Stadion wins" is automatic, no toggle needed
 - New sync frequency options - Already complete
 - Connect/disconnect buttons - Already complete

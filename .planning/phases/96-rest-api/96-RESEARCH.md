@@ -1,18 +1,18 @@
 # Phase 96: REST API - Research
 
 **Researched:** 2026-01-21
-**Domain:** WordPress REST API for custom post type (caelis_feedback)
+**Domain:** WordPress REST API for custom post type (stadion_feedback)
 **Confidence:** HIGH
 
 ## Summary
 
-This phase implements REST API endpoints for the `caelis_feedback` custom post type under `prm/v1/feedback`. The codebase already has extensive REST API patterns established through `Caelis\REST\Base` and multiple domain-specific REST classes (Todos, Workspaces, People, etc.).
+This phase implements REST API endpoints for the `stadion_feedback` custom post type under `stadion/v1/feedback`. The codebase already has extensive REST API patterns established through `Stadion\REST\Base` and multiple domain-specific REST classes (Todos, Workspaces, People, etc.).
 
-The key architectural decision is to follow the existing patterns rather than extending the built-in `wp/v2` REST controller. The codebase uses custom `prm/v1` namespace endpoints with explicit formatting, permission callbacks, and ACF field handling.
+The key architectural decision is to follow the existing patterns rather than extending the built-in `wp/v2` REST controller. The codebase uses custom `stadion/v1` namespace endpoints with explicit formatting, permission callbacks, and ACF field handling.
 
 WordPress Application Passwords (built-in since WP 5.6) provide Basic Auth support out of the box for all REST endpoints. No additional authentication setup is required - the `is_user_logged_in()` function already works with Application Password authentication.
 
-**Primary recommendation:** Create a new `Caelis\REST\Feedback` class following the exact patterns of `Caelis\REST\Todos` - register routes via `rest_api_init`, use `Base` class methods for sanitization and permission checks, format responses explicitly.
+**Primary recommendation:** Create a new `Stadion\REST\Feedback` class following the exact patterns of `Stadion\REST\Todos` - register routes via `rest_api_init`, use `Base` class methods for sanitization and permission checks, format responses explicitly.
 
 ## Standard Stack
 
@@ -23,7 +23,7 @@ The established libraries/tools for this domain:
 |---------|---------|---------|--------------|
 | WordPress REST API | Core WP | Route registration, request/response handling | Native, well-documented |
 | ACF Pro | Required | Field storage and retrieval | Already used throughout codebase |
-| `Caelis\REST\Base` | Internal | Shared permission checks and response formatting | Established pattern in codebase |
+| `Stadion\REST\Base` | Internal | Shared permission checks and response formatting | Established pattern in codebase |
 
 ### Supporting
 | Library | Version | Purpose | When to Use |
@@ -36,7 +36,7 @@ The established libraries/tools for this domain:
 ### Alternatives Considered
 | Instead of | Could Use | Tradeoff |
 |------------|-----------|----------|
-| Custom `prm/v1` endpoints | Extend `wp/v2/feedback` controller | `prm/v1` matches existing patterns, gives more control over response format |
+| Custom `stadion/v1` endpoints | Extend `wp/v2/feedback` controller | `stadion/v1` matches existing patterns, gives more control over response format |
 | Manual permission checks | `rest_prepare_*` filters | Manual checks are explicit, match existing code style |
 
 **Installation:**
@@ -53,12 +53,12 @@ includes/
 ```
 
 ### Pattern 1: REST Controller Class Structure
-**What:** New REST classes extend `Caelis\REST\Base` and register routes in constructor via `rest_api_init`
-**When to use:** All custom REST endpoints under `prm/v1`
+**What:** New REST classes extend `Stadion\REST\Base` and register routes in constructor via `rest_api_init`
+**When to use:** All custom REST endpoints under `stadion/v1`
 **Example:**
 ```php
 // Source: includes/class-rest-todos.php (existing pattern)
-namespace Caelis\REST;
+namespace Stadion\REST;
 
 class Feedback extends Base {
     public function __construct() {
@@ -68,7 +68,7 @@ class Feedback extends Base {
 
     public function register_routes() {
         register_rest_route(
-            'prm/v1',
+            'stadion/v1',
             '/feedback',
             [
                 'methods'             => \WP_REST_Server::READABLE,
@@ -108,7 +108,7 @@ public function check_feedback_access( $request ) {
     $feedback_id = (int) $request->get_param( 'id' );
     $feedback = get_post( $feedback_id );
 
-    if ( ! $feedback || $feedback->post_type !== 'caelis_feedback' ) {
+    if ( ! $feedback || $feedback->post_type !== 'stadion_feedback' ) {
         return false;
     }
 
@@ -170,7 +170,7 @@ public function get_feedback_list( $request ) {
 
     // Query feedback with pagination
     $query = new \WP_Query( [
-        'post_type'      => 'caelis_feedback',
+        'post_type'      => 'stadion_feedback',
         'posts_per_page' => $per_page,
         'paged'          => $page,
         // ... filters
@@ -188,7 +188,7 @@ public function get_feedback_list( $request ) {
 
 ### Anti-Patterns to Avoid
 - **Extending WP_REST_Controller directly:** The codebase uses custom Base class pattern instead
-- **Using filters on wp/v2 endpoints:** Create explicit prm/v1 endpoints with full control
+- **Using filters on wp/v2 endpoints:** Create explicit stadion/v1 endpoints with full control
 - **Separate author lookup calls:** Embed author info in response per CONTEXT.md decision
 - **Using custom database tables:** Feedback uses CPT + ACF, not custom tables
 
@@ -248,7 +248,7 @@ Verified patterns from official sources and existing codebase:
 // Source: includes/class-rest-todos.php pattern
 public function register_routes() {
     // GET /feedback - List
-    register_rest_route( 'prm/v1', '/feedback', [
+    register_rest_route( 'stadion/v1', '/feedback', [
         'methods'             => \WP_REST_Server::READABLE,
         'callback'            => [ $this, 'get_feedback_list' ],
         'permission_callback' => fn() => is_user_logged_in(),
@@ -256,14 +256,14 @@ public function register_routes() {
     ] );
 
     // POST /feedback - Create
-    register_rest_route( 'prm/v1', '/feedback', [
+    register_rest_route( 'stadion/v1', '/feedback', [
         'methods'             => \WP_REST_Server::CREATABLE,
         'callback'            => [ $this, 'create_feedback' ],
         'permission_callback' => fn() => is_user_logged_in(),
     ] );
 
     // GET /feedback/{id} - Single
-    register_rest_route( 'prm/v1', '/feedback/(?P<id>\d+)', [
+    register_rest_route( 'stadion/v1', '/feedback/(?P<id>\d+)', [
         'methods'             => \WP_REST_Server::READABLE,
         'callback'            => [ $this, 'get_feedback' ],
         'permission_callback' => [ $this, 'check_feedback_access' ],
@@ -273,7 +273,7 @@ public function register_routes() {
     ] );
 
     // PATCH /feedback/{id} - Update
-    register_rest_route( 'prm/v1', '/feedback/(?P<id>\d+)', [
+    register_rest_route( 'stadion/v1', '/feedback/(?P<id>\d+)', [
         'methods'             => \WP_REST_Server::EDITABLE,
         'callback'            => [ $this, 'update_feedback' ],
         'permission_callback' => [ $this, 'check_feedback_access' ],
@@ -283,7 +283,7 @@ public function register_routes() {
     ] );
 
     // DELETE /feedback/{id} - Delete
-    register_rest_route( 'prm/v1', '/feedback/(?P<id>\d+)', [
+    register_rest_route( 'stadion/v1', '/feedback/(?P<id>\d+)', [
         'methods'             => \WP_REST_Server::DELETABLE,
         'callback'            => [ $this, 'delete_feedback' ],
         'permission_callback' => [ $this, 'check_feedback_access' ],
@@ -299,14 +299,14 @@ public function register_routes() {
 // Source: WordPress REST API conventions, existing codebase
 return new \WP_Error(
     'rest_forbidden',          // code
-    __( 'You do not have permission to access this feedback.', 'caelis' ), // message
+    __( 'You do not have permission to access this feedback.', 'stadion' ), // message
     [ 'status' => 403 ]        // data with HTTP status
 );
 
 // For validation errors with params
 return new \WP_Error(
     'rest_invalid_param',
-    __( 'Invalid feedback type.', 'caelis' ),
+    __( 'Invalid feedback type.', 'stadion' ),
     [
         'status' => 400,
         'params' => [ 'feedback_type' => 'Must be "bug" or "feature_request"' ],
@@ -327,7 +327,7 @@ public function update_feedback( $request ) {
     if ( $status !== null && ! $is_admin ) {
         return new \WP_Error(
             'rest_forbidden',
-            __( 'Only administrators can change feedback status.', 'caelis' ),
+            __( 'Only administrators can change feedback status.', 'stadion' ),
             [ 'status' => 403 ]
         );
     }
@@ -337,7 +337,7 @@ public function update_feedback( $request ) {
     if ( $priority !== null && ! $is_admin ) {
         return new \WP_Error(
             'rest_forbidden',
-            __( 'Only administrators can change feedback priority.', 'caelis' ),
+            __( 'Only administrators can change feedback priority.', 'stadion' ),
             [ 'status' => 403 ]
         );
     }
@@ -380,7 +380,7 @@ Things that couldn't be fully resolved:
 - `includes/class-rest-todos.php` - CRUD endpoint patterns
 - `includes/class-rest-workspaces.php` - Complex permission patterns
 - `includes/class-rest-api.php` - Main API class patterns
-- `includes/class-post-types.php` - caelis_feedback CPT registration
+- `includes/class-post-types.php` - stadion_feedback CPT registration
 - `acf-json/group_feedback_fields.json` - ACF field definitions
 - `.planning/phases/96-rest-api/96-CONTEXT.md` - User decisions
 

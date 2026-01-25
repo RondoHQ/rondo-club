@@ -35,10 +35,10 @@ decisions:
     rationale: Graceful degradation ensures sync always completes
   - id: unlink-preserve-data
     decision: Unlink deleted Google contacts by removing meta, not deleting post
-    rationale: Preserves Caelis data while removing Google association
+    rationale: Preserves Stadion data while removing Google association
   - id: push-linked-only
     decision: Only push contacts that have _google_contact_id (linked contacts)
-    rationale: Don't auto-create Google contacts for all Caelis contacts
+    rationale: Don't auto-create Google contacts for all Stadion contacts
   - id: pull-then-push
     decision: Pull from Google first, then push local changes
     rationale: Ensures we have latest Google state before pushing
@@ -84,8 +84,8 @@ Each task was committed atomically:
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Delta fallback | Fall back to full import when syncToken missing/expired | Graceful degradation ensures sync always completes |
-| Unlink behavior | Remove Google meta but preserve Caelis data | User's data is valuable, only association is removed |
-| Push scope | Only push linked contacts | Don't auto-create Google contacts for unlinked Caelis contacts |
+| Unlink behavior | Remove Google meta but preserve Stadion data | User's data is valuable, only association is removed |
+| Push scope | Only push linked contacts | Don't auto-create Google contacts for unlinked Stadion contacts |
 | Sync order | Pull first, then push | Have latest Google state before pushing changes |
 
 ## Deviations from Plan

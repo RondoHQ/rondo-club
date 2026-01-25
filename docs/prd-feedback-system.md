@@ -2,7 +2,7 @@
 
 ## Overview
 
-Add a feedback system to Caelis that allows users to submit bug reports and feature requests directly from within the application. These submissions will be stored as WordPress posts and exposed via an authenticated REST API using WordPress native application passwords.
+Add a feedback system to Stadion that allows users to submit bug reports and feature requests directly from within the application. These submissions will be stored as WordPress posts and exposed via an authenticated REST API using WordPress native application passwords.
 
 ## Problem Statement
 
@@ -15,7 +15,7 @@ Currently, there's no built-in mechanism for users to report bugs or request fea
 
 ## Goals
 
-1. Allow users to submit bugs and feature requests from within Caelis
+1. Allow users to submit bugs and feature requests from within Stadion
 2. Store feedback as WordPress custom post types
 3. Expose feedback through REST API endpoints
 4. Support authentication via WordPress application passwords
@@ -34,11 +34,11 @@ Currently, there's no built-in mechanism for users to report bugs or request fea
 
 ### 1. Feedback Post Type
 
-Create a new custom post type `caelis_feedback` with the following characteristics:
+Create a new custom post type `stadion_feedback` with the following characteristics:
 
 | Property | Value |
 |----------|-------|
-| Post Type Slug | `caelis_feedback` |
+| Post Type Slug | `stadion_feedback` |
 | Singular | Feedback |
 | Plural | Feedback |
 | Public | No |
@@ -54,7 +54,7 @@ Create a new custom post type `caelis_feedback` with the following characteristi
 | `status` | Select | Yes | `new`, `acknowledged`, `in_progress`, `resolved`, `wont_fix` |
 | `priority` | Select | No | `low`, `medium`, `high`, `critical` |
 | `browser_info` | Text | No | Auto-captured browser/OS info |
-| `app_version` | Text | No | Auto-captured Caelis version |
+| `app_version` | Text | No | Auto-captured Stadion version |
 | `url_context` | Text | No | Page URL where feedback was submitted |
 | `steps_to_reproduce` | Textarea | No | For bugs: reproduction steps |
 | `expected_behavior` | Textarea | No | For bugs: what should happen |
@@ -111,12 +111,12 @@ After successful submission:
 
 ### 4. REST API Endpoints
 
-All endpoints under namespace `prm/v1/feedback`.
+All endpoints under namespace `stadion/v1/feedback`.
 
 #### 4.1 List Feedback
 
 ```
-GET /wp-json/prm/v1/feedback
+GET /wp-json/stadion/v1/feedback
 ```
 
 **Query Parameters:**
@@ -173,7 +173,7 @@ GET /wp-json/prm/v1/feedback
 #### 4.2 Get Single Feedback
 
 ```
-GET /wp-json/prm/v1/feedback/{id}
+GET /wp-json/stadion/v1/feedback/{id}
 ```
 
 Returns single feedback item with same structure as list item.
@@ -181,7 +181,7 @@ Returns single feedback item with same structure as list item.
 #### 4.3 Create Feedback
 
 ```
-POST /wp-json/prm/v1/feedback
+POST /wp-json/stadion/v1/feedback
 ```
 
 **Request Body:**
@@ -201,7 +201,7 @@ POST /wp-json/prm/v1/feedback
 #### 4.4 Update Feedback
 
 ```
-PATCH /wp-json/prm/v1/feedback/{id}
+PATCH /wp-json/stadion/v1/feedback/{id}
 ```
 
 **Request Body:** Partial update with any feedback fields.
@@ -211,7 +211,7 @@ PATCH /wp-json/prm/v1/feedback/{id}
 #### 4.5 Delete Feedback
 
 ```
-DELETE /wp-json/prm/v1/feedback/{id}
+DELETE /wp-json/stadion/v1/feedback/{id}
 ```
 
 **Permissions:** Author can delete their own; admins can delete any.
@@ -223,7 +223,7 @@ DELETE /wp-json/prm/v1/feedback/{id}
 Use WordPress native application passwords for API authentication:
 
 - Users generate application passwords via **Users → Profile → Application Passwords**
-- Or via the Caelis Settings page (add a UI for this)
+- Or via the Stadion Settings page (add a UI for this)
 
 #### 5.2 Authentication Methods
 
@@ -261,7 +261,7 @@ X-WP-Nonce: {nonce}
 Add to `class-post-types.php`:
 
 ```php
-'caelis_feedback' => [
+'stadion_feedback' => [
     'label' => 'Feedback',
     'public' => false,
     'show_in_rest' => true,
@@ -277,7 +277,7 @@ Add to `class-post-types.php`:
 Create `class-rest-feedback.php`:
 
 - Extend existing REST patterns in the codebase
-- Register routes under `prm/v1/feedback`
+- Register routes under `stadion/v1/feedback`
 - Implement CRUD operations with ACF field handling
 - Add application password authentication check
 
@@ -286,7 +286,7 @@ Create `class-rest-feedback.php`:
 Create `acf-json/group_feedback_fields.json`:
 
 - Define all feedback fields
-- Set location rule to `caelis_feedback` post type
+- Set location rule to `stadion_feedback` post type
 - Configure conditional logic for bug vs feature request fields
 
 ### 2. Frontend Components
@@ -316,11 +316,11 @@ Add to `src/api/client.js`:
 
 ```javascript
 feedback: {
-  list: (params) => get('/prm/v1/feedback', params),
-  get: (id) => get(`/prm/v1/feedback/${id}`),
-  create: (data) => post('/prm/v1/feedback', data),
-  update: (id, data) => patch(`/prm/v1/feedback/${id}`, data),
-  delete: (id) => del(`/prm/v1/feedback/${id}`),
+  list: (params) => get('/stadion/v1/feedback', params),
+  get: (id) => get(`/stadion/v1/feedback/${id}`),
+  create: (data) => post('/stadion/v1/feedback', data),
+  update: (id, data) => patch(`/stadion/v1/feedback/${id}`, data),
+  delete: (id) => del(`/stadion/v1/feedback/${id}`),
 }
 ```
 
@@ -458,18 +458,18 @@ Add to crontab for automated processing:
 
 ```bash
 # Process all approved feedback daily at 2 AM
-0 2 * * * /path/to/caelis/bin/get-feedback.sh --loop
+0 2 * * * /path/to/stadion/bin/get-feedback.sh --loop
 
 # Process bugs every 6 hours
-0 */6 * * * /path/to/caelis/bin/get-feedback.sh --type=bug --loop
+0 */6 * * * /path/to/stadion/bin/get-feedback.sh --type=bug --loop
 ```
 
 **Environment Variables:**
 
 Required in `.env`:
-- `CAELIS_API_URL` - WordPress site URL
-- `CAELIS_API_USER` - WordPress username
-- `CAELIS_API_PASSWORD` - Application password
+- `STADION_API_URL` - WordPress site URL
+- `STADION_API_USER` - WordPress username
+- `STADION_API_PASSWORD` - Application password
 - `CLAUDE_PATH` - Path to Claude Code binary (optional, defaults to `claude`)
 - `HOMEBREW_PATH` - Homebrew bin path for cron (optional)
 - `USER_HOME` - User home directory for cron (optional)
@@ -488,15 +488,15 @@ curl -X POST \
     "type": "bug",
     "priority": "high",
     "steps_to_reproduce": "1. Connect Google Calendar\n2. Create recurring event\n3. Trigger sync",
-    "expected_behavior": "Event should appear in Caelis",
+    "expected_behavior": "Event should appear in Stadion",
     "actual_behavior": "Only first occurrence syncs"
   }' \
-  https://your-site.com/wp-json/prm/v1/feedback
+  https://your-site.com/wp-json/stadion/v1/feedback
 ```
 
 **Listing feedback with filtering:**
 
 ```bash
 curl -u "joost:xxxx xxxx xxxx xxxx xxxx xxxx" \
-  "https://your-site.com/wp-json/prm/v1/feedback?type=bug&status=new&priority=high"
+  "https://your-site.com/wp-json/stadion/v1/feedback?type=bug&status=new&priority=high"
 ```

@@ -7,7 +7,7 @@ tags: [wordpress, cpt, acf, feedback, rest-api]
 # Dependency graph
 requires: []
 provides:
-  - caelis_feedback custom post type registered
+  - stadion_feedback custom post type registered
   - ACF field group for feedback metadata (11 fields)
   - REST API endpoint /wp-json/wp/v2/feedback
   - Conditional logic for bug vs feature request fields
@@ -27,7 +27,7 @@ key-files:
     - includes/class-post-types.php
 
 key-decisions:
-  - "Use ACF select field for status instead of custom post statuses (simpler than prm_todo pattern)"
+  - "Use ACF select field for status instead of custom post statuses (simpler than stadion_todo pattern)"
   - "Feedback is global scope (not workspace-scoped)"
 
 patterns-established:
@@ -41,7 +41,7 @@ completed: 2026-01-21
 
 # Phase 95 Plan 01: CPT and ACF Field Group Summary
 
-**caelis_feedback CPT with 11-field ACF group including type/status/priority and conditional bug/feature request fields**
+**stadion_feedback CPT with 11-field ACF group including type/status/priority and conditional bug/feature request fields**
 
 ## Performance
 
@@ -52,7 +52,7 @@ completed: 2026-01-21
 - **Files modified:** 2
 
 ## Accomplishments
-- Registered caelis_feedback custom post type with REST API support
+- Registered stadion_feedback custom post type with REST API support
 - Created ACF field group with 11 fields for feedback metadata
 - Implemented conditional logic showing bug-specific or feature request fields based on type
 - Enabled REST API endpoint at /wp-json/wp/v2/feedback
@@ -61,7 +61,7 @@ completed: 2026-01-21
 
 Each task was committed atomically:
 
-1. **Task 1: Register caelis_feedback custom post type** - `d2e4de0` (feat)
+1. **Task 1: Register stadion_feedback custom post type** - `d2e4de0` (feat)
 2. **Task 2: Create ACF field group for feedback metadata** - `df07bd7` (feat)
 
 ## Files Created/Modified
@@ -69,7 +69,7 @@ Each task was committed atomically:
 - `acf-json/group_feedback_fields.json` - ACF field group with 11 fields
 
 ## Decisions Made
-- Used ACF select field for status (new/in_progress/resolved/declined) instead of custom post statuses - simpler approach than prm_todo pattern
+- Used ACF select field for status (new/in_progress/resolved/declined) instead of custom post statuses - simpler approach than stadion_todo pattern
 - Menu position 26 places Feedback after Settings area in WordPress admin
 - Used dashicons-megaphone for feedback menu icon
 

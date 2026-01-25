@@ -3,7 +3,7 @@
  * Handles @mention parsing, storage, and rendering
  */
 
-namespace Caelis\Collaboration;
+namespace Stadion\Collaboration;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

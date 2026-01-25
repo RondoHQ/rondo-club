@@ -1,11 +1,11 @@
 <?php
 /**
- * User Roles for Caelis
+ * User Roles for Stadion
  *
- * Registers custom user role for Caelis users with minimal permissions
+ * Registers custom user role for Stadion users with minimal permissions
  */
 
-namespace Caelis\Core;
+namespace Stadion\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -13,9 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class UserRoles {
 
-	const ROLE_NAME         = 'caelis_user';
-	const ROLE_DISPLAY_NAME = 'Caelis User';
-	const APPROVAL_META_KEY = 'caelis_user_approved';
+	const ROLE_NAME         = 'stadion_user';
+	const ROLE_DISPLAY_NAME = 'Stadion User';
+	const APPROVAL_META_KEY = 'stadion_user_approved';
 
 	public function __construct() {
 		// Register role on theme activation
@@ -30,7 +30,7 @@ class UserRoles {
 		// Set default role for new users
 		add_filter( 'pre_option_default_role', [ $this, 'set_default_role' ] );
 
-		// Set new users to Caelis User role and mark as unapproved
+		// Set new users to Stadion User role and mark as unapproved
 		add_action( 'user_register', [ $this, 'handle_new_user_registration' ], 10, 1 );
 
 		// Add admin columns for user approval
@@ -61,7 +61,7 @@ class UserRoles {
 	}
 
 	/**
-	 * Register the Caelis User role
+	 * Register the Stadion User role
 	 */
 	public function register_role() {
 		// Get the role capabilities
@@ -76,7 +76,7 @@ class UserRoles {
 	}
 
 	/**
-	 * Remove the Caelis User role
+	 * Remove the Stadion User role
 	 */
 	public function remove_role() {
 		// Get all users with this role
@@ -92,7 +92,7 @@ class UserRoles {
 	}
 
 	/**
-	 * Get capabilities for Caelis User role
+	 * Get capabilities for Stadion User role
 	 *
 	 * Minimal permissions needed to:
 	 * - Create, edit, and delete their own people and companies
@@ -124,7 +124,7 @@ class UserRoles {
 	}
 
 	/**
-	 * Set default role to Caelis User
+	 * Set default role to Stadion User
 	 */
 	public function set_default_role( $value ) {
 		return self::ROLE_NAME;
@@ -134,7 +134,7 @@ class UserRoles {
 	 * Handle new user registration
 	 */
 	public function handle_new_user_registration( $user_id ) {
-		// Set role to Caelis User
+		// Set role to Stadion User
 		$user = new \WP_User( $user_id );
 		$user->set_role( self::ROLE_NAME );
 
@@ -162,7 +162,7 @@ class UserRoles {
 		}
 
 		// Build the email
-		$subject               = __( 'New Caelis user awaiting approval', 'caelis' );
+		$subject               = __( 'New Stadion user awaiting approval', 'stadion' );
 		$approval_url          = admin_url( 'users.php' );
 		$frontend_approval_url = home_url( '/settings/user-approval' );
 
@@ -171,7 +171,7 @@ class UserRoles {
 			__(
 				'Hello,
 
-A new user has registered for Caelis and is awaiting your approval:
+A new user has registered for Stadion and is awaiting your approval:
 
 Name: %1$s
 Email: %2$s
@@ -179,11 +179,11 @@ Registered: %3$s
 
 You can approve or deny this user from:
 - WordPress Admin: %4$s
-- Caelis Settings: %5$s
+- Stadion Settings: %5$s
 
 Best regards,
-Caelis',
-				'caelis'
+Stadion',
+				'stadion'
 			),
 			$user->display_name ?: $user->user_login,
 			$user->user_email,
@@ -223,19 +223,19 @@ Caelis',
 		if ( $user ) {
 			wp_mail(
 				$user->user_email,
-				__( 'Your Caelis account has been approved', 'caelis' ),
+				__( 'Your Stadion account has been approved', 'stadion' ),
 				sprintf(
 					// translators: %1$s: user name, %2$s: login URL.
 					__(
 						'Hello %1$s,
 
-Your Caelis account has been approved. You can now log in and start using Caelis.
+Your Stadion account has been approved. You can now log in and start using Stadion.
 
 Login: %2$s
 
 Best regards,
-Caelis Team',
-						'caelis'
+Stadion Team',
+						'stadion'
 					),
 					$user->display_name,
 					wp_login_url()
@@ -260,7 +260,7 @@ Caelis Team',
 		foreach ( $columns as $key => $value ) {
 			$new_columns[ $key ] = $value;
 			if ( 'role' === $key ) {
-				$new_columns['caelis_approved'] = __( 'Approved', 'caelis' );
+				$new_columns['stadion_approved'] = __( 'Approved', 'stadion' );
 			}
 		}
 		return $new_columns;
@@ -275,16 +275,16 @@ Caelis Team',
 	 * @return string Column HTML.
 	 */
 	public function show_approval_column( $value, $column_name, $user_id ) {
-		if ( 'caelis_approved' === $column_name ) {
+		if ( 'stadion_approved' === $column_name ) {
 			$is_approved = self::is_user_approved( $user_id );
 			$user        = get_userdata( $user_id );
 
-			// Only show for Caelis Users
+			// Only show for Stadion Users
 			if ( in_array( self::ROLE_NAME, $user->roles ) ) {
 				if ( $is_approved ) {
-					return '<span style="color: green;">✓ ' . __( 'Yes', 'caelis' ) . '</span>';
+					return '<span style="color: green;">✓ ' . __( 'Yes', 'stadion' ) . '</span>';
 				} else {
-					return '<span style="color: red;">✗ ' . __( 'No', 'caelis' ) . '</span>';
+					return '<span style="color: red;">✗ ' . __( 'No', 'stadion' ) . '</span>';
 				}
 			}
 			return '—';
@@ -296,8 +296,8 @@ Caelis Team',
 	 * Add bulk approval actions
 	 */
 	public function add_bulk_approval_actions( $actions ) {
-		$actions['caelis_approve'] = __( 'Approve', 'caelis' );
-		$actions['caelis_deny']    = __( 'Deny', 'caelis' );
+		$actions['stadion_approve'] = __( 'Approve', 'stadion' );
+		$actions['stadion_deny']    = __( 'Deny', 'stadion' );
 		return $actions;
 	}
 
@@ -310,16 +310,16 @@ Caelis Team',
 	 * @return string Modified redirect URL.
 	 */
 	public function handle_bulk_approval( $sendback, $action, $user_ids ) {
-		if ( 'caelis_approve' === $action ) {
+		if ( 'stadion_approve' === $action ) {
 			foreach ( $user_ids as $user_id ) {
 				$this->approve_user( $user_id );
 			}
-			$sendback = add_query_arg( 'caelis_approved', count( $user_ids ), $sendback );
-		} elseif ( 'caelis_deny' === $action ) {
+			$sendback = add_query_arg( 'stadion_approved', count( $user_ids ), $sendback );
+		} elseif ( 'stadion_deny' === $action ) {
 			foreach ( $user_ids as $user_id ) {
 				$this->deny_user( $user_id );
 			}
-			$sendback = add_query_arg( 'caelis_denied', count( $user_ids ), $sendback );
+			$sendback = add_query_arg( 'stadion_denied', count( $user_ids ), $sendback );
 		}
 		return $sendback;
 	}
@@ -328,27 +328,27 @@ Caelis Team',
 	 * Add approve/deny actions to user row
 	 */
 	public function add_user_row_actions( $actions, $user ) {
-		// Only show for Caelis Users
+		// Only show for Stadion Users
 		if ( in_array( self::ROLE_NAME, $user->roles ) ) {
 			$is_approved = self::is_user_approved( $user->ID );
 
 			if ( ! $is_approved ) {
-				$actions['caelis_approve'] = sprintf(
+				$actions['stadion_approve'] = sprintf(
 					'<a href="%s">%s</a>',
 					wp_nonce_url(
-						admin_url( 'users.php?action=caelis_approve&user=' . $user->ID ),
-						'caelis_approve_user_' . $user->ID
+						admin_url( 'users.php?action=stadion_approve&user=' . $user->ID ),
+						'stadion_approve_user_' . $user->ID
 					),
-					__( 'Approve', 'caelis' )
+					__( 'Approve', 'stadion' )
 				);
 			} else {
-				$actions['caelis_deny'] = sprintf(
+				$actions['stadion_deny'] = sprintf(
 					'<a href="%s">%s</a>',
 					wp_nonce_url(
-						admin_url( 'users.php?action=caelis_deny&user=' . $user->ID ),
-						'caelis_deny_user_' . $user->ID
+						admin_url( 'users.php?action=stadion_deny&user=' . $user->ID ),
+						'stadion_deny_user_' . $user->ID
 					),
-					__( 'Deny', 'caelis' )
+					__( 'Deny', 'stadion' )
 				);
 			}
 		}
@@ -373,16 +373,16 @@ Caelis Team',
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$nonce   = sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) );
 
-			if ( 'caelis_approve' === $action ) {
-				if ( wp_verify_nonce( $nonce, 'caelis_approve_user_' . $user_id ) ) {
+			if ( 'stadion_approve' === $action ) {
+				if ( wp_verify_nonce( $nonce, 'stadion_approve_user_' . $user_id ) ) {
 					$this->approve_user( $user_id );
-					wp_redirect( admin_url( 'users.php?caelis_approved=1' ) );
+					wp_redirect( admin_url( 'users.php?stadion_approved=1' ) );
 					exit;
 				}
-			} elseif ( 'caelis_deny' === $action ) {
-				if ( wp_verify_nonce( $nonce, 'caelis_deny_user_' . $user_id ) ) {
+			} elseif ( 'stadion_deny' === $action ) {
+				if ( wp_verify_nonce( $nonce, 'stadion_deny_user_' . $user_id ) ) {
 					$this->deny_user( $user_id );
-					wp_redirect( admin_url( 'users.php?caelis_denied=1' ) );
+					wp_redirect( admin_url( 'users.php?stadion_denied=1' ) );
 					exit;
 				}
 			}
@@ -390,28 +390,28 @@ Caelis Team',
 
 		// Show admin notices.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only, no action.
-		if ( isset( $_GET['caelis_approved'] ) ) {
+		if ( isset( $_GET['stadion_approved'] ) ) {
 			add_action(
 				'admin_notices',
 				function () {
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
-					$count = absint( $_GET['caelis_approved'] );
+					$count = absint( $_GET['stadion_approved'] );
 					// translators: %d is the number of users approved.
-					$message = sprintf( _n( '%d user approved.', '%d users approved.', $count, 'caelis' ), $count );
+					$message = sprintf( _n( '%d user approved.', '%d users approved.', $count, 'stadion' ), $count );
 					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 				}
 			);
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only, no action.
-		if ( isset( $_GET['caelis_denied'] ) ) {
+		if ( isset( $_GET['stadion_denied'] ) ) {
 			add_action(
 				'admin_notices',
 				function () {
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
-					$count = absint( $_GET['caelis_denied'] );
+					$count = absint( $_GET['stadion_denied'] );
 					// translators: %d is the number of users denied.
-					$message = sprintf( _n( '%d user denied.', '%d users denied.', $count, 'caelis' ), $count );
+					$message = sprintf( _n( '%d user denied.', '%d users denied.', $count, 'stadion' ), $count );
 					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 				}
 			);

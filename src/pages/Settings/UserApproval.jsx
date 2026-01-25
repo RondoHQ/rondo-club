@@ -7,7 +7,7 @@ import { CheckCircle2, XCircle, Loader2, ArrowLeft, ShieldAlert, Trash2 } from '
 export default function UserApproval() {
   useDocumentTitle('User Approval - Settings');
   const queryClient = useQueryClient();
-  const config = window.prmConfig || {};
+  const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
   
   // Check if user is admin
@@ -190,7 +190,7 @@ export default function UserApproval() {
 
       {users.length === 0 && (
         <div className="card p-8 text-center">
-          <p className="text-gray-600 dark:text-gray-300">No Caelis users found.</p>
+          <p className="text-gray-600 dark:text-gray-300">No Stadion users found.</p>
         </div>
       )}
       </div>

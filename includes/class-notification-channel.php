@@ -5,7 +5,7 @@
  * Provides the contract for notification channel implementations.
  */
 
-namespace Caelis\Notifications;
+namespace Stadion\Notifications;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

@@ -42,12 +42,12 @@ Users can now view available calendars for each connection and select which cale
 
 **Backend changes:**
 
-1. Added `list_calendars()` static method to `Caelis\Calendar\GoogleProvider`:
+1. Added `list_calendars()` static method to `Stadion\Calendar\GoogleProvider`:
    - Uses Google Calendar API's `calendarList` endpoint
    - Returns array of calendars with id, name, color, and primary flag
    - Handles errors gracefully, returns empty array on failure
 
-2. Added REST endpoint `GET /prm/v1/calendar/connections/{id}/calendars`:
+2. Added REST endpoint `GET /stadion/v1/calendar/connections/{id}/calendars`:
    - Permission: requires approved user
    - Routes to appropriate provider based on connection type
    - Google: uses new `list_calendars()` method

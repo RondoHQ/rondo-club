@@ -2,11 +2,11 @@
 
 namespace Tests\Wpunit;
 
-use Tests\Support\CaelisTestCase;
-use PRM_Access_Control;
-use PRM_Visibility;
-use PRM_Workspace_Members;
-use PRM_User_Roles;
+use Tests\Support\StadionTestCase;
+use STADION_Access_Control;
+use STADION_Visibility;
+use STADION_Workspace_Members;
+use STADION_User_Roles;
 
 /**
  * Tests for visibility rules - private, workspace, and shared access patterns.
@@ -16,30 +16,30 @@ use PRM_User_Roles;
  * - workspace: All workspace members can access
  * - shared: Direct shares override visibility restrictions
  */
-class VisibilityRulesTest extends CaelisTestCase {
+class VisibilityRulesTest extends StadionTestCase {
 
 	/**
-	 * PRM_Access_Control instance for access checks.
+	 * STADION_Access_Control instance for access checks.
 	 *
-	 * @var PRM_Access_Control
+	 * @var STADION_Access_Control
 	 */
-	private PRM_Access_Control $access_control;
+	private STADION_Access_Control $access_control;
 
 	protected function set_up(): void {
 		parent::set_up();
-		$this->access_control = new PRM_Access_Control();
+		$this->access_control = new STADION_Access_Control();
 	}
 
 	/**
-	 * Helper: Create an approved Caelis user.
+	 * Helper: Create an approved Stadion user.
 	 *
 	 * @param array $args Optional user arguments.
 	 * @return int User ID.
 	 */
 	protected function createApprovedUser( array $args = [] ): int {
-		$user_id = $this->createCaelisUser( $args );
+		$user_id = $this->createStadionUser( $args );
 		// Mark user as approved
-		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
+		update_user_meta( $user_id, STADION_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
 	}
 
@@ -66,7 +66,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		wp_insert_term( $term_name, 'workspace_access', [ 'slug' => $term_slug ] );
 
 		// Add owner as admin member
-		PRM_Workspace_Members::add( $workspace_id, $owner_id, PRM_Workspace_Members::ROLE_ADMIN );
+		STADION_Workspace_Members::add( $workspace_id, $owner_id, STADION_Workspace_Members::ROLE_ADMIN );
 
 		return $workspace_id;
 	}
@@ -103,7 +103,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		);
 
 		// Set visibility to private
-		PRM_Visibility::set_visibility( $person_id, 'private' );
+		STADION_Visibility::set_visibility( $person_id, 'private' );
 
 		// Alice can access (author always has access)
 		$this->assertTrue(
@@ -126,7 +126,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		);
 
 		// Set visibility to private
-		PRM_Visibility::set_visibility( $person_id, 'private' );
+		STADION_Visibility::set_visibility( $person_id, 'private' );
 
 		// Bob cannot access (private = author only)
 		$this->assertFalse(
@@ -146,12 +146,12 @@ class VisibilityRulesTest extends CaelisTestCase {
 		);
 
 		// Set visibility to private
-		PRM_Visibility::set_visibility( $person_id, 'private' );
+		STADION_Visibility::set_visibility( $person_id, 'private' );
 
 		// Verify get_visibility() returns 'private'
 		$this->assertEquals(
 			'private',
-			PRM_Visibility::get_visibility( $person_id ),
+			STADION_Visibility::get_visibility( $person_id ),
 			'get_visibility() should return private'
 		);
 	}
@@ -169,7 +169,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		// Do NOT set visibility - should default to private
 		$this->assertEquals(
 			'private',
-			PRM_Visibility::get_visibility( $person_id ),
+			STADION_Visibility::get_visibility( $person_id ),
 			'Default visibility should be private when not set'
 		);
 	}
@@ -188,7 +188,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		$workspace_id = $this->createWorkspace( $alice_id, [ 'post_title' => 'Team Workspace' ] );
 
 		// Add Bob as member
-		PRM_Workspace_Members::add( $workspace_id, $bob_id, PRM_Workspace_Members::ROLE_MEMBER );
+		STADION_Workspace_Members::add( $workspace_id, $bob_id, STADION_Workspace_Members::ROLE_MEMBER );
 
 		// Create a person post authored by Alice with workspace visibility
 		$person_id = $this->createPerson(
@@ -199,7 +199,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		);
 
 		// Set visibility to workspace
-		PRM_Visibility::set_visibility( $person_id, 'workspace' );
+		STADION_Visibility::set_visibility( $person_id, 'workspace' );
 
 		// Assign to workspace
 		$this->assignToWorkspace( $person_id, $workspace_id );
@@ -232,7 +232,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		$workspace_id = $this->createWorkspace( $alice_id, [ 'post_title' => 'Viewer Test Workspace' ] );
 
 		// Add viewer as viewer role
-		PRM_Workspace_Members::add( $workspace_id, $viewer_id, PRM_Workspace_Members::ROLE_VIEWER );
+		STADION_Workspace_Members::add( $workspace_id, $viewer_id, STADION_Workspace_Members::ROLE_VIEWER );
 
 		// Create workspace-visible person
 		$person_id = $this->createPerson(
@@ -242,7 +242,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 			]
 		);
 
-		PRM_Visibility::set_visibility( $person_id, 'workspace' );
+		STADION_Visibility::set_visibility( $person_id, 'workspace' );
 		$this->assignToWorkspace( $person_id, $workspace_id );
 
 		// Viewer can access (read access)
@@ -263,10 +263,10 @@ class VisibilityRulesTest extends CaelisTestCase {
 		$workspace2_id = $this->createWorkspace( $alice_id, [ 'post_title' => 'Workspace Two' ] );
 
 		// Bob is member of workspace1 only
-		PRM_Workspace_Members::add( $workspace1_id, $bob_id, PRM_Workspace_Members::ROLE_MEMBER );
+		STADION_Workspace_Members::add( $workspace1_id, $bob_id, STADION_Workspace_Members::ROLE_MEMBER );
 
 		// Dave is member of workspace2 only
-		PRM_Workspace_Members::add( $workspace2_id, $dave_id, PRM_Workspace_Members::ROLE_MEMBER );
+		STADION_Workspace_Members::add( $workspace2_id, $dave_id, STADION_Workspace_Members::ROLE_MEMBER );
 
 		// Create person assigned to both workspaces
 		$person_id = $this->createPerson(
@@ -276,7 +276,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 			]
 		);
 
-		PRM_Visibility::set_visibility( $person_id, 'workspace' );
+		STADION_Visibility::set_visibility( $person_id, 'workspace' );
 
 		// Assign to both workspaces
 		$term1 = get_term_by( 'slug', 'workspace-' . $workspace1_id, 'workspace_access' );
@@ -313,7 +313,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 			]
 		);
 
-		PRM_Visibility::set_visibility( $person_id, 'private' );
+		STADION_Visibility::set_visibility( $person_id, 'private' );
 
 		// Before sharing, Bob cannot access
 		$this->assertFalse(
@@ -322,7 +322,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		);
 
 		// Share with Bob
-		PRM_Visibility::add_share( $person_id, $bob_id, 'view' );
+		STADION_Visibility::add_share( $person_id, $bob_id, 'view' );
 
 		// After sharing, Bob can access
 		$this->assertTrue(
@@ -349,12 +349,12 @@ class VisibilityRulesTest extends CaelisTestCase {
 		);
 
 		// Share with view permission
-		PRM_Visibility::add_share( $person_id, $bob_id, 'view' );
+		STADION_Visibility::add_share( $person_id, $bob_id, 'view' );
 
 		// Verify share permission
 		$this->assertEquals(
 			'view',
-			PRM_Visibility::get_share_permission( $person_id, $bob_id ),
+			STADION_Visibility::get_share_permission( $person_id, $bob_id ),
 			'get_share_permission should return view'
 		);
 	}
@@ -371,12 +371,12 @@ class VisibilityRulesTest extends CaelisTestCase {
 		);
 
 		// Share with edit permission
-		PRM_Visibility::add_share( $person_id, $bob_id, 'edit' );
+		STADION_Visibility::add_share( $person_id, $bob_id, 'edit' );
 
 		// Verify share permission
 		$this->assertEquals(
 			'edit',
-			PRM_Visibility::get_share_permission( $person_id, $bob_id ),
+			STADION_Visibility::get_share_permission( $person_id, $bob_id ),
 			'get_share_permission should return edit'
 		);
 
@@ -398,10 +398,10 @@ class VisibilityRulesTest extends CaelisTestCase {
 			]
 		);
 
-		PRM_Visibility::set_visibility( $person_id, 'private' );
+		STADION_Visibility::set_visibility( $person_id, 'private' );
 
 		// Share with Bob
-		PRM_Visibility::add_share( $person_id, $bob_id, 'view' );
+		STADION_Visibility::add_share( $person_id, $bob_id, 'view' );
 
 		// Bob can access
 		$this->assertTrue(
@@ -410,7 +410,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		);
 
 		// Remove share
-		PRM_Visibility::remove_share( $person_id, $bob_id );
+		STADION_Visibility::remove_share( $person_id, $bob_id );
 
 		// Bob loses access
 		$this->assertFalse(
@@ -432,23 +432,23 @@ class VisibilityRulesTest extends CaelisTestCase {
 
 		// Before sharing
 		$this->assertFalse(
-			PRM_Visibility::user_has_share( $person_id, $bob_id ),
+			STADION_Visibility::user_has_share( $person_id, $bob_id ),
 			'user_has_share should return false before sharing'
 		);
 
 		// After sharing
-		PRM_Visibility::add_share( $person_id, $bob_id, 'view' );
+		STADION_Visibility::add_share( $person_id, $bob_id, 'view' );
 
 		$this->assertTrue(
-			PRM_Visibility::user_has_share( $person_id, $bob_id ),
+			STADION_Visibility::user_has_share( $person_id, $bob_id ),
 			'user_has_share should return true after sharing'
 		);
 
 		// After removing share
-		PRM_Visibility::remove_share( $person_id, $bob_id );
+		STADION_Visibility::remove_share( $person_id, $bob_id );
 
 		$this->assertFalse(
-			PRM_Visibility::user_has_share( $person_id, $bob_id ),
+			STADION_Visibility::user_has_share( $person_id, $bob_id ),
 			'user_has_share should return false after share removal'
 		);
 	}
@@ -469,7 +469,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 			]
 		);
 
-		PRM_Visibility::set_visibility( $person_id, 'workspace' );
+		STADION_Visibility::set_visibility( $person_id, 'workspace' );
 		$this->assignToWorkspace( $person_id, $workspace_id );
 
 		// Bob is NOT a workspace member, cannot access
@@ -479,7 +479,7 @@ class VisibilityRulesTest extends CaelisTestCase {
 		);
 
 		// Share with Bob directly
-		PRM_Visibility::add_share( $person_id, $bob_id, 'view' );
+		STADION_Visibility::add_share( $person_id, $bob_id, 'view' );
 
 		// Now Bob can access via direct share
 		$this->assertTrue(
@@ -500,20 +500,20 @@ class VisibilityRulesTest extends CaelisTestCase {
 		);
 
 		// Share with view permission
-		PRM_Visibility::add_share( $person_id, $bob_id, 'view' );
+		STADION_Visibility::add_share( $person_id, $bob_id, 'view' );
 
 		$this->assertEquals(
 			'view',
-			PRM_Visibility::get_share_permission( $person_id, $bob_id ),
+			STADION_Visibility::get_share_permission( $person_id, $bob_id ),
 			'Initial permission should be view'
 		);
 
 		// Update to edit permission (add_share updates existing)
-		PRM_Visibility::add_share( $person_id, $bob_id, 'edit' );
+		STADION_Visibility::add_share( $person_id, $bob_id, 'edit' );
 
 		$this->assertEquals(
 			'edit',
-			PRM_Visibility::get_share_permission( $person_id, $bob_id ),
+			STADION_Visibility::get_share_permission( $person_id, $bob_id ),
 			'Permission should be updated to edit'
 		);
 	}

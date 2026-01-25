@@ -9,7 +9,7 @@ requires:
   - phase: 80-01
     provides: GoogleContactsAPI class with import_all() method
 provides:
-  - POST /prm/v1/google-contacts/import REST endpoint
+  - POST /stadion/v1/google-contacts/import REST endpoint
   - triggerGoogleContactsImport API client method
   - Import stats return (imported, updated, skipped counts)
 affects: [80-03 frontend import UI, future manual re-import triggers]
@@ -42,7 +42,7 @@ completed: 2026-01-17
 
 # Phase 80 Plan 02: REST Endpoint and API Client Summary
 
-**POST /prm/v1/google-contacts/import endpoint with stats return and API client integration**
+**POST /stadion/v1/google-contacts/import endpoint with stats return and API client integration**
 
 ## Performance
 

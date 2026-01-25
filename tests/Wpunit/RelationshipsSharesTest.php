@@ -2,13 +2,13 @@
 
 namespace Tests\Wpunit;
 
-use Tests\Support\CaelisTestCase;
-use PRM_Access_Control;
-use PRM_Visibility;
-use PRM_Workspace_Members;
-use PRM_User_Roles;
-use PRM_REST_People;
-use PRM_REST_Companies;
+use Tests\Support\StadionTestCase;
+use STADION_Access_Control;
+use STADION_Visibility;
+use STADION_Workspace_Members;
+use STADION_User_Roles;
+use STADION_REST_People;
+use STADION_REST_Companies;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -22,36 +22,36 @@ use WP_REST_Server;
  * - Sharing endpoints for people and companies
  * - Bulk update operations with ownership checks
  */
-class RelationshipsSharesTest extends CaelisTestCase {
+class RelationshipsSharesTest extends StadionTestCase {
 
 	/**
-	 * PRM_Access_Control instance for access checks.
+	 * STADION_Access_Control instance for access checks.
 	 *
-	 * @var PRM_Access_Control
+	 * @var STADION_Access_Control
 	 */
-	private PRM_Access_Control $access_control;
+	private STADION_Access_Control $access_control;
 
 	/**
 	 * REST People handler.
 	 *
-	 * @var PRM_REST_People
+	 * @var STADION_REST_People
 	 */
-	private PRM_REST_People $rest_people;
+	private STADION_REST_People $rest_people;
 
 	/**
 	 * REST Companies handler.
 	 *
-	 * @var PRM_REST_Companies
+	 * @var STADION_REST_Companies
 	 */
-	private PRM_REST_Companies $rest_companies;
+	private STADION_REST_Companies $rest_companies;
 
 	protected function set_up(): void {
 		parent::set_up();
-		$this->access_control = new PRM_Access_Control();
+		$this->access_control = new STADION_Access_Control();
 
 		// Manually initialize REST API classes for testing
-		$this->rest_people    = new PRM_REST_People();
-		$this->rest_companies = new PRM_REST_Companies();
+		$this->rest_people    = new STADION_REST_People();
+		$this->rest_companies = new STADION_REST_Companies();
 
 		// Initialize the REST server and register routes
 		global $wp_rest_server;
@@ -60,14 +60,14 @@ class RelationshipsSharesTest extends CaelisTestCase {
 	}
 
 	/**
-	 * Helper: Create an approved Caelis user.
+	 * Helper: Create an approved Stadion user.
 	 *
 	 * @param array $args Optional user arguments.
 	 * @return int User ID.
 	 */
 	protected function createApprovedUser( array $args = [] ): int {
-		$user_id = $this->createCaelisUser( $args );
-		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
+		$user_id = $this->createStadionUser( $args );
+		update_user_meta( $user_id, STADION_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
 	}
 
@@ -94,7 +94,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		wp_insert_term( $term_name, 'workspace_access', [ 'slug' => $term_slug ] );
 
 		// Add owner as admin member
-		PRM_Workspace_Members::add( $workspace_id, $owner_id, PRM_Workspace_Members::ROLE_ADMIN );
+		STADION_Workspace_Members::add( $workspace_id, $owner_id, STADION_Workspace_Members::ROLE_ADMIN );
 
 		return $workspace_id;
 	}
@@ -138,7 +138,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 
 	/**
 	 * Test person-company relationship endpoint.
-	 * GET /prm/v1/companies/{id}/people should return people working at the company.
+	 * GET /stadion/v1/companies/{id}/people should return people working at the company.
 	 */
 	public function test_company_people_endpoint_returns_employees(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel1' ] );
@@ -176,8 +176,8 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		];
 		update_field( 'work_history', $work_history, $person_id );
 
-		// GET /prm/v1/companies/{id}/people
-		$response = $this->restRequest( 'GET', '/prm/v1/companies/' . $company_id . '/people' );
+		// GET /stadion/v1/companies/{id}/people
+		$response = $this->restRequest( 'GET', '/stadion/v1/companies/' . $company_id . '/people' );
 
 		$this->assertEquals( 200, $response->get_status(), 'Response should be 200 OK' );
 
@@ -248,7 +248,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 			$former_person_id
 		);
 
-		$response = $this->restRequest( 'GET', '/prm/v1/companies/' . $company_id . '/people' );
+		$response = $this->restRequest( 'GET', '/stadion/v1/companies/' . $company_id . '/people' );
 		$data     = $response->get_data();
 
 		$this->assertCount( 1, $data['current'], 'Should have 1 current employee' );
@@ -259,7 +259,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 
 	/**
 	 * Test person-dates relationship endpoint.
-	 * GET /prm/v1/people/{id}/dates should return dates linked to the person.
+	 * GET /stadion/v1/people/{id}/dates should return dates linked to the person.
 	 */
 	public function test_person_dates_endpoint_returns_linked_dates(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel3' ] );
@@ -290,8 +290,8 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		// Let's also set the related_people field explicitly
 		update_field( 'related_people', [ $person_id ], $date_id );
 
-		// GET /prm/v1/people/{person_id}/dates
-		$response = $this->restRequest( 'GET', '/prm/v1/people/' . $person_id . '/dates' );
+		// GET /stadion/v1/people/{person_id}/dates
+		$response = $this->restRequest( 'GET', '/stadion/v1/people/' . $person_id . '/dates' );
 
 		$this->assertEquals( 200, $response->get_status(), 'Response should be 200 OK' );
 
@@ -422,7 +422,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 
 	/**
 	 * Test sharing endpoint for people - add share.
-	 * POST /prm/v1/people/{id}/shares
+	 * POST /stadion/v1/people/{id}/shares
 	 */
 	public function test_people_share_add(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share1' ] );
@@ -440,7 +440,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		// POST share with Bob (view permission)
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/people/' . $person_id . '/shares',
+			'/stadion/v1/people/' . $person_id . '/shares',
 			[
 				'user_id'    => $bob_id,
 				'permission' => 'view',
@@ -455,7 +455,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 
 	/**
 	 * Test sharing endpoint for people - get shares.
-	 * GET /prm/v1/people/{id}/shares
+	 * GET /stadion/v1/people/{id}/shares
 	 */
 	public function test_people_share_get(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share2' ] );
@@ -470,10 +470,10 @@ class RelationshipsSharesTest extends CaelisTestCase {
 			]
 		);
 
-		PRM_Visibility::add_share( $person_id, $bob_id, 'view' );
+		STADION_Visibility::add_share( $person_id, $bob_id, 'view' );
 
 		// GET shares
-		$response = $this->restRequest( 'GET', '/prm/v1/people/' . $person_id . '/shares' );
+		$response = $this->restRequest( 'GET', '/stadion/v1/people/' . $person_id . '/shares' );
 
 		$this->assertEquals( 200, $response->get_status(), 'Get shares should return 200' );
 
@@ -485,7 +485,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 
 	/**
 	 * Test sharing endpoint for people - remove share.
-	 * DELETE /prm/v1/people/{id}/shares/{user_id}
+	 * DELETE /stadion/v1/people/{id}/shares/{user_id}
 	 */
 	public function test_people_share_remove(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share3' ] );
@@ -500,18 +500,18 @@ class RelationshipsSharesTest extends CaelisTestCase {
 			]
 		);
 
-		PRM_Visibility::add_share( $person_id, $bob_id, 'view' );
+		STADION_Visibility::add_share( $person_id, $bob_id, 'view' );
 
 		// Verify share exists
-		$this->assertTrue( PRM_Visibility::user_has_share( $person_id, $bob_id ), 'Bob should have share before removal' );
+		$this->assertTrue( STADION_Visibility::user_has_share( $person_id, $bob_id ), 'Bob should have share before removal' );
 
 		// DELETE share
-		$response = $this->restRequest( 'DELETE', '/prm/v1/people/' . $person_id . '/shares/' . $bob_id );
+		$response = $this->restRequest( 'DELETE', '/stadion/v1/people/' . $person_id . '/shares/' . $bob_id );
 
 		$this->assertEquals( 200, $response->get_status(), 'Remove share should return 200' );
 
 		// Verify share removed
-		$this->assertFalse( PRM_Visibility::user_has_share( $person_id, $bob_id ), 'Bob should not have share after removal' );
+		$this->assertFalse( STADION_Visibility::user_has_share( $person_id, $bob_id ), 'Bob should not have share after removal' );
 	}
 
 	/**
@@ -532,31 +532,31 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		// Add share with view permission
 		$this->restRequest(
 			'POST',
-			'/prm/v1/people/' . $person_id . '/shares',
+			'/stadion/v1/people/' . $person_id . '/shares',
 			[
 				'user_id'    => $bob_id,
 				'permission' => 'view',
 			]
 		);
 
-		$this->assertEquals( 'view', PRM_Visibility::get_share_permission( $person_id, $bob_id ), 'Initial permission should be view' );
+		$this->assertEquals( 'view', STADION_Visibility::get_share_permission( $person_id, $bob_id ), 'Initial permission should be view' );
 
 		// Update to edit permission
 		$this->restRequest(
 			'POST',
-			'/prm/v1/people/' . $person_id . '/shares',
+			'/stadion/v1/people/' . $person_id . '/shares',
 			[
 				'user_id'    => $bob_id,
 				'permission' => 'edit',
 			]
 		);
 
-		$this->assertEquals( 'edit', PRM_Visibility::get_share_permission( $person_id, $bob_id ), 'Permission should be updated to edit' );
+		$this->assertEquals( 'edit', STADION_Visibility::get_share_permission( $person_id, $bob_id ), 'Permission should be updated to edit' );
 	}
 
 	/**
 	 * Test sharing endpoint for companies.
-	 * POST/GET/DELETE /prm/v1/companies/{id}/shares
+	 * POST/GET/DELETE /stadion/v1/companies/{id}/shares
 	 */
 	public function test_companies_share_lifecycle(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share5' ] );
@@ -574,7 +574,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		// POST share
 		$add_response = $this->restRequest(
 			'POST',
-			'/prm/v1/companies/' . $company_id . '/shares',
+			'/stadion/v1/companies/' . $company_id . '/shares',
 			[
 				'user_id'    => $bob_id,
 				'permission' => 'view',
@@ -583,23 +583,23 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$this->assertEquals( 200, $add_response->get_status(), 'Add share should return 200' );
 
 		// GET shares
-		$get_response = $this->restRequest( 'GET', '/prm/v1/companies/' . $company_id . '/shares' );
+		$get_response = $this->restRequest( 'GET', '/stadion/v1/companies/' . $company_id . '/shares' );
 		$shares       = $get_response->get_data();
 		$this->assertCount( 1, $shares, 'Should have 1 share' );
 		$this->assertEquals( $bob_id, $shares[0]['user_id'], 'Share should be with Bob' );
 
 		// DELETE share
-		$del_response = $this->restRequest( 'DELETE', '/prm/v1/companies/' . $company_id . '/shares/' . $bob_id );
+		$del_response = $this->restRequest( 'DELETE', '/stadion/v1/companies/' . $company_id . '/shares/' . $bob_id );
 		$this->assertEquals( 200, $del_response->get_status(), 'Delete share should return 200' );
 
 		// Verify share removed
-		$get_response2 = $this->restRequest( 'GET', '/prm/v1/companies/' . $company_id . '/shares' );
+		$get_response2 = $this->restRequest( 'GET', '/stadion/v1/companies/' . $company_id . '/shares' );
 		$this->assertCount( 0, $get_response2->get_data(), 'Should have no shares after removal' );
 	}
 
 	/**
 	 * Test bulk update for people - visibility change.
-	 * POST /prm/v1/people/bulk-update
+	 * POST /stadion/v1/people/bulk-update
 	 */
 	public function test_people_bulk_update_visibility(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk1' ] );
@@ -629,14 +629,14 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		);
 
 		// All should start as private (default)
-		$this->assertEquals( 'private', PRM_Visibility::get_visibility( $person1_id ) );
-		$this->assertEquals( 'private', PRM_Visibility::get_visibility( $person2_id ) );
-		$this->assertEquals( 'private', PRM_Visibility::get_visibility( $person3_id ) );
+		$this->assertEquals( 'private', STADION_Visibility::get_visibility( $person1_id ) );
+		$this->assertEquals( 'private', STADION_Visibility::get_visibility( $person2_id ) );
+		$this->assertEquals( 'private', STADION_Visibility::get_visibility( $person3_id ) );
 
 		// Bulk update visibility to workspace
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/people/bulk-update',
+			'/stadion/v1/people/bulk-update',
 			[
 				'ids'     => [ $person1_id, $person2_id, $person3_id ],
 				'updates' => [
@@ -652,9 +652,9 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$this->assertCount( 3, $data['updated'], 'All 3 should be updated' );
 
 		// Verify visibility changed
-		$this->assertEquals( 'workspace', PRM_Visibility::get_visibility( $person1_id ) );
-		$this->assertEquals( 'workspace', PRM_Visibility::get_visibility( $person2_id ) );
-		$this->assertEquals( 'workspace', PRM_Visibility::get_visibility( $person3_id ) );
+		$this->assertEquals( 'workspace', STADION_Visibility::get_visibility( $person1_id ) );
+		$this->assertEquals( 'workspace', STADION_Visibility::get_visibility( $person2_id ) );
+		$this->assertEquals( 'workspace', STADION_Visibility::get_visibility( $person3_id ) );
 	}
 
 	/**
@@ -674,7 +674,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		// Bulk update workspace assignment
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/people/bulk-update',
+			'/stadion/v1/people/bulk-update',
 			[
 				'ids'     => [ $person1_id, $person2_id ],
 				'updates' => [
@@ -713,7 +713,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		// Bulk add label
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/people/bulk-update',
+			'/stadion/v1/people/bulk-update',
 			[
 				'ids'     => [ $person1_id, $person2_id ],
 				'updates' => [
@@ -754,7 +754,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		// Bulk remove label
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/people/bulk-update',
+			'/stadion/v1/people/bulk-update',
 			[
 				'ids'     => [ $person1_id, $person2_id ],
 				'updates' => [
@@ -791,7 +791,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/people/bulk-update',
+			'/stadion/v1/people/bulk-update',
 			[
 				'ids'     => [ $person1_id, $person2_id ],
 				'updates' => [
@@ -828,7 +828,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		// Bulk update visibility
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/companies/bulk-update',
+			'/stadion/v1/companies/bulk-update',
 			[
 				'ids'     => [ $company1_id, $company2_id ],
 				'updates' => [
@@ -841,8 +841,8 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		$this->assertTrue( $response->get_data()['success'] );
 
 		// Verify visibility changed
-		$this->assertEquals( 'shared', PRM_Visibility::get_visibility( $company1_id ) );
-		$this->assertEquals( 'shared', PRM_Visibility::get_visibility( $company2_id ) );
+		$this->assertEquals( 'shared', STADION_Visibility::get_visibility( $company1_id ) );
+		$this->assertEquals( 'shared', STADION_Visibility::get_visibility( $company2_id ) );
 	}
 
 	/**
@@ -863,7 +863,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		// Bulk add label
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/companies/bulk-update',
+			'/stadion/v1/companies/bulk-update',
 			[
 				'ids'     => [ $company1_id, $company2_id ],
 				'updates' => [
@@ -900,7 +900,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/companies/bulk-update',
+			'/stadion/v1/companies/bulk-update',
 			[
 				'ids'     => [ $company1_id, $company2_id ],
 				'updates' => [
@@ -929,7 +929,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/people/' . $person_id . '/shares',
+			'/stadion/v1/people/' . $person_id . '/shares',
 			[
 				'user_id'    => $charlie_id,
 				'permission' => 'view',
@@ -952,7 +952,7 @@ class RelationshipsSharesTest extends CaelisTestCase {
 		// Alice tries to share with herself
 		$response = $this->restRequest(
 			'POST',
-			'/prm/v1/people/' . $person_id . '/shares',
+			'/stadion/v1/people/' . $person_id . '/shares',
 			[
 				'user_id'    => $alice_id,
 				'permission' => 'view',

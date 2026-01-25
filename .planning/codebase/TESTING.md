@@ -95,7 +95,7 @@ describe('API client', () => {
 
 **What to Mock:**
 - Axios HTTP requests
-- WordPress `window.prmConfig` global
+- WordPress `window.stadionConfig` global
 - React Query client
 - localStorage/sessionStorage
 

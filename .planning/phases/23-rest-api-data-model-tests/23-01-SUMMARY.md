@@ -7,7 +7,7 @@ tags: [phpunit, rest-api, crud, acf, access-control]
 # Dependency graph
 requires:
   - phase: 22-access-control-tests
-    provides: Access control test patterns, CaelisTestCase base class
+    provides: Access control test patterns, StadionTestCase base class
 provides:
   - CptCrudTest with 24 tests for REST API CRUD operations
   - ACF field handling verification in REST responses
@@ -114,8 +114,8 @@ Both tasks were combined in a single commit as they share the same test file:
 
 **1. [Rule 3 - Blocking] Test database recreation**
 - **Found during:** Initial test run
-- **Issue:** Test database tables missing (caelis_test.wp_options not found)
-- **Fix:** Recreated test database with `mysql -u root -e "DROP DATABASE IF EXISTS caelis_test; CREATE DATABASE caelis_test;"`
+- **Issue:** Test database tables missing (stadion_test.wp_options not found)
+- **Fix:** Recreated test database with `mysql -u root -e "DROP DATABASE IF EXISTS stadion_test; CREATE DATABASE stadion_test;"`
 - **Verification:** All tests run successfully
 
 **2. [Rule 1 - Expected Behavior] DELETE returns 404**

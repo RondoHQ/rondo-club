@@ -91,7 +91,7 @@ function TypeBadge({ type }) {
 
 export default function FeedbackManagement() {
   useDocumentTitle('Feedback Management - Settings');
-  const config = window.prmConfig || {};
+  const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
 
   // Filter and sort state

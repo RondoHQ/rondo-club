@@ -13,18 +13,18 @@ Create ShareModal component for sharing contacts/companies with specific users, 
 ## Tasks Completed
 
 ### Task 1: Add share REST endpoints to backend
-Added sharing endpoints to both `PRM_REST_People` and `PRM_REST_Companies` classes:
+Added sharing endpoints to both `STADION_REST_People` and `STADION_REST_Companies` classes:
 
 **Routes registered:**
-- `GET /prm/v1/people/{id}/shares` - Get list of users a person is shared with
-- `POST /prm/v1/people/{id}/shares` - Share person with a user
-- `DELETE /prm/v1/people/{id}/shares/{user_id}` - Remove share from a user
-- `GET /prm/v1/companies/{id}/shares` - Get list of users a company is shared with
-- `POST /prm/v1/companies/{id}/shares` - Share company with a user
-- `DELETE /prm/v1/companies/{id}/shares/{user_id}` - Remove share from a user
+- `GET /stadion/v1/people/{id}/shares` - Get list of users a person is shared with
+- `POST /stadion/v1/people/{id}/shares` - Share person with a user
+- `DELETE /stadion/v1/people/{id}/shares/{user_id}` - Remove share from a user
+- `GET /stadion/v1/companies/{id}/shares` - Get list of users a company is shared with
+- `POST /stadion/v1/companies/{id}/shares` - Share company with a user
+- `DELETE /stadion/v1/companies/{id}/shares/{user_id}` - Remove share from a user
 
-**User search endpoint in `PRM_REST_API`:**
-- `GET /prm/v1/users/search?q={query}` - Search users by name/email (excludes current user)
+**User search endpoint in `STADION_REST_API`:**
+- `GET /stadion/v1/users/search?q={query}` - Search users by name/email (excludes current user)
 
 **Handler methods added:**
 - `check_post_owner()` - Permission check (must be post author or admin)

@@ -39,7 +39,7 @@ score: 6/6 must-haves verified
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| AddAttendeePopup.jsx | /prm/v1/search | useSearch hook | WIRED | Import at line 3: `import { useSearch } from '@/hooks/useDashboard'`, used at line 24 |
+| AddAttendeePopup.jsx | /stadion/v1/search | useSearch hook | WIRED | Import at line 3: `import { useSearch } from '@/hooks/useDashboard'`, used at line 24 |
 | AddAttendeePopup.jsx | usePeople.js | onSelectPerson callback | WIRED | Callback passed from MeetingDetailModal, calls `addEmailMutation.mutateAsync` (MeetingDetailModal.jsx:85-88) |
 | MeetingDetailModal.jsx | AddAttendeePopup.jsx | Component import | WIRED | Import at line 8, rendered in AttendeeRow at lines 374-381 |
 | MeetingDetailModal.jsx | usePeople.js | useAddEmailToPerson hook | WIRED | Import at line 7, initialized at line 62, used in handleSelectPerson |

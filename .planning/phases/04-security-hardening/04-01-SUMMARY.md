@@ -12,13 +12,13 @@ Implement sodium encryption for Slack bot tokens to replace weak base64 encoding
   - Generates 24-byte random nonce using `random_bytes()`
   - Encrypts with `sodium_crypto_secretbox()`
   - Returns base64-encoded nonce + ciphertext
-  - Falls back to base64 encoding if `CAELIS_ENCRYPTION_KEY` not defined
+  - Falls back to base64 encoding if `STADION_ENCRYPTION_KEY` not defined
 
 - Added `decrypt_token($encrypted)` method
   - Decodes base64 and extracts nonce (first 24 bytes) + ciphertext
   - Decrypts with `sodium_crypto_secretbox_open()`
   - Falls back to legacy base64 decode if:
-    - `CAELIS_ENCRYPTION_KEY` not defined
+    - `STADION_ENCRYPTION_KEY` not defined
     - Decoded data too short to be sodium-encrypted
     - Decryption fails (migration path for legacy tokens)
 
@@ -36,7 +36,7 @@ Implement sodium encryption for Slack bot tokens to replace weak base64 encoding
 | decrypt_token method defined | PASS |
 | All token storage uses encryption | PASS |
 | Legacy base64 fallback implemented | PASS |
-| CAELIS_ENCRYPTION_KEY check implemented | PASS |
+| STADION_ENCRYPTION_KEY check implemented | PASS |
 
 ## Files Modified
 - `includes/class-rest-slack.php` - Added encryption methods and updated token handling
@@ -51,7 +51,7 @@ Existing tokens stored with base64 encoding will automatically migrate to sodium
 3. Next time token is stored (e.g., user reconnects Slack), it will use sodium encryption
 
 ## Security Notes
-- **Key management**: `CAELIS_ENCRYPTION_KEY` must be defined in `wp-config.php` as a 32-byte key
+- **Key management**: `STADION_ENCRYPTION_KEY` must be defined in `wp-config.php` as a 32-byte key
 - **Key generation**: Use `sodium_crypto_secretbox_keygen()` or `random_bytes(SODIUM_CRYPTO_SECRETBOX_KEYBYTES)`
 - **Graceful degradation**: System continues to work with base64 if key not configured (not recommended for production)
 

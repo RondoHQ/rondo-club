@@ -7,7 +7,7 @@ tags: [security, xss, wordpress, php, sanitization]
 # Dependency graph
 requires: [01-rest-api-infrastructure]
 provides:
-  - XSS sanitization helpers in PRM_REST_Base (sanitize_text, sanitize_rich_content, sanitize_url)
+  - XSS sanitization helpers in STADION_REST_Base (sanitize_text, sanitize_rich_content, sanitize_url)
   - Server-side output escaping for all REST API responses
   - Defense-in-depth protection against stored XSS attacks
 affects: []
@@ -50,7 +50,7 @@ completed: 2026-01-13
 
 ## Accomplishments
 
-- Added three protected sanitization helper methods to PRM_REST_Base class
+- Added three protected sanitization helper methods to STADION_REST_Base class
 - Updated format_person_summary, format_company_summary, and format_date to use sanitization
 - Sanitized remaining response fields in get_all_todos() and get_investments()
 

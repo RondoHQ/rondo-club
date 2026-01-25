@@ -42,7 +42,7 @@ User delegated all implementation decisions to Claude. The following areas are o
 
 No specific requirements — open to standard approaches.
 
-Follow existing Caelis UI patterns and ACF conventions where applicable.
+Follow existing Stadion UI patterns and ACF conventions where applicable.
 
 </specifics>
 

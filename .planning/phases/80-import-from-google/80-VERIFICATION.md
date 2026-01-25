@@ -7,7 +7,7 @@ score: 5/5 must-haves verified
 
 # Phase 80: Import from Google Verification Report
 
-**Phase Goal:** Users can import all their Google Contacts into Caelis with proper field mapping
+**Phase Goal:** Users can import all their Google Contacts into Stadion with proper field mapping
 **Verified:** 2026-01-17T21:45:00Z
 **Status:** passed
 **Re-verification:** No - initial verification
@@ -18,10 +18,10 @@ score: 5/5 must-haves verified
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | User sees all Google Contacts appear in Caelis after connecting | VERIFIED | `import_all()` fetches all contacts via People API pagination (`listPeopleConnections` at line 157), auto-imports via `has_pending_import` flag in Settings.jsx (line 246) |
+| 1 | User sees all Google Contacts appear in Stadion after connecting | VERIFIED | `import_all()` fetches all contacts via People API pagination (`listPeopleConnections` at line 157), auto-imports via `has_pending_import` flag in Settings.jsx (line 246) |
 | 2 | Contact details (name, email, phone, address, birthday) are correctly mapped | VERIFIED | Field mapping methods exist: `import_names()` (line 338), `import_contact_info()` (line 375), `import_addresses()` (line 444), `import_birthday()` (line 571) |
 | 3 | Duplicate contacts are detected by email and merged rather than duplicated | VERIFIED | `find_by_email()` (line 271) searches ACF contact_info repeater; fill-gaps-only pattern in all import methods (check `get_field()` before `update_field()`) |
-| 4 | Photos from Google appear on Caelis person profiles | VERIFIED | `import_photo()` (line 665) calls `sideload_image()` (line 718) with WordPress media library integration |
+| 4 | Photos from Google appear on Stadion person profiles | VERIFIED | `import_photo()` (line 665) calls `sideload_image()` (line 718) with WordPress media library integration |
 | 5 | Work history is created from Google organization data | VERIFIED | `import_work_history()` (line 498) calls `get_or_create_company()` (line 750) and creates work_history ACF entries |
 
 **Score:** 5/5 truths verified
@@ -30,9 +30,9 @@ score: 5/5 must-haves verified
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `includes/class-google-contacts-api-import.php` | GoogleContactsAPI class with import logic | VERIFIED | 854 lines, 21 methods, namespace Caelis\Import |
-| `includes/class-rest-google-contacts.php` | POST /prm/v1/google-contacts/import endpoint | VERIFIED | `trigger_import()` method registered, calls `GoogleContactsAPI::import_all()` |
-| `src/api/client.js` | `triggerGoogleContactsImport` API method | VERIFIED | Line 260: `triggerGoogleContactsImport: () => api.post('/prm/v1/google-contacts/import')` |
+| `includes/class-google-contacts-api-import.php` | GoogleContactsAPI class with import logic | VERIFIED | 854 lines, 21 methods, namespace Stadion\Import |
+| `includes/class-rest-google-contacts.php` | POST /stadion/v1/google-contacts/import endpoint | VERIFIED | `trigger_import()` method registered, calls `GoogleContactsAPI::import_all()` |
+| `src/api/client.js` | `triggerGoogleContactsImport` API method | VERIFIED | Line 260: `triggerGoogleContactsImport: () => api.post('/stadion/v1/google-contacts/import')` |
 | `src/pages/Settings/Settings.jsx` | Import trigger, progress, results UI | VERIFIED | Auto-import trigger (line 246), progress indicator (line 2157), results display (line 2165-2211), re-import button (line 2138) |
 
 ### Key Link Verification
@@ -50,7 +50,7 @@ score: 5/5 must-haves verified
 | Requirement | Status | Details |
 |-------------|--------|---------|
 | IMPORT-01: Pull all contacts via People API | SATISFIED | `listPeopleConnections` with pagination |
-| IMPORT-02: Map Google Contact fields to Caelis fields | SATISFIED | All field import methods implemented |
+| IMPORT-02: Map Google Contact fields to Stadion fields | SATISFIED | All field import methods implemented |
 | IMPORT-03: Detect and handle duplicates by email | SATISFIED | `find_by_email()` + fill-gaps-only pattern |
 | IMPORT-04: Store google_contact_id | SATISFIED | `store_google_ids()` saves `_google_contact_id` |
 | IMPORT-05: Store google_etag | SATISFIED | `store_google_ids()` saves `_google_etag` |
@@ -102,7 +102,7 @@ Phase 80 "Import from Google" is fully implemented and verified:
 - Company creation/linking in `work_history`
 
 **API:**
-- REST endpoint `POST /prm/v1/google-contacts/import` triggers import
+- REST endpoint `POST /stadion/v1/google-contacts/import` triggers import
 - Returns detailed stats (imported, updated, skipped, photos, dates, companies)
 - Error handling stores last_error for UI feedback
 

@@ -1,6 +1,6 @@
 # Custom Fields Implementation Plan
 
-**Caelis CRM - Global Custom Fields for Person & Organization**
+**Stadion CRM - Global Custom Fields for Person & Organization**
 
 ---
 
@@ -15,7 +15,7 @@
 
 ## 1. Database Schema
 
-New custom table: `wp_prm_custom_fields`
+New custom table: `wp_stadion_custom_fields`
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -54,25 +54,25 @@ New custom table: `wp_prm_custom_fields`
 
 ## 2. REST API Endpoints
 
-New endpoints under `/prm/v1/custom-fields`
+New endpoints under `/stadion/v1/custom-fields`
 
 ### Field Definitions (Admin only)
 
 ```
-GET    /prm/v1/custom-fields                    # List all custom fields
-GET    /prm/v1/custom-fields?object_type=person # List fields for object type
-GET    /prm/v1/custom-fields/{id}               # Get single field definition
-POST   /prm/v1/custom-fields                    # Create new custom field
-PUT    /prm/v1/custom-fields/{id}               # Update field definition
-DELETE /prm/v1/custom-fields/{id}               # Deactivate field (soft delete)
-POST   /prm/v1/custom-fields/reorder            # Reorder fields { ids: [3,1,2] }
+GET    /stadion/v1/custom-fields                    # List all custom fields
+GET    /stadion/v1/custom-fields?object_type=person # List fields for object type
+GET    /stadion/v1/custom-fields/{id}               # Get single field definition
+POST   /stadion/v1/custom-fields                    # Create new custom field
+PUT    /stadion/v1/custom-fields/{id}               # Update field definition
+DELETE /stadion/v1/custom-fields/{id}               # Deactivate field (soft delete)
+POST   /stadion/v1/custom-fields/reorder            # Reorder fields { ids: [3,1,2] }
 ```
 
 ### Schema Discovery (Public)
 
 ```
-GET    /prm/v1/schema/person    # Get person schema (standard + custom fields)
-GET    /prm/v1/schema/company   # Get company schema (standard + custom fields)
+GET    /stadion/v1/schema/person    # Get person schema (standard + custom fields)
+GET    /stadion/v1/schema/company   # Get company schema (standard + custom fields)
 ```
 
 Schema endpoints return combined standard ACF fields + custom fields for form rendering.
@@ -80,7 +80,7 @@ Schema endpoints return combined standard ACF fields + custom fields for form re
 ### Example Request/Response
 
 ```json
-// POST /prm/v1/custom-fields
+// POST /stadion/v1/custom-fields
 {
   "object_type": "person",
   "field_key": "linkedin_url",
@@ -149,12 +149,12 @@ Update PersonDetail.jsx and CompanyDetail.jsx to:
 
 ## 4. PHP Classes
 
-### 4.1 PRM_Custom_Fields_Table
+### 4.1 STADION_Custom_Fields_Table
 
 Database table creation and management.
 
 ```php
-class PRM_Custom_Fields_Table {
+class STADION_Custom_Fields_Table {
     public static function create_table() { /* dbDelta() */ }
     public static function get_fields($object_type = null) { /* SELECT */ }
     public static function get_field($id) { /* SELECT by ID */ }
@@ -165,15 +165,15 @@ class PRM_Custom_Fields_Table {
 }
 ```
 
-### 4.2 PRM_Custom_Fields_REST
+### 4.2 STADION_Custom_Fields_REST
 
 REST API endpoint registration and handlers.
 
 ```php
-class PRM_Custom_Fields_REST extends PRM_REST_Base {
+class STADION_Custom_Fields_REST extends STADION_REST_Base {
     public function register_routes() {
-        // /prm/v1/custom-fields endpoints
-        // /prm/v1/schema/{object_type} endpoints
+        // /stadion/v1/custom-fields endpoints
+        // /stadion/v1/schema/{object_type} endpoints
     }
 
     public function get_items($request) { /* List fields */ }
@@ -187,12 +187,12 @@ class PRM_Custom_Fields_REST extends PRM_REST_Base {
 }
 ```
 
-### 4.3 PRM_Custom_Fields_Integration
+### 4.3 STADION_Custom_Fields_Integration
 
 Hooks into existing REST responses to include custom field values.
 
 ```php
-class PRM_Custom_Fields_Integration {
+class STADION_Custom_Fields_Integration {
     public function __construct() {
         // Hook into REST response preparation
         add_filter('rest_prepare_person', [$this, 'add_custom_fields'], 10, 3);
@@ -205,7 +205,7 @@ class PRM_Custom_Fields_Integration {
 
     public function add_custom_fields($response, $post, $request) {
         // Add custom_fields object to response
-        $fields = PRM_Custom_Fields_Table::get_fields($post->post_type);
+        $fields = STADION_Custom_Fields_Table::get_fields($post->post_type);
         foreach ($fields as $field) {
             $response->data['custom_fields'][$field->field_key] =
                 get_post_meta($post->ID, 'custom_' . $field->field_key, true);
@@ -217,7 +217,7 @@ class PRM_Custom_Fields_Integration {
         $custom = $request->get_param('custom_fields');
         if (!$custom) return;
 
-        $fields = PRM_Custom_Fields_Table::get_fields($post->post_type);
+        $fields = STADION_Custom_Fields_Table::get_fields($post->post_type);
         foreach ($fields as $field) {
             if (isset($custom[$field->field_key])) {
                 update_post_meta($post->ID, 'custom_' . $field->field_key,

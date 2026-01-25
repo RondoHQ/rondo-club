@@ -2,7 +2,7 @@
 
 ## Overview
 
-Caelis supports importing contacts from multiple sources:
+Stadion supports importing contacts from multiple sources:
 
 - **vCard (.vcf)**: Universal contact format from Apple Contacts, Outlook, Android, and most contact apps
 - **Google Contacts CSV**: Export from Google Contacts
@@ -27,7 +27,7 @@ vCard is a universal standard format supported by virtually all contact manageme
 
 **Field Mapping**:
 
-| vCard Field | Caelis Field |
+| vCard Field | Stadion Field |
 |-------------|--------------|
 | `N` (Name) | `first_name`, `last_name` |
 | `FN` (Formatted Name) | Fallback for `first_name`/`last_name` |
@@ -59,7 +59,7 @@ Export from Google Contacts using the "Google CSV" format.
 
 **Field Mapping**:
 
-| Google Field | Caelis Field |
+| Google Field | Stadion Field |
 |--------------|--------------|
 | `Given Name` or `First Name` | `first_name` |
 | `Family Name` or `Last Name` | `last_name` |
@@ -92,7 +92,7 @@ See: Monica CRM documentation for export instructions.
 
 **Validate File**:
 ```
-POST /wp-json/prm/v1/import/vcard/validate
+POST /wp-json/stadion/v1/import/vcard/validate
 Content-Type: multipart/form-data
 
 file: <vCard file>
@@ -115,7 +115,7 @@ file: <vCard file>
 
 **Import File**:
 ```
-POST /wp-json/prm/v1/import/vcard
+POST /wp-json/stadion/v1/import/vcard
 Content-Type: multipart/form-data
 
 file: <vCard file>
@@ -142,7 +142,7 @@ file: <vCard file>
 
 **Validate File**:
 ```
-POST /wp-json/prm/v1/import/google-contacts/validate
+POST /wp-json/stadion/v1/import/google-contacts/validate
 Content-Type: multipart/form-data
 
 file: <CSV file>
@@ -178,7 +178,7 @@ file: <CSV file>
 
 **Import File**:
 ```
-POST /wp-json/prm/v1/import/google-contacts
+POST /wp-json/stadion/v1/import/google-contacts
 Content-Type: multipart/form-data
 
 file: <CSV file>
@@ -208,9 +208,9 @@ decisions: {"3": "merge", "7": "new", "12": "skip"}
 
 | Class | File | Purpose |
 |-------|------|---------|
-| `PRM_VCard_Import` | `includes/class-vcard-import.php` | vCard parsing and import |
-| `PRM_Google_Contacts_Import` | `includes/class-google-contacts-import.php` | Google CSV parsing and import |
-| `PRM_Monica_Import` | `includes/class-monica-import.php` | Monica SQL parsing and import |
+| `STADION_VCard_Import` | `includes/class-vcard-import.php` | vCard parsing and import |
+| `STADION_Google_Contacts_Import` | `includes/class-google-contacts-import.php` | Google CSV parsing and import |
+| `STADION_Monica_Import` | `includes/class-monica-import.php` | Monica SQL parsing and import |
 
 ### Frontend Components
 
@@ -329,7 +329,7 @@ Google Contacts import provides **user-controlled duplicate handling**:
 **API: Import Request with Decisions:**
 
 ```json
-POST /wp-json/prm/v1/import/google-contacts
+POST /wp-json/stadion/v1/import/google-contacts
 Content-Type: multipart/form-data
 
 file: <CSV file>
@@ -366,13 +366,13 @@ Duplicate detection respects access control boundaries:
 1. Create a new PHP class in `includes/`:
 
 ```php
-class PRM_Custom_Import {
+class STADION_Custom_Import {
     public function __construct() {
         add_action('rest_api_init', [$this, 'register_routes']);
     }
     
     public function register_routes() {
-        register_rest_route('prm/v1', '/import/custom', [
+        register_rest_route('stadion/v1', '/import/custom', [
             'methods' => 'POST',
             'callback' => [$this, 'handle_import'],
             'permission_callback' => [$this, 'check_permission'],
@@ -392,8 +392,8 @@ class PRM_Custom_Import {
 2. Register the class in `functions.php`:
 
 ```php
-require_once PRM_PLUGIN_DIR . '/class-custom-import.php';
-new PRM_Custom_Import();
+require_once STADION_PLUGIN_DIR . '/class-custom-import.php';
+new STADION_Custom_Import();
 ```
 
 3. Create a React component in `src/components/import/`:

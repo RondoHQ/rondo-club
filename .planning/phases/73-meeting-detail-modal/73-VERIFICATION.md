@@ -33,7 +33,7 @@ must_haves:
       status: verified
       evidence: "Line 15 lazy import, lines 798-806 modal usage"
     - from: "src/components/MeetingDetailModal.jsx"
-      to: "/prm/v1/calendar/events/{id}/notes"
+      to: "/stadion/v1/calendar/events/{id}/notes"
       status: verified
       evidence: "Lines 15-16 useMeetingNotes/useUpdateMeetingNotes hooks"
     - from: "MeetingCard"
@@ -79,7 +79,7 @@ must_haves:
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
 | Dashboard.jsx | MeetingDetailModal | lazy import + state | VERIFIED | Import at line 15, modal rendered at lines 798-806, controlled by showMeetingModal state |
-| MeetingDetailModal | /prm/v1/calendar/events/{id}/notes | useMeetingNotes hook | VERIFIED | Hook imported at line 6, used at lines 15-16, saves on blur via handleNotesSave |
+| MeetingDetailModal | /stadion/v1/calendar/events/{id}/notes | useMeetingNotes hook | VERIFIED | Hook imported at line 6, used at lines 15-16, saves on blur via handleNotesSave |
 | MeetingCard | MeetingDetailModal | onClick -> state | VERIFIED | onClick callback (line 275) triggers setSelectedMeeting/setShowMeetingModal (lines 644-646) |
 
 ### Requirements Coverage
@@ -91,7 +91,7 @@ must_haves:
 | MTG-03: Modal displays meeting location (if present) | SATISFIED | MapPin section with conditional render (lines 106-111) |
 | MTG-04: Modal displays meeting description (if present) | SATISFIED | Description section with conditional render (lines 129-137) |
 | MTG-05: Modal displays list of attendees with avatars | SATISFIED | Attendees section with AttendeeRow component showing avatars |
-| MTG-06: Attendees in Caelis are visually distinguished | SATISFIED | Matched attendees have accent color text (lines 209-210) |
+| MTG-06: Attendees in Stadion are visually distinguished | SATISFIED | Matched attendees have accent color text (lines 209-210) |
 | MTG-07: User can click known attendee to navigate to profile | SATISFIED | Link wrapper to /people/{person_id} (lines 223-231) |
 | MTG-08: Modal includes notes/prep section | SATISFIED | Collapsible notes section with RichTextEditor (lines 153-174) |
 | ADD-01: Unknown attendees are clearly identified | SATISFIED | Gray text color, User icon placeholder, not clickable |
@@ -117,7 +117,7 @@ No blocker anti-patterns found.
 **Why human:** Visual verification of layout and formatting
 
 ### 3. Attendee Visual Distinction
-**Test:** View a meeting with both known (Caelis contacts) and unknown attendees
+**Test:** View a meeting with both known (Stadion contacts) and unknown attendees
 **Expected:** Known attendees show with accent color and photos; unknown show gray with User icon
 **Why human:** Color and visual styling verification
 
@@ -138,7 +138,7 @@ All 9 requirements for Phase 73 have been verified:
 **Backend (Plan 01):**
 - format_today_meeting() returns attendees array with matched/unmatched status
 - format_today_meeting() returns description from post_content
-- GET/PUT /prm/v1/calendar/events/{id}/notes endpoints working with auth
+- GET/PUT /stadion/v1/calendar/events/{id}/notes endpoints working with auth
 - useMeetingNotes and useUpdateMeetingNotes hooks correctly wired
 
 **Frontend (Plan 02):**

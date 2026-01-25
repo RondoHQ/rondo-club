@@ -10,7 +10,7 @@ files:
 
 ## Problem
 
-Caelis currently has no automated testing infrastructure. As the codebase grows with multi-user features, bulk operations, and API endpoints, we need a robust testing framework to:
+Stadion currently has no automated testing infrastructure. As the codebase grows with multi-user features, bulk operations, and API endpoints, we need a robust testing framework to:
 
 1. Prevent regressions during development
 2. Validate PHP backend functionality (REST API, access control, auto-titles)

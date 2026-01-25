@@ -1,24 +1,24 @@
 # Architecture Research: Google Contacts Sync
 
-**Project:** Caelis v5.0 - Google Contacts Two-Way Sync
+**Project:** Stadion v5.0 - Google Contacts Two-Way Sync
 **Researched:** 2026-01-17
-**Confidence:** HIGH (based on existing Caelis patterns + authoritative Google API documentation)
+**Confidence:** HIGH (based on existing Stadion patterns + authoritative Google API documentation)
 
 ## Executive Summary
 
-This document defines the architecture for bidirectional Google Contacts synchronization. The design follows established Caelis patterns (from Calendar sync) while adding the complexity of true bidirectional sync with conflict resolution. Key architectural decisions:
+This document defines the architecture for bidirectional Google Contacts synchronization. The design follows established Stadion patterns (from Calendar sync) while adding the complexity of true bidirectional sync with conflict resolution. Key architectural decisions:
 
-1. **Follow existing patterns** - Reuse `Caelis\Calendar` namespace structure, OAuth infrastructure, and WP-Cron scheduling
+1. **Follow existing patterns** - Reuse `Stadion\Calendar` namespace structure, OAuth infrastructure, and WP-Cron scheduling
 2. **Sync token for delta sync** - Use Google People API's `syncToken` mechanism (7-day expiry, 410 error triggers full resync)
 3. **ETag for optimistic locking** - Prevent concurrent modification conflicts using Google's etag field
 4. **Field-level conflict resolution** - Merge non-conflicting fields, apply strategy only to conflicting fields
-5. **Caelis as source of truth** - When in doubt, Caelis data wins (configurable)
+5. **Stadion as source of truth** - When in doubt, Stadion data wins (configurable)
 
 ## Component Design
 
 ### Namespace Structure
 
-Following PSR-4 autoloading established in Caelis, new classes go under `Caelis\Contacts`:
+Following PSR-4 autoloading established in Stadion, new classes go under `Stadion\Contacts`:
 
 ```
 src/
@@ -40,7 +40,7 @@ src/
 **Purpose:** Low-level Google People API operations with proper error handling.
 
 **Responsibilities:**
-- Authenticate using existing OAuth tokens (reuse `Caelis\Calendar\GoogleOAuth`)
+- Authenticate using existing OAuth tokens (reuse `Stadion\Calendar\GoogleOAuth`)
 - CRUD operations: `get()`, `create()`, `update()`, `delete()`
 - List contacts with pagination and syncToken support
 - Handle rate limiting with exponential backoff
@@ -108,7 +108,7 @@ class GoogleContactsSync {
 **State Transitions (per contact):**
 ```
 UNLINKED  --> SYNCED      (after first export to Google)
-SYNCED    --> PENDING_PUSH (Caelis edit detected)
+SYNCED    --> PENDING_PUSH (Stadion edit detected)
 SYNCED    --> PENDING_PULL (Google edit detected via delta sync)
 PENDING_* --> CONFLICT     (both sides edited since last sync)
 CONFLICT  --> SYNCED       (after resolution)
@@ -117,7 +117,7 @@ SYNCED    --> UNLINKED     (user unlinks or deletes)
 
 #### 3. GoogleContactsMapper (Field Mapping)
 
-**Purpose:** Bidirectional field mapping between Google People API format and Caelis ACF fields.
+**Purpose:** Bidirectional field mapping between Google People API format and Stadion ACF fields.
 
 **Design Principle:** Single source of truth for field mappings - both directions derive from same config.
 
@@ -127,18 +127,18 @@ class GoogleContactsMapper {
     private const FIELD_MAP = [
         'names' => [
             'google_path' => 'names[0]',
-            'caelis_fields' => [
+            'stadion_fields' => [
                 'givenName'  => 'first_name',
                 'familyName' => 'last_name',
             ],
         ],
         'nicknames' => [
             'google_path' => 'nicknames[0].value',
-            'caelis_fields' => ['value' => 'nickname'],
+            'stadion_fields' => ['value' => 'nickname'],
         ],
         'emailAddresses' => [
             'google_path' => 'emailAddresses',
-            'caelis_field' => 'contact_info',
+            'stadion_field' => 'contact_info',
             'filter' => ['contact_type' => 'email'],
             'repeater' => true,
         ],
@@ -146,13 +146,13 @@ class GoogleContactsMapper {
     ];
 
     public function toGoogle(int $personId): array;
-    public function toCaelis(array $googleContact): array;
+    public function toStadion(array $googleContact): array;
     public function getChangedFields(array $before, array $after): array;
 }
 ```
 
 **Complex Mappings:**
-| Google Field | Caelis Field | Notes |
+| Google Field | Stadion Field | Notes |
 |--------------|--------------|-------|
 | `names[0].givenName` | `first_name` | ACF text field |
 | `names[0].familyName` | `last_name` | ACF text field |
@@ -173,11 +173,11 @@ class GoogleContactsMapper {
 class GoogleContactsConflict {
     public function detectConflict(int $personId, array $googleData): ?Conflict {
         $lastSynced = get_post_meta($personId, '_google_last_synced', true);
-        $caelisModified = get_post_modified_time('U', false, $personId);
+        $stadionModified = get_post_modified_time('U', false, $personId);
         $googleModified = strtotime($googleData['metadata']['sources'][0]['updateTime']);
 
         // Both modified since last sync = conflict
-        if ($caelisModified > $lastSynced && $googleModified > $lastSynced) {
+        if ($stadionModified > $lastSynced && $googleModified > $lastSynced) {
             return new Conflict($personId, $googleData, $this->getChangedFields(...));
         }
 
@@ -188,23 +188,23 @@ class GoogleContactsConflict {
 
 **Resolution Strategies:**
 1. **newest_wins** (default) - Compare `post_modified` vs Google `updateTime`
-2. **caelis_wins** - Always prefer Caelis data
+2. **stadion_wins** - Always prefer Stadion data
 3. **google_wins** - Always prefer Google data
 4. **field_level_merge** - Non-conflicting fields merged, conflicting fields use newest
 5. **manual** - Queue for user review
 
 **Field-Level Merge Algorithm:**
 ```php
-public function mergeFields(array $caelis, array $google, array $conflicts): array {
+public function mergeFields(array $stadion, array $google, array $conflicts): array {
     $merged = [];
 
     foreach (self::FIELD_MAP as $field => $config) {
         if (in_array($field, $conflicts)) {
             // Conflicting field - apply strategy
-            $merged[$field] = $this->resolveFieldConflict($field, $caelis, $google);
+            $merged[$field] = $this->resolveFieldConflict($field, $stadion, $google);
         } else {
             // Non-conflicting - use whichever has data (prefer newest if both)
-            $merged[$field] = $caelis[$field] ?? $google[$field] ?? null;
+            $merged[$field] = $stadion[$field] ?? $google[$field] ?? null;
         }
     }
 
@@ -232,11 +232,11 @@ User clicks "Connect Google Contacts"
 │ 1. Call people.connections.list with requestSyncToken  │
 │ 2. Paginate through all contacts (1000 per page max)   │
 │ 3. For each Google contact:                            │
-│    - Check for existing Caelis match (by email/name)   │
+│    - Check for existing Stadion match (by email/name)   │
 │    - If match: link and merge data                     │
 │    - If new: create person or queue for review         │
 │ 4. Store nextSyncToken in user meta                    │
-│ 5. For unlinked Caelis contacts: export to Google      │
+│ 5. For unlinked Stadion contacts: export to Google      │
 └─────────────────────────────────────────────────────────┘
          │
          ▼
@@ -300,17 +300,17 @@ Conflict Detected
          ▼
 ┌─────────────────────────────────────────────────────────┐
 │ Check User's Configured Strategy                        │
-│ (user meta: caelis_google_contacts_conflict_mode)       │
+│ (user meta: stadion_google_contacts_conflict_mode)       │
 └─────────────────────────────────────────────────────────┘
          │
     ┌────┴────┬─────────┬─────────┐
     ▼         ▼         ▼         ▼
- newest    caelis    google    manual
+ newest    stadion    google    manual
    wins      wins      wins    review
     │         │         │         │
     ▼         ▼         ▼         ▼
 Compare    Use       Use      Queue in
- times    Caelis    Google   _google_sync_status
+ times    Stadion    Google   _google_sync_status
     │         │         │      = 'conflict'
     └────┬────┴─────────┘         │
          ▼                        ▼
@@ -326,7 +326,7 @@ Compare    Use       Use      Queue in
 ```
                     ┌──────────────┐
                     │   UNLINKED   │◄──────────────────────────────┐
-                    │ (Caelis only)│                               │
+                    │ (Stadion only)│                               │
                     └──────┬───────┘                               │
                            │                                       │
                     Export │ to Google                      Unlink │
@@ -339,7 +339,7 @@ Compare    Use       Use      Queue in
            │               │                │                     │
            │     ┌─────────┼─────────┐      │                     │
            │     │         │         │      │                     │
-           │  Caelis     Both     Google    │                     │
+           │  Stadion     Both     Google    │                     │
            │  edited    edited    edited    │                     │
            │     │         │         │      │                     │
            │     ▼         ▼         ▼      │                     │
@@ -401,9 +401,9 @@ The Google Contacts sync should leverage existing patterns from Calendar sync:
 
 | Existing Component | How Contacts Sync Uses It |
 |--------------------|---------------------------|
-| `Caelis\Calendar\GoogleOAuth` | Extend with contacts scopes (additive) |
-| `Caelis\Calendar\Sync` (cron scheduling) | Same pattern, different hook |
-| `Caelis\Data\CredentialEncryption` | Same encryption for tokens |
+| `Stadion\Calendar\GoogleOAuth` | Extend with contacts scopes (additive) |
+| `Stadion\Calendar\Sync` (cron scheduling) | Same pattern, different hook |
+| `Stadion\Data\CredentialEncryption` | Same encryption for tokens |
 | Transient-based sync locks | Same pattern for preventing concurrent syncs |
 | User meta for connection state | Same storage pattern |
 
@@ -449,53 +449,53 @@ New meta fields on `person` post type:
 '_google_raw_data'       // json: cached Google data for conflict resolution
 
 // Conflict tracking
-'_google_conflict_data'  // json: {caelis: {...}, google: {...}, fields: [...]}
+'_google_conflict_data'  // json: {stadion: {...}, google: {...}, fields: [...]}
 ```
 
 ### User Meta Schema
 
 ```php
 // Connection state
-'caelis_google_contacts_enabled'     // bool: master switch
-'caelis_google_contacts_sync_token'  // string: for delta sync
+'stadion_google_contacts_enabled'     // bool: master switch
+'stadion_google_contacts_sync_token'  // string: for delta sync
 
 // Preferences
-'caelis_google_contacts_sync_frequency'  // string: 15min|1hour|6hours|daily
-'caelis_google_contacts_sync_direction'  // string: bidirectional|import|export
-'caelis_google_contacts_conflict_mode'   // string: newest|caelis|google|manual
-'caelis_google_contacts_delete_mode'     // string: unlink|propagate
+'stadion_google_contacts_sync_frequency'  // string: 15min|1hour|6hours|daily
+'stadion_google_contacts_sync_direction'  // string: bidirectional|import|export
+'stadion_google_contacts_conflict_mode'   // string: newest|stadion|google|manual
+'stadion_google_contacts_delete_mode'     // string: unlink|propagate
 
 // Status tracking
-'caelis_google_contacts_last_sync'       // datetime
-'caelis_google_contacts_last_error'      // string
-'caelis_google_contacts_stats'           // json: {synced: N, pending: M, conflicts: K}
+'stadion_google_contacts_last_sync'       // datetime
+'stadion_google_contacts_last_error'      // string
+'stadion_google_contacts_stats'           // json: {synced: N, pending: M, conflicts: K}
 ```
 
 ### REST API Endpoints
 
-Following existing `Caelis\REST` patterns:
+Following existing `Stadion\REST` patterns:
 
 ```php
-namespace Caelis\REST;
+namespace Stadion\REST;
 
 class GoogleContacts extends Base {
     public function register_routes() {
         // Connection management
-        register_rest_route('prm/v1', '/google-contacts/status', [...]);
-        register_rest_route('prm/v1', '/google-contacts/connect', [...]);
-        register_rest_route('prm/v1', '/google-contacts/disconnect', [...]);
+        register_rest_route('stadion/v1', '/google-contacts/status', [...]);
+        register_rest_route('stadion/v1', '/google-contacts/connect', [...]);
+        register_rest_route('stadion/v1', '/google-contacts/disconnect', [...]);
 
         // Sync operations
-        register_rest_route('prm/v1', '/google-contacts/sync', [...]);
-        register_rest_route('prm/v1', '/google-contacts/preferences', [...]);
+        register_rest_route('stadion/v1', '/google-contacts/sync', [...]);
+        register_rest_route('stadion/v1', '/google-contacts/preferences', [...]);
 
         // Conflict resolution
-        register_rest_route('prm/v1', '/google-contacts/conflicts', [...]);
-        register_rest_route('prm/v1', '/google-contacts/conflicts/(?P<id>\d+)', [...]);
+        register_rest_route('stadion/v1', '/google-contacts/conflicts', [...]);
+        register_rest_route('stadion/v1', '/google-contacts/conflicts/(?P<id>\d+)', [...]);
 
         // Per-contact operations
-        register_rest_route('prm/v1', '/people/(?P<id>\d+)/google-sync', [...]);
-        register_rest_route('prm/v1', '/people/(?P<id>\d+)/google-link', [...]);
+        register_rest_route('stadion/v1', '/people/(?P<id>\d+)/google-sync', [...]);
+        register_rest_route('stadion/v1', '/people/(?P<id>\d+)/google-link', [...]);
     }
 }
 ```
@@ -515,7 +515,7 @@ Based on dependencies between components:
 ### Phase 2: One-Way Import
 **Dependencies:** Phase 1
 **Deliverables:**
-1. Create `GoogleContactsMapper` (Google -> Caelis direction)
+1. Create `GoogleContactsMapper` (Google -> Stadion direction)
 2. Implement full sync (import all contacts)
 3. Duplicate detection logic
 4. Photo sideloading
@@ -524,9 +524,9 @@ Based on dependencies between components:
 ### Phase 3: One-Way Export
 **Dependencies:** Phase 2
 **Deliverables:**
-1. Extend `GoogleContactsMapper` (Caelis -> Google direction)
+1. Extend `GoogleContactsMapper` (Stadion -> Google direction)
 2. Implement contact creation in Google
-3. Link existing Caelis contacts to Google
+3. Link existing Stadion contacts to Google
 4. Bulk export functionality
 
 ### Phase 4: Delta Sync

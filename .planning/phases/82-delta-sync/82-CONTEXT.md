@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Background sync detects and propagates changes in both directions. Changes in Google Contacts appear in Caelis without manual action, and changes in Caelis appear in Google Contacts. Only changed contacts are synced (not full re-import every time).
+Background sync detects and propagates changes in both directions. Changes in Google Contacts appear in Stadion without manual action, and changes in Stadion appear in Google Contacts. Only changed contacts are synced (not full re-import every time).
 
 </domain>
 
@@ -16,7 +16,7 @@ Background sync detects and propagates changes in both directions. Changes in Go
 ### Sync frequency & triggers
 - Default sync frequency: hourly via WP-Cron
 - User-configurable frequency in Settings (options: 15min, hourly, daily)
-- Event-triggered sync: changes push to Google immediately on contact save in Caelis
+- Event-triggered sync: changes push to Google immediately on contact save in Stadion
 - Manual "Sync Now" button available in Settings > Connections for immediate full sync
 
 ### Claude's Discretion

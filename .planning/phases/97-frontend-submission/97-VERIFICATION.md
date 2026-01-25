@@ -7,7 +7,7 @@ score: 6/6 must-haves verified
 
 # Phase 97: Frontend Submission Verification Report
 
-**Phase Goal:** Users can submit feedback (bugs/features) from within Caelis UI
+**Phase Goal:** Users can submit feedback (bugs/features) from within Stadion UI
 **Verified:** 2026-01-21T18:03:51Z
 **Status:** passed
 **Re-verification:** No - initial verification

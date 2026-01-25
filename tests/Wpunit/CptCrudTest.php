@@ -2,9 +2,9 @@
 
 namespace Tests\Wpunit;
 
-use Tests\Support\CaelisTestCase;
-use PRM_Access_Control;
-use PRM_User_Roles;
+use Tests\Support\StadionTestCase;
+use STADION_Access_Control;
+use STADION_User_Roles;
 use WP_REST_Request;
 use WP_REST_Server;
 
@@ -14,7 +14,7 @@ use WP_REST_Server;
  * Verifies that standard REST API endpoints work correctly for person, company,
  * and important_date post types with proper access control and ACF field handling.
  */
-class CptCrudTest extends CaelisTestCase {
+class CptCrudTest extends StadionTestCase {
 
 	/**
 	 * REST server instance.
@@ -36,15 +36,15 @@ class CptCrudTest extends CaelisTestCase {
 	}
 
 	/**
-	 * Helper to create an approved Caelis user with a unique login.
+	 * Helper to create an approved Stadion user with a unique login.
 	 *
 	 * @param string $prefix User login prefix for uniqueness
 	 * @return int User ID
 	 */
-	private function createApprovedCaelisUser( string $prefix = 'user' ): int {
+	private function createApprovedStadionUser( string $prefix = 'user' ): int {
 		$unique_id = uniqid( $prefix . '_' );
-		$user_id   = $this->createCaelisUser( [ 'user_login' => $unique_id ] );
-		update_user_meta( $user_id, PRM_User_Roles::APPROVAL_META_KEY, '1' );
+		$user_id   = $this->createStadionUser( [ 'user_login' => $unique_id ] );
+		update_user_meta( $user_id, STADION_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
 	}
 
@@ -90,7 +90,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test CREATE person via POST to /wp/v2/people.
 	 */
 	public function test_person_create_via_rest_api(): void {
-		$user_id = $this->createApprovedCaelisUser( 'creator' );
+		$user_id = $this->createApprovedStadionUser( 'creator' );
 		wp_set_current_user( $user_id );
 
 		$response = $this->restRequest(
@@ -117,7 +117,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test READ person via GET as owner.
 	 */
 	public function test_person_read_as_owner_via_rest_api(): void {
-		$user_id = $this->createApprovedCaelisUser( 'owner' );
+		$user_id = $this->createApprovedStadionUser( 'owner' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -140,8 +140,8 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test READ person denied for non-owner.
 	 */
 	public function test_person_read_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
-		$other_id = $this->createApprovedCaelisUser( 'other' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
+		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		// Create person as owner
 		wp_set_current_user( $owner_id );
@@ -168,8 +168,8 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test person list only returns user's own posts.
 	 */
 	public function test_person_list_returns_only_user_posts(): void {
-		$alice_id = $this->createApprovedCaelisUser( 'alice' );
-		$bob_id   = $this->createApprovedCaelisUser( 'bob' );
+		$alice_id = $this->createApprovedStadionUser( 'alice' );
+		$bob_id   = $this->createApprovedStadionUser( 'bob' );
 
 		// Create persons for Alice
 		wp_set_current_user( $alice_id );
@@ -213,7 +213,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test UPDATE person via PATCH as owner.
 	 */
 	public function test_person_update_as_owner_via_rest_api(): void {
-		$user_id = $this->createApprovedCaelisUser( 'updater' );
+		$user_id = $this->createApprovedStadionUser( 'updater' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -245,8 +245,8 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test UPDATE person denied for non-owner.
 	 */
 	public function test_person_update_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
-		$other_id = $this->createApprovedCaelisUser( 'other' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
+		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		// Create person as owner
 		wp_set_current_user( $owner_id );
@@ -288,7 +288,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * and the post is moved to trash.
 	 */
 	public function test_person_delete_as_owner_via_rest_api(): void {
-		$user_id = $this->createApprovedCaelisUser( 'deleter' );
+		$user_id = $this->createApprovedStadionUser( 'deleter' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -324,8 +324,8 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test DELETE person denied for non-owner.
 	 */
 	public function test_person_delete_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
-		$other_id = $this->createApprovedCaelisUser( 'other' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
+		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		// Create person as owner
 		wp_set_current_user( $owner_id );
@@ -360,7 +360,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test company CREATE via POST.
 	 */
 	public function test_company_create_via_rest_api(): void {
-		$user_id = $this->createApprovedCaelisUser( 'creator' );
+		$user_id = $this->createApprovedStadionUser( 'creator' );
 		wp_set_current_user( $user_id );
 
 		$response = $this->restRequest(
@@ -386,8 +386,8 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test company READ as owner vs non-owner.
 	 */
 	public function test_company_read_access_control(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
-		$other_id = $this->createApprovedCaelisUser( 'other' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
+		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		wp_set_current_user( $owner_id );
 		$company_id = $this->createOrganization(
@@ -415,8 +415,8 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test company UPDATE access control.
 	 */
 	public function test_company_update_access_control(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
-		$other_id = $this->createApprovedCaelisUser( 'other' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
+		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		wp_set_current_user( $owner_id );
 		$company_id = $this->createOrganization(
@@ -455,7 +455,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * The important assertion is that the post is actually trashed.
 	 */
 	public function test_company_delete_as_owner(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
 
 		wp_set_current_user( $owner_id );
 		$company_id = $this->createOrganization(
@@ -486,8 +486,8 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test company DELETE denied for non-owner.
 	 */
 	public function test_company_delete_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
-		$other_id = $this->createApprovedCaelisUser( 'other' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
+		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		wp_set_current_user( $owner_id );
 		$company_id = $this->createOrganization(
@@ -515,7 +515,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test important_date CREATE via POST.
 	 */
 	public function test_important_date_create_via_rest_api(): void {
-		$user_id = $this->createApprovedCaelisUser( 'creator' );
+		$user_id = $this->createApprovedStadionUser( 'creator' );
 		wp_set_current_user( $user_id );
 
 		// Create a person first to link to
@@ -548,8 +548,8 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test important_date READ access control.
 	 */
 	public function test_important_date_read_access_control(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
-		$other_id = $this->createApprovedCaelisUser( 'other' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
+		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		wp_set_current_user( $owner_id );
 		$date_id = $this->createImportantDatePost(
@@ -577,8 +577,8 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test important_date UPDATE access control.
 	 */
 	public function test_important_date_update_access_control(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
-		$other_id = $this->createApprovedCaelisUser( 'other' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
+		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		wp_set_current_user( $owner_id );
 		$date_id = $this->createImportantDatePost(
@@ -617,7 +617,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * The important assertion is that the post is actually trashed.
 	 */
 	public function test_important_date_delete_as_owner(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
 
 		wp_set_current_user( $owner_id );
 		$date_id = $this->createImportantDatePost(
@@ -648,8 +648,8 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test important_date DELETE denied for non-owner.
 	 */
 	public function test_important_date_delete_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedCaelisUser( 'owner' );
-		$other_id = $this->createApprovedCaelisUser( 'other' );
+		$owner_id = $this->createApprovedStadionUser( 'owner' );
+		$other_id = $this->createApprovedStadionUser( 'other' );
 
 		wp_set_current_user( $owner_id );
 		$date_id = $this->createImportantDatePost(
@@ -681,7 +681,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test person ACF fields appear in REST response.
 	 */
 	public function test_person_acf_fields_in_rest_response(): void {
-		$user_id = $this->createApprovedCaelisUser( 'acfuser' );
+		$user_id = $this->createApprovedStadionUser( 'acfuser' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -713,7 +713,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test company ACF fields appear in REST response.
 	 */
 	public function test_company_acf_fields_in_rest_response(): void {
-		$user_id = $this->createApprovedCaelisUser( 'acfuser' );
+		$user_id = $this->createApprovedStadionUser( 'acfuser' );
 		wp_set_current_user( $user_id );
 
 		$company_id = $this->createOrganization(
@@ -742,7 +742,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test important_date ACF fields appear in REST response.
 	 */
 	public function test_important_date_acf_fields_in_rest_response(): void {
-		$user_id = $this->createApprovedCaelisUser( 'acfuser' );
+		$user_id = $this->createApprovedStadionUser( 'acfuser' );
 		wp_set_current_user( $user_id );
 
 		// Create a person to link to
@@ -782,7 +782,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test ACF field updates via REST PATCH.
 	 */
 	public function test_person_acf_field_update_via_rest(): void {
-		$user_id = $this->createApprovedCaelisUser( 'acfupdater' );
+		$user_id = $this->createApprovedStadionUser( 'acfupdater' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -820,7 +820,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test company ACF field update via REST.
 	 */
 	public function test_company_acf_field_update_via_rest(): void {
-		$user_id = $this->createApprovedCaelisUser( 'acfupdater' );
+		$user_id = $this->createApprovedStadionUser( 'acfupdater' );
 		wp_set_current_user( $user_id );
 
 		$company_id = $this->createOrganization(
@@ -853,7 +853,7 @@ class CptCrudTest extends CaelisTestCase {
 	 * Test important_date ACF field update via REST.
 	 */
 	public function test_important_date_acf_field_update_via_rest(): void {
-		$user_id = $this->createApprovedCaelisUser( 'acfupdater' );
+		$user_id = $this->createApprovedStadionUser( 'acfupdater' );
 		wp_set_current_user( $user_id );
 
 		$date_id = $this->createImportantDatePost(

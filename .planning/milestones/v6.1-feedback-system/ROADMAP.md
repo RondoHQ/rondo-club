@@ -2,7 +2,7 @@
 
 ## Overview
 
-This milestone adds a feedback system to Caelis, enabling users to submit bug reports and feature requests from within the application. Feedback is stored as WordPress posts, exposed via authenticated REST API for external tool integration, and managed through a dedicated admin UI.
+This milestone adds a feedback system to Stadion, enabling users to submit bug reports and feature requests from within the application. Feedback is stored as WordPress posts, exposed via authenticated REST API for external tool integration, and managed through a dedicated admin UI.
 
 ## Phase Structure
 
@@ -13,7 +13,7 @@ This milestone adds a feedback system to Caelis, enabling users to submit bug re
 **Dependencies:** None
 
 **Requirements:**
-- FEED-01: `caelis_feedback` custom post type registration
+- FEED-01: `stadion_feedback` custom post type registration
 - FEED-02: ACF field group for feedback metadata (type, status, priority, context fields)
 - FEED-03: Feedback statuses (new, in_progress, resolved, declined)
 
@@ -37,7 +37,7 @@ Plans:
 **Dependencies:** Phase 1
 
 **Requirements:**
-- FEED-04: REST API endpoints (CRUD) under `prm/v1/feedback`
+- FEED-04: REST API endpoints (CRUD) under `stadion/v1/feedback`
 - FEED-05: Application password authentication support
 - FEED-06: Permission model (own feedback + admin access to all)
 
@@ -47,8 +47,8 @@ Plans:
 - [x] 96-01-PLAN.md — Create Feedback REST API with CRUD endpoints and permissions
 
 **Success Criteria:**
-1. User can create feedback via `POST /wp-json/prm/v1/feedback` with application password auth
-2. User can list their own feedback via `GET /wp-json/prm/v1/feedback`
+1. User can create feedback via `POST /wp-json/stadion/v1/feedback` with application password auth
+2. User can list their own feedback via `GET /wp-json/stadion/v1/feedback`
 3. User can update/delete their own feedback via PATCH/DELETE endpoints
 4. Admin can list, update, and delete any feedback
 5. API returns proper error codes for unauthorized access attempts
@@ -57,7 +57,7 @@ Plans:
 
 ### Phase 3: Frontend Submission
 
-**Goal:** Users can submit and view feedback from within Caelis.
+**Goal:** Users can submit and view feedback from within Stadion.
 
 **Dependencies:** Phase 2
 
@@ -130,7 +130,7 @@ Plans:
 
 | Requirement | Description | Phase |
 |-------------|-------------|-------|
-| FEED-01 | `caelis_feedback` CPT registration | Phase 1 |
+| FEED-01 | `stadion_feedback` CPT registration | Phase 1 |
 | FEED-02 | ACF field group for feedback metadata | Phase 1 |
 | FEED-03 | Feedback status values | Phase 1 |
 | FEED-04 | REST API CRUD endpoints | Phase 2 |
@@ -161,7 +161,7 @@ Plans:
 
 ### Backend Patterns (from existing codebase)
 - CPT registration: Follow pattern in `includes/class-post-types.php`
-- REST endpoints: Extend `Caelis\REST\Base`, follow pattern in `includes/class-rest-api.php`
+- REST endpoints: Extend `Stadion\REST\Base`, follow pattern in `includes/class-rest-api.php`
 - ACF fields: Store in `acf-json/` directory for version control
 
 ### Scope Decisions (User Confirmed)

@@ -5,7 +5,7 @@
  * Imports data from Monica CRM SQL export files.
  */
 
-namespace Caelis\Import;
+namespace Stadion\Import;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -58,7 +58,7 @@ class Monica {
 	 */
 	public function register_routes() {
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/import/monica',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -68,7 +68,7 @@ class Monica {
 		);
 
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/import/monica/validate',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -92,18 +92,18 @@ class Monica {
 		$file = $request->get_file_params()['file'] ?? null;
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		$sql_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $sql_content ) ) {
-			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Check if it's a valid Monica SQL export
 		if ( strpos( $sql_content, 'INSERT IGNORE INTO `contacts`' ) === false ) {
-			return new \WP_Error( 'invalid_format', __( 'Invalid Monica SQL export format. File must contain contacts table.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_format', __( 'Invalid Monica SQL export format. File must contain contacts table.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Parse the SQL to get summary
@@ -165,11 +165,11 @@ class Monica {
 		$monica_url = $request->get_param( 'monica_url' ) ?? '';
 
 		if ( ! $file || $file['error'] !== UPLOAD_ERR_OK ) {
-			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'upload_error', __( 'File upload failed.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		if ( empty( $monica_url ) ) {
-			return new \WP_Error( 'missing_url', __( 'Monica instance URL is required for photo import.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_url', __( 'Monica instance URL is required for photo import.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Normalize Monica URL
@@ -178,7 +178,7 @@ class Monica {
 		$sql_content = file_get_contents( $file['tmp_name'] );
 
 		if ( empty( $sql_content ) ) {
-			return new \WP_Error( 'empty_file', __( 'File is empty.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_file', __( 'File is empty.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Parse the SQL
@@ -718,7 +718,7 @@ class Monica {
 				[
 					'comment_post_ID'  => $post_id,
 					'comment_content'  => $content,
-					'comment_type'     => \PRM_Comment_Types::TYPE_NOTE,
+					'comment_type'     => \STADION_Comment_Types::TYPE_NOTE,
 					'user_id'          => get_current_user_id(),
 					'comment_approved' => 1,
 					'comment_date'     => $this->format_date( $created_at ),
@@ -811,7 +811,7 @@ class Monica {
 			return;
 		}
 
-		$title = sprintf( __( "%s's Birthday", 'caelis' ), $full_name );
+		$title = sprintf( __( "%s's Birthday", 'stadion' ), $full_name );
 
 		$date_post_id = wp_insert_post(
 			[
@@ -852,7 +852,7 @@ class Monica {
 			return;
 		}
 
-		$title = sprintf( __( '%s - Special Date', 'caelis' ), $full_name );
+		$title = sprintf( __( '%s - Special Date', 'stadion' ), $full_name );
 
 		$date_post_id = wp_insert_post(
 			[
@@ -925,7 +925,7 @@ class Monica {
 		} else {
 			// Generate title from type
 			$type_label = ucwords( str_replace( [ '-', '_' ], ' ', $type_key ) );
-			$title      = sprintf( __( "%1\$s's %2\$s", 'caelis' ), $full_name, $type_label );
+			$title      = sprintf( __( "%1\$s's %2\$s", 'stadion' ), $full_name, $type_label );
 		}
 
 		// Check if this exact life event already exists (avoid duplicates).

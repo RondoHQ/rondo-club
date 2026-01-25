@@ -1,12 +1,12 @@
-# Caelis Multi-User Transformation
+# Stadion Multi-User Transformation
 
 ## What This Is
 
-A major milestone transforming Caelis from a single-user personal CRM into a multi-user collaborative platform. Combines Clay.earth's intimate relationship focus with Twenty CRM's team collaboration features while preserving privacy and personal connection.
+A major milestone transforming Stadion from a single-user personal CRM into a multi-user collaborative platform. Combines Clay.earth's intimate relationship focus with Twenty CRM's team collaboration features while preserving privacy and personal connection.
 
 ## Core Value
 
-Add workspaces and sharing to enable team collaboration while maintaining the personal, relationship-focused experience that makes Caelis unique.
+Add workspaces and sharing to enable team collaboration while maintaining the personal, relationship-focused experience that makes Stadion unique.
 
 ## Requirements
 
@@ -16,7 +16,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 - Personal CRM with people, companies, dates management — existing
 - WordPress theme with React SPA frontend — existing
-- REST API communication (wp/v2 + prm/v1 namespaces) — existing
+- REST API communication (wp/v2 + stadion/v1 namespaces) — existing
 - Slack integration for notifications (OAuth, webhooks) — existing
 - CardDAV sync support via Sabre/DAV — existing
 - Import from Google Contacts, Monica CRM, vCard — existing
@@ -52,7 +52,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Card/list view toggle for people screen — v2.1
 - Tabular list view with Name, Organization, Workspace columns — v2.1
 - Checkbox multi-selection with Set-based state — v2.1
-- Bulk update REST endpoint `/prm/v1/people/bulk-update` — v2.1
+- Bulk update REST endpoint `/stadion/v1/people/bulk-update` — v2.1
 - Bulk visibility change modal (Private/Workspace) — v2.1
 - Bulk workspace assignment modal — v2.1
 
@@ -81,11 +81,11 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 **v3.0 Testing Infrastructure (shipped 2026-01-13):**
 - PHPUnit via wp-browser (Codeception) with WPLoader — v3.0
 - 120 tests covering access control, REST API, search, relationships — v3.0
-- Separate test database (caelis_test) for isolation — v3.0
+- Separate test database (stadion_test) for isolation — v3.0
 
 **v3.1 Pending Response Tracking (shipped 2026-01-14):**
-- prm_todo custom post type (migrated from comments) — v3.1
-- WordPress post statuses (prm_open, prm_awaiting, prm_completed) — v3.1
+- stadion_todo custom post type (migrated from comments) — v3.1
+- WordPress post statuses (stadion_open, stadion_awaiting, stadion_completed) — v3.1
 - Awaiting response tracking with timestamps and aging indicators — v3.1
 - Filter UI (Open/Awaiting/Completed tabs) across all views — v3.1
 - WP-CLI migration: `wp prm migrate-todos` — v3.1
@@ -134,7 +134,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Google Calendar OAuth2 integration with google/apiclient library — v4.0
 - CalDAV provider for iCloud, Fastmail, Nextcloud, generic servers — v4.0
 - calendar_event CPT for caching synced events — v4.0
-- PRM_Credential_Encryption class for secure OAuth token storage — v4.0
+- STADION_Credential_Encryption class for secure OAuth token storage — v4.0
 - Email-first contact matching algorithm with confidence scores — v4.0
 - Calendar settings UI with connection management (/settings/calendars) — v4.0
 - Person profile Meetings tab with upcoming/past meetings — v4.0
@@ -171,8 +171,8 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Split notification channel classes into separate files (one-class-per-file compliance) — v4.4
 - PSR-4 namespaces added to 38 PHP classes across 9 namespace groups — v4.4
 - Composer autoloading with classmap for includes/ directory — v4.4
-- 38 backward-compatible class aliases (PRM_* → Caelis\*) — v4.4
-- Manual prm_autoloader() function removed (52 lines) — v4.4
+- 38 backward-compatible class aliases (STADION_* → Stadion\*) — v4.4
+- Manual stadion_autoloader() function removed (52 lines) — v4.4
 - PHPCS Generic.Files.OneClassPerFile rule enabled — v4.4
 
 **v4.5 Calendar Sync Control (shipped 2026-01-16):**
@@ -218,7 +218,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Import from Google with field mapping, duplicate detection, photo sideloading — v5.0
 - Export to Google with reverse field mapping and etag conflict handling — v5.0
 - Delta sync using Google syncToken for efficient change detection — v5.0
-- Conflict resolution with Caelis-wins strategy and activity logging — v5.0
+- Conflict resolution with Stadion-wins strategy and activity logging — v5.0
 - Settings UI with sync history viewer — v5.0
 - "View in Google Contacts" link on person profiles — v5.0
 - WP-CLI commands: sync, sync --full, status, conflicts, unlink-all — v5.0
@@ -244,11 +244,11 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 **v6.1 Feedback System**
 
-- [ ] caelis_feedback custom post type with ACF fields (type, status, priority, context)
-- [ ] REST API endpoints under prm/v1/feedback with CRUD operations
+- [ ] stadion_feedback custom post type with ACF fields (type, status, priority, context)
+- [ ] REST API endpoints under stadion/v1/feedback with CRUD operations
 - [ ] Application password authentication support for API access
 - [ ] Frontend feedback page with list view, detail view, and submission form
-- [ ] Admin management UI in Caelis for status changes and ordering
+- [ ] Admin management UI in Stadion for status changes and ordering
 - [ ] Settings UI for managing application passwords
 - [ ] System info capture (browser, version, current page) on opt-in
 
@@ -282,7 +282,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - `includes/class-taxonomies.php` — Taxonomy registration (add workspace_access here)
 
 **Reference Documents:**
-- `Caelis-Multi-User-Project-Plan.md` — Detailed technical design for multi-user phases
+- `Stadion-Multi-User-Project-Plan.md` — Detailed technical design for multi-user phases
 - `.planning/milestones/v5.0-google-contacts-sync.md` — Technical design for Google Contacts sync
 - `docs/prd/Custom-Fields-Implementation-Plan.md` — PRD for custom fields (adapted to ACF-native approach)
 
@@ -355,7 +355,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Strategic PHPCS exclusions | CardDAV/Sabre naming, short ternary, deprecated functions kept as documented | ✓ Good |
 | WP-CLI multi-class exception | Keep 9 CLI command classes in one file (conditionally loaded, logically grouped) | ✓ Good |
 | Composer classmap alongside PSR-4 | Supports current class-*.php naming during transition to standard PSR-4 | ✓ Good |
-| Backward-compatible class aliases | All PRM_* class names work via class_alias() for existing code | ✓ Good |
+| Backward-compatible class aliases | All STADION_* class names work via class_alias() for existing code | ✓ Good |
 | Global class backslash prefix | PHP/WP classes (DateTime, WP_Error, etc.) need `\` in namespaced files | ✓ Good |
 | Dark mode contrast pattern | Consistently use gray-300/gray-400 for better contrast (not gray-400/gray-500) | ✓ Good |
 | Solid background for dark mode selected states | Use dark:bg-accent-800 with dark:text-accent-100 (semi-transparent accent-900/30 unreliable) | ✓ Good |
@@ -375,9 +375,9 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Wider modal for two columns | max-w-2xl accommodates two-column layout | ✓ Good |
 | Separate OAuth callback for contacts | Different post-auth behavior vs calendar (redirect to subtab, pending_import flag) | ✓ Good |
 | User-level connection for contacts | Contacts sync is account-wide, unlike calendar which is per-resource | ✓ Good |
-| Fill gaps only on import | Never overwrite existing Caelis data, only fill empty fields | ✓ Good |
-| Three-way conflict comparison | Compare Google vs Caelis vs snapshot to detect actual conflicts | ✓ Good |
-| Caelis wins by default | Source of truth design, deletions in Google only unlink in Caelis | ✓ Good |
+| Fill gaps only on import | Never overwrite existing Stadion data, only fill empty fields | ✓ Good |
+| Three-way conflict comparison | Compare Google vs Stadion vs snapshot to detect actual conflicts | ✓ Good |
+| Stadion wins by default | Source of truth design, deletions in Google only unlink in Stadion | ✓ Good |
 | Sync history in connection meta | Last 10 entries, efficient storage without unbounded growth | ✓ Good |
 | ACF-native field storage | Field groups per post type (group_custom_fields_{post_type}), no custom tables | ✓ Good |
 | Field key naming pattern | field_custom_{post_type}_{slug} for consistency and traceability | ✓ Good |

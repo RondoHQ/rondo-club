@@ -6,15 +6,15 @@
 
 ## Summary
 
-Phase 83 adds conflict detection and deletion handling to the existing delta sync infrastructure from Phase 82. The CONTEXT.md specifies field-level conflict detection (conflicts occur only when the SAME field is modified in both systems), with Caelis-always-wins resolution strategy and activity log entries for audit.
+Phase 83 adds conflict detection and deletion handling to the existing delta sync infrastructure from Phase 82. The CONTEXT.md specifies field-level conflict detection (conflicts occur only when the SAME field is modified in both systems), with Stadion-always-wins resolution strategy and activity log entries for audit.
 
 The existing sync infrastructure already has:
 1. `import_delta()` in GoogleContactsAPI that detects Google deletions via `getMetadata()->getDeleted()`
-2. `push_changed_contacts()` in GoogleContactsSync that exports modified Caelis contacts
+2. `push_changed_contacts()` in GoogleContactsSync that exports modified Stadion contacts
 3. `_google_last_import` and `_google_last_export` timestamps for change tracking
 4. Activity logging via `wp_insert_comment()` with `TYPE_ACTIVITY` comment type
 
-For deletion handling: Caelis deletions propagate to Google via `before_delete_post` hook calling the People API `deleteContact` method. Google deletions are already handled in Phase 82 (unlink only, preserve Caelis data).
+For deletion handling: Stadion deletions propagate to Google via `before_delete_post` hook calling the People API `deleteContact` method. Google deletions are already handled in Phase 82 (unlink only, preserve Stadion data).
 
 **Primary recommendation:** Add field snapshot storage (`_google_synced_fields` post meta), conflict detection in pull phase, activity logging for resolved conflicts, and deletion propagation via WordPress hook.
 
@@ -31,7 +31,7 @@ For deletion handling: Caelis deletions propagate to Google via `before_delete_p
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
 | Post Meta | Built-in | Store synced field snapshot | Track last-synced values |
-| PRM_Comment_Types | Existing | Activity type constant | Log conflict resolutions |
+| STADION_Comment_Types | Existing | Activity type constant | Log conflict resolutions |
 
 ### Alternatives Considered
 | Instead of | Could Use | Tradeoff |
@@ -72,7 +72,7 @@ update_post_meta($post_id, '_google_synced_fields', $snapshot);
 ```
 
 ### Pattern 2: Field-Level Conflict Detection
-**What:** Compare Google values against both current Caelis values AND last-synced snapshot
+**What:** Compare Google values against both current Stadion values AND last-synced snapshot
 **When to use:** During pull phase in import_delta()
 **Example:**
 ```php
@@ -84,19 +84,19 @@ private function detect_field_conflicts(int $post_id, object $google_person): ar
     // Get Google values
     $google_name = $this->extract_google_name($google_person);
 
-    // Get current Caelis values
-    $caelis_first = get_field('first_name', $post_id);
-    $caelis_last = get_field('last_name', $post_id);
+    // Get current Stadion values
+    $stadion_first = get_field('first_name', $post_id);
+    $stadion_last = get_field('last_name', $post_id);
 
     // Check first_name: conflict if BOTH changed from snapshot
     $snapshot_first = $snapshot['first_name'] ?? '';
-    if ($google_name['first'] !== $snapshot_first && $caelis_first !== $snapshot_first) {
+    if ($google_name['first'] !== $snapshot_first && $stadion_first !== $snapshot_first) {
         // Both changed - this is a conflict
         $conflicts[] = [
             'field'        => 'first_name',
             'google_value' => $google_name['first'],
-            'caelis_value' => $caelis_first,
-            'kept_value'   => $caelis_first, // Caelis wins
+            'stadion_value' => $stadion_first,
+            'kept_value'   => $stadion_first, // Stadion wins
         ];
     }
 
@@ -129,14 +129,14 @@ private function log_conflict_resolution(int $post_id, array $conflicts, int $us
     }
 
     $content = sprintf(
-        __('Sync conflict resolved (Caelis wins):\n%s', 'caelis'),
+        __('Sync conflict resolved (Stadion wins):\n%s', 'stadion'),
         implode("\n", $lines)
     );
 
     wp_insert_comment([
         'comment_post_ID'  => $post_id,
         'comment_content'  => $content,
-        'comment_type'     => 'prm_activity',
+        'comment_type'     => 'stadion_activity',
         'user_id'          => $user_id,
         'comment_approved' => 1,
     ]);
@@ -147,7 +147,7 @@ private function log_conflict_resolution(int $post_id, array $conflicts, int $us
 }
 ```
 
-### Pattern 4: Deletion Hook for Caelis -> Google
+### Pattern 4: Deletion Hook for Stadion -> Google
 **What:** Hook into WordPress post deletion to delete corresponding Google contact
 **When to use:** When a linked person post is permanently deleted
 **Example:**
@@ -184,7 +184,7 @@ add_action('before_delete_post', function($post_id, $post) {
 
 ### Pattern 5: Google People API deleteContact
 **What:** Delete a contact from Google Contacts
-**When to use:** When Caelis contact is permanently deleted
+**When to use:** When Stadion contact is permanently deleted
 **Example:**
 ```php
 // Source: https://developers.google.com/people/api/rest/v1/people/deleteContact
@@ -221,11 +221,11 @@ $service->people->deleteContact($resource_name);
 **How to avoid:** Use `before_delete_post` - meta data still available
 **Warning signs:** `get_post_meta()` returns empty for `_google_contact_id`
 
-### Pitfall 2: Blocking Caelis Deletion on Google Error
+### Pitfall 2: Blocking Stadion Deletion on Google Error
 **What goes wrong:** User can't delete contact if Google API fails
 **Why it happens:** Throwing exception in hook
 **How to avoid:** Wrap Google API call in try/catch, log errors, allow deletion
-**Warning signs:** Contacts stuck in Caelis when Google is unreachable
+**Warning signs:** Contacts stuck in Stadion when Google is unreachable
 
 ### Pitfall 3: Snapshot Not Updated After Sync
 **What goes wrong:** Conflicts detected incorrectly because snapshot is stale
@@ -240,10 +240,10 @@ $service->people->deleteContact($resource_name);
 **Warning signs:** Code duplication, N/A for Phase 83
 
 ### Pitfall 5: Trash vs Permanent Delete
-**What goes wrong:** Deleting Google contact when Caelis contact is just trashed
+**What goes wrong:** Deleting Google contact when Stadion contact is just trashed
 **Why it happens:** Hooking wrong action
 **How to avoid:** `before_delete_post` only fires on permanent delete (empty trash)
-**Warning signs:** Contacts deleted from Google when trashed in Caelis
+**Warning signs:** Contacts deleted from Google when trashed in Stadion
 
 ## Code Examples
 
@@ -267,7 +267,7 @@ try {
 ### Activity Entry Creation
 ```php
 // Source: Existing pattern from class-calendar-sync.php line 467
-use Caelis\Collaboration\CommentTypes;
+use Stadion\Collaboration\CommentTypes;
 
 $comment_id = wp_insert_comment([
     'comment_post_ID'  => $person_id,
@@ -327,14 +327,14 @@ public function handle_person_deletion(int $post_id, \WP_Post $post): void {
 |--------------|------------------|--------------|--------|
 | Timestamp-only conflict | Field-level comparison | Modern sync patterns | More precise conflict detection |
 | Manual resolution | Auto-resolve with audit | Per CONTEXT.md | Simpler UX, maintains transparency |
-| Cascade delete both ways | Asymmetric (Caelis authoritative) | Per CONTEXT.md | Preserves user data |
+| Cascade delete both ways | Asymmetric (Stadion authoritative) | Per CONTEXT.md | Preserves user data |
 
-**Current state in Caelis:**
+**Current state in Stadion:**
 - Phase 82 handles Google deletions (unlink only)
 - Phase 82 has delta sync infrastructure
 - Activity logging infrastructure exists
 - No field snapshot storage yet
-- No Caelis -> Google deletion propagation yet
+- No Stadion -> Google deletion propagation yet
 
 ## Open Questions
 
@@ -358,9 +358,9 @@ public function handle_person_deletion(int $post_id, \WP_Post $post): void {
 ### Primary (HIGH confidence)
 - [Google People API deleteContact](https://developers.google.com/people/api/rest/v1/people/deleteContact) - API endpoint, parameters, scopes
 - [WordPress before_delete_post hook](https://developer.wordpress.org/reference/hooks/before_delete_post/) - Hook timing, parameters, when meta is available
-- Caelis codebase: `class-google-contacts-sync.php` - Current sync infrastructure
-- Caelis codebase: `class-google-contacts-api-import.php` - Delta import with deletion detection
-- Caelis codebase: `class-comment-types.php` - Activity logging patterns
+- Stadion codebase: `class-google-contacts-sync.php` - Current sync infrastructure
+- Stadion codebase: `class-google-contacts-api-import.php` - Delta import with deletion detection
+- Stadion codebase: `class-comment-types.php` - Activity logging patterns
 - CONTEXT.md - User decisions on conflict strategy and deletion behavior
 
 ### Secondary (MEDIUM confidence)
@@ -374,7 +374,7 @@ public function handle_person_deletion(int $post_id, \WP_Post $post): void {
 
 **Confidence breakdown:**
 - Standard stack: HIGH - Using existing WordPress/Google infrastructure
-- Architecture: HIGH - Based on existing Caelis patterns and CONTEXT.md decisions
+- Architecture: HIGH - Based on existing Stadion patterns and CONTEXT.md decisions
 - Pitfalls: HIGH - Documented in WordPress codex and verified against codebase
 
 **Research date:** 2026-01-17

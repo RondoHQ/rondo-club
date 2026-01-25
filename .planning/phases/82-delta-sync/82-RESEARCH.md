@@ -6,7 +6,7 @@
 
 ## Summary
 
-Delta sync enables automatic bidirectional synchronization between Caelis and Google Contacts. The Google People API provides a `syncToken` mechanism for efficient change detection on the Google side, returning only modified/deleted contacts since the last sync. For Caelis changes, we compare `post_modified` timestamps against the stored `_google_last_export` meta to detect which contacts need pushing to Google.
+Delta sync enables automatic bidirectional synchronization between Stadion and Google Contacts. The Google People API provides a `syncToken` mechanism for efficient change detection on the Google side, returning only modified/deleted contacts since the last sync. For Stadion changes, we compare `post_modified` timestamps against the stored `_google_last_export` meta to detect which contacts need pushing to Google.
 
 The existing codebase already has:
 1. A working cron pattern in `class-calendar-sync.php` with user-configurable frequencies
@@ -14,7 +14,7 @@ The existing codebase already has:
 3. Import functionality in `class-google-contacts-api-import.php` for full imports
 4. Connection storage in `class-google-contacts-connection.php` with a `sync_token` field already defined
 
-**Primary recommendation:** Build a new `GoogleContactsSync` class following the `Caelis\Calendar\Sync` pattern, leveraging Google's syncToken for pull operations and post_modified comparison for push operations.
+**Primary recommendation:** Build a new `GoogleContactsSync` class following the `Stadion\Calendar\Sync` pattern, leveraging Google's syncToken for pull operations and post_modified comparison for push operations.
 
 ## Standard Stack
 
@@ -79,13 +79,13 @@ $response = $service->people_connections->listPeopleConnections('people/me', $pa
 foreach ($response->getConnections() as $person) {
     $metadata = $person->getMetadata();
     if ($metadata && $metadata->getDeleted()) {
-        // Contact was deleted in Google - unlink in Caelis
+        // Contact was deleted in Google - unlink in Stadion
         $this->handle_google_deletion($person->getResourceName());
     }
 }
 ```
 
-### Pattern 2: Caelis Change Detection
+### Pattern 2: Stadion Change Detection
 **What:** Compare post_modified with _google_last_export to find local changes
 **When to use:** Every sync cycle to push changes to Google
 **Example:**
@@ -122,7 +122,7 @@ foreach ($query->posts as $post) {
 **Example:**
 ```php
 // Source: class-calendar-sync.php lines 88-114
-const USER_INDEX_TRANSIENT = 'prm_contacts_sync_last_user_index';
+const USER_INDEX_TRANSIENT = 'stadion_contacts_sync_last_user_index';
 
 public function run_background_sync() {
     $users = $this->get_users_with_connections();
@@ -175,7 +175,7 @@ Problems that look simple but have existing solutions:
 | Problem | Don't Build | Use Instead | Why |
 |---------|-------------|-------------|-----|
 | Change detection (Google) | Field-by-field comparison | Google syncToken | API provides deleted flag, etag, efficient delta |
-| Change detection (Caelis) | Custom modified tracking | post_modified vs _google_last_export | WordPress already tracks post_modified |
+| Change detection (Stadion) | Custom modified tracking | post_modified vs _google_last_export | WordPress already tracks post_modified |
 | Recurring schedule | Manual timestamp tracking | WP-Cron with custom schedule | Reliable, survives restarts |
 | User round-robin | Custom queue | Transient with modulo index | Proven pattern in class-calendar-sync.php |
 | Token refresh | Manual refresh logic | Google\Client::isAccessTokenExpired() | Already implemented in export/import classes |
@@ -197,7 +197,7 @@ Problems that look simple but have existing solutions:
 **Warning signs:** Contacts keep re-exporting every sync cycle
 
 ### Pitfall 3: Event-Triggered Export Conflicts with Background Sync
-**What goes wrong:** Contact saved in Caelis triggers immediate export AND background sync exports it
+**What goes wrong:** Contact saved in Stadion triggers immediate export AND background sync exports it
 **Why it happens:** Race condition between save_post hook and cron
 **How to avoid:** Check _google_last_export timestamp before background push
 **Warning signs:** Duplicate exports, etag conflicts
@@ -243,7 +243,7 @@ foreach ($response->getConnections() as $person) {
     $metadata = $person->getMetadata();
     if ($metadata && $metadata->getDeleted()) {
         $resource_name = $person->getResourceName();
-        // Unlink in Caelis - find post by _google_contact_id
+        // Unlink in Stadion - find post by _google_contact_id
         $posts = get_posts([
             'post_type'   => 'person',
             'meta_key'    => '_google_contact_id',
@@ -251,7 +251,7 @@ foreach ($response->getConnections() as $person) {
             'numberposts' => 1,
         ]);
         if (!empty($posts)) {
-            // Delete meta to unlink, preserve Caelis data
+            // Delete meta to unlink, preserve Stadion data
             delete_post_meta($posts[0]->ID, '_google_contact_id');
             delete_post_meta($posts[0]->ID, '_google_etag');
         }
@@ -282,11 +282,11 @@ try {
 add_filter('cron_schedules', function($schedules) {
     $schedules['every_15_minutes'] = [
         'interval' => 900,
-        'display'  => __('Every 15 Minutes', 'caelis'),
+        'display'  => __('Every 15 Minutes', 'stadion'),
     ];
     $schedules['hourly'] = [
         'interval' => 3600,
-        'display'  => __('Every Hour', 'caelis'),
+        'display'  => __('Every Hour', 'stadion'),
     ];
     // Note: 'daily' is built-in
     return $schedules;
@@ -329,10 +329,10 @@ Things that couldn't be fully resolved:
 ### Primary (HIGH confidence)
 - [Google People API people.connections.list](https://developers.google.com/people/api/rest/v1/people.connections/list) - syncToken parameters, deleted contacts handling
 - [Google People API Contacts Guide](https://developers.google.com/people/v1/contacts) - Best practices for read/write operations
-- Caelis codebase: `class-calendar-sync.php` - Proven cron and round-robin patterns
-- Caelis codebase: `class-google-contacts-export.php` - Export implementation
-- Caelis codebase: `class-google-contacts-api-import.php` - Import implementation
-- Caelis codebase: `class-google-contacts-connection.php` - Connection storage with sync_token field
+- Stadion codebase: `class-calendar-sync.php` - Proven cron and round-robin patterns
+- Stadion codebase: `class-google-contacts-export.php` - Export implementation
+- Stadion codebase: `class-google-contacts-api-import.php` - Import implementation
+- Stadion codebase: `class-google-contacts-connection.php` - Connection storage with sync_token field
 
 ### Secondary (MEDIUM confidence)
 - [WordPress Cron Scheduling](https://developer.wordpress.org/plugins/cron/understanding-wp-cron-scheduling/) - Custom schedules, best practices

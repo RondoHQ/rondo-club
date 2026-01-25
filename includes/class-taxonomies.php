@@ -3,7 +3,7 @@
  * Custom Taxonomies Registration
  */
 
-namespace Caelis\Core;
+namespace Stadion\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -109,15 +109,15 @@ class Taxonomies {
 	 */
 	private function register_workspace_access_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Workspace Access', 'taxonomy general name', 'caelis' ),
-			'singular_name' => _x( 'Workspace Access', 'taxonomy singular name', 'caelis' ),
-			'search_items'  => __( 'Search Workspace Access', 'caelis' ),
-			'all_items'     => __( 'All Workspace Access', 'caelis' ),
-			'edit_item'     => __( 'Edit Workspace Access', 'caelis' ),
-			'update_item'   => __( 'Update Workspace Access', 'caelis' ),
-			'add_new_item'  => __( 'Add New Workspace Access', 'caelis' ),
-			'new_item_name' => __( 'New Workspace Access Name', 'caelis' ),
-			'menu_name'     => __( 'Workspace Access', 'caelis' ),
+			'name'          => _x( 'Workspace Access', 'taxonomy general name', 'stadion' ),
+			'singular_name' => _x( 'Workspace Access', 'taxonomy singular name', 'stadion' ),
+			'search_items'  => __( 'Search Workspace Access', 'stadion' ),
+			'all_items'     => __( 'All Workspace Access', 'stadion' ),
+			'edit_item'     => __( 'Edit Workspace Access', 'stadion' ),
+			'update_item'   => __( 'Update Workspace Access', 'stadion' ),
+			'add_new_item'  => __( 'Add New Workspace Access', 'stadion' ),
+			'new_item_name' => __( 'New Workspace Access Name', 'stadion' ),
+			'menu_name'     => __( 'Workspace Access', 'stadion' ),
 		];
 
 		$args = [
@@ -138,15 +138,15 @@ class Taxonomies {
 	 */
 	private function register_person_label_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Labels', 'taxonomy general name', 'caelis' ),
-			'singular_name' => _x( 'Label', 'taxonomy singular name', 'caelis' ),
-			'search_items'  => __( 'Search Labels', 'caelis' ),
-			'all_items'     => __( 'All Labels', 'caelis' ),
-			'edit_item'     => __( 'Edit Label', 'caelis' ),
-			'update_item'   => __( 'Update Label', 'caelis' ),
-			'add_new_item'  => __( 'Add New Label', 'caelis' ),
-			'new_item_name' => __( 'New Label Name', 'caelis' ),
-			'menu_name'     => __( 'Labels', 'caelis' ),
+			'name'          => _x( 'Labels', 'taxonomy general name', 'stadion' ),
+			'singular_name' => _x( 'Label', 'taxonomy singular name', 'stadion' ),
+			'search_items'  => __( 'Search Labels', 'stadion' ),
+			'all_items'     => __( 'All Labels', 'stadion' ),
+			'edit_item'     => __( 'Edit Label', 'stadion' ),
+			'update_item'   => __( 'Update Label', 'stadion' ),
+			'add_new_item'  => __( 'Add New Label', 'stadion' ),
+			'new_item_name' => __( 'New Label Name', 'stadion' ),
+			'menu_name'     => __( 'Labels', 'stadion' ),
 		];
 
 		$args = [
@@ -167,15 +167,15 @@ class Taxonomies {
 	 */
 	private function register_company_label_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Company Labels', 'taxonomy general name', 'caelis' ),
-			'singular_name' => _x( 'Company Label', 'taxonomy singular name', 'caelis' ),
-			'search_items'  => __( 'Search Company Labels', 'caelis' ),
-			'all_items'     => __( 'All Company Labels', 'caelis' ),
-			'edit_item'     => __( 'Edit Company Label', 'caelis' ),
-			'update_item'   => __( 'Update Company Label', 'caelis' ),
-			'add_new_item'  => __( 'Add New Company Label', 'caelis' ),
-			'new_item_name' => __( 'New Company Label Name', 'caelis' ),
-			'menu_name'     => __( 'Labels', 'caelis' ),
+			'name'          => _x( 'Company Labels', 'taxonomy general name', 'stadion' ),
+			'singular_name' => _x( 'Company Label', 'taxonomy singular name', 'stadion' ),
+			'search_items'  => __( 'Search Company Labels', 'stadion' ),
+			'all_items'     => __( 'All Company Labels', 'stadion' ),
+			'edit_item'     => __( 'Edit Company Label', 'stadion' ),
+			'update_item'   => __( 'Update Company Label', 'stadion' ),
+			'add_new_item'  => __( 'Add New Company Label', 'stadion' ),
+			'new_item_name' => __( 'New Company Label Name', 'stadion' ),
+			'menu_name'     => __( 'Labels', 'stadion' ),
 		];
 
 		$args = [
@@ -196,15 +196,15 @@ class Taxonomies {
 	 */
 	private function register_relationship_type_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Relationship Types', 'taxonomy general name', 'caelis' ),
-			'singular_name' => _x( 'Relationship Type', 'taxonomy singular name', 'caelis' ),
-			'search_items'  => __( 'Search Relationship Types', 'caelis' ),
-			'all_items'     => __( 'All Relationship Types', 'caelis' ),
-			'edit_item'     => __( 'Edit Relationship Type', 'caelis' ),
-			'update_item'   => __( 'Update Relationship Type', 'caelis' ),
-			'add_new_item'  => __( 'Add New Relationship Type', 'caelis' ),
-			'new_item_name' => __( 'New Relationship Type Name', 'caelis' ),
-			'menu_name'     => __( 'Relationship Types', 'caelis' ),
+			'name'          => _x( 'Relationship Types', 'taxonomy general name', 'stadion' ),
+			'singular_name' => _x( 'Relationship Type', 'taxonomy singular name', 'stadion' ),
+			'search_items'  => __( 'Search Relationship Types', 'stadion' ),
+			'all_items'     => __( 'All Relationship Types', 'stadion' ),
+			'edit_item'     => __( 'Edit Relationship Type', 'stadion' ),
+			'update_item'   => __( 'Update Relationship Type', 'stadion' ),
+			'add_new_item'  => __( 'Add New Relationship Type', 'stadion' ),
+			'new_item_name' => __( 'New Relationship Type Name', 'stadion' ),
+			'menu_name'     => __( 'Relationship Types', 'stadion' ),
 		];
 
 		$args = [
@@ -228,15 +228,15 @@ class Taxonomies {
 	 */
 	private function register_date_type_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Date Types', 'taxonomy general name', 'caelis' ),
-			'singular_name' => _x( 'Date Type', 'taxonomy singular name', 'caelis' ),
-			'search_items'  => __( 'Search Date Types', 'caelis' ),
-			'all_items'     => __( 'All Date Types', 'caelis' ),
-			'edit_item'     => __( 'Edit Date Type', 'caelis' ),
-			'update_item'   => __( 'Update Date Type', 'caelis' ),
-			'add_new_item'  => __( 'Add New Date Type', 'caelis' ),
-			'new_item_name' => __( 'New Date Type Name', 'caelis' ),
-			'menu_name'     => __( 'Date Types', 'caelis' ),
+			'name'          => _x( 'Date Types', 'taxonomy general name', 'stadion' ),
+			'singular_name' => _x( 'Date Type', 'taxonomy singular name', 'stadion' ),
+			'search_items'  => __( 'Search Date Types', 'stadion' ),
+			'all_items'     => __( 'All Date Types', 'stadion' ),
+			'edit_item'     => __( 'Edit Date Type', 'stadion' ),
+			'update_item'   => __( 'Update Date Type', 'stadion' ),
+			'add_new_item'  => __( 'Add New Date Type', 'stadion' ),
+			'new_item_name' => __( 'New Date Type Name', 'stadion' ),
+			'menu_name'     => __( 'Date Types', 'stadion' ),
 		];
 
 		$args = [
@@ -261,42 +261,42 @@ class Taxonomies {
 	private function add_default_relationship_types() {
 		$defaults = [
 			// Basic relationships
-			'partner'      => __( 'Partner', 'caelis' ),
-			'spouse'       => __( 'Spouse', 'caelis' ),
-			'friend'       => __( 'Friend', 'caelis' ),
-			'colleague'    => __( 'Colleague', 'caelis' ),
-			'acquaintance' => __( 'Acquaintance', 'caelis' ),
-			'ex'           => __( 'Ex', 'caelis' ),
+			'partner'      => __( 'Partner', 'stadion' ),
+			'spouse'       => __( 'Spouse', 'stadion' ),
+			'friend'       => __( 'Friend', 'stadion' ),
+			'colleague'    => __( 'Colleague', 'stadion' ),
+			'acquaintance' => __( 'Acquaintance', 'stadion' ),
+			'ex'           => __( 'Ex', 'stadion' ),
 
 			// Family - immediate
-			'parent'       => __( 'Parent', 'caelis' ),
-			'child'        => __( 'Child', 'caelis' ),
-			'sibling'      => __( 'Sibling', 'caelis' ),
+			'parent'       => __( 'Parent', 'stadion' ),
+			'child'        => __( 'Child', 'stadion' ),
+			'sibling'      => __( 'Sibling', 'stadion' ),
 
 			// Family - extended
-			'grandparent'  => __( 'Grandparent', 'caelis' ),
-			'grandchild'   => __( 'Grandchild', 'caelis' ),
-			'uncle'        => __( 'Uncle', 'caelis' ),
-			'aunt'         => __( 'Aunt', 'caelis' ),
-			'nephew'       => __( 'Nephew', 'caelis' ),
-			'niece'        => __( 'Niece', 'caelis' ),
-			'cousin'       => __( 'Cousin', 'caelis' ),
+			'grandparent'  => __( 'Grandparent', 'stadion' ),
+			'grandchild'   => __( 'Grandchild', 'stadion' ),
+			'uncle'        => __( 'Uncle', 'stadion' ),
+			'aunt'         => __( 'Aunt', 'stadion' ),
+			'nephew'       => __( 'Nephew', 'stadion' ),
+			'niece'        => __( 'Niece', 'stadion' ),
+			'cousin'       => __( 'Cousin', 'stadion' ),
 
 			// Family - step/in-law
-			'stepparent'   => __( 'Stepparent', 'caelis' ),
-			'stepchild'    => __( 'Stepchild', 'caelis' ),
-			'stepsibling'  => __( 'Stepsibling', 'caelis' ),
-			'inlaw'        => __( 'In-law', 'caelis' ),
+			'stepparent'   => __( 'Stepparent', 'stadion' ),
+			'stepchild'    => __( 'Stepchild', 'stadion' ),
+			'stepsibling'  => __( 'Stepsibling', 'stadion' ),
+			'inlaw'        => __( 'In-law', 'stadion' ),
 
 			// Family - other
-			'godparent'    => __( 'Godparent', 'caelis' ),
-			'godchild'     => __( 'Godchild', 'caelis' ),
+			'godparent'    => __( 'Godparent', 'stadion' ),
+			'godchild'     => __( 'Godchild', 'stadion' ),
 
 			// Professional
-			'boss'         => __( 'Boss', 'caelis' ),
-			'subordinate'  => __( 'Subordinate', 'caelis' ),
-			'mentor'       => __( 'Mentor', 'caelis' ),
-			'mentee'       => __( 'Mentee', 'caelis' ),
+			'boss'         => __( 'Boss', 'stadion' ),
+			'subordinate'  => __( 'Subordinate', 'stadion' ),
+			'mentor'       => __( 'Mentor', 'stadion' ),
+			'mentee'       => __( 'Mentee', 'stadion' ),
 		];
 
 		foreach ( $defaults as $slug => $name ) {
@@ -419,58 +419,58 @@ class Taxonomies {
 	private function add_default_date_types() {
 		$defaults = [
 			// Core types
-			'birthday'                => __( 'Birthday', 'caelis' ),
-			'memorial'                => __( 'Memorial', 'caelis' ),
-			'first-met'               => __( 'First Met', 'caelis' ),
+			'birthday'                => __( 'Birthday', 'stadion' ),
+			'memorial'                => __( 'Memorial', 'stadion' ),
+			'first-met'               => __( 'First Met', 'stadion' ),
 
 			// Family & relationships (Monica category 2)
-			'new-relationship'        => __( 'New Relationship', 'caelis' ),
-			'engagement'              => __( 'Engagement', 'caelis' ),
-			'wedding'                 => __( 'Wedding', 'caelis' ),
-			'marriage'                => __( 'Marriage', 'caelis' ),
-			'expecting-a-baby'        => __( 'Expecting a Baby', 'caelis' ),
-			'new-child'               => __( 'New Child', 'caelis' ),
-			'new-family-member'       => __( 'New Family Member', 'caelis' ),
-			'new-pet'                 => __( 'New Pet', 'caelis' ),
-			'end-of-relationship'     => __( 'End of Relationship', 'caelis' ),
-			'loss-of-a-loved-one'     => __( 'Loss of a Loved One', 'caelis' ),
+			'new-relationship'        => __( 'New Relationship', 'stadion' ),
+			'engagement'              => __( 'Engagement', 'stadion' ),
+			'wedding'                 => __( 'Wedding', 'stadion' ),
+			'marriage'                => __( 'Marriage', 'stadion' ),
+			'expecting-a-baby'        => __( 'Expecting a Baby', 'stadion' ),
+			'new-child'               => __( 'New Child', 'stadion' ),
+			'new-family-member'       => __( 'New Family Member', 'stadion' ),
+			'new-pet'                 => __( 'New Pet', 'stadion' ),
+			'end-of-relationship'     => __( 'End of Relationship', 'stadion' ),
+			'loss-of-a-loved-one'     => __( 'Loss of a Loved One', 'stadion' ),
 
 			// Work & education (Monica category 1)
-			'new-job'                 => __( 'New Job', 'caelis' ),
-			'retirement'              => __( 'Retirement', 'caelis' ),
-			'new-school'              => __( 'New School', 'caelis' ),
-			'study-abroad'            => __( 'Study Abroad', 'caelis' ),
-			'volunteer-work'          => __( 'Volunteer Work', 'caelis' ),
-			'published-book-or-paper' => __( 'Published Book or Paper', 'caelis' ),
-			'military-service'        => __( 'Military Service', 'caelis' ),
+			'new-job'                 => __( 'New Job', 'stadion' ),
+			'retirement'              => __( 'Retirement', 'stadion' ),
+			'new-school'              => __( 'New School', 'stadion' ),
+			'study-abroad'            => __( 'Study Abroad', 'stadion' ),
+			'volunteer-work'          => __( 'Volunteer Work', 'stadion' ),
+			'published-book-or-paper' => __( 'Published Book or Paper', 'stadion' ),
+			'military-service'        => __( 'Military Service', 'stadion' ),
 
 			// Home & living (Monica category 3)
-			'moved'                   => __( 'Moved', 'caelis' ),
-			'bought-a-home'           => __( 'Bought a Home', 'caelis' ),
-			'home-improvement'        => __( 'Home Improvement', 'caelis' ),
-			'holidays'                => __( 'Holidays', 'caelis' ),
-			'new-vehicle'             => __( 'New Vehicle', 'caelis' ),
-			'new-roommate'            => __( 'New Roommate', 'caelis' ),
+			'moved'                   => __( 'Moved', 'stadion' ),
+			'bought-a-home'           => __( 'Bought a Home', 'stadion' ),
+			'home-improvement'        => __( 'Home Improvement', 'stadion' ),
+			'holidays'                => __( 'Holidays', 'stadion' ),
+			'new-vehicle'             => __( 'New Vehicle', 'stadion' ),
+			'new-roommate'            => __( 'New Roommate', 'stadion' ),
 
 			// Health & wellness (Monica category 4)
-			'overcame-an-illness'     => __( 'Overcame an Illness', 'caelis' ),
-			'quit-a-habit'            => __( 'Quit a Habit', 'caelis' ),
-			'new-eating-habits'       => __( 'New Eating Habits', 'caelis' ),
-			'weight-loss'             => __( 'Weight Loss', 'caelis' ),
-			'surgery'                 => __( 'Surgery', 'caelis' ),
+			'overcame-an-illness'     => __( 'Overcame an Illness', 'stadion' ),
+			'quit-a-habit'            => __( 'Quit a Habit', 'stadion' ),
+			'new-eating-habits'       => __( 'New Eating Habits', 'stadion' ),
+			'weight-loss'             => __( 'Weight Loss', 'stadion' ),
+			'surgery'                 => __( 'Surgery', 'stadion' ),
 
 			// Travel & experiences (Monica category 5)
-			'new-sport'               => __( 'New Sport', 'caelis' ),
-			'new-hobby'               => __( 'New Hobby', 'caelis' ),
-			'new-instrument'          => __( 'New Instrument', 'caelis' ),
-			'new-language'            => __( 'New Language', 'caelis' ),
-			'travel'                  => __( 'Travel', 'caelis' ),
-			'achievement-or-award'    => __( 'Achievement or Award', 'caelis' ),
-			'first-word'              => __( 'First Word', 'caelis' ),
-			'first-kiss'              => __( 'First Kiss', 'caelis' ),
+			'new-sport'               => __( 'New Sport', 'stadion' ),
+			'new-hobby'               => __( 'New Hobby', 'stadion' ),
+			'new-instrument'          => __( 'New Instrument', 'stadion' ),
+			'new-language'            => __( 'New Language', 'stadion' ),
+			'travel'                  => __( 'Travel', 'stadion' ),
+			'achievement-or-award'    => __( 'Achievement or Award', 'stadion' ),
+			'first-word'              => __( 'First Word', 'stadion' ),
+			'first-kiss'              => __( 'First Kiss', 'stadion' ),
 
 			// Fallback
-			'other'                   => __( 'Other', 'caelis' ),
+			'other'                   => __( 'Other', 'stadion' ),
 		];
 
 		foreach ( $defaults as $slug => $name ) {

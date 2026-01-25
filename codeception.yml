@@ -30,8 +30,8 @@ suites:
           dbUrl: "%TEST_DB_URL%"
           tablePrefix: "wp_"
           domain: "%WP_DOMAIN%"
-          adminEmail: "admin@caelis.test"
+          adminEmail: "admin@stadion.test"
           plugins:
             - advanced-custom-fields-pro/acf.php
-          theme: caelis
+          theme: stadion
           loadOnly: false

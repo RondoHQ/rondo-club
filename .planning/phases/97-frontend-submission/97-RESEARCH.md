@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase implements the frontend UI for submitting and viewing feedback within the Caelis React SPA. The backend REST API at `/prm/v1/feedback` is already complete (Phase 96), so this phase focuses purely on React components, routing, API integration, and user experience.
+This phase implements the frontend UI for submitting and viewing feedback within the Stadion React SPA. The backend REST API at `/stadion/v1/feedback` is already complete (Phase 96), so this phase focuses purely on React components, routing, API integration, and user experience.
 
 The codebase has well-established patterns for list pages (TodosList, DatesList, PeopleList), detail views (PersonDetail, CompanyDetail), modal forms (PersonEditModal, CompanyEditModal), and TanStack Query hooks (usePeople, useTodos, useDashboard). The frontend implementation should follow these existing patterns exactly.
 
@@ -77,11 +77,11 @@ export const prmApi = {
   // ... existing methods
 
   // Feedback
-  getFeedbackList: (params) => api.get('/prm/v1/feedback', { params }),
-  getFeedback: (id) => api.get(`/prm/v1/feedback/${id}`),
-  createFeedback: (data) => api.post('/prm/v1/feedback', data),
-  updateFeedback: (id, data) => api.put(`/prm/v1/feedback/${id}`, data),
-  deleteFeedback: (id) => api.delete(`/prm/v1/feedback/${id}`),
+  getFeedbackList: (params) => api.get('/stadion/v1/feedback', { params }),
+  getFeedback: (id) => api.get(`/stadion/v1/feedback/${id}`),
+  createFeedback: (data) => api.post('/stadion/v1/feedback', data),
+  updateFeedback: (id, data) => api.put(`/stadion/v1/feedback/${id}`, data),
+  deleteFeedback: (id) => api.delete(`/stadion/v1/feedback/${id}`),
 };
 ```
 
@@ -224,7 +224,7 @@ const handleFormSubmit = (data) => {
 
   if (data.include_system_info) {
     submitData.browser_info = navigator.userAgent;
-    submitData.app_version = window.prmConfig?.version || 'unknown';
+    submitData.app_version = window.stadionConfig?.version || 'unknown';
     submitData.url_context = window.location.href;
   }
 

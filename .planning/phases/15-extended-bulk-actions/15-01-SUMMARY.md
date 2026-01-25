@@ -1,7 +1,7 @@
 # Summary: 15-01 Backend REST Endpoint Extension
 
 ## Overview
-Extended the bulk-update REST endpoint (`/prm/v1/people/bulk-update`) to support organization assignment and label management operations, enabling backend support for Phase 15's extended bulk actions.
+Extended the bulk-update REST endpoint (`/stadion/v1/people/bulk-update`) to support organization assignment and label management operations, enabling backend support for Phase 15's extended bulk actions.
 
 ## Tasks Completed
 
@@ -43,7 +43,7 @@ None. Implementation followed plan exactly.
 
 ### Assign organization to people
 ```json
-POST /wp-json/prm/v1/people/bulk-update
+POST /wp-json/stadion/v1/people/bulk-update
 {
   "ids": [123, 456],
   "updates": {
@@ -54,7 +54,7 @@ POST /wp-json/prm/v1/people/bulk-update
 
 ### Clear organization from people
 ```json
-POST /wp-json/prm/v1/people/bulk-update
+POST /wp-json/stadion/v1/people/bulk-update
 {
   "ids": [123, 456],
   "updates": {
@@ -65,7 +65,7 @@ POST /wp-json/prm/v1/people/bulk-update
 
 ### Add labels to people
 ```json
-POST /wp-json/prm/v1/people/bulk-update
+POST /wp-json/stadion/v1/people/bulk-update
 {
   "ids": [123, 456],
   "updates": {
@@ -76,7 +76,7 @@ POST /wp-json/prm/v1/people/bulk-update
 
 ### Remove labels from people
 ```json
-POST /wp-json/prm/v1/people/bulk-update
+POST /wp-json/stadion/v1/people/bulk-update
 {
   "ids": [123, 456],
   "updates": {
@@ -87,7 +87,7 @@ POST /wp-json/prm/v1/people/bulk-update
 
 ### Combined update
 ```json
-POST /wp-json/prm/v1/people/bulk-update
+POST /wp-json/stadion/v1/people/bulk-update
 {
   "ids": [123, 456],
   "updates": {

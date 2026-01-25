@@ -2,15 +2,15 @@
 status: verifying
 trigger: "Meeting attendees are being matched to people in the CRM who are NOT those people. Matching should only happen by email, but it appears to match by other criteria (possibly name)."
 created: 2026-01-22T10:00:00Z
-updated: 2026-01-22T10:15:00Z
+updated: 2026-01-22T10:20:00Z
 ---
 
 ## Current Focus
 
 hypothesis: CONFIRMED and FIXED
-test: Removed fuzzy name matching fallback from match_single() method
+test: Fix deployed to production, commit a0fb929
 expecting: After re-match, only exact email matches will show
-next_action: Run WP-CLI rematch command and verify false matches are cleared
+next_action: User needs to run WP-CLI rematch command on production to clear existing false matches
 
 ## Symptoms
 

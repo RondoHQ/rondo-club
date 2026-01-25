@@ -11,7 +11,7 @@ requires:
   - phase: 49-google-calendar-provider
     provides: Pattern for calendar provider class, calendar_event CPT
 provides:
-  - PRM_CalDAV_Provider class for CalDAV calendar sync
+  - STADION_CalDAV_Provider class for CalDAV calendar sync
   - test_caldav REST endpoint for credential validation
   - CalDAV support in trigger_sync endpoint
 affects: [51-contact-matching, 52-calendar-ui]
@@ -57,7 +57,7 @@ completed: 2026-01-15
 
 ## Accomplishments
 
-- Created PRM_CalDAV_Provider class with test_connection, discover_calendars, and sync methods
+- Created STADION_CalDAV_Provider class with test_connection, discover_calendars, and sync methods
 - Implemented CalDAV REST endpoint for credential testing and calendar discovery
 - Added CalDAV support to trigger_sync endpoint for calendar synchronization
 - Documented CalDAV setup for iCloud, Fastmail, and Nextcloud in .env.example
@@ -66,7 +66,7 @@ completed: 2026-01-15
 
 Each task was committed atomically:
 
-1. **Task 1: Create PRM_CalDAV_Provider class** - `c8efee9` (feat)
+1. **Task 1: Create STADION_CalDAV_Provider class** - `c8efee9` (feat)
 2. **Task 2: Implement CalDAV REST endpoints** - `8ce22d0` (feat)
 3. **Task 3: Update .env.example with CalDAV documentation** - `7b49dad` (docs)
 
@@ -74,7 +74,7 @@ Each task was committed atomically:
 
 - `includes/class-caldav-provider.php` - CalDAV provider with connection testing, calendar discovery, and event sync
 - `includes/class-rest-calendar.php` - Updated test_caldav and trigger_sync endpoints for CalDAV support
-- `functions.php` - Added PRM_CalDAV_Provider to autoloader class map
+- `functions.php` - Added STADION_CalDAV_Provider to autoloader class map
 - `.env.example` - Added CalDAV setup documentation with provider-specific URLs
 
 ## Decisions Made

@@ -1,10 +1,10 @@
 # Multi-User System
 
-This document describes Caelis's multi-user collaboration features, enabling teams to share contacts and work together while maintaining privacy controls.
+This document describes Stadion's multi-user collaboration features, enabling teams to share contacts and work together while maintaining privacy controls.
 
 ## Overview
 
-Caelis supports two collaboration modes:
+Stadion supports two collaboration modes:
 
 1. **Single-user mode** - The default. Contacts are private to the user who created them.
 2. **Multi-user mode** - Workspaces and sharing enable team collaboration.
@@ -186,29 +186,29 @@ This chain ensures backward compatibility while enabling collaboration.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/prm/v1/workspaces` | List your workspaces |
-| POST | `/prm/v1/workspaces` | Create workspace |
-| GET | `/prm/v1/workspaces/{id}` | Get workspace details |
-| PUT | `/prm/v1/workspaces/{id}` | Update workspace |
-| DELETE | `/prm/v1/workspaces/{id}` | Delete workspace (owner only) |
+| GET | `/stadion/v1/workspaces` | List your workspaces |
+| POST | `/stadion/v1/workspaces` | Create workspace |
+| GET | `/stadion/v1/workspaces/{id}` | Get workspace details |
+| PUT | `/stadion/v1/workspaces/{id}` | Update workspace |
+| DELETE | `/stadion/v1/workspaces/{id}` | Delete workspace (owner only) |
 
 ### Member Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/prm/v1/workspaces/{id}/members` | Add member |
-| PUT | `/prm/v1/workspaces/{id}/members/{user_id}` | Update member role |
-| DELETE | `/prm/v1/workspaces/{id}/members/{user_id}` | Remove member |
+| POST | `/stadion/v1/workspaces/{id}/members` | Add member |
+| PUT | `/stadion/v1/workspaces/{id}/members/{user_id}` | Update member role |
+| DELETE | `/stadion/v1/workspaces/{id}/members/{user_id}` | Remove member |
 
 ### Invitation Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/prm/v1/workspaces/{id}/invites` | Create invitation |
-| GET | `/prm/v1/workspaces/{id}/invites` | List pending invitations |
-| DELETE | `/prm/v1/workspaces/{id}/invites/{invite_id}` | Revoke invitation |
-| GET | `/prm/v1/invites/{token}` | Validate invitation (public) |
-| POST | `/prm/v1/invites/{token}/accept` | Accept invitation |
+| POST | `/stadion/v1/workspaces/{id}/invites` | Create invitation |
+| GET | `/stadion/v1/workspaces/{id}/invites` | List pending invitations |
+| DELETE | `/stadion/v1/workspaces/{id}/invites/{invite_id}` | Revoke invitation |
+| GET | `/stadion/v1/invites/{token}` | Validate invitation (public) |
+| POST | `/stadion/v1/invites/{token}/accept` | Accept invitation |
 
 ## Related Documentation
 

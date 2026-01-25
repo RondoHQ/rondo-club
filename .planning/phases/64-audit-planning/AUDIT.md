@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The Caelis PHP codebase contains **41 classes** across **39 files** in the `includes/` directory. Only **1 file** contains multiple class definitions. The codebase is already well-organized with functional groupings, but lacks formal namespace hierarchy and PSR-4 autoloading.
+The Stadion PHP codebase contains **41 classes** across **39 files** in the `includes/` directory. Only **1 file** contains multiple class definitions. The codebase is already well-organized with functional groupings, but lacks formal namespace hierarchy and PSR-4 autoloading.
 
 **Key Finding:** The codebase is cleaner than expected. Only `class-notification-channels.php` violates the one-class-per-file rule.
 
@@ -26,9 +26,9 @@ The Caelis PHP codebase contains **41 classes** across **39 files** in the `incl
 
 | Class | Type | Line | Lines | Description |
 |-------|------|------|-------|-------------|
-| `PRM_Notification_Channel` | abstract | 15 | ~64 | Base class for notification channels |
-| `PRM_Email_Channel` | concrete | 79 | ~342 | Email notification implementation |
-| `PRM_Slack_Channel` | concrete | 426 | ~408 | Slack notification implementation |
+| `STADION_Notification_Channel` | abstract | 15 | ~64 | Base class for notification channels |
+| `STADION_Email_Channel` | concrete | 79 | ~342 | Email notification implementation |
+| `STADION_Slack_Channel` | concrete | 426 | ~408 | Slack notification implementation |
 
 **Split Strategy:**
 1. `class-notification-channel.php` - Abstract base class (new file)
@@ -93,80 +93,80 @@ includes/
 #### Core WordPress Integration (5 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `PRM_Post_Types` | class-post-types.php | 402 | CPT registration |
-| `PRM_Taxonomies` | class-taxonomies.php | 527 | Taxonomy registration |
-| `PRM_Access_Control` | class-access-control.php | 481 | User data isolation |
-| `PRM_Visibility` | class-visibility.php | 164 | Visibility helpers |
-| `PRM_User_Roles` | class-user-roles.php | 399 | Custom role management |
+| `STADION_Post_Types` | class-post-types.php | 402 | CPT registration |
+| `STADION_Taxonomies` | class-taxonomies.php | 527 | Taxonomy registration |
+| `STADION_Access_Control` | class-access-control.php | 481 | User data isolation |
+| `STADION_Visibility` | class-visibility.php | 164 | Visibility helpers |
+| `STADION_User_Roles` | class-user-roles.php | 399 | Custom role management |
 
 #### REST API Controllers (9 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `PRM_REST_Base` | class-rest-base.php | 227 | Abstract base controller |
-| `PRM_REST_API` | class-rest-api.php | 1178 | Legacy endpoints (dashboard, search) |
-| `PRM_REST_People` | class-rest-people.php | 774 | People CRUD |
-| `PRM_REST_Companies` | class-rest-companies.php | 601 | Companies CRUD |
-| `PRM_REST_Todos` | class-rest-todos.php | 492 | Todos CRUD |
-| `PRM_REST_Workspaces` | class-rest-workspaces.php | 1238 | Workspaces CRUD |
-| `PRM_REST_Slack` | class-rest-slack.php | 714 | Slack integration |
-| `PRM_REST_Import_Export` | class-rest-import-export.php | 423 | Import/Export endpoints |
-| `PRM_REST_Calendar` | class-rest-calendar.php | 1220 | Calendar endpoints |
+| `STADION_REST_Base` | class-rest-base.php | 227 | Abstract base controller |
+| `STADION_REST_API` | class-rest-api.php | 1178 | Legacy endpoints (dashboard, search) |
+| `STADION_REST_People` | class-rest-people.php | 774 | People CRUD |
+| `STADION_REST_Companies` | class-rest-companies.php | 601 | Companies CRUD |
+| `STADION_REST_Todos` | class-rest-todos.php | 492 | Todos CRUD |
+| `STADION_REST_Workspaces` | class-rest-workspaces.php | 1238 | Workspaces CRUD |
+| `STADION_REST_Slack` | class-rest-slack.php | 714 | Slack integration |
+| `STADION_REST_Import_Export` | class-rest-import-export.php | 423 | Import/Export endpoints |
+| `STADION_REST_Calendar` | class-rest-calendar.php | 1220 | Calendar endpoints |
 
 #### Notification System (3 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `PRM_Notification_Channel` | class-notification-channels.php | 64 | Abstract base |
-| `PRM_Email_Channel` | class-notification-channels.php | 342 | Email notifications |
-| `PRM_Slack_Channel` | class-notification-channels.php | 408 | Slack notifications |
+| `STADION_Notification_Channel` | class-notification-channels.php | 64 | Abstract base |
+| `STADION_Email_Channel` | class-notification-channels.php | 342 | Email notifications |
+| `STADION_Slack_Channel` | class-notification-channels.php | 408 | Slack notifications |
 
 #### Calendar System (6 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `PRM_Calendar_Connections` | class-calendar-connections.php | 156 | Connection management |
-| `PRM_Calendar_Matcher` | class-calendar-matcher.php | 297 | Email-to-person matching |
-| `PRM_Calendar_Sync` | class-calendar-sync.php | 450 | Background sync |
-| `PRM_Google_Calendar_Provider` | class-google-calendar-provider.php | 296 | Google Calendar API |
-| `PRM_CalDAV_Provider` | class-caldav-provider.php | 643 | CalDAV protocol |
-| `PRM_Google_OAuth` | class-google-oauth.php | 190 | OAuth flow |
+| `STADION_Calendar_Connections` | class-calendar-connections.php | 156 | Connection management |
+| `STADION_Calendar_Matcher` | class-calendar-matcher.php | 297 | Email-to-person matching |
+| `STADION_Calendar_Sync` | class-calendar-sync.php | 450 | Background sync |
+| `STADION_Google_Calendar_Provider` | class-google-calendar-provider.php | 296 | Google Calendar API |
+| `STADION_CalDAV_Provider` | class-caldav-provider.php | 643 | CalDAV protocol |
+| `STADION_Google_OAuth` | class-google-oauth.php | 190 | OAuth flow |
 
 #### Import/Export System (5 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `PRM_Monica_Import` | class-monica-import.php | 1040 | Monica CRM import |
-| `PRM_VCard_Import` | class-vcard-import.php | 1038 | VCard import |
-| `PRM_VCard_Export` | class-vcard-export.php | 940 | VCard export |
-| `PRM_Google_Contacts_Import` | class-google-contacts-import.php | 795 | Google Contacts import |
-| `PRM_ICal_Feed` | class-ical-feed.php | 477 | iCal feed generation |
+| `STADION_Monica_Import` | class-monica-import.php | 1040 | Monica CRM import |
+| `STADION_VCard_Import` | class-vcard-import.php | 1038 | VCard import |
+| `STADION_VCard_Export` | class-vcard-export.php | 940 | VCard export |
+| `STADION_Google_Contacts_Import` | class-google-contacts-import.php | 795 | Google Contacts import |
+| `STADION_ICal_Feed` | class-ical-feed.php | 477 | iCal feed generation |
 
 #### CardDAV System (4 classes)
 | Class | File | Namespace | Responsibility |
 |-------|------|-----------|----------------|
-| `PRM_CardDAV_Server` | class-carddav-server.php | none | Server wrapper |
-| `CardDAVBackend` | carddav/class-carddav-backend.php | `Caelis\CardDAV` | Sabre backend |
-| `AuthBackend` | carddav/class-auth-backend.php | `Caelis\CardDAV` | Authentication |
-| `PrincipalBackend` | carddav/class-principal-backend.php | `Caelis\CardDAV` | Principal backend |
+| `STADION_CardDAV_Server` | class-carddav-server.php | none | Server wrapper |
+| `CardDAVBackend` | carddav/class-carddav-backend.php | `Stadion\CardDAV` | Sabre backend |
+| `AuthBackend` | carddav/class-auth-backend.php | `Stadion\CardDAV` | Authentication |
+| `PrincipalBackend` | carddav/class-principal-backend.php | `Stadion\CardDAV` | Principal backend |
 
 #### Collaborative Features (5 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `PRM_Comment_Types` | class-comment-types.php | 616 | Notes/Activities |
-| `PRM_Workspace_Members` | class-workspace-members.php | 263 | Workspace membership |
-| `PRM_Mentions` | class-mentions.php | 53 | @mention parsing |
-| `PRM_Mention_Notifications` | class-mention-notifications.php | 110 | Mention notifications |
-| `PRM_Reminders` | class-reminders.php | 681 | Daily digest |
+| `STADION_Comment_Types` | class-comment-types.php | 616 | Notes/Activities |
+| `STADION_Workspace_Members` | class-workspace-members.php | 263 | Workspace membership |
+| `STADION_Mentions` | class-mentions.php | 53 | @mention parsing |
+| `STADION_Mention_Notifications` | class-mention-notifications.php | 110 | Mention notifications |
+| `STADION_Reminders` | class-reminders.php | 681 | Daily digest |
 
 #### Data Processing (4 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `PRM_Auto_Title` | class-auto-title.php | 208 | Auto-generate titles |
-| `PRM_Inverse_Relationships` | class-inverse-relationships.php | 660 | Bidirectional relationships |
-| `PRM_Todo_Migration` | class-todo-migration.php | 102 | Todo migration helper |
-| `PRM_Credential_Encryption` | class-credential-encryption.php | 56 | Sodium encryption |
+| `STADION_Auto_Title` | class-auto-title.php | 208 | Auto-generate titles |
+| `STADION_Inverse_Relationships` | class-inverse-relationships.php | 660 | Bidirectional relationships |
+| `STADION_Todo_Migration` | class-todo-migration.php | 102 | Todo migration helper |
+| `STADION_Credential_Encryption` | class-credential-encryption.php | 56 | Sodium encryption |
 
 #### CLI Commands (1 class)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `PRM_WP_CLI` | class-wp-cli.php | 1720 | WP-CLI commands |
+| `STADION_WP_CLI` | class-wp-cli.php | 1720 | WP-CLI commands |
 
 ---
 
@@ -244,64 +244,64 @@ includes/                        includes/
 
 ### Root Namespace
 
-`Caelis\` as the root namespace, mapping to `includes/`.
+`Stadion\` as the root namespace, mapping to `includes/`.
 
 ### Full Namespace Map
 
 | Current Class | Target Namespace | Target File |
 |---------------|------------------|-------------|
 | **Core** | | |
-| `PRM_Post_Types` | `Caelis\Core\PostTypes` | `core/PostTypes.php` |
-| `PRM_Taxonomies` | `Caelis\Core\Taxonomies` | `core/Taxonomies.php` |
-| `PRM_Access_Control` | `Caelis\Core\AccessControl` | `core/AccessControl.php` |
-| `PRM_Visibility` | `Caelis\Core\Visibility` | `core/Visibility.php` |
-| `PRM_User_Roles` | `Caelis\Core\UserRoles` | `core/UserRoles.php` |
-| `PRM_Auto_Title` | `Caelis\Core\AutoTitle` | `core/AutoTitle.php` |
+| `STADION_Post_Types` | `Stadion\Core\PostTypes` | `core/PostTypes.php` |
+| `STADION_Taxonomies` | `Stadion\Core\Taxonomies` | `core/Taxonomies.php` |
+| `STADION_Access_Control` | `Stadion\Core\AccessControl` | `core/AccessControl.php` |
+| `STADION_Visibility` | `Stadion\Core\Visibility` | `core/Visibility.php` |
+| `STADION_User_Roles` | `Stadion\Core\UserRoles` | `core/UserRoles.php` |
+| `STADION_Auto_Title` | `Stadion\Core\AutoTitle` | `core/AutoTitle.php` |
 | **REST API** | | |
-| `PRM_REST_Base` | `Caelis\REST\Base` | `rest/Base.php` |
-| `PRM_REST_API` | `Caelis\REST\Api` | `rest/Api.php` |
-| `PRM_REST_People` | `Caelis\REST\People` | `rest/People.php` |
-| `PRM_REST_Companies` | `Caelis\REST\Companies` | `rest/Companies.php` |
-| `PRM_REST_Todos` | `Caelis\REST\Todos` | `rest/Todos.php` |
-| `PRM_REST_Workspaces` | `Caelis\REST\Workspaces` | `rest/Workspaces.php` |
-| `PRM_REST_Slack` | `Caelis\REST\Slack` | `rest/Slack.php` |
-| `PRM_REST_Import_Export` | `Caelis\REST\ImportExport` | `rest/ImportExport.php` |
-| `PRM_REST_Calendar` | `Caelis\REST\Calendar` | `rest/Calendar.php` |
+| `STADION_REST_Base` | `Stadion\REST\Base` | `rest/Base.php` |
+| `STADION_REST_API` | `Stadion\REST\Api` | `rest/Api.php` |
+| `STADION_REST_People` | `Stadion\REST\People` | `rest/People.php` |
+| `STADION_REST_Companies` | `Stadion\REST\Companies` | `rest/Companies.php` |
+| `STADION_REST_Todos` | `Stadion\REST\Todos` | `rest/Todos.php` |
+| `STADION_REST_Workspaces` | `Stadion\REST\Workspaces` | `rest/Workspaces.php` |
+| `STADION_REST_Slack` | `Stadion\REST\Slack` | `rest/Slack.php` |
+| `STADION_REST_Import_Export` | `Stadion\REST\ImportExport` | `rest/ImportExport.php` |
+| `STADION_REST_Calendar` | `Stadion\REST\Calendar` | `rest/Calendar.php` |
 | **Notifications** | | |
-| `PRM_Notification_Channel` | `Caelis\Notifications\Channel` | `notifications/Channel.php` |
-| `PRM_Email_Channel` | `Caelis\Notifications\EmailChannel` | `notifications/EmailChannel.php` |
-| `PRM_Slack_Channel` | `Caelis\Notifications\SlackChannel` | `notifications/SlackChannel.php` |
+| `STADION_Notification_Channel` | `Stadion\Notifications\Channel` | `notifications/Channel.php` |
+| `STADION_Email_Channel` | `Stadion\Notifications\EmailChannel` | `notifications/EmailChannel.php` |
+| `STADION_Slack_Channel` | `Stadion\Notifications\SlackChannel` | `notifications/SlackChannel.php` |
 | **Calendar** | | |
-| `PRM_Calendar_Connections` | `Caelis\Calendar\Connections` | `calendar/Connections.php` |
-| `PRM_Calendar_Matcher` | `Caelis\Calendar\Matcher` | `calendar/Matcher.php` |
-| `PRM_Calendar_Sync` | `Caelis\Calendar\Sync` | `calendar/Sync.php` |
-| `PRM_Google_Calendar_Provider` | `Caelis\Calendar\GoogleProvider` | `calendar/GoogleProvider.php` |
-| `PRM_CalDAV_Provider` | `Caelis\Calendar\CalDAVProvider` | `calendar/CalDAVProvider.php` |
-| `PRM_Google_OAuth` | `Caelis\Calendar\GoogleOAuth` | `calendar/GoogleOAuth.php` |
+| `STADION_Calendar_Connections` | `Stadion\Calendar\Connections` | `calendar/Connections.php` |
+| `STADION_Calendar_Matcher` | `Stadion\Calendar\Matcher` | `calendar/Matcher.php` |
+| `STADION_Calendar_Sync` | `Stadion\Calendar\Sync` | `calendar/Sync.php` |
+| `STADION_Google_Calendar_Provider` | `Stadion\Calendar\GoogleProvider` | `calendar/GoogleProvider.php` |
+| `STADION_CalDAV_Provider` | `Stadion\Calendar\CalDAVProvider` | `calendar/CalDAVProvider.php` |
+| `STADION_Google_OAuth` | `Stadion\Calendar\GoogleOAuth` | `calendar/GoogleOAuth.php` |
 | **Import** | | |
-| `PRM_Monica_Import` | `Caelis\Import\Monica` | `import/Monica.php` |
-| `PRM_VCard_Import` | `Caelis\Import\VCard` | `import/VCard.php` |
-| `PRM_Google_Contacts_Import` | `Caelis\Import\GoogleContacts` | `import/GoogleContacts.php` |
+| `STADION_Monica_Import` | `Stadion\Import\Monica` | `import/Monica.php` |
+| `STADION_VCard_Import` | `Stadion\Import\VCard` | `import/VCard.php` |
+| `STADION_Google_Contacts_Import` | `Stadion\Import\GoogleContacts` | `import/GoogleContacts.php` |
 | **Export** | | |
-| `PRM_VCard_Export` | `Caelis\Export\VCard` | `export/VCard.php` |
-| `PRM_ICal_Feed` | `Caelis\Export\ICalFeed` | `export/ICalFeed.php` |
+| `STADION_VCard_Export` | `Stadion\Export\VCard` | `export/VCard.php` |
+| `STADION_ICal_Feed` | `Stadion\Export\ICalFeed` | `export/ICalFeed.php` |
 | **CardDAV** (already namespaced) | | |
-| `Caelis\CardDAV\CardDAVBackend` | (keep) | `carddav/CardDAVBackend.php` |
-| `Caelis\CardDAV\AuthBackend` | (keep) | `carddav/AuthBackend.php` |
-| `Caelis\CardDAV\PrincipalBackend` | (keep) | `carddav/PrincipalBackend.php` |
-| `PRM_CardDAV_Server` | `Caelis\CardDAV\Server` | `carddav/Server.php` |
+| `Stadion\CardDAV\CardDAVBackend` | (keep) | `carddav/CardDAVBackend.php` |
+| `Stadion\CardDAV\AuthBackend` | (keep) | `carddav/AuthBackend.php` |
+| `Stadion\CardDAV\PrincipalBackend` | (keep) | `carddav/PrincipalBackend.php` |
+| `STADION_CardDAV_Server` | `Stadion\CardDAV\Server` | `carddav/Server.php` |
 | **Collaboration** | | |
-| `PRM_Comment_Types` | `Caelis\Collaboration\CommentTypes` | `collaboration/CommentTypes.php` |
-| `PRM_Workspace_Members` | `Caelis\Collaboration\WorkspaceMembers` | `collaboration/WorkspaceMembers.php` |
-| `PRM_Mentions` | `Caelis\Collaboration\Mentions` | `collaboration/Mentions.php` |
-| `PRM_Mention_Notifications` | `Caelis\Collaboration\MentionNotifications` | `collaboration/MentionNotifications.php` |
-| `PRM_Reminders` | `Caelis\Collaboration\Reminders` | `collaboration/Reminders.php` |
+| `STADION_Comment_Types` | `Stadion\Collaboration\CommentTypes` | `collaboration/CommentTypes.php` |
+| `STADION_Workspace_Members` | `Stadion\Collaboration\WorkspaceMembers` | `collaboration/WorkspaceMembers.php` |
+| `STADION_Mentions` | `Stadion\Collaboration\Mentions` | `collaboration/Mentions.php` |
+| `STADION_Mention_Notifications` | `Stadion\Collaboration\MentionNotifications` | `collaboration/MentionNotifications.php` |
+| `STADION_Reminders` | `Stadion\Collaboration\Reminders` | `collaboration/Reminders.php` |
 | **Data** | | |
-| `PRM_Inverse_Relationships` | `Caelis\Data\InverseRelationships` | `data/InverseRelationships.php` |
-| `PRM_Todo_Migration` | `Caelis\Data\TodoMigration` | `data/TodoMigration.php` |
-| `PRM_Credential_Encryption` | `Caelis\Data\CredentialEncryption` | `data/CredentialEncryption.php` |
+| `STADION_Inverse_Relationships` | `Stadion\Data\InverseRelationships` | `data/InverseRelationships.php` |
+| `STADION_Todo_Migration` | `Stadion\Data\TodoMigration` | `data/TodoMigration.php` |
+| `STADION_Credential_Encryption` | `Stadion\Data\CredentialEncryption` | `data/CredentialEncryption.php` |
 | **CLI** | | |
-| `PRM_WP_CLI` | `Caelis\CLI\Commands` | `cli/Commands.php` |
+| `STADION_WP_CLI` | `Stadion\CLI\Commands` | `cli/Commands.php` |
 
 ---
 
@@ -317,7 +317,7 @@ includes/                        includes/
 **Step 2: Create folder structure**
 - Create subdirectories: `core/`, `rest/`, `notifications/`, `calendar/`, `import/`, `export/`, `collaboration/`, `data/`, `cli/`
 - Move files to appropriate folders
-- Keep old class names (PRM_* prefix)
+- Keep old class names (STADION_* prefix)
 - Update autoloader paths in functions.php
 
 **Step 3: Verify**
@@ -336,11 +336,11 @@ includes/                        includes/
 - Run `composer dump-autoload`
 
 **Step 3: Remove manual autoloader**
-- Remove `prm_autoloader()` function from functions.php
+- Remove `stadion_autoloader()` function from functions.php
 - Ensure Composer autoloader is loaded early
 
 **Step 4: Backward Compatibility**
-- Add class aliases for old PRM_* names (optional, for plugin compatibility)
+- Add class aliases for old STADION_* names (optional, for plugin compatibility)
 
 ---
 
@@ -382,7 +382,7 @@ After Phase 65 completes:
    - All class properties remain accessible
 
 2. **REST API endpoints unchanged**
-   - All `/prm/v1/` endpoints work identically
+   - All `/stadion/v1/` endpoints work identically
    - Response formats preserved
 
 3. **Hook compatibility**
@@ -395,8 +395,8 @@ For backward compatibility, add class aliases in functions.php:
 
 ```php
 // Backward compatibility aliases
-class_alias( 'Caelis\Core\PostTypes', 'PRM_Post_Types' );
-class_alias( 'Caelis\Core\Taxonomies', 'PRM_Taxonomies' );
+class_alias( 'Stadion\Core\PostTypes', 'STADION_Post_Types' );
+class_alias( 'Stadion\Core\Taxonomies', 'STADION_Taxonomies' );
 // ... etc for all classes
 ```
 
@@ -444,10 +444,10 @@ After each phase:
 
 ## Notes
 
-1. **CardDAV classes already namespaced:** The 3 classes in `carddav/` already use the `Caelis\CardDAV` namespace and follow PSR-4 naming conventions. These only need minor file renaming (remove `class-` prefix).
+1. **CardDAV classes already namespaced:** The 3 classes in `carddav/` already use the `Stadion\CardDAV` namespace and follow PSR-4 naming conventions. These only need minor file renaming (remove `class-` prefix).
 
 2. **WP-CLI conditional loading:** The `class-wp-cli.php` file is only loaded when WP-CLI is active. This pattern should be preserved.
 
 3. **Sabre library compatibility:** The CardDAV/CalDAV classes extend Sabre library base classes. Variable naming rules are relaxed for these files as Sabre uses camelCase.
 
-4. **REST controller inheritance:** All PRM_REST_* classes extend PRM_REST_Base. This inheritance chain must be preserved during namespace migration.
+4. **REST controller inheritance:** All STADION_REST_* classes extend STADION_REST_Base. This inheritance chain must be preserved during namespace migration.

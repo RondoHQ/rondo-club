@@ -4,10 +4,10 @@
  *
  * Maps WordPress users to DAV principals.
  *
- * @package Caelis
+ * @package Stadion
  */
 
-namespace Caelis\CardDAV;
+namespace Stadion\CardDAV;
 
 use Sabre\DAVACL\PrincipalBackend\AbstractBackend;
 
@@ -33,7 +33,7 @@ class PrincipalBackend extends AbstractBackend {
 		// Get all users who can use the CRM
 		$users = get_users(
 			[
-				'role__in' => [ 'administrator', 'caelis_user' ],
+				'role__in' => [ 'administrator', 'stadion_user' ],
 			]
 		);
 
@@ -65,7 +65,7 @@ class PrincipalBackend extends AbstractBackend {
 		}
 
 		// Verify user has appropriate role
-		if ( ! user_can( $user, 'manage_options' ) && ! in_array( 'caelis_user', $user->roles ) ) {
+		if ( ! user_can( $user, 'manage_options' ) && ! in_array( 'stadion_user', $user->roles ) ) {
 			return null;
 		}
 
@@ -103,7 +103,7 @@ class PrincipalBackend extends AbstractBackend {
 		$displayName = $searchProperties['{DAV:}displayname'] ?? null;
 
 		$args = [
-			'role__in' => [ 'administrator', 'caelis_user' ],
+			'role__in' => [ 'administrator', 'stadion_user' ],
 		];
 
 		if ( $email ) {
@@ -137,7 +137,7 @@ class PrincipalBackend extends AbstractBackend {
 			$email = substr( $uri, 7 );
 			$user  = get_user_by( 'email', $email );
 
-			if ( $user && ( user_can( $user, 'manage_options' ) || in_array( 'caelis_user', $user->roles ) ) ) {
+			if ( $user && ( user_can( $user, 'manage_options' ) || in_array( 'stadion_user', $user->roles ) ) ) {
 				return $principalPrefix . '/' . $user->user_login;
 			}
 		}

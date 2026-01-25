@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Build REST API endpoints for feedback CRUD operations under `prm/v1/feedback`. External tools can create and manage feedback programmatically with application password authentication. Admins can access all feedback; users access only their own.
+Build REST API endpoints for feedback CRUD operations under `stadion/v1/feedback`. External tools can create and manage feedback programmatically with application password authentication. Admins can access all feedback; users access only their own.
 
 </domain>
 
@@ -53,7 +53,7 @@ Build REST API endpoints for feedback CRUD operations under `prm/v1/feedback`. E
 <specifics>
 ## Specific Ideas
 
-No specific requirements — follow existing prm/v1 patterns and WordPress REST conventions.
+No specific requirements — follow existing stadion/v1 patterns and WordPress REST conventions.
 
 </specifics>
 

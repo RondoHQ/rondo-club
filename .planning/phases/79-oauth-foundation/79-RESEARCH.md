@@ -53,7 +53,7 @@ The current implementation follows this pattern:
 User clicks "Connect Google Calendar"
     |
     v
-GET /prm/v1/calendar/auth/google
+GET /stadion/v1/calendar/auth/google
     |
     v
 GoogleOAuth::get_auth_url($user_id)
@@ -65,7 +65,7 @@ GoogleOAuth::get_auth_url($user_id)
 User redirected to Google, grants access
     |
     v
-GET /prm/v1/calendar/auth/google/callback
+GET /stadion/v1/calendar/auth/google/callback
     - Validates state from transient
     - Exchanges code for tokens via GoogleOAuth::handle_callback()
     - Creates calendar connection with encrypted credentials
@@ -136,9 +136,9 @@ $needs_contacts_auth = !$has_contacts;
 **Example:**
 ```php
 // User meta keys for contacts
-const CONTACTS_META_KEY = '_prm_google_contacts_connection';
-const CONTACTS_SYNC_TOKEN = '_prm_google_contacts_sync_token';
-const CONTACTS_LAST_SYNC = '_prm_google_contacts_last_sync';
+const CONTACTS_META_KEY = '_stadion_google_contacts_connection';
+const CONTACTS_SYNC_TOKEN = '_stadion_google_contacts_sync_token';
+const CONTACTS_LAST_SYNC = '_stadion_google_contacts_last_sync';
 
 // Connection structure (stored encrypted in user meta)
 $contacts_connection = [
@@ -210,8 +210,8 @@ $actual_scopes = explode(' ', $token['scope']);
 $state = json_encode(['token' => $random_token, 'purpose' => 'contacts']);
 
 // Option 2: Separate endpoints (recommended)
-// /prm/v1/calendar/auth/google/callback - calendar
-// /prm/v1/google-contacts/callback      - contacts
+// /stadion/v1/calendar/auth/google/callback - calendar
+// /stadion/v1/google-contacts/callback      - contacts
 ```
 **Warning signs:** Calendar connections created when contacts intended
 
@@ -257,7 +257,7 @@ class GoogleOAuth {
         $client = new \Google\Client();
         $client->setClientId(GOOGLE_CALENDAR_CLIENT_ID);
         $client->setClientSecret(GOOGLE_CALENDAR_CLIENT_SECRET);
-        $client->setRedirectUri(rest_url('prm/v1/google-contacts/callback'));
+        $client->setRedirectUri(rest_url('stadion/v1/google-contacts/callback'));
 
         // Set contacts scope based on access mode
         $scope = $readonly ? self::CONTACTS_SCOPE_READONLY : self::CONTACTS_SCOPE_READWRITE;
@@ -303,7 +303,7 @@ public static function get_contacts_access_mode(array $credentials): string {
 ```php
 // Source: Pattern from class-calendar-connections.php adapted for contacts
 class GoogleContactsConnection {
-    const META_KEY = '_prm_google_contacts_connection';
+    const META_KEY = '_stadion_google_contacts_connection';
 
     public static function get_connection(int $user_id): ?array {
         $connection = get_user_meta($user_id, self::META_KEY, true);
@@ -338,7 +338,7 @@ public function google_contacts_auth_init($request) {
     if (GoogleContactsConnection::is_connected($user_id)) {
         return new \WP_Error(
             'already_connected',
-            __('Google Contacts is already connected.', 'caelis'),
+            __('Google Contacts is already connected.', 'stadion'),
             ['status' => 400]
         );
     }
@@ -351,7 +351,7 @@ public function google_contacts_auth_init($request) {
     if (!$client) {
         return new \WP_Error(
             'not_configured',
-            __('Google integration is not configured.', 'caelis'),
+            __('Google integration is not configured.', 'stadion'),
             ['status' => 400]
         );
     }
@@ -407,10 +407,10 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- Existing codebase: `/Users/joostdevalk/Code/caelis/includes/class-google-oauth.php`
-- Existing codebase: `/Users/joostdevalk/Code/caelis/includes/class-calendar-connections.php`
-- Existing codebase: `/Users/joostdevalk/Code/caelis/includes/class-rest-calendar.php`
-- Google API PHP Client: `/Users/joostdevalk/Code/caelis/vendor/google/apiclient-services/src/PeopleService.php`
+- Existing codebase: `/Users/joostdevalk/Code/stadion/includes/class-google-oauth.php`
+- Existing codebase: `/Users/joostdevalk/Code/stadion/includes/class-calendar-connections.php`
+- Existing codebase: `/Users/joostdevalk/Code/stadion/includes/class-rest-calendar.php`
+- Google API PHP Client: `/Users/joostdevalk/Code/stadion/vendor/google/apiclient-services/src/PeopleService.php`
 - [Google API PHP Client OAuth docs](https://github.com/googleapis/google-api-php-client/blob/main/docs/oauth-web.md)
 
 ### Secondary (MEDIUM confidence)
@@ -447,11 +447,11 @@ Things that couldn't be fully resolved:
 3. `src/pages/Settings/GoogleContactsCard.jsx` - UI component for connection status
 
 ### User Meta Keys to Add
-- `_prm_google_contacts_connection` - Connection data (credentials, status, etc.)
-- `_prm_google_contacts_pending_import` - Flag for auto-start import (Phase 80)
+- `_stadion_google_contacts_connection` - Connection data (credentials, status, etc.)
+- `_stadion_google_contacts_pending_import` - Flag for auto-start import (Phase 80)
 
 ### API Endpoints to Add
-- `GET /prm/v1/google-contacts/status` - Check connection status
-- `GET /prm/v1/google-contacts/auth` - Initiate OAuth flow
-- `GET /prm/v1/google-contacts/callback` - Handle OAuth callback
-- `DELETE /prm/v1/google-contacts` - Disconnect and revoke
+- `GET /stadion/v1/google-contacts/status` - Check connection status
+- `GET /stadion/v1/google-contacts/auth` - Initiate OAuth flow
+- `GET /stadion/v1/google-contacts/callback` - Handle OAuth callback
+- `DELETE /stadion/v1/google-contacts` - Disconnect and revoke

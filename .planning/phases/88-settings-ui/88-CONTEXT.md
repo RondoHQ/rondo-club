@@ -20,7 +20,7 @@ Admin interface for managing custom field definitions through a Settings subtab.
 - Edit/Delete actions appear on row hover (hidden until hover)
 
 ### Add/Edit flow
-- Slide-out panel for add/edit form (consistent with other Caelis detail views)
+- Slide-out panel for add/edit form (consistent with other Stadion detail views)
 - Simple dropdown for field type selection (not grouped or visual picker)
 - Field type changeable after creation, but with warning about data implications
 - Form fields: Label (required), Type (required), Description (optional)
@@ -50,8 +50,8 @@ Admin interface for managing custom field definitions through a Settings subtab.
 <specifics>
 ## Specific Ideas
 
-- Slide-out panel should feel like other Caelis detail views (consistent pattern)
-- Tab bar pattern similar to existing Caelis navigation patterns
+- Slide-out panel should feel like other Stadion detail views (consistent pattern)
+- Tab bar pattern similar to existing Stadion navigation patterns
 
 </specifics>
 

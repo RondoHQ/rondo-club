@@ -9,7 +9,7 @@
 This phase extends the Phase 74 "Add Person from Meeting" feature to allow users to add an unknown attendee's email address to an existing person instead of always creating a new person. The core challenge is introducing a choice popup when the Add button is clicked, implementing person search/select, and updating the existing person's contact_info ACF field.
 
 The codebase already has all necessary primitives:
-- Person search via `/prm/v1/search` endpoint (used by SearchModal in Layout.jsx)
+- Person search via `/stadion/v1/search` endpoint (used by SearchModal in Layout.jsx)
 - Person update via `useUpdatePerson` hook using `wpApi.updatePerson`
 - contact_info ACF repeater field for storing emails
 - Calendar re-matching via `Matcher::on_person_saved()` hook (auto-triggers on acf/save_post)
@@ -315,7 +315,7 @@ async function addEmailToExistingPerson(personId, email) {
 
 No major open questions. The implementation path is clear:
 
-1. **Resolved:** How to search people - use existing `/prm/v1/search` endpoint via useSearch hook
+1. **Resolved:** How to search people - use existing `/stadion/v1/search` endpoint via useSearch hook
 2. **Resolved:** How to update contact_info - use existing useUpdatePerson with ACF data
 3. **Resolved:** How to trigger calendar re-matching - automatic via existing `acf/save_post` hook
 4. **Resolved:** Meeting query invalidation - need to add to useUpdatePerson or custom hook
@@ -323,15 +323,15 @@ No major open questions. The implementation path is clear:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/caelis/src/components/MeetingDetailModal.jsx` - Current add person implementation from Phase 74
-- `/Users/joostdevalk/Code/caelis/src/components/PersonEditModal.jsx` - prefillData pattern from Phase 74
-- `/Users/joostdevalk/Code/caelis/src/components/layout/Layout.jsx` - SearchModal pattern (lines 197-416)
-- `/Users/joostdevalk/Code/caelis/src/hooks/usePeople.js` - useUpdatePerson, useCreatePerson hooks
-- `/Users/joostdevalk/Code/caelis/includes/class-calendar-matcher.php` - Matcher::on_person_saved() hook
-- `/Users/joostdevalk/Code/caelis/src/components/ContactEditModal.jsx` - contact_info field structure
+- `/Users/joostdevalk/Code/stadion/src/components/MeetingDetailModal.jsx` - Current add person implementation from Phase 74
+- `/Users/joostdevalk/Code/stadion/src/components/PersonEditModal.jsx` - prefillData pattern from Phase 74
+- `/Users/joostdevalk/Code/stadion/src/components/layout/Layout.jsx` - SearchModal pattern (lines 197-416)
+- `/Users/joostdevalk/Code/stadion/src/hooks/usePeople.js` - useUpdatePerson, useCreatePerson hooks
+- `/Users/joostdevalk/Code/stadion/includes/class-calendar-matcher.php` - Matcher::on_person_saved() hook
+- `/Users/joostdevalk/Code/stadion/src/components/ContactEditModal.jsx` - contact_info field structure
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/caelis/.planning/phases/74-add-person-from-meeting/74-01-PLAN.md` - Phase 74 implementation details
+- `/Users/joostdevalk/Code/stadion/.planning/phases/74-add-person-from-meeting/74-01-PLAN.md` - Phase 74 implementation details
 
 ## Metadata
 

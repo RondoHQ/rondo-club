@@ -5,10 +5,10 @@
  * Performs CRUD operations on Person CPT for CardDAV sync.
  * Includes sync token support for efficient synchronization.
  *
- * @package Caelis
+ * @package Stadion
  */
 
-namespace Caelis\CardDAV;
+namespace Stadion\CardDAV;
 
 use Sabre\CardDAV\Backend\AbstractBackend;
 use Sabre\CardDAV\Backend\SyncSupport;
@@ -23,12 +23,12 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	/**
 	 * Option name for sync tokens
 	 */
-	const SYNC_TOKEN_OPTION = 'prm_carddav_sync_tokens';
+	const SYNC_TOKEN_OPTION = 'stadion_carddav_sync_tokens';
 
 	/**
 	 * Option name for change log
 	 */
-	const CHANGE_LOG_OPTION = 'prm_carddav_changes';
+	const CHANGE_LOG_OPTION = 'stadion_carddav_changes';
 
 	/**
 	 * Flag to prevent duplicate logging during CardDAV operations
@@ -210,8 +210,8 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 				'id'                                     => $user->ID,
 				'uri'                                    => 'contacts',
 				'principaluri'                           => $principalUri,
-				'{DAV:}displayname'                      => 'Caelis Contacts',
-				'{' . Plugin::NS_CARDDAV . '}addressbook-description' => 'Contacts from Caelis CRM',
+				'{DAV:}displayname'                      => 'Stadion Contacts',
+				'{' . Plugin::NS_CARDDAV . '}addressbook-description' => 'Contacts from Stadion CRM',
 				'{http://calendarserver.org/ns/}getctag' => $ctag,
 				'{http://sabredav.org/ns}sync-token'     => $sync_token,
 			],
@@ -276,7 +276,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		);
 
 		foreach ( $persons as $person ) {
-			$vcard = \Caelis\Export\VCard::generate( $person );
+			$vcard = \Stadion\Export\VCard::generate( $person );
 			$etag  = $this->generateEtag( $person );
 
 			$cards[] = [
@@ -323,7 +323,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			return null;
 		}
 
-		$vcard = \Caelis\Export\VCard::generate( $person );
+		$vcard = \Stadion\Export\VCard::generate( $person );
 		$etag  = $this->generateEtag( $person );
 
 		return [
@@ -371,7 +371,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		self::set_skip_hooks( true );
 
 		// Parse the vCard data
-		$parsed = \Caelis\Export\VCard::parse( $cardData );
+		$parsed = \Stadion\Export\VCard::parse( $cardData );
 
 		if ( empty( $parsed['first_name'] ) && empty( $parsed['last_name'] ) && empty( $parsed['full_name'] ) ) {
 			error_log( 'CardDAV: Create failed - no name found in vCard data' );
@@ -442,7 +442,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 					[
 						'comment_post_ID'  => $post_id,
 						'comment_content'  => wp_kses_post( $note_content ),
-						'comment_type'     => \PRM_Comment_Types::TYPE_NOTE,
+						'comment_type'     => \STADION_Comment_Types::TYPE_NOTE,
 						'user_id'          => $addressBookId,
 						'comment_approved' => 1,
 					]
@@ -506,7 +506,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		}
 
 		// Parse the vCard data
-		$parsed = \Caelis\Export\VCard::parse( $cardData );
+		$parsed = \Stadion\Export\VCard::parse( $cardData );
 
 		// Update name fields
 		$first_name = $parsed['first_name'] ?: '';
@@ -558,7 +558,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 				$existing = get_comments(
 					[
 						'post_id' => $person_id,
-						'type'    => \PRM_Comment_Types::TYPE_NOTE,
+						'type'    => \STADION_Comment_Types::TYPE_NOTE,
 						'search'  => $note_content,
 						'number'  => 1,
 					]
@@ -569,7 +569,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 						[
 							'comment_post_ID'  => $person_id,
 							'comment_content'  => wp_kses_post( $note_content ),
-							'comment_type'     => \PRM_Comment_Types::TYPE_NOTE,
+							'comment_type'     => \STADION_Comment_Types::TYPE_NOTE,
 							'user_id'          => $addressBookId,
 							'comment_approved' => 1,
 						]

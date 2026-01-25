@@ -18,9 +18,9 @@ score: 4/4 must-haves verified
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Changes in Google Contacts appear in Caelis without manual action | VERIFIED | `import_delta()` method in `class-google-contacts-api-import.php` uses syncToken to fetch only changed contacts; cron job runs every 15 minutes processing users round-robin |
-| 2 | Changes in Caelis contacts appear in Google Contacts without manual action | VERIFIED | `push_changed_contacts()` in `class-google-contacts-sync.php` compares `post_modified` vs `_google_last_export` and calls `export_contact()` for changed posts |
-| 3 | Sync runs automatically in background at configurable frequency | VERIFIED | WP-Cron event `prm_google_contacts_sync` confirmed scheduled (next run in ~3 min); frequency dropdown in Settings with options 15min/hourly/6hr/daily stored in `sync_frequency` |
+| 1 | Changes in Google Contacts appear in Stadion without manual action | VERIFIED | `import_delta()` method in `class-google-contacts-api-import.php` uses syncToken to fetch only changed contacts; cron job runs every 15 minutes processing users round-robin |
+| 2 | Changes in Stadion contacts appear in Google Contacts without manual action | VERIFIED | `push_changed_contacts()` in `class-google-contacts-sync.php` compares `post_modified` vs `_google_last_export` and calls `export_contact()` for changed posts |
+| 3 | Sync runs automatically in background at configurable frequency | VERIFIED | WP-Cron event `stadion_google_contacts_sync` confirmed scheduled (next run in ~3 min); frequency dropdown in Settings with options 15min/hourly/6hr/daily stored in `sync_frequency` |
 | 4 | Only changed contacts are synced (not full re-import every time) | VERIFIED | Delta sync uses Google syncToken for pulls; push phase filters to contacts where `post_modified > _google_last_export` |
 
 **Score:** 4/4 truths verified
@@ -35,16 +35,16 @@ score: 4/4 must-haves verified
 | `includes/class-rest-google-contacts.php` | REST endpoints for sync | VERIFIED | Routes: `/google-contacts/sync` (POST), `/google-contacts/sync-frequency` (POST); callbacks: `trigger_contacts_sync()`, `update_contacts_sync_frequency()` |
 | `src/api/client.js` | API functions for sync | VERIFIED | Has `triggerContactsSync()` and `updateContactsSyncFrequency()` |
 | `src/pages/Settings/Settings.jsx` | Sync UI controls | VERIFIED | Has "Sync Now" button, frequency dropdown, `handleContactsSync()`, `syncFrequencyOptions` |
-| `functions.php` | GoogleContactsSync initialization | VERIFIED | `use Caelis\Contacts\GoogleContactsSync;` at line 50, `new GoogleContactsSync();` at line 345 |
+| `functions.php` | GoogleContactsSync initialization | VERIFIED | `use Stadion\Contacts\GoogleContactsSync;` at line 50, `new GoogleContactsSync();` at line 345 |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| `functions.php` | `class-google-contacts-sync.php` | class instantiation | WIRED | `new GoogleContactsSync();` in `prm_init()` |
+| `functions.php` | `class-google-contacts-sync.php` | class instantiation | WIRED | `new GoogleContactsSync();` in `stadion_init()` |
 | `GoogleContactsSync::sync_user()` | `GoogleContactsAPI::import_delta()` | method call | WIRED | Line 229: `$importer->import_delta()` |
 | `GoogleContactsSync::push_changed_contacts()` | `GoogleContactsExport::export_contact()` | method call | WIRED | Line 382: `$exporter->export_contact($post->ID)` |
-| `Settings.jsx` | `/prm/v1/google-contacts/sync` | fetch on button click | WIRED | `handleContactsSync` calls `prmApi.triggerContactsSync()` |
+| `Settings.jsx` | `/stadion/v1/google-contacts/sync` | fetch on button click | WIRED | `handleContactsSync` calls `prmApi.triggerContactsSync()` |
 | `trigger_contacts_sync()` | `GoogleContactsSync::sync_user_manual()` | method call | WIRED | Line 680: `$sync->sync_user_manual($user_id)` |
 | WP-Cron | `GoogleContactsSync::run_background_sync()` | hook callback | WIRED | `add_action(self::CRON_HOOK, [$this, 'run_background_sync'])` |
 
@@ -74,7 +74,7 @@ None required. All success criteria can be verified programmatically.
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| Cron event scheduled | VERIFIED | `wp cron event list` shows `prm_google_contacts_sync` scheduled, next run in ~3 minutes |
+| Cron event scheduled | VERIFIED | `wp cron event list` shows `stadion_google_contacts_sync` scheduled, next run in ~3 minutes |
 | PHP files syntax valid | VERIFIED | All files pass `php -l` check |
 | Files deployed | VERIFIED | Production rsync completed per SUMMARY files |
 

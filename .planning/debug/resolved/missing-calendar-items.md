@@ -58,7 +58,7 @@ started: Just noticed
 
 - timestamp: 2026-01-17T09:52:00Z
   checked: Calendar sync cron status
-  found: prm_calendar_sync cron was NOT scheduled, manually scheduled and ran sync
+  found: stadion_calendar_sync cron was NOT scheduled, manually scheduled and ran sync
   implication: Calendar sync was not running automatically
 
 - timestamp: 2026-01-17T09:55:00Z

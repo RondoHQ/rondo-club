@@ -5,7 +5,7 @@
  * Handles Slack-based notification delivery via OAuth or webhooks.
  */
 
-namespace Caelis\Notifications;
+namespace Stadion\Notifications;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -21,11 +21,11 @@ class SlackChannel extends Channel {
 	}
 
 	public function get_channel_name() {
-		return __( 'Slack', 'caelis' );
+		return __( 'Slack', 'stadion' );
 	}
 
 	public function is_enabled_for_user( $user_id ) {
-		$channels = get_user_meta( $user_id, 'caelis_notification_channels', true );
+		$channels = get_user_meta( $user_id, 'stadion_notification_channels', true );
 		if ( ! is_array( $channels ) ) {
 			return false;
 		}
@@ -33,24 +33,24 @@ class SlackChannel extends Channel {
 			return false;
 		}
 		// Check if bot token is configured (OAuth) or webhook (legacy)
-		$bot_token = get_user_meta( $user_id, 'caelis_slack_bot_token', true );
-		$webhook   = get_user_meta( $user_id, 'caelis_slack_webhook', true );
+		$bot_token = get_user_meta( $user_id, 'stadion_slack_bot_token', true );
+		$webhook   = get_user_meta( $user_id, 'stadion_slack_webhook', true );
 		return ! empty( $bot_token ) || ! empty( $webhook );
 	}
 
 	public function get_user_config( $user_id ) {
 		// Prefer OAuth bot token over webhook
-		$bot_token = get_user_meta( $user_id, 'caelis_slack_bot_token', true );
+		$bot_token = get_user_meta( $user_id, 'stadion_slack_bot_token', true );
 		if ( ! empty( $bot_token ) ) {
 			return [
 				'bot_token'    => base64_decode( $bot_token ),
-				'workspace_id' => get_user_meta( $user_id, 'caelis_slack_workspace_id', true ),
-				'target'       => get_user_meta( $user_id, 'caelis_slack_target', true ), // Channel or user ID
+				'workspace_id' => get_user_meta( $user_id, 'stadion_slack_workspace_id', true ),
+				'target'       => get_user_meta( $user_id, 'stadion_slack_target', true ), // Channel or user ID
 			];
 		}
 
 		// Fallback to webhook for legacy support
-		$webhook = get_user_meta( $user_id, 'caelis_slack_webhook', true );
+		$webhook = get_user_meta( $user_id, 'stadion_slack_webhook', true );
 		if ( ! empty( $webhook ) ) {
 			return [
 				'webhook_url' => $webhook,
@@ -96,10 +96,10 @@ class SlackChannel extends Channel {
 				$targets = [ $target ];
 			} else {
 				// Get configured targets from user meta
-				$targets = get_user_meta( $user_id, 'caelis_slack_targets', true );
+				$targets = get_user_meta( $user_id, 'stadion_slack_targets', true );
 				if ( ! is_array( $targets ) || empty( $targets ) ) {
 					// Fallback to user's Slack user ID (DM) if no targets configured
-					$slack_user_id = get_user_meta( $user_id, 'caelis_slack_user_id', true );
+					$slack_user_id = get_user_meta( $user_id, 'stadion_slack_user_id', true );
 					if ( ! empty( $slack_user_id ) ) {
 						$targets = [ $slack_user_id ];
 					}
@@ -138,7 +138,7 @@ class SlackChannel extends Channel {
 
 		$payload = [
 			'channel' => $target,
-			'text'    => __( 'Your Reminders & Todos for This Week', 'caelis' ),
+			'text'    => __( 'Your Reminders & Todos for This Week', 'stadion' ),
 			'blocks'  => $blocks,
 		];
 
@@ -177,9 +177,9 @@ class SlackChannel extends Channel {
 		$logo_url = $this->get_logo_url();
 
 		$payload = [
-			'text'     => __( 'Your Important Dates for This Week', 'caelis' ),
+			'text'     => __( 'Your Important Dates for This Week', 'stadion' ),
 			'blocks'   => $blocks,
-			'username' => 'Caelis',
+			'username' => 'Stadion',
 		];
 
 		if ( $logo_url ) {
@@ -224,7 +224,7 @@ class SlackChannel extends Channel {
 		$text_parts = [];
 
 		// Today section
-		$text_parts[] = sprintf( '*<%s|%s> %s*', home_url(), 'Caelis', __( 'Today', 'caelis' ) );
+		$text_parts[] = sprintf( '*<%s|%s> %s*', home_url(), 'Stadion', __( 'Today', 'stadion' ) );
 		$text_parts[] = ''; // Empty line
 
 		$has_today_items = false;
@@ -260,13 +260,13 @@ class SlackChannel extends Channel {
 		}
 
 		if ( ! $has_today_items ) {
-			$text_parts[] = '• ' . __( 'No reminders or todos', 'caelis' );
+			$text_parts[] = '• ' . __( 'No reminders or todos', 'stadion' );
 		}
 
 		$text_parts[] = ''; // Empty line
 
 		// Tomorrow section
-		$text_parts[] = '*' . __( 'Tomorrow', 'caelis' ) . '*';
+		$text_parts[] = '*' . __( 'Tomorrow', 'stadion' ) . '*';
 		$text_parts[] = ''; // Empty line
 
 		$has_tomorrow_items = false;
@@ -298,13 +298,13 @@ class SlackChannel extends Channel {
 		}
 
 		if ( ! $has_tomorrow_items ) {
-			$text_parts[] = '• ' . __( 'No reminders or todos', 'caelis' );
+			$text_parts[] = '• ' . __( 'No reminders or todos', 'stadion' );
 		}
 
 		$text_parts[] = ''; // Empty line
 
 		// Rest of week section
-		$text_parts[] = '*' . __( 'Rest of the week', 'caelis' ) . '*';
+		$text_parts[] = '*' . __( 'Rest of the week', 'stadion' ) . '*';
 		$text_parts[] = ''; // Empty line
 
 		$has_week_items = false;
@@ -337,13 +337,13 @@ class SlackChannel extends Channel {
 		}
 
 		if ( ! $has_week_items ) {
-			$text_parts[] = '• ' . __( 'No reminders or todos', 'caelis' );
+			$text_parts[] = '• ' . __( 'No reminders or todos', 'stadion' );
 		}
 
 		// Mentions section
 		if ( ! empty( $digest_data['mentions'] ) ) {
 			$text_parts[] = ''; // Empty line
-			$text_parts[] = '*' . __( 'You were mentioned', 'caelis' ) . '* 💬';
+			$text_parts[] = '*' . __( 'You were mentioned', 'stadion' ) . '* 💬';
 			$text_parts[] = ''; // Empty line
 
 			foreach ( $digest_data['mentions'] as $mention ) {
@@ -356,7 +356,7 @@ class SlackChannel extends Channel {
 		// Workspace activity section
 		if ( ! empty( $digest_data['workspace_activity'] ) ) {
 			$text_parts[] = ''; // Empty line
-			$text_parts[] = '*' . __( 'Workspace Activity', 'caelis' ) . '* 📋';
+			$text_parts[] = '*' . __( 'Workspace Activity', 'stadion' ) . '* 📋';
 			$text_parts[] = ''; // Empty line
 
 			foreach ( $digest_data['workspace_activity'] as $activity ) {

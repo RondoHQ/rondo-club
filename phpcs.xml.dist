@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         name="Caelis Theme"
+         name="Stadion Theme"
          xsi:noNamespaceSchemaLocation="https://schema.phpcodesniffer.com/phpcs.xsd">
 
-    <description>WordPress Coding Standards for Caelis Theme</description>
+    <description>WordPress Coding Standards for Stadion Theme</description>
 
     <!-- What to scan -->
     <file>.</file>
@@ -44,7 +44,7 @@
         <exclude name="Universal.Operators.DisallowShortTernary.Found"/>
 
         <!--
-            Using role names directly (e.g., 'administrator', 'caelis_user')
+            Using role names directly (e.g., 'administrator', 'stadion_user')
             is valid in WordPress capability checks.
         -->
         <exclude name="WordPress.WP.Capabilities.RoleFound"/>
@@ -103,7 +103,7 @@
     <rule ref="WordPress.WP.I18n">
         <properties>
             <property name="text_domain" type="array">
-                <element value="caelis"/>
+                <element value="stadion"/>
             </property>
         </properties>
     </rule>
@@ -112,9 +112,9 @@
     <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
         <properties>
             <property name="prefixes" type="array">
-                <element value="prm_"/>
-                <element value="caelis"/>
-                <element value="PRM_"/>
+                <element value="stadion_"/>
+                <element value="stadion"/>
+                <element value="STADION_"/>
             </property>
         </properties>
     </rule>

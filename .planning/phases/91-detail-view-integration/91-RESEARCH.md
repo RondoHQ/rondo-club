@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase integrates custom fields into the Person and Organization detail pages. The Caelis codebase already has established patterns for displaying sections on detail pages, editing via modals, and handling ACF data through the REST API. Custom field values are already exposed through ACF's native REST API integration (`show_in_rest: 1` on the field group), so field values are accessible in the `acf` object of person/company responses.
+This phase integrates custom fields into the Person and Organization detail pages. The Stadion codebase already has established patterns for displaying sections on detail pages, editing via modals, and handling ACF data through the REST API. Custom field values are already exposed through ACF's native REST API integration (`show_in_rest: 1` on the field group), so field values are accessible in the `acf` object of person/company responses.
 
 The implementation requires:
 1. A new "Custom Fields" section component for detail pages
@@ -14,11 +14,11 @@ The implementation requires:
 3. Type-specific display renderers for the 14 field types
 4. Type-specific input components for editing
 
-**Primary recommendation:** Create a reusable `CustomFieldsSection` component that renders in both PersonDetail and CompanyDetail, with a corresponding `CustomFieldsEditModal` that handles all field types. This matches existing Caelis patterns.
+**Primary recommendation:** Create a reusable `CustomFieldsSection` component that renders in both PersonDetail and CompanyDetail, with a corresponding `CustomFieldsEditModal` that handles all field types. This matches existing Stadion patterns.
 
 ## Standard Stack
 
-The Caelis codebase already has all required libraries installed and in use.
+The Stadion codebase already has all required libraries installed and in use.
 
 ### Core (Already in Use)
 | Library | Version | Purpose | Why Standard |
@@ -157,7 +157,7 @@ Problems that look simple but have existing solutions:
 | API caching | Custom state | TanStack Query | Already manages all server state |
 | Person/Company search | Custom search | Existing autocomplete patterns | Used in RelationshipEditModal |
 
-**Key insight:** Every UI pattern needed already exists in Caelis. The main work is type-specific rendering.
+**Key insight:** Every UI pattern needed already exists in Stadion. The main work is type-specific rendering.
 
 ## Common Pitfalls
 
@@ -185,7 +185,7 @@ Problems that look simple but have existing solutions:
 **How to avoid:** Fetch field definitions for display (available to all logged-in users when fetching the post), but don't show Settings link to non-admins.
 **Warning signs:** Regular users see empty Custom Fields section.
 
-**Resolution:** The field definitions are needed to display values properly (to get label, type, etc.). However, the `/prm/v1/custom-fields/{post_type}` endpoint requires `manage_options`. We have two options:
+**Resolution:** The field definitions are needed to display values properly (to get label, type, etc.). However, the `/stadion/v1/custom-fields/{post_type}` endpoint requires `manage_options`. We have two options:
 1. Create a new read-only endpoint for non-admins
 2. Include field definitions in the person/company REST response
 
@@ -330,10 +330,10 @@ function FieldDisplay({ field, value }) {
 
 | Old Approach | Current Approach | When Changed | Impact |
 |--------------|------------------|--------------|--------|
-| Click-to-edit inline | Modal-based editing | N/A (Caelis standard) | Consistent UX |
+| Click-to-edit inline | Modal-based editing | N/A (Stadion standard) | Consistent UX |
 | Custom field storage | ACF native storage | Phase 87-90 | Use ACF APIs |
 
-**Current in Caelis:**
+**Current in Stadion:**
 - All editing uses modals, not inline editing
 - ACF handles field storage and REST exposure
 - Custom fields are in their own field group per post type
@@ -343,7 +343,7 @@ function FieldDisplay({ field, value }) {
 Things that couldn't be fully resolved:
 
 1. **Field Definition Access for Non-Admins**
-   - What we know: Currently `/prm/v1/custom-fields/{post_type}` requires `manage_options`
+   - What we know: Currently `/stadion/v1/custom-fields/{post_type}` requires `manage_options`
    - What's unclear: Non-admins need field definitions to display values properly
    - Recommendation: Add field definitions to person/company REST response via `rest_prepare` filter, OR create read-only endpoint for field metadata (label, type, choices only)
 
@@ -360,14 +360,14 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/caelis/src/pages/People/PersonDetail.jsx` - Detail page structure, section patterns
-- `/Users/joostdevalk/Code/caelis/src/pages/Companies/CompanyDetail.jsx` - Organization detail patterns
-- `/Users/joostdevalk/Code/caelis/src/components/FieldFormPanel.jsx` - Field type options, form patterns
-- `/Users/joostdevalk/Code/caelis/src/components/ContactEditModal.jsx` - Modal editing pattern
-- `/Users/joostdevalk/Code/caelis/includes/customfields/class-manager.php` - Field storage, types
-- `/Users/joostdevalk/Code/caelis/includes/class-rest-custom-fields.php` - API structure
-- `/Users/joostdevalk/Code/caelis/src/api/client.js` - API client methods
-- `/Users/joostdevalk/Code/caelis/src/pages/Settings/CustomFields.jsx` - Field management UI
+- `/Users/joostdevalk/Code/stadion/src/pages/People/PersonDetail.jsx` - Detail page structure, section patterns
+- `/Users/joostdevalk/Code/stadion/src/pages/Companies/CompanyDetail.jsx` - Organization detail patterns
+- `/Users/joostdevalk/Code/stadion/src/components/FieldFormPanel.jsx` - Field type options, form patterns
+- `/Users/joostdevalk/Code/stadion/src/components/ContactEditModal.jsx` - Modal editing pattern
+- `/Users/joostdevalk/Code/stadion/includes/customfields/class-manager.php` - Field storage, types
+- `/Users/joostdevalk/Code/stadion/includes/class-rest-custom-fields.php` - API structure
+- `/Users/joostdevalk/Code/stadion/src/api/client.js` - API client methods
+- `/Users/joostdevalk/Code/stadion/src/pages/Settings/CustomFields.jsx` - Field management UI
 
 ### Secondary (MEDIUM confidence)
 - ACF documentation on REST API field exposure (via `show_in_rest: 1`)

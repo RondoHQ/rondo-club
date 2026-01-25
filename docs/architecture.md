@@ -10,7 +10,7 @@ This document describes the technical architecture of the bidirectional relation
 
 ### Backend Components
 
-#### PRM_Inverse_Relationships Class
+#### STADION_Inverse_Relationships Class
 
 **File**: `includes/class-inverse-relationships.php`
 
@@ -182,7 +182,7 @@ To add custom logic when relationships are created:
 
 ```php
 // In your theme's functions.php or a custom plugin
-add_action('prm_relationship_created', function($from_person_id, $to_person_id, $relationship_type_id) {
+add_action('stadion_relationship_created', function($from_person_id, $to_person_id, $relationship_type_id) {
     // Your custom logic here
 }, 10, 3);
 ```
@@ -192,7 +192,7 @@ add_action('prm_relationship_created', function($from_person_id, $to_person_id, 
 To override inverse mappings programmatically:
 
 ```php
-add_filter('prm_inverse_relationship_type', function($inverse_type_id, $relationship_type_id, $from_person_id, $to_person_id) {
+add_filter('stadion_inverse_relationship_type', function($inverse_type_id, $relationship_type_id, $from_person_id, $to_person_id) {
     // Custom logic to determine inverse
     return $inverse_type_id;
 }, 10, 4);
@@ -203,7 +203,7 @@ add_filter('prm_inverse_relationship_type', function($inverse_type_id, $relation
 To customize gender-dependent resolution:
 
 ```php
-add_filter('prm_resolve_gender_dependent_type', function($resolved_type_id, $group, $gender, $related_person_id) {
+add_filter('stadion_resolve_gender_dependent_type', function($resolved_type_id, $group, $gender, $related_person_id) {
     // Custom resolution logic
     return $resolved_type_id;
 }, 10, 4);
@@ -260,7 +260,7 @@ Inverse mappings are stored in taxonomy term meta:
 
 ### Access Control
 
-- Relationship creation respects `PRM_Access_Control` permissions
+- Relationship creation respects `STADION_Access_Control` permissions
 - Users can only create relationships for people they can access
 - Inverse relationships inherit the same access restrictions
 

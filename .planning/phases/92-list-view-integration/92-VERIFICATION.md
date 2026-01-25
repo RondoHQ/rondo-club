@@ -41,11 +41,11 @@ score: 5/5 must-haves verified
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| PeopleList.jsx | /prm/v1/custom-fields/person/metadata | useQuery with prmApi.getCustomFieldsMetadata('person') | WIRED | Line 152 calls API, response stored in customFields |
-| CompaniesList.jsx | /prm/v1/custom-fields/company/metadata | useQuery with prmApi.getCustomFieldsMetadata('company') | WIRED | Line 432 calls API, response stored in customFields |
+| PeopleList.jsx | /stadion/v1/custom-fields/person/metadata | useQuery with prmApi.getCustomFieldsMetadata('person') | WIRED | Line 152 calls API, response stored in customFields |
+| CompaniesList.jsx | /stadion/v1/custom-fields/company/metadata | useQuery with prmApi.getCustomFieldsMetadata('company') | WIRED | Line 432 calls API, response stored in customFields |
 | CustomFieldColumn.jsx | person.acf/company.acf | Reading field.name from ACF object | WIRED | PeopleList line 117: `person.acf?.[field.name]`, CompaniesList line 397: `company.acf?.[field.name]` |
 | FieldFormPanel.jsx | REST API | submitData includes show_in_list_view and list_view_order | WIRED | Lines 355-357 add properties to submitData before onSubmit |
-| API client | REST endpoint | getCustomFieldsMetadata method | WIRED | client.js line 273: `getCustomFieldsMetadata: (postType) => api.get('/prm/v1/custom-fields/${postType}/metadata')` |
+| API client | REST endpoint | getCustomFieldsMetadata method | WIRED | client.js line 273: `getCustomFieldsMetadata: (postType) => api.get('/stadion/v1/custom-fields/${postType}/metadata')` |
 
 ### Requirements Coverage
 

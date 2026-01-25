@@ -73,7 +73,7 @@
             "label": "App Version",
             "name": "app_version",
             "type": "text",
-            "instructions": "Caelis version at time of submission",
+            "instructions": "Stadion version at time of submission",
             "required": 0
         },
         {
@@ -175,7 +175,7 @@
             {
                 "param": "post_type",
                 "operator": "==",
-                "value": "caelis_feedback"
+                "value": "stadion_feedback"
             }
         ]
     ],

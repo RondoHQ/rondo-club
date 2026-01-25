@@ -19,9 +19,9 @@
  * - sync_frequency: int - Sync frequency in minutes (15, 60, 360, 1440)
  */
 
-namespace Caelis\Contacts;
+namespace Stadion\Contacts;
 
-use Caelis\Data\CredentialEncryption;
+use Stadion\Data\CredentialEncryption;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -32,12 +32,12 @@ class GoogleContactsConnection {
 	/**
 	 * User meta key for storing Google Contacts connection data
 	 */
-	const META_KEY = '_prm_google_contacts_connection';
+	const META_KEY = '_stadion_google_contacts_connection';
 
 	/**
 	 * User meta key for pending import flag
 	 */
-	const PENDING_IMPORT_KEY = '_prm_google_contacts_pending_import';
+	const PENDING_IMPORT_KEY = '_stadion_google_contacts_pending_import';
 
 	/**
 	 * Get the Google Contacts connection for a user
@@ -200,10 +200,10 @@ class GoogleContactsConnection {
 	 */
 	public static function get_frequency_options(): array {
 		return [
-			15   => __( 'Every 15 minutes', 'caelis' ),
-			60   => __( 'Every hour', 'caelis' ),
-			360  => __( 'Every 6 hours', 'caelis' ),
-			1440 => __( 'Daily', 'caelis' ),
+			15   => __( 'Every 15 minutes', 'stadion' ),
+			60   => __( 'Every hour', 'stadion' ),
+			360  => __( 'Every 6 hours', 'stadion' ),
+			1440 => __( 'Daily', 'stadion' ),
 		];
 	}
 

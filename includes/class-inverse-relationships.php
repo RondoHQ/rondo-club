@@ -5,7 +5,7 @@
  * Automatically creates/updates/deletes inverse relationships when relationships are modified.
  */
 
-namespace Caelis\Data;
+namespace Stadion\Data;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

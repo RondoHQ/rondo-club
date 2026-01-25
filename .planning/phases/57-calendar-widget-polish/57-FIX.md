@@ -97,7 +97,7 @@ When no calendar is connected, row 2 should show 2 items (Recently Contacted, Re
 **Issue:** Favicon does not update when accent color changes in Settings → Appearance.
 
 **Fix:**
-1. Find the `prm_theme_add_favicon()` function in functions.php (around line 384-389)
+1. Find the `stadion_theme_add_favicon()` function in functions.php (around line 384-389)
 2. Comment out or remove the static favicon output
 3. React's useTheme.js already has the updateFavicon() function that will create the favicon link dynamically
 

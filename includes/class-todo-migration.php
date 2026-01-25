@@ -3,10 +3,10 @@
  * Todo Status Migration
  *
  * Migrates todos from meta-based status (is_completed, awaiting_response)
- * to WordPress post status (prm_open, prm_awaiting, prm_completed).
+ * to WordPress post status (stadion_open, stadion_awaiting, stadion_completed).
  */
 
-namespace Caelis\Data;
+namespace Stadion\Data;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -88,7 +88,7 @@ class TodoMigration {
 		$todos = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
-				'prm_todo',
+				'stadion_todo',
 				'publish'
 			)
 		);
@@ -102,13 +102,13 @@ class TodoMigration {
 
 			// Determine new status
 			if ( $is_completed && $awaiting_response ) {
-				$new_status = 'prm_awaiting';
+				$new_status = 'stadion_awaiting';
 				++$stats['awaiting'];
 			} elseif ( $is_completed ) {
-				$new_status = 'prm_completed';
+				$new_status = 'stadion_completed';
 				++$stats['completed'];
 			} else {
-				$new_status = 'prm_open';
+				$new_status = 'stadion_open';
 				++$stats['open'];
 			}
 
@@ -123,7 +123,7 @@ class TodoMigration {
 				);
 
 				// Rename awaiting_response_since to awaiting_since if migrating to awaiting
-				if ( $new_status === 'prm_awaiting' && $awaiting_response_since ) {
+				if ( $new_status === 'stadion_awaiting' && $awaiting_response_since ) {
 					update_field( 'awaiting_since', $awaiting_response_since, $todo_id );
 				}
 
@@ -148,7 +148,7 @@ class TodoMigration {
 	 * @return bool True if there are todos with 'publish' status.
 	 */
 	public static function needs_migration() {
-		$count = wp_count_posts( 'prm_todo' );
+		$count = wp_count_posts( 'stadion_todo' );
 		return isset( $count->publish ) && $count->publish > 0;
 	}
 }

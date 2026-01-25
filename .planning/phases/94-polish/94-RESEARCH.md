@@ -233,7 +233,7 @@ Verified patterns from official sources and existing codebase:
 
 ### Sortable List Setup (from DashboardCustomizeModal.jsx)
 ```jsx
-// Source: /Users/joostdevalk/Code/caelis/src/components/DashboardCustomizeModal.jsx lines 107-134
+// Source: /Users/joostdevalk/Code/stadion/src/components/DashboardCustomizeModal.jsx lines 107-134
 const sensors = useSensors(
   useSensor(PointerSensor, {
     activationConstraint: { distance: 8 },
@@ -262,7 +262,7 @@ const handleDragEnd = (event) => {
 ### ACF Validation Filter (from official docs)
 ```php
 // Source: https://www.advancedcustomfields.com/resources/acf-validate_value/
-function caelis_validate_custom_field($valid, $value, $field, $input_name) {
+function stadion_validate_custom_field($valid, $value, $field, $input_name) {
     // Early exit if already invalid
     if ($valid !== true) {
         return $valid;
@@ -292,14 +292,14 @@ function caelis_validate_custom_field($valid, $value, $field, $input_name) {
 
     return $valid;
 }
-add_filter('acf/validate_value', 'caelis_validate_custom_field', 10, 4);
+add_filter('acf/validate_value', 'stadion_validate_custom_field', 10, 4);
 ```
 
 ### Bulk Update Field Order API
 ```php
-// New endpoint: PUT /prm/v1/custom-fields/{post_type}/order
+// New endpoint: PUT /stadion/v1/custom-fields/{post_type}/order
 register_rest_route(
-    'prm/v1',
+    'stadion/v1',
     '/custom-fields/(?P<post_type>person|company)/order',
     [
         'methods' => 'PUT',

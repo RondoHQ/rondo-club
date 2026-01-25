@@ -14,7 +14,7 @@ The key decisions are:
 - Global scope (not workspace-scoped) as confirmed in prior decisions
 - Gallery field for attachments using existing WordPress media library pattern
 
-**Primary recommendation:** Follow existing `prm_todo` and `person` CPT patterns exactly - register CPT in `class-post-types.php` with a new method, create ACF JSON file with conditional logic for bug vs feature request fields.
+**Primary recommendation:** Follow existing `stadion_todo` and `person` CPT patterns exactly - register CPT in `class-post-types.php` with a new method, create ACF JSON file with conditional logic for bug vs feature request fields.
 
 ## Standard Stack
 
@@ -34,7 +34,7 @@ The established libraries/tools for this domain:
 ### Alternatives Considered
 | Instead of | Could Use | Tradeoff |
 |------------|-----------|----------|
-| ACF select for status | Custom post_status | `prm_todo` uses custom post statuses, but adds complexity for minimal benefit here |
+| ACF select for status | Custom post_status | `stadion_todo` uses custom post statuses, but adds complexity for minimal benefit here |
 | ACF gallery | Custom attachment handling | Gallery field handles media library integration already |
 
 **Installation:**
@@ -51,25 +51,25 @@ acf-json/
 ```
 
 ### Pattern 1: CPT Registration Method
-**What:** Add a private method to `Caelis\Core\PostTypes` class
+**What:** Add a private method to `Stadion\Core\PostTypes` class
 **When to use:** For any new custom post type
 **Example:**
 ```php
 // Source: Existing pattern from class-post-types.php (lines 283-318)
 private function register_feedback_post_type() {
     $labels = [
-        'name'               => _x( 'Feedback', 'Post type general name', 'caelis' ),
-        'singular_name'      => _x( 'Feedback', 'Post type singular name', 'caelis' ),
-        'menu_name'          => _x( 'Feedback', 'Admin Menu text', 'caelis' ),
-        'add_new'            => __( 'Add New', 'caelis' ),
-        'add_new_item'       => __( 'Add New Feedback', 'caelis' ),
-        'edit_item'          => __( 'Edit Feedback', 'caelis' ),
-        'new_item'           => __( 'New Feedback', 'caelis' ),
-        'view_item'          => __( 'View Feedback', 'caelis' ),
-        'search_items'       => __( 'Search Feedback', 'caelis' ),
-        'not_found'          => __( 'No feedback found', 'caelis' ),
-        'not_found_in_trash' => __( 'No feedback found in Trash', 'caelis' ),
-        'all_items'          => __( 'All Feedback', 'caelis' ),
+        'name'               => _x( 'Feedback', 'Post type general name', 'stadion' ),
+        'singular_name'      => _x( 'Feedback', 'Post type singular name', 'stadion' ),
+        'menu_name'          => _x( 'Feedback', 'Admin Menu text', 'stadion' ),
+        'add_new'            => __( 'Add New', 'stadion' ),
+        'add_new_item'       => __( 'Add New Feedback', 'stadion' ),
+        'edit_item'          => __( 'Edit Feedback', 'stadion' ),
+        'new_item'           => __( 'New Feedback', 'stadion' ),
+        'view_item'          => __( 'View Feedback', 'stadion' ),
+        'search_items'       => __( 'Search Feedback', 'stadion' ),
+        'not_found'          => __( 'No feedback found', 'stadion' ),
+        'not_found_in_trash' => __( 'No feedback found in Trash', 'stadion' ),
+        'all_items'          => __( 'All Feedback', 'stadion' ),
     ];
 
     $args = [
@@ -90,7 +90,7 @@ private function register_feedback_post_type() {
         'supports'           => [ 'title', 'editor', 'author' ],
     ];
 
-    register_post_type( 'caelis_feedback', $args );
+    register_post_type( 'stadion_feedback', $args );
 }
 ```
 
@@ -144,7 +144,7 @@ private function register_feedback_post_type() {
 
 ### Anti-Patterns to Avoid
 - **Custom validation for select fields:** ACF select fields already enforce valid values - don't add PHP validation
-- **Custom post statuses for simple workflows:** The `prm_todo` CPT uses custom post statuses (`prm_open`, `prm_awaiting`, `prm_completed`) but this adds complexity. For feedback, ACF select is simpler
+- **Custom post statuses for simple workflows:** The `stadion_todo` CPT uses custom post statuses (`stadion_open`, `stadion_awaiting`, `stadion_completed`) but this adds complexity. For feedback, ACF select is simpler
 - **Workspace scoping:** Per prior decisions, feedback is global per installation, not workspace-scoped
 
 ## Don't Hand-Roll
@@ -192,7 +192,7 @@ Verified patterns from existing codebase:
 
 ### Complete ACF Field Group Structure
 ```json
-// Source: /Users/joostdevalk/Code/caelis/acf-json/group_todo_fields.json
+// Source: /Users/joostdevalk/Code/stadion/acf-json/group_todo_fields.json
 {
     "key": "group_feedback_fields",
     "title": "Feedback Fields",
@@ -204,7 +204,7 @@ Verified patterns from existing codebase:
             {
                 "param": "post_type",
                 "operator": "==",
-                "value": "caelis_feedback"
+                "value": "stadion_feedback"
             }
         ]
     ],
@@ -226,7 +226,7 @@ Verified patterns from existing codebase:
 
 ### Gallery Field for Attachments
 ```json
-// Source: /Users/joostdevalk/Code/caelis/acf-json/group_person_fields.json (lines 75-84)
+// Source: /Users/joostdevalk/Code/stadion/acf-json/group_person_fields.json (lines 75-84)
 {
     "key": "field_feedback_attachments",
     "label": "Attachments",
@@ -242,7 +242,7 @@ Verified patterns from existing codebase:
 
 ### Textarea Field for Long Text
 ```json
-// Source: /Users/joostdevalk/Code/caelis/acf-json/group_person_fields.json (lines 102-107)
+// Source: /Users/joostdevalk/Code/stadion/acf-json/group_person_fields.json (lines 102-107)
 {
     "key": "field_feedback_steps_to_reproduce",
     "label": "Steps to Reproduce",
@@ -280,13 +280,13 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/caelis/includes/class-post-types.php` - 8 CPT registration patterns
-- `/Users/joostdevalk/Code/caelis/acf-json/group_todo_fields.json` - ACF field group with select, conditional logic
-- `/Users/joostdevalk/Code/caelis/acf-json/group_person_fields.json` - ACF gallery field pattern
+- `/Users/joostdevalk/Code/stadion/includes/class-post-types.php` - 8 CPT registration patterns
+- `/Users/joostdevalk/Code/stadion/acf-json/group_todo_fields.json` - ACF field group with select, conditional logic
+- `/Users/joostdevalk/Code/stadion/acf-json/group_person_fields.json` - ACF gallery field pattern
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/caelis/docs/prd-feedback-system.md` - PRD with field specifications
-- `/Users/joostdevalk/Code/caelis/.planning/milestones/v6.1-feedback-system/REQUIREMENTS.md` - Detailed requirements
+- `/Users/joostdevalk/Code/stadion/docs/prd-feedback-system.md` - PRD with field specifications
+- `/Users/joostdevalk/Code/stadion/.planning/milestones/v6.1-feedback-system/REQUIREMENTS.md` - Detailed requirements
 
 ### Tertiary (LOW confidence)
 - None - all research based on existing codebase patterns

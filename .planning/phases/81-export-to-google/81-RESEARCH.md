@@ -6,10 +6,10 @@
 
 ## Summary
 
-This phase implements exporting Caelis contacts to Google Contacts via the People API. The codebase already has the Google API PHP client library installed, OAuth integration with read/write scope support, and established patterns for both async processing (WP-Cron single events) and save_post hooks.
+This phase implements exporting Stadion contacts to Google Contacts via the People API. The codebase already has the Google API PHP client library installed, OAuth integration with read/write scope support, and established patterns for both async processing (WP-Cron single events) and save_post hooks.
 
 The export functionality requires:
-1. Reverse field mapping from Caelis ACF fields to Google Person objects
+1. Reverse field mapping from Stadion ACF fields to Google Person objects
 2. Creating new contacts via `people->createContact()`
 3. Updating existing linked contacts via `people->updateContact()` with etag validation
 4. Uploading photos via `people->updateContactPhoto()` with base64-encoded bytes
@@ -71,13 +71,13 @@ private function queue_export( int $post_id ): void {
     $queued[ $post_id ] = true;
 
     // Clear any existing scheduled event
-    $timestamp = wp_next_scheduled( 'caelis_google_contact_export', [ $post_id ] );
+    $timestamp = wp_next_scheduled( 'stadion_google_contact_export', [ $post_id ] );
     if ( $timestamp ) {
-        wp_unschedule_event( $timestamp, 'caelis_google_contact_export', [ $post_id ] );
+        wp_unschedule_event( $timestamp, 'stadion_google_contact_export', [ $post_id ] );
     }
 
     // Schedule immediate execution
-    wp_schedule_single_event( time(), 'caelis_google_contact_export', [ $post_id ] );
+    wp_schedule_single_event( time(), 'stadion_google_contact_export', [ $post_id ] );
     spawn_cron();
 }
 ```
@@ -94,7 +94,7 @@ if ( $google_contact_id ) {
     // Contact was imported - update existing Google contact
     $this->update_google_contact( $post_id, $google_contact_id );
 } else {
-    // New Caelis contact - create in Google
+    // New Stadion contact - create in Google
     $resource_name = $this->create_google_contact( $post_id );
     // Store the returned resourceName for future syncs
     update_post_meta( $post_id, '_google_contact_id', $resource_name );
@@ -145,7 +145,7 @@ Problems that look simple but have existing solutions:
 
 ### Pitfall 1: Singleton Field Violations
 **What goes wrong:** Sending multiple names, birthdays, or genders causes 400 error
-**Why it happens:** Caelis might have repeater data, Google only accepts single values
+**Why it happens:** Stadion might have repeater data, Google only accepts single values
 **How to avoid:** Only send first/primary value for singleton fields
 **Warning signs:** 400 error with "more than one field specified on singleton"
 
@@ -319,11 +319,11 @@ public function on_person_saved( $post_id, $post, $update ) {
 }
 ```
 
-## Field Mapping: Caelis to Google
+## Field Mapping: Stadion to Google
 
 Based on the import class and ACF fields, here is the reverse mapping:
 
-| Caelis Field | Google Field | Notes |
+| Stadion Field | Google Field | Notes |
 |--------------|--------------|-------|
 | `first_name` | `Name.givenName` | Singleton - one value only |
 | `last_name` | `Name.familyName` | Singleton - one value only |
@@ -336,7 +336,7 @@ Based on the import class and ACF fields, here is the reverse mapping:
 | Birthday (from important_date) | `Birthday` | Singleton, optional |
 
 ### Contact Type Mapping
-| Caelis `contact_type` | Google Type |
+| Stadion `contact_type` | Google Type |
 |-----------------------|-------------|
 | `email` | `EmailAddress` |
 | `phone` | `PhoneNumber` (type: "home") |
@@ -386,10 +386,10 @@ Things that couldn't be fully resolved:
   - [updateContact](https://developers.google.com/people/api/rest/v1/people/updateContact)
   - [updateContactPhoto](https://developers.google.com/people/api/rest/v1/people/updateContactPhoto)
 - Existing codebase files:
-  - `/Users/joostdevalk/Code/caelis/vendor/google/apiclient-services/src/PeopleService/Resource/People.php`
-  - `/Users/joostdevalk/Code/caelis/includes/class-google-contacts-api-import.php`
-  - `/Users/joostdevalk/Code/caelis/includes/class-google-oauth.php`
-  - `/Users/joostdevalk/Code/caelis/includes/class-auto-title.php` (async cron pattern)
+  - `/Users/joostdevalk/Code/stadion/vendor/google/apiclient-services/src/PeopleService/Resource/People.php`
+  - `/Users/joostdevalk/Code/stadion/includes/class-google-contacts-api-import.php`
+  - `/Users/joostdevalk/Code/stadion/includes/class-google-oauth.php`
+  - `/Users/joostdevalk/Code/stadion/includes/class-auto-title.php` (async cron pattern)
 
 ### Secondary (MEDIUM confidence)
 - google-api-php-client GitHub issues for PHP examples

@@ -9,7 +9,7 @@ requires:
   - phase: 23
     provides: Testing infrastructure for validation
 provides:
-  - prm_todo custom post type registered
+  - stadion_todo custom post type registered
   - ACF field group for todo metadata
   - Access control integration for todos
 affects: [24-02, 24-03, 24-04, 25, 26, 27, 28]
@@ -18,7 +18,7 @@ affects: [24-02, 24-03, 24-04, 25, 26, 27, 28]
 tech-stack:
   added: []
   patterns:
-    - prm_todo CPT follows existing CPT registration patterns
+    - stadion_todo CPT follows existing CPT registration patterns
     - ACF field group mirrors visibility_settings for consistency
 
 key-files:
@@ -33,7 +33,7 @@ key-decisions:
   - "Single related_person field (not multi-select like important_date)"
 
 patterns-established:
-  - "prm_todo follows same access control pattern as other CPTs"
+  - "stadion_todo follows same access control pattern as other CPTs"
 
 issues-created: []
 
@@ -42,9 +42,9 @@ duration: 8min
 completed: 2026-01-14
 ---
 
-# Phase 24 Plan 01: Register prm_todo CPT Summary
+# Phase 24 Plan 01: Register stadion_todo CPT Summary
 
-**prm_todo custom post type registered with ACF fields and full access control integration**
+**stadion_todo custom post type registered with ACF fields and full access control integration**
 
 ## Performance
 
@@ -56,7 +56,7 @@ completed: 2026-01-14
 
 ## Accomplishments
 
-- Registered `prm_todo` custom post type with REST API support (`/wp/v2/todos`)
+- Registered `stadion_todo` custom post type with REST API support (`/wp/v2/todos`)
 - Created ACF field group with related_person, is_completed, due_date, visibility, workspaces
 - Integrated access control: query filtering, REST API filtering, workspace support
 
@@ -64,9 +64,9 @@ completed: 2026-01-14
 
 Each task was committed atomically:
 
-1. **Task 1: Register prm_todo custom post type** - `683eb31` (feat)
+1. **Task 1: Register stadion_todo custom post type** - `683eb31` (feat)
 2. **Task 2: Create ACF field group for todo metadata** - `766311e` (feat)
-3. **Task 3: Add access control for prm_todo** - `16b52e7` (feat)
+3. **Task 3: Add access control for stadion_todo** - `16b52e7` (feat)
 
 **Plan metadata:** To be committed with this summary
 
@@ -74,7 +74,7 @@ Each task was committed atomically:
 
 - `acf-json/group_todo_fields.json` - ACF field group defining todo metadata fields
 - `includes/class-post-types.php` - Added register_todo_post_type() method
-- `includes/class-access-control.php` - Added prm_todo to controlled post types and REST hooks
+- `includes/class-access-control.php` - Added stadion_todo to controlled post types and REST hooks
 
 ## Decisions Made
 
@@ -91,7 +91,7 @@ None
 
 ## Next Phase Readiness
 
-- prm_todo CPT registered and functional
+- stadion_todo CPT registered and functional
 - Ready for Plan 24-02: REST API endpoints for CRUD operations
 - Foundation established for migrating existing comment-based todos
 

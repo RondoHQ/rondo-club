@@ -19,7 +19,7 @@ score: 4/4 must-haves verified
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
 | 1 | User with existing Google Calendar connection can add Contacts scope without re-authenticating | VERIFIED | `setIncludeGrantedScopes(true)` set in `get_contacts_client()` at line 254 of class-google-oauth.php enables incremental authorization |
-| 2 | New users can connect Google Contacts in a single OAuth flow | VERIFIED | `get_contacts_auth_url()` generates valid auth URL, `/prm/v1/google-contacts/auth` endpoint initiates flow, callback handles token exchange |
+| 2 | New users can connect Google Contacts in a single OAuth flow | VERIFIED | `get_contacts_auth_url()` generates valid auth URL, `/stadion/v1/google-contacts/auth` endpoint initiates flow, callback handles token exchange |
 | 3 | Google Contacts connection status displays in Settings > Connections | VERIFIED | `CONNECTION_SUBTABS` includes contacts, `ConnectionsContactsSubtab` component renders status card with email, access mode, last sync time |
 | 4 | Tokens are stored securely using existing Sodium encryption | VERIFIED | `GoogleContactsConnection::save_connection()` calls `CredentialEncryption::encrypt()` for credentials array |
 
@@ -31,7 +31,7 @@ score: 4/4 must-haves verified
 |----------|----------|--------|---------|
 | `includes/class-google-oauth.php` | Contacts scope constants and get_contacts_client method | VERIFIED | 357 lines, has CONTACTS_SCOPE_READONLY, CONTACTS_SCOPE_READWRITE, get_contacts_client(), get_contacts_auth_url(), handle_contacts_callback(), has_contacts_scope(), get_contacts_access_mode() |
 | `includes/class-google-contacts-connection.php` | User meta storage for Google Contacts connection | VERIFIED | 185 lines, has get_connection(), save_connection(), delete_connection(), is_connected(), get_decrypted_credentials(), update_connection(), set_pending_import(), has_pending_import() |
-| `includes/class-rest-google-contacts.php` | REST API endpoints for contacts OAuth | VERIFIED | 351 lines, registers status, auth, callback, disconnect endpoints at /prm/v1/google-contacts/* |
+| `includes/class-rest-google-contacts.php` | REST API endpoints for contacts OAuth | VERIFIED | 351 lines, registers status, auth, callback, disconnect endpoints at /stadion/v1/google-contacts/* |
 | `src/api/client.js` | API methods for Google Contacts OAuth | VERIFIED | Contains getGoogleContactsStatus, initiateGoogleContactsAuth, disconnectGoogleContacts methods in prmApi object |
 | `src/pages/Settings/Settings.jsx` | Google Contacts connection card in Settings | VERIFIED | ConnectionsContactsSubtab component with full connection state, connect/disconnect handlers |
 | `functions.php` | Instantiates RESTGoogleContacts | VERIFIED | Line 317: `new RESTGoogleContacts();` |
@@ -43,9 +43,9 @@ score: 4/4 must-haves verified
 | class-rest-google-contacts.php | class-google-oauth.php | GoogleOAuth::get_contacts_client() | WIRED | 5 calls: is_configured(), get_contacts_auth_url(), handle_contacts_callback(), get_contacts_access_mode() |
 | class-rest-google-contacts.php | class-google-contacts-connection.php | GoogleContactsConnection methods | WIRED | 8 calls: get_connection(), is_connected(), has_pending_import(), save_connection(), set_pending_import(), delete_connection() |
 | functions.php | class-rest-google-contacts.php | new RESTGoogleContacts() | WIRED | Line 317 instantiates the class |
-| Settings.jsx | /prm/v1/google-contacts/status | prmApi.getGoogleContactsStatus() | WIRED | Called in useEffect on mount, refreshed after OAuth callback |
-| Settings.jsx | /prm/v1/google-contacts/auth | prmApi.initiateGoogleContactsAuth() | WIRED | Called in handleConnectGoogleContacts, redirects to auth_url |
-| Settings.jsx | /prm/v1/google-contacts | prmApi.disconnectGoogleContacts() | WIRED | Called in handleDisconnectGoogleContacts |
+| Settings.jsx | /stadion/v1/google-contacts/status | prmApi.getGoogleContactsStatus() | WIRED | Called in useEffect on mount, refreshed after OAuth callback |
+| Settings.jsx | /stadion/v1/google-contacts/auth | prmApi.initiateGoogleContactsAuth() | WIRED | Called in handleConnectGoogleContacts, redirects to auth_url |
+| Settings.jsx | /stadion/v1/google-contacts | prmApi.disconnectGoogleContacts() | WIRED | Called in handleDisconnectGoogleContacts |
 
 ### Requirements Coverage
 

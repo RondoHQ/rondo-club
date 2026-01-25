@@ -204,6 +204,8 @@ function App() {
 
                   {/* Settings */}
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/settings/:tab" element={<Settings />} />
+                  <Route path="/settings/:tab/:subtab" element={<Settings />} />
                   <Route path="/settings/relationship-types" element={<RelationshipTypes />} />
                   <Route path="/settings/labels" element={<Labels />} />
                   <Route path="/settings/user-approval" element={<UserApproval />} />

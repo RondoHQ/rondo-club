@@ -2,14 +2,14 @@
 
 ## Overview
 
-Requirements for the Caelis feedback system enabling bug reports and feature requests.
+Requirements for the Stadion feedback system enabling bug reports and feature requests.
 
 ## v1 Requirements
 
 ### Backend (Phase 1)
 
 #### FEED-01: Feedback Custom Post Type
-Register `caelis_feedback` custom post type with:
+Register `stadion_feedback` custom post type with:
 - Public: No
 - Show in REST: Yes (for custom endpoints)
 - REST Base: `feedback`
@@ -22,7 +22,7 @@ Create ACF field group `group_feedback_fields` with:
 - `status` (select): new, in_progress, resolved, declined - Required, default: new
 - `priority` (select): low, medium, high, critical - Optional, default: medium
 - `browser_info` (text): Auto-captured browser/OS info
-- `app_version` (text): Auto-captured Caelis version
+- `app_version` (text): Auto-captured Stadion version
 - `url_context` (text): Page URL where submitted
 - `steps_to_reproduce` (textarea): For bugs only
 - `expected_behavior` (textarea): For bugs only
@@ -40,7 +40,7 @@ Implement status workflow:
 ### REST API (Phase 2)
 
 #### FEED-04: REST API Endpoints
-Register endpoints under `prm/v1/feedback`:
+Register endpoints under `stadion/v1/feedback`:
 - `GET /feedback` - List feedback (paginated, filterable)
 - `GET /feedback/{id}` - Get single feedback
 - `POST /feedback` - Create feedback

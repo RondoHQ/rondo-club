@@ -11,7 +11,7 @@ requires:
   - phase: 80-import-from-google
     provides: Field mapping patterns to reverse, stored google_contact_id/etag meta
 provides:
-  - GoogleContactsExport class for exporting Caelis contacts to Google
+  - GoogleContactsExport class for exporting Stadion contacts to Google
   - Field mapping from ACF fields to Google Person objects
   - Contact creation via createContact()
   - Contact updates via updateContact() with etag validation
@@ -22,7 +22,7 @@ affects: [81-02-rest-export, 81-03-bulk-export, 82-delta-sync]
 tech-stack:
   added: []
   patterns:
-    - "Reverse field mapping from Caelis ACF to Google Person objects"
+    - "Reverse field mapping from Stadion ACF to Google Person objects"
     - "Etag-based optimistic locking for concurrent modification prevention"
     - "Retry logic on 409 conflict by fetching fresh etag"
 

@@ -7,7 +7,7 @@ tags: [relationships, sharing, bulk-update, rest-api, phpunit]
 # Dependency graph
 requires:
   - phase: 21-phpunit-setup
-    provides: CaelisTestCase base class, wp-browser infrastructure
+    provides: StadionTestCase base class, wp-browser infrastructure
   - phase: 22-access-control-tests
     provides: Visibility and access control test patterns
 provides:
@@ -26,7 +26,7 @@ key-files:
 
 key-decisions:
   - "Initialize WP_REST_Server in set_up() to ensure routes are registered"
-  - "Manually instantiate PRM_REST_People and PRM_REST_Companies for proper route registration"
+  - "Manually instantiate STADION_REST_People and STADION_REST_Companies for proper route registration"
   - "Use rest_do_request() for testing REST endpoints vs. direct method calls"
 
 patterns-established:
@@ -56,8 +56,8 @@ completed: 2026-01-13
 ## Accomplishments
 
 - Created RelationshipsSharesTest with 21 comprehensive tests
-- Tested person-company relationships via `/prm/v1/companies/{id}/people`
-- Tested person-dates relationships via `/prm/v1/people/{id}/dates`
+- Tested person-company relationships via `/stadion/v1/companies/{id}/people`
+- Tested person-dates relationships via `/stadion/v1/people/{id}/dates`
 - Verified computed fields (is_deceased, birth_year) in person REST responses
 - Tested complete sharing lifecycle (add/get/remove) for people and companies
 - Verified share permission levels (view/edit) and updates
@@ -110,7 +110,7 @@ Both tasks implemented in a single test file, committed atomically:
 ## Decisions Made
 
 - **REST Server Initialization:** Required manually instantiating WP_REST_Server and triggering rest_api_init hook because test environment doesn't automatically detect REST requests
-- **Route Registration:** Explicitly created PRM_REST_People and PRM_REST_Companies instances in set_up() to ensure routes are registered before tests run
+- **Route Registration:** Explicitly created STADION_REST_People and STADION_REST_Companies instances in set_up() to ensure routes are registered before tests run
 
 ## Deviations from Plan
 
@@ -118,8 +118,8 @@ Both tasks implemented in a single test file, committed atomically:
 
 **1. [Rule 3 - Blocking] REST routes returning 404**
 - **Found during:** Initial test run
-- **Issue:** REST routes were not registered because `prm_is_rest_request()` returned false in test environment
-- **Fix:** Manually initialize WP_REST_Server and PRM_REST_* classes in set_up()
+- **Issue:** REST routes were not registered because `stadion_is_rest_request()` returned false in test environment
+- **Fix:** Manually initialize WP_REST_Server and STADION_REST_* classes in set_up()
 - **Verification:** All 21 tests pass
 
 ### Deferred Enhancements

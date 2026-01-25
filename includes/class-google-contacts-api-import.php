@@ -2,15 +2,15 @@
 /**
  * Google Contacts API Import Class
  *
- * Imports contacts from Google Contacts via People API into Caelis.
+ * Imports contacts from Google Contacts via People API into Stadion.
  * Matches existing contacts by email only, fills gaps without overwriting.
  */
 
-namespace Caelis\Import;
+namespace Stadion\Import;
 
-use Caelis\Calendar\GoogleOAuth;
-use Caelis\Collaboration\CommentTypes;
-use Caelis\Contacts\GoogleContactsConnection;
+use Stadion\Calendar\GoogleOAuth;
+use Stadion\Collaboration\CommentTypes;
+use Stadion\Contacts\GoogleContactsConnection;
 use Google\Service\PeopleService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -213,7 +213,7 @@ class GoogleContactsAPI {
 	/**
 	 * Unlink a contact that was deleted in Google
 	 *
-	 * Removes Google metadata from the Caelis person but preserves all other data.
+	 * Removes Google metadata from the Stadion person but preserves all other data.
 	 *
 	 * @param string $resource_name Google resource name (people/c123...).
 	 */
@@ -235,7 +235,7 @@ class GoogleContactsAPI {
 
 		$post_id = $posts[0]->ID;
 
-		// Remove Google-related meta but preserve Caelis data
+		// Remove Google-related meta but preserve Stadion data
 		delete_post_meta( $post_id, '_google_contact_id' );
 		delete_post_meta( $post_id, '_google_etag' );
 		delete_post_meta( $post_id, '_google_last_import' );
@@ -247,7 +247,7 @@ class GoogleContactsAPI {
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log(
 				sprintf(
-					'PRM_Google_Contacts: Unlinked contact %d (was %s) - deleted in Google',
+					'STADION_Google_Contacts: Unlinked contact %d (was %s) - deleted in Google',
 					$post_id,
 					$resource_name
 				)
@@ -788,7 +788,7 @@ class GoogleContactsAPI {
 		$date_formatted = sprintf( '%04d-%02d-%02d', $year, $month, $day );
 
 		// translators: %s is the person's name
-		$title = sprintf( __( "%s's Birthday", 'caelis' ), $full_name );
+		$title = sprintf( __( "%s's Birthday", 'stadion' ), $full_name );
 
 		$date_post_id = wp_insert_post(
 			[
@@ -1027,14 +1027,14 @@ class GoogleContactsAPI {
 	}
 
 	/**
-	 * Detect field-level conflicts between Google and Caelis
+	 * Detect field-level conflicts between Google and Stadion
 	 *
-	 * Compares Google values, Caelis values, and last-synced snapshot to determine
+	 * Compares Google values, Stadion values, and last-synced snapshot to determine
 	 * which fields were modified in both systems since last sync.
 	 *
 	 * @param int    $post_id      Post ID.
 	 * @param object $google_person Google Person object.
-	 * @return array Array of conflicts, each with field, google_value, caelis_value, kept_value.
+	 * @return array Array of conflicts, each with field, google_value, stadion_value, kept_value.
 	 */
 	private function detect_field_conflicts( int $post_id, object $google_person ): array {
 		$conflicts = [];
@@ -1047,8 +1047,8 @@ class GoogleContactsAPI {
 			return $conflicts;
 		}
 
-		// Get current Caelis values.
-		$caelis_values = $this->get_field_snapshot( $post_id );
+		// Get current Stadion values.
+		$stadion_values = $this->get_field_snapshot( $post_id );
 
 		// Extract Google values from person object.
 		$google_values = $this->extract_google_field_values( $google_person );
@@ -1058,19 +1058,19 @@ class GoogleContactsAPI {
 
 		foreach ( $fields as $field ) {
 			$snapshot_value = $snapshot[ $field ] ?? '';
-			$caelis_value   = $caelis_values[ $field ] ?? '';
+			$stadion_value   = $stadion_values[ $field ] ?? '';
 			$google_value   = $google_values[ $field ] ?? '';
 
 			// Conflict: both systems changed this field since last sync.
-			// (Google value differs from snapshot AND Caelis value differs from snapshot).
-			if ( $google_value !== $snapshot_value && $caelis_value !== $snapshot_value ) {
+			// (Google value differs from snapshot AND Stadion value differs from snapshot).
+			if ( $google_value !== $snapshot_value && $stadion_value !== $snapshot_value ) {
 				// Only log if values are actually different (not just both changed to same value).
-				if ( $google_value !== $caelis_value ) {
+				if ( $google_value !== $stadion_value ) {
 					$conflicts[] = [
 						'field'        => $field,
 						'google_value' => $google_value,
-						'caelis_value' => $caelis_value,
-						'kept_value'   => $caelis_value, // Caelis wins.
+						'stadion_value' => $stadion_value,
+						'kept_value'   => $stadion_value, // Stadion wins.
 					];
 				}
 			}
@@ -1144,7 +1144,7 @@ class GoogleContactsAPI {
 	 * Log conflict resolution as activity entry
 	 *
 	 * Creates an activity entry on the person showing which fields had conflicts
-	 * and that Caelis values were kept.
+	 * and that Stadion values were kept.
 	 *
 	 * @param int   $post_id   Post ID.
 	 * @param array $conflicts Array of conflicts from detect_field_conflicts().
@@ -1155,12 +1155,12 @@ class GoogleContactsAPI {
 		}
 
 		// Format conflict details as bullet list.
-		$lines = [ 'Sync conflict resolved (Caelis wins):' ];
+		$lines = [ 'Sync conflict resolved (Stadion wins):' ];
 		foreach ( $conflicts as $conflict ) {
 			$field_label  = ucfirst( str_replace( '_', ' ', $conflict['field'] ) );
 			$google_value = $conflict['google_value'] ?: '(empty)';
-			$caelis_value = $conflict['caelis_value'] ?: '(empty)';
-			$lines[]      = sprintf( '- %s: Google had "%s", kept "%s"', $field_label, $google_value, $caelis_value );
+			$stadion_value = $conflict['stadion_value'] ?: '(empty)';
+			$lines[]      = sprintf( '- %s: Google had "%s", kept "%s"', $field_label, $google_value, $stadion_value );
 		}
 		$content = implode( "\n", $lines );
 
@@ -1182,7 +1182,7 @@ class GoogleContactsAPI {
 	}
 
 	/**
-	 * Map Google phone type to Caelis contact type
+	 * Map Google phone type to Stadion contact type
 	 *
 	 * @param string|null $google_type Google phone type.
 	 * @return string 'mobile' or 'phone'.

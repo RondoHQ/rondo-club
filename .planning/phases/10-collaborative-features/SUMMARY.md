@@ -3,7 +3,7 @@
 ## Status: COMPLETE
 
 ## Overview
-Phase 10 added collaborative features to Caelis, enabling team members to work together on shared contacts with visibility controls, @mentions, and activity digests.
+Phase 10 added collaborative features to Stadion, enabling team members to work together on shared contacts with visibility controls, @mentions, and activity digests.
 
 ## Plans Executed
 
@@ -19,16 +19,16 @@ Phase 10 added collaborative features to Caelis, enabling team members to work t
 ### Plan 10-02: @Mentions Infrastructure
 **Deliverables:**
 - `MentionInput` React component using react-mentions library
-- `PRM_Mentions` PHP class for parsing and storing mentions
+- `STADION_Mentions` PHP class for parsing and storing mentions
 - Workspace member search API endpoint
 - `_mentioned_users` comment meta storage
-- `prm_user_mentioned` action hook
+- `stadion_user_mentioned` action hook
 
 **Key Decision:** Mention markup uses react-mentions format: `@[Display Name](user_id)`
 
 ### Plan 10-03: Mention Notifications
 **Deliverables:**
-- `PRM_Mention_Notifications` PHP class
+- `STADION_Mention_Notifications` PHP class
 - Immediate email notifications (optional)
 - Digest queue via user meta
 - Settings UI for notification preference
@@ -92,7 +92,7 @@ Phase 10 added collaborative features to Caelis, enabling team members to work t
 ## Integration Points
 - Builds on workspace_access taxonomy (Phase 7)
 - Uses _workspace_memberships user meta (Phase 8)
-- Extends PRM_Reminders cron system
+- Extends STADION_Reminders cron system
 - Integrates with existing notification channels
 
 ## Next Steps

@@ -19,7 +19,7 @@ score: 9/9 must-haves verified
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
 | 1 | Fields have a menu_order property that persists in database | VERIFIED | `menu_order` in UPDATABLE_PROPERTIES (class-manager.php:91), `reorder_fields` method updates ACF fields (lines 437-451) |
-| 2 | Bulk reorder API updates menu_order for multiple fields in one request | VERIFIED | PUT `/prm/v1/custom-fields/{post_type}/order` endpoint (class-rest-custom-fields.php:112-130), `reorder_items` callback (lines 480-492) |
+| 2 | Bulk reorder API updates menu_order for multiple fields in one request | VERIFIED | PUT `/stadion/v1/custom-fields/{post_type}/order` endpoint (class-rest-custom-fields.php:112-130), `reorder_items` callback (lines 480-492) |
 | 3 | Required fields are validated on save (frontend triggers, backend enforces) | VERIFIED | `required` in UPDATABLE_PROPERTIES (class-manager.php:44), `required` toggle in FieldFormPanel.jsx (lines 1302-1315), submitData.required included (line 369) |
 | 4 | Unique fields prevent duplicate values per post type per user | VERIFIED | `Validation` class with `acf/validate_value` hook (class-validation.php:29), queries for existing posts with same value (lines 86-105) |
 | 5 | Admin can drag fields to reorder them in Settings | VERIFIED | DndContext/SortableContext in CustomFields.jsx (lines 368-406), SortableFieldRow component (lines 54-120), GripVertical drag handle |
@@ -35,12 +35,12 @@ score: 9/9 must-haves verified
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
 | `includes/customfields/class-manager.php` | menu_order in UPDATABLE_PROPERTIES, reorder_fields method | VERIFIED | menu_order at line 91, unique at line 93, reorder_fields method at lines 437-451 (473 total lines) |
-| `includes/class-rest-custom-fields.php` | PUT /prm/v1/custom-fields/{post_type}/order endpoint | VERIFIED | Route at lines 112-130, reorder_items callback at lines 480-492, unique param at lines 349, 422, 694-698 (723 total lines) |
+| `includes/class-rest-custom-fields.php` | PUT /stadion/v1/custom-fields/{post_type}/order endpoint | VERIFIED | Route at lines 112-130, reorder_items callback at lines 480-492, unique param at lines 349, 422, 694-698 (723 total lines) |
 | `includes/customfields/class-validation.php` | Unique validation via ACF validate_value hook | VERIFIED | New file (118 lines), Validation class with validate_unique method, acf/validate_value filter at line 29 |
-| `src/api/client.js` | reorderCustomFields API method | VERIFIED | Line 271: `reorderCustomFields: (postType, order) => api.put(\`/prm/v1/custom-fields/${postType}/order\`, { order })` |
+| `src/api/client.js` | reorderCustomFields API method | VERIFIED | Line 271: `reorderCustomFields: (postType, order) => api.put(\`/stadion/v1/custom-fields/${postType}/order\`, { order })` |
 | `src/pages/Settings/CustomFields.jsx` | DndContext, SortableContext wrapper, SortableFieldRow component | VERIFIED | dnd-kit imports (lines 6-21), SortableFieldRow component (lines 54-120), DndContext wrapping field list (lines 368-406) |
 | `src/components/FieldFormPanel.jsx` | Required toggle, unique toggle in Validation Options section | VERIFIED | Validation Options section (lines 1298-1332), required checkbox (1302-1315), unique checkbox (1317-1330) |
-| `functions.php` | CustomFieldsValidation instantiation | VERIFIED | Import at line 55, class alias at lines 244-246, instantiation in prm_init at line 330 |
+| `functions.php` | CustomFieldsValidation instantiation | VERIFIED | Import at line 55, class alias at lines 244-246, instantiation in stadion_init at line 330 |
 
 ### Key Link Verification
 
@@ -50,7 +50,7 @@ score: 9/9 must-haves verified
 | FieldFormPanel.jsx | submitData.required | form submission | WIRED | formData.required loaded (line 194), checkbox bound to formData (1307), submitData.required assigned (line 369) |
 | FieldFormPanel.jsx | submitData.unique | form submission | WIRED | formData.unique loaded (line 195), checkbox bound to formData (1322), submitData.unique assigned (line 370) |
 | class-validation.php | acf/validate_value | add_filter hook | WIRED | add_filter at line 29 in constructor, validate_unique callback method (lines 44-116) |
-| functions.php | CustomFieldsValidation | new instance | WIRED | Instantiated in prm_init at line 330 when $is_admin || $is_rest || $is_cron |
+| functions.php | CustomFieldsValidation | new instance | WIRED | Instantiated in stadion_init at line 330 when $is_admin || $is_rest || $is_cron |
 
 ### Requirements Coverage
 

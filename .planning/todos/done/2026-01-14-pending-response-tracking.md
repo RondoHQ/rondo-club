@@ -7,7 +7,7 @@ files: []
 
 ## Problem
 
-To-dos and activities in Caelis can lead to emails or messages being sent (e.g., reaching out to a contact, sending a follow-up). Currently there's no easy way to track which outreach is still awaiting a response from the other party.
+To-dos and activities in Stadion can lead to emails or messages being sent (e.g., reaching out to a contact, sending a follow-up). Currently there's no easy way to track which outreach is still awaiting a response from the other party.
 
 Users need visibility into:
 - Which contacts they're waiting to hear back from

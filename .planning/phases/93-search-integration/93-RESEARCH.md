@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase integrates custom field values into the existing global search functionality. The Caelis codebase already has a well-established search implementation in `global_search()` that uses a scoring system to prioritize results. Custom fields are stored using ACF's native storage (field name as meta key in `wp_postmeta`), and the CustomFields Manager provides methods to get active field definitions per post type.
+This phase integrates custom field values into the existing global search functionality. The Stadion codebase already has a well-established search implementation in `global_search()` that uses a scoring system to prioritize results. Custom fields are stored using ACF's native storage (field name as meta key in `wp_postmeta`), and the CustomFields Manager provides methods to get active field definitions per post type.
 
 The implementation requires:
 1. Extending `global_search()` to query custom field meta values
@@ -79,7 +79,7 @@ $general_matches = get_posts([
 **Example:**
 ```php
 // Source: includes/customfields/class-manager.php
-use Caelis\CustomFields\Manager;
+use Stadion\CustomFields\Manager;
 
 $manager = new Manager();
 $fields = $manager->get_fields('person', false); // Active fields only
@@ -134,7 +134,7 @@ Problems that look simple but have existing solutions:
 | Getting field definitions | Custom database queries | `Manager::get_fields()` | Already handles active filtering |
 | Meta LIKE queries | Custom SQL | WP_Query meta_query with LIKE | WordPress handles escaping, indexing |
 | Scoring system | New scoring logic | Existing pattern in global_search | Maintains consistency |
-| Access control | Custom filtering | Existing PRM_Access_Control | Already filters by user |
+| Access control | Custom filtering | Existing STADION_Access_Control | Already filters by user |
 
 **Key insight:** The existing search already does multi-step scoring with meta queries. Just add another step for custom fields.
 
@@ -181,7 +181,7 @@ Problems that look simple but have existing solutions:
  * @return array Array of field names (meta keys) to search.
  */
 private function get_searchable_custom_fields( string $post_type ): array {
-    $manager = new \Caelis\CustomFields\Manager();
+    $manager = new \Stadion\CustomFields\Manager();
     $fields = $manager->get_fields( $post_type, false ); // Active only
 
     // Searchable field types (from CONTEXT.md decisions)
@@ -269,7 +269,7 @@ if ( ! empty( $custom_field_names ) ) {
 |--------------|------------------|--------------|--------|
 | No custom field search | Meta LIKE queries | Phase 93 | Users can find records by custom field content |
 
-**Current in Caelis:**
+**Current in Stadion:**
 - Custom fields use ACF-native storage (field name as meta key)
 - Search uses WP_Query with meta_query for field-specific searching
 - Scoring system prioritizes name matches over general content
@@ -291,10 +291,10 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/caelis/includes/class-rest-api.php` - Existing `global_search()` implementation (lines 1087-1209)
-- `/Users/joostdevalk/Code/caelis/includes/customfields/class-manager.php` - `get_fields()` method (lines 376-414)
-- `/Users/joostdevalk/Code/caelis/includes/class-rest-custom-fields.php` - REST API structure
-- `/Users/joostdevalk/Code/caelis/src/components/FieldFormPanel.jsx` - Field types list (lines 6-21)
+- `/Users/joostdevalk/Code/stadion/includes/class-rest-api.php` - Existing `global_search()` implementation (lines 1087-1209)
+- `/Users/joostdevalk/Code/stadion/includes/customfields/class-manager.php` - `get_fields()` method (lines 376-414)
+- `/Users/joostdevalk/Code/stadion/includes/class-rest-custom-fields.php` - REST API structure
+- `/Users/joostdevalk/Code/stadion/src/components/FieldFormPanel.jsx` - Field types list (lines 6-21)
 
 ### Secondary (MEDIUM confidence)
 - WordPress WP_Query documentation on meta_query

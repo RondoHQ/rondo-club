@@ -8,7 +8,7 @@
 
 Phase 73 implements a Meeting Detail Modal that displays full meeting information when users click on a meeting card. The codebase already has well-established modal patterns (TodoModal, ShareModal, ImportantDateModal) that provide clear templates for implementation. The calendar integration (v4.0) already stores rich meeting data including attendees, location, description, and matched people.
 
-The existing `MeetingCard` component in `PersonDetail.jsx` shows meeting cards but they are not clickable to open a detail modal. The Today's Meetings widget in Dashboard uses a simpler card that links to person profiles. The API returns comprehensive meeting data including `matched_people` (Caelis contacts) and `attendees` (raw calendar attendees), providing everything needed for the modal.
+The existing `MeetingCard` component in `PersonDetail.jsx` shows meeting cards but they are not clickable to open a detail modal. The Today's Meetings widget in Dashboard uses a simpler card that links to person profiles. The API returns comprehensive meeting data including `matched_people` (Stadion contacts) and `attendees` (raw calendar attendees), providing everything needed for the modal.
 
 **Primary recommendation:** Create a read-only `MeetingDetailModal` component following the TodoModal pattern (view/edit modes), with attendee list showing matched vs unknown attendees, and a rich text notes section for meeting prep that stores to post meta.
 
@@ -166,7 +166,7 @@ Problems that look simple but have existing solutions:
 
 ### Pitfall 2: Missing Attendee Data
 **What goes wrong:** Raw attendees from calendar not available, only matched people
-**Why it happens:** `_attendees` meta contains all attendees, `_matched_people` contains only Caelis matches
+**Why it happens:** `_attendees` meta contains all attendees, `_matched_people` contains only Stadion matches
 **How to avoid:** API needs to return both matched and unmatched attendees for ADD-01 requirement
 **Warning signs:** Cannot show "unknown attendees" because data isn't in response
 
@@ -292,7 +292,7 @@ const formatDate = (date) => {
   all_day: false,
   location: "Conference Room A",
   meeting_url: "https://meet.google.com/abc",
-  matched_people: [           // People matched to Caelis contacts
+  matched_people: [           // People matched to Stadion contacts
     { person_id: 456, name: "John Doe", thumbnail: "url" }
   ],
   calendar_name: "Work Calendar"
@@ -328,10 +328,10 @@ For meeting notes (MTG-08) and full attendee list (ADD-01), the API needs:
 
 ### 1. Get/Save Meeting Notes
 ```php
-// GET /prm/v1/calendar/events/{id}/notes
+// GET /stadion/v1/calendar/events/{id}/notes
 // Returns: { notes: "<html content>" }
 
-// PUT /prm/v1/calendar/events/{id}/notes
+// PUT /stadion/v1/calendar/events/{id}/notes
 // Body: { notes: "<html content>" }
 // Stores in _meeting_notes post meta
 ```
@@ -377,17 +377,17 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/caelis/src/components/Timeline/TodoModal.jsx` - Modal pattern
-- `/Users/joostdevalk/Code/caelis/src/components/ImportantDateModal.jsx` - Modal with scrolling
-- `/Users/joostdevalk/Code/caelis/src/components/ShareModal.jsx` - User list pattern
-- `/Users/joostdevalk/Code/caelis/src/pages/Dashboard.jsx` - MeetingCard component
-- `/Users/joostdevalk/Code/caelis/src/pages/People/PersonDetail.jsx` - Full MeetingCard component
-- `/Users/joostdevalk/Code/caelis/includes/class-rest-calendar.php` - Meeting API endpoints
-- `/Users/joostdevalk/Code/caelis/src/hooks/useMeetings.js` - Meeting hooks
-- `/Users/joostdevalk/Code/caelis/src/api/client.js` - API client methods
+- `/Users/joostdevalk/Code/stadion/src/components/Timeline/TodoModal.jsx` - Modal pattern
+- `/Users/joostdevalk/Code/stadion/src/components/ImportantDateModal.jsx` - Modal with scrolling
+- `/Users/joostdevalk/Code/stadion/src/components/ShareModal.jsx` - User list pattern
+- `/Users/joostdevalk/Code/stadion/src/pages/Dashboard.jsx` - MeetingCard component
+- `/Users/joostdevalk/Code/stadion/src/pages/People/PersonDetail.jsx` - Full MeetingCard component
+- `/Users/joostdevalk/Code/stadion/includes/class-rest-calendar.php` - Meeting API endpoints
+- `/Users/joostdevalk/Code/stadion/src/hooks/useMeetings.js` - Meeting hooks
+- `/Users/joostdevalk/Code/stadion/src/api/client.js` - API client methods
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/caelis/includes/class-calendar-matcher.php` - Attendee matching logic
+- `/Users/joostdevalk/Code/stadion/includes/class-calendar-matcher.php` - Attendee matching logic
 
 ### Tertiary (LOW confidence)
 - None - all findings verified with codebase

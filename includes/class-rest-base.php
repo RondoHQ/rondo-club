@@ -6,7 +6,7 @@
  * Contains common permission checks and response formatting methods.
  */
 
-namespace Caelis\REST;
+namespace Stadion\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -45,7 +45,7 @@ abstract class Base {
 		}
 
 		// Check if user is approved
-		return \PRM_User_Roles::is_user_approved( $user_id );
+		return \STADION_User_Roles::is_user_approved( $user_id );
 	}
 
 	/**
@@ -79,7 +79,7 @@ abstract class Base {
 		}
 
 		$person_id      = $request->get_param( 'person_id' );
-		$access_control = new \PRM_Access_Control();
+		$access_control = new \STADION_Access_Control();
 
 		return $access_control->user_can_access_post( $person_id );
 	}

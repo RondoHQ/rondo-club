@@ -21,21 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.0.0] - 2026-01-18
 
 ### Added
-- Google Contacts bidirectional sync with Caelis as source of truth
+- Google Contacts bidirectional sync with Stadion as source of truth
 - OAuth connection for Google Contacts in Settings > Connections
 - Automatic import from Google Contacts with duplicate detection
-- Export Caelis contacts to Google Contacts
+- Export Stadion contacts to Google Contacts
 - Delta sync using Google syncToken for efficient updates
 - Configurable sync frequency (15min, hourly, 6hr, daily)
-- Conflict detection with Caelis-wins resolution strategy
+- Conflict detection with Stadion-wins resolution strategy
 - Sync history log in Settings showing recent sync operations
 - "View in Google Contacts" link on synced person profiles
 - WP-CLI commands for Google Contacts management:
-  - `wp caelis google-contacts sync --user-id=ID` - trigger sync
-  - `wp caelis google-contacts sync --user-id=ID --full` - full resync
-  - `wp caelis google-contacts status --user-id=ID` - check status
-  - `wp caelis google-contacts conflicts --user-id=ID` - list conflicts
-  - `wp caelis google-contacts unlink-all --user-id=ID` - reset sync
+  - `wp stadion google-contacts sync --user-id=ID` - trigger sync
+  - `wp stadion google-contacts sync --user-id=ID --full` - full resync
+  - `wp stadion google-contacts status --user-id=ID` - check status
+  - `wp stadion google-contacts conflicts --user-id=ID` - list conflicts
+  - `wp stadion google-contacts unlink-all --user-id=ID` - reset sync
 
 ## [4.10.0] - 2026-01-17
 
@@ -98,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Per-connection sync_to_days setting (1 week to 90 days forward)
 - Per-connection sync_frequency setting (15 min, 30 min, hourly, 4 hours, daily)
 - Background sync respects per-connection frequency settings with `is_sync_due()` check
-- Calendar list API endpoint `GET /prm/v1/calendar/connections/{id}/calendars`
+- Calendar list API endpoint `GET /stadion/v1/calendar/connections/{id}/calendars`
 - Calendar selector dropdown in EditConnectionModal
 - Connection card displays selected calendar name as subtitle
 - `list_calendars()` method in GoogleProvider for fetching available calendars
@@ -115,14 +115,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive codebase audit (AUDIT.md) with namespace hierarchy design
 - PSR-4 namespaces for 38 PHP classes across 9 namespace groups
 - Composer autoloading with classmap for includes/ directory
-- 38 backward-compatible class aliases (PRM_* → Caelis\*)
+- 38 backward-compatible class aliases (STADION_* → Stadion\*)
 - PHPCS Generic.Files.OneClassPerFile rule enabled
 - Daily debug.log rotation via WP-Cron with 7-day retention
 
 ### Changed
 - Split notification channel classes into separate files (one-class-per-file compliance)
-- Removed manual prm_autoloader() function (52 lines)
-- All classes now use proper PHP namespaces (Caelis\Core, Caelis\REST, etc.)
+- Removed manual stadion_autoloader() function (52 lines)
+- All classes now use proper PHP namespaces (Stadion\Core, Stadion\REST, etc.)
 
 ## [4.3.0] - 2026-01-16
 
@@ -136,7 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Converted entire codebase to short array syntax ([] instead of array())
 - Disabled Yoda conditions for improved code readability
 - PHPCS violations reduced from 49,450 to 46 (99.9% reduction)
-- Text domain standardized to 'caelis' throughout codebase
+- Text domain standardized to 'stadion' throughout codebase
 - All date() calls converted to gmdate() for timezone safety
 
 ## [4.2.0] - 2026-01-15
@@ -259,7 +259,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Changed
 - PersonDetail layout changed from flex to 3-column CSS grid for equal-width columns
-- Timeline endpoint now queries all todo post statuses (prm_open, prm_awaiting, prm_completed)
+- Timeline endpoint now queries all todo post statuses (stadion_open, stadion_awaiting, stadion_completed)
 - Timeline endpoint returns proper `status` field instead of deprecated `is_completed`
 
 ### Fixed
@@ -277,8 +277,8 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Changed
 - `SearchDashboardTest.php` updated to use CPT-based todos instead of comment-based
-  - `createTodo()` helper now creates `prm_todo` posts
-  - Added `PRM_REST_Todos` route registration
+  - `createTodo()` helper now creates `stadion_todo` posts
+  - Added `STADION_REST_Todos` route registration
 
 ## [1.77.0] - 2026-01-14
 
@@ -290,34 +290,34 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
   - Deletes original comments after successful migration
 
 ### Changed
-- Dashboard `count_open_todos()` now queries `prm_todo` CPT instead of comments
-  - Uses `WP_Query` with access control filtering via `PRM_Access_Control` hooks
+- Dashboard `count_open_todos()` now queries `stadion_todo` CPT instead of comments
+  - Uses `WP_Query` with access control filtering via `STADION_Access_Control` hooks
 
 ### Removed
-- Legacy comment-based todo code from `PRM_Comment_Types`:
+- Legacy comment-based todo code from `STADION_Comment_Types`:
   - `TYPE_TODO` constant
   - Todo REST routes (`/people/{id}/todos`, `/todos/{id}`)
   - Todo methods: `get_todos()`, `create_todo()`, `update_todo()`, `delete_todo()`
   - Todo meta registration (`is_completed`, `due_date`)
-- Legacy `get_all_todos()` method from `PRM_REST_API` (now handled by `PRM_REST_Todos`)
-- Legacy `/prm/v1/todos` route from `PRM_REST_API` (now handled by `PRM_REST_Todos`)
+- Legacy `get_all_todos()` method from `STADION_REST_API` (now handled by `STADION_REST_Todos`)
+- Legacy `/stadion/v1/todos` route from `STADION_REST_API` (now handled by `STADION_REST_Todos`)
 
 ## [1.76.0] - 2026-01-14
 
 ### Added
-- `PRM_REST_Todos` class for full CRUD operations on the todo CPT via REST API
-  - Person-scoped endpoints: GET/POST `/prm/v1/people/{person_id}/todos`
-  - Global endpoints: GET `/prm/v1/todos` with optional `completed` filter parameter
-  - Single todo endpoints: GET/PUT/DELETE `/prm/v1/todos/{id}`
+- `STADION_REST_Todos` class for full CRUD operations on the todo CPT via REST API
+  - Person-scoped endpoints: GET/POST `/stadion/v1/people/{person_id}/todos`
+  - Global endpoints: GET `/stadion/v1/todos` with optional `completed` filter parameter
+  - Single todo endpoints: GET/PUT/DELETE `/stadion/v1/todos/{id}`
   - Response format matches existing comment-based todo system for seamless frontend migration
   - Proper permission callbacks using `check_person_access()` and `check_user_approved()`
-  - Access control integration via existing `PRM_Access_Control` filters
+  - Access control integration via existing `STADION_Access_Control` filters
 
 ## [1.75.0] - 2026-01-14
 
 ### Added
-- `prm_todo` custom post type for tracking todos/tasks related to people
-  - Post type slug: `prm_todo`, REST base: `todos`
+- `stadion_todo` custom post type for tracking todos/tasks related to people
+  - Post type slug: `stadion_todo`, REST base: `todos`
   - Internal only (public: false) but visible in admin and REST API
   - Supports title (todo text), editor (optional notes), and author
   - Menu position after Important Dates with dashicons-yes-alt icon
@@ -327,11 +327,11 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
   - `due_date`: date_picker for optional due date (Y-m-d format)
   - `_visibility`: select field for private/workspace visibility
   - `_assigned_workspaces`: taxonomy field for workspace assignment (conditional on visibility)
-- Access control integration for `prm_todo` post type
+- Access control integration for `stadion_todo` post type
   - Added to `$controlled_post_types` array for automatic query filtering
-  - REST API query filtering via `rest_prm_todo_query` hook
-  - REST API single item access via `rest_prepare_prm_todo` hook
-  - Workspace ID conversion via `rest_after_insert_prm_todo` hook
+  - REST API query filtering via `rest_stadion_todo_query` hook
+  - REST API single item access via `rest_prepare_stadion_todo` hook
+  - Workspace ID conversion via `rest_after_insert_stadion_todo` hook
 
 ## [1.74.0] - 2026-01-13
 
@@ -399,7 +399,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
   - Bulk workspace assignment
   - Bulk label management (add/remove mode toggle)
 - Actions dropdown in Organizations selection toolbar
-- Bulk update REST endpoint for companies (`POST /prm/v1/companies/bulk-update`)
+- Bulk update REST endpoint for companies (`POST /stadion/v1/companies/bulk-update`)
 - `useBulkUpdateCompanies` hook for React components
 
 ### Changed
@@ -498,7 +498,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.63.0] - 2026-01-13
 
 ### Added
-- Bulk update REST endpoint `/prm/v1/people/bulk-update` for batch operations
+- Bulk update REST endpoint `/stadion/v1/people/bulk-update` for batch operations
   - Accepts array of person IDs and updates object with visibility and/or workspace assignments
   - Validates ownership of each post before updating
   - Returns success/failure details for each person
@@ -576,7 +576,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
   - Consistent formatting with email digest presentation
 
 ### Changed
-- PRM_Reminders now gathers mentions and workspace activity before sending digests
+- STADION_Reminders now gathers mentions and workspace activity before sending digests
 - Empty digests are now skipped when user has no dates, todos, mentions, or workspace activity
 
 ## [1.59.1] - 2026-01-13
@@ -588,9 +588,9 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Added
 - @mention notification system for collaborative features
-  - PRM_Mention_Notifications class handles notification delivery when users are mentioned
+  - STADION_Mention_Notifications class handles notification delivery when users are mentioned
   - Immediate email notifications or queue for daily digest based on user preference
-  - User preference stored in `caelis_mention_notifications` user meta (digest/immediate/never)
+  - User preference stored in `stadion_mention_notifications` user meta (digest/immediate/never)
   - Self-mentions are automatically ignored (no notification sent)
 - MentionInput integration in NoteModal for workspace contacts
   - NoteModal now uses MentionInput component for contacts shared with workspaces
@@ -599,7 +599,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - Mention notification preference in Settings
   - New "Mention notifications" dropdown in Notifications tab
   - Three options: Include in daily digest (default), Send immediately, Don't notify me
-  - REST API endpoint `/prm/v1/user/mention-notifications` for preference management
+  - REST API endpoint `/stadion/v1/user/mention-notifications` for preference management
 
 ## [1.58.0] - 2026-01-13
 
@@ -615,10 +615,10 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
   - Shared notes have subtle blue left border for visual distinction
 - New @mentions infrastructure for collaborative notes
   - MentionInput React component using react-mentions library
-  - Workspace member search API endpoint (`/prm/v1/workspaces/members/search`)
-  - PRM_Mentions PHP class for parsing, storing, and rendering @mentions
+  - Workspace member search API endpoint (`/stadion/v1/workspaces/members/search`)
+  - STADION_Mentions PHP class for parsing, storing, and rendering @mentions
   - Mentioned user IDs stored in comment meta `_mentioned_users`
-  - Action hook `prm_user_mentioned` fires when users are mentioned
+  - Action hook `stadion_user_mentioned` fires when users are mentioned
 - Workspace iCal calendar feed support
   - New `/workspace/{id}/calendar/{token}.ics` endpoint for workspace calendars
   - Includes important dates for all contacts shared with the workspace
@@ -638,7 +638,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Fixed
 - CardDAV sync now tracks changes made via web UI (previously only tracked CardDAV-originated changes)
-- New contacts created in Caelis web interface now properly sync to CardDAV clients (iPhone, etc.)
+- New contacts created in Stadion web interface now properly sync to CardDAV clients (iPhone, etc.)
 
 ## [1.57.0] - 2026-01-13
 
@@ -687,9 +687,9 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Added
 - ShareModal component for sharing contacts/companies with specific users
 - `useSharing.js` hook with `useShares`, `useAddShare`, `useRemoveShare`, `useUserSearch` hooks
-- Share REST endpoints for People (`/prm/v1/people/{id}/shares`)
-- Share REST endpoints for Companies (`/prm/v1/companies/{id}/shares`)
-- User search endpoint (`/prm/v1/users/search`) for finding users to share with
+- Share REST endpoints for People (`/stadion/v1/people/{id}/shares`)
+- Share REST endpoints for Companies (`/stadion/v1/companies/{id}/shares`)
+- User search endpoint (`/stadion/v1/users/search`) for finding users to share with
 - Share button in PersonDetail page header
 - Share button in CompanyDetail page header
 
@@ -735,12 +735,12 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.48.0] - 2026-01-13
 
 ### Added
-- Workspace invitation REST API endpoints in `PRM_REST_Workspaces`
-- POST /prm/v1/workspaces/{id}/invites - Create and send invitation email
-- GET /prm/v1/workspaces/{id}/invites - List pending invites
-- DELETE /prm/v1/workspaces/{id}/invites/{invite_id} - Revoke pending invite
-- GET /prm/v1/invites/{token} - Validate invite (public, no auth required)
-- POST /prm/v1/invites/{token}/accept - Accept invite and join workspace
+- Workspace invitation REST API endpoints in `STADION_REST_Workspaces`
+- POST /stadion/v1/workspaces/{id}/invites - Create and send invitation email
+- GET /stadion/v1/workspaces/{id}/invites - List pending invites
+- DELETE /stadion/v1/workspaces/{id}/invites/{invite_id} - Revoke pending invite
+- GET /stadion/v1/invites/{token} - Validate invite (public, no auth required)
+- POST /stadion/v1/invites/{token}/accept - Accept invite and join workspace
 - HTML email template for invitation notifications
 
 ## [1.47.0] - 2026-01-13
@@ -753,16 +753,16 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.46.0] - 2026-01-13
 
 ### Added
-- Workspace term sync functionality in `PRM_Taxonomies`
+- Workspace term sync functionality in `STADION_Taxonomies`
 - Auto-creates `workspace-{ID}` terms when workspaces are published
 - Updates term names when workspace titles change
 - Removes terms when workspaces are permanently deleted
 - ACF field for assigning contacts to workspaces (shown when visibility = workspace)
-- New `PRM_REST_Workspaces` class for workspace REST API endpoints
-- GET/POST /prm/v1/workspaces for listing and creating workspaces
-- GET/PUT/DELETE /prm/v1/workspaces/{id} for workspace details and management
-- POST /prm/v1/workspaces/{id}/members for adding members
-- DELETE/PUT /prm/v1/workspaces/{id}/members/{user_id} for removing and updating members
+- New `STADION_REST_Workspaces` class for workspace REST API endpoints
+- GET/POST /stadion/v1/workspaces for listing and creating workspaces
+- GET/PUT/DELETE /stadion/v1/workspaces/{id} for workspace details and management
+- POST /stadion/v1/workspaces/{id}/members for adding members
+- DELETE/PUT /stadion/v1/workspaces/{id}/members/{user_id} for removing and updating members
 - Permission callbacks for workspace access, admin, and owner checks
 
 ## [1.45.0] - 2026-01-13
@@ -779,7 +779,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.44.0] - 2026-01-13
 
 ### Added
-- Workspace membership management system via `PRM_Workspace_Members` class
+- Workspace membership management system via `STADION_Workspace_Members` class
 - User meta storage for workspace memberships with roles (admin, member, viewer)
 - Methods for adding, removing, and updating user workspace memberships
 - Query helpers to get user workspaces, workspace members, and role checks
@@ -787,7 +787,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - Protection against removing workspace owner from membership
 - ACF visibility field group for Person, Company, and Important Date post types
 - Visibility options: private (default), workspace, and shared with specific users
-- `PRM_Visibility` helper class for managing visibility and sharing
+- `STADION_Visibility` helper class for managing visibility and sharing
 - Share management methods: add_share, remove_share, get_shares, user_has_share
 - `_shared_with` post meta for storing direct user shares with permissions
 
@@ -819,7 +819,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Changed
 - Added XSS sanitization to REST API responses using WordPress native functions
-- Added sanitize_text(), sanitize_rich_content(), sanitize_url() helpers to PRM_REST_Base
+- Added sanitize_text(), sanitize_rich_content(), sanitize_url() helpers to STADION_REST_Base
 - All user-supplied content in API responses now properly escaped (defense-in-depth)
 
 ## [1.42.4] - 2026-01-13
@@ -832,9 +832,9 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Changed
 - Slack bot tokens are now encrypted using sodium_crypto_secretbox instead of base64 encoding
-- Added encrypt_token/decrypt_token helper methods to PRM_REST_Slack class
+- Added encrypt_token/decrypt_token helper methods to STADION_REST_Slack class
 - Legacy base64-encoded tokens are automatically migrated on first read
-- Graceful fallback to base64 if CAELIS_ENCRYPTION_KEY constant is not defined
+- Graceful fallback to base64 if STADION_ENCRYPTION_KEY constant is not defined
 
 ## [1.42.2] - 2026-01-09
 
@@ -846,13 +846,13 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.42.1] - 2026-01-09
 
 ### Fixed
-- PRM_THEME_VERSION now reads from style.css instead of being hardcoded to 1.0.0
+- STADION_THEME_VERSION now reads from style.css instead of being hardcoded to 1.0.0
 
 ## [1.42.0] - 2026-01-09
 
 ### Added
 - Version check system for PWA/mobile app cache invalidation
-- New `/prm/v1/version` REST API endpoint returns current theme version
+- New `/stadion/v1/version` REST API endpoint returns current theme version
 - `useVersionCheck` hook monitors for new versions every 5 minutes and on tab visibility change
 - Update banner appears at top of screen when a new version is available, with one-click reload
 
@@ -907,7 +907,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Changed
 - vCard import: Multiple NOTE entries are now supported (all imported as separate timeline notes)
 - vCard import: Phone labels (Home/Work) now preserved during import
-- PRM_VCard_Import now uses notes array internally for consistency
+- STADION_VCard_Import now uses notes array internally for consistency
 
 ## [1.39.5] - 2026-01-09
 
@@ -1319,7 +1319,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Added
 - "Investments" section on person detail page showing companies they've invested in
 - "Invested in" section on company detail page showing companies they've invested in
-- New REST API endpoint `/prm/v1/investments/{id}` to query reverse investor relationships
+- New REST API endpoint `/stadion/v1/investments/{id}` to query reverse investor relationships
 
 ## [1.20.2] - 2026-01-07
 
@@ -1359,7 +1359,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Added
 - vCard import on "Add new person" screen - drop a .vcf file to pre-fill the form
-- New API endpoint `/prm/v1/import/vcard/parse` to parse single vCard contact data
+- New API endpoint `/stadion/v1/import/vcard/parse` to parse single vCard contact data
 
 ## [1.18.0] - 2026-01-07
 
@@ -1404,7 +1404,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - New Todos page accessible from the main navigation menu
 - Dashboard now shows "Open todos" stat card (4th card in the stats row)
 - Dashboard now displays open todos alongside upcoming reminders
-- REST API endpoint `GET /prm/v1/todos` to fetch all todos across all people
+- REST API endpoint `GET /stadion/v1/todos` to fetch all todos across all people
 - Dashboard API now returns `open_todos_count` in stats
 
 ### Changed
@@ -1468,7 +1468,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Added
 - Per-user cron jobs for precise notification timing at each user's preferred time
 - Admin button to reschedule all user reminder cron jobs in Settings
-- REST API endpoint `POST /prm/v1/reminders/reschedule-cron` to reschedule all cron jobs
+- REST API endpoint `POST /stadion/v1/reminders/reschedule-cron` to reschedule all cron jobs
 - User cron job cleanup when user is deleted via `delete_user` hook
 
 ### Changed
@@ -1484,7 +1484,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Added
 - WP-CLI command `wp prm reminders trigger` to manually trigger daily reminders
-- REST API endpoint `/prm/v1/reminders/cron-status` to check cron job status
+- REST API endpoint `/stadion/v1/reminders/cron-status` to check cron job status
 
 ## [1.13.0] - 2026-01-04
 
@@ -1495,10 +1495,10 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - Todo creation and editing modals
 - Note creation modal
 - Timeline utilities for date formatting, grouping, and activity type icons
-- REST API endpoints for todos: GET, POST, PUT, DELETE `/prm/v1/people/{id}/todos` and `/prm/v1/todos/{id}`
-- Todo comment type (`prm_todo`) with meta fields: `is_completed` (boolean) and `due_date` (string)
+- REST API endpoints for todos: GET, POST, PUT, DELETE `/stadion/v1/people/{id}/todos` and `/stadion/v1/todos/{id}`
+- Todo comment type (`stadion_todo`) with meta fields: `is_completed` (boolean) and `due_date` (string)
 - WP-CLI command `wp prm reminders trigger` to manually trigger daily reminders
-- REST API endpoint `/prm/v1/reminders/cron-status` to check cron job status
+- REST API endpoint `/stadion/v1/reminders/cron-status` to check cron job status
 
 ### Changed
 - Timeline section now displays notes, activities, and todos in a unified view
@@ -1537,7 +1537,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - Slack OAuth 2.0 integration replacing webhook-based integration
 - OAuth flow with "Connect Slack" button in Settings
 - Slack Web API support for messaging channels and users directly
-- Slash command `/caelis` to view recent reminders in Slack
+- Slash command `/stadion` to view recent reminders in Slack
 - Automatic Slack user ID mapping for direct messaging
 - Slack workspace name display in Settings
 - Event subscription endpoint for Slack URL verification
@@ -1548,9 +1548,9 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - Legacy webhook support maintained for backward compatibility during migration
 
 ### Technical Details
-- New REST API endpoints: `/prm/v1/slack/oauth/authorize`, `/prm/v1/slack/oauth/callback`, `/prm/v1/slack/disconnect`, `/prm/v1/slack/commands`, `/prm/v1/slack/events`
-- User meta keys: `caelis_slack_bot_token`, `caelis_slack_workspace_id`, `caelis_slack_workspace_name`, `caelis_slack_user_id`
-- Requires WordPress constants: `CAELIS_SLACK_CLIENT_ID`, `CAELIS_SLACK_CLIENT_SECRET`, `CAELIS_SLACK_SIGNING_SECRET`
+- New REST API endpoints: `/stadion/v1/slack/oauth/authorize`, `/stadion/v1/slack/oauth/callback`, `/stadion/v1/slack/disconnect`, `/stadion/v1/slack/commands`, `/stadion/v1/slack/events`
+- User meta keys: `stadion_slack_bot_token`, `stadion_slack_workspace_id`, `stadion_slack_workspace_name`, `stadion_slack_user_id`
+- Requires WordPress constants: `STADION_SLACK_CLIENT_ID`, `STADION_SLACK_CLIENT_SECRET`, `STADION_SLACK_SIGNING_SECRET`
 
 ## [1.11.4] - 2026-01-04
 
@@ -1635,7 +1635,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Fixed
 - Fixed approval screen display for unapproved users - now shows a properly styled "Account Pending Approval" screen instead of an error
-- Changed `/prm/v1/user/me` endpoint permission callback to allow logged-in users (not just approved) so approval status can be checked
+- Changed `/stadion/v1/user/me` endpoint permission callback to allow logged-in users (not just approved) so approval status can be checked
 
 ## [1.8.0] - 2026-01-04
 
@@ -1773,15 +1773,15 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.4.4] - 2026-01-04
 
 ### Changed
-- Changed "Register For This Site" notice text to "Register for Caelis"
+- Changed "Register For This Site" notice text to "Register for Stadion"
 - No longer hiding the register notice (now displays with updated text)
 
 ## [1.4.3] - 2026-01-04
 
 ### Changed
-- Changed registration page title to "Register for Caelis"
-- Changed login page title to "Log in to Caelis"
-- Changed lost password page title to "Lost your password for Caelis?"
+- Changed registration page title to "Register for Stadion"
+- Changed login page title to "Log in to Stadion"
+- Changed lost password page title to "Lost your password for Stadion?"
 - Added left border color (#d97706) and 20px top margin to notice.info.message divs
 
 ## [1.4.2] - 2026-01-04
@@ -1806,7 +1806,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.4.0] - 2026-01-04
 
 ### Added
-- User approval system - new users default to "Caelis User" role but require admin approval before accessing the system
+- User approval system - new users default to "Stadion User" role but require admin approval before accessing the system
 - Admin interface for approving/denying users:
   - Approval status column in users list
   - Bulk approve/deny actions
@@ -1816,7 +1816,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - Approval status included in user API response
 
 ### Changed
-- Default role for new registrations is now "Caelis User" instead of Subscriber
+- Default role for new registrations is now "Stadion User" instead of Subscriber
 - All REST API endpoints now check approval status before allowing access
 - Access control system blocks unapproved users from viewing any data
 - Users are marked as unapproved by default when registered
@@ -1824,7 +1824,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.3.1] - 2026-01-04
 
 ### Added
-- Custom "Caelis User" role automatically created on theme activation
+- Custom "Stadion User" role automatically created on theme activation
 - Role has minimal permissions: can create/edit/delete their own people and companies, upload files
 - Role cannot access WordPress admin settings, manage users, or install plugins/themes
 - Role is automatically removed on theme deactivation (users reassigned to Subscriber)
@@ -2009,19 +2009,19 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ## [1.0.119] - 2026-01-04
 
 ### Added
-- Caelis favicon now displays on the WordPress login page
+- Stadion favicon now displays on the WordPress login page
 
 ## [1.0.118] - 2026-01-04
 
 ### Fixed
-- Login button now properly uses Caelis amber colors (overrides WordPress defaults)
+- Login button now properly uses Stadion amber colors (overrides WordPress defaults)
 - Added more margin above the login button for better spacing
 
 ## [1.0.117] - 2026-01-04
 
 ### Added
-- Custom Caelis-branded WordPress login page with amber theme colors
-- Login page displays Caelis logo and name
+- Custom Stadion-branded WordPress login page with amber theme colors
+- Login page displays Stadion logo and name
 - Users are redirected to homepage after successful login
 
 ## [1.0.116] - 2026-01-04
@@ -2041,13 +2041,13 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 
 ### Fixed
 - Photo uploads now use properly named files based on person/company name instead of original filename
-- New REST API endpoints: `/prm/v1/people/{id}/photo` and `/prm/v1/companies/{id}/logo/upload`
+- New REST API endpoints: `/stadion/v1/people/{id}/photo` and `/stadion/v1/companies/{id}/logo/upload`
 - Files are saved as `{sanitized-name}.{ext}` (e.g., `john-doe.jpg`) for consistent file paths
 
 ## [1.0.113] - 2026-01-04
 
 ### Changed
-- Rebranded application from "Koinastra" to "Caelis" across all user-facing text
+- Rebranded application from "Koinastra" to "Stadion" across all user-facing text
 - Updated theme name, description, email notifications, and documentation
 
 ## [1.0.112] - 2026-01-04
@@ -2056,7 +2056,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - iCal calendar feed: Subscribe to important dates from any calendar app (Apple Calendar, Google Calendar, Outlook)
 - iCal feed authentication: Secure token-based URLs for private calendar subscriptions
 - Settings: Calendar subscription section with feed URL, copy button, and regenerate token option
-- REST API endpoints: `/prm/v1/user/ical-url` and `/prm/v1/user/regenerate-ical-token`
+- REST API endpoints: `/stadion/v1/user/ical-url` and `/stadion/v1/user/regenerate-ical-token`
 - Clickable events: Calendar events link directly to the related person's detail page
 - Recurring dates: Dates marked as recurring automatically repeat yearly in the feed
 
@@ -2384,7 +2384,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Added
 - Default relationship configurations: System now ships with pre-configured inverse mappings and gender-dependent settings
 - Restore defaults button: Added "Restore Defaults" button in Relationship Types settings page
-- REST API endpoint: `/prm/v1/relationship-types/restore-defaults` to restore default configurations
+- REST API endpoint: `/stadion/v1/relationship-types/restore-defaults` to restore default configurations
 - Automatic setup: Default configurations are applied when relationship types are first created
 
 ### Changed
@@ -2432,7 +2432,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Changed
 - Inverse relationships: Moved inverse relationship mappings from hardcoded PHP array to ACF taxonomy field
 - Relationship types now have an "Inverse Relationship Type" field that can be configured in WordPress admin
-- Removed hardcoded `$inverse_mappings` array from `PRM_Inverse_Relationships` class
+- Removed hardcoded `$inverse_mappings` array from `STADION_Inverse_Relationships` class
 
 ## [1.0.67] - 2024-12-19
 
@@ -2566,7 +2566,7 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 - User menu: Shows current user's avatar with dropdown menu
 - User menu: "Edit profile" link to WordPress user profile page
 - User menu: "WordPress admin" link (only visible for admin users)
-- Backend: New REST endpoint `/prm/v1/user/me` to get current user information
+- Backend: New REST endpoint `/stadion/v1/user/me` to get current user information
 
 ## [1.0.44] - 2024-12-19
 

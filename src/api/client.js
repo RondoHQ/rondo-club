@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Get config from WordPress
-const config = window.prmConfig || {};
+const config = window.stadionConfig || {};
 
 // Create axios instance
 const api = axios.create({
@@ -15,8 +15,8 @@ const api = axios.create({
 // Request interceptor to ensure nonce is current
 api.interceptors.request.use((config) => {
   // Update nonce from window in case it was refreshed
-  if (window.prmConfig?.nonce) {
-    config.headers['X-WP-Nonce'] = window.prmConfig.nonce;
+  if (window.stadionConfig?.nonce) {
+    config.headers['X-WP-Nonce'] = window.stadionConfig.nonce;
   }
   return config;
 });
@@ -76,7 +76,7 @@ export const wpApi = {
   createRelationshipType: (data) => api.post('/wp/v2/relationship_type', data),
   updateRelationshipType: (id, data) => api.post(`/wp/v2/relationship_type/${id}`, data),
   deleteRelationshipType: (id) => api.delete(`/wp/v2/relationship_type/${id}?force=true`),
-  restoreRelationshipTypeDefaults: () => api.post('/prm/v1/relationship-types/restore-defaults'),
+  restoreRelationshipTypeDefaults: () => api.post('/stadion/v1/relationship-types/restore-defaults'),
   getDateTypes: () => api.get('/wp/v2/date_type', { params: { per_page: 100 } }),
   
   // Media
@@ -93,201 +93,201 @@ export const wpApi = {
 // Helper for custom PRM API
 export const prmApi = {
   // Version check (for cache invalidation)
-  getVersion: () => api.get('/prm/v1/version'),
+  getVersion: () => api.get('/stadion/v1/version'),
   
   // Dashboard
-  getDashboard: () => api.get('/prm/v1/dashboard'),
+  getDashboard: () => api.get('/stadion/v1/dashboard'),
   
   // Gravatar
-  sideloadGravatar: (personId, email) => api.post(`/prm/v1/people/${personId}/gravatar`, { email }),
+  sideloadGravatar: (personId, email) => api.post(`/stadion/v1/people/${personId}/gravatar`, { email }),
 
   // Bulk operations
-  bulkUpdatePeople: (ids, updates) => api.post('/prm/v1/people/bulk-update', { ids, updates }),
-  bulkUpdateCompanies: (ids, updates) => api.post('/prm/v1/companies/bulk-update', { ids, updates }),
+  bulkUpdatePeople: (ids, updates) => api.post('/stadion/v1/people/bulk-update', { ids, updates }),
+  bulkUpdateCompanies: (ids, updates) => api.post('/stadion/v1/companies/bulk-update', { ids, updates }),
   
   // Current user
-  getCurrentUser: () => api.get('/prm/v1/user/me'),
+  getCurrentUser: () => api.get('/stadion/v1/user/me'),
   
   // User management (admin only)
-  getUsers: () => api.get('/prm/v1/users'),
-  approveUser: (userId) => api.post(`/prm/v1/users/${userId}/approve`),
-  denyUser: (userId) => api.post(`/prm/v1/users/${userId}/deny`),
-  deleteUser: (userId) => api.delete(`/prm/v1/users/${userId}`),
+  getUsers: () => api.get('/stadion/v1/users'),
+  approveUser: (userId) => api.post(`/stadion/v1/users/${userId}/approve`),
+  denyUser: (userId) => api.post(`/stadion/v1/users/${userId}/deny`),
+  deleteUser: (userId) => api.delete(`/stadion/v1/users/${userId}`),
   
   // Search
-  search: (query) => api.get('/prm/v1/search', { params: { q: query } }),
+  search: (query) => api.get('/stadion/v1/search', { params: { q: query } }),
   
   // Reminders
   getReminders: (daysAhead = 30) => 
-    api.get('/prm/v1/reminders', { params: { days_ahead: daysAhead } }),
-  triggerReminders: () => api.post('/prm/v1/reminders/trigger'),
-  rescheduleCronJobs: () => api.post('/prm/v1/reminders/reschedule-cron'),
+    api.get('/stadion/v1/reminders', { params: { days_ahead: daysAhead } }),
+  triggerReminders: () => api.post('/stadion/v1/reminders/trigger'),
+  rescheduleCronJobs: () => api.post('/stadion/v1/reminders/reschedule-cron'),
   
   // Notification channels
-  getNotificationChannels: () => api.get('/prm/v1/user/notification-channels'),
-  updateNotificationChannels: (channels) => api.post('/prm/v1/user/notification-channels', { channels }),
-  updateSlackWebhook: (webhook) => api.post('/prm/v1/user/slack-webhook', { webhook }),
-  updateNotificationTime: (time) => api.post('/prm/v1/user/notification-time', { time }),
-  updateMentionNotifications: (preference) => api.post('/prm/v1/user/mention-notifications', { preference }),
+  getNotificationChannels: () => api.get('/stadion/v1/user/notification-channels'),
+  updateNotificationChannels: (channels) => api.post('/stadion/v1/user/notification-channels', { channels }),
+  updateSlackWebhook: (webhook) => api.post('/stadion/v1/user/slack-webhook', { webhook }),
+  updateNotificationTime: (time) => api.post('/stadion/v1/user/notification-time', { time }),
+  updateMentionNotifications: (preference) => api.post('/stadion/v1/user/mention-notifications', { preference }),
   
   // Slack OAuth
-  getSlackStatus: () => api.get('/prm/v1/user/slack-status'),
-  disconnectSlack: () => api.post('/prm/v1/slack/disconnect'),
-  getSlackChannels: () => api.get('/prm/v1/slack/channels'),
-  getSlackTargets: () => api.get('/prm/v1/slack/targets'),
-  updateSlackTargets: (targets) => api.post('/prm/v1/slack/targets', { targets }),
+  getSlackStatus: () => api.get('/stadion/v1/user/slack-status'),
+  disconnectSlack: () => api.post('/stadion/v1/slack/disconnect'),
+  getSlackChannels: () => api.get('/stadion/v1/slack/channels'),
+  getSlackTargets: () => api.get('/stadion/v1/slack/targets'),
+  updateSlackTargets: (targets) => api.post('/stadion/v1/slack/targets', { targets }),
   
   // Person-specific
-  getPersonDates: (personId) => api.get(`/prm/v1/people/${personId}/dates`),
-  getPersonTimeline: (personId) => api.get(`/prm/v1/people/${personId}/timeline`),
-  getPersonNotes: (personId) => api.get(`/prm/v1/people/${personId}/notes`),
+  getPersonDates: (personId) => api.get(`/stadion/v1/people/${personId}/dates`),
+  getPersonTimeline: (personId) => api.get(`/stadion/v1/people/${personId}/timeline`),
+  getPersonNotes: (personId) => api.get(`/stadion/v1/people/${personId}/notes`),
   createNote: (personId, content, visibility = 'private') =>
-    api.post(`/prm/v1/people/${personId}/notes`, { content, visibility }),
+    api.post(`/stadion/v1/people/${personId}/notes`, { content, visibility }),
   updateNote: (noteId, content, visibility = null) =>
-    api.put(`/prm/v1/notes/${noteId}`, { content, ...(visibility && { visibility }) }),
-  deleteNote: (noteId) => api.delete(`/prm/v1/notes/${noteId}`),
+    api.put(`/stadion/v1/notes/${noteId}`, { content, ...(visibility && { visibility }) }),
+  deleteNote: (noteId) => api.delete(`/stadion/v1/notes/${noteId}`),
   
   // Activities
-  getPersonActivities: (personId) => api.get(`/prm/v1/people/${personId}/activities`),
+  getPersonActivities: (personId) => api.get(`/stadion/v1/people/${personId}/activities`),
   createActivity: (personId, data) => 
-    api.post(`/prm/v1/people/${personId}/activities`, data),
+    api.post(`/stadion/v1/people/${personId}/activities`, data),
   updateActivity: (activityId, data) => 
-    api.put(`/prm/v1/activities/${activityId}`, data),
-  deleteActivity: (activityId) => api.delete(`/prm/v1/activities/${activityId}`),
+    api.put(`/stadion/v1/activities/${activityId}`, data),
+  deleteActivity: (activityId) => api.delete(`/stadion/v1/activities/${activityId}`),
   
   // Todos
   getAllTodos: (status = 'open') =>
-    api.get('/prm/v1/todos', { params: { status } }),
+    api.get('/stadion/v1/todos', { params: { status } }),
   
   // Investments (companies where entity is an investor)
-  getInvestments: (investorId) => api.get(`/prm/v1/investments/${investorId}`),
-  getPersonTodos: (personId) => api.get(`/prm/v1/people/${personId}/todos`),
+  getInvestments: (investorId) => api.get(`/stadion/v1/investments/${investorId}`),
+  getPersonTodos: (personId) => api.get(`/stadion/v1/people/${personId}/todos`),
   createTodo: (personId, data) => 
-    api.post(`/prm/v1/people/${personId}/todos`, data),
+    api.post(`/stadion/v1/people/${personId}/todos`, data),
   updateTodo: (todoId, data) => 
-    api.put(`/prm/v1/todos/${todoId}`, data),
-  deleteTodo: (todoId) => api.delete(`/prm/v1/todos/${todoId}`),
+    api.put(`/stadion/v1/todos/${todoId}`, data),
+  deleteTodo: (todoId) => api.delete(`/stadion/v1/todos/${todoId}`),
   
   // Company-specific
-  getCompanyPeople: (companyId) => api.get(`/prm/v1/companies/${companyId}/people`),
-  setCompanyLogo: (companyId, mediaId) => api.post(`/prm/v1/companies/${companyId}/logo`, { media_id: mediaId }),
+  getCompanyPeople: (companyId) => api.get(`/stadion/v1/companies/${companyId}/people`),
+  setCompanyLogo: (companyId, mediaId) => api.post(`/stadion/v1/companies/${companyId}/logo`, { media_id: mediaId }),
   
   // Photo uploads with proper naming
   uploadPersonPhoto: (personId, file) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post(`/prm/v1/people/${personId}/photo`, formData, {
+    return api.post(`/stadion/v1/people/${personId}/photo`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
   uploadCompanyLogo: (companyId, file) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post(`/prm/v1/companies/${companyId}/logo/upload`, formData, {
+    return api.post(`/stadion/v1/companies/${companyId}/logo/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
   
   // CardDAV & Application Passwords
-  getCardDAVUrls: () => api.get('/prm/v1/carddav/urls'),
+  getCardDAVUrls: () => api.get('/stadion/v1/carddav/urls'),
   getAppPasswords: (userId) => api.get(`/wp/v2/users/${userId}/application-passwords`),
   createAppPassword: (userId, name) => api.post(`/wp/v2/users/${userId}/application-passwords`, { name }),
   deleteAppPassword: (userId, uuid) => api.delete(`/wp/v2/users/${userId}/application-passwords/${uuid}`),
 
   // Workspaces
-  getWorkspaces: () => api.get('/prm/v1/workspaces'),
-  getWorkspace: (id) => api.get(`/prm/v1/workspaces/${id}`),
-  createWorkspace: (data) => api.post('/prm/v1/workspaces', data),
-  updateWorkspace: (id, data) => api.put(`/prm/v1/workspaces/${id}`, data),
-  deleteWorkspace: (id) => api.delete(`/prm/v1/workspaces/${id}`),
+  getWorkspaces: () => api.get('/stadion/v1/workspaces'),
+  getWorkspace: (id) => api.get(`/stadion/v1/workspaces/${id}`),
+  createWorkspace: (data) => api.post('/stadion/v1/workspaces', data),
+  updateWorkspace: (id, data) => api.put(`/stadion/v1/workspaces/${id}`, data),
+  deleteWorkspace: (id) => api.delete(`/stadion/v1/workspaces/${id}`),
 
   // Workspace members
-  addWorkspaceMember: (workspaceId, data) => api.post(`/prm/v1/workspaces/${workspaceId}/members`, data),
-  removeWorkspaceMember: (workspaceId, userId) => api.delete(`/prm/v1/workspaces/${workspaceId}/members/${userId}`),
-  updateWorkspaceMember: (workspaceId, userId, data) => api.put(`/prm/v1/workspaces/${workspaceId}/members/${userId}`, data),
+  addWorkspaceMember: (workspaceId, data) => api.post(`/stadion/v1/workspaces/${workspaceId}/members`, data),
+  removeWorkspaceMember: (workspaceId, userId) => api.delete(`/stadion/v1/workspaces/${workspaceId}/members/${userId}`),
+  updateWorkspaceMember: (workspaceId, userId, data) => api.put(`/stadion/v1/workspaces/${workspaceId}/members/${userId}`, data),
   searchWorkspaceMembers: async (workspaceIds, query) => {
-    const { data } = await api.get('/prm/v1/workspaces/members/search', {
+    const { data } = await api.get('/stadion/v1/workspaces/members/search', {
       params: { workspace_ids: workspaceIds.join(','), query },
     });
     return data;
   },
 
   // Workspace invites
-  getWorkspaceInvites: (workspaceId) => api.get(`/prm/v1/workspaces/${workspaceId}/invites`),
-  createWorkspaceInvite: (workspaceId, data) => api.post(`/prm/v1/workspaces/${workspaceId}/invites`, data),
-  revokeWorkspaceInvite: (workspaceId, inviteId) => api.delete(`/prm/v1/workspaces/${workspaceId}/invites/${inviteId}`),
+  getWorkspaceInvites: (workspaceId) => api.get(`/stadion/v1/workspaces/${workspaceId}/invites`),
+  createWorkspaceInvite: (workspaceId, data) => api.post(`/stadion/v1/workspaces/${workspaceId}/invites`, data),
+  revokeWorkspaceInvite: (workspaceId, inviteId) => api.delete(`/stadion/v1/workspaces/${workspaceId}/invites/${inviteId}`),
 
   // Public invite endpoints (no auth required for validation)
-  validateInvite: (token) => api.get(`/prm/v1/invites/${token}`),
-  acceptInvite: (token) => api.post(`/prm/v1/invites/${token}/accept`),
+  validateInvite: (token) => api.get(`/stadion/v1/invites/${token}`),
+  acceptInvite: (token) => api.post(`/stadion/v1/invites/${token}/accept`),
 
   // Sharing (for ShareModal - uses existing _shared_with meta)
-  getPostShares: (postId, postType) => api.get(`/prm/v1/${postType}/${postId}/shares`),
-  sharePost: (postId, postType, data) => api.post(`/prm/v1/${postType}/${postId}/shares`, data),
-  unsharePost: (postId, postType, userId) => api.delete(`/prm/v1/${postType}/${postId}/shares/${userId}`),
+  getPostShares: (postId, postType) => api.get(`/stadion/v1/${postType}/${postId}/shares`),
+  sharePost: (postId, postType, data) => api.post(`/stadion/v1/${postType}/${postId}/shares`, data),
+  unsharePost: (postId, postType, userId) => api.delete(`/stadion/v1/${postType}/${postId}/shares/${userId}`),
 
   // User search for sharing
-  searchUsers: (query) => api.get('/prm/v1/users/search', { params: { q: query } }),
+  searchUsers: (query) => api.get('/stadion/v1/users/search', { params: { q: query } }),
 
   // iCal feed
-  getIcalUrl: () => api.get('/prm/v1/user/ical-url'),
+  getIcalUrl: () => api.get('/stadion/v1/user/ical-url'),
 
   // Theme preferences
-  getThemePreferences: () => api.get('/prm/v1/user/theme-preferences'),
-  updateThemePreferences: (prefs) => api.patch('/prm/v1/user/theme-preferences', prefs),
+  getThemePreferences: () => api.get('/stadion/v1/user/theme-preferences'),
+  updateThemePreferences: (prefs) => api.patch('/stadion/v1/user/theme-preferences', prefs),
 
   // Dashboard settings
-  getDashboardSettings: () => api.get('/prm/v1/user/dashboard-settings'),
-  updateDashboardSettings: (settings) => api.patch('/prm/v1/user/dashboard-settings', settings),
+  getDashboardSettings: () => api.get('/stadion/v1/user/dashboard-settings'),
+  updateDashboardSettings: (settings) => api.patch('/stadion/v1/user/dashboard-settings', settings),
 
   // Linked person (for filtering current user from attendee lists)
-  getLinkedPerson: () => api.get('/prm/v1/user/linked-person'),
-  updateLinkedPerson: (personId) => api.post('/prm/v1/user/linked-person', { person_id: personId }),
+  getLinkedPerson: () => api.get('/stadion/v1/user/linked-person'),
+  updateLinkedPerson: (personId) => api.post('/stadion/v1/user/linked-person', { person_id: personId }),
 
   // Person meetings
-  getPersonMeetings: (personId, params = {}) => api.get(`/prm/v1/people/${personId}/meetings`, { params }),
-  logMeetingAsActivity: (eventId) => api.post(`/prm/v1/calendar/events/${eventId}/log`),
-  getTodayMeetings: () => api.get('/prm/v1/calendar/today-meetings'),
-  getMeetingsForDate: (date) => api.get('/prm/v1/calendar/today-meetings', { params: { date } }),
+  getPersonMeetings: (personId, params = {}) => api.get(`/stadion/v1/people/${personId}/meetings`, { params }),
+  logMeetingAsActivity: (eventId) => api.post(`/stadion/v1/calendar/events/${eventId}/log`),
+  getTodayMeetings: () => api.get('/stadion/v1/calendar/today-meetings'),
+  getMeetingsForDate: (date) => api.get('/stadion/v1/calendar/today-meetings', { params: { date } }),
 
   // Meeting notes
-  getMeetingNotes: (eventId) => api.get(`/prm/v1/calendar/events/${eventId}/notes`),
-  updateMeetingNotes: (eventId, notes) => api.put(`/prm/v1/calendar/events/${eventId}/notes`, { notes }),
+  getMeetingNotes: (eventId) => api.get(`/stadion/v1/calendar/events/${eventId}/notes`),
+  updateMeetingNotes: (eventId, notes) => api.put(`/stadion/v1/calendar/events/${eventId}/notes`, { notes }),
 
   // Google Contacts OAuth
-  getGoogleContactsStatus: () => api.get('/prm/v1/google-contacts/status'),
-  initiateGoogleContactsAuth: (readonly = true) => api.get('/prm/v1/google-contacts/auth', { params: { readonly } }),
-  disconnectGoogleContacts: () => api.delete('/prm/v1/google-contacts'),
-  triggerGoogleContactsImport: () => api.post('/prm/v1/google-contacts/import'),
-  getGoogleContactsUnlinkedCount: () => api.get('/prm/v1/google-contacts/unlinked-count'),
-  bulkExportGoogleContacts: () => api.post('/prm/v1/google-contacts/bulk-export'),
-  triggerContactsSync: () => api.post('/prm/v1/google-contacts/sync'),
-  updateContactsSyncFrequency: (frequency) => api.post('/prm/v1/google-contacts/sync-frequency', { frequency }),
+  getGoogleContactsStatus: () => api.get('/stadion/v1/google-contacts/status'),
+  initiateGoogleContactsAuth: (readonly = true) => api.get('/stadion/v1/google-contacts/auth', { params: { readonly } }),
+  disconnectGoogleContacts: () => api.delete('/stadion/v1/google-contacts'),
+  triggerGoogleContactsImport: () => api.post('/stadion/v1/google-contacts/import'),
+  getGoogleContactsUnlinkedCount: () => api.get('/stadion/v1/google-contacts/unlinked-count'),
+  bulkExportGoogleContacts: () => api.post('/stadion/v1/google-contacts/bulk-export'),
+  triggerContactsSync: () => api.post('/stadion/v1/google-contacts/sync'),
+  updateContactsSyncFrequency: (frequency) => api.post('/stadion/v1/google-contacts/sync-frequency', { frequency }),
 
   // Custom Fields management (admin only)
-  getCustomFields: (postType) => api.get(`/prm/v1/custom-fields/${postType}`),
-  createCustomField: (postType, data) => api.post(`/prm/v1/custom-fields/${postType}`, data),
-  updateCustomField: (postType, fieldKey, data) => api.put(`/prm/v1/custom-fields/${postType}/${fieldKey}`, data),
-  deleteCustomField: (postType, fieldKey) => api.delete(`/prm/v1/custom-fields/${postType}/${fieldKey}`),
-  reorderCustomFields: (postType, order) => api.put(`/prm/v1/custom-fields/${postType}/order`, { order }),
+  getCustomFields: (postType) => api.get(`/stadion/v1/custom-fields/${postType}`),
+  createCustomField: (postType, data) => api.post(`/stadion/v1/custom-fields/${postType}`, data),
+  updateCustomField: (postType, fieldKey, data) => api.put(`/stadion/v1/custom-fields/${postType}/${fieldKey}`, data),
+  deleteCustomField: (postType, fieldKey) => api.delete(`/stadion/v1/custom-fields/${postType}/${fieldKey}`),
+  reorderCustomFields: (postType, order) => api.put(`/stadion/v1/custom-fields/${postType}/order`, { order }),
 
   // Custom Fields metadata (read-only, for display)
-  getCustomFieldsMetadata: (postType) => api.get(`/prm/v1/custom-fields/${postType}/metadata`),
+  getCustomFieldsMetadata: (postType) => api.get(`/stadion/v1/custom-fields/${postType}/metadata`),
 
   // Calendar connections
-  getCalendarConnections: () => api.get('/prm/v1/calendar/connections'),
-  createCalendarConnection: (data) => api.post('/prm/v1/calendar/connections', data),
-  updateCalendarConnection: (id, data) => api.put(`/prm/v1/calendar/connections/${id}`, data),
-  deleteCalendarConnection: (id) => api.delete(`/prm/v1/calendar/connections/${id}`),
-  triggerCalendarSync: (id) => api.post(`/prm/v1/calendar/connections/${id}/sync`),
-  getConnectionCalendars: (id) => api.get(`/prm/v1/calendar/connections/${id}/calendars`),
-  getGoogleAuthUrl: () => api.get('/prm/v1/calendar/auth/google'),
-  testCalDAVConnection: (credentials) => api.post('/prm/v1/calendar/auth/caldav/test', credentials),
+  getCalendarConnections: () => api.get('/stadion/v1/calendar/connections'),
+  createCalendarConnection: (data) => api.post('/stadion/v1/calendar/connections', data),
+  updateCalendarConnection: (id, data) => api.put(`/stadion/v1/calendar/connections/${id}`, data),
+  deleteCalendarConnection: (id) => api.delete(`/stadion/v1/calendar/connections/${id}`),
+  triggerCalendarSync: (id) => api.post(`/stadion/v1/calendar/connections/${id}/sync`),
+  getConnectionCalendars: (id) => api.get(`/stadion/v1/calendar/connections/${id}/calendars`),
+  getGoogleAuthUrl: () => api.get('/stadion/v1/calendar/auth/google'),
+  testCalDAVConnection: (credentials) => api.post('/stadion/v1/calendar/auth/caldav/test', credentials),
 
   // Feedback
-  getFeedbackList: (params) => api.get('/prm/v1/feedback', { params }),
-  getFeedback: (id) => api.get(`/prm/v1/feedback/${id}`),
-  createFeedback: (data) => api.post('/prm/v1/feedback', data),
-  updateFeedback: (id, data) => api.put(`/prm/v1/feedback/${id}`, data),
-  deleteFeedback: (id) => api.delete(`/prm/v1/feedback/${id}`),
+  getFeedbackList: (params) => api.get('/stadion/v1/feedback', { params }),
+  getFeedback: (id) => api.get(`/stadion/v1/feedback/${id}`),
+  createFeedback: (data) => api.post('/stadion/v1/feedback', data),
+  updateFeedback: (id, data) => api.put(`/stadion/v1/feedback/${id}`, data),
+  deleteFeedback: (id) => api.delete(`/stadion/v1/feedback/${id}`),
 };

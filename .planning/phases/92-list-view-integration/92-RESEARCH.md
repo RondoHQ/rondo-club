@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase integrates custom fields into the People and Organizations list views as additional columns. The Caelis codebase has well-established list view patterns in `PeopleList.jsx` and `CompaniesList.jsx` that use table-based layouts with sortable headers, row selection, and filtering. Custom field definitions are already accessible via the REST API (`/prm/v1/custom-fields/{post_type}/metadata`), and custom field values are exposed through ACF's REST API integration in the `acf` object of person/company responses.
+This phase integrates custom fields into the People and Organizations list views as additional columns. The Stadion codebase has well-established list view patterns in `PeopleList.jsx` and `CompaniesList.jsx` that use table-based layouts with sortable headers, row selection, and filtering. Custom field definitions are already accessible via the REST API (`/stadion/v1/custom-fields/{post_type}/metadata`), and custom field values are exposed through ACF's REST API integration in the `acf` object of person/company responses.
 
 The implementation requires:
 1. Settings to enable "show in list view" per field (stored in field definition)
@@ -18,7 +18,7 @@ The implementation requires:
 
 ## Standard Stack
 
-The Caelis codebase already has all required libraries installed and in use.
+The Stadion codebase already has all required libraries installed and in use.
 
 ### Core (Already in Use)
 | Library | Version | Purpose | Why Standard |
@@ -154,7 +154,7 @@ src/
 ### Anti-Patterns to Avoid
 - **Wide columns for custom fields:** Custom field columns should be narrow; use truncation/tooltips
 - **Showing all fields by default:** Custom fields should be hidden until admin enables "show in list view"
-- **Inline editing in list view:** Caelis pattern is click-to-detail for editing, not inline
+- **Inline editing in list view:** Stadion pattern is click-to-detail for editing, not inline
 - **Separate API call per column:** Fetch all field definitions once, filter by `show_in_list_view`
 
 ## Don't Hand-Roll
@@ -167,7 +167,7 @@ Problems that look simple but have existing solutions:
 | Truncating text | Custom CSS | Tailwind `truncate` class | Already used for website column |
 | Date formatting | Custom formatter | `date-fns` format() | Already in use |
 | Boolean display | Custom icons | Existing true_false render pattern | Consistent with detail view |
-| Field metadata | Custom endpoint | `/prm/v1/custom-fields/{post_type}/metadata` | Already exists from Phase 91 |
+| Field metadata | Custom endpoint | `/stadion/v1/custom-fields/{post_type}/metadata` | Already exists from Phase 91 |
 | Type-specific rendering | Build from scratch | Adapt from CustomFieldsSection.jsx | Same logic, compact display |
 
 **Key insight:** Phase 91 already implemented full type-specific rendering. For list views, we adapt that rendering to be more compact (truncated text, smaller images, etc.).
@@ -395,7 +395,7 @@ The existing field definition (stored via ACF) needs two new properties:
 These are stored in the ACF field definition and exposed via the metadata endpoint.
 
 ### Metadata Endpoint Update
-The `/prm/v1/custom-fields/{post_type}/metadata` endpoint needs to include these properties:
+The `/stadion/v1/custom-fields/{post_type}/metadata` endpoint needs to include these properties:
 
 ```php
 // In class-rest-custom-fields.php get_field_metadata()
@@ -426,7 +426,7 @@ Simpler: show numeric input for order when "show in list view" is checked. Lower
 | Fixed columns only | Dynamic custom field columns | This phase | User configurable |
 | Column config in UI preferences | Column config in field definitions | This phase | Admin-controlled, consistent for all users |
 
-**Current in Caelis:**
+**Current in Stadion:**
 - List views have fixed columns (name, organization, workspace, labels)
 - No user column customization exists
 - All data already available via ACF in person/company responses
@@ -470,12 +470,12 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/caelis/src/pages/People/PeopleList.jsx` - List view structure, SortableHeader pattern
-- `/Users/joostdevalk/Code/caelis/src/pages/Companies/CompaniesList.jsx` - Organization list view patterns
-- `/Users/joostdevalk/Code/caelis/src/components/CustomFieldsSection.jsx` - Type-specific rendering (Phase 91)
-- `/Users/joostdevalk/Code/caelis/src/components/FieldFormPanel.jsx` - Field form patterns
-- `/Users/joostdevalk/Code/caelis/includes/customfields/class-manager.php` - Field storage, updatable properties
-- `/Users/joostdevalk/Code/caelis/includes/class-rest-custom-fields.php` - API structure, metadata endpoint
+- `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` - List view structure, SortableHeader pattern
+- `/Users/joostdevalk/Code/stadion/src/pages/Companies/CompaniesList.jsx` - Organization list view patterns
+- `/Users/joostdevalk/Code/stadion/src/components/CustomFieldsSection.jsx` - Type-specific rendering (Phase 91)
+- `/Users/joostdevalk/Code/stadion/src/components/FieldFormPanel.jsx` - Field form patterns
+- `/Users/joostdevalk/Code/stadion/includes/customfields/class-manager.php` - Field storage, updatable properties
+- `/Users/joostdevalk/Code/stadion/includes/class-rest-custom-fields.php` - API structure, metadata endpoint
 
 ### Secondary (MEDIUM confidence)
 - Phase 91 Research document - Type rendering patterns

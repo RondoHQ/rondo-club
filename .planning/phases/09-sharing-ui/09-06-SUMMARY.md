@@ -21,7 +21,7 @@ Enhanced the existing filter dropdown in PeopleList.jsx with:
 
 **Hooks and data:**
 - Imported and used `useWorkspaces` hook
-- Retrieved `currentUserId` from `window.prmConfig?.userId`
+- Retrieved `currentUserId` from `window.stadionConfig?.userId`
 
 **UI additions:**
 - Ownership filter section with radio buttons (All Contacts, My Contacts, Shared with Me)

@@ -7,7 +7,7 @@ tags: [documentation, wp-config, installation, slack, google-calendar, caldav, c
 # Dependency graph
 requires:
   - phase: 01-foundation
-    provides: Caelis base setup with encryption, Slack, calendar integrations
+    provides: Stadion base setup with encryption, Slack, calendar integrations
 provides:
   - Complete wp-config.php configuration documentation in README.md
   - User-facing installation guide for all integrations

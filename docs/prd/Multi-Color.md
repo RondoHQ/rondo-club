@@ -8,7 +8,7 @@
 
 ## Overview
 
-This PRD describes the implementation of user-configurable theme customization for Caelis, including accent color selection and dark mode support. Users will be able to personalize their experience by choosing from predefined color palettes and selecting their preferred color scheme (light, dark, or system-based).
+This PRD describes the implementation of user-configurable theme customization for Stadion, including accent color selection and dark mode support. Users will be able to personalize their experience by choosing from predefined color palettes and selecting their preferred color scheme (light, dark, or system-based).
 
 ---
 

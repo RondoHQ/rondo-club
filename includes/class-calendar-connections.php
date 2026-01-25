@@ -6,7 +6,7 @@
  * a linked calendar (Google Calendar, CalDAV) with encrypted credentials.
  */
 
-namespace Caelis\Calendar;
+namespace Stadion\Calendar;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -17,7 +17,7 @@ class Connections {
 	/**
 	 * User meta key for storing calendar connections
 	 */
-	const META_KEY = '_prm_calendar_connections';
+	const META_KEY = '_stadion_calendar_connections';
 
 	/**
 	 * Get all calendar connections for a user
@@ -137,7 +137,7 @@ class Connections {
 	 * @return bool True if updated, false if connection not found
 	 */
 	public static function update_credentials( int $user_id, string $connection_id, array $credentials ): bool {
-		$encrypted = \Caelis\Data\CredentialEncryption::encrypt( $credentials );
+		$encrypted = \Stadion\Data\CredentialEncryption::encrypt( $credentials );
 
 		return self::update_connection(
 			$user_id,

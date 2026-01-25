@@ -4,10 +4,10 @@
  *
  * Initializes and routes requests to the Sabre/DAV CardDAV server.
  *
- * @package Caelis
+ * @package Stadion
  */
 
-namespace Caelis\CardDAV;
+namespace Stadion\CardDAV;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -98,15 +98,15 @@ class Server {
 		}
 
 		// Include backend classes
-		require_once \PRM_PLUGIN_DIR . '/carddav/class-auth-backend.php';
-		require_once \PRM_PLUGIN_DIR . '/carddav/class-principal-backend.php';
-		require_once \PRM_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
+		require_once \STADION_PLUGIN_DIR . '/carddav/class-auth-backend.php';
+		require_once \STADION_PLUGIN_DIR . '/carddav/class-principal-backend.php';
+		require_once \STADION_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
 
 		try {
 			// Create backends
-			$authBackend      = new \Caelis\CardDAV\AuthBackend();
-			$principalBackend = new \Caelis\CardDAV\PrincipalBackend();
-			$carddavBackend   = new \Caelis\CardDAV\CardDAVBackend();
+			$authBackend      = new \Stadion\CardDAV\AuthBackend();
+			$principalBackend = new \Stadion\CardDAV\PrincipalBackend();
+			$carddavBackend   = new \Stadion\CardDAV\CardDAVBackend();
 
 			// Create directory tree
 			$tree = [
@@ -119,7 +119,7 @@ class Server {
 			$server->setBaseUri( self::BASE_URI );
 
 			// Add plugins
-			$server->addPlugin( new \Sabre\DAV\Auth\Plugin( $authBackend, 'Caelis' ) );
+			$server->addPlugin( new \Sabre\DAV\Auth\Plugin( $authBackend, 'Stadion' ) );
 			$server->addPlugin( new \Sabre\DAV\Browser\Plugin() );
 			$server->addPlugin( new \Sabre\CardDAV\Plugin() );
 			$server->addPlugin( new \Sabre\DAVACL\Plugin() );

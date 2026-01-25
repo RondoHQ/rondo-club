@@ -2,16 +2,16 @@
 /**
  * Google Contacts Export Class
  *
- * Exports Caelis contacts to Google Contacts via People API.
+ * Exports Stadion contacts to Google Contacts via People API.
  * Handles field mapping, contact creation, updates, and photo uploads.
  *
- * @package Caelis
+ * @package Stadion
  */
 
-namespace Caelis\Export;
+namespace Stadion\Export;
 
-use Caelis\Calendar\GoogleOAuth;
-use Caelis\Contacts\GoogleContactsConnection;
+use Stadion\Calendar\GoogleOAuth;
+use Stadion\Contacts\GoogleContactsConnection;
 use Google\Service\PeopleService;
 use Google\Service\PeopleService\Person;
 use Google\Service\PeopleService\Name;
@@ -31,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class GoogleContactsExport
  *
- * Exports Caelis person records to Google Contacts.
+ * Exports Stadion person records to Google Contacts.
  */
 class GoogleContactsExport {
 
@@ -50,7 +50,7 @@ class GoogleContactsExport {
 	public static function init(): void {
 		$instance = new self( 0 ); // User ID set per-save.
 		add_action( 'save_post_person', [ $instance, 'on_person_saved' ], 20, 3 );
-		add_action( 'caelis_google_contact_export', [ $instance, 'handle_async_export' ], 10, 2 );
+		add_action( 'stadion_google_contact_export', [ $instance, 'handle_async_export' ], 10, 2 );
 		add_action( 'before_delete_post', [ $instance, 'on_person_deleted' ], 10, 2 );
 	}
 
@@ -105,13 +105,13 @@ class GoogleContactsExport {
 		$queued[ $key ] = true;
 
 		// Clear any existing scheduled event.
-		$timestamp = wp_next_scheduled( 'caelis_google_contact_export', [ $post_id, $user_id ] );
+		$timestamp = wp_next_scheduled( 'stadion_google_contact_export', [ $post_id, $user_id ] );
 		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, 'caelis_google_contact_export', [ $post_id, $user_id ] );
+			wp_unschedule_event( $timestamp, 'stadion_google_contact_export', [ $post_id, $user_id ] );
 		}
 
 		// Schedule immediate execution.
-		wp_schedule_single_event( time(), 'caelis_google_contact_export', [ $post_id, $user_id ] );
+		wp_schedule_single_event( time(), 'stadion_google_contact_export', [ $post_id, $user_id ] );
 		spawn_cron();
 	}
 
@@ -733,7 +733,7 @@ class GoogleContactsExport {
 			$phone = new PhoneNumber();
 			$phone->setValue( $value );
 
-			// Map Caelis type to Google type.
+			// Map Stadion type to Google type.
 			if ( $contact_type === 'mobile' ) {
 				$phone->setType( 'mobile' );
 			} else {
@@ -965,9 +965,9 @@ class GoogleContactsExport {
 	}
 
 	/**
-	 * Map Caelis label to Google type
+	 * Map Stadion label to Google type
 	 *
-	 * @param string $label Caelis label (e.g., "Work", "Home").
+	 * @param string $label Stadion label (e.g., "Work", "Home").
 	 * @return string Google type string.
 	 */
 	private function map_label_to_google_type( string $label ): string {
@@ -1051,7 +1051,7 @@ class GoogleContactsExport {
 		// Verify user has readwrite access.
 		$connection = GoogleContactsConnection::get_connection( $this->user_id );
 		if ( ! $connection || ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
-			$stats['errors'][] = __( 'Google Contacts is not connected with read-write access.', 'caelis' );
+			$stats['errors'][] = __( 'Google Contacts is not connected with read-write access.', 'stadion' );
 			return $stats;
 		}
 
@@ -1107,7 +1107,7 @@ class GoogleContactsExport {
 					$stats['failed']++;
 					$stats['errors'][] = sprintf(
 						/* translators: %d: contact ID */
-						__( 'Failed to export contact ID %d.', 'caelis' ),
+						__( 'Failed to export contact ID %d.', 'stadion' ),
 						$post_id
 					);
 				}
@@ -1115,7 +1115,7 @@ class GoogleContactsExport {
 				$stats['failed']++;
 				$stats['errors'][] = sprintf(
 					/* translators: 1: contact ID, 2: error message */
-					__( 'Error exporting contact ID %1$d: %2$s', 'caelis' ),
+					__( 'Error exporting contact ID %1$d: %2$s', 'stadion' ),
 					$post_id,
 					$e->getMessage()
 				);

@@ -1,12 +1,12 @@
 # Stack Research: Google Contacts Sync
 
-**Project:** Caelis Google Contacts Two-Way Sync (v5.0)
+**Project:** Stadion Google Contacts Two-Way Sync (v5.0)
 **Researched:** 2026-01-17
 **Confidence:** HIGH (verified with official Google documentation)
 
 ## Executive Summary
 
-Caelis already has the core infrastructure needed for Google Contacts sync. The existing `google/apiclient ^2.15` dependency includes the `Google_Service_PeopleService` class required for the People API. The OAuth flow, token encryption (Sodium), and WP-Cron patterns from Calendar integration transfer directly. **No new Composer dependencies are needed** - only OAuth scope expansion and new PHP classes using existing patterns.
+Stadion already has the core infrastructure needed for Google Contacts sync. The existing `google/apiclient ^2.15` dependency includes the `Google_Service_PeopleService` class required for the People API. The OAuth flow, token encryption (Sodium), and WP-Cron patterns from Calendar integration transfer directly. **No new Composer dependencies are needed** - only OAuth scope expansion and new PHP classes using existing patterns.
 
 ---
 
@@ -97,7 +97,7 @@ use Google\Service\PeopleService\Photo;
 | Added value | Slightly simpler syntax |
 | Downside | Extra abstraction, potential breaking changes |
 
-**Verdict:** SKIP. Caelis already has established patterns with direct google/apiclient usage. Adding a helper library creates inconsistency with Calendar implementation.
+**Verdict:** SKIP. Stadion already has established patterns with direct google/apiclient usage. Adding a helper library creates inconsistency with Calendar implementation.
 
 ---
 
@@ -272,11 +272,11 @@ private const SCOPES = [ 'https://www.googleapis.com/auth/calendar.readonly' ];
 
 ### Credential Storage Pattern
 
-Follow existing `PRM_Calendar_Connections` pattern:
+Follow existing `STADION_Calendar_Connections` pattern:
 
 ```php
 // User meta structure for contacts
-'_prm_google_contacts_connection' => [
+'_stadion_google_contacts_connection' => [
     'id' => 'google_contacts_' . uniqid(),
     'provider' => 'google_contacts',
     'credentials' => CredentialEncryption::encrypt([
@@ -310,7 +310,7 @@ Store Google-specific metadata on `person` posts:
 Copy from `GoogleProvider::sync()`:
 
 ```php
-$lock_key = 'prm_contacts_sync_lock_' . $user_id;
+$lock_key = 'stadion_contacts_sync_lock_' . $user_id;
 if (get_transient($lock_key)) {
     return ['skipped' => true];
 }
@@ -332,13 +332,13 @@ Handle these Google API errors:
 | 400 | `failedPrecondition` | ETag mismatch - fetch latest, merge, retry |
 | 401 | Unauthorized | Token expired - refresh or re-auth |
 | 403 | Quota exceeded | Exponential backoff |
-| 404 | Contact deleted | Mark as deleted in Caelis |
+| 404 | Contact deleted | Mark as deleted in Stadion |
 | 410 | `EXPIRED_SYNC_TOKEN` | Full sync without syncToken |
 | 429 | Rate limited | Exponential backoff |
 
 ### Field Mapping Quick Reference
 
-| Google People API | Caelis ACF Field | Notes |
+| Google People API | Stadion ACF Field | Notes |
 |-------------------|------------------|-------|
 | `names[0].givenName` | `first_name` | Single value |
 | `names[0].familyName` | `last_name` | Single value |

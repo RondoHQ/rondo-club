@@ -1,6 +1,6 @@
 <?php
 /**
- * WP-CLI Commands for Caelis
+ * WP-CLI Commands for Stadion
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -8,19 +8,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Import namespaced classes for WP-CLI commands
-use Caelis\Collaboration\Reminders;
-use Caelis\Notifications\EmailChannel;
-use Caelis\Notifications\SlackChannel;
-use Caelis\Calendar\Connections;
-use Caelis\Calendar\Matcher;
-use Caelis\Calendar\Sync;
-use Caelis\Calendar\GoogleProvider;
-use Caelis\Calendar\CalDAVProvider;
-use Caelis\Export\VCard;
-use Caelis\Contacts\GoogleContactsSync;
-use Caelis\Contacts\GoogleContactsConnection;
-use Caelis\Import\GoogleContactsAPI;
-use Caelis\Collaboration\CommentTypes;
+use Stadion\Collaboration\Reminders;
+use Stadion\Notifications\EmailChannel;
+use Stadion\Notifications\SlackChannel;
+use Stadion\Calendar\Connections;
+use Stadion\Calendar\Matcher;
+use Stadion\Calendar\Sync;
+use Stadion\Calendar\GoogleProvider;
+use Stadion\Calendar\CalDAVProvider;
+use Stadion\Export\VCard;
+use Stadion\Contacts\GoogleContactsSync;
+use Stadion\Contacts\GoogleContactsConnection;
+use Stadion\Import\GoogleContactsAPI;
+use Stadion\Collaboration\CommentTypes;
 
 // Only load if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -28,7 +28,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Reminders WP-CLI Commands
 	 */
-	class PRM_Reminders_CLI_Command {
+	class STADION_Reminders_CLI_Command {
 
 		/**
 		 * Trigger daily reminders manually
@@ -112,7 +112,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				// Check if it's the right time for this user (unless --force flag is set or specific user)
 				if ( ! isset( $assoc_args['force'] ) && ! $specific_user_id ) {
-					$preferred_time = get_user_meta( $user_id, 'caelis_notification_time', true );
+					$preferred_time = get_user_meta( $user_id, 'stadion_notification_time', true );
 					if ( empty( $preferred_time ) ) {
 						$preferred_time = '09:00';
 					}
@@ -288,7 +288,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Migration WP-CLI Commands
 	 */
-	class PRM_Migration_CLI_Command {
+	class STADION_Migration_CLI_Command {
 
 		/**
 		 * Migrate addresses from contact_info to dedicated addresses field
@@ -420,7 +420,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * VCard WP-CLI Commands
 	 */
-	class PRM_VCard_CLI_Command {
+	class STADION_VCard_CLI_Command {
 
 		/**
 		 * Get the vCard for a person (as CardDAV would serve it)
@@ -576,7 +576,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Visibility WP-CLI Commands
 	 */
-	class PRM_Visibility_CLI_Command {
+	class STADION_Visibility_CLI_Command {
 
 		/**
 		 * Set default visibility for posts that don't have it set
@@ -716,10 +716,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Multi-User Migration WP-CLI Commands
 	 */
-	class PRM_MultiUser_CLI_Command {
+	class STADION_MultiUser_CLI_Command {
 
 		/**
-		 * Migrate existing Caelis installation to multi-user system
+		 * Migrate existing Stadion installation to multi-user system
 		 *
 		 * This command sets default visibility on all existing contacts,
 		 * companies, and important dates, enabling the multi-user features
@@ -742,7 +742,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			WP_CLI::log( '' );
 			WP_CLI::log( '╔════════════════════════════════════════════════════════════╗' );
-			WP_CLI::log( '║         Caelis Multi-User Migration                        ║' );
+			WP_CLI::log( '║         Stadion Multi-User Migration                        ║' );
 			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
 			WP_CLI::log( '' );
 			WP_CLI::log( 'This migration will:' );
@@ -760,7 +760,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			// Use the existing visibility command logic
-			$visibility_command = new PRM_Visibility_CLI_Command();
+			$visibility_command = new STADION_Visibility_CLI_Command();
 
 			// Process all post types
 			WP_CLI::log( 'Starting migration...' );
@@ -815,7 +815,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::success( 'Dry run complete. Run without --dry-run to apply changes.' );
 			} else {
 				if ( $total_updated > 0 ) {
-					WP_CLI::success( 'Migration complete! Your Caelis installation is now multi-user ready.' );
+					WP_CLI::success( 'Migration complete! Your Stadion installation is now multi-user ready.' );
 				} else {
 					WP_CLI::success( 'Migration complete. All posts already had visibility set.' );
 				}
@@ -914,7 +914,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					)
 				);
 				WP_CLI::log( '' );
-				WP_CLI::log( 'Your Caelis installation is properly configured for multi-user mode.' );
+				WP_CLI::log( 'Your Stadion installation is properly configured for multi-user mode.' );
 			} else {
 				WP_CLI::warning(
 					sprintf(
@@ -993,7 +993,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * CardDAV WP-CLI Commands
 	 */
-	class PRM_CardDAV_CLI_Command {
+	class STADION_CardDAV_CLI_Command {
 
 		/**
 		 * Reset CardDAV sync token to force a full resync
@@ -1027,8 +1027,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$users = get_users( [ 'fields' => 'all' ] );
 			}
 
-			$changes        = get_option( 'prm_carddav_changes', [] );
-			$tokens         = get_option( 'prm_carddav_sync_tokens', [] );
+			$changes        = get_option( 'stadion_carddav_changes', [] );
+			$tokens         = get_option( 'stadion_carddav_sync_tokens', [] );
 			$now            = time();
 			$total_contacts = 0;
 
@@ -1075,8 +1075,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::log( sprintf( 'Queued %d contact(s) for resync for user %s (ID: %d)', $count, $user->display_name, $uid ) );
 			}
 
-			update_option( 'prm_carddav_changes', $changes );
-			update_option( 'prm_carddav_sync_tokens', $tokens );
+			update_option( 'stadion_carddav_changes', $changes );
+			update_option( 'stadion_carddav_sync_tokens', $tokens );
 
 			WP_CLI::success( sprintf( 'Queued %d contact(s) for resync. Next sync will pull all contacts.', $total_contacts ) );
 			WP_CLI::log( '' );
@@ -1087,7 +1087,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Important Dates WP-CLI Commands
 	 */
-	class PRM_Dates_CLI_Command {
+	class STADION_Dates_CLI_Command {
 
 		/**
 		 * Regenerate all Important Date titles using current naming convention.
@@ -1148,7 +1148,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				$old_title = $date_post->post_title;
 
-				// Generate new title using same logic as PRM_Auto_Title
+				// Generate new title using same logic as STADION_Auto_Title
 				$new_title = $this->generate_date_title( $post_id );
 
 				if ( $old_title === $new_title ) {
@@ -1180,7 +1180,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 
 		/**
-		 * Generate date title from fields (mirrors PRM_Auto_Title logic)
+		 * Generate date title from fields (mirrors STADION_Auto_Title logic)
 		 *
 		 * @param int $post_id Post ID
 		 * @return string Generated title
@@ -1188,14 +1188,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		private function generate_date_title( $post_id ) {
 			// Get date type from taxonomy
 			$date_types = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'names' ] );
-			$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'caelis' );
+			$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'stadion' );
 
 			// Get related people
 			$people = get_field( 'related_people', $post_id ) ?: [];
 
 			if ( empty( $people ) ) {
 				// translators: %s is the date type label (e.g., "Birthday", "Anniversary").
-				return sprintf( __( 'Unnamed %s', 'caelis' ), $type_label );
+				return sprintf( __( 'Unnamed %s', 'stadion' ), $type_label );
 			}
 
 			// Get full names of related people.
@@ -1203,14 +1203,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			foreach ( $people as $person ) {
 				$person_id = is_object( $person ) ? $person->ID : $person;
 				$full_name = html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' );
-				if ( $full_name && __( 'Unnamed Person', 'caelis' ) !== $full_name ) {
+				if ( $full_name && __( 'Unnamed Person', 'stadion' ) !== $full_name ) {
 					$names[] = $full_name;
 				}
 			}
 
 			if ( empty( $names ) ) {
 				// translators: %s is the date type label (e.g., "Birthday", "Anniversary").
-				return sprintf( __( 'Unnamed %s', 'caelis' ), $type_label );
+				return sprintf( __( 'Unnamed %s', 'stadion' ), $type_label );
 			}
 
 			$count = count( $names );
@@ -1223,24 +1223,24 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			if ( 'wedding' === $type_slug ) {
 				if ( $count >= 2 ) {
 					// translators: %1$s and %2$s are the names of the people getting married.
-					return sprintf( __( 'Wedding of %1$s & %2$s', 'caelis' ), $names[0], $names[1] );
+					return sprintf( __( 'Wedding of %1$s & %2$s', 'stadion' ), $names[0], $names[1] );
 				} elseif ( 1 === $count ) {
 					// translators: %s is the name of the person getting married.
-					return sprintf( __( 'Wedding of %s', 'caelis' ), $names[0] );
+					return sprintf( __( 'Wedding of %s', 'stadion' ), $names[0] );
 				}
 			}
 
 			if ( 1 === $count ) {
 				// translators: %1$s is person name, %2$s is date type (e.g., "John's Birthday").
-				return sprintf( __( "%1\$s's %2\$s", 'caelis' ), $names[0], $type_label );
+				return sprintf( __( "%1\$s's %2\$s", 'stadion' ), $names[0], $type_label );
 			} elseif ( 2 === $count ) {
 				// translators: %1$s and %2$s are person names, %3$s is date type (e.g., "John & Jane's Anniversary").
-				return sprintf( __( "%1\$s & %2\$s's %3\$s", 'caelis' ), $names[0], $names[1], $type_label );
+				return sprintf( __( "%1\$s & %2\$s's %3\$s", 'stadion' ), $names[0], $names[1], $type_label );
 			} else {
 				$first_two = implode( ', ', array_slice( $names, 0, 2 ) );
 				$remaining = $count - 2;
 				// translators: %1$s is first two names, %2$d is remaining count, %3$s is date type.
-				return sprintf( __( '%1$s +%2$d %3$s', 'caelis' ), $first_two, $remaining, $type_label );
+				return sprintf( __( '%1$s +%2$d %3$s', 'stadion' ), $first_two, $remaining, $type_label );
 			}
 		}
 	}
@@ -1248,12 +1248,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Todos WP-CLI Commands
 	 */
-	class PRM_Todos_CLI_Command {
+	class STADION_Todos_CLI_Command {
 
 		/**
 		 * Migrate todos from comment-based storage to CPT-based storage
 		 *
-		 * This command migrates all prm_todo comments to the new prm_todo
+		 * This command migrates all stadion_todo comments to the new stadion_todo
 		 * custom post type, preserving all metadata and relationships.
 		 *
 		 * ## OPTIONS
@@ -1277,20 +1277,20 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			WP_CLI::log( '' );
 			WP_CLI::log( '╔════════════════════════════════════════════════════════════╗' );
-			WP_CLI::log( '║         Caelis Todo Migration                              ║' );
+			WP_CLI::log( '║         Stadion Todo Migration                              ║' );
 			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
 			WP_CLI::log( '' );
 			WP_CLI::log( 'This migration will:' );
-			WP_CLI::log( '  1. Find all comment-based todos (prm_todo comment type)' );
-			WP_CLI::log( '  2. Create corresponding prm_todo CPT posts' );
+			WP_CLI::log( '  1. Find all comment-based todos (stadion_todo comment type)' );
+			WP_CLI::log( '  2. Create corresponding stadion_todo CPT posts' );
 			WP_CLI::log( '  3. Copy all metadata (is_completed, due_date)' );
 			WP_CLI::log( '  4. Delete the original comments after successful migration' );
 			WP_CLI::log( '' );
 
-			// Query all prm_todo comments
+			// Query all stadion_todo comments
 			$todos = get_comments(
 				[
-					'type'   => 'prm_todo',
+					'type'   => 'stadion_todo',
 					'status' => 'approve',
 					'number' => 0, // All todos
 				]
@@ -1350,9 +1350,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					continue;
 				}
 
-				// Create the new prm_todo CPT post
+				// Create the new stadion_todo CPT post
 				$post_data = [
-					'post_type'   => 'prm_todo',
+					'post_type'   => 'stadion_todo',
 					'post_title'  => $todo_content,
 					'post_author' => $todo->user_id,
 					'post_date'   => $todo->comment_date,
@@ -1383,7 +1383,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				// Set visibility to private (todos were always private)
 				update_field( '_visibility', 'private', $new_post_id );
 
-				WP_CLI::log( sprintf( '  Created prm_todo post ID %d', $new_post_id ) );
+				WP_CLI::log( sprintf( '  Created stadion_todo post ID %d', $new_post_id ) );
 
 				// Delete the original comment
 				$deleted = wp_delete_comment( $todo->comment_ID, true );
@@ -1446,7 +1446,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			WP_CLI::log( '' );
 			WP_CLI::log( '╔════════════════════════════════════════════════════════════╗' );
-			WP_CLI::log( '║         Caelis Todo Persons Migration                      ║' );
+			WP_CLI::log( '║         Stadion Todo Persons Migration                      ║' );
 			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
 			WP_CLI::log( '' );
 			WP_CLI::log( 'This migration will:' );
@@ -1455,12 +1455,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '  3. Remove old related_person meta' );
 			WP_CLI::log( '' );
 
-			// Query all prm_todo posts (bypass access control)
+			// Query all stadion_todo posts (bypass access control)
 			global $wpdb;
 			$todo_ids = $wpdb->get_col(
 				"SELECT ID FROM {$wpdb->posts}
-                 WHERE post_type = 'prm_todo'
-                 AND post_status IN ('prm_open', 'prm_awaiting', 'prm_completed', 'publish')"
+                 WHERE post_type = 'stadion_todo'
+                 AND post_status IN ('stadion_open', 'stadion_awaiting', 'stadion_completed', 'publish')"
 			);
 
 			if ( empty( $todo_ids ) ) {
@@ -1536,7 +1536,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Calendar Sync WP-CLI Commands
 	 */
-	class PRM_Calendar_CLI_Command {
+	class STADION_Calendar_CLI_Command {
 
 		/**
 		 * Sync calendar events from connected calendars
@@ -1761,7 +1761,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$user_ids = $wpdb->get_col(
 				"SELECT DISTINCT user_id
                  FROM {$wpdb->usermeta}
-                 WHERE meta_key = '_prm_calendar_connections'"
+                 WHERE meta_key = '_stadion_calendar_connections'"
 			);
 
 			if ( ! empty( $user_ids ) ) {
@@ -1876,7 +1876,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Google Contacts WP-CLI Commands
 	 */
-	class PRM_Google_Contacts_CLI_Command {
+	class STADION_Google_Contacts_CLI_Command {
 
 		/**
 		 * Sync Google Contacts for a user
@@ -1894,8 +1894,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp caelis google-contacts sync --user-id=1
-		 *     wp caelis google-contacts sync --user-id=1 --full
+		 *     wp stadion google-contacts sync --user-id=1
+		 *     wp stadion google-contacts sync --user-id=1 --full
 		 *
 		 * @when after_wp_load
 		 */
@@ -2004,7 +2004,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp caelis google-contacts status --user-id=1
+		 *     wp stadion google-contacts status --user-id=1
 		 *
 		 * @when after_wp_load
 		 */
@@ -2087,8 +2087,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		/**
 		 * List unresolved sync conflicts for a user
 		 *
-		 * Shows contacts where data conflicted between Google and Caelis during sync.
-		 * Caelis wins all conflicts but they are logged for review.
+		 * Shows contacts where data conflicted between Google and Stadion during sync.
+		 * Stadion wins all conflicts but they are logged for review.
 		 *
 		 * ## OPTIONS
 		 *
@@ -2097,7 +2097,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp caelis google-contacts conflicts --user-id=1
+		 *     wp stadion google-contacts conflicts --user-id=1
 		 *
 		 * @when after_wp_load
 		 */
@@ -2156,7 +2156,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			if ( empty( $conflicts ) ) {
 				WP_CLI::warning( 'No sync conflicts found.' );
 				WP_CLI::log( '' );
-				WP_CLI::log( 'This is good! It means Caelis and Google Contacts data have not conflicted.' );
+				WP_CLI::log( 'This is good! It means Stadion and Google Contacts data have not conflicted.' );
 				return;
 			}
 
@@ -2176,7 +2176,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI\Utils\format_items( 'table', $table_data, [ 'Person', 'Date', 'Details' ] );
 
 			WP_CLI::log( '' );
-			WP_CLI::log( 'Note: Caelis is the source of truth. Conflicts are auto-resolved in favor of Caelis data.' );
+			WP_CLI::log( 'Note: Stadion is the source of truth. Conflicts are auto-resolved in favor of Stadion data.' );
 			WP_CLI::log( '' );
 		}
 
@@ -2184,7 +2184,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * Unlink all contacts from Google to reset sync state
 		 *
 		 * Removes Google metadata from all contacts owned by the user but preserves
-		 * all Caelis data. Useful to reset sync state for a fresh start.
+		 * all Stadion data. Useful to reset sync state for a fresh start.
 		 *
 		 * ## OPTIONS
 		 *
@@ -2196,8 +2196,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp caelis google-contacts unlink-all --user-id=1
-		 *     wp caelis google-contacts unlink-all --user-id=1 --yes
+		 *     wp stadion google-contacts unlink-all --user-id=1
+		 *     wp stadion google-contacts unlink-all --user-id=1 --yes
 		 *
 		 * @when after_wp_load
 		 */
@@ -2243,7 +2243,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			// Confirm unless --yes flag provided
 			if ( ! isset( $assoc_args['yes'] ) ) {
-				WP_CLI::confirm( 'This will remove all Google sync metadata from these contacts. Caelis data will be preserved. Continue?' );
+				WP_CLI::confirm( 'This will remove all Google sync metadata from these contacts. Stadion data will be preserved. Continue?' );
 			}
 
 			WP_CLI::log( 'Unlinking contacts...' );
@@ -2264,14 +2264,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '' );
 			WP_CLI::success( sprintf( 'Unlinked %d contact(s). Sync token cleared.', $unlinked ) );
 			WP_CLI::log( '' );
-			WP_CLI::log( 'To re-sync, run: wp caelis google-contacts sync --user-id=' . $user_id . ' --full' );
+			WP_CLI::log( 'To re-sync, run: wp stadion google-contacts sync --user-id=' . $user_id . ' --full' );
 		}
 	}
 
 	/**
 	 * Calendar Event WP-CLI Commands
 	 */
-	class PRM_Event_CLI_Command {
+	class STADION_Event_CLI_Command {
 
 		/**
 		 * Clean up HTML entities in calendar event titles
@@ -2356,15 +2356,15 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Register WP-CLI commands
 	 */
-	WP_CLI::add_command( 'caelis google-contacts', 'PRM_Google_Contacts_CLI_Command' );
-	WP_CLI::add_command( 'prm reminders', 'PRM_Reminders_CLI_Command' );
-	WP_CLI::add_command( 'prm migrate', 'PRM_Migration_CLI_Command' );
-	WP_CLI::add_command( 'prm vcard', 'PRM_VCard_CLI_Command' );
-	WP_CLI::add_command( 'prm visibility', 'PRM_Visibility_CLI_Command' );
-	WP_CLI::add_command( 'prm carddav', 'PRM_CardDAV_CLI_Command' );
-	WP_CLI::add_command( 'prm multiuser', 'PRM_MultiUser_CLI_Command' );
-	WP_CLI::add_command( 'prm dates', 'PRM_Dates_CLI_Command' );
-	WP_CLI::add_command( 'prm todos', 'PRM_Todos_CLI_Command' );
-	WP_CLI::add_command( 'prm calendar', 'PRM_Calendar_CLI_Command' );
-	WP_CLI::add_command( 'prm event', 'PRM_Event_CLI_Command' );
+	WP_CLI::add_command( 'stadion google-contacts', 'STADION_Google_Contacts_CLI_Command' );
+	WP_CLI::add_command( 'prm reminders', 'STADION_Reminders_CLI_Command' );
+	WP_CLI::add_command( 'prm migrate', 'STADION_Migration_CLI_Command' );
+	WP_CLI::add_command( 'prm vcard', 'STADION_VCard_CLI_Command' );
+	WP_CLI::add_command( 'prm visibility', 'STADION_Visibility_CLI_Command' );
+	WP_CLI::add_command( 'prm carddav', 'STADION_CardDAV_CLI_Command' );
+	WP_CLI::add_command( 'prm multiuser', 'STADION_MultiUser_CLI_Command' );
+	WP_CLI::add_command( 'prm dates', 'STADION_Dates_CLI_Command' );
+	WP_CLI::add_command( 'prm todos', 'STADION_Todos_CLI_Command' );
+	WP_CLI::add_command( 'prm calendar', 'STADION_Calendar_CLI_Command' );
+	WP_CLI::add_command( 'prm event', 'STADION_Event_CLI_Command' );
 }

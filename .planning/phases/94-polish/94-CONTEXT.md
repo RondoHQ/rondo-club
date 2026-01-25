@@ -47,7 +47,7 @@ User delegated all implementation decisions to Claude. The following areas are o
 <specifics>
 ## Specific Ideas
 
-No specific requirements — open to standard approaches that match existing Caelis patterns.
+No specific requirements — open to standard approaches that match existing Stadion patterns.
 
 </specifics>
 

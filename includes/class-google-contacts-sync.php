@@ -6,10 +6,10 @@
  * Processes users round-robin with configurable sync frequency.
  */
 
-namespace Caelis\Contacts;
+namespace Stadion\Contacts;
 
-use Caelis\Import\GoogleContactsAPI;
-use Caelis\Export\GoogleContactsExport;
+use Stadion\Import\GoogleContactsAPI;
+use Stadion\Export\GoogleContactsExport;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -20,7 +20,7 @@ class GoogleContactsSync {
 	/**
 	 * Cron action name
 	 */
-	const CRON_HOOK = 'prm_google_contacts_sync';
+	const CRON_HOOK = 'stadion_google_contacts_sync';
 
 	/**
 	 * Custom cron schedule interval name
@@ -30,7 +30,7 @@ class GoogleContactsSync {
 	/**
 	 * Transient key for tracking last synced user index
 	 */
-	const USER_INDEX_TRANSIENT = 'prm_contacts_sync_last_user_index';
+	const USER_INDEX_TRANSIENT = 'stadion_contacts_sync_last_user_index';
 
 	/**
 	 * Default sync frequency in minutes
@@ -67,7 +67,7 @@ class GoogleContactsSync {
 		if ( ! isset( $schedules[ self::CRON_SCHEDULE ] ) ) {
 			$schedules[ self::CRON_SCHEDULE ] = [
 				'interval' => 900, // 15 minutes in seconds
-				'display'  => __( 'Every 15 Minutes', 'caelis' ),
+				'display'  => __( 'Every 15 Minutes', 'stadion' ),
 			];
 		}
 
@@ -131,7 +131,7 @@ class GoogleContactsSync {
 	public function get_users_with_connections() {
 		global $wpdb;
 
-		// Query users who have _prm_google_contacts_connection user meta
+		// Query users who have _stadion_google_contacts_connection user meta
 		$user_ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT DISTINCT user_id
@@ -228,11 +228,11 @@ class GoogleContactsSync {
 		];
 
 		try {
-			// PULL PHASE: Google -> Caelis
+			// PULL PHASE: Google -> Stadion
 			$importer             = new GoogleContactsAPI( $user_id );
 			$results['pull_stats'] = $importer->import_delta();
 
-			// PUSH PHASE: Caelis -> Google (only if readwrite access)
+			// PUSH PHASE: Stadion -> Google (only if readwrite access)
 			if ( $has_write_access ) {
 				$results['push_stats'] = $this->push_changed_contacts( $user_id );
 			}
@@ -262,7 +262,7 @@ class GoogleContactsSync {
 
 			error_log(
 				sprintf(
-					'PRM_Contacts_Sync: User %d - pulled %d, pushed %d, unlinked %d',
+					'STADION_Contacts_Sync: User %d - pulled %d, pushed %d, unlinked %d',
 					$user_id,
 					$pull_count,
 					$push_count,
@@ -287,7 +287,7 @@ class GoogleContactsSync {
 
 			error_log(
 				sprintf(
-					'PRM_Contacts_Sync: Error syncing contacts for user %d: %s',
+					'STADION_Contacts_Sync: Error syncing contacts for user %d: %s',
 					$user_id,
 					$e->getMessage()
 				)
@@ -309,7 +309,7 @@ class GoogleContactsSync {
 	public function sync_user_manual( int $user_id ): array {
 		// Check if user is connected.
 		if ( ! GoogleContactsConnection::is_connected( $user_id ) ) {
-			throw new \Exception( __( 'Google Contacts is not connected.', 'caelis' ) );
+			throw new \Exception( __( 'Google Contacts is not connected.', 'stadion' ) );
 		}
 
 		// Start timing for history entry
@@ -353,7 +353,7 @@ class GoogleContactsSync {
 	}
 
 	/**
-	 * Push contacts modified in Caelis since last export to Google
+	 * Push contacts modified in Stadion since last export to Google
 	 *
 	 * @param int $user_id User ID.
 	 * @return array Stats with pushed count and errors.
@@ -602,11 +602,11 @@ class GoogleContactsSync {
 			'push_stats' => null,
 		];
 
-		// PULL PHASE: Google -> Caelis
+		// PULL PHASE: Google -> Stadion
 		$importer             = new GoogleContactsAPI( $user_id );
 		$results['pull_stats'] = $importer->import_delta();
 
-		// PUSH PHASE: Caelis -> Google (only if readwrite access)
+		// PUSH PHASE: Stadion -> Google (only if readwrite access)
 		if ( $has_write_access ) {
 			$results['push_stats'] = $this->push_changed_contacts( $user_id );
 		}

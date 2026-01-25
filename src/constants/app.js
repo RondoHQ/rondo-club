@@ -3,5 +3,5 @@
  * Centralized configuration for app-wide values
  */
 
-export const APP_NAME = 'Caelis';
+export const APP_NAME = 'Stadion';
 

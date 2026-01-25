@@ -77,7 +77,7 @@ Admin-only feedback management page with sortable table, inline status/priority 
 - **FEED-14**: Status workflow controls (inline dropdown)
 - **FEED-15**: Priority assignment (inline dropdown)
 - **FEED-16**: Feedback ordering (sortable columns)
-- Admin-only access enforced via `window.prmConfig.isAdmin`
+- Admin-only access enforced via `window.stadionConfig.isAdmin`
 - Existing useFeedback hooks reused (useFeedbackList, useUpdateFeedback)
 
 ## Deviations from Plan

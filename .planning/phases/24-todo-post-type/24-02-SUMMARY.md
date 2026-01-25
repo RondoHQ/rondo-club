@@ -7,7 +7,7 @@ tags: [rest-api, crud, todos, wordpress]
 # Dependency graph
 requires:
   - phase: 24-01
-    provides: prm_todo CPT and ACF field group
+    provides: stadion_todo CPT and ACF field group
 provides:
   - Full REST API for todo CRUD operations
   - Person-scoped and global todo endpoints
@@ -18,7 +18,7 @@ affects: [24-03, 24-04, frontend]
 tech-stack:
   added: []
   patterns:
-    - PRM_REST_Todos extends PRM_REST_Base for shared infrastructure
+    - STADION_REST_Todos extends STADION_REST_Base for shared infrastructure
     - check_todo_access() permission pattern for single-item operations
 
 key-files:
@@ -29,10 +29,10 @@ key-files:
 
 key-decisions:
   - "Response format matches existing comment-based todo system"
-  - "All endpoints use existing access control via PRM_Access_Control"
+  - "All endpoints use existing access control via STADION_Access_Control"
 
 patterns-established:
-  - "Todo REST class follows same pattern as PRM_REST_People, PRM_REST_Companies"
+  - "Todo REST class follows same pattern as STADION_REST_People, STADION_REST_Companies"
 
 issues-created: []
 
@@ -43,7 +43,7 @@ completed: 2026-01-14
 
 # Phase 24 Plan 02: REST API Endpoints Summary
 
-**Full CRUD REST API for prm_todo CPT with person-scoped and global endpoints**
+**Full CRUD REST API for stadion_todo CPT with person-scoped and global endpoints**
 
 ## Performance
 
@@ -55,16 +55,16 @@ completed: 2026-01-14
 
 ## Accomplishments
 
-- Created `PRM_REST_Todos` class extending `PRM_REST_Base` with 6 endpoint methods
-- Registered class in autoloader and instantiation in `prm_init()`
+- Created `STADION_REST_Todos` class extending `STADION_REST_Base` with 6 endpoint methods
+- Registered class in autoloader and instantiation in `stadion_init()`
 - Verified all endpoints work on production: GET, POST, PUT, DELETE operations tested successfully
 
 ## Task Commits
 
 Each task was committed atomically:
 
-1. **Task 1: Create PRM_REST_Todos class** - `5ae4036` (feat)
-2. **Task 2: Register PRM_REST_Todos in functions.php** - `e51a617` (feat)
+1. **Task 1: Create STADION_REST_Todos class** - `5ae4036` (feat)
+2. **Task 2: Register STADION_REST_Todos in functions.php** - `e51a617` (feat)
 3. **Task 3: Test REST API endpoints manually** - Testing verified (no commit needed)
 
 ## Files Created/Modified
@@ -76,12 +76,12 @@ Each task was committed atomically:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/prm/v1/people/{person_id}/todos` | Get todos for specific person |
-| POST | `/prm/v1/people/{person_id}/todos` | Create todo linked to person |
-| GET | `/prm/v1/todos` | Get all todos (optional `completed` filter) |
-| GET | `/prm/v1/todos/{id}` | Get single todo |
-| PUT | `/prm/v1/todos/{id}` | Update todo |
-| DELETE | `/prm/v1/todos/{id}` | Delete todo |
+| GET | `/stadion/v1/people/{person_id}/todos` | Get todos for specific person |
+| POST | `/stadion/v1/people/{person_id}/todos` | Create todo linked to person |
+| GET | `/stadion/v1/todos` | Get all todos (optional `completed` filter) |
+| GET | `/stadion/v1/todos/{id}` | Get single todo |
+| PUT | `/stadion/v1/todos/{id}` | Update todo |
+| DELETE | `/stadion/v1/todos/{id}` | Delete todo |
 
 ## Response Format
 
@@ -105,7 +105,7 @@ Response matches existing comment-based todo format for seamless frontend migrat
 ## Decisions Made
 
 1. **Response format**: Matched existing comment-based todo response exactly for seamless frontend migration
-2. **Access control**: Used existing `PRM_Access_Control` filters rather than custom permission checks
+2. **Access control**: Used existing `STADION_Access_Control` filters rather than custom permission checks
 
 ## Deviations from Plan
 

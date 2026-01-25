@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
 
   // Base path for production builds - WordPress theme location
-  base: '/wp-content/themes/caelis/dist/',
+  base: '/wp-content/themes/stadion/dist/',
 
   // Inject build timestamp for version checking
   define: {

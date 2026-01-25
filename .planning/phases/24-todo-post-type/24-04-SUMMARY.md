@@ -12,7 +12,7 @@ Update PHPUnit tests to cover the new todo CPT system, verify dashboard integrat
 
 ### Task 1: Verify dashboard counts todos from CPT correctly
 - **Status:** Already completed in 24-03
-- `count_open_todos()` in `class-rest-api.php` queries `prm_todo` CPT with access control filtering
+- `count_open_todos()` in `class-rest-api.php` queries `stadion_todo` CPT with access control filtering
 
 ### Task 2: Create PHPUnit tests for todo CPT
 - **Status:** Completed
@@ -23,8 +23,8 @@ Update PHPUnit tests to cover the new todo CPT system, verify dashboard integrat
   - Dashboard integration (open_todos_count)
   - Completion filter (excludes/includes completed)
 - Updated `SearchDashboardTest.php` to use CPT-based todos:
-  - Changed `createTodo()` helper to create `prm_todo` posts instead of comments
-  - Added `PRM_REST_Todos` instantiation for route registration
+  - Changed `createTodo()` helper to create `stadion_todo` posts instead of comments
+  - Added `STADION_REST_Todos` instantiation for route registration
 
 ### Task 3: Run full test suite and verify no regressions
 - **Status:** Completed
@@ -33,7 +33,7 @@ Update PHPUnit tests to cover the new todo CPT system, verify dashboard integrat
 
 ## Key Decisions
 
-1. **Keep existing tests in SearchDashboardTest.php** - Rather than removing the todo tests from SearchDashboardTest.php, we updated them to work with the new CPT system. This maintains test coverage for the `/prm/v1/todos` endpoint from multiple test classes.
+1. **Keep existing tests in SearchDashboardTest.php** - Rather than removing the todo tests from SearchDashboardTest.php, we updated them to work with the new CPT system. This maintains test coverage for the `/stadion/v1/todos` endpoint from multiple test classes.
 
 2. **Create dedicated TodoCptTest.php** - Added comprehensive tests specifically for the todo CPT in a new test class for clearer organization.
 
@@ -58,13 +58,13 @@ Update PHPUnit tests to cover the new todo CPT system, verify dashboard integrat
 ## Test Coverage
 
 **New tests in TodoCptTest.php (16 tests):**
-- test_prm_todo_post_type_registered
-- test_prm_todo_has_rest_support
+- test_stadion_todo_post_type_registered
+- test_stadion_todo_has_rest_support
 - test_user_can_only_see_own_todos
 - test_admin_sees_own_todos
 - test_get_todos_returns_user_todos
 - test_get_person_todos_filters_by_person
-- test_create_todo_creates_prm_todo_post
+- test_create_todo_creates_stadion_todo_post
 - test_update_todo_changes_is_completed
 - test_delete_todo_removes_post
 - test_dashboard_counts_open_todos

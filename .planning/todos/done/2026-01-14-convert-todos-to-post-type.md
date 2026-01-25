@@ -23,7 +23,7 @@ To-dos would benefit from being a full post type so they can:
 
 Migrate todos from comment type to custom post type:
 
-1. Create new `prm_todo` post type in `class-post-types.php`
+1. Create new `stadion_todo` post type in `class-post-types.php`
 2. Define ACF fields for todo properties (status, due date, linked person/org)
 3. Create migration script to convert existing todo comments to posts
 4. Update REST API endpoints for the new structure

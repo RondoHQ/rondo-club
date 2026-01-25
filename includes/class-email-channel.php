@@ -5,7 +5,7 @@
  * Handles email-based notification delivery for daily digests.
  */
 
-namespace Caelis\Notifications;
+namespace Stadion\Notifications;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -21,11 +21,11 @@ class EmailChannel extends Channel {
 	}
 
 	public function get_channel_name() {
-		return __( 'Email', 'caelis' );
+		return __( 'Email', 'stadion' );
 	}
 
 	public function is_enabled_for_user( $user_id ) {
-		$channels = get_user_meta( $user_id, 'caelis_notification_channels', true );
+		$channels = get_user_meta( $user_id, 'stadion_notification_channels', true );
 		if ( ! is_array( $channels ) ) {
 			// Default to enabled for email if not set
 			return true;
@@ -74,8 +74,8 @@ class EmailChannel extends Channel {
 
 		// Update subject line to indicate collaborative activity
 		$subject = $has_collab
-			? sprintf( __( '[%1$s] Your digest (including team activity) - %2$s', 'caelis' ), $site_name, $today_formatted )
-			: sprintf( __( '[%1$s] Your Reminders & Todos - %2$s', 'caelis' ), $site_name, $today_formatted );
+			? sprintf( __( '[%1$s] Your digest (including team activity) - %2$s', 'stadion' ), $site_name, $today_formatted )
+			: sprintf( __( '[%1$s] Your Reminders & Todos - %2$s', 'stadion' ), $site_name, $today_formatted );
 
 		$message = $this->format_email_message( $user, $digest_data );
 
@@ -296,7 +296,7 @@ class EmailChannel extends Channel {
 		}
 
 		$html .= sprintf(
-			'<p style="margin-top: 20px;"><a href="%s">Visit Caelis</a> to see more details.</p>',
+			'<p style="margin-top: 20px;"><a href="%s">Visit Stadion</a> to see more details.</p>',
 			esc_url( $site_url )
 		);
 
@@ -317,7 +317,7 @@ class EmailChannel extends Channel {
 	 * Set email from name
 	 */
 	public function set_email_from_name( $from_name ) {
-		return 'Caelis';
+		return 'Stadion';
 	}
 
 	/**

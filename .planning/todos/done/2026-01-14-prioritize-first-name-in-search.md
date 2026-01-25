@@ -12,4 +12,4 @@ When searching for people, the current search may not prioritize first name matc
 
 ## Solution
 
-TBD - investigate current search implementation in `PRM_REST_API` and adjust relevance scoring to weight first name matches more heavily.
+TBD - investigate current search implementation in `STADION_REST_API` and adjust relevance scoring to weight first name matches more heavily.
