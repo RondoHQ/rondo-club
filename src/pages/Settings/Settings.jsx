@@ -48,7 +48,7 @@ export default function Settings() {
     if (subtab) {
       navigate(`/settings/${tab}/${subtab}`);
     } else if (tab === 'connections') {
-      // Default to calendars subtab when switching to connections
+      // Default to agendas subtab when switching to connections
       navigate(`/settings/${tab}/calendars`);
     } else {
       navigate(`/settings/${tab}`);
@@ -1062,7 +1062,7 @@ function CalendarsTab() {
       const response = await prmApi.getCalendarConnections();
       setConnections(response.data || []);
     } catch (err) {
-      setError('Failed to load calendar connections.');
+      setError('Failed to load agenda connections.');
     } finally {
       setLoading(false);
     }
@@ -1098,7 +1098,7 @@ function CalendarsTab() {
   };
 
   const handleDelete = async (connectionId, connectionName) => {
-    if (!confirm(`Are you sure you want to delete "${connectionName}"? All synced events from this calendar will also be deleted.`)) {
+    if (!confirm(`Are you sure you want to delete "${connectionName}"? All synced events from this agenda will also be deleted.`)) {
       return;
     }
 
@@ -1117,7 +1117,7 @@ function CalendarsTab() {
     try {
       await prmApi.createCalendarConnection(data);
       setShowAddModal(null);
-      setSuccessMessage('CalDAV calendar connected successfully!');
+      setSuccessMessage('CalDAV agenda connected successfully!');
       fetchConnections();
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (err) {
@@ -1136,7 +1136,7 @@ function CalendarsTab() {
   };
 
   const regenerateIcalToken = async () => {
-    if (!confirm('Are you sure you want to regenerate your calendar URL? Any existing calendar subscriptions will stop working until you update them with the new URL.')) {
+    if (!confirm('Are you sure you want to regenerate your agenda URL? Any existing agenda subscriptions will stop working until you update them with the new URL.')) {
       return;
     }
 
@@ -1153,12 +1153,12 @@ function CalendarsTab() {
   };
 
   const formatLastSync = (lastSync) => {
-    if (!lastSync) return 'Never synced';
+    if (!lastSync) return 'Nog nooit gesynchroniseerd';
     try {
       const date = new Date(lastSync);
       return formatDistanceToNow(date, { addSuffix: true });
     } catch {
-      return 'Never synced';
+      return 'Nog nooit gesynchroniseerd';
     }
   };
 
@@ -1199,9 +1199,9 @@ function CalendarsTab() {
 
       {/* Connections list */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Calendar Connections</h2>
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Agendakoppelingen</h2>
         <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Connect your calendars to automatically sync meetings and find contacts you meet with.
+          Koppel je agenda's om automatisch afspraken te synchroniseren en contacten te vinden.
         </p>
 
         {loading ? (
@@ -1225,14 +1225,14 @@ function CalendarsTab() {
                     {/* Multi-calendar display */}
                     {connection.calendar_ids?.length > 0 ? (
                       <p className="text-xs text-gray-400 dark:text-gray-500">
-                        {connection.calendar_ids.length} calendar{connection.calendar_ids.length !== 1 ? 's' : ''} selected
+                        {connection.calendar_ids.length} agenda{connection.calendar_ids.length !== 1 ? 's' : ''} geselecteerd
                       </p>
                     ) : connection.calendar_id && connection.calendar_id !== 'primary' ? (
                       <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">{connection.calendar_name || connection.calendar_id}</p>
                     ) : null}
                     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <span>{formatLastSync(connection.last_sync)}</span>
-                      {connection.last_fout && (
+                      {connection.last_error && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs dark:bg-red-900/30 dark:text-red-400">
                           <AlertCircle className="w-3 h-3" />
                           Error
@@ -1251,7 +1251,7 @@ function CalendarsTab() {
                     onClick={() => handleSync(connection.id)}
                     disabled={syncing[connection.id]}
                     className="btn-secondary text-sm flex items-center gap-1"
-                    title="Sync now"
+                    title="Nu synchroniseren"
                   >
                     <RefreshCw className={`w-4 h-4 ${syncing[connection.id] ? 'animate-spin' : ''}`} />
                     {syncing[connection.id] ? 'Synchroniseren...' : 'Sync'}
@@ -1259,14 +1259,14 @@ function CalendarsTab() {
                   <button
                     onClick={() => setShowAddModal(connection)}
                     className="btn-secondary text-sm p-2"
-                    title="Edit"
+                    title="Bewerken"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(connection.id, connection.name)}
                     className="btn-secondary text-sm p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                    title="Delete"
+                    title="Verwijderen"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -1276,14 +1276,14 @@ function CalendarsTab() {
           </div>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No calendar connections yet. Add one below to start syncing your meetings.
+            No agenda connections yet. Add one below to start syncing your meetings.
           </p>
         )}
       </div>
 
       {/* Add connection section */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Add Connection</h2>
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Koppeling toevoegen</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             onClick={handleConnectGoogle}
@@ -1298,7 +1298,7 @@ function CalendarsTab() {
               </svg>
             </div>
             <div className="flex-1">
-              <p className="font-medium dark:text-gray-100">Connect Google Calendar</p>
+              <p className="font-medium dark:text-gray-100">Google Agenda koppelen</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Sign in with your Google account
               </p>
@@ -1314,7 +1314,7 @@ function CalendarsTab() {
               <Calendar className="w-6 h-6 text-accent-600 dark:text-accent-400" />
             </div>
             <div className="flex-1">
-              <p className="font-medium dark:text-gray-100">Add CalDAV Calendar</p>
+              <p className="font-medium dark:text-gray-100">CalDAV-agenda toevoegen</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 iCloud, Fastmail, Nextcloud, etc.
               </p>
@@ -1325,9 +1325,9 @@ function CalendarsTab() {
 
       {/* Important Dates Subscription */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Subscribe to important dates in your calendar</h2>
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Subscribe to important dates in your agenda</h2>
         <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-          Subscribe to your important dates in any calendar app (Apple Calendar, Google Calendar, Outlook, etc.)
+          Subscribe to your important dates in any agenda app (Apple Calendar, Google Calendar, Outlook, etc.)
         </p>
 
         {icalLoading ? (
@@ -1338,7 +1338,7 @@ function CalendarsTab() {
         ) : (
           <div className="space-y-4">
             <div>
-              <label className="label mb-1">Your calendar feed URL</label>
+              <label className="label mb-1">Your agenda feed URL</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -1377,7 +1377,7 @@ function CalendarsTab() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  Subscribe in calendar app
+                  Subscribe in agenda app
                 </span>
               </a>
 
@@ -1386,7 +1386,7 @@ function CalendarsTab() {
                 disabled={regenerating}
                 className="btn-secondary"
               >
-                {regenerating ? 'Regenerating...' : 'Regenerate URL'}
+                {regenerating ? 'Opnieuw genereren...' : 'Regenerate URL'}
               </button>
             </div>
 
@@ -1434,12 +1434,12 @@ function CalDAVModal({ onSave, onClose }) {
   const [selectedCalendar, setSelectedCalendar] = useState('');
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [fout, setError] = useState('');
+  const [error, setError] = useState('');
   const [tested, setTested] = useState(false);
 
   const handleTest = async () => {
     if (!url || !username || !password) {
-      setError('Please fill in server URL, username, and password.');
+      setError('Vul server-URL, gebruikersnaam en wachtwoord in.');
       return;
     }
 
@@ -1455,10 +1455,10 @@ function CalDAVModal({ onSave, onClose }) {
           setSelectedCalendar(response.data.calendars[0].id);
         }
       } else {
-        setError(response.data?.message || 'Connection test failed.');
+        setError(response.data?.message || 'Verbindingstest mislukt.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Connection test failed.');
+      setError(err.response?.data?.message || 'Verbindingstest mislukt.');
     } finally {
       setTesting(false);
     }
@@ -1466,15 +1466,15 @@ function CalDAVModal({ onSave, onClose }) {
 
   const handleSave = async () => {
     if (!name) {
-      setError('Please enter a name for this connection.');
+      setError('Voer een naam in voor deze koppeling.');
       return;
     }
     if (!tested || calendars.length === 0) {
-      setError('Please test the connection and select a calendar first.');
+      setError('Test eerst de verbinding en selecteer een agenda.');
       return;
     }
     if (!selectedCalendar) {
-      setError('Please select a calendar.');
+      setError('Selecteer een agenda.');
       return;
     }
 
@@ -1489,7 +1489,7 @@ function CalDAVModal({ onSave, onClose }) {
         credentials: { url, username, password },
       });
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save connection.');
+      setError(err.response?.data?.message || 'Kan koppeling niet opslaan.');
     } finally {
       setSaving(false);
     }
@@ -1499,7 +1499,7 @@ function CalDAVModal({ onSave, onClose }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 dark:bg-gray-800">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold dark:text-gray-100">Add CalDAV Calendar</h3>
+          <h3 className="text-lg font-semibold dark:text-gray-100">CalDAV-agenda toevoegen</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded dark:hover:bg-gray-700">
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
@@ -1508,23 +1508,23 @@ function CalDAVModal({ onSave, onClose }) {
         <div className="p-4 space-y-4">
           {fout && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
-              {fout}
+              {error}
             </div>
           )}
 
           <div>
-            <label className="label mb-1">Connection name</label>
+            <label className="label mb-1">Verbindingsnaam</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="input"
-              placeholder="e.g., iCloud Calendar"
+              placeholder="bijv. iCloud Agenda"
             />
           </div>
 
           <div>
-            <label className="label mb-1">Server URL</label>
+            <label className="label mb-1">Server-URL</label>
             <input
               type="url"
               value={url}
@@ -1533,7 +1533,7 @@ function CalDAVModal({ onSave, onClose }) {
               placeholder="https://caldav.example.com"
             />
             <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-              For iCloud: caldav.icloud.com, Fastmail: caldav.fastmail.com/dav
+              Voor iCloud: caldav.icloud.com, Fastmail: caldav.fastmail.com/dav
             </p>
           </div>
 
@@ -1549,16 +1549,16 @@ function CalDAVModal({ onSave, onClose }) {
           </div>
 
           <div>
-            <label className="label mb-1">Password / App password</label>
+            <label className="label mb-1">Wachtwoord / App-wachtwoord</label>
             <input
               type="password"
               value={password}
               onChange={(e) => { setPassword(e.target.value); setTested(false); }}
               className="input"
-              placeholder="App-specific password"
+              placeholder="App-specifiek wachtwoord"
             />
             <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-              For iCloud, use an app-specific password from appleid.apple.com
+              Voor iCloud, gebruik een app-specifiek wachtwoord van appleid.apple.com
             </p>
           </div>
 
@@ -1567,12 +1567,12 @@ function CalDAVModal({ onSave, onClose }) {
             disabled={testing || !url || !username || !password}
             className="btn-secondary w-full"
           >
-            {testing ? 'Testing...' : tested ? 'Re-test Connection' : 'Test Connection'}
+            {testing ? 'Testen...' : tested ? 'Opnieuw testen' : 'Verbinding testen'}
           </button>
 
-          {tested && calendars.length > 0 && (
+          {tested && agendas.length > 0 && (
             <div>
-              <label className="label mb-1">Select calendar</label>
+              <label className="label mb-1">Selecteer agenda</label>
               <select
                 value={selectedCalendar}
                 onChange={(e) => setSelectedCalendar(e.target.value)}
@@ -1587,9 +1587,9 @@ function CalDAVModal({ onSave, onClose }) {
             </div>
           )}
 
-          {tested && calendars.length === 0 && (
+          {tested && agendas.length === 0 && (
             <p className="text-sm text-yellow-600 dark:text-yellow-400">
-              No calendars found. Please check your credentials and server URL.
+              Geen agenda's gevonden. Controleer je inloggegevens en server-URL.
             </p>
           )}
         </div>
@@ -1620,7 +1620,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
   const [syncToDays, setSyncToDays] = useState(connection.sync_to_days || 30);
   const [syncFrequency, setSyncFrequency] = useState(connection.sync_frequency || 15);
   const [saving, setSaving] = useState(false);
-  const [fout, setError] = useState('');
+  const [error, setError] = useState('');
 
   // Multi-calendar selection state
   const [calendars, setCalendars] = useState([]);
@@ -1642,7 +1642,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
   const isCalDAV = connection.provider === 'caldav';
   const isGoogle = connection.provider === 'google';
 
-  // Fetch available calendars when modal opens
+  // Fetch beschikbare agenda's when modal opens
   useEffect(() => {
     const fetchCalendars = async () => {
       setLoadingCalendars(true);
@@ -1658,8 +1658,8 @@ function EditConnectionModal({ connection, onSave, onClose }) {
           }
         }
       } catch (err) {
-        // Silently fail - calendar list is optional enhancement
-        console.fout('Failed to fetch calendars:', err);
+        // Silently fail - agenda-lijst is optional enhancement
+        console.error('Failed to fetch agendas:', err);
       } finally {
         setLoadingCalendars(false);
       }
@@ -1669,7 +1669,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
   const handleTestCalDAV = async () => {
     if (!url || !username || !password) {
-      setError('Please fill in server URL, username, and password to test.');
+      setError('Vul server-URL, gebruikersnaam en wachtwoord in om te testen.');
       return;
     }
 
@@ -1683,11 +1683,11 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         setError('');
       } else {
         setTested(false);
-        setError(response.data?.message || 'Connection test failed.');
+        setError(response.data?.message || 'Verbindingstest mislukt.');
       }
     } catch (err) {
       setTested(false);
-      setError(err.response?.data?.message || 'Connection test failed.');
+      setError(err.response?.data?.message || 'Verbindingstest mislukt.');
     } finally {
       setTesting(false);
     }
@@ -1695,13 +1695,13 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError('Please enter a name for this connection.');
+      setError('Voer een naam in voor deze koppeling.');
       return;
     }
 
     // If CalDAV credentials changed, must be tested
     if (isCalDAV && (url || username || password) && !tested) {
-      setError('Please test the updated credentials before saving.');
+      setError('Test de bijgewerkte inloggegevens voor het opslaan.');
       return;
     }
 
@@ -1718,9 +1718,9 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         sync_frequency: syncFrequency,
       };
 
-      // Include calendar_ids array if we have selections (for Google connections)
+      // Include agenda_ids array if we have selections (for Google connections)
       if (isGoogle && selectedCalendarIds.length > 0) {
-        data.calendar_ids = selectedCalendarIds;
+        data.calendar_ids = geselecteerdCalendarIds;
       }
 
       // Include CalDAV credentials if any were changed
@@ -1730,39 +1730,39 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
       await onSave(connection.id, data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save connection.');
+      setError(err.response?.data?.message || 'Kan koppeling niet opslaan.');
       setSaving(false);
     }
   };
 
   const syncFromOptions = [
-    { value: 30, label: '30 days' },
-    { value: 60, label: '60 days' },
-    { value: 90, label: '90 days' },
-    { value: 180, label: '180 days' },
+    { value: 30, label: '30 dagen' },
+    { value: 60, label: '60 dagen' },
+    { value: 90, label: '90 dagen' },
+    { value: 180, label: '180 dagen' },
   ];
 
   const syncToOptions = [
     { value: 7, label: '1 week' },
-    { value: 14, label: '2 weeks' },
-    { value: 30, label: '30 days' },
-    { value: 60, label: '60 days' },
-    { value: 90, label: '90 days' },
+    { value: 14, label: '2 weken' },
+    { value: 30, label: '30 dagen' },
+    { value: 60, label: '60 dagen' },
+    { value: 90, label: '90 dagen' },
   ];
 
   const syncFrequencyOptions = [
-    { value: 15, label: 'Every 15 minutes' },
-    { value: 30, label: 'Every 30 minutes' },
-    { value: 60, label: 'Every hour' },
-    { value: 240, label: 'Every 4 hours' },
-    { value: 1440, label: 'Once daily' },
+    { value: 15, label: 'Elke 15 minuten' },
+    { value: 30, label: 'Elke 30 minuten' },
+    { value: 60, label: 'Elk uur' },
+    { value: 240, label: 'Elke 4 uur' },
+    { value: 1440, label: 'Eenmaal per dag' },
   ];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 dark:bg-gray-800">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold dark:text-gray-100">Edit Connection</h3>
+          <h3 className="text-lg font-semibold dark:text-gray-100">Koppeling bewerken</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded dark:hover:bg-gray-700">
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
@@ -1771,7 +1771,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         <div className="p-4 space-y-4">
           {fout && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
-              {fout}
+              {error}
             </div>
           )}
 
@@ -1787,22 +1787,22 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
           {/* Connection name */}
           <div>
-            <label className="label mb-1">Connection name</label>
+            <label className="label mb-1">Verbindingsnaam</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="input"
-              placeholder="e.g., Work Calendar"
+              placeholder="bijv. Werkagenda"
             />
           </div>
 
-          {/* Two-column layout for Google connections with calendars */}
-          {isGoogle && calendars.length > 0 && (
+          {/* Two-column layout for Google connections with agendas */}
+          {isGoogle && agendas.length > 0 && (
             <div className="grid md:grid-cols-2 gap-4">
               {/* Left column: Calendar selection */}
               <div>
-                <label className="label mb-1">Calendars to sync</label>
+                <label className="label mb-1">Agenda's om te synchroniseren</label>
                 <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
                   {calendars.map((cal) => (
                     <label key={cal.id} className="flex items-center gap-2 cursor-pointer">
@@ -1819,14 +1819,14 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                         className="rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-gray-600 dark:bg-gray-800"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
-                        {cal.name}{cal.primary ? ' (Primary)' : ''}
+                        {cal.name}{cal.primary ? ' (Primair)' : ''}
                       </span>
                     </label>
                   ))}
                 </div>
                 {selectedCalendarIds.length === 0 && (
                   <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                    Select at least one calendar to sync
+                    Selecteer ten minste één agenda om te synchroniseren
                   </p>
                 )}
               </div>
@@ -1851,7 +1851,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
                 {/* Sync from dropdown */}
                 <div>
-                  <label className="label mb-1">Sync events from</label>
+                  <label className="label mb-1">Afspraken synchroniseren vanaf</label>
                   <select
                     value={syncFromDays}
                     onChange={(e) => setSyncFromDays(Number(e.target.value))}
@@ -1859,7 +1859,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                   >
                     {syncFromOptions.map((option) => (
                       <option key={option.value} value={option.value}>
-                        Past {option.label}
+                        Afgelopen {option.label}
                       </option>
                     ))}
                   </select>
@@ -1867,7 +1867,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
                 {/* Sync to dropdown */}
                 <div>
-                  <label className="label mb-1">Sync events until</label>
+                  <label className="label mb-1">Afspraken synchroniseren tot</label>
                   <select
                     value={syncToDays}
                     onChange={(e) => setSyncToDays(Number(e.target.value))}
@@ -1875,7 +1875,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                   >
                     {syncToOptions.map((option) => (
                       <option key={option.value} value={option.value}>
-                        Next {option.label}
+                        Komende {option.label}
                       </option>
                     ))}
                   </select>
@@ -1884,18 +1884,18 @@ function EditConnectionModal({ connection, onSave, onClose }) {
             </div>
           )}
 
-          {/* Loading state for calendars */}
+          {/* Loading state for agenda's */}
           {loadingCalendars && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Loading available calendars...
+              Beschikbare agenda's laden...
             </p>
           )}
 
           {/* Sync enabled toggle */}
           <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
             <div>
-              <p className="font-medium dark:text-gray-100">Sync enabled</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Automatically sync calendar events</p>
+              <p className="font-medium dark:text-gray-100">Synchronisatie ingeschakeld</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Automatisch agenda-afspraken synchroniseren</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -1911,8 +1911,8 @@ function EditConnectionModal({ connection, onSave, onClose }) {
           {/* Auto-log meetings toggle */}
           <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
             <div>
-              <p className="font-medium dark:text-gray-100">Auto-log meetings</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Automatically create activities from meetings</p>
+              <p className="font-medium dark:text-gray-100">Automatisch afspraken loggen</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Automatisch activiteiten aanmaken van afspraken</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -1925,8 +1925,8 @@ function EditConnectionModal({ connection, onSave, onClose }) {
             </label>
           </div>
 
-          {/* Sync settings for non-Google or Google without calendars loaded */}
-          {(!isGoogle || calendars.length === 0) && !loadingCalendars && (
+          {/* Sync settings for non-Google or Google without agendas loaded */}
+          {(!isGoogle || agendas.length === 0) && !loadingCalendars && (
             <>
               {/* Sync from dropdown */}
               <div>
@@ -1943,7 +1943,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-                  Events older than this will not be synced
+                  Oudere afspraken worden niet gesynchroniseerd
                 </p>
               </div>
 
@@ -1962,7 +1962,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-                  Future events beyond this will not be synced
+                  Toekomstige afspraken hierna worden niet gesynchroniseerd
                 </p>
               </div>
 
@@ -1981,7 +1981,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-                  How often to check for calendar updates
+                  How often to check for agenda updates
                 </p>
               </div>
             </>
@@ -2035,7 +2035,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                     disabled={testing || !url || !username || !password}
                     className="btn-secondary w-full"
                   >
-                    {testing ? 'Testing...' : tested ? 'Credentials verified' : 'Test new credentials'}
+                    {testing ? 'Testen...' : tested ? 'Inloggegevens geverifieerd' : 'Nieuwe inloggegevens testen'}
                   </button>
                 )}
               </div>
@@ -2046,7 +2046,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
           {isGoogle && (
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600">
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                To change Google Calendar credentials, delete this connection and reconnect with Google OAuth.
+                Om Google Agenda-inloggegevens te wijzigen, verwijder deze koppeling en maak opnieuw verbinding via Google OAuth.
               </p>
             </div>
           )}
@@ -2058,7 +2058,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
           </button>
           <button
             onClick={handleSave}
-            disabled={saving || (isGoogle && calendars.length > 0 && selectedCalendarIds.length === 0)}
+            disabled={saving || (isGoogle && agendas.length > 0 && geselecteerdCalendarIds.length === 0)}
             className="btn-primary"
           >
             {saving ? 'Opslaan...' : 'Save'}
@@ -2197,8 +2197,8 @@ function ConnectionsCalendarsSubtab() {
 
 // Synchronisatiefrequentie options for UI
 const SYNC_FREQUENCY_OPTIONS = [
-  { value: 15, label: 'Every 15 minutes' },
-  { value: 60, label: 'Every hour' },
+  { value: 15, label: 'Elke 15 minuten' },
+  { value: 60, label: 'Elk uur' },
   { value: 360, label: 'Every 6 hours' },
   { value: 1440, label: 'Daily' },
 ];
@@ -2263,15 +2263,15 @@ function ConnectionsContactsSubtab({
                     <summary className="cursor-pointer hover:underline">
                       {googleContactsStatus.sync_history[0].fouts} fout{googleContactsStatus.sync_history[0].fouts !== 1 ? 's' : ''} in laatste synchronisatie
                     </summary>
-                    {googleContactsStatus.last_fout && (
+                    {googleContactsStatus.last_error && (
                       <p className="mt-1 pl-2 text-amber-700 dark:text-amber-300 text-xs">
-                        {googleContactsStatus.last_fout}
+                        {googleContactsStatus.last_error}
                       </p>
                     )}
                   </details>
-                ) : googleContactsStatus.last_fout && !googleContactsImportResult ? (
+                ) : googleContactsStatus.last_error && !googleContactsImportResult ? (
                   <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                    Waarschuwing: {googleContactsStatus.last_fout}
+                    Waarschuwing: {googleContactsStatus.last_error}
                   </p>
                 ) : null}
               </div>
@@ -2870,7 +2870,7 @@ function NotificationsTab({
               </div>
             )}
             <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-              Choose the UTC time when you want to receive your daily reminder digest. Reminders are sent within a 1-hour window of your selected time.
+              Choose the UTC time when you want to receive your daily reminder digest. Reminders are sent within a 1-hour window of your geselecteerd time.
             </p>
           </div>
 
