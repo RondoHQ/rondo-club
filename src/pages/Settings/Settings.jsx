@@ -14,21 +14,21 @@ import GoogleContactsImport from '@/components/import/GoogleContactsImport';
 
 // Tab configuration
 const TABS = [
-  { id: 'appearance', label: 'Appearance', icon: Palette },
-  { id: 'connections', label: 'Connections', icon: Share2 },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'data', label: 'Data', icon: Database },
-  { id: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
-  { id: 'about', label: 'About', icon: Info },
+  { id: 'appearance', label: 'Weergave', icon: Palette },
+  { id: 'connections', label: 'Koppelingen', icon: Share2 },
+  { id: 'notifications', label: 'Meldingen', icon: Bell },
+  { id: 'data', label: 'Gegevens', icon: Database },
+  { id: 'admin', label: 'Beheer', icon: Shield, adminOnly: true },
+  { id: 'about', label: 'Info', icon: Info },
 ];
 
 // Connections subtabs configuration
 const CONNECTION_SUBTABS = [
-  { id: 'calendars', label: 'Calendars', icon: Calendar },
-  { id: 'contacts', label: 'Contacts', icon: Users },
+  { id: 'calendars', label: 'Google Agenda', icon: Calendar },
+  { id: 'contacts', label: 'Google Contacten', icon: Users },
   { id: 'carddav', label: 'CardDAV', icon: Database },
   { id: 'slack', label: 'Slack', icon: MessageSquare },
-  { id: 'api-access', label: 'API Access', icon: Key },
+  { id: 'api-access', label: 'API-toegang', icon: Key },
 ];
 
 export default function Settings() {
@@ -115,7 +115,7 @@ export default function Settings() {
   const [syncError, setSyncError] = useState(null);
   const [syncSuccess, setSyncSuccess] = useState(null);
 
-  // Fetch Application Passwords and CardDAV URLs on mount
+  // Fetch Applicatiewachtwoorden and CardDAV URLs on mount
   useEffect(() => {
     const fetchAppPasswords = async () => {
       try {
@@ -214,7 +214,7 @@ export default function Settings() {
           setUnlinkedCount(response.data.unlinked_count);
         })
         .catch(err => {
-          console.error('Failed to fetch unlinked count:', err);
+          console.fout('Failed to fetch unlinked count:', err);
         });
     }
   }, [googleContactsStatus?.connected, googleContactsStatus?.access_mode]);
@@ -223,9 +223,9 @@ export default function Settings() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const slackConnectedParam = params.get('slack_connected');
-    const slackError = params.get('slack_error');
+    const slackError = params.get('slack_fout');
     const googleConnected = params.get('connected');
-    const googleError = params.get('error');
+    const googleError = params.get('fout');
 
     // Handle Slack OAuth callbacks
     if (slackConnectedParam === '1') {
@@ -238,7 +238,7 @@ export default function Settings() {
       // Clean URL but keep tab and subtab for connections/slack
       navigate('/settings/connections/slack', { replace: true });
     } else if (slackError) {
-      setWebhookTestMessage(`Slack connection failed: ${slackError}`);
+      setWebhookTestMessage(`Slack-verbinding failed: ${slackError}`);
       navigate('/settings/connections/slack', { replace: true });
     }
 
@@ -255,11 +255,11 @@ export default function Settings() {
       });
       navigate('/settings/connections/contacts', { replace: true });
     } else if (googleError && params.get('subtab') === 'contacts') {
-      // Show error on contacts subtab
+      // Show fout on contacts subtab
       setGoogleContactsMessage(`Connection failed: ${googleError}`);
       navigate('/settings/connections/contacts', { replace: true });
     } else if (googleError && params.get('tab') === 'connections') {
-      // Keep on connections/calendars to show error
+      // Keep on connections/calendars to show fout
       navigate('/settings/connections/calendars', { replace: true });
     }
   }, [navigate]);
@@ -275,8 +275,8 @@ export default function Settings() {
     try {
       const response = await apiClient.get('/stadion/v1/slack/oauth/authorize');
       window.location.href = response.data.oauth_url;
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to connect Slack');
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Failed to connect Slack');
     }
   };
   
@@ -297,8 +297,8 @@ export default function Settings() {
       if (notificationChannels.includes('slack')) {
         await toggleChannel('slack');
       }
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to disconnect Slack');
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Failed to disconnect Slack');
     } finally {
       setDisconnectingSlack(false);
     }
@@ -315,10 +315,10 @@ export default function Settings() {
     setSavingSlackTargets(true);
     try {
       await prmApi.updateSlackTargets(slackTargets);
-      setWebhookTestMessage('Notification targets saved successfully');
+      setWebhookTestMessage('Meldingsdoelen saved successfully');
       setTimeout(() => setWebhookTestMessage(''), 3000);
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to save notification targets');
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Failed to save notification targets');
     } finally {
       setSavingSlackTargets(false);
     }
@@ -332,8 +332,8 @@ export default function Settings() {
       if (response.data.auth_url) {
         window.location.href = response.data.auth_url;
       }
-    } catch (error) {
-      setGoogleContactsMessage(error.response?.data?.message || 'Failed to initiate connection');
+    } catch (fout) {
+      setGoogleContactsMessage(fout.response?.data?.message || 'Failed to initiate connection');
       setConnectingGoogleContacts(false);
     }
   };
@@ -346,8 +346,8 @@ export default function Settings() {
       setGoogleContactsStatus({ ...googleContactsStatus, connected: false });
       setGoogleContactsMessage('Google Contacts disconnected.');
       setGoogleContactsImportResult(null);
-    } catch (error) {
-      setGoogleContactsMessage(error.response?.data?.message || 'Failed to disconnect');
+    } catch (fout) {
+      setGoogleContactsMessage(fout.response?.data?.message || 'Failed to disconnect');
     } finally {
       setDisconnectingGoogleContacts(false);
     }
@@ -356,7 +356,7 @@ export default function Settings() {
   const handleImportGoogleContacts = async () => {
     setGoogleContactsImporting(true);
     setGoogleContactsImportResult(null);
-    setGoogleContactsMessage('Importing contacts from Google...');
+    setGoogleContactsMessage('Contacten importeren van Google...');
 
     try {
       const response = await prmApi.triggerGoogleContactsImport();
@@ -372,8 +372,8 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       queryClient.invalidateQueries({ queryKey: ['dates'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    } catch (error) {
-      setGoogleContactsMessage(`Import failed: ${error.response?.data?.message || error.message}`);
+    } catch (fout) {
+      setGoogleContactsMessage(`Import failed: ${fout.response?.data?.message || fout.message}`);
       setGoogleContactsImportResult(null);
     } finally {
       setGoogleContactsImporting(false);
@@ -389,10 +389,10 @@ export default function Settings() {
       setBulkExportResult(response.data);
       // Refresh unlinked count after export
       setUnlinkedCount(0);
-    } catch (error) {
+    } catch (fout) {
       setBulkExportResult({
         success: false,
-        message: error.response?.data?.message || 'Bulk export failed'
+        message: fout.response?.data?.message || 'Bulk export failed'
       });
     } finally {
       setIsBulkExporting(false);
@@ -407,15 +407,15 @@ export default function Settings() {
       const response = await prmApi.triggerContactsSync();
       const stats = response.data.stats;
       const pullCount = stats?.pull?.contacts_imported || 0;
-      const pushedCount = stats?.push?.pushed || 0;
-      setSyncSuccess(`Sync completed: ${pullCount} imported, ${pushedCount} pushed`);
+      const verzondenCount = stats?.push?.pushed || 0;
+      setSyncSuccess(`Sync completed: ${pullCount} imported, ${pushedCount} verzonden`);
       // Invalidate contacts status query to refresh last_sync display
       queryClient.invalidateQueries({ queryKey: ['contacts-status'] });
       // Refresh status
       const statusResponse = await prmApi.getGoogleContactsStatus();
       setGoogleContactsStatus(statusResponse.data);
-    } catch (error) {
-      setSyncError(error.response?.data?.message || 'Sync failed');
+    } catch (fout) {
+      setSyncError(fout.response?.data?.message || 'Sync failed');
     } finally {
       setIsSyncing(false);
     }
@@ -430,8 +430,8 @@ export default function Settings() {
         ...prev,
         sync_frequency: frequency,
       }));
-    } catch (error) {
-      console.error('Failed to update sync frequency:', error);
+    } catch (fout) {
+      console.fout('Failed to update sync frequency:', fout);
     }
   };
 
@@ -445,8 +445,8 @@ export default function Settings() {
       setNewPassword(response.data.password);
       setAppPasswords([...appPasswords, response.data]);
       setNewPasswordName('');
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to create app password');
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Failed to create app password');
     } finally {
       setCreatingPassword(false);
     }
@@ -460,8 +460,8 @@ export default function Settings() {
     try {
       await prmApi.deleteAppPassword(userId, uuid);
       setAppPasswords(appPasswords.filter(p => p.uuid !== uuid));
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to revoke app password');
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Failed to revoke app password');
     }
   };
   
@@ -502,8 +502,8 @@ export default function Settings() {
     try {
       await prmApi.updateNotificationChannels(newChannels);
       setNotificationChannels(newChannels);
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update notification channels');
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Failed to update notification channels');
     } finally {
       setSavingChannels(false);
     }
@@ -521,8 +521,8 @@ export default function Settings() {
 
     try {
       await prmApi.updateNotificationTime(roundedTime);
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update notification time');
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Failed to update notification time');
       const response = await prmApi.getNotificationChannels();
       setNotificationTime(response.data.notification_time || '09:00');
     } finally {
@@ -537,8 +537,8 @@ export default function Settings() {
 
     try {
       await prmApi.updateMentionNotifications(preference);
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update mention notification preference');
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Failed to update mention notification preference');
       setMentionNotifications(previousValue);
     } finally {
       setSavingMentionPref(false);
@@ -556,8 +556,8 @@ export default function Settings() {
     try {
       const response = await prmApi.triggerReminders();
       setReminderMessage(response.data.message || 'Reminders triggered successfully.');
-    } catch (error) {
-      setReminderMessage(error.response?.data?.message || 'Failed to trigger reminders. Please check server logs.');
+    } catch (fout) {
+      setReminderMessage(fout.response?.data?.message || 'Failed to trigger reminders. Please check server logs.');
     } finally {
       setTriggeringReminders(false);
     }
@@ -574,8 +574,8 @@ export default function Settings() {
     try {
       const response = await prmApi.rescheduleCronJobs();
       setCronMessage(response.data.message || 'Cron jobs rescheduled successfully.');
-    } catch (error) {
-      setCronMessage(error.response?.data?.message || 'Failed to reschedule cron jobs. Please check server logs.');
+    } catch (fout) {
+      setCronMessage(fout.response?.data?.message || 'Failed to reschedule cron jobs. Please check server logs.');
     } finally {
       setReschedulingCron(false);
     }
@@ -737,7 +737,7 @@ function AppearanceTab() {
         const response = await prmApi.getLinkedPerson();
         setLinkedPerson(response.data.person || null);
       } catch {
-        // No linked person or error
+        // No linked person or fout
         setLinkedPerson(null);
       } finally {
         setLoadingLinkedPerson(false);
@@ -777,9 +777,9 @@ function AppearanceTab() {
   };
 
   const colorSchemeOptions = [
-    { id: 'light', label: 'Light', icon: Sun },
-    { id: 'dark', label: 'Dark', icon: Moon },
-    { id: 'system', label: 'System', icon: Monitor },
+    { id: 'light', label: 'Licht', icon: Sun },
+    { id: 'dark', label: 'Donker', icon: Moon },
+    { id: 'system', label: 'Systeem', icon: Monitor },
   ];
 
   // Map accent color names to Tailwind color classes
@@ -1004,7 +1004,7 @@ function CalendarsTab() {
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState({});
-  const [error, setError] = useState('');
+  const [fout, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [showAddModal, setShowAddModal] = useState(null); // 'google' | 'caldav' | null
   const navigate = useNavigate();
@@ -1025,7 +1025,7 @@ function CalendarsTab() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const connected = params.get('connected');
-    const errorParam = params.get('error');
+    const foutParam = params.get('fout');
 
     if (connected === 'google') {
       setSuccessMessage('Google Calendar connected successfully!');
@@ -1034,8 +1034,8 @@ function CalendarsTab() {
       // Clean URL
       navigate('/settings/connections/calendars', { replace: true });
       setTimeout(() => setSuccessMessage(''), 5000);
-    } else if (errorParam) {
-      setError(errorParam);
+    } else if (foutParam) {
+      setError(foutParam);
       navigate('/settings/connections/calendars', { replace: true });
       setTimeout(() => setError(''), 8000);
     }
@@ -1121,7 +1121,7 @@ function CalendarsTab() {
       fetchConnections();
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (err) {
-      throw err; // Let CalDAVModal handle the error
+      throw err; // Let CalDAVModal handle the fout
     }
   };
 
@@ -1190,10 +1190,10 @@ function CalendarsTab() {
       )}
 
       {/* Error message */}
-      {error && (
+      {fout && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 dark:bg-red-900/20 dark:border-red-800">
           <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-          <p className="text-red-800 dark:text-red-300">{error}</p>
+          <p className="text-red-800 dark:text-red-300">{fout}</p>
         </div>
       )}
 
@@ -1232,7 +1232,7 @@ function CalendarsTab() {
                     ) : null}
                     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <span>{formatLastSync(connection.last_sync)}</span>
-                      {connection.last_error && (
+                      {connection.last_fout && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs dark:bg-red-900/30 dark:text-red-400">
                           <AlertCircle className="w-3 h-3" />
                           Error
@@ -1254,7 +1254,7 @@ function CalendarsTab() {
                     title="Sync now"
                   >
                     <RefreshCw className={`w-4 h-4 ${syncing[connection.id] ? 'animate-spin' : ''}`} />
-                    {syncing[connection.id] ? 'Syncing...' : 'Sync'}
+                    {syncing[connection.id] ? 'Synchroniseren...' : 'Sync'}
                   </button>
                   <button
                     onClick={() => setShowAddModal(connection)}
@@ -1350,7 +1350,7 @@ function CalendarsTab() {
                 <button
                   onClick={copyIcalUrl}
                   className="btn-secondary whitespace-nowrap"
-                  title="Copy URL"
+                  title="URL kopiëren"
                 >
                   {icalCopied ? (
                     <span className="flex items-center gap-1">
@@ -1434,7 +1434,7 @@ function CalDAVModal({ onSave, onClose }) {
   const [selectedCalendar, setSelectedCalendar] = useState('');
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [fout, setError] = useState('');
   const [tested, setTested] = useState(false);
 
   const handleTest = async () => {
@@ -1506,9 +1506,9 @@ function CalDAVModal({ onSave, onClose }) {
         </div>
 
         <div className="p-4 space-y-4">
-          {error && (
+          {fout && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
-              {error}
+              {fout}
             </div>
           )}
 
@@ -1603,7 +1603,7 @@ function CalDAVModal({ onSave, onClose }) {
             disabled={saving || !tested || calendars.length === 0}
             className="btn-primary"
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? 'Opslaan...' : 'Save'}
           </button>
         </div>
       </div>
@@ -1620,7 +1620,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
   const [syncToDays, setSyncToDays] = useState(connection.sync_to_days || 30);
   const [syncFrequency, setSyncFrequency] = useState(connection.sync_frequency || 15);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [fout, setError] = useState('');
 
   // Multi-calendar selection state
   const [calendars, setCalendars] = useState([]);
@@ -1659,7 +1659,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         }
       } catch (err) {
         // Silently fail - calendar list is optional enhancement
-        console.error('Failed to fetch calendars:', err);
+        console.fout('Failed to fetch calendars:', err);
       } finally {
         setLoadingCalendars(false);
       }
@@ -1769,9 +1769,9 @@ function EditConnectionModal({ connection, onSave, onClose }) {
         </div>
 
         <div className="p-4 space-y-4">
-          {error && (
+          {fout && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
-              {error}
+              {fout}
             </div>
           )}
 
@@ -1833,9 +1833,9 @@ function EditConnectionModal({ connection, onSave, onClose }) {
 
               {/* Right column: Sync settings */}
               <div className="space-y-3">
-                {/* Sync frequency dropdown */}
+                {/* Synchronisatiefrequentie dropdown */}
                 <div>
-                  <label className="label mb-1">Sync frequency</label>
+                  <label className="label mb-1">Synchronisatiefrequentie</label>
                   <select
                     value={syncFrequency}
                     onChange={(e) => setSyncFrequency(Number(e.target.value))}
@@ -1966,9 +1966,9 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                 </p>
               </div>
 
-              {/* Sync frequency dropdown */}
+              {/* Synchronisatiefrequentie dropdown */}
               <div>
-                <label className="label mb-1">Sync frequency</label>
+                <label className="label mb-1">Synchronisatiefrequentie</label>
                 <select
                   value={syncFrequency}
                   onChange={(e) => setSyncFrequency(Number(e.target.value))}
@@ -2061,7 +2061,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
             disabled={saving || (isGoogle && calendars.length > 0 && selectedCalendarIds.length === 0)}
             className="btn-primary"
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? 'Opslaan...' : 'Save'}
           </button>
         </div>
       </div>
@@ -2195,7 +2195,7 @@ function ConnectionsCalendarsSubtab() {
   return <CalendarsTab />;
 }
 
-// Sync frequency options for UI
+// Synchronisatiefrequentie options for UI
 const SYNC_FREQUENCY_OPTIONS = [
   { value: 15, label: 'Every 15 minutes' },
   { value: 60, label: 'Every hour' },
@@ -2238,40 +2238,40 @@ function ConnectionsContactsSubtab({
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-900/20 dark:border-green-800">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-green-900 dark:text-green-300">Connected to Google Contacts</p>
+                <p className="font-medium text-green-900 dark:text-green-300">Verbonden met Google Contacten</p>
                 {googleContactsStatus.email && (
                   <p className="text-sm text-green-700 dark:text-green-400">{googleContactsStatus.email}</p>
                 )}
                 {googleContactsStatus.last_sync && (
                   <p className="text-xs text-green-600 dark:text-green-500 mt-1">
-                    Last synced: {formatDistanceToNow(new Date(googleContactsStatus.last_sync), { addSuffix: true })}
+                    Laatst gesynchroniseerd: {formatDistanceToNow(new Date(googleContactsStatus.last_sync), { addSuffix: true })}
                   </p>
                 )}
                 {googleContactsStatus.contact_count > 0 && (
                   <p className="text-xs text-green-600 dark:text-green-500">
-                    {googleContactsStatus.contact_count} contacts synced
+                    {googleContactsStatus.contact_count} contacten gesynchroniseerd
                   </p>
                 )}
                 {googleContactsStatus.access_mode && (
                   <p className="text-xs text-green-600 dark:text-green-500">
-                    Access: {googleContactsStatus.access_mode === 'readwrite' ? 'Read & Write' : 'Read Only'}
+                    Toegang: {googleContactsStatus.access_mode === 'readwrite' ? 'Lezen & Schrijven' : 'Alleen Lezen'}
                   </p>
                 )}
-                {/* Error indicator - show if last sync had errors */}
-                {googleContactsStatus.sync_history?.[0]?.errors > 0 ? (
+                {/* Error indicator - show if last sync had fouts */}
+                {googleContactsStatus.sync_history?.[0]?.fouts > 0 ? (
                   <details className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                     <summary className="cursor-pointer hover:underline">
-                      {googleContactsStatus.sync_history[0].errors} error{googleContactsStatus.sync_history[0].errors !== 1 ? 's' : ''} in last sync
+                      {googleContactsStatus.sync_history[0].fouts} fout{googleContactsStatus.sync_history[0].fouts !== 1 ? 's' : ''} in laatste synchronisatie
                     </summary>
-                    {googleContactsStatus.last_error && (
+                    {googleContactsStatus.last_fout && (
                       <p className="mt-1 pl-2 text-amber-700 dark:text-amber-300 text-xs">
-                        {googleContactsStatus.last_error}
+                        {googleContactsStatus.last_fout}
                       </p>
                     )}
                   </details>
-                ) : googleContactsStatus.last_error && !googleContactsImportResult ? (
+                ) : googleContactsStatus.last_fout && !googleContactsImportResult ? (
                   <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                    Warning: {googleContactsStatus.last_error}
+                    Waarschuwing: {googleContactsStatus.last_fout}
                   </p>
                 ) : null}
               </div>
@@ -2282,7 +2282,7 @@ function ConnectionsContactsSubtab({
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent-700 dark:text-accent-300 hover:text-accent-800 dark:hover:text-accent-200"
                   >
                     <RefreshCw className="h-4 w-4" />
-                    Re-import
+                    Opnieuw importeren
                   </button>
                 )}
                 <button
@@ -2290,7 +2290,7 @@ function ConnectionsContactsSubtab({
                   disabled={disconnectingGoogleContacts || googleContactsImporting}
                   className="btn-secondary text-sm"
                 >
-                  {disconnectingGoogleContacts ? 'Disconnecting...' : 'Disconnect'}
+                  {disconnectingGoogleContacts ? 'Ontkoppelen...' : 'Disconnect'}
                 </button>
               </div>
             </div>
@@ -2300,7 +2300,7 @@ function ConnectionsContactsSubtab({
           {googleContactsImporting && (
             <div className="flex items-center gap-2 text-accent-600 dark:text-accent-400">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Importing contacts from Google...</span>
+              <span>Contacten importeren van Google...</span>
             </div>
           )}
 
@@ -2310,38 +2310,38 @@ function ConnectionsContactsSubtab({
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-green-800 dark:text-green-200">
-                  <p className="font-medium">Import complete!</p>
+                  <p className="font-medium">Import voltooid!</p>
                   <ul className="mt-1 space-y-0.5">
-                    <li>{googleContactsImportResult.stats.contacts_imported} contacts imported</li>
-                    <li>{googleContactsImportResult.stats.contacts_updated} contacts updated</li>
+                    <li>{googleContactsImportResult.stats.contacts_imported} contacten geïmporteerd</li>
+                    <li>{googleContactsImportResult.stats.contacts_updated} contacten bijgewerkt</li>
                     {googleContactsImportResult.stats.contacts_skipped > 0 && (
-                      <li>{googleContactsImportResult.stats.contacts_skipped} contacts skipped</li>
+                      <li>{googleContactsImportResult.stats.contacts_skipped} contacten overgeslagen</li>
                     )}
                     {googleContactsImportResult.stats.contacts_no_email > 0 && (
                       <li className="text-green-600 dark:text-green-300">
-                        {googleContactsImportResult.stats.contacts_no_email} skipped (no email)
+                        {googleContactsImportResult.stats.contacts_no_email} overgeslagen (geen e-mail)
                       </li>
                     )}
                     {googleContactsImportResult.stats.teams_created > 0 && (
-                      <li>{googleContactsImportResult.stats.teams_created} organizations created</li>
+                      <li>{googleContactsImportResult.stats.teams_created} organisaties aangemaakt</li>
                     )}
                     {googleContactsImportResult.stats.dates_created > 0 && (
-                      <li>{googleContactsImportResult.stats.dates_created} birthdays added</li>
+                      <li>{googleContactsImportResult.stats.dates_created} verjaardagen toegevoegd</li>
                     )}
                     {googleContactsImportResult.stats.photos_imported > 0 && (
-                      <li>{googleContactsImportResult.stats.photos_imported} photos imported</li>
+                      <li>{googleContactsImportResult.stats.photos_imported} foto's geïmporteerd</li>
                     )}
                   </ul>
-                  {googleContactsImportResult.stats.errors?.length > 0 && (
+                  {googleContactsImportResult.stats.fouts?.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-700">
-                      <p className="font-medium text-amber-700 dark:text-amber-300">Warnings:</p>
+                      <p className="font-medium text-amber-700 dark:text-amber-300">Waarschuwingen:</p>
                       <ul className="list-disc list-inside">
-                        {googleContactsImportResult.stats.errors.slice(0, 5).map((error, i) => (
-                          <li key={i} className="text-amber-600 dark:text-amber-400">{error}</li>
+                        {googleContactsImportResult.stats.fouts.slice(0, 5).map((fout, i) => (
+                          <li key={i} className="text-amber-600 dark:text-amber-400">{fout}</li>
                         ))}
-                        {googleContactsImportResult.stats.errors.length > 5 && (
+                        {googleContactsImportResult.stats.fouts.length > 5 && (
                           <li className="text-amber-600 dark:text-amber-400">
-                            ...and {googleContactsImportResult.stats.errors.length - 5} more
+                            ...and {googleContactsImportResult.stats.fouts.length - 5} more
                           </li>
                         )}
                       </ul>
@@ -2358,7 +2358,7 @@ function ConnectionsContactsSubtab({
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                    Bulk Export to Google
+                    Bulk exporteren naar Google
                   </h4>
                   {unlinkedCount !== null && unlinkedCount > 0 && !isBulkExporting && !bulkExportResult && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -2367,7 +2367,7 @@ function ConnectionsContactsSubtab({
                   )}
                   {unlinkedCount === 0 && !isBulkExporting && !bulkExportResult && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      All contacts are synced to Google
+                      Alle contacten zijn gesynchroniseerd met Google
                     </p>
                   )}
                 </div>
@@ -2387,7 +2387,7 @@ function ConnectionsContactsSubtab({
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      Exporting contacts to Google...
+                      Contacten exporteren naar Google...
                     </span>
                   </div>
                 </div>
@@ -2401,12 +2401,12 @@ function ConnectionsContactsSubtab({
                   </p>
                   {bulkExportResult.stats && (
                     <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                      <span className="inline-block mr-3">Exported: {bulkExportResult.stats.exported}</span>
+                      <span className="inline-block mr-3">Geëxporteerd: {bulkExportResult.stats.exported}</span>
                       {bulkExportResult.stats.skipped > 0 && (
-                        <span className="inline-block mr-3">Skipped: {bulkExportResult.stats.skipped}</span>
+                        <span className="inline-block mr-3">Overgeslagen: {bulkExportResult.stats.skipped}</span>
                       )}
                       {bulkExportResult.stats.failed > 0 && (
-                        <span className="inline-block text-red-600 dark:text-red-400">Failed: {bulkExportResult.stats.failed}</span>
+                        <span className="inline-block text-red-600 dark:text-red-400">Mislukt: {bulkExportResult.stats.failed}</span>
                       )}
                     </div>
                   )}
@@ -2421,15 +2421,15 @@ function ConnectionsContactsSubtab({
             </div>
           )}
 
-          {/* Background Sync Section */}
+          {/* Achtergrond synchronisatie Section */}
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                  Background Sync
+                  Achtergrond synchronisatie
                 </h4>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Automatically sync contacts in the background.
+                  Synchroniseer contacten automatisch op de achtergrond.
                 </p>
               </div>
               <button
@@ -2440,21 +2440,21 @@ function ConnectionsContactsSubtab({
                 {isSyncing ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Syncing...
+                    Synchroniseren...
                   </>
                 ) : (
                   <>
                     <RefreshCw className="h-4 w-4" />
-                    Sync Now
+                    Nu synchroniseren
                   </>
                 )}
               </button>
             </div>
 
-            {/* Sync frequency dropdown */}
+            {/* Synchronisatiefrequentie dropdown */}
             <div className="mt-3">
               <label htmlFor="sync-frequency" className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                Sync frequency
+                Synchronisatiefrequentie
               </label>
               <select
                 id="sync-frequency"
@@ -2477,7 +2477,7 @@ function ConnectionsContactsSubtab({
               </div>
             )}
 
-            {/* Sync error message */}
+            {/* Sync fout message */}
             {syncError && (
               <div className="mt-3 p-2 rounded-md bg-red-50 dark:bg-red-900/20 text-sm text-red-800 dark:text-red-200">
                 {syncError}
@@ -2485,14 +2485,14 @@ function ConnectionsContactsSubtab({
             )}
           </div>
 
-          {/* Sync History */}
+          {/* Synchronisatiegeschiedenis */}
           {googleContactsStatus.sync_history?.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <details className="group">
                 <summary className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-accent-600 dark:hover:text-accent-400 flex items-center gap-1">
-                  <span>Sync History</span>
+                  <span>Synchronisatiegeschiedenis</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    ({googleContactsStatus.sync_history.length} recent)
+                    ({googleContactsStatus.sync_history.length} recente)
                   </span>
                 </summary>
                 <div className="mt-3 space-y-2">
@@ -2505,15 +2505,15 @@ function ConnectionsContactsSubtab({
                         {formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true })}
                       </span>
                       <span className="flex items-center gap-3">
-                        {entry.pulled > 0 && <span>{entry.pulled} pulled</span>}
-                        {entry.pushed > 0 && <span>{entry.pushed} pushed</span>}
-                        {entry.errors > 0 && (
+                        {entry.pulled > 0 && <span>{entry.pulled} opgehaald</span>}
+                        {entry.pushed > 0 && <span>{entry.pushed} verzonden</span>}
+                        {entry.fouts > 0 && (
                           <span className="text-amber-600 dark:text-amber-400">
-                            {entry.errors} error{entry.errors !== 1 ? 's' : ''}
+                            {entry.fouts} fout{entry.fouts !== 1 ? 's' : ''}
                           </span>
                         )}
-                        {entry.pulled === 0 && entry.pushed === 0 && entry.errors === 0 && (
-                          <span className="text-gray-400 dark:text-gray-500">No changes</span>
+                        {entry.pulled === 0 && entry.pushed === 0 && entry.fouts === 0 && (
+                          <span className="text-gray-400 dark:text-gray-500">Geen wijzigingen</span>
                         )}
                       </span>
                     </div>
@@ -2530,10 +2530,10 @@ function ConnectionsContactsSubtab({
             disabled={connectingGoogleContacts}
             className="btn-primary"
           >
-            {connectingGoogleContacts ? 'Connecting...' : 'Connect Google Contacts'}
+            {connectingGoogleContacts ? 'Verbinden...' : 'Google Contacten koppelen'}
           </button>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Grants read and write access to sync contacts bidirectionally.
+            Verleent lees- en schrijftoegang om contacten bidirectioneel te synchroniseren.
           </p>
         </div>
       )}
@@ -2554,23 +2554,23 @@ function ConnectionsContactsSubtab({
   );
 }
 
-// ConnectionsCardDAVSubtab - CardDAV sync configuration (URLs only, passwords managed in API Access tab)
+// ConnectionsCardDAVSubtab - CardDAV-synchronisatie configuration (URLs only, passwords managed in API Access tab)
 function ConnectionsCardDAVSubtab({
   carddavUrls, config, copyCarddavUrl, setActiveTab,
 }) {
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">CardDAV sync</h2>
+      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">CardDAV-synchronisatie</h2>
       <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-        Sync your contacts with apps like Apple Contacts, Android Contacts, or Thunderbird using CardDAV.
+        Synchroniseer je contacten met apps zoals Apple Contacten, Android Contacten of Thunderbird via CardDAV.
       </p>
 
       {carddavUrls ? (
         <div className="space-y-4">
           <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
-            <h3 className="font-medium text-sm dark:text-gray-200">Connection details</h3>
+            <h3 className="font-medium text-sm dark:text-gray-200">Verbindingsdetails</h3>
             <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400">Server URL (for most apps)</label>
+              <label className="text-xs text-gray-500 dark:text-gray-400">Server-URL (voor de meeste apps)</label>
               <div className="flex gap-2 mt-1">
                 <input
                   type="text"
@@ -2582,7 +2582,7 @@ function ConnectionsCardDAVSubtab({
                 <button
                   onClick={() => copyCarddavUrl(carddavUrls.addressbook)}
                   className="btn-secondary text-xs px-2"
-                  title="Copy URL"
+                  title="URL kopiëren"
                 >
                   Copy
                 </button>
@@ -2601,7 +2601,7 @@ function ConnectionsCardDAVSubtab({
                 <button
                   onClick={() => copyCarddavUrl(config.userLogin)}
                   className="btn-secondary text-xs px-2"
-                  title="Copy username"
+                  title="Gebruikersnaam kopiëren"
                 >
                   Copy
                 </button>
@@ -2610,12 +2610,12 @@ function ConnectionsCardDAVSubtab({
           </div>
 
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Application passwords for CardDAV are managed in{' '}
+            Applicatiewachtwoorden voor CardDAV worden beheerd in{' '}
             <button
               onClick={() => setActiveTab('api-access')}
               className="text-accent-600 dark:text-accent-400 hover:underline"
             >
-              Settings &gt; API Access
+              Instellingen Settings &gt; API Accessgt; API-toegang
             </button>
             .
           </p>
@@ -2629,7 +2629,7 @@ function ConnectionsCardDAVSubtab({
   );
 }
 
-// ConnectionsSlackSubtab - Slack connection management
+// ConnectionsSlackSubtab - Slack-verbinding management
 function ConnectionsSlackSubtab({
   slackConnected, slackWorkspaceName, handleConnectSlack, handleDisconnectSlack,
   disconnectingSlack, webhookTestMessage, slackChannels, slackUsers, slackTargets,
@@ -2637,9 +2637,9 @@ function ConnectionsSlackSubtab({
 }) {
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Slack connection</h2>
+      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Slack-verbinding</h2>
       <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-        Connect your Slack workspace to receive notifications and use Slack commands.
+        Koppel je Slack-workspace om meldingen te ontvangen en Slack-commando's te gebruiken.
       </p>
 
       {slackConnected ? (
@@ -2647,7 +2647,7 @@ function ConnectionsSlackSubtab({
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-900/20 dark:border-green-800">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-green-900 dark:text-green-300">Connected to Slack</p>
+                <p className="font-medium text-green-900 dark:text-green-300">Verbonden met Slack</p>
                 {slackWorkspaceName && (
                   <p className="text-sm text-green-700 dark:text-green-400">Workspace: {slackWorkspaceName}</p>
                 )}
@@ -2657,7 +2657,7 @@ function ConnectionsSlackSubtab({
                 disabled={disconnectingSlack}
                 className="btn-secondary text-sm"
               >
-                {disconnectingSlack ? 'Disconnecting...' : 'Disconnect'}
+                {disconnectingSlack ? 'Ontkoppelen...' : 'Disconnect'}
               </button>
             </div>
           </div>
@@ -2668,20 +2668,20 @@ function ConnectionsSlackSubtab({
             </p>
           )}
 
-          {/* Notification targets configuration */}
+          {/* Meldingsdoelen configuration */}
           <div className="mt-4 p-4 border border-gray-200 rounded-lg dark:border-gray-700">
-            <h3 className="font-medium mb-3 dark:text-gray-200">Notification targets</h3>
+            <h3 className="font-medium mb-3 dark:text-gray-200">Meldingsdoelen</h3>
             <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-              Choose where to send Slack notifications. You can select multiple channels and users.
+              Kies waar je Slack-meldingen naartoe wilt sturen. Je kunt meerdere kanalen en gebruikers selecteren.
             </p>
 
             {loadingSlackData ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Loading channels and users...</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Kanalen en gebruikers laden...</p>
             ) : (
               <>
                 {slackChannels.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-sm font-medium mb-2 dark:text-gray-300">Channels</h4>
+                    <h4 className="text-sm font-medium mb-2 dark:text-gray-300">Kanalen</h4>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {slackChannels.map((channel) => (
                         <label
@@ -2703,7 +2703,7 @@ function ConnectionsSlackSubtab({
 
                 {slackUsers.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-sm font-medium mb-2 dark:text-gray-300">Direct messages</h4>
+                    <h4 className="text-sm font-medium mb-2 dark:text-gray-300">Directe berichten</h4>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {slackUsers.map((user) => (
                         <label
@@ -2718,7 +2718,7 @@ function ConnectionsSlackSubtab({
                           />
                           <span className="text-sm dark:text-gray-300">
                             {user.name}
-                            {user.is_me && <span className="text-gray-500 ml-1 dark:text-gray-500">(you)</span>}
+                            {user.is_me && <span className="text-gray-500 ml-1 dark:text-gray-500">(jij)</span>}
                           </span>
                         </label>
                       ))}
@@ -2728,7 +2728,7 @@ function ConnectionsSlackSubtab({
 
                 {slackChannels.length === 0 && slackUsers.length === 0 && !loadingSlackData && (
                   <p className="text-sm text-gray-500 mb-4 dark:text-gray-400">
-                    No channels or users found. Make sure the Slack app has the necessary permissions.
+                    Geen kanalen of gebruikers gevonden. Zorg ervoor dat de Slack-app de benodigde rechten heeft.
                   </p>
                 )}
 
@@ -2737,7 +2737,7 @@ function ConnectionsSlackSubtab({
                   disabled={savingSlackTargets}
                   className="btn-primary text-sm mt-4"
                 >
-                  {savingSlackTargets ? 'Saving...' : 'Save targets'}
+                  {savingSlackTargets ? 'Opslaan...' : 'Doelen opslaan'}
                 </button>
               </>
             )}
@@ -2750,7 +2750,7 @@ function ConnectionsSlackSubtab({
             className="btn-primary w-full"
             disabled={disconnectingSlack}
           >
-            Connect Slack
+            Slack koppelen
           </button>
           {webhookTestMessage && (
             <p className={`text-sm ${webhookTestMessage.includes('successfully') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -2758,7 +2758,7 @@ function ConnectionsSlackSubtab({
             </p>
           )}
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Connect your Slack workspace to receive daily reminder notifications. You'll be able to message channels or receive direct messages.
+            Koppel je Slack-workspace om dagelijkse herinneringsmeldingen te ontvangen. Je kunt berichten naar kanalen sturen of directe berichten ontvangen.
           </p>
         </div>
       )}
@@ -2809,7 +2809,7 @@ function NotificationsTab({
             <div>
               <p className="font-medium dark:text-gray-200">Slack</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {slackConnected ? 'Receive notifications in Slack' : 'Connect Slack in Connections to enable'}
+                {slackConnected ? 'Receive notifications in Slack' : 'Slack koppelen in Connections to enable'}
               </p>
             </div>
             {slackConnected ? (
@@ -2828,7 +2828,7 @@ function NotificationsTab({
                 to="/settings/connections/slack"
                 className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
               >
-                Connect Slack
+                Slack koppelen
               </Link>
             )}
           </div>
@@ -2876,19 +2876,19 @@ function NotificationsTab({
 
           {/* Mention notifications preference */}
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Mention notifications</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Vermeldingsmeldingen</label>
             <select
               value={mentionNotifications}
               onChange={(e) => handleMentionNotificationsChange(e.target.value)}
               className="input"
               disabled={savingMentionPref}
             >
-              <option value="digest">Include in daily digest (default)</option>
-              <option value="immediate">Send immediately</option>
-              <option value="never">Don&apos;t notify me</option>
+              <option value="digest">Opnemen in dagelijkse samenvatting (standaard)</option>
+              <option value="immediate">Direct verzenden</option>
+              <option value="never">Niet melden</option>
             </select>
             <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-              Choose when to receive notifications when someone @mentions you in a note.
+              Kies wanneer je meldingen wilt ontvangen als iemand je @vermeldt in een notitie.
             </p>
           </div>
         </div>
@@ -2902,21 +2902,21 @@ const importTypes = [
   {
     id: 'vcard',
     name: 'vCard',
-    description: 'Apple Contacts, Outlook, Android',
+    description: 'Apple Contacten, Outlook, Android',
     icon: FileCode,
     component: VCardImport,
   },
   {
     id: 'google',
-    name: 'Google Contacts',
-    description: 'CSV export from Google',
+    name: 'Google Contacten',
+    description: 'CSV-export van Google',
     icon: FileSpreadsheet,
     component: GoogleContactsImport,
   },
   {
     id: 'monica',
     name: 'Monica CRM',
-    description: 'SQL export from Monica',
+    description: 'SQL-export van Monica',
     icon: Database,
     component: MonicaImport,
   },
@@ -2932,10 +2932,10 @@ function APIAccessTab({
   return (
     <div className="space-y-6">
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Application Passwords</h2>
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Applicatiewachtwoorden</h2>
         <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-          Create application passwords for API access from external tools and scripts.
-          These passwords work with the REST API and CardDAV sync.
+          Maak applicatiewachtwoorden aan voor API-toegang vanuit externe tools en scripts.
+          These passwords work with the REST API and CardDAV-synchronisatie.
         </p>
 
         {appPasswordsLoading ? (
@@ -2951,7 +2951,7 @@ function APIAccessTab({
                 type="text"
                 value={newPasswordName}
                 onChange={(e) => setNewPasswordName(e.target.value)}
-                placeholder="Password name (e.g., My Script, Mobile App)"
+                placeholder="Wachtwoordnaam (bijv. Mijn Script, Mobiele App)"
                 className="input flex-1"
                 disabled={creatingPassword}
               />
@@ -2960,7 +2960,7 @@ function APIAccessTab({
                 disabled={creatingPassword || !newPasswordName.trim()}
                 className="btn-primary whitespace-nowrap"
               >
-                {creatingPassword ? 'Creating...' : 'Create'}
+                {creatingPassword ? 'Aanmaken...' : 'Create'}
               </button>
             </form>
 
@@ -2968,9 +2968,9 @@ function APIAccessTab({
             {newPassword && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-                  <h3 className="text-lg font-semibold mb-2 dark:text-gray-100">Application Password Created</h3>
+                  <h3 className="text-lg font-semibold mb-2 dark:text-gray-100">Applicatiewachtwoord aangemaakt</h3>
                   <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
-                    Copy this password now. It won&apos;t be shown again.
+                    Kopieer dit wachtwoord nu. Het zal niet&apos;opnieuw worden getoond.
                   </p>
                   <div className="flex gap-2 mb-4">
                     <input
@@ -3010,7 +3010,7 @@ function APIAccessTab({
             {/* Existing passwords list */}
             {appPasswords.length > 0 ? (
               <div>
-                <h3 className="text-sm font-medium mb-2 dark:text-gray-200">Your application passwords</h3>
+                <h3 className="text-sm font-medium mb-2 dark:text-gray-200">Jouw applicatiewachtwoorden</h3>
                 <div className="space-y-2">
                   {appPasswords.map((password) => (
                     <div
@@ -3020,7 +3020,7 @@ function APIAccessTab({
                       <div>
                         <p className="font-medium text-sm dark:text-gray-200">{password.name}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Created {formatDate(password.created)} · Last used {formatDate(password.last_used)}
+                          Aangemaakt {formatDate(password.created)} · Laatst gebruikt {formatDate(password.last_used)}
                         </p>
                       </div>
                       <button
@@ -3035,7 +3035,7 @@ function APIAccessTab({
               </div>
             ) : (
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                No application passwords yet. Create one to start using the API.
+                Nog geen applicatiewachtwoorden. Maak er een aan om de API te gebruiken.
               </p>
             )}
           </div>
