@@ -9,10 +9,10 @@ Requirements for Dutch localization. Direct string replacement approach (no i18n
 
 ### Navigation & Core UI
 
-- [ ] **NAV-01**: Translate sidebar navigation labels (Dashboard->Dashboard, People->Leden, Teams->Teams, Commissies->Commissies, Dates->Datums, Todos->Taken, Workspaces->Werkruimtes, Feedback->Feedback, Settings->Instellingen)
-- [ ] **NAV-02**: Translate quick actions menu (Nieuw lid, Nieuw team, Nieuwe taak, Nieuwe datum)
-- [ ] **NAV-03**: Translate user menu (Profiel bewerken, WordPress admin, Uitloggen)
-- [ ] **NAV-04**: Translate search modal labels and placeholders
+- [x] **NAV-01**: Translate sidebar navigation labels (Dashboard->Dashboard, People->Leden, Teams->Teams, Commissies->Commissies, Dates->Datums, Todos->Taken, Workspaces->Werkruimtes, Feedback->Feedback, Settings->Instellingen)
+- [x] **NAV-02**: Translate quick actions menu (Nieuw lid, Nieuw team, Nieuwe taak, Nieuwe datum)
+- [x] **NAV-03**: Translate user menu (Profiel bewerken, WordPress admin, Uitloggen)
+- [x] **NAV-04**: Translate search modal labels and placeholders
 
 ### Dashboard
 
@@ -92,10 +92,10 @@ None for this milestone - focused solely on Dutch translation.
 |-------------|-------|--------|
 | FORMAT-01 | Phase 99 | Complete |
 | FORMAT-02 | Phase 99 | Complete |
-| NAV-01 | Phase 100 | Pending |
-| NAV-02 | Phase 100 | Pending |
-| NAV-03 | Phase 100 | Pending |
-| NAV-04 | Phase 100 | Pending |
+| NAV-01 | Phase 100 | Complete |
+| NAV-02 | Phase 100 | Complete |
+| NAV-03 | Phase 100 | Complete |
+| NAV-04 | Phase 100 | Complete |
 | DASH-01 | Phase 101 | Pending |
 | DASH-02 | Phase 101 | Pending |
 | DASH-03 | Phase 101 | Pending |

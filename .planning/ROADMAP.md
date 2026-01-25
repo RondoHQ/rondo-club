@@ -11,7 +11,7 @@ This milestone transforms the entire Stadion frontend from English to Dutch. Sta
 ## Phases
 
 - [x] **Phase 99: Date Formatting Foundation** - Configure Dutch locale for date-fns
-- [ ] **Phase 100: Navigation & Layout** - Translate sidebar, quick actions, user menu, search
+- [x] **Phase 100: Navigation & Layout** - Translate sidebar, quick actions, user menu, search
 - [ ] **Phase 101: Dashboard** - Translate stats, widgets, empty states, messages
 - [ ] **Phase 102: Leden (People)** - Translate people pages and forms
 - [ ] **Phase 103: Teams & Commissies** - Translate teams and commissies pages
@@ -47,7 +47,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 100-01-PLAN.md — Translate all navigation and layout strings in Layout.jsx
+- [x] 100-01-PLAN.md — Translate all navigation and layout strings in Layout.jsx
 
 ### Phase 101: Dashboard
 **Goal**: Dashboard displays entirely in Dutch
@@ -151,7 +151,7 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 99. Date Formatting Foundation | 2/2 | ✓ Complete | 2026-01-25 |
-| 100. Navigation & Layout | 0/1 | Not started | - |
+| 100. Navigation & Layout | 1/1 | ✓ Complete | 2026-01-25 |
 | 101. Dashboard | 0/1 | Not started | - |
 | 102. Leden (People) | 0/2 | Not started | - |
 | 103. Teams & Commissies | 0/2 | Not started | - |
