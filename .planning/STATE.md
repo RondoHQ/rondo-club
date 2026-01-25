@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 
 Milestone: v7.0 Dutch Localization
 Phase: 106 of 106 (Global UI Elements)
-Plan: 4 of N in phase 106
+Plan: 5 of N in phase 106
 Status: In progress
-Last activity: 2026-01-25 - Completed 106-04-PLAN.md (Feedback and Meeting components translated)
+Last activity: 2026-01-25 - Completed 106-05-PLAN.md (Workspace pages and PersonDetail translated)
 
 Progress: [████████████] In progress
 
@@ -69,13 +69,17 @@ Progress: [████████████] In progress
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-Recent decisions (105-06, 105-07, 106-02):
+Recent decisions (105-06, 105-07, 106-02, 106-05):
 - Use 'Nooit' for null dates instead of 'Never'
 - Use nl-NL locale with day-month order for Dutch date formatting
 - Update message condition checks to use Dutch keywords for color coding
 - Use 'Synchronisatie voltooid' for sync completion messages
 - Use 'Koppel Slack om in te schakelen' for disconnected Slack state
 - Use 'Kan bekijken/Kan bewerken' for permission display in share modal
+- Use 'werkruimte' (compound) for workspace terminology
+- Use 'Beheerder/Lid/Kijker' for Admin/Member/Viewer workspace roles
+- Use 'Gevarenzone' for Danger Zone
+- Use 'Heropenen/Markeer als voltooid/Voltooien' for todo status actions
 
 ### Pending Todos
 
@@ -98,5 +102,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 106-04-PLAN.md - Feedback and Meeting components translated to Dutch
+Stopped at: Completed 106-05-PLAN.md - Workspace pages and PersonDetail translated to Dutch
 Resume file: None
