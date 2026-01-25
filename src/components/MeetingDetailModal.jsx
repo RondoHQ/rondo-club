@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { X, MapPin, Video, Clock, User, ChevronDown, UserPlus, ExternalLink, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useMeetingNotes, useUpdateMeetingNotes } from '@/hooks/useMeetings';
 import { useCreatePerson, useAddEmailToPerson } from '@/hooks/usePeople';

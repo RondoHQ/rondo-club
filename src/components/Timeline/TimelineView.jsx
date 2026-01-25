@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 import {
   Phone, Mail, Users, Coffee, Utensils, FileText, Circle, MessageCircle, Video,
   CheckSquare2, Square, Pencil, Trash2, Link as LinkIcon, Lock, Globe, Clock

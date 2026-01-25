@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Pencil, ExternalLink, FileText, Link as LinkIcon, User, Building2 } from 'lucide-react';
-import { format, parse, isValid } from 'date-fns';
+import { format, parse, isValid } from '@/utils/dateFormat';
 import { Link } from 'react-router-dom';
 import { prmApi, wpApi } from '@/api/client';
 import { getPersonName, getTeamName } from '@/utils/formatters';
