@@ -94,7 +94,7 @@ export default function AddAttendeePopup({
           {/* Header with attendee info */}
           <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Add {attendee?.email || 'attendee'}
+              Voeg {attendee?.email || 'deelnemer'} toe
             </p>
           </div>
 
@@ -105,7 +105,7 @@ export default function AddAttendeePopup({
             className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
             <Search className="w-4 h-4 text-gray-400" />
-            <span>Add to existing person</span>
+            <span>Toevoegen aan bestaand persoon</span>
           </button>
           <button
             onClick={handleCreateNew}
@@ -113,7 +113,7 @@ export default function AddAttendeePopup({
             className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
             <UserPlus className="w-4 h-4 text-gray-400" />
-            <span>Create new person</span>
+            <span>Nieuwe persoon aanmaken</span>
           </button>
         </div>
       )}
@@ -125,7 +125,7 @@ export default function AddAttendeePopup({
             <button
               onClick={handleBackToChoice}
               className="p-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              title="Back"
+              title="Terug"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -134,7 +134,7 @@ export default function AddAttendeePopup({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search people..."
+              placeholder="Personen zoeken..."
               className="flex-1 px-2 py-2.5 text-sm outline-none placeholder:text-gray-400 bg-transparent dark:text-gray-100"
               autoComplete="off"
             />
@@ -144,15 +144,15 @@ export default function AddAttendeePopup({
           <div className="max-h-[50vh] overflow-y-auto">
             {!showResults ? (
               <div className="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                Type at least 2 characters
+                Typ minimaal 2 tekens
               </div>
             ) : isSearching ? (
               <div className="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                Searching...
+                Zoeken...
               </div>
             ) : people.length === 0 ? (
               <div className="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                No people found
+                Geen personen gevonden
               </div>
             ) : (
               <div className="py-1">
@@ -186,7 +186,7 @@ export default function AddAttendeePopup({
           {/* Loading indicator */}
           {isLoading && (
             <div className="px-3 py-2 border-t border-gray-200 dark:border-gray-700 text-center text-xs text-gray-500 dark:text-gray-400">
-              Adding email...
+              E-mail toevoegen...
             </div>
           )}
         </div>

@@ -193,7 +193,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
   if (durationHours > 0 && durationMins > 0) {
     durationText = `${durationHours}h ${durationMins}m`;
   } else if (durationHours > 0) {
-    durationText = durationHours === 1 ? '1 hour' : `${durationHours} hours`;
+    durationText = durationHours === 1 ? '1 uur' : `${durationHours} uur`;
   } else {
     durationText = `${durationMins} min`;
   }
@@ -201,7 +201,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
   // Format time display
   const dateStr = format(startDate, 'EEEE, MMMM d, yyyy');
   const timeStr = meeting.all_day
-    ? 'All day'
+    ? 'Hele dag'
     : `${format(startDate, 'h:mm a')} - ${format(endDate, 'h:mm a')} (${durationText})`;
 
   // Sort attendees: matched first, then alphabetically
@@ -230,7 +230,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-accent-600 dark:hover:text-accent-400"
-                title="Open in Google Calendar"
+                title="Openen in Google Agenda"
               >
                 <ExternalLink className="w-5 h-5" />
               </a>
@@ -281,7 +281,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
                 rel="noopener noreferrer"
                 className="text-sm text-accent-600 dark:text-accent-400 hover:underline break-all"
               >
-                Join meeting
+                Deelnemen aan vergadering
               </a>
             </div>
           )}
@@ -289,7 +289,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
           {/* Description from calendar */}
           {meeting.description && (
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Beschrijving</p>
               <div
                 className="text-sm text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none"
                 dangerouslySetInnerHTML={{ __html: meeting.description }}
@@ -301,7 +301,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
           {sortedAttendees.length > 0 && (
             <div>
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Attendees ({sortedAttendees.length})
+                Deelnemers ({sortedAttendees.length})
               </p>
               <div className="space-y-1">
                 {sortedAttendees.map((attendee, index) => (
@@ -328,15 +328,15 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
               className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 hover:text-gray-900 dark:hover:text-gray-100"
             >
               <ChevronDown className={`w-4 h-4 transition-transform ${showNotes ? '' : '-rotate-90'}`} />
-              Meeting notes
-              {updateNotes.isPending && <span className="text-xs text-gray-400 ml-2">Saving...</span>}
+              Vergadernotities
+              {updateNotes.isPending && <span className="text-xs text-gray-400 ml-2">Opslaan...</span>}
             </button>
             {showNotes && (
               <RichTextEditor
                 value={notes}
                 onChange={handleNotesChange}
                 onBlur={handleNotesSave}
-                placeholder="Add meeting prep notes..."
+                placeholder="Voeg voorbereidingsnotities toe..."
                 disabled={isLoadingNotes}
                 minHeight="100px"
               />
@@ -347,7 +347,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
         {/* Footer */}
         <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-end">
           <button onClick={onClose} className="btn-secondary">
-            Close
+            Sluiten
           </button>
         </div>
       </div>
@@ -380,7 +380,7 @@ function AttendeeRow({
   onSelectPerson,
   isAddingEmail
 }) {
-  const displayName = attendee.person_name || attendee.name || attendee.email || 'Unknown';
+  const displayName = attendee.person_name || attendee.name || attendee.email || 'Onbekend';
 
   const content = (
     <div className="flex items-center gap-3 py-2">
@@ -420,7 +420,7 @@ function AttendeeRow({
             onAddPerson(attendee);
           }}
           className="flex-shrink-0 p-1.5 text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-          title="Add as contact"
+          title="Toevoegen als contact"
         >
           <UserPlus className="w-4 h-4" />
         </button>
