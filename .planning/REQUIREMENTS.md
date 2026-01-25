@@ -70,8 +70,8 @@ Requirements for Dutch localization. Direct string replacement approach (no i18n
 
 ### Date Formatting
 
-- [ ] **FORMAT-01**: Configure date-fns with Dutch locale for all date displays
-- [ ] **FORMAT-02**: Update relative date formatting (vandaag, gisteren, over X dagen)
+- [x] **FORMAT-01**: Configure date-fns with Dutch locale for all date displays
+- [x] **FORMAT-02**: Update relative date formatting (vandaag, gisteren, over X dagen)
 
 ## Future Requirements
 
@@ -90,8 +90,8 @@ None for this milestone - focused solely on Dutch translation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FORMAT-01 | Phase 99 | Pending |
-| FORMAT-02 | Phase 99 | Pending |
+| FORMAT-01 | Phase 99 | Complete |
+| FORMAT-02 | Phase 99 | Complete |
 | NAV-01 | Phase 100 | Pending |
 | NAV-02 | Phase 100 | Pending |
 | NAV-03 | Phase 100 | Pending |

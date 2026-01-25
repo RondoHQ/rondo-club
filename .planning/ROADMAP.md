@@ -10,7 +10,7 @@ This milestone transforms the entire Stadion frontend from English to Dutch. Sta
 
 ## Phases
 
-- [ ] **Phase 99: Date Formatting Foundation** - Configure Dutch locale for date-fns
+- [x] **Phase 99: Date Formatting Foundation** - Configure Dutch locale for date-fns
 - [ ] **Phase 100: Navigation & Layout** - Translate sidebar, quick actions, user menu, search
 - [ ] **Phase 101: Dashboard** - Translate stats, widgets, empty states, messages
 - [ ] **Phase 102: Leden (People)** - Translate people pages and forms
@@ -32,8 +32,8 @@ This milestone transforms the entire Stadion frontend from English to Dutch. Sta
 **Plans**: 2 plans
 
 Plans:
-- [ ] 99-01-PLAN.md — Create Dutch date formatting utility and update timeline.js
-- [ ] 99-02-PLAN.md — Update all remaining files to use Dutch formatting utility
+- [x] 99-01-PLAN.md — Create Dutch date formatting utility and update timeline.js
+- [x] 99-02-PLAN.md — Update all remaining files to use Dutch formatting utility
 
 ### Phase 100: Navigation & Layout
 **Goal**: Users see Dutch labels in all navigation elements
@@ -150,7 +150,7 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 99. Date Formatting Foundation | 0/2 | Ready | - |
+| 99. Date Formatting Foundation | 2/2 | ✓ Complete | 2026-01-25 |
 | 100. Navigation & Layout | 0/1 | Not started | - |
 | 101. Dashboard | 0/1 | Not started | - |
 | 102. Leden (People) | 0/2 | Not started | - |
