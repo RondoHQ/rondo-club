@@ -131,8 +131,8 @@ export default function GoogleContactsImport() {
       </p>
       <ol className="text-sm text-gray-600 dark:text-gray-300 list-decimal list-inside space-y-1 ml-2">
         <li>Ga naar <a href="https://contacts.google.com" target="_blank" rel="noopener noreferrer" className="text-accent-600 dark:text-accent-400 hover:underline">contacts.google.com</a></li>
-        <li>Klik op "Exporteren" in de linker zijbalk</li>
-        <li>Selecteer het "Google CSV" formaat en klik op "Exporteren"</li>
+        <li>Klik op &ldquo;Exporteren&rdquo; in de linker zijbalk</li>
+        <li>Selecteer het &ldquo;Google CSV&rdquo; formaat en klik op &ldquo;Exporteren&rdquo;</li>
       </ol>
 
       {importMutation.isSuccess ? (
@@ -148,7 +148,7 @@ export default function GoogleContactsImport() {
                 <p>Organisaties aangemaakt: {importMutation.data.stats.teams_created}</p>
                 <p>Verjaardagen aangemaakt: {importMutation.data.stats.dates_created}</p>
                 <p>Notities aangemaakt: {importMutation.data.stats.notes_created}</p>
-                <p>Foto's geïmporteerd: {importMutation.data.stats.photos_imported}</p>
+                <p>Foto&apos;s geïmporteerd: {importMutation.data.stats.photos_imported}</p>
                 {importMutation.data.stats.errors?.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-800">
                     <p className="font-medium">Fouten:</p>
@@ -256,7 +256,7 @@ export default function GoogleContactsImport() {
                       {validationResult.summary.photos > 0 && (
                         <div className="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
                           <Image className="h-4 w-4" />
-                          <span>{validationResult.summary.photos} foto's</span>
+                          <span>{validationResult.summary.photos} foto&apos;s</span>
                         </div>
                       )}
                     </div>

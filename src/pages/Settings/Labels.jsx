@@ -12,7 +12,7 @@ const TABS = [
 ];
 
 export default function Labels() {
-  useDocumentTitle('Labels - Settings');
+  useDocumentTitle('Labels - Instellingen');
   const queryClient = useQueryClient();
   const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
