@@ -62,7 +62,7 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading, currentP
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search for people to add..."
+          placeholder="Zoek leden om toe te voegen..."
           className="input"
           disabled={isLoading}
         />
@@ -84,7 +84,7 @@ function PeopleSelector({ value = [], onChange, people = [], isLoading, currentP
                 </button>
               ))
             ) : (
-              <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">No people found</p>
+              <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">Geen leden gevonden</p>
             )}
           </div>
         )}
@@ -166,8 +166,8 @@ export default function ImportantDateModal({
         let title;
         if (typeSlug === 'wedding') {
           title = fullNames.length >= 2
-            ? `Wedding of ${fullNames[0]} & ${fullNames[1]}`
-            : `Wedding of ${fullNames[0]}`;
+            ? `Trouwdag van ${fullNames[0]} & ${fullNames[1]}`
+            : `Trouwdag van ${fullNames[0]}`;
         } else {
           title = `${fullNames[0]}'s ${typeName}`;
         }
@@ -270,7 +270,7 @@ export default function ImportantDateModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit date' : 'Add date'}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Datum bewerken' : 'Datum toevoegen'}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -284,7 +284,7 @@ export default function ImportantDateModal({
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Related people */}
             <div>
-              <label className="label">Related people</label>
+              <label className="label">Gerelateerde personen</label>
               <Controller
                 name="related_people"
                 control={control}
@@ -302,11 +302,11 @@ export default function ImportantDateModal({
 
             {/* Date type */}
             <div>
-              <label className="label">Date type *</label>
+              <label className="label">Datumtype *</label>
               <Controller
                 name="date_type"
                 control={control}
-                rules={{ required: 'Please select a date type' }}
+                rules={{ required: 'Selecteer een datumtype' }}
                 render={({ field }) => (
                   <select
                     value={field.value ? String(field.value) : ''}
@@ -314,7 +314,7 @@ export default function ImportantDateModal({
                     className="input"
                     disabled={isLoading}
                   >
-                    <option value="">Select a type...</option>
+                    <option value="">Selecteer een type...</option>
                     {dateTypes.map(type => (
                       <option key={type.id} value={String(type.id)}>
                         {type.name}
@@ -336,19 +336,19 @@ export default function ImportantDateModal({
                   onChange: () => { hasUserEditedTitle.current = true; }
                 })}
                 className="input"
-                placeholder="e.g., Mom's Birthday"
+                placeholder="bijv. Moeders verjaardag"
                 disabled={isLoading}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Auto-generated from person and date type. You can customize it.
+                Automatisch gegenereerd op basis van persoon en type. Je kunt dit aanpassen.
               </p>
             </div>
 
             {/* Date value */}
             <div>
-              <label className="label">Date *</label>
+              <label className="label">Datum *</label>
               <input
-                {...register('date_value', { required: 'Date is required' })}
+                {...register('date_value', { required: 'Datum is verplicht' })}
                 type="date"
                 className="input"
                 disabled={isLoading}
@@ -368,7 +368,7 @@ export default function ImportantDateModal({
                 disabled={isLoading}
               />
               <label htmlFor="year_unknown" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                Year unknown
+                Jaar onbekend
               </label>
             </div>
 
@@ -382,7 +382,7 @@ export default function ImportantDateModal({
                 disabled={isLoading}
               />
               <label htmlFor="is_recurring" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                Repeats every year
+                Jaarlijks terugkerend
               </label>
             </div>
           </div>
@@ -394,14 +394,14 @@ export default function ImportantDateModal({
               className="btn-secondary"
               disabled={isLoading}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={isLoading}
             >
-              {isLoading ? 'Saving...' : (isEditing ? 'Save changes' : 'Add date')}
+              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Datum toevoegen')}
             </button>
           </div>
         </form>
