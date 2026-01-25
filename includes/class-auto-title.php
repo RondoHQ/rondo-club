@@ -30,8 +30,31 @@ class AutoTitle {
 		add_filter( 'acf/update_value/key=field_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 		add_filter( 'acf/update_value/key=field_company_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 
-		// Validate duplicate email addresses before save (REST API)
+		// Set temporary title for REST API person creation (priority 5 = before validation)
+		add_filter( 'rest_pre_insert_person', [ $this, 'set_temporary_title_rest' ], 5, 2 );
+
+		// Validate duplicate email addresses before save (REST API, priority 10 = after title set)
 		add_filter( 'rest_pre_insert_person', [ $this, 'validate_unique_emails_rest' ], 10, 2 );
+	}
+
+	/**
+	 * Set temporary title for person during REST API creation
+	 *
+	 * WordPress requires a title when creating posts via REST API.
+	 * This filter runs before validation to set a temporary title,
+	 * which will be replaced by auto_generate_person_title() after ACF fields are saved.
+	 *
+	 * @param stdClass        $prepared_post The prepared post data.
+	 * @param WP_REST_Request $request       The request object.
+	 * @return stdClass The prepared post with temporary title.
+	 */
+	public function set_temporary_title_rest( $prepared_post, $request ) {
+		// Only set temporary title if no title was provided
+		if ( empty( $prepared_post->post_title ) ) {
+			$prepared_post->post_title = __( 'New Person', 'stadion' );
+		}
+
+		return $prepared_post;
 	}
 
 	/**
