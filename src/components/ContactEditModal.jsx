@@ -83,7 +83,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
           <div className="flex-1 overflow-y-auto p-4">
             {fields.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                Nog geen contactgegevens. Klik op "Contactgegeven toevoegen" om er een toe te voegen.
+                Nog geen contactgegevens. Klik op &ldquo;Contactgegeven toevoegen&rdquo; om er een toe te voegen.
               </p>
             ) : (
               <div className="space-y-3">
