@@ -6,7 +6,7 @@ This milestone transforms the entire Stadion frontend from English to Dutch. Sta
 
 ## Milestones
 
-- 📋 **v7.0 Dutch Localization** - Phases 99-106 (in progress)
+- ✅ **v7.0 Dutch Localization** - Phases 99-106 (complete)
 
 ## Phases
 
@@ -17,7 +17,7 @@ This milestone transforms the entire Stadion frontend from English to Dutch. Sta
 - [x] **Phase 103: Teams & Commissies** - Translate teams and commissies pages
 - [x] **Phase 104: Datums & Taken** - Translate important dates and todos
 - [x] **Phase 105: Instellingen (Settings)** - Translate all settings pages
-- [ ] **Phase 106: Global UI** - Translate buttons, states, placeholders, dialogs
+- [x] **Phase 106: Global UI** - Translate buttons, states, placeholders, dialogs
 
 ## Phase Details
 
@@ -148,11 +148,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 106-01-PLAN.md — Translate activity types, contact types, timeline modals, RichTextEditor
-- [ ] 106-02-PLAN.md — Translate person detail modals (address, relationship, work history, share)
-- [ ] 106-03-PLAN.md — Translate custom fields components
-- [ ] 106-04-PLAN.md — Translate feedback and meeting components
-- [ ] 106-05-PLAN.md — Translate workspace pages and remaining PersonDetail strings
+- [x] 106-01-PLAN.md — Translate activity types, contact types, timeline modals, RichTextEditor
+- [x] 106-02-PLAN.md — Translate person detail modals (address, relationship, work history, share)
+- [x] 106-03-PLAN.md — Translate custom fields components
+- [x] 106-04-PLAN.md — Translate feedback and meeting components
+- [x] 106-05-PLAN.md — Translate workspace pages and remaining PersonDetail strings
 
 ## Progress
 
@@ -168,8 +168,8 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 | 103. Teams & Commissies | 3/3 | ✓ Complete | 2026-01-25 |
 | 104. Datums & Taken | 3/3 | ✓ Complete | 2026-01-25 |
 | 105. Instellingen (Settings) | 7/7 | ✓ Complete | 2026-01-25 |
-| 106. Global UI Elements | 0/5 | Not started | - |
+| 106. Global UI Elements | 5/5 | ✓ Complete | 2026-01-25 |
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 (Phase 105 complete)*
+*Last updated: 2026-01-25 (Phase 106 complete - milestone v7.0 complete)*
