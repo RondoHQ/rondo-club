@@ -98,7 +98,7 @@ function SearchableCountrySelector({ value, onChange, disabled }) {
           value={displayValue}
           onChange={handleInputChange}
           onFocus={handleFocus}
-          placeholder="Search country..."
+          placeholder="Land zoeken..."
           className="input pr-8"
           disabled={disabled}
         />
@@ -139,7 +139,7 @@ function SearchableCountrySelector({ value, onChange, disabled }) {
             ))
           ) : (
             <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-              No countries found
+              Geen landen gevonden
             </div>
           )}
         </div>
@@ -210,7 +210,7 @@ export default function AddressEditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit address' : 'Add address'}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Adres bewerken' : 'Adres toevoegen'}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -228,18 +228,18 @@ export default function AddressEditModal({
               <input
                 {...register('address_label')}
                 className="input"
-                placeholder="e.g., Home, Work"
+                placeholder="bijv. Thuis, Werk"
                 disabled={isLoading}
               />
             </div>
 
             {/* Street */}
             <div>
-              <label className="label">Street</label>
+              <label className="label">Straat</label>
               <input
                 {...register('street')}
                 className="input"
-                placeholder="e.g., 123 Main Street"
+                placeholder="bijv. Hoofdstraat 123"
                 disabled={isLoading}
               />
             </div>
@@ -247,21 +247,21 @@ export default function AddressEditModal({
             {/* City and Postal Code row */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Postal code</label>
+                <label className="label">Postcode</label>
                 <input
                   {...register('postal_code')}
                   className="input"
-                  placeholder="e.g., 12345"
+                  placeholder="bijv. 1234 AB"
                   disabled={isLoading}
                 />
               </div>
               
               <div>
-                <label className="label">City</label>
+                <label className="label">Plaats</label>
                 <input
                   {...register('city')}
                   className="input"
-                  placeholder="e.g., Amsterdam"
+                  placeholder="bijv. Amsterdam"
                   disabled={isLoading}
                 />
               </div>
@@ -270,17 +270,17 @@ export default function AddressEditModal({
             {/* State and Country row */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">State/Province</label>
+                <label className="label">Provincie</label>
                 <input
                   {...register('state')}
                   className="input"
-                  placeholder="e.g., North Holland"
+                  placeholder="bijv. Noord-Holland"
                   disabled={isLoading}
                 />
               </div>
               
               <div>
-                <label className="label">Country</label>
+                <label className="label">Land</label>
                 <Controller
                   name="country"
                   control={control}
@@ -303,14 +303,14 @@ export default function AddressEditModal({
               className="btn-secondary"
               disabled={isLoading}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={isLoading}
             >
-              {isLoading ? 'Saving...' : (isEditing ? 'Save changes' : 'Add address')}
+              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Adres toevoegen')}
             </button>
           </div>
         </form>
