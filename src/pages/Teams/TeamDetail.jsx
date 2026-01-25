@@ -137,25 +137,25 @@ export default function TeamDetail() {
   
   // Update document title with team's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
-  useDocumentTitle(getTeamName(team) || 'Organization');
-  
+  useDocumentTitle(getTeamName(team) || 'Team');
+
   // Redirect if team is trashed
   useEffect(() => {
     if (team?.status === 'trash') {
       navigate('/teams', { replace: true });
     }
   }, [team, navigate]);
-  
+
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this organization?')) {
+    if (!window.confirm('Weet je zeker dat je dit team wilt verwijderen?')) {
       return;
     }
-    
+
     try {
       await deleteTeam.mutateAsync();
       // Navigation will happen in onSuccess callback
     } catch {
-      alert('Failed to delete organization. Please try again.');
+      alert('Team kon niet worden verwijderd. Probeer het opnieuw.');
     }
   };
   
@@ -177,7 +177,7 @@ export default function TeamDetail() {
       await updateTeam.mutateAsync(payload);
       setShowEditModal(false);
     } catch {
-      alert('Failed to save organization. Please try again.');
+      alert('Team kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSaving(false);
     }
@@ -230,8 +230,8 @@ export default function TeamDetail() {
   if (error || !team) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-red-600 dark:text-red-400">Failed to load organization.</p>
-        <Link to="/teams" className="btn-secondary mt-4">Back to organizations</Link>
+        <p className="text-red-600 dark:text-red-400">Team kon niet worden geladen.</p>
+        <Link to="/teams" className="btn-secondary mt-4">Terug naar teams</Link>
       </div>
     );
   }
@@ -249,20 +249,20 @@ export default function TeamDetail() {
       <div className="flex items-center justify-between">
         <Link to="/teams" className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Back to organizations</span>
+          <span className="hidden md:inline">Terug naar teams</span>
         </Link>
         <div className="flex gap-2">
-          <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Share">
+          <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Delen">
             <Share2 className="w-4 h-4 mr-2" />
-            Share
+            Delen
           </button>
           <button onClick={() => setShowEditModal(true)} className="btn-secondary">
             <Edit className="w-4 h-4 mr-2" />
-            Edit
+            Bewerken
           </button>
           <button onClick={handleDelete} className="btn-danger-outline">
             <Trash2 className="w-4 h-4 mr-2" />
-            Delete
+            Verwijderen
           </button>
         </div>
       </div>
@@ -305,12 +305,12 @@ export default function TeamDetail() {
           <div>
             {/* Parent team link */}
             {parentTeam && (
-              <Link 
+              <Link
                 to={`/teams/${parentTeam.id}`}
                 className="text-sm text-accent-600 dark:text-accent-400 hover:underline flex items-center mb-1"
               >
                 <GitBranch className="w-3 h-3 mr-1" />
-                Subsidiary of {getTeamName(parentTeam)}
+                Onderdeel van {getTeamName(parentTeam)}
               </Link>
             )}
             <h1 className="text-2xl font-bold">{getTeamName(team)}</h1>
@@ -334,7 +334,7 @@ export default function TeamDetail() {
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <GitBranch className="w-5 h-5 mr-2" />
-            Subsidiaries
+            Subteams
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {childTeams.map((child) => (
@@ -367,13 +367,13 @@ export default function TeamDetail() {
       )}
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Current Employees */}
+        {/* Current Members */}
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2" />
-            Current employees
+            Huidige leden
           </h2>
-          
+
           {employees?.current?.length > 0 ? (
             <div className="space-y-2">
               {employees.current.map((person) => (
@@ -399,17 +399,17 @@ export default function TeamDetail() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No current employees.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Geen huidige leden.</p>
           )}
         </div>
-        
-        {/* Former Employees */}
+
+        {/* Former Members */}
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2" />
-            Former employees
+            Voormalige leden
           </h2>
-          
+
           {employees?.former?.length > 0 ? (
             <div className="space-y-2">
               {employees.former.map((person) => (
@@ -435,25 +435,25 @@ export default function TeamDetail() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No former employees.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Geen voormalige leden.</p>
           )}
         </div>
       </div>
       
-      {/* Investors */}
+      {/* Sponsors */}
       {investorDetails.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" />
-            Investors
+            Sponsoren
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {investorDetails.map((investor) => {
               const isPerson = investor.type === 'person';
-              const linkPath = isPerson 
-                ? `/people/${investor.id}` 
+              const linkPath = isPerson
+                ? `/people/${investor.id}`
                 : `/teams/${investor.id}`;
-              
+
               return (
                 <Link
                   key={`${investor.type}-${investor.id}`}
@@ -479,7 +479,7 @@ export default function TeamDetail() {
                   <div className="ml-3">
                     <p className="text-sm font-medium">{investor.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {isPerson ? 'Person' : 'Organization'}
+                      {isPerson ? 'Lid' : 'Team'}
                     </p>
                   </div>
                 </Link>
@@ -489,12 +489,12 @@ export default function TeamDetail() {
         </div>
       )}
       
-      {/* Invested in (teams this organization has invested in) */}
+      {/* Invested in (teams this team sponsors) */}
       {investments.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" />
-            Invested in
+            Investeert in
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {investments.map((team) => (
@@ -530,7 +530,7 @@ export default function TeamDetail() {
       {/* Contact info */}
       {acf.contact_info?.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4">Contact information</h2>
+          <h2 className="font-semibold mb-4">Contactgegevens</h2>
           <div className="space-y-3">
             {acf.contact_info.map((contact, index) => (
               <div key={index}>
