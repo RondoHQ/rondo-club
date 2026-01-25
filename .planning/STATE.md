@@ -102,5 +102,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 106-05-PLAN.md - Workspace pages and PersonDetail translated to Dutch
+Stopped at: Completed 106-01-PLAN.md - Activity types and timeline modals translated to Dutch
 Resume file: None
+
+Note: Plans 01, 02, 04, 05 complete. Plan 03 remaining.
