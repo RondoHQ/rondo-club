@@ -10,7 +10,7 @@ This phase involves translating Teams and Commissies pages from English to Dutch
 
 The codebase already has Commissies as a separate entity (post type `commissie`) with its own list and detail pages. Teams use the `team` post type. Both follow nearly identical UI patterns with list views, detail pages, and edit modals. The translation approach should mirror Phase 102 exactly.
 
-**Primary recommendation:** Apply direct string replacement in 4 files (TeamsList.jsx, TeamDetail.jsx, CommissiesList.jsx, CommissieDetail.jsx) and 2 modals (TeamEditModal.jsx, CommissieEditModal.jsx), following Phase 102 patterns and CONTEXT.md terminology.
+**Primary recommendation:** Apply direct string replacement in 4 page files (TeamsList.jsx, TeamDetail.jsx, CommissiesList.jsx, CommissieDetail.jsx), 2 modal files (TeamEditModal.jsx, CommissieEditModal.jsx), and 1 shared component (VisibilitySelector.jsx), following Phase 102 patterns and CONTEXT.md terminology.
 
 ## Standard Stack
 
@@ -54,15 +54,15 @@ The established pattern is direct string replacement in JSX files:
 src/
 ├── pages/
 │   ├── Teams/
-│   │   ├── TeamsList.jsx      # List page, filters, bulk actions
-│   │   └── TeamDetail.jsx     # Detail page, sections
+│   │   ├── TeamsList.jsx      # List page, filters, bulk actions (~1272 lines)
+│   │   └── TeamDetail.jsx     # Detail page, sections (~577 lines)
 │   └── Commissies/
-│       ├── CommissiesList.jsx # List page, filters, bulk actions
-│       └── CommissieDetail.jsx # Detail page, sections
+│       ├── CommissiesList.jsx # List page, filters, bulk actions (~1272 lines)
+│       └── CommissieDetail.jsx # Detail page, sections (~577 lines)
 └── components/
-    ├── TeamEditModal.jsx      # Create/edit form
-    ├── CommissieEditModal.jsx # Create/edit form
-    └── VisibilitySelector.jsx # Shared visibility component
+    ├── TeamEditModal.jsx      # Create/edit form (~617 lines)
+    ├── CommissieEditModal.jsx # Create/edit form (~617 lines)
+    └── VisibilitySelector.jsx # Shared visibility component (~159 lines)
 ```
 
 ### Singular/Plural Pattern
@@ -89,7 +89,7 @@ Example pattern from Phase 102:
 | Translation system | i18n framework | Direct string replacement | Single-language app, simple scope |
 | Visibility component | Duplicate code | Existing VisibilitySelector.jsx | Already shared across entities |
 
-**Key insight:** The VisibilitySelector component is shared and should be translated once, affecting all entities.
+**Key insight:** The VisibilitySelector component is shared and should be translated once, affecting all entities. This was NOT translated in Phase 102 (verified: still contains English strings).
 
 ## Common Pitfalls
 
@@ -111,17 +111,23 @@ Example pattern from Phase 102:
 **How to avoid:** Grep for common empty state patterns: "No .* found", "No .* yet"
 **Warning signs:** Users see English when they have no data
 
-### Pitfall 4: Parent/Child Terminology
+### Pitfall 4: Parent/Child Terminology for Teams
 **What goes wrong:** "Subsidiary" and "Parent organization" left in English
 **Why it happens:** These are less prominent UI elements
-**How to avoid:** Per CONTEXT.md: remove/hide parent organization for Teams
-**Warning signs:** References to parent organizations still visible
+**How to avoid:** Per CONTEXT.md: remove/hide parent organization for Teams (not needed)
+**Warning signs:** References to parent organizations still visible in Teams
 
 ### Pitfall 5: VisibilitySelector Shared Component
-**What goes wrong:** Translating visibility in TeamEditModal but not the shared component
-**Why it happens:** VisibilitySelector.jsx is a separate shared component
-**How to avoid:** Translate VisibilitySelector.jsx once, affects all uses
-**Warning signs:** Visibility options show different languages in different places
+**What goes wrong:** Translating visibility in modals but not the shared component
+**Why it happens:** VisibilitySelector.jsx is a separate shared component, easy to miss
+**How to avoid:** Translate VisibilitySelector.jsx FIRST, then all uses get translated
+**Warning signs:** Visibility options show English in forms but Dutch elsewhere
+
+### Pitfall 6: Person/Organization Type Labels in Investor Lists
+**What goes wrong:** "Person" and "Organization" type labels remain in English
+**Why it happens:** These small type indicators in investor selection are easy to miss
+**How to avoid:** Search for "Person" and "Organization" strings in modal files
+**Warning signs:** Investor dropdown shows "Person" or "Organization" type in English
 
 ## Code Examples
 
@@ -134,6 +140,7 @@ Example pattern from Phase 102:
 "Search organizations..." -> "Teams zoeken..."
 "Add organization" -> "Nieuw team"
 "organizations" -> "teams" (in selection toolbar)
+"organization" -> "team" (singular)
 
 // Sort options
 "Name" -> "Naam"
@@ -154,6 +161,14 @@ Example pattern from Phase 102:
 "Add your first organization." -> "Voeg je eerste team toe."
 "No organizations match your filters" -> "Geen teams voldoen aan je filters"
 "Try adjusting your filters to see more results." -> "Pas je filters aan om meer resultaten te zien."
+"Try a different search." -> "Probeer een andere zoekopdracht."
+
+// Bulk selection
+"{n} organization(s) selected" -> "{n} team(s) geselecteerd"
+"Clear selection" -> "Selectie wissen"
+"Actions" -> "Acties"
+"Change visibility..." -> "Zichtbaarheid wijzigen..."
+"Assign to workspace..." -> "Toewijzen aan workspace..."
 ```
 
 ### Translation Mapping - Teams Detail
@@ -171,15 +186,17 @@ Example pattern from Phase 102:
 "Investors" -> "Sponsoren" (per CONTEXT.md)
 "Invested in" -> "Investeert in" (or hide if not applicable)
 "Contact information" -> "Contactgegevens"
-"Subsidiaries" -> Skip/hide per CONTEXT.md
+"Subsidiaries" -> Hide/remove per CONTEXT.md (parent org not relevant)
 
 // Empty states
 "No current employees." -> "Geen huidige leden."
 "No former employees." -> "Geen voormalige leden."
+"Failed to load organization." -> "Team kon niet worden geladen."
 
 // Confirmation dialogs
 "Are you sure you want to delete this organization?" -> "Weet je zeker dat je dit team wilt verwijderen?"
 "Failed to delete organization. Please try again." -> "Team kon niet worden verwijderd. Probeer het opnieuw."
+"Failed to save organization. Please try again." -> "Team kon niet worden opgeslagen. Probeer het opnieuw."
 ```
 
 ### Translation Mapping - Teams Edit Modal
@@ -192,7 +209,7 @@ Example pattern from Phase 102:
 // Form labels
 "Organization name *" -> "Naam *"
 "Website" -> "Website"
-"Parent organization" -> Remove/hide per CONTEXT.md
+"Parent organization" -> REMOVE/HIDE per CONTEXT.md
 "Investors" -> "Sponsoren"
 
 // Placeholders
@@ -201,28 +218,52 @@ Example pattern from Phase 102:
 "Search people and organizations..." -> "Leden en teams zoeken..."
 "Add investor..." -> "Sponsor toevoegen..."
 
+// Type labels in investor dropdown
+"Person" -> "Lid"
+"Organization" -> "Team"
+
+// Validation messages
+"Organization name is required" -> "Naam is verplicht"
+
+// Helper text
+"Select if this organization is a subsidiary or division of another" -> REMOVE with parent field
+"Select people or organizations that have invested in this team" -> "Selecteer leden of teams die dit team sponsoren"
+
+// No results states
+"No organizations found" -> "Geen teams gevonden"
+"No results found" -> "Geen resultaten gevonden"
+"No people or organizations available" -> "Geen leden of teams beschikbaar"
+"Loading..." -> "Laden..."
+"Searching..." -> "Zoeken..."
+
 // Buttons
 "Cancel" -> "Annuleren"
 "Saving..." -> "Opslaan..."
 "Save changes" -> "Wijzigingen opslaan"
 "Create organization" -> "Team aanmaken"
-
-// Helper text
-"Select if this organization is a subsidiary or division of another" -> Remove/hide
-"Select people or organizations that have invested in this team" -> "Selecteer leden of teams die dit team sponsoren"
 ```
 
 ### Translation Mapping - Commissies List
 
 ```jsx
-// Page elements
+// Page elements (similar to Teams but with commissie-specific terms)
 "Search organizations..." -> "Commissies zoeken..."
 "Add organization" -> "Nieuwe commissie"
+"organizations" -> "commissies"
+"organization" -> "commissie"
+
+// Filter labels
+"All Organizations" -> "Alle commissies"
+"My Organizations" -> "Mijn commissies"
 
 // Empty states
 "No organizations found" -> "Geen commissies gevonden"
 "Failed to load organizations." -> "Commissies konden niet worden geladen."
 "Add your first organization." -> "Voeg je eerste commissie toe."
+"No organizations match your filters" -> "Geen commissies voldoen aan je filters"
+
+// Bulk selection
+"{n} organization(s) selected" -> "{n} commissie(s) geselecteerd"
 ```
 
 ### Translation Mapping - Commissies Detail
@@ -231,14 +272,18 @@ Example pattern from Phase 102:
 // Navigation
 "Back to organizations" -> "Terug naar commissies"
 
-// Section headers (per CONTEXT.md)
-"Current employees" -> "Leden" (or "Commissieleden")
+// Section headers
+"Current employees" -> "Leden" (commissie members)
 "Former employees" -> "Voormalige leden"
 "Investors" -> "Sponsoren"
-"Subsidiaries" -> "Subcommissies" (if applicable)
+"Subsidiaries" -> "Subcommissies" (if applicable, or hide)
+"Subsidiary of {name}" -> "Subcommissie van {name}"
 
 // Confirmation
 "Are you sure you want to delete this organization?" -> "Weet je zeker dat je deze commissie wilt verwijderen?"
+"Failed to delete organization. Please try again." -> "Commissie kon niet worden verwijderd. Probeer het opnieuw."
+"Failed to save organization. Please try again." -> "Commissie kon niet worden opgeslagen. Probeer het opnieuw."
+"Failed to load organization." -> "Commissie kon niet worden geladen."
 ```
 
 ### Translation Mapping - Commissies Edit Modal
@@ -251,12 +296,38 @@ Example pattern from Phase 102:
 // Form labels
 "Commissie name *" -> "Naam *"
 "Parent commissie" -> "Hoofdcommissie"
+"Investors" -> "Sponsoren"
+
+// Placeholders
+"Commissie name" -> "Commissienaam"
+"Search commissies..." -> "Commissies zoeken..."
+"Search people and commissies..." -> "Leden en commissies zoeken..."
+"Add investor..." -> "Sponsor toevoegen..."
+
+// Type labels
+"Person" -> "Lid"
+"Commissie" -> "Commissie"
+
+// Validation
+"Commissie name is required" -> "Naam is verplicht"
 
 // Helper text
-"Select if this commissie is a sub-commissie of another" -> "Selecteer als deze commissie een subcommissie is"
+"Select if this commissie is a sub-commissie of another" -> "Selecteer als dit een subcommissie is"
+"Select people or commissies that have invested in this commissie" -> "Selecteer leden of commissies die deze commissie sponsoren"
+
+// No results states
+"No commissies found" -> "Geen commissies gevonden"
+"No parent commissie" -> "Geen hoofdcommissie"
+"No people or commissies available" -> "Geen leden of commissies beschikbaar"
+
+// Buttons
+"Cancel" -> "Annuleren"
+"Saving..." -> "Opslaan..."
+"Save changes" -> "Wijzigingen opslaan"
+"Create commissie" -> "Commissie aanmaken"
 ```
 
-### Translation Mapping - VisibilitySelector
+### Translation Mapping - VisibilitySelector (SHARED)
 
 ```jsx
 // Visibility label
@@ -265,7 +336,7 @@ Example pattern from Phase 102:
 // Visibility options (per CONTEXT.md)
 "Private" -> "Prive"
 "Only you can see this" -> "Alleen jij kunt dit zien"
-"Workspace" -> "Workspace" (keep English)
+"Workspace" -> "Workspace" (keep English per CONTEXT.md)
 "Share with workspace members" -> "Deel met workspace-leden"
 
 // Workspace selection
@@ -281,24 +352,37 @@ Example pattern from Phase 102:
 "Done" -> "Klaar"
 ```
 
-### Translation Mapping - Bulk Action Modals
+### Translation Mapping - Bulk Action Modals (INLINE IN LIST FILES)
 
 ```jsx
-// BulkVisibilityModal
+// BulkVisibilityModal (in TeamsList.jsx and CommissiesList.jsx)
 "Change Visibility" -> "Zichtbaarheid wijzigen"
 "Select visibility for {count} organization(s):" -> "Kies zichtbaarheid voor {count} team(s)/commissie(s):"
 "Only you can see these organizations" -> "Alleen jij kunt deze teams/commissies zien"
+"Share with workspace members" -> "Deel met workspace-leden"
 "Cancel" -> "Annuleren"
 "Applying..." -> "Toepassen..."
 "Apply to {count} organization(s)" -> "Toepassen op {count} team(s)/commissie(s)"
 
-// BulkWorkspaceModal
+// BulkWorkspaceModal (in TeamsList.jsx and CommissiesList.jsx)
 "Assign to Workspace" -> "Toewijzen aan workspace"
 "Select workspaces for {count} organization(s):" -> "Selecteer workspaces voor {count} team(s)/commissie(s):"
 "No workspaces available." -> "Geen workspaces beschikbaar."
 "Create a workspace first to use this feature." -> "Maak eerst een workspace aan om deze functie te gebruiken."
 "Assigning..." -> "Toewijzen..."
 "Assign to {count} organization(s)" -> "Toewijzen aan {count} team(s)/commissie(s)"
+"members" -> "leden"
+
+// BulkLabelsModal (in TeamsList.jsx and CommissiesList.jsx)
+"Manage Labels" -> "Labels beheren"
+"Add" / "Remove" labels for {count} organization(s):" -> "Labels toevoegen aan" / "Labels verwijderen van"
+"Add Labels" -> "Labels toevoegen"
+"Remove Labels" -> "Labels verwijderen"
+"No labels available." -> "Geen labels beschikbaar."
+"Create labels first to use this feature." -> "Maak eerst labels aan om deze functie te gebruiken."
+"Adding..." -> "Toevoegen..."
+"Removing..." -> "Verwijderen..."
+"Add/Remove {n} label(s)" -> "{n} label(s) toevoegen/verwijderen"
 ```
 
 ## State of the Art
@@ -308,6 +392,7 @@ Example pattern from Phase 102:
 | English UI | Dutch UI | Phase 101-103 | Full Dutch experience |
 | "Investors" | "Sponsoren" | CONTEXT.md decision | Sports club context |
 | "Parent Organization" | Hidden/removed | CONTEXT.md decision | Simplified Teams UI |
+| "Industry" field | Hidden | CONTEXT.md decision | Not needed for sports club |
 
 **Deprecated/outdated:**
 - "Industry" field: Hidden for Teams per CONTEXT.md (not needed)
@@ -317,27 +402,31 @@ Example pattern from Phase 102:
 
 1. **VisibilitySelector Translation Scope**
    - What we know: Component is shared across Teams, Commissies, People
-   - What's unclear: Should it be translated in this phase or was it already done in Phase 102?
-   - Recommendation: Check if already translated; if not, translate in this phase
+   - Confirmed: NOT yet translated (checked source - still English)
+   - Recommendation: Translate in this phase; affects all entity edit forms
 
 2. **Commissie Member Roles**
    - What we know: CONTEXT.md mentions "Voorzitter" and "Lid" as predefined roles
-   - What's unclear: Where are these roles displayed/edited?
-   - Recommendation: May be in a separate component not yet identified; implement if found
+   - What's unclear: These may be in the Person work_history, not in Commissie UI
+   - Recommendation: Roles appear to be on the Person side (work history), not Commissie forms. Skip for this phase; address in separate person/work-history phase if needed.
+
+3. **"Invested in" Section for Teams**
+   - What we know: Teams can show companies they've invested in
+   - What's unclear: Is this relevant for sports club context?
+   - Recommendation: Translate to "Investeert in" but consider hiding in future if not applicable
 
 ## Sources
 
 ### Primary (HIGH confidence)
 - `.planning/phases/103-teams-commissies/103-CONTEXT.md` - User decisions and terminology
-- `.planning/phases/102-leden/102-01-PLAN.md` - Established translation patterns
-- `.planning/phases/102-leden/102-02-PLAN.md` - Form translation patterns
-- `src/pages/Teams/TeamsList.jsx` - Current implementation (lines 1-1272)
-- `src/pages/Teams/TeamDetail.jsx` - Current implementation (lines 1-577)
-- `src/pages/Commissies/CommissiesList.jsx` - Current implementation (lines 1-1272)
-- `src/pages/Commissies/CommissieDetail.jsx` - Current implementation (lines 1-577)
-- `src/components/TeamEditModal.jsx` - Current implementation (lines 1-617)
-- `src/components/CommissieEditModal.jsx` - Current implementation (lines 1-617)
-- `src/components/VisibilitySelector.jsx` - Shared component (lines 1-159)
+- `src/pages/Teams/TeamsList.jsx` - Current implementation (verified English strings)
+- `src/pages/Teams/TeamDetail.jsx` - Current implementation (verified English strings)
+- `src/pages/Commissies/CommissiesList.jsx` - Current implementation (verified English strings)
+- `src/pages/Commissies/CommissieDetail.jsx` - Current implementation (verified English strings)
+- `src/components/TeamEditModal.jsx` - Current implementation (verified English strings)
+- `src/components/CommissieEditModal.jsx` - Current implementation (verified English strings)
+- `src/components/VisibilitySelector.jsx` - Shared component (verified English strings)
+- `src/pages/People/PeopleList.jsx` - Reference for Dutch translation patterns (already translated)
 
 ### Secondary (MEDIUM confidence)
 - Phase 102 completed summaries - Verified translation approach works
@@ -350,8 +439,17 @@ Example pattern from Phase 102:
 **Confidence breakdown:**
 - Standard stack: HIGH - No changes needed, existing stack
 - Architecture: HIGH - Direct string replacement, established pattern
-- Pitfalls: HIGH - Based on actual Phase 102 experience
+- Pitfalls: HIGH - Based on actual Phase 102 experience and code review
 - Code examples: HIGH - Derived from actual codebase + CONTEXT.md
+
+**Files to translate (7 total):**
+1. `src/pages/Teams/TeamsList.jsx` (~1272 lines)
+2. `src/pages/Teams/TeamDetail.jsx` (~577 lines)
+3. `src/pages/Commissies/CommissiesList.jsx` (~1272 lines)
+4. `src/pages/Commissies/CommissieDetail.jsx` (~577 lines)
+5. `src/components/TeamEditModal.jsx` (~617 lines)
+6. `src/components/CommissieEditModal.jsx` (~617 lines)
+7. `src/components/VisibilitySelector.jsx` (~159 lines) - SHARED
 
 **Research date:** 2026-01-25
 **Valid until:** 2026-02-25 (stable - translation patterns don't change)
