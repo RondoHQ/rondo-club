@@ -145,10 +145,14 @@ Plans:
   3. Common placeholders are in Dutch (Zoeken..., Selecteer..., Geen resultaten)
   4. Validation and error messages are in Dutch
   5. Confirmation dialogs are in Dutch (Weet je het zeker?)
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 106-01: Translate common components and utilities
+- [ ] 106-01-PLAN.md — Translate activity types, contact types, timeline modals, RichTextEditor
+- [ ] 106-02-PLAN.md — Translate person detail modals (address, relationship, work history, share)
+- [ ] 106-03-PLAN.md — Translate custom fields components
+- [ ] 106-04-PLAN.md — Translate feedback and meeting components
+- [ ] 106-05-PLAN.md — Translate workspace pages and remaining PersonDetail strings
 
 ## Progress
 
@@ -164,7 +168,7 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 | 103. Teams & Commissies | 3/3 | ✓ Complete | 2026-01-25 |
 | 104. Datums & Taken | 3/3 | ✓ Complete | 2026-01-25 |
 | 105. Instellingen (Settings) | 7/7 | ✓ Complete | 2026-01-25 |
-| 106. Global UI Elements | 0/1 | Not started | - |
+| 106. Global UI Elements | 0/5 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-25*
