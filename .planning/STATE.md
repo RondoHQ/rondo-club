@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Convert entire Stadion interface to Dutch with proper terminology (Leden, Teams, Commissies)
-**Current focus:** Phase 105 - Instellingen/Settings (complete, re-executed 105-01)
+**Current focus:** Phase 105 - Instellingen/Settings (complete with gap closure plan 06)
 
 ## Current Position
 
 Milestone: v7.0 Dutch Localization
 Phase: 105 of 106 (Instellingen - Settings)
-Plan: 5 of 5 in current phase
+Plan: 6 of 6 in current phase (gap closure plan)
 Status: Phase complete
-Last activity: 2026-01-25 - Re-executed and documented 105-01-PLAN.md (Settings Part 1 translation with bug fixes)
+Last activity: 2026-01-25 - Completed 105-06-PLAN.md (Settings error messages gap closure)
 
-Progress: [███████████] 100% (15/15 plans complete)
+Progress: [████████████] 100% (16/16 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15 (this milestone)
-- Plans total: 15 planned
-- Current phase: 105 (Instellingen - Settings) - 5 of 5 plans complete
+- Total plans completed: 16 (this milestone)
+- Plans total: 16 planned (including gap closure)
+- Current phase: 105 (Instellingen - Settings) - 6 of 6 plans complete
 
 *Updated after each plan completion*
 
@@ -61,13 +61,18 @@ Progress: [███████████] 100% (15/15 plans complete)
 | v6.0 Custom Fields | 87-94 | 15 | 2026-01-21 |
 | v6.1 Feedback System | 95-98 | 6 | 2026-01-21 |
 
-**Total:** 31 milestones, 98 phases, 186 plans completed
+**Total:** 31 milestones, 98 phases, 187 plans completed
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+
+Recent decisions (105-06):
+- Use 'Nooit' for null dates instead of 'Never'
+- Use nl-NL locale with day-month order for Dutch date formatting
+- Update message condition checks to use Dutch keywords for color coding
 
 ### Pending Todos
 
@@ -90,5 +95,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Re-executed 105-01-PLAN.md - fixed corrupted variables and created SUMMARY
+Stopped at: Completed 105-06-PLAN.md - Settings error messages gap closure
 Resume file: None
