@@ -116,7 +116,7 @@ export default function MonicaImport() {
     <div className="space-y-4">
       <h2 className="text-lg font-semibold dark:text-gray-50">Importeren van Monica</h2>
       <p className="text-sm text-gray-600 dark:text-gray-300">
-        Importeer contacten, relaties, notities en foto's vanuit een Monica CRM SQL-exportbestand.
+        Importeer contacten, relaties, notities en foto&apos;s vanuit een Monica CRM SQL-exportbestand.
         Het opnieuw importeren van hetzelfde bestand zal bestaande contacten bijwerken in plaats van duplicaten aan te maken.
       </p>
 
@@ -264,7 +264,7 @@ export default function MonicaImport() {
                 <p className="text-sm text-red-600 dark:text-red-400">{validationResult.urlError}</p>
               )}
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Voer de URL van je Monica-instantie in om foto's te importeren. Foto's worden vanaf deze URL gedownload.
+                Voer de URL van je Monica-instantie in om foto&apos;s te importeren. Foto's worden vanaf deze URL gedownload.
               </p>
             </div>
           )}

@@ -225,7 +225,7 @@ export default function VCardImport() {
                       {validationResult.summary.photos > 0 && (
                         <div className="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
                           <Image className="h-4 w-4" />
-                          <span>{validationResult.summary.photos} foto's</span>
+                          <span>{validationResult.summary.photos} foto&apos;s</span>
                         </div>
                       )}
                       {validationResult.summary.notes > 0 && (

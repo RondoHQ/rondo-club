@@ -79,7 +79,7 @@ export function useRouteTitle(customTitle = null) {
           title = 'Datums';
         }
       } else if (path.startsWith('/settings')) {
-        title = 'Settings';
+        title = 'Instellingen';
       } else {
         title = APP_NAME;
       }
