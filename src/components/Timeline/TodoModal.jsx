@@ -159,18 +159,18 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
 
   // Format date for display (e.g., "Jan 16, 2026")
   const formatDateForDisplay = (dateString) => {
-    if (!dateString) return 'No due date';
+    if (!dateString) return 'Geen deadline';
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
     } catch {
-      return 'No due date';
+      return 'Geen deadline';
     }
   };
 
   // Get the modal title based on mode and todo state
   const getModalTitle = () => {
-    if (!todo) return 'Add todo';
-    return isViewMode ? 'View todo' : 'Edit todo';
+    if (!todo) return 'Taak toevoegen';
+    return isViewMode ? 'Taak bekijken' : 'Taak bewerken';
   };
 
   // View mode layout
@@ -178,20 +178,20 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     <div className="p-4">
       {/* Todo content */}
       <div className="mb-4">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</p>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Beschrijving</p>
         <p className="text-gray-900 dark:text-gray-50 whitespace-pre-wrap">{todo?.content}</p>
       </div>
 
       {/* Due date */}
       <div className="mb-4">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due date</p>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deadline</p>
         <p className="text-gray-600 dark:text-gray-400">{formatDateForDisplay(todo?.due_date)}</p>
       </div>
 
       {/* Notes - only show if there are notes */}
       {todo?.notes && (
         <div className="mb-4">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notities</p>
           <div
             className="text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none"
             dangerouslySetInnerHTML={{ __html: todo.notes }}
@@ -202,7 +202,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       {/* Related people */}
       {selectedPersons.length > 0 && (
         <div className="mb-4">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Related people</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gerelateerde personen</p>
           <div className="flex flex-wrap gap-2">
             {selectedPersons.map(person => (
               <span
@@ -234,7 +234,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
           onClick={handleClose}
           className="btn-secondary"
         >
-          Close
+          Sluiten
         </button>
         <button
           type="button"
@@ -242,7 +242,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
           className="btn-primary flex items-center gap-1"
         >
           <Pencil className="w-4 h-4" />
-          Edit
+          Bewerken
         </button>
       </div>
     </div>
@@ -253,7 +253,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     <form onSubmit={handleSubmit} className="p-4">
       <div className="mb-4">
         <label htmlFor="todo-content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Description
+          Beschrijving
         </label>
         <textarea
           id="todo-content"
@@ -261,7 +261,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
           onChange={(e) => setContent(e.target.value)}
           rows={4}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-          placeholder="What needs to be done?"
+          placeholder="Wat moet er gedaan worden?"
           disabled={isLoading}
           autoFocus
         />
@@ -269,7 +269,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
 
       <div className="mb-4">
         <label htmlFor="todo-due-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Due date (optional)
+          Deadline (optioneel)
         </label>
         <input
           id="todo-due-date"
@@ -289,13 +289,13 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
           className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 hover:text-gray-900 dark:hover:text-gray-100"
         >
           <ChevronDown className={`w-4 h-4 transition-transform ${showNotes ? '' : '-rotate-90'}`} />
-          Notes (optional)
+          Notities (optioneel)
         </button>
         {showNotes && (
           <RichTextEditor
             value={notes}
             onChange={setNotes}
-            placeholder="Add detailed notes..."
+            placeholder="Voeg gedetailleerde notities toe..."
             disabled={isLoading}
             minHeight="80px"
           />
@@ -306,7 +306,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       {todo && (
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Related people
+            Gerelateerde personen
           </label>
 
           {/* Selected persons as chips */}
@@ -351,7 +351,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
               disabled={isLoading}
             >
               <Plus className="w-4 h-4" />
-              Add person
+              Lid toevoegen
             </button>
 
             {isPersonDropdownOpen && (
@@ -364,7 +364,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
                       type="text"
                       value={personSearchQuery}
                       onChange={(e) => setPersonSearchQuery(e.target.value)}
-                      placeholder="Search people..."
+                      placeholder="Leden zoeken..."
                       className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
                       autoFocus
                     />
@@ -375,7 +375,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
                 <div className="overflow-y-auto max-h-48">
                   {isPeopleLoading ? (
                     <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                      Loading...
+                      Laden...
                     </div>
                   ) : filteredPeople.length > 0 ? (
                     filteredPeople
@@ -403,7 +403,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
                       ))
                   ) : (
                     <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                      No people found
+                      Geen leden gevonden
                     </div>
                   )}
                 </div>
@@ -416,7 +416,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       {/* Status hint for existing todos */}
       {todo && (
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          Tip: Use the status buttons on the todo list to change between Open, Awaiting, and Completed.
+          Tip: Gebruik de statusknoppen in de takenlijst om te wisselen tussen Te doen, Openstaand en Afgerond.
         </p>
       )}
 
@@ -427,14 +427,14 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
           className="btn-secondary"
           disabled={isLoading}
         >
-          Cancel
+          Annuleren
         </button>
         <button
           type="submit"
           className="btn-primary"
           disabled={isLoading || !content.trim()}
         >
-          {isLoading ? (todo ? 'Saving...' : 'Adding...') : (todo ? 'Save' : 'Add todo')}
+          {isLoading ? (todo ? 'Opslaan...' : 'Toevoegen...') : (todo ? 'Opslaan' : 'Taak toevoegen')}
         </button>
       </div>
     </form>
