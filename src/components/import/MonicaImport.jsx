@@ -25,7 +25,7 @@ export default function MonicaImport() {
     onError: (error) => {
       setValidationResult({
         valid: false,
-        error: error.response?.data?.message || 'Failed to validate file',
+        error: error.response?.data?.message || 'Bestand valideren mislukt',
       });
     },
   });
@@ -79,7 +79,7 @@ export default function MonicaImport() {
     if (!selectedFile.name.endsWith('.sql')) {
       setValidationResult({
         valid: false,
-        error: 'Please select a SQL file',
+        error: 'Selecteer een SQL-bestand',
       });
       return;
     }
@@ -94,7 +94,7 @@ export default function MonicaImport() {
     if (!monicaUrl.trim()) {
       setValidationResult(prev => ({
         ...prev,
-        urlError: 'Please enter your Monica instance URL',
+        urlError: 'Voer de URL van je Monica-instantie in',
       }));
       return;
     }
@@ -114,10 +114,10 @@ export default function MonicaImport() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold dark:text-gray-50">Import from Monica</h2>
+      <h2 className="text-lg font-semibold dark:text-gray-50">Importeren van Monica</h2>
       <p className="text-sm text-gray-600 dark:text-gray-300">
-        Import contacts, relationships, notes, and photos from a Monica CRM SQL export file.
-        Reimporting the same file will update existing contacts instead of creating duplicates.
+        Importeer contacten, relaties, notities en foto's vanuit een Monica CRM SQL-exportbestand.
+        Het opnieuw importeren van hetzelfde bestand zal bestaande contacten bijwerken in plaats van duplicaten aan te maken.
       </p>
 
       {importMutation.isSuccess ? (
@@ -125,19 +125,19 @@ export default function MonicaImport() {
           <div className="flex items-start gap-3">
             <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
             <div className="flex-1">
-              <h3 className="font-medium text-green-900 dark:text-green-300">Import Complete</h3>
+              <h3 className="font-medium text-green-900 dark:text-green-300">Import voltooid</h3>
               <div className="mt-2 text-sm text-green-800 dark:text-green-200 space-y-1">
-                <p>Contacts imported: {importMutation.data.stats.contacts_imported}</p>
-                <p>Contacts updated: {importMutation.data.stats.contacts_updated}</p>
-                <p>Contacts skipped (partial): {importMutation.data.stats.contacts_skipped}</p>
-                <p>Photos imported: {importMutation.data.stats.photos_imported}</p>
-                <p>Organizations created: {importMutation.data.stats.teams_created}</p>
-                <p>Relationships created: {importMutation.data.stats.relationships_created}</p>
-                <p>Important dates created: {importMutation.data.stats.dates_created}</p>
-                <p>Notes created: {importMutation.data.stats.notes_created}</p>
+                <p>Contacten geïmporteerd: {importMutation.data.stats.contacts_imported}</p>
+                <p>Contacten bijgewerkt: {importMutation.data.stats.contacts_updated}</p>
+                <p>Contacten overgeslagen (gedeeltelijk): {importMutation.data.stats.contacts_skipped}</p>
+                <p>Foto's geïmporteerd: {importMutation.data.stats.photos_imported}</p>
+                <p>Organisaties aangemaakt: {importMutation.data.stats.teams_created}</p>
+                <p>Relaties aangemaakt: {importMutation.data.stats.relationships_created}</p>
+                <p>Belangrijke datums aangemaakt: {importMutation.data.stats.dates_created}</p>
+                <p>Notities aangemaakt: {importMutation.data.stats.notes_created}</p>
                 {importMutation.data.stats.errors?.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-800">
-                    <p className="font-medium">Errors:</p>
+                    <p className="font-medium">Fouten:</p>
                     <ul className="list-disc list-inside">
                       {importMutation.data.stats.errors.map((error, i) => (
                         <li key={i}>{error}</li>
@@ -150,7 +150,7 @@ export default function MonicaImport() {
                 onClick={reset}
                 className="mt-3 text-sm text-green-700 dark:text-green-300 hover:text-green-800 dark:hover:text-green-200 font-medium"
               >
-                Import another file
+                Een ander bestand importeren
               </button>
             </div>
           </div>
@@ -181,7 +181,7 @@ export default function MonicaImport() {
             {validateMutation.isPending ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 text-accent-600 dark:text-accent-400 animate-spin" />
-                <p className="text-gray-600 dark:text-gray-300">Validating file...</p>
+                <p className="text-gray-600 dark:text-gray-300">Bestand valideren...</p>
               </div>
             ) : file ? (
               <div className="flex flex-col items-center gap-2">
@@ -195,9 +195,9 @@ export default function MonicaImport() {
               <div className="flex flex-col items-center gap-2">
                 <Upload className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                 <p className="text-gray-600 dark:text-gray-300">
-                  Drag and drop your Monica SQL export file here, or click to browse
+                  Sleep je Monica SQL-exportbestand hierheen of klik om te bladeren
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Supports SQL export files</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Ondersteunt SQL-exportbestanden</p>
               </div>
             )}
           </div>
@@ -215,15 +215,15 @@ export default function MonicaImport() {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="font-medium text-green-900 dark:text-green-300">File validated successfully</h3>
+                    <h3 className="font-medium text-green-900 dark:text-green-300">Bestand succesvol gevalideerd</h3>
                     <div className="mt-2 text-sm text-green-800 dark:text-green-200">
-                      <p>Export format: {validationResult.version}</p>
-                      <p>Contacts to import: {validationResult.summary.contacts}</p>
-                      <p>Relationships: {validationResult.summary.relationships}</p>
-                      <p>Notes: {validationResult.summary.notes}</p>
-                      <p>Dates: {validationResult.summary.reminders}</p>
-                      <p>Photos: {validationResult.summary.photos}</p>
-                      <p>Organizations: {validationResult.summary.teams_count}</p>
+                      <p>Exportformaat: {validationResult.version}</p>
+                      <p>Te importeren contacten: {validationResult.summary.contacts}</p>
+                      <p>Relaties: {validationResult.summary.relationships}</p>
+                      <p>Notities: {validationResult.summary.notes}</p>
+                      <p>Datums: {validationResult.summary.reminders}</p>
+                      <p>Foto's: {validationResult.summary.photos}</p>
+                      <p>Organisaties: {validationResult.summary.teams_count}</p>
                     </div>
                   </div>
                 </div>
@@ -231,7 +231,7 @@ export default function MonicaImport() {
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
                   <div>
-                    <h3 className="font-medium text-red-900 dark:text-red-300">Validation failed</h3>
+                    <h3 className="font-medium text-red-900 dark:text-red-300">Validatie mislukt</h3>
                     <p className="text-sm text-red-700 dark:text-red-200 mt-1">{validationResult.error}</p>
                   </div>
                 </div>
@@ -243,7 +243,7 @@ export default function MonicaImport() {
           {validationResult?.valid && (
             <div className="space-y-2">
               <label htmlFor="monica-url" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                Monica Instance URL
+                Monica-instantie URL
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -254,7 +254,7 @@ export default function MonicaImport() {
                   id="monica-url"
                   value={monicaUrl}
                   onChange={(e) => setMonicaUrl(e.target.value)}
-                  placeholder="https://your-monica-instance.com"
+                  placeholder="https://je-monica-instantie.com"
                   className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-50 ${
                     validationResult.urlError ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                   }`}
@@ -264,7 +264,7 @@ export default function MonicaImport() {
                 <p className="text-sm text-red-600 dark:text-red-400">{validationResult.urlError}</p>
               )}
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Enter the URL of your Monica instance to import photos. Photos will be downloaded from this URL.
+                Voer de URL van je Monica-instantie in om foto's te importeren. Foto's worden vanaf deze URL gedownload.
               </p>
             </div>
           )}
@@ -280,12 +280,12 @@ export default function MonicaImport() {
                 {importMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="hidden md:inline">Importing...</span>
+                    <span className="hidden md:inline">Importeren...</span>
                   </>
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    <span className="hidden md:inline">Start Import</span>
+                    <span className="hidden md:inline">Start import</span>
                   </>
                 )}
               </button>
@@ -294,7 +294,7 @@ export default function MonicaImport() {
                 disabled={importMutation.isPending}
                 className="btn-secondary"
               >
-                Cancel
+                Annuleren
               </button>
             </div>
           )}
@@ -305,9 +305,9 @@ export default function MonicaImport() {
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
                 <div>
-                  <h3 className="font-medium text-red-900 dark:text-red-300">Import failed</h3>
+                  <h3 className="font-medium text-red-900 dark:text-red-300">Import mislukt</h3>
                   <p className="text-sm text-red-700 dark:text-red-200 mt-1">
-                    {importMutation.error.response?.data?.message || 'An error occurred during import'}
+                    {importMutation.error.response?.data?.message || 'Er is een fout opgetreden tijdens het importeren'}
                   </p>
                 </div>
               </div>
