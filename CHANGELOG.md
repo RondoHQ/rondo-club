@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.0] - 2026-01-25
+
+### Changed
+- **BREAKING:** Forked from Caelis, renamed project to Stadion
+- **BREAKING:** Renamed all `PRM_` prefixes to `STADION_`
+- **BREAKING:** Renamed REST API namespace from `prm/v1` to `stadion/v1`
+- **BREAKING:** Renamed Organizations to Teams (post type `company` → `team`)
+- **BREAKING:** Renamed taxonomy from `company_label` to `team_label`
+- **BREAKING:** REST endpoints changed from `/companies` to `/teams`
+- Renamed frontend config from `prmConfig` to `stadionConfig`
+- Updated user role from `caelis_user` to `stadion_user`
+- Teams are now designed to be synced from Sportlink (read-only)
+- Work History renamed to Team History in person profiles
+
+### Removed
+- Investors field from teams (not needed for sports teams)
+
 ## [6.0.0] - 2026-01-20
 
 ### Added
