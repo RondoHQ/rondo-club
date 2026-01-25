@@ -84,15 +84,16 @@ Plans:
 **Requirements**: TEAM-01, TEAM-02, TEAM-03, COMM-01, COMM-02
 **Success Criteria** (what must be TRUE):
   1. Teams page title and list headers are in Dutch
-  2. Team form labels are in Dutch (Naam, Website, Moederorganisatie, Branche, Investeerders)
+  2. Team form labels are in Dutch (Naam, Website, Sponsoren)
   3. Visibility and workspace options are in Dutch
   4. Commissies page title and list headers are in Dutch
   5. Commissie form labels are in Dutch
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 103-01: Translate teams pages
-- [ ] 103-02: Translate commissies pages
+- [ ] 103-01-PLAN.md — Translate shared VisibilitySelector component to Dutch
+- [ ] 103-02-PLAN.md — Translate Teams pages (TeamsList, TeamDetail, TeamEditModal)
+- [ ] 103-03-PLAN.md — Translate Commissies pages (CommissiesList, CommissieDetail, CommissieEditModal)
 
 ### Phase 104: Datums & Taken
 **Goal**: Important Dates and Todos pages display entirely in Dutch
@@ -154,11 +155,11 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 | 100. Navigation & Layout | 1/1 | ✓ Complete | 2026-01-25 |
 | 101. Dashboard | 1/1 | ✓ Complete | 2026-01-25 |
 | 102. Leden (People) | 2/2 | ✓ Complete | 2026-01-25 |
-| 103. Teams & Commissies | 0/2 | Not started | - |
+| 103. Teams & Commissies | 0/3 | Ready | - |
 | 104. Datums & Taken | 0/2 | Not started | - |
 | 105. Instellingen (Settings) | 0/2 | Not started | - |
 | 106. Global UI Elements | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 (Phase 102 complete)*
+*Last updated: 2026-01-25 (Phase 103 planned)*
