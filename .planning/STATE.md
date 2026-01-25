@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 
 Milestone: v7.0 Dutch Localization
 Phase: 106 of 106 (Global UI Elements)
-Plan: 5 of N in phase 106
-Status: In progress
-Last activity: 2026-01-25 - Completed 106-05-PLAN.md (Workspace pages and PersonDetail translated)
+Plan: 5 of 5 in phase 106
+Status: Phase complete
+Last activity: 2026-01-25 - Completed 106-03-PLAN.md (Custom fields components translated)
 
-Progress: [████████████] In progress
+Progress: [████████████] 100% (5/5 plans complete in phase 106)
 
 ## Performance Metrics
 
@@ -69,7 +69,7 @@ Progress: [████████████] In progress
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-Recent decisions (105-06, 105-07, 106-02, 106-05):
+Recent decisions (105-06, 105-07, 106-02, 106-03, 106-05):
 - Use 'Nooit' for null dates instead of 'Never'
 - Use nl-NL locale with day-month order for Dutch date formatting
 - Update message condition checks to use Dutch keywords for color coding
@@ -80,6 +80,8 @@ Recent decisions (105-06, 105-07, 106-02, 106-05):
 - Use 'Beheerder/Lid/Kijker' for Admin/Member/Viewer workspace roles
 - Use 'Gevarenzone' for Danger Zone
 - Use 'Heropenen/Markeer als voltooid/Voltooien' for todo status actions
+- Field type labels: Tekst, Tekstveld, Nummer, Datum, Selectie, Selectievakje, Ja/Nee, Afbeelding, Bestand, Kleur, Relatie
+- Boolean defaults use Ja/Nee (not Yes/No)
 
 ### Pending Todos
 
@@ -102,7 +104,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 106-01-PLAN.md - Activity types and timeline modals translated to Dutch
+Stopped at: Completed 106-03-PLAN.md - Custom fields components translated to Dutch
 Resume file: None
 
-Note: Plans 01, 02, 04, 05 complete. Plan 03 remaining.
+Note: Phase 106 complete. All 5 plans (01, 02, 03, 04, 05) executed.
