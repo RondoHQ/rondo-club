@@ -160,7 +160,7 @@ export default function PersonEditModal({
   const handleVcardFile = (file) => {
     const ext = file.name.split('.').pop().toLowerCase();
     if (ext !== 'vcf' && ext !== 'vcard') {
-      setVcardError('Please select a vCard file (.vcf)');
+      setVcardError('Selecteer een vCard-bestand (.vcf)');
       return;
     }
     
@@ -184,11 +184,11 @@ export default function PersonEditModal({
         
         // Show notice if multiple contacts in file
         if (data.contact_count > 1) {
-          setVcardError(`Note: File contains ${data.contact_count} contacts. Only the first contact was loaded.`);
+          setVcardError(`Let op: bestand bevat ${data.contact_count} contacten. Alleen het eerste contact is geladen.`);
         }
       },
       onError: (error) => {
-        setVcardError(error.response?.data?.message || 'Failed to parse vCard file');
+        setVcardError(error.response?.data?.message || 'vCard-bestand kon niet worden verwerkt');
         setVcardFile(null);
       },
     });
@@ -222,7 +222,7 @@ export default function PersonEditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Edit person' : 'Add person'}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Lid bewerken' : 'Lid toevoegen'}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -261,12 +261,12 @@ export default function PersonEditModal({
                   {parseVcardMutation.isPending ? (
                     <div className="flex items-center justify-center gap-2 py-1">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-600 dark:border-accent-400"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-300">Parsing vCard...</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">vCard verwerken...</span>
                     </div>
                   ) : vcardFile && !vcardError ? (
                     <div className="flex items-center justify-center gap-2 py-1">
                       <FileCode className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <span className="text-sm text-green-700 dark:text-green-400">Loaded from {vcardFile.name}</span>
+                      <span className="text-sm text-green-700 dark:text-green-400">Geladen uit {vcardFile.name}</span>
                       <button
                         type="button"
                         onClick={(e) => {
@@ -283,7 +283,7 @@ export default function PersonEditModal({
                     <div className="flex items-center justify-center gap-2 py-1">
                       <Upload className="h-4 w-4 text-gray-400" />
                       <span className="text-sm text-gray-600 dark:text-gray-300">
-                        Drop a vCard or <span className="text-accent-600 dark:text-accent-400">browse</span>
+                        Sleep een vCard of <span className="text-accent-600 dark:text-accent-400">blader</span>
                       </span>
                     </div>
                   )}
@@ -301,11 +301,11 @@ export default function PersonEditModal({
             {/* Name fields */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">First name *</label>
+                <label className="label">Voornaam *</label>
                 <input
-                  {...register('first_name', { required: 'First name is required' })}
+                  {...register('first_name', { required: 'Voornaam is verplicht' })}
                   className="input"
-                  placeholder="John"
+                  placeholder="Jan"
                   disabled={isLoading}
                   autoFocus
                 />
@@ -313,13 +313,13 @@ export default function PersonEditModal({
                   <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.first_name.message}</p>
                 )}
               </div>
-              
+
               <div>
-                <label className="label">Last name</label>
+                <label className="label">Achternaam</label>
                 <input
                   {...register('last_name')}
                   className="input"
-                  placeholder="Doe"
+                  placeholder="Jansen"
                   disabled={isLoading}
                 />
               </div>
@@ -327,11 +327,11 @@ export default function PersonEditModal({
 
             {/* Nickname */}
             <div>
-              <label className="label">Nickname</label>
+              <label className="label">Bijnaam</label>
               <input
                 {...register('nickname')}
                 className="input"
-                placeholder="Johnny"
+                placeholder="Jansen"
                 disabled={isLoading}
               />
             </div>
@@ -339,27 +339,27 @@ export default function PersonEditModal({
             {/* Gender and Pronouns */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Gender</label>
+                <label className="label">Geslacht</label>
                 <select
                   {...register('gender')}
                   className="input"
                   disabled={isLoading}
                 >
-                  <option value="">Select...</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="non_binary">Non-binary</option>
-                  <option value="other">Other</option>
-                  <option value="prefer_not_to_say">Prefer not to say</option>
+                  <option value="">Selecteer...</option>
+                  <option value="male">M (Man)</option>
+                  <option value="female">V (Vrouw)</option>
+                  <option value="non_binary">X (Non-binair)</option>
+                  <option value="other">Anders</option>
+                  <option value="prefer_not_to_say">Geen antwoord</option>
                 </select>
               </div>
               <div>
-                <label className="label">Pronouns</label>
+                <label className="label">Voornaamwoorden</label>
                 <input
                   {...register('pronouns')}
                   type="text"
                   className="input"
-                  placeholder="e.g., they/them"
+                  placeholder="bijv. die/hen"
                   disabled={isLoading}
                 />
               </div>
@@ -368,16 +368,16 @@ export default function PersonEditModal({
             {/* Email - only editable when creating */}
             {!isEditing && (
               <div>
-                <label className="label">Email</label>
+                <label className="label">E-mail</label>
                 <input
                   {...register('email')}
                   type="email"
                   className="input"
-                  placeholder="john@example.com"
+                  placeholder="jan@voorbeeld.nl"
                   disabled={isLoading}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Gravatar will be auto-fetched if available
+                  Gravatar wordt automatisch opgehaald indien beschikbaar
                 </p>
               </div>
             )}
@@ -385,21 +385,21 @@ export default function PersonEditModal({
             {/* Phone - only editable when creating */}
             {!isEditing && (
               <div>
-                <label className="label">Phone</label>
+                <label className="label">Telefoon</label>
                 <div className="flex gap-2">
                   <select
                     {...register('phone_type')}
                     className="input w-24"
                     disabled={isLoading}
                   >
-                    <option value="mobile">Mobile</option>
-                    <option value="phone">Phone</option>
+                    <option value="mobile">Mobiel</option>
+                    <option value="phone">Telefoon</option>
                   </select>
                   <input
                     {...register('phone')}
                     type="tel"
                     className="input flex-1"
-                    placeholder="+1 234 567 890"
+                    placeholder="+31 6 12345678"
                     disabled={isLoading}
                   />
                 </div>
@@ -409,7 +409,7 @@ export default function PersonEditModal({
             {/* Birthday - only when creating */}
             {!isEditing && (
               <div>
-                <label className="label">Birthday</label>
+                <label className="label">Verjaardag</label>
                 <input
                   {...register('birthday')}
                   type="date"
@@ -421,12 +421,12 @@ export default function PersonEditModal({
 
             {/* How we met */}
             <div>
-              <label className="label">How we met</label>
+              <label className="label">Hoe we elkaar kennen</label>
               <textarea
                 {...register('how_we_met')}
                 className="input"
                 rows={3}
-                placeholder="We met at..."
+                placeholder="We ontmoetten elkaar bij..."
                 disabled={isLoading}
               />
             </div>
@@ -452,7 +452,7 @@ export default function PersonEditModal({
                 disabled={isLoading}
               />
               <label htmlFor="is_favorite" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                Mark as favorite
+                Markeren als favoriet
               </label>
             </div>
           </div>
@@ -464,14 +464,14 @@ export default function PersonEditModal({
               className="btn-secondary"
               disabled={isLoading}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={isLoading}
             >
-              {isLoading ? 'Saving...' : (isEditing ? 'Save changes' : 'Create person')}
+              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Lid aanmaken')}
             </button>
           </div>
         </form>
