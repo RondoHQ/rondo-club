@@ -11,15 +11,38 @@ https://your-site.com/wp-json/
 
 ## Authentication
 
-**Method:** WordPress Session + REST Nonce
+The API supports two authentication methods:
 
-Every request must include the `X-WP-Nonce` header:
+### Method 1: Application Password (Recommended for External Integrations)
+
+Use HTTP Basic Authentication with a WordPress Application Password. This is the recommended method for scripts, external services, and API integrations.
+
+1. Generate an Application Password in WordPress: **Users → Profile → Application Passwords**
+2. Use your WordPress username and the generated password (with spaces)
+
+```bash
+curl -X GET "https://your-site.com/wp-json/wp/v2/people" \
+  -u "username:xxxx xxxx xxxx xxxx xxxx xxxx"
+```
+
+Or with the `Authorization` header:
+
+```bash
+curl -X GET "https://your-site.com/wp-json/wp/v2/people" \
+  -H "Authorization: Basic $(echo -n 'username:xxxx xxxx xxxx xxxx xxxx xxxx' | base64)"
+```
+
+### Method 2: Session + Nonce (Browser Use)
+
+For requests from the Stadion frontend (same browser session), use the REST nonce:
 
 ```
 X-WP-Nonce: {nonce_value}
 ```
 
 The nonce is available in `window.stadionConfig.nonce` when logged in to Stadion.
+
+---
 
 **Access Control:** Users can only see and modify people they created themselves. Sharing and workspace visibility can extend access to other users.
 
@@ -587,14 +610,13 @@ if ($person_id && !is_wp_error($person_id)) {
 update_field('is_favorite', true, $person_id);
 ```
 
-### cURL
+### cURL (with Application Password)
 
 ```bash
 # Create a person
 curl -X POST "https://your-site.com/wp-json/wp/v2/people" \
+  -u "username:xxxx xxxx xxxx xxxx xxxx xxxx" \
   -H "Content-Type: application/json" \
-  -H "X-WP-Nonce: YOUR_NONCE" \
-  -H "Cookie: wordpress_logged_in_xxx=YOUR_COOKIE" \
   -d '{
     "status": "publish",
     "acf": {
@@ -606,14 +628,21 @@ curl -X POST "https://your-site.com/wp-json/wp/v2/people" \
 
 # Update a person
 curl -X PUT "https://your-site.com/wp-json/wp/v2/people/456" \
+  -u "username:xxxx xxxx xxxx xxxx xxxx xxxx" \
   -H "Content-Type: application/json" \
-  -H "X-WP-Nonce: YOUR_NONCE" \
-  -H "Cookie: wordpress_logged_in_xxx=YOUR_COOKIE" \
   -d '{
     "acf": {
       "is_favorite": true
     }
   }'
+
+# List people
+curl -X GET "https://your-site.com/wp-json/wp/v2/people?per_page=10" \
+  -u "username:xxxx xxxx xxxx xxxx xxxx xxxx"
+
+# Delete a person
+curl -X DELETE "https://your-site.com/wp-json/wp/v2/people/456" \
+  -u "username:xxxx xxxx xxxx xxxx xxxx xxxx"
 ```
 
 ---
@@ -626,7 +655,9 @@ curl -X PUT "https://your-site.com/wp-json/wp/v2/people/456" \
 
 3. **Access Control:** Each user only sees people they created. Use visibility settings and sharing to extend access.
 
-4. **Nonce Expiration:** WordPress nonces expire after 24 hours. For long-running integrations, refresh the nonce periodically.
+4. **Authentication Choice:**
+   - **Application Passwords:** Best for external scripts, integrations, and automation. No expiration, revocable per-app.
+   - **Nonces:** Best for browser-based requests. Expire after 24 hours.
 
 5. **Rate Limiting:** There's no built-in rate limiting, but be mindful of server resources when making bulk requests.
 
