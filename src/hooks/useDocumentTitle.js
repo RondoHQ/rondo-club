@@ -58,25 +58,25 @@ export function useRouteTitle(customTitle = null) {
         }
       } else if (path.startsWith('/teams')) {
         if (path === '/teams' || path === '/teams/') {
-          title = 'Organizations';
+          title = 'Teams';
         } else if (path === '/teams/new') {
-          title = 'New organization';
+          title = 'Nieuw team';
         } else if (path.endsWith('/edit')) {
-          title = 'Edit organization';
+          title = 'Team bewerken';
         } else if (routeId) {
-          title = 'Organization';
+          title = 'Team';
         } else {
-          title = 'Organizations';
+          title = 'Teams';
         }
       } else if (path.startsWith('/dates')) {
         if (path === '/dates' || path === '/dates/') {
-          title = 'Events';
+          title = 'Datums';
         } else if (path === '/dates/new') {
-          title = 'New date';
+          title = 'Nieuwe datum';
         } else if (path.endsWith('/edit')) {
-          title = 'Edit date';
+          title = 'Datum bewerken';
         } else {
-          title = 'Events';
+          title = 'Datums';
         }
       } else if (path.startsWith('/settings')) {
         title = 'Settings';

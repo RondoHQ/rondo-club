@@ -7,7 +7,7 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Complete todo</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Taak afronden</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -22,7 +22,7 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
           </p>
 
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            What's the status of this todo?
+            Wat is de status van deze taak?
           </p>
 
           <div className="space-y-3">
@@ -33,8 +33,8 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
               >
                 <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900 dark:text-gray-50">Awaiting response</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">You did your part, waiting for their reply</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-50">Openstaand</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Je hebt je deel gedaan, wachten op hun reactie</p>
                 </div>
               </button>
             )}
@@ -45,8 +45,8 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
             >
               <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400 flex-shrink-0" />
               <div className="flex-1">
-                <p className="font-medium text-gray-900 dark:text-gray-50">Complete</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Mark the todo as fully done</p>
+                <p className="font-medium text-gray-900 dark:text-gray-50">Afronden</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Markeer de taak als volledig afgerond</p>
               </div>
             </button>
 
@@ -56,8 +56,8 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
             >
               <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
               <div className="flex-1">
-                <p className="font-medium text-gray-900 dark:text-gray-50">Complete & log activity</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Record this as an activity on the timeline</p>
+                <p className="font-medium text-gray-900 dark:text-gray-50">Afronden & activiteit loggen</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Leg dit vast als activiteit op de tijdlijn</p>
               </div>
             </button>
           </div>
@@ -69,7 +69,7 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
             onClick={onClose}
             className="btn-secondary"
           >
-            Cancel
+            Annuleren
           </button>
         </div>
       </div>
