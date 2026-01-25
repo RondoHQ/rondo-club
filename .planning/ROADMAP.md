@@ -14,7 +14,7 @@ This milestone transforms the entire Stadion frontend from English to Dutch. Sta
 - [x] **Phase 100: Navigation & Layout** - Translate sidebar, quick actions, user menu, search
 - [x] **Phase 101: Dashboard** - Translate stats, widgets, empty states, messages
 - [x] **Phase 102: Leden (People)** - Translate people pages and forms
-- [ ] **Phase 103: Teams & Commissies** - Translate teams and commissies pages
+- [x] **Phase 103: Teams & Commissies** - Translate teams and commissies pages
 - [ ] **Phase 104: Datums & Taken** - Translate important dates and todos
 - [ ] **Phase 105: Instellingen (Settings)** - Translate all settings pages
 - [ ] **Phase 106: Global UI** - Translate buttons, states, placeholders, dialogs
@@ -91,9 +91,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 103-01-PLAN.md — Translate shared VisibilitySelector component to Dutch
-- [ ] 103-02-PLAN.md — Translate Teams pages (TeamsList, TeamDetail, TeamEditModal)
-- [ ] 103-03-PLAN.md — Translate Commissies pages (CommissiesList, CommissieDetail, CommissieEditModal)
+- [x] 103-01-PLAN.md — Translate shared VisibilitySelector component to Dutch
+- [x] 103-02-PLAN.md — Translate Teams pages (TeamsList, TeamDetail, TeamEditModal)
+- [x] 103-03-PLAN.md — Translate Commissies pages (CommissiesList, CommissieDetail, CommissieEditModal)
 
 ### Phase 104: Datums & Taken
 **Goal**: Important Dates and Todos pages display entirely in Dutch
@@ -155,11 +155,11 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 | 100. Navigation & Layout | 1/1 | ✓ Complete | 2026-01-25 |
 | 101. Dashboard | 1/1 | ✓ Complete | 2026-01-25 |
 | 102. Leden (People) | 2/2 | ✓ Complete | 2026-01-25 |
-| 103. Teams & Commissies | 0/3 | Ready | - |
+| 103. Teams & Commissies | 3/3 | ✓ Complete | 2026-01-25 |
 | 104. Datums & Taken | 0/2 | Not started | - |
 | 105. Instellingen (Settings) | 0/2 | Not started | - |
 | 106. Global UI Elements | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25 (Phase 103 planned)*
+*Last updated: 2026-01-25 (Phase 103 complete)*

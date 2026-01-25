@@ -30,14 +30,14 @@ Requirements for Dutch localization. Direct string replacement approach (no i18n
 
 ### Teams
 
-- [ ] **TEAM-01**: Translate page title and list headers
-- [ ] **TEAM-02**: Translate team form labels (Naam, Website, Moederorganisatie, Branche, Investeerders)
-- [ ] **TEAM-03**: Translate visibility and workspace options
+- [x] **TEAM-01**: Translate page title and list headers
+- [x] **TEAM-02**: Translate team form labels (Naam, Website, Sponsoren)
+- [x] **TEAM-03**: Translate visibility and workspace options
 
 ### Commissies
 
-- [ ] **COMM-01**: Translate page title and list headers
-- [ ] **COMM-02**: Translate commissie form labels
+- [x] **COMM-01**: Translate page title and list headers
+- [x] **COMM-02**: Translate commissie form labels
 
 ### Dates (Datums)
 
@@ -104,11 +104,11 @@ None for this milestone - focused solely on Dutch translation.
 | LEDEN-02 | Phase 102 | Complete |
 | LEDEN-03 | Phase 102 | Complete |
 | LEDEN-04 | Phase 102 | Complete |
-| TEAM-01 | Phase 103 | Pending |
-| TEAM-02 | Phase 103 | Pending |
-| TEAM-03 | Phase 103 | Pending |
-| COMM-01 | Phase 103 | Pending |
-| COMM-02 | Phase 103 | Pending |
+| TEAM-01 | Phase 103 | Complete |
+| TEAM-02 | Phase 103 | Complete |
+| TEAM-03 | Phase 103 | Complete |
+| COMM-01 | Phase 103 | Complete |
+| COMM-02 | Phase 103 | Complete |
 | DATE-01 | Phase 104 | Pending |
 | DATE-02 | Phase 104 | Pending |
 | DATE-03 | Phase 104 | Pending |
@@ -134,4 +134,4 @@ None for this milestone - focused solely on Dutch translation.
 
 ---
 *Requirements defined: 2026-01-25*
-*Last updated: 2026-01-25 (Phase 102 complete)*
+*Last updated: 2026-01-25 (Phase 103 complete)*
