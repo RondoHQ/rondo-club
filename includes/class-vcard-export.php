@@ -4,10 +4,10 @@
  *
  * Generates vCard 3.0 format from person data for CardDAV server.
  *
- * @package Caelis
+ * @package Stadion
  */
 
-namespace Caelis\Export;
+namespace Stadion\Export;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

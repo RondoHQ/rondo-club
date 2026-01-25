@@ -7,7 +7,7 @@ tags: [visibility, access-control, phpunit, wp-browser, shares, workspaces]
 # Dependency graph
 requires:
   - phase: 21-phpunit-setup
-    provides: CaelisTestCase base class, wp-browser infrastructure
+    provides: StadionTestCase base class, wp-browser infrastructure
 provides:
   - VisibilityRulesTest with 14 tests covering all visibility modes
   - Bug fix for direct shares overriding private visibility

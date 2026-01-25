@@ -7,7 +7,7 @@ tags: [rest-api, timeline, todos, cpt, react-query, cache-invalidation]
 # Dependency graph
 requires:
   - phase: 24-todo-post-type
-    provides: prm_todo CPT with REST endpoints
+    provides: stadion_todo CPT with REST endpoints
 provides:
   - Timeline endpoint returns todos alongside notes and activities
   - usePersonTodos hook for direct person todo fetching
@@ -55,7 +55,7 @@ completed: 2026-01-14
 - **Files modified:** 3
 
 ## Accomplishments
-- Timeline endpoint fetches todos from prm_todo CPT and merges with notes/activities
+- Timeline endpoint fetches todos from stadion_todo CPT and merges with notes/activities
 - Added usePersonTodos hook for direct person todo fetching
 - Updated cache invalidation in usePeople.js mutations (timeline + todos)
 - Updated cache invalidation in useDashboard.js mutations (timeline)
@@ -69,7 +69,7 @@ Each task was committed atomically:
 3. **Task 3: Update useDashboard hooks to invalidate timeline** - `1c7bf4f` (feat)
 
 ## Files Created/Modified
-- `includes/class-comment-types.php` - Updated get_timeline() to fetch and merge todos from prm_todo CPT
+- `includes/class-comment-types.php` - Updated get_timeline() to fetch and merge todos from stadion_todo CPT
 - `src/hooks/usePeople.js` - Added todos key, usePersonTodos hook, and updated todo mutations
 - `src/hooks/useDashboard.js` - Added timeline invalidation to useUpdateTodo and useDeleteTodo
 

@@ -4,7 +4,7 @@ This document describes the iCal calendar subscription feature that allows users
 
 ## Overview
 
-Caelis generates iCal feeds for users containing important dates. There are two types of feeds:
+Stadion generates iCal feeds for users containing important dates. There are two types of feeds:
 
 1. **Personal Feed** - Contains all important dates accessible to the user
 2. **Workspace Feed** - Contains important dates for contacts shared with a workspace
@@ -47,7 +47,7 @@ webcal://your-site.com/workspace/{workspace_id}/calendar/{token}.ics
 
 ## Implementation
 
-### Class: `PRM_ICal_Feed`
+### Class: `STADION_ICal_Feed`
 
 Located in `includes/class-ical-feed.php`.
 
@@ -55,7 +55,7 @@ Located in `includes/class-ical-feed.php`.
 
 | Component | Purpose |
 |-----------|---------|
-| `TOKEN_META_KEY` | User meta key: `prm_ical_token` |
+| `TOKEN_META_KEY` | User meta key: `stadion_ical_token` |
 | `TOKEN_LENGTH` | 32 bytes (64 hex characters) |
 | Personal Rewrite Rule | `^calendar/([a-f0-9]+)\.ics$` |
 | Workspace Rewrite Rule | `^workspace/([0-9]+)/calendar/([a-f0-9]+)\.ics$` |
@@ -70,20 +70,20 @@ bin2hex(random_bytes(32))
 
 **Token Storage:**
 ```php
-update_user_meta($user_id, 'prm_ical_token', $token);
+update_user_meta($user_id, 'stadion_ical_token', $token);
 ```
 
 **Token Lookup:**
 ```sql
 SELECT user_id FROM wp_usermeta 
-WHERE meta_key = 'prm_ical_token' AND meta_value = '{token}'
+WHERE meta_key = 'stadion_ical_token' AND meta_value = '{token}'
 ```
 
 ## REST API Endpoints
 
 ### Get Calendar URL
 
-**GET** `/prm/v1/user/ical-url`
+**GET** `/stadion/v1/user/ical-url`
 
 Returns the current user's iCal feed URL.
 
@@ -100,7 +100,7 @@ The `token` field can be used to construct workspace calendar URLs on the fronte
 
 ### Regenerate Token
 
-**POST** `/prm/v1/user/regenerate-ical-token`
+**POST** `/stadion/v1/user/regenerate-ical-token`
 
 Creates a new token, invalidating the old URL.
 
@@ -123,7 +123,7 @@ Creates a new token, invalidating the old URL.
 ```ical
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Caelis//Site Name//EN
+PRODID:-//Stadion//Site Name//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 X-WR-CALNAME:Site Name - Important Dates
@@ -267,7 +267,7 @@ https://your-site.com/workspace/{workspace_id}/calendar/{token}.ics
 
 ### Calendar Name
 
-Workspace calendars are named "Caelis - {Workspace Name}" to help users identify them in their calendar app.
+Workspace calendars are named "Stadion - {Workspace Name}" to help users identify them in their calendar app.
 
 ## Technical Details
 
@@ -279,7 +279,7 @@ The feed uses WordPress rewrite rules:
 ```php
 add_rewrite_rule(
     '^calendar/([a-f0-9]+)\.ics$',
-    'index.php?prm_ical_feed=1&prm_ical_token=$matches[1]',
+    'index.php?stadion_ical_feed=1&stadion_ical_token=$matches[1]',
     'top'
 );
 ```
@@ -288,16 +288,16 @@ add_rewrite_rule(
 ```php
 add_rewrite_rule(
     '^workspace/([0-9]+)/calendar/([a-f0-9]+)\.ics$',
-    'index.php?prm_workspace_ical=1&prm_workspace_id=$matches[1]&prm_ical_token=$matches[2]',
+    'index.php?stadion_workspace_ical=1&stadion_workspace_id=$matches[1]&stadion_ical_token=$matches[2]',
     'top'
 );
 ```
 
 **Query Variables:**
-- `prm_ical_feed` - Triggers personal feed handler
-- `prm_workspace_ical` - Triggers workspace feed handler
-- `prm_ical_token` - User's authentication token
-- `prm_workspace_id` - Workspace post ID
+- `stadion_ical_feed` - Triggers personal feed handler
+- `stadion_workspace_ical` - Triggers workspace feed handler
+- `stadion_ical_token` - User's authentication token
+- `stadion_workspace_id` - Workspace post ID
 
 **Note:** After theme activation, rewrite rules are flushed to register these rules.
 
@@ -305,7 +305,7 @@ add_rewrite_rule(
 
 ```php
 header('Content-Type: text/calendar; charset=utf-8');
-header('Content-Disposition: attachment; filename="caelis.ics"');
+header('Content-Disposition: attachment; filename="stadion.ics"');
 header('Cache-Control: no-cache, must-revalidate');
 header('Pragma: no-cache');
 ```

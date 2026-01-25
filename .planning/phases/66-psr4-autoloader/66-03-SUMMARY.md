@@ -9,10 +9,10 @@ requires:
   - phase: 64-audit-planning
     provides: namespace mapping for Import, Export, CardDAV, and Data classes
 provides:
-  - Caelis\Import namespace for Monica, VCard, GoogleContacts import classes
-  - Caelis\Export namespace for VCard export and ICalFeed classes
-  - Caelis\CardDAV namespace for Server class (alongside existing AuthBackend, CardDAVBackend, PrincipalBackend)
-  - Caelis\Data namespace for InverseRelationships, TodoMigration, CredentialEncryption classes
+  - Stadion\Import namespace for Monica, VCard, GoogleContacts import classes
+  - Stadion\Export namespace for VCard export and ICalFeed classes
+  - Stadion\CardDAV namespace for Server class (alongside existing AuthBackend, CardDAVBackend, PrincipalBackend)
+  - Stadion\Data namespace for InverseRelationships, TodoMigration, CredentialEncryption classes
 affects: [66-04-PLAN, autoloader, functions.php]
 
 # Tech tracking
@@ -40,12 +40,12 @@ key-files:
 
 key-decisions:
   - "Updated cross-references in 6 files to use fully qualified namespaces"
-  - "PRM_Workspace_Members reference in ICalFeed left unchanged (class not yet namespaced)"
+  - "STADION_Workspace_Members reference in ICalFeed left unchanged (class not yet namespaced)"
 
 patterns-established:
-  - "Import classes use Caelis\\Import namespace"
-  - "Export classes use Caelis\\Export namespace"
-  - "Data utility classes use Caelis\\Data namespace"
+  - "Import classes use Stadion\\Import namespace"
+  - "Export classes use Stadion\\Export namespace"
+  - "Data utility classes use Stadion\\Data namespace"
   - "CardDAV server moved to same namespace as existing carddav/ subdirectory classes"
 
 # Metrics
@@ -64,10 +64,10 @@ completed: 2026-01-16
 - **Files modified:** 15 (9 namespace additions + 6 cross-reference updates)
 
 ## Accomplishments
-- Added Caelis\Import namespace to 3 import classes (Monica, VCard, GoogleContacts)
-- Added Caelis\Export namespace to 2 export classes (VCard, ICalFeed)
-- Added Caelis\CardDAV namespace to Server class (consistent with existing carddav/ classes)
-- Added Caelis\Data namespace to 3 utility classes (InverseRelationships, TodoMigration, CredentialEncryption)
+- Added Stadion\Import namespace to 3 import classes (Monica, VCard, GoogleContacts)
+- Added Stadion\Export namespace to 2 export classes (VCard, ICalFeed)
+- Added Stadion\CardDAV namespace to Server class (consistent with existing carddav/ classes)
+- Added Stadion\Data namespace to 3 utility classes (InverseRelationships, TodoMigration, CredentialEncryption)
 - Updated all cross-references in 6 dependent files to use fully qualified namespaces
 
 ## Task Commits
@@ -80,27 +80,27 @@ Each task was committed atomically:
 ## Files Created/Modified
 
 ### Namespace Additions (9 files)
-- `includes/class-monica-import.php` - Caelis\Import\Monica
-- `includes/class-vcard-import.php` - Caelis\Import\VCard
-- `includes/class-google-contacts-import.php` - Caelis\Import\GoogleContacts
-- `includes/class-vcard-export.php` - Caelis\Export\VCard
-- `includes/class-ical-feed.php` - Caelis\Export\ICalFeed
-- `includes/class-carddav-server.php` - Caelis\CardDAV\Server
-- `includes/class-inverse-relationships.php` - Caelis\Data\InverseRelationships
-- `includes/class-todo-migration.php` - Caelis\Data\TodoMigration
-- `includes/class-credential-encryption.php` - Caelis\Data\CredentialEncryption
+- `includes/class-monica-import.php` - Stadion\Import\Monica
+- `includes/class-vcard-import.php` - Stadion\Import\VCard
+- `includes/class-google-contacts-import.php` - Stadion\Import\GoogleContacts
+- `includes/class-vcard-export.php` - Stadion\Export\VCard
+- `includes/class-ical-feed.php` - Stadion\Export\ICalFeed
+- `includes/class-carddav-server.php` - Stadion\CardDAV\Server
+- `includes/class-inverse-relationships.php` - Stadion\Data\InverseRelationships
+- `includes/class-todo-migration.php` - Stadion\Data\TodoMigration
+- `includes/class-credential-encryption.php` - Stadion\Data\CredentialEncryption
 
 ### Cross-Reference Updates (6 files)
-- `includes/carddav/class-carddav-backend.php` - Updated PRM_VCard_Export to \Caelis\Export\VCard
-- `includes/class-wp-cli.php` - Updated PRM_VCard_Export to \Caelis\Export\VCard
-- `includes/class-rest-calendar.php` - Updated PRM_Credential_Encryption to \Caelis\Data\CredentialEncryption
-- `includes/class-calendar-connections.php` - Updated PRM_Credential_Encryption to \Caelis\Data\CredentialEncryption
-- `includes/class-caldav-provider.php` - Updated PRM_Credential_Encryption to \Caelis\Data\CredentialEncryption
-- `includes/class-google-oauth.php` - Updated PRM_Credential_Encryption to \Caelis\Data\CredentialEncryption
+- `includes/carddav/class-carddav-backend.php` - Updated STADION_VCard_Export to \Stadion\Export\VCard
+- `includes/class-wp-cli.php` - Updated STADION_VCard_Export to \Stadion\Export\VCard
+- `includes/class-rest-calendar.php` - Updated STADION_Credential_Encryption to \Stadion\Data\CredentialEncryption
+- `includes/class-calendar-connections.php` - Updated STADION_Credential_Encryption to \Stadion\Data\CredentialEncryption
+- `includes/class-caldav-provider.php` - Updated STADION_Credential_Encryption to \Stadion\Data\CredentialEncryption
+- `includes/class-google-oauth.php` - Updated STADION_Credential_Encryption to \Stadion\Data\CredentialEncryption
 
 ## Decisions Made
 - Updated cross-references immediately rather than waiting for Plan 04 (class aliases) to ensure code consistency
-- Left PRM_Workspace_Members reference in ICalFeed unchanged since that class is in a future batch
+- Left STADION_Workspace_Members reference in ICalFeed unchanged since that class is in a future batch
 
 ## Deviations from Plan
 None - plan executed as specified. Cross-reference updates were implicit (necessary for functioning code).

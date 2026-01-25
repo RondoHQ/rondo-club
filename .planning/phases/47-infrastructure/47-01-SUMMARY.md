@@ -8,8 +8,8 @@ tags: [calendar, cpt, encryption, user-meta, sodium]
 requires: []
 provides:
   - calendar_event CPT for caching synced events
-  - PRM_Calendar_Connections helper for user meta CRUD
-  - PRM_Credential_Encryption for secure OAuth token storage
+  - STADION_Calendar_Connections helper for user meta CRUD
+  - STADION_Credential_Encryption for secure OAuth token storage
 affects: [48-google-oauth, 49-google-calendar, 50-caldav, 51-contact-matching, 52-settings-ui, 54-background-sync]
 
 # Tech tracking
@@ -34,7 +34,7 @@ key-decisions:
   - "Connections stored in user meta (simple, per-user, no custom table)"
 
 patterns-established:
-  - "PRM_Credential_Encryption provides reusable encrypt/decrypt for OAuth tokens"
+  - "STADION_Credential_Encryption provides reusable encrypt/decrypt for OAuth tokens"
   - "Connection structure includes sync_enabled, auto_log, sync_from_days flags"
 
 # Metrics
@@ -44,7 +44,7 @@ completed: 2026-01-15
 
 # Phase 47 Plan 01: Calendar Infrastructure Summary
 
-**Created calendar_event CPT, PRM_Calendar_Connections helper, and PRM_Credential_Encryption class for secure OAuth token storage**
+**Created calendar_event CPT, STADION_Calendar_Connections helper, and STADION_Credential_Encryption class for secure OAuth token storage**
 
 ## Performance
 
@@ -57,8 +57,8 @@ completed: 2026-01-15
 ## Accomplishments
 
 - Registered calendar_event CPT for caching synced calendar events (private, no admin UI)
-- Created PRM_Calendar_Connections static helper with full CRUD for user meta connections
-- Created PRM_Credential_Encryption class using sodium for secure OAuth token storage
+- Created STADION_Calendar_Connections static helper with full CRUD for user meta connections
+- Created STADION_Credential_Encryption class using sodium for secure OAuth token storage
 - Added both new classes to the autoloader in functions.php
 
 ## Task Commits
@@ -66,8 +66,8 @@ completed: 2026-01-15
 Each task was committed atomically:
 
 1. **Task 1: Register calendar_event CPT** - `6c2945c` (feat)
-2. **Task 2: Create PRM_Calendar_Connections helper class** - `27d9f44` (feat)
-3. **Task 3: Create PRM_Credential_Encryption class** - `7432599` (feat)
+2. **Task 2: Create STADION_Calendar_Connections helper class** - `27d9f44` (feat)
+3. **Task 3: Create STADION_Credential_Encryption class** - `7432599` (feat)
 
 **Plan metadata:** TBD (docs: complete plan)
 
@@ -81,7 +81,7 @@ Each task was committed atomically:
 ## Decisions Made
 
 - **calendar_event CPT is completely private** - No admin UI, no REST exposure; events managed via sync process only
-- **Sodium encryption with AUTH_KEY** - Uses WordPress AUTH_KEY hashed with 'prm_calendar' salt for key derivation
+- **Sodium encryption with AUTH_KEY** - Uses WordPress AUTH_KEY hashed with 'stadion_calendar' salt for key derivation
 - **User meta for connections** - Simple storage model, no custom database tables per WordPress best practices
 
 ## Deviations from Plan
@@ -99,8 +99,8 @@ None - no external service configuration required.
 ## Next Phase Readiness
 
 - Calendar infrastructure complete, ready for Phase 48 (Google OAuth)
-- PRM_Credential_Encryption available for storing OAuth tokens
-- PRM_Calendar_Connections ready for connection management
+- STADION_Credential_Encryption available for storing OAuth tokens
+- STADION_Calendar_Connections ready for connection management
 - calendar_event CPT ready for event caching
 
 ---

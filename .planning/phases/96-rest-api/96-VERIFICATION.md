@@ -18,11 +18,11 @@ score: 10/10 must-haves verified
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Logged-in user can list their own feedback via GET /prm/v1/feedback | VERIFIED | Route registered at line 30-50, permission_callback uses is_user_logged_in(), get_feedback_list filters by author for non-admins (line 201-202) |
-| 2 | Logged-in user can create feedback via POST /prm/v1/feedback | VERIFIED | Route at line 42-48, create_feedback function at line 271-377 with full field handling |
-| 3 | Logged-in user can read their own feedback via GET /prm/v1/feedback/{id} | VERIFIED | Route at line 57-67, check_feedback_access validates ownership (line 179) |
-| 4 | Logged-in user can update their own feedback via PATCH /prm/v1/feedback/{id} | VERIFIED | Route at line 69-80, update_feedback function at line 406-543 |
-| 5 | Logged-in user can delete their own feedback via DELETE /prm/v1/feedback/{id} | VERIFIED | Route at line 81-93, delete_feedback function at line 551-574 |
+| 1 | Logged-in user can list their own feedback via GET /stadion/v1/feedback | VERIFIED | Route registered at line 30-50, permission_callback uses is_user_logged_in(), get_feedback_list filters by author for non-admins (line 201-202) |
+| 2 | Logged-in user can create feedback via POST /stadion/v1/feedback | VERIFIED | Route at line 42-48, create_feedback function at line 271-377 with full field handling |
+| 3 | Logged-in user can read their own feedback via GET /stadion/v1/feedback/{id} | VERIFIED | Route at line 57-67, check_feedback_access validates ownership (line 179) |
+| 4 | Logged-in user can update their own feedback via PATCH /stadion/v1/feedback/{id} | VERIFIED | Route at line 69-80, update_feedback function at line 406-543 |
+| 5 | Logged-in user can delete their own feedback via DELETE /stadion/v1/feedback/{id} | VERIFIED | Route at line 81-93, delete_feedback function at line 551-574 |
 | 6 | Admin can list all feedback from all users | VERIFIED | get_feedback_list skips author filter when is_admin (line 200-203) |
 | 7 | Admin can update status and priority on any feedback | VERIFIED | update_feedback checks is_admin before blocking status/priority (lines 421-437) |
 | 8 | Non-admin cannot change status or priority fields | VERIFIED | rest_forbidden error returned for non-admin status/priority changes (lines 424, 433) |
@@ -50,8 +50,8 @@ score: 10/10 must-haves verified
 
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
-| POST /wp-json/prm/v1/feedback with app password auth | SATISFIED | is_user_logged_in works with Application Passwords automatically |
-| GET /wp-json/prm/v1/feedback lists own feedback | SATISFIED | Author filter applied for non-admins |
+| POST /wp-json/stadion/v1/feedback with app password auth | SATISFIED | is_user_logged_in works with Application Passwords automatically |
+| GET /wp-json/stadion/v1/feedback lists own feedback | SATISFIED | Author filter applied for non-admins |
 | PATCH/DELETE for own feedback | SATISFIED | check_feedback_access validates ownership |
 | Admin CRUD on any feedback | SATISFIED | Admin bypasses author checks, can modify status/priority |
 | Proper error codes (401, 403) | SATISFIED | rest_forbidden (403), is_user_logged_in false (401), rest_not_found (404) |
@@ -67,7 +67,7 @@ No TODO, FIXME, placeholder, or stub patterns detected in `includes/class-rest-f
 ### Human Verification Required
 
 ### 1. API Authentication Flow
-**Test:** Use curl with Application Password to call `POST /wp-json/prm/v1/feedback`
+**Test:** Use curl with Application Password to call `POST /wp-json/stadion/v1/feedback`
 **Expected:** 201 response with created feedback object
 **Why human:** Requires valid WordPress user with Application Password
 
@@ -77,7 +77,7 @@ No TODO, FIXME, placeholder, or stub patterns detected in `includes/class-rest-f
 **Why human:** Requires two user accounts (admin and non-admin) for comparison
 
 ### 3. Cross-User Access Denial
-**Test:** As User A, attempt GET /prm/v1/feedback/{id} for User B's feedback
+**Test:** As User A, attempt GET /stadion/v1/feedback/{id} for User B's feedback
 **Expected:** 403 Forbidden response
 **Why human:** Requires multiple user sessions
 

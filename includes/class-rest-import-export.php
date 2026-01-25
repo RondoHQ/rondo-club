@@ -5,7 +5,7 @@
  * Handles export endpoints (vCard, Google CSV) and CardDAV URL endpoints.
  */
 
-namespace Caelis\REST;
+namespace Stadion\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -26,7 +26,7 @@ class ImportExport extends Base {
 	public function register_routes() {
 		// Export contacts as vCard
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/export/vcard',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -37,7 +37,7 @@ class ImportExport extends Base {
 
 		// Export contacts as Google CSV
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/export/google-csv',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -48,7 +48,7 @@ class ImportExport extends Base {
 
 		// Get CardDAV URLs for the current user
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/carddav/urls',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -63,13 +63,13 @@ class ImportExport extends Base {
 	 */
 	public function export_vcard( $request ) {
 		$user_id        = get_current_user_id();
-		$access_control = new \PRM_Access_Control();
+		$access_control = new \STADION_Access_Control();
 
 		// Get all accessible people
 		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
 
 		if ( empty( $people_ids ) ) {
-			return new \WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'no_contacts', __( 'No contacts to export.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Get companies for work history
@@ -102,7 +102,7 @@ class ImportExport extends Base {
 			$person_data = $rest_response->get_data();
 
 			// Get dates for birthday
-			$dates_request  = new WP_REST_Request( 'GET', "/prm/v1/people/{$person_id}/dates" );
+			$dates_request  = new WP_REST_Request( 'GET', "/stadion/v1/people/{$person_id}/dates" );
 			$dates_response = rest_do_request( $dates_request );
 			$person_dates   = [];
 			if ( ! is_wp_error( $dates_response ) && $dates_response->get_status() === 200 ) {
@@ -117,14 +117,14 @@ class ImportExport extends Base {
 		}
 
 		if ( empty( $vcards ) ) {
-			return new \WP_Error( 'export_failed', __( 'Failed to generate vCard export.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'export_failed', __( 'Failed to generate vCard export.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		$vcard_content = implode( "\n", $vcards );
 
 		// Return as download
 		header( 'Content-Type: text/vcard; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="caelis-contacts.vcf"' );
+		header( 'Content-Disposition: attachment; filename="stadion-contacts.vcf"' );
 		header( 'Content-Length: ' . strlen( $vcard_content ) );
 		echo $vcard_content;
 		exit;
@@ -135,13 +135,13 @@ class ImportExport extends Base {
 	 */
 	public function export_google_csv( $request ) {
 		$user_id        = get_current_user_id();
-		$access_control = new \PRM_Access_Control();
+		$access_control = new \STADION_Access_Control();
 
 		// Get all accessible people
 		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
 
 		if ( empty( $people_ids ) ) {
-			return new \WP_Error( 'no_contacts', __( 'No contacts to export.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'no_contacts', __( 'No contacts to export.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Google Contacts CSV headers
@@ -237,7 +237,7 @@ class ImportExport extends Base {
 			$row[11] = $acf['nickname'] ?? ''; // Nickname
 
 			// Birthday
-			$dates_request  = new WP_REST_Request( 'GET', "/prm/v1/people/{$person_id}/dates" );
+			$dates_request  = new WP_REST_Request( 'GET', "/stadion/v1/people/{$person_id}/dates" );
 			$dates_response = rest_do_request( $dates_request );
 			if ( ! is_wp_error( $dates_response ) && $dates_response->get_status() === 200 ) {
 				$dates = $dates_response->get_data();
@@ -328,7 +328,7 @@ class ImportExport extends Base {
 		fclose( $output );
 
 		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="caelis-contacts.csv"' );
+		header( 'Content-Disposition: attachment; filename="stadion-contacts.csv"' );
 		exit;
 	}
 
@@ -471,7 +471,7 @@ class ImportExport extends Base {
 		if ( ! $user || ! $user->ID ) {
 			return new \WP_Error(
 				'not_logged_in',
-				__( 'You must be logged in.', 'caelis' ),
+				__( 'You must be logged in.', 'stadion' ),
 				[ 'status' => 401 ]
 			);
 		}

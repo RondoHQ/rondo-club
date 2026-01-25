@@ -2,7 +2,7 @@
 
 ## Project Reference
 
-**Core Value:** Enable users to submit bug reports and feature requests from within Caelis, with API access for external tool integration and admin management capabilities.
+**Core Value:** Enable users to submit bug reports and feature requests from within Stadion, with API access for external tool integration and admin management capabilities.
 
 **Current Focus:** Roadmap created, awaiting phase 1 planning.
 

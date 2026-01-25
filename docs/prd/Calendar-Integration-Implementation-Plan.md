@@ -1,6 +1,6 @@
 # Calendar Integration Implementation Plan
 
-**Caelis CRM - CalDAV & Google Calendar Integration for Meeting Matching**
+**Stadion CRM - CalDAV & Google Calendar Integration for Meeting Matching**
 
 ---
 
@@ -35,7 +35,7 @@
 Store calendar connections in **user meta** (one user can have multiple connections):
 
 ```php
-// Meta key: _prm_calendar_connections
+// Meta key: _stadion_calendar_connections
 // Value: array of connection objects
 [
     [
@@ -56,8 +56,8 @@ Store calendar connections in **user meta** (one user can have multiple connecti
 ```
 
 **Functions:**
-- `get_user_meta($user_id, '_prm_calendar_connections', true)`
-- `update_user_meta($user_id, '_prm_calendar_connections', $connections)`
+- `get_user_meta($user_id, '_stadion_calendar_connections', true)`
+- `update_user_meta($user_id, '_stadion_calendar_connections', $connections)`
 
 ### 1.2 Calendar Events → Custom Post Type
 
@@ -174,7 +174,7 @@ For large contact databases, use WordPress transients to cache email→person lo
 
 ```php
 // Build lookup cache (refresh on contact save)
-function prm_build_email_lookup_cache($user_id) {
+function stadion_build_email_lookup_cache($user_id) {
     $people = get_posts([
         'post_type' => 'person',
         'author' => $user_id,
@@ -193,7 +193,7 @@ function prm_build_email_lookup_cache($user_id) {
         }
     }
 
-    set_transient("prm_email_lookup_{$user_id}", $lookup, DAY_IN_SECONDS);
+    set_transient("stadion_email_lookup_{$user_id}", $lookup, DAY_IN_SECONDS);
     return $lookup;
 }
 ```
@@ -205,45 +205,45 @@ function prm_build_email_lookup_cache($user_id) {
 ### 3.1 Calendar Connections
 
 ```
-GET    /prm/v1/calendar/connections              # List user's connections
-POST   /prm/v1/calendar/connections              # Add new connection
-GET    /prm/v1/calendar/connections/{id}         # Get connection details
-PUT    /prm/v1/calendar/connections/{id}         # Update connection settings
-DELETE /prm/v1/calendar/connections/{id}         # Remove connection
+GET    /stadion/v1/calendar/connections              # List user's connections
+POST   /stadion/v1/calendar/connections              # Add new connection
+GET    /stadion/v1/calendar/connections/{id}         # Get connection details
+PUT    /stadion/v1/calendar/connections/{id}         # Update connection settings
+DELETE /stadion/v1/calendar/connections/{id}         # Remove connection
 
-POST   /prm/v1/calendar/connections/{id}/sync    # Trigger manual sync
-GET    /prm/v1/calendar/connections/{id}/status  # Get sync status
+POST   /stadion/v1/calendar/connections/{id}/sync    # Trigger manual sync
+GET    /stadion/v1/calendar/connections/{id}/status  # Get sync status
 ```
 
 ### 3.2 OAuth Flows
 
 ```
-GET    /prm/v1/calendar/auth/google              # Initiate Google OAuth
-GET    /prm/v1/calendar/auth/google/callback     # OAuth callback (redirect)
-POST   /prm/v1/calendar/auth/caldav/test         # Test CalDAV credentials
+GET    /stadion/v1/calendar/auth/google              # Initiate Google OAuth
+GET    /stadion/v1/calendar/auth/google/callback     # OAuth callback (redirect)
+POST   /stadion/v1/calendar/auth/caldav/test         # Test CalDAV credentials
 ```
 
 ### 3.3 Events & Matching
 
 ```
-GET    /prm/v1/calendar/events                   # List cached events
+GET    /stadion/v1/calendar/events                   # List cached events
        ?from=2026-01-01&to=2026-02-01            # Date range filter
        &person_id=123                            # Filter by matched person
 
-GET    /prm/v1/people/{id}/meetings              # Get meetings for a person
+GET    /stadion/v1/people/{id}/meetings              # Get meetings for a person
        ?upcoming=true                            # Only future meetings
        ?past=true                                # Only past meetings
        &limit=10
 
-POST   /prm/v1/calendar/events/{id}/log          # Manually log event as activity
-POST   /prm/v1/calendar/events/{id}/match        # Manually match person to event
-DELETE /prm/v1/calendar/events/{id}/match/{pid}  # Remove person match
+POST   /stadion/v1/calendar/events/{id}/log          # Manually log event as activity
+POST   /stadion/v1/calendar/events/{id}/match        # Manually match person to event
+DELETE /stadion/v1/calendar/events/{id}/match/{pid}  # Remove person match
 ```
 
 ### 3.4 Example Responses
 
 ```json
-// GET /prm/v1/people/123/meetings?upcoming=true
+// GET /stadion/v1/people/123/meetings?upcoming=true
 {
   "upcoming": [
     {
@@ -287,7 +287,7 @@ DELETE /prm/v1/calendar/events/{id}/match/{pid}  # Remove person match
 
 **Sync Process:**
 ```php
-class PRM_Google_Calendar_Provider {
+class STADION_Google_Calendar_Provider {
     public function sync($user_id, $connection) {
         $client = $this->get_authenticated_client($connection);
         $service = new Google_Service_Calendar($client);
@@ -344,7 +344,7 @@ class PRM_Google_Calendar_Provider {
         update_post_meta($post_id, '_organizer_email', $google_event->getOrganizer()?->getEmail());
 
         // Run matching
-        $matcher = new PRM_Calendar_Matcher();
+        $matcher = new STADION_Calendar_Matcher();
         $matches = $matcher->match_attendees($user_id, $this->extract_attendees($google_event));
         update_post_meta($post_id, '_matched_people', wp_json_encode($matches));
 
@@ -374,7 +374,7 @@ class PRM_Google_Calendar_Provider {
 
 **Sync Process:**
 ```php
-class PRM_CalDAV_Provider {
+class STADION_CalDAV_Provider {
     public function sync($connection) {
         $client = new \Sabre\DAV\Client([
             'baseUri' => $connection->get_server_url(),
@@ -425,7 +425,7 @@ Events are auto-logged as activities when:
 ### 5.2 Activity Creation
 
 ```php
-class PRM_Calendar_Activity_Logger {
+class STADION_Calendar_Activity_Logger {
     public function maybe_log_event($event_id) {
         $activity_id = get_post_meta($event_id, '_activity_id', true);
         if ($activity_id) return; // Already logged
@@ -445,7 +445,7 @@ class PRM_Calendar_Activity_Logger {
         foreach ($matched_people as $match) {
             // Create activity using existing activity system
             $activity_id = wp_insert_post([
-                'post_type' => 'prm_activity',
+                'post_type' => 'stadion_activity',
                 'post_title' => $event->post_title,
                 'post_content' => $this->format_description($event_id),
                 'post_author' => $event->post_author,
@@ -531,26 +531,26 @@ add_filter('cron_schedules', function($schedules) {
 });
 
 // Schedule sync job
-if (!wp_next_scheduled('prm_calendar_sync')) {
-    wp_schedule_event(time(), 'every_15_minutes', 'prm_calendar_sync');
+if (!wp_next_scheduled('stadion_calendar_sync')) {
+    wp_schedule_event(time(), 'every_15_minutes', 'stadion_calendar_sync');
 }
 
-add_action('prm_calendar_sync', function() {
+add_action('stadion_calendar_sync', function() {
     // Get all users with calendar connections
     $users = get_users([
-        'meta_key' => '_prm_calendar_connections',
+        'meta_key' => '_stadion_calendar_connections',
         'meta_compare' => 'EXISTS',
     ]);
 
     foreach ($users as $user) {
-        $connections = get_user_meta($user->ID, '_prm_calendar_connections', true);
+        $connections = get_user_meta($user->ID, '_stadion_calendar_connections', true);
         if (!is_array($connections)) continue;
 
         foreach ($connections as &$conn) {
             if (!$conn['sync_enabled']) continue;
 
             try {
-                $provider = PRM_Calendar_Provider_Factory::create($conn['provider']);
+                $provider = STADION_Calendar_Provider_Factory::create($conn['provider']);
                 $provider->sync($user->ID, $conn);
                 $conn['last_sync'] = current_time('c');
                 $conn['last_error'] = null;
@@ -559,7 +559,7 @@ add_action('prm_calendar_sync', function() {
             }
         }
 
-        update_user_meta($user->ID, '_prm_calendar_connections', $connections);
+        update_user_meta($user->ID, '_stadion_calendar_connections', $connections);
     }
 });
 ```
@@ -585,7 +585,7 @@ add_action('prm_calendar_sync', function() {
 ### 8.1 Credential Storage
 
 ```php
-class PRM_Credential_Encryption {
+class STADION_Credential_Encryption {
     public static function encrypt($data) {
         $key = self::get_encryption_key();
         $iv = random_bytes(16);
@@ -615,7 +615,7 @@ class PRM_Credential_Encryption {
 
     private static function get_encryption_key() {
         // Use WordPress AUTH_KEY or dedicated key
-        return hash('sha256', AUTH_KEY . 'prm_calendar', true);
+        return hash('sha256', AUTH_KEY . 'stadion_calendar', true);
     }
 }
 ```
@@ -623,7 +623,7 @@ class PRM_Credential_Encryption {
 ### 8.2 OAuth Token Refresh
 
 ```php
-class PRM_Google_Auth {
+class STADION_Google_Auth {
     public function get_valid_access_token($connection) {
         $creds = $connection->get_decrypted_credentials();
 
@@ -672,13 +672,13 @@ includes/
 ### 9.2 Provider Interface
 
 ```php
-interface PRM_Calendar_Provider {
+interface STADION_Calendar_Provider {
     public function get_calendars(array $credentials): array;
     public function sync(int $user_id, array $connection): void;
     public function test_connection(array $credentials): bool;
 }
 
-interface PRM_OAuth_Calendar_Provider extends PRM_Calendar_Provider {
+interface STADION_OAuth_Calendar_Provider extends STADION_Calendar_Provider {
     public function get_auth_url(string $redirect_uri): string;
     public function handle_callback(string $code, string $redirect_uri): array;
     public function refresh_token(string $refresh_token): array;
@@ -688,9 +688,9 @@ interface PRM_OAuth_Calendar_Provider extends PRM_Calendar_Provider {
 ### 9.3 Connection Helper Class
 
 ```php
-class PRM_Calendar_Connections {
+class STADION_Calendar_Connections {
     public static function get_user_connections(int $user_id): array {
-        return get_user_meta($user_id, '_prm_calendar_connections', true) ?: [];
+        return get_user_meta($user_id, '_stadion_calendar_connections', true) ?: [];
     }
 
     public static function get_connection(int $user_id, string $connection_id): ?array {
@@ -706,7 +706,7 @@ class PRM_Calendar_Connections {
         $connection['id'] = 'conn_' . uniqid();
         $connection['created_at'] = current_time('c');
         $connections[] = $connection;
-        update_user_meta($user_id, '_prm_calendar_connections', $connections);
+        update_user_meta($user_id, '_stadion_calendar_connections', $connections);
         return $connection['id'];
     }
 
@@ -715,7 +715,7 @@ class PRM_Calendar_Connections {
         foreach ($connections as &$conn) {
             if ($conn['id'] === $connection_id) {
                 $conn = array_merge($conn, $updates);
-                update_user_meta($user_id, '_prm_calendar_connections', $connections);
+                update_user_meta($user_id, '_stadion_calendar_connections', $connections);
                 return true;
             }
         }
@@ -725,7 +725,7 @@ class PRM_Calendar_Connections {
     public static function delete_connection(int $user_id, string $connection_id): bool {
         $connections = self::get_user_connections($user_id);
         $connections = array_filter($connections, fn($c) => $c['id'] !== $connection_id);
-        update_user_meta($user_id, '_prm_calendar_connections', array_values($connections));
+        update_user_meta($user_id, '_stadion_calendar_connections', array_values($connections));
 
         // Also delete cached events for this connection
         $events = get_posts([
@@ -774,21 +774,21 @@ src/
 // src/api/client.js additions
 export const calendarApi = {
   // Connections
-  getConnections: () => api.get('/prm/v1/calendar/connections'),
-  createConnection: (data) => api.post('/prm/v1/calendar/connections', data),
-  updateConnection: (id, data) => api.put(`/prm/v1/calendar/connections/${id}`, data),
-  deleteConnection: (id) => api.delete(`/prm/v1/calendar/connections/${id}`),
-  syncConnection: (id) => api.post(`/prm/v1/calendar/connections/${id}/sync`),
+  getConnections: () => api.get('/stadion/v1/calendar/connections'),
+  createConnection: (data) => api.post('/stadion/v1/calendar/connections', data),
+  updateConnection: (id, data) => api.put(`/stadion/v1/calendar/connections/${id}`, data),
+  deleteConnection: (id) => api.delete(`/stadion/v1/calendar/connections/${id}`),
+  syncConnection: (id) => api.post(`/stadion/v1/calendar/connections/${id}/sync`),
 
   // OAuth
-  getGoogleAuthUrl: () => api.get('/prm/v1/calendar/auth/google'),
-  testCalDAV: (data) => api.post('/prm/v1/calendar/auth/caldav/test', data),
+  getGoogleAuthUrl: () => api.get('/stadion/v1/calendar/auth/google'),
+  testCalDAV: (data) => api.post('/stadion/v1/calendar/auth/caldav/test', data),
 
   // Events & Meetings
   getPersonMeetings: (personId, params) =>
-    api.get(`/prm/v1/people/${personId}/meetings`, { params }),
+    api.get(`/stadion/v1/people/${personId}/meetings`, { params }),
   logEventAsActivity: (eventId) =>
-    api.post(`/prm/v1/calendar/events/${eventId}/log`),
+    api.post(`/stadion/v1/calendar/events/${eventId}/log`),
 };
 ```
 
@@ -830,14 +830,14 @@ export const calendarApi = {
 # Google OAuth (add to .env)
 GOOGLE_CALENDAR_CLIENT_ID=your-client-id
 GOOGLE_CALENDAR_CLIENT_SECRET=your-client-secret
-GOOGLE_CALENDAR_REDIRECT_URI=https://yoursite.com/wp-json/prm/v1/calendar/auth/google/callback
+GOOGLE_CALENDAR_REDIRECT_URI=https://yoursite.com/wp-json/stadion/v1/calendar/auth/google/callback
 ```
 
 ---
 
 ## 13. Future Enhancements
 
-- **Two-way sync:** Create calendar events from Caelis (e.g., schedule follow-up)
+- **Two-way sync:** Create calendar events from Stadion (e.g., schedule follow-up)
 - **Meeting notes:** Add notes to logged meetings
 - **Recurring event handling:** Better UX for recurring meetings
 - **Calendar widget:** Dashboard showing today's meetings with contacts

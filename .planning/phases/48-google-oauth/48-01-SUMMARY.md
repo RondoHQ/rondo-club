@@ -33,7 +33,7 @@ key-decisions:
   - "Used google/apiclient official library for OAuth2"
   - "State parameter includes user_id|nonce for CSRF protection"
   - "Token refresh happens proactively 5 minutes before expiration"
-  - "Credentials stored encrypted via PRM_Credential_Encryption"
+  - "Credentials stored encrypted via STADION_Credential_Encryption"
 
 patterns-established:
   - "OAuth flow: init returns auth_url, callback handles code exchange and redirect"
@@ -59,7 +59,7 @@ completed: 2026-01-15
 ## Accomplishments
 
 - Installed google/apiclient library via Composer
-- Created PRM_Google_OAuth class with complete OAuth2 flow
+- Created STADION_Google_OAuth class with complete OAuth2 flow
 - Implemented REST endpoints for OAuth init and callback
 - Added token refresh logic with proactive refresh before expiration
 - Added update_credentials helper for token refresh operations
@@ -69,7 +69,7 @@ completed: 2026-01-15
 
 Each task was committed atomically:
 
-1. **Task 1: Install google/apiclient and create PRM_Google_OAuth class** - `99203e0` (feat)
+1. **Task 1: Install google/apiclient and create STADION_Google_OAuth class** - `99203e0` (feat)
 2. **Task 2: Implement OAuth endpoints in REST Calendar class** - `d3c5a65` (feat)
 3. **Task 3: Add token refresh logic and connection update helper** - `ec8eef1` (feat)
 4. **Task 4: Update .env.example with Google OAuth variables** - `e44e7ee` (docs)
@@ -79,7 +79,7 @@ Each task was committed atomically:
 - `includes/class-google-oauth.php` - New Google OAuth class with auth URL generation, callback handling, token refresh
 - `composer.json` - Added google/apiclient ^2.15 dependency
 - `composer.lock` - Updated with google/apiclient and dependencies
-- `functions.php` - Added PRM_Google_OAuth to autoloader
+- `functions.php` - Added STADION_Google_OAuth to autoloader
 - `includes/class-rest-calendar.php` - Replaced OAuth stub methods with working implementations
 - `includes/class-calendar-connections.php` - Added update_credentials() helper method
 - `.env.example` - Documented GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET

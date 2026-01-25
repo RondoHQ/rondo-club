@@ -1,4 +1,5 @@
-# Caelis
+<!-- Personal CRM system built as a WordPress theme with React SPA frontend -->
+# Stadion
 
 A React-powered WordPress theme for personal relationship management. This theme provides a modern, single-page application interface for managing contacts, companies, and important dates.
 
@@ -14,7 +15,7 @@ A React-powered WordPress theme for personal relationship management. This theme
 ### For Users (Pre-built)
 
 1. Download the latest release (includes pre-built `/dist` folder)
-2. Upload to `/wp-content/themes/caelis-theme/`
+2. Upload to `/wp-content/themes/stadion-theme/`
 3. Activate the theme in WordPress
 4. Make sure ACF Pro is installed and activated
 
@@ -22,8 +23,8 @@ A React-powered WordPress theme for personal relationship management. This theme
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/caelis-theme.git
-cd caelis-theme
+git clone https://github.com/yourusername/stadion-theme.git
+cd stadion-theme
 
 # Install dependencies
 npm install
@@ -37,18 +38,18 @@ npm run build
 
 ## Configuration
 
-Caelis uses PHP constants defined in `wp-config.php` for configuration. This is the standard WordPress approach and ensures settings are secure and environment-specific.
+Stadion uses PHP constants defined in `wp-config.php` for configuration. This is the standard WordPress approach and ensures settings are secure and environment-specific.
 
 ### Quick Setup with WP-CLI
 
 ```bash
 # Required: Generate and set encryption key
-wp config set CAELIS_ENCRYPTION_KEY "$(php -r 'echo bin2hex(random_bytes(16));')" --type=constant
+wp config set STADION_ENCRYPTION_KEY "$(php -r 'echo bin2hex(random_bytes(16));')" --type=constant
 
 # Optional: Slack integration
-wp config set CAELIS_SLACK_CLIENT_ID 'your-client-id' --type=constant
-wp config set CAELIS_SLACK_CLIENT_SECRET 'your-client-secret' --type=constant
-wp config set CAELIS_SLACK_SIGNING_SECRET 'your-signing-secret' --type=constant
+wp config set STADION_SLACK_CLIENT_ID 'your-client-id' --type=constant
+wp config set STADION_SLACK_CLIENT_SECRET 'your-client-secret' --type=constant
+wp config set STADION_SLACK_SIGNING_SECRET 'your-signing-secret' --type=constant
 
 # Optional: Google integration (Calendar + Contacts)
 wp config set GOOGLE_OAUTH_CLIENT_ID 'your-client-id.apps.googleusercontent.com' --type=constant
@@ -59,10 +60,10 @@ wp config set GOOGLE_OAUTH_CLIENT_SECRET 'your-client-secret' --type=constant
 
 | Constant | Purpose | Required | Generation/Source |
 |----------|---------|----------|-------------------|
-| `CAELIS_ENCRYPTION_KEY` | Encryption for OAuth tokens | Yes | `php -r "echo bin2hex(random_bytes(16));"` |
-| `CAELIS_SLACK_CLIENT_ID` | Slack OAuth app client ID | Optional | Slack API Dashboard |
-| `CAELIS_SLACK_CLIENT_SECRET` | Slack OAuth app client secret | Optional | Slack API Dashboard |
-| `CAELIS_SLACK_SIGNING_SECRET` | Slack webhook verification | Optional | Slack API Dashboard |
+| `STADION_ENCRYPTION_KEY` | Encryption for OAuth tokens | Yes | `php -r "echo bin2hex(random_bytes(16));"` |
+| `STADION_SLACK_CLIENT_ID` | Slack OAuth app client ID | Optional | Slack API Dashboard |
+| `STADION_SLACK_CLIENT_SECRET` | Slack OAuth app client secret | Optional | Slack API Dashboard |
+| `STADION_SLACK_SIGNING_SECRET` | Slack webhook verification | Optional | Slack API Dashboard |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID (Calendar + Contacts) | Optional | Google Cloud Console |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret | Optional | Google Cloud Console |
 
@@ -77,7 +78,7 @@ php -r "echo bin2hex(random_bytes(16));"
 Add to `wp-config.php`:
 
 ```php
-define('CAELIS_ENCRYPTION_KEY', 'your-generated-32-byte-key-here');
+define('STADION_ENCRYPTION_KEY', 'your-generated-32-byte-key-here');
 ```
 
 ### Slack Integration (Optional)
@@ -90,9 +91,9 @@ To enable Slack notifications for reminders:
 4. Copy credentials from **Basic Information**
 
 ```php
-define('CAELIS_SLACK_CLIENT_ID', '1234567890.1234567890');
-define('CAELIS_SLACK_CLIENT_SECRET', 'your-client-secret');
-define('CAELIS_SLACK_SIGNING_SECRET', 'your-signing-secret');
+define('STADION_SLACK_CLIENT_ID', '1234567890.1234567890');
+define('STADION_SLACK_CLIENT_SECRET', 'your-client-secret');
+define('STADION_SLACK_SIGNING_SECRET', 'your-signing-secret');
 ```
 
 ### Google Integration (Optional)
@@ -111,8 +112,8 @@ Google OAuth credentials are shared between Calendar sync and Contacts sync.
 5. Create **OAuth 2.0 credentials** (APIs & Services > Credentials)
    - Application type: Web application
    - Authorized redirect URIs:
-     - `https://your-domain.com/wp-json/prm/v1/calendar/auth/google/callback`
-     - `https://your-domain.com/wp-json/prm/v1/contacts/auth/google/callback`
+     - `https://your-domain.com/wp-json/stadion/v1/calendar/auth/google/callback`
+     - `https://your-domain.com/wp-json/stadion/v1/contacts/auth/google/callback`
 
 ```php
 define('GOOGLE_OAUTH_CLIENT_ID', 'your-client-id.apps.googleusercontent.com');
@@ -134,16 +135,16 @@ Supported providers:
 ### Example wp-config.php
 
 ```php
-// Caelis Configuration
+// Stadion Configuration
 // ====================
 
 // Required: Encryption key (32 bytes)
-define('CAELIS_ENCRYPTION_KEY', 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4');
+define('STADION_ENCRYPTION_KEY', 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4');
 
 // Optional: Slack Integration
-define('CAELIS_SLACK_CLIENT_ID', '1234567890.1234567890');
-define('CAELIS_SLACK_CLIENT_SECRET', 'abcdef1234567890abcdef1234567890');
-define('CAELIS_SLACK_SIGNING_SECRET', '1234abcd5678efgh9012ijkl3456mnop');
+define('STADION_SLACK_CLIENT_ID', '1234567890.1234567890');
+define('STADION_SLACK_CLIENT_SECRET', 'abcdef1234567890abcdef1234567890');
+define('STADION_SLACK_SIGNING_SECRET', '1234abcd5678efgh9012ijkl3456mnop');
 
 // Optional: Google Integration (Calendar + Contacts)
 define('GOOGLE_OAUTH_CLIENT_ID', '123456789-abc123def456.apps.googleusercontent.com');
@@ -155,7 +156,7 @@ define('GOOGLE_OAUTH_CLIENT_SECRET', 'GOCSPX-abcdefghijklmnop');
 ### File Structure
 
 ```
-caelis-theme/
+stadion-theme/
 ├── style.css           # Theme metadata (required by WordPress)
 ├── functions.php       # Theme functions and asset loading
 ├── index.php           # Single template that loads React
@@ -218,13 +219,13 @@ This generates:
 ### WordPress Integration
 
 The theme automatically:
-- Passes WordPress configuration to React via `window.prmConfig`
+- Passes WordPress configuration to React via `window.stadionConfig`
 - Handles authentication state
 - Sets up REST API nonces for secure requests
 
 Configuration available in React:
 ```javascript
-window.prmConfig = {
+window.stadionConfig = {
   apiUrl: '/wp-json/',
   nonce: 'abc123...',
   siteUrl: 'https://example.com',
@@ -234,7 +235,7 @@ window.prmConfig = {
   loginUrl: '/wp-login.php',
   logoutUrl: '/wp-login.php?action=logout',
   adminUrl: '/wp-admin/',
-  themeUrl: '/wp-content/themes/caelis-theme/',
+  themeUrl: '/wp-content/themes/stadion-theme/',
 };
 ```
 
@@ -259,7 +260,7 @@ The theme uses two API namespaces:
 - Built-in WordPress authentication
 - ACF fields included in responses
 
-### Custom PRM API (`/prm/v1/`)
+### Custom PRM API (`/stadion/v1/`)
 - Dashboard summary
 - Timeline (notes + activities)
 - Global search

@@ -31,14 +31,14 @@ re_verification: false
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
 | `src/pages/Dashboard.jsx` | MeetingCard component with time-based styling | VERIFIED | Lines 237-301 implement isPast/isNow detection and conditional styling |
-| `includes/class-wp-cli.php` | WP-CLI command for event title cleanup | VERIFIED | Lines 2271-2370: PRM_Event_CLI_Command class with cleanup_titles method, registered at line 2369 |
+| `includes/class-wp-cli.php` | WP-CLI command for event title cleanup | VERIFIED | Lines 2271-2370: STADION_Event_CLI_Command class with cleanup_titles method, registered at line 2369 |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
 | MeetingCard | Time styling | Date comparison | WIRED | Lines 239-243: `new Date(meeting.start_time)`, `new Date(meeting.end_time)`, isPast/isNow calculations |
-| CLI command | WP system | WP_CLI::add_command | WIRED | Line 2369: `WP_CLI::add_command( 'prm event', 'PRM_Event_CLI_Command' );` |
+| CLI command | WP system | WP_CLI::add_command | WIRED | Line 2369: `WP_CLI::add_command( 'prm event', 'STADION_Event_CLI_Command' );` |
 
 ### Requirements Coverage
 

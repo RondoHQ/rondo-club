@@ -94,7 +94,7 @@
             {
                 "param": "post_type",
                 "operator": "==",
-                "value": "prm_todo"
+                "value": "stadion_todo"
             }
         ]
     ],

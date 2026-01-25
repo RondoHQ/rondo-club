@@ -4,7 +4,7 @@ import { format } from 'date-fns';
  * Simple inline input for a custom field.
  * Used in row-level edit mode where all fields are editable at once.
  */
-export default function InlineFieldInput({ field, value, onChange, disabled }) {
+export default function InlineFieldInput({ field, value, onChange, disabled, onKeyDown }) {
   // Check if this field type supports inline editing
   const supportsInlineEdit = !['checkbox', 'relationship', 'image', 'file', 'link', 'color_picker'].includes(field.type);
 
@@ -25,6 +25,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled }) {
           type={field.type === 'email' ? 'email' : field.type === 'url' ? 'url' : 'text'}
           value={value ?? ''}
           onChange={(e) => onChange(field.name, e.target.value)}
+          onKeyDown={onKeyDown}
           className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
           placeholder={field.placeholder || ''}
           disabled={disabled}
@@ -37,6 +38,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled }) {
           type="text"
           value={value ?? ''}
           onChange={(e) => onChange(field.name, e.target.value)}
+          onKeyDown={onKeyDown}
           className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
           placeholder={field.placeholder || ''}
           disabled={disabled}
@@ -51,6 +53,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled }) {
             type="number"
             value={value ?? ''}
             onChange={(e) => onChange(field.name, e.target.value)}
+            onKeyDown={onKeyDown}
             min={field.min}
             max={field.max}
             step={field.step}
@@ -67,6 +70,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled }) {
           type="date"
           value={value ? format(new Date(value), 'yyyy-MM-dd') : ''}
           onChange={(e) => onChange(field.name, e.target.value)}
+          onKeyDown={onKeyDown}
           className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
           disabled={disabled}
         />
@@ -77,6 +81,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled }) {
         <select
           value={value ?? ''}
           onChange={(e) => onChange(field.name, e.target.value)}
+          onKeyDown={onKeyDown}
           className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
           disabled={disabled}
         >
@@ -92,6 +97,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled }) {
         <select
           value={value ? '1' : '0'}
           onChange={(e) => onChange(field.name, e.target.value === '1')}
+          onKeyDown={onKeyDown}
           className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
           disabled={disabled}
         >
@@ -106,6 +112,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled }) {
           type="text"
           value={value ?? ''}
           onChange={(e) => onChange(field.name, e.target.value)}
+          onKeyDown={onKeyDown}
           className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
           disabled={disabled}
         />

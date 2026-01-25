@@ -7,11 +7,11 @@
 <research_summary>
 ## Summary
 
-Researched the recurring `NotFoundError: Failed to execute 'removeChild' on 'Node'` errors in Caelis. This is a well-documented React issue ([GitHub #17256](https://github.com/facebook/react/issues/17256)) caused when React's virtual DOM becomes out of sync with the actual DOM.
+Researched the recurring `NotFoundError: Failed to execute 'removeChild' on 'Node'` errors in Stadion. This is a well-documented React issue ([GitHub #17256](https://github.com/facebook/react/issues/17256)) caused when React's virtual DOM becomes out of sync with the actual DOM.
 
 The error occurs when React tries to remove a DOM node that no longer exists in its expected parent position. This happens because external forces (browser extensions, third-party scripts, translation features, or direct DOM manipulation) modify the DOM independently of React.
 
-**Key findings specific to Caelis:**
+**Key findings specific to Stadion:**
 1. The app uses React 18 with StrictMode (double-rendering in dev)
 2. Fragment syntax (`<>...</>`) is used in App.jsx and 10 other components
 3. Modals return early with `if (!isOpen) return null` - this is correct
@@ -237,7 +237,7 @@ if (typeof Node !== 'undefined') {
 
 ### Recommended main.jsx Structure
 ```jsx
-// Source: Caelis pattern + research recommendations
+// Source: Stadion pattern + research recommendations
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import DomErrorBoundary from './components/DomErrorBoundary';
@@ -271,7 +271,7 @@ if (rootElement) {
 }
 ```
 
-### Safe Modal Pattern (Already Correct in Caelis)
+### Safe Modal Pattern (Already Correct in Stadion)
 ```jsx
 // Source: Existing TodoModal pattern - this is correct
 export default function TodoModal({ isOpen, onClose, ... }) {
@@ -290,7 +290,7 @@ export default function TodoModal({ isOpen, onClose, ... }) {
 ### Safe dangerouslySetInnerHTML Usage
 ```jsx
 // Source: React docs pattern
-// Current Caelis usage is correct - the issue isn't here
+// Current Stadion usage is correct - the issue isn't here
 <div
   className="prose"
   dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
@@ -326,7 +326,7 @@ export default function TodoModal({ isOpen, onClose, ... }) {
 
 2. **Is Google Translate the culprit?**
    - What we know: Google Translate is a common cause of these errors
-   - What's unclear: Whether Caelis users have it enabled
+   - What's unclear: Whether Stadion users have it enabled
    - Recommendation: Add `translate="no"` regardless - it's harmless and preventive
 
 3. **Browser extension interference?**

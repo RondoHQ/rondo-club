@@ -7,11 +7,11 @@ tags: [phpunit, rest-api, search, dashboard, reminders, todos, wp-browser]
 # Dependency graph
 requires:
   - phase: 21-phpunit-setup
-    provides: PHPUnit infrastructure, CaelisTestCase base class, factory helpers
+    provides: PHPUnit infrastructure, StadionTestCase base class, factory helpers
   - phase: 22-access-control-tests
-    provides: Test patterns for access control, createApprovedCaelisUser() helper
+    provides: Test patterns for access control, createApprovedStadionUser() helper
 provides:
-  - SearchDashboardTest with 20 tests verifying /prm/v1/ custom endpoints
+  - SearchDashboardTest with 20 tests verifying /stadion/v1/ custom endpoints
   - REST API testing patterns (doRestRequest helper, REST server initialization)
 affects: [23-03-timeline-tests]
 
@@ -26,14 +26,14 @@ key-files:
   modified: []
 
 key-decisions:
-  - "Manually instantiate PRM_REST_API class in tests to bypass prm_is_rest_request() check"
+  - "Manually instantiate STADION_REST_API class in tests to bypass stadion_is_rest_request() check"
   - "Use string 'true' for boolean REST params (matches query string behavior)"
   - "Unique user logins per test to avoid conflicts in parallel test execution"
 
 patterns-established:
   - "doRestRequest() helper for internal REST API testing"
   - "REST server initialization: new WP_REST_Server() + do_action('rest_api_init')"
-  - "createTodo() helper for creating prm_todo comments"
+  - "createTodo() helper for creating stadion_todo comments"
 
 issues-created: []
 
@@ -44,7 +44,7 @@ completed: 2026-01-13
 
 # Phase 23 Plan 02: SearchDashboardTest Summary
 
-**20 tests verifying /prm/v1/ custom endpoints: search, dashboard, reminders, and todos with access control enforcement**
+**20 tests verifying /stadion/v1/ custom endpoints: search, dashboard, reminders, and todos with access control enforcement**
 
 ## Performance
 
@@ -79,7 +79,7 @@ Each task was committed atomically:
 
 ## Test Coverage by Endpoint
 
-### Search (/prm/v1/search)
+### Search (/stadion/v1/search)
 - `test_search_returns_matching_person` - Basic search functionality
 - `test_search_isolation_between_users` - User A cannot see User B's contacts
 - `test_search_across_post_types` - Returns both people and companies
@@ -88,20 +88,20 @@ Each task was committed atomically:
 - `test_search_blocked_for_unapproved_user` - 403 for unapproved
 - `test_search_blocked_for_logged_out_user` - 401 for logged out
 
-### Dashboard (/prm/v1/dashboard)
+### Dashboard (/stadion/v1/dashboard)
 - `test_dashboard_returns_correct_counts` - Accurate people/companies/dates counts
 - `test_dashboard_isolation_between_users` - Users see only their own counts
 - `test_dashboard_empty_for_new_user` - New user gets zero counts
 - `test_dashboard_blocked_for_unapproved_user` - 403 for unapproved
 
-### Reminders (/prm/v1/reminders)
+### Reminders (/stadion/v1/reminders)
 - `test_reminders_returns_upcoming_dates` - Returns dates within range
 - `test_reminders_filters_by_days_ahead` - Respects days_ahead parameter
 - `test_reminders_validation_zero_days` - days_ahead=0 returns 400
 - `test_reminders_validation_days_too_large` - days_ahead>365 returns 400
 - `test_reminders_blocked_for_unapproved_user` - 403 for unapproved
 
-### Todos (/prm/v1/todos)
+### Todos (/stadion/v1/todos)
 - `test_todos_returns_uncompleted_todos` - Default returns only incomplete
 - `test_todos_returns_all_with_completed_filter` - completed=true includes all
 - `test_todos_isolation_between_users` - User A cannot see User B's todos
@@ -110,7 +110,7 @@ Each task was committed atomically:
 ## Decisions Made
 
 - **REST server initialization:** Manually create WP_REST_Server and trigger rest_api_init action since test environment doesn't automatically set REST_REQUEST
-- **PRM_REST_API instantiation:** Must be done explicitly in tests since prm_is_rest_request() returns false in test environment
+- **STADION_REST_API instantiation:** Must be done explicitly in tests since stadion_is_rest_request() returns false in test environment
 - **Boolean parameter handling:** Use string 'true' instead of boolean true for REST params to match real HTTP query string behavior
 
 ## Deviations from Plan
@@ -120,7 +120,7 @@ Each task was committed atomically:
 **1. [Rule 3 - Blocking] REST routes not registered (404 errors)**
 - **Found during:** Initial test execution
 - **Issue:** All REST endpoints returned 404 because routes weren't registered
-- **Fix:** Added explicit `new \PRM_REST_API()` and `do_action('rest_api_init')` in set_up()
+- **Fix:** Added explicit `new \STADION_REST_API()` and `do_action('rest_api_init')` in set_up()
 - **Verification:** All 20 tests pass
 
 **2. [Rule 1 - Bug Fix] Boolean parameter handling**

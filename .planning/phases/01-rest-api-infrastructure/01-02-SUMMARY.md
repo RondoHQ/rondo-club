@@ -22,7 +22,7 @@ key-files:
 
 key-decisions:
   - "Verification performed via static analysis (no running WordPress environment available)"
-  - "All 12 expected endpoint categories confirmed registered in PRM_REST_API"
+  - "All 12 expected endpoint categories confirmed registered in STADION_REST_API"
   - "Permission callbacks correctly resolve to inherited base class methods via $this"
 
 patterns-established: []
@@ -48,7 +48,7 @@ completed: 2026-01-13
 
 ## Accomplishments
 - Verified PHP syntax for all modified files (no errors)
-- Confirmed PRM_REST_API correctly extends PRM_REST_Base
+- Confirmed STADION_REST_API correctly extends STADION_REST_Base
 - Verified all 37 REST routes remain registered
 - Confirmed all 12 expected endpoint categories are present
 - Collected infrastructure metrics for progress tracking
@@ -69,8 +69,8 @@ All tasks were verification-only with no code changes:
 - `functions.php`: PASS
 
 ### Class Inheritance
-- PRM_REST_API extends: **PRM_REST_Base** (verified)
-- PRM_REST_Base is abstract: **yes**
+- STADION_REST_API extends: **STADION_REST_Base** (verified)
+- STADION_REST_Base is abstract: **yes**
 - Key methods inherited: check_user_approved, check_admin_permission, format_person_summary
 
 ### API Endpoint Availability
@@ -94,8 +94,8 @@ All expected endpoints confirmed registered:
 
 | Metric | Value |
 |--------|-------|
-| Total routes in PRM_REST_API | 37 |
-| Methods in PRM_REST_Base | 9 |
+| Total routes in STADION_REST_API | 37 |
+| Methods in STADION_REST_Base | 9 |
 | class-rest-api.php size | 103,068 bytes (2,735 lines) |
 | class-rest-base.php size | 6,872 bytes (213 lines) |
 | Combined size | 109,940 bytes (2,948 lines) |

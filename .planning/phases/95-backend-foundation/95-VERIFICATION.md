@@ -45,21 +45,21 @@ score: 7/7 must-haves verified
 **acf-json/group_feedback_fields.json**
 - Level 1 (Exists): YES
 - Level 2 (Substantive): YES - 11 fields defined with proper configuration
-- Level 3 (Wired): YES - Location rule targets `caelis_feedback` post type
+- Level 3 (Wired): YES - Location rule targets `stadion_feedback` post type
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|----|----|--------|---------|
 | class-post-types.php | WordPress | init hook | VERIFIED | Constructor adds action on line 15 |
-| class-post-types.php | register_post_type | function call | VERIFIED | Line 403: `register_post_type( 'caelis_feedback', $args )` |
-| group_feedback_fields.json | caelis_feedback | ACF location rule | VERIFIED | Line 178: `"value": "caelis_feedback"` |
+| class-post-types.php | register_post_type | function call | VERIFIED | Line 403: `register_post_type( 'stadion_feedback', $args )` |
+| group_feedback_fields.json | stadion_feedback | ACF location rule | VERIFIED | Line 178: `"value": "stadion_feedback"` |
 
 ### Requirements Coverage
 
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
-| FEED-01: caelis_feedback CPT registration | SATISFIED | CPT registered on line 403 with full configuration |
+| FEED-01: stadion_feedback CPT registration | SATISFIED | CPT registered on line 403 with full configuration |
 | FEED-02: ACF field group for feedback metadata | SATISFIED | 11 fields: type, status, priority, browser_info, app_version, url_context, steps_to_reproduce, expected_behavior, actual_behavior, use_case, attachments |
 | FEED-03: Feedback statuses (new, in_progress, resolved, declined) | SATISFIED | ACF select field with exactly these 4 status values |
 
@@ -117,7 +117,7 @@ The following items require human testing in WordPress admin:
 
 Phase 95 goal **achieved**. All required infrastructure is in place:
 
-1. `caelis_feedback` custom post type is properly registered with REST API support
+1. `stadion_feedback` custom post type is properly registered with REST API support
 2. ACF field group contains all 11 required fields with correct configuration
 3. Conditional logic is properly configured for bug vs feature request fields
 4. Status field enforces the 4 valid values (new, in_progress, resolved, declined)

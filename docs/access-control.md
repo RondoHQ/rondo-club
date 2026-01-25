@@ -1,10 +1,10 @@
 # Access Control
 
-This document describes the row-level security system that controls who can see and edit contacts, companies, and dates in Caelis.
+This document describes the row-level security system that controls who can see and edit contacts, companies, and dates in Stadion.
 
 ## Overview
 
-Caelis implements **row-level access control** with multiple access paths:
+Stadion implements **row-level access control** with multiple access paths:
 
 1. **Author access** - Users can always see posts they created
 2. **Workspace access** - Members of a workspace can see workspace-visible posts
@@ -54,7 +54,7 @@ The `get_user_permission()` method returns the user's permission level for a pos
 
 ## Implementation
 
-The access control system is implemented in `includes/class-access-control.php` via the `PRM_Access_Control` class.
+The access control system is implemented in `includes/class-access-control.php` via the `STADION_Access_Control` class.
 
 ### Controlled Post Types
 
@@ -181,14 +181,14 @@ Visibility is stored in the `_visibility` post meta field:
 | `workspace` | Visible to workspace members |
 | `shared` | Visible to users in `_shared_with` |
 
-The `PRM_Visibility` helper class provides methods for managing visibility:
+The `STADION_Visibility` helper class provides methods for managing visibility:
 
 ```php
 // Get visibility (returns 'private' if not set)
-$visibility = PRM_Visibility::get_visibility($post_id);
+$visibility = STADION_Visibility::get_visibility($post_id);
 
 // Set visibility
-PRM_Visibility::set_visibility($post_id, 'workspace');
+STADION_Visibility::set_visibility($post_id, 'workspace');
 ```
 
 ## Workspace Access
@@ -224,20 +224,20 @@ When visibility is set to `shared` or as an additional access path, the `_shared
 ]
 ```
 
-The `PRM_Visibility` class manages shares:
+The `STADION_Visibility` class manages shares:
 
 ```php
 // Add/update a share
-PRM_Visibility::add_share($post_id, $user_id, 'edit');
+STADION_Visibility::add_share($post_id, $user_id, 'edit');
 
 // Remove a share
-PRM_Visibility::remove_share($post_id, $user_id);
+STADION_Visibility::remove_share($post_id, $user_id);
 
 // Check if user has share
-$has_share = PRM_Visibility::user_has_share($post_id, $user_id);
+$has_share = STADION_Visibility::user_has_share($post_id, $user_id);
 
 // Get permission level ('view', 'edit', or false)
-$permission = PRM_Visibility::get_share_permission($post_id, $user_id);
+$permission = STADION_Visibility::get_share_permission($post_id, $user_id);
 ```
 
 ## Administrator Access Control
@@ -307,7 +307,7 @@ if ($query->have_posts()) {
 
 ## User Roles
 
-Caelis automatically creates a custom user role called **"Caelis User"** (`caelis_user`) when the theme is activated. This role has minimal permissions:
+Stadion automatically creates a custom user role called **"Stadion User"** (`stadion_user`) when the theme is activated. This role has minimal permissions:
 
 **Capabilities:**
 - `read` - Required for WordPress access
@@ -318,7 +318,7 @@ Caelis automatically creates a custom user role called **"Caelis User"** (`caeli
 - `delete_published_posts` - Delete their own published posts
 - `upload_files` - Upload files (photos, logos)
 
-**What Caelis Users cannot do:**
+**What Stadion Users cannot do:**
 - Edit other users' posts
 - Manage other users
 - Access WordPress admin settings

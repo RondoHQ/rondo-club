@@ -3,7 +3,7 @@
  * Auto-generate post titles from ACF fields
  */
 
-namespace Caelis\Core;
+namespace Stadion\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -21,7 +21,7 @@ class AutoTitle {
 		add_action( 'rest_after_insert_person', [ $this, 'trigger_calendar_rematch_rest' ], 25, 2 );
 
 		// Handle async calendar rematch cron job
-		add_action( 'caelis_async_calendar_rematch', [ $this, 'handle_async_calendar_rematch' ] );
+		add_action( 'stadion_async_calendar_rematch', [ $this, 'handle_async_calendar_rematch' ] );
 
 		// Hide title field in admin for person CPT
 		add_filter( 'acf/prepare_field/name=_post_title', [ $this, 'hide_title_field' ] );
@@ -54,7 +54,7 @@ class AutoTitle {
 		$full_name = trim( $first_name . ' ' . $last_name );
 
 		if ( empty( $full_name ) ) {
-			$full_name = __( 'Unnamed Person', 'caelis' );
+			$full_name = __( 'Unnamed Person', 'stadion' );
 		}
 
 		// Unhook to prevent infinite loop
@@ -128,13 +128,13 @@ class AutoTitle {
 	private function generate_date_title_from_fields( $post_id ) {
 		// Get date type from taxonomy
 		$date_types = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'names' ] );
-		$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'caelis' );
+		$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'stadion' );
 
 		// Get related people
 		$people = get_field( 'related_people', $post_id ) ?: [];
 
 		if ( empty( $people ) ) {
-			return sprintf( __( 'Unnamed %s', 'caelis' ), $type_label );
+			return sprintf( __( 'Unnamed %s', 'stadion' ), $type_label );
 		}
 
 		// Get full names of related people
@@ -142,13 +142,13 @@ class AutoTitle {
 		foreach ( $people as $person ) {
 			$person_id = is_object( $person ) ? $person->ID : $person;
 			$full_name = html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' );
-			if ( $full_name && $full_name !== __( 'Unnamed Person', 'caelis' ) ) {
+			if ( $full_name && $full_name !== __( 'Unnamed Person', 'stadion' ) ) {
 				$names[] = $full_name;
 			}
 		}
 
 		if ( empty( $names ) ) {
-			return sprintf( __( 'Unnamed %s', 'caelis' ), $type_label );
+			return sprintf( __( 'Unnamed %s', 'stadion' ), $type_label );
 		}
 
 		$count = count( $names );
@@ -162,23 +162,23 @@ class AutoTitle {
 			if ( $count >= 2 ) {
 				// "Wedding of Person1 & Person2"
 				return sprintf(
-					__( 'Wedding of %1$s & %2$s', 'caelis' ),
+					__( 'Wedding of %1$s & %2$s', 'stadion' ),
 					$names[0],
 					$names[1]
 				);
 			} elseif ( $count === 1 ) {
 				// "Wedding of Person1" (fallback if only one person)
-				return sprintf( __( 'Wedding of %s', 'caelis' ), $names[0] );
+				return sprintf( __( 'Wedding of %s', 'stadion' ), $names[0] );
 			}
 		}
 
 		if ( $count === 1 ) {
 			// "Sarah's Birthday"
-			return sprintf( __( "%1\$s's %2\$s", 'caelis' ), $names[0], $type_label );
+			return sprintf( __( "%1\$s's %2\$s", 'stadion' ), $names[0], $type_label );
 		} elseif ( $count === 2 ) {
 			// "Tom & Lisa's Birthday"
 			return sprintf(
-				__( "%1\$s & %2\$s's %3\$s", 'caelis' ),
+				__( "%1\$s & %2\$s's %3\$s", 'stadion' ),
 				$names[0],
 				$names[1],
 				$type_label
@@ -188,7 +188,7 @@ class AutoTitle {
 			$first_two = implode( ', ', array_slice( $names, 0, 2 ) );
 			$remaining = $count - 2;
 			return sprintf(
-				__( '%1$s +%2$d %3$s', 'caelis' ),
+				__( '%1$s +%2$d %3$s', 'stadion' ),
 				$first_two,
 				$remaining,
 				$type_label
@@ -286,13 +286,13 @@ class AutoTitle {
 		$scheduled[ $post_id ] = true;
 
 		// Clear any existing scheduled event for this person
-		$timestamp = wp_next_scheduled( 'caelis_async_calendar_rematch', [ $post_id ] );
+		$timestamp = wp_next_scheduled( 'stadion_async_calendar_rematch', [ $post_id ] );
 		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, 'caelis_async_calendar_rematch', [ $post_id ] );
+			wp_unschedule_event( $timestamp, 'stadion_async_calendar_rematch', [ $post_id ] );
 		}
 
 		// Schedule to run immediately (next cron tick)
-		wp_schedule_single_event( time(), 'caelis_async_calendar_rematch', [ $post_id ] );
+		wp_schedule_single_event( time(), 'stadion_async_calendar_rematch', [ $post_id ] );
 
 		// Trigger cron to run soon (non-blocking)
 		spawn_cron();
@@ -304,7 +304,7 @@ class AutoTitle {
 	 * @param int $post_id Person post ID.
 	 */
 	public function handle_async_calendar_rematch( int $post_id ): void {
-		\Caelis\Calendar\Matcher::on_person_saved( $post_id );
+		\Stadion\Calendar\Matcher::on_person_saved( $post_id );
 	}
 
 	/**
@@ -360,7 +360,7 @@ class AutoTitle {
 				'duplicate_email',
 				sprintf(
 					/* translators: 1: email address, 2: person name */
-					__( 'The email address "%1$s" is already used by "%2$s". Each email address can only belong to one person.', 'caelis' ),
+					__( 'The email address "%1$s" is already used by "%2$s". Each email address can only belong to one person.', 'stadion' ),
 					$duplicate['email'],
 					$duplicate['person_name']
 				),

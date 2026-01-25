@@ -40,7 +40,7 @@ User delegated all decisions to Claude. The following areas are open for Claude 
 <specifics>
 ## Specific Ideas
 
-No specific requirements — open to standard approaches that match existing Caelis patterns.
+No specific requirements — open to standard approaches that match existing Stadion patterns.
 
 </specifics>
 

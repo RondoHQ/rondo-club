@@ -46,7 +46,7 @@ The established libraries/tools for this domain:
 src/pages/Dashboard.jsx          # Contains meetings card renderer
   - useTodayMeetings()           # Hook that fetches today's meetings
     - prmApi.getTodayMeetings()  # API client method
-      - /prm/v1/calendar/today-meetings  # REST endpoint (currently hardcoded to today)
+      - /stadion/v1/calendar/today-meetings  # REST endpoint (currently hardcoded to today)
 ```
 
 ### Target Meeting Widget Structure
@@ -55,7 +55,7 @@ src/pages/Dashboard.jsx          # Contains meetings card renderer
   - useState(selectedDate)       # Track selected date (default: today)
   - useDateMeetings(date)        # New/modified hook accepting date
     - prmApi.getMeetingsForDate(date)  # New/modified API method
-      - /prm/v1/calendar/today-meetings?date=YYYY-MM-DD  # Add date param
+      - /stadion/v1/calendar/today-meetings?date=YYYY-MM-DD  # Add date param
 ```
 
 ### Pattern 1: Date Navigation State Management
@@ -262,9 +262,9 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- Codebase analysis: `/Users/joostdevalk/Code/caelis/src/pages/Dashboard.jsx` - existing widget implementation
-- Codebase analysis: `/Users/joostdevalk/Code/caelis/src/hooks/useMeetings.js` - existing hook patterns
-- Codebase analysis: `/Users/joostdevalk/Code/caelis/includes/class-rest-calendar.php` - API endpoint
+- Codebase analysis: `/Users/joostdevalk/Code/stadion/src/pages/Dashboard.jsx` - existing widget implementation
+- Codebase analysis: `/Users/joostdevalk/Code/stadion/src/hooks/useMeetings.js` - existing hook patterns
+- Codebase analysis: `/Users/joostdevalk/Code/stadion/includes/class-rest-calendar.php` - API endpoint
 
 ### Secondary (MEDIUM confidence)
 - [date-fns official documentation](https://date-fns.org/) - date manipulation functions

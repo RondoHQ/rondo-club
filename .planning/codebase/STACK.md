@@ -70,10 +70,10 @@
 
 **Environment:**
 - WordPress constants for Slack integration:
-  - `CAELIS_SLACK_CLIENT_ID`
-  - `CAELIS_SLACK_CLIENT_SECRET`
-  - `CAELIS_SLACK_SIGNING_SECRET`
-- Runtime config passed via `window.prmConfig` object
+  - `STADION_SLACK_CLIENT_ID`
+  - `STADION_SLACK_CLIENT_SECRET`
+  - `STADION_SLACK_SIGNING_SECRET`
+- Runtime config passed via `window.stadionConfig` object
 
 **Build:**
 - `vite.config.js` - Vite bundler configuration with WordPress integration

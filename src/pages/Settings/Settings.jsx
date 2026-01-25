@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, MessageSquare, Search, User, Link as LinkIcon, Loader2, CheckCircle, Key, Copy } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -32,30 +32,31 @@ const CONNECTION_SUBTABS = [
 ];
 
 export default function Settings() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { tab: urlTab, subtab: urlSubtab } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const config = window.prmConfig || {};
+  const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
   const userId = config.userId;
 
   // Get active tab from URL or default to 'appearance'
-  const activeTab = searchParams.get('tab') || 'appearance';
+  const activeTab = urlTab || 'appearance';
   // Get active subtab for connections tab
-  const activeSubtab = searchParams.get('subtab') || 'calendars';
+  const activeSubtab = urlSubtab || 'calendars';
 
   const setActiveTab = (tab, subtab = null) => {
     if (subtab) {
-      setSearchParams({ tab, subtab });
+      navigate(`/settings/${tab}/${subtab}`);
     } else if (tab === 'connections') {
       // Default to calendars subtab when switching to connections
-      setSearchParams({ tab, subtab: 'calendars' });
+      navigate(`/settings/${tab}/calendars`);
     } else {
-      setSearchParams({ tab });
+      navigate(`/settings/${tab}`);
     }
   };
 
   const setActiveSubtab = (subtab) => {
-    setSearchParams({ tab: 'connections', subtab });
+    navigate(`/settings/connections/${subtab}`);
   };
   
   // Filter tabs based on admin status
@@ -235,16 +236,16 @@ export default function Settings() {
         setSlackWorkspaceName(response.data.workspace_name || '');
       });
       // Clean URL but keep tab and subtab for connections/slack
-      setSearchParams({ tab: 'connections', subtab: 'slack' });
+      navigate('/settings/connections/slack', { replace: true });
     } else if (slackError) {
       setWebhookTestMessage(`Slack connection failed: ${slackError}`);
-      setSearchParams({ tab: 'connections', subtab: 'slack' });
+      navigate('/settings/connections/slack', { replace: true });
     }
 
     // Handle Google Calendar OAuth callbacks (redirected from PHP)
     if (googleConnected === 'google') {
       // Clean URL but keep tab and subtab for connections/calendars
-      setSearchParams({ tab: 'connections', subtab: 'calendars' });
+      navigate('/settings/connections/calendars', { replace: true });
     } else if (googleConnected === 'google-contacts') {
       // Handle Google Contacts OAuth callback
       setGoogleContactsMessage('Google Contacts connected successfully!');
@@ -252,16 +253,16 @@ export default function Settings() {
       prmApi.getGoogleContactsStatus().then(response => {
         setGoogleContactsStatus(response.data);
       });
-      setSearchParams({ tab: 'connections', subtab: 'contacts' });
+      navigate('/settings/connections/contacts', { replace: true });
     } else if (googleError && params.get('subtab') === 'contacts') {
       // Show error on contacts subtab
       setGoogleContactsMessage(`Connection failed: ${googleError}`);
-      setSearchParams({ tab: 'connections', subtab: 'contacts' });
+      navigate('/settings/connections/contacts', { replace: true });
     } else if (googleError && params.get('tab') === 'connections') {
       // Keep on connections/calendars to show error
-      setSearchParams({ tab: 'connections', subtab: 'calendars' });
+      navigate('/settings/connections/calendars', { replace: true });
     }
-  }, []);
+  }, [navigate]);
 
   // Auto-import when pending flag is set (after OAuth connection)
   useEffect(() => {
@@ -272,7 +273,7 @@ export default function Settings() {
 
   const handleConnectSlack = async () => {
     try {
-      const response = await apiClient.get('/prm/v1/slack/oauth/authorize');
+      const response = await apiClient.get('/stadion/v1/slack/oauth/authorize');
       window.location.href = response.data.oauth_url;
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to connect Slack');
@@ -753,7 +754,7 @@ function AppearanceTab() {
       setShowPersonSearch(false);
       setPersonSearchQuery('');
       // Update the global config so filtering works immediately
-      window.prmConfig.currentUserPersonId = person.id;
+      window.stadionConfig.currentUserPersonId = person.id;
     } catch {
       alert('Failed to link person. Please try again.');
     } finally {
@@ -767,7 +768,7 @@ function AppearanceTab() {
       await prmApi.updateLinkedPerson(null);
       setLinkedPerson(null);
       // Update the global config
-      window.prmConfig.currentUserPersonId = null;
+      window.stadionConfig.currentUserPersonId = null;
     } catch {
       alert('Failed to unlink person. Please try again.');
     } finally {
@@ -1006,7 +1007,7 @@ function CalendarsTab() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [showAddModal, setShowAddModal] = useState(null); // 'google' | 'caldav' | null
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // iCal subscription state
   const [icalUrl, setIcalUrl] = useState('');
@@ -1022,28 +1023,29 @@ function CalendarsTab() {
 
   // Handle OAuth callback params from URL
   useEffect(() => {
-    const connected = searchParams.get('connected');
-    const errorParam = searchParams.get('error');
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get('connected');
+    const errorParam = params.get('error');
 
     if (connected === 'google') {
       setSuccessMessage('Google Calendar connected successfully!');
       // Refresh connections list
       fetchConnections();
       // Clean URL
-      setSearchParams({ tab: 'calendars' });
+      navigate('/settings/connections/calendars', { replace: true });
       setTimeout(() => setSuccessMessage(''), 5000);
     } else if (errorParam) {
       setError(errorParam);
-      setSearchParams({ tab: 'calendars' });
+      navigate('/settings/connections/calendars', { replace: true });
       setTimeout(() => setError(''), 8000);
     }
-  }, [searchParams, setSearchParams]);
+  }, [navigate]);
 
   // Fetch iCal URL on mount
   useEffect(() => {
     const fetchIcalUrl = async () => {
       try {
-        const response = await apiClient.get('/prm/v1/user/ical-url');
+        const response = await apiClient.get('/stadion/v1/user/ical-url');
         setIcalUrl(response.data.url);
         setWebcalUrl(response.data.webcal_url);
       } catch {
@@ -1140,7 +1142,7 @@ function CalendarsTab() {
 
     setRegenerating(true);
     try {
-      const response = await apiClient.post('/prm/v1/user/regenerate-ical-token');
+      const response = await apiClient.post('/stadion/v1/user/regenerate-ical-token');
       setIcalUrl(response.data.url);
       setWebcalUrl(response.data.webcal_url);
     } catch {
@@ -2823,7 +2825,7 @@ function NotificationsTab({
               </label>
             ) : (
               <Link
-                to="/settings?tab=connections&subtab=slack"
+                to="/settings/connections/slack"
                 className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
               >
                 Connect Slack
@@ -3050,7 +3052,7 @@ function APIAccessTab({
           </div>
           <div>
             <label className="text-xs text-gray-500 dark:text-gray-400">REST API Base URL</label>
-            <p className="font-mono text-sm dark:text-gray-200">{window.location.origin}/wp-json/prm/v1/</p>
+            <p className="font-mono text-sm dark:text-gray-200">{window.location.origin}/wp-json/stadion/v1/</p>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
             Use HTTP Basic Authentication with your username and an application password.
@@ -3066,9 +3068,9 @@ function DataTab() {
 
   const handleExport = (format) => {
     if (format === 'vcard') {
-      window.location.href = '/wp-json/prm/v1/export/vcard';
+      window.location.href = '/wp-json/stadion/v1/export/vcard';
     } else if (format === 'google-csv') {
-      window.location.href = '/wp-json/prm/v1/export/google-csv';
+      window.location.href = '/wp-json/stadion/v1/export/google-csv';
     }
   };
   

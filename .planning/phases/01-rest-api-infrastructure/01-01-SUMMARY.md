@@ -7,7 +7,7 @@ tags: [rest-api, php, wordpress, inheritance, refactoring]
 # Dependency graph
 requires: []
 provides:
-  - Abstract PRM_REST_Base class with shared permission and formatting methods
+  - Abstract STADION_REST_Base class with shared permission and formatting methods
   - Inheritance structure for domain-specific REST classes
   - 8 shared methods: check_user_approved, check_admin_permission, check_person_access, check_person_edit_permission, check_company_edit_permission, format_person_summary, format_company_summary, format_date
 affects: [02-rest-api-people-companies, 03-rest-api-integrations]
@@ -27,8 +27,8 @@ key-decisions:
   - "Empty constructor in base class - child classes register their own routes"
 
 patterns-established:
-  - "PRM_REST_Base: Abstract base for all REST API classes with shared infrastructure"
-  - "Inheritance pattern: Domain-specific classes extend PRM_REST_Base"
+  - "STADION_REST_Base: Abstract base for all REST API classes with shared infrastructure"
+  - "Inheritance pattern: Domain-specific classes extend STADION_REST_Base"
 
 issues-created: []
 
@@ -50,16 +50,16 @@ completed: 2026-01-13
 - **Files modified:** 3
 
 ## Accomplishments
-- Created abstract PRM_REST_Base class with shared permission and formatting methods
-- Updated PRM_REST_API to extend base class, removing 148 lines of duplicate code
+- Created abstract STADION_REST_Base class with shared permission and formatting methods
+- Updated STADION_REST_API to extend base class, removing 148 lines of duplicate code
 - Added autoloader mapping for new class
 
 ## Task Commits
 
 Each task was committed atomically:
 
-1. **Task 1: Create PRM_REST_Base abstract class** - `91806f2` (feat)
-2. **Task 2: Update PRM_REST_API to extend base class** - `14ddfa1` (refactor)
+1. **Task 1: Create STADION_REST_Base abstract class** - `91806f2` (feat)
+2. **Task 2: Update STADION_REST_API to extend base class** - `14ddfa1` (refactor)
 3. **Task 3: Update autoloader for new class** - `05569f2` (chore)
 
 **Plan metadata:** pending (docs: complete plan)
@@ -67,7 +67,7 @@ Each task was committed atomically:
 ## Files Created/Modified
 - `includes/class-rest-base.php` - Abstract base class with 8 shared methods (213 lines)
 - `includes/class-rest-api.php` - Updated to extend base class, methods removed (-148 lines)
-- `functions.php` - Autoloader mapping for PRM_REST_Base (+1 line)
+- `functions.php` - Autoloader mapping for STADION_REST_Base (+1 line)
 
 ## Decisions Made
 - Made permission methods (check_*) public since they're used as permission_callback in route registration
@@ -84,7 +84,7 @@ None.
 
 ## Next Phase Readiness
 - Base class infrastructure complete for Phase 2 (People & Companies extraction)
-- PRM_REST_API already extends PRM_REST_Base, ready for further method extraction
+- STADION_REST_API already extends STADION_REST_Base, ready for further method extraction
 - Inheritance pattern established for domain-specific REST classes
 
 ---

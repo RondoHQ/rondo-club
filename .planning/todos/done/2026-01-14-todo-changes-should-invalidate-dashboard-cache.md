@@ -12,4 +12,4 @@ When a todo is added or updated, the dashboard cache is not invalidated. This me
 
 ## Solution
 
-TBD - add cache invalidation hooks when todo posts are created, updated, or deleted. Likely needs to hook into `save_post_caelis_todo` or similar and clear the relevant dashboard transients.
+TBD - add cache invalidation hooks when todo posts are created, updated, or deleted. Likely needs to hook into `save_post_stadion_todo` or similar and clear the relevant dashboard transients.

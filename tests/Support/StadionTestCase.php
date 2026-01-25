@@ -5,12 +5,12 @@ namespace Tests\Support;
 use lucatume\WPBrowser\TestCase\WPTestCase;
 
 /**
- * Base test case for Caelis theme tests.
+ * Base test case for Stadion theme tests.
  *
  * Provides helper methods for creating test fixtures and
  * ensures ACF is properly loaded.
  */
-abstract class CaelisTestCase extends WPTestCase {
+abstract class StadionTestCase extends WPTestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
@@ -68,13 +68,13 @@ abstract class CaelisTestCase extends WPTestCase {
 	}
 
 	/**
-	 * Create a Caelis User with the custom role.
+	 * Create a Stadion User with the custom role.
 	 *
 	 * @param array $args User arguments
 	 * @return int User ID
 	 */
-	protected function createCaelisUser( array $args = [] ): int {
-		$defaults = [ 'role' => 'caelis_user' ];
+	protected function createStadionUser( array $args = [] ): int {
+		$defaults = [ 'role' => 'stadion_user' ];
 		return self::factory()->user->create( array_merge( $defaults, $args ) );
 	}
 

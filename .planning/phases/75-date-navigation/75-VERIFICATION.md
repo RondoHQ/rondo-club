@@ -31,7 +31,7 @@ score: 4/4 must-haves verified
 |----------|----------|--------|---------|
 | `includes/class-rest-calendar.php` | Date parameter support in today-meetings endpoint | VERIFIED | Lines 1208-1218: `$date_param = $request->get_param('date')`, regex validation `/^\d{4}-\d{2}-\d{2}$/`, sanitization with `sanitize_text_field()` |
 | `src/hooks/useMeetings.js` | useDateMeetings hook with date parameter | VERIFIED | Lines 40-52: `useDateMeetings(date)` accepts Date object, formats to `yyyy-MM-dd`, calls `prmApi.getMeetingsForDate(dateStr)` |
-| `src/api/client.js` | getMeetingsForDate API method | VERIFIED | Line 246: `getMeetingsForDate: (date) => api.get('/prm/v1/calendar/today-meetings', { params: { date } })` |
+| `src/api/client.js` | getMeetingsForDate API method | VERIFIED | Line 246: `getMeetingsForDate: (date) => api.get('/stadion/v1/calendar/today-meetings', { params: { date } })` |
 | `src/pages/Dashboard.jsx` | Navigation buttons and date state | VERIFIED | Line 325: `const [selectedDate, setSelectedDate] = useState(new Date())`, Lines 333-335: navigation handlers, Lines 643-665: prev/next/today buttons in UI |
 
 ### Key Link Verification
@@ -40,7 +40,7 @@ score: 4/4 must-haves verified
 |------|----|-----|--------|---------|
 | `src/pages/Dashboard.jsx` | `src/hooks/useMeetings.js` | `useDateMeetings(selectedDate)` | WIRED | Line 6: import, Line 326: `const { data: meetingsData } = useDateMeetings(selectedDate)` |
 | `src/hooks/useMeetings.js` | `src/api/client.js` | `prmApi.getMeetingsForDate` | WIRED | Line 3: import, Line 45: `const response = await prmApi.getMeetingsForDate(dateStr)` |
-| `src/api/client.js` | `/prm/v1/calendar/today-meetings` | REST API with date param | WIRED | Line 246: `api.get('/prm/v1/calendar/today-meetings', { params: { date } })` |
+| `src/api/client.js` | `/stadion/v1/calendar/today-meetings` | REST API with date param | WIRED | Line 246: `api.get('/stadion/v1/calendar/today-meetings', { params: { date } })` |
 
 ### Requirements Coverage
 

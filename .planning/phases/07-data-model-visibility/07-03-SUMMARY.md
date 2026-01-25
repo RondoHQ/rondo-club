@@ -6,7 +6,7 @@ Created the workspace membership management system using user meta, enabling use
 
 ## Changes Made
 
-### Task 1: PRM_Workspace_Members Class
+### Task 1: STADION_Workspace_Members Class
 
 **File:** `includes/class-workspace-members.php`
 
@@ -49,11 +49,11 @@ Added automatic owner membership:
 
 **Class Loading:**
 - Added to autoloader class map in `functions.php`
-- Instantiated in `prm_init()` for admin/REST/cron contexts
+- Instantiated in `stadion_init()` for admin/REST/cron contexts
 
 ## Verification
 
-- [x] PRM_Workspace_Members class loads without errors
+- [x] STADION_Workspace_Members class loads without errors
 - [x] Creating workspace adds owner as admin member
 - [x] get_user_workspaces() returns correct data
 - [x] get_members() returns correct data
@@ -71,13 +71,13 @@ Added automatic owner membership:
 
 ## Commits
 
-1. `feat(07-03): create PRM_Workspace_Members class for workspace membership management` (37fb1bf)
+1. `feat(07-03): create STADION_Workspace_Members class for workspace membership management` (37fb1bf)
 2. `feat(07-03): add workspace owner auto-membership hook` (a999882)
 
 ## Next Steps
 
 Phase 7 continues with:
-- 07-04: Update PRM_Access_Control for visibility checks
+- 07-04: Update STADION_Access_Control for visibility checks
 
 ## Notes
 

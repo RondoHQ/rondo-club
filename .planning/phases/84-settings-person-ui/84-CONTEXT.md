@@ -29,7 +29,7 @@ Note: Much of the Settings UI already exists from Phase 82-03 (sync frequency dr
 
 ### Sync Preferences
 - Sync frequency: dropdown with 15min, hourly, 6hr, daily options (already exists from 82-03)
-- Conflict resolution: default "Caelis wins" strategy is automatic — no user-facing toggle needed
+- Conflict resolution: default "Stadion wins" strategy is automatic — no user-facing toggle needed
 - Keep UI simple since conflict resolution logs to activity timeline anyway
 
 ### Person Page Integration

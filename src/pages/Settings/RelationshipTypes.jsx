@@ -148,7 +148,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
 export default function RelationshipTypes() {
   useDocumentTitle('Relationship Types - Settings');
   const queryClient = useQueryClient();
-  const config = window.prmConfig || {};
+  const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
   
   // Check if user is admin

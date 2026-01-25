@@ -5,10 +5,10 @@
  * Uses WordPress Application Passwords for authentication.
  * WordPress 6.8+ uses BLAKE2b hashing ($generic$ prefix) for app passwords.
  *
- * @package Caelis
+ * @package Stadion
  */
 
-namespace Caelis\CardDAV;
+namespace Stadion\CardDAV;
 
 use Sabre\DAV\Auth\Backend\AbstractBasic;
 

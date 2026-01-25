@@ -7,11 +7,11 @@ tags: [phpunit, wp-browser, codeception, access-control, workspace, user-approva
 # Dependency graph
 requires:
   - phase: 21-phpunit-setup
-    provides: CaelisTestCase base class, test database configuration, factory helpers
+    provides: StadionTestCase base class, test database configuration, factory helpers
 provides:
   - WorkspacePermissionsTest with 23 tests for workspace membership and user approval
-  - Test coverage for PRM_Workspace_Members class
-  - Test coverage for user approval blocking in PRM_Access_Control
+  - Test coverage for STADION_Workspace_Members class
+  - Test coverage for user approval blocking in STADION_Access_Control
 affects: [23-rest-api-tests, future-access-control-changes]
 
 # Tech tracking
@@ -32,7 +32,7 @@ key-decisions:
 patterns-established:
   - "createUniqueUser() helper pattern for test isolation"
   - "createWorkspace() and assignPostToWorkspace() helpers for workspace testing"
-  - "Manual role assignment after factory creation for non-caelis_user roles"
+  - "Manual role assignment after factory creation for non-stadion_user roles"
 
 issues-created: []
 
@@ -43,7 +43,7 @@ completed: 2026-01-13
 
 # Phase 22 Plan 03: WorkspacePermissionsTest Summary
 
-**23 tests covering workspace membership CRUD, role-based permissions, and user approval blocking for PRM_Access_Control**
+**23 tests covering workspace membership CRUD, role-based permissions, and user approval blocking for STADION_Access_Control**
 
 ## Performance
 
@@ -84,7 +84,7 @@ Tasks were committed together due to single file output:
 ## Decisions Made
 
 - **Unique test IDs:** Used `wp_generate_password(6, false)` per test to ensure unique usernames, avoiding conflicts from test isolation issues
-- **Admin role workaround:** The `user_register` hook forces all new users to `caelis_user` role, so admin tests must manually set role after creation
+- **Admin role workaround:** The `user_register` hook forces all new users to `stadion_user` role, so admin tests must manually set role after creation
 - **REST filter testing:** Avoided direct SQL query testing for get_accessible_post_ids due to transaction isolation; tested via user_can_access_post instead
 
 ## Deviations from Plan
@@ -101,7 +101,7 @@ Tasks were committed together due to single file output:
 
 **2. [Rule 3 - Blocking] Admin role override workaround**
 - **Found during:** Task 2 (test_admin_always_approved)
-- **Issue:** Factory user creation with role 'administrator' was being overridden by user_register hook to caelis_user
+- **Issue:** Factory user creation with role 'administrator' was being overridden by user_register hook to stadion_user
 - **Fix:** Create user first, then manually set role to administrator via WP_User::set_role()
 - **Files modified:** tests/Wpunit/WorkspacePermissionsTest.php
 - **Verification:** Admin test passes, user has administrator role and manage_options capability

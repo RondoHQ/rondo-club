@@ -52,7 +52,7 @@
 3. React Query checks cache, initiates GET request
 4. `src/api/client.js` sends request to `/wp/v2/people`
 5. WordPress receives request, validates nonce
-6. `PRM_Access_Control` filters query by current user
+6. `STADION_Access_Control` filters query by current user
 7. Database returns user's people posts
 8. Response transformed by `usePeople` hook
 9. UI renders `PersonCard` components
@@ -63,7 +63,7 @@
 2. Form submission triggers `useCreatePerson()` mutation
 3. `prmApi.createPerson(data)` sends POST request
 4. WordPress validates and creates post
-5. `PRM_Auto_Title` generates post title
+5. `STADION_Auto_Title` generates post title
 6. ACF fields saved to postmeta
 7. Response with new post ID returned
 8. React Query invalidates `['people']` cache
@@ -72,8 +72,8 @@
 **Scheduled Flow (Reminders):**
 
 1. WordPress cron fires at user's notification time
-2. `prm_user_reminder` action triggered
-3. `PRM_Reminders::process_user_reminders()` executes
+2. `stadion_user_reminder` action triggered
+3. `STADION_Reminders::process_user_reminders()` executes
 4. Queries upcoming important dates
 5. Formats notifications per channel
 6. Dispatches via Email and/or Slack
@@ -99,7 +99,7 @@
 
 **PHP Service Classes:**
 - Purpose: Domain-specific business logic
-- Examples: `PRM_Reminders`, `PRM_Access_Control`, `PRM_REST_API`
+- Examples: `STADION_Reminders`, `STADION_Access_Control`, `STADION_REST_API`
 - Pattern: Constructor registers WordPress hooks, methods handle actions
 - Location: `includes/class-*.php`
 
@@ -173,7 +173,7 @@
 - `ProtectedRoute` component in React
 
 **Access Control:**
-- `PRM_Access_Control` filters all queries to user's own posts
+- `STADION_Access_Control` filters all queries to user's own posts
 - Admin users can see all data
 - Capability checks on sensitive endpoints
 

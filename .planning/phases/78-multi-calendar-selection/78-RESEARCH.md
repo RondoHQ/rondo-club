@@ -283,10 +283,10 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/caelis/includes/class-calendar-connections.php` - Current storage structure
-- `/Users/joostdevalk/Code/caelis/includes/class-google-calendar-provider.php` - Current sync implementation
-- `/Users/joostdevalk/Code/caelis/includes/class-rest-calendar.php` - Current REST endpoints
-- `/Users/joostdevalk/Code/caelis/src/pages/Settings/Settings.jsx` - Current UI implementation
+- `/Users/joostdevalk/Code/stadion/includes/class-calendar-connections.php` - Current storage structure
+- `/Users/joostdevalk/Code/stadion/includes/class-google-calendar-provider.php` - Current sync implementation
+- `/Users/joostdevalk/Code/stadion/includes/class-rest-calendar.php` - Current REST endpoints
+- `/Users/joostdevalk/Code/stadion/src/pages/Settings/Settings.jsx` - Current UI implementation
 
 ### Secondary (MEDIUM confidence)
 - Phase 68-01-SUMMARY.md - Prior calendar selection implementation

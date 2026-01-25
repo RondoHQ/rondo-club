@@ -664,8 +664,8 @@ export default function PeopleList() {
   const { data: workspaces = [] } = useWorkspaces();
   const bulkUpdateMutation = useBulkUpdatePeople();
 
-  // Get current user ID from prmConfig
-  const currentUserId = window.prmConfig?.userId;
+  // Get current user ID from stadionConfig
+  const currentUserId = window.stadionConfig?.userId;
   
   // Create person mutation (using shared hook)
   const createPersonMutation = useCreatePerson({

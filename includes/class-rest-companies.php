@@ -5,7 +5,7 @@
  * Handles REST API endpoints related to companies domain.
  */
 
-namespace Caelis\REST;
+namespace Stadion\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -28,7 +28,7 @@ class Companies extends Base {
 	public function register_routes() {
 		// People by company
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/companies/(?P<company_id>\d+)/people',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -46,7 +46,7 @@ class Companies extends Base {
 
 		// Set company logo (featured image) - by media ID
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/companies/(?P<company_id>\d+)/logo',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -70,7 +70,7 @@ class Companies extends Base {
 
 		// Upload company logo with proper filename
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/companies/(?P<company_id>\d+)/logo/upload',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -88,7 +88,7 @@ class Companies extends Base {
 
 		// Sharing endpoints
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/companies/(?P<id>\d+)/shares',
 			[
 				[
@@ -105,7 +105,7 @@ class Companies extends Base {
 		);
 
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/companies/(?P<id>\d+)/shares/(?P<user_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -116,7 +116,7 @@ class Companies extends Base {
 
 		// Bulk update companies
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/companies/bulk-update',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -213,11 +213,11 @@ class Companies extends Base {
 		$user_id    = get_current_user_id();
 
 		// Check if user can access this company
-		$access_control = new \PRM_Access_Control();
+		$access_control = new \STADION_Access_Control();
 		if ( ! current_user_can( 'manage_options' ) && ! $access_control->user_can_access_post( $company_id, $user_id ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to access this company.', 'caelis' ),
+				__( 'You do not have permission to access this company.', 'stadion' ),
 				[ 'status' => 403 ]
 			);
 		}
@@ -314,20 +314,20 @@ class Companies extends Base {
 		// Verify company exists
 		$company = get_post( $company_id );
 		if ( ! $company || $company->post_type !== 'company' ) {
-			return new \WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'company_not_found', __( 'Company not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Verify media exists
 		$media = get_post( $media_id );
 		if ( ! $media || $media->post_type !== 'attachment' ) {
-			return new \WP_Error( 'media_not_found', __( 'Media not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'media_not_found', __( 'Media not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Set as featured image
 		$result = set_post_thumbnail( $company_id, $media_id );
 
 		if ( ! $result ) {
-			return new \WP_Error( 'set_thumbnail_failed', __( 'Failed to set company logo.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'set_thumbnail_failed', __( 'Failed to set company logo.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
@@ -352,13 +352,13 @@ class Companies extends Base {
 		// Verify company exists
 		$company = get_post( $company_id );
 		if ( ! $company || $company->post_type !== 'company' ) {
-			return new \WP_Error( 'company_not_found', __( 'Company not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'company_not_found', __( 'Company not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Check for uploaded file
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new \WP_Error( 'no_file', __( 'No file uploaded.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_file', __( 'No file uploaded.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		$file = $files['file'];
@@ -366,7 +366,7 @@ class Companies extends Base {
 		// Validate file type
 		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' ];
 		if ( ! in_array( $file['type'], $allowed_types ) ) {
-			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Get company name for filename
@@ -480,12 +480,12 @@ class Companies extends Base {
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new \WP_Error( 'invalid_user', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_user', __( 'User not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Can't share with yourself
 		if ( $user_id === get_current_user_id() ) {
-			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Get current shares
@@ -500,7 +500,7 @@ class Companies extends Base {
 				return rest_ensure_response(
 					[
 						'success' => true,
-						'message' => __( 'Share updated.', 'caelis' ),
+						'message' => __( 'Share updated.', 'stadion' ),
 					]
 				);
 			}
@@ -516,7 +516,7 @@ class Companies extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Shared successfully.', 'caelis' ),
+				'message' => __( 'Shared successfully.', 'stadion' ),
 			]
 		);
 	}
@@ -545,7 +545,7 @@ class Companies extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Share removed.', 'caelis' ),
+				'message' => __( 'Share removed.', 'stadion' ),
 			]
 		);
 	}
@@ -560,7 +560,7 @@ class Companies extends Base {
 		if ( ! is_user_logged_in() ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You must be logged in to perform this action.', 'caelis' ),
+				__( 'You must be logged in to perform this action.', 'stadion' ),
 				[ 'status' => 401 ]
 			);
 		}
@@ -575,7 +575,7 @@ class Companies extends Base {
 			if ( ! $post || $post->post_type !== 'company' ) {
 				return new \WP_Error(
 					'rest_invalid_id',
-					sprintf( __( 'Company with ID %d not found.', 'caelis' ), $post_id ),
+					sprintf( __( 'Company with ID %d not found.', 'stadion' ), $post_id ),
 					[ 'status' => 404 ]
 				);
 			}
@@ -584,7 +584,7 @@ class Companies extends Base {
 			if ( (int) $post->post_author !== $current_user_id && ! $is_admin ) {
 				return new \WP_Error(
 					'rest_forbidden',
-					sprintf( __( 'You do not have permission to update company with ID %d.', 'caelis' ), $post_id ),
+					sprintf( __( 'You do not have permission to update company with ID %d.', 'stadion' ), $post_id ),
 					[ 'status' => 403 ]
 				);
 			}
@@ -613,11 +613,11 @@ class Companies extends Base {
 			try {
 				// Update visibility if provided
 				if ( isset( $updates['visibility'] ) ) {
-					$result = \PRM_Visibility::set_visibility( $post_id, $updates['visibility'] );
+					$result = \STADION_Visibility::set_visibility( $post_id, $updates['visibility'] );
 					if ( ! $result ) {
 						$failed[] = [
 							'id'    => $post_id,
-							'error' => __( 'Failed to update visibility.', 'caelis' ),
+							'error' => __( 'Failed to update visibility.', 'stadion' ),
 						];
 						continue;
 					}

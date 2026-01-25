@@ -33,7 +33,7 @@ key-decisions:
   - "Used Database icon for page header (matches data management theme)"
   - "Table layout for field list (consistent with admin patterns)"
   - "Hover actions for Edit/Delete (matches Labels.jsx pattern)"
-  - "localStorage persistence for tab selection (key: caelis-custom-fields-tab)"
+  - "localStorage persistence for tab selection (key: stadion-custom-fields-tab)"
 
 patterns-established:
   - "Custom fields page structure for Settings subtab"
@@ -83,7 +83,7 @@ Each task was committed atomically:
 - **Database icon:** Used for page header to indicate data management functionality
 - **Table layout:** Simple table with Label/Type columns for field list
 - **Hover actions:** Edit/Delete icons appear on row hover with opacity transition
-- **localStorage persistence:** Tab selection persisted under 'caelis-custom-fields-tab' key
+- **localStorage persistence:** Tab selection persisted under 'stadion-custom-fields-tab' key
 
 ## Deviations from Plan
 

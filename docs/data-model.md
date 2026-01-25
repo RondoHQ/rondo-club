@@ -1,6 +1,6 @@
 # Data Model
 
-This document describes the custom post types, taxonomies, and ACF field groups that make up the Caelis data model.
+This document describes the custom post types, taxonomies, and ACF field groups that make up the Stadion data model.
 
 ## Custom Post Types
 
@@ -235,7 +235,7 @@ Represents collaborative workspaces for multi-user features (Phase 7+).
 | Supports | title, editor, author, thumbnail |
 | Public | No (private, accessed via REST API) |
 
-**Membership:** Stored in user meta via `PRM_Workspace_Members` class (see below).
+**Membership:** Stored in user meta via `STADION_Workspace_Members` class (see below).
 
 ---
 
@@ -278,7 +278,7 @@ For `shared` visibility, the `_shared_with` post meta stores sharing details:
 ]
 ```
 
-**Helper Class:** `PRM_Visibility` provides static methods for managing visibility:
+**Helper Class:** `STADION_Visibility` provides static methods for managing visibility:
 
 | Method | Description |
 |--------|-------------|

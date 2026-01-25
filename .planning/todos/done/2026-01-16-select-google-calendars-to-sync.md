@@ -9,7 +9,7 @@ files:
 
 ## Problem
 
-Currently, when Google Calendar is connected, all calendars from the user's account are synced. Users may have multiple calendars (personal, work, shared, subscribed) and may only want to sync specific ones to Caelis.
+Currently, when Google Calendar is connected, all calendars from the user's account are synced. Users may have multiple calendars (personal, work, shared, subscribed) and may only want to sync specific ones to Stadion.
 
 Without calendar selection:
 - Events from unwanted calendars clutter the dashboard

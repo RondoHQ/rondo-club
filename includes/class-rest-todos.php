@@ -6,7 +6,7 @@
  * replacing the comment-based todo endpoints.
  */
 
-namespace Caelis\REST;
+namespace Stadion\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -28,7 +28,7 @@ class Todos extends Base {
 	public function register_routes() {
 		// Person-scoped endpoints
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/people/(?P<person_id>\d+)/todos',
 			[
 				[
@@ -60,7 +60,7 @@ class Todos extends Base {
 
 		// Global endpoints
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/todos',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -78,7 +78,7 @@ class Todos extends Base {
 		);
 
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/todos/(?P<id>\d+)',
 			[
 				[
@@ -143,18 +143,18 @@ class Todos extends Base {
 		$todo_id = $request->get_param( 'id' );
 		$todo    = get_post( $todo_id );
 
-		if ( ! $todo || $todo->post_type !== 'prm_todo' ) {
+		if ( ! $todo || $todo->post_type !== 'stadion_todo' ) {
 			return false;
 		}
 
 		// Verify it's a valid todo status
-		$valid_statuses = [ 'prm_open', 'prm_awaiting', 'prm_completed', 'publish' ];
+		$valid_statuses = [ 'stadion_open', 'stadion_awaiting', 'stadion_completed', 'publish' ];
 		if ( ! in_array( $todo->post_status, $valid_statuses, true ) ) {
 			return false;
 		}
 
 		// Use access control to check if user can access this todo
-		$access_control = new \PRM_Access_Control();
+		$access_control = new \STADION_Access_Control();
 		return $access_control->user_can_access_post( $todo_id );
 	}
 
@@ -171,9 +171,9 @@ class Todos extends Base {
 		// The serialized format contains the ID as a quoted string: "123"
 		$todos = get_posts(
 			[
-				'post_type'      => 'prm_todo',
+				'post_type'      => 'stadion_todo',
 				'posts_per_page' => -1,
-				'post_status'    => [ 'prm_open', 'prm_awaiting', 'prm_completed' ],
+				'post_status'    => [ 'stadion_open', 'stadion_awaiting', 'stadion_completed' ],
 				'meta_query'     => [
 					[
 						'key'     => 'related_persons',
@@ -214,24 +214,24 @@ class Todos extends Base {
 		}
 
 		if ( empty( $person_ids ) ) {
-			return new \WP_Error( 'no_person', __( 'At least one person is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_person', __( 'At least one person is required.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		if ( empty( $content ) ) {
-			return new \WP_Error( 'empty_content', __( 'Todo content is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_content', __( 'Todo content is required.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Validate and determine post status
 		$valid_statuses = [ 'open', 'awaiting', 'completed' ];
 		if ( $status !== null && ! in_array( $status, $valid_statuses, true ) ) {
-			return new \WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'stadion' ), [ 'status' => 400 ] );
 		}
-		$post_status = $status ? 'prm_' . $status : 'prm_open';
+		$post_status = $status ? 'stadion_' . $status : 'stadion_open';
 
 		// Create the todo post
 		$post_id = wp_insert_post(
 			[
-				'post_type'   => 'prm_todo',
+				'post_type'   => 'stadion_todo',
 				'post_title'  => $content,
 				'post_status' => $post_status,
 				'post_author' => get_current_user_id(),
@@ -239,7 +239,7 @@ class Todos extends Base {
 		);
 
 		if ( is_wp_error( $post_id ) ) {
-			return new \WP_Error( 'create_failed', __( 'Failed to create todo.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'create_failed', __( 'Failed to create todo.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		// Save ACF fields - use new multi-person field
@@ -278,17 +278,17 @@ class Todos extends Base {
 
 		// Map status param to post_status values
 		$status_map = [
-			'open'      => [ 'prm_open' ],
-			'awaiting'  => [ 'prm_awaiting' ],
-			'completed' => [ 'prm_completed' ],
-			'all'       => [ 'prm_open', 'prm_awaiting', 'prm_completed' ],
+			'open'      => [ 'stadion_open' ],
+			'awaiting'  => [ 'stadion_awaiting' ],
+			'completed' => [ 'stadion_completed' ],
+			'all'       => [ 'stadion_open', 'stadion_awaiting', 'stadion_completed' ],
 		];
 
-		$post_statuses = $status_map[ $status ] ?? [ 'prm_open' ];
+		$post_statuses = $status_map[ $status ] ?? [ 'stadion_open' ];
 
 		// Build query args - access control filter will handle visibility
 		$args = [
-			'post_type'      => 'prm_todo',
+			'post_type'      => 'stadion_todo',
 			'posts_per_page' => 100, // Reasonable limit
 			'post_status'    => $post_statuses,
 			'orderby'        => 'date',
@@ -353,8 +353,8 @@ class Todos extends Base {
 		$todo_id = (int) $request->get_param( 'id' );
 		$todo    = get_post( $todo_id );
 
-		if ( ! $todo || $todo->post_type !== 'prm_todo' ) {
-			return new \WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), [ 'status' => 404 ] );
+		if ( ! $todo || $todo->post_type !== 'stadion_todo' ) {
+			return new \WP_Error( 'not_found', __( 'Todo not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		return rest_ensure_response( $this->format_todo( $todo ) );
@@ -376,8 +376,8 @@ class Todos extends Base {
 
 		$todo = get_post( $todo_id );
 
-		if ( ! $todo || $todo->post_type !== 'prm_todo' ) {
-			return new \WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), [ 'status' => 404 ] );
+		if ( ! $todo || $todo->post_type !== 'stadion_todo' ) {
+			return new \WP_Error( 'not_found', __( 'Todo not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Build update args
@@ -392,11 +392,11 @@ class Todos extends Base {
 		if ( $status !== null ) {
 			$valid_statuses = [ 'open', 'awaiting', 'completed' ];
 			if ( ! in_array( $status, $valid_statuses, true ) ) {
-				return new \WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'caelis' ), [ 'status' => 400 ] );
+				return new \WP_Error( 'invalid_status', __( 'Invalid status. Use: open, awaiting, or completed.', 'stadion' ), [ 'status' => 400 ] );
 			}
 
 			$current_status  = $this->get_todo_status( $todo );
-			$new_post_status = 'prm_' . $status;
+			$new_post_status = 'stadion_' . $status;
 
 			// Set awaiting_since timestamp when changing to awaiting
 			if ( $status === 'awaiting' && $current_status !== 'awaiting' ) {
@@ -451,9 +451,9 @@ class Todos extends Base {
 	 */
 	private function get_todo_status( $post ) {
 		$status_map = [
-			'prm_open'      => 'open',
-			'prm_awaiting'  => 'awaiting',
-			'prm_completed' => 'completed',
+			'stadion_open'      => 'open',
+			'stadion_awaiting'  => 'awaiting',
+			'stadion_completed' => 'completed',
 			'publish'       => 'open', // Legacy fallback
 		];
 
@@ -470,14 +470,14 @@ class Todos extends Base {
 		$todo_id = (int) $request->get_param( 'id' );
 		$todo    = get_post( $todo_id );
 
-		if ( ! $todo || $todo->post_type !== 'prm_todo' ) {
-			return new \WP_Error( 'not_found', __( 'Todo not found.', 'caelis' ), [ 'status' => 404 ] );
+		if ( ! $todo || $todo->post_type !== 'stadion_todo' ) {
+			return new \WP_Error( 'not_found', __( 'Todo not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		$result = wp_delete_post( $todo_id, true ); // Force delete (bypass trash)
 
 		if ( ! $result ) {
-			return new \WP_Error( 'delete_failed', __( 'Failed to delete todo.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'delete_failed', __( 'Failed to delete todo.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response( [ 'deleted' => true ] );

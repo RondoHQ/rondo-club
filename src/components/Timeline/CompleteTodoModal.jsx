@@ -1,6 +1,6 @@
 import { Clock, CheckSquare, FileText, X } from 'lucide-react';
 
-export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, onComplete, onCompleteAsActivity }) {
+export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, onComplete, onCompleteAsActivity, hideAwaitingOption = false }) {
   if (!isOpen || !todo) return null;
 
   return (
@@ -26,16 +26,18 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
           </p>
 
           <div className="space-y-3">
-            <button
-              onClick={onAwaiting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-orange-300 dark:hover:border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors text-left"
-            >
-              <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="font-medium text-gray-900 dark:text-gray-50">Awaiting response</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">You did your part, waiting for their reply</p>
-              </div>
-            </button>
+            {!hideAwaitingOption && (
+              <button
+                onClick={onAwaiting}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-orange-300 dark:hover:border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors text-left"
+              >
+                <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900 dark:text-gray-50">Awaiting response</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">You did your part, waiting for their reply</p>
+                </div>
+              </button>
+            )}
 
             <button
               onClick={onComplete}

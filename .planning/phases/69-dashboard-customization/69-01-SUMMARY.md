@@ -9,9 +9,9 @@ Implemented user-configurable dashboard with card visibility toggles and drag-an
 ### Backend Changes
 
 - Added REST API endpoints for dashboard settings (`includes/class-rest-api.php`):
-  - `GET /prm/v1/user/dashboard-settings` - returns visible_cards and card_order arrays
-  - `PATCH /prm/v1/user/dashboard-settings` - updates settings with validation
-- Settings stored in WordPress user meta: `caelis_dashboard_visible_cards`, `caelis_dashboard_card_order`
+  - `GET /stadion/v1/user/dashboard-settings` - returns visible_cards and card_order arrays
+  - `PATCH /stadion/v1/user/dashboard-settings` - updates settings with validation
+- Settings stored in WordPress user meta: `stadion_dashboard_visible_cards`, `stadion_dashboard_card_order`
 - Added validation for valid card IDs: stats, reminders, todos, awaiting, meetings, recent-contacted, recent-edited, favorites
 
 ### Frontend Changes

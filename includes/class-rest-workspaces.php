@@ -5,7 +5,7 @@
  * Handles REST API endpoints for workspace management and member operations.
  */
 
-namespace Caelis\REST;
+namespace Stadion\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -26,9 +26,9 @@ class Workspaces extends Base {
 	 * Register custom REST routes for workspace domain
 	 */
 	public function register_routes() {
-		// GET /prm/v1/workspaces - List user's workspaces
+		// GET /stadion/v1/workspaces - List user's workspaces
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -37,9 +37,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// POST /prm/v1/workspaces - Create workspace
+		// POST /stadion/v1/workspaces - Create workspace
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -58,9 +58,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// GET /prm/v1/workspaces/(?P<id>\d+) - Get workspace details
+		// GET /stadion/v1/workspaces/(?P<id>\d+) - Get workspace details
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces/(?P<id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -76,9 +76,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// PUT /prm/v1/workspaces/(?P<id>\d+) - Update workspace
+		// PUT /stadion/v1/workspaces/(?P<id>\d+) - Update workspace
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces/(?P<id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::EDITABLE,
@@ -102,9 +102,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// DELETE /prm/v1/workspaces/(?P<id>\d+) - Delete workspace
+		// DELETE /stadion/v1/workspaces/(?P<id>\d+) - Delete workspace
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces/(?P<id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -120,9 +120,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// POST /prm/v1/workspaces/(?P<id>\d+)/members - Add member
+		// POST /stadion/v1/workspaces/(?P<id>\d+)/members - Add member
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces/(?P<id>\d+)/members',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -152,9 +152,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// DELETE /prm/v1/workspaces/(?P<id>\d+)/members/(?P<user_id>\d+) - Remove member
+		// DELETE /stadion/v1/workspaces/(?P<id>\d+)/members/(?P<user_id>\d+) - Remove member
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces/(?P<id>\d+)/members/(?P<user_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -175,9 +175,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// PUT /prm/v1/workspaces/(?P<id>\d+)/members/(?P<user_id>\d+) - Update member role
+		// PUT /stadion/v1/workspaces/(?P<id>\d+)/members/(?P<user_id>\d+) - Update member role
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces/(?P<id>\d+)/members/(?P<user_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::EDITABLE,
@@ -205,9 +205,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// POST /prm/v1/workspaces/(?P<id>\d+)/invites - Create & send invite
+		// POST /stadion/v1/workspaces/(?P<id>\d+)/invites - Create & send invite
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces/(?P<id>\d+)/invites',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -238,9 +238,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// GET /prm/v1/workspaces/(?P<id>\d+)/invites - List pending invites
+		// GET /stadion/v1/workspaces/(?P<id>\d+)/invites - List pending invites
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces/(?P<id>\d+)/invites',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -256,9 +256,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// DELETE /prm/v1/workspaces/(?P<id>\d+)/invites/(?P<invite_id>\d+) - Revoke invite
+		// DELETE /stadion/v1/workspaces/(?P<id>\d+)/invites/(?P<invite_id>\d+) - Revoke invite
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces/(?P<id>\d+)/invites/(?P<invite_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -279,9 +279,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// GET /prm/v1/invites/(?P<token>[a-zA-Z0-9]+) - Validate invite (PUBLIC)
+		// GET /stadion/v1/invites/(?P<token>[a-zA-Z0-9]+) - Validate invite (PUBLIC)
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/invites/(?P<token>[a-zA-Z0-9]+)',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -297,9 +297,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// POST /prm/v1/invites/(?P<token>[a-zA-Z0-9]+)/accept - Accept invite
+		// POST /stadion/v1/invites/(?P<token>[a-zA-Z0-9]+)/accept - Accept invite
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/invites/(?P<token>[a-zA-Z0-9]+)/accept',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -315,9 +315,9 @@ class Workspaces extends Base {
 			]
 		);
 
-		// GET /prm/v1/workspaces/members/search - Search members across workspaces
+		// GET /stadion/v1/workspaces/members/search - Search members across workspaces
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/workspaces/members/search',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -373,7 +373,7 @@ class Workspaces extends Base {
 			return true;
 		}
 
-		return \PRM_Workspace_Members::is_member( $workspace_id, $user_id );
+		return \STADION_Workspace_Members::is_member( $workspace_id, $user_id );
 	}
 
 	/**
@@ -405,7 +405,7 @@ class Workspaces extends Base {
 			return true;
 		}
 
-		return \PRM_Workspace_Members::is_admin( $workspace_id, $user_id );
+		return \STADION_Workspace_Members::is_admin( $workspace_id, $user_id );
 	}
 
 	/**
@@ -449,7 +449,7 @@ class Workspaces extends Base {
 	 */
 	public function get_workspaces( $request ) {
 		$user_id         = get_current_user_id();
-		$user_workspaces = \PRM_Workspace_Members::get_user_workspaces( $user_id );
+		$user_workspaces = \STADION_Workspace_Members::get_user_workspaces( $user_id );
 
 		$workspaces = [];
 		foreach ( $user_workspaces as $membership ) {
@@ -458,7 +458,7 @@ class Workspaces extends Base {
 				continue;
 			}
 
-			$members = \PRM_Workspace_Members::get_members( $membership['workspace_id'] );
+			$members = \STADION_Workspace_Members::get_members( $membership['workspace_id'] );
 
 			$workspaces[] = [
 				'id'           => $workspace->ID,
@@ -486,11 +486,11 @@ class Workspaces extends Base {
 		$user_id      = get_current_user_id();
 
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Get members with user info
-		$members_raw = \PRM_Workspace_Members::get_members( $workspace_id );
+		$members_raw = \STADION_Workspace_Members::get_members( $workspace_id );
 		$members     = [];
 
 		foreach ( $members_raw as $member ) {
@@ -510,7 +510,7 @@ class Workspaces extends Base {
 			];
 		}
 
-		$current_role = \PRM_Workspace_Members::get_user_role( $workspace_id, $user_id );
+		$current_role = \STADION_Workspace_Members::get_user_role( $workspace_id, $user_id );
 
 		$response = [
 			'id'           => $workspace->ID,
@@ -555,7 +555,7 @@ class Workspaces extends Base {
 			return new \WP_Error( 'create_failed', $workspace_id->get_error_message(), [ 'status' => 500 ] );
 		}
 
-		// The save_post_workspace hook in PRM_Workspace_Members auto-adds author as admin
+		// The save_post_workspace hook in STADION_Workspace_Members auto-adds author as admin
 
 		$workspace = get_post( $workspace_id );
 
@@ -583,7 +583,7 @@ class Workspaces extends Base {
 		$workspace    = get_post( $workspace_id );
 
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		$post_data = [
@@ -609,8 +609,8 @@ class Workspaces extends Base {
 
 		$workspace    = get_post( $workspace_id );
 		$user_id      = get_current_user_id();
-		$members      = \PRM_Workspace_Members::get_members( $workspace_id );
-		$current_role = \PRM_Workspace_Members::get_user_role( $workspace_id, $user_id );
+		$members      = \STADION_Workspace_Members::get_members( $workspace_id );
+		$current_role = \STADION_Workspace_Members::get_user_role( $workspace_id, $user_id );
 
 		return rest_ensure_response(
 			[
@@ -636,20 +636,20 @@ class Workspaces extends Base {
 		$workspace    = get_post( $workspace_id );
 
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		$result = wp_trash_post( $workspace_id );
 
 		if ( ! $result ) {
-			return new \WP_Error( 'delete_failed', __( 'Failed to delete workspace.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'delete_failed', __( 'Failed to delete workspace.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
 			[
 				'success' => true,
 				'id'      => $workspace_id,
-				'message' => __( 'Workspace moved to trash.', 'caelis' ),
+				'message' => __( 'Workspace moved to trash.', 'stadion' ),
 			]
 		);
 	}
@@ -668,27 +668,27 @@ class Workspaces extends Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new \WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'user_not_found', __( 'User not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Check if user is already a member
-		if ( \PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
+		if ( \STADION_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
 			// Update their role instead
-			$result = \PRM_Workspace_Members::update_role( $workspace_id, $user_id, $role );
+			$result = \STADION_Workspace_Members::update_role( $workspace_id, $user_id, $role );
 			if ( ! $result ) {
-				return new \WP_Error( 'update_failed', __( 'Failed to update member role.', 'caelis' ), [ 'status' => 500 ] );
+				return new \WP_Error( 'update_failed', __( 'Failed to update member role.', 'stadion' ), [ 'status' => 500 ] );
 			}
 		} else {
 			// Add new member
-			$result = \PRM_Workspace_Members::add( $workspace_id, $user_id, $role );
+			$result = \STADION_Workspace_Members::add( $workspace_id, $user_id, $role );
 			if ( ! $result ) {
-				return new \WP_Error( 'add_failed', __( 'Failed to add member.', 'caelis' ), [ 'status' => 500 ] );
+				return new \WP_Error( 'add_failed', __( 'Failed to add member.', 'stadion' ), [ 'status' => 500 ] );
 			}
 		}
 
@@ -718,30 +718,30 @@ class Workspaces extends Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Check if user is the owner (cannot be removed)
 		if ( (int) $workspace->post_author === $user_id ) {
-			return new \WP_Error( 'cannot_remove_owner', __( 'Cannot remove the workspace owner.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'cannot_remove_owner', __( 'Cannot remove the workspace owner.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Check if user is a member
-		if ( ! \PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
-			return new \WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
+		if ( ! \STADION_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
+			return new \WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
-		$result = \PRM_Workspace_Members::remove( $workspace_id, $user_id );
+		$result = \STADION_Workspace_Members::remove( $workspace_id, $user_id );
 
 		if ( ! $result ) {
-			return new \WP_Error( 'remove_failed', __( 'Failed to remove member.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'remove_failed', __( 'Failed to remove member.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
 			[
 				'success' => true,
 				'user_id' => $user_id,
-				'message' => __( 'Member removed from workspace.', 'caelis' ),
+				'message' => __( 'Member removed from workspace.', 'stadion' ),
 			]
 		);
 	}
@@ -760,24 +760,24 @@ class Workspaces extends Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new \WP_Error( 'user_not_found', __( 'User not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'user_not_found', __( 'User not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Check if user is a member
-		if ( ! \PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
-			return new \WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
+		if ( ! \STADION_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
+			return new \WP_Error( 'not_a_member', __( 'User is not a member of this workspace.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
-		$result = \PRM_Workspace_Members::update_role( $workspace_id, $user_id, $role );
+		$result = \STADION_Workspace_Members::update_role( $workspace_id, $user_id, $role );
 
 		if ( ! $result ) {
-			return new \WP_Error( 'update_failed', __( 'Failed to update member role.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'update_failed', __( 'Failed to update member role.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
@@ -807,13 +807,13 @@ class Workspaces extends Base {
 		// Validate workspace exists
 		$workspace = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_type !== 'workspace' ) {
-			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'Workspace not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Check if user with this email is already a workspace member
 		$existing_user = get_user_by( 'email', $email );
-		if ( $existing_user && \PRM_Workspace_Members::is_member( $workspace_id, $existing_user->ID ) ) {
-			return new \WP_Error( 'already_member', __( 'This user is already a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
+		if ( $existing_user && \STADION_Workspace_Members::is_member( $workspace_id, $existing_user->ID ) ) {
+			return new \WP_Error( 'already_member', __( 'This user is already a member of this workspace.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Check if pending invite already exists for this email+workspace
@@ -841,7 +841,7 @@ class Workspaces extends Base {
 		);
 
 		if ( ! empty( $existing_invites ) ) {
-			return new \WP_Error( 'invite_exists', __( 'A pending invite already exists for this email address.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invite_exists', __( 'A pending invite already exists for this email address.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Generate secure token (alphanumeric only)
@@ -924,7 +924,7 @@ class Workspaces extends Base {
 				'role'       => get_field( '_invite_role', $invite->ID ),
 				'status'     => get_field( '_invite_status', $invite->ID ),
 				'expires_at' => get_field( '_invite_expires_at', $invite->ID ),
-				'invited_by' => $inviter ? $inviter->display_name : __( 'Unknown', 'caelis' ),
+				'invited_by' => $inviter ? $inviter->display_name : __( 'Unknown', 'stadion' ),
 				'invited_at' => $invite->post_date_gmt,
 			];
 		}
@@ -944,19 +944,19 @@ class Workspaces extends Base {
 
 		$invite = get_post( $invite_id );
 		if ( ! $invite || $invite->post_type !== 'workspace_invite' ) {
-			return new \WP_Error( 'invite_not_found', __( 'Invite not found.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invite_not_found', __( 'Invite not found.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Verify invite belongs to this workspace
 		$invite_workspace_id = (int) get_field( '_invite_workspace_id', $invite_id );
 		if ( $invite_workspace_id !== $workspace_id ) {
-			return new \WP_Error( 'invite_not_found', __( 'Invite not found for this workspace.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invite_not_found', __( 'Invite not found for this workspace.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Check status
 		$status = get_field( '_invite_status', $invite_id );
 		if ( $status !== 'pending' ) {
-			return new \WP_Error( 'invalid_status', __( 'Only pending invites can be revoked.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_status', __( 'Only pending invites can be revoked.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Revoke the invite
@@ -966,7 +966,7 @@ class Workspaces extends Base {
 			[
 				'success' => true,
 				'id'      => $invite_id,
-				'message' => __( 'Invite has been revoked.', 'caelis' ),
+				'message' => __( 'Invite has been revoked.', 'stadion' ),
 			]
 		);
 	}
@@ -984,13 +984,13 @@ class Workspaces extends Base {
 
 		$invite = $this->get_invite_by_token( $token );
 		if ( ! $invite ) {
-			return new \WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Check status
 		$status = get_field( '_invite_status', $invite->ID );
 		if ( $status !== 'pending' ) {
-			return new \WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Check expiration
@@ -998,14 +998,14 @@ class Workspaces extends Base {
 		if ( strtotime( $expires_at ) < time() ) {
 			// Mark as expired
 			update_field( '_invite_status', 'expired', $invite->ID );
-			return new \WP_Error( 'expired', __( 'This invitation has expired.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'expired', __( 'This invitation has expired.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Get workspace info
 		$workspace_id = (int) get_field( '_invite_workspace_id', $invite->ID );
 		$workspace    = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_status !== 'publish' ) {
-			return new \WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Get inviter info
@@ -1017,7 +1017,7 @@ class Workspaces extends Base {
 				'role'           => get_field( '_invite_role', $invite->ID ),
 				'workspace_id'   => $workspace_id,
 				'workspace_name' => $this->sanitize_text( $workspace->post_title ),
-				'invited_by'     => $inviter ? $inviter->display_name : __( 'Unknown', 'caelis' ),
+				'invited_by'     => $inviter ? $inviter->display_name : __( 'Unknown', 'stadion' ),
 				'expires_at'     => $expires_at,
 			]
 		);
@@ -1036,50 +1036,50 @@ class Workspaces extends Base {
 
 		$invite = $this->get_invite_by_token( $token );
 		if ( ! $invite ) {
-			return new \WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_token', __( 'Invalid or expired invitation.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Check status
 		$status = get_field( '_invite_status', $invite->ID );
 		if ( $status !== 'pending' ) {
-			return new \WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_status', __( 'This invitation is no longer valid.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Check expiration
 		$expires_at = get_field( '_invite_expires_at', $invite->ID );
 		if ( strtotime( $expires_at ) < time() ) {
 			update_field( '_invite_status', 'expired', $invite->ID );
-			return new \WP_Error( 'expired', __( 'This invitation has expired.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'expired', __( 'This invitation has expired.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Verify email matches or user is admin
 		$invite_email = get_field( '_invite_email', $invite->ID );
 		if ( $user->user_email !== $invite_email && ! current_user_can( 'manage_options' ) ) {
-			return new \WP_Error( 'email_mismatch', __( 'Your email address does not match this invitation.', 'caelis' ), [ 'status' => 403 ] );
+			return new \WP_Error( 'email_mismatch', __( 'Your email address does not match this invitation.', 'stadion' ), [ 'status' => 403 ] );
 		}
 
 		// Get workspace
 		$workspace_id = (int) get_field( '_invite_workspace_id', $invite->ID );
 		$workspace    = get_post( $workspace_id );
 		if ( ! $workspace || $workspace->post_status !== 'publish' ) {
-			return new \WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'caelis' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'workspace_not_found', __( 'The workspace no longer exists.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
 		// Check if user is already a member
-		if ( \PRM_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
+		if ( \STADION_Workspace_Members::is_member( $workspace_id, $user_id ) ) {
 			// Mark invite as accepted anyway
 			update_field( '_invite_status', 'accepted', $invite->ID );
 			update_field( '_invite_accepted_by', $user_id, $invite->ID );
 
-			return new \WP_Error( 'already_member', __( 'You are already a member of this workspace.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'already_member', __( 'You are already a member of this workspace.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		// Add user to workspace
 		$role   = get_field( '_invite_role', $invite->ID );
-		$result = \PRM_Workspace_Members::add( $workspace_id, $user_id, $role );
+		$result = \STADION_Workspace_Members::add( $workspace_id, $user_id, $role );
 
 		if ( ! $result ) {
-			return new \WP_Error( 'join_failed', __( 'Failed to join workspace.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'join_failed', __( 'Failed to join workspace.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		// Mark invite as accepted
@@ -1092,7 +1092,7 @@ class Workspaces extends Base {
 				'workspace_id'   => $workspace_id,
 				'workspace_name' => $this->sanitize_text( $workspace->post_title ),
 				'role'           => $role,
-				'message'        => __( 'You have joined the workspace.', 'caelis' ),
+				'message'        => __( 'You have joined the workspace.', 'stadion' ),
 			]
 		);
 	}
@@ -1113,7 +1113,7 @@ class Workspaces extends Base {
 		// Filter to only workspaces the current user has access to
 		$accessible_workspace_ids = [];
 		foreach ( $workspace_ids as $workspace_id ) {
-			if ( \PRM_Workspace_Members::is_member( $workspace_id, $current_user_id ) || current_user_can( 'manage_options' ) ) {
+			if ( \STADION_Workspace_Members::is_member( $workspace_id, $current_user_id ) || current_user_can( 'manage_options' ) ) {
 				$accessible_workspace_ids[] = $workspace_id;
 			}
 		}
@@ -1125,7 +1125,7 @@ class Workspaces extends Base {
 		// Collect all member user IDs from accessible workspaces
 		$member_ids = [];
 		foreach ( $accessible_workspace_ids as $workspace_id ) {
-			$members = \PRM_Workspace_Members::get_members( $workspace_id );
+			$members = \STADION_Workspace_Members::get_members( $workspace_id );
 			foreach ( $members as $member ) {
 				$member_ids[ $member['user_id'] ] = true;
 			}
@@ -1204,7 +1204,7 @@ class Workspaces extends Base {
 		}
 
 		$inviter      = get_user_by( 'ID', $invite->post_author );
-		$inviter_name = $inviter ? $inviter->display_name : __( 'Someone', 'caelis' );
+		$inviter_name = $inviter ? $inviter->display_name : __( 'Someone', 'stadion' );
 
 		$workspace_name = $this->sanitize_text( $workspace->post_title );
 		$accept_url     = site_url( '/workspace-invite/' . $token );
@@ -1212,7 +1212,7 @@ class Workspaces extends Base {
 		// Build email subject
 		$subject = sprintf(
 			/* translators: %s: workspace name */
-			__( "You've been invited to %s on Caelis", 'caelis' ),
+			__( "You've been invited to %s on Stadion", 'stadion' ),
 			$workspace_name
 		);
 
@@ -1236,9 +1236,9 @@ class Workspaces extends Base {
 	 */
 	private function build_invite_email_html( $inviter_name, $workspace_name, $role, $accept_url ) {
 		$role_labels = [
-			'admin'  => __( 'Admin', 'caelis' ),
-			'member' => __( 'Member', 'caelis' ),
-			'viewer' => __( 'Viewer', 'caelis' ),
+			'admin'  => __( 'Admin', 'stadion' ),
+			'member' => __( 'Member', 'stadion' ),
+			'viewer' => __( 'Viewer', 'stadion' ),
 		];
 		$role_label  = $role_labels[ $role ] ?? $role;
 
@@ -1250,28 +1250,28 @@ class Workspaces extends Base {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">' . __( 'Workspace Invitation', 'caelis' ) . '</h1>
+        <h1 style="color: white; margin: 0; font-size: 24px;">' . __( 'Workspace Invitation', 'stadion' ) . '</h1>
     </div>
     <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
         <p style="font-size: 16px; margin-top: 0;">' . sprintf(
 			/* translators: 1: inviter name, 2: workspace name */
-			__( '%1$s has invited you to join <strong>%2$s</strong>.', 'caelis' ),
+			__( '%1$s has invited you to join <strong>%2$s</strong>.', 'stadion' ),
 			esc_html( $inviter_name ),
 			esc_html( $workspace_name )
 		) . '</p>
         <p style="font-size: 14px; color: #666;">' . sprintf(
 			/* translators: %s: role name */
-			__( 'You will be added as a %s.', 'caelis' ),
+			__( 'You will be added as a %s.', 'stadion' ),
 			'<strong>' . esc_html( $role_label ) . '</strong>'
 		) . '</p>
         <div style="text-align: center; margin: 30px 0;">
-            <a href="' . esc_url( $accept_url ) . '" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 14px 30px; border-radius: 6px; font-weight: 600; font-size: 16px;">' . __( 'Accept Invitation', 'caelis' ) . '</a>
+            <a href="' . esc_url( $accept_url ) . '" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 14px 30px; border-radius: 6px; font-weight: 600; font-size: 16px;">' . __( 'Accept Invitation', 'stadion' ) . '</a>
         </div>
-        <p style="font-size: 13px; color: #888; margin-bottom: 0;">' . __( 'This invitation expires in 7 days.', 'caelis' ) . '</p>
+        <p style="font-size: 13px; color: #888; margin-bottom: 0;">' . __( 'This invitation expires in 7 days.', 'stadion' ) . '</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
         <p style="font-size: 12px; color: #888; margin: 0;">' . sprintf(
 			/* translators: %s: accept URL */
-			__( 'If the button above does not work, copy and paste this link into your browser: %s', 'caelis' ),
+			__( 'If the button above does not work, copy and paste this link into your browser: %s', 'stadion' ),
 			'<br><a href="' . esc_url( $accept_url ) . '" style="color: #667eea; word-break: break-all;">' . esc_url( $accept_url ) . '</a>'
 		) . '</p>
     </div>

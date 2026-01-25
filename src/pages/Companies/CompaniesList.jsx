@@ -331,14 +331,19 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
 }
 
 function OrganizationListRow({ company, workspaces, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit }) {
-  // Local state for edited field values
+  // Local state for edited field values (includes name, website, workspace, and custom fields)
   const [editedFields, setEditedFields] = useState({});
 
   // Reset edited fields when entering/exiting edit mode
   useEffect(() => {
     if (isEditing) {
-      // Initialize with current values
-      const initialValues = {};
+      // Initialize with current values for core fields and custom fields
+      const assignedWorkspaces = company.acf?._assigned_workspaces || [];
+      const initialValues = {
+        _name: company.title?.rendered || company.title || '',
+        _website: company.acf?.website || '',
+        _workspace: assignedWorkspaces.length > 0 ? String(assignedWorkspaces[0]) : '',
+      };
       listViewFields.forEach(field => {
         initialValues[field.name] = company.acf?.[field.name] ?? '';
       });
@@ -346,7 +351,7 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
     } else {
       setEditedFields({});
     }
-  }, [isEditing, company.acf, listViewFields]);
+  }, [isEditing, company.acf, company.title, listViewFields]);
 
   const handleFieldChange = (fieldName, value) => {
     setEditedFields(prev => ({ ...prev, [fieldName]: value }));
@@ -359,6 +364,11 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
       onCancelEdit();
+    }
+    // Save on Enter (but not in textareas or selects where Enter might have other meaning)
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      handleSave();
     }
   };
 
@@ -404,13 +414,35 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
           )}
         </Link>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap">
-        <Link to={`/companies/${company.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-50">
-          {getCompanyName(company)}
-        </Link>
+      <td className="px-4 py-3 whitespace-nowrap" onDoubleClick={() => !isEditing && onStartEdit(company.id)}>
+        {isEditing ? (
+          <input
+            type="text"
+            value={editedFields._name ?? ''}
+            onChange={(e) => handleFieldChange('_name', e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-full px-2 py-1 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+            disabled={isUpdating}
+            autoFocus
+          />
+        ) : (
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-50 cursor-pointer">
+            {getCompanyName(company)}
+          </span>
+        )}
       </td>
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 max-w-48">
-        {company.acf?.website ? (
+        {isEditing ? (
+          <input
+            type="url"
+            value={editedFields._website ?? ''}
+            onChange={(e) => handleFieldChange('_website', e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+            placeholder="https://..."
+            disabled={isUpdating}
+          />
+        ) : company.acf?.website ? (
           <a
             href={company.acf.website.startsWith('http') ? company.acf.website : `https://${company.acf.website}`}
             target="_blank"
@@ -421,20 +453,38 @@ function OrganizationListRow({ company, workspaces, listViewFields, isSelected, 
           </a>
         ) : '-'}
       </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-        {workspaceNames || '-'}
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(company.id)}>
+        {isEditing ? (
+          <select
+            value={editedFields._workspace ?? ''}
+            onChange={(e) => handleFieldChange('_workspace', e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+            disabled={isUpdating}
+          >
+            <option value="">No workspace</option>
+            {workspaces.map(ws => (
+              <option key={ws.id} value={String(ws.id)}>{ws.title}</option>
+            ))}
+          </select>
+        ) : (
+          <span className="cursor-pointer">{workspaceNames || '-'}</span>
+        )}
       </td>
       {listViewFields.map(field => (
-        <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+        <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(company.id)}>
           {isEditing ? (
             <InlineFieldInput
               field={field}
               value={editedFields[field.name]}
               onChange={handleFieldChange}
+              onKeyDown={handleKeyDown}
               disabled={isUpdating}
             />
           ) : (
-            <CustomFieldColumn field={field} value={company.acf?.[field.name]} />
+            <span className="cursor-pointer">
+              <CustomFieldColumn field={field} value={company.acf?.[field.name]} />
+            </span>
           )}
         </td>
       ))}
@@ -587,15 +637,49 @@ export default function CompaniesList() {
   const queryClient = useQueryClient();
 
   // Mutation for updating row custom fields
+  // ACF fields that require array type (repeaters, multi-select post_object, etc.)
+  // These cannot be null - must be empty array [] when empty
+  const arrayTypeAcfFields = ['contact_info', 'investors', '_assigned_workspaces'];
+
   const updateRowMutation = useMutation({
     mutationFn: async ({ companyId, editedFields, existingAcf }) => {
-      // Merge edited fields with existing ACF data to preserve required fields like _visibility
-      const response = await wpApi.updateCompany(companyId, {
-        acf: {
-          ...existingAcf,
-          ...editedFields
+      // Extract core fields (prefixed with _) from custom fields
+      const { _name, _website, _workspace, ...customFields } = editedFields;
+
+      // Merge custom fields with existing ACF data to preserve required fields like _visibility
+      const mergedAcf = {
+        ...existingAcf,
+        ...customFields
+      };
+
+      // Update website in ACF if changed
+      if (_website !== undefined) {
+        mergedAcf.website = _website;
+      }
+
+      // Update workspace assignment
+      if (_workspace !== undefined) {
+        mergedAcf._assigned_workspaces = _workspace ? [parseInt(_workspace, 10)] : [];
+      }
+
+      // Sanitize null values for array-type fields (REST API requires [] not null)
+      arrayTypeAcfFields.forEach(fieldName => {
+        if (mergedAcf[fieldName] === null || mergedAcf[fieldName] === undefined) {
+          mergedAcf[fieldName] = [];
         }
       });
+
+      // Build update payload
+      const updatePayload = {
+        acf: mergedAcf
+      };
+
+      // Update title if name changed
+      if (_name !== undefined) {
+        updatePayload.title = _name;
+      }
+
+      const response = await wpApi.updateCompany(companyId, updatePayload);
       return response.data;
     },
     onSuccess: () => {
@@ -606,7 +690,14 @@ export default function CompaniesList() {
 
   // Handler for saving all edited fields in a row
   const handleSaveRow = async (companyId, editedFields, existingAcf) => {
-    await updateRowMutation.mutateAsync({ companyId, editedFields, existingAcf });
+    // Convert empty strings to null for number fields (REST API requires number or null)
+    const processedFields = { ...editedFields };
+    listViewFields.forEach(field => {
+      if (field.type === 'number' && processedFields[field.name] === '') {
+        processedFields[field.name] = null;
+      }
+    });
+    await updateRowMutation.mutateAsync({ companyId, editedFields: processedFields, existingAcf });
   };
 
   // Row edit mode handlers
@@ -618,8 +709,8 @@ export default function CompaniesList() {
     setEditingRowId(null);
   };
 
-  // Get current user ID from prmConfig
-  const currentUserId = window.prmConfig?.userId;
+  // Get current user ID from stadionConfig
+  const currentUserId = window.stadionConfig?.userId;
 
   const { data: companies, isLoading, error } = useQuery({
     queryKey: ['companies', search],

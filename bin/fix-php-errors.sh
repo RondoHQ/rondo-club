@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# Caelis PHP Error Fix Script
-# Retrieves WordPress debug.log from server and uses Claude to fix Caelis PHP errors.
+# Stadion PHP Error Fix Script
+# Retrieves WordPress debug.log from server and uses Claude to fix Stadion PHP errors.
 #
 # Usage:
 #   bin/fix-php-errors.sh              # Fetch errors and run Claude to fix them
@@ -14,7 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # Lock file to prevent concurrent runs
-LOCK_FILE="/tmp/caelis-php-errors.lock"
+LOCK_FILE="/tmp/stadion-php-errors.lock"
 LOCK_CREATED=false
 SCRIPT_COMPLETED=false
 
@@ -143,7 +143,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --help|-h)
             cat << EOF
-Caelis PHP Error Fix Script
+Stadion PHP Error Fix Script
 
 Usage:
   bin/fix-php-errors.sh              # Fetch errors and run Claude to fix them
@@ -159,7 +159,7 @@ Environment variables (set in .env):
 
 The script:
   1. Connects to server and fetches wp-content/debug.log
-  2. Filters for errors in the Caelis theme
+  2. Filters for errors in the Stadion theme
   3. Groups duplicate errors
   4. Runs Claude to fix each unique error
   5. Logs all fixes to logs/php-fixes.log
@@ -178,7 +178,7 @@ done
 check_lock
 create_lock
 
-echo -e "${CYAN}=== Caelis PHP Error Fixer ===${NC}" >&2
+echo -e "${CYAN}=== Stadion PHP Error Fixer ===${NC}" >&2
 
 # Step 1: Fetch debug.log from server
 echo -e "${YELLOW}Fetching debug.log from server...${NC}" >&2
@@ -202,8 +202,8 @@ fi
 LOG_SIZE=$(wc -c < "$TEMP_LOG" | tr -d ' ')
 log "INFO" "Fetched debug.log ($LOG_SIZE bytes)"
 
-# Step 2: Filter for Caelis-related errors from the last hour
-echo -e "${YELLOW}Filtering for Caelis theme errors (last hour only)...${NC}" >&2
+# Step 2: Filter for Stadion-related errors from the last hour
+echo -e "${YELLOW}Filtering for Stadion theme errors (last hour only)...${NC}" >&2
 
 # Calculate cutoff time (1 hour ago)
 CUTOFF_TIME=$(date -v-1H +%s 2>/dev/null || date -d '1 hour ago' +%s)
@@ -236,10 +236,10 @@ is_recent() {
     return 1  # Not recent or couldn't parse
 }
 
-# Extract errors related to caelis theme path
+# Extract errors related to stadion theme path
 # WordPress debug.log format: [DD-Mon-YYYY HH:MM:SS UTC] PHP type: message in /path/file.php on line N
 TEMP_ALL_ERRORS=$(mktemp)
-grep -E "themes/caelis" "$TEMP_LOG" | \
+grep -E "themes/stadion" "$TEMP_LOG" | \
     grep -E "PHP (Fatal error|Parse error|Warning|Notice|Deprecated)" > "$TEMP_ALL_ERRORS" || true
 
 # Filter to only recent errors
@@ -253,8 +253,8 @@ rm -f "$TEMP_ALL_ERRORS"
 ERROR_COUNT=$(wc -l < "$TEMP_ERRORS" | tr -d ' ')
 
 if [ "$ERROR_COUNT" -eq 0 ]; then
-    echo -e "${GREEN}No Caelis PHP errors found in debug.log${NC}" >&2
-    log "INFO" "No Caelis errors found in debug.log"
+    echo -e "${GREEN}No Stadion PHP errors found in debug.log${NC}" >&2
+    log "INFO" "No Stadion errors found in debug.log"
     SCRIPT_COMPLETED=true
     exit 0
 fi
@@ -307,7 +307,7 @@ if [ "$DRY_RUN" = true ]; then
 
     while IFS=$'\t' read -r signature error_type message file line_num; do
         # Convert server path to local path
-        local_file="${file/*themes\/caelis/$PROJECT_ROOT}"
+        local_file="${file/*themes\/stadion/$PROJECT_ROOT}"
 
         echo -e "${YELLOW}[$error_type]${NC} $local_file:$line_num" >&2
         echo "  $message" >&2
@@ -327,7 +327,7 @@ FAILED_COUNT=0
 
 while IFS=$'\t' read -r signature error_type message file line_num; do
     # Convert server path to local path
-    local_file="${file/*themes\/caelis/$PROJECT_ROOT}"
+    local_file="${file/*themes\/stadion/$PROJECT_ROOT}"
 
     echo "" >&2
     echo -e "${YELLOW}Processing: [$error_type] ${local_file}:${line_num}${NC}" >&2
@@ -344,7 +344,7 @@ while IFS=$'\t' read -r signature error_type message file line_num; do
 
     # Build prompt for Claude
     PROMPT=$(cat << EOF
-Fix the following PHP error in the Caelis codebase:
+Fix the following PHP error in the Stadion codebase:
 
 **Error Type:** $error_type
 **File:** $local_file

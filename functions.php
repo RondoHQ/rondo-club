@@ -1,6 +1,6 @@
 <?php
 /**
- * Caelis Theme Functions
+ * Stadion Theme Functions
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,62 +26,62 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 }
 
 // PSR-4 namespaced class imports
-use Caelis\Core\PostTypes;
-use Caelis\Core\Taxonomies;
-use Caelis\Core\AutoTitle;
-use Caelis\Core\AccessControl;
-use Caelis\Core\Visibility;
-use Caelis\Core\UserRoles;
-use Caelis\REST\Api;
-use Caelis\REST\People;
-use Caelis\REST\Companies;
-use Caelis\REST\Todos;
-use Caelis\REST\Workspaces;
-use Caelis\REST\Slack;
-use Caelis\REST\ImportExport;
-use Caelis\REST\Calendar as RESTCalendar;
-use Caelis\REST\GoogleContacts as RESTGoogleContacts;
-use Caelis\REST\Feedback as RESTFeedback;
-use Caelis\Calendar\Connections;
-use Caelis\Calendar\Matcher;
-use Caelis\Calendar\Sync;
-use Caelis\Calendar\GoogleProvider;
-use Caelis\Calendar\CalDAVProvider;
-use Caelis\Calendar\GoogleOAuth;
-use Caelis\Notifications\EmailChannel;
-use Caelis\Notifications\SlackChannel;
-use Caelis\Collaboration\CommentTypes;
-use Caelis\Collaboration\WorkspaceMembers;
-use Caelis\Collaboration\MentionNotifications;
-use Caelis\Collaboration\Reminders;
-use Caelis\Import\Monica;
-use Caelis\Import\VCard as VCardImport;
-use Caelis\Import\GoogleContacts;
-use Caelis\Import\GoogleContactsAPI;
-use Caelis\Export\VCard as VCardExport;
-use Caelis\Export\ICalFeed;
-use Caelis\Export\GoogleContactsExport;
-use Caelis\Contacts\GoogleContactsSync;
-use Caelis\CardDAV\Server as CardDAVServer;
-use Caelis\Data\InverseRelationships;
-use Caelis\Data\TodoMigration;
-use Caelis\CustomFields\Manager as CustomFieldsManager;
-use Caelis\CustomFields\Validation as CustomFieldsValidation;
-use Caelis\REST\CustomFields as RESTCustomFields;
+use Stadion\Core\PostTypes;
+use Stadion\Core\Taxonomies;
+use Stadion\Core\AutoTitle;
+use Stadion\Core\AccessControl;
+use Stadion\Core\Visibility;
+use Stadion\Core\UserRoles;
+use Stadion\REST\Api;
+use Stadion\REST\People;
+use Stadion\REST\Companies;
+use Stadion\REST\Todos;
+use Stadion\REST\Workspaces;
+use Stadion\REST\Slack;
+use Stadion\REST\ImportExport;
+use Stadion\REST\Calendar as RESTCalendar;
+use Stadion\REST\GoogleContacts as RESTGoogleContacts;
+use Stadion\REST\Feedback as RESTFeedback;
+use Stadion\Calendar\Connections;
+use Stadion\Calendar\Matcher;
+use Stadion\Calendar\Sync;
+use Stadion\Calendar\GoogleProvider;
+use Stadion\Calendar\CalDAVProvider;
+use Stadion\Calendar\GoogleOAuth;
+use Stadion\Notifications\EmailChannel;
+use Stadion\Notifications\SlackChannel;
+use Stadion\Collaboration\CommentTypes;
+use Stadion\Collaboration\WorkspaceMembers;
+use Stadion\Collaboration\MentionNotifications;
+use Stadion\Collaboration\Reminders;
+use Stadion\Import\Monica;
+use Stadion\Import\VCard as VCardImport;
+use Stadion\Import\GoogleContacts;
+use Stadion\Import\GoogleContactsAPI;
+use Stadion\Export\VCard as VCardExport;
+use Stadion\Export\ICalFeed;
+use Stadion\Export\GoogleContactsExport;
+use Stadion\Contacts\GoogleContactsSync;
+use Stadion\CardDAV\Server as CardDAVServer;
+use Stadion\Data\InverseRelationships;
+use Stadion\Data\TodoMigration;
+use Stadion\CustomFields\Manager as CustomFieldsManager;
+use Stadion\CustomFields\Validation as CustomFieldsValidation;
+use Stadion\REST\CustomFields as RESTCustomFields;
 
-define( 'PRM_THEME_DIR', get_template_directory() );
-define( 'PRM_THEME_URL', get_template_directory_uri() );
-define( 'PRM_THEME_VERSION', wp_get_theme()->get( 'Version' ) );
+define( 'STADION_THEME_DIR', get_template_directory() );
+define( 'STADION_THEME_URL', get_template_directory_uri() );
+define( 'STADION_THEME_VERSION', wp_get_theme()->get( 'Version' ) );
 
 // Plugin constants (now part of theme)
-define( 'PRM_VERSION', PRM_THEME_VERSION );
-define( 'PRM_PLUGIN_DIR', PRM_THEME_DIR . '/includes' );
-define( 'PRM_PLUGIN_URL', PRM_THEME_URL . '/includes' );
+define( 'STADION_VERSION', STADION_THEME_VERSION );
+define( 'STADION_PLUGIN_DIR', STADION_THEME_DIR . '/includes' );
+define( 'STADION_PLUGIN_URL', STADION_THEME_URL . '/includes' );
 
 /**
  * Check for required dependencies
  */
-function prm_check_dependencies() {
+function stadion_check_dependencies() {
 	$missing = [];
 
 	// Check for ACF Pro
@@ -95,7 +95,7 @@ function prm_check_dependencies() {
 			function () use ( $missing ) {
 				$message = sprintf(
 					// translators: %s is a comma-separated list of plugin names.
-					__( 'Caelis requires the following plugins: %s', 'caelis' ),
+					__( 'Stadion requires the following plugins: %s', 'stadion' ),
 					implode( ', ', $missing )
 				);
 				echo '<div class="notice notice-error"><p>' . esc_html( $message ) . '</p></div>';
@@ -110,165 +110,165 @@ function prm_check_dependencies() {
 /**
  * Backward compatibility class aliases.
  *
- * These allow code using old PRM_* class names to continue working
+ * These allow code using old STADION_* class names to continue working
  * while the codebase transitions to PSR-4 namespaced classes.
  */
 // Core classes
-if ( ! class_exists( 'PRM_Post_Types' ) ) {
-	class_alias( PostTypes::class, 'PRM_Post_Types' );
+if ( ! class_exists( 'STADION_Post_Types' ) ) {
+	class_alias( PostTypes::class, 'STADION_Post_Types' );
 }
-if ( ! class_exists( 'PRM_Taxonomies' ) ) {
-	class_alias( Taxonomies::class, 'PRM_Taxonomies' );
+if ( ! class_exists( 'STADION_Taxonomies' ) ) {
+	class_alias( Taxonomies::class, 'STADION_Taxonomies' );
 }
-if ( ! class_exists( 'PRM_Auto_Title' ) ) {
-	class_alias( AutoTitle::class, 'PRM_Auto_Title' );
+if ( ! class_exists( 'STADION_Auto_Title' ) ) {
+	class_alias( AutoTitle::class, 'STADION_Auto_Title' );
 }
-if ( ! class_exists( 'PRM_Access_Control' ) ) {
-	class_alias( AccessControl::class, 'PRM_Access_Control' );
+if ( ! class_exists( 'STADION_Access_Control' ) ) {
+	class_alias( AccessControl::class, 'STADION_Access_Control' );
 }
-if ( ! class_exists( 'PRM_Visibility' ) ) {
-	class_alias( Visibility::class, 'PRM_Visibility' );
+if ( ! class_exists( 'STADION_Visibility' ) ) {
+	class_alias( Visibility::class, 'STADION_Visibility' );
 }
-if ( ! class_exists( 'PRM_User_Roles' ) ) {
-	class_alias( UserRoles::class, 'PRM_User_Roles' );
+if ( ! class_exists( 'STADION_User_Roles' ) ) {
+	class_alias( UserRoles::class, 'STADION_User_Roles' );
 }
 
 // REST classes
-if ( ! class_exists( 'PRM_REST_API' ) ) {
-	class_alias( Api::class, 'PRM_REST_API' );
+if ( ! class_exists( 'STADION_REST_API' ) ) {
+	class_alias( Api::class, 'STADION_REST_API' );
 }
-if ( ! class_exists( 'PRM_REST_Base' ) ) {
-	class_alias( \Caelis\REST\Base::class, 'PRM_REST_Base' );
+if ( ! class_exists( 'STADION_REST_Base' ) ) {
+	class_alias( \Stadion\REST\Base::class, 'STADION_REST_Base' );
 }
-if ( ! class_exists( 'PRM_REST_People' ) ) {
-	class_alias( People::class, 'PRM_REST_People' );
+if ( ! class_exists( 'STADION_REST_People' ) ) {
+	class_alias( People::class, 'STADION_REST_People' );
 }
-if ( ! class_exists( 'PRM_REST_Companies' ) ) {
-	class_alias( Companies::class, 'PRM_REST_Companies' );
+if ( ! class_exists( 'STADION_REST_Companies' ) ) {
+	class_alias( Companies::class, 'STADION_REST_Companies' );
 }
-if ( ! class_exists( 'PRM_REST_Todos' ) ) {
-	class_alias( Todos::class, 'PRM_REST_Todos' );
+if ( ! class_exists( 'STADION_REST_Todos' ) ) {
+	class_alias( Todos::class, 'STADION_REST_Todos' );
 }
-if ( ! class_exists( 'PRM_REST_Workspaces' ) ) {
-	class_alias( Workspaces::class, 'PRM_REST_Workspaces' );
+if ( ! class_exists( 'STADION_REST_Workspaces' ) ) {
+	class_alias( Workspaces::class, 'STADION_REST_Workspaces' );
 }
-if ( ! class_exists( 'PRM_REST_Slack' ) ) {
-	class_alias( Slack::class, 'PRM_REST_Slack' );
+if ( ! class_exists( 'STADION_REST_Slack' ) ) {
+	class_alias( Slack::class, 'STADION_REST_Slack' );
 }
-if ( ! class_exists( 'PRM_REST_Import_Export' ) ) {
-	class_alias( ImportExport::class, 'PRM_REST_Import_Export' );
+if ( ! class_exists( 'STADION_REST_Import_Export' ) ) {
+	class_alias( ImportExport::class, 'STADION_REST_Import_Export' );
 }
-if ( ! class_exists( 'PRM_REST_Calendar' ) ) {
-	class_alias( RESTCalendar::class, 'PRM_REST_Calendar' );
+if ( ! class_exists( 'STADION_REST_Calendar' ) ) {
+	class_alias( RESTCalendar::class, 'STADION_REST_Calendar' );
 }
-if ( ! class_exists( 'PRM_REST_Feedback' ) ) {
-	class_alias( RESTFeedback::class, 'PRM_REST_Feedback' );
+if ( ! class_exists( 'STADION_REST_Feedback' ) ) {
+	class_alias( RESTFeedback::class, 'STADION_REST_Feedback' );
 }
 
 // Calendar classes
-if ( ! class_exists( 'PRM_Calendar_Connections' ) ) {
-	class_alias( Connections::class, 'PRM_Calendar_Connections' );
+if ( ! class_exists( 'STADION_Calendar_Connections' ) ) {
+	class_alias( Connections::class, 'STADION_Calendar_Connections' );
 }
-if ( ! class_exists( 'PRM_Calendar_Matcher' ) ) {
-	class_alias( Matcher::class, 'PRM_Calendar_Matcher' );
+if ( ! class_exists( 'STADION_Calendar_Matcher' ) ) {
+	class_alias( Matcher::class, 'STADION_Calendar_Matcher' );
 }
-if ( ! class_exists( 'PRM_Calendar_Sync' ) ) {
-	class_alias( Sync::class, 'PRM_Calendar_Sync' );
+if ( ! class_exists( 'STADION_Calendar_Sync' ) ) {
+	class_alias( Sync::class, 'STADION_Calendar_Sync' );
 }
-if ( ! class_exists( 'PRM_Google_Calendar_Provider' ) ) {
-	class_alias( GoogleProvider::class, 'PRM_Google_Calendar_Provider' );
+if ( ! class_exists( 'STADION_Google_Calendar_Provider' ) ) {
+	class_alias( GoogleProvider::class, 'STADION_Google_Calendar_Provider' );
 }
-if ( ! class_exists( 'PRM_CalDAV_Provider' ) ) {
-	class_alias( CalDAVProvider::class, 'PRM_CalDAV_Provider' );
+if ( ! class_exists( 'STADION_CalDAV_Provider' ) ) {
+	class_alias( CalDAVProvider::class, 'STADION_CalDAV_Provider' );
 }
-if ( ! class_exists( 'PRM_Google_OAuth' ) ) {
-	class_alias( GoogleOAuth::class, 'PRM_Google_OAuth' );
+if ( ! class_exists( 'STADION_Google_OAuth' ) ) {
+	class_alias( GoogleOAuth::class, 'STADION_Google_OAuth' );
 }
 
 // Notification classes
-if ( ! class_exists( 'PRM_Notification_Channel' ) ) {
-	class_alias( \Caelis\Notifications\Channel::class, 'PRM_Notification_Channel' );
+if ( ! class_exists( 'STADION_Notification_Channel' ) ) {
+	class_alias( \Stadion\Notifications\Channel::class, 'STADION_Notification_Channel' );
 }
-if ( ! class_exists( 'PRM_Email_Channel' ) ) {
-	class_alias( EmailChannel::class, 'PRM_Email_Channel' );
+if ( ! class_exists( 'STADION_Email_Channel' ) ) {
+	class_alias( EmailChannel::class, 'STADION_Email_Channel' );
 }
-if ( ! class_exists( 'PRM_Slack_Channel' ) ) {
-	class_alias( SlackChannel::class, 'PRM_Slack_Channel' );
+if ( ! class_exists( 'STADION_Slack_Channel' ) ) {
+	class_alias( SlackChannel::class, 'STADION_Slack_Channel' );
 }
 
 // Collaboration classes
-if ( ! class_exists( 'PRM_Comment_Types' ) ) {
-	class_alias( CommentTypes::class, 'PRM_Comment_Types' );
+if ( ! class_exists( 'STADION_Comment_Types' ) ) {
+	class_alias( CommentTypes::class, 'STADION_Comment_Types' );
 }
-if ( ! class_exists( 'PRM_Workspace_Members' ) ) {
-	class_alias( WorkspaceMembers::class, 'PRM_Workspace_Members' );
+if ( ! class_exists( 'STADION_Workspace_Members' ) ) {
+	class_alias( WorkspaceMembers::class, 'STADION_Workspace_Members' );
 }
-if ( ! class_exists( 'PRM_Mentions' ) ) {
-	class_alias( \Caelis\Collaboration\Mentions::class, 'PRM_Mentions' );
+if ( ! class_exists( 'STADION_Mentions' ) ) {
+	class_alias( \Stadion\Collaboration\Mentions::class, 'STADION_Mentions' );
 }
-if ( ! class_exists( 'PRM_Mention_Notifications' ) ) {
-	class_alias( MentionNotifications::class, 'PRM_Mention_Notifications' );
+if ( ! class_exists( 'STADION_Mention_Notifications' ) ) {
+	class_alias( MentionNotifications::class, 'STADION_Mention_Notifications' );
 }
-if ( ! class_exists( 'PRM_Reminders' ) ) {
-	class_alias( Reminders::class, 'PRM_Reminders' );
+if ( ! class_exists( 'STADION_Reminders' ) ) {
+	class_alias( Reminders::class, 'STADION_Reminders' );
 }
 
 // Import classes
-if ( ! class_exists( 'PRM_Monica_Import' ) ) {
-	class_alias( Monica::class, 'PRM_Monica_Import' );
+if ( ! class_exists( 'STADION_Monica_Import' ) ) {
+	class_alias( Monica::class, 'STADION_Monica_Import' );
 }
-if ( ! class_exists( 'PRM_VCard_Import' ) ) {
-	class_alias( VCardImport::class, 'PRM_VCard_Import' );
+if ( ! class_exists( 'STADION_VCard_Import' ) ) {
+	class_alias( VCardImport::class, 'STADION_VCard_Import' );
 }
-if ( ! class_exists( 'PRM_Google_Contacts_Import' ) ) {
-	class_alias( GoogleContacts::class, 'PRM_Google_Contacts_Import' );
+if ( ! class_exists( 'STADION_Google_Contacts_Import' ) ) {
+	class_alias( GoogleContacts::class, 'STADION_Google_Contacts_Import' );
 }
-if ( ! class_exists( 'PRM_Google_Contacts_API_Import' ) ) {
-	class_alias( GoogleContactsAPI::class, 'PRM_Google_Contacts_API_Import' );
+if ( ! class_exists( 'STADION_Google_Contacts_API_Import' ) ) {
+	class_alias( GoogleContactsAPI::class, 'STADION_Google_Contacts_API_Import' );
 }
 
 // Export classes
-if ( ! class_exists( 'PRM_VCard_Export' ) ) {
-	class_alias( VCardExport::class, 'PRM_VCard_Export' );
+if ( ! class_exists( 'STADION_VCard_Export' ) ) {
+	class_alias( VCardExport::class, 'STADION_VCard_Export' );
 }
-if ( ! class_exists( 'PRM_ICal_Feed' ) ) {
-	class_alias( ICalFeed::class, 'PRM_ICal_Feed' );
+if ( ! class_exists( 'STADION_ICal_Feed' ) ) {
+	class_alias( ICalFeed::class, 'STADION_ICal_Feed' );
 }
-if ( ! class_exists( 'PRM_Google_Contacts_Export' ) ) {
-	class_alias( GoogleContactsExport::class, 'PRM_Google_Contacts_Export' );
+if ( ! class_exists( 'STADION_Google_Contacts_Export' ) ) {
+	class_alias( GoogleContactsExport::class, 'STADION_Google_Contacts_Export' );
 }
 
 // CardDAV class
-if ( ! class_exists( 'PRM_CardDAV_Server' ) ) {
-	class_alias( CardDAVServer::class, 'PRM_CardDAV_Server' );
+if ( ! class_exists( 'STADION_CardDAV_Server' ) ) {
+	class_alias( CardDAVServer::class, 'STADION_CardDAV_Server' );
 }
 
 // Data classes
-if ( ! class_exists( 'PRM_Inverse_Relationships' ) ) {
-	class_alias( InverseRelationships::class, 'PRM_Inverse_Relationships' );
+if ( ! class_exists( 'STADION_Inverse_Relationships' ) ) {
+	class_alias( InverseRelationships::class, 'STADION_Inverse_Relationships' );
 }
-if ( ! class_exists( 'PRM_Todo_Migration' ) ) {
-	class_alias( TodoMigration::class, 'PRM_Todo_Migration' );
+if ( ! class_exists( 'STADION_Todo_Migration' ) ) {
+	class_alias( TodoMigration::class, 'STADION_Todo_Migration' );
 }
-if ( ! class_exists( 'PRM_Credential_Encryption' ) ) {
-	class_alias( \Caelis\Data\CredentialEncryption::class, 'PRM_Credential_Encryption' );
+if ( ! class_exists( 'STADION_Credential_Encryption' ) ) {
+	class_alias( \Stadion\Data\CredentialEncryption::class, 'STADION_Credential_Encryption' );
 }
 
 // CustomFields classes
-if ( ! class_exists( 'PRM_Custom_Fields_Manager' ) ) {
-	class_alias( CustomFieldsManager::class, 'PRM_Custom_Fields_Manager' );
+if ( ! class_exists( 'STADION_Custom_Fields_Manager' ) ) {
+	class_alias( CustomFieldsManager::class, 'STADION_Custom_Fields_Manager' );
 }
-if ( ! class_exists( 'PRM_Custom_Fields_Validation' ) ) {
-	class_alias( CustomFieldsValidation::class, 'PRM_Custom_Fields_Validation' );
+if ( ! class_exists( 'STADION_Custom_Fields_Validation' ) ) {
+	class_alias( CustomFieldsValidation::class, 'STADION_Custom_Fields_Validation' );
 }
-if ( ! class_exists( 'PRM_REST_Custom_Fields' ) ) {
-	class_alias( RESTCustomFields::class, 'PRM_REST_Custom_Fields' );
+if ( ! class_exists( 'STADION_REST_Custom_Fields' ) ) {
+	class_alias( RESTCustomFields::class, 'STADION_REST_Custom_Fields' );
 }
 
 /**
  * Check if current request is a CardDAV request
  */
-function prm_is_carddav_request() {
+function stadion_is_carddav_request() {
 	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
 	return strpos( $request_uri, '/carddav' ) === 0;
 }
@@ -276,7 +276,7 @@ function prm_is_carddav_request() {
 /**
  * Check if current request is a REST API request
  */
-function prm_is_rest_request() {
+function stadion_is_rest_request() {
 	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
 		return true;
 	}
@@ -291,7 +291,7 @@ function prm_is_rest_request() {
 /**
  * Check if current request is for the iCal feed
  */
-function prm_is_ical_request() {
+function stadion_is_ical_request() {
 	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
 	return strpos( $request_uri, '/prm-ical/' ) !== false || strpos( $request_uri, 'prm-ical' ) !== false;
 }
@@ -299,14 +299,14 @@ function prm_is_ical_request() {
 /**
  * Initialize the CRM functionality with conditional class loading
  */
-function prm_init() {
+function stadion_init() {
 	// Prevent double initialization
 	static $initialized = false;
 	if ( $initialized ) {
 		return;
 	}
 
-	if ( ! prm_check_dependencies() ) {
+	if ( ! stadion_check_dependencies() ) {
 		return;
 	}
 
@@ -317,14 +317,14 @@ function prm_init() {
 	new UserRoles();
 
 	// iCal feed - only load for iCal requests
-	if ( prm_is_ical_request() ) {
+	if ( stadion_is_ical_request() ) {
 		new ICalFeed();
 		$initialized = true;
 		return; // iCal requests don't need other functionality
 	}
 
 	// CardDAV server - only load for CardDAV requests
-	if ( prm_is_carddav_request() ) {
+	if ( stadion_is_carddav_request() ) {
 		new CardDAVServer();
 		$initialized = true;
 		return; // CardDAV requests don't need other functionality
@@ -332,7 +332,7 @@ function prm_init() {
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
-	$is_rest  = prm_is_rest_request();
+	$is_rest  = stadion_is_rest_request();
 	$is_cron  = defined( 'DOING_CRON' ) && DOING_CRON;
 
 	// Classes needed for content creation/editing (admin, REST, or cron)
@@ -382,36 +382,36 @@ function prm_init() {
 
 	// iCal feed - also initialize on non-iCal requests for hook registration
 	// but we check for its specific request above for early return optimization
-	if ( ! prm_is_ical_request() ) {
+	if ( ! stadion_is_ical_request() ) {
 		new ICalFeed();
 	}
 
 	// CardDAV server - initialize for rewrite rule registration
-	if ( ! prm_is_carddav_request() ) {
+	if ( ! stadion_is_carddav_request() ) {
 		new CardDAVServer();
 	}
 
 	// Initialize CardDAV sync hooks to track changes made via web UI
 	// This must run on all requests, not just CardDAV requests
-	\Caelis\CardDAV\CardDAVBackend::init_hooks();
+	\Stadion\CardDAV\CardDAVBackend::init_hooks();
 
 	$initialized = true;
 }
 // Initialize early for REST API requests, but also check on plugins_loaded
 // in case ACF Pro isn't loaded yet (plugins load after themes)
-add_action( 'after_setup_theme', 'prm_init', 5 );
-add_action( 'plugins_loaded', 'prm_init', 5 );
+add_action( 'after_setup_theme', 'stadion_init', 5 );
+add_action( 'plugins_loaded', 'stadion_init', 5 );
 
 // Load WP-CLI commands if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
-	require_once PRM_PLUGIN_DIR . '/class-wp-cli.php';
+	require_once STADION_PLUGIN_DIR . '/class-wp-cli.php';
 	new TodoMigration();
 }
 
 /**
  * Theme setup
  */
-function prm_theme_setup() {
+function stadion_theme_setup() {
 	// Add theme support
 	add_theme_support( 'title-tag' );
 	add_theme_support( 'post-thumbnails' );
@@ -431,35 +431,35 @@ function prm_theme_setup() {
 	// Register nav menus (optional, React handles navigation)
 	register_nav_menus(
 		[
-			'primary' => __( 'Primary Menu', 'caelis' ),
+			'primary' => __( 'Primary Menu', 'stadion' ),
 		]
 	);
 }
-add_action( 'after_setup_theme', 'prm_theme_setup' );
+add_action( 'after_setup_theme', 'stadion_theme_setup' );
 
 /**
  * Set default page title for SPA (React will update it dynamically)
  */
-function prm_theme_document_title_parts( $title ) {
+function stadion_theme_document_title_parts( $title ) {
 	// Only modify title on frontend (not admin)
 	if ( is_admin() ) {
 		return $title;
 	}
 
 	// Set a default title - React will update it when routes change
-	$title['title'] = 'Caelis';
+	$title['title'] = 'Stadion';
 	$title['site']  = '';
 
 	return $title;
 }
-add_filter( 'document_title_parts', 'prm_theme_document_title_parts', 20 );
+add_filter( 'document_title_parts', 'stadion_theme_document_title_parts', 20 );
 
 /**
  * Enqueue scripts and styles
  */
-function prm_theme_enqueue_assets() {
-	$dist_dir = PRM_THEME_DIR . '/dist';
-	$dist_url = PRM_THEME_URL . '/dist';
+function stadion_theme_enqueue_assets() {
+	$dist_dir = STADION_THEME_DIR . '/dist';
+	$dist_url = STADION_THEME_URL . '/dist';
 
 	// Check if we have built assets (Vite puts manifest in .vite subdirectory)
 	$manifest_path = $dist_dir . '/.vite/manifest.json';
@@ -481,7 +481,7 @@ function prm_theme_enqueue_assets() {
 						'prm-theme-style',
 						$dist_url . '/' . $css_file,
 						[],
-						PRM_THEME_VERSION
+						STADION_THEME_VERSION
 					);
 				}
 			}
@@ -491,12 +491,12 @@ function prm_theme_enqueue_assets() {
 					'prm-theme-script',
 					$dist_url . '/' . $main_js['file'],
 					[],
-					PRM_THEME_VERSION,
+					STADION_THEME_VERSION,
 					true
 				);
 
 				// Localize script with WordPress data
-				wp_localize_script( 'prm-theme-script', 'prmConfig', prm_get_js_config() );
+				wp_localize_script( 'prm-theme-script', 'stadionConfig', stadion_get_js_config() );
 			}
 		}
 	} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -517,24 +517,24 @@ function prm_theme_enqueue_assets() {
 			'wp_head',
 			function () {
 				// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript, WordPress.Security.EscapeOutput.OutputNotEscaped
-				echo '<script>console.error("Caelis: Build files not found. Please run npm run build.");</script>';
+				echo '<script>console.error("Stadion: Build files not found. Please run npm run build.");</script>';
 			}
 		);
 	}
 }
-add_action( 'wp_enqueue_scripts', 'prm_theme_enqueue_assets' );
+add_action( 'wp_enqueue_scripts', 'stadion_theme_enqueue_assets' );
 
 /**
  * Get JavaScript configuration
  */
-function prm_get_js_config() {
+function stadion_get_js_config() {
 	$user    = wp_get_current_user();
 	$user_id = get_current_user_id();
 
 	// Get build time from manifest file modification time.
 	// This ensures every build produces a unique timestamp.
 	$build_time    = null;
-	$manifest_path = PRM_THEME_DIR . '/dist/.vite/manifest.json';
+	$manifest_path = STADION_THEME_DIR . '/dist/.vite/manifest.json';
 	if ( file_exists( $manifest_path ) ) {
 		$build_time = gmdate( 'c', filemtime( $manifest_path ) );
 	} else {
@@ -543,7 +543,7 @@ function prm_get_js_config() {
 	}
 
 	// Get user's linked person ID (for filtering current user from attendee lists)
-	$linked_person_id = $user_id ? (int) get_user_meta( $user_id, 'caelis_linked_person_id', true ) : null;
+	$linked_person_id = $user_id ? (int) get_user_meta( $user_id, 'stadion_linked_person_id', true ) : null;
 
 	return [
 		'apiUrl'              => rest_url(),
@@ -557,7 +557,7 @@ function prm_get_js_config() {
 		'loginUrl'            => wp_login_url(),
 		'logoutUrl'           => wp_logout_url( home_url() ),
 		'adminUrl'            => admin_url(),
-		'themeUrl'            => PRM_THEME_URL,
+		'themeUrl'            => STADION_THEME_URL,
 		'version'             => wp_get_theme()->get( 'Version' ),
 		'buildTime'           => $build_time,
 		'currentUserPersonId' => $linked_person_id ?: null,
@@ -567,11 +567,11 @@ function prm_get_js_config() {
 /**
  * Add config to head for initial page load
  */
-function prm_theme_add_config_to_head() {
-	$config = prm_get_js_config();
-	echo '<script>window.prmConfig = ' . wp_json_encode( $config ) . ';</script>';
+function stadion_theme_add_config_to_head() {
+	$config = stadion_get_js_config();
+	echo '<script>window.stadionConfig = ' . wp_json_encode( $config ) . ';</script>';
 }
-add_action( 'wp_head', 'prm_theme_add_config_to_head', 0 );
+add_action( 'wp_head', 'stadion_theme_add_config_to_head', 0 );
 
 /**
  * Add favicon to head
@@ -584,29 +584,29 @@ add_action( 'wp_head', 'prm_theme_add_config_to_head', 0 );
  * React will create the favicon link element on mount with the user's accent color.
  */
 // Removed static favicon output - React manages favicon dynamically via useTheme.js
-// function prm_theme_add_favicon() {
-//     $favicon_url = PRM_THEME_URL . '/favicon.svg';
+// function stadion_theme_add_favicon() {
+//     $favicon_url = STADION_THEME_URL . '/favicon.svg';
 //     echo '<link rel="icon" type="image/svg+xml" href="' . esc_url($favicon_url) . '">';
 //     echo '<link rel="alternate icon" href="' . esc_url($favicon_url) . '">';
 // }
-// add_action('wp_head', 'prm_theme_add_favicon', 1);
+// add_action('wp_head', 'stadion_theme_add_favicon', 1);
 
 /**
  * Hide admin bar on frontend - it interferes with the SPA interface
  */
-function prm_theme_remove_admin_bar() {
+function stadion_theme_remove_admin_bar() {
 	if ( ! is_admin() ) {
 		show_admin_bar( false );
 	}
 }
-add_action( 'after_setup_theme', 'prm_theme_remove_admin_bar' );
+add_action( 'after_setup_theme', 'stadion_theme_remove_admin_bar' );
 
 /**
  * Redirect WordPress backend URLs to SPA frontend routes
  *
  * Handles URLs like ?post_type=person&p=123 → /people/123
  */
-function prm_redirect_backend_urls() {
+function stadion_redirect_backend_urls() {
 	// Don't redirect admin, login, or API requests.
 	if ( is_admin() || 'wp-login.php' === $GLOBALS['pagenow'] ) {
 		return;
@@ -639,12 +639,12 @@ function prm_redirect_backend_urls() {
 	wp_redirect( $redirect_url, 301 );
 	exit;
 }
-add_action( 'template_redirect', 'prm_redirect_backend_urls', 0 ); // Priority 0 to run before other redirects
+add_action( 'template_redirect', 'stadion_redirect_backend_urls', 0 ); // Priority 0 to run before other redirects
 
 /**
  * Redirect all frontend requests to index.php (SPA)
  */
-function prm_theme_template_redirect() {
+function stadion_theme_template_redirect() {
 	// Don't redirect admin, login, or API requests.
 	if ( is_admin() || 'wp-login.php' === $GLOBALS['pagenow'] ) {
 		return;
@@ -703,21 +703,21 @@ function prm_theme_template_redirect() {
 		exit;
 	}
 }
-add_action( 'template_redirect', 'prm_theme_template_redirect', 1 );
+add_action( 'template_redirect', 'stadion_theme_template_redirect', 1 );
 
 /**
  * Handle client-side routing - return index.php for all routes
  */
-function prm_theme_rewrite_rules() {
+function stadion_theme_rewrite_rules() {
 	add_rewrite_rule( '^app/?', 'index.php', 'top' );
 	add_rewrite_rule( '^app/(.+)/?', 'index.php', 'top' );
 }
-add_action( 'init', 'prm_theme_rewrite_rules' );
+add_action( 'init', 'stadion_theme_rewrite_rules' );
 
 /**
  * Theme activation - includes CRM initialization
  */
-function prm_theme_activation() {
+function stadion_theme_activation() {
 	// Trigger post type registration (Composer autoloader handles class loading)
 	$post_types = new PostTypes();
 	$post_types->register_post_types();
@@ -744,23 +744,23 @@ function prm_theme_activation() {
 	$contacts_sync->schedule_sync();
 
 	// Also handle theme-specific rewrite rules
-	prm_theme_rewrite_rules();
+	stadion_theme_rewrite_rules();
 
 	// Initialize CardDAV server rewrite rules
 	$carddav = new CardDAVServer();
 	$carddav->register_rewrite_rules();
 }
-add_action( 'after_switch_theme', 'prm_theme_activation' );
+add_action( 'after_switch_theme', 'stadion_theme_activation' );
 
 /**
  * Theme deactivation - cleanup CRM functionality
  */
-function prm_theme_deactivation() {
+function stadion_theme_deactivation() {
 	// Clear all per-user reminder cron jobs
-	wp_clear_scheduled_hook( 'prm_user_reminder' );
+	wp_clear_scheduled_hook( 'stadion_user_reminder' );
 
 	// Clear legacy scheduled hook (for backward compatibility)
-	wp_clear_scheduled_hook( 'prm_daily_reminder_check' );
+	wp_clear_scheduled_hook( 'stadion_daily_reminder_check' );
 
 	// Clear calendar sync cron job
 	$calendar_sync = new Sync();
@@ -777,16 +777,16 @@ function prm_theme_deactivation() {
 	// Flush rewrite rules
 	flush_rewrite_rules();
 }
-add_action( 'switch_theme', 'prm_theme_deactivation' );
+add_action( 'switch_theme', 'stadion_theme_deactivation' );
 
 /**
  * Unschedule user reminder cron when user is deleted
  */
-function prm_user_deleted( $user_id ) {
+function stadion_user_deleted( $user_id ) {
 	$reminders = new Reminders();
 	$reminders->unschedule_user_reminder( $user_id );
 }
-add_action( 'delete_user', 'prm_user_deleted' );
+add_action( 'delete_user', 'stadion_user_deleted' );
 
 /**
  * Add type="module" to script tags
@@ -796,56 +796,56 @@ add_action( 'delete_user', 'prm_user_deleted' );
  * @param string $src    Script source URL.
  * @return string Modified script tag.
  */
-function prm_theme_script_type( $tag, $handle, $src ) {
+function stadion_theme_script_type( $tag, $handle, $src ) {
 	if ( 'prm-theme-script' === $handle ) {
 		// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript -- Modifying enqueued script tag.
 		return '<script type="module" src="' . esc_url( $src ) . '"></script>';
 	}
 	return $tag;
 }
-add_filter( 'script_loader_tag', 'prm_theme_script_type', 10, 3 );
+add_filter( 'script_loader_tag', 'stadion_theme_script_type', 10, 3 );
 
 /**
  * Disable WordPress emojis (performance)
  */
-function prm_theme_disable_emojis() {
+function stadion_theme_disable_emojis() {
 	remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
 	remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
 	remove_action( 'wp_print_styles', 'print_emoji_styles' );
 	remove_action( 'admin_print_styles', 'print_emoji_styles' );
 }
-add_action( 'init', 'prm_theme_disable_emojis' );
+add_action( 'init', 'stadion_theme_disable_emojis' );
 
 /**
  * Clean up WordPress head
  */
-function prm_theme_cleanup_head() {
+function stadion_theme_cleanup_head() {
 	remove_action( 'wp_head', 'rsd_link' );
 	remove_action( 'wp_head', 'wlwmanifest_link' );
 	remove_action( 'wp_head', 'wp_generator' );
 	remove_action( 'wp_head', 'wp_shortlink_wp_head' );
 }
-add_action( 'init', 'prm_theme_cleanup_head' );
+add_action( 'init', 'stadion_theme_cleanup_head' );
 
 /**
  * Load ACF JSON from theme directory
  */
-function prm_acf_json_load_point( $paths ) {
-	$paths[] = PRM_THEME_DIR . '/acf-json';
+function stadion_acf_json_load_point( $paths ) {
+	$paths[] = STADION_THEME_DIR . '/acf-json';
 	return $paths;
 }
-add_filter( 'acf/settings/load_json', 'prm_acf_json_load_point' );
+add_filter( 'acf/settings/load_json', 'stadion_acf_json_load_point' );
 
 /**
  * Save ACF JSON to theme directory (for development)
  */
-function prm_acf_json_save_point( $path ) {
+function stadion_acf_json_save_point( $path ) {
 	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		$path = PRM_THEME_DIR . '/acf-json';
+		$path = STADION_THEME_DIR . '/acf-json';
 	}
 	return $path;
 }
-add_filter( 'acf/settings/save_json', 'prm_acf_json_save_point' );
+add_filter( 'acf/settings/save_json', 'stadion_acf_json_save_point' );
 
 /**
  * Invalidate email lookup cache when a person is saved
@@ -853,7 +853,7 @@ add_filter( 'acf/settings/save_json', 'prm_acf_json_save_point' );
  * This ensures that the contact matching cache stays in sync
  * when contact info (emails) are updated on person records.
  */
-function prm_invalidate_email_lookup_on_person_save( $post_id ) {
+function stadion_invalidate_email_lookup_on_person_save( $post_id ) {
 	if ( get_post_type( $post_id ) === 'person' ) {
 		$user_id = get_post_field( 'post_author', $post_id );
 		if ( $user_id ) {
@@ -861,13 +861,13 @@ function prm_invalidate_email_lookup_on_person_save( $post_id ) {
 		}
 	}
 }
-add_action( 'acf/save_post', 'prm_invalidate_email_lookup_on_person_save', 20 );
+add_action( 'acf/save_post', 'stadion_invalidate_email_lookup_on_person_save', 20 );
 
 /**
  * Custom login page styling
  */
-function prm_login_styles() {
-	$favicon_url = PRM_THEME_URL . '/favicon.svg';
+function stadion_login_styles() {
+	$favicon_url = STADION_THEME_URL . '/favicon.svg';
 	?>
 	<style type="text/css">
 		/* Background */
@@ -894,7 +894,7 @@ function prm_login_styles() {
 		
 		/* App name below logo */
 		#login h1::after {
-			content: 'Caelis';
+			content: 'Stadion';
 			display: block;
 			text-align: center;
 			font-size: 28px;
@@ -1029,38 +1029,38 @@ function prm_login_styles() {
 	</style>
 	<?php
 }
-add_action( 'login_enqueue_scripts', 'prm_login_styles' );
+add_action( 'login_enqueue_scripts', 'stadion_login_styles' );
 
 /**
  * Add favicon to login page
  */
-function prm_login_favicon() {
-	$favicon_url = PRM_THEME_URL . '/favicon.svg';
+function stadion_login_favicon() {
+	$favicon_url = STADION_THEME_URL . '/favicon.svg';
 	echo '<link rel="icon" type="image/svg+xml" href="' . esc_url( $favicon_url ) . '">';
 	echo '<link rel="alternate icon" href="' . esc_url( $favicon_url ) . '">';
 }
-add_action( 'login_head', 'prm_login_favicon' );
+add_action( 'login_head', 'stadion_login_favicon' );
 
 /**
  * Change login logo URL to homepage
  */
-function prm_login_logo_url() {
+function stadion_login_logo_url() {
 	return home_url( '/' );
 }
-add_filter( 'login_headerurl', 'prm_login_logo_url' );
+add_filter( 'login_headerurl', 'stadion_login_logo_url' );
 
 /**
  * Change login logo title
  */
-function prm_login_logo_title() {
-	return 'Caelis';
+function stadion_login_logo_title() {
+	return 'Stadion';
 }
-add_filter( 'login_headertext', 'prm_login_logo_title' );
+add_filter( 'login_headertext', 'stadion_login_logo_title' );
 
 /**
  * Redirect users to homepage after login
  */
-function prm_login_redirect( $redirect_to, $request, $user ) {
+function stadion_login_redirect( $redirect_to, $request, $user ) {
 	// Only redirect if no specific redirect was requested
 	if ( isset( $_GET['redirect_to'] ) && ! empty( $_GET['redirect_to'] ) ) {
 		return $redirect_to;
@@ -1069,7 +1069,7 @@ function prm_login_redirect( $redirect_to, $request, $user ) {
 	// Redirect all users to the homepage
 	return home_url( '/' );
 }
-add_filter( 'login_redirect', 'prm_login_redirect', 10, 3 );
+add_filter( 'login_redirect', 'stadion_login_redirect', 10, 3 );
 
 /**
  * Disable admin color scheme picker for all users
@@ -1085,7 +1085,7 @@ remove_action( 'admin_color_scheme_picker', 'admin_color_scheme_picker' );
  * @param string $domain          Text domain.
  * @return string Modified text.
  */
-function prm_registration_message_filter( $translated_text, $text, $domain ) {
+function stadion_registration_message_filter( $translated_text, $text, $domain ) {
 	// Only filter on login/registration pages.
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking URL context only.
 	$is_register  = isset( $_GET['action'] ) && 'register' === $_GET['action'];
@@ -1099,28 +1099,28 @@ function prm_registration_message_filter( $translated_text, $text, $domain ) {
 	}
 	return $translated_text;
 }
-add_filter( 'gettext', 'prm_registration_message_filter', 20, 3 );
+add_filter( 'gettext', 'stadion_registration_message_filter', 20, 3 );
 
 /**
- * Change "Register For This Site" to "Register for Caelis"
+ * Change "Register For This Site" to "Register for Stadion"
  *
  * @param string $translated_text Translated text.
  * @param string $text            Original text.
  * @param string $domain          Text domain.
  * @return string Modified text.
  */
-function prm_change_register_notice_text( $translated_text, $text, $domain ) {
+function stadion_change_register_notice_text( $translated_text, $text, $domain ) {
 	if ( 'Register For This Site' === $text ) {
-		return 'Register for Caelis';
+		return 'Register for Stadion';
 	}
 	return $translated_text;
 }
-add_filter( 'gettext', 'prm_change_register_notice_text', 20, 3 );
+add_filter( 'gettext', 'stadion_change_register_notice_text', 20, 3 );
 
 /**
  * Change login page titles
  */
-function prm_login_page_titles() {
+function stadion_login_page_titles() {
 	?>
 	<script>
 		(function() {
@@ -1140,54 +1140,54 @@ function prm_login_page_titles() {
 				// Registration page
 				var title = document.querySelector('.login form h1, .login h1, #login h1');
 				if (title) {
-					title.textContent = 'Register for Caelis';
+					title.textContent = 'Register for Stadion';
 				}
 				// Also check for any other title elements
 				var formTitle = document.querySelector('.login form .title, .login .title');
 				if (formTitle) {
-					formTitle.textContent = 'Register for Caelis';
+					formTitle.textContent = 'Register for Stadion';
 				}
 			} else if (action === 'lostpassword' || action === 'retrievepassword') {
 				// Lost password page
 				var title = document.querySelector('.login form h1, .login h1, #login h1');
 				if (title) {
-					title.textContent = 'Lost your password for Caelis?';
+					title.textContent = 'Lost your password for Stadion?';
 				}
 				var formTitle = document.querySelector('.login form .title, .login .title');
 				if (formTitle) {
-					formTitle.textContent = 'Lost your password for Caelis?';
+					formTitle.textContent = 'Lost your password for Stadion?';
 				}
 			} else {
 				// Login page (default)
 				var title = document.querySelector('.login form h1, .login h1, #login h1');
 				if (title && !title.textContent.includes('Register') && !title.textContent.includes('Lost')) {
-					title.textContent = 'Log in to Caelis';
+					title.textContent = 'Log in to Stadion';
 				}
 				var formTitle = document.querySelector('.login form .title, .login .title');
 				if (formTitle && !formTitle.textContent.includes('Register') && !formTitle.textContent.includes('Lost')) {
-					formTitle.textContent = 'Log in to Caelis';
+					formTitle.textContent = 'Log in to Stadion';
 				}
 			}
 			
 			// Also check for page title in document title
 			if (action === 'register') {
-				document.title = 'Register for Caelis';
+				document.title = 'Register for Stadion';
 			} else if (action === 'lostpassword' || action === 'retrievepassword') {
-				document.title = 'Lost your password for Caelis?';
+				document.title = 'Lost your password for Stadion?';
 			} else {
-				document.title = 'Log in to Caelis';
+				document.title = 'Log in to Stadion';
 			}
 		})();
 	</script>
 	<?php
 }
-add_action( 'login_footer', 'prm_login_page_titles' );
+add_action( 'login_footer', 'stadion_login_page_titles' );
 
 /**
  * Debug log rotation - runs daily via WP-Cron
  */
-add_action( 'prm_rotate_debug_log', 'prm_rotate_debug_log' );
-function prm_rotate_debug_log() {
+add_action( 'stadion_rotate_debug_log', 'stadion_rotate_debug_log' );
+function stadion_rotate_debug_log() {
     $log_dir  = WP_CONTENT_DIR;
     $log_file = $log_dir . '/debug.log';
     $date     = date( 'Y-m-d' );
@@ -1214,6 +1214,6 @@ function prm_rotate_debug_log() {
 }
 
 // Schedule daily rotation if not already scheduled
-if ( ! wp_next_scheduled( 'prm_rotate_debug_log' ) ) {
-    wp_schedule_event( strtotime( 'tomorrow midnight' ), 'daily', 'prm_rotate_debug_log' );
+if ( ! wp_next_scheduled( 'stadion_rotate_debug_log' ) ) {
+    wp_schedule_event( strtotime( 'tomorrow midnight' ), 'daily', 'stadion_rotate_debug_log' );
 }

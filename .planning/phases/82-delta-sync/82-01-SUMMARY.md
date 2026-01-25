@@ -52,9 +52,9 @@ WP-Cron scheduling for Google Contacts delta sync with round-robin user processi
 Created `includes/class-google-contacts-sync.php` implementing:
 
 1. **Cron Constants**:
-   - `CRON_HOOK = 'prm_google_contacts_sync'`
+   - `CRON_HOOK = 'stadion_google_contacts_sync'`
    - `CRON_SCHEDULE = 'every_15_minutes'`
-   - `USER_INDEX_TRANSIENT = 'prm_contacts_sync_last_user_index'`
+   - `USER_INDEX_TRANSIENT = 'stadion_contacts_sync_last_user_index'`
 
 2. **Scheduling Methods**:
    - `add_cron_schedules()` - Adds 15-minute interval (checks if already exists)
@@ -82,8 +82,8 @@ Created `includes/class-google-contacts-sync.php` implementing:
 ### Theme Integration
 
 Updated `functions.php`:
-- Added `use Caelis\Contacts\GoogleContactsSync;`
-- Instantiate `new GoogleContactsSync()` in `prm_init()`
+- Added `use Stadion\Contacts\GoogleContactsSync;`
+- Instantiate `new GoogleContactsSync()` in `stadion_init()`
 - Schedule sync on theme activation
 - Unschedule sync on theme deactivation
 
@@ -102,7 +102,7 @@ Updated `functions.php`:
 - [x] PHP syntax valid
 - [x] functions.php updated and working
 - [x] Deployed to production
-- [x] Cron event `prm_google_contacts_sync` scheduled and running
+- [x] Cron event `stadion_google_contacts_sync` scheduled and running
 
 ## Commits
 

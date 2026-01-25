@@ -14,7 +14,7 @@ export default function MonicaImport() {
     mutationFn: async (file) => {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await api.post('/prm/v1/import/monica/validate', formData, {
+      const response = await api.post('/stadion/v1/import/monica/validate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
@@ -35,7 +35,7 @@ export default function MonicaImport() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('monica_url', monicaUrl);
-      const response = await api.post('/prm/v1/import/monica', formData, {
+      const response = await api.post('/stadion/v1/import/monica', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;

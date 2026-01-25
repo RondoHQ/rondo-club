@@ -3,7 +3,7 @@
  * Custom Comment Types for Notes and Activities
  */
 
-namespace Caelis\Collaboration;
+namespace Stadion\Collaboration;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -14,8 +14,8 @@ class CommentTypes {
 	/**
 	 * Registered comment types
 	 */
-	const TYPE_NOTE     = 'prm_note';
-	const TYPE_ACTIVITY = 'prm_activity';
+	const TYPE_NOTE     = 'stadion_note';
+	const TYPE_ACTIVITY = 'stadion_activity';
 
 	public function __construct() {
 		// Register REST API routes for notes and activities
@@ -106,7 +106,7 @@ class CommentTypes {
 	public function register_rest_routes() {
 		// Notes endpoints
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/people/(?P<person_id>\d+)/notes',
 			[
 				[
@@ -130,7 +130,7 @@ class CommentTypes {
 		);
 
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/notes/(?P<id>\d+)',
 			[
 				[
@@ -148,7 +148,7 @@ class CommentTypes {
 
 		// Activities endpoints
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/people/(?P<person_id>\d+)/activities',
 			[
 				[
@@ -165,7 +165,7 @@ class CommentTypes {
 		);
 
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/activities/(?P<id>\d+)',
 			[
 				[
@@ -183,7 +183,7 @@ class CommentTypes {
 
 		// Timeline endpoint (combined notes + activities)
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/people/(?P<person_id>\d+)/timeline',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -202,7 +202,7 @@ class CommentTypes {
 		}
 
 		$person_id      = $request->get_param( 'person_id' );
-		$access_control = new \PRM_Access_Control();
+		$access_control = new \STADION_Access_Control();
 
 		return $access_control->user_can_access_post( $person_id );
 	}
@@ -267,7 +267,7 @@ class CommentTypes {
 		}
 
 		if ( empty( $content ) ) {
-			return new \WP_Error( 'empty_content', __( 'Note content is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_content', __( 'Note content is required.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		$comment_id = wp_insert_comment(
@@ -281,16 +281,16 @@ class CommentTypes {
 		);
 
 		if ( ! $comment_id ) {
-			return new \WP_Error( 'create_failed', __( 'Failed to create note.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'create_failed', __( 'Failed to create note.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		// Save visibility meta
 		update_comment_meta( $comment_id, '_note_visibility', $visibility );
 
 		// Parse and save @mentions, fire action if any mentions found
-		$mentioned_ids = \PRM_Mentions::save_mentions( $comment_id, $content );
+		$mentioned_ids = \STADION_Mentions::save_mentions( $comment_id, $content );
 		if ( ! empty( $mentioned_ids ) ) {
-			do_action( 'prm_user_mentioned', $comment_id, $mentioned_ids, get_current_user_id() );
+			do_action( 'stadion_user_mentioned', $comment_id, $mentioned_ids, get_current_user_id() );
 		}
 
 		$comment = get_comment( $comment_id );
@@ -316,7 +316,7 @@ class CommentTypes {
 
 		// wp_update_comment returns false on failure, 0 if no changes, 1 if updated.
 		if ( false === $result || is_wp_error( $result ) ) {
-			return new \WP_Error( 'update_failed', __( 'Failed to update note.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'update_failed', __( 'Failed to update note.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		// Update visibility if provided.
@@ -328,11 +328,11 @@ class CommentTypes {
 		}
 
 		// Update @mentions (check for new mentions to notify)
-		$old_mentions   = \PRM_Mentions::get_mentions( $comment_id );
-		$new_mentions   = \PRM_Mentions::save_mentions( $comment_id, $content );
+		$old_mentions   = \STADION_Mentions::get_mentions( $comment_id );
+		$new_mentions   = \STADION_Mentions::save_mentions( $comment_id, $content );
 		$added_mentions = array_diff( $new_mentions, $old_mentions );
 		if ( ! empty( $added_mentions ) ) {
-			do_action( 'prm_user_mentioned', $comment_id, $added_mentions, get_current_user_id() );
+			do_action( 'stadion_user_mentioned', $comment_id, $added_mentions, get_current_user_id() );
 		}
 
 		$comment = get_comment( $comment_id );
@@ -349,7 +349,7 @@ class CommentTypes {
 		$result = wp_delete_comment( $comment_id, true );
 
 		if ( ! $result ) {
-			return new \WP_Error( 'delete_failed', __( 'Failed to delete note.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'delete_failed', __( 'Failed to delete note.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response( [ 'deleted' => true ] );
@@ -387,7 +387,7 @@ class CommentTypes {
 		$participants  = $request->get_param( 'participants' ) ?: [];
 
 		if ( empty( $content ) ) {
-			return new \WP_Error( 'empty_content', __( 'Activity description is required.', 'caelis' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'empty_content', __( 'Activity description is required.', 'stadion' ), [ 'status' => 400 ] );
 		}
 
 		$comment_id = wp_insert_comment(
@@ -401,7 +401,7 @@ class CommentTypes {
 		);
 
 		if ( ! $comment_id ) {
-			return new \WP_Error( 'create_failed', __( 'Failed to create activity.', 'caelis' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'create_failed', __( 'Failed to create activity.', 'stadion' ), [ 'status' => 500 ] );
 		}
 
 		// Save meta
@@ -505,13 +505,13 @@ class CommentTypes {
 			$timeline[] = $this->format_comment( $comment, $type );
 		}
 
-		// Also fetch todos from the prm_todo CPT
-		// Access control is automatic via PRM_Access_Control hooks on WP_Query
+		// Also fetch todos from the stadion_todo CPT
+		// Access control is automatic via STADION_Access_Control hooks on WP_Query
 		// Use LIKE query since ACF stores serialized arrays for related_persons
 		$todos = get_posts(
 			[
-				'post_type'      => 'prm_todo',
-				'post_status'    => [ 'prm_open', 'prm_awaiting', 'prm_completed' ],
+				'post_type'      => 'stadion_todo',
+				'post_status'    => [ 'stadion_open', 'stadion_awaiting', 'stadion_completed' ],
 				'posts_per_page' => -1,
 				'meta_query'     => [
 					[
@@ -525,9 +525,9 @@ class CommentTypes {
 
 		// Map post status to frontend status values
 		$status_map = [
-			'prm_open'      => 'open',
-			'prm_awaiting'  => 'awaiting',
-			'prm_completed' => 'completed',
+			'stadion_open'      => 'open',
+			'stadion_awaiting'  => 'awaiting',
+			'stadion_completed' => 'completed',
 		];
 
 		foreach ( $todos as $todo ) {
@@ -560,7 +560,7 @@ class CommentTypes {
 				'persons'        => $persons,
 				'notes'          => get_field( 'notes', $todo->ID ) ?: null,
 				'status'         => $status_map[ $todo->post_status ] ?? 'open',
-				'is_completed'   => 'prm_completed' === $todo->post_status,
+				'is_completed'   => 'stadion_completed' === $todo->post_status,
 				'due_date'       => get_field( 'due_date', $todo->ID ) ?: null,
 				'awaiting_since' => get_field( 'awaiting_since', $todo->ID ) ?: null,
 			];
@@ -601,7 +601,7 @@ class CommentTypes {
 		$content = $comment->comment_content;
 		if ( 'activity' === $type || 'note' === $type ) {
 			// Render @mentions as styled spans before URL processing
-			$content = \PRM_Mentions::render_mentions( $content );
+			$content = \STADION_Mentions::render_mentions( $content );
 			$content = make_clickable( $content );
 			// Add target="_blank" and rel="noopener noreferrer" to links for security
 			$content = str_replace( '<a href=', '<a target="_blank" rel="noopener noreferrer" href=', $content );

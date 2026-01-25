@@ -6,7 +6,7 @@
  * Enables users to belong to multiple workspaces with different roles.
  */
 
-namespace Caelis\Collaboration;
+namespace Stadion\Collaboration;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

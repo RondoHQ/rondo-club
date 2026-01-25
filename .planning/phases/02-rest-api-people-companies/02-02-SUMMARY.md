@@ -7,7 +7,7 @@ tags: [rest-api, php, wordpress, inheritance, refactoring]
 # Dependency graph
 requires: [01-rest-api-infrastructure, 02-01-people-endpoints]
 provides:
-  - PRM_REST_Companies class with company-specific REST endpoints
+  - STADION_REST_Companies class with company-specific REST endpoints
   - Extracted routes: /companies/{id}/people, /companies/{id}/logo, /companies/{id}/logo/upload
   - Complete separation of company domain from monolithic REST API class
 affects: [03-rest-api-integrations]
@@ -22,12 +22,12 @@ key-files:
   modified: [includes/class-rest-api.php, functions.php]
 
 key-decisions:
-  - "PRM_REST_Companies extends PRM_REST_Base for shared permission and formatting methods"
+  - "STADION_REST_Companies extends STADION_REST_Base for shared permission and formatting methods"
   - "Registers routes in constructor via rest_api_init hook following established pattern"
-  - "Instantiated after PRM_REST_People in prm_init() to maintain route registration order"
+  - "Instantiated after STADION_REST_People in stadion_init() to maintain route registration order"
 
 patterns-established:
-  - "Domain-specific REST classes: extend PRM_REST_Base, register routes via rest_api_init"
+  - "Domain-specific REST classes: extend STADION_REST_Base, register routes via rest_api_init"
 
 issues-created: []
 
@@ -38,7 +38,7 @@ completed: 2026-01-13
 
 # Phase 2: REST API People & Companies - Plan 02 Summary
 
-**Extract company-related REST API endpoints into dedicated PRM_REST_Companies class**
+**Extract company-related REST API endpoints into dedicated STADION_REST_Companies class**
 
 ## Performance
 
@@ -50,7 +50,7 @@ completed: 2026-01-13
 
 ## Accomplishments
 
-- Created PRM_REST_Companies class extending PRM_REST_Base with 3 company-specific methods
+- Created STADION_REST_Companies class extending STADION_REST_Base with 3 company-specific methods
 - Registered 3 REST routes: /companies/{id}/people, /companies/{id}/logo, /companies/{id}/logo/upload
 - Removed ~247 lines from class-rest-api.php, added 282-line dedicated class
 - Phase 2 (People & Companies extraction) is now complete
@@ -59,8 +59,8 @@ completed: 2026-01-13
 
 Each task was committed atomically:
 
-1. **Task 1: Create PRM_REST_Companies class with routes and methods** - `bdb5061` (feat)
-2. **Task 2: Remove company methods from PRM_REST_API and update autoloader** - `ddea1cc` (refactor)
+1. **Task 1: Create STADION_REST_Companies class with routes and methods** - `bdb5061` (feat)
+2. **Task 2: Remove company methods from STADION_REST_API and update autoloader** - `ddea1cc` (refactor)
 
 ## Files Created/Modified
 
@@ -70,8 +70,8 @@ Each task was committed atomically:
 
 ## Decisions Made
 
-- Used PRM_REST_Base permission method (check_company_edit_permission) as callback for logo endpoints
-- Used PRM_REST_Base formatting method (format_person_summary) for employee list response
+- Used STADION_REST_Base permission method (check_company_edit_permission) as callback for logo endpoints
+- Used STADION_REST_Base formatting method (format_person_summary) for employee list response
 - Public endpoint for /companies/{id}/people maintained (per existing code) with internal access control
 
 ## Deviations from Plan
@@ -85,8 +85,8 @@ None.
 ## Phase 2 Completion
 
 Phase 2 (REST API People & Companies) is now complete:
-- Plan 02-01: People endpoints extracted to PRM_REST_People
-- Plan 02-02: Company endpoints extracted to PRM_REST_Companies
+- Plan 02-01: People endpoints extracted to STADION_REST_People
+- Plan 02-02: Company endpoints extracted to STADION_REST_Companies
 
 The monolithic class-rest-api.php has been reduced by approximately 600 lines across both plans. The domain-specific REST class pattern is fully established and ready for Phase 3 (Integrations extraction).
 

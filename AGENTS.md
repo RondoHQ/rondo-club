@@ -4,7 +4,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 ## Project Overview
 
-**Caelis** is a personal CRM system built as a WordPress theme with integrated backend functionality and a modern React SPA frontend. Tracks contacts, organizations, important dates, and interactions with user-specific access control.
+**Stadion** is a personal CRM system built as a WordPress theme with integrated backend functionality and a modern React SPA frontend. Tracks contacts, organizations, important dates, and interactions with user-specific access control.
 
 **Tech Stack:**
 - Backend: WordPress 6.0+, PHP 8.0+, ACF Pro (required)
@@ -13,7 +13,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 ## Development Commands
 
-All commands run from `caelis/`:
+All commands run from `stadion/`:
 
 ```bash
 npm run dev      # Start Vite dev server (port 5173, HMR enabled)
@@ -42,18 +42,18 @@ Entry point: `functions.php`
 - Registers activation/deactivation hooks for rewrites and cron via theme activation hooks
 
 **Key classes:**
-- `PRM_Post_Types` - Registers Person, Organization, Important Date CPTs
-- `PRM_Taxonomies` - Registers labels and relationship types
-- `PRM_Auto_Title` - Auto-generates post titles
-- `PRM_Access_Control` - Row-level user data filtering at query and REST levels
-- `PRM_User_Roles` - Registers custom "Caelis User" role with minimal permissions
-- `PRM_REST_API` - Custom `/prm/v1/` endpoints (dashboard, search, timeline, reminders)
-- `PRM_Comment_Types` - Notes and Activities system using comments
-- `PRM_Reminders` - Daily digest reminder system with multi-channel support (Email, Slack)
-- `PRM_Notification_Channel` - Abstract base class for notification channels
-- `PRM_Email_Channel` - Email notification implementation
-- `PRM_Slack_Channel` - Slack webhook notification implementation
-- `PRM_Monica_Import` - Monica CRM import functionality
+- `STADION_Post_Types` - Registers Person, Organization, Important Date CPTs
+- `STADION_Taxonomies` - Registers labels and relationship types
+- `STADION_Auto_Title` - Auto-generates post titles
+- `STADION_Access_Control` - Row-level user data filtering at query and REST levels
+- `STADION_User_Roles` - Registers custom "Stadion User" role with minimal permissions
+- `STADION_REST_API` - Custom `/stadion/v1/` endpoints (dashboard, search, timeline, reminders)
+- `STADION_Comment_Types` - Notes and Activities system using comments
+- `STADION_Reminders` - Daily digest reminder system with multi-channel support (Email, Slack)
+- `STADION_Notification_Channel` - Abstract base class for notification channels
+- `STADION_Email_Channel` - Email notification implementation
+- `STADION_Slack_Channel` - Slack webhook notification implementation
+- `STADION_Monica_Import` - Monica CRM import functionality
 
 **ACF field groups** are stored as JSON in `acf-json/` for version control.
 
@@ -74,7 +74,7 @@ Entry point: `src/main.jsx`
 
 **API client uses two namespaces:**
 - `/wp/v2/` - Standard WordPress REST (people, organizations, important-dates)
-- `/prm/v1/` - Custom endpoints (dashboard, search, timeline)
+- `/stadion/v1/` - Custom endpoints (dashboard, search, timeline)
 
 ## Data Model
 
@@ -97,7 +97,7 @@ Entry point: `src/main.jsx`
 
 ## User Roles
 
-- **Caelis User** - Custom role created automatically on theme activation
+- **Stadion User** - Custom role created automatically on theme activation
   - Minimal permissions: can create/edit/delete their own people and organizations, upload files
   - Cannot access WordPress admin settings, manage other users, or install plugins/themes
   - Role is automatically removed on theme deactivation (users reassigned to Subscriber)
@@ -127,11 +127,11 @@ This is a single repository containing both backend (PHP) and frontend (React) c
 
 **Adding ACF fields:** Edit in WordPress admin when `WP_DEBUG` is true; changes auto-save to `acf-json/`
 
-**Adding REST endpoints:** Extend `PRM_REST_API` class in `includes/class-rest-api.php`
+**Adding REST endpoints:** Extend `STADION_REST_API` class in `includes/class-rest-api.php`
 
 **Adding React pages:** Create component in `src/pages/`, add route in `src/App.jsx`
 
-**Adding PHP classes:** Create new class file in `includes/`, load it in `functions.php` via `prm_init()`
+**Adding PHP classes:** Create new class file in `includes/`, load it in `functions.php` via `stadion_init()`
 
 ## Required rules for every change
 

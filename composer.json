@@ -1,6 +1,6 @@
 {
-    "name": "jdevalk/caelis",
-    "description": "Caelis Personal CRM Theme with CardDAV support",
+    "name": "jdevalk/stadion",
+    "description": "Stadion Personal CRM Theme with CardDAV support",
     "type": "wordpress-theme",
     "license": "GPL-2.0-or-later",
     "require": {
@@ -10,7 +10,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Caelis\\": "includes/"
+            "Stadion\\": "includes/"
         },
         "classmap": [
             "includes/"

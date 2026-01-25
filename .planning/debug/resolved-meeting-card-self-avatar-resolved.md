@@ -7,7 +7,7 @@ updated: 2026-01-18T14:45:00+01:00
 
 ## Current Focus
 
-hypothesis: Type mismatch between person_id (from API) and currentUserPersonId (from prmConfig) causing strict equality comparison to fail
+hypothesis: Type mismatch between person_id (from API) and currentUserPersonId (from stadionConfig) causing strict equality comparison to fail
 test: Compare types at runtime - add console.log to MeetingCard filter
 expecting: If types differ (string vs number), filter fails silently
 next_action: User to test on production, check browser console for debug output showing types
@@ -34,7 +34,7 @@ started: Regression - was working after c5c86d3 commit, now broken
 - timestamp: 2026-01-18T14:27:00+01:00
   checked: PHP config generation in functions.php (lines 510, 527)
   found: `$linked_person_id = (int) get_user_meta(...)` cast to int, then `'currentUserPersonId' => $linked_person_id ?: null`
-  implication: Should be integer in prmConfig, but JSON encoding could affect this
+  implication: Should be integer in stadionConfig, but JSON encoding could affect this
 
 - timestamp: 2026-01-18T14:28:00+01:00
   checked: PHP matched_people formatting in class-rest-calendar.php (lines 1480-1484)

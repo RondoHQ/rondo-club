@@ -2,36 +2,36 @@
 
 ## Overview
 
-Caelis uses a conditional class loading system to optimize performance. Instead of loading all PHP classes on every page request, classes are loaded only when they are needed.
+Stadion uses a conditional class loading system to optimize performance. Instead of loading all PHP classes on every page request, classes are loaded only when they are needed.
 
 ## How It Works
 
 ### SPL Autoloader
 
-The `prm_autoloader()` function is registered with PHP's SPL autoload system. When a class is referenced for the first time, PHP automatically calls this function to load the class file.
+The `stadion_autoloader()` function is registered with PHP's SPL autoload system. When a class is referenced for the first time, PHP automatically calls this function to load the class file.
 
 ```php
-function prm_autoloader($class_name) {
-    // Only handle PRM_ prefixed classes
-    if (strpos($class_name, 'PRM_') !== 0) {
+function stadion_autoloader($class_name) {
+    // Only handle STADION_ prefixed classes
+    if (strpos($class_name, 'STADION_') !== 0) {
         return;
     }
     
     $class_map = [
-        'PRM_Post_Types' => 'class-post-types.php',
+        'STADION_Post_Types' => 'class-post-types.php',
         // ... other classes
     ];
     
     if (isset($class_map[$class_name])) {
-        require_once PRM_PLUGIN_DIR . '/' . $class_map[$class_name];
+        require_once STADION_PLUGIN_DIR . '/' . $class_map[$class_name];
     }
 }
-spl_autoload_register('prm_autoloader');
+spl_autoload_register('stadion_autoloader');
 ```
 
 ### Conditional Initialization
 
-The `prm_init()` function determines which classes to instantiate based on the request context:
+The `stadion_init()` function determines which classes to instantiate based on the request context:
 
 | Context | Classes Loaded |
 |---------|----------------|
@@ -48,17 +48,17 @@ The `prm_init()` function determines which classes to instantiate based on the r
 
 These classes are essential for WordPress integration and must be loaded on every request:
 
-- **PRM_Post_Types** - Registers custom post types (person, company, important_date)
-- **PRM_Taxonomies** - Registers taxonomies (labels, relationship types, date types)
-- **PRM_Access_Control** - Row-level security filtering
+- **STADION_Post_Types** - Registers custom post types (person, company, important_date)
+- **STADION_Taxonomies** - Registers taxonomies (labels, relationship types, date types)
+- **STADION_Access_Control** - Row-level security filtering
 
 ### Content Management Classes
 
 These classes handle content creation and modification:
 
-- **PRM_Auto_Title** - Auto-generates post titles
-- **PRM_Inverse_Relationships** - Syncs bidirectional relationships
-- **PRM_Comment_Types** - Notes and activities system
+- **STADION_Auto_Title** - Auto-generates post titles
+- **STADION_Inverse_Relationships** - Syncs bidirectional relationships
+- **STADION_Comment_Types** - Notes and activities system
 
 Loaded for: Admin, REST API, Cron
 
@@ -66,24 +66,24 @@ Loaded for: Admin, REST API, Cron
 
 These classes provide REST API endpoints:
 
-- **PRM_REST_API** - Custom `/prm/v1/` endpoints
-- **PRM_Monica_Import** - Monica CRM import
-- **PRM_VCard_Import** - vCard import
-- **PRM_Google_Contacts_Import** - Google Contacts import
+- **STADION_REST_API** - Custom `/stadion/v1/` endpoints
+- **STADION_Monica_Import** - Monica CRM import
+- **STADION_VCard_Import** - vCard import
+- **STADION_Google_Contacts_Import** - Google Contacts import
 
 Loaded for: REST API requests only
 
 ### Utility Classes
 
-- **PRM_Reminders** - Daily reminder cron job (Admin, Cron only)
-- **PRM_ICal_Feed** - Calendar feed generation (All requests for hook registration)
+- **STADION_Reminders** - Daily reminder cron job (Admin, Cron only)
+- **STADION_ICal_Feed** - Calendar feed generation (All requests for hook registration)
 
 ## Context Detection
 
 The system uses helper functions to detect the request context:
 
 ```php
-function prm_is_rest_request() {
+function stadion_is_rest_request() {
     if (defined('REST_REQUEST') && REST_REQUEST) {
         return true;
     }
@@ -92,7 +92,7 @@ function prm_is_rest_request() {
     return strpos($_SERVER['REQUEST_URI'], '/' . $rest_prefix . '/') !== false;
 }
 
-function prm_is_ical_request() {
+function stadion_is_ical_request() {
     return strpos($_SERVER['REQUEST_URI'], '/prm-ical/') !== false;
 }
 ```
@@ -105,19 +105,19 @@ When adding a new PHP class:
    ```php
    $class_map = [
        // existing entries...
-       'PRM_Your_Class' => 'class-your-class.php',
+       'STADION_Your_Class' => 'class-your-class.php',
    ];
    ```
 
-2. **Add initialization** in the appropriate context section of `prm_init()`:
+2. **Add initialization** in the appropriate context section of `stadion_init()`:
    ```php
    // If only needed for REST API
    if ($is_rest) {
-       new PRM_Your_Class();
+       new STADION_Your_Class();
    }
    
    // If always needed
-   new PRM_Your_Class();
+   new STADION_Your_Class();
    ```
 
 ## Performance Benefits
@@ -134,8 +134,8 @@ The conditional loading system provides several benefits:
 To see which classes are loaded on a request, you can temporarily add logging:
 
 ```php
-function prm_autoloader($class_name) {
-    if (strpos($class_name, 'PRM_') !== 0) return;
+function stadion_autoloader($class_name) {
+    if (strpos($class_name, 'STADION_') !== 0) return;
     
     error_log('Autoloading: ' . $class_name);
     // ... rest of autoloader

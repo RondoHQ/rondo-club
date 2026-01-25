@@ -9,7 +9,7 @@ requires: []
 provides:
   - CustomFields Manager class with CRUD operations
   - ACF database persistence for custom field definitions
-  - Backward compatibility alias PRM_Custom_Fields_Manager
+  - Backward compatibility alias STADION_Custom_Fields_Manager
 affects: [87-02, 87-03, 88, 89]
 
 # Tech tracking
@@ -35,7 +35,7 @@ key-decisions:
   - "Field keys are immutable once created to prevent orphaned data"
 
 patterns-established:
-  - "CustomFields namespace under Caelis\\CustomFields"
+  - "CustomFields namespace under Stadion\\CustomFields"
   - "Manager class as stateless orchestrator with no hooks"
   - "ACF field group key pattern: group_custom_fields_{post_type}"
   - "ACF field key pattern: field_custom_{post_type}_{slug}"
@@ -74,7 +74,7 @@ Each task was committed atomically:
 ## Files Created/Modified
 
 - `includes/customfields/class-manager.php` - Manager class with ensure_field_group, create_field, update_field, deactivate_field, reactivate_field, get_fields, get_field methods
-- `functions.php` - Added use statement and PRM_Custom_Fields_Manager alias
+- `functions.php` - Added use statement and STADION_Custom_Fields_Manager alias
 - `tests/wpunit/CustomFields/ManagerTest.php` - 16 integration tests covering all CRUD operations
 
 ## Decisions Made

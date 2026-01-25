@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-Google Contacts sync is a well-established integration pattern with clear user expectations. The research reveals that users expect bidirectional sync with intelligent conflict resolution, but are frequently disappointed by implementations that only sync basic fields (name, email, phone) while ignoring richer metadata. Caelis has an opportunity to differentiate by providing comprehensive field mapping and a "source of truth" model that aligns with the user's stated preference.
+Google Contacts sync is a well-established integration pattern with clear user expectations. The research reveals that users expect bidirectional sync with intelligent conflict resolution, but are frequently disappointed by implementations that only sync basic fields (name, email, phone) while ignoring richer metadata. Stadion has an opportunity to differentiate by providing comprehensive field mapping and a "source of truth" model that aligns with the user's stated preference.
 
 ---
 
@@ -36,18 +36,18 @@ Research from [RealSynch](https://www.realsynch.com/how-to-sync-google-contacts-
 - Automatic updates when contact details change
 - No duplicate entries through smart automation
 
-**Competitive baseline:** HubSpot, Pipedrive, Zoho CRM, and Capsule CRM all offer Google Contacts integration. Users switching to Caelis will expect parity.
+**Competitive baseline:** HubSpot, Pipedrive, Zoho CRM, and Capsule CRM all offer Google Contacts integration. Users switching to Stadion will expect parity.
 
 ---
 
 ## Differentiators
 
-Features that set Caelis apart. Not expected, but valued.
+Features that set Stadion apart. Not expected, but valued.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
 | **Comprehensive field mapping** | Sync addresses, work history, social URLs, biographies - not just basics | Medium | Most CRMs only sync name/email/phone |
-| **Clear source of truth model** | "Caelis wins" or "Google wins" or "newest wins" - user chooses | Medium | Many CRMs leave this ambiguous |
+| **Clear source of truth model** | "Stadion wins" or "Google wins" or "newest wins" - user chooses | Medium | Many CRMs leave this ambiguous |
 | **Delta sync with syncToken** | Only sync changes, not full re-import each time | Medium | Reduces API calls, faster sync |
 | **Conflict queue with manual resolution** | Let users review when both sides changed | High | Most CRMs auto-overwrite without notice |
 | **Per-contact sync control** | Toggle sync on/off for individual contacts | Low | Privacy control for sensitive contacts |
@@ -65,7 +65,7 @@ The [HubSpot community forums](https://community.hubspot.com/t5/CRM/google-conta
 2. **No conflict visibility:** "If you make changes to the same contact in both Google and [CRM] between syncs, some of the changes may be overwritten."
 3. **Duplicate creation:** "If you delete or merge contacts in Google, they will be re-added during the next sync."
 
-Caelis can differentiate by solving these pain points explicitly.
+Stadion can differentiate by solving these pain points explicitly.
 
 ---
 
@@ -103,16 +103,16 @@ Research from [Resco docs](https://docs.resco.net/wiki/Conflict_resolution) and 
 | **Client/Google wins** | Google is source of truth | For Google-centric users |
 | **Manual resolution** | User decides per conflict | For careful data managers |
 
-**User's stated preference:** "Caelis is source of truth" - this maps to "CRM wins" strategy as default.
+**User's stated preference:** "Stadion is source of truth" - this maps to "CRM wins" strategy as default.
 
 ### Deletion Expectations
 
 | Scenario | User Expectation | Recommendation |
 |----------|------------------|----------------|
-| Delete in Caelis | Ask whether to delete in Google too | Default: propagate (user confirmed) |
-| Delete in Google | Ask whether to delete in Caelis | Default: unlink only (safe) |
+| Delete in Stadion | Ask whether to delete in Google too | Default: propagate (user confirmed) |
+| Delete in Google | Ask whether to delete in Stadion | Default: unlink only (safe) |
 
-**User's stated preference:** "Caelis to Google deletion propagates, Google to Caelis deletion unlinks only" - this is exactly right and aligns with industry best practices for source-of-truth models.
+**User's stated preference:** "Stadion to Google deletion propagates, Google to Stadion deletion unlinks only" - this is exactly right and aligns with industry best practices for source-of-truth models.
 
 ### Photo Sync Expectations
 
@@ -154,7 +154,7 @@ What to deliberately NOT build and why.
 
 3. **Automatic duplicate merging:** The [Dropcontact article](https://www.dropcontact.com/blog/crm-how-to-detect-and-merge-duplicate-contacts) warns: "A big concern when managing duplicates is the risk of overwriting or losing critical customer data when you merge records." Detection yes, auto-merge no.
 
-4. **Label/group sync:** Google uses "labels" for groups, Caelis uses labels differently (person_label taxonomy). Mapping these is non-trivial and the user explicitly said "all contacts sync regardless of workspace" - suggesting they don't want filtering.
+4. **Label/group sync:** Google uses "labels" for groups, Stadion uses labels differently (person_label taxonomy). Mapping these is non-trivial and the user explicitly said "all contacts sync regardless of workspace" - suggesting they don't want filtering.
 
 ---
 
@@ -164,7 +164,7 @@ What other CRMs do.
 
 ### Feature Matrix
 
-| Feature | HubSpot | Pipedrive | Zoho CRM | Capsule | Less Annoying | Caelis (Planned) |
+| Feature | HubSpot | Pipedrive | Zoho CRM | Capsule | Less Annoying | Stadion (Planned) |
 |---------|---------|-----------|----------|---------|---------------|------------------|
 | **Sync direction** | Bidirectional | Bidirectional | Bidirectional | Bidirectional | Bidirectional | Bidirectional |
 | **OAuth connection** | Yes | Yes | Yes | Yes | Yes | Yes |
@@ -203,9 +203,9 @@ What other CRMs do.
 - Honest about limitations: "Only default contact/company fields sync - custom fields will not sync"
 - Warns users about conflict overwrites
 
-### Caelis Positioning
+### Stadion Positioning
 
-Based on the competitive analysis, Caelis should position as:
+Based on the competitive analysis, Stadion should position as:
 
 1. **More comprehensive than lightweight CRMs** (Capsule, Less Annoying) - full field mapping including work history, photos, birthdays
 2. **Simpler than enterprise CRMs** (HubSpot, Salesforce) - no paid tiers, no complex setup
@@ -265,7 +265,7 @@ For MVP (v5.0), prioritize:
 
 ### Defer to Post-MVP
 - **Contact group/label mapping**: Complex, unclear requirements
-- **Custom field sync**: Requires defining what "custom fields" means in Caelis
+- **Custom field sync**: Requires defining what "custom fields" means in Stadion
 - **Multi-account support**: Major complexity
 - **Real-time sync alternatives**: Google doesn't support webhooks
 
@@ -309,10 +309,10 @@ The user specified several preferences that align well with research findings:
 | User Preference | Research Finding | Recommendation |
 |-----------------|------------------|----------------|
 | All contacts sync regardless of workspace | Anti-feature: label/group filtering adds complexity | Agree - sync all |
-| Caelis is source of truth | Industry pattern: "CRM wins" conflict resolution | Agree - default to Caelis wins |
+| Stadion is source of truth | Industry pattern: "CRM wins" conflict resolution | Agree - default to Stadion wins |
 | Photos: preserve on initial, propagate after | Best practice for avoiding overwrites | Agree - implement as stated |
-| Delete Caelis->Google: propagate | Standard for source-of-truth model | Agree |
-| Delete Google->Caelis: unlink only | Safe default, prevents data loss | Agree |
+| Delete Stadion->Google: propagate | Standard for source-of-truth model | Agree |
+| Delete Google->Stadion: unlink only | Safe default, prevents data loss | Agree |
 
 All user preferences align with industry best practices for a CRM-as-source-of-truth model.
 

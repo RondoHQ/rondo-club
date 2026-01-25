@@ -5,12 +5,12 @@
  * Provides REST API endpoints for managing custom field definitions.
  * Exposes the CustomFields Manager to the React frontend for CRUD operations.
  *
- * @package Caelis\REST
+ * @package Stadion\REST
  */
 
-namespace Caelis\REST;
+namespace Stadion\REST;
 
-use Caelis\CustomFields\Manager;
+use Stadion\CustomFields\Manager;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;
@@ -25,12 +25,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * REST controller for custom field definitions.
  *
  * Endpoints:
- * - GET    /prm/v1/custom-fields/{post_type}           - List all fields (admin)
- * - POST   /prm/v1/custom-fields/{post_type}           - Create new field (admin)
- * - GET    /prm/v1/custom-fields/{post_type}/{key}     - Get single field (admin)
- * - PUT    /prm/v1/custom-fields/{post_type}/{key}     - Update field (admin)
- * - DELETE /prm/v1/custom-fields/{post_type}/{key}     - Deactivate field (admin)
- * - GET    /prm/v1/custom-fields/{post_type}/metadata  - Read-only field metadata (any logged-in user)
+ * - GET    /stadion/v1/custom-fields/{post_type}           - List all fields (admin)
+ * - POST   /stadion/v1/custom-fields/{post_type}           - Create new field (admin)
+ * - GET    /stadion/v1/custom-fields/{post_type}/{key}     - Get single field (admin)
+ * - PUT    /stadion/v1/custom-fields/{post_type}/{key}     - Update field (admin)
+ * - DELETE /stadion/v1/custom-fields/{post_type}/{key}     - Deactivate field (admin)
+ * - GET    /stadion/v1/custom-fields/{post_type}/metadata  - Read-only field metadata (any logged-in user)
  */
 class CustomFields extends WP_REST_Controller {
 
@@ -39,7 +39,7 @@ class CustomFields extends WP_REST_Controller {
 	 *
 	 * @var string
 	 */
-	protected $namespace = 'prm/v1';
+	protected $namespace = 'stadion/v1';
 
 	/**
 	 * REST route base.

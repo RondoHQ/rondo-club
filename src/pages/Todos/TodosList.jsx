@@ -47,12 +47,10 @@ export default function TodosList() {
       return;
     }
 
-    // If it's an awaiting todo, clicking marks it complete
+    // If it's an awaiting todo, show the complete modal (without awaiting option)
     if (todo.status === 'awaiting') {
-      updateTodo.mutate({
-        todoId: todo.id,
-        data: { status: 'completed' },
-      });
+      setTodoToComplete(todo);
+      setShowCompleteModal(true);
       return;
     }
 
@@ -307,7 +305,7 @@ export default function TodosList() {
         onClose={() => setShowGlobalTodoModal(false)}
       />
 
-      {/* Complete Todo Modal - now with three options */}
+      {/* Complete Todo Modal - now with three options (awaiting option hidden if already awaiting) */}
       <CompleteTodoModal
         isOpen={showCompleteModal}
         onClose={() => {
@@ -318,6 +316,7 @@ export default function TodosList() {
         onAwaiting={handleMarkAwaiting}
         onComplete={handleJustComplete}
         onCompleteAsActivity={handleCompleteAsActivity}
+        hideAwaitingOption={todoToComplete?.status === 'awaiting'}
       />
 
       {/* Activity Modal (for converting todo to activity) */}

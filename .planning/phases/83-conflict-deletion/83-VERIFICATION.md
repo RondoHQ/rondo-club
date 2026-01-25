@@ -6,10 +6,10 @@ score: 5/5 must-haves verified
 must_haves:
   truths:
     - "When contact modified in both systems, conflict is detected"
-    - "Default resolution strategy (Caelis wins) is applied automatically"
+    - "Default resolution strategy (Stadion wins) is applied automatically"
     - "Conflict resolution is logged as activity entry for audit"
-    - "Deleting a contact in Caelis removes it from Google Contacts"
-    - "Deleting a contact in Google only unlinks it in Caelis (preserves Caelis data)"
+    - "Deleting a contact in Stadion removes it from Google Contacts"
+    - "Deleting a contact in Google only unlinks it in Stadion (preserves Stadion data)"
   artifacts:
     - path: "includes/class-google-contacts-api-import.php"
       provides: "Conflict detection, field snapshot, activity logging"
@@ -34,14 +34,14 @@ must_haves:
       to: "unlink_contact()"
       status: wired
 human_verification:
-  - test: "Modify same field in both Caelis and Google, trigger sync"
-    expected: "Activity entry shows conflict with both values, Caelis value preserved"
+  - test: "Modify same field in both Stadion and Google, trigger sync"
+    expected: "Activity entry shows conflict with both values, Stadion value preserved"
     why_human: "Requires actual Google Contacts modification and sync cycle"
-  - test: "Permanently delete a linked contact in Caelis"
+  - test: "Permanently delete a linked contact in Stadion"
     expected: "Contact is also deleted from Google Contacts"
     why_human: "Requires verification in Google Contacts UI"
   - test: "Delete a contact in Google Contacts, trigger sync"
-    expected: "Contact unlinked in Caelis, data preserved"
+    expected: "Contact unlinked in Stadion, data preserved"
     why_human: "Requires actual Google Contacts deletion and sync cycle"
 ---
 
@@ -58,11 +58,11 @@ human_verification:
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | When contact modified in both systems, conflict is detected | VERIFIED | `detect_field_conflicts()` compares Google, Caelis, and snapshot values at line 1039-1080 |
-| 2 | Default resolution strategy (Caelis wins) is applied automatically | VERIFIED | Import logic fills gaps only (preserves Caelis values), `kept_value` = `caelis_value` at line 1073 |
+| 1 | When contact modified in both systems, conflict is detected | VERIFIED | `detect_field_conflicts()` compares Google, Stadion, and snapshot values at line 1039-1080 |
+| 2 | Default resolution strategy (Stadion wins) is applied automatically | VERIFIED | Import logic fills gaps only (preserves Stadion values), `kept_value` = `stadion_value` at line 1073 |
 | 3 | Conflict resolution is logged as activity entry for audit | VERIFIED | `log_conflict_resolution()` creates TYPE_ACTIVITY comment with sync_conflict type at line 1152-1181 |
-| 4 | Deleting a contact in Caelis removes it from Google Contacts | VERIFIED | `before_delete_post` hook -> `on_person_deleted()` -> `delete_google_contact()` at lines 54, 162-185, 197-263 |
-| 5 | Deleting a contact in Google only unlinks it in Caelis (preserves Caelis data) | VERIFIED | `unlink_contact()` removes Google meta but preserves contact at lines 220-256 |
+| 4 | Deleting a contact in Stadion removes it from Google Contacts | VERIFIED | `before_delete_post` hook -> `on_person_deleted()` -> `delete_google_contact()` at lines 54, 162-185, 197-263 |
+| 5 | Deleting a contact in Google only unlinks it in Stadion (preserves Stadion data) | VERIFIED | `unlink_contact()` removes Google meta but preserves contact at lines 220-256 |
 
 **Score:** 5/5 truths verified
 
@@ -93,9 +93,9 @@ human_verification:
 | Requirement | Status | Supporting Truth |
 |-------------|--------|------------------|
 | CONFLICT-01 | SATISFIED | Truth 1 (conflict detection) |
-| CONFLICT-02 | SATISFIED | Truth 2 (Caelis wins strategy) |
+| CONFLICT-02 | SATISFIED | Truth 2 (Stadion wins strategy) |
 | CONFLICT-04 | SATISFIED | Truth 3 (activity logging) |
-| DELETE-01 | SATISFIED | Truth 4 (Caelis -> Google deletion) |
+| DELETE-01 | SATISFIED | Truth 4 (Stadion -> Google deletion) |
 | DELETE-02 | SATISFIED | Truth 5 (Google deletion -> unlink only) |
 
 ### Anti-Patterns Found
@@ -112,11 +112,11 @@ The following items need manual testing because they involve actual Google Conta
 
 ### 1. Conflict Detection with Real Data
 
-**Test:** Edit a contact's name in both Caelis and Google Contacts, then trigger a sync
-**Expected:** Activity entry appears on the contact showing "Sync conflict resolved (Caelis wins):" with the conflicting values
+**Test:** Edit a contact's name in both Stadion and Google Contacts, then trigger a sync
+**Expected:** Activity entry appears on the contact showing "Sync conflict resolved (Stadion wins):" with the conflicting values
 **Why human:** Requires actual modification in Google Contacts UI and a sync cycle to execute
 
-### 2. Caelis Deletion Propagation
+### 2. Stadion Deletion Propagation
 
 **Test:** Permanently delete a contact that is linked to Google Contacts (has _google_contact_id)
 **Expected:** Contact is also deleted from the user's Google Contacts
@@ -125,13 +125,13 @@ The following items need manual testing because they involve actual Google Conta
 ### 3. Google Deletion Handling
 
 **Test:** Delete a contact in Google Contacts, then trigger a sync
-**Expected:** Contact is unlinked in Caelis (Google meta removed) but contact data preserved
+**Expected:** Contact is unlinked in Stadion (Google meta removed) but contact data preserved
 **Why human:** Requires deletion in Google Contacts UI and sync to verify unlink behavior
 
 ## Code Quality Summary
 
 ### Conflict Detection Implementation
-- Three-way comparison correctly implemented: Google value vs Caelis value vs snapshot value
+- Three-way comparison correctly implemented: Google value vs Stadion value vs snapshot value
 - Only logs actual conflicts (both changed AND to different values)
 - Field names tracked: first_name, last_name, email, phone, organization
 - Snapshot stored in `_google_synced_fields` post meta with `synced_at` timestamp
@@ -141,8 +141,8 @@ The following items need manual testing because they involve actual Google Conta
 - Uses `CommentTypes::TYPE_ACTIVITY` constant for comment type
 - Adds `activity_type` = 'sync_conflict' meta for filtering
 - Adds `activity_date` meta for display
-- Format: "Sync conflict resolved (Caelis wins):" followed by bullet list of conflicts
-- Each bullet: "- {Field name}: Google had "{google_value}", kept "{caelis_value}""
+- Format: "Sync conflict resolved (Stadion wins):" followed by bullet list of conflicts
+- Each bullet: "- {Field name}: Google had "{google_value}", kept "{stadion_value}""
 
 ### Deletion Propagation Implementation
 - Uses `before_delete_post` hook (not `delete_post`) - correct timing for meta access
@@ -155,7 +155,7 @@ The following items need manual testing because they involve actual Google Conta
 ### Google Deletion Handling (from Phase 82)
 - `import_delta()` checks `metadata.getDeleted()` flag
 - Calls `unlink_contact()` which removes Google meta only
-- Preserves all Caelis contact data
+- Preserves all Stadion contact data
 - Increments `contacts_unlinked` stat for tracking
 
 ## Verification Method

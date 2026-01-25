@@ -10,7 +10,7 @@ requires:
     provides: CustomFields Manager class with CRUD operations
 provides:
   - REST API endpoints for custom field management
-  - Full CRUD via /prm/v1/custom-fields/{post_type}
+  - Full CRUD via /stadion/v1/custom-fields/{post_type}
   - Admin-only permission checks (manage_options)
 affects: [87-03, 88, 89]
 
@@ -36,7 +36,7 @@ key-decisions:
   - "Route pattern allows hyphens in field keys for generated keys"
 
 patterns-established:
-  - "REST endpoint pattern: /prm/v1/custom-fields/{post_type}/{field_key}"
+  - "REST endpoint pattern: /stadion/v1/custom-fields/{post_type}/{field_key}"
   - "GET collection supports include_inactive query param"
   - "POST/PUT return full field object on success"
   - "DELETE returns { success: true, field: {...} } on success"
@@ -48,7 +48,7 @@ completed: 2026-01-18
 
 # Phase 87 Plan 02: Custom Fields REST API Summary
 
-**REST API controller exposing CustomFields Manager via /prm/v1/custom-fields with full CRUD operations**
+**REST API controller exposing CustomFields Manager via /stadion/v1/custom-fields with full CRUD operations**
 
 ## Performance
 
@@ -75,7 +75,7 @@ Each task was committed atomically:
 ## Files Created/Modified
 
 - `includes/class-rest-custom-fields.php` - REST controller with GET/POST/PUT/DELETE endpoints, permission checks, parameter schemas
-- `functions.php` - Added use statement, PRM_REST_Custom_Fields alias, instantiation in REST section
+- `functions.php` - Added use statement, STADION_REST_Custom_Fields alias, instantiation in REST section
 - `includes/customfields/class-manager.php` - Fixed get_fields() to query database directly for group post ID
 
 ## Decisions Made

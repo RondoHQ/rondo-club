@@ -47,7 +47,7 @@ completed: 2026-01-17
 
 # Phase 81 Plan 03: Bulk Export UI Summary
 
-**Bulk export button in Settings to push all unlinked Caelis contacts to Google with sequential processing and progress display**
+**Bulk export button in Settings to push all unlinked Stadion contacts to Google with sequential processing and progress display**
 
 ## Performance
 

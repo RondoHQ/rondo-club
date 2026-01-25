@@ -25,7 +25,7 @@ Field:
   - Instructions: "Control who can see this contact"
   - REST API enabled (`show_in_rest: true`)
 
-### Task 2: PRM_Visibility Helper Class
+### Task 2: STADION_Visibility Helper Class
 
 **Files:** `includes/class-visibility.php`, `functions.php`
 
@@ -60,14 +60,14 @@ Created static helper class with:
 ]
 ```
 
-Added `PRM_Visibility` to autoloader in `functions.php`.
+Added `STADION_Visibility` to autoloader in `functions.php`.
 
 ## Verification
 
 - [x] ACF field group JSON file created with correct structure
 - [x] Field group targets all three post types (person, company, important_date)
 - [x] Visibility field in sidebar position
-- [x] PRM_Visibility class has no PHP syntax errors
+- [x] STADION_Visibility class has no PHP syntax errors
 - [x] Class properly added to autoloader
 - [x] `npm run build` succeeds
 - [x] Deployed to production
@@ -76,20 +76,20 @@ Added `PRM_Visibility` to autoloader in `functions.php`.
 
 - `acf-json/group_visibility_settings.json` - New ACF field group
 - `includes/class-visibility.php` - New visibility helper class
-- `functions.php` - Added PRM_Visibility to autoloader
+- `functions.php` - Added STADION_Visibility to autoloader
 - `docs/data-model.md` - Updated with visibility documentation
 - `CHANGELOG.md` - Added changelog entries
 
 ## Commits
 
 1. `feat(07-02): add visibility ACF field group for Person/Company/Important Date` (a63fdcb)
-2. `feat(07-02): add PRM_Visibility helper class for visibility and sharing` (7f21620)
+2. `feat(07-02): add STADION_Visibility helper class for visibility and sharing` (7f21620)
 
 ## Next Steps
 
 Phase 7 continues with:
 - 07-03: Add workspace membership to user meta (completed in parallel)
-- 07-04: Update PRM_Access_Control to check visibility, workspace membership, and shares
+- 07-04: Update STADION_Access_Control to check visibility, workspace membership, and shares
 
 ## Notes
 

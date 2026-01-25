@@ -7,16 +7,16 @@ tags: [phpunit, access-control, user-isolation, wp-browser]
 # Dependency graph
 requires:
   - phase: 21-phpunit-setup
-    provides: PHPUnit infrastructure, CaelisTestCase base class, factory helpers
+    provides: PHPUnit infrastructure, StadionTestCase base class, factory helpers
 provides:
   - UserIsolationTest with 18 tests verifying user_can_access_post() and query filtering
-  - Test patterns for PRM_Access_Control class
+  - Test patterns for STADION_Access_Control class
 affects: [22-02-visibility-tests, 22-03-workspace-tests]
 
 # Tech tracking
 tech-stack:
   added: []
-  patterns: [createApprovedCaelisUser() helper, integer casting for DB results]
+  patterns: [createApprovedStadionUser() helper, integer casting for DB results]
 
 key-files:
   created:
@@ -29,7 +29,7 @@ key-decisions:
   - "Test both positive (author access) and negative (non-author denied) cases"
 
 patterns-established:
-  - "createApprovedCaelisUser() - helper method for creating approved Caelis users"
+  - "createApprovedStadionUser() - helper method for creating approved Stadion users"
   - "Integer casting pattern: array_map('intval', $db_results) for ID comparisons"
   - "Test structure: separate test methods for each post type and scenario"
 
@@ -82,8 +82,8 @@ Each task was committed atomically:
 
 **1. [Rule 3 - Blocking] Recreated test database**
 - **Found during:** Initial test run
-- **Issue:** Test database tables were missing (caelis_test.wp_options not found)
-- **Fix:** Recreated test database with `mysql -u root -e "DROP DATABASE IF EXISTS caelis_test; CREATE DATABASE caelis_test;"`
+- **Issue:** Test database tables were missing (stadion_test.wp_options not found)
+- **Fix:** Recreated test database with `mysql -u root -e "DROP DATABASE IF EXISTS stadion_test; CREATE DATABASE stadion_test;"`
 - **Verification:** All tests run successfully
 
 **2. [Rule 1 - Bug Fix] Fixed type comparison for DB results**
@@ -106,7 +106,7 @@ None beyond the auto-fixed deviations above.
 - UserIsolationTest complete and passing
 - Ready for 22-02 (VisibilityRulesTest) and 22-03 (WorkspacePermissionsTest)
 - Test patterns established for future access control tests
-- createApprovedCaelisUser() helper available for reuse
+- createApprovedStadionUser() helper available for reuse
 
 ---
 *Phase: 22-access-control-tests*

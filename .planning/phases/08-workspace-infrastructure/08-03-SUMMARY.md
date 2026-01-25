@@ -10,7 +10,7 @@ Implemented automatic synchronization of workspace_access taxonomy terms with wo
 
 **File:** `includes/class-taxonomies.php`
 
-Added workspace term sync hooks and methods to `PRM_Taxonomies`:
+Added workspace term sync hooks and methods to `STADION_Taxonomies`:
 
 1. **Constructor hooks:**
    - `save_post_workspace` -> `ensure_workspace_term()` (priority 10)
@@ -79,7 +79,7 @@ None - plan executed exactly as written.
 ## Notes
 
 - The sync_contact_workspace_terms() method mentioned in the plan was not needed because ACF handles term relationships automatically when `save_terms: true`
-- Term slug format `workspace-{ID}` matches the pattern expected by `PRM_Access_Control::get_accessible_post_ids()` and `user_can_access_post()`
+- Term slug format `workspace-{ID}` matches the pattern expected by `STADION_Access_Control::get_accessible_post_ids()` and `user_can_access_post()`
 - The checkbox field type provides a clean UI for selecting multiple workspaces
 - Terms are only available after workspaces are created and published
 

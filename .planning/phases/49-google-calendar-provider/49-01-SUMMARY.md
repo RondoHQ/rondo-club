@@ -7,11 +7,11 @@ tags: [google-calendar, sync, rest-api, calendar-integration]
 # Dependency graph
 requires:
   - phase: 48-google-oauth
-    provides: Google OAuth flow, token management, PRM_Google_OAuth class
+    provides: Google OAuth flow, token management, STADION_Google_OAuth class
   - phase: 47-infrastructure
-    provides: calendar_event CPT, PRM_Calendar_Connections helper
+    provides: calendar_event CPT, STADION_Calendar_Connections helper
 provides:
-  - PRM_Google_Calendar_Provider class for Google Calendar sync
+  - STADION_Google_Calendar_Provider class for Google Calendar sync
   - Event fetching and upsert logic
   - Attendee extraction with email, name, response status
   - Meeting URL extraction (Google Meet, Zoom, Teams, Webex)
@@ -62,7 +62,7 @@ completed: 2026-01-15
 
 ## Accomplishments
 
-- Created PRM_Google_Calendar_Provider class with full sync implementation
+- Created STADION_Google_Calendar_Provider class with full sync implementation
 - Implemented event upsert that creates/updates calendar_event posts
 - Extracted attendees with email, name, and response status
 - Extracted meeting URLs from Google Meet, conferenceData, Zoom/Teams patterns
@@ -73,14 +73,14 @@ completed: 2026-01-15
 
 Each task was committed atomically:
 
-1. **Task 1: Create PRM_Google_Calendar_Provider class** - `1228baf` (feat)
+1. **Task 1: Create STADION_Google_Calendar_Provider class** - `1228baf` (feat)
 2. **Task 2: Implement trigger_sync and get_events REST endpoints** - `f13b2c8` (feat)
 
 ## Files Created/Modified
 
 - `includes/class-google-calendar-provider.php` - New class with sync(), upsert_event(), extract_attendees(), extract_meeting_url() methods
 - `includes/class-rest-calendar.php` - Updated trigger_sync() and get_events() from stubs to working implementations
-- `functions.php` - Added PRM_Google_Calendar_Provider to autoloader
+- `functions.php` - Added STADION_Google_Calendar_Provider to autoloader
 
 ## Decisions Made
 

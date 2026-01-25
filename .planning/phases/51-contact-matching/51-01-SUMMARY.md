@@ -11,11 +11,11 @@ requires:
   - phase: 50-caldav-provider
     provides: CalDAV event sync with attendees
 provides:
-  - PRM_Calendar_Matcher class with email-first matching
+  - STADION_Calendar_Matcher class with email-first matching
   - Fuzzy name matching with confidence scores
   - Email lookup transient cache with 24h expiration
   - _matched_people meta on calendar events
-  - GET /prm/v1/people/{id}/meetings endpoint
+  - GET /stadion/v1/people/{id}/meetings endpoint
 affects: [52-settings-ui, 53-auto-logging]
 
 # Tech tracking
@@ -64,17 +64,17 @@ completed: 2026-01-15
 
 ## Accomplishments
 
-- Created PRM_Calendar_Matcher class with multi-strategy matching
+- Created STADION_Calendar_Matcher class with multi-strategy matching
 - Implemented transient-based email lookup cache with 24h expiration
 - Integrated matching into both Google and CalDAV providers on sync
-- Built GET /prm/v1/people/{id}/meetings endpoint with full response format
+- Built GET /stadion/v1/people/{id}/meetings endpoint with full response format
 - Added cache invalidation on person save via ACF hook
 
 ## Task Commits
 
 Each task was committed atomically:
 
-1. **Task 1: Create PRM_Calendar_Matcher class** - `2b5906e` (feat)
+1. **Task 1: Create STADION_Calendar_Matcher class** - `2b5906e` (feat)
 2. **Task 2: Integrate matching into calendar providers** - `50cfe1f` (feat)
 3. **Task 3: Add meetings-by-person REST endpoint** - `448427f` (feat)
 
@@ -109,7 +109,7 @@ None - no external service configuration required.
 
 - Contact matching fully functional for both Google and CalDAV providers
 - Events now have _matched_people meta populated on sync
-- GET /prm/v1/people/{id}/meetings endpoint ready for frontend integration
+- GET /stadion/v1/people/{id}/meetings endpoint ready for frontend integration
 - Ready for Phase 52 (Settings UI) or Phase 53 (Auto-logging)
 
 ---

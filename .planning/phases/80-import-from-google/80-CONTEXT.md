@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Pull all contacts from user's Google Contacts into Caelis with proper field mapping, duplicate detection, and photo sideloading. This is a one-directional initial import. Export to Google and ongoing sync are separate phases.
+Pull all contacts from user's Google Contacts into Stadion with proper field mapping, duplicate detection, and photo sideloading. This is a one-directional initial import. Export to Google and ongoing sync are separate phases.
 
 </domain>
 
@@ -18,8 +18,8 @@ Pull all contacts from user's Google Contacts into Caelis with proper field mapp
 - Contacts without email addresses are skipped entirely (not imported)
 - When duplicate found (matching email): link and fill gaps only
   - Store google_contact_id on existing person
-  - Add Google data only for empty fields in Caelis
-  - Existing Caelis data is never overwritten
+  - Add Google data only for empty fields in Stadion
+  - Existing Stadion data is never overwritten
 
 ### Field mapping
 - Multiple emails/phones: Import all into ACF repeater fields
@@ -27,10 +27,10 @@ Pull all contacts from user's Google Contacts into Caelis with proper field mapp
 - Google notes field: Skip (not imported)
 - Google contact groups/labels: Skip (not imported)
 - Birthday: Create as important_date (from requirements)
-- Addresses, URLs, biography: Map to corresponding Caelis fields
+- Addresses, URLs, biography: Map to corresponding Stadion fields
 
 ### Photo handling
-- Sideload photos only for contacts that don't already have a photo in Caelis
+- Sideload photos only for contacts that don't already have a photo in Stadion
 - If photo download fails: skip silently, continue with import
 - Photos uploaded to WordPress media library and set as person featured image
 
@@ -46,7 +46,7 @@ Pull all contacts from user's Google Contacts into Caelis with proper field mapp
 ## Specific Ideas
 
 - Phase 79 set a `has_pending_import` flag after OAuth — can be used to trigger import
-- Caelis is source of truth — Google data fills gaps but never overwrites
+- Stadion is source of truth — Google data fills gaps but never overwrites
 
 </specifics>
 

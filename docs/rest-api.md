@@ -1,6 +1,6 @@
 # REST API
 
-This document describes all REST API endpoints available in Caelis, including both WordPress standard endpoints and custom endpoints.
+This document describes all REST API endpoints available in Stadion, including both WordPress standard endpoints and custom endpoints.
 
 ## Authentication
 
@@ -15,12 +15,12 @@ The nonce is automatically injected by the frontend via `window.wpApiSettings.no
 
 ## API Namespaces
 
-Caelis uses two API namespaces:
+Stadion uses two API namespaces:
 
 | Namespace | Purpose |
 |-----------|---------|
 | `/wp/v2/` | Standard WordPress REST API for CRUD operations on post types |
-| `/prm/v1/` | Custom endpoints for dashboard, search, and specialized operations |
+| `/stadion/v1/` | Custom endpoints for dashboard, search, and specialized operations |
 
 ---
 
@@ -69,13 +69,13 @@ These endpoints are provided by WordPress with access control applied:
 
 ---
 
-## Custom Endpoints (`/prm/v1/`)
+## Custom Endpoints (`/stadion/v1/`)
 
 These endpoints provide specialized functionality beyond basic CRUD operations.
 
 ### Dashboard
 
-**GET** `/prm/v1/dashboard`
+**GET** `/stadion/v1/dashboard`
 
 Returns summary statistics and recent activity for the dashboard.
 
@@ -117,7 +117,7 @@ Returns summary statistics and recent activity for the dashboard.
 
 ### Version
 
-**GET** `/prm/v1/version`
+**GET** `/stadion/v1/version`
 
 Returns the current theme version. Used for PWA/mobile app cache invalidation.
 
@@ -136,7 +136,7 @@ This endpoint is called periodically by the frontend to detect when a new versio
 
 ### Global Search
 
-**GET** `/prm/v1/search`
+**GET** `/stadion/v1/search`
 
 Search across people, companies, and dates.
 
@@ -167,7 +167,7 @@ Search across people, companies, and dates.
 
 ### Upcoming Reminders
 
-**GET** `/prm/v1/reminders`
+**GET** `/stadion/v1/reminders`
 
 Get upcoming important dates with reminders.
 
@@ -200,7 +200,7 @@ Get upcoming important dates with reminders.
 
 ### People by Company
 
-**GET** `/prm/v1/companies/{company_id}/people`
+**GET** `/stadion/v1/companies/{company_id}/people`
 
 Get all people who work or worked at a company.
 
@@ -236,7 +236,7 @@ Get all people who work or worked at a company.
 
 ### Dates by Person
 
-**GET** `/prm/v1/people/{person_id}/dates`
+**GET** `/stadion/v1/people/{person_id}/dates`
 
 Get all important dates related to a person.
 
@@ -263,7 +263,7 @@ Get all important dates related to a person.
 
 ### Current User
 
-**GET** `/prm/v1/user/me`
+**GET** `/stadion/v1/user/me`
 
 Get information about the currently logged in user.
 
@@ -286,7 +286,7 @@ Get information about the currently logged in user.
 
 ### Person Photo Upload
 
-**POST** `/prm/v1/people/{person_id}/photo`
+**POST** `/stadion/v1/people/{person_id}/photo`
 
 Upload and set a person's profile photo. The filename is automatically generated from the person's name.
 
@@ -312,7 +312,7 @@ Upload and set a person's profile photo. The filename is automatically generated
 
 ### Gravatar Sideload
 
-**POST** `/prm/v1/people/{person_id}/gravatar`
+**POST** `/stadion/v1/people/{person_id}/gravatar`
 
 Fetch and set a person's Gravatar as their profile photo.
 
@@ -346,7 +346,7 @@ If no Gravatar exists:
 
 ### Company Logo Upload
 
-**POST** `/prm/v1/companies/{company_id}/logo/upload`
+**POST** `/stadion/v1/companies/{company_id}/logo/upload`
 
 Upload and set a company's logo. The filename is automatically generated from the company name.
 
@@ -372,7 +372,7 @@ Upload and set a company's logo. The filename is automatically generated from th
 
 ### Set Company Logo (by Media ID)
 
-**POST** `/prm/v1/companies/{company_id}/logo`
+**POST** `/stadion/v1/companies/{company_id}/logo`
 
 Set a company's logo from an existing media library item.
 
@@ -399,7 +399,7 @@ Set a company's logo from an existing media library item.
 
 ### Restore Relationship Type Defaults
 
-**POST** `/prm/v1/relationship-types/restore-defaults`
+**POST** `/stadion/v1/relationship-types/restore-defaults`
 
 Restore default inverse relationship mappings and gender-dependent configurations.
 
@@ -417,7 +417,7 @@ Restore default inverse relationship mappings and gender-dependent configuration
 
 ### Workspaces
 
-**GET** `/prm/v1/workspaces`
+**GET** `/stadion/v1/workspaces`
 
 List all workspaces the current user is a member of.
 
@@ -438,7 +438,7 @@ List all workspaces the current user is a member of.
 
 ---
 
-**GET** `/prm/v1/workspaces/{id}`
+**GET** `/stadion/v1/workspaces/{id}`
 
 Get single workspace with members.
 
@@ -463,7 +463,7 @@ Get single workspace with members.
 
 ---
 
-**POST** `/prm/v1/workspaces`
+**POST** `/stadion/v1/workspaces`
 
 Create a new workspace.
 
@@ -479,7 +479,7 @@ Create a new workspace.
 
 ---
 
-**PUT** `/prm/v1/workspaces/{id}`
+**PUT** `/stadion/v1/workspaces/{id}`
 
 Update workspace details.
 
@@ -495,7 +495,7 @@ Update workspace details.
 
 ---
 
-**DELETE** `/prm/v1/workspaces/{id}`
+**DELETE** `/stadion/v1/workspaces/{id}`
 
 Delete a workspace.
 
@@ -505,7 +505,7 @@ Delete a workspace.
 
 ### Workspace Members
 
-**POST** `/prm/v1/workspaces/{id}/members`
+**POST** `/stadion/v1/workspaces/{id}/members`
 
 Add a member to the workspace.
 
@@ -521,7 +521,7 @@ Add a member to the workspace.
 
 ---
 
-**PUT** `/prm/v1/workspaces/{id}/members/{user_id}`
+**PUT** `/stadion/v1/workspaces/{id}/members/{user_id}`
 
 Update member role.
 
@@ -536,7 +536,7 @@ Update member role.
 
 ---
 
-**DELETE** `/prm/v1/workspaces/{id}/members/{user_id}`
+**DELETE** `/stadion/v1/workspaces/{id}/members/{user_id}`
 
 Remove a member from the workspace.
 
@@ -546,7 +546,7 @@ Remove a member from the workspace.
 
 ### Workspace Invites
 
-**GET** `/prm/v1/workspaces/{id}/invites`
+**GET** `/stadion/v1/workspaces/{id}/invites`
 
 List pending invites for a workspace.
 
@@ -554,7 +554,7 @@ List pending invites for a workspace.
 
 ---
 
-**POST** `/prm/v1/workspaces/{id}/invites`
+**POST** `/stadion/v1/workspaces/{id}/invites`
 
 Create and send an email invitation.
 
@@ -570,7 +570,7 @@ Create and send an email invitation.
 
 ---
 
-**DELETE** `/prm/v1/workspaces/{id}/invites/{invite_id}`
+**DELETE** `/stadion/v1/workspaces/{id}/invites/{invite_id}`
 
 Revoke a pending invite.
 
@@ -578,7 +578,7 @@ Revoke a pending invite.
 
 ---
 
-**GET** `/prm/v1/invites/{token}`
+**GET** `/stadion/v1/invites/{token}`
 
 Validate an invite token (public endpoint).
 
@@ -596,7 +596,7 @@ Validate an invite token (public endpoint).
 
 ---
 
-**POST** `/prm/v1/invites/{token}/accept`
+**POST** `/stadion/v1/invites/{token}/accept`
 
 Accept an invite and join the workspace.
 
@@ -606,7 +606,7 @@ Accept an invite and join the workspace.
 
 ### Direct Sharing (People)
 
-**GET** `/prm/v1/people/{id}/shares`
+**GET** `/stadion/v1/people/{id}/shares`
 
 Get list of users a person is shared with.
 
@@ -627,7 +627,7 @@ Get list of users a person is shared with.
 
 ---
 
-**POST** `/prm/v1/people/{id}/shares`
+**POST** `/stadion/v1/people/{id}/shares`
 
 Share a person with another user.
 
@@ -651,7 +651,7 @@ Share a person with another user.
 
 ---
 
-**DELETE** `/prm/v1/people/{id}/shares/{user_id}`
+**DELETE** `/stadion/v1/people/{id}/shares/{user_id}`
 
 Remove sharing from a user.
 
@@ -669,7 +669,7 @@ Remove sharing from a user.
 
 ### Direct Sharing (Companies)
 
-**GET** `/prm/v1/companies/{id}/shares`
+**GET** `/stadion/v1/companies/{id}/shares`
 
 Get list of users a company is shared with.
 
@@ -679,7 +679,7 @@ Get list of users a company is shared with.
 
 ---
 
-**POST** `/prm/v1/companies/{id}/shares`
+**POST** `/stadion/v1/companies/{id}/shares`
 
 Share a company with another user.
 
@@ -689,7 +689,7 @@ Share a company with another user.
 
 ---
 
-**DELETE** `/prm/v1/companies/{id}/shares/{user_id}`
+**DELETE** `/stadion/v1/companies/{id}/shares/{user_id}`
 
 Remove sharing from a user.
 
@@ -699,7 +699,7 @@ Remove sharing from a user.
 
 ### User Search
 
-**GET** `/prm/v1/users/search`
+**GET** `/stadion/v1/users/search`
 
 Search for users to share with.
 
@@ -729,7 +729,7 @@ Note: The current user is automatically excluded from search results.
 
 ### Mention Notifications Preference
 
-**POST** `/prm/v1/user/mention-notifications`
+**POST** `/stadion/v1/user/mention-notifications`
 
 Update the user's preference for @mention notifications.
 
@@ -755,7 +755,7 @@ Update the user's preference for @mention notifications.
 }
 ```
 
-The preference is also returned by GET `/prm/v1/user/notification-channels` as part of the response:
+The preference is also returned by GET `/stadion/v1/user/notification-channels` as part of the response:
 ```json
 {
   "channels": ["email"],
@@ -769,7 +769,7 @@ The preference is also returned by GET `/prm/v1/user/notification-channels` as p
 
 ### Workspace Member Search
 
-**GET** `/prm/v1/workspaces/members/search`
+**GET** `/stadion/v1/workspaces/members/search`
 
 Search for workspace members for @mention autocomplete.
 

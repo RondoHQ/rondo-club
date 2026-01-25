@@ -6,7 +6,7 @@
  * notifications, channels, and slash commands.
  */
 
-namespace Caelis\REST;
+namespace Stadion\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -29,7 +29,7 @@ class Slack extends Base {
 	 */
 	protected function encrypt_token( $token ) {
 		// Check if encryption key is defined, fallback to base64 if not
-		if ( ! defined( 'CAELIS_ENCRYPTION_KEY' ) || empty( CAELIS_ENCRYPTION_KEY ) ) {
+		if ( ! defined( 'STADION_ENCRYPTION_KEY' ) || empty( STADION_ENCRYPTION_KEY ) ) {
 			return base64_encode( $token );
 		}
 
@@ -37,7 +37,7 @@ class Slack extends Base {
 		$nonce = random_bytes( SODIUM_CRYPTO_SECRETBOX_NONCEBYTES );
 
 		// Encrypt the token
-		$ciphertext = sodium_crypto_secretbox( $token, $nonce, CAELIS_ENCRYPTION_KEY );
+		$ciphertext = sodium_crypto_secretbox( $token, $nonce, STADION_ENCRYPTION_KEY );
 
 		// Return base64-encoded nonce + ciphertext
 		return base64_encode( $nonce . $ciphertext );
@@ -53,7 +53,7 @@ class Slack extends Base {
 	 */
 	protected function decrypt_token( $encrypted ) {
 		// Check if encryption key is defined, fallback to base64 decode if not
-		if ( ! defined( 'CAELIS_ENCRYPTION_KEY' ) || empty( CAELIS_ENCRYPTION_KEY ) ) {
+		if ( ! defined( 'STADION_ENCRYPTION_KEY' ) || empty( STADION_ENCRYPTION_KEY ) ) {
 			return base64_decode( $encrypted );
 		}
 
@@ -72,7 +72,7 @@ class Slack extends Base {
 		$ciphertext = substr( $decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES );
 
 		// Attempt decryption
-		$plaintext = sodium_crypto_secretbox_open( $ciphertext, $nonce, CAELIS_ENCRYPTION_KEY );
+		$plaintext = sodium_crypto_secretbox_open( $ciphertext, $nonce, STADION_ENCRYPTION_KEY );
 
 		if ( $plaintext === false ) {
 			// Decryption failed, try legacy base64 decode (migration path)
@@ -88,7 +88,7 @@ class Slack extends Base {
 	public function register_routes() {
 		// Slack OAuth - Authorize
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/slack/oauth/authorize',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -99,7 +99,7 @@ class Slack extends Base {
 
 		// Slack OAuth - Callback
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/slack/oauth/callback',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -110,7 +110,7 @@ class Slack extends Base {
 
 		// Slack - Disconnect
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/slack/disconnect',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -121,7 +121,7 @@ class Slack extends Base {
 
 		// Slack - Status
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/user/slack-status',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -132,7 +132,7 @@ class Slack extends Base {
 
 		// Slack - Commands (slash command endpoint)
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/slack/commands',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -143,7 +143,7 @@ class Slack extends Base {
 
 		// Slack - Events (event subscription endpoint)
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/slack/events',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -154,7 +154,7 @@ class Slack extends Base {
 
 		// Slack - Get channels and users
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/slack/channels',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -165,7 +165,7 @@ class Slack extends Base {
 
 		// Slack - Get notification targets
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/slack/targets',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -176,7 +176,7 @@ class Slack extends Base {
 
 		// Slack - Update notification targets
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/slack/targets',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -187,7 +187,7 @@ class Slack extends Base {
 
 		// Slack - Update webhook URL (legacy)
 		register_rest_route(
-			'prm/v1',
+			'stadion/v1',
 			'/user/slack-webhook',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -217,10 +217,10 @@ class Slack extends Base {
 	 * Redirects user to Slack OAuth authorization page
 	 */
 	public function slack_oauth_authorize( $request ) {
-		if ( ! defined( 'CAELIS_SLACK_CLIENT_ID' ) || empty( CAELIS_SLACK_CLIENT_ID ) ) {
+		if ( ! defined( 'STADION_SLACK_CLIENT_ID' ) || empty( STADION_SLACK_CLIENT_ID ) ) {
 			return new \WP_Error(
 				'slack_not_configured',
-				__( 'Slack integration is not configured.', 'caelis' ),
+				__( 'Slack integration is not configured.', 'stadion' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -229,7 +229,7 @@ class Slack extends Base {
 		if ( ! $user_id ) {
 			return new \WP_Error(
 				'not_authenticated',
-				__( 'You must be logged in to connect Slack.', 'caelis' ),
+				__( 'You must be logged in to connect Slack.', 'stadion' ),
 				[ 'status' => 401 ]
 			);
 		}
@@ -240,11 +240,11 @@ class Slack extends Base {
 		set_transient( 'slack_oauth_state_' . $user_id, $state, 600 ); // 10 minutes
 
 		// Build OAuth URL
-		$redirect_uri = rest_url( 'prm/v1/slack/oauth/callback' );
+		$redirect_uri = rest_url( 'stadion/v1/slack/oauth/callback' );
 		$scopes       = 'chat:write,chat:write.public,channels:read,users:read,users:read.email,commands';
 
 		$params = [
-			'client_id'    => CAELIS_SLACK_CLIENT_ID,
+			'client_id'    => STADION_SLACK_CLIENT_ID,
 			'scope'        => $scopes,
 			'redirect_uri' => $redirect_uri,
 			'state'        => $state,
@@ -271,13 +271,13 @@ class Slack extends Base {
 
 		// Handle error from Slack
 		if ( $error ) {
-			$error_url = home_url( '/settings?tab=connections&subtab=slack&slack_error=' . urlencode( $error ) );
+			$error_url = home_url( '/settings/connections/slack&slack_error=' . urlencode( $error ) );
 			wp_redirect( $error_url );
 			exit;
 		}
 
 		if ( empty( $code ) || empty( $state ) ) {
-			$error_url = home_url( '/settings?tab=connections&subtab=slack&slack_error=missing_parameters' );
+			$error_url = home_url( '/settings/connections/slack&slack_error=missing_parameters' );
 			wp_redirect( $error_url );
 			exit;
 		}
@@ -286,7 +286,7 @@ class Slack extends Base {
 		// State format: base64(user_id:random_string)
 		$decoded_state = base64_decode( $state, true );
 		if ( $decoded_state === false ) {
-			$error_url = home_url( '/settings?tab=connections&subtab=slack&slack_error=invalid_state' );
+			$error_url = home_url( '/settings/connections/slack&slack_error=invalid_state' );
 			wp_redirect( $error_url );
 			exit;
 		}
@@ -295,7 +295,7 @@ class Slack extends Base {
 		$user_id                                = absint( $user_id_from_state );
 
 		if ( ! $user_id ) {
-			$error_url = home_url( '/settings?tab=connections&subtab=slack&slack_error=invalid_state' );
+			$error_url = home_url( '/settings/connections/slack&slack_error=invalid_state' );
 			wp_redirect( $error_url );
 			exit;
 		}
@@ -303,7 +303,7 @@ class Slack extends Base {
 		// Verify state matches stored state
 		$stored_state = get_transient( 'slack_oauth_state_' . $user_id );
 		if ( $stored_state !== $state ) {
-			$error_url = home_url( '/settings?tab=connections&subtab=slack&slack_error=invalid_state' );
+			$error_url = home_url( '/settings/connections/slack&slack_error=invalid_state' );
 			wp_redirect( $error_url );
 			exit;
 		}
@@ -312,13 +312,13 @@ class Slack extends Base {
 		delete_transient( 'slack_oauth_state_' . $user_id );
 
 		// Exchange code for token
-		$redirect_uri = rest_url( 'prm/v1/slack/oauth/callback' );
+		$redirect_uri = rest_url( 'stadion/v1/slack/oauth/callback' );
 		$response     = wp_remote_post(
 			'https://slack.com/api/oauth.v2.access',
 			[
 				'body'    => [
-					'client_id'     => CAELIS_SLACK_CLIENT_ID,
-					'client_secret' => CAELIS_SLACK_CLIENT_SECRET,
+					'client_id'     => STADION_SLACK_CLIENT_ID,
+					'client_secret' => STADION_SLACK_CLIENT_SECRET,
 					'code'          => $code,
 					'redirect_uri'  => $redirect_uri,
 				],
@@ -327,7 +327,7 @@ class Slack extends Base {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			$error_url = home_url( '/settings?tab=connections&subtab=slack&slack_error=network_error' );
+			$error_url = home_url( '/settings/connections/slack&slack_error=network_error' );
 			wp_redirect( $error_url );
 			exit;
 		}
@@ -336,7 +336,7 @@ class Slack extends Base {
 
 		if ( empty( $body['ok'] ) || empty( $body['access_token'] ) ) {
 			$error_msg = isset( $body['error'] ) ? $body['error'] : 'unknown_error';
-			$error_url = home_url( '/settings?tab=connections&subtab=slack&slack_error=' . urlencode( $error_msg ) );
+			$error_url = home_url( '/settings/connections/slack&slack_error=' . urlencode( $error_msg ) );
 			wp_redirect( $error_url );
 			exit;
 		}
@@ -348,26 +348,26 @@ class Slack extends Base {
 		$slack_user_id  = isset( $body['authed_user']['id'] ) ? $body['authed_user']['id'] : '';
 
 		// Encrypt token before storing
-		update_user_meta( $user_id, 'caelis_slack_bot_token', $this->encrypt_token( $bot_token ) );
-		update_user_meta( $user_id, 'caelis_slack_workspace_id', $workspace_id );
-		update_user_meta( $user_id, 'caelis_slack_workspace_name', $workspace_name );
-		update_user_meta( $user_id, 'caelis_slack_user_id', $slack_user_id );
+		update_user_meta( $user_id, 'stadion_slack_bot_token', $this->encrypt_token( $bot_token ) );
+		update_user_meta( $user_id, 'stadion_slack_workspace_id', $workspace_id );
+		update_user_meta( $user_id, 'stadion_slack_workspace_name', $workspace_name );
+		update_user_meta( $user_id, 'stadion_slack_user_id', $slack_user_id );
 
 		// Auto-enable Slack channel
-		$channels = get_user_meta( $user_id, 'caelis_notification_channels', true );
+		$channels = get_user_meta( $user_id, 'stadion_notification_channels', true );
 		if ( ! is_array( $channels ) ) {
 			$channels = [];
 		}
 		if ( ! in_array( 'slack', $channels ) ) {
 			$channels[] = 'slack';
-			update_user_meta( $user_id, 'caelis_notification_channels', $channels );
+			update_user_meta( $user_id, 'stadion_notification_channels', $channels );
 		}
 
 		// Remove old webhook if exists
-		delete_user_meta( $user_id, 'caelis_slack_webhook' );
+		delete_user_meta( $user_id, 'stadion_slack_webhook' );
 
 		// Redirect to settings with success message
-		$success_url = home_url( '/settings?tab=connections&subtab=slack&slack_connected=1' );
+		$success_url = home_url( '/settings/connections/slack&slack_connected=1' );
 		wp_redirect( $success_url );
 		exit;
 	}
@@ -379,12 +379,12 @@ class Slack extends Base {
 		$user_id = get_current_user_id();
 
 		// Get bot token
-		$encrypted_token = get_user_meta( $user_id, 'caelis_slack_bot_token', true );
+		$encrypted_token = get_user_meta( $user_id, 'stadion_slack_bot_token', true );
 		if ( empty( $encrypted_token ) ) {
 			return rest_ensure_response(
 				[
 					'success' => true,
-					'message' => __( 'Slack was not connected.', 'caelis' ),
+					'message' => __( 'Slack was not connected.', 'stadion' ),
 				]
 			);
 		}
@@ -403,22 +403,22 @@ class Slack extends Base {
 		);
 
 		// Remove stored data
-		delete_user_meta( $user_id, 'caelis_slack_bot_token' );
-		delete_user_meta( $user_id, 'caelis_slack_workspace_id' );
-		delete_user_meta( $user_id, 'caelis_slack_workspace_name' );
-		delete_user_meta( $user_id, 'caelis_slack_user_id' );
+		delete_user_meta( $user_id, 'stadion_slack_bot_token' );
+		delete_user_meta( $user_id, 'stadion_slack_workspace_id' );
+		delete_user_meta( $user_id, 'stadion_slack_workspace_name' );
+		delete_user_meta( $user_id, 'stadion_slack_user_id' );
 
 		// Disable Slack channel
-		$channels = get_user_meta( $user_id, 'caelis_notification_channels', true );
+		$channels = get_user_meta( $user_id, 'stadion_notification_channels', true );
 		if ( is_array( $channels ) ) {
 			$channels = array_diff( $channels, [ 'slack' ] );
-			update_user_meta( $user_id, 'caelis_notification_channels', $channels );
+			update_user_meta( $user_id, 'stadion_notification_channels', $channels );
 		}
 
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Slack disconnected successfully.', 'caelis' ),
+				'message' => __( 'Slack disconnected successfully.', 'stadion' ),
 			]
 		);
 	}
@@ -428,7 +428,7 @@ class Slack extends Base {
 	 */
 	public function get_slack_status( $request ) {
 		$user_id   = get_current_user_id();
-		$bot_token = get_user_meta( $user_id, 'caelis_slack_bot_token', true );
+		$bot_token = get_user_meta( $user_id, 'stadion_slack_bot_token', true );
 
 		if ( empty( $bot_token ) ) {
 			return rest_ensure_response(
@@ -438,12 +438,12 @@ class Slack extends Base {
 			);
 		}
 
-		$workspace_name = get_user_meta( $user_id, 'caelis_slack_workspace_name', true );
+		$workspace_name = get_user_meta( $user_id, 'stadion_slack_workspace_name', true );
 
 		return rest_ensure_response(
 			[
 				'connected'      => true,
-				'workspace_name' => $workspace_name ?: __( 'Unknown workspace', 'caelis' ),
+				'workspace_name' => $workspace_name ?: __( 'Unknown workspace', 'stadion' ),
 			]
 		);
 	}
@@ -453,10 +453,10 @@ class Slack extends Base {
 	 */
 	public function slack_commands( $request ) {
 		// Verify request signature
-		if ( ! defined( 'CAELIS_SLACK_SIGNING_SECRET' ) || empty( CAELIS_SLACK_SIGNING_SECRET ) ) {
+		if ( ! defined( 'STADION_SLACK_SIGNING_SECRET' ) || empty( STADION_SLACK_SIGNING_SECRET ) ) {
 			return new \WP_Error(
 				'slack_not_configured',
-				__( 'Slack integration is not configured.', 'caelis' ),
+				__( 'Slack integration is not configured.', 'stadion' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -475,7 +475,7 @@ class Slack extends Base {
 		if ( empty( $timestamp ) || abs( time() - (int) $timestamp ) > 300 ) { // 5 minutes
 			return new \WP_Error(
 				'invalid_timestamp',
-				__( 'Request timestamp is invalid or too old.', 'caelis' ),
+				__( 'Request timestamp is invalid or too old.', 'stadion' ),
 				[ 'status' => 401 ]
 			);
 		}
@@ -484,18 +484,18 @@ class Slack extends Base {
 		if ( empty( $signature ) || empty( $body ) ) {
 			return new \WP_Error(
 				'missing_signature',
-				__( 'Missing request signature.', 'caelis' ),
+				__( 'Missing request signature.', 'stadion' ),
 				[ 'status' => 401 ]
 			);
 		}
 
 		$sig_basestring = 'v0:' . $timestamp . ':' . $body;
-		$my_signature   = 'v0=' . hash_hmac( 'sha256', $sig_basestring, CAELIS_SLACK_SIGNING_SECRET );
+		$my_signature   = 'v0=' . hash_hmac( 'sha256', $sig_basestring, STADION_SLACK_SIGNING_SECRET );
 
 		if ( ! hash_equals( $my_signature, $signature ) ) {
 			return new \WP_Error(
 				'invalid_signature',
-				__( 'Invalid request signature.', 'caelis' ),
+				__( 'Invalid request signature.', 'stadion' ),
 				[ 'status' => 401 ]
 			);
 		}
@@ -505,11 +505,11 @@ class Slack extends Base {
 		$slack_user_id = isset( $params['user_id'] ) ? $params['user_id'] : '';
 		$command       = isset( $params['command'] ) ? $params['command'] : '';
 
-		if ( $command !== '/caelis' ) {
+		if ( $command !== '/stadion' ) {
 			return rest_ensure_response(
 				[
 					'response_type' => 'ephemeral',
-					'text'          => __( 'Unknown command.', 'caelis' ),
+					'text'          => __( 'Unknown command.', 'stadion' ),
 				]
 			);
 		}
@@ -518,7 +518,7 @@ class Slack extends Base {
 		$wp_user_id = null;
 		$users      = get_users( [ 'fields' => 'ID' ] );
 		foreach ( $users as $uid ) {
-			$stored_slack_user_id = get_user_meta( $uid, 'caelis_slack_user_id', true );
+			$stored_slack_user_id = get_user_meta( $uid, 'stadion_slack_user_id', true );
 			if ( $stored_slack_user_id === $slack_user_id ) {
 				$wp_user_id = $uid;
 				break;
@@ -529,13 +529,13 @@ class Slack extends Base {
 			return rest_ensure_response(
 				[
 					'response_type' => 'ephemeral',
-					'text'          => __( 'You need to connect your Slack account first. Visit your Caelis settings to connect.', 'caelis' ),
+					'text'          => __( 'You need to connect your Slack account first. Visit your Stadion settings to connect.', 'stadion' ),
 				]
 			);
 		}
 
 		// Get user's most recent reminder digest
-		$reminders   = new \PRM_Reminders();
+		$reminders   = new \STADION_Reminders();
 		$digest_data = $reminders->get_weekly_digest( $wp_user_id );
 
 		// Debug: Log what we found
@@ -553,13 +553,13 @@ class Slack extends Base {
 			return rest_ensure_response(
 				[
 					'response_type' => 'ephemeral',
-					'text'          => __( 'You have no upcoming reminders.', 'caelis' ),
+					'text'          => __( 'You have no upcoming reminders.', 'stadion' ),
 				]
 			);
 		}
 
 		// Format Slack blocks
-		$slack_channel = new \PRM_Slack_Channel();
+		$slack_channel = new \STADION_Slack_Channel();
 		$blocks        = $slack_channel->format_slack_blocks( $digest_data );
 
 		return rest_ensure_response(
@@ -595,12 +595,12 @@ class Slack extends Base {
 	 */
 	public function get_slack_channels( $request ) {
 		$user_id   = get_current_user_id();
-		$bot_token = get_user_meta( $user_id, 'caelis_slack_bot_token', true );
+		$bot_token = get_user_meta( $user_id, 'stadion_slack_bot_token', true );
 
 		if ( empty( $bot_token ) ) {
 			return new \WP_Error(
 				'slack_not_connected',
-				__( 'Slack is not connected.', 'caelis' ),
+				__( 'Slack is not connected.', 'stadion' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -655,7 +655,7 @@ class Slack extends Base {
 		if ( ! is_wp_error( $users_response ) ) {
 			$users_body = json_decode( wp_remote_retrieve_body( $users_response ), true );
 			if ( ! empty( $users_body['ok'] ) && ! empty( $users_body['members'] ) ) {
-				$slack_user_id = get_user_meta( $user_id, 'caelis_slack_user_id', true );
+				$slack_user_id = get_user_meta( $user_id, 'stadion_slack_user_id', true );
 				foreach ( $users_body['members'] as $user ) {
 					// Skip bots and deleted users
 					if ( ! empty( $user['deleted'] ) || ( ! empty( $user['is_bot'] ) && $user['id'] !== 'USLACKBOT' ) ) {
@@ -684,11 +684,11 @@ class Slack extends Base {
 	 */
 	public function get_slack_targets( $request ) {
 		$user_id = get_current_user_id();
-		$targets = get_user_meta( $user_id, 'caelis_slack_targets', true );
+		$targets = get_user_meta( $user_id, 'stadion_slack_targets', true );
 
 		if ( ! is_array( $targets ) ) {
 			// Default to user's own Slack user ID (DM)
-			$slack_user_id = get_user_meta( $user_id, 'caelis_slack_user_id', true );
+			$slack_user_id = get_user_meta( $user_id, 'stadion_slack_user_id', true );
 			$targets       = $slack_user_id ? [ $slack_user_id ] : [];
 		}
 
@@ -709,7 +709,7 @@ class Slack extends Base {
 		if ( ! is_array( $targets ) ) {
 			return new \WP_Error(
 				'invalid_targets',
-				__( 'Targets must be an array.', 'caelis' ),
+				__( 'Targets must be an array.', 'stadion' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -719,11 +719,11 @@ class Slack extends Base {
 
 		// If empty, default to user's Slack user ID
 		if ( empty( $targets ) ) {
-			$slack_user_id = get_user_meta( $user_id, 'caelis_slack_user_id', true );
+			$slack_user_id = get_user_meta( $user_id, 'stadion_slack_user_id', true );
 			$targets       = $slack_user_id ? [ $slack_user_id ] : [];
 		}
 
-		update_user_meta( $user_id, 'caelis_slack_targets', $targets );
+		update_user_meta( $user_id, 'stadion_slack_targets', $targets );
 
 		return rest_ensure_response(
 			[
@@ -742,19 +742,19 @@ class Slack extends Base {
 
 		if ( empty( $webhook ) ) {
 			// Remove webhook
-			delete_user_meta( $user_id, 'caelis_slack_webhook' );
+			delete_user_meta( $user_id, 'stadion_slack_webhook' );
 
 			// Also disable Slack channel if it's enabled
-			$channels = get_user_meta( $user_id, 'caelis_notification_channels', true );
+			$channels = get_user_meta( $user_id, 'stadion_notification_channels', true );
 			if ( is_array( $channels ) ) {
 				$channels = array_diff( $channels, [ 'slack' ] );
-				update_user_meta( $user_id, 'caelis_notification_channels', $channels );
+				update_user_meta( $user_id, 'stadion_notification_channels', $channels );
 			}
 
 			return rest_ensure_response(
 				[
 					'success' => true,
-					'message' => __( 'Slack webhook removed.', 'caelis' ),
+					'message' => __( 'Slack webhook removed.', 'stadion' ),
 				]
 			);
 		}
@@ -763,7 +763,7 @@ class Slack extends Base {
 		if ( ! filter_var( $webhook, FILTER_VALIDATE_URL ) ) {
 			return new \WP_Error(
 				'invalid_webhook',
-				__( 'Invalid webhook URL.', 'caelis' ),
+				__( 'Invalid webhook URL.', 'stadion' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -773,14 +773,14 @@ class Slack extends Base {
 		if ( $host !== 'hooks.slack.com' ) {
 			return new \WP_Error(
 				'invalid_webhook_domain',
-				__( 'Webhook URL must be from hooks.slack.com domain.', 'caelis' ),
+				__( 'Webhook URL must be from hooks.slack.com domain.', 'stadion' ),
 				[ 'status' => 400 ]
 			);
 		}
 
 		// Test webhook with a simple message
 		$test_payload = [
-			'text' => __( 'Caelis notification test', 'caelis' ),
+			'text' => __( 'Stadion notification test', 'stadion' ),
 		];
 
 		$response = wp_remote_post(
@@ -797,7 +797,7 @@ class Slack extends Base {
 		if ( is_wp_error( $response ) ) {
 			return new \WP_Error(
 				'webhook_test_failed',
-				sprintf( __( 'Webhook test failed: %s', 'caelis' ), $response->get_error_message() ),
+				sprintf( __( 'Webhook test failed: %s', 'stadion' ), $response->get_error_message() ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -806,18 +806,18 @@ class Slack extends Base {
 		if ( $status_code < 200 || $status_code >= 300 ) {
 			return new \WP_Error(
 				'webhook_test_failed',
-				sprintf( __( 'Webhook test failed with status code: %d', 'caelis' ), $status_code ),
+				sprintf( __( 'Webhook test failed with status code: %d', 'stadion' ), $status_code ),
 				[ 'status' => 400 ]
 			);
 		}
 
 		// Save webhook
-		update_user_meta( $user_id, 'caelis_slack_webhook', $webhook );
+		update_user_meta( $user_id, 'stadion_slack_webhook', $webhook );
 
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Slack webhook configured successfully.', 'caelis' ),
+				'message' => __( 'Slack webhook configured successfully.', 'stadion' ),
 			]
 		);
 	}

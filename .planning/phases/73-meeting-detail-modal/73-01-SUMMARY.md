@@ -57,7 +57,7 @@ completed: 2026-01-17
 
 - Extended format_today_meeting() to return full attendees array with matched/unmatched distinction
 - Added description field from post_content to meeting response
-- Implemented GET and PUT endpoints for meeting notes (/prm/v1/calendar/events/{id}/notes)
+- Implemented GET and PUT endpoints for meeting notes (/stadion/v1/calendar/events/{id}/notes)
 - Created useMeetingNotes and useUpdateMeetingNotes React hooks with cache invalidation
 
 ## Task Commits

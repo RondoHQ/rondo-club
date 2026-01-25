@@ -6,28 +6,28 @@
 
 **WordPress REST API:**
 - Standard endpoints: `/wp/v2/` for posts, people, companies, dates
-- Custom namespace: `/prm/v1/` for dashboard, search, reminders, user management
+- Custom namespace: `/stadion/v1/` for dashboard, search, reminders, user management
 - Client: `src/api/client.js` (Axios with nonce handling)
 
 **Slack Integration:**
 - OAuth 2.0 integration for user authorization
 - Endpoints:
-  - `/prm/v1/slack/oauth/authorize` - OAuth flow initiation
-  - `/prm/v1/slack/oauth/callback` - OAuth callback handling
-  - `/prm/v1/slack/disconnect` - User disconnect
-  - `/prm/v1/slack/channels` - List available channels
-  - `/prm/v1/slack/targets` - Get/update notification targets
-  - `/prm/v1/slack/commands` - Slash command handling
-  - `/prm/v1/slack/events` - Event subscriptions
+  - `/stadion/v1/slack/oauth/authorize` - OAuth flow initiation
+  - `/stadion/v1/slack/oauth/callback` - OAuth callback handling
+  - `/stadion/v1/slack/disconnect` - User disconnect
+  - `/stadion/v1/slack/channels` - List available channels
+  - `/stadion/v1/slack/targets` - Get/update notification targets
+  - `/stadion/v1/slack/commands` - Slash command handling
+  - `/stadion/v1/slack/events` - Event subscriptions
 - Environment variables:
-  - `CAELIS_SLACK_CLIENT_ID`
-  - `CAELIS_SLACK_CLIENT_SECRET`
-  - `CAELIS_SLACK_SIGNING_SECRET`
+  - `STADION_SLACK_CLIENT_ID`
+  - `STADION_SLACK_CLIENT_SECRET`
+  - `STADION_SLACK_SIGNING_SECRET`
 - Implementation: `includes/class-notification-channels.php`
 
 **Gravatar:**
 - Avatar fetching by email
-- Endpoint: `/prm/v1/people/{personId}/gravatar`
+- Endpoint: `/stadion/v1/people/{personId}/gravatar`
 - Implementation: `includes/class-rest-api.php`
 
 ## Data Storage
@@ -40,8 +40,8 @@
 
 **File Storage:**
 - WordPress Media Library for photos and logos
-- Photo upload: `/prm/v1/people/{personId}/photo`
-- Logo upload: `/prm/v1/companies/{companyId}/logo/upload`
+- Photo upload: `/stadion/v1/people/{personId}/photo`
+- Logo upload: `/stadion/v1/companies/{companyId}/logo/upload`
 
 **Caching:**
 - React Query client-side caching for API responses
@@ -58,9 +58,9 @@
 **User Management:**
 - Admin approval workflow for new users
 - Endpoints:
-  - `/prm/v1/users` - List pending users
-  - `/prm/v1/users/{id}/approve` - Approve user
-  - `/prm/v1/users/{id}/deny` - Deny user
+  - `/stadion/v1/users` - List pending users
+  - `/stadion/v1/users/{id}/approve` - Approve user
+  - `/stadion/v1/users/{id}/deny` - Deny user
 - Implementation: `includes/class-user-roles.php`
 
 **Application Passwords:**
@@ -72,28 +72,28 @@
 **Google Contacts Import:**
 - CSV import from Google Contacts export
 - Endpoints:
-  - `/prm/v1/import/google-contacts/validate`
-  - `/prm/v1/import/google-contacts`
+  - `/stadion/v1/import/google-contacts/validate`
+  - `/stadion/v1/import/google-contacts`
 - Photo importing capability
 - Implementation: `includes/class-google-contacts-import.php`
 
 **Monica CRM Import:**
 - SQL database export import
 - Endpoints:
-  - `/prm/v1/import/monica/validate`
-  - `/prm/v1/import/monica`
+  - `/stadion/v1/import/monica/validate`
+  - `/stadion/v1/import/monica`
 - Photo sideloading from Monica instance
 - Implementation: `includes/class-monica-import.php`
 
 **vCard Import/Export:**
 - Standard vCard format (2.1, 3.0, 4.0)
 - Import: `includes/class-vcard-import.php`
-- Export: `/prm/v1/export/vcard`
+- Export: `/stadion/v1/export/vcard`
 - Implementation: `includes/class-vcard-export.php`
 
 **CSV Export:**
 - Google Contacts CSV format
-- Endpoint: `/prm/v1/export/google-csv`
+- Endpoint: `/stadion/v1/export/google-csv`
 
 ## Calendar & Sync Services
 
@@ -133,17 +133,17 @@
 - HTML email formatting
 - Digest delivery system
 - Endpoints:
-  - `/prm/v1/user/notification-channels`
-  - `/prm/v1/user/notification-time`
+  - `/stadion/v1/user/notification-channels`
+  - `/stadion/v1/user/notification-time`
 - Implementation: `includes/class-notification-channels.php`
 
 **Reminders:**
 - WordPress cron for scheduled delivery
 - Multi-channel dispatch (Email, Slack)
 - Endpoints:
-  - `/prm/v1/reminders`
-  - `/prm/v1/reminders/trigger`
-  - `/prm/v1/reminders/reschedule-cron`
+  - `/stadion/v1/reminders`
+  - `/stadion/v1/reminders/trigger`
+  - `/stadion/v1/reminders/reschedule-cron`
 - Implementation: `includes/class-reminders.php`
 
 ## Environment Configuration
@@ -151,7 +151,7 @@
 **Development:**
 - Vite dev server on `http://localhost:5173`
 - WordPress local environment required
-- Config passed via `window.prmConfig`
+- Config passed via `window.stadionConfig`
 
 **Production:**
 - Static assets in `dist/` served by WordPress
@@ -161,18 +161,18 @@
 ## Webhooks & Callbacks
 
 **Incoming:**
-- Slack events: `/prm/v1/slack/events`
+- Slack events: `/stadion/v1/slack/events`
   - Signature verification via Slack signing secret
-- Slack commands: `/prm/v1/slack/commands`
+- Slack commands: `/stadion/v1/slack/commands`
 
 **Outgoing:**
 - Slack webhook notifications to user-configured channels
-- Endpoint: `/prm/v1/user/slack-webhook`
+- Endpoint: `/stadion/v1/user/slack-webhook`
 
 ## Version Management
 
 **PWA Cache Invalidation:**
-- Version check endpoint: `/prm/v1/version`
+- Version check endpoint: `/stadion/v1/version`
 - Theme version from `style.css`
 - Implementation: `src/hooks/useVersionCheck.js`
 

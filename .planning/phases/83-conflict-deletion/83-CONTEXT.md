@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Detect conflicts when contacts are modified in both Caelis and Google since the last sync, resolve them with Caelis as source of truth, and handle deletions correctly in both directions. Conflicts are field-level (only same field modified in both systems). Deleting in Caelis propagates to Google; deleting in Google only unlinks in Caelis.
+Detect conflicts when contacts are modified in both Stadion and Google since the last sync, resolve them with Stadion as source of truth, and handle deletions correctly in both directions. Conflicts are field-level (only same field modified in both systems). Deleting in Stadion propagates to Google; deleting in Google only unlinks in Stadion.
 
 </domain>
 
@@ -20,13 +20,13 @@ Detect conflicts when contacts are modified in both Caelis and Google since the 
 - Track all synced fields: name, email, phone, address, birthday, organization
 
 ### Resolution strategy
-- Fixed strategy: Caelis always wins (no user configuration)
+- Fixed strategy: Stadion always wins (no user configuration)
 - Before overwriting Google value, log the conflict with both values
 - Conflict history stored as activity entries on the person (not post meta)
 
 ### Deletion behavior
-- Caelis → Google: Delete in Caelis triggers delete in Google via before_delete_post hook
-- Google → Caelis: Unlink only, preserve Caelis contact (per 82-02 decision)
+- Stadion → Google: Delete in Stadion triggers delete in Google via before_delete_post hook
+- Google → Stadion: Unlink only, preserve Stadion contact (per 82-02 decision)
 - No confirmation period - deletions propagate immediately on next sync
 - Use WordPress before_delete_post hook to trigger Google API delete
 
@@ -46,7 +46,7 @@ Detect conflicts when contacts are modified in both Caelis and Google since the 
 <specifics>
 ## Specific Ideas
 
-- Asymmetric deletion model: Caelis is authoritative, so deletions flow Caelis→Google but not Google→Caelis
+- Asymmetric deletion model: Stadion is authoritative, so deletions flow Stadion→Google but not Google→Stadion
 - Activity log serves as audit trail without being noisy - users can dig in if curious
 
 </specifics>

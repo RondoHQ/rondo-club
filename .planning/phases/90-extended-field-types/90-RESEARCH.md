@@ -56,8 +56,8 @@ The Phase 89 implementation provides:
    - Key pattern: namespace by post_type with `field_custom_{post_type}_{slug}` keys
 
 2. **REST API** (`includes/class-rest-custom-fields.php`):
-   - GET/POST `/prm/v1/custom-fields/{post_type}` - List and create
-   - GET/PUT/DELETE `/prm/v1/custom-fields/{post_type}/{key}` - Single field CRUD
+   - GET/POST `/stadion/v1/custom-fields/{post_type}` - List and create
+   - GET/PUT/DELETE `/stadion/v1/custom-fields/{post_type}/{key}` - Single field CRUD
    - Parameter definitions in `get_create_params()` and `get_update_params()`
 
 3. **Settings UI** (`src/components/FieldFormPanel.jsx`):

@@ -15,12 +15,12 @@ After deploying v3.1 with the new todo post status system:
 1. The `wp prm migrate-todos` migration command doesn't work as expected
 2. Open todos don't show any todos on the dashboard or TodosList
 
-The migration was designed to convert existing todos from the old meta-based system (`is_completed`, `awaiting_response` fields with `post_status='publish'`) to the new WordPress post status system (`prm_open`, `prm_awaiting`, `prm_completed`).
+The migration was designed to convert existing todos from the old meta-based system (`is_completed`, `awaiting_response` fields with `post_status='publish'`) to the new WordPress post status system (`stadion_open`, `stadion_awaiting`, `stadion_completed`).
 
 Likely causes:
 - Migration script may not be finding todos with `post_status='publish'`
 - REST API queries may have issues with the new status filtering
-- Dashboard `count_open_todos()` queries for `prm_open` status
+- Dashboard `count_open_todos()` queries for `stadion_open` status
 
 ## Solution
 

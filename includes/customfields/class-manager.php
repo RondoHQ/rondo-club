@@ -5,10 +5,10 @@
  * Provides programmatic CRUD operations for ACF custom field definitions.
  * Uses ACF's database persistence API to store field groups and fields.
  *
- * @package Caelis\CustomFields
+ * @package Stadion\CustomFields
  */
 
-namespace Caelis\CustomFields;
+namespace Stadion\CustomFields;
 
 use WP_Error;
 

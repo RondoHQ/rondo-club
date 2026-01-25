@@ -2,28 +2,28 @@
 
 namespace Tests\Wpunit;
 
-use Tests\Support\CaelisTestCase;
+use Tests\Support\StadionTestCase;
 
 /**
  * Smoke test to verify PHPUnit/wp-browser setup is working.
  *
  * These tests verify:
  * - WordPress is loaded correctly
- * - Caelis theme is active
+ * - Stadion theme is active
  * - Custom post types are registered
  * - ACF Pro is available
  * - Factory methods work
  */
-class SmokeTest extends CaelisTestCase {
+class SmokeTest extends StadionTestCase {
 
 	public function test_wordpress_is_loaded(): void {
 		$this->assertTrue( function_exists( 'wp_insert_post' ) );
 		$this->assertTrue( defined( 'ABSPATH' ) );
 	}
 
-	public function test_caelis_theme_is_active(): void {
+	public function test_stadion_theme_is_active(): void {
 		$theme = wp_get_theme();
-		$this->assertEquals( 'caelis', $theme->get_stylesheet() );
+		$this->assertEquals( 'stadion', $theme->get_stylesheet() );
 	}
 
 	public function test_person_post_type_is_registered(): void {
@@ -52,9 +52,9 @@ class SmokeTest extends CaelisTestCase {
 		);
 	}
 
-	public function test_caelis_user_role_exists(): void {
-		$role = get_role( 'caelis_user' );
-		$this->assertNotNull( $role, 'Caelis User role should exist' );
+	public function test_stadion_user_role_exists(): void {
+		$role = get_role( 'stadion_user' );
+		$this->assertNotNull( $role, 'Stadion User role should exist' );
 	}
 
 	public function test_can_create_person_with_factory(): void {
@@ -65,12 +65,12 @@ class SmokeTest extends CaelisTestCase {
 		$this->assertEquals( 'Test Person', get_the_title( $person_id ) );
 	}
 
-	public function test_can_create_caelis_user(): void {
-		$user_id = $this->createCaelisUser( [ 'user_login' => 'testuser' ] );
+	public function test_can_create_stadion_user(): void {
+		$user_id = $this->createStadionUser( [ 'user_login' => 'testuser' ] );
 
 		$this->assertGreaterThan( 0, $user_id );
 		$user = get_user_by( 'id', $user_id );
-		$this->assertTrue( in_array( 'caelis_user', $user->roles, true ) );
+		$this->assertTrue( in_array( 'stadion_user', $user->roles, true ) );
 	}
 
 	public function test_database_transactions_rollback(): void {

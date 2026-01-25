@@ -185,7 +185,7 @@ export default function ImportantDateModal({
       if (dateItem) {
         // Editing existing date
         // related_people can be:
-        // - Array of objects { id, name } from /prm/v1/people/{id}/dates
+        // - Array of objects { id, name } from /stadion/v1/people/{id}/dates
         // - Array of objects with ID/id from ACF (when dateItem.acf exists)
         // - Array of numbers
         let relatedPeopleIds = [];
@@ -204,7 +204,7 @@ export default function ImportantDateModal({
         }
 
         // date_type can be:
-        // - Array of term NAMES (strings) from /prm/v1/people/{id}/dates
+        // - Array of term NAMES (strings) from /stadion/v1/people/{id}/dates
         // - Array of term IDs (numbers) from WP REST API
         let dateTypeId = '';
         if (dateItem.date_type?.length > 0 && dateItem.date_type[0] != null) {

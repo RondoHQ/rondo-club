@@ -125,7 +125,7 @@ Each task was committed atomically:
 During execution, these authentication requirements were handled:
 
 1. Task 3: Google OAuth required valid callback URL in Google Cloud Console
-   - User added `https://cael.is/wp-json/prm/v1/google-contacts/callback` to authorized redirect URIs
+   - User added `https://cael.is/wp-json/stadion/v1/google-contacts/callback` to authorized redirect URIs
    - OAuth flow completed successfully after configuration
 
 ## User Setup Required

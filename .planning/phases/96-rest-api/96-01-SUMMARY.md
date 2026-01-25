@@ -7,9 +7,9 @@ tags: [rest-api, feedback, crud, authentication, authorization]
 # Dependency graph
 requires:
   - phase: 95-backend-foundation
-    provides: caelis_feedback CPT and ACF field group
+    provides: stadion_feedback CPT and ACF field group
 provides:
-  - REST API controller for feedback CRUD at prm/v1/feedback
+  - REST API controller for feedback CRUD at stadion/v1/feedback
   - Permission-based access control (owner or admin)
   - Field-level authorization (status/priority admin-only)
   - Pagination support with X-WP-Total headers
@@ -19,7 +19,7 @@ affects: [97-frontend-submission, 98-admin-management]
 tech-stack:
   added: []
   patterns:
-    - "REST controller extending Caelis\\REST\\Base"
+    - "REST controller extending Stadion\\REST\\Base"
     - "check_feedback_access permission callback pattern"
     - "Field-level permission checks in update endpoint"
 
@@ -45,7 +45,7 @@ completed: 2026-01-21
 
 # Phase 96 Plan 01: Feedback REST API Summary
 
-**Full CRUD REST API for feedback at prm/v1/feedback with permission-based access control and admin-only status/priority fields**
+**Full CRUD REST API for feedback at stadion/v1/feedback with permission-based access control and admin-only status/priority fields**
 
 ## Performance
 
@@ -98,7 +98,7 @@ None - no external service configuration required.
 ## Next Phase Readiness
 
 - REST API is fully functional and deployed
-- Frontend can now integrate with prm/v1/feedback endpoints
+- Frontend can now integrate with stadion/v1/feedback endpoints
 - Admin management interface can use status/priority filtering
 - Ready for Phase 97 (Frontend Submission Form)
 

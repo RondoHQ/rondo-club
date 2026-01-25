@@ -15,15 +15,15 @@ Implement @mentions infrastructure - react-mentions frontend component, PHP pars
 ### Task 2: Add workspace member search API endpoint and client method
 - **Commit**: `61b2d2f` - feat(10-02): add workspace member search API endpoint and client method
 - **Files**:
-  - `includes/class-rest-workspaces.php` - Added `/prm/v1/workspaces/members/search` endpoint
+  - `includes/class-rest-workspaces.php` - Added `/stadion/v1/workspaces/members/search` endpoint
   - `src/api/client.js` - Added `searchWorkspaceMembers()` method
 
-### Task 3: Create PRM_Mentions class for parsing and rendering
-- **Commit**: `9acde6f` - feat(10-02): create PRM_Mentions class for parsing and rendering
+### Task 3: Create STADION_Mentions class for parsing and rendering
+- **Commit**: `9acde6f` - feat(10-02): create STADION_Mentions class for parsing and rendering
 - **Files**:
   - `includes/class-mentions.php` - New class with static methods for mention handling
   - `includes/class-comment-types.php` - Integration in create_note, update_note, format_comment
-  - `functions.php` - Added PRM_Mentions to autoloader
+  - `functions.php` - Added STADION_Mentions to autoloader
 
 ## Technical Details
 
@@ -34,12 +34,12 @@ Implement @mentions infrastructure - react-mentions frontend component, PHP pars
 - Styled with Tailwind-compatible inline styles
 
 ### Workspace Member Search API
-- Endpoint: `GET /prm/v1/workspaces/members/search`
+- Endpoint: `GET /stadion/v1/workspaces/members/search`
 - Parameters: `workspace_ids` (comma-separated), `query` (search string)
 - Returns: Array of `{id, name, email}` objects
 - Security: Validates user has access to requested workspaces
 
-### PRM_Mentions Class
+### STADION_Mentions Class
 Static methods:
 - `parse_mention_ids($content)` - Extract user IDs from markup
 - `render_mentions($content)` - Convert markup to HTML spans
@@ -48,17 +48,17 @@ Static methods:
 
 ### Integration Points
 - Notes store mentioned user IDs in `_mentioned_users` comment meta
-- Action hook `prm_user_mentioned` fires when users are mentioned
+- Action hook `stadion_user_mentioned` fires when users are mentioned
 - Mentions rendered as styled spans in API responses
 
 ## Verification Checklist
 - [x] `npm install` succeeds with react-mentions
 - [x] MentionInput component created with correct structure
-- [x] `/prm/v1/workspaces/members/search` endpoint registered
+- [x] `/stadion/v1/workspaces/members/search` endpoint registered
 - [x] `searchWorkspaceMembers()` client method available
-- [x] `PRM_Mentions::parse_mention_ids()` extracts user IDs
+- [x] `STADION_Mentions::parse_mention_ids()` extracts user IDs
 - [x] Notes integration calls `save_mentions()` on create/update
-- [x] `prm_user_mentioned` action fires when mentions saved
+- [x] `stadion_user_mentioned` action fires when mentions saved
 - [x] `npm run build` succeeds
 - [x] PHP syntax valid for all modified files
 

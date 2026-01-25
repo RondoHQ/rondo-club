@@ -8,7 +8,7 @@ Extended the iCal feed system to support workspace-scoped calendars, allowing wo
 ## Tasks Completed
 
 ### Task 1: Add workspace iCal rewrite rules and query vars
-- Added `prm_workspace_ical` and `prm_workspace_id` query vars
+- Added `stadion_workspace_ical` and `stadion_workspace_id` query vars
 - Added workspace calendar rewrite rule: `^workspace/([0-9]+)/calendar/([a-f0-9]+)\.ics$`
 - Updated `handle_feed_request()` to check for workspace feed first
 
@@ -16,13 +16,13 @@ Extended the iCal feed system to support workspace-scoped calendars, allowing wo
 - Created `handle_workspace_feed()` method with security checks:
   - Token validation via `get_user_by_token()`
   - Workspace existence check (post_type, post_status)
-  - Membership verification via `PRM_Workspace_Members::is_member()`
+  - Membership verification via `STADION_Workspace_Members::is_member()`
 - Created `get_workspace_important_dates()` method:
   - Queries people with workspace_access taxonomy term
   - Queries important dates linked via related_people ACF field
   - Includes fallback for ACF serialized relationship format
 - Created `output_workspace_ical()` and `generate_workspace_ical()` methods
-- Workspace calendar named "Caelis - {Workspace Name}"
+- Workspace calendar named "Stadion - {Workspace Name}"
 
 ### Task 3: Add workspace calendar URL to WorkspaceDetail UI
 - Added iCal token fetch via `prmApi.getIcalUrl()` on component mount
@@ -35,13 +35,13 @@ Extended the iCal feed system to support workspace-scoped calendars, allowing wo
   - Fallback message when iCal feed not enabled in Settings
 
 ## Files Modified
-- `/Users/joostdevalk/Code/caelis/includes/class-ical-feed.php` - Workspace feed implementation
-- `/Users/joostdevalk/Code/caelis/src/pages/Workspaces/WorkspaceDetail.jsx` - Calendar subscription UI
-- `/Users/joostdevalk/Code/caelis/src/api/client.js` - Added getIcalUrl helper
-- `/Users/joostdevalk/Code/caelis/docs/ical-feed.md` - Updated documentation
-- `/Users/joostdevalk/Code/caelis/CHANGELOG.md` - Added changelog entry
-- `/Users/joostdevalk/Code/caelis/style.css` - Version bump to 1.58.0
-- `/Users/joostdevalk/Code/caelis/package.json` - Version bump to 1.58.0
+- `/Users/joostdevalk/Code/stadion/includes/class-ical-feed.php` - Workspace feed implementation
+- `/Users/joostdevalk/Code/stadion/src/pages/Workspaces/WorkspaceDetail.jsx` - Calendar subscription UI
+- `/Users/joostdevalk/Code/stadion/src/api/client.js` - Added getIcalUrl helper
+- `/Users/joostdevalk/Code/stadion/docs/ical-feed.md` - Updated documentation
+- `/Users/joostdevalk/Code/stadion/CHANGELOG.md` - Added changelog entry
+- `/Users/joostdevalk/Code/stadion/style.css` - Version bump to 1.58.0
+- `/Users/joostdevalk/Code/stadion/package.json` - Version bump to 1.58.0
 
 ## Commits
 - `b2e85a6` - feat(10-04): add workspace iCal calendar feed support
@@ -61,7 +61,7 @@ The `related_people` field may store data in different formats depending on ACF 
 The implementation handles both formats with a fallback LIKE query for serialized data.
 
 ### API Enhancement
-The `/prm/v1/user/ical-url` endpoint now returns a `token` field in addition to `url` and `webcal_url`, allowing the frontend to construct workspace calendar URLs without parsing the URL.
+The `/stadion/v1/user/ical-url` endpoint now returns a `token` field in addition to `url` and `webcal_url`, allowing the frontend to construct workspace calendar URLs without parsing the URL.
 
 ## Verification Checklist
 - [x] Workspace query vars registered

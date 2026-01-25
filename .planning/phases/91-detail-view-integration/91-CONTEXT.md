@@ -15,7 +15,7 @@ Custom fields appear in a dedicated section on Person and Organization detail pa
 
 ### Claude's Discretion
 
-User deferred all decisions to Claude. The following will be determined during research and planning based on existing Caelis patterns:
+User deferred all decisions to Claude. The following will be determined during research and planning based on existing Stadion patterns:
 
 **Section placement & layout:**
 - Where Custom Fields section appears on detail pages
@@ -45,7 +45,7 @@ User deferred all decisions to Claude. The following will be determined during r
 <specifics>
 ## Specific Ideas
 
-No specific requirements — open to standard approaches that match existing Caelis patterns.
+No specific requirements — open to standard approaches that match existing Stadion patterns.
 
 </specifics>
 

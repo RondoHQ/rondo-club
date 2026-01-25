@@ -58,7 +58,7 @@ completed: 2026-01-14
 
 ## Accomplishments
 
-- Added awaiting_response query parameter to /prm/v1/todos endpoint with proper meta_query handling
+- Added awaiting_response query parameter to /stadion/v1/todos endpoint with proper meta_query handling
 - Built filter UI with status tabs (All/Open/Completed) and awaiting toggle button
 - Simplified TodosList from complex grouped sections to single filtered list
 - Added 3 new PHPUnit tests covering filter combinations (10 new assertions)

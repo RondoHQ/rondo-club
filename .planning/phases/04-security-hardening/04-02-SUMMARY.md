@@ -17,9 +17,9 @@
 - **Changes:**
   - Created `docs/public-endpoints.md` documenting all public endpoints
   - Documented three Slack integration endpoints:
-    1. `/prm/v1/slack/oauth/callback` - OAuth redirect with state validation
-    2. `/prm/v1/slack/commands` - Slash commands with signature validation
-    3. `/prm/v1/slack/events` - Event subscription with challenge verification
+    1. `/stadion/v1/slack/oauth/callback` - OAuth redirect with state validation
+    2. `/stadion/v1/slack/commands` - Slash commands with signature validation
+    3. `/stadion/v1/slack/events` - Event subscription with challenge verification
   - Each endpoint has "Why public" and "Security mechanism" sections
   - Added security review checklist for future public endpoints
 

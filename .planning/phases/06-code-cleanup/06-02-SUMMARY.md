@@ -9,10 +9,10 @@
 
 Created comprehensive environment variable documentation with:
 - Header explaining these are WordPress constants (defined in wp-config.php), not environment variables
-- CAELIS_ENCRYPTION_KEY - 32-byte key for sodium encryption (with generation command)
-- CAELIS_SLACK_CLIENT_ID - Slack OAuth app client ID
-- CAELIS_SLACK_CLIENT_SECRET - Slack OAuth app client secret
-- CAELIS_SLACK_SIGNING_SECRET - Slack request signature verification
+- STADION_ENCRYPTION_KEY - 32-byte key for sodium encryption (with generation command)
+- STADION_SLACK_CLIENT_ID - Slack OAuth app client ID
+- STADION_SLACK_CLIENT_SECRET - Slack OAuth app client secret
+- STADION_SLACK_SIGNING_SECRET - Slack request signature verification
 
 ### Task 2: Consolidate decodeHtml() in familyTreeBuilder.js
 - **Status**: Completed
