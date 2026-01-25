@@ -408,7 +408,7 @@ export default function Settings() {
       const stats = response.data.stats;
       const pullCount = stats?.pull?.contacts_imported || 0;
       const verzondenCount = stats?.push?.pushed || 0;
-      setSyncSuccess(`Sync completed: ${pullCount} imported, ${pushedCount} verzonden`);
+      setSyncSuccess(`Synchronisatie voltooid: ${pullCount} geimporteerd, ${verzondenCount} verzonden`);
       // Invalidate contacts status query to refresh last_sync display
       queryClient.invalidateQueries({ queryKey: ['contacts-status'] });
       // Refresh status
@@ -1085,7 +1085,7 @@ function CalendarsTab() {
     setSyncing(prev => ({ ...prev, [connectionId]: true }));
     try {
       const response = await prmApi.triggerCalendarSync(connectionId);
-      setSuccessMessage(`Sync completed: ${response.data.created} new, ${response.data.updated} updated events.`);
+      setSuccessMessage(`Synchronisatie voltooid: ${response.data.created} nieuw, ${response.data.updated} bijgewerkt.`);
       setTimeout(() => setSuccessMessage(''), 5000);
       // Refresh connections to update last_sync
       fetchConnections();
@@ -1989,14 +1989,14 @@ function EditConnectionModal({ connection, onSave, onClose }) {
           {/* CalDAV credential update section */}
           {isCalDAV && (
             <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h4 className="font-medium mb-3 dark:text-gray-100">Update credentials (optional)</h4>
+              <h4 className="font-medium mb-3 dark:text-gray-100">Inloggegevens bijwerken (optioneel)</h4>
               <p className="text-sm text-gray-500 mb-3 dark:text-gray-400">
-                Leave blank to keep current credentials. Fill in all fields to update.
+                Laat leeg om huidige inloggegevens te behouden. Vul alle velden in om bij te werken.
               </p>
 
               <div className="space-y-3">
                 <div>
-                  <label className="label mb-1">Server URL</label>
+                  <label className="label mb-1">Server-URL</label>
                   <input
                     type="url"
                     value={url}
@@ -2018,13 +2018,13 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                 </div>
 
                 <div>
-                  <label className="label mb-1">Password / App password</label>
+                  <label className="label mb-1">Wachtwoord / App-wachtwoord</label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setTested(false); }}
                     className="input"
-                    placeholder="New app-specific password"
+                    placeholder="Nieuw app-specifiek wachtwoord"
                   />
                 </div>
 
@@ -2808,7 +2808,7 @@ function NotificationsTab({
             <div>
               <p className="font-medium dark:text-gray-200">Slack</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {slackConnected ? 'Receive notifications in Slack' : 'Slack koppelen in Connections to enable'}
+                {slackConnected ? 'Ontvang meldingen in Slack' : 'Koppel Slack om in te schakelen'}
               </p>
             </div>
             {slackConnected ? (
