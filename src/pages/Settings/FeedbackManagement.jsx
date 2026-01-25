@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ShieldAlert, Loader2, ArrowUp, ArrowDown, Eye } from 'lucide-react';
 import { useFeedbackList, useUpdateFeedback } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 
 // Status options with badge colors
 const STATUS_OPTIONS = [

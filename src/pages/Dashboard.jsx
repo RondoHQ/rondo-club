@@ -4,7 +4,7 @@ import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSqua
 import { useDashboard, useTodos, useUpdateTodo, useDashboardSettings, useUpdateDashboardSettings, DEFAULT_DASHBOARD_CARDS } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useDateMeetings } from '@/hooks/useMeetings';
-import { format, addDays, subDays, isToday } from 'date-fns';
+import { format, addDays, subDays, isToday } from '@/utils/dateFormat';
 import { APP_NAME } from '@/constants/app';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
@@ -81,12 +81,12 @@ function ReminderCard({ reminder }) {
   const cardContent = (
     <>
       <div className={`px-2 py-1 rounded text-xs font-medium ${urgencyClass}`}>
-        {daysUntil === 0 ? 'Today' : `${daysUntil}d`}
+        {daysUntil === 0 ? 'Vandaag' : `${daysUntil}d`}
       </div>
       <div className="ml-3 flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{reminder.title}</p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {format(new Date(reminder.next_occurrence), 'MMMM d, yyyy')}
+          {format(new Date(reminder.next_occurrence), 'd MMMM yyyy')}
         </p>
       </div>
       {hasRelatedPeople && (
@@ -179,7 +179,7 @@ function TodoCard({ todo, onToggle, onView }) {
       </div>
       {todo.due_date && todo.status === 'open' && (
         <div className={`ml-3 text-xs text-right flex-shrink-0 ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-          <div>{format(new Date(todo.due_date), 'MMM d')}</div>
+          <div>{format(new Date(todo.due_date), 'd MMM')}</div>
           {isOverdue && <div className="text-red-600 dark:text-red-300">overdue</div>}
         </div>
       )}
@@ -228,7 +228,7 @@ function AwaitingTodoCard({ todo, onToggle, onView }) {
       </div>
       <div className={`ml-3 text-xs px-2 py-1 rounded-full flex items-center gap-1 ${urgencyClass}`}>
         <Clock className="w-3 h-3" />
-        {days === 0 ? 'Today' : `${days}d`}
+        {days === 0 ? 'Vandaag' : `${days}d`}
       </div>
     </button>
   );
@@ -729,7 +729,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <h2 className="font-semibold flex items-center dark:text-gray-50">
             <CalendarClock className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />
-            {isToday(selectedDate) ? "Today's meetings" : format(selectedDate, 'EEEE, MMMM d')} {dateMeetings.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({dateMeetings.length})</span>}
+            {isToday(selectedDate) ? "Today's meetings" : format(selectedDate, 'EEEE d MMMM')} {dateMeetings.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({dateMeetings.length})</span>}
           </h2>
           <div className="flex items-center gap-1">
             {!isToday(selectedDate) && (
@@ -773,7 +773,7 @@ export default function Dashboard() {
             <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
               {isToday(selectedDate)
                 ? 'No meetings scheduled for today'
-                : `No meetings on ${format(selectedDate, 'MMMM d')}`}
+                : `No meetings on ${format(selectedDate, 'd MMMM')}`}
             </p>
           )}
         </div>

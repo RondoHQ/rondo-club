@@ -4,7 +4,7 @@ import { CheckSquare, Square, Clock, Pencil, Trash2, Plus, RotateCcw, User } fro
 import { useTodos, useUpdateTodo, useDeleteTodo } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format } from 'date-fns';
+import { format } from '@/utils/dateFormat';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import { stripHtmlTags } from '@/utils/richTextUtils';
 import TodoModal from '@/components/Timeline/TodoModal';
