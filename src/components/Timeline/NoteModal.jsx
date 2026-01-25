@@ -50,7 +50,7 @@ export default function NoteModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Add note</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Notitie toevoegen</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -63,13 +63,13 @@ export default function NoteModal({
         <form onSubmit={handleSubmit} className="p-4">
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Note
+              Notitie
             </label>
             {workspaceIds.length > 0 ? (
               <MentionInput
                 value={content}
                 onChange={setContent}
-                placeholder="Add a note... Use @ to mention someone"
+                placeholder="Voeg een notitie toe... Gebruik @ om iemand te vermelden"
                 workspaceIds={workspaceIds}
               />
             ) : (
@@ -79,7 +79,7 @@ export default function NoteModal({
                 <RichTextEditor
                   value={content}
                   onChange={setContent}
-                  placeholder="Enter your note..."
+                  placeholder="Typ je notitie..."
                   disabled={isLoading}
                   autoFocus
                   minHeight="150px"
@@ -105,7 +105,7 @@ export default function NoteModal({
                   ) : (
                     <Lock className="w-4 h-4 text-gray-400" />
                   )}
-                  Share this note with others who can see this contact
+                  Deel deze notitie met anderen die dit contact kunnen zien
                 </span>
               </label>
             </div>
@@ -118,14 +118,14 @@ export default function NoteModal({
               className="btn-secondary"
               disabled={isLoading}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="submit"
               className="btn-primary"
               disabled={isLoading || isContentEmpty}
             >
-              {isLoading ? 'Adding...' : 'Add note'}
+              {isLoading ? 'Toevoegen...' : 'Notitie toevoegen'}
             </button>
           </div>
         </form>
