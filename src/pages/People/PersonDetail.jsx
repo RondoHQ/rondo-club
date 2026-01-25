@@ -130,7 +130,7 @@ function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick, curren
                 {endDate && <> - {formatTime(endDate)}</>}
               </>
             )}
-            {meeting.all_day && ' (All day)'}
+            {meeting.all_day && ' (Hele dag)'}
           </p>
         )}
 
@@ -184,7 +184,7 @@ function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick, curren
 
           return (
             <div className="mt-2 flex items-center gap-1">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1">Also attending:</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1">Ook aanwezig:</span>
               <div className="flex -space-x-2">
                 {displayedAttendees.map((attendee, index) => {
                   const displayName = attendee.person_name || attendee.name || attendee.email || 'Unknown';
@@ -237,7 +237,7 @@ function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick, curren
         {isLowConfidence && (
           <div className="flex items-center gap-1 mt-2 text-xs text-amber-600 dark:text-amber-400">
             <AlertCircle className="w-3.5 h-3.5" />
-            <span>Match confidence: {meeting.confidence}%</span>
+            <span>Betrouwbaarheid: {meeting.confidence}%</span>
           </div>
         )}
       </div>
@@ -247,7 +247,7 @@ function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick, curren
         <div className="flex-shrink-0 ml-2">
           {meeting.logged_as_activity ? (
             <span className="text-xs text-green-600 dark:text-green-400 px-2 py-1 rounded bg-green-50 dark:bg-green-900/20">
-              Logged
+              Vastgelegd
             </span>
           ) : (
             <button
@@ -255,7 +255,7 @@ function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick, curren
               disabled={isLogging}
               className="text-xs px-3 py-1.5 rounded-md bg-accent-600 hover:bg-accent-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isLogging ? 'Logging...' : 'Log Activity'}
+              {isLogging ? 'Vastleggen...' : 'Activiteit vastleggen'}
             </button>
           )}
         </div>
@@ -451,7 +451,7 @@ export default function PersonDetail() {
       
       setShowContactModal(false);
     } catch {
-      alert('Failed to save contacts. Please try again.');
+      alert('Contacten konden niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingContacts(false);
     }
@@ -497,7 +497,7 @@ export default function PersonDetail() {
       setShowDateModal(false);
       setEditingDate(null);
     } catch {
-      alert('Failed to save date. Please try again.');
+      alert('Datum kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingDate(false);
     }
@@ -537,7 +537,7 @@ export default function PersonDetail() {
       setEditingRelationship(null);
       setEditingRelationshipIndex(null);
     } catch {
-      alert('Failed to save relationship. Please try again.');
+      alert('Relatie kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingRelationship(false);
     }
@@ -579,7 +579,7 @@ export default function PersonDetail() {
       setEditingAddress(null);
       setEditingAddressIndex(null);
     } catch {
-      alert('Failed to save address. Please try again.');
+      alert('Adres kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingAddress(false);
     }
@@ -621,7 +621,7 @@ export default function PersonDetail() {
       setEditingWorkHistory(null);
       setEditingWorkHistoryIndex(null);
     } catch {
-      alert('Failed to save work history. Please try again.');
+      alert('Werkgeschiedenis kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingWorkHistory(false);
     }
@@ -653,7 +653,7 @@ export default function PersonDetail() {
       
       setShowPersonEditModal(false);
     } catch {
-      alert('Failed to save person. Please try again.');
+      alert('Lid kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingPerson(false);
     }
@@ -661,7 +661,7 @@ export default function PersonDetail() {
 
   // Handle deleting an address
   const handleDeleteAddress = async (index) => {
-    if (!window.confirm('Are you sure you want to delete this address?')) {
+    if (!window.confirm('Weet je zeker dat je dit adres wilt verwijderen?')) {
       return;
     }
     
@@ -682,7 +682,7 @@ export default function PersonDetail() {
 
   // Handle deleting a relationship
   const handleDeleteRelationship = async (index) => {
-    if (!window.confirm('Are you sure you want to delete this relationship?')) {
+    if (!window.confirm('Weet je zeker dat je deze relatie wilt verwijderen?')) {
       return;
     }
     
@@ -697,7 +697,7 @@ export default function PersonDetail() {
     // Ask if inverse should be deleted
     let deleteInverse = true; // Default to true since backend automatically deletes it
     if (relatedPersonId && relationshipTypeId) {
-      deleteInverse = window.confirm('Do you also want to delete the inverse relationship from the other person?');
+      deleteInverse = window.confirm('Wil je ook de omgekeerde relatie bij de andere persoon verwijderen?');
     }
     
     // If user doesn't want to delete inverse, we need to save it and re-add it after deletion
@@ -798,19 +798,19 @@ export default function PersonDetail() {
 
   // Handle deleting a date
   const handleDeleteDate = async (dateId) => {
-    if (!window.confirm('Are you sure you want to delete this important date?')) {
+    if (!window.confirm('Weet je zeker dat je deze belangrijke datum wilt verwijderen?')) {
       return;
     }
-    
+
     await deleteDate.mutateAsync({ dateId, personId: id });
   };
 
   // Handle deleting a note
   const handleDeleteNote = async (noteId) => {
-    if (!window.confirm('Are you sure you want to delete this note?')) {
+    if (!window.confirm('Weet je zeker dat je deze notitie wilt verwijderen?')) {
       return;
     }
-    
+
     await deleteNote.mutateAsync({ noteId, personId: id });
   };
 
@@ -820,7 +820,7 @@ export default function PersonDetail() {
       await createNote.mutateAsync({ personId: id, content, visibility });
       setShowNoteModal(false);
     } catch {
-      alert('Failed to create note. Please try again.');
+      alert('Notitie kon niet worden aangemaakt. Probeer het opnieuw.');
     }
   };
 
@@ -853,7 +853,7 @@ export default function PersonDetail() {
       
       setShowActivityModal(false);
     } catch {
-      alert('Failed to save activity. Please try again.');
+      alert('Activiteit kon niet worden opgeslagen. Probeer het opnieuw.');
     }
   };
 
@@ -864,7 +864,7 @@ export default function PersonDetail() {
       setShowTodoModal(false);
       setEditingTodo(null);
     } catch {
-      alert('Failed to create todo. Please try again.');
+      alert('Taak kon niet worden aangemaakt. Probeer het opnieuw.');
     }
   };
 
@@ -877,7 +877,7 @@ export default function PersonDetail() {
       setShowTodoModal(false);
       setEditingTodo(null);
     } catch {
-      alert('Failed to update todo. Please try again.');
+      alert('Taak kon niet worden bijgewerkt. Probeer het opnieuw.');
     }
   };
 
@@ -906,7 +906,7 @@ export default function PersonDetail() {
           personId: id,
         });
       } catch {
-        alert('Failed to reopen todo. Please try again.');
+        alert('Taak kon niet worden heropend. Probeer het opnieuw.');
       }
     }
   };
@@ -925,7 +925,7 @@ export default function PersonDetail() {
       setShowCompleteModal(false);
       setTodoToComplete(null);
     } catch {
-      alert('Failed to update todo. Please try again.');
+      alert('Taak kon niet worden bijgewerkt. Probeer het opnieuw.');
     }
   };
 
@@ -943,7 +943,7 @@ export default function PersonDetail() {
       setShowCompleteModal(false);
       setTodoToComplete(null);
     } catch {
-      alert('Failed to complete todo. Please try again.');
+      alert('Taak kon niet worden voltooid. Probeer het opnieuw.');
     }
   };
   
@@ -972,7 +972,7 @@ export default function PersonDetail() {
       // Success - invalidation happens in the mutation hook
     } catch (error) {
       console.error('Failed to log meeting:', error);
-      alert('Failed to log meeting as activity. Please try again.');
+      alert('Afspraak kon niet als activiteit worden vastgelegd. Probeer het opnieuw.');
     } finally {
       setLoggingMeetingId(null);
     }
@@ -980,19 +980,19 @@ export default function PersonDetail() {
 
   // Handle deleting an activity
   const handleDeleteActivity = async (activityId) => {
-    if (!window.confirm('Are you sure you want to delete this activity?')) {
+    if (!window.confirm('Weet je zeker dat je deze activiteit wilt verwijderen?')) {
       return;
     }
-    
+
     await deleteActivity.mutateAsync({ activityId, personId: id });
   };
 
   // Handle deleting a todo
   const handleDeleteTodo = async (todoId) => {
-    if (!window.confirm('Are you sure you want to delete this todo?')) {
+    if (!window.confirm('Weet je zeker dat je deze taak wilt verwijderen?')) {
       return;
     }
-    
+
     await deleteTodo.mutateAsync({ todoId, personId: id });
   };
 
@@ -1021,7 +1021,7 @@ export default function PersonDetail() {
 
   // Handle deleting a work history item
   const handleDeleteWorkHistory = async (index) => {
-    if (!window.confirm('Are you sure you want to delete this work history item?')) {
+    if (!window.confirm('Weet je zeker dat je dit werkverleden wilt verwijderen?')) {
       return;
     }
     
@@ -1087,13 +1087,13 @@ export default function PersonDetail() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      alert('Selecteer een afbeeldingsbestand');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must be less than 5MB');
+      alert('Afbeelding moet kleiner zijn dan 5MB');
       return;
     }
 
@@ -1107,7 +1107,7 @@ export default function PersonDetail() {
       queryClient.invalidateQueries({ queryKey: ['person', id] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
     } catch {
-      alert('Failed to upload photo. Please try again.');
+      alert('Foto kon niet worden geüpload. Probeer het opnieuw.');
     } finally {
       setIsUploadingPhoto(false);
       // Reset file input
@@ -1127,7 +1127,7 @@ export default function PersonDetail() {
         personDates: personDates || [],
       });
     } catch {
-      alert('Failed to export vCard. Please try again.');
+      alert('vCard kon niet worden geëxporteerd. Probeer het opnieuw.');
     }
   };
 
@@ -1736,13 +1736,13 @@ export default function PersonDetail() {
           {!isDeceased && (
             <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Contact information</h2>
+                <h2 className="font-semibold">Contactgegevens</h2>
                 <button
                   onClick={() => setShowContactModal(true)}
                   className="btn-secondary text-sm"
                 >
                   <Pencil className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Edit</span>
+                  <span className="hidden md:inline">Bewerken</span>
                 </button>
               </div>
             {acf.contact_info?.filter(contact => !socialTypes.includes(contact.contact_type)).length > 0 ? (
@@ -1834,7 +1834,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No contact information yet. <button onClick={() => setShowContactModal(true)} className="text-accent-600 hover:underline">Add some</button>
+                Nog geen contactgegevens. <button onClick={() => setShowContactModal(true)} className="text-accent-600 hover:underline">Toevoegen</button>
               </p>
             )}
             {/* View in Google Contacts link - only for synced contacts with email */}
@@ -1857,7 +1857,7 @@ export default function PersonDetail() {
           {/* Important Dates */}
           <div className="card p-6 break-inside-avoid mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Important dates</h2>
+              <h2 className="font-semibold">Belangrijke datums</h2>
               <button
                 onClick={() => {
                   setEditingDate(null);
@@ -1923,7 +1923,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No important dates yet. <button onClick={() => { setEditingDate(null); setShowDateModal(true); }} className="text-accent-600 hover:underline">Add one</button>
+                Nog geen belangrijke datums. <button onClick={() => { setEditingDate(null); setShowDateModal(true); }} className="text-accent-600 hover:underline">Toevoegen</button>
               </p>
             )}
           </div>
@@ -1932,7 +1932,7 @@ export default function PersonDetail() {
             {!isDeceased && (
               <div className="card p-6 break-inside-avoid mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold">Addresses</h2>
+                  <h2 className="font-semibold">Adressen</h2>
                   <button
                     onClick={() => {
                       setEditingAddress(null);
@@ -2000,7 +2000,7 @@ export default function PersonDetail() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 text-center py-4">
-                    No addresses yet. <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-accent-600 hover:underline">Add one</button>
+                    Nog geen adressen. <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-accent-600 hover:underline">Toevoegen</button>
                   </p>
                 )}
               </div>
@@ -2025,7 +2025,7 @@ export default function PersonDetail() {
             {/* Relationships */}
             <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Relationships</h2>
+                <h2 className="font-semibold">Relaties</h2>
                 <div className="flex items-center gap-2">
                   <Link
                     to={`/people/${id}/family-tree`}
@@ -2110,7 +2110,7 @@ export default function PersonDetail() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  No relationships yet. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-accent-600 hover:underline">Add one</button>
+                  Nog geen relaties. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-accent-600 hover:underline">Toevoegen</button>
                 </p>
               )}
             </div>
@@ -2174,7 +2174,7 @@ export default function PersonDetail() {
             {/* Work history */}
           <div className="card p-6 break-inside-avoid mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Work history</h2>
+              <h2 className="font-semibold">Werkgeschiedenis</h2>
               <button
                 onClick={() => {
                   setEditingWorkHistory(null);
@@ -2252,7 +2252,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No work history yet. <button onClick={() => { setEditingWorkHistory(null); setEditingWorkHistoryIndex(null); setShowWorkHistoryModal(true); }} className="text-accent-600 hover:underline">Add one</button>
+                Nog geen werkgeschiedenis. <button onClick={() => { setEditingWorkHistory(null); setEditingWorkHistoryIndex(null); setShowWorkHistoryModal(true); }} className="text-accent-600 hover:underline">Toevoegen</button>
               </p>
             )}
           </div>
@@ -2298,7 +2298,7 @@ export default function PersonDetail() {
           {colleagues.length > 0 && (
             <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Colleagues</h2>
+                <h2 className="font-semibold">Collega's</h2>
                 <span className="text-xs text-gray-500 dark:text-gray-400">{colleagues.length} {colleagues.length === 1 ? 'colleague' : 'colleagues'}</span>
               </div>
               <div className="space-y-2">
@@ -2340,7 +2340,7 @@ export default function PersonDetail() {
           <div className="space-y-6">
             {/* Upcoming Meetings */}
             <div className="card p-6">
-              <h2 className="font-semibold mb-4">Upcoming Meetings</h2>
+              <h2 className="font-semibold mb-4">Aankomende afspraken</h2>
               {meetingsLoading ? (
                 <div className="text-gray-500 dark:text-gray-400">Loading...</div>
               ) : meetings?.upcoming?.length > 0 ? (
@@ -2359,13 +2359,13 @@ export default function PersonDetail() {
                   ))}
                 </div>
               ) : (
-                <div className="text-gray-500 dark:text-gray-400 text-sm">No upcoming meetings</div>
+                <div className="text-gray-500 dark:text-gray-400 text-sm">Geen aankomende afspraken</div>
               )}
             </div>
 
             {/* Past Meetings */}
             <div className="card p-6">
-              <h2 className="font-semibold mb-4">Past Meetings</h2>
+              <h2 className="font-semibold mb-4">Afspraken in het verleden</h2>
               {meetings?.past?.length > 0 ? (
                 <div className="space-y-3">
                   {meetings.past.map(meeting => (
@@ -2384,7 +2384,7 @@ export default function PersonDetail() {
                   ))}
                 </div>
               ) : (
-                <div className="text-gray-500 dark:text-gray-400 text-sm">No past meetings</div>
+                <div className="text-gray-500 dark:text-gray-400 text-sm">Geen afspraken in het verleden gevonden</div>
               )}
             </div>
           </div>
@@ -2397,7 +2397,7 @@ export default function PersonDetail() {
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-semibold">Todos</h2>
+                  <h2 className="font-semibold">Taken</h2>
                   {openTodosCount > 0 && (
                     <span className="bg-accent-100 text-accent-700 text-xs font-medium px-2 py-0.5 rounded-full">
                       {openTodosCount}
@@ -2410,7 +2410,7 @@ export default function PersonDetail() {
                     setShowTodoModal(true);
                   }}
                   className="btn-secondary text-sm"
-                  title="Add todo"
+                  title="Taak toevoegen"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -2534,7 +2534,7 @@ export default function PersonDetail() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  No todos yet.
+                  Nog geen taken.
                 </p>
               )}
             </div>
@@ -2588,7 +2588,7 @@ export default function PersonDetail() {
                     setShowMobileTodos(false);
                   }}
                   className="btn-secondary text-sm"
-                  title="Add todo"
+                  title="Taak toevoegen"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -2723,7 +2723,7 @@ export default function PersonDetail() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  No todos yet.
+                  Nog geen taken.
                 </p>
               )}
             </div>
