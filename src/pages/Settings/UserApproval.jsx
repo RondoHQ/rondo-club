@@ -5,29 +5,29 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, ShieldAlert, Trash2 } from 'lucide-react';
 
 export default function UserApproval() {
-  useDocumentTitle('User Approval - Settings');
+  useDocumentTitle('Gebruikersgoedkeuring - Instellingen');
   const queryClient = useQueryClient();
   const config = window.stadionConfig || {};
   const isAdmin = config.isAdmin || false;
-  
+
   // Check if user is admin
   if (!isAdmin) {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="card p-8 text-center">
           <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
-          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Access Denied</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Toegang geweigerd</h1>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            You don't have permission to manage user approvals. This feature is only available to administrators.
+            Je hebt geen toestemming om gebruikersgoedkeuringen te beheren. Deze functie is alleen beschikbaar voor beheerders.
           </p>
           <Link to="/settings" className="btn-primary">
-            Back to Settings
+            Terug naar Instellingen
           </Link>
         </div>
       </div>
     );
   }
-  
+
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
@@ -35,46 +35,46 @@ export default function UserApproval() {
       return response.data;
     },
   });
-  
+
   const approveMutation = useMutation({
     mutationFn: (userId) => prmApi.approveUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
   });
-  
+
   const denyMutation = useMutation({
     mutationFn: (userId) => prmApi.denyUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
   });
-  
+
   const deleteMutation = useMutation({
     mutationFn: (userId) => prmApi.deleteUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
   });
-  
+
   const handleApprove = (userId) => {
-    if (window.confirm('Are you sure you want to approve this user?')) {
+    if (window.confirm('Weet je zeker dat je deze gebruiker wilt goedkeuren?')) {
       approveMutation.mutate(userId);
     }
   };
-  
+
   const handleDeny = (userId) => {
-    if (window.confirm('Are you sure you want to deny this user? They will not be able to access the system.')) {
+    if (window.confirm('Weet je zeker dat je deze gebruiker wilt weigeren? Ze kunnen geen toegang krijgen tot het systeem.')) {
       denyMutation.mutate(userId);
     }
   };
-  
+
   const handleDelete = (userId, userName) => {
-    if (window.confirm(`Are you sure you want to delete ${userName}? This will permanently delete their account and all their related data (people, organizations, dates). This action cannot be undone.`)) {
+    if (window.confirm(`Weet je zeker dat je ${userName} wilt verwijderen? Dit zal hun account en alle gerelateerde gegevens (leden, organisaties, datums) permanent verwijderen. Dit kan niet ongedaan worden gemaakt.`)) {
       deleteMutation.mutate(userId);
     }
   };
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -82,10 +82,10 @@ export default function UserApproval() {
       </div>
     );
   }
-  
+
   const unapprovedUsers = users.filter(u => !u.is_approved);
   const approvedUsers = users.filter(u => u.is_approved);
-  
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
@@ -94,15 +94,15 @@ export default function UserApproval() {
           className="btn-secondary flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="hidden md:inline">Back to Settings</span>
+          <span className="hidden md:inline">Terug naar Instellingen</span>
         </Link>
-        <h1 className="text-2xl font-semibold dark:text-gray-50">User Approval</h1>
+        <h1 className="text-2xl font-semibold dark:text-gray-50">Gebruikersgoedkeuring</h1>
       </div>
 
       <div className="space-y-6">
       {unapprovedUsers.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold dark:text-gray-50 mb-4">Pending Approval</h2>
+          <h2 className="text-lg font-semibold dark:text-gray-50 mb-4">Wacht op goedkeuring</h2>
           <div className="space-y-3">
             {unapprovedUsers.map((user) => (
               <div
@@ -113,7 +113,7 @@ export default function UserApproval() {
                   <p className="font-medium dark:text-gray-50">{user.name}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">
-                    Registered: {new Date(user.registered).toLocaleDateString()}
+                    Geregistreerd: {new Date(user.registered).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -123,7 +123,7 @@ export default function UserApproval() {
                     className="btn-primary flex items-center gap-2"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    Approve
+                    Goedkeuren
                   </button>
                   <button
                     onClick={() => handleDeny(user.id)}
@@ -131,7 +131,7 @@ export default function UserApproval() {
                     className="btn-secondary flex items-center gap-2"
                   >
                     <XCircle className="w-4 h-4" />
-                    Deny
+                    Weigeren
                   </button>
                   <button
                     onClick={() => handleDelete(user.id, user.name)}
@@ -139,7 +139,7 @@ export default function UserApproval() {
                     className="btn-danger flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    Verwijderen
                   </button>
                 </div>
               </div>
@@ -150,7 +150,7 @@ export default function UserApproval() {
 
       {approvedUsers.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold dark:text-gray-50 mb-4">Approved Users</h2>
+          <h2 className="text-lg font-semibold dark:text-gray-50 mb-4">Goedgekeurde gebruikers</h2>
           <div className="space-y-3">
             {approvedUsers.map((user) => (
               <div
@@ -171,7 +171,7 @@ export default function UserApproval() {
                     className="btn-secondary flex items-center gap-2"
                   >
                     <XCircle className="w-4 h-4" />
-                    Revoke Access
+                    Toegang intrekken
                   </button>
                   <button
                     onClick={() => handleDelete(user.id, user.name)}
@@ -179,7 +179,7 @@ export default function UserApproval() {
                     className="btn-danger flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    Verwijderen
                   </button>
                 </div>
               </div>
@@ -190,11 +190,10 @@ export default function UserApproval() {
 
       {users.length === 0 && (
         <div className="card p-8 text-center">
-          <p className="text-gray-600 dark:text-gray-300">No Stadion users found.</p>
+          <p className="text-gray-600 dark:text-gray-300">Geen Stadion-gebruikers gevonden.</p>
         </div>
       )}
       </div>
     </div>
   );
 }
-

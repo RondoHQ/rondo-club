@@ -7,8 +7,8 @@ import { Link } from 'react-router-dom';
 
 // Tab configuration
 const TABS = [
-  { id: 'person', label: 'People Labels' },
-  { id: 'team', label: 'Organization Labels' },
+  { id: 'person', label: 'Ledenlabels' },
+  { id: 'team', label: 'Organisatielabels' },
 ];
 
 export default function Labels() {
@@ -29,12 +29,12 @@ export default function Labels() {
       <div className="max-w-2xl mx-auto">
         <div className="card p-8 text-center">
           <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
-          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Access Denied</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Toegang geweigerd</h1>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            You don't have permission to manage labels. This feature is only available to administrators.
+            Je hebt geen toestemming om labels te beheren. Deze functie is alleen beschikbaar voor beheerders.
           </p>
           <Link to="/settings" className="btn-primary">
-            Back to Settings
+            Terug naar Instellingen
           </Link>
         </div>
       </div>
@@ -63,7 +63,7 @@ export default function Labels() {
   const labels = activeTab === 'person' ? personLabels : teamLabels;
   const isLoading = activeTab === 'person' ? personLabelsLoading : teamLabelsLoading;
   const queryKey = activeTab === 'person' ? 'person-labels' : 'team-labels';
-  const entityName = activeTab === 'person' ? 'people' : 'organizations';
+  const entityName = activeTab === 'person' ? 'leden' : 'organisaties';
 
   // Create mutation
   const createMutation = useMutation({
@@ -120,7 +120,7 @@ export default function Labels() {
 
   const handleSave = () => {
     if (!editingName.trim()) {
-      alert('Name is required');
+      alert('Naam is verplicht');
       return;
     }
 
@@ -132,7 +132,7 @@ export default function Labels() {
 
   const handleCreate = () => {
     if (!newName.trim()) {
-      alert('Name is required');
+      alert('Naam is verplicht');
       return;
     }
 
@@ -140,7 +140,7 @@ export default function Labels() {
   };
 
   const handleDelete = (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
+    if (!window.confirm(`Weet je zeker dat je "${name}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
       return;
     }
 
@@ -170,7 +170,7 @@ export default function Labels() {
               className="btn-primary flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              <span className="hidden md:inline">Add Label</span>
+              <span className="hidden md:inline">Label toevoegen</span>
             </button>
           )}
         </div>
@@ -201,16 +201,16 @@ export default function Labels() {
         {/* Add new form */}
         {isAdding && (
           <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-            <h3 className="font-semibold dark:text-gray-50 mb-4">Add New Label</h3>
+            <h3 className="font-semibold dark:text-gray-50 mb-4">Nieuw label toevoegen</h3>
             <div className="space-y-4">
               <div>
-                <label className="label">Name *</label>
+                <label className="label">Naam *</label>
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   className="input"
-                  placeholder="e.g., Friend, Family, VIP, Client"
+                  placeholder="bijv. Vriend, Familie, VIP, Klant"
                 />
               </div>
               <div className="flex gap-2">
@@ -224,7 +224,7 @@ export default function Labels() {
                   ) : (
                     <Save className="w-4 h-4" />
                   )}
-                  <span className="hidden md:inline">Save</span>
+                  <span className="hidden md:inline">Opslaan</span>
                 </button>
                 <button
                   onClick={() => {
@@ -233,7 +233,7 @@ export default function Labels() {
                   }}
                   className="btn-secondary"
                 >
-                  Cancel
+                  Annuleren
                 </button>
               </div>
             </div>
@@ -251,7 +251,7 @@ export default function Labels() {
         {!isLoading && (
           <div className="space-y-2">
             {labels.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-8">No labels found. Create one to get started.</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-8">Geen labels gevonden. Maak er een aan om te beginnen.</p>
             ) : (
               labels.map((label) => {
                 const isEditing = editingId === label.id;
@@ -264,7 +264,7 @@ export default function Labels() {
                     {isEditing ? (
                       <div className="space-y-4">
                         <div>
-                          <label className="label">Name *</label>
+                          <label className="label">Naam *</label>
                           <input
                             type="text"
                             value={editingName}
@@ -283,14 +283,14 @@ export default function Labels() {
                             ) : (
                               <Save className="w-4 h-4" />
                             )}
-                            <span className="hidden md:inline">Save</span>
+                            <span className="hidden md:inline">Opslaan</span>
                           </button>
                           <button
                             onClick={handleCancelEdit}
                             className="btn-secondary flex items-center gap-2"
                           >
                             <X className="w-4 h-4" />
-                            <span className="hidden md:inline">Cancel</span>
+                            <span className="hidden md:inline">Annuleren</span>
                           </button>
                         </div>
                       </div>
@@ -306,14 +306,14 @@ export default function Labels() {
                           <button
                             onClick={() => handleEdit(label)}
                             className="p-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded"
-                            title="Edit"
+                            title="Bewerken"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(label.id, label.name)}
                             className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                            title="Delete"
+                            title="Verwijderen"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
