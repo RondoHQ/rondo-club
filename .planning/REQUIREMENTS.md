@@ -9,7 +9,7 @@ Requirements for Dutch localization. Direct string replacement approach (no i18n
 
 ### Navigation & Core UI
 
-- [ ] **NAV-01**: Translate sidebar navigation labels (Dashboard→Dashboard, People→Leden, Teams→Teams, Commissies→Commissies, Dates→Datums, Todos→Taken, Workspaces→Werkruimtes, Feedback→Feedback, Settings→Instellingen)
+- [ ] **NAV-01**: Translate sidebar navigation labels (Dashboard->Dashboard, People->Leden, Teams->Teams, Commissies->Commissies, Dates->Datums, Todos->Taken, Workspaces->Werkruimtes, Feedback->Feedback, Settings->Instellingen)
 - [ ] **NAV-02**: Translate quick actions menu (Nieuw lid, Nieuw team, Nieuwe taak, Nieuwe datum)
 - [ ] **NAV-03**: Translate user menu (Profiel bewerken, WordPress admin, Uitloggen)
 - [ ] **NAV-04**: Translate search modal labels and placeholders
@@ -75,7 +75,7 @@ Requirements for Dutch localization. Direct string replacement approach (no i18n
 
 ## Future Requirements
 
-None for this milestone — focused solely on Dutch translation.
+None for this milestone - focused solely on Dutch translation.
 
 ## Out of Scope
 
@@ -90,48 +90,48 @@ None for this milestone — focused solely on Dutch translation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | TBD | Pending |
-| NAV-02 | TBD | Pending |
-| NAV-03 | TBD | Pending |
-| NAV-04 | TBD | Pending |
-| DASH-01 | TBD | Pending |
-| DASH-02 | TBD | Pending |
-| DASH-03 | TBD | Pending |
-| DASH-04 | TBD | Pending |
-| LEDEN-01 | TBD | Pending |
-| LEDEN-02 | TBD | Pending |
-| LEDEN-03 | TBD | Pending |
-| LEDEN-04 | TBD | Pending |
-| TEAM-01 | TBD | Pending |
-| TEAM-02 | TBD | Pending |
-| TEAM-03 | TBD | Pending |
-| COMM-01 | TBD | Pending |
-| COMM-02 | TBD | Pending |
-| DATE-01 | TBD | Pending |
-| DATE-02 | TBD | Pending |
-| DATE-03 | TBD | Pending |
-| TODO-01 | TBD | Pending |
-| TODO-02 | TBD | Pending |
-| TODO-03 | TBD | Pending |
-| SET-01 | TBD | Pending |
-| SET-02 | TBD | Pending |
-| SET-03 | TBD | Pending |
-| SET-04 | TBD | Pending |
-| SET-05 | TBD | Pending |
-| SET-06 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| FORMAT-01 | TBD | Pending |
-| FORMAT-02 | TBD | Pending |
+| FORMAT-01 | Phase 99 | Pending |
+| FORMAT-02 | Phase 99 | Pending |
+| NAV-01 | Phase 100 | Pending |
+| NAV-02 | Phase 100 | Pending |
+| NAV-03 | Phase 100 | Pending |
+| NAV-04 | Phase 100 | Pending |
+| DASH-01 | Phase 101 | Pending |
+| DASH-02 | Phase 101 | Pending |
+| DASH-03 | Phase 101 | Pending |
+| DASH-04 | Phase 101 | Pending |
+| LEDEN-01 | Phase 102 | Pending |
+| LEDEN-02 | Phase 102 | Pending |
+| LEDEN-03 | Phase 102 | Pending |
+| LEDEN-04 | Phase 102 | Pending |
+| TEAM-01 | Phase 103 | Pending |
+| TEAM-02 | Phase 103 | Pending |
+| TEAM-03 | Phase 103 | Pending |
+| COMM-01 | Phase 103 | Pending |
+| COMM-02 | Phase 103 | Pending |
+| DATE-01 | Phase 104 | Pending |
+| DATE-02 | Phase 104 | Pending |
+| DATE-03 | Phase 104 | Pending |
+| TODO-01 | Phase 104 | Pending |
+| TODO-02 | Phase 104 | Pending |
+| TODO-03 | Phase 104 | Pending |
+| SET-01 | Phase 105 | Pending |
+| SET-02 | Phase 105 | Pending |
+| SET-03 | Phase 105 | Pending |
+| SET-04 | Phase 105 | Pending |
+| SET-05 | Phase 105 | Pending |
+| SET-06 | Phase 105 | Pending |
+| UI-01 | Phase 106 | Pending |
+| UI-02 | Phase 106 | Pending |
+| UI-03 | Phase 106 | Pending |
+| UI-04 | Phase 106 | Pending |
+| UI-05 | Phase 106 | Pending |
 
 **Coverage:**
 - v7.0 requirements: 36 total
-- Mapped to phases: 0
-- Unmapped: 36 (pending roadmap)
+- Mapped to phases: 36
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-25*
-*Last updated: 2026-01-25 after initial definition*
+*Last updated: 2026-01-25 after roadmap creation*
