@@ -229,7 +229,7 @@ export default function Settings() {
 
     // Handle Slack OAuth callbacks
     if (slackConnectedParam === '1') {
-      setWebhookTestMessage('Slack connected successfully!');
+      setWebhookTestMessage('Slack succesvol verbonden!');
       // Refresh Slack status
       prmApi.getSlackStatus().then(response => {
         setSlackConnected(response.data.connected || false);
@@ -248,7 +248,7 @@ export default function Settings() {
       navigate('/settings/connections/calendars', { replace: true });
     } else if (googleConnected === 'google-contacts') {
       // Handle Google Contacts OAuth callback
-      setGoogleContactsMessage('Google Contacts connected successfully!');
+      setGoogleContactsMessage('Google Contacten succesvol verbonden!');
       // Refresh status
       prmApi.getGoogleContactsStatus().then(response => {
         setGoogleContactsStatus(response.data);
@@ -293,7 +293,7 @@ export default function Settings() {
       setSlackChannels([]);
       setSlackUsers([]);
       setSlackTargets([]);
-      setWebhookTestMessage('Slack disconnected successfully');
+      setWebhookTestMessage('Slack succesvol ontkoppeld');
       if (notificationChannels.includes('slack')) {
         await toggleChannel('slack');
       }
@@ -315,7 +315,7 @@ export default function Settings() {
     setSavingSlackTargets(true);
     try {
       await prmApi.updateSlackTargets(slackTargets);
-      setWebhookTestMessage('Meldingsdoelen saved successfully');
+      setWebhookTestMessage('Meldingsdoelen succesvol opgeslagen');
       setTimeout(() => setWebhookTestMessage(''), 3000);
     } catch (fout) {
       alert(fout.response?.data?.message || 'Failed to save notification targets');
@@ -344,7 +344,7 @@ export default function Settings() {
     try {
       await prmApi.disconnectGoogleContacts();
       setGoogleContactsStatus({ ...googleContactsStatus, connected: false });
-      setGoogleContactsMessage('Google Contacts disconnected.');
+      setGoogleContactsMessage('Google Contacten ontkoppeld.');
       setGoogleContactsImportResult(null);
     } catch (fout) {
       setGoogleContactsMessage(fout.response?.data?.message || 'Failed to disconnect');
@@ -756,7 +756,7 @@ function AppearanceTab() {
       // Update the global config so filtering works immediately
       window.stadionConfig.currentUserPersonId = person.id;
     } catch {
-      alert('Failed to link person. Please try again.');
+      alert('Kan persoon niet koppelen. Probeer het opnieuw.');
     } finally {
       setSavingLinkedPerson(false);
     }
@@ -770,7 +770,7 @@ function AppearanceTab() {
       // Update the global config
       window.stadionConfig.currentUserPersonId = null;
     } catch {
-      alert('Failed to unlink person. Please try again.');
+      alert('Kan persoon niet ontkoppelen. Probeer het opnieuw.');
     } finally {
       setSavingLinkedPerson(false);
     }
@@ -809,9 +809,9 @@ function AppearanceTab() {
     <div className="space-y-6">
       {/* Color scheme card */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Color scheme</h2>
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Kleurenschema</h2>
         <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Choose how {APP_NAME} looks to you. Select a single theme or sync with your system settings.
+          Kies hoe {APP_NAME} eruitziet. Selecteer een thema of synchroniseer met je systeeminstellingen.
         </p>
 
         {/* Color scheme selector */}
@@ -837,18 +837,18 @@ function AppearanceTab() {
           })}
         </div>
 
-        {/* Current mode indicator */}
+        {/* Current modus indicator */}
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          Currently using <span className="font-medium">{effectiveColorScheme}</span> mode
-          {colorScheme === 'system' && ' (based on your system preference)'}
+          Momenteel <span className="font-medium">{effectiveColorScheme}</span> modus
+          {colorScheme === 'system' && ' (op basis van je systeeminstelling)'}
         </p>
       </div>
 
       {/* Accent color card */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Accent color</h2>
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Accentkleur</h2>
         <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Choose the accent color used for buttons, links, and other interactive elements.
+          Kies de accentkleur voor knoppen, links en andere interactieve elementen.
         </p>
 
         {/* Accent color picker */}
@@ -865,7 +865,7 @@ function AppearanceTab() {
                   ${isSelected ? `ring-2 ring-offset-2 ${accentRingClasses[color]} dark:ring-offset-gray-800` : ''}
                 `}
                 title={color.charAt(0).toUpperCase() + color.slice(1)}
-                aria-label={`Select ${color} accent color`}
+                aria-label={`Selecteer ${color} accentkleur`}
               />
             );
           })}
@@ -873,7 +873,7 @@ function AppearanceTab() {
 
         {/* Current accent indicator */}
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          Selected: <span className="font-medium capitalize">{accentColor}</span>
+          Geselecteerd: <span className="font-medium capitalize">{accentColor}</span>
         </p>
       </div>
 
@@ -881,14 +881,14 @@ function AppearanceTab() {
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4 dark:text-gray-100 flex items-center gap-2">
           <LinkIcon className="w-5 h-5" />
-          Profile link
+          Profielkoppeling
         </h2>
         <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Link your account to your person record. When linked, you will be hidden from meeting attendee lists since you already know you are attending.
+          Koppel je account aan je persoonsrecord. Wanneer gekoppeld word je verborgen uit de deelnemerslijst van afspraken, omdat je al weet dat je aanwezig bent.
         </p>
 
         {loadingLinkedPerson ? (
-          <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Laden...</div>
         ) : linkedPerson ? (
           <div className="space-y-3">
             {/* Currently linked person */}
@@ -907,7 +907,7 @@ function AppearanceTab() {
                 )}
                 <div>
                   <p className="font-medium text-gray-900 dark:text-gray-100">{linkedPerson.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Linked to your account</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Gekoppeld aan je account</p>
                 </div>
               </div>
               <button
@@ -915,7 +915,7 @@ function AppearanceTab() {
                 disabled={savingLinkedPerson}
                 className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
               >
-                {savingLinkedPerson ? 'Unlinking...' : 'Unlink'}
+                {savingLinkedPerson ? 'Ontkoppelen...' : 'Unlink'}
               </button>
             </div>
           </div>
@@ -930,7 +930,7 @@ function AppearanceTab() {
                     type="text"
                     value={personSearchQuery}
                     onChange={(e) => setPersonSearchQuery(e.target.value)}
-                    placeholder="Search for your person record..."
+                    placeholder="Zoek je persoonsrecord..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm placeholder:text-gray-400 bg-white dark:bg-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
                     autoFocus
                   />
@@ -940,9 +940,9 @@ function AppearanceTab() {
                 {showSearchResults && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-64 overflow-y-auto z-10">
                     {isSearching ? (
-                      <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">Searching...</div>
+                      <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">Zoeken...</div>
                     ) : peopleResults.length === 0 ? (
-                      <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">No people found</div>
+                      <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">Geen personen gevonden</div>
                     ) : (
                       peopleResults.map((person) => (
                         <button
@@ -986,11 +986,11 @@ function AppearanceTab() {
                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 <Search className="w-4 h-4" />
-                <span>Link to your person record</span>
+                <span>Koppel aan je persoonsrecord</span>
               </button>
             )}
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Not linked yet. Search for your person record to link it to your account.
+              Nog niet gekoppeld. Zoek je persoonsrecord om het aan je account te koppelen.
             </p>
           </div>
         )}
@@ -1538,7 +1538,7 @@ function CalDAVModal({ onSave, onClose }) {
           </div>
 
           <div>
-            <label className="label mb-1">Username</label>
+            <label className="label mb-1">Gebruikersnaam</label>
             <input
               type="text"
               value={username}
@@ -2008,7 +2008,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                 </div>
 
                 <div>
-                  <label className="label mb-1">Username</label>
+                  <label className="label mb-1">Gebruikersnaam</label>
                   <input
                     type="text"
                     value={username}
@@ -2589,7 +2589,7 @@ function ConnectionsCardDAVSubtab({
               </div>
             </div>
             <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400">Username</label>
+              <label className="text-xs text-gray-500 dark:text-gray-400">Gebruikersnaam</label>
               <div className="flex gap-2 mt-1">
                 <input
                   type="text"
@@ -2615,7 +2615,7 @@ function ConnectionsCardDAVSubtab({
               onClick={() => setActiveTab('api-access')}
               className="text-accent-600 dark:text-accent-400 hover:underline"
             >
-              Instellingen Settings &gt; API Accessgt; API-toegang
+              Instellingen Instellingen Settings &gt; API Accessgt; API-toeganggt; API-toegang
             </button>
             .
           </p>
@@ -3044,14 +3044,14 @@ function APIAccessTab({
 
       {/* API information card */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">API Information</h2>
+        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">API-informatie</h2>
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Username</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400">Gebruikersnaam</label>
             <p className="font-mono text-sm dark:text-gray-200">{config.userLogin || 'N/A'}</p>
           </div>
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">REST API Base URL</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400">REST API Basis-URL</label>
             <p className="font-mono text-sm dark:text-gray-200">{window.location.origin}/wp-json/stadion/v1/</p>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
@@ -3080,9 +3080,9 @@ function DataTab() {
     <div className="space-y-6">
       {/* Import Section */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Import data</h2>
+        <h2 className="text-lg font-semibold mb-4">Gegevens importeren</h2>
         <p className="text-sm text-gray-600 mb-6">
-          Import your contacts from various sources. Existing contacts with matching names will be updated instead of duplicated.
+          Importeer je contacten vanuit verschillende bronnen. Bestaande contacten met dezelfde naam worden bijgewerkt in plaats van gedupliceerd.
         </p>
 
         {/* Import type tabs */}
@@ -3126,9 +3126,9 @@ function DataTab() {
       
       {/* Export Section */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Export data</h2>
+        <h2 className="text-lg font-semibold mb-4">Gegevens exporteren</h2>
         <p className="text-sm text-gray-600 mb-6">
-          Export all your contacts in a format compatible with other contact management systems.
+          Exporteer al je contacten in een formaat dat compatibel is met andere contactbeheersystemen.
         </p>
         
         <div className="space-y-4">
@@ -3140,9 +3140,9 @@ function DataTab() {
               <FileCode className="w-6 h-6 text-accent-600" />
             </div>
             <div className="flex-1">
-              <p className="font-medium">Export as vCard (.vcf)</p>
+              <p className="font-medium">Exporteren als vCard (.vcf)</p>
               <p className="text-sm text-gray-500">
-                Compatible with Apple Contacts, Outlook, Android, and most contact apps
+                Compatibel met Apple Contacten, Outlook, Android en de meeste contact-apps
               </p>
             </div>
             <Download className="w-5 h-5 text-gray-400" />
@@ -3156,9 +3156,9 @@ function DataTab() {
               <FileSpreadsheet className="w-6 h-6 text-accent-600" />
             </div>
             <div className="flex-1">
-              <p className="font-medium">Export as Google Contacts CSV</p>
+              <p className="font-medium">Exporteren als Google Contacten CSV</p>
               <p className="text-sm text-gray-500">
-                Import directly into Google Contacts or other CSV-compatible systems
+                Direct importeren in Google Contacten of andere CSV-compatibele systemen
               </p>
             </div>
             <Download className="w-5 h-5 text-gray-400" />
@@ -3177,63 +3177,63 @@ function AdminTab({
   return (
     <div className="space-y-6">
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">User management</h2>
+        <h2 className="text-lg font-semibold mb-4">Gebruikersbeheer</h2>
         <div className="space-y-3">
           <Link
             to="/settings/user-approval"
             className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
-            <p className="font-medium">User approval</p>
-            <p className="text-sm text-gray-500">Approve or deny access for new users</p>
+            <p className="font-medium">Gebruikersgoedkeuring</p>
+            <p className="text-sm text-gray-500">Keur toegang goed of weiger voor nieuwe gebruikers</p>
           </Link>
         </div>
       </div>
       
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Configuration</h2>
+        <h2 className="text-lg font-semibold mb-4">Configuratie</h2>
         <div className="space-y-3">
           <Link
             to="/settings/relationship-types"
             className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
-            <p className="font-medium">Relationship types</p>
-            <p className="text-sm text-gray-500">Manage relationship types and their inverse mappings</p>
+            <p className="font-medium">Relatietypes</p>
+            <p className="text-sm text-gray-500">Beheer relatietypes en hun omgekeerde koppelingen</p>
           </Link>
           <Link
             to="/settings/labels"
             className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
             <p className="font-medium">Labels</p>
-            <p className="text-sm text-gray-500">Manage labels for people and organizations</p>
+            <p className="text-sm text-gray-500">Beheer labels voor personen en organisaties</p>
           </Link>
           <Link
             to="/settings/custom-fields"
             className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
-            <p className="font-medium">Custom fields</p>
-            <p className="text-sm text-gray-500">Define custom data fields for people and organizations</p>
+            <p className="font-medium">Aangepaste velden</p>
+            <p className="text-sm text-gray-500">Definieer aangepaste gegevensvelden voor personen en organisaties</p>
           </Link>
           <Link
             to="/settings/feedback"
             className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:border-gray-600"
           >
-            <p className="font-medium dark:text-gray-100">Feedback management</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">View and manage all user feedback</p>
+            <p className="font-medium dark:text-gray-100">Feedbackbeheer</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Bekijk en beheer alle gebruikersfeedback</p>
           </Link>
         </div>
       </div>
 
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">System actions</h2>
+        <h2 className="text-lg font-semibold mb-4">Systeemacties</h2>
         <div className="space-y-3">
           <button
             onClick={handleTriggerReminders}
             disabled={triggeringReminders}
             className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <p className="font-medium">Trigger reminders</p>
+            <p className="font-medium">Herinneringen versturen</p>
             <p className="text-sm text-gray-500">
-              {triggeringReminders ? 'Sending...' : 'Manually send reminders for today'}
+              {triggeringReminders ? 'Verzenden...' : 'Handmatig herinneringen voor vandaag versturen'}
             </p>
             {reminderMessage && (
               <p className="text-sm text-green-600 mt-1">{reminderMessage}</p>
@@ -3244,9 +3244,9 @@ function AdminTab({
             disabled={reschedulingCron}
             className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <p className="font-medium">Reschedule cron jobs</p>
+            <p className="font-medium">Cron-taken herplannen</p>
             <p className="text-sm text-gray-500">
-              {reschedulingCron ? 'Rescheduling...' : 'Reschedule all user reminder cron jobs'}
+              {reschedulingCron ? 'Herplannen...' : 'Herplan alle gebruikersherinneringen'}
             </p>
             {cronMessage && (
               <p className="text-sm text-green-600 mt-1">{cronMessage}</p>
@@ -3262,22 +3262,22 @@ function AdminTab({
 function AboutTab({ config }) {
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4">About {APP_NAME}</h2>
+      <h2 className="text-lg font-semibold mb-4">Over {APP_NAME}</h2>
       <div className="space-y-4">
         <div>
           <p className="text-sm text-gray-600">
-            Version {config.version || '1.0.0'}
+            Versie {config.version || '1.0.0'}
           </p>
         </div>
         <div className="pt-4 border-t border-gray-200">
           <p className="text-sm text-gray-600">
-            {APP_NAME} is a personal CRM system that helps you manage your contacts, 
-            track important dates, and maintain meaningful relationships.
+            {APP_NAME} is een persoonlijk CRM-systeem dat je helpt bij het beheren van je contacten,
+            het bijhouden van belangrijke datums en het onderhouden van betekenisvolle relaties.
           </p>
         </div>
         <div className="pt-4 border-t border-gray-200">
           <p className="text-sm text-gray-500">
-            Built with WordPress, React, and Tailwind CSS.
+            Gebouwd met WordPress, React en Tailwind CSS.
           </p>
         </div>
       </div>
