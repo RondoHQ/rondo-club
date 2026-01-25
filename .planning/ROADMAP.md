@@ -29,10 +29,11 @@ This milestone transforms the entire Stadion frontend from English to Dutch. Sta
   1. All date displays use Dutch formatting (e.g., "25 januari 2026")
   2. Relative dates show Dutch labels ("vandaag", "gisteren", "over 3 dagen")
   3. Month and day names appear in Dutch throughout the application
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 99-01: Configure date-fns Dutch locale
+- [ ] 99-01-PLAN.md — Create Dutch date formatting utility and update timeline.js
+- [ ] 99-02-PLAN.md — Update all remaining files to use Dutch formatting utility
 
 ### Phase 100: Navigation & Layout
 **Goal**: Users see Dutch labels in all navigation elements
@@ -149,7 +150,7 @@ Phases execute in numeric order: 99 -> 100 -> 101 -> 102 -> 103 -> 104 -> 105 ->
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 99. Date Formatting Foundation | 0/1 | Not started | - |
+| 99. Date Formatting Foundation | 0/2 | Ready | - |
 | 100. Navigation & Layout | 0/1 | Not started | - |
 | 101. Dashboard | 0/1 | Not started | - |
 | 102. Leden (People) | 0/2 | Not started | - |
