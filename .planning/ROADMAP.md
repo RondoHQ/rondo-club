@@ -72,11 +72,11 @@ Plans:
   2. Person form labels are in Dutch (Voornaam, Achternaam, Bijnaam, Geslacht, E-mail, Telefoon)
   3. Gender options display in Dutch (Man, Vrouw, Non-binair, Anders, Zeg ik liever niet)
   4. vCard import messages are in Dutch
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 102-01: Translate people list and headers
-- [ ] 102-02: Translate person form and modals
+- [ ] 102-01-PLAN.md — Translate PeopleList.jsx (headers, columns, filters, bulk actions)
+- [ ] 102-02-PLAN.md — Translate PersonEditModal.jsx and PersonDetail.jsx (form, sections, tabs)
 
 ### Phase 103: Teams & Commissies
 **Goal**: Teams and Commissies pages display entirely in Dutch
