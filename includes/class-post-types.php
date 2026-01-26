@@ -19,8 +19,6 @@ class PostTypes {
 	 * Register all custom post types
 	 */
 	public function register_post_types() {
-		$this->register_workspace_post_type();
-		$this->register_workspace_invite_post_type();
 		$this->register_person_post_type();
 		$this->register_team_post_type();
 		$this->register_commissie_post_type();
@@ -29,86 +27,6 @@ class PostTypes {
 		$this->register_todo_post_type();
 		$this->register_calendar_event_post_type();
 		$this->register_feedback_post_type();
-	}
-
-	/**
-	 * Register Workspace CPT
-	 */
-	private function register_workspace_post_type() {
-		$labels = [
-			'name'               => _x( 'Workspaces', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Workspace', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'Workspaces', 'Admin Menu text', 'stadion' ),
-			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Workspace', 'stadion' ),
-			'edit_item'          => __( 'Edit Workspace', 'stadion' ),
-			'new_item'           => __( 'New Workspace', 'stadion' ),
-			'view_item'          => __( 'View Workspace', 'stadion' ),
-			'search_items'       => __( 'Search Workspaces', 'stadion' ),
-			'not_found'          => __( 'No workspaces found', 'stadion' ),
-			'not_found_in_trash' => __( 'No workspaces found in Trash', 'stadion' ),
-			'all_items'          => __( 'All Workspaces', 'stadion' ),
-		];
-
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'workspaces',
-			'query_var'          => false,
-			'rewrite'            => false, // Disable rewrite rules - React Router handles routing
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 4,
-			'menu_icon'          => 'dashicons-networking',
-			'supports'           => [ 'title', 'editor', 'author', 'thumbnail' ],
-		];
-
-		register_post_type( 'workspace', $args );
-	}
-
-	/**
-	 * Register Workspace Invite CPT
-	 *
-	 * Used for tracking workspace invitations sent to users via email.
-	 * Not exposed via standard wp/v2 REST - uses custom endpoints only.
-	 */
-	private function register_workspace_invite_post_type() {
-		$labels = [
-			'name'               => _x( 'Workspace Invites', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Workspace Invite', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'Invites', 'Admin Menu text', 'stadion' ),
-			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Invite', 'stadion' ),
-			'edit_item'          => __( 'Edit Invite', 'stadion' ),
-			'new_item'           => __( 'New Invite', 'stadion' ),
-			'view_item'          => __( 'View Invite', 'stadion' ),
-			'search_items'       => __( 'Search Invites', 'stadion' ),
-			'not_found'          => __( 'No invites found', 'stadion' ),
-			'not_found_in_trash' => __( 'No invites found in Trash', 'stadion' ),
-			'all_items'          => __( 'All Invites', 'stadion' ),
-		];
-
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => 'edit.php?post_type=workspace', // Submenu under Workspaces
-			'show_in_rest'       => false, // Custom endpoints only
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'supports'           => [ 'title' ], // Title = email for easy identification
-		];
-
-		register_post_type( 'workspace_invite', $args );
 	}
 
 	/**
