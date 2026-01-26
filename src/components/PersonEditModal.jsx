@@ -61,7 +61,6 @@ export default function PersonEditModal({
       phone_type: 'mobile',
       birthday: '',
       how_we_met: '',
-      is_favorite: false,
     },
   });
 
@@ -91,7 +90,6 @@ export default function PersonEditModal({
           phone_type: phoneContact?.contact_type || 'mobile',
           birthday: '', // Birthday is stored separately
           how_we_met: person.acf?.how_we_met || '',
-          is_favorite: person.acf?.is_favorite || false,
         });
         // Load existing visibility settings
         setVisibility(person.acf?._visibility || 'private');
@@ -109,7 +107,6 @@ export default function PersonEditModal({
           phone_type: 'mobile',
           birthday: '',
           how_we_met: '',
-          is_favorite: false,
         });
         setVisibility('private');
         setSelectedWorkspaces([]);
@@ -126,7 +123,6 @@ export default function PersonEditModal({
           phone_type: 'mobile',
           birthday: '',
           how_we_met: '',
-          is_favorite: false,
         });
         // Reset visibility to private
         setVisibility('private');
@@ -179,7 +175,6 @@ export default function PersonEditModal({
           phone_type: data.phone_type || 'mobile',
           birthday: data.birthday || '',
           how_we_met: data.note || '',
-          is_favorite: false,
         });
         
         // Show notice if multiple contacts in file
@@ -441,20 +436,6 @@ export default function PersonEditModal({
               }}
               disabled={isLoading}
             />
-
-            {/* Favorite */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="is_favorite"
-                {...register('is_favorite')}
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500 dark:bg-gray-700"
-                disabled={isLoading}
-              />
-              <label htmlFor="is_favorite" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                Markeren als favoriet
-              </label>
-            </div>
           </div>
           
           <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">

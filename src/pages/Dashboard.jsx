@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Users, Building2, Calendar, Star, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Building2, Calendar, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDashboard, useTodos, useUpdateTodo, useDashboardSettings, useUpdateDashboardSettings, DEFAULT_DASHBOARD_CARDS } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useDateMeetings } from '@/hooks/useMeetings';
@@ -30,7 +30,7 @@ function StatCard({ title, value, icon: Icon, href }) {
   );
 }
 
-function PersonCard({ person, hideStar = false }) {
+function PersonCard({ person }) {
   return (
     <Link
       to={`/people/${person.id}`}
@@ -56,9 +56,6 @@ function PersonCard({ person, hideStar = false }) {
           <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{person.labels.join(', ')}</p>
         )}
       </div>
-      {person.is_favorite && !hideStar && (
-        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-      )}
     </Link>
   );
 }
@@ -602,7 +599,7 @@ export default function Dashboard() {
     );
   }
   
-  const { stats, recent_people, upcoming_reminders, favorites, recently_contacted } = data || {};
+  const { stats, recent_people, upcoming_reminders, recently_contacted } = data || {};
   const totalItems = (stats?.total_people || 0) + (stats?.total_teams || 0) + (stats?.total_dates || 0);
   const isEmpty = totalItems === 0;
   
@@ -814,23 +811,6 @@ export default function Dashboard() {
             <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
               Nog geen leden. <Link to="/people/new" className="text-accent-600 dark:text-accent-400">Voeg iemand toe</Link>
             </p>
-          )}
-        </div>
-      </div>
-    ),
-    'favorites': () => (
-      <div key="favorites" className="card">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          <h2 className="font-semibold flex items-center dark:text-gray-50">
-            <Star className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400 fill-current" />
-            Favorieten {favorites?.length > 0 && <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">({favorites.length})</span>}
-          </h2>
-        </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto">
-          {favorites?.length > 0 ? (
-            favorites.slice(0, 5).map((person) => <PersonCard key={person.id} person={person} hideStar={true} />)
-          ) : (
-            <p className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">Nog geen favorieten</p>
           )}
         </div>
       </div>

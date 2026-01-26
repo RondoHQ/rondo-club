@@ -10,7 +10,6 @@ export const DEFAULT_DASHBOARD_CARDS = [
   'meetings',
   'recent-contacted',
   'recent-edited',
-  'favorites',
 ];
 
 export function useDashboard() {

@@ -28,7 +28,6 @@ const CARD_DEFINITIONS = {
   'meetings': { label: 'Afspraken vandaag', description: 'Agenda-items voor vandaag' },
   'recent-contacted': { label: 'Recent gecontacteerd', description: 'Contacten met recente activiteit' },
   'recent-edited': { label: 'Recent bewerkt', description: 'Recent gewijzigde leden' },
-  'favorites': { label: 'Favorieten', description: 'Favoriete contacten' },
 };
 
 function SortableCard({ id, isVisible, onToggleVisibility }) {

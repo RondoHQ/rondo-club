@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Star, Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Lock, Users, Building2, Tag } from 'lucide-react';
+import { Plus, Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Lock, Users, Building2, Tag } from 'lucide-react';
 import { usePeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useQuery } from '@tanstack/react-query';
@@ -79,9 +79,6 @@ function PersonListRow({ person, teamName, workspaces, listViewFields, isSelecte
             {person.first_name || ''}
             {person.is_deceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
           </span>
-          {person.is_favorite && (
-            <Star className="w-4 h-4 ml-1 text-yellow-400 fill-current" />
-          )}
         </Link>
       </td>
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -638,7 +635,6 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
 
 export default function PeopleList() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedLabels, setSelectedLabels] = useState([]);
   const [selectedBirthYear, setSelectedBirthYear] = useState('');
   const [lastModifiedFilter, setLastModifiedFilter] = useState('');
@@ -769,11 +765,6 @@ export default function PeopleList() {
     
     let filtered = [...people];
     
-    // Apply favorites filter
-    if (showFavoritesOnly) {
-      filtered = filtered.filter(person => person.is_favorite);
-    }
-    
     // Apply label filters
     if (selectedLabels.length > 0) {
       filtered = filtered.filter(person => {
@@ -835,9 +826,9 @@ export default function PeopleList() {
     }
 
     return filtered;
-  }, [people, showFavoritesOnly, selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, selectedWorkspaceFilter, currentUserId]);
+  }, [people, selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, selectedWorkspaceFilter, currentUserId]);
 
-  const hasActiveFilters = showFavoritesOnly || selectedLabels.length > 0 || selectedBirthYear || lastModifiedFilter || ownershipFilter !== 'all' || selectedWorkspaceFilter;
+  const hasActiveFilters = selectedLabels.length > 0 || selectedBirthYear || lastModifiedFilter || ownershipFilter !== 'all' || selectedWorkspaceFilter;
   
   const handleLabelToggle = (label) => {
     setSelectedLabels(prev => 
@@ -848,7 +839,6 @@ export default function PeopleList() {
   };
   
   const clearFilters = () => {
-    setShowFavoritesOnly(false);
     setSelectedLabels([]);
     setSelectedBirthYear('');
     setLastModifiedFilter('');
@@ -887,7 +877,7 @@ export default function PeopleList() {
   // Clear selection when filters change or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [showFavoritesOnly, selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, selectedWorkspaceFilter, people]);
+  }, [selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, selectedWorkspaceFilter, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1103,7 +1093,7 @@ export default function PeopleList() {
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
                 <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
-                  {selectedLabels.length + (showFavoritesOnly ? 1 : 0) + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0)}
+                  {selectedLabels.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1115,31 +1105,6 @@ export default function PeopleList() {
                 className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
               >
                 <div className="p-4 space-y-4">
-                  {/* Favorites Filter */}
-                  <div>
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={showFavoritesOnly}
-                        onChange={(e) => setShowFavoritesOnly(e.target.checked)}
-                        className="sr-only"
-                      />
-                      <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                        showFavoritesOnly
-                          ? 'bg-accent-600 border-accent-600'
-                          : 'border-gray-300 dark:border-gray-500'
-                      }`}>
-                        {showFavoritesOnly && (
-                          <Check className="w-3 h-3 text-white" />
-                        )}
-                      </div>
-                      <div className="flex items-center">
-                        <Star className="w-4 h-4 mr-2 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Alleen favorieten</span>
-                      </div>
-                    </label>
-                  </div>
-
                   {/* Labels Filter */}
                   {availableLabels.length > 0 && (
                     <div>
@@ -1285,18 +1250,6 @@ export default function PeopleList() {
           {/* Active Filter Chips */}
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2">
-              {showFavoritesOnly && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-900/50 text-accent-800 dark:text-accent-200 rounded-full text-xs">
-                  <Star className="w-3 h-3" />
-                  Favorieten
-                  <button
-                    onClick={() => setShowFavoritesOnly(false)}
-                    className="hover:text-accent-600 dark:hover:text-accent-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
               {selectedLabels.map(label => (
                 <span
                   key={label}
