@@ -147,30 +147,10 @@ class Teams extends Base {
 								return false;
 							}
 							// Must have at least one supported update type
-							$has_update = isset( $param['visibility'] )
-								|| isset( $param['assigned_workspaces'] )
-								|| isset( $param['labels_add'] )
+							$has_update = isset( $param['labels_add'] )
 								|| isset( $param['labels_remove'] );
 							if ( ! $has_update ) {
 								return false;
-							}
-							// Validate visibility if provided
-							if ( isset( $param['visibility'] ) ) {
-								$valid_visibilities = [ 'private', 'workspace', 'shared' ];
-								if ( ! in_array( $param['visibility'], $valid_visibilities, true ) ) {
-									return false;
-								}
-							}
-							// Validate assigned_workspaces if provided
-							if ( isset( $param['assigned_workspaces'] ) ) {
-								if ( ! is_array( $param['assigned_workspaces'] ) ) {
-									return false;
-								}
-								foreach ( $param['assigned_workspaces'] as $ws_id ) {
-									if ( ! is_numeric( $ws_id ) ) {
-										return false;
-									}
-								}
 							}
 							// Validate labels_add if provided
 							if ( isset( $param['labels_add'] ) ) {
@@ -596,8 +576,7 @@ class Teams extends Base {
 	/**
 	 * Bulk update multiple teams
 	 *
-	 * Updates visibility, workspace assignments, and/or labels
-	 * for multiple teams at once.
+	 * Updates labels for multiple teams at once.
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response Response with updated/failed arrays.
@@ -611,40 +590,6 @@ class Teams extends Base {
 
 		foreach ( $ids as $post_id ) {
 			try {
-				// Update visibility if provided
-				if ( isset( $updates['visibility'] ) ) {
-					$result = \STADION_Visibility::set_visibility( $post_id, $updates['visibility'] );
-					if ( ! $result ) {
-						$failed[] = [
-							'id'    => $post_id,
-							'error' => __( 'Failed to update visibility.', 'stadion' ),
-						];
-						continue;
-					}
-				}
-
-				// Update workspace assignments if provided
-				if ( isset( $updates['assigned_workspaces'] ) ) {
-					$workspace_ids = array_map( 'intval', $updates['assigned_workspaces'] );
-
-					// Convert workspace post IDs to term IDs
-					$term_ids = [];
-					foreach ( $workspace_ids as $workspace_id ) {
-						$term_slug = 'workspace-' . $workspace_id;
-						$term      = get_term_by( 'slug', $term_slug, 'workspace_access' );
-
-						if ( $term && ! is_wp_error( $term ) ) {
-							$term_ids[] = $term->term_id;
-						}
-					}
-
-					// Set the terms on the post
-					wp_set_object_terms( $post_id, $term_ids, 'workspace_access' );
-
-					// Update the ACF field with term IDs
-					update_field( '_assigned_workspaces', $term_ids, $post_id );
-				}
-
 				// Add labels if provided (append, don't replace)
 				if ( ! empty( $updates['labels_add'] ) ) {
 					$term_ids = array_map( 'intval', $updates['labels_add'] );
