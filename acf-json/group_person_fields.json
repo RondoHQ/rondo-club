@@ -83,15 +83,6 @@
             "max": 50
         },
         {
-            "key": "field_is_favorite",
-            "label": "Favorite",
-            "name": "is_favorite",
-            "type": "true_false",
-            "message": "Mark as favorite",
-            "default_value": 0,
-            "ui": 1
-        },
-        {
             "key": "field_person_story",
             "label": "Story",
             "name": "",
