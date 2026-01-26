@@ -30,14 +30,12 @@ use Stadion\Core\PostTypes;
 use Stadion\Core\Taxonomies;
 use Stadion\Core\AutoTitle;
 use Stadion\Core\AccessControl;
-use Stadion\Core\Visibility;
 use Stadion\Core\UserRoles;
 use Stadion\REST\Api;
 use Stadion\REST\People;
 use Stadion\REST\Teams;
 use Stadion\REST\Commissies;
 use Stadion\REST\Todos;
-use Stadion\REST\Workspaces;
 use Stadion\REST\Slack;
 use Stadion\REST\ImportExport;
 use Stadion\REST\Calendar as RESTCalendar;
@@ -52,7 +50,6 @@ use Stadion\Calendar\GoogleOAuth;
 use Stadion\Notifications\EmailChannel;
 use Stadion\Notifications\SlackChannel;
 use Stadion\Collaboration\CommentTypes;
-use Stadion\Collaboration\WorkspaceMembers;
 use Stadion\Collaboration\MentionNotifications;
 use Stadion\Collaboration\Reminders;
 use Stadion\Import\Monica;
@@ -127,9 +124,6 @@ if ( ! class_exists( 'STADION_Auto_Title' ) ) {
 if ( ! class_exists( 'STADION_Access_Control' ) ) {
 	class_alias( AccessControl::class, 'STADION_Access_Control' );
 }
-if ( ! class_exists( 'STADION_Visibility' ) ) {
-	class_alias( Visibility::class, 'STADION_Visibility' );
-}
 if ( ! class_exists( 'STADION_User_Roles' ) ) {
 	class_alias( UserRoles::class, 'STADION_User_Roles' );
 }
@@ -152,9 +146,6 @@ if ( ! class_exists( 'STADION_REST_Commissies' ) ) {
 }
 if ( ! class_exists( 'STADION_REST_Todos' ) ) {
 	class_alias( Todos::class, 'STADION_REST_Todos' );
-}
-if ( ! class_exists( 'STADION_REST_Workspaces' ) ) {
-	class_alias( Workspaces::class, 'STADION_REST_Workspaces' );
 }
 if ( ! class_exists( 'STADION_REST_Slack' ) ) {
 	class_alias( Slack::class, 'STADION_REST_Slack' );
@@ -203,9 +194,6 @@ if ( ! class_exists( 'STADION_Slack_Channel' ) ) {
 // Collaboration classes
 if ( ! class_exists( 'STADION_Comment_Types' ) ) {
 	class_alias( CommentTypes::class, 'STADION_Comment_Types' );
-}
-if ( ! class_exists( 'STADION_Workspace_Members' ) ) {
-	class_alias( WorkspaceMembers::class, 'STADION_Workspace_Members' );
 }
 if ( ! class_exists( 'STADION_Mentions' ) ) {
 	class_alias( \Stadion\Collaboration\Mentions::class, 'STADION_Mentions' );
@@ -344,7 +332,6 @@ function stadion_init() {
 		new AutoTitle();
 		new InverseRelationships();
 		new CommentTypes();
-		new WorkspaceMembers();
 		new MentionNotifications();
 
 		// Initialize custom field validation (unique constraint).
@@ -360,7 +347,6 @@ function stadion_init() {
 		new People();
 		new Teams();
 		new Commissies();
-		new Workspaces();
 		new Todos();
 		new Slack();
 		new ImportExport();
