@@ -471,9 +471,6 @@ export default function PersonDetail() {
             related_people: data.related_people,
             is_recurring: data.is_recurring,
             year_unknown: data.year_unknown,
-            // Preserve existing visibility to satisfy ACF required field validation
-            _visibility: editingDate.acf?._visibility || 'private',
-            _assigned_workspaces: editingDate.acf?._assigned_workspaces || [],
           },
         });
       } else {
@@ -487,7 +484,6 @@ export default function PersonDetail() {
             related_people: data.related_people,
             is_recurring: data.is_recurring,
             year_unknown: data.year_unknown,
-            _visibility: 'private',
           },
         });
       }
@@ -638,8 +634,6 @@ export default function PersonDetail() {
         gender: data.gender || null,
         pronouns: data.pronouns || null,
         how_we_met: data.how_we_met,
-        _visibility: data.visibility || 'private',
-        _assigned_workspaces: data.assigned_workspaces || [],
       });
 
       await updatePerson.mutateAsync({
@@ -2733,8 +2727,8 @@ export default function PersonDetail() {
             onClose={() => setShowNoteModal(false)}
             onSubmit={handleCreateNote}
             isLoading={createNote.isPending}
-            isContactShared={person?.acf?._visibility === 'workspace' || person?.acf?._visibility === 'shared'}
-            workspaceIds={person?.acf?._visibility === 'workspace' ? (person?.acf?._assigned_workspaces || []) : []}
+            isContactShared={false}
+            workspaceIds={[]}
           />
           
           <QuickActivityModal

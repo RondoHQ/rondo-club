@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, ChevronDown, Lock, Users, Tag, Check, Pencil } from 'lucide-react';
+import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, ChevronDown, Tag, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCreateCommissie, useBulkUpdateCommissies } from '@/hooks/useCommissies';
 import { wpApi, prmApi } from '@/api/client';
@@ -8,207 +8,6 @@ import { getCommissieName } from '@/utils/formatters';
 import CommissieEditModal from '@/components/CommissieEditModal';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
-
-// Bulk Visibility Modal Component for Organizations
-function BulkVisibilityModal({ isOpen, onClose, selectedCount, onSubmit, isLoading }) {
-  const [selectedVisibility, setSelectedVisibility] = useState('private');
-
-  // Reset selection when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setSelectedVisibility('private');
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const visibilityOptions = [
-    {
-      value: 'private',
-      label: 'Privé',
-      description: 'Alleen jij kunt deze commissies zien',
-      icon: Lock
-    },
-    {
-      value: 'workspace',
-      label: 'Workspace',
-      description: 'Deel met workspace-leden',
-      icon: Users
-    },
-  ];
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-          <h2 className="text-lg font-semibold dark:text-gray-50">Zichtbaarheid wijzigen</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            disabled={isLoading}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Kies zichtbaarheid voor {selectedCount} {selectedCount === 1 ? 'commissie' : 'commissies'}:
-          </p>
-
-          <div className="space-y-2">
-            {visibilityOptions.map((option) => {
-              const Icon = option.icon;
-              const isSelected = selectedVisibility === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setSelectedVisibility(option.value)}
-                  disabled={isLoading}
-                  className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
-                    isSelected
-                      ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 mt-0.5 ${isSelected ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'}`} />
-                  <div className="flex-1">
-                    <div className={`text-sm font-medium ${isSelected ? 'text-accent-900 dark:text-accent-100' : 'text-gray-900 dark:text-gray-50'}`}>
-                      {option.label}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{option.description}</div>
-                  </div>
-                  {isSelected && <Check className="w-5 h-5 text-accent-600 dark:text-accent-400 mt-0.5" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn-secondary"
-            disabled={isLoading}
-          >
-            Annuleren
-          </button>
-          <button
-            type="button"
-            onClick={() => onSubmit(selectedVisibility)}
-            className="btn-primary"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Toepassen...' : `Toepassen op ${selectedCount} ${selectedCount === 1 ? 'commissie' : 'commissies'}`}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Bulk Workspace Modal Component for Organizations
-function BulkWorkspaceModal({ isOpen, onClose, selectedCount, workspaces, onSubmit, isLoading }) {
-  const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState([]);
-
-  // Reset selection when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setSelectedWorkspaceIds([]);
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleWorkspaceToggle = (workspaceId) => {
-    setSelectedWorkspaceIds(prev =>
-      prev.includes(workspaceId)
-        ? prev.filter(id => id !== workspaceId)
-        : [...prev, workspaceId]
-    );
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-          <h2 className="text-lg font-semibold dark:text-gray-50">Toewijzen aan workspace</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            disabled={isLoading}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Selecteer workspaces voor {selectedCount} {selectedCount === 1 ? 'commissie' : 'commissies'}:
-          </p>
-
-          {workspaces.length === 0 ? (
-            <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-              <Users className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
-              <p className="text-sm">Geen workspaces beschikbaar.</p>
-              <p className="text-xs">Maak eerst een workspace aan om deze functie te gebruiken.</p>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {workspaces.map((workspace) => {
-                const isChecked = selectedWorkspaceIds.includes(workspace.id);
-                return (
-                  <button
-                    key={workspace.id}
-                    type="button"
-                    onClick={() => handleWorkspaceToggle(workspace.id)}
-                    disabled={isLoading}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
-                      isChecked
-                        ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
-                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                    }`}
-                  >
-                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
-                      isChecked ? 'bg-accent-600 border-accent-600' : 'border-gray-300 dark:border-gray-500'
-                    }`}>
-                      {isChecked && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{workspace.title}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{workspace.member_count} leden</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn-secondary"
-            disabled={isLoading}
-          >
-            Annuleren
-          </button>
-          <button
-            type="button"
-            onClick={() => onSubmit(selectedWorkspaceIds)}
-            className="btn-primary"
-            disabled={isLoading || workspaces.length === 0}
-          >
-            {isLoading ? 'Toewijzen...' : `Toewijzen aan ${selectedCount} ${selectedCount === 1 ? 'commissie' : 'commissies'}`}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // Bulk Labels Modal Component for Organizations
 function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isLoading }) {
@@ -329,19 +128,17 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
   );
 }
 
-function OrganizationListRow({ commissie, workspaces, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit }) {
-  // Local state for edited field values (includes name, website, workspace, and custom fields)
+function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit }) {
+  // Local state for edited field values (includes name, website, and custom fields)
   const [editedFields, setEditedFields] = useState({});
 
   // Reset edited fields when entering/exiting edit mode
   useEffect(() => {
     if (isEditing) {
       // Initialize with current values for core fields and custom fields
-      const assignedWorkspaces = commissie.acf?._assigned_workspaces || [];
       const initialValues = {
         _name: commissie.title?.rendered || commissie.title || '',
         _website: commissie.acf?.website || '',
-        _workspace: assignedWorkspaces.length > 0 ? String(assignedWorkspaces[0]) : '',
       };
       listViewFields.forEach(field => {
         initialValues[field.name] = commissie.acf?.[field.name] ?? '';
@@ -370,16 +167,6 @@ function OrganizationListRow({ commissie, workspaces, listViewFields, isSelected
       handleSave();
     }
   };
-
-  const assignedWorkspaces = commissie.acf?._assigned_workspaces || [];
-  const workspaceNames = assignedWorkspaces
-    .map(wsId => {
-      const numId = typeof wsId === 'string' ? parseInt(wsId, 10) : wsId;
-      const found = workspaces.find(ws => ws.id === numId);
-      return found?.title;
-    })
-    .filter(Boolean)
-    .join(', ');
 
   return (
     <tr
@@ -451,24 +238,6 @@ function OrganizationListRow({ commissie, workspaces, listViewFields, isSelected
             {commissie.acf.website}
           </a>
         ) : '-'}
-      </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(commissie.id)}>
-        {isEditing ? (
-          <select
-            value={editedFields._workspace ?? ''}
-            onChange={(e) => handleFieldChange('_workspace', e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
-            disabled={isUpdating}
-          >
-            <option value="">No workspace</option>
-            {workspaces.map(ws => (
-              <option key={ws.id} value={String(ws.id)}>{ws.title}</option>
-            ))}
-          </select>
-        ) : (
-          <span className="cursor-pointer">{workspaceNames || '-'}</span>
-        )}
       </td>
       {listViewFields.map(field => (
         <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(commissie.id)}>
@@ -549,7 +318,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
   );
 }
 
-function OrganizationListView({ commissies, workspaces, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort, onSaveRow, isUpdating, editingRowId, onStartEdit, onCancelEdit }) {
+function OrganizationListView({ commissies, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort, onSaveRow, isUpdating, editingRowId, onStartEdit, onCancelEdit }) {
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -573,7 +342,6 @@ function OrganizationListView({ commissies, workspaces, listViewFields, selected
             <th scope="col" className="w-10 px-2 bg-gray-50 dark:bg-gray-800"></th>
             <SortableHeader field="name" label="Naam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="website" label="Website" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="workspace" label="Workspace" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
               <SortableHeader
                 key={field.key}
@@ -593,7 +361,6 @@ function OrganizationListView({ commissies, workspaces, listViewFields, selected
             <OrganizationListRow
               key={commissie.id}
               commissie={commissie}
-              workspaces={workspaces}
               listViewFields={listViewFields}
               isSelected={selectedIds.has(commissie.id)}
               onToggleSelection={onToggleSelection}
@@ -615,15 +382,13 @@ export default function CommissiesList() {
   const [search, setSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all', 'mine', 'shared'
-  const [selectedWorkspaceFilter, setSelectedWorkspaceFilter] = useState('');
   const [showCommissieModal, setShowCommissieModal] = useState(false);
   const [isCreatingCommissie, setIsCreatingCommissie] = useState(false);
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
-  const [showBulkVisibilityModal, setShowBulkVisibilityModal] = useState(false);
-  const [showBulkWorkspaceModal, setShowBulkWorkspaceModal] = useState(false);
+  const [showBulkLabelsModal, setShowBulkLabelsModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [editingRowId, setEditingRowId] = useState(null);
   const filterRef = useRef(null);
@@ -637,14 +402,14 @@ export default function CommissiesList() {
   // Mutation for updating row custom fields
   // ACF fields that require array type (repeaters, multi-select post_object, etc.)
   // These cannot be null - must be empty array [] when empty
-  const arrayTypeAcfFields = ['contact_info', 'investors', '_assigned_workspaces'];
+  const arrayTypeAcfFields = ['contact_info', 'investors'];
 
   const updateRowMutation = useMutation({
     mutationFn: async ({ commissieId, editedFields, existingAcf }) => {
       // Extract core fields (prefixed with _) from custom fields
-      const { _name, _website, _workspace, ...customFields } = editedFields;
+      const { _name, _website, ...customFields } = editedFields;
 
-      // Merge custom fields with existing ACF data to preserve required fields like _visibility
+      // Merge custom fields with existing ACF data
       const mergedAcf = {
         ...existingAcf,
         ...customFields
@@ -653,11 +418,6 @@ export default function CommissiesList() {
       // Update website in ACF if changed
       if (_website !== undefined) {
         mergedAcf.website = _website;
-      }
-
-      // Update workspace assignment
-      if (_workspace !== undefined) {
-        mergedAcf._assigned_workspaces = _workspace ? [parseInt(_workspace, 10)] : [];
       }
 
       // Sanitize null values for array-type fields (REST API requires [] not null)
@@ -787,11 +547,10 @@ export default function CommissiesList() {
     };
   }, []);
 
-  const hasActiveFilters = ownershipFilter !== 'all' || selectedWorkspaceFilter;
+  const hasActiveFilters = ownershipFilter !== 'all';
 
   const clearFilters = () => {
     setOwnershipFilter('all');
-    setSelectedWorkspaceFilter('');
   };
 
   // Selection helper functions
@@ -809,20 +568,6 @@ export default function CommissiesList() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  // Helper to get workspace names for a commissie (used in sorting)
-  const getCommissieWorkspaceNames = (commissie) => {
-    const assignedWorkspaces = commissie.acf?._assigned_workspaces || [];
-    return assignedWorkspaces
-      .map(wsId => {
-        const numId = typeof wsId === 'string' ? parseInt(wsId, 10) : wsId;
-        const found = workspaces.find(ws => ws.id === numId);
-        return found?.title;
-      })
-      .filter(Boolean)
-      .join(', ');
-  };
-
-
   // Filter commissies
   const filteredCommissies = useMemo(() => {
     if (!commissies) return [];
@@ -836,16 +581,8 @@ export default function CommissiesList() {
       filtered = filtered.filter(commissie => commissie.author !== currentUserId);
     }
 
-    // Apply workspace filter
-    if (selectedWorkspaceFilter) {
-      filtered = filtered.filter(commissie => {
-        const assignedWorkspaces = commissie.acf?._assigned_workspaces || [];
-        return assignedWorkspaces.includes(parseInt(selectedWorkspaceFilter));
-      });
-    }
-
     return filtered;
-  }, [commissies, ownershipFilter, selectedWorkspaceFilter, currentUserId]);
+  }, [commissies, ownershipFilter, currentUserId]);
 
   // Sort filtered commissies
   const sortedCommissies = useMemo(() => {
@@ -860,9 +597,6 @@ export default function CommissiesList() {
       } else if (sortField === 'website') {
         valueA = (a.acf?.website || '').toLowerCase();
         valueB = (b.acf?.website || '').toLowerCase();
-      } else if (sortField === 'workspace') {
-        valueA = getCommissieWorkspaceNames(a).toLowerCase();
-        valueB = getCommissieWorkspaceNames(b).toLowerCase();
       } else if (sortField.startsWith('custom_')) {
         // Handle custom field sorting
         const fieldName = sortField.replace('custom_', '');
@@ -899,7 +633,7 @@ export default function CommissiesList() {
       const comparison = valueA.localeCompare(valueB);
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [filteredCommissies, sortField, sortOrder, workspaces, listViewFields]);
+  }, [filteredCommissies, sortField, sortOrder, listViewFields]);
 
   // Computed selection state
   const isAllSelected = sortedCommissies.length > 0 &&
@@ -918,7 +652,7 @@ export default function CommissiesList() {
   // Clear selection when filters change
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [ownershipFilter, selectedWorkspaceFilter, commissies]);
+  }, [ownershipFilter, commissies]);
   
   return (
     <div className="space-y-4">
@@ -945,7 +679,6 @@ export default function CommissiesList() {
             >
               <option value="name">Naam</option>
               <option value="website">Website</option>
-              <option value="workspace">Workspace</option>
             </select>
             <div className="h-4 w-px bg-gray-300 dark:bg-gray-600"></div>
             <button
@@ -970,7 +703,7 @@ export default function CommissiesList() {
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
                 <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
-                  {(ownershipFilter !== 'all' ? 1 : 0) + (selectedWorkspaceFilter ? 1 : 0)}
+                  {ownershipFilter !== 'all' ? 1 : 0}
                 </span>
               )}
             </button>
@@ -1020,25 +753,6 @@ export default function CommissiesList() {
                     </div>
                   </div>
 
-                  {/* Workspace Filter */}
-                  {workspaces.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                        Workspace
-                      </h3>
-                      <select
-                        value={selectedWorkspaceFilter}
-                        onChange={(e) => setSelectedWorkspaceFilter(e.target.value)}
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
-                      >
-                        <option value="">Alle workspaces</option>
-                        {workspaces.map(ws => (
-                          <option key={ws.id} value={ws.id}>{ws.title}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
                   {/* Clear Filters */}
                   {hasActiveFilters && (
                     <button
@@ -1060,14 +774,6 @@ export default function CommissiesList() {
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-900/50 text-accent-800 dark:text-accent-200 rounded-full text-xs">
                   {ownershipFilter === 'mine' ? 'Mijn commissies' : 'Gedeeld met mij'}
                   <button onClick={() => setOwnershipFilter('all')} className="hover:text-accent-600 dark:hover:text-accent-300">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {selectedWorkspaceFilter && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-full text-xs">
-                  {workspaces.find(ws => ws.id === parseInt(selectedWorkspaceFilter))?.title || 'Workspace'}
-                  <button onClick={() => setSelectedWorkspaceFilter('')} className="hover:text-blue-600 dark:hover:text-blue-300">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -1153,22 +859,12 @@ export default function CommissiesList() {
                     <button
                       onClick={() => {
                         setShowBulkDropdown(false);
-                        setShowBulkVisibilityModal(true);
+                        setShowBulkLabelsModal(true);
                       }}
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50"
                     >
-                      <Lock className="w-4 h-4" />
-                      Zichtbaarheid wijzigen...
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowBulkDropdown(false);
-                        setShowBulkWorkspaceModal(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50"
-                    >
-                      <Users className="w-4 h-4" />
-                      Toewijzen aan workspace...
+                      <Tag className="w-4 h-4" />
+                      Labels beheren...
                     </button>
                   </div>
                 </div>
@@ -1188,7 +884,6 @@ export default function CommissiesList() {
       {!isLoading && !error && sortedCommissies?.length > 0 && (
         <OrganizationListView
           commissies={sortedCommissies}
-          workspaces={workspaces}
           listViewFields={listViewFields}
           selectedIds={selectedIds}
           onToggleSelection={toggleSelection}
@@ -1221,42 +916,24 @@ export default function CommissiesList() {
         isLoading={isCreatingCommissie}
       />
 
-      {/* Bulk Visibility Modal */}
-      <BulkVisibilityModal
-        isOpen={showBulkVisibilityModal}
-        onClose={() => setShowBulkVisibilityModal(false)}
+      {/* Bulk Labels Modal */}
+      <BulkLabelsModal
+        isOpen={showBulkLabelsModal}
+        onClose={() => setShowBulkLabelsModal(false)}
         selectedCount={selectedIds.size}
-        onSubmit={async (visibility) => {
+        labels={commissieLabels}
+        onSubmit={async (mode, labelIds) => {
           setBulkActionLoading(true);
           try {
             await bulkUpdateMutation.mutateAsync({
               ids: Array.from(selectedIds),
-              updates: { visibility }
+              updates: {
+                labels: labelIds,
+                label_mode: mode
+              }
             });
             clearSelection();
-            setShowBulkVisibilityModal(false);
-          } finally {
-            setBulkActionLoading(false);
-          }
-        }}
-        isLoading={bulkActionLoading}
-      />
-
-      {/* Bulk Workspace Modal */}
-      <BulkWorkspaceModal
-        isOpen={showBulkWorkspaceModal}
-        onClose={() => setShowBulkWorkspaceModal(false)}
-        selectedCount={selectedIds.size}
-        workspaces={workspaces}
-        onSubmit={async (workspaceIds) => {
-          setBulkActionLoading(true);
-          try {
-            await bulkUpdateMutation.mutateAsync({
-              ids: Array.from(selectedIds),
-              updates: { assigned_workspaces: workspaceIds }
-            });
-            clearSelection();
-            setShowBulkWorkspaceModal(false);
+            setShowBulkLabelsModal(false);
           } finally {
             setBulkActionLoading(false);
           }

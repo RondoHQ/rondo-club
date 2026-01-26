@@ -168,9 +168,6 @@ export default function TeamDetail() {
         acf: {
           website: data.website,
           investors: data.investors || [],
-          // Use visibility values from the form, fall back to existing values
-          _visibility: data.visibility || team.acf?._visibility || 'private',
-          _assigned_workspaces: data.assigned_workspaces || team.acf?._assigned_workspaces || [],
         },
       };
 
