@@ -746,8 +746,8 @@ class People extends Base {
 						// If team not in history, add new entry
 						if ( ! $found ) {
 							$work_history[] = [
-								'team'    => $org_id,
-								'title'      => '',
+								'team'       => $org_id,
+								'job_title'  => '',
 								'start_date' => '',
 								'end_date'   => '',
 								'is_current' => true,

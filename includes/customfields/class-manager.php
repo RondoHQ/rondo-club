@@ -31,6 +31,18 @@ class Manager {
 	const SUPPORTED_POST_TYPES = array( 'person', 'team' );
 
 	/**
+	 * Map Stadion field types to ACF field types.
+	 *
+	 * Stadion uses simplified type names for the frontend UI,
+	 * while ACF uses different internal type names.
+	 *
+	 * @var array
+	 */
+	private const TYPE_MAP = array(
+		'date' => 'date_picker',
+	);
+
+	/**
 	 * Properties that can be updated on existing fields.
 	 * Key, type, and parent are immutable once created.
 	 *
@@ -238,12 +250,15 @@ class Manager {
 			? sanitize_title( $field_config['name'] )
 			: sanitize_title( $field_config['label'] );
 
+		// Map Stadion type to ACF type.
+		$acf_type = $this->map_type_to_acf( $field_config['type'] );
+
 		// Build field array.
 		$field = array(
 			'key'          => $field_key,
 			'label'        => $field_config['label'],
 			'name'         => $field_name,
-			'type'         => $field_config['type'],
+			'type'         => $acf_type,
 			'parent'       => $group['ID'], // Must be post ID, not key.
 			'instructions' => $field_config['instructions'] ?? '',
 			'required'     => $field_config['required'] ?? 0,
@@ -431,6 +446,15 @@ class Manager {
 			$fields = array_values( $fields );
 		}
 
+		// Map ACF types back to Stadion types for API responses.
+		$fields = array_map(
+			function ( $field ) {
+				$field['type'] = $this->map_type_from_acf( $field['type'] );
+				return $field;
+			},
+			$fields
+		);
+
 		return $fields;
 	}
 
@@ -441,7 +465,12 @@ class Manager {
 	 * @return array|false Field array on success, false if not found.
 	 */
 	public function get_field( string $field_key ) {
-		return acf_get_field( $field_key );
+		$field = acf_get_field( $field_key );
+		if ( $field ) {
+			// Map ACF type back to Stadion type for API response.
+			$field['type'] = $this->map_type_from_acf( $field['type'] );
+		}
+		return $field;
 	}
 
 	/**
@@ -485,5 +514,26 @@ class Manager {
 	 */
 	private function get_group_key( string $post_type ): string {
 		return 'group_custom_fields_' . $post_type;
+	}
+
+	/**
+	 * Map a Stadion field type to the corresponding ACF field type.
+	 *
+	 * @param string $type The Stadion field type.
+	 * @return string The ACF field type.
+	 */
+	private function map_type_to_acf( string $type ): string {
+		return self::TYPE_MAP[ $type ] ?? $type;
+	}
+
+	/**
+	 * Map an ACF field type back to Stadion field type for API responses.
+	 *
+	 * @param string $acf_type The ACF field type.
+	 * @return string The Stadion field type.
+	 */
+	private function map_type_from_acf( string $acf_type ): string {
+		$reverse_map = array_flip( self::TYPE_MAP );
+		return $reverse_map[ $acf_type ] ?? $acf_type;
 	}
 }

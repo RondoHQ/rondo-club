@@ -247,7 +247,7 @@
                 {
                     "key": "field_work_company",
                     "label": "Team",
-                    "name": "company",
+                    "name": "team",
                     "type": "post_object",
                     "post_type": ["team"],
                     "return_format": "id",
