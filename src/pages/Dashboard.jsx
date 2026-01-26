@@ -621,7 +621,7 @@ export default function Dashboard() {
             href="/teams"
           />
           <StatCard
-            title="Evenementen"
+            title="Herinneringen"
             value={0}
             icon={Calendar}
             href="/dates"
@@ -633,7 +633,7 @@ export default function Dashboard() {
             href="/todos"
           />
           <StatCard
-            title="Openstaand"
+            title="In afwachting"
             value={0}
             icon={Clock}
             href="/todos?status=awaiting"
@@ -656,9 +656,9 @@ export default function Dashboard() {
       <div key="stats" className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Totaal leden" value={stats?.total_people || 0} icon={Users} href="/people" />
         <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
-        <StatCard title="Evenementen" value={stats?.total_dates || 0} icon={Calendar} href="/dates" />
+        <StatCard title="Herinneringen" value={stats?.total_dates || 0} icon={Calendar} href="/dates" />
         <StatCard title="Open taken" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
-        <StatCard title="Openstaand" value={stats?.awaiting_todos_count || 0} icon={Clock} href="/todos?status=awaiting" />
+        <StatCard title="In afwachting" value={stats?.awaiting_todos_count || 0} icon={Clock} href="/todos?status=awaiting" />
       </div>
     ),
     'reminders': () => (
