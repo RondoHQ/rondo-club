@@ -875,7 +875,6 @@ class Api extends Base {
 		'meetings',
 		'recent-contacted',
 		'recent-edited',
-		'favorites',
 	];
 
 	/**
@@ -889,7 +888,6 @@ class Api extends Base {
 		'meetings',
 		'recent-contacted',
 		'recent-edited',
-		'favorites',
 	];
 
 	/**
@@ -1360,21 +1358,6 @@ class Api extends Base {
 		$reminders_handler  = new \STADION_Reminders();
 		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
 
-		// Favorites
-		$favorites = get_posts(
-			[
-				'post_type'      => 'person',
-				'posts_per_page' => 10,
-				'post_status'    => 'publish',
-				'meta_query'     => [
-					[
-						'key'   => 'is_favorite',
-						'value' => '1',
-					],
-				],
-			]
-		);
-
 		// Get open todos count
 		$open_todos_count = $this->count_open_todos();
 
@@ -1395,7 +1378,6 @@ class Api extends Base {
 				],
 				'recent_people'      => array_map( [ $this, 'format_person_summary' ], $recent_people ),
 				'upcoming_reminders' => array_slice( $upcoming_reminders, 0, 5 ),
-				'favorites'          => array_map( [ $this, 'format_person_summary' ], $favorites ),
 				'recently_contacted' => $recently_contacted,
 			]
 		);

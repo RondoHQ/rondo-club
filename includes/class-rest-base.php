@@ -206,13 +206,12 @@ abstract class Base {
 	 */
 	protected function format_person_summary( $post ) {
 		return [
-			'id'          => $post->ID,
-			'name'        => $this->sanitize_text( $post->post_title ),
-			'first_name'  => $this->sanitize_text( get_field( 'first_name', $post->ID ) ),
-			'last_name'   => $this->sanitize_text( get_field( 'last_name', $post->ID ) ),
-			'thumbnail'   => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
-			'is_favorite' => (bool) get_field( 'is_favorite', $post->ID ),
-			'labels'      => wp_get_post_terms( $post->ID, 'person_label', [ 'fields' => 'names' ] ),
+			'id'         => $post->ID,
+			'name'       => $this->sanitize_text( $post->post_title ),
+			'first_name' => $this->sanitize_text( get_field( 'first_name', $post->ID ) ),
+			'last_name'  => $this->sanitize_text( get_field( 'last_name', $post->ID ) ),
+			'thumbnail'  => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
+			'labels'     => wp_get_post_terms( $post->ID, 'person_label', [ 'fields' => 'names' ] ),
 		];
 	}
 

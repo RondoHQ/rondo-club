@@ -470,10 +470,6 @@ class Monica {
 			}
 		}
 
-		if ( ! empty( $contact['is_starred'] ) && $contact['is_starred'] != '0' ) {
-			update_field( 'is_favorite', true, $post_id );
-		}
-
 		// Handle company/work history
 		if ( ! empty( $contact['team'] ) || ! empty( $contact['job'] ) ) {
 			$team_name = $contact['team'] ?? '';
