@@ -13,7 +13,7 @@ Milestone: v7.0 Dutch Localization — SHIPPED
 Phase: N/A (milestone complete, ready for next milestone)
 Plan: N/A
 Status: Ready for /gsd:new-milestone
-Last activity: 2026-01-26 — Completed quick task 002: Remove favorites functionality
+Last activity: 2026-01-26 — Completed quick task 003: API documentation update
 
 Progress: Milestone v7.0 complete. Run /gsd:new-milestone to start next milestone.
 
@@ -96,11 +96,12 @@ None.
 |---|-------------|------|-----------|
 | 001 | API documentation for leden CRUD operations | 2026-01-25 | [001-api-docs-leden-crud](./quick/001-api-docs-leden-crud/) |
 | 002 | Remove favorites section and functionality | 2026-01-26 | [002-remove-favorites](./quick/002-remove-favorites/) |
+| 003 | API documentation update (is_favorite removal, Important Dates, Custom Fields) | 2026-01-26 | [003-api-docs-update](./quick/003-api-docs-update/) |
 
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Quick task 002 completed
+Stopped at: Quick task 003 completed
 Resume file: None
 
 Note: v7.0 complete. Run /gsd:new-milestone to start next milestone.
