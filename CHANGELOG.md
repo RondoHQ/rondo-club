@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.1.0] - 2026-01-26
+
+### Removed
+- **Favorites feature:** Removed the ability to mark people as favorites
+  - Removed is_favorite ACF field from person records
+  - Removed favorites filter from People list
+  - Removed favorites dashboard widget
+  - Removed favorites star indicator from person cards and detail views
+  - Removed favorites from dashboard customization options
+  - Removed is_starred import from Monica importer
+
 ## [7.0.0] - 2026-01-25
 
 ### Changed
