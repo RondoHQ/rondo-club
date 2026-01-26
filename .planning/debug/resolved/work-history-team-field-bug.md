@@ -1,8 +1,8 @@
 ---
-status: verifying
+status: resolved
 trigger: "work-history-team-field-bug - The Stadion WordPress plugin has a bug - it accepts the team field in work_history entries but stores/returns it as company: null"
 created: 2026-01-26T10:00:00Z
-updated: 2026-01-26T10:15:00Z
+updated: 2026-01-26T10:20:00Z
 ---
 
 ## Current Focus

@@ -258,3 +258,17 @@ The script reads server credentials from `.env` (see `.env.example` for required
 3. Clears WordPress and SiteGround caches
 
 **Production URL:** See `DEPLOY_PRODUCTION_URL` in `.env`
+
+### SSH Access
+
+When connecting via SSH to the production server, **always include the port**:
+
+```bash
+source .env && ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "command here"
+```
+
+For WP-CLI commands on production:
+
+```bash
+source .env && ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "cd ~/www/stadion.svawc.nl/public_html/wp-content/themes/stadion && wp <command>"
+```

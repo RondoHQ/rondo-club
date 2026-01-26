@@ -2597,6 +2597,53 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::log( sprintf( '  - Updated %d important date reference(s).', $updated ) );
 			}
 		}
+
+		/**
+		 * Clear all work history entries from all people
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--dry-run]
+		 * : Preview changes without making them.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp prm people clear_work_history
+		 *     wp prm people clear_work_history --dry-run
+		 *
+		 * @when after_wp_load
+		 */
+		public function clear_work_history( $args, $assoc_args ) {
+			global $wpdb;
+
+			$dry_run = isset( $assoc_args['dry-run'] );
+
+			if ( $dry_run ) {
+				WP_CLI::log( 'Dry run mode - no changes will be made.' );
+			}
+
+			// Count work_history meta entries
+			$count = $wpdb->get_var(
+				"SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key LIKE 'work_history%'"
+			);
+
+			WP_CLI::log( sprintf( 'Found %d work_history meta entries.', $count ) );
+
+			if ( $count === 0 ) {
+				WP_CLI::success( 'No work history entries to delete.' );
+				return;
+			}
+
+			if ( ! $dry_run ) {
+				$deleted = $wpdb->query(
+					"DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE 'work_history%'"
+				);
+
+				WP_CLI::success( sprintf( 'Deleted %d work_history meta entries.', $deleted ) );
+			} else {
+				WP_CLI::log( sprintf( 'Would delete %d work_history meta entries.', $count ) );
+			}
+		}
 	}
 
 	/**
