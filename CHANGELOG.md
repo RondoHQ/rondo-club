@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed favorites star indicator from person cards and detail views
   - Removed favorites from dashboard customization options
   - Removed is_starred import from Monica importer
+- **Workspaces feature:** Completely removed multi-user collaboration functionality
+  - Removed workspace CPT and workspace_invite CPT
+  - Removed workspace_access taxonomy
+  - Removed visibility settings (private/workspace/shared) from all entities
+  - Removed workspace navigation, routes, pages, and components
+  - Removed workspace member management and invites
+  - Removed VisibilitySelector from edit modals
+  - Removed workspace-related ACF field groups
+  - Simplified access control to author-only model
+  - Removed bulk visibility/workspace updates from REST APIs
 
 ## [7.0.0] - 2026-01-25
 
