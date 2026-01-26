@@ -15,6 +15,9 @@ class AutoTitle {
 		add_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
 		add_action( 'acf/save_post', [ $this, 'auto_generate_date_title' ], 20 );
 
+		// Generate title for REST API person creation/update (priority 20 = same as acf/save_post)
+		add_action( 'rest_after_insert_person', [ $this, 'auto_generate_person_title_rest' ], 20, 2 );
+
 		// Trigger calendar re-matching after person save (priority 25 = after title generation)
 		// Hook both acf/save_post (admin) and rest_after_insert_person (REST API)
 		add_action( 'acf/save_post', [ $this, 'trigger_calendar_rematch' ], 25 );
@@ -30,11 +33,142 @@ class AutoTitle {
 		add_filter( 'acf/update_value/key=field_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 		add_filter( 'acf/update_value/key=field_company_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 
-		// Set temporary title for REST API person creation (priority 5 = before validation)
-		add_filter( 'rest_pre_insert_person', [ $this, 'set_temporary_title_rest' ], 5, 2 );
+		// Inject title into REST API requests for person creation (runs very early)
+		add_filter( 'rest_pre_dispatch', [ $this, 'inject_title_for_person_creation' ], 10, 3 );
 
-		// Validate duplicate email addresses before save (REST API, priority 10 = after title set)
-		add_filter( 'rest_pre_insert_person', [ $this, 'validate_unique_emails_rest' ], 10, 2 );
+		// Debug logging for REST API person requests
+		add_filter( 'rest_pre_dispatch', [ $this, 'debug_log_person_request' ], 1, 3 );
+		add_filter( 'rest_request_after_callbacks', [ $this, 'debug_log_person_response' ], 999, 3 );
+
+		// Make title not required in REST API schema (backup)
+		add_filter( 'rest_person_item_schema', [ $this, 'make_title_optional_in_schema' ] );
+
+		// Set temporary title for REST API person creation
+		add_filter( 'rest_pre_insert_person', [ $this, 'set_temporary_title_rest' ], 5, 2 );
+	}
+
+	/**
+	 * Debug log incoming REST API requests for person endpoint
+	 *
+	 * @param mixed           $result  Response to replace the requested version with.
+	 * @param WP_REST_Server  $server  Server instance.
+	 * @param WP_REST_Request $request Request used to generate the response.
+	 * @return mixed Unchanged result.
+	 */
+	public function debug_log_person_request( $result, $server, $request ) {
+		$route = $request->get_route();
+		if ( strpos( $route, '/wp/v2/people' ) !== 0 ) {
+			return $result;
+		}
+
+		$log_data = [
+			'time'        => gmdate( 'Y-m-d H:i:s' ),
+			'route'       => $route,
+			'method'      => $request->get_method(),
+			'params'      => $request->get_params(),
+			'headers'     => $request->get_headers(),
+			'user_id'     => get_current_user_id(),
+			'auth_header' => isset( $_SERVER['HTTP_AUTHORIZATION'] ) ? 'present' : 'missing',
+		];
+
+		error_log( 'STADION REST DEBUG [REQUEST]: ' . wp_json_encode( $log_data ) );
+
+		return $result;
+	}
+
+	/**
+	 * Debug log REST API responses for person endpoint
+	 *
+	 * @param WP_REST_Response|WP_Error $response Result to send to the client.
+	 * @param array                     $handler  Route handler used for the request.
+	 * @param WP_REST_Request           $request  Request used to generate the response.
+	 * @return WP_REST_Response|WP_Error Unchanged response.
+	 */
+	public function debug_log_person_response( $response, $handler, $request ) {
+		$route = $request->get_route();
+		if ( strpos( $route, '/wp/v2/people' ) !== 0 ) {
+			return $response;
+		}
+
+		if ( is_wp_error( $response ) ) {
+			$log_data = [
+				'time'    => gmdate( 'Y-m-d H:i:s' ),
+				'route'   => $route,
+				'method'  => $request->get_method(),
+				'error'   => true,
+				'code'    => $response->get_error_code(),
+				'message' => $response->get_error_message(),
+				'data'    => $response->get_error_data(),
+			];
+		} else {
+			$log_data = [
+				'time'   => gmdate( 'Y-m-d H:i:s' ),
+				'route'  => $route,
+				'method' => $request->get_method(),
+				'status' => $response->get_status(),
+			];
+		}
+
+		error_log( 'STADION REST DEBUG [RESPONSE]: ' . wp_json_encode( $log_data ) );
+
+		return $response;
+	}
+
+	/**
+	 * Inject required fields into REST API requests for person creation
+	 *
+	 * This runs very early in the REST API dispatch, before validation.
+	 * It adds required fields (title, _visibility) to POST requests for creating people.
+	 *
+	 * @param mixed           $result  Response to replace the requested version with. Can be anything
+	 *                                 a normal endpoint can return, or null to not hijack the request.
+	 * @param WP_REST_Server  $server  Server instance.
+	 * @param WP_REST_Request $request Request used to generate the response.
+	 * @return mixed Unchanged result.
+	 */
+	public function inject_title_for_person_creation( $result, $server, $request ) {
+		// Only intercept POST requests to /wp/v2/people (create new person)
+		$route = $request->get_route();
+		if ( $request->get_method() !== 'POST' || $route !== '/wp/v2/people' ) {
+			return $result;
+		}
+
+		// Inject a temporary title if not set - will be replaced by auto_generate_person_title()
+		$title = $request->get_param( 'title' );
+		if ( empty( $title ) ) {
+			$request->set_param( 'title', __( 'New Person', 'stadion' ) );
+		}
+
+		// Inject default _visibility if not set in acf params
+		$acf = $request->get_param( 'acf' );
+		if ( is_array( $acf ) && ! isset( $acf['_visibility'] ) ) {
+			$acf['_visibility'] = \STADION_Visibility::VISIBILITY_PRIVATE;
+			$request->set_param( 'acf', $acf );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Make title field optional in REST API schema for person post type
+	 *
+	 * By default, WordPress marks 'title' as required if the post type supports it.
+	 * Since we auto-generate titles from ACF fields, we need to allow creation without title.
+	 *
+	 * @param array $schema The REST API schema for person post type.
+	 * @return array Modified schema with title not required.
+	 */
+	public function make_title_optional_in_schema( $schema ) {
+		if ( isset( $schema['properties']['title']['required'] ) ) {
+			$schema['properties']['title']['required'] = false;
+		}
+
+		// Also remove 'title' from the top-level 'required' array if present
+		if ( isset( $schema['required'] ) && is_array( $schema['required'] ) ) {
+			$schema['required'] = array_values( array_diff( $schema['required'], [ 'title' ] ) );
+		}
+
+		return $schema;
 	}
 
 	/**
@@ -93,6 +227,36 @@ class AutoTitle {
 
 		// Re-hook
 		add_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
+	}
+
+	/**
+	 * Auto-generate Person post title from REST API request
+	 *
+	 * Called via rest_after_insert_person hook when a person is created/updated via REST API.
+	 * ACF fields are already saved at this point, so we can read them and generate the title.
+	 *
+	 * @param WP_Post         $post    Inserted or updated post object.
+	 * @param WP_REST_Request $request Request object.
+	 */
+	public function auto_generate_person_title_rest( $post, $request ) {
+		$post_id = $post->ID;
+
+		$first_name = get_field( 'first_name', $post_id ) ?: '';
+		$last_name  = get_field( 'last_name', $post_id ) ?: '';
+
+		$full_name = trim( $first_name . ' ' . $last_name );
+
+		if ( empty( $full_name ) ) {
+			$full_name = __( 'Unnamed Person', 'stadion' );
+		}
+
+		wp_update_post(
+			[
+				'ID'         => $post_id,
+				'post_title' => $full_name,
+				'post_name'  => sanitize_title( $full_name . '-' . $post_id ),
+			]
+		);
 	}
 
 	/**
@@ -330,138 +494,4 @@ class AutoTitle {
 		\Stadion\Calendar\Matcher::on_person_saved( $post_id );
 	}
 
-	/**
-	 * Validate that email addresses are unique across people (REST API)
-	 *
-	 * Prevents saving a person if any of their email addresses already exist
-	 * on another person record belonging to the same user.
-	 *
-	 * @param stdClass        $prepared_post The prepared post data.
-	 * @param WP_REST_Request $request       The request object.
-	 * @return stdClass|WP_Error The prepared post or error if duplicate email found.
-	 */
-	public function validate_unique_emails_rest( $prepared_post, $request ) {
-		// Get the acf field from the request
-		$acf_fields = $request->get_param( 'acf' );
-
-		if ( empty( $acf_fields ) || ! isset( $acf_fields['contact_info'] ) ) {
-			return $prepared_post;
-		}
-
-		$contact_info = $acf_fields['contact_info'];
-		if ( ! is_array( $contact_info ) ) {
-			return $prepared_post;
-		}
-
-		// Extract email addresses from contact_info
-		$emails = [];
-		foreach ( $contact_info as $contact ) {
-			if (
-				isset( $contact['contact_type'] ) &&
-				$contact['contact_type'] === 'email' &&
-				! empty( $contact['contact_value'] )
-			) {
-				$emails[] = strtolower( trim( $contact['contact_value'] ) );
-			}
-		}
-
-		if ( empty( $emails ) ) {
-			return $prepared_post;
-		}
-
-		// Get current post ID (for updates) or 0 (for creates)
-		// For PUT/PATCH requests, the ID is in the URL params, not the request body
-		$url_params      = $request->get_url_params();
-		$current_post_id = isset( $url_params['id'] ) ? (int) $url_params['id'] : 0;
-		$user_id         = get_current_user_id();
-
-		// Check for duplicates
-		$duplicate = $this->find_duplicate_email( $emails, $current_post_id, $user_id );
-
-		if ( $duplicate ) {
-			return new \WP_Error(
-				'duplicate_email',
-				sprintf(
-					/* translators: 1: email address, 2: person name */
-					__( 'The email address "%1$s" is already used by "%2$s". Each email address can only belong to one person.', 'stadion' ),
-					$duplicate['email'],
-					$duplicate['person_name']
-				),
-				[ 'status' => 400 ]
-			);
-		}
-
-		return $prepared_post;
-	}
-
-	/**
-	 * Find if any email in the list already belongs to another person
-	 *
-	 * Uses direct SQL query for performance - avoids loading all people and their ACF fields.
-	 *
-	 * @param array $emails          Array of email addresses to check.
-	 * @param int   $exclude_post_id Post ID to exclude (current person being edited).
-	 * @param int   $user_id         User ID to scope the check to.
-	 * @return array|null Array with 'email' and 'person_name' if duplicate found, null otherwise.
-	 */
-	private function find_duplicate_email( array $emails, int $exclude_post_id, int $user_id ): ?array {
-		if ( empty( $emails ) ) {
-			return null;
-		}
-
-		global $wpdb;
-
-		// Build placeholders for the IN clause
-		$placeholders = implode( ',', array_fill( 0, count( $emails ), '%s' ) );
-
-		// Find people that have any of these email values in their contact_info meta
-		// ACF stores repeater values as contact_info_0_contact_value, contact_info_1_contact_value, etc.
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is safe
-		$sql = $wpdb->prepare(
-			"SELECT DISTINCT p.ID, p.post_title, pm.meta_value as email
-			 FROM {$wpdb->posts} p
-			 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-			 WHERE p.post_type = 'person'
-			 AND p.post_status = 'publish'
-			 AND p.post_author = %d
-			 AND p.ID != %d
-			 AND pm.meta_key LIKE 'contact_info\_%%\_contact_value'
-			 AND pm.meta_value IN ($placeholders)
-			 LIMIT 10",
-			array_merge( [ $user_id, $exclude_post_id ], $emails )
-		);
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Already prepared above
-		$potential_matches = $wpdb->get_results( $sql );
-
-		if ( empty( $potential_matches ) ) {
-			return null;
-		}
-
-		// Verify matches are actually email type (not some other contact type with same value)
-		foreach ( $potential_matches as $match ) {
-			$contact_info = get_field( 'contact_info', $match->ID );
-
-			if ( ! is_array( $contact_info ) ) {
-				continue;
-			}
-
-			foreach ( $contact_info as $contact ) {
-				if (
-					isset( $contact['contact_type'] ) &&
-					$contact['contact_type'] === 'email' &&
-					! empty( $contact['contact_value'] ) &&
-					in_array( strtolower( trim( $contact['contact_value'] ) ), $emails, true )
-				) {
-					return [
-						'email'       => strtolower( trim( $contact['contact_value'] ) ),
-						'person_id'   => $match->ID,
-						'person_name' => $match->post_title,
-					];
-				}
-			}
-		}
-
-		return null;
-	}
 }
