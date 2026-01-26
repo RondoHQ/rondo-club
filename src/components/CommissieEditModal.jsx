@@ -4,7 +4,6 @@ import { X, ChevronDown, Building2, Search, User, TrendingUp } from 'lucide-reac
 import { useQuery } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { getCommissieName, decodeHtml } from '@/utils/formatters';
-import VisibilitySelector from '@/components/VisibilitySelector';
 
 export default function CommissieEditModal({
   isOpen,
@@ -25,10 +24,6 @@ export default function CommissieEditModal({
   const [investorsSearchQuery, setInvestorsSearchQuery] = useState('');
   const [debouncedInvestorsQuery, setDebouncedInvestorsQuery] = useState('');
   const [selectedInvestors, setSelectedInvestors] = useState([]);
-
-  // Visibility state
-  const [visibility, setVisibility] = useState('private');
-  const [selectedWorkspaces, setSelectedWorkspaces] = useState([]);
 
   const parentDropdownRef = useRef(null);
   const investorsDropdownRef = useRef(null);
@@ -186,9 +181,6 @@ export default function CommissieEditModal({
         // Set parent commissie if exists
         setSelectedParentId(commissie.parent ? String(commissie.parent) : '');
         // Investors will be loaded via separate effect
-        // Load existing visibility settings
-        setVisibility(commissie.acf?._visibility || 'private');
-        setSelectedWorkspaces(commissie.acf?._assigned_workspaces || []);
       } else {
         // Creating - reset to defaults
         reset({
@@ -197,9 +189,6 @@ export default function CommissieEditModal({
         });
         setSelectedParentId('');
         setSelectedInvestors([]);
-        // Reset visibility to private
-        setVisibility('private');
-        setSelectedWorkspaces([]);
       }
     }
   }, [isOpen, commissie, reset]);
@@ -292,8 +281,6 @@ export default function CommissieEditModal({
       ...data,
       parentId: selectedParentId ? parseInt(selectedParentId) : 0,
       investors: selectedInvestors.map(inv => inv.id),
-      visibility,
-      assigned_workspaces: selectedWorkspaces,
     });
   };
 
@@ -579,17 +566,6 @@ export default function CommissieEditModal({
                 Selecteer leden of commissies die deze commissie sponsoren
               </p>
             </div>
-
-            {/* Visibility */}
-            <VisibilitySelector
-              value={visibility}
-              workspaces={selectedWorkspaces}
-              onChange={({ visibility: v, workspaces: w }) => {
-                setVisibility(v);
-                setSelectedWorkspaces(w);
-              }}
-              disabled={isLoading}
-            />
           </div>
 
           <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
