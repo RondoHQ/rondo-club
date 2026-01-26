@@ -18,6 +18,9 @@ class AutoTitle {
 		// Generate title for REST API person creation/update (priority 20 = same as acf/save_post)
 		add_action( 'rest_after_insert_person', [ $this, 'auto_generate_person_title_rest' ], 20, 2 );
 
+		// Generate title for REST API important_date creation/update
+		add_action( 'rest_after_insert_important_date', [ $this, 'auto_generate_date_title_rest' ], 20, 2 );
+
 		// Trigger calendar re-matching after person save (priority 25 = after title generation)
 		// Hook both acf/save_post (admin) and rest_after_insert_person (REST API)
 		add_action( 'acf/save_post', [ $this, 'trigger_calendar_rematch' ], 25 );
@@ -115,10 +118,10 @@ class AutoTitle {
 	}
 
 	/**
-	 * Inject required fields into REST API requests for person creation
+	 * Inject required fields into REST API requests for person creation/update
 	 *
 	 * This runs very early in the REST API dispatch, before validation.
-	 * It adds required fields (title, _visibility) to POST requests for creating people.
+	 * It adds required fields (title, _visibility) to POST/PUT requests for people.
 	 *
 	 * @param mixed           $result  Response to replace the requested version with. Can be anything
 	 *                                 a normal endpoint can return, or null to not hijack the request.
@@ -127,22 +130,36 @@ class AutoTitle {
 	 * @return mixed Unchanged result.
 	 */
 	public function inject_title_for_person_creation( $result, $server, $request ) {
-		// Only intercept POST requests to /wp/v2/people (create new person)
-		$route = $request->get_route();
-		if ( $request->get_method() !== 'POST' || $route !== '/wp/v2/people' ) {
+		$route  = $request->get_route();
+		$method = $request->get_method();
+
+		// Check if this is a people endpoint (POST to /wp/v2/people or PUT to /wp/v2/people/{id})
+		$is_create = $method === 'POST' && $route === '/wp/v2/people';
+		$is_update = $method === 'PUT' && preg_match( '#^/wp/v2/people/\d+$#', $route );
+
+		if ( ! $is_create && ! $is_update ) {
 			return $result;
 		}
 
-		// Inject a temporary title if not set - will be replaced by auto_generate_person_title()
-		$title = $request->get_param( 'title' );
-		if ( empty( $title ) ) {
-			$request->set_param( 'title', __( 'New Person', 'stadion' ) );
+		// For creation: inject a temporary title if not set - will be replaced by auto_generate_person_title()
+		if ( $is_create ) {
+			$title = $request->get_param( 'title' );
+			if ( empty( $title ) ) {
+				$request->set_param( 'title', __( 'New Person', 'stadion' ) );
+			}
 		}
 
 		// Inject default _visibility if not set in acf params
 		$acf = $request->get_param( 'acf' );
 		if ( is_array( $acf ) && ! isset( $acf['_visibility'] ) ) {
-			$acf['_visibility'] = \STADION_Visibility::VISIBILITY_PRIVATE;
+			// For updates, get the existing visibility from the post
+			if ( $is_update && preg_match( '#/wp/v2/people/(\d+)$#', $route, $matches ) ) {
+				$post_id            = (int) $matches[1];
+				$existing_visibility = get_field( '_visibility', $post_id );
+				$acf['_visibility'] = $existing_visibility ?: \STADION_Visibility::VISIBILITY_PRIVATE;
+			} else {
+				$acf['_visibility'] = \STADION_Visibility::VISIBILITY_PRIVATE;
+			}
 			$request->set_param( 'acf', $acf );
 		}
 
@@ -307,6 +324,36 @@ class AutoTitle {
 
 		// Re-hook
 		add_action( 'acf/save_post', [ $this, 'auto_generate_date_title' ], 20 );
+	}
+
+	/**
+	 * Auto-generate Important Date post title from REST API request
+	 *
+	 * Called via rest_after_insert_important_date hook when an important date is created/updated via REST API.
+	 * ACF fields are already saved at this point, so we can read them and generate the title.
+	 *
+	 * @param WP_Post         $post    Inserted or updated post object.
+	 * @param WP_REST_Request $request Request object.
+	 */
+	public function auto_generate_date_title_rest( $post, $request ) {
+		$post_id = $post->ID;
+
+		// Check for custom label first
+		$custom_label = get_field( 'custom_label', $post_id );
+
+		if ( ! empty( $custom_label ) ) {
+			$title = $custom_label;
+		} else {
+			$title = $this->generate_date_title_from_fields( $post_id );
+		}
+
+		wp_update_post(
+			[
+				'ID'         => $post_id,
+				'post_title' => $title,
+				'post_name'  => sanitize_title( $title . '-' . $post_id ),
+			]
+		);
 	}
 
 	/**

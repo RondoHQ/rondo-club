@@ -259,6 +259,28 @@ class Api extends Base {
 			]
 		);
 
+		// Find person by email (for sync deduplication)
+		// Uses check_authenticated instead of check_user_approved for sync scripts
+		register_rest_route(
+			'stadion/v1',
+			'/people/find-by-email',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'find_person_by_email' ],
+				'permission_callback' => function() {
+					return is_user_logged_in();
+				},
+				'args'                => [
+					'email' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_email( $param );
+						},
+					],
+				],
+			]
+		);
+
 		// Dashboard summary
 		register_rest_route(
 			'stadion/v1',
@@ -1080,6 +1102,48 @@ class Api extends Base {
 				'message'   => __( 'Person linked successfully.', 'stadion' ),
 			]
 		);
+	}
+
+	/**
+	 * Find a person by email address (for sync deduplication)
+	 *
+	 * Searches all people for a matching email in contact_info.
+	 * Returns the person ID if found, null otherwise.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response Response with person ID or null.
+	 */
+	public function find_person_by_email( $request ) {
+		$email = strtolower( trim( sanitize_email( $request->get_param( 'email' ) ) ) );
+
+		if ( empty( $email ) ) {
+			return new \WP_REST_Response( [ 'id' => null ], 200 );
+		}
+
+		// Search all people (bypass access control for sync operations)
+		$people = get_posts(
+			[
+				'post_type'        => 'person',
+				'posts_per_page'   => -1,
+				'post_status'      => 'publish',
+				'suppress_filters' => true,
+			]
+		);
+
+		foreach ( $people as $person ) {
+			$contact_info = get_field( 'contact_info', $person->ID ) ?: [];
+
+			foreach ( $contact_info as $contact ) {
+				if ( 'email' === $contact['contact_type'] ) {
+					$person_email = strtolower( trim( $contact['contact_value'] ?? '' ) );
+					if ( $person_email === $email ) {
+						return new \WP_REST_Response( [ 'id' => $person->ID ], 200 );
+					}
+				}
+			}
+		}
+
+		return new \WP_REST_Response( [ 'id' => null ], 200 );
 	}
 
 	/**

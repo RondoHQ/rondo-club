@@ -2354,8 +2354,268 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 
 	/**
+	 * People WP-CLI Commands
+	 */
+	class STADION_People_CLI_Command {
+
+		/**
+		 * Find and merge duplicate people (same email, different records)
+		 *
+		 * This is useful when parents were created as separate records but the person
+		 * already existed as a member. The command will:
+		 * - Find people with "Ouder/verzorger" in their name
+		 * - Check if their email matches another person
+		 * - Merge relationships from the duplicate to the original
+		 * - Delete the duplicate
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--dry-run]
+		 * : Preview changes without making them.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp prm people merge_duplicates
+		 *     wp prm people merge_duplicates --dry-run
+		 *
+		 * @when after_wp_load
+		 */
+		public function merge_duplicates( $args, $assoc_args ) {
+			$dry_run = isset( $assoc_args['dry-run'] );
+
+			if ( $dry_run ) {
+				WP_CLI::log( 'Dry run mode - no changes will be saved.' );
+			}
+
+			// Get all people (suppress filters to bypass access control)
+			$people = get_posts(
+				[
+					'post_type'        => 'person',
+					'posts_per_page'   => -1,
+					'post_status'      => 'publish',
+					'suppress_filters' => true,
+				]
+			);
+
+			// Build email -> person ID map (excluding Ouder/verzorger records)
+			$email_to_person = [];
+			$parent_records  = [];
+
+			foreach ( $people as $person ) {
+				$contact_info = get_field( 'contact_info', $person->ID ) ?: [];
+
+				// Collect emails for this person
+				$emails = [];
+				foreach ( $contact_info as $contact ) {
+					if ( 'email' === $contact['contact_type'] && ! empty( $contact['contact_value'] ) ) {
+						$emails[] = strtolower( trim( $contact['contact_value'] ) );
+					}
+				}
+
+				// Check post_title for "Ouder/verzorger" pattern (auto-generated parent records)
+				if ( strpos( $person->post_title, 'Ouder/verzorger' ) !== false ) {
+					// This is a parent record - check for duplicates later
+					$parent_records[] = [
+						'id'     => $person->ID,
+						'title'  => $person->post_title,
+						'emails' => $emails,
+					];
+				} else {
+					// This is a regular person - add to email map
+					foreach ( $emails as $email ) {
+						if ( ! isset( $email_to_person[ $email ] ) ) {
+							$email_to_person[ $email ] = [];
+						}
+						$email_to_person[ $email ][] = $person->ID;
+					}
+				}
+			}
+
+			WP_CLI::log( sprintf( 'Found %d parent records to check.', count( $parent_records ) ) );
+
+			$merged  = 0;
+			$skipped = 0;
+
+			foreach ( $parent_records as $parent ) {
+				$duplicate_of = null;
+
+				// Check if any of the parent's emails match an existing person
+				foreach ( $parent['emails'] as $email ) {
+					if ( isset( $email_to_person[ $email ] ) && ! empty( $email_to_person[ $email ] ) ) {
+						$duplicate_of = $email_to_person[ $email ][0];
+						break;
+					}
+				}
+
+				if ( ! $duplicate_of ) {
+					$skipped++;
+					continue;
+				}
+
+				$original_title = get_the_title( $duplicate_of );
+				WP_CLI::log( sprintf(
+					'[MERGE] "%s" (ID: %d) -> "%s" (ID: %d)',
+					$parent['title'],
+					$parent['id'],
+					$original_title,
+					$duplicate_of
+				) );
+
+				if ( ! $dry_run ) {
+					$this->merge_person( $parent['id'], $duplicate_of );
+				}
+
+				$merged++;
+			}
+
+			if ( $dry_run ) {
+				WP_CLI::success( sprintf( 'Would merge %d duplicate(s). Skipped %d (no matching email).', $merged, $skipped ) );
+			} else {
+				WP_CLI::success( sprintf( 'Merged %d duplicate(s). Skipped %d (no matching email).', $merged, $skipped ) );
+			}
+		}
+
+		/**
+		 * Merge a duplicate person into the original
+		 *
+		 * @param int $duplicate_id The duplicate person ID to merge from and delete.
+		 * @param int $original_id  The original person ID to merge into.
+		 */
+		private function merge_person( $duplicate_id, $original_id ) {
+			// Get relationships from both records
+			$duplicate_relationships = get_field( 'relationships', $duplicate_id ) ?: [];
+			$original_relationships  = get_field( 'relationships', $original_id ) ?: [];
+
+			// Get existing related person IDs from original
+			$existing_related_ids = array_map(
+				function ( $r ) {
+					return $r['related_person'];
+				},
+				$original_relationships
+			);
+
+			// Add relationships from duplicate that don't exist in original
+			$new_relationships = [];
+			foreach ( $duplicate_relationships as $rel ) {
+				if ( ! in_array( $rel['related_person'], $existing_related_ids, true ) ) {
+					$new_relationships[] = $rel;
+				}
+			}
+
+			if ( ! empty( $new_relationships ) ) {
+				$merged_relationships = array_merge( $original_relationships, $new_relationships );
+				update_field( 'relationships', $merged_relationships, $original_id );
+				WP_CLI::log( sprintf( '  - Added %d relationship(s) to original.', count( $new_relationships ) ) );
+			}
+
+			// Update any references to the duplicate in other people's relationships
+			$this->update_relationship_references( $duplicate_id, $original_id );
+
+			// Update any important_date records that reference the duplicate
+			$this->update_date_references( $duplicate_id, $original_id );
+
+			// Delete the duplicate
+			wp_delete_post( $duplicate_id, true );
+			WP_CLI::log( sprintf( '  - Deleted duplicate (ID: %d).', $duplicate_id ) );
+		}
+
+		/**
+		 * Update relationship references from duplicate to original
+		 *
+		 * @param int $duplicate_id The duplicate person ID.
+		 * @param int $original_id  The original person ID.
+		 */
+		private function update_relationship_references( $duplicate_id, $original_id ) {
+			$people = get_posts(
+				[
+					'post_type'        => 'person',
+					'posts_per_page'   => -1,
+					'post_status'      => 'publish',
+					'suppress_filters' => true,
+					'meta_query'       => [
+						[
+							'key'     => 'relationships',
+							'compare' => 'EXISTS',
+						],
+					],
+				]
+			);
+
+			$updated = 0;
+			foreach ( $people as $person ) {
+				if ( $person->ID === $duplicate_id || $person->ID === $original_id ) {
+					continue;
+				}
+
+				$relationships = get_field( 'relationships', $person->ID ) ?: [];
+				$changed       = false;
+
+				foreach ( $relationships as &$rel ) {
+					if ( (int) $rel['related_person'] === $duplicate_id ) {
+						$rel['related_person'] = $original_id;
+						$changed               = true;
+					}
+				}
+				unset( $rel );
+
+				if ( $changed ) {
+					update_field( 'relationships', $relationships, $person->ID );
+					$updated++;
+				}
+			}
+
+			if ( $updated > 0 ) {
+				WP_CLI::log( sprintf( '  - Updated %d relationship reference(s).', $updated ) );
+			}
+		}
+
+		/**
+		 * Update important_date references from duplicate to original
+		 *
+		 * @param int $duplicate_id The duplicate person ID.
+		 * @param int $original_id  The original person ID.
+		 */
+		private function update_date_references( $duplicate_id, $original_id ) {
+			$dates = get_posts(
+				[
+					'post_type'        => 'important_date',
+					'posts_per_page'   => -1,
+					'post_status'      => 'publish',
+					'suppress_filters' => true,
+				]
+			);
+
+			$updated = 0;
+			foreach ( $dates as $date ) {
+				$related_people = get_field( 'related_people', $date->ID ) ?: [];
+				$changed        = false;
+
+				foreach ( $related_people as $index => $person_id ) {
+					$pid = is_object( $person_id ) ? $person_id->ID : $person_id;
+					if ( (int) $pid === $duplicate_id ) {
+						$related_people[ $index ] = $original_id;
+						$changed                  = true;
+					}
+				}
+
+				if ( $changed ) {
+					// Remove duplicates (in case original was already in the list)
+					$related_people = array_unique( $related_people );
+					update_field( 'related_people', array_values( $related_people ), $date->ID );
+					$updated++;
+				}
+			}
+
+			if ( $updated > 0 ) {
+				WP_CLI::log( sprintf( '  - Updated %d important date reference(s).', $updated ) );
+			}
+		}
+	}
+
+	/**
 	 * Register WP-CLI commands
 	 */
+	WP_CLI::add_command( 'prm people', 'STADION_People_CLI_Command' );
 	WP_CLI::add_command( 'stadion google-contacts', 'STADION_Google_Contacts_CLI_Command' );
 	WP_CLI::add_command( 'prm reminders', 'STADION_Reminders_CLI_Command' );
 	WP_CLI::add_command( 'prm migrate', 'STADION_Migration_CLI_Command' );
