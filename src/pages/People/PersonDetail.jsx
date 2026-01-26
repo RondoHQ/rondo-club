@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, lazy, Suspense } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Edit, Trash2, Star, Mail, Phone,
+  ArrowLeft, Edit, Trash2, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, Square, TrendingUp, StickyNote, Share2, Clock, User, Video, ExternalLink, AlertCircle
 } from 'lucide-react';
@@ -638,7 +638,6 @@ export default function PersonDetail() {
         gender: data.gender || null,
         pronouns: data.pronouns || null,
         how_we_met: data.how_we_met,
-        is_favorite: data.is_favorite,
         _visibility: data.visibility || 'private',
         _assigned_workspaces: data.assigned_workspaces || [],
       });
@@ -1525,9 +1524,6 @@ export default function PersonDetail() {
                 {person.name}
                 {isDeceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
               </h1>
-              {person.is_favorite && (
-                <Star className="w-5 h-5 text-yellow-400 fill-current" />
-              )}
             </div>
             {currentPositions.length > 0 && (
               <p className="text-base text-gray-600 dark:text-gray-300">
