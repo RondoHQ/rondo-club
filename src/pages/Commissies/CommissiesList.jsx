@@ -2,7 +2,6 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, ChevronDown, Lock, Users, Tag, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useCreateCommissie, useBulkUpdateCommissies } from '@/hooks/useCommissies';
 import { wpApi, prmApi } from '@/api/client';
 import { getCommissieName } from '@/utils/formatters';
@@ -632,7 +631,6 @@ export default function CommissiesList() {
   const bulkDropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  const { data: workspaces = [] } = useWorkspaces();
   const bulkUpdateMutation = useBulkUpdateCommissies();
   const queryClient = useQueryClient();
 
