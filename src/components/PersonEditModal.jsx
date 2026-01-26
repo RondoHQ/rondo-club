@@ -4,7 +4,6 @@ import { X, Upload, FileCode, AlertCircle } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import api from '@/api/client';
-import VisibilitySelector from '@/components/VisibilitySelector';
 
 export default function PersonEditModal({
   isOpen,
@@ -20,10 +19,6 @@ export default function PersonEditModal({
   const [dragActive, setDragActive] = useState(false);
   const [vcardFile, setVcardFile] = useState(null);
   const [vcardError, setVcardError] = useState(null);
-
-  // Visibility state
-  const [visibility, setVisibility] = useState('private');
-  const [selectedWorkspaces, setSelectedWorkspaces] = useState([]);
   
   // Fetch date types to get birthday term ID
   const { data: dateTypes = [] } = useQuery({
@@ -91,9 +86,6 @@ export default function PersonEditModal({
           birthday: '', // Birthday is stored separately
           how_we_met: person.acf?.how_we_met || '',
         });
-        // Load existing visibility settings
-        setVisibility(person.acf?._visibility || 'private');
-        setSelectedWorkspaces(person.acf?._assigned_workspaces || []);
       } else if (prefillData) {
         // Pre-fill mode - use provided data from external context (e.g., meeting attendee)
         reset({
@@ -108,8 +100,6 @@ export default function PersonEditModal({
           birthday: '',
           how_we_met: '',
         });
-        setVisibility('private');
-        setSelectedWorkspaces([]);
       } else {
         // Creating - reset to defaults
         reset({
@@ -124,9 +114,6 @@ export default function PersonEditModal({
           birthday: '',
           how_we_met: '',
         });
-        // Reset visibility to private
-        setVisibility('private');
-        setSelectedWorkspaces([]);
       }
     }
   }, [isOpen, person, prefillData, reset]);
@@ -208,8 +195,6 @@ export default function PersonEditModal({
     onSubmit({
       ...data,
       birthdayType: birthdayType, // Pass birthday type for creating birthday date
-      visibility,
-      assigned_workspaces: selectedWorkspaces,
     });
   };
 
@@ -425,17 +410,6 @@ export default function PersonEditModal({
                 disabled={isLoading}
               />
             </div>
-
-            {/* Visibility */}
-            <VisibilitySelector
-              value={visibility}
-              workspaces={selectedWorkspaces}
-              onChange={({ visibility: v, workspaces: w }) => {
-                setVisibility(v);
-                setSelectedWorkspaces(w);
-              }}
-              disabled={isLoading}
-            />
           </div>
           
           <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
