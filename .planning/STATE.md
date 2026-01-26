@@ -4,7 +4,7 @@
 
 See: .planning/PROJECT.md (updated 2026-01-25)
 
-**Core value:** Personal CRM with multi-user workspaces, Dutch-localized interface
+**Core value:** Personal CRM for single-user, Dutch-localized interface
 **Current focus:** Planning next milestone
 
 ## Current Position
@@ -13,7 +13,7 @@ Milestone: v7.0 Dutch Localization — SHIPPED
 Phase: N/A (milestone complete, ready for next milestone)
 Plan: N/A
 Status: Ready for /gsd:new-milestone
-Last activity: 2026-01-26 — Completed quick task 004: API documentation for Teams and Commissies
+Last activity: 2026-01-26 — Completed quick task 005: Delete entire Workspaces functionality
 
 Progress: Milestone v7.0 complete. Run /gsd:new-milestone to start next milestone.
 
@@ -72,11 +72,15 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 Recent decisions (v7.0 milestone):
 - Dutch locale via dateFormat.js wrapper - all dates formatted in Dutch
-- Loan words kept (Dashboard, Workspaces, Feedback) - common English terms
+- Loan words kept (Dashboard, Feedback) - common English terms
 - Informal tone (je/jij) - warm, friendly UI
 - "Leden" terminology (not Personen) - consistent naming
 - "Openstaand" for awaiting (not Wachtend) - dashboard and todos
 - Mixed terminology for activity types - keep international terms
+
+Quick task 005 decisions:
+- Completely remove workspaces - simplify to single-user model
+- Author-based access control only - no visibility settings needed
 
 ### Pending Todos
 
@@ -98,11 +102,12 @@ None.
 | 002 | Remove favorites section and functionality | 2026-01-26 | [002-remove-favorites](./quick/002-remove-favorites/) |
 | 003 | API documentation update (is_favorite removal, Important Dates, Custom Fields) | 2026-01-26 | [003-api-docs-update](./quick/003-api-docs-update/) |
 | 004 | API documentation for Teams and Commissies | 2026-01-26 | [004-api-documentation-for-teams-and-commissi](./quick/004-api-documentation-for-teams-and-commissi/) |
+| 005 | Delete entire Workspaces functionality | 2026-01-26 | [005-delete-workspaces](./quick/005-delete-workspaces/) |
 
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Quick task 004 completed
+Stopped at: Quick task 005 completed - Workspaces removed
 Resume file: None
 
-Note: v7.0 complete. Run /gsd:new-milestone to start next milestone.
+Note: v7.0 complete. Workspaces functionality removed. Run /gsd:new-milestone to start next milestone.
