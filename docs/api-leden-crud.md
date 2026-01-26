@@ -79,7 +79,6 @@ The nonce is available in `window.stadionConfig.nonce` when logged in to Stadion
 | `acf.nickname` | string | Nickname | Any string |
 | `acf.gender` | string | Gender | `male`, `female`, `non_binary`, `other`, `prefer_not_to_say` |
 | `acf.pronouns` | string | Pronouns | e.g., "hij/hem", "zij/haar" |
-| `acf.is_favorite` | boolean | Mark as favorite | `true` or `false` |
 
 ### Contact Information
 
@@ -219,7 +218,6 @@ X-WP-Nonce: {nonce}
     "first_name": "Jan",
     "last_name": "de Vries",
     "gender": "male",
-    "is_favorite": false,
     "contact_info": [
       {
         "contact_type": "email",
@@ -262,7 +260,6 @@ X-WP-Nonce: {nonce}
     "first_name": "Jan",
     "last_name": "de Vries",
     "gender": "male",
-    "is_favorite": false,
     "contact_info": [...],
     "addresses": [...],
     "work_history": [],
@@ -291,7 +288,6 @@ X-WP-Nonce: {nonce}
 ```json
 {
   "acf": {
-    "is_favorite": true,
     "contact_info": [
       {
         "contact_type": "email",
@@ -334,7 +330,6 @@ X-WP-Nonce: {nonce}
     "nickname": "",
     "gender": "male",
     "pronouns": "",
-    "is_favorite": true,
     "photo_gallery": [],
     "how_we_met": "",
     "met_date": "",
@@ -573,10 +568,6 @@ const newPerson = await createPerson({
 });
 
 console.log('Created person:', newPerson.id);
-
-await updatePerson(newPerson.id, {
-  is_favorite: true,
-});
 ```
 
 ### PHP (WordPress context)
@@ -607,7 +598,7 @@ if ($person_id && !is_wp_error($person_id)) {
 }
 
 // Update a person
-update_field('is_favorite', true, $person_id);
+update_field('how_we_met', 'Ontmoet op een conferentie', $person_id);
 ```
 
 ### cURL (with Application Password)
@@ -626,13 +617,14 @@ curl -X POST "https://your-site.com/wp-json/wp/v2/people" \
     }
   }'
 
-# Update a person
+# Update a person (change name)
 curl -X PUT "https://your-site.com/wp-json/wp/v2/people/456" \
   -u "username:xxxx xxxx xxxx xxxx xxxx xxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "acf": {
-      "is_favorite": true
+      "first_name": "Johannes",
+      "how_we_met": "Ontmoet op een conferentie"
     }
   }'
 
