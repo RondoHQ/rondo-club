@@ -58,7 +58,6 @@ const navigation = [
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
   { name: 'Datums', href: '/dates', icon: Calendar },
   { name: 'Taken', href: '/todos', icon: CheckSquare },
-  { name: 'Workspaces', href: '/workspaces', icon: UsersRound },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare },
   { name: 'Instellingen', href: '/settings', icon: Settings },
 ];
@@ -552,7 +551,6 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddTeam, onAddDate, onO
     if (path.startsWith('/commissies')) return 'Commissies';
     if (path.startsWith('/dates')) return 'Datums';
     if (path.startsWith('/todos')) return 'Taken';
-    if (path.startsWith('/workspaces')) return 'Workspaces';
     if (path.startsWith('/settings')) return 'Instellingen';
     return '';
   };
