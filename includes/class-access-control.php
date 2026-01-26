@@ -43,100 +43,13 @@ class AccessControl {
 		add_filter( 'rest_prepare_company', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_important_date', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_stadion_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
-
-		// Convert workspace post IDs to term IDs when saving via REST API
-		add_action( 'rest_after_insert_person', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
-		add_action( 'rest_after_insert_company', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
-		add_action( 'rest_after_insert_important_date', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
-		add_action( 'rest_after_insert_stadion_todo', [ $this, 'convert_workspace_ids_after_rest_insert' ], 10, 2 );
-
-		// Convert term IDs back to workspace post IDs when loading
-		add_filter( 'acf/load_value/name=_assigned_workspaces', [ $this, 'convert_term_ids_to_workspace_ids' ], 10, 3 );
-	}
-
-	/**
-	 * Convert workspace post IDs to term IDs after REST API insert/update
-	 *
-	 * The frontend sends workspace post IDs, but the ACF taxonomy field needs
-	 * workspace_access term IDs. This action converts and saves them properly.
-	 *
-	 * @param WP_Post $post The inserted/updated post
-	 * @param WP_REST_Request $request The request object
-	 */
-	public function convert_workspace_ids_after_rest_insert( $post, $request ) {
-		$params = $request->get_json_params();
-
-		// Check if workspace IDs were sent
-		if ( ! isset( $params['acf']['_assigned_workspaces'] ) ) {
-			return;
-		}
-
-		$workspace_ids = $params['acf']['_assigned_workspaces'];
-
-		// Handle empty array - clear all terms
-		if ( empty( $workspace_ids ) || ! is_array( $workspace_ids ) ) {
-			wp_set_object_terms( $post->ID, [], 'workspace_access' );
-			update_field( '_assigned_workspaces', [], $post->ID );
-			return;
-		}
-
-		// Convert workspace post IDs to term IDs
-		$term_ids = [];
-		foreach ( $workspace_ids as $workspace_id ) {
-			$term_slug = 'workspace-' . intval( $workspace_id );
-			$term      = get_term_by( 'slug', $term_slug, 'workspace_access' );
-
-			if ( $term && ! is_wp_error( $term ) ) {
-				$term_ids[] = $term->term_id;
-			}
-		}
-
-		// Set the terms on the post
-		wp_set_object_terms( $post->ID, $term_ids, 'workspace_access' );
-
-		// Update the ACF field with term IDs
-		update_field( '_assigned_workspaces', $term_ids, $post->ID );
-	}
-
-	/**
-	 * Convert workspace_access term IDs to workspace post IDs when loading
-	 *
-	 * The ACF taxonomy field stores term IDs, but the frontend expects workspace
-	 * post IDs. This filter converts between the two formats.
-	 *
-	 * @param mixed $value The loaded value (term IDs)
-	 * @param int $post_id The post ID
-	 * @param array $field The field array
-	 * @return array Array of workspace post IDs
-	 */
-	public function convert_term_ids_to_workspace_ids( $value, $post_id, $field ) {
-		if ( empty( $value ) || ! is_array( $value ) ) {
-			return [];
-		}
-
-		$workspace_ids = [];
-		foreach ( $value as $term_id ) {
-			$term = get_term( $term_id, 'workspace_access' );
-			if ( $term && ! is_wp_error( $term ) ) {
-				// The term slug format is 'workspace-{post_id}'
-				if ( preg_match( '/^workspace-(\d+)$/', $term->slug, $matches ) ) {
-					$workspace_ids[] = intval( $matches[1] );
-				}
-			}
-		}
-
-		return $workspace_ids;
 	}
 
 	/**
 	 * Check if a user can access a post
 	 *
-	 * Permission resolution order:
-	 * 1. Is user the author? → Full access
-	 * 2. Check _shared_with for user → Allow with specified permission (overrides visibility)
-	 * 3. Is _visibility = 'private'? → Deny (unless #1 or #2)
-	 * 4. Is _visibility = 'workspace'? → Check workspace membership
-	 * 5. Deny
+	 * Simple author-based access control:
+	 * User can access a post if they are the author.
 	 */
 	public function user_can_access_post( $post_id, $user_id = null ) {
 		if ( $user_id === null ) {
@@ -161,7 +74,7 @@ class AccessControl {
 			return false;
 		}
 
-		// 1. Check if user is the author → Full access
+		// Check if user is the author
 		if ( (int) $post->post_author === (int) $user_id ) {
 			return true;
 		}
@@ -171,41 +84,6 @@ class AccessControl {
 			return true;
 		}
 
-		// 2. Check direct shares first (overrides visibility)
-		if ( \STADION_Visibility::user_has_share( $post_id, $user_id ) ) {
-			return true;
-		}
-
-		// 3. Check visibility
-		$visibility = \STADION_Visibility::get_visibility( $post_id );
-
-		// Private = only author (already checked above), no shares (checked above)
-		if ( $visibility === \STADION_Visibility::VISIBILITY_PRIVATE ) {
-			return false;
-		}
-
-		// 4. Workspace visibility check
-		if ( $visibility === \STADION_Visibility::VISIBILITY_WORKSPACE ) {
-			// Get user's workspace IDs
-			$user_workspace_ids = \STADION_Workspace_Members::get_user_workspace_ids( $user_id );
-
-			if ( ! empty( $user_workspace_ids ) ) {
-				// Check if post has any matching workspace_access terms
-				$post_terms = wp_get_post_terms( $post_id, 'workspace_access', [ 'fields' => 'slugs' ] );
-
-				if ( ! is_wp_error( $post_terms ) ) {
-					foreach ( $post_terms as $slug ) {
-						// Term slug format: 'workspace-{ID}'
-						$workspace_id = (int) str_replace( 'workspace-', '', $slug );
-						if ( in_array( $workspace_id, $user_workspace_ids ) ) {
-							return true;
-						}
-					}
-				}
-			}
-		}
-
-		// 5. Deny
 		return false;
 	}
 
@@ -214,7 +92,7 @@ class AccessControl {
 	 *
 	 * @param int $post_id Post ID.
 	 * @param int $user_id User ID (optional, defaults to current user).
-	 * @return string|false 'owner', 'admin', 'member', 'viewer', 'edit', 'view', or false.
+	 * @return string|false 'owner' or false.
 	 */
 	public function get_user_permission( $post_id, $user_id = null ) {
 		if ( $user_id === null ) {
@@ -230,31 +108,6 @@ class AccessControl {
 		// Owner
 		if ( (int) $post->post_author === (int) $user_id ) {
 			return 'owner';
-		}
-
-		// Workspace role
-		$visibility = \STADION_Visibility::get_visibility( $post_id );
-		if ( $visibility === \STADION_Visibility::VISIBILITY_WORKSPACE ) {
-			$user_workspace_ids = \STADION_Workspace_Members::get_user_workspace_ids( $user_id );
-			$post_terms         = wp_get_post_terms( $post_id, 'workspace_access', [ 'fields' => 'slugs' ] );
-
-			if ( ! is_wp_error( $post_terms ) ) {
-				foreach ( $post_terms as $slug ) {
-					$workspace_id = (int) str_replace( 'workspace-', '', $slug );
-					if ( in_array( $workspace_id, $user_workspace_ids ) ) {
-						$role = \STADION_Workspace_Members::get_user_role( $workspace_id, $user_id );
-						if ( $role ) {
-							return $role; // 'admin', 'member', or 'viewer'
-						}
-					}
-				}
-			}
-		}
-
-		// Direct share permission
-		$share_permission = \STADION_Visibility::get_share_permission( $post_id, $user_id );
-		if ( $share_permission ) {
-			return $share_permission; // 'edit' or 'view'
 		}
 
 		return false;
@@ -312,10 +165,7 @@ class AccessControl {
 	/**
 	 * Get all post IDs accessible by a user
 	 *
-	 * Includes posts where:
-	 * 1. User is author
-	 * 2. _visibility = 'workspace' AND user is member of any assigned workspace
-	 * 3. User appears in _shared_with meta
+	 * Simple author-based access: returns posts where user is the author.
 	 */
 	public function get_accessible_post_ids( $post_type, $user_id ) {
 		global $wpdb;
@@ -327,7 +177,7 @@ class AccessControl {
 		}
 		$status_placeholders = implode( ',', array_fill( 0, count( $valid_statuses ), '%s' ) );
 
-		// 1. Posts authored by user
+		// Posts authored by user
 		$authored_params = array_merge( [ $post_type ], $valid_statuses, [ $user_id ] );
 		$authored        = $wpdb->get_col(
 			$wpdb->prepare(
@@ -339,63 +189,7 @@ class AccessControl {
 			)
 		);
 
-		// 2. Workspace-visible posts where user is member
-		$workspace_ids   = \STADION_Workspace_Members::get_user_workspace_ids( $user_id );
-		$workspace_posts = [];
-
-		if ( ! empty( $workspace_ids ) ) {
-			// Build term slugs from workspace IDs (format: workspace-{ID})
-			$term_slugs = array_map(
-				function ( $id ) {
-					return 'workspace-' . $id;
-				},
-				$workspace_ids
-			);
-
-			$term_placeholders = implode( ',', array_fill( 0, count( $term_slugs ), '%s' ) );
-
-			// Prepare query parameters: post_type first, then statuses, then term slugs
-			$query_params = array_merge( [ $post_type ], $valid_statuses, $term_slugs );
-
-			$workspace_posts = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT DISTINCT p.ID
-                 FROM {$wpdb->posts} p
-                 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-                 INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-                 INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-                 INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
-                 WHERE p.post_type = %s
-                 AND p.post_status IN ($status_placeholders)
-                 AND pm.meta_key = '_visibility'
-                 AND pm.meta_value = 'workspace'
-                 AND tt.taxonomy = 'workspace_access'
-                 AND t.slug IN ($term_placeholders)",
-					$query_params
-				)
-			);
-		}
-
-		// 3. Posts shared directly with user
-		// _shared_with is serialized array, so we use LIKE for the user_id
-		$shared_params = array_merge( [ $post_type ], $valid_statuses, [ '%"user_id":' . $user_id . '%' ] );
-		$shared_posts  = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT p.ID
-             FROM {$wpdb->posts} p
-             INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-             WHERE p.post_type = %s
-             AND p.post_status IN ($status_placeholders)
-             AND pm.meta_key = '_shared_with'
-             AND pm.meta_value LIKE %s",
-				$shared_params
-			)
-		);
-
-		// Merge and dedupe
-		$all_ids = array_unique( array_merge( $authored, $workspace_posts, $shared_posts ) );
-
-		return $all_ids;
+		return $authored;
 	}
 
 	/**
