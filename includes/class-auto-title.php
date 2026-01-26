@@ -156,9 +156,9 @@ class AutoTitle {
 			if ( $is_update && preg_match( '#/wp/v2/people/(\d+)$#', $route, $matches ) ) {
 				$post_id            = (int) $matches[1];
 				$existing_visibility = get_field( '_visibility', $post_id );
-				$acf['_visibility'] = $existing_visibility ?: \STADION_Visibility::VISIBILITY_PRIVATE;
+				$acf['_visibility'] = $existing_visibility ?: 'private';
 			} else {
-				$acf['_visibility'] = \STADION_Visibility::VISIBILITY_PRIVATE;
+				$acf['_visibility'] = 'private';
 			}
 			$request->set_param( 'acf', $acf );
 		}
