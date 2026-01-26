@@ -147,30 +147,10 @@ class Commissies extends Base {
 								return false;
 							}
 							// Must have at least one supported update type
-							$has_update = isset( $param['visibility'] )
-								|| isset( $param['assigned_workspaces'] )
-								|| isset( $param['labels_add'] )
+							$has_update = isset( $param['labels_add'] )
 								|| isset( $param['labels_remove'] );
 							if ( ! $has_update ) {
 								return false;
-							}
-							// Validate visibility if provided
-							if ( isset( $param['visibility'] ) ) {
-								$valid_visibilities = [ 'private', 'workspace', 'shared' ];
-								if ( ! in_array( $param['visibility'], $valid_visibilities, true ) ) {
-									return false;
-								}
-							}
-							// Validate assigned_workspaces if provided
-							if ( isset( $param['assigned_workspaces'] ) ) {
-								if ( ! is_array( $param['assigned_workspaces'] ) ) {
-									return false;
-								}
-								foreach ( $param['assigned_workspaces'] as $ws_id ) {
-									if ( ! is_numeric( $ws_id ) ) {
-										return false;
-									}
-								}
 							}
 							// Validate labels_add if provided
 							if ( isset( $param['labels_add'] ) ) {
@@ -606,34 +586,6 @@ class Commissies extends Base {
 
 		foreach ( $ids as $post_id ) {
 			try {
-				if ( isset( $updates['visibility'] ) ) {
-					$result = \STADION_Visibility::set_visibility( $post_id, $updates['visibility'] );
-					if ( ! $result ) {
-						$failed[] = [
-							'id'    => $post_id,
-							'error' => __( 'Failed to update visibility.', 'stadion' ),
-						];
-						continue;
-					}
-				}
-
-				if ( isset( $updates['assigned_workspaces'] ) ) {
-					$workspace_ids = array_map( 'intval', $updates['assigned_workspaces'] );
-
-					$term_ids = [];
-					foreach ( $workspace_ids as $workspace_id ) {
-						$term_slug = 'workspace-' . $workspace_id;
-						$term      = get_term_by( 'slug', $term_slug, 'workspace_access' );
-
-						if ( $term && ! is_wp_error( $term ) ) {
-							$term_ids[] = $term->term_id;
-						}
-					}
-
-					wp_set_object_terms( $post_id, $term_ids, 'workspace_access' );
-					update_field( '_assigned_workspaces', $term_ids, $post_id );
-				}
-
 				if ( ! empty( $updates['labels_add'] ) ) {
 					$term_ids = array_map( 'intval', $updates['labels_add'] );
 					wp_set_object_terms( $post_id, $term_ids, 'commissie_label', true );
