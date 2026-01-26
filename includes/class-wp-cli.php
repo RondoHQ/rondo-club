@@ -2397,81 +2397,68 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				]
 			);
 
-			// Build email -> person ID map (excluding Ouder/verzorger records)
-			$email_to_person = [];
-			$parent_records  = [];
+			// Build email -> person IDs map for ALL people
+			$email_to_persons = [];
 
 			foreach ( $people as $person ) {
 				$contact_info = get_field( 'contact_info', $person->ID ) ?: [];
 
 				// Collect emails for this person
-				$emails = [];
 				foreach ( $contact_info as $contact ) {
 					if ( 'email' === $contact['contact_type'] && ! empty( $contact['contact_value'] ) ) {
-						$emails[] = strtolower( trim( $contact['contact_value'] ) );
-					}
-				}
-
-				// Check post_title for "Ouder/verzorger" pattern (auto-generated parent records)
-				if ( strpos( $person->post_title, 'Ouder/verzorger' ) !== false ) {
-					// This is a parent record - check for duplicates later
-					$parent_records[] = [
-						'id'     => $person->ID,
-						'title'  => $person->post_title,
-						'emails' => $emails,
-					];
-				} else {
-					// This is a regular person - add to email map
-					foreach ( $emails as $email ) {
-						if ( ! isset( $email_to_person[ $email ] ) ) {
-							$email_to_person[ $email ] = [];
+						$email = strtolower( trim( $contact['contact_value'] ) );
+						if ( ! isset( $email_to_persons[ $email ] ) ) {
+							$email_to_persons[ $email ] = [];
 						}
-						$email_to_person[ $email ][] = $person->ID;
+						$email_to_persons[ $email ][] = $person->ID;
 					}
 				}
 			}
 
-			WP_CLI::log( sprintf( 'Found %d parent records to check.', count( $parent_records ) ) );
+			// Find emails with multiple people (duplicates)
+			$duplicate_sets = [];
+			foreach ( $email_to_persons as $email => $person_ids ) {
+				// Remove duplicates and sort
+				$unique_ids = array_unique( $person_ids );
+				if ( count( $unique_ids ) > 1 ) {
+					sort( $unique_ids ); // Lowest ID first (original)
+					$duplicate_sets[ $email ] = $unique_ids;
+				}
+			}
+
+			WP_CLI::log( sprintf( 'Found %d email(s) with duplicate people.', count( $duplicate_sets ) ) );
 
 			$merged  = 0;
 			$skipped = 0;
 
-			foreach ( $parent_records as $parent ) {
-				$duplicate_of = null;
+			foreach ( $duplicate_sets as $email => $person_ids ) {
+				$original_id = array_shift( $person_ids ); // Keep the lowest ID
+				$original_title = get_the_title( $original_id );
 
-				// Check if any of the parent's emails match an existing person
-				foreach ( $parent['emails'] as $email ) {
-					if ( isset( $email_to_person[ $email ] ) && ! empty( $email_to_person[ $email ] ) ) {
-						$duplicate_of = $email_to_person[ $email ][0];
-						break;
+				foreach ( $person_ids as $duplicate_id ) {
+					$duplicate_title = get_the_title( $duplicate_id );
+
+					WP_CLI::log( sprintf(
+						'[MERGE] "%s" (ID: %d) -> "%s" (ID: %d) [email: %s]',
+						$duplicate_title,
+						$duplicate_id,
+						$original_title,
+						$original_id,
+						$email
+					) );
+
+					if ( ! $dry_run ) {
+						$this->merge_person( $duplicate_id, $original_id );
 					}
+
+					$merged++;
 				}
-
-				if ( ! $duplicate_of ) {
-					$skipped++;
-					continue;
-				}
-
-				$original_title = get_the_title( $duplicate_of );
-				WP_CLI::log( sprintf(
-					'[MERGE] "%s" (ID: %d) -> "%s" (ID: %d)',
-					$parent['title'],
-					$parent['id'],
-					$original_title,
-					$duplicate_of
-				) );
-
-				if ( ! $dry_run ) {
-					$this->merge_person( $parent['id'], $duplicate_of );
-				}
-
-				$merged++;
 			}
 
 			if ( $dry_run ) {
-				WP_CLI::success( sprintf( 'Would merge %d duplicate(s). Skipped %d (no matching email).', $merged, $skipped ) );
+				WP_CLI::success( sprintf( 'Would merge %d duplicate(s) from %d email(s).', $merged, count( $duplicate_sets ) ) );
 			} else {
-				WP_CLI::success( sprintf( 'Merged %d duplicate(s). Skipped %d (no matching email).', $merged, $skipped ) );
+				WP_CLI::success( sprintf( 'Merged %d duplicate(s) from %d email(s).', $merged, count( $duplicate_sets ) ) );
 			}
 		}
 
