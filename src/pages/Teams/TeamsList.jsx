@@ -2,7 +2,6 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, ChevronDown, Lock, Users, Tag, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useCreateTeam, useBulkUpdateTeams } from '@/hooks/useTeams';
 import { wpApi, prmApi } from '@/api/client';
 import { getTeamName } from '@/utils/formatters';
@@ -632,7 +631,6 @@ export default function TeamsList() {
   const bulkDropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  const { data: workspaces = [] } = useWorkspaces();
   const bulkUpdateMutation = useBulkUpdateTeams();
   const queryClient = useQueryClient();
 
