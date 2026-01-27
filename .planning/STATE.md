@@ -103,11 +103,12 @@ None.
 | 003 | API documentation update (is_favorite removal, Important Dates, Custom Fields) | 2026-01-26 | [003-api-docs-update](./quick/003-api-docs-update/) |
 | 004 | API documentation for Teams and Commissies | 2026-01-26 | [004-api-documentation-for-teams-and-commissi](./quick/004-api-documentation-for-teams-and-commissi/) |
 | 005 | Delete entire Workspaces functionality | 2026-01-26 | [005-delete-workspaces](./quick/005-delete-workspaces/) |
+| 006 | Delete duplicate important dates script | 2026-01-27 | [006-delete-duplicate-important-dates](./quick/006-delete-duplicate-important-dates/) |
 
 ## Session Continuity
 
-Last session: 2026-01-26
-Stopped at: Quick task 005 completed - Workspaces removed
+Last session: 2026-01-27
+Stopped at: Quick task 006 completed - Duplicate dates cleanup script
 Resume file: None
 
 Note: v7.0 complete. Workspaces functionality removed. Run /gsd:new-milestone to start next milestone.
