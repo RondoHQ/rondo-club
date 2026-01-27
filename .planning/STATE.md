@@ -13,7 +13,7 @@ Milestone: v7.0 Dutch Localization — SHIPPED
 Phase: N/A (milestone complete, ready for next milestone)
 Plan: N/A
 Status: Ready for /gsd:new-milestone
-Last activity: 2026-01-26 — Completed quick task 005: Delete entire Workspaces functionality
+Last activity: 2026-01-28 — Completed quick task 007: Rename "Werk" tab to "Rollen"
 
 Progress: Milestone v7.0 complete. Run /gsd:new-milestone to start next milestone.
 
@@ -104,11 +104,12 @@ None.
 | 004 | API documentation for Teams and Commissies | 2026-01-26 | [004-api-documentation-for-teams-and-commissi](./quick/004-api-documentation-for-teams-and-commissi/) |
 | 005 | Delete entire Workspaces functionality | 2026-01-26 | [005-delete-workspaces](./quick/005-delete-workspaces/) |
 | 006 | Delete duplicate important dates script | 2026-01-27 | [006-delete-duplicate-important-dates](./quick/006-delete-duplicate-important-dates/) |
+| 007 | Rename "Werk" tab to "Rollen" on PersonDetail | 2026-01-28 | [007-rename-werk-tab-to-rollen](./quick/007-rename-werk-tab-to-rollen/) |
 
 ## Session Continuity
 
-Last session: 2026-01-27
-Stopped at: Quick task 006 completed - Duplicate dates cleanup script
+Last session: 2026-01-28
+Stopped at: Quick task 007 completed - Rename "Werk" tab to "Rollen"
 Resume file: None
 
 Note: v7.0 complete. Workspaces functionality removed. Run /gsd:new-milestone to start next milestone.
