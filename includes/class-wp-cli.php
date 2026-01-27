@@ -2387,23 +2387,45 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::log( 'Dry run mode - no changes will be saved.' );
 			}
 
-			// Get all people (suppress filters to bypass access control)
-			$people = get_posts(
-				[
-					'post_type'        => 'person',
-					'posts_per_page'   => -1,
-					'post_status'      => 'publish',
-					'suppress_filters' => true,
-				]
+			// Get all people using direct DB query to bypass access control hooks
+			global $wpdb;
+			$person_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
+					'person',
+					'publish'
+				)
 			);
 
+			$people = array_map( 'get_post', $person_ids );
+			$people = array_filter( $people ); // Remove any null values
+
+			// Build person ID -> name_key map for quick lookups
+			$person_name_keys = [];
 			// Build email -> person IDs map for ALL people
 			$email_to_persons = [];
+			// Build name -> person IDs map (first_name + last_name, lowercased)
+			$name_to_persons = [];
 
 			foreach ( $people as $person ) {
-				$contact_info = get_field( 'contact_info', $person->ID ) ?: [];
+				// Collect name key for this person
+				$first_name = get_field( 'first_name', $person->ID ) ?: '';
+				$last_name  = get_field( 'last_name', $person->ID ) ?: '';
+				$name_key   = strtolower( trim( trim( $first_name ) . ' ' . trim( $last_name ) ) );
+
+				// Store name key for this person
+				$person_name_keys[ $person->ID ] = $name_key;
+
+				// Only use non-empty names for name-based matching
+				if ( ! empty( $name_key ) ) {
+					if ( ! isset( $name_to_persons[ $name_key ] ) ) {
+						$name_to_persons[ $name_key ] = [];
+					}
+					$name_to_persons[ $name_key ][] = $person->ID;
+				}
 
 				// Collect emails for this person
+				$contact_info = get_field( 'contact_info', $person->ID ) ?: [];
 				foreach ( $contact_info as $contact ) {
 					if ( 'email' === $contact['contact_type'] && ! empty( $contact['contact_value'] ) ) {
 						$email = strtolower( trim( $contact['contact_value'] ) );
@@ -2415,23 +2437,70 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				}
 			}
 
-			// Find emails with multiple people (duplicates)
+			// Find duplicates: require BOTH same name AND same email
 			$duplicate_sets = [];
-			foreach ( $email_to_persons as $email => $person_ids ) {
-				// Remove duplicates and sort
-				$unique_ids = array_unique( $person_ids );
-				if ( count( $unique_ids ) > 1 ) {
-					sort( $unique_ids ); // Lowest ID first (original)
-					$duplicate_sets[ $email ] = $unique_ids;
+
+			// For email matches, only consider them duplicates if names also match
+			foreach ( $email_to_persons as $email => $email_person_ids ) {
+				$unique_ids = array_unique( $email_person_ids );
+				if ( count( $unique_ids ) <= 1 ) {
+					continue;
+				}
+
+				// Group by name within this email group
+				$name_groups = [];
+				foreach ( $unique_ids as $pid ) {
+					$name_key = $person_name_keys[ $pid ] ?? '';
+					if ( ! empty( $name_key ) ) {
+						if ( ! isset( $name_groups[ $name_key ] ) ) {
+							$name_groups[ $name_key ] = [];
+						}
+						$name_groups[ $name_key ][] = $pid;
+					}
+				}
+
+				// Only create duplicate sets for name groups with multiple people
+				foreach ( $name_groups as $name_key => $group_ids ) {
+					if ( count( $group_ids ) > 1 ) {
+						sort( $group_ids ); // Lowest ID first (original)
+						$key = 'email+name:' . $email . '|' . $name_key;
+						$duplicate_sets[ $key ] = $group_ids;
+					}
 				}
 			}
 
-			WP_CLI::log( sprintf( 'Found %d email(s) with duplicate people.', count( $duplicate_sets ) ) );
+			// Also find name-only duplicates (same name, no shared email)
+			foreach ( $name_to_persons as $name_key => $name_person_ids ) {
+				$unique_ids = array_unique( $name_person_ids );
+				if ( count( $unique_ids ) <= 1 ) {
+					continue;
+				}
+
+				sort( $unique_ids ); // Lowest ID first (original)
+				$key = 'name:' . $name_key;
+
+				// Check if already covered by email+name match
+				$already_covered = false;
+				foreach ( $duplicate_sets as $existing_key => $existing_ids ) {
+					if ( $unique_ids == $existing_ids ) {
+						$already_covered = true;
+						break;
+					}
+				}
+
+				if ( ! $already_covered ) {
+					$duplicate_sets[ $key ] = $unique_ids;
+				}
+			}
+
+			$email_name_count = count( array_filter( array_keys( $duplicate_sets ), function( $k ) { return strpos( $k, 'email+name:' ) === 0; } ) );
+			$name_count       = count( array_filter( array_keys( $duplicate_sets ), function( $k ) { return strpos( $k, 'name:' ) === 0; } ) );
+			WP_CLI::log( sprintf( 'Found %d email+name and %d name-only duplicate set(s).', $email_name_count, $name_count ) );
 
 			$merged  = 0;
 			$skipped = 0;
 
-			foreach ( $duplicate_sets as $email => $person_ids ) {
+			foreach ( $duplicate_sets as $match_key => $person_ids ) {
 				$original_id = array_shift( $person_ids ); // Keep the lowest ID
 				$original_title = get_the_title( $original_id );
 
@@ -2439,12 +2508,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					$duplicate_title = get_the_title( $duplicate_id );
 
 					WP_CLI::log( sprintf(
-						'[MERGE] "%s" (ID: %d) -> "%s" (ID: %d) [email: %s]',
+						'[MERGE] "%s" (ID: %d) -> "%s" (ID: %d) [%s]',
 						$duplicate_title,
 						$duplicate_id,
 						$original_title,
 						$original_id,
-						$email
+						$match_key
 					) );
 
 					if ( ! $dry_run ) {
@@ -2456,9 +2525,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			if ( $dry_run ) {
-				WP_CLI::success( sprintf( 'Would merge %d duplicate(s) from %d email(s).', $merged, count( $duplicate_sets ) ) );
+				WP_CLI::success( sprintf( 'Would merge %d duplicate(s) from %d set(s).', $merged, count( $duplicate_sets ) ) );
 			} else {
-				WP_CLI::success( sprintf( 'Merged %d duplicate(s) from %d email(s).', $merged, count( $duplicate_sets ) ) );
+				WP_CLI::success( sprintf( 'Merged %d duplicate(s) from %d set(s).', $merged, count( $duplicate_sets ) ) );
 			}
 		}
 
