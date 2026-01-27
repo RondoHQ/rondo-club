@@ -215,12 +215,15 @@ class People extends Base {
 		// Query dates where this person is in the related_people field
 		// ACF stores post_object arrays as serialized PHP arrays
 		// Try both formats: serialized array and quoted JSON-style (for backward compatibility)
+		// suppress_filters bypasses access control - safe because check_person_access already verified
+		// the user can access this person
 		$dates = get_posts(
 			[
-				'post_type'      => 'important_date',
-				'posts_per_page' => -1,
-				'post_status'    => 'publish',
-				'meta_query'     => [
+				'post_type'        => 'important_date',
+				'posts_per_page'   => -1,
+				'post_status'      => 'publish',
+				'suppress_filters' => true,
+				'meta_query'       => [
 					'relation' => 'OR',
 					[
 						'key'     => 'related_people',
@@ -485,11 +488,14 @@ class People extends Base {
 		// Get all dates for this person to compute deceased status and birth year
 		// ACF stores post_object arrays as serialized PHP arrays
 		// Try both formats: serialized array and quoted JSON-style (for backward compatibility)
+		// suppress_filters bypasses access control - safe because this filter only runs for
+		// persons the user already has access to (via rest_prepare_person filter)
 		$person_dates = get_posts(
 			[
-				'post_type'      => 'important_date',
-				'posts_per_page' => -1,
-				'meta_query'     => [
+				'post_type'        => 'important_date',
+				'posts_per_page'   => -1,
+				'suppress_filters' => true,
+				'meta_query'       => [
 					'relation' => 'OR',
 					[
 						'key'     => 'related_people',
