@@ -122,6 +122,11 @@ class AccessControl {
 			return;
 		}
 
+		// Respect suppress_filters flag - allows internal queries to bypass access control
+		if ( $query->get( 'suppress_filters' ) ) {
+			return;
+		}
+
 		// Only filter our controlled post types
 		$post_type = $query->get( 'post_type' );
 
