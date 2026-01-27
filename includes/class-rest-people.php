@@ -405,6 +405,11 @@ class People extends Base {
 	 * @return WP_REST_Response Modified response with expanded relationships.
 	 */
 	public function expand_person_relationships( $response, $post, $request ) {
+		// Return early if response is an error (e.g., unauthorized access)
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
 		$data = $response->get_data();
 
 		if ( ! isset( $data['acf']['relationships'] ) || ! is_array( $data['acf']['relationships'] ) ) {
@@ -483,6 +488,11 @@ class People extends Base {
 	 * @return WP_REST_Response Modified response with computed fields.
 	 */
 	public function add_person_computed_fields( $response, $post, $request ) {
+		// Return early if response is an error (e.g., unauthorized access)
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
 		$data = $response->get_data();
 
 		// Get all dates for this person to compute deceased status and birth year
