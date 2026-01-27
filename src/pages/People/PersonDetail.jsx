@@ -1695,7 +1695,7 @@ export default function PersonDetail() {
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
             }`}
           >
-            Werk
+            Rollen
           </button>
           <button
             onClick={() => setActiveTab('meetings')}
