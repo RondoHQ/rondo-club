@@ -260,7 +260,8 @@ abstract class Base {
 			'date_value'     => get_field( 'date_value', $post->ID ),
 			'is_recurring'   => (bool) get_field( 'is_recurring', $post->ID ),
 			'year_unknown'   => (bool) get_field( 'year_unknown', $post->ID ),
-			'date_type'      => wp_get_post_terms( $post->ID, 'date_type', [ 'fields' => 'names' ] ),
+			'date_type'      => wp_get_post_terms( $post->ID, 'date_type', [ 'fields' => 'slugs' ] ),
+			'date_type_names' => wp_get_post_terms( $post->ID, 'date_type', [ 'fields' => 'names' ] ),
 			'related_people' => $people_names,
 		];
 	}
