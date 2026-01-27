@@ -212,12 +212,21 @@ class People extends Base {
 	public function get_dates_by_person( $request ) {
 		$person_id = $request->get_param( 'person_id' );
 
+		// Query dates where this person is in the related_people field
+		// ACF stores post_object arrays as serialized PHP arrays
+		// Try both formats: serialized array and quoted JSON-style (for backward compatibility)
 		$dates = get_posts(
 			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
 				'meta_query'     => [
+					'relation' => 'OR',
+					[
+						'key'     => 'related_people',
+						'value'   => serialize( strval( $person_id ) ),
+						'compare' => 'LIKE',
+					],
 					[
 						'key'     => 'related_people',
 						'value'   => '"' . $person_id . '"',
@@ -474,11 +483,19 @@ class People extends Base {
 		$data = $response->get_data();
 
 		// Get all dates for this person to compute deceased status and birth year
+		// ACF stores post_object arrays as serialized PHP arrays
+		// Try both formats: serialized array and quoted JSON-style (for backward compatibility)
 		$person_dates = get_posts(
 			[
 				'post_type'      => 'important_date',
 				'posts_per_page' => -1,
 				'meta_query'     => [
+					'relation' => 'OR',
+					[
+						'key'     => 'related_people',
+						'value'   => serialize( strval( $post->ID ) ),
+						'compare' => 'LIKE',
+					],
 					[
 						'key'     => 'related_people',
 						'value'   => '"' . $post->ID . '"',
