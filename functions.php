@@ -565,6 +565,34 @@ function stadion_theme_add_config_to_head() {
 add_action( 'wp_head', 'stadion_theme_add_config_to_head', 0 );
 
 /**
+ * Output PWA meta tags for iOS and Android support
+ *
+ * vite-plugin-pwa handles manifest generation, but we need to manually
+ * inject meta tags since WordPress uses PHP templates, not index.html.
+ */
+function stadion_pwa_meta_tags() {
+	$theme_url = STADION_THEME_URL;
+	?>
+	<!-- PWA Meta Tags -->
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="apple-mobile-web-app-title" content="Stadion">
+
+	<!-- Apple Touch Icon -->
+	<link rel="apple-touch-icon" href="<?php echo esc_url( $theme_url . '/public/icons/apple-touch-icon-180x180.png' ); ?>">
+
+	<!-- Manifest -->
+	<link rel="manifest" href="<?php echo esc_url( $theme_url . '/dist/manifest.webmanifest' ); ?>">
+
+	<!-- Theme Color (default orange, React will update dynamically) -->
+	<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f97316">
+	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#ea580c">
+	<?php
+}
+add_action( 'wp_head', 'stadion_pwa_meta_tags', 2 );
+
+/**
  * Add favicon to head
  *
  * Note: Dynamic favicon is handled by React's useTheme hook (src/hooks/useTheme.js)
