@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.3.0] - 2026-01-28
+
+### Added
+- Smart Android install prompt after user engagement (2 page views or 1 note)
+- iOS install instructions modal with visual Add to Home Screen guide
+- Periodic service worker update checking (hourly)
+- Engagement tracking for install prompt timing
+
+### Changed
+- ReloadPrompt text localized to Dutch
+- Install prompts respect dismissal preferences with 7-day cooldown
+
 ## [8.2.0] - 2026-01-28
 
 ### Added
