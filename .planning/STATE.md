@@ -36,7 +36,7 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ### Pending Todos
 
-None.
+3 todos in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
