@@ -1543,7 +1543,7 @@ export default function PersonDetail() {
       </div>
       
       {/* Profile header */}
-      <div className="card p-6">
+      <div className={`card p-6 ${acf['financiele-blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : ''}`}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="relative group">
             {person.thumbnail ? (
@@ -1619,13 +1619,19 @@ export default function PersonDetail() {
                 <span>Overleden op {format(deathDateValue, deathYearUnknown ? 'd MMMM' : 'd MMMM yyyy')}{age !== null && ` op ${age}-jarige leeftijd`}</span>
               </p>
             )}
-            {!isDeceased && (getGenderSymbol(acf.gender) || acf.pronouns || age !== null) && (
+            {!isDeceased && (getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele-blokkade']) && (
               <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
                 {getGenderSymbol(acf.gender) && <span>{getGenderSymbol(acf.gender)}</span>}
                 {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
                 {acf.pronouns && <span>{acf.pronouns}</span>}
                 {(getGenderSymbol(acf.gender) || acf.pronouns) && age !== null && <span>&nbsp;—&nbsp;</span>}
                 {age !== null && <span>{age} jaar</span>}
+                {acf['financiele-blokkade'] && (
+                  <>
+                    {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}
+                    <span className="text-red-600 dark:text-red-400 font-medium">Financiële blokkade</span>
+                  </>
+                )}
               </p>
             )}
             <div>
