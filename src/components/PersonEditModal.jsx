@@ -4,6 +4,7 @@ import { X, Upload, FileCode, AlertCircle } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import api from '@/api/client';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 export default function PersonEditModal({
   isOpen,
@@ -14,6 +15,7 @@ export default function PersonEditModal({
   prefillData = null // Pass prefillData for pre-filling from external context (e.g., meeting attendee)
 }) {
   const isEditing = !!person;
+  const isOnline = useOnlineStatus();
   
   // vCard import state
   const [dragActive, setDragActive] = useState(false);
@@ -423,8 +425,8 @@ export default function PersonEditModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              disabled={isLoading}
+              className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!isOnline || isLoading}
             >
               {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Lid aanmaken')}
             </button>
