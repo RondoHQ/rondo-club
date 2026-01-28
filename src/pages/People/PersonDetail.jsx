@@ -1368,6 +1368,58 @@ export default function PersonDetail() {
     return sortedWorkHistory.filter(job => job.is_current);
   }, [sortedWorkHistory]);
 
+  // Process positions for grouped display in header
+  const groupedPositions = useMemo(() => {
+    if (!currentPositions?.length) return [];
+
+    // Filter out "Kaderlid Algemeen" if there are multiple positions
+    let positionsToShow = currentPositions;
+    if (currentPositions.length > 1) {
+      positionsToShow = currentPositions.filter(job => job.job_title !== 'Kaderlid Algemeen');
+      // If all positions were "Kaderlid Algemeen", keep them all
+      if (positionsToShow.length === 0) {
+        positionsToShow = currentPositions;
+      }
+    }
+
+    // Group positions by team
+    // Use null key for "Verenigingsbreed" or positions without a team
+    const groups = new Map();
+
+    positionsToShow.forEach(job => {
+      const team = job.team && teamMap[job.team];
+      const isVerenigingsbreed = team?.name === 'Verenigingsbreed';
+      const groupKey = (!team || isVerenigingsbreed) ? null : job.team;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
+          teamId: groupKey,
+          team: groupKey ? team : null,
+          teamName: groupKey ? team.name : null,
+          teamType: groupKey ? team.type : null,
+          showTeamLink: groupKey !== null, // Don't show link for Verenigingsbreed or no-team
+          titles: []
+        });
+      }
+
+      if (job.job_title) {
+        groups.get(groupKey).titles.push(job.job_title);
+      }
+    });
+
+    // Convert to array and sort: Verenigingsbreed (null key) first, then other teams
+    const result = Array.from(groups.values())
+      .filter(group => group.titles.length > 0) // Only show groups with titles
+      .sort((a, b) => {
+        // null (Verenigingsbreed/no-team) first
+        if (a.teamId === null && b.teamId !== null) return -1;
+        if (a.teamId !== null && b.teamId === null) return 1;
+        return 0;
+      });
+
+    return result;
+  }, [currentPositions, teamMap]);
+
   // Extract and sort todos from timeline
   // Open first, awaiting second, completed last
   const sortedTodos = useMemo(() => {
@@ -1581,32 +1633,25 @@ export default function PersonDetail() {
                 {isDeceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
               </h1>
             </div>
-            {currentPositions.length > 0 && (
+            {groupedPositions.length > 0 && (
               <p className="text-base text-gray-600 dark:text-gray-300">
-                {currentPositions.map((job, idx) => {
-                  const hasTitle = !!job.job_title;
-                  const hasTeam = job.team && teamMap[job.team];
-
-                  if (!hasTitle && !hasTeam) return null;
-
-                  return (
-                    <span key={idx}>
-                      {idx > 0 && ', '}
-                      {hasTitle ? job.job_title : 'Werkt'}
-                      {hasTeam && (
-                        <>
-                          <span className="text-gray-400 dark:text-gray-500"> bij </span>
-                          <Link
-                            to={`/${teamMap[job.team].type === 'commissie' ? 'commissies' : 'teams'}/${job.team}`}
-                            className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
-                          >
-                            {teamMap[job.team].name}
-                          </Link>
-                        </>
-                      )}
-                    </span>
-                  );
-                })}
+                {groupedPositions.map((group, groupIdx) => (
+                  <span key={groupIdx}>
+                    {groupIdx > 0 && ', '}
+                    {group.titles.join(', ')}
+                    {group.showTeamLink && group.team && (
+                      <>
+                        <span className="text-gray-400 dark:text-gray-500"> bij </span>
+                        <Link
+                          to={`/${group.teamType === 'commissie' ? 'commissies' : 'teams'}/${group.teamId}`}
+                          className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
+                        >
+                          {group.teamName}
+                        </Link>
+                      </>
+                    )}
+                  </span>
+                ))}
               </p>
             )}
             {acf.nickname && (
