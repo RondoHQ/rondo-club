@@ -53,11 +53,12 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 |---|-------------|------|--------|-----------|
 | 008 | WYSIWYG custom fields render as HTML | 2026-01-28 | 8f84f75 | [008-wysiwyg-html-render](./quick/008-wysiwyg-html-render/) |
 | 009 | Person header job display improvements | 2026-01-28 | cdcf587 | [009-person-header-job-display](./quick/009-person-header-job-display/) |
+| 010 | VOG status indicator and Sportlink link | 2026-01-28 | 0857a5f | [010-vog-status-indicator-and-sportlink-link-](./quick/010-vog-status-indicator-and-sportlink-link-/) |
 
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: v8.0 PWA Enhancement milestone archived
+Stopped at: Quick task 010 completed
 Resume file: None
 
 Next: Run `/gsd:new-milestone` to start next milestone
