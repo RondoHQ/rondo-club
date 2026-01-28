@@ -1,5 +1,33 @@
 # Project Milestones: Stadion
 
+## v8.0 PWA Enhancement (Shipped: 2026-01-28)
+
+**Delivered:** Progressive Web App transformation with installable app experience on iOS and Android, offline support with cached data access, pull-to-refresh gesture, and smart install prompts.
+
+**Phases completed:** 107-110 (15 plans total)
+
+**Key accomplishments:**
+
+- PWA Foundation with Web App Manifest, vite-plugin-pwa, iOS meta tags, and safe area CSS for notched devices
+- Offline Support with service worker asset caching, offline fallback page, cached API data display, and offline banner with form mutation protection
+- Mobile UX with pull-to-refresh on all list and detail views and iOS overscroll prevention in standalone mode
+- Install Experience with smart Android install prompt (engagement-based), iOS install instructions modal, and periodic update notifications
+- Dutch localization of all PWA notifications and prompts
+- Lighthouse PWA score 90+, verified on real iOS and Android devices in standalone mode
+
+**Stats:**
+
+- 52 files changed
+- +5,613 / -911 lines changed
+- 4 phases, 15 plans
+- 1 day (2026-01-28)
+
+**Git range:** `9e7ac2f` → `3a073af`
+
+**What's next:** To be determined
+
+---
+
 ## v7.0 Dutch Localization (Shipped: 2026-01-25)
 
 **Delivered:** Complete Dutch translation of the entire Stadion React frontend, including navigation, dashboard, entity pages (Leden, Teams, Commissies, Datums, Taken), settings, and all global UI elements.
