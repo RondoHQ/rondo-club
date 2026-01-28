@@ -22,8 +22,6 @@ export function useCreateTeam({ onSuccess } = {}) {
           website: data.website,
           industry: data.industry,
           investors: data.investors || [],
-          _visibility: data.visibility || 'private',
-          _assigned_workspaces: data.assigned_workspaces || [],
         },
       };
 
