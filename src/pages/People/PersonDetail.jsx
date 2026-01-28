@@ -596,6 +596,7 @@ export default function PersonDetail() {
       
       const workHistoryItem = {
         team: data.team || null,
+        entity_type: data.entity_type || null,
         job_title: data.job_title || '',
         description: data.description || '',
         start_date: data.start_date || '',
@@ -1132,15 +1133,44 @@ export default function PersonDetail() {
   };
 
   // Fetch team/commissie names for work history entries
-  const entityIds = person?.acf?.work_history
-    ?.map(job => job.team)
-    .filter(Boolean) || [];
+  // Build a map of entity ID to type from work history for efficient lookup
+  const entityTypeMap = useMemo(() => {
+    const map = new Map();
+    if (!person?.acf?.work_history) return map;
+    person.acf.work_history.forEach(job => {
+      if (job.team && job.entity_type && !map.has(job.team)) {
+        map.set(job.team, job.entity_type);
+      }
+    });
+    return map;
+  }, [person?.acf?.work_history]);
+
+  // Get unique entity IDs from work history
+  const entityIds = useMemo(() => {
+    if (!person?.acf?.work_history) return [];
+    const ids = person.acf.work_history
+      .map(job => job.team)
+      .filter(Boolean);
+    return [...new Set(ids)];
+  }, [person?.acf?.work_history]);
 
   const entityQueries = useQueries({
     queries: entityIds.map(entityId => ({
       queryKey: ['work-history-entity', entityId],
       queryFn: async () => {
-        // Try fetching as team first
+        // Check if we know the entity type from the work history data
+        const knownType = entityTypeMap.get(entityId);
+
+        // If we know the entity type, fetch directly from the correct endpoint
+        if (knownType === 'team') {
+          const response = await wpApi.getTeam(entityId, { _embed: true });
+          return { ...response.data, _entityType: 'team' };
+        }
+        if (knownType === 'commissie') {
+          const response = await wpApi.getCommissie(entityId, { _embed: true });
+          return { ...response.data, _entityType: 'commissie' };
+        }
+        // Legacy data without entity_type: try team first, then commissie
         try {
           const response = await wpApi.getTeam(entityId, { _embed: true });
           return { ...response.data, _entityType: 'team' };
@@ -1155,6 +1185,7 @@ export default function PersonDetail() {
       },
       enabled: !!entityId,
       retry: false, // Don't retry 404s
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     })),
   });
 
