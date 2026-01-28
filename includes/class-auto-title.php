@@ -118,10 +118,10 @@ class AutoTitle {
 	}
 
 	/**
-	 * Inject required fields into REST API requests for person creation/update
+	 * Inject required fields into REST API requests for person creation
 	 *
 	 * This runs very early in the REST API dispatch, before validation.
-	 * It adds required fields (title, _visibility) to POST/PUT requests for people.
+	 * It adds a temporary title to POST requests for people (replaced by auto_generate_person_title).
 	 *
 	 * @param mixed           $result  Response to replace the requested version with. Can be anything
 	 *                                 a normal endpoint can return, or null to not hijack the request.
@@ -133,34 +133,15 @@ class AutoTitle {
 		$route  = $request->get_route();
 		$method = $request->get_method();
 
-		// Check if this is a people endpoint (POST to /wp/v2/people or PUT to /wp/v2/people/{id})
-		$is_create = $method === 'POST' && $route === '/wp/v2/people';
-		$is_update = $method === 'PUT' && preg_match( '#^/wp/v2/people/\d+$#', $route );
-
-		if ( ! $is_create && ! $is_update ) {
+		// Only handle person creation (POST to /wp/v2/people)
+		if ( $method !== 'POST' || $route !== '/wp/v2/people' ) {
 			return $result;
 		}
 
-		// For creation: inject a temporary title if not set - will be replaced by auto_generate_person_title()
-		if ( $is_create ) {
-			$title = $request->get_param( 'title' );
-			if ( empty( $title ) ) {
-				$request->set_param( 'title', __( 'New Person', 'stadion' ) );
-			}
-		}
-
-		// Inject default _visibility if not set in acf params
-		$acf = $request->get_param( 'acf' );
-		if ( is_array( $acf ) && ! isset( $acf['_visibility'] ) ) {
-			// For updates, get the existing visibility from the post
-			if ( $is_update && preg_match( '#/wp/v2/people/(\d+)$#', $route, $matches ) ) {
-				$post_id            = (int) $matches[1];
-				$existing_visibility = get_field( '_visibility', $post_id );
-				$acf['_visibility'] = $existing_visibility ?: 'private';
-			} else {
-				$acf['_visibility'] = 'private';
-			}
-			$request->set_param( 'acf', $acf );
+		// Inject a temporary title if not set - will be replaced by auto_generate_person_title()
+		$title = $request->get_param( 'title' );
+		if ( empty( $title ) ) {
+			$request->set_param( 'title', __( 'New Person', 'stadion' ) );
 		}
 
 		return $result;

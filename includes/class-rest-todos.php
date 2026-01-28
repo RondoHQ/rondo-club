@@ -259,9 +259,6 @@ class Todos extends Base {
 			update_field( 'awaiting_since', gmdate( 'Y-m-d H:i:s' ), $post_id );
 		}
 
-		// Set default visibility to private
-		update_field( '_visibility', 'private', $post_id );
-
 		$todo = get_post( $post_id );
 
 		return rest_ensure_response( $this->format_todo( $todo ) );

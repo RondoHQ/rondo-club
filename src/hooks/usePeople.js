@@ -170,8 +170,6 @@ export function useCreatePerson({ onSuccess } = {}) {
           pronouns: data.pronouns || null,
           how_we_met: data.how_we_met,
           contact_info: contactInfo,
-          _visibility: data.visibility || 'private',
-          _assigned_workspaces: data.assigned_workspaces || [],
         },
       };
 
@@ -199,7 +197,6 @@ export function useCreatePerson({ onSuccess } = {}) {
               date_value: data.birthday,
               is_recurring: true,
               related_people: [personId],
-              _visibility: 'private',
             },
           });
         } catch {
@@ -284,7 +281,6 @@ export function useAddEmailToPerson() {
         acf: {
           first_name: person.acf?.first_name || '',
           last_name: person.acf?.last_name || '',
-          _visibility: person.acf?._visibility || 'private',
           contact_info: [...currentContacts, newContact],
         },
       });
