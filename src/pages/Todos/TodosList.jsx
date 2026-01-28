@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckSquare, Square, Clock, Pencil, Trash2, Plus, RotateCcw, User } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTodos, useUpdateTodo, useDeleteTodo } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
+import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import { stripHtmlTags } from '@/utils/richTextUtils';
 import TodoModal from '@/components/Timeline/TodoModal';
@@ -27,12 +29,17 @@ export default function TodosList() {
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [activityInitialData, setActivityInitialData] = useState(null);
+  const queryClient = useQueryClient();
 
   // Fetch todos with the current filter
   const { data: todos, isLoading } = useTodos(statusFilter);
   const updateTodo = useUpdateTodo();
   const deleteTodo = useDeleteTodo();
   const createActivity = useCreateActivity();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['todos'] });
+  };
 
   // Filter is handled by API, so just use todos directly
   const filteredTodos = useMemo(() => {
@@ -196,8 +203,9 @@ export default function TodosList() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <div className="space-y-6">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold">Taken</h1>
         <div className="flex items-center gap-2">
@@ -332,7 +340,8 @@ export default function TodosList() {
         personId={todoToComplete?.person_id}
         initialData={activityInitialData}
       />
-    </div>
+      </div>
+    </PullToRefreshWrapper>
   );
 }
 

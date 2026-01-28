@@ -2,8 +2,9 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag } from 'lucide-react';
 import { usePeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeople';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
+import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getTeamName } from '@/utils/formatters';
 import PersonEditModal from '@/components/PersonEditModal';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
@@ -434,9 +435,14 @@ export default function PeopleList() {
   const dropdownRef = useRef(null);
   const bulkDropdownRef = useRef(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: people, isLoading, error } = usePeople();
   const bulkUpdateMutation = useBulkUpdatePeople();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['people', 'list'] });
+  };
 
   // Get current user ID from stadionConfig
   const currentUserId = window.stadionConfig?.userId;
@@ -796,8 +802,9 @@ export default function PeopleList() {
   }, [filteredAndSortedPeople, sortField, sortOrder, personTeamMap, listViewFields]);
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <div className="space-y-4">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* Sort Controls */}
@@ -1208,6 +1215,7 @@ export default function PeopleList() {
         }}
         isLoading={bulkActionLoading}
       />
-    </div>
+      </div>
+    </PullToRefreshWrapper>
   );
 }

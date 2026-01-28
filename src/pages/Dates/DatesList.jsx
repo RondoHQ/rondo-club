@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Calendar, Gift, Heart, Star } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useReminders } from '@/hooks/useDashboard';
 import { usePeople } from '@/hooks/usePeople';
 import { useCreateDate } from '@/hooks/useDates';
 import { format } from '@/utils/dateFormat';
 import ImportantDateModal from '@/components/ImportantDateModal';
+import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 
 const typeIcons = {
   birthday: Gift,
@@ -139,9 +141,14 @@ function DateCard({ dates }) {
 export default function DatesList() {
   const [showDateModal, setShowDateModal] = useState(false);
   const [isCreatingDate, setIsCreatingDate] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: dates, isLoading, error } = useReminders(365);
   const { data: allPeople = [], isLoading: isPeopleLoading } = usePeople();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['reminders'] });
+  };
 
   // Create date mutation
   const createDateMutation = useCreateDate({
@@ -174,8 +181,9 @@ export default function DatesList() {
   }, {});
   
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <div className="space-y-6">
+        {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-gray-600 dark:text-gray-400">
           {dates?.length || 0} aankomende datums
@@ -234,6 +242,7 @@ export default function DatesList() {
         allPeople={allPeople}
         isPeopleLoading={isPeopleLoading}
       />
-    </div>
+      </div>
+    </PullToRefreshWrapper>
   );
 }
