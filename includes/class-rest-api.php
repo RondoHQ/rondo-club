@@ -429,6 +429,25 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Get entity (team or commissie) by ID - unified lookup
+		register_rest_route(
+			'stadion/v1',
+			'/entity/(?P<id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_entity_by_id' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && $param > 0;
+						},
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -1456,6 +1475,79 @@ class Api extends Base {
 		);
 
 		return count( $todos );
+	}
+
+	/**
+	 * Get entity (team or commissie) by ID
+	 *
+	 * Unified lookup that determines the post type and returns the appropriate data.
+	 * Used by frontend to avoid 404 errors when entity type is unknown.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error Response object or error.
+	 */
+	public function get_entity_by_id( $request ) {
+		$id = (int) $request->get_param( 'id' );
+
+		$post = get_post( $id );
+
+		if ( ! $post ) {
+			return new \WP_Error(
+				'not_found',
+				'Entity not found',
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Check if it's a team or commissie
+		if ( ! in_array( $post->post_type, [ 'team', 'commissie' ], true ) ) {
+			return new \WP_Error(
+				'invalid_type',
+				'Entity is not a team or commissie',
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Build response similar to WP REST API
+		$response = [
+			'id'           => $post->ID,
+			'title'        => [ 'rendered' => get_the_title( $post ) ],
+			'slug'         => $post->post_name,
+			'status'       => $post->post_status,
+			'type'         => $post->post_type,
+			'_entity_type' => $post->post_type,
+		];
+
+		// Add featured image if available
+		$thumbnail_id = get_post_thumbnail_id( $post->ID );
+		if ( $thumbnail_id ) {
+			$thumbnail_url = wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' );
+			$full_url      = wp_get_attachment_image_url( $thumbnail_id, 'full' );
+			$response['_embedded'] = [
+				'wp:featuredmedia' => [
+					[
+						'source_url'    => $full_url,
+						'media_details' => [
+							'sizes' => [
+								'thumbnail' => [
+									'source_url' => $thumbnail_url,
+								],
+							],
+						],
+					],
+				],
+			];
+		}
+
+		// Add ACF fields if available
+		if ( function_exists( 'get_fields' ) ) {
+			$acf_fields = get_fields( $post->ID );
+			if ( $acf_fields ) {
+				$response['acf'] = $acf_fields;
+			}
+		}
+
+		return rest_ensure_response( $response );
 	}
 
 	/**

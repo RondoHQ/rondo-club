@@ -1209,22 +1209,9 @@ export default function PersonDetail() {
           const response = await wpApi.getCommissie(entityId, { _embed: true });
           return { ...response.data, _entityType: 'commissie' };
         }
-        // Legacy data without entity_type: try both endpoints in parallel
-        const [teamResult, commissieResult] = await Promise.allSettled([
-          wpApi.getTeam(entityId, { _embed: true }),
-          wpApi.getCommissie(entityId, { _embed: true }),
-        ]);
-
-        // Return whichever succeeded (team takes priority if both somehow exist)
-        if (teamResult.status === 'fulfilled') {
-          return { ...teamResult.value.data, _entityType: 'team' };
-        }
-        if (commissieResult.status === 'fulfilled') {
-          return { ...commissieResult.value.data, _entityType: 'commissie' };
-        }
-
-        // Both failed - throw the team error
-        throw teamResult.reason;
+        // Legacy data without entity_type: use unified endpoint
+        const response = await prmApi.getEntity(entityId);
+        return { ...response.data, _entityType: response.data._entity_type || response.data.type };
       },
       enabled: !!entityId,
       retry: false, // Don't retry 404s

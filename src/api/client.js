@@ -61,6 +61,9 @@ export const wpApi = {
   updateCommissie: (id, data) => api.put(`/wp/v2/commissies/${id}`, data),
   deleteCommissie: (id, params = {}) => api.delete(`/wp/v2/commissies/${id}`, { params }),
 
+  // Entity lookup (team or commissie by ID - avoids 404 fallback)
+  getEntity: (id) => api.get(`/stadion/v1/entity/${id}`),
+
   // Important Dates
   getDates: (params) => api.get('/wp/v2/important-dates', { params }),
   getDate: (id) => api.get(`/wp/v2/important-dates/${id}`),
