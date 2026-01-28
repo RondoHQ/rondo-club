@@ -17,10 +17,10 @@ Requirements for PWA milestone. Each maps to roadmap phases.
 
 ### Offline Support
 
-- [ ] **OFF-01**: App caches static assets (JS, CSS, fonts) via service worker for offline access
-- [ ] **OFF-02**: App shows offline fallback page when network unavailable and no cached content
-- [ ] **OFF-03**: App displays cached API data (contacts, teams, etc.) when offline (read-only)
-- [ ] **OFF-04**: App shows offline indicator when network unavailable
+- [x] **OFF-01**: App caches static assets (JS, CSS, fonts) via service worker for offline access
+- [x] **OFF-02**: App shows offline fallback page when network unavailable and no cached content
+- [x] **OFF-03**: App displays cached API data (contacts, teams, etc.) when offline (read-only)
+- [x] **OFF-04**: App shows offline indicator when network unavailable
 
 ### Mobile UX
 
@@ -78,10 +78,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PWA-03 | Phase 107 | Complete |
 | PWA-04 | Phase 107 | Complete |
 | PWA-05 | Phase 107 | Complete |
-| OFF-01 | Phase 108 | Pending |
-| OFF-02 | Phase 108 | Pending |
-| OFF-03 | Phase 108 | Pending |
-| OFF-04 | Phase 108 | Pending |
+| OFF-01 | Phase 108 | Complete |
+| OFF-02 | Phase 108 | Complete |
+| OFF-03 | Phase 108 | Complete |
+| OFF-04 | Phase 108 | Complete |
 | UX-01 | Phase 109 | Pending |
 | UX-02 | Phase 109 | Pending |
 | INST-01 | Phase 110 | Pending |
