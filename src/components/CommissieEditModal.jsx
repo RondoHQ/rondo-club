@@ -4,6 +4,7 @@ import { X, ChevronDown, Building2, Search, User, TrendingUp } from 'lucide-reac
 import { useQuery } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { getCommissieName, decodeHtml } from '@/utils/formatters';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 export default function CommissieEditModal({
   isOpen,
@@ -13,6 +14,7 @@ export default function CommissieEditModal({
   commissie = null // Pass commissie data for editing
 }) {
   const isEditing = !!commissie;
+  const isOnline = useOnlineStatus();
 
   // State for parent commissie dropdown
   const [isParentDropdownOpen, setIsParentDropdownOpen] = useState(false);
@@ -579,8 +581,8 @@ export default function CommissieEditModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              disabled={isLoading}
+              className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!isOnline || isLoading}
             >
               {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Commissie aanmaken')}
             </button>

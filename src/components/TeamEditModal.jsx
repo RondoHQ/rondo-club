@@ -4,15 +4,17 @@ import { X, ChevronDown, Building2, Search, User, TrendingUp } from 'lucide-reac
 import { useQuery } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { getTeamName, decodeHtml } from '@/utils/formatters';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
-export default function TeamEditModal({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
+export default function TeamEditModal({
+  isOpen,
+  onClose,
+  onSubmit,
   isLoading,
   team = null // Pass team data for editing
 }) {
   const isEditing = !!team;
+  const isOnline = useOnlineStatus();
   
   // State for parent team dropdown
   const [isParentDropdownOpen, setIsParentDropdownOpen] = useState(false);
@@ -578,8 +580,8 @@ export default function TeamEditModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              disabled={isLoading}
+              className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!isOnline || isLoading}
             >
               {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Team aanmaken')}
             </button>
