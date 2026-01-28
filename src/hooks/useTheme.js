@@ -25,6 +25,20 @@ const ACCENT_HEX = {
 };
 
 /**
+ * Accent color hex values for dark mode (Tailwind -600 values)
+ */
+const ACCENT_HEX_DARK = {
+  orange: '#ea580c',
+  teal: '#0d9488',
+  indigo: '#4f46e5',
+  emerald: '#059669',
+  violet: '#7c3aed',
+  pink: '#db2777',
+  fuchsia: '#c026d3',
+  rose: '#e11d48',
+};
+
+/**
  * localStorage key for theme preferences
  */
 const STORAGE_KEY = 'theme-preferences';
@@ -115,6 +129,30 @@ function updateFavicon(accentColor) {
 }
 
 /**
+ * Update theme-color meta tags for PWA
+ * These control the browser/OS chrome color on mobile
+ * @param {string} accentColor - The accent color name
+ */
+function updateThemeColorMeta(accentColor) {
+  if (typeof document === 'undefined') return;
+
+  const lightHex = ACCENT_HEX[accentColor] || ACCENT_HEX.orange;
+  const darkHex = ACCENT_HEX_DARK[accentColor] || ACCENT_HEX_DARK.orange;
+
+  // Update light mode theme-color
+  const lightMeta = document.querySelector('meta[name="theme-color"][media*="light"]');
+  if (lightMeta) {
+    lightMeta.content = lightHex;
+  }
+
+  // Update dark mode theme-color
+  const darkMeta = document.querySelector('meta[name="theme-color"][media*="dark"]');
+  if (darkMeta) {
+    darkMeta.content = darkHex;
+  }
+}
+
+/**
  * Apply theme to DOM
  * @param {string} effectiveColorScheme - 'light' or 'dark'
  * @param {string} accentColor - The accent color name
@@ -136,6 +174,9 @@ function applyTheme(effectiveColorScheme, accentColor) {
 
   // Update favicon to match accent color
   updateFavicon(accentColor);
+
+  // Update theme-color meta tags for PWA
+  updateThemeColorMeta(accentColor);
 }
 
 /**
