@@ -136,7 +136,7 @@ export default function WorkHistoryEditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Werkgeschiedenis bewerken' : 'Werkgeschiedenis toevoegen'}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Functie bewerken' : 'Functie toevoegen'}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -240,7 +240,7 @@ export default function WorkHistoryEditModal({
               className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={!isOnline || isLoading}
             >
-              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Werkgeschiedenis toevoegen')}
+              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Functie toevoegen')}
             </button>
           </div>
         </form>

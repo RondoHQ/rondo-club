@@ -633,7 +633,7 @@ export default function PersonDetail() {
       setEditingWorkHistory(null);
       setEditingWorkHistoryIndex(null);
     } catch {
-      alert('Werkgeschiedenis kon niet worden opgeslagen. Probeer het opnieuw.');
+      alert('Functie kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingWorkHistory(false);
     }
@@ -1196,58 +1196,6 @@ export default function PersonDetail() {
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     })),
   });
-
-  // Get current job team IDs (jobs without end_date)
-  const currentJobTeamIds = useMemo(() => {
-    if (!person?.acf?.work_history) return [];
-    return person.acf.work_history
-      .filter(job => !job.end_date && job.team)
-      .map(job => job.team);
-  }, [person?.acf?.work_history]);
-
-  // Fetch colleagues for current jobs
-  const colleagueQueries = useQueries({
-    queries: currentJobTeamIds.map(teamId => ({
-      queryKey: ['team-people', teamId],
-      queryFn: async () => {
-        const response = await prmApi.getTeamPeople(teamId);
-        return { teamId, ...response.data };
-      },
-      enabled: !!teamId,
-    })),
-  });
-
-  // Process colleagues data - combine all current employees from all teams, excluding self
-  const colleagues = useMemo(() => {
-    const colleagueMap = new Map();
-    
-    colleagueQueries.forEach(query => {
-      if (query.data?.current) {
-        query.data.current.forEach(employee => {
-          // Exclude the current person
-          if (employee.id !== parseInt(id)) {
-            // If already in map, just add the team; otherwise create new entry
-            if (colleagueMap.has(employee.id)) {
-              const existing = colleagueMap.get(employee.id);
-              if (!existing.teams.includes(query.data.teamId)) {
-                existing.teams.push(query.data.teamId);
-              }
-            } else {
-              colleagueMap.set(employee.id, {
-                ...employee,
-                teams: [query.data.teamId],
-              });
-            }
-          }
-        });
-      }
-    });
-    
-    // Convert to array and sort alphabetically by name
-    return Array.from(colleagueMap.values()).sort((a, b) => 
-      (a.name || '').localeCompare(b.name || '')
-    );
-  }, [colleagueQueries, id]);
 
   // Fetch dates for related people to calculate ages for sorting
   const relatedPersonIds = person?.acf?.relationships
@@ -2268,10 +2216,10 @@ export default function PersonDetail() {
         {/* Work Tab */}
         {activeTab === 'work' && (
           <div className="columns-1 md:columns-2 gap-6">
-            {/* Work history */}
-          <div className="card p-6 break-inside-avoid mb-6">
+            {/* Work history - spans both columns */}
+          <div className="card p-6 mb-6 [column-span:all]">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Werkgeschiedenis</h2>
+              <h2 className="font-semibold">Functiegeschiedenis</h2>
               <button
                 onClick={() => {
                   setEditingWorkHistory(null);
@@ -2279,7 +2227,7 @@ export default function PersonDetail() {
                   setShowWorkHistoryModal(true);
                 }}
                 className="btn-secondary text-sm"
-                title="Werkgeschiedenis toevoegen"
+                title="Functie toevoegen"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -2331,14 +2279,14 @@ export default function PersonDetail() {
                             setShowWorkHistoryModal(true);
                           }}
                           className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title="Werkgeschiedenis bewerken"
+                          title="Functie bewerken"
                         >
                           <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
                         </button>
                         <button
                           onClick={() => handleDeleteWorkHistory(originalIndex)}
                           className="p-1 hover:bg-red-50 rounded"
-                          title="Werkgeschiedenis verwijderen"
+                          title="Functie verwijderen"
                         >
                           <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
                         </button>
@@ -2349,7 +2297,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                Nog geen werkgeschiedenis. <button onClick={() => { setEditingWorkHistory(null); setEditingWorkHistoryIndex(null); setShowWorkHistoryModal(true); }} className="text-accent-600 hover:underline">Toevoegen</button>
+                Nog geen functiegeschiedenis. <button onClick={() => { setEditingWorkHistory(null); setEditingWorkHistoryIndex(null); setShowWorkHistoryModal(true); }} className="text-accent-600 hover:underline">Toevoegen</button>
               </p>
             )}
           </div>
@@ -2391,44 +2339,6 @@ export default function PersonDetail() {
             </div>
           )}
 
-          {/* Colleagues - only show if person has current job(s) */}
-          {colleagues.length > 0 && (
-            <div className="card p-6 break-inside-avoid mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Collega's</h2>
-                <span className="text-xs text-gray-500 dark:text-gray-400">{colleagues.length} {colleagues.length === 1 ? 'colleague' : 'colleagues'}</span>
-              </div>
-              <div className="space-y-2">
-                {colleagues.map((colleague) => (
-                  <Link
-                    key={colleague.id}
-                    to={`/people/${colleague.id}`}
-                    className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    {colleague.thumbnail ? (
-                      <img
-                        src={colleague.thumbnail}
-                        alt={colleague.name || ''}
-                        className="w-8 h-8 rounded-full object-cover mr-2"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full mr-2 flex items-center justify-center">
-                        <span className="text-xs font-medium text-gray-500">
-                          {colleague.name?.[0] || '?'}
-                        </span>
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{colleague.name}</p>
-                      {colleague.job_title && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{colleague.job_title}</p>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
           </div>
         )}
 
