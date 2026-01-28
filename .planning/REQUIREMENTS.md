@@ -9,11 +9,11 @@ Requirements for PWA milestone. Each maps to roadmap phases.
 
 ### PWA Foundation
 
-- [ ] **PWA-01**: App has Web App Manifest with name, short_name, icons, theme_color, background_color, and display: standalone
-- [ ] **PWA-02**: App registers a service worker that enables browser install prompt on Android
-- [ ] **PWA-03**: App has Apple Touch icons and iOS-specific meta tags for Add to Home Screen
-- [ ] **PWA-04**: App handles safe area insets for notched devices (iPhone X+)
-- [ ] **PWA-05**: App theme color in manifest matches user's configured accent color setting
+- [x] **PWA-01**: App has Web App Manifest with name, short_name, icons, theme_color, background_color, and display: standalone
+- [x] **PWA-02**: App registers a service worker that enables browser install prompt on Android
+- [x] **PWA-03**: App has Apple Touch icons and iOS-specific meta tags for Add to Home Screen
+- [x] **PWA-04**: App handles safe area insets for notched devices (iPhone X+)
+- [x] **PWA-05**: App theme color in manifest matches user's configured accent color setting
 
 ### Offline Support
 
@@ -73,11 +73,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PWA-01 | Phase 107 | Pending |
-| PWA-02 | Phase 107 | Pending |
-| PWA-03 | Phase 107 | Pending |
-| PWA-04 | Phase 107 | Pending |
-| PWA-05 | Phase 107 | Pending |
+| PWA-01 | Phase 107 | Complete |
+| PWA-02 | Phase 107 | Complete |
+| PWA-03 | Phase 107 | Complete |
+| PWA-04 | Phase 107 | Complete |
+| PWA-05 | Phase 107 | Complete |
 | OFF-01 | Phase 108 | Pending |
 | OFF-02 | Phase 108 | Pending |
 | OFF-03 | Phase 108 | Pending |
