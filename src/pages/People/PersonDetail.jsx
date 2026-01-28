@@ -435,8 +435,9 @@ export default function PersonDetail() {
     }
   };
 
-  // Helper function to format phone number for tel: link
-  // Removes all non-digit characters except + at the start, and removes Unicode marks
+  // Helper function to format phone number for tel: and WhatsApp links
+  // Removes all non-digit characters except + at the start, removes Unicode marks,
+  // and converts Dutch mobile numbers (06...) to international format (+316...)
   const formatPhoneForTel = (phone) => {
     if (!phone) return '';
     // Remove all Unicode marks and invisible characters
@@ -445,6 +446,10 @@ export default function PersonDetail() {
     const hasPlus = cleaned.startsWith('+');
     // Remove all non-digit characters
     cleaned = cleaned.replace(/\D/g, '');
+    // Convert Dutch mobile numbers (06...) to international format (+316...)
+    if (!hasPlus && cleaned.startsWith('06')) {
+      return `+316${cleaned.slice(2)}`;
+    }
     // Prepend + if it was at the start
     return hasPlus ? `+${cleaned}` : cleaned;
   };
@@ -1467,7 +1472,7 @@ export default function PersonDetail() {
     if (mobileContact) {
       links.push({
         contact_type: 'whatsapp',
-        contact_value: `https://wa.me/${mobileContact.contact_value.replace(/[^0-9+]/g, '')}`,
+        contact_value: `https://wa.me/${formatPhoneForTel(mobileContact.contact_value)}`,
       });
     }
     
