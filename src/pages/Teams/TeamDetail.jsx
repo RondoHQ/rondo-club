@@ -8,6 +8,7 @@ import { getTeamName, decodeHtml, sanitizeTeamAcf } from '@/utils/formatters';
 import TeamEditModal from '@/components/TeamEditModal';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
+import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 
 export default function TeamDetail() {
   const { id } = useParams();
@@ -134,7 +135,11 @@ export default function TeamDetail() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
-  
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['teams', parseInt(id, 10)] });
+  };
+
   // Update document title with team's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
   useDocumentTitle(getTeamName(team) || 'Team');
@@ -239,11 +244,12 @@ export default function TeamDetail() {
   }
   
   const acf = team.acf || {};
-  
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
         <Link to="/teams" className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
           <span className="hidden md:inline">Terug naar teams</span>
@@ -568,6 +574,7 @@ export default function TeamDetail() {
         postId={team.id}
         postTitle={getTeamName(team)}
       />
-    </div>
+      </div>
+    </PullToRefreshWrapper>
   );
 }

@@ -8,6 +8,7 @@ import { getCommissieName, decodeHtml, sanitizeCommissieAcf } from '@/utils/form
 import CommissieEditModal from '@/components/CommissieEditModal';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
+import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 
 export default function CommissieDetail() {
   const { id } = useParams();
@@ -134,7 +135,11 @@ export default function CommissieDetail() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
-  
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['commissies', parseInt(id, 10)] });
+  };
+
   // Update document title with commissie's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
   useDocumentTitle(getCommissieName(commissie) || 'Organization');
@@ -239,11 +244,12 @@ export default function CommissieDetail() {
   }
   
   const acf = commissie.acf || {};
-  
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
         <Link to="/commissies" className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
           <span className="hidden md:inline">Terug naar commissies</span>
@@ -568,6 +574,7 @@ export default function CommissieDetail() {
         postId={commissie.id}
         postTitle={getCommissieName(commissie)}
       />
-    </div>
+      </div>
+    </PullToRefreshWrapper>
   );
 }

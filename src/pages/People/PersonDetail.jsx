@@ -29,6 +29,7 @@ const LinkedInIcon = ({ className }) => (
 import { usePerson, usePersonTimeline, usePersonDates, useDeletePerson, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople, peopleKeys } from '@/hooks/usePeople';
 import { usePersonMeetings, useLogMeetingAsActivity } from '@/hooks/useMeetings';
 import TimelineView from '@/components/Timeline/TimelineView';
+import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import NoteModal from '@/components/Timeline/NoteModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import TodoModal from '@/components/Timeline/TodoModal';
@@ -290,7 +291,14 @@ export default function PersonDetail() {
   const deleteActivity = useDeleteActivity();
   const deleteTodo = useDeleteTodo();
   const { data: allPeople, isLoading: isPeopleLoading } = usePeople();
-  
+
+  const handleRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['people', 'detail', id] }),
+      queryClient.invalidateQueries({ queryKey: ['people', id, 'timeline'] }),
+    ]);
+  };
+
   // Fetch teams where this person is an investor
   const { data: investments = [] } = useQuery({
     queryKey: ['investments', id],
@@ -1499,11 +1507,12 @@ export default function PersonDetail() {
       default: return 'text-gray-600';
     }
   };
-  
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
         <Link to="/people" className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
           <span className="hidden md:inline">Terug naar leden</span>
@@ -2910,6 +2919,7 @@ export default function PersonDetail() {
           meeting={selectedMeeting}
         />
       </Suspense>
-    </div>
+      </div>
+    </PullToRefreshWrapper>
   );
 }

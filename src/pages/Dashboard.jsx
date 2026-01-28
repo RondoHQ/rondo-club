@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Users, Building2, Calendar, ArrowRight, Plus, Sparkles, CheckSquare, Square, MessageCircle, Clock, CalendarClock, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useDashboard, useTodos, useUpdateTodo, useDashboardSettings, useUpdateDashboardSettings, DEFAULT_DASHBOARD_CARDS } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useDateMeetings } from '@/hooks/useMeetings';
@@ -10,6 +11,7 @@ import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import DashboardCustomizeModal from '@/components/DashboardCustomizeModal';
+import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 
 const TodoModal = lazy(() => import('@/components/Timeline/TodoModal'));
 const MeetingDetailModal = lazy(() => import('@/components/MeetingDetailModal'));
@@ -342,6 +344,15 @@ export default function Dashboard() {
   const updateTodo = useUpdateTodo();
   const createActivity = useCreateActivity();
   const updateDashboardSettings = useUpdateDashboardSettings();
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['reminders'] }),
+      queryClient.invalidateQueries({ queryKey: ['todos'] }),
+    ]);
+  };
 
   // Date navigation state for meetings widget
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -857,9 +868,10 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-6 -mb-4 lg:-mb-6">
-      {/* Render cards in segments respecting order */}
-      {renderCardSegments()}
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <div className="space-y-6 -mb-4 lg:-mb-6">
+        {/* Render cards in segments respecting order */}
+        {renderCardSegments()}
 
       {/* Complete Todo Modal */}
       <CompleteTodoModal
@@ -921,6 +933,7 @@ export default function Dashboard() {
         onSave={handleSaveSettings}
         isSaving={updateDashboardSettings.isPending}
       />
-    </div>
+      </div>
+    </PullToRefreshWrapper>
   );
 }
