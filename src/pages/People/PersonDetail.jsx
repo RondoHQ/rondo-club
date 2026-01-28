@@ -51,6 +51,13 @@ import { downloadVCard } from '@/utils/vcard';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import { stripHtmlTags } from '@/utils/richTextUtils';
 
+// Helper to validate date strings
+function isValidDate(dateString) {
+  if (!dateString) return false;
+  const date = new Date(dateString);
+  return date instanceof Date && !isNaN(date.getTime());
+}
+
 // Helper to get gender symbol
 function getGenderSymbol(gender) {
   if (!gender) return null;
@@ -1124,19 +1131,30 @@ export default function PersonDetail() {
     }
   };
 
-  // Fetch team names for work history entries
-  const teamIds = person?.acf?.work_history
+  // Fetch team/commissie names for work history entries
+  const entityIds = person?.acf?.work_history
     ?.map(job => job.team)
     .filter(Boolean) || [];
-  
-  const teamQueries = useQueries({
-    queries: teamIds.map(teamId => ({
-      queryKey: ['team', teamId],
+
+  const entityQueries = useQueries({
+    queries: entityIds.map(entityId => ({
+      queryKey: ['work-history-entity', entityId],
       queryFn: async () => {
-        const response = await wpApi.getTeam(teamId, { _embed: true });
-        return response.data;
+        // Try fetching as team first
+        try {
+          const response = await wpApi.getTeam(entityId, { _embed: true });
+          return { ...response.data, _entityType: 'team' };
+        } catch (error) {
+          // If 404, try fetching as commissie
+          if (error.response?.status === 404) {
+            const response = await wpApi.getCommissie(entityId, { _embed: true });
+            return { ...response.data, _entityType: 'commissie' };
+          }
+          throw error;
+        }
       },
-      enabled: !!teamId,
+      enabled: !!entityId,
+      retry: false, // Don't retry 404s
     })),
   });
 
@@ -1265,19 +1283,23 @@ export default function PersonDetail() {
     });
   }, [person?.acf?.relationships, personAgeMap]);
 
-  // Create a map of team ID to team data (name and logo)
-  const teamMap = {};
-  teamQueries.forEach((query, index) => {
+  // Create a map of entity ID to entity data (name, logo, type)
+  const entityMap = {};
+  entityQueries.forEach((query, index) => {
     if (query.data) {
-      const teamId = teamIds[index];
-      teamMap[teamId] = {
+      const entityId = entityIds[index];
+      entityMap[entityId] = {
         name: getTeamName(query.data),
         logo: query.data._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
               query.data._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url ||
               null,
+        type: query.data._entityType || 'team',
       };
     }
   });
+
+  // Keep teamMap for backward compatibility (references old teamMap in other parts of code)
+  const teamMap = entityMap;
   
   // Sort work history by start date descending (most recent first)
   // Current jobs come first, then sorted by start_date descending
@@ -1535,7 +1557,7 @@ export default function PersonDetail() {
                         <>
                           <span className="text-gray-400 dark:text-gray-500"> bij </span>
                           <Link
-                            to={`/organizations/${job.team}`}
+                            to={`/${teamMap[job.team].type === 'commissie' ? 'commissies' : 'teams'}/${job.team}`}
                             className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
                           >
                             {teamMap[job.team].name}
@@ -2199,17 +2221,17 @@ export default function PersonDetail() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium">{job.job_title}</p>
                         {job.team && teamData && (
-                          <Link 
-                            to={`/teams/${job.team}`}
+                          <Link
+                            to={`/${teamData.type === 'commissie' ? 'commissies' : 'teams'}/${job.team}`}
                             className="text-sm text-accent-600 hover:underline"
                           >
                             {teamData.name}
                           </Link>
                         )}
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {job.start_date && format(new Date(job.start_date), 'MMM yyyy')}
+                          {job.start_date && isValidDate(job.start_date) && format(new Date(job.start_date), 'MMM yyyy')}
                           {' - '}
-                          {job.is_current ? 'Heden' : job.end_date ? format(new Date(job.end_date), 'MMM yyyy') : ''}
+                          {job.is_current ? 'Heden' : job.end_date && isValidDate(job.end_date) ? format(new Date(job.end_date), 'MMM yyyy') : ''}
                         </p>
                         {job.description && (
                           <p className="text-sm text-gray-600 mt-1">{job.description}</p>
