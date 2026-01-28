@@ -1209,18 +1209,22 @@ export default function PersonDetail() {
           const response = await wpApi.getCommissie(entityId, { _embed: true });
           return { ...response.data, _entityType: 'commissie' };
         }
-        // Legacy data without entity_type: try team first, then commissie
-        try {
-          const response = await wpApi.getTeam(entityId, { _embed: true });
-          return { ...response.data, _entityType: 'team' };
-        } catch (error) {
-          // If 404, try fetching as commissie
-          if (error.response?.status === 404) {
-            const response = await wpApi.getCommissie(entityId, { _embed: true });
-            return { ...response.data, _entityType: 'commissie' };
-          }
-          throw error;
+        // Legacy data without entity_type: try both endpoints in parallel
+        const [teamResult, commissieResult] = await Promise.allSettled([
+          wpApi.getTeam(entityId, { _embed: true }),
+          wpApi.getCommissie(entityId, { _embed: true }),
+        ]);
+
+        // Return whichever succeeded (team takes priority if both somehow exist)
+        if (teamResult.status === 'fulfilled') {
+          return { ...teamResult.value.data, _entityType: 'team' };
         }
+        if (commissieResult.status === 'fulfilled') {
+          return { ...commissieResult.value.data, _entityType: 'commissie' };
+        }
+
+        // Both failed - throw the team error
+        throw teamResult.reason;
       },
       enabled: !!entityId,
       retry: false, // Don't retry 404s
