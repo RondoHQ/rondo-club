@@ -1506,10 +1506,10 @@ export default function PersonDetail() {
     }
 
     // Add Sportlink if there's a KNVB ID
-    if (acf.knvb_id) {
+    if (acf['knvb-id']) {
       links.push({
         contact_type: 'sportlink',
-        contact_value: `https://club.sportlink.com/member/${acf.knvb_id}`,
+        contact_value: `https://club.sportlink.com/member/${acf['knvb-id']}`,
       });
     }
 
