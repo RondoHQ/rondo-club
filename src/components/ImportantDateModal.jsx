@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { decodeHtml, getPersonName } from '@/utils/formatters';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 function PeopleSelector({ value = [], onChange, people = [], isLoading, currentPersonId }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,6 +105,7 @@ export default function ImportantDateModal({
   isPeopleLoading = false
 }) {
   const isEditing = !!dateItem;
+  const isOnline = useOnlineStatus();
 
   // Track if user has manually edited the title
   const hasUserEditedTitle = useRef(false);
@@ -398,8 +400,8 @@ export default function ImportantDateModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              disabled={isLoading}
+              className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!isOnline || isLoading}
             >
               {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Datum toevoegen')}
             </button>

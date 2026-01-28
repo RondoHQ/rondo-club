@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { X, ChevronDown } from 'lucide-react';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 // Comprehensive list of countries
 const COUNTRIES = [
@@ -148,14 +149,15 @@ function SearchableCountrySelector({ value, onChange, disabled }) {
   );
 }
 
-export default function AddressEditModal({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  isLoading, 
-  address = null 
+export default function AddressEditModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+  address = null
 }) {
   const isEditing = !!address;
+  const isOnline = useOnlineStatus();
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
     defaultValues: {
@@ -307,8 +309,8 @@ export default function AddressEditModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              disabled={isLoading}
+              className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!isOnline || isLoading}
             >
               {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Adres toevoegen')}
             </button>

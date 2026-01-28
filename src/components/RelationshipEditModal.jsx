@@ -4,6 +4,7 @@ import { X, Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { getPersonName } from '@/utils/formatters';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 function SearchablePersonSelector({ value, onChange, people, isLoading, excludePersonId }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -133,11 +134,11 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
   );
 }
 
-export default function RelationshipEditModal({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  isLoading, 
+export default function RelationshipEditModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
   relationship = null,
   personId,
   allPeople = [],
@@ -145,6 +146,7 @@ export default function RelationshipEditModal({
   onCreatePerson
 }) {
   const isEditing = !!relationship;
+  const isOnline = useOnlineStatus();
 
   // Fetch relationship types
   const { data: relationshipTypes = [], isLoading: isRelationshipTypesLoading } = useQuery({
@@ -285,8 +287,8 @@ export default function RelationshipEditModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              disabled={isLoading}
+              className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!isOnline || isLoading}
             >
               {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Relatie toevoegen')}
             </button>

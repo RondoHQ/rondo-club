@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Upload, Trash2 } from 'lucide-react';
 import { wpApi } from '@/api/client';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 export default function FeedbackModal({
   isOpen,
@@ -9,6 +10,7 @@ export default function FeedbackModal({
   onSubmit,
   isLoading,
 }) {
+  const isOnline = useOnlineStatus();
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({
     defaultValues: {
       title: '',
@@ -340,8 +342,8 @@ export default function FeedbackModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              disabled={isLoading || isUploading}
+              className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!isOnline || isLoading || isUploading}
             >
               {isLoading ? 'Verzenden...' : 'Feedback verzenden'}
             </button>

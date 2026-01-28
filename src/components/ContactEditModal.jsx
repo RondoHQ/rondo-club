@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 const CONTACT_TYPES = [
   { value: 'email', label: 'Email' },
@@ -19,6 +20,7 @@ const CONTACT_TYPES = [
 ];
 
 export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading, contactInfo = [] }) {
+  const isOnline = useOnlineStatus();
   const { register, control, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
       contacts: contactInfo.length > 0 
@@ -180,8 +182,8 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              disabled={isLoading}
+              className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!isOnline || isLoading}
             >
               {isLoading ? 'Opslaan...' : 'Wijzigingen opslaan'}
             </button>

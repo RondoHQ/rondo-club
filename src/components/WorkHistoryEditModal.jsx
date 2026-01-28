@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 function EntitySelector({ value, onChange, entities, isLoading }) {
   // value is now "{type}:{id}" format, e.g., "team:123" or "commissie:456"
@@ -23,14 +24,15 @@ function EntitySelector({ value, onChange, entities, isLoading }) {
   );
 }
 
-export default function WorkHistoryEditModal({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  isLoading, 
-  workHistoryItem = null 
+export default function WorkHistoryEditModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+  workHistoryItem = null
 }) {
   const isEditing = !!workHistoryItem;
+  const isOnline = useOnlineStatus();
 
   // Fetch teams for the selector
   const { data: teamsData = [], isLoading: isTeamsLoading } = useQuery({
@@ -235,8 +237,8 @@ export default function WorkHistoryEditModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              disabled={isLoading}
+              className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!isOnline || isLoading}
             >
               {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Werkgeschiedenis toevoegen')}
             </button>
