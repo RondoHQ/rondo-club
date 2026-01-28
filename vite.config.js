@@ -58,8 +58,8 @@ export default defineConfig({
             },
           },
         ],
-        // Offline fallback page
-        navigateFallback: '/offline.html',
+        // Offline fallback page (must include base path)
+        navigateFallback: '/wp-content/themes/stadion/dist/offline.html',
         navigateFallbackDenylist: [
           /^\/wp-json\//,   // Don't use offline page for API requests
           /^\/wp-admin\//,  // Don't use offline page for admin
