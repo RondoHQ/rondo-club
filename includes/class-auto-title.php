@@ -48,16 +48,6 @@ class AutoTitle {
 
 		// Set temporary title for REST API person creation
 		add_filter( 'rest_pre_insert_person', [ $this, 'set_temporary_title_rest' ], 5, 2 );
-
-		// Set default visibility BEFORE validation (fixes ACF REST schema bug)
-		add_filter( 'rest_pre_insert_person', [ $this, 'set_default_visibility_pre_insert' ], 10, 2 );
-		add_filter( 'rest_pre_insert_team', [ $this, 'set_default_visibility_pre_insert' ], 10, 2 );
-		add_filter( 'rest_pre_insert_important_date', [ $this, 'set_default_visibility_pre_insert' ], 10, 2 );
-
-		// Set default visibility after insert (backup for non-REST creates)
-		add_action( 'rest_after_insert_person', [ $this, 'set_default_visibility' ], 10, 2 );
-		add_action( 'rest_after_insert_team', [ $this, 'set_default_visibility' ], 10, 2 );
-		add_action( 'rest_after_insert_important_date', [ $this, 'set_default_visibility' ], 10, 2 );
 	}
 
 	/**
@@ -530,98 +520,6 @@ class AutoTitle {
 	 */
 	public function handle_async_calendar_rematch( int $post_id ): void {
 		\Stadion\Calendar\Matcher::on_person_saved( $post_id );
-	}
-
-	/**
-	 * Set default visibility BEFORE REST API validation
-	 *
-	 * Fixes ACF REST API bug where ANY field with show_in_rest=1 is treated as required
-	 * during validation, regardless of the field's "required" setting. This is a known
-	 * ACF issue: https://github.com/AdvancedCustomFields/acf/issues/757
-	 *
-	 * By injecting the default value before validation, we satisfy ACF's schema requirements
-	 * without requiring external clients (sync tools) to know about internal visibility fields.
-	 *
-	 * @param WP_Post         $prepared_post Post object prepared for insertion.
-	 * @param WP_REST_Request $request       Request object.
-	 * @return WP_Post Modified post object.
-	 */
-	public function set_default_visibility_pre_insert( $prepared_post, $request ) {
-		// Check if ACF parameters exist in request
-		$acf_params = $request->get_param( 'acf' );
-
-		// If no ACF params at all, or _visibility is not set, inject default
-		if ( ! is_array( $acf_params ) || ! isset( $acf_params['_visibility'] ) ) {
-			// Initialize acf array if it doesn't exist
-			if ( ! is_array( $acf_params ) ) {
-				$acf_params = [];
-			}
-
-			// Set default visibility to 'private'
-			$acf_params['_visibility'] = 'private';
-
-			// Update the request parameter
-			$request->set_param( 'acf', $acf_params );
-
-			// Debug logging
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( sprintf(
-					'[AutoTitle] set_default_visibility_pre_insert: Injected _visibility=private for post type %s',
-					$prepared_post->post_type
-				) );
-			}
-		}
-
-		return $prepared_post;
-	}
-
-	/**
-	 * Set default visibility for posts created via REST API without _visibility field
-	 *
-	 * ACF field group has default_value="private" but doesn't automatically apply it
-	 * when posts are created via REST API. This ensures the default is set.
-	 *
-	 * BACKUP METHOD: This runs after insert. The pre_insert hook (above) handles REST API.
-	 * This method remains for non-REST creation methods.
-	 *
-	 * @param WP_Post         $post    Inserted or updated post object.
-	 * @param WP_REST_Request $request Request object.
-	 */
-	public function set_default_visibility( $post, $request ) {
-		$post_id = $post->ID;
-
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( sprintf(
-				'[AutoTitle] set_default_visibility called for post %d (type: %s)',
-				$post_id,
-				get_post_type( $post_id )
-			) );
-		}
-
-		// Check if _visibility field already has a value
-		$visibility = get_field( '_visibility', $post_id );
-
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( sprintf(
-				'[AutoTitle] Current visibility for post %d: %s',
-				$post_id,
-				var_export( $visibility, true )
-			) );
-		}
-
-		// If no value set, apply the default
-		if ( empty( $visibility ) ) {
-			update_field( '_visibility', 'private', $post_id );
-
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( sprintf(
-					'[AutoTitle] Set visibility to private for post %d. New value: %s',
-					$post_id,
-					var_export( get_field( '_visibility', $post_id ), true )
-				) );
-			}
-		}
 	}
 
 }
