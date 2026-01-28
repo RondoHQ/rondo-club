@@ -58,10 +58,13 @@ Plans:
   2. App displays clear offline indicator when network disconnected
   3. Static assets (JS, CSS, fonts) load from cache when offline
   4. User sees helpful offline fallback page when navigating to uncached route
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 108-01: [To be planned]
+- [ ] 108-01-PLAN.md — Core infrastructure (useOnlineStatus hook, TanStack Query integration, offline.html)
+- [ ] 108-02-PLAN.md — OfflineBanner component and App.jsx mounting
+- [ ] 108-03-PLAN.md — Form disabling in edit modals when offline
+- [ ] 108-04-PLAN.md — Deploy and verify offline functionality
 
 ### Phase 109: Mobile UX
 **Goal**: Provide native-like mobile gestures and prevent iOS-specific UX issues
