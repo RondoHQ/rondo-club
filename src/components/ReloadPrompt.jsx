@@ -70,16 +70,16 @@ export function ReloadPrompt() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              Ready for offline use
+              Klaar voor offline gebruik
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Stadion can now work offline
+              Stadion werkt nu ook zonder internet
             </p>
           </div>
           <button
             onClick={close}
             className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-            aria-label="Dismiss"
+            aria-label="Sluiten"
           >
             <X className="w-4 h-4" />
           </button>
@@ -95,10 +95,10 @@ export function ReloadPrompt() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                Update available
+                Update beschikbaar
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                A new version of Stadion is ready
+                Een nieuwe versie van Stadion is beschikbaar
               </p>
             </div>
           </div>
@@ -113,7 +113,7 @@ export function ReloadPrompt() {
               onClick={() => updateServiceWorker(true)}
               className="px-3 py-1.5 text-sm bg-accent-600 text-white rounded-md hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
             >
-              Reload now
+              Nu herladen
             </button>
           </div>
         </div>
