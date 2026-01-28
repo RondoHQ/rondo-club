@@ -1769,7 +1769,7 @@ export default function PersonDetail() {
                           className="flex-shrink-0 hover:opacity-80 transition-opacity"
                           title="Bekijk in Sportlink Club"
                         >
-                          <img src="/icons/sportlink.png" alt="Sportlink" className="w-5 h-5" />
+                          <img src={`${window.stadionConfig?.themeUrl}/public/icons/sportlink.png`} alt="Sportlink" className="w-5 h-5" />
                         </a>
                       );
                     }
