@@ -41,10 +41,13 @@ See PROJECT.md for complete milestone history.
   3. App launches in standalone mode (no browser chrome) after installation
   4. Content displays correctly on iPhone X+ (not hidden behind notch)
   5. App theme color matches user's configured accent color setting
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 107-01: [To be planned]
+- [ ] 107-01-PLAN.md — Install vite-plugin-pwa and generate PWA icons
+- [ ] 107-02-PLAN.md — iOS meta tags and safe area CSS
+- [ ] 107-03-PLAN.md — ReloadPrompt component and dynamic theme color
+- [ ] 107-04-PLAN.md — Deploy and verify on devices
 
 ### Phase 108: Offline Support
 **Goal**: Enable basic offline functionality showing cached data when network unavailable
@@ -95,7 +98,7 @@ Phases execute in numeric order: 107 → 108 → 109 → 110
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 107. PWA Foundation | v8.0 | 0/? | Not started | - |
+| 107. PWA Foundation | v8.0 | 0/4 | Planned | - |
 | 108. Offline Support | v8.0 | 0/? | Not started | - |
 | 109. Mobile UX | v8.0 | 0/? | Not started | - |
 | 110. Install & Polish | v8.0 | 0/? | Not started | - |
