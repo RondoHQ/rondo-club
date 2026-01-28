@@ -1,186 +1,273 @@
-# Project Research Summary
+# PWA Enhancement Research Summary
 
-**Project:** Stadion v5.0 - Google Contacts Two-Way Sync
-**Domain:** Personal CRM - Google Contacts Integration
-**Researched:** 2026-01-17
+**Project:** Stadion v8.0 PWA Enhancement
+**Domain:** Progressive Web App for Personal CRM (React SPA + WordPress Backend)
+**Researched:** 2026-01-28
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Google Contacts bidirectional sync is a well-established integration pattern with clear user expectations and comprehensive official documentation. Stadion is uniquely positioned to implement this because the core infrastructure already exists: the `google/apiclient` library is installed, OAuth token encryption (Sodium) is working, and WP-Cron background sync patterns are proven in the Calendar integration. **No new Composer dependencies are required** - only OAuth scope expansion and new PHP classes following established patterns.
+Adding PWA capabilities to Stadion's existing React SPA + WordPress architecture is straightforward using vite-plugin-pwa with minimal additional dependencies. The recommended approach uses Workbox's generateSW strategy for automatic service worker generation, NetworkFirst caching for WordPress REST API endpoints, and careful coordination with TanStack Query's existing cache layer. This enables home screen installation on iOS and Android, basic offline support showing cached data, and smart update notifications.
 
-The recommended approach is to treat Stadion as the source of truth, implement comprehensive field mapping (not just basic name/email/phone like most CRMs), and use Google's syncToken mechanism for efficient delta synchronization. The user's stated preferences (Stadion wins conflicts, photos preserve on initial sync, deletions propagate from Stadion but only unlink from Google) align perfectly with industry best practices for a CRM-centric workflow.
+The critical architectural insight is that iOS Safari imposes severe limitations compared to Android Chrome: no programmatic install prompts, 7-day storage eviction for inactive users, and 50MB cache limits. Therefore, the PWA strategy must be designed for graceful degradation, treating all offline data as transient cache rather than persistent storage. TanStack Query already handles this pattern well, making integration cleaner than typical PWA implementations.
 
-Key risks center on OAuth configuration (testing mode 7-day token expiry), API behavior (syncToken expiration, ETag conflicts, write propagation delays), and WordPress constraints (WP-Cron timeouts). All are mitigable with proper error handling, chunked processing, and following the documented patterns. The 8-phase architecture research provides a clear build order with explicit dependencies.
+Key risks center on double-caching conflicts between service worker and TanStack Query, iOS-specific UI issues (safe area insets, pull-to-refresh gestures), and service worker update management. These are all preventable with proper configuration in Phase 1 and careful testing in standalone mode on real devices. The most critical decision is choosing NetworkFirst (or no caching) for API routes to avoid serving stale data when TanStack Query expects fresh responses.
 
 ## Key Findings
 
 ### Recommended Stack
 
-Stadion already has everything needed. The existing `google/apiclient ^2.15` includes `Google_Service_PeopleService` for all People API operations. The OAuth flow, Sodium-based token encryption, and WP-Cron patterns transfer directly from Calendar integration.
+**vite-plugin-pwa (v0.20+)** is the de facto standard for Vite-based PWAs, providing zero-config integration with Vite's build pipeline. It wraps Workbox's generateSW and injectManifest methods, handling manifest generation and service worker creation automatically. For Stadion's needs (install to home screen, basic offline, pull-to-refresh, update notifications), generateSW provides sufficient functionality without the maintenance burden of custom service worker code.
 
 **Core technologies:**
-- **google/apiclient (existing):** Google API PHP client - already installed, provides People API service classes
-- **Sodium encryption (existing):** Token storage - reuse CredentialEncryption class for contacts tokens
-- **WP-Cron (WordPress native):** Background sync scheduling - matches Calendar sync pattern exactly
-- **Google People API v1:** Contacts CRUD + delta sync via syncToken - official, well-documented API
+- **vite-plugin-pwa (v0.20+)**: PWA generation and service worker creation — Zero-config, integrates with Vite 5+, actively maintained
+- **workbox-window (v7.3+)**: Service worker lifecycle management — Auto-installed peer dependency, handles registration and updates
+- **react-simple-pull-to-refresh (v1.3.3)**: Mobile pull-to-refresh gesture — Zero dependencies, 40K weekly downloads, works on iOS/Android
+- **Native beforeinstallprompt API**: Install prompt on Android — No library needed, ~20 lines custom hook, iOS requires manual add to home screen
 
-**No new dependencies needed.** This significantly reduces risk and maintains consistency with existing codebase patterns.
+**Platform support matrix:** Chrome/Edge desktop and Android have full PWA features. iOS Safari supports service workers (with 50MB cache limit) and standalone mode, but lacks programmatic install prompts and has 7-day storage eviction policy. Firefox and Safari desktop support service workers but not install prompts.
 
 ### Expected Features
 
 **Must have (table stakes):**
-- OAuth-based one-click connection (extend existing Calendar OAuth)
-- Bidirectional sync (one-way is considered "broken" by users)
-- Comprehensive field mapping (name, email, phone, address, birthday, photo, work history)
-- Duplicate detection on import (match by email first, then name)
-- Sync status visibility ("Last synced" timestamp, sync badges)
-- Manual sync trigger and error reporting
-- Disconnect option that removes tokens but preserves data
+- Web App Manifest with icons (192x192, 512x512) and Apple Touch icons (180x180)
+- HTTPS serving (required for service workers)
+- Service worker registration for offline capability
+- Standalone display mode (app runs without browser chrome)
+- Basic offline fallback showing cached data
+- Theme color and splash screen
 
-**Should have (competitive differentiation):**
-- Clear source of truth model ("Stadion wins" by default)
-- Delta sync with syncToken (only sync changes, not full re-import)
-- Per-contact sync toggle (privacy control for sensitive contacts)
-- Configurable conflict resolution strategies
-- Sync audit log for accountability
-- Work history auto-creation from Google team data
+**Should have (competitive):**
+- Smart install prompt on Android (prompts after 2-3 valuable actions)
+- Update notification UI letting users control when to refresh
+- Offline data access via TanStack Query + service worker cache coordination
+- Pull-to-refresh gesture on mobile (medium complexity, defer to post-MVP)
+- App shortcuts for quick actions (Android only, nice-to-have)
 
 **Defer (v2+):**
-- Contact group/label sync (complex mapping, unclear requirements)
-- Custom field sync (requires defining what "custom fields" means)
-- Multi-account support (massive complexity, merge rule confusion)
-- Real-time sync (Google Contacts has no webhook support)
+- Push notifications (requires backend FCM infrastructure, iOS 16.4+ only)
+- Full offline editing with conflict resolution (complex queueing, IndexedDB transactions)
+- Background sync for mutations (Android-only API, high complexity)
+- Native app features like contacts API (poor browser support)
+- Precaching all contacts (storage limits, bandwidth waste)
 
 ### Architecture Approach
 
-The architecture follows existing Stadion patterns under a new `Stadion\Contacts` namespace. Five core classes handle distinct responsibilities: GoogleContactsProvider (API client with rate limiting), GoogleContactsSync (orchestrator with state management), GoogleContactsMapper (bidirectional field mapping), GoogleContactsConflict (conflict detection and resolution), and REST\GoogleContacts (API endpoints for UI). This separation enables isolated testing and matches the proven Calendar architecture.
+PWA features integrate through vite-plugin-pwa extending the Vite build pipeline to generate manifest.webmanifest and sw.js at build time. WordPress serves these assets alongside the existing React SPA via wp_head hook for manifest link and service worker registration in main.jsx. The service worker must be served from theme root (not /dist/) to control the entire frontend scope while excluding /wp-admin/ paths.
 
 **Major components:**
-1. **GoogleContactsProvider** - Low-level API operations, error handling, rate limiting with exponential backoff
-2. **GoogleContactsSync** - Sync orchestration, WP-Cron scheduling, lock management, state tracking
-3. **GoogleContactsMapper** - Bidirectional field mapping, single source of truth for Google<->Stadion conversion
-4. **GoogleContactsConflict** - Conflict detection, resolution strategies (newest/stadion/google/manual wins)
-5. **REST\GoogleContacts** - REST API endpoints for connection management, sync triggers, conflict resolution UI
+1. **Manifest + Icons** — Generated by vite-plugin-pwa, served via WordPress wp_head, includes both web manifest icons and Apple Touch icons for iOS
+2. **Service Worker** — Generated in dist/, copied to theme root post-build, registers in main.jsx with update callbacks, uses NetworkFirst for API routes
+3. **Cache Coordination** — Service worker handles NetworkFirst for /wp-json/* endpoints (timeout 10s, fallback to cache), TanStack Query uses networkMode: 'offlineFirst' to work with service worker
+4. **Update Management** — registerType: 'prompt' strategy shows user notification when update available, user controls when to reload, prevents mid-session disruption
+
+**Critical integration points:** Service worker scope configuration to exclude /wp-admin/, post-build copy script to move sw.js to theme root, TanStack Query networkMode coordination, and server Cache-Control headers to prevent sw.js caching.
 
 ### Critical Pitfalls
 
-1. **OAuth Testing Mode (CRITICAL)** - Refresh tokens expire after 7 days in testing mode. Must switch to production mode BEFORE any users connect, then generate NEW OAuth credentials. Existing tokens will still expire; users re-auth once.
+1. **iOS 7-Day Storage Eviction** — Accept this limitation, design for graceful degradation. iOS wipes all PWA storage (cache, IndexedDB, localStorage) after 7 days of non-use. Solution: Treat offline data as transient cache, optimize initial data fetch on cold start, document limitation for users.
 
-2. **SyncToken Expiration** - Sync tokens expire after exactly 7 days. If background sync fails for a week, next attempt requires full resync that may exceed quotas. Prevention: automatic full-sync fallback on 410 error, proactive resync if approaching 7 days.
+2. **Service Worker + TanStack Query Double-Caching Conflict** — Service worker serves cached API responses, making TanStack Query refetch pointless. Solution: Use NetworkFirst strategy for /wp-json/ endpoints (fresh data first, cache only for offline fallback), or don't cache API responses in service worker at all. TanStack Query already provides optimal caching.
 
-3. **ETag Conflicts** - Updates fail silently if contact changed between read and write. Prevention: always fetch fresh before updating, implement retry logic (fetch-merge-retry max 3 times), never cache contacts for deferred updates.
+3. **skipWaiting() Causes Version Mismatch** — New service worker activates mid-session, page has old JS bundle but service worker serves new assets. Result: broken functionality, React errors, missing chunks. Solution: Use registerType: 'prompt', show non-intrusive update notification, let user control when to refresh. Never auto-update without consent.
 
-4. **Write Propagation Delays** - Google states writes have "propagation delay of several minutes." Never rely on read-after-write consistency. Use update response as source of truth, show "syncing..." state in UI.
+4. **iOS Pull-to-Refresh Conflicts with Scrolling** — iOS standalone mode enables pull-to-refresh gesture by default, accidental page reloads lose app state. Solution: Add CSS overscroll-behavior-y: none to body, provide alternative refresh mechanism in UI.
 
-5. **WP-Cron Timeouts** - Default 60-second timeout kills large syncs. Prevention: chunked processing (50-100 contacts per run), store progress for resume, consider Action Scheduler for reliable background jobs.
+5. **iOS Safe Area Insets Not Handled** — Content gets hidden behind notch/home indicator on iPhone. Solution: Add viewport-fit=cover to viewport meta tag, use CSS env(safe-area-inset-*) for padding, add apple-mobile-web-app-status-bar-style meta tag.
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure:
+Based on research, suggested phase structure prioritizes foundational setup, then cache strategy coordination, then polish and testing. Total implementation: 4-6 days.
 
-### Phase 1: OAuth Foundation
-**Rationale:** All subsequent phases depend on authenticated API access. OAuth misconfiguration (testing mode) is the highest-risk pitfall.
-**Delivers:** Working OAuth connection with contacts scope, token storage, connection status UI
-**Addresses:** OAuth-based connection (table stakes)
-**Avoids:** Testing mode 7-day token expiry, insecure token storage
+### Phase 1: PWA Foundation (1-2 days)
+**Rationale:** Establish manifest, service worker, and iOS compatibility basics before any caching logic. This phase makes the app installable and handles platform-specific quirks.
 
-### Phase 2: One-Way Import
-**Rationale:** Import-only allows validating field mapping, duplicate detection, and API behavior before tackling bidirectional complexity.
-**Delivers:** Full sync of Google contacts to Stadion, field mapping, duplicate detection, photo sideloading
-**Uses:** GoogleContactsProvider, GoogleContactsMapper (Google->Stadion direction)
-**Implements:** Basic sync infrastructure, personFields mask, pagination handling
+**Delivers:**
+- Installable PWA on iOS and Android (manual on iOS, auto-prompt on Android)
+- Service worker registered and active
+- iOS-specific fixes (safe area insets, pull-to-refresh prevention, Apple Touch icons)
+- Server configuration preventing sw.js caching
 
-### Phase 3: One-Way Export
-**Rationale:** Export depends on working import (field mapping tested) and establishes the Stadion->Google direction.
-**Delivers:** Create new Stadion contacts in Google, link existing contacts, bulk export
-**Uses:** GoogleContactsMapper (Stadion->Google direction), ETag for conflict prevention
-**Implements:** Contact creation in Google, resourceName tracking
+**Addresses features:**
+- Web app manifest with icons (table stakes)
+- HTTPS serving (already in place)
+- Service worker registration (table stakes)
+- Standalone display mode (table stakes)
+- Theme color and splash screen (table stakes)
 
-### Phase 4: Delta Sync
-**Rationale:** Full sync on every run is inefficient and hits rate limits. Delta sync is required for sustainable background operation.
-**Delivers:** syncToken-based incremental sync, change detection for local edits, WP-Cron scheduling
-**Uses:** GoogleContactsSync orchestrator
-**Avoids:** SyncToken expiration, WP-Cron timeouts (via chunked processing)
+**Avoids pitfalls:**
+- Pitfall 4: iOS pull-to-refresh (add overscroll-behavior-y: none)
+- Pitfall 6: iOS safe area insets (viewport-fit=cover + CSS)
+- Pitfall 7: iOS manifest icons (apple-touch-icon meta tags)
+- Pitfall 10: Stale service worker (Cache-Control headers)
+- Pitfall 13: Missing manifest fields (comprehensive manifest config)
 
-### Phase 5: Conflict Resolution
-**Rationale:** With bidirectional delta sync working, conflicts become possible and must be handled explicitly.
-**Delivers:** Conflict detection, resolution strategies, manual conflict queue, audit logging
-**Uses:** GoogleContactsConflict class
-**Implements:** "Stadion wins" default strategy, field-level merge option
+**Critical decisions:**
+- Choose service worker strategy (recommend generateSW for MVP simplicity)
+- Configure vite-plugin-pwa in vite.config.js
+- Add post-build script to copy sw.js to theme root
 
-### Phase 6: Settings UI
-**Rationale:** Backend must be complete before exposing configuration options to users.
-**Delivers:** Google Contacts settings card, sync preferences, connection management, sync status display
-**Uses:** REST\GoogleContacts endpoints
-**Addresses:** Sync status visibility, manual sync trigger (table stakes)
+### Phase 2: Cache Strategy & Update Management (1-2 days)
+**Rationale:** With PWA installable, configure caching to work with TanStack Query without conflicts. This is the most critical phase for avoiding double-caching pitfalls.
 
-### Phase 7: Person Detail UI
-**Rationale:** Per-contact features depend on global sync being stable and Settings UI providing context.
-**Delivers:** Sync status indicator on person detail, per-contact sync toggle, conflict resolution modal, "View in Google" link
-**Addresses:** Per-contact sync control (differentiator)
+**Delivers:**
+- NetworkFirst caching for WordPress REST API (or no API caching)
+- Precaching for static assets (JS, CSS, fonts)
+- Update notification UI with user-controlled refresh
+- Cache cleanup strategy for old versions
 
-### Phase 8: Polish and Edge Cases
-**Rationale:** Final hardening after all features work. Edge cases discovered during earlier phases addressed here.
-**Delivers:** Deletion handling, error recovery, WP-CLI commands, performance optimization, documentation
-**Avoids:** All remaining pitfalls (deletion markers, birthday date inconsistency, resourceName changes)
+**Addresses features:**
+- Basic offline fallback (table stakes)
+- Update notification (should have)
+- Offline data access coordination (should have)
+
+**Avoids pitfalls:**
+- Pitfall 2: Service worker + TanStack Query conflict (NetworkFirst or no API caching)
+- Pitfall 3: skipWaiting version mismatch (registerType: 'prompt' with custom UI)
+- Pitfall 11: precacheAndRoute caches wrong files (explicit globPatterns)
+- Pitfall 15: No update notification (implement prompt UI)
+- Pitfall 16: Orphaned cache entries (cleanupOutdatedCaches: true)
+
+**Uses stack elements:**
+- workbox-window for lifecycle management
+- TanStack Query networkMode: 'offlineFirst'
+- vite-plugin-pwa registerType: 'prompt'
+
+**Implements architecture components:**
+- Cache coordination layer between service worker and TanStack Query
+- Update notification component with useRegisterSW hook
+
+### Phase 3: Smart Install Prompt (1 day)
+**Rationale:** With core PWA functional, add user engagement features. Install prompt increases install rate on Android.
+
+**Delivers:**
+- Custom install button shown after user engagement
+- beforeinstallprompt event handling
+- iOS manual install instructions (modal with screenshots)
+- Install analytics tracking
+
+**Addresses features:**
+- Smart install prompt (should have, Android only)
+
+**Avoids pitfalls:**
+- Pitfall 5: iOS no back button (ensure navigation patterns tested)
+- Pitfall 8: EU users can't install (detection and messaging)
+
+**Implementation:**
+- Custom React hook for beforeinstallprompt (no library needed)
+- Show install button after viewing 2 people OR adding 1 note
+- iOS-specific UI guidance for manual "Add to Home Screen"
+
+### Phase 4: Testing & Polish (1-2 days)
+**Rationale:** Test in standalone mode on real devices to catch iOS-specific issues before launch.
+
+**Delivers:**
+- Full testing on iOS and Android devices in standalone mode
+- Offline mode verification
+- Update flow end-to-end testing
+- Lighthouse PWA audit (target score > 90)
+- Documentation of iOS 7-day limitation
+
+**Avoids pitfalls:**
+- Pitfall 17: Testing in browser instead of standalone mode
+- Pitfall 18: Service worker cache hides bugs in dev
+- Pitfall 19: WordPress nonce expiration (detection and clear error)
+- Pitfall 20: WordPress cache plugins conflict (SiteGround exclusions)
+
+**Testing checklist:**
+- Install on iPhone (iOS 16+) and Android device
+- Test navigation in standalone mode (no dead ends)
+- Test offline mode (airplane mode)
+- Deploy update and verify notification appears
+- Confirm no content behind notch/home indicator
+- Verify pull-to-refresh disabled
 
 ### Phase Ordering Rationale
 
-- **Dependencies flow downward:** OAuth must work before import, import before export, delta sync before conflict resolution
-- **Risk reduction:** OAuth pitfall is addressed first; API behavior validated in Phase 2 before building bidirectional
-- **UI comes last:** Backend must be stable before exposing controls that depend on it
-- **Matches architecture components:** Each phase roughly maps to one major component being built
+- **Phase 1 before Phase 2:** Must have working service worker and iOS compatibility before configuring caching logic. Trying to debug cache issues while also fighting iOS quirks is too complex.
+- **Phase 2 before Phase 3:** Cache strategy must work correctly before adding install prompt. Users who install a broken PWA will uninstall immediately.
+- **Phase 3 standalone:** Install prompt is pure enhancement, doesn't affect core functionality, can be done in parallel with other polish work.
+- **Phase 4 at end:** Real device testing requires working PWA, catches issues early enough to fix before launch.
+
+**Dependencies discovered:**
+- Service worker scope depends on file location (theme root vs /dist/)
+- iOS features require specific HTML meta tags (can't be added via manifest)
+- TanStack Query configuration must align with service worker caching strategy
+- WordPress nonce expiration affects offline action replay
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 2 (Import):** Field mapping edge cases (multiple emails, address formats, birthday without year)
-- **Phase 5 (Conflict Resolution):** Conflict merge algorithms, field-level comparison logic
+**Phases with standard patterns (skip research-phase):**
+- **Phase 1:** PWA foundation is well-documented, official Vite PWA plugin guide covers all setup
+- **Phase 2:** Cache strategies are standard Workbox patterns, TanStack Query offline docs are clear
+- **Phase 3:** Install prompt is native browser API, implementation patterns are established
+- **Phase 4:** Testing requires real devices, not research
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (OAuth):** Well-documented Google OAuth, existing Stadion patterns
-- **Phase 3 (Export):** Reverse of import, same API patterns
-- **Phase 4 (Delta Sync):** Google's syncToken is well-documented, follow existing Calendar pattern
-- **Phase 6-8 (UI/Polish):** Standard React patterns, Stadion UI conventions established
+**No phases need deeper research.** All research dimensions (stack, features, architecture, pitfalls) are HIGH confidence with verified official sources.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Official Google documentation, existing Stadion implementation proves patterns work |
-| Features | HIGH | Multiple CRM comparisons, user community feedback, clear competitive landscape |
-| Architecture | HIGH | Based on existing Stadion patterns + official Google API documentation |
-| Pitfalls | HIGH | Official documentation warnings + verified community reports of issues |
+| Stack | HIGH | Official Vite PWA plugin documentation, verified npm package stats, clear version compatibility |
+| Features | MEDIUM | iOS limitations documented in multiple sources but specific behaviors (7-day eviction) may vary by version |
+| Architecture | HIGH | Official documentation for Vite, Workbox, TanStack Query integration patterns |
+| Pitfalls | HIGH | Based on official Google documentation, verified community reports, Vite PWA issues |
 
 **Overall confidence:** HIGH
 
-All research derives from official Google documentation (People API docs, OAuth docs) or verified Stadion codebase patterns. Competitive analysis used multiple CRM documentation sources that agree on user expectations.
+Research covers all critical aspects with official documentation. iOS-specific behaviors have medium confidence because Apple's PWA support evolves with each iOS version, but limitations are consistent across recent versions (iOS 13.4+).
 
 ### Gaps to Address
 
-- **Photo upload size limits:** Google docs don't specify maximum size. Recommend testing with 5MB limit, adjust if needed.
-- **Batch operation error handling:** Partial batch failures need explicit handling strategy - define during Phase 2 implementation.
-- **"Other Contacts" sync scope:** User mentioned syncing from "Other Contacts" (auto-created from email). May need additional scope (`contacts.other.readonly`). Verify during Phase 1.
+**iOS 7-day eviction edge cases:** Research confirms this limitation exists, but exact trigger conditions (app not opened vs app not used actively) unclear. Handle during Phase 4 testing: document user experience, optimize cold start performance, add clear messaging.
+
+**TanStack Query networkMode interaction:** Documentation covers networkMode: 'offlineFirst' but interaction with service worker NetworkFirst strategy needs verification. Handle during Phase 2: test both approaches (no API caching vs NetworkFirst), choose based on actual behavior.
+
+**WordPress nonce expiration in offline mode:** Research identifies the issue but mitigation strategy needs testing. Handle during Phase 4: implement nonce validation before mutation execution, test offline period > 12 hours, ensure clear error messaging.
+
+**SiteGround cache configuration:** Research identifies potential conflict but specific SiteGround dashboard settings need verification. Handle during Phase 1 deployment: check production cache headers, configure exclusions if needed, test sw.js Cache-Control.
+
+**Pull-to-refresh on iOS:** Research shows it's "buggy" but didn't specify exact issues. Handle during Phase 4: test on real iOS device, decide whether to implement custom pull-to-refresh or rely on explicit refresh button in UI.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Google People API - Read and Manage Contacts](https://developers.google.com/people/v1/contacts)
-- [Google People API - people.connections.list](https://developers.google.com/people/api/rest/v1/people.connections/list)
-- [Google People API - updateContact](https://developers.google.com/people/api/rest/v1/people/updateContact)
-- [Google People API - updateContactPhoto](https://developers.google.com/people/api/rest/v1/people/updateContactPhoto)
-- [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
-- [Google OAuth Best Practices](https://developers.google.com/identity/protocols/oauth2/resources/best-practices)
+
+**Official Documentation:**
+- [Vite Plugin PWA Guide](https://vite-pwa-org.netlify.app/guide/) — Complete PWA setup, service worker strategies, React integration
+- [Workbox Strategies - Chrome for Developers](https://developer.chrome.com/docs/workbox/modules/workbox-strategies) — NetworkFirst, CacheFirst patterns
+- [MDN: Progressive Web Apps](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) — Web standards reference
+- [MDN: Web App Manifest](https://developer.mozilla.org/en-US/docs/Web/Manifest) — Manifest specification
+- [TanStack Query Network Mode](https://tanstack.com/query/v4/docs/framework/react/guides/network-mode) — offlineFirst behavior
+
+**Library Documentation:**
+- [vite-plugin-pwa GitHub](https://github.com/vite-pwa/vite-plugin-pwa) — Plugin API, examples
+- [react-simple-pull-to-refresh npm](https://www.npmjs.com/package/react-simple-pull-to-refresh) — Usage, API reference
 
 ### Secondary (MEDIUM confidence)
-- [HubSpot Community - Google Contacts Sync Issues](https://community.hubspot.com/t5/CRM/google-contacts-sync-wrong-with-crm-Hubspot/td-p/964692) - User expectations and pain points
-- [Less Annoying CRM - Syncing with Google Contacts](https://www.lessannoyingcrm.com/help/how-do-i-sync-with-google-contacts) - Competitive feature analysis
-- [RealSynch - How to Sync Google Contacts with Any CRM](https://www.realsynch.com/how-to-sync-google-contacts-with-any-crm-without-losing-data/) - Industry best practices
+
+**Implementation Patterns:**
+- [Making totally offline-available PWAs with Vite and React](https://adueck.github.io/blog/caching-everything-for-totally-offline-pwa-vite-react/) — Real-world implementation
+- [Offline React Query - TkDodo](https://tkdodo.eu/blog/offline-react-query) — TanStack Query offline strategies by maintainer
+- [Advanced Caching Strategies with Workbox](https://medium.com/animall-engineering/advanced-caching-strategies-with-workbox-beyond-stalewhilerevalidate-d000f1d27d0a) — NetworkFirst patterns
+
+**iOS Limitations:**
+- [PWA iOS Limitations and Safari Support - MagicBell](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide) — Comprehensive iOS limitation guide
+- [PWA on iOS - Current Status & Limitations - Brainhub](https://brainhub.eu/library/pwa-on-ios) — 2025 iOS PWA status
+- [Navigating Safari/iOS PWA Limitations - Vinova](https://vinova.sg/navigating-safari-ios-pwa-limitations/) — Storage persistence, 7-day eviction
+
+**Service Worker Patterns:**
+- [Handling Service Worker Updates - WhatWebCanDo](https://whatwebcando.today/articles/handling-service-worker-updates/) — Update strategies
+- [Rich Harris - Stuff I wish I'd known about service workers](https://gist.github.com/Rich-Harris/fd6c3c73e6e707e312d7c5d7d0f3b2f9) — Common pitfalls
+- [Workbox - Handling Service Worker Updates](https://developer.chrome.com/docs/workbox/handling-service-worker-updates) — Official update patterns
 
 ### Tertiary (LOW confidence)
-- [Action Scheduler Performance](https://actionscheduler.org/perf/) - WP-Cron alternative if timeout issues emerge
+
+**WordPress Integration:**
+- [WordPress PWA Service Worker Integration](https://github.com/GoogleChromeLabs/pwa-wp/wiki/Service-Worker) — Archived project, patterns still relevant
+- [Implementing A Service Worker For Single-Page App WordPress Sites](https://www.smashingmagazine.com/2017/10/service-worker-single-page-application-wordpress-sites/) — 2017 article, architectural concepts valid
 
 ---
-*Research completed: 2026-01-17*
+*Research completed: 2026-01-28*
 *Ready for roadmap: yes*

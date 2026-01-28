@@ -1,642 +1,795 @@
-# Architecture Research: Google Contacts Sync
+# PWA Architecture Integration
 
-**Project:** Stadion v5.0 - Google Contacts Two-Way Sync
-**Researched:** 2026-01-17
-**Confidence:** HIGH (based on existing Stadion patterns + authoritative Google API documentation)
+**Domain:** React SPA + WordPress Theme
+**Researched:** 2026-01-28
+**Confidence:** HIGH (verified with official Vite PWA plugin docs and WordPress PWA patterns)
 
 ## Executive Summary
 
-This document defines the architecture for bidirectional Google Contacts synchronization. The design follows established Stadion patterns (from Calendar sync) while adding the complexity of true bidirectional sync with conflict resolution. Key architectural decisions:
+PWA features integrate into the existing Stadion architecture through the **vite-plugin-pwa**, which generates manifest and service worker at build time. The plugin extends the Vite build pipeline to produce PWA assets that WordPress then serves alongside the existing React SPA. Critical integration points include: manifest injection into `index.php`, service worker registration in `main.jsx`, and scope configuration to exclude WordPress admin areas.
 
-1. **Follow existing patterns** - Reuse `Stadion\Calendar` namespace structure, OAuth infrastructure, and WP-Cron scheduling
-2. **Sync token for delta sync** - Use Google People API's `syncToken` mechanism (7-day expiry, 410 error triggers full resync)
-3. **ETag for optimistic locking** - Prevent concurrent modification conflicts using Google's etag field
-4. **Field-level conflict resolution** - Merge non-conflicting fields, apply strategy only to conflicting fields
-5. **Stadion as source of truth** - When in doubt, Stadion data wins (configurable)
+**Key architectural decision:** Service worker must be served from theme root (not `/dist/`) to control the entire frontend scope while excluding `/wp-admin/`.
 
-## Component Design
+## Integration Points
 
-### Namespace Structure
+### 1. Manifest Location and Serving
 
-Following PSR-4 autoloading established in Stadion, new classes go under `Stadion\Contacts`:
+**Where it lives:**
+- Generated: `dist/manifest.webmanifest` (by vite-plugin-pwa during build)
+- Served from: Theme root via WordPress `wp_head` hook
+- Referenced in: `index.php` via `<link rel="manifest">` tag
 
-```
-src/
-  Contacts/
-    GoogleOAuth.php          # Extends calendar OAuth with contacts scopes
-    GoogleContactsProvider.php  # People API client (CRUD operations)
-    GoogleContactsSync.php      # Sync orchestration
-    GoogleContactsMapper.php    # Field mapping bidirectional
-    GoogleContactsConflict.php  # Conflict detection and resolution
-
-  REST/
-    GoogleContacts.php       # REST API endpoints for UI
-```
-
-### Component Responsibilities
-
-#### 1. GoogleContactsProvider (API Client)
-
-**Purpose:** Low-level Google People API operations with proper error handling.
-
-**Responsibilities:**
-- Authenticate using existing OAuth tokens (reuse `Stadion\Calendar\GoogleOAuth`)
-- CRUD operations: `get()`, `create()`, `update()`, `delete()`
-- List contacts with pagination and syncToken support
-- Handle rate limiting with exponential backoff
-- Validate etag before mutations to prevent lost updates
-
-**Key Methods:**
+**How it's served:**
 ```php
-class GoogleContactsProvider {
-    // List all contacts (initial sync)
-    public function listContacts(int $pageSize = 100, ?string $pageToken = null): array;
+// In functions.php
+function stadion_add_pwa_manifest() {
+    $manifest_url = STADION_THEME_URL . '/dist/manifest.webmanifest';
+    echo '<link rel="manifest" href="' . esc_url($manifest_url) . '">';
+}
+add_action('wp_head', 'stadion_add_pwa_manifest', 2);
+```
 
-    // Delta sync using syncToken
-    public function syncContacts(string $syncToken): array;
+**Configuration location:** `vite.config.js`
+```javascript
+import { VitePWA } from 'vite-plugin-pwa'
 
-    // CRUD with etag validation
-    public function getContact(string $resourceName): ?array;
-    public function createContact(array $contactData): array;
-    public function updateContact(string $resourceName, array $contactData, string $etag): array;
-    public function deleteContact(string $resourceName, string $etag): bool;
+export default defineConfig({
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'prompt', // or 'autoUpdate'
+      manifest: {
+        name: 'Stadion',
+        short_name: 'Stadion',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#fffbeb',
+        theme_color: '#f59e0b',
+        icons: [
+          // Icon configurations
+        ]
+      }
+    })
+  ]
+})
+```
+
+**Why this location:**
+- Vite PWA plugin automatically injects manifest link into build output
+- WordPress `wp_head` ensures proper HTML head ordering
+- Theme URL constant ensures correct absolute paths
+
+### 2. Service Worker Location and Scope
+
+**Critical architectural requirement:** Service worker MUST be served from theme root to control frontend scope.
+
+**Where it lives:**
+- Generated: `dist/sw.js` (by vite-plugin-pwa)
+- **Must be copied to:** `sw.js` (theme root)
+- Registered from: `src/main.jsx`
+
+**Why theme root:**
+Service worker scope is determined by its location. A service worker at `/wp-content/themes/stadion/sw.js` can only control URLs under `/wp-content/themes/stadion/`, which is too restrictive. The service worker needs to control `/` to intercept frontend routes like `/people`, `/teams`, etc.
+
+**Service Worker-Allowed header alternative:**
+If copying to root is not possible, WordPress can serve the service worker from `/dist/sw.js` with a `Service-Worker-Allowed: /` HTTP header to broaden scope. However, this requires server configuration and is less portable.
+
+**Recommended approach:** Post-build copy step
+```json
+// package.json
+{
+  "scripts": {
+    "build": "vite build && npm run copy-sw",
+    "copy-sw": "cp dist/sw.js sw.js"
+  }
 }
 ```
 
-**Error Handling:**
-- `410 Gone` - syncToken expired, trigger full resync
-- `409 Conflict` - etag mismatch, fetch fresh data and retry
-- `429 Too Many Requests` - exponential backoff (1s, 2s, 4s, 8s, max 60s)
-- `401 Unauthorized` - token refresh failed, mark connection as needing reauth
-
-#### 2. GoogleContactsSync (Orchestrator)
-
-**Purpose:** Coordinate sync operations, manage sync state, handle scheduling.
-
-**Responsibilities:**
-- Determine sync direction (full vs delta)
-- Track sync state per contact (`_google_sync_status` post meta)
-- Manage sync locks (prevent concurrent syncs)
-- Schedule background sync via WP-Cron
-- Log sync operations for debugging
-
-**Sync Loop:**
-```php
-class GoogleContactsSync {
-    public function sync(int $userId): SyncResult {
-        // 1. Acquire lock
-        if (!$this->acquireLock($userId)) {
-            return SyncResult::skipped('Sync already in progress');
+**Scope configuration:**
+```javascript
+// vite.config.js
+VitePWA({
+  scope: '/',
+  workbox: {
+    navigateFallback: null, // WordPress handles routing
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/.*\/wp-json\/.*/,
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'api-cache',
+          networkTimeoutSeconds: 10,
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 5 * 60 // 5 minutes
+          }
         }
+      }
+    ]
+  }
+})
+```
 
-        try {
-            // 2. Determine sync type
-            $syncToken = $this->getSyncToken($userId);
+### 3. Service Worker Registration
 
-            if ($syncToken) {
-                return $this->deltaSync($userId, $syncToken);
-            } else {
-                return $this->fullSync($userId);
-            }
-        } finally {
-            $this->releaseLock($userId);
+**Where:** `src/main.jsx` (after React root render)
+
+**Strategy:** Use vite-plugin-pwa virtual modules for lifecycle control
+
+```javascript
+// src/main.jsx
+import { registerSW } from 'virtual:pwa-register'
+
+// After ReactDOM.createRoot(...).render(...)
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    // Show update prompt to user
+    // Store updateSW callback for user-triggered reload
+  },
+  onOfflineReady() {
+    // Notify user app is ready for offline use
+  },
+  onRegistered(registration) {
+    // Service worker registered successfully
+    console.log('SW registered:', registration)
+  },
+  onRegisterError(error) {
+    console.error('SW registration error:', error)
+  }
+})
+```
+
+**registerType options:**
+- `'prompt'` (recommended): User controls when to reload for updates. Better UX for data-heavy forms.
+- `'autoUpdate'`: Silent background updates. Simpler but can interrupt user work.
+
+**Why main.jsx:** Ensures service worker registers only after React mounts, avoiding race conditions with initial app state.
+
+### 4. Interaction with TanStack Query Cache
+
+**Cache layer coordination:**
+
+PWA introduces two cache layers:
+1. **Service Worker cache** (via Workbox) - network/HTTP level
+2. **TanStack Query cache** - application/React level
+
+**Recommended strategy: NetworkFirst for API, CacheFirst for assets**
+
+```javascript
+// Service Worker caching (Workbox config)
+runtimeCaching: [
+  {
+    // API requests: Network first, fallback to cache
+    urlPattern: /^https:\/\/.*\/wp-json\/.*/,
+    handler: 'NetworkFirst',
+    options: {
+      cacheName: 'api-cache',
+      networkTimeoutSeconds: 10,
+    }
+  },
+  {
+    // Static assets: Cache first
+    urlPattern: /\.(?:js|css|woff2?|png|jpg|jpeg|svg)$/,
+    handler: 'CacheFirst',
+    options: {
+      cacheName: 'assets-cache',
+      expiration: {
+        maxEntries: 60,
+        maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+      }
+    }
+  }
+]
+```
+
+```javascript
+// TanStack Query config (src/main.jsx)
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes in memory
+      retry: 1,
+      networkMode: 'offlineFirst' // Use SW cache before failing
+    }
+  }
+})
+```
+
+**Why NetworkFirst for API:**
+- Ensures fresh data when online
+- Falls back to cached data when offline
+- Respects TanStack Query's staleTime (5 min)
+- Network timeout (10s) prevents long waits on poor connections
+
+**Why offlineFirst networkMode:**
+TanStack Query's `offlineFirst` mode works with service workers: queries run even when offline, using cached responses from the service worker. This prevents query errors during offline periods.
+
+**Cache coordination:**
+```
+User action → TanStack Query
+               ↓
+           axios request → Service Worker
+                            ↓
+                        Network attempt (with timeout)
+                            ↓
+                     [success] or [timeout/offline]
+                            ↓
+                    [return fresh] or [return cached]
+                            ↓
+                        TanStack Query
+                            ↓
+                        Update UI
+```
+
+### 5. WordPress Admin Area Exclusion
+
+**Critical requirement:** Service worker MUST NOT interfere with `/wp-admin/`
+
+**Implementation: Scope-based exclusion**
+
+The service worker scope (`/`) naturally includes admin URLs. Explicit exclusion is required in the service worker fetch handler:
+
+```javascript
+// vite.config.js
+VitePWA({
+  workbox: {
+    // Exclude admin and WordPress core from precaching
+    globIgnores: ['**/wp-admin/**', '**/wp-includes/**'],
+
+    // Navigation requests exclusion
+    navigateFallbackDenylist: [
+      /^\/wp-admin/,
+      /^\/wp-login/,
+      /^\/?wp-json/,
+    ],
+
+    // Runtime caching exclusions handled per route
+  }
+})
+```
+
+**Why this approach:**
+- WordPress admin uses different authentication (cookies vs REST nonce)
+- Admin requests should never be cached (always fresh)
+- Prevents service worker from breaking admin features
+- Preview functionality (`?preview=true`) remains unaffected
+
+**Additional safeguard in custom service worker (if needed):**
+```javascript
+// src/sw-custom.js (optional)
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url)
+
+  // Don't intercept admin, login, or API requests
+  if (
+    url.pathname.startsWith('/wp-admin') ||
+    url.pathname.startsWith('/wp-login') ||
+    url.pathname.includes('wp-json')
+  ) {
+    return // Let WordPress handle it
+  }
+
+  // Handle other requests with Workbox strategies
+})
+```
+
+## Service Worker Strategy
+
+### Registration Strategy: Prompt for Update
+
+**Recommended:** `registerType: 'prompt'`
+
+**Rationale:**
+- Users control when to reload (preserves form state)
+- Clear communication about updates
+- Better for data-heavy CRM app
+- Prevents mid-workflow interruptions
+
+**UX Flow:**
+1. Service worker detects new version
+2. `onNeedRefresh()` callback triggers
+3. App shows update notification banner
+4. User clicks "Update" when ready
+5. `updateSW()` called → reload with new version
+
+**Alternative: autoUpdate**
+Use if seamless updates are more important than preserving user state. Suitable for read-heavy apps, not ideal for form-heavy CRM.
+
+### Caching Strategy
+
+**Three-tier caching:**
+
+| Resource Type | Strategy | Cache Name | Rationale |
+|---------------|----------|------------|-----------|
+| HTML shell (`index.php` output) | NetworkFirst (timeout 5s) | `shell-cache` | Always try for fresh, fast fallback |
+| API requests (`/wp-json/*`) | NetworkFirst (timeout 10s) | `api-cache` | Fresh data priority, offline fallback |
+| Static assets (JS/CSS/images) | CacheFirst | `assets-cache` | Immutable, versioned by Vite |
+| WordPress uploads | CacheFirst | `media-cache` | Immutable, user-uploaded content |
+
+**Cache expiration:**
+```javascript
+workbox: {
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/.*\/wp-json\/.*/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'api-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 5 * 60 // Match TanStack Query staleTime
         }
-    }
-}
-```
-
-**State Transitions (per contact):**
-```
-UNLINKED  --> SYNCED      (after first export to Google)
-SYNCED    --> PENDING_PUSH (Stadion edit detected)
-SYNCED    --> PENDING_PULL (Google edit detected via delta sync)
-PENDING_* --> CONFLICT     (both sides edited since last sync)
-CONFLICT  --> SYNCED       (after resolution)
-SYNCED    --> UNLINKED     (user unlinks or deletes)
-```
-
-#### 3. GoogleContactsMapper (Field Mapping)
-
-**Purpose:** Bidirectional field mapping between Google People API format and Stadion ACF fields.
-
-**Design Principle:** Single source of truth for field mappings - both directions derive from same config.
-
-**Mapping Structure:**
-```php
-class GoogleContactsMapper {
-    private const FIELD_MAP = [
-        'names' => [
-            'google_path' => 'names[0]',
-            'stadion_fields' => [
-                'givenName'  => 'first_name',
-                'familyName' => 'last_name',
-            ],
-        ],
-        'nicknames' => [
-            'google_path' => 'nicknames[0].value',
-            'stadion_fields' => ['value' => 'nickname'],
-        ],
-        'emailAddresses' => [
-            'google_path' => 'emailAddresses',
-            'stadion_field' => 'contact_info',
-            'filter' => ['contact_type' => 'email'],
-            'repeater' => true,
-        ],
-        // ... etc
-    ];
-
-    public function toGoogle(int $personId): array;
-    public function toStadion(array $googleContact): array;
-    public function getChangedFields(array $before, array $after): array;
-}
-```
-
-**Complex Mappings:**
-| Google Field | Stadion Field | Notes |
-|--------------|--------------|-------|
-| `names[0].givenName` | `first_name` | ACF text field |
-| `names[0].familyName` | `last_name` | ACF text field |
-| `photos[0].url` | `_thumbnail_id` | Sideload as attachment |
-| `emailAddresses[]` | `contact_info[]` (type: email) | ACF repeater |
-| `phoneNumbers[]` | `contact_info[]` (type: phone/mobile) | ACF repeater |
-| `addresses[]` | `addresses[]` | ACF repeater |
-| `birthdays[0]` | `important_date` CPT | Link via `related_people` |
-| `teams[0]` | `work_history[]` | Create team if needed |
-| `biographies[0].value` | `story` | ACF WYSIWYG |
-
-#### 4. GoogleContactsConflict (Conflict Resolution)
-
-**Purpose:** Detect and resolve conflicts when both systems modify the same contact.
-
-**Conflict Detection:**
-```php
-class GoogleContactsConflict {
-    public function detectConflict(int $personId, array $googleData): ?Conflict {
-        $lastSynced = get_post_meta($personId, '_google_last_synced', true);
-        $stadionModified = get_post_modified_time('U', false, $personId);
-        $googleModified = strtotime($googleData['metadata']['sources'][0]['updateTime']);
-
-        // Both modified since last sync = conflict
-        if ($stadionModified > $lastSynced && $googleModified > $lastSynced) {
-            return new Conflict($personId, $googleData, $this->getChangedFields(...));
+      }
+    },
+    {
+      urlPattern: /\/wp-content\/uploads\/.*/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'media-cache',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
         }
-
-        return null;
+      }
     }
+  ]
 }
 ```
 
-**Resolution Strategies:**
-1. **newest_wins** (default) - Compare `post_modified` vs Google `updateTime`
-2. **stadion_wins** - Always prefer Stadion data
-3. **google_wins** - Always prefer Google data
-4. **field_level_merge** - Non-conflicting fields merged, conflicting fields use newest
-5. **manual** - Queue for user review
+### Precaching Strategy
 
-**Field-Level Merge Algorithm:**
-```php
-public function mergeFields(array $stadion, array $google, array $conflicts): array {
-    $merged = [];
+**What to precache:**
+- App shell (HTML)
+- Core JS bundle (vendor chunk)
+- Core CSS
+- Critical icons/assets
 
-    foreach (self::FIELD_MAP as $field => $config) {
-        if (in_array($field, $conflicts)) {
-            // Conflicting field - apply strategy
-            $merged[$field] = $this->resolveFieldConflict($field, $stadion, $google);
-        } else {
-            // Non-conflicting - use whichever has data (prefer newest if both)
-            $merged[$field] = $stadion[$field] ?? $google[$field] ?? null;
+**What NOT to precache:**
+- API responses (runtime cached instead)
+- User uploads (too large, runtime cached)
+- Dynamic route data
+
+**Configuration:**
+```javascript
+VitePWA({
+  includeAssets: ['favicon.svg'], // Static assets to precache
+  workbox: {
+    globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+    maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB limit
+  }
+})
+```
+
+## Build Order and Dependencies
+
+### Phase 1: Foundation Setup (No code changes)
+**Goal:** Add vite-plugin-pwa and configure basic manifest
+
+**Tasks:**
+1. Install dependencies: `npm install -D vite-plugin-pwa workbox-window`
+2. Configure `vite.config.js` with VitePWA plugin
+3. Configure manifest (name, icons, theme colors)
+4. Test build produces `dist/manifest.webmanifest`
+
+**Verification:**
+- `npm run build` succeeds
+- `dist/manifest.webmanifest` exists
+- Manifest contains correct app metadata
+
+**Dependencies:** None (standalone)
+
+### Phase 2: Manifest Integration
+**Goal:** Serve manifest from WordPress, add PWA meta tags
+
+**Tasks:**
+1. Add `stadion_add_pwa_manifest()` function to `functions.php`
+2. Add theme color meta tags to `index.php`
+3. Add apple-touch-icon links
+4. Test manifest loads in browser
+
+**Verification:**
+- Manifest appears in DevTools → Application → Manifest
+- No console errors about manifest
+- Theme colors applied correctly
+
+**Dependencies:** Phase 1 (requires manifest file)
+
+### Phase 3: Service Worker Generation
+**Goal:** Generate service worker, configure caching strategies
+
+**Tasks:**
+1. Configure Workbox runtime caching in `vite.config.js`
+2. Add API caching strategy (NetworkFirst)
+3. Add static asset caching (CacheFirst)
+4. Exclude `/wp-admin/` and `/wp-login/`
+5. Test build produces `dist/sw.js`
+
+**Verification:**
+- `npm run build` produces `dist/sw.js`
+- Service worker includes cache strategies
+- Admin URLs excluded from caching
+
+**Dependencies:** Phase 1 (requires plugin setup)
+
+### Phase 4: Service Worker Deployment
+**Goal:** Copy service worker to theme root, make it accessible
+
+**Tasks:**
+1. Add post-build script to `package.json`: `"copy-sw": "cp dist/sw.js sw.js"`
+2. Update `npm run build` to run copy-sw
+3. Test service worker accessible at theme root
+4. Update `.gitignore` to track `sw.js`
+
+**Verification:**
+- `sw.js` exists in theme root after build
+- Service worker accessible via browser
+- File tracked in git (intentional)
+
+**Dependencies:** Phase 3 (requires sw.js to exist)
+
+**Why copy step:** Service worker needs root scope to control frontend routes. Serving from `/dist/sw.js` would limit scope to `/dist/` only.
+
+### Phase 5: Service Worker Registration
+**Goal:** Register service worker in React app, wire up update UI
+
+**Tasks:**
+1. Import `registerSW` from `virtual:pwa-register` in `main.jsx`
+2. Implement `onNeedRefresh()` callback (show update banner)
+3. Implement `onOfflineReady()` callback (show offline indicator)
+4. Create UpdateBanner component (user-triggered reload)
+5. Store `updateSW` callback in state/context
+
+**Verification:**
+- Service worker registers on app load
+- Update banner appears when new version detected
+- Clicking "Update" reloads with new version
+- Offline indicator appears when service worker ready
+
+**Dependencies:** Phase 4 (requires accessible service worker)
+
+### Phase 6: TanStack Query Integration
+**Goal:** Configure TanStack Query for offline-first mode
+
+**Tasks:**
+1. Update QueryClient config: add `networkMode: 'offlineFirst'`
+2. Test API requests work offline (using cached data)
+3. Test online/offline transitions
+4. Add error boundaries for offline failures
+
+**Verification:**
+- Queries work offline (use cached SW responses)
+- No query errors during offline periods
+- UI updates when transitioning online/offline
+- Error messages clear when online
+
+**Dependencies:** Phase 5 (requires registered service worker)
+
+### Phase 7: Testing and Optimization
+**Goal:** Verify PWA features work correctly, optimize performance
+
+**Tasks:**
+1. Test install prompt on mobile/desktop
+2. Test offline functionality (airplane mode)
+3. Test update flow (deploy new version, trigger update)
+4. Run Lighthouse PWA audit
+5. Optimize cache sizes and expiration
+
+**Verification:**
+- Lighthouse PWA score > 90
+- Install prompt appears on supported browsers
+- App works offline (cached routes accessible)
+- Updates apply cleanly without data loss
+
+**Dependencies:** Phase 6 (requires full integration)
+
+### Dependency Graph
+
+```
+Phase 1: Foundation Setup
+    ↓
+Phase 2: Manifest Integration (requires manifest file)
+    ↓
+Phase 3: Service Worker Generation (parallel with Phase 2)
+    ↓
+Phase 4: Service Worker Deployment (requires sw.js)
+    ↓
+Phase 5: Service Worker Registration (requires accessible sw.js)
+    ↓
+Phase 6: TanStack Query Integration (requires registered SW)
+    ↓
+Phase 7: Testing and Optimization (requires full stack)
+```
+
+**Critical path:** 1 → 3 → 4 → 5 → 6 → 7
+**Parallel work:** Phase 2 can be done alongside Phase 3
+
+## WordPress Considerations
+
+### Admin Area Protection
+
+**Requirement:** Service worker MUST NOT interfere with WordPress admin.
+
+**Implementation:**
+1. **Scope-based exclusion:** Service worker at `/` but with fetch handler checks
+2. **Navigation exclusion:** `navigateFallbackDenylist` prevents admin route interception
+3. **Cache exclusion:** `globIgnores` prevents admin asset caching
+
+**Testing checklist:**
+- [ ] `/wp-admin/` loads without service worker interception
+- [ ] Login redirects work correctly
+- [ ] Admin AJAX requests not cached
+- [ ] Plugin/theme updates work
+- [ ] Media uploads work
+
+### Authentication Considerations
+
+**WordPress uses two auth mechanisms:**
+1. **Session cookies** (admin, traditional pages)
+2. **REST nonce** (REST API, React app)
+
+**Service worker implications:**
+- API requests include `X-WP-Nonce` header (short-lived, 24h)
+- Cached API responses may have stale nonces
+- Nonce refresh required after cache expiration
+
+**Solution:** NetworkFirst strategy with timeout
+- Always attempts fresh request (gets fresh nonce)
+- Falls back to cache only when truly offline
+- TanStack Query handles 401 errors (nonce expired)
+
+**Nonce refresh flow:**
+```javascript
+// In axios interceptor (already exists in src/api/client.js)
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      // Nonce expired, redirect to login
+      window.location.href = window.stadionConfig.loginUrl
+    }
+    return Promise.reject(error)
+  }
+)
+```
+
+### Asset Versioning
+
+**Current system:** Vite generates hashed filenames (`main-abc123.js`)
+
+**PWA integration:** Service worker precache automatically includes hashed assets
+
+**Update flow:**
+1. Deploy new build (new hashes)
+2. Service worker detects manifest change
+3. Triggers `onNeedRefresh()` callback
+4. User clicks update
+5. New assets downloaded and cached
+6. Page reloads with new version
+
+**No changes required** - existing Vite versioning works seamlessly with PWA.
+
+### Development vs Production
+
+**Development (WP_DEBUG = true):**
+- Vite dev server at `localhost:5173` (HMR enabled)
+- Service worker disabled (interferes with HMR)
+- Manifest served but not functional
+
+**Production (WP_DEBUG = false):**
+- Assets from `dist/` folder
+- Service worker active
+- Full PWA functionality
+
+**Configuration:**
+```javascript
+// vite.config.js
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    react(),
+    VitePWA({
+      // Disable in dev mode to avoid HMR conflicts
+      disable: mode === 'development',
+      // ... other config
+    })
+  ]
+}))
+```
+
+**Why disable in dev:**
+- Service worker caching conflicts with HMR hot reload
+- Development workflow prioritizes speed over offline capability
+- Manifest still served for testing installation
+
+### Deployment Process
+
+**Current:** `bin/deploy.sh` syncs files to production
+
+**PWA additions:**
+1. Ensure `sw.js` copied to theme root before deploy
+2. Deploy syncs `sw.js` along with other theme files
+3. Service worker updates trigger automatically on client
+
+**Updated deployment checklist:**
+- [ ] Run `npm run build` (generates dist/ and copies sw.js)
+- [ ] Verify `sw.js` exists in theme root
+- [ ] Run `bin/deploy.sh`
+- [ ] Test service worker updates on production
+- [ ] Verify update prompt appears for existing users
+
+**No script changes required** - `sw.js` at theme root deploys like any other PHP/JS file.
+
+## Anti-Patterns to Avoid
+
+### 1. Service Worker in /dist/
+**Why bad:** Scope limited to `/dist/`, can't control frontend routes
+**Instead:** Copy `sw.js` to theme root, scope to `/`
+
+### 2. Caching /wp-admin/ URLs
+**Why bad:** Breaks admin functionality, caches sensitive data
+**Instead:** Explicitly exclude admin paths in service worker config
+
+### 3. CacheFirst for API requests
+**Why bad:** Serves stale data indefinitely, nonces expire
+**Instead:** NetworkFirst with timeout, cache as fallback
+
+### 4. Precaching all API responses
+**Why bad:** Bloats cache, stale data, nonce issues
+**Instead:** Runtime caching with expiration, NetworkFirst strategy
+
+### 5. autoUpdate without user notification
+**Why bad:** Interrupts user workflows, loses form data
+**Instead:** Use `prompt` strategy, let users control updates
+
+### 6. Ignoring offline error states
+**Why bad:** Users see broken UI when offline
+**Instead:** Detect online/offline, show appropriate UI, use error boundaries
+
+### 7. Not testing offline transitions
+**Why bad:** Edge cases (going offline mid-request) break app
+**Instead:** Test airplane mode, throttle network, test partial offline states
+
+### 8. Mixing WordPress session auth with cached responses
+**Why bad:** Session cookies cached, auth state inconsistent
+**Instead:** Exclude session-based URLs, use NetworkFirst for authenticated requests
+
+## Scalability Considerations
+
+### Cache Size Management
+
+| User Load | Cache Strategy | Considerations |
+|-----------|---------------|----------------|
+| 1-10 users | Default (50 API entries, 60 assets) | Minimal overhead, ~5-10MB per user |
+| 10-100 users | Same as default | No server impact, browser handles caching |
+| 100+ users | Same as default | No backend changes needed, scales infinitely |
+
+**Why PWA scales:** Caching is client-side. Server load actually *decreases* as more users cache assets.
+
+### API Request Optimization
+
+**Current:** TanStack Query with 5-minute staleTime
+**With PWA:** NetworkFirst adds 10s timeout fallback
+
+**Impact on API load:**
+- Online users: No change (network first)
+- Intermittently offline: Reduced API calls (fallback to cache during timeouts)
+- Fully offline: Zero API calls
+
+**Recommendation:** Monitor API response times. If consistently > 10s, increase `networkTimeoutSeconds` to reduce cache fallbacks.
+
+### Storage Quotas
+
+**Browser storage limits:**
+- Chrome/Edge: ~60% of disk space (temporary storage)
+- Safari: ~1GB on desktop, ~500MB on iOS
+- Firefox: ~50% of disk space
+
+**Stadion PWA cache estimate:**
+- Precached assets: ~2-3MB (JS/CSS bundles)
+- API cache (50 entries): ~1-2MB (JSON responses)
+- Media cache (100 entries): ~10-20MB (profile photos)
+- **Total:** ~15-25MB per user
+
+**Quota exceeded handling:**
+```javascript
+// Service worker automatically evicts oldest entries
+// No manual handling required with Workbox
+workbox: {
+  runtimeCaching: [
+    {
+      // ... config
+      options: {
+        expiration: {
+          maxEntries: 50, // Automatic LRU eviction
+          maxAgeSeconds: 5 * 60
         }
+      }
     }
-
-    return $merged;
+  ]
 }
 ```
 
-## Data Flow
+**Monitoring:** Browser DevTools → Application → Storage → Cache Storage
 
-### Initial Full Sync Flow
+## Performance Impact
 
-```
-User clicks "Connect Google Contacts"
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│ OAuth Flow (reuse existing GoogleOAuth)                 │
-│ - Add contacts scope to existing calendar scopes        │
-│ - Store tokens encrypted in user meta                   │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│ Full Sync (no syncToken)                                │
-│ 1. Call people.connections.list with requestSyncToken  │
-│ 2. Paginate through all contacts (1000 per page max)   │
-│ 3. For each Google contact:                            │
-│    - Check for existing Stadion match (by email/name)   │
-│    - If match: link and merge data                     │
-│    - If new: create person or queue for review         │
-│ 4. Store nextSyncToken in user meta                    │
-│ 5. For unlinked Stadion contacts: export to Google      │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-    Store syncToken
-```
+### Initial Load
 
-### Delta Sync Flow (Background)
+**Before PWA:**
+- First visit: Load HTML → JS → CSS → API requests
+- Return visit: Browser cache (if not expired)
 
-```
-WP-Cron triggers sync
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│ 1. Pull Changes from Google                             │
-│    - Call connections.list with stored syncToken        │
-│    - If 410 error: clear token, trigger full sync       │
-│    - Process changed/deleted contacts                   │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│ 2. Detect Local Changes                                 │
-│    - Query persons where post_modified > last_synced    │
-│    - Query persons with _google_sync_status = pending   │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│ 3. Conflict Detection                                   │
-│    - For each changed contact (both sides)              │
-│    - Compare modification timestamps                    │
-│    - Identify conflicting fields                        │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│ 4. Apply Changes                                        │
-│    - Non-conflicting: apply directly                    │
-│    - Conflicting: apply resolution strategy             │
-│    - Manual conflicts: queue for review                 │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│ 5. Push Changes to Google                               │
-│    - For each PENDING_PUSH contact                      │
-│    - Include etag in update request                     │
-│    - Handle 409 (etag mismatch) with fetch-merge-retry  │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-    Store new syncToken
-    Update last_synced timestamps
-```
+**After PWA:**
+- First visit: Same as before + service worker installation (~200ms overhead)
+- Return visit: Service worker active, instant load from cache
 
-### Conflict Resolution Flow
+**Metrics:**
+- Time to Interactive (TTI): +200ms on first visit, -1000ms on repeat visits
+- Largest Contentful Paint (LCP): No change first visit, -500ms repeat visits
 
-```
-Conflict Detected
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│ Check User's Configured Strategy                        │
-│ (user meta: stadion_google_contacts_conflict_mode)       │
-└─────────────────────────────────────────────────────────┘
-         │
-    ┌────┴────┬─────────┬─────────┐
-    ▼         ▼         ▼         ▼
- newest    stadion    google    manual
-   wins      wins      wins    review
-    │         │         │         │
-    ▼         ▼         ▼         ▼
-Compare    Use       Use      Queue in
- times    Stadion    Google   _google_sync_status
-    │         │         │      = 'conflict'
-    └────┬────┴─────────┘         │
-         ▼                        ▼
-    Apply winner              Show in UI
-    Update both sides         Wait for user
-    Log resolution            decision
-```
+### API Request Performance
 
-## Sync State Machine
+**Online, good connection:**
+- Before PWA: Direct API request
+- After PWA: +20ms overhead (service worker interception, still makes network request)
 
-### Per-Contact States
+**Online, poor connection:**
+- Before PWA: 2-10s wait, possible timeout
+- After PWA: 10s timeout → cache fallback (~50ms)
 
-```
-                    ┌──────────────┐
-                    │   UNLINKED   │◄──────────────────────────────┐
-                    │ (Stadion only)│                               │
-                    └──────┬───────┘                               │
-                           │                                       │
-                    Export │ to Google                      Unlink │
-                           │                                       │
-                           ▼                                       │
-                    ┌──────────────┐                               │
-           ┌───────►│    SYNCED    │◄───────┐                     │
-           │        │  (in sync)   │        │                     │
-           │        └──────┬───────┘        │                     │
-           │               │                │                     │
-           │     ┌─────────┼─────────┐      │                     │
-           │     │         │         │      │                     │
-           │  Stadion     Both     Google    │                     │
-           │  edited    edited    edited    │                     │
-           │     │         │         │      │                     │
-           │     ▼         ▼         ▼      │                     │
-           │ ┌────────┐ ┌────────┐ ┌────────┐                     │
-           │ │PENDING │ │CONFLICT│ │PENDING │                     │
-           │ │ _PUSH  │ │        │ │ _PULL  │                     │
-           │ └────┬───┘ └────┬───┘ └────┬───┘                     │
-           │      │          │          │                         │
-           │   Push to    Resolve    Pull from                    │
-           │   Google    conflict     Google                      │
-           │      │          │          │                         │
-           └──────┴──────────┴──────────┘                         │
-                                                                  │
-                                    Delete on either side ────────┘
-```
+**Offline:**
+- Before PWA: Request fails, UI breaks
+- After PWA: Instant cache response (~50ms)
 
-### Per-User States
+**Recommendation:** NetworkFirst strategy optimizes for online performance while providing offline fallback.
 
-```
-┌─────────────────┐
-│  DISCONNECTED   │
-│ (no OAuth token)│
-└────────┬────────┘
-         │ Connect
-         ▼
-┌─────────────────┐
-│   CONNECTING    │
-│ (OAuth in flow) │
-└────────┬────────┘
-         │ Token received
-         ▼
-┌─────────────────┐
-│  INITIAL_SYNC   │
-│(full sync running)│
-└────────┬────────┘
-         │ Complete
-         ▼
-┌─────────────────┐
-│    CONNECTED    │◄──────┐
-│ (periodic sync) │       │
-└────────┬────────┘       │
-         │                │
-    ┌────┴────┐           │
-    │         │           │
-  Error    Sync OK        │
-    │         │           │
-    ▼         └───────────┘
-┌─────────────────┐
-│     ERROR       │
-│(needs attention)│
-└─────────────────┘
-```
+### Build Performance
 
-## Integration with Existing Architecture
+**Build time impact:**
+- Before PWA: ~10-15s (Vite build)
+- After PWA: +2-3s (Workbox service worker generation)
+- Total: ~12-18s
 
-### Reusing Calendar Infrastructure
-
-The Google Contacts sync should leverage existing patterns from Calendar sync:
-
-| Existing Component | How Contacts Sync Uses It |
-|--------------------|---------------------------|
-| `Stadion\Calendar\GoogleOAuth` | Extend with contacts scopes (additive) |
-| `Stadion\Calendar\Sync` (cron scheduling) | Same pattern, different hook |
-| `Stadion\Data\CredentialEncryption` | Same encryption for tokens |
-| Transient-based sync locks | Same pattern for preventing concurrent syncs |
-| User meta for connection state | Same storage pattern |
-
-### OAuth Scope Extension
-
-Current calendar-only scopes:
-```php
-private const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-```
-
-Extended for contacts:
-```php
-private const CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-private const CONTACTS_SCOPES = [
-    'https://www.googleapis.com/auth/contacts',        // Full access
-    // OR 'https://www.googleapis.com/auth/contacts.readonly'  // Import-only
-];
-
-public static function getScopes(array $features = ['calendar', 'contacts']): array {
-    $scopes = [];
-    if (in_array('calendar', $features)) {
-        $scopes = array_merge($scopes, self::CALENDAR_SCOPES);
-    }
-    if (in_array('contacts', $features)) {
-        $scopes = array_merge($scopes, self::CONTACTS_SCOPES);
-    }
-    return $scopes;
-}
-```
-
-### Post Meta Schema
-
-New meta fields on `person` post type:
-```php
-// Sync identification
-'_google_contact_id'     // string: resourceName (e.g., "people/c12345")
-'_google_etag'           // string: for optimistic locking
-'_google_sync_enabled'   // bool: whether this contact syncs
-
-// Sync state
-'_google_sync_status'    // enum: synced|pending_push|pending_pull|conflict|unlinked
-'_google_last_synced'    // datetime: last successful sync
-'_google_raw_data'       // json: cached Google data for conflict resolution
-
-// Conflict tracking
-'_google_conflict_data'  // json: {stadion: {...}, google: {...}, fields: [...]}
-```
-
-### User Meta Schema
-
-```php
-// Connection state
-'stadion_google_contacts_enabled'     // bool: master switch
-'stadion_google_contacts_sync_token'  // string: for delta sync
-
-// Preferences
-'stadion_google_contacts_sync_frequency'  // string: 15min|1hour|6hours|daily
-'stadion_google_contacts_sync_direction'  // string: bidirectional|import|export
-'stadion_google_contacts_conflict_mode'   // string: newest|stadion|google|manual
-'stadion_google_contacts_delete_mode'     // string: unlink|propagate
-
-// Status tracking
-'stadion_google_contacts_last_sync'       // datetime
-'stadion_google_contacts_last_error'      // string
-'stadion_google_contacts_stats'           // json: {synced: N, pending: M, conflicts: K}
-```
-
-### REST API Endpoints
-
-Following existing `Stadion\REST` patterns:
-
-```php
-namespace Stadion\REST;
-
-class GoogleContacts extends Base {
-    public function register_routes() {
-        // Connection management
-        register_rest_route('stadion/v1', '/google-contacts/status', [...]);
-        register_rest_route('stadion/v1', '/google-contacts/connect', [...]);
-        register_rest_route('stadion/v1', '/google-contacts/disconnect', [...]);
-
-        // Sync operations
-        register_rest_route('stadion/v1', '/google-contacts/sync', [...]);
-        register_rest_route('stadion/v1', '/google-contacts/preferences', [...]);
-
-        // Conflict resolution
-        register_rest_route('stadion/v1', '/google-contacts/conflicts', [...]);
-        register_rest_route('stadion/v1', '/google-contacts/conflicts/(?P<id>\d+)', [...]);
-
-        // Per-contact operations
-        register_rest_route('stadion/v1', '/people/(?P<id>\d+)/google-sync', [...]);
-        register_rest_route('stadion/v1', '/people/(?P<id>\d+)/google-link', [...]);
-    }
-}
-```
-
-## Build Order (Recommended Implementation Sequence)
-
-Based on dependencies between components:
-
-### Phase 1: Foundation (No UI needed)
-**Dependencies:** None
-**Deliverables:**
-1. Extend `GoogleOAuth` for contacts scopes
-2. Create `GoogleContactsProvider` with basic CRUD
-3. Add post meta fields to person CPT
-4. Basic REST endpoints for status/connect
-
-### Phase 2: One-Way Import
-**Dependencies:** Phase 1
-**Deliverables:**
-1. Create `GoogleContactsMapper` (Google -> Stadion direction)
-2. Implement full sync (import all contacts)
-3. Duplicate detection logic
-4. Photo sideloading
-5. Birthday -> important_date creation
-
-### Phase 3: One-Way Export
-**Dependencies:** Phase 2
-**Deliverables:**
-1. Extend `GoogleContactsMapper` (Stadion -> Google direction)
-2. Implement contact creation in Google
-3. Link existing Stadion contacts to Google
-4. Bulk export functionality
-
-### Phase 4: Delta Sync
-**Dependencies:** Phase 3
-**Deliverables:**
-1. Create `GoogleContactsSync` orchestrator
-2. Implement syncToken-based delta sync
-3. Change detection for local edits
-4. Background sync via WP-Cron
-
-### Phase 5: Conflict Resolution
-**Dependencies:** Phase 4
-**Deliverables:**
-1. Create `GoogleContactsConflict` class
-2. Implement resolution strategies
-3. Conflict queuing for manual review
-4. Audit logging
-
-### Phase 6: Settings UI
-**Dependencies:** Phases 1-5 (backend must be complete)
-**Deliverables:**
-1. Google Contacts card in Settings
-2. Preferences panel
-3. Sync status display
-4. Manual sync button
-
-### Phase 7: Person Detail UI
-**Dependencies:** Phase 6
-**Deliverables:**
-1. Sync status indicator
-2. Per-contact sync toggle
-3. Conflict resolution modal
-4. "View in Google" link
-
-### Phase 8: Polish & Edge Cases
-**Dependencies:** All previous
-**Deliverables:**
-1. Deletion handling
-2. Error recovery
-3. WP-CLI commands
-4. Performance optimization
-5. Documentation
-
-## Performance Considerations
-
-### Batch Processing
-
-For initial sync with many contacts:
-```php
-// Process in batches of 50 to avoid memory issues
-foreach (array_chunk($googleContacts, 50) as $batch) {
-    foreach ($batch as $contact) {
-        $this->processContact($contact);
-    }
-    // Allow garbage collection between batches
-    gc_collect_cycles();
-}
-```
-
-### Rate Limiting
-
-Google People API limits:
-- 90 requests per minute per user
-- 10 requests per second per user
-
-Implementation:
-```php
-class RateLimiter {
-    private const MAX_PER_MINUTE = 90;
-    private const MAX_PER_SECOND = 10;
-
-    public function throttle(): void {
-        $key = 'google_contacts_rate_' . get_current_user_id();
-        $count = (int) get_transient($key);
-
-        if ($count >= self::MAX_PER_MINUTE) {
-            sleep(60); // Wait for rate limit window to reset
-        }
-
-        set_transient($key, $count + 1, 60);
-    }
-}
-```
-
-### Caching
-
-Cache Google contact data during sync to avoid re-fetching:
-```php
-// Cache raw Google data for conflict resolution
-update_post_meta($personId, '_google_raw_data', wp_json_encode($googleContact));
-
-// Use etag for conditional requests (304 Not Modified)
-$headers = ['If-None-Match' => $storedEtag];
-```
-
-## Security Considerations
-
-1. **Token Storage:** Use existing `CredentialEncryption` class (Sodium)
-2. **Minimal Scopes:** Request only contacts scope, not full Google account
-3. **User Isolation:** Each user has their own sync state, no cross-user data access
-4. **Audit Trail:** Log all sync operations with timestamps
+**Disk usage:**
+- Additional files: `sw.js` (~50KB), `manifest.webmanifest` (~1KB)
+- Negligible impact on deployment size
 
 ## Sources
 
-- [Google People API - Read and Manage Contacts](https://developers.google.com/people/v1/contacts)
-- [Google Calendar API - Synchronize Resources Efficiently](https://developers.google.com/workspace/calendar/api/guides/sync)
-- [Google People API - people.connections.list](https://developers.google.com/people/api/rest/v1/people.connections/list)
-- [Two-Way Sync Architecture - StackSync](https://www.stacksync.com/blog/two-way-sync-architecture-essential-knowledge-for-data-professionals)
-- [ETags and Optimistic Concurrency Control](https://fideloper.com/etags-and-optimistic-concurrency-control)
-- [Martin Fowler - Optimistic Offline Lock](https://martinfowler.com/eaaCatalog/optimisticOfflineLock.html)
-- [Data Synchronization Patterns (McCormick & Schmidt)](https://www.dre.vanderbilt.edu/~schmidt/PDF/PatternPaperv11.pdf)
-- [WP Background Processing Library](https://github.com/deliciousbrains/wp-background-processing)
-- [Action Scheduler for WordPress](https://actionscheduler.org/)
+### High Confidence (Official Documentation)
+
+- [Vite Plugin PWA Guide](https://vite-pwa-org.netlify.app/guide/) - Official Vite PWA plugin documentation
+- [TanStack Query Network Mode](https://tanstack.com/query/v4/docs/framework/react/guides/network-mode) - Official TanStack Query docs on network modes
+- [MDN Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers) - Authoritative web standards reference
+- [web.dev PWA Service Workers](https://web.dev/learn/pwa/service-workers) - Google's official PWA learning resource
+
+### Medium Confidence (Community Best Practices)
+
+- [Making totally offline-available PWAs with Vite and React](https://adueck.github.io/blog/caching-everything-for-totally-offline-pwa-vite-react/) - Real-world implementation guide
+- [How to turn your Vite React App into a PWA with Ease](https://www.timsanteford.com/posts/transform-your-vite-react-app-into-a-pwa-with-ease/) - Tutorial on Vite PWA integration
+- [Offline React Query](https://tkdodo.eu/blog/offline-react-query) - TanStack Query offline strategies by TkDodo (TanStack maintainer)
+- [Supporting Offline Mode in TanStack Query](https://lucas-barake.github.io/persisting-tantsack-query-data-locally/) - Offline mode implementation patterns
+
+### Low Confidence (Requires Verification)
+
+- [WordPress PWA Service Worker Integration](https://github.com/GoogleChromeLabs/pwa-wp/wiki/Service-Worker) - GoogleChromeLabs WordPress PWA plugin (archived project, patterns still relevant)
+- [Implementing A Service Worker For Single-Page App WordPress Sites](https://www.smashingmagazine.com/2017/10/service-worker-single-page-application-wordpress-sites/) - 2017 article, patterns outdated but architectural concepts valid
+
+## Confidence Assessment
+
+| Area | Level | Rationale |
+|------|-------|-----------|
+| Vite PWA Plugin Integration | HIGH | Official documentation, well-established plugin |
+| Service Worker Scope | HIGH | Web standards (MDN), verified with multiple sources |
+| TanStack Query Offline Mode | MEDIUM | Official docs limited, community patterns validated |
+| WordPress Admin Exclusion | MEDIUM | Community patterns, no official WordPress PWA guidance |
+| Cache Strategies | HIGH | Workbox official patterns, standard web performance practice |
+
+## Open Questions (for Phase-Specific Research)
+
+1. **Background sync:** Should form submissions queue when offline? (Defer to Phase 7)
+2. **Push notifications:** Are reminders better as push vs email? (Defer to separate milestone)
+3. **Install prompt timing:** When should install banner appear? (Defer to Phase 7, UX testing)
+4. **iOS install instructions:** How to guide iOS users through "Add to Home Screen"? (Defer to Phase 2, UX content)
+5. **Cache invalidation:** Should admin actions invalidate frontend caches? (Defer to Phase 6, test first)
