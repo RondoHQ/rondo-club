@@ -246,10 +246,10 @@
             "sub_fields": [
                 {
                     "key": "field_work_company",
-                    "label": "Team",
+                    "label": "Team / Commissie",
                     "name": "team",
                     "type": "post_object",
-                    "post_type": ["team"],
+                    "post_type": ["team", "commissie"],
                     "return_format": "id",
                     "allow_null": 1,
                     "wrapper": {
