@@ -91,6 +91,32 @@ function getInitials(name, email) {
   return '?';
 }
 
+// Helper to calculate VOG status
+function getVogStatus(acf) {
+  // Check if person has work functions other than "Donateur"
+  const werkfuncties = acf?.werkfuncties || [];
+  const hasNonDonateurFunction = werkfuncties.some(fn => fn !== 'Donateur');
+
+  if (!hasNonDonateurFunction) {
+    return null; // Don't show VOG indicator for Donateurs only
+  }
+
+  const vogDate = acf?.vog_datum;
+  if (!vogDate) {
+    return { status: 'missing', label: 'Geen VOG', color: 'red' };
+  }
+
+  const vogDateObj = new Date(vogDate);
+  const threeYearsAgo = new Date();
+  threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+
+  if (vogDateObj >= threeYearsAgo) {
+    return { status: 'valid', label: 'VOG OK', color: 'green' };
+  } else {
+    return { status: 'expired', label: 'VOG verlopen', color: 'orange' };
+  }
+}
+
 // MeetingCard component for displaying meeting info
 function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick, currentPersonId }) {
   // Format the meeting date/time
@@ -1444,7 +1470,10 @@ export default function PersonDetail() {
   }
   
   const acf = person.acf || {};
-  
+
+  // Calculate VOG status
+  const vogStatus = getVogStatus(acf);
+
   // Extract social links for header display (slack is now in contact details, not social)
   const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'bluesky', 'threads', 'website'];
   const socialLinks = acf.contact_info?.filter(contact => socialTypes.includes(contact.contact_type)) || [];
@@ -1464,10 +1493,10 @@ export default function PersonDetail() {
     'website': 8,
   };
   
-  // Sort social links by display order, and add WhatsApp if mobile exists
+  // Sort social links by display order, and add WhatsApp and Sportlink if applicable
   const sortedSocialLinks = (() => {
     const links = [...socialLinks];
-    
+
     // Add WhatsApp if there's a mobile number
     if (mobileContact) {
       links.push({
@@ -1475,7 +1504,15 @@ export default function PersonDetail() {
         contact_value: `https://wa.me/${formatPhoneForTel(mobileContact.contact_value)}`,
       });
     }
-    
+
+    // Add Sportlink if there's a KNVB ID
+    if (acf.knvb_id) {
+      links.push({
+        contact_type: 'sportlink',
+        contact_value: `https://club.sportlink.com/member/${acf.knvb_id}`,
+      });
+    }
+
     return links.sort((a, b) => {
       const orderA = socialIconOrder[a.contact_type] || 99;
       const orderB = socialIconOrder[b.contact_type] || 99;
@@ -1543,7 +1580,21 @@ export default function PersonDetail() {
       </div>
       
       {/* Profile header */}
-      <div className={`card p-6 ${acf['financiele-blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : ''}`}>
+      <div className={`card p-6 relative ${acf['financiele-blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : ''}`}>
+        {/* VOG Status Badge */}
+        {vogStatus && (
+          <div className="absolute top-4 right-4">
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+              vogStatus.color === 'green'
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                : vogStatus.color === 'orange'
+                ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+            }`}>
+              {vogStatus.label}
+            </span>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="relative group">
             {person.thumbnail ? (
@@ -1701,15 +1752,32 @@ export default function PersonDetail() {
               {sortedSocialLinks.length > 0 && (
                 <div className="flex items-center gap-3 mt-4">
                   {sortedSocialLinks.map((contact, index) => {
-                    const SocialIcon = getSocialIcon(contact.contact_type);
-                    const iconColor = getSocialIconColor(contact.contact_type);
-                    
                     // Ensure URL has protocol
                     let url = contact.contact_value;
                     if (!url.match(/^https?:\/\//i)) {
                       url = `https://${url}`;
                     }
-                    
+
+                    // Handle Sportlink specially with custom icon
+                    if (contact.contact_type === 'sportlink') {
+                      return (
+                        <a
+                          key={index}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                          title="Bekijk in Sportlink Club"
+                        >
+                          <img src="/icons/sportlink.png" alt="Sportlink" className="w-5 h-5" />
+                        </a>
+                      );
+                    }
+
+                    // Regular social icons
+                    const SocialIcon = getSocialIcon(contact.contact_type);
+                    const iconColor = getSocialIconColor(contact.contact_type);
+
                     return (
                       <a
                         key={index}
