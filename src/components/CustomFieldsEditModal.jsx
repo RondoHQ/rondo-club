@@ -5,6 +5,7 @@ import Sketch from '@uiw/react-color-sketch';
 import { wpApi, prmApi } from '@/api/client';
 import { useQuery } from '@tanstack/react-query';
 import { decodeHtml, getPersonName, getTeamName } from '@/utils/formatters';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 /**
  * Build default form values from field definitions and current values
@@ -465,6 +466,7 @@ export default function CustomFieldsEditModal({
   onSubmit,
   isLoading,
 }) {
+  const isOnline = useOnlineStatus();
   const { register, handleSubmit, control, reset, watch } = useForm({
     defaultValues: buildDefaultValues(fieldDefs, currentValues),
   });
@@ -764,8 +766,8 @@ export default function CustomFieldsEditModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
-              disabled={isLoading}
+              className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!isOnline || isLoading}
             >
               {isLoading ? 'Opslaan...' : 'Wijzigingen opslaan'}
             </button>
