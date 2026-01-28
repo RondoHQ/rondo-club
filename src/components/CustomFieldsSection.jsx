@@ -182,6 +182,14 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
         return <span className="whitespace-pre-wrap">{String(value)}</span>;
       }
 
+      case 'wysiwyg':
+        return (
+          <div
+            className="prose prose-sm dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: value }}
+          />
+        );
+
       case 'email':
         return (
           <a
