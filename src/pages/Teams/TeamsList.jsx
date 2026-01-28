@@ -4,6 +4,7 @@ import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, A
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCreateTeam, useBulkUpdateTeams } from '@/hooks/useTeams';
 import { wpApi, prmApi } from '@/api/client';
+import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getTeamName } from '@/utils/formatters';
 import TeamEditModal from '@/components/TeamEditModal';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
@@ -399,6 +400,10 @@ export default function TeamsList() {
   const bulkUpdateMutation = useBulkUpdateTeams();
   const queryClient = useQueryClient();
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['teams'] });
+  };
+
   // Mutation for updating row custom fields
   // ACF fields that require array type (repeaters, multi-select post_object, etc.)
   // These cannot be null - must be empty array [] when empty
@@ -655,8 +660,9 @@ export default function TeamsList() {
   }, [ownershipFilter, teams]);
   
   return (
-    <div className="space-y-4">
-      {/* Header */}
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <div className="space-y-4">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-48 max-w-md">
@@ -941,6 +947,7 @@ export default function TeamsList() {
         isLoading={bulkActionLoading}
       />
 
-    </div>
+      </div>
+    </PullToRefreshWrapper>
   );
 }

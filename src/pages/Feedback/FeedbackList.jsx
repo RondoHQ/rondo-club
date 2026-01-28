@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare, Bug, Lightbulb, Plus, Clock } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useFeedbackList, useCreateFeedback } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 import FeedbackModal from '@/components/FeedbackModal';
+import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 
 // Status badge colors
 const statusColors = {
@@ -43,6 +45,7 @@ export default function FeedbackList() {
   const [typeFilter, setTypeFilter] = useState(''); // '' | 'bug' | 'feature_request'
   const [statusFilter, setStatusFilter] = useState('open'); // 'open' | '' | 'new' | 'approved' | 'in_progress' | 'resolved' | 'declined'
   const [showModal, setShowModal] = useState(false);
+  const queryClient = useQueryClient();
 
   // Fetch feedback with filters
   const { data: feedback, isLoading, error } = useFeedbackList({
@@ -50,6 +53,10 @@ export default function FeedbackList() {
     status: statusFilter || undefined,
   });
   const createFeedback = useCreateFeedback();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['feedback'] });
+  };
 
   // Submit handler
   const handleSubmit = async (data) => {
@@ -76,8 +83,9 @@ export default function FeedbackList() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <PullToRefreshWrapper onRefresh={handleRefresh}>
+      <div className="space-y-6">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold">Feedback</h1>
         <button
@@ -249,6 +257,7 @@ export default function FeedbackList() {
         onSubmit={handleSubmit}
         isLoading={createFeedback.isPending}
       />
-    </div>
+      </div>
+    </PullToRefreshWrapper>
   );
 }
