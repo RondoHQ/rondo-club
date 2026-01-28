@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 Phase: 110 of 110 (Install & Polish)
 Plan: None (ready to plan)
 Status: Ready to plan
-Last activity: 2026-01-28 - Completed Phase 109 (Mobile UX)
+Last activity: 2026-01-28 - Completed quick task 008: WYSIWYG HTML rendering
 
 Progress: [████████░░] 80%
 
@@ -77,6 +77,12 @@ None.
 - People list slow when offline: Large data volume, consider optimization in future
 
 **Pre-existing lint errors:** 143 ESLint errors in unrelated files (not blocking PWA work)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 008 | WYSIWYG custom fields render as HTML | 2026-01-28 | 8f84f75 | [008-wysiwyg-html-render](./quick/008-wysiwyg-html-render/) |
 
 ## Session Continuity
 
