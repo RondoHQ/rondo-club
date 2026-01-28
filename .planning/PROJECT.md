@@ -258,15 +258,23 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Global UI elements: buttons, dialogs, activity types, contact types, rich text editor — v7.0
 - 36 localization requirements delivered across 8 phases (99-106) — v7.0
 
+**v8.0 PWA Enhancement (shipped 2026-01-28):**
+- Web App Manifest with vite-plugin-pwa, icons, theme color, standalone display mode — v8.0
+- Service worker for asset caching and offline support with cached API data — v8.0
+- iOS meta tags, Apple Touch icons, and safe area CSS for notched devices — v8.0
+- Pull-to-refresh gesture on all list and detail views — v8.0
+- iOS overscroll prevention in standalone mode — v8.0
+- Smart Android install prompt after user engagement — v8.0
+- iOS install instructions modal for Add to Home Screen — v8.0
+- Update notification with refresh button and hourly checking — v8.0
+- Dutch localization of all PWA notifications and prompts — v8.0
+- Lighthouse PWA score 90+ verified on real devices — v8.0
+
 ### Active
 
-<!-- v8.0 PWA Enhancement - current scope -->
+<!-- Next milestone scope - to be defined -->
 
-- [ ] Web App Manifest with app icon, splash screen, theme colors, standalone display mode
-- [ ] Service Worker for asset caching and basic offline support (show cached data)
-- [ ] Pull-to-refresh gesture to refresh current view in standalone mode
-- [ ] Smart install prompt after a few visits (dismissable, remembers preference)
-- [ ] iOS and Android PWA support
+(None yet — define requirements for next milestone)
 
 ### Out of Scope
 
@@ -406,4 +414,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | RelationshipItemCompact for list view | Async fetch for relationship names in compact column display | ✓ Good |
 
 ---
-*Last updated: 2026-01-28 after v8.0 PWA Enhancement milestone started*
+*Last updated: 2026-01-28 after v8.0 PWA Enhancement milestone shipped*
