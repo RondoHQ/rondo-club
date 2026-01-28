@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { decodeHtml } from '@/utils/formatters';
 import { meetingsKeys } from './useMeetings';
+import { trackNoteAdded } from '@/hooks/useEngagementTracking';
 
 // Query keys
 export const peopleKeys = {
@@ -346,6 +347,7 @@ export function useCreateNote() {
       prmApi.createNote(personId, content, visibility),
     onSuccess: (_, { personId }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
+      trackNoteAdded();
     },
   });
 }
@@ -364,11 +366,12 @@ export function useDeleteNote() {
 // Activity mutations
 export function useCreateActivity() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ personId, data }) => prmApi.createActivity(personId, data),
     onSuccess: (_, { personId }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
+      trackNoteAdded();
     },
   });
 }
