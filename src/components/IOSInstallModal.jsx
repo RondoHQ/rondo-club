@@ -80,7 +80,7 @@ export function IOSInstallModal() {
             </div>
             <div className="flex-1 text-sm">
               <p className="text-gray-900 dark:text-gray-100 mb-2">
-                Scroll omlaag en kies "Zet op beginscherm"
+                Scroll omlaag en kies &ldquo;Zet op beginscherm&rdquo;
               </p>
               <div className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-accent-600 dark:text-accent-400">
                 <Plus className="w-4 h-4" />
@@ -95,7 +95,7 @@ export function IOSInstallModal() {
             </div>
             <div className="flex-1 text-sm">
               <p className="text-gray-900 dark:text-gray-100">
-                Tik op "Voeg toe"
+                Tik op &ldquo;Voeg toe&rdquo;
               </p>
             </div>
           </li>
