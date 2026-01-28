@@ -73,26 +73,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PWA-01 | TBD | Pending |
-| PWA-02 | TBD | Pending |
-| PWA-03 | TBD | Pending |
-| PWA-04 | TBD | Pending |
-| PWA-05 | TBD | Pending |
-| OFF-01 | TBD | Pending |
-| OFF-02 | TBD | Pending |
-| OFF-03 | TBD | Pending |
-| OFF-04 | TBD | Pending |
-| UX-01 | TBD | Pending |
-| UX-02 | TBD | Pending |
-| INST-01 | TBD | Pending |
-| INST-02 | TBD | Pending |
-| INST-03 | TBD | Pending |
+| PWA-01 | Phase 107 | Pending |
+| PWA-02 | Phase 107 | Pending |
+| PWA-03 | Phase 107 | Pending |
+| PWA-04 | Phase 107 | Pending |
+| PWA-05 | Phase 107 | Pending |
+| OFF-01 | Phase 108 | Pending |
+| OFF-02 | Phase 108 | Pending |
+| OFF-03 | Phase 108 | Pending |
+| OFF-04 | Phase 108 | Pending |
+| UX-01 | Phase 109 | Pending |
+| UX-02 | Phase 109 | Pending |
+| INST-01 | Phase 110 | Pending |
+| INST-02 | Phase 110 | Pending |
+| INST-03 | Phase 110 | Pending |
 
 **Coverage:**
 - v8.0 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-28*
-*Last updated: 2026-01-28 after initial definition*
+*Last updated: 2026-01-28 after roadmap creation*
