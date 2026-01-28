@@ -7,6 +7,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { prmApi } from '@/api/client';
 import Layout from '@/components/layout/Layout';
 import { ReloadPrompt } from '@/components/ReloadPrompt';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 // Lazy-loaded page components
@@ -165,6 +166,7 @@ function App() {
     <div className="app-root">
       <UpdateBanner />
       <ReloadPrompt />
+      <OfflineBanner />
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={
