@@ -9,13 +9,13 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 
 ## Current Position
 
-Milestone: v7.0 Dutch Localization — SHIPPED
-Phase: N/A (milestone complete, ready for next milestone)
-Plan: N/A
-Status: Ready for /gsd:new-milestone
-Last activity: 2026-01-28 — Completed quick task 007: Rename "Werk" tab to "Rollen"
+Milestone: v8.0 PWA Enhancement — DEFINING REQUIREMENTS
+Phase: Not started
+Plan: —
+Status: Defining requirements
+Last activity: 2026-01-28 — Milestone v8.0 started
 
-Progress: Milestone v7.0 complete. Run /gsd:new-milestone to start next milestone.
+Progress: Requirements being defined. Research phase next.
 
 ## Performance Metrics
 
