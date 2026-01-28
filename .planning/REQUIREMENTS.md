@@ -24,8 +24,8 @@ Requirements for PWA milestone. Each maps to roadmap phases.
 
 ### Mobile UX
 
-- [ ] **UX-01**: User can pull-to-refresh to reload current view in standalone PWA mode
-- [ ] **UX-02**: App prevents iOS overscroll behavior that triggers app reload
+- [x] **UX-01**: User can pull-to-refresh to reload current view in standalone PWA mode
+- [x] **UX-02**: App prevents iOS overscroll behavior that triggers app reload
 
 ### Install Experience
 
@@ -82,8 +82,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OFF-02 | Phase 108 | Complete |
 | OFF-03 | Phase 108 | Complete |
 | OFF-04 | Phase 108 | Complete |
-| UX-01 | Phase 109 | Pending |
-| UX-02 | Phase 109 | Pending |
+| UX-01 | Phase 109 | Complete |
+| UX-02 | Phase 109 | Complete |
 | INST-01 | Phase 110 | Pending |
 | INST-02 | Phase 110 | Pending |
 | INST-03 | Phase 110 | Pending |
