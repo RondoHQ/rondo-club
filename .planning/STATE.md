@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 ## Current Position
 
 Phase: 110 of 110 (Install & Polish)
-Plan: 3 of 3
+Plan: 2 of 3
 Status: In progress
-Last activity: 2026-01-28 - Completed 110-03-PLAN.md
+Last activity: 2026-01-28 - Completed 110-02-PLAN.md
 
 Progress: [████████░░] 82%
 
@@ -67,8 +67,10 @@ Recent decisions affecting current work:
 - Engagement thresholds: 2 page views OR 1 note added for prompt visibility (110-01)
 - Standalone mode detection prevents prompts in already-installed apps (110-01)
 - sessionStorage for per-session engagement, localStorage for persistent dismissals (110-01)
-- Periodic SW update checking: 1-hour interval, online-only, cache-busting headers (110-03)
-- ReloadPrompt fully localized to Dutch for consistency with app UI (110-03)
+- Android install banner shows after 2 page views OR 1 note added (110-02)
+- iOS install modal shows after 3 page views (higher threshold for less intrusion) (110-02)
+- Install prompts positioned at bottom-20 to avoid ReloadPrompt overlap (110-02)
+- Z-index layering for notification coexistence: UpdateBanner (100) > Reload/iOS modal (50) > Install banner (40) (110-02)
 
 ### Pending Todos
 
@@ -95,7 +97,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 110-03-PLAN.md
+Stopped at: Completed 110-02-PLAN.md
 Resume file: None
 
-Next: Phase 110 execution complete (plans 110-01, 110-02, 110-03 done)
+Next: Execute 110-03-PLAN.md (Engagement tracking integration and production testing)
