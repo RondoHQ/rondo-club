@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 Phase: 110 of 110 (Install & Polish)
 Plan: None (ready to plan)
 Status: Ready to plan
-Last activity: 2026-01-28 - Completed quick task 008: WYSIWYG HTML rendering
+Last activity: 2026-01-28 - Completed quick task 009: Person header job display improvements
 
 Progress: [████████░░] 80%
 
@@ -83,6 +83,7 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 008 | WYSIWYG custom fields render as HTML | 2026-01-28 | 8f84f75 | [008-wysiwyg-html-render](./quick/008-wysiwyg-html-render/) |
+| 009 | Person header job display improvements | 2026-01-28 | cdcf587 | [009-person-header-job-display](./quick/009-person-header-job-display/) |
 
 ## Session Continuity
 
