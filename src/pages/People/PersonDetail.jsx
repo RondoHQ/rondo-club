@@ -1509,7 +1509,7 @@ export default function PersonDetail() {
     if (acf['knvb-id']) {
       links.push({
         contact_type: 'sportlink',
-        contact_value: `https://club.sportlink.com/member/${acf['knvb-id']}`,
+        contact_value: `https://club.sportlink.com/member/member-details/${acf['knvb-id']}/general`,
       });
     }
 
