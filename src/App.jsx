@@ -8,6 +8,8 @@ import { prmApi } from '@/api/client';
 import Layout from '@/components/layout/Layout';
 import { ReloadPrompt } from '@/components/ReloadPrompt';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { InstallPrompt } from '@/components/InstallPrompt';
+import { IOSInstallModal } from '@/components/IOSInstallModal';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 // Lazy-loaded page components
@@ -167,6 +169,8 @@ function App() {
       <UpdateBanner />
       <ReloadPrompt />
       <OfflineBanner />
+      <InstallPrompt />
+      <IOSInstallModal />
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={
