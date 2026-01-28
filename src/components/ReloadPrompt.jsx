@@ -9,16 +9,41 @@ import { RefreshCw, X, CheckCircle } from 'lucide-react';
  * - Detect when a new version is available
  * - Allow users to trigger update (reload)
  * - Show "ready for offline" notification
+ * - Check for updates periodically (every hour)
  */
 export function ReloadPrompt() {
+  const intervalMS = 60 * 60 * 1000; // Check every hour
+
   const {
     offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker
   } = useRegisterSW({
-    onRegistered(registration) {
-      // SW registered successfully
+    onRegisteredSW(swUrl, registration) {
       console.log('SW Registered:', registration);
+
+      if (registration) {
+        setInterval(async () => {
+          // Only check when online
+          if (navigator.onLine) {
+            try {
+              const resp = await fetch(swUrl, {
+                cache: 'no-store',
+                headers: {
+                  'cache': 'no-store',
+                  'cache-control': 'no-cache',
+                },
+              });
+
+              if (resp?.status === 200) {
+                await registration.update();
+              }
+            } catch (error) {
+              console.debug('SW update check failed:', error);
+            }
+          }
+        }, intervalMS);
+      }
     },
     onRegisterError(error) {
       console.error('SW registration error:', error);
