@@ -44,49 +44,6 @@
             "required": 0,
             "display_format": "F j, Y",
             "return_format": "Y-m-d"
-        },
-        {
-            "key": "field_todo_visibility",
-            "label": "Visibility",
-            "name": "_visibility",
-            "type": "select",
-            "instructions": "Control who can see this todo",
-            "required": 1,
-            "choices": {
-                "private": "Private (only you)",
-                "workspace": "Workspace"
-            },
-            "default_value": "private",
-            "return_format": "value",
-            "allow_null": 0,
-            "multiple": 0,
-            "ui": 0,
-            "ajax": 0
-        },
-        {
-            "key": "field_todo_assigned_workspaces",
-            "label": "Workspaces",
-            "name": "_assigned_workspaces",
-            "type": "taxonomy",
-            "instructions": "Select which workspaces can access this todo",
-            "required": 0,
-            "conditional_logic": [
-                [
-                    {
-                        "field": "field_todo_visibility",
-                        "operator": "==",
-                        "value": "workspace"
-                    }
-                ]
-            ],
-            "taxonomy": "workspace_access",
-            "add_term": 0,
-            "save_terms": 1,
-            "load_terms": 1,
-            "return_format": "id",
-            "field_type": "checkbox",
-            "allow_null": 1,
-            "multiple": 0
         }
     ],
     "location": [
