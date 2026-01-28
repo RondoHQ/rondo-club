@@ -1392,20 +1392,11 @@ class Api extends Base {
 	public function get_dashboard_summary( $request ) {
 		$user_id = get_current_user_id();
 
-		// Get accessible post counts (respects access control)
-		$access_control = new \STADION_Access_Control();
-
-		// For admins, use wp_count_posts for efficiency
-		// For regular users, count only their accessible posts
-		if ( current_user_can( 'manage_options' ) ) {
-			$total_people    = wp_count_posts( 'person' )->publish;
-			$total_teams = wp_count_posts( 'team' )->publish;
-			$total_dates     = wp_count_posts( 'important_date' )->publish;
-		} else {
-			$total_people    = count( $access_control->get_accessible_post_ids( 'person', $user_id ) );
-			$total_teams = count( $access_control->get_accessible_post_ids( 'team', $user_id ) );
-			$total_dates     = count( $access_control->get_accessible_post_ids( 'important_date', $user_id ) );
-		}
+		// Get post counts (all approved users see all data)
+		// Access control is already applied via WP_Query filters
+		$total_people = wp_count_posts( 'person' )->publish;
+		$total_teams  = wp_count_posts( 'team' )->publish;
+		$total_dates  = wp_count_posts( 'important_date' )->publish;
 
 		// Recent people
 		$recent_people = get_posts(
@@ -1496,29 +1487,29 @@ class Api extends Base {
 	private function get_recently_contacted_people( $limit = 5 ) {
 		global $wpdb;
 
-		$user_id           = get_current_user_id();
-		$access_control    = new \STADION_Access_Control();
-		$accessible_people = $access_control->get_accessible_post_ids( 'person', $user_id );
+		$user_id        = get_current_user_id();
+		$access_control = new \STADION_Access_Control();
 
-		if ( empty( $accessible_people ) ) {
+		// Check if user has access (all approved users see all data)
+		if ( ! $access_control->is_user_approved( $user_id ) ) {
 			return [];
 		}
 
-		// Get the most recent activity for each person
-		$placeholders = implode( ',', array_fill( 0, count( $accessible_people ), '%d' ) );
-
 		// Query to get people with their most recent activity date
+		// No post__in filter needed - approved users see all people
 		$query = $wpdb->prepare(
 			"SELECT c.comment_post_ID as person_id, MAX(cm.meta_value) as last_activity_date
              FROM {$wpdb->comments} c
              INNER JOIN {$wpdb->commentmeta} cm ON c.comment_ID = cm.comment_id AND cm.meta_key = 'activity_date'
+             INNER JOIN {$wpdb->posts} p ON c.comment_post_ID = p.ID
              WHERE c.comment_type = 'stadion_activity'
              AND c.comment_approved = '1'
-             AND c.comment_post_ID IN ($placeholders)
+             AND p.post_type = 'person'
+             AND p.post_status = 'publish'
              GROUP BY c.comment_post_ID
              ORDER BY last_activity_date DESC
              LIMIT %d",
-			...array_merge( $accessible_people, [ $limit ] )
+			$limit
 		);
 
 		$results = $wpdb->get_results( $query );
@@ -1544,21 +1535,12 @@ class Api extends Base {
 	 */
 	public function get_investments( $request ) {
 		$investor_id = (int) $request->get_param( 'investor_id' );
-		$user_id     = get_current_user_id();
-
-		// Get all teams accessible by this user
-		$access_control       = new \STADION_Access_Control();
-		$accessible_teams = $access_control->get_accessible_post_ids( 'team', $user_id );
-
-		if ( empty( $accessible_teams ) ) {
-			return rest_ensure_response( [] );
-		}
 
 		// Query teams where this ID appears in the investors field
+		// Access control applied automatically via WP_Query filters (all approved users see all data)
 		$teams = get_posts(
 			[
 				'post_type'      => 'team',
-				'post__in'       => $accessible_teams,
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
 				'meta_query'     => [
@@ -1575,7 +1557,6 @@ class Api extends Base {
 		$teams_serialized = get_posts(
 			[
 				'post_type'      => 'team',
-				'post__in'       => $accessible_teams,
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
 				'meta_query'     => [

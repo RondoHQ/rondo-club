@@ -65,26 +65,42 @@ class ImportExport extends Base {
 		$user_id        = get_current_user_id();
 		$access_control = new \STADION_Access_Control();
 
-		// Get all accessible people
-		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
+		// Check if user is approved (all approved users see all data)
+		if ( ! $access_control->is_user_approved( $user_id ) ) {
+			return new \WP_Error( 'not_approved', __( 'Your account is pending approval.', 'stadion' ), [ 'status' => 403 ] );
+		}
 
-		if ( empty( $people_ids ) ) {
+		// Get all people (access control applied via WP_Query filters)
+		$people = get_posts(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+			]
+		);
+
+		if ( empty( $people ) ) {
 			return new \WP_Error( 'no_contacts', __( 'No contacts to export.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
-		// Get teams for work history
-		$team_ids = $access_control->get_accessible_post_ids( 'team', $user_id );
+		// Get teams for work history (access control applied via WP_Query filters)
+		$teams = get_posts(
+			[
+				'post_type'      => 'team',
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+			]
+		);
+
 		$team_map = [];
-		foreach ( $team_ids as $team_id ) {
-			$team = get_post( $team_id );
-			if ( $team ) {
-				$team_map[ $team_id ] = $team->post_title;
-			}
+		foreach ( $teams as $team ) {
+			$team_map[ $team->ID ] = $team->post_title;
 		}
 
 		// Build vCard content
 		$vcards = [];
-		foreach ( $people_ids as $person_id ) {
+		foreach ( $people as $person_id ) {
 			$person = get_post( $person_id );
 			if ( ! $person || $person->post_status !== 'publish' ) {
 				continue;
@@ -137,10 +153,22 @@ class ImportExport extends Base {
 		$user_id        = get_current_user_id();
 		$access_control = new \STADION_Access_Control();
 
-		// Get all accessible people
-		$people_ids = $access_control->get_accessible_post_ids( 'person', $user_id );
+		// Check if user is approved (all approved users see all data)
+		if ( ! $access_control->is_user_approved( $user_id ) ) {
+			return new \WP_Error( 'not_approved', __( 'Your account is pending approval.', 'stadion' ), [ 'status' => 403 ] );
+		}
 
-		if ( empty( $people_ids ) ) {
+		// Get all people (access control applied via WP_Query filters)
+		$people = get_posts(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+			]
+		);
+
+		if ( empty( $people ) ) {
 			return new \WP_Error( 'no_contacts', __( 'No contacts to export.', 'stadion' ), [ 'status' => 404 ] );
 		}
 
@@ -206,7 +234,7 @@ class ImportExport extends Base {
 		];
 
 		$rows = [];
-		foreach ( $people_ids as $person_id ) {
+		foreach ( $people as $person_id ) {
 			$person = get_post( $person_id );
 			if ( ! $person || $person->post_status !== 'publish' ) {
 				continue;
