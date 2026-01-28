@@ -8,6 +8,17 @@ import { getPersonName, getTeamName } from '@/utils/formatters';
 import CustomFieldsEditModal from './CustomFieldsEditModal';
 
 /**
+ * Process HTML to make links open in new tabs
+ * Adds target="_blank" and rel="noopener noreferrer" to all anchor tags
+ */
+function processHtmlLinks(html) {
+  if (!html || typeof html !== 'string') return html;
+
+  // Add target="_blank" and rel="noopener noreferrer" to all <a> tags
+  return html.replace(/<a\s+/gi, '<a target="_blank" rel="noopener noreferrer" ');
+}
+
+/**
  * Component to display a relationship item, fetching details if needed
  */
 function RelationshipItem({ itemId, allowedPostTypes }) {
@@ -185,8 +196,8 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
       case 'wysiwyg':
         return (
           <div
-            className="prose prose-sm dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: value }}
+            className="prose prose-sm dark:prose-invert max-w-none prose-a:text-accent-600 dark:prose-a:text-accent-400"
+            dangerouslySetInnerHTML={{ __html: processHtmlLinks(value) }}
           />
         );
 
