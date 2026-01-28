@@ -1,411 +1,398 @@
-# Stack Research: Google Contacts Sync
+# Technology Stack - PWA Features
 
-**Project:** Stadion Google Contacts Two-Way Sync (v5.0)
-**Researched:** 2026-01-17
-**Confidence:** HIGH (verified with official Google documentation)
+**Project:** Stadion (Personal CRM)
+**Researched:** 2026-01-28
+**Confidence:** HIGH
 
 ## Executive Summary
 
-Stadion already has the core infrastructure needed for Google Contacts sync. The existing `google/apiclient ^2.15` dependency includes the `Google_Service_PeopleService` class required for the People API. The OAuth flow, token encryption (Sodium), and WP-Cron patterns from Calendar integration transfer directly. **No new Composer dependencies are needed** - only OAuth scope expansion and new PHP classes using existing patterns.
-
----
+Adding PWA capabilities to the existing Vite + React + WordPress stack requires minimal additional dependencies. The recommended approach uses `vite-plugin-pwa` with Workbox's `generateSW` strategy for automatic service worker generation, custom React hooks for install prompts, and `react-simple-pull-to-refresh` for mobile pull-to-refresh functionality.
 
 ## Recommended Stack
 
-### Core Library (Already Installed)
+### Core PWA Plugin
 
-| Technology | Version | Purpose | Status |
-|------------|---------|---------|--------|
-| `google/apiclient` | ^2.15 (current: 2.19.0 available) | Google API PHP client | **Already in composer.json** |
-| `Google_Service_PeopleService` | Included | People API service class | **Available via google/apiclient-services** |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `vite-plugin-pwa` | ^0.20+ | PWA generation | Zero-config integration with Vite, handles manifest generation and service worker creation. Requires Vite 5+ (already satisfied). Actively maintained by Vite ecosystem. |
+| `workbox-window` | ^7.3+ | Service worker registration | Runtime library for service worker lifecycle management. Auto-installed as peer dependency of vite-plugin-pwa. |
 
-**Recommendation:** Keep `^2.15` constraint. The current installation works. Optionally upgrade to `^2.19` for latest features, but not required.
+**Rationale:** `vite-plugin-pwa` is the de facto standard for Vite-based PWAs. It wraps Workbox's `generateSW` and `injectManifest` methods, providing seamless integration with Vite's build pipeline. Version 0.17+ requires Vite 5, which this project already uses.
 
-### OAuth Scopes (New)
+### Pull-to-Refresh
 
-| Scope | Purpose | Required |
-|-------|---------|----------|
-| `https://www.googleapis.com/auth/contacts` | Read/write contacts | **YES** (bidirectional sync) |
-| `https://www.googleapis.com/auth/contacts.readonly` | Read-only contacts | OPTIONAL (import-only mode) |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `react-simple-pull-to-refresh` | ^1.3.3 | Mobile pull-to-refresh gesture | Zero dependencies, 40K+ weekly downloads, works on both mobile and desktop. Simple async/await API integrates cleanly with TanStack Query's refetch methods. |
 
-**Current Calendar scope:** `https://www.googleapis.com/auth/calendar.readonly`
+**Rationale:** Among React pull-to-refresh libraries, `react-simple-pull-to-refresh` has the highest adoption (40K weekly downloads vs 667 for alternatives) and zero dependencies. While last updated 3 years ago, it's feature-complete and stable. Alternative considered: building custom hook using touch events, but this library provides cross-browser compatibility and resistance customization out of the box.
 
-**Implementation:** Extend `GoogleOAuth::SCOPES` constant to be configurable per-service, or request additional scopes incrementally.
+### Install Prompt (No External Library)
 
-### Existing Infrastructure (Reuse)
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Custom React Hook | N/A | Capture beforeinstallprompt | Native browser API, no library needed. Chrome/Edge/Samsung Internet support only. iOS Safari does not support programmatic install prompts. |
 
-| Component | Location | Reuse Strategy |
-|-----------|----------|----------------|
-| OAuth2 flow | `class-google-oauth.php` | Extend for multi-scope support |
-| Token encryption | `class-credential-encryption.php` | Direct reuse (Sodium-based) |
-| Token refresh | `GoogleOAuth::get_access_token()` | Direct reuse |
-| Background sync | `class-calendar-sync.php` | Follow same WP-Cron patterns |
-| Transient locking | `GoogleProvider::sync()` | Copy pattern for race condition prevention |
+**Rationale:** The `beforeinstallprompt` event is a browser-native API. Adding a library like `react-pwa-install` adds unnecessary dependencies for functionality that can be implemented in ~20 lines of custom hook code. iOS Safari requires manual "Add to Home Screen" from share menu regardless of library choice.
 
----
+### PWA Icon Generation (Build-time Tool)
 
-## Libraries
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `@vite-pwa/assets-generator` | ^0.2+ | Generate PWA icons | Official tool from vite-pwa ecosystem. Generates all required icon sizes (192x192, 512x512) and maskable variants from single source image. |
 
-### Primary: google/apiclient (ALREADY INSTALLED)
+**Rationale:** Manually creating 8+ icon variants is error-prone. This CLI tool generates all required sizes and formats (including Apple touch icons) from a single source image. Used during development setup, not a runtime dependency.
 
-```json
-{
-  "require": {
-    "google/apiclient": "^2.15"
-  }
+## Integration Architecture
+
+### Web App Manifest vs Vite Build Manifest
+
+**Critical:** Vite's `build.manifest: true` generates a `manifest.json` for asset mapping. Web App Manifest also uses `manifest.json`. To avoid conflicts:
+
+- **Vite build manifest:** Remains at `dist/.vite/manifest.json` (Vite 5+ default behavior)
+- **Web App Manifest:** Use `manifest.webmanifest` filename (W3C recommended standard)
+- `vite-plugin-pwa` automatically handles this separation
+
+Current `vite.config.js` has `manifest: true` for asset mapping. This remains unchanged. `vite-plugin-pwa` generates separate `manifest.webmanifest` for PWA functionality.
+
+### Service Worker Strategy: generateSW vs injectManifest
+
+**Recommendation:** Use `generateSW` (default) strategy.
+
+| Strategy | When to Use | Complexity |
+|----------|-------------|------------|
+| `generateSW` | Standard offline caching, precaching build assets | Low - Workbox generates SW code |
+| `injectManifest` | Custom SW logic, advanced features (background sync, push notifications) | High - Write custom SW code |
+
+**Rationale for generateSW:**
+- Milestone scope is basic PWA features (install, offline, pull-to-refresh)
+- No background sync or push notifications required yet
+- `generateSW` provides runtime caching for WordPress REST API via configuration
+- Can migrate to `injectManifest` later if advanced features needed
+
+### Runtime Caching Strategy
+
+For WordPress REST API endpoints, configure Workbox runtime caching:
+
+```javascript
+workbox: {
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/.*\.stadion\..*\/wp-json\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'api-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 5 * 60, // 5 minutes
+        },
+        networkTimeoutSeconds: 10,
+      },
+    },
+  ],
 }
 ```
 
-**Version:** Current constraint `^2.15` is sufficient. Latest is v2.19.0.
+**Strategy rationale:**
+- **NetworkFirst** for `/wp-json/` endpoints: Tries network first, falls back to cache on failure. Ensures fresh data when online while providing offline fallback.
+- **CacheFirst** for static assets (CSS, JS, images): vite-plugin-pwa handles this automatically via precaching.
+- **StaleWhileRevalidate** not recommended for WordPress REST: Would show stale data immediately, causing confusing UX when data has changed server-side.
 
-**Why this library:**
-- Official Google library with full People API support
-- Already installed and working for Calendar integration
-- Includes `Google_Service_PeopleService` for all CRUD operations
-- Automatic token refresh handling
-- Well-documented, actively maintained
+## Installation
 
-**Key classes you'll use:**
-```php
-use Google\Service\PeopleService;
-use Google\Service\PeopleService\Person;
-use Google\Service\PeopleService\Name;
-use Google\Service\PeopleService\EmailAddress;
-use Google\Service\PeopleService\PhoneNumber;
-use Google\Service\PeopleService\Address;
-use Google\Service\PeopleService\Birthday;
-use Google\Service\PeopleService\Team;
-use Google\Service\PeopleService\Photo;
+```bash
+# Core PWA dependencies
+npm install -D vite-plugin-pwa
+
+# Pull-to-refresh
+npm install react-simple-pull-to-refresh
+
+# Icon generation (one-time setup)
+npm install -D @vite-pwa/assets-generator
 ```
 
-### NOT Recommended: rapidwebltd/php-google-people-api
+## Configuration Changes Required
 
-| Aspect | Assessment |
-|--------|------------|
-| Latest version | v1.0.1 (from 2019!) |
-| Maintenance | Effectively abandoned |
-| Dependency | Adds extra OAuth handler layer |
-| Benefit | Minor convenience over raw google/apiclient |
+### 1. Update vite.config.js
 
-**Verdict:** SKIP. The official `google/apiclient` already installed provides everything needed. Adding this wrapper creates an unnecessary dependency on unmaintained code.
+```javascript
+import { VitePWA } from 'vite-plugin-pwa';
 
-### NOT Recommended: yidas/google-apiclient-helper
-
-| Aspect | Assessment |
-|--------|------------|
-| Purpose | Convenience wrapper for google/apiclient |
-| Added value | Slightly simpler syntax |
-| Downside | Extra abstraction, potential breaking changes |
-
-**Verdict:** SKIP. Stadion already has established patterns with direct google/apiclient usage. Adding a helper library creates inconsistency with Calendar implementation.
-
----
-
-## APIs
-
-### Google People API v1
-
-**Base URL:** `https://people.googleapis.com/v1`
-
-**Core Endpoints for Contacts Sync:**
-
-| Operation | Method | Endpoint | Rate Limit |
-|-----------|--------|----------|------------|
-| List contacts | GET | `/people/me/connections` | 1 critical read per contact |
-| Get contact | GET | `/people/{resourceName}` | 1 critical read |
-| Create contact | POST | `/people:createContact` | 1 critical write |
-| Update contact | PATCH | `/people/{resourceName}:updateContact` | 1 critical write |
-| Delete contact | DELETE | `/people/{resourceName}:deleteContact` | 1 write request |
-| Update photo | PATCH | `/people/{resourceName}:updateContactPhoto` | 1 critical write |
-
-**Batch Endpoints (for bulk operations):**
-
-| Operation | Method | Endpoint | Max Items |
-|-----------|--------|----------|-----------|
-| Batch create | POST | `/people:batchCreateContacts` | 200 contacts |
-| Batch update | POST | `/people:batchUpdateContacts` | 200 contacts |
-| Batch delete | POST | `/people:batchDeleteContacts` | 500 contacts |
-| Batch get | GET | `/people:batchGet` | 200 contacts |
-
-### Delta Sync with syncToken
-
-**How it works:**
-1. First sync: Call `connections.list` with `requestSyncToken=true`
-2. Store returned `nextSyncToken` in user meta
-3. Subsequent syncs: Call with `syncToken` parameter
-4. API returns only changed contacts since last sync
-5. Deleted contacts returned with `metadata.deleted=true`
-
-**Critical constraints:**
-- Sync tokens expire after **7 days**
-- Expired token returns HTTP 410 with `EXPIRED_SYNC_TOKEN` reason
-- When expired: perform full sync without syncToken
-- All request parameters must match the first call when using syncToken
-
-**PHP implementation pattern:**
-```php
-$params = [
-    'personFields' => 'metadata,names,emailAddresses,phoneNumbers,addresses,birthdays,teams,photos,biographies,nicknames,urls',
-    'pageSize' => 1000,
-    'requestSyncToken' => true,
-];
-
-// Add syncToken for incremental sync
-if ($stored_sync_token) {
-    $params['syncToken'] = $stored_sync_token;
-}
-
-$response = $people_service->people_connections->listPeopleConnections('people/me', $params);
-$contacts = $response->getConnections();
-$next_sync_token = $response->getNextSyncToken();
+export default defineConfig({
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: {
+        name: 'Stadion Personal CRM',
+        short_name: 'Stadion',
+        description: 'Personal relationship management system',
+        theme_color: '#ffffff',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.stadion\..*\/wp-json\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 300,
+              },
+              networkTimeoutSeconds: 10,
+            },
+          },
+        ],
+      },
+    }),
+  ],
+  // Existing config remains unchanged
+});
 ```
 
-### ETag for Conflict Detection
+### 2. Add PWA Icons to public/
 
-**Required for updates/deletes.** The ETag prevents overwriting concurrent modifications.
+Generate icons using assets-generator, place in `public/` directory:
+- `pwa-192x192.png`
+- `pwa-512x512.png`
+- `apple-touch-icon.png` (180x180 for iOS)
 
-**Flow:**
-1. Fetch contact: `GET /people/{resourceName}?personFields=metadata,...`
-2. Extract ETag from `person.metadata.sources[0].etag`
-3. Include in update: `person.metadata.sources[0].etag = stored_etag`
-4. If ETag mismatch: API returns 400 `failedPrecondition`
-5. On conflict: fetch latest, merge changes, retry
+### 3. Custom React Hook for Install Prompt
 
-### Photo Upload
+No external library needed. Implement custom hook:
 
-**Method:** `people.updateContactPhoto`
-**Format:** Base64-encoded photo bytes in request body
+```javascript
+// src/hooks/usePWAInstall.js
+import { useState, useEffect } from 'react';
 
-```php
-$photo_request = new UpdateContactPhotoRequest();
-$photo_request->setPhotoBytes(base64_encode($image_data));
-$photo_request->setPersonFields('photos');
+export function usePWAInstall() {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
 
-$people_service->people->updateContactPhoto($resource_name, $photo_request);
-```
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
 
-**No explicit size limit documented**, but recommend keeping under 5MB for reliability.
+    window.addEventListener('beforeinstallprompt', handler);
 
----
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
-## What NOT to Use
+  const promptInstall = async () => {
+    if (!deferredPrompt) return;
 
-### 1. Google Contacts API v3 (DEPRECATED)
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
 
-| Issue | Details |
-|-------|---------|
-| Status | **Turned down January 19, 2022** |
-| Replacement | People API v1 |
-| Risk | Will not work |
+    setDeferredPrompt(null);
+    setIsInstallable(false);
 
-**Verdict:** Do not use. The old `https://www.google.com/m8/feeds` endpoints are dead.
+    return outcome === 'accepted';
+  };
 
-### 2. Service Account Authentication
-
-| Issue | Details |
-|-------|---------|
-| Problem | People API does not support service accounts for user contacts |
-| Why | Contacts are user-specific, not domain-wide |
-| Alternative | OAuth2 with user consent |
-
-**Verdict:** Not applicable. Personal contacts require user OAuth flow.
-
-### 3. Generic HTTP Batch (Google_Http_Batch)
-
-| Issue | Details |
-|-------|---------|
-| Problem | Returns 404 errors with People API |
-| Why | Batch endpoints are dedicated paths, not generic batching |
-| Alternative | Use dedicated batch endpoints directly |
-
-**Verdict:** Use `batchCreateContacts`, `batchUpdateContacts`, `batchDeleteContacts` endpoints directly rather than generic batching.
-
-### 4. Webhook-based Real-time Sync
-
-| Issue | Details |
-|-------|---------|
-| Problem | People API has no push notification/webhook support |
-| Alternative | Polling with syncToken (efficient delta sync) |
-| Alignment | Matches Calendar integration pattern |
-
-**Verdict:** Not available. Use WP-Cron polling with syncToken for efficient sync.
-
-### 5. Parallel Mutate Requests
-
-| Issue | Details |
-|-------|---------|
-| Problem | Causes increased latency and failures |
-| Source | Official Google documentation warning |
-| Alternative | Sequential mutate requests per user |
-
-**Verdict:** Always serialize create/update/delete operations for the same user.
-
----
-
-## Integration Notes
-
-### Extending Existing OAuth
-
-The current `GoogleOAuth` class has hardcoded scopes:
-
-```php
-private const SCOPES = [ 'https://www.googleapis.com/auth/calendar.readonly' ];
-```
-
-**Recommended changes:**
-
-1. **Option A: Service-specific scopes** (cleanest)
-   ```php
-   public const CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-   public const CONTACTS_SCOPES = ['https://www.googleapis.com/auth/contacts'];
-
-   public static function get_auth_url(int $user_id, array $scopes): string
-   ```
-
-2. **Option B: Incremental scope request**
-   - User connects Calendar first
-   - Later adds Contacts scope
-   - Google handles incremental consent
-   - Existing tokens gain new scope
-
-**Recommendation:** Option A for cleaner separation. Each connection (Calendar, Contacts) has its own credential set.
-
-### Credential Storage Pattern
-
-Follow existing `STADION_Calendar_Connections` pattern:
-
-```php
-// User meta structure for contacts
-'_stadion_google_contacts_connection' => [
-    'id' => 'google_contacts_' . uniqid(),
-    'provider' => 'google_contacts',
-    'credentials' => CredentialEncryption::encrypt([
-        'access_token' => '...',
-        'refresh_token' => '...',
-        'expires_at' => time() + 3600,
-        'scope' => 'https://www.googleapis.com/auth/contacts',
-    ]),
-    'sync_enabled' => true,
-    'sync_token' => '...', // People API sync token
-    'last_sync' => '2026-01-17T10:00:00Z',
-    'last_error' => null,
-];
-```
-
-### Contact Post Meta Schema
-
-Store Google-specific metadata on `person` posts:
-
-```php
-'_google_contact_id'     // string: resourceName (e.g., "people/c12345678")
-'_google_etag'           // string: ETag for conflict detection
-'_google_sync_enabled'   // bool: Whether this contact syncs
-'_google_last_synced'    // datetime: Last successful sync
-'_google_sync_status'    // enum: 'synced', 'pending_push', 'pending_pull', 'conflict', 'error'
-'_google_raw_data'       // json: Cached Google contact for conflict resolution
-```
-
-### Sync Lock Pattern
-
-Copy from `GoogleProvider::sync()`:
-
-```php
-$lock_key = 'stadion_contacts_sync_lock_' . $user_id;
-if (get_transient($lock_key)) {
-    return ['skipped' => true];
-}
-set_transient($lock_key, true, 5 * MINUTE_IN_SECONDS);
-
-try {
-    // Sync logic
-} finally {
-    delete_transient($lock_key);
+  return { isInstallable, promptInstall };
 }
 ```
 
-### Error Handling
+## Alternatives Considered
 
-Handle these Google API errors:
+### Service Worker Management
 
-| HTTP Code | Reason | Action |
-|-----------|--------|--------|
-| 400 | `failedPrecondition` | ETag mismatch - fetch latest, merge, retry |
-| 401 | Unauthorized | Token expired - refresh or re-auth |
-| 403 | Quota exceeded | Exponential backoff |
-| 404 | Contact deleted | Mark as deleted in Stadion |
-| 410 | `EXPIRED_SYNC_TOKEN` | Full sync without syncToken |
-| 429 | Rate limited | Exponential backoff |
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| vite-plugin-pwa | Custom service worker | Requires manual Workbox setup, no Vite integration, increases maintenance burden |
+| vite-plugin-pwa | Parcel/Webpack plugins | Not compatible with Vite |
 
-### Field Mapping Quick Reference
+### Pull-to-Refresh Libraries
 
-| Google People API | Stadion ACF Field | Notes |
-|-------------------|------------------|-------|
-| `names[0].givenName` | `first_name` | Single value |
-| `names[0].familyName` | `last_name` | Single value |
-| `nicknames[0].value` | `nickname` | Single value |
-| `emailAddresses[]` | `contact_info` repeater | type: 'email' |
-| `phoneNumbers[]` | `contact_info` repeater | type: 'phone'/'mobile' |
-| `addresses[]` | `addresses` repeater | Full address mapping |
-| `birthdays[0]` | Create `important_date` post | type: 'birthday' |
-| `teams[0]` | `work_history` repeater | May create team |
-| `photos[0].url` | `_thumbnail_id` | Sideload to media |
-| `biographies[0].value` | `story` | WYSIWYG field |
-| `urls[]` | `contact_info` repeater | Detect type from URL |
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| react-simple-pull-to-refresh | react-pull-to-refresh | Lower adoption (3K vs 40K weekly downloads), similar API |
+| react-simple-pull-to-refresh | Custom touch event implementation | Requires handling touch events, resistance physics, scroll detection—all already solved by library |
+| react-simple-pull-to-refresh | Native CSS overscroll-behavior | Only works on Chromium browsers, no iOS Safari support |
 
----
+### Install Prompt Libraries
 
-## Rate Limits & Quotas
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| Custom hook | react-pwa-install | Adds 50KB dependency for ~20 lines of code. Library handles iOS Safari detection but can't bypass Apple's restrictions anyway. |
+| Custom hook | pwa-install | Similar issue—unnecessary dependency for simple event handler |
 
-### Default Quotas (per project)
+## iOS Safari Limitations (Critical)
 
-| Quota | Limit | Period |
-|-------|-------|--------|
-| Critical read requests | 1,500 | Per minute |
-| Critical write requests | 60 | Per minute |
-| Daily writes | Varies | Per day |
+**SERVICE WORKER:** Supported but with severe restrictions.
+- Background execution extremely limited (battery conservation)
+- Cache storage limited to 50MB
+- Service worker may be killed aggressively when app in background
 
-### Recommendations
+**INSTALL PROMPT:** NOT supported.
+- No `beforeinstallprompt` event fires on iOS Safari
+- Must use manual "Add to Home Screen" from share menu
+- No programmatic prompt possible
 
-1. **Batch operations** for initial import (up to 200 contacts per request)
-2. **Delta sync** for ongoing sync (syncToken reduces read load)
-3. **Rate limiting** with exponential backoff on 429 errors
-4. **Sequential writes** for the same user (no parallel mutations)
+**PUSH NOTIFICATIONS:** Supported only on iOS 16.4+ (outside EU).
+- In EU, Apple removed standalone PWA support in iOS 17.4
+- PWAs open in Safari tabs instead of standalone windows
+- Push notifications don't work in EU
 
----
+**RECOMMENDATION:** Design UI to gracefully handle absence of install prompt on iOS. Show instruction modal with screenshot of share menu for iOS users.
+
+## Platform Support Matrix
+
+| Feature | Chrome/Edge Desktop | Chrome Android | iOS Safari | Samsung Internet |
+|---------|---------------------|----------------|------------|------------------|
+| Service Worker | Full | Full | Limited | Full |
+| Install Prompt | Yes | Yes | No | Yes |
+| Pull-to-Refresh | Yes (via library) | Yes (native + library) | Yes (via library) | Yes |
+| Offline Caching | Yes | Yes | Yes (50MB limit) | Yes |
+| Standalone Mode | Yes | Yes | Yes (No in EU) | Yes |
+
+## Build Pipeline Integration
+
+### Development Mode
+- `npm run dev` - Vite dev server on port 5173
+- Service worker NOT active in dev (prevents caching issues)
+- Enable via `devOptions: { enabled: true }` if testing SW locally
+
+### Production Build
+- `npm run build` - Generates:
+  - `dist/.vite/manifest.json` (Vite asset manifest)
+  - `dist/manifest.webmanifest` (Web App Manifest)
+  - `dist/sw.js` (Service worker)
+  - `dist/workbox-*.js` (Workbox runtime)
+  - All existing assets (CSS, JS, images)
+
+### Deployment
+- Existing `bin/deploy.sh` script works unchanged
+- Syncs entire `dist/` folder including new SW files
+- Service worker registers automatically on first page load
+
+## Version Compatibility
+
+| Dependency | Minimum Version | Current Project | Compatible |
+|------------|-----------------|-----------------|------------|
+| Node.js | 18+ | 18+ | Yes |
+| Vite | 5.0+ | 5.0+ | Yes |
+| React | 16.8+ (hooks) | 18+ | Yes |
+| PHP | 8.0+ | 8.0+ | Yes |
+
+## Migration Path to Advanced Features
+
+If future milestones require advanced PWA features:
+
+### Background Sync (for offline actions)
+- Switch to `injectManifest` strategy
+- Add custom SW code with Workbox BackgroundSync
+- Complexity: Medium
+
+### Push Notifications
+- Switch to `injectManifest` strategy
+- Add backend support for Web Push API (PHP library)
+- Add notification permission UI
+- Complexity: High
+- Note: Won't work on iOS in EU
+
+### Periodic Background Sync
+- Switch to `injectManifest` strategy
+- Limited browser support (Chrome 80+, not iOS)
+- Complexity: Medium
+
+**Current recommendation:** Stay with `generateSW` until these features are explicitly required.
+
+## Security Considerations
+
+### Service Worker Scope
+- Service worker at `/wp-content/themes/stadion/dist/sw.js` has scope of `/wp-content/themes/stadion/dist/`
+- **Issue:** Won't intercept requests to WordPress root or other paths
+- **Solution:** Configure `scope: '/'` in VitePWA options and serve SW from root via WordPress routing
+
+### HTTPS Requirement
+- Service workers require HTTPS (or localhost for dev)
+- Production environment must serve over HTTPS
+- Current deployment: Verify SSL certificate is active
+
+### Cache Poisoning
+- NetworkFirst strategy prevents serving indefinitely stale data
+- 5-minute cache expiration for API responses
+- Workbox automatically versions precached assets
+
+## Performance Impact
+
+### Bundle Size
+- `vite-plugin-pwa`: 0 KB (build-time only)
+- `workbox-window`: ~4 KB gzipped (runtime)
+- `react-simple-pull-to-refresh`: ~3 KB gzipped
+- **Total runtime impact:** ~7 KB additional bundle size
+
+### Service Worker Overhead
+- Initial SW registration: ~50ms
+- Precache size: ~500 KB (estimated for current React app)
+- API cache: 50 entries max, 5-minute TTL, minimal storage impact
+
+### Perceived Performance
+- **First visit:** Slightly slower (SW registration + precache download)
+- **Repeat visits:** Significantly faster (instant load from cache)
+- **Offline:** Functional instead of broken
+
+## Testing Requirements
+
+### Browser Testing
+- Chrome/Edge: Full PWA features
+- Firefox: Service worker only (no install prompt)
+- Safari macOS: Service worker only (no install prompt)
+- Safari iOS: Service worker (limited), no install prompt
+- Chrome Android: Full PWA features
+
+### Testing Checklist
+- [ ] Install prompt appears on Chrome/Edge desktop and Android
+- [ ] App installs successfully
+- [ ] Offline mode works (disconnect network, app still loads)
+- [ ] Pull-to-refresh triggers data refetch on mobile
+- [ ] iOS Safari shows app in standalone mode (when added to home screen)
+- [ ] Service worker updates automatically on new deployments
 
 ## Sources
 
 ### Official Documentation (HIGH confidence)
+- [Vite Plugin PWA Guide](https://vite-pwa-org.netlify.app/guide/)
+- [Workbox Strategies - Chrome for Developers](https://developer.chrome.com/docs/workbox/modules/workbox-strategies)
+- [MDN: Web App Manifest](https://developer.mozilla.org/en-US/docs/Web/Manifest)
+- [MDN: Progressive Web Apps](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
+- [BeforeInstallPromptEvent - MDN](https://developer.mozilla.org/en-US/docs/Web/API/BeforeInstallPromptEvent)
 
-- [Google People API - Read and Manage Contacts](https://developers.google.com/people/v1/contacts)
-- [people.connections.list Method](https://developers.google.com/people/api/rest/v1/people.connections/list)
-- [people.updateContact Method](https://developers.google.com/people/api/rest/v1/people/updateContact)
-- [people.updateContactPhoto Method](https://developers.google.com/people/api/rest/v1/people/updateContactPhoto)
-- [Contacts API Migration Guide](https://developers.google.com/people/contacts-api-migration)
-- [People API Introduction](https://developers.google.com/people)
-- [OAuth 2.0 Scopes for Google APIs](https://developers.google.com/identity/protocols/oauth2/scopes)
+### Library Sources (MEDIUM confidence)
+- [vite-plugin-pwa GitHub](https://github.com/vite-pwa/vite-plugin-pwa)
+- [react-simple-pull-to-refresh npm](https://www.npmjs.com/package/react-simple-pull-to-refresh)
+- [react-simple-pull-to-refresh vs alternatives - npm trends](https://npmtrends.com/react-pullable-vs-react-simple-pull-to-refresh)
 
-### Library Documentation (HIGH confidence)
+### Platform Limitations (MEDIUM confidence - rapidly evolving)
+- [PWA on iOS - Current Status & Limitations [2025]](https://brainhub.eu/library/pwa-on-ios)
+- [PWA iOS Limitations and Safari Support Guide](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide)
+- [Do PWAs Work on iPhone?](https://www.mobiloud.com/blog/progressive-web-apps-ios)
 
-- [google/apiclient on Packagist](https://packagist.org/packages/google/apiclient)
-- [google/apiclient GitHub Releases](https://github.com/googleapis/google-api-php-client/releases)
-- [Google API PHP Client GitHub](https://github.com/googleapis/google-api-php-client)
-
-### Implementation References (MEDIUM confidence)
-
-- [Google People API batch mutates announcement](https://developers.googleblog.com/2021/03/google-people-api-now-supports-batch.html)
-- [GitHub Issue: updateContactPhoto in PHP](https://github.com/googleapis/google-api-php-client-services/issues/220)
-
----
-
-## Summary
-
-| Decision | Recommendation | Rationale |
-|----------|----------------|-----------|
-| Primary library | `google/apiclient` (existing) | Already installed, official, full feature support |
-| New dependencies | **None needed** | Existing stack sufficient |
-| OAuth approach | Extend `GoogleOAuth` class | Follow established patterns |
-| Sync approach | WP-Cron + syncToken | Matches Calendar pattern, efficient delta sync |
-| Token storage | Sodium encryption (existing) | Reuse `CredentialEncryption` class |
-| Photo handling | Sideload + updateContactPhoto | WordPress media library + API upload |
-| Conflict resolution | ETag-based | Required by API, prevents overwrites |
+### Technical Implementation (MEDIUM confidence)
+- [Advanced Caching Strategies with Workbox](https://medium.com/animall-engineering/advanced-caching-strategies-with-workbox-beyond-stalewhilerevalidate-d000f1d27d0a)
+- [Vite manifest.json vs Web App Manifest - GitHub Issue #9636](https://github.com/vitejs/vite/issues/9636)
+- [Progressive Web App (PWA) with Vite Development Guide](https://dev.to/hamdankhan364/simplifying-progressive-web-app-pwa-development-with-vite-a-beginners-guide-38cf)

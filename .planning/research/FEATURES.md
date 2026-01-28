@@ -1,321 +1,310 @@
-# Features Research: Google Contacts Sync
+# PWA Feature Landscape for Personal CRM
 
-**Domain:** Personal CRM - Google Contacts Integration
-**Researched:** 2026-01-17
-**Overall Confidence:** HIGH (verified with multiple authoritative sources)
+**Domain:** Personal CRM (Contact Management System)
+**Researched:** 2026-01-28
+**Confidence:** MEDIUM (verified with multiple sources, some iOS-specific behaviors may require testing)
 
 ## Executive Summary
 
-Google Contacts sync is a well-established integration pattern with clear user expectations. The research reveals that users expect bidirectional sync with intelligent conflict resolution, but are frequently disappointed by implementations that only sync basic fields (name, email, phone) while ignoring richer metadata. Stadion has an opportunity to differentiate by providing comprehensive field mapping and a "source of truth" model that aligns with the user's stated preference.
+PWAs for personal CRM applications in 2026 require a specific set of table stakes features to feel "installable" and "app-like," with clear platform differences between Android and iOS. For a mobile-first CRM where users primarily access on phones to check contacts and log activities, offline capability and home screen installation are critical differentiators from web-only alternatives.
 
----
+**Key insight:** iOS PWA limitations significantly impact feature availability compared to Android. Storage persistence, lack of automatic install prompts, and 7-day cache eviction require careful architecture decisions.
 
-## Table Stakes
+## Table Stakes Features
 
-Features users expect. Missing = product feels incomplete.
+Features users expect when a PWA is marketed as "installable" or "mobile-ready." Missing these = product feels incomplete or broken.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **OAuth-based connection** | Users expect one-click authorization, not manual API key setup | Low | Extend existing Google OAuth |
-| **Bidirectional sync** | One-way sync is seen as "broken" by users | Medium | Most CRMs now offer this |
-| **Basic field mapping** | Name, email, phone must sync reliably | Low | Industry minimum |
-| **Photo sync** | Profile pictures are expected to transfer | Medium | Requires sideloading from authenticated URLs |
-| **Duplicate detection** | Users have contacts in both systems already | Medium | Match by email first, then name |
-| **Sync status visibility** | Users need to know what synced and when | Low | "Last synced" timestamp, sync badges |
-| **Manual sync trigger** | Users want to force sync when needed | Low | "Sync Now" button |
-| **Error reporting** | When sync fails, users must know why | Low | Clear error messages, retry options |
-| **Disconnect/unlink option** | Users need to revoke access cleanly | Low | Must remove tokens, not delete data |
-| **Birthday sync** | Birthdays are high-value data for personal CRM | Medium | Map to important_date post type |
-
-### Why These Are Table Stakes
-
-Research from [RealSynch](https://www.realsynch.com/how-to-sync-google-contacts-with-any-crm-without-losing-data/) and [GetSharedContacts](https://getsharedcontacts.com/integration/synchronize-google-contacts-with-any-software-or-crm/) shows that basic integrations that only transfer name/email/phone are considered inadequate. Users explicitly expect:
-
-- Two-way sync that updates contacts in both systems
-- Full data transfer including tags, custom fields, multiple emails, and addresses
-- Automatic updates when contact details change
-- No duplicate entries through smart automation
-
-**Competitive baseline:** HubSpot, Pipedrive, Zoho CRM, and Capsule CRM all offer Google Contacts integration. Users switching to Stadion will expect parity.
-
----
+| Feature | Why Expected | Complexity | Platform Notes |
+|---------|--------------|------------|----------------|
+| **Web App Manifest** | Required for installability on all platforms | Low | Android: auto-prompt available. iOS: requires manual "Add to Home Screen" |
+| **HTTPS serving** | Security requirement for service workers | Low | Vite dev server supports HTTPS in dev mode |
+| **Service Worker registration** | Core PWA requirement for offline/caching | Medium | Use vite-plugin-pwa for zero-config setup |
+| **App icons (192x192, 512x512)** | Visual identity on home screen | Low | iOS also needs Apple Touch icons (180x180) |
+| **Splash screen** | Native-like launch experience | Low | Auto-generated from manifest on Android; requires static images on iOS |
+| **Standalone display mode** | App runs without browser chrome | Low | Set in manifest.json: "display": "standalone" |
+| **Basic offline fallback** | Show something when offline, not blank screen | Medium | Cache app shell + show "offline" message for failed requests |
+| **Theme color** | Browser UI matches app branding | Low | Set in manifest + meta tag for iOS |
 
 ## Differentiators
 
-Features that set Stadion apart. Not expected, but valued.
+Features that set this PWA apart from basic web apps. Not expected by default, but add significant value for mobile CRM usage.
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Comprehensive field mapping** | Sync addresses, work history, social URLs, biographies - not just basics | Medium | Most CRMs only sync name/email/phone |
-| **Clear source of truth model** | "Stadion wins" or "Google wins" or "newest wins" - user chooses | Medium | Many CRMs leave this ambiguous |
-| **Delta sync with syncToken** | Only sync changes, not full re-import each time | Medium | Reduces API calls, faster sync |
-| **Conflict queue with manual resolution** | Let users review when both sides changed | High | Most CRMs auto-overwrite without notice |
-| **Per-contact sync control** | Toggle sync on/off for individual contacts | Low | Privacy control for sensitive contacts |
-| **Sync audit log** | Full history of what synced when | Medium | Enterprise-grade accountability |
-| **Work history auto-creation** | Create teams from Google team data | Medium | Reduces manual data entry |
-| **Graceful deletion handling** | Unlink vs propagate delete as user choice | Medium | Prevents accidental data loss |
-| **View in Google Contacts link** | One-click to see contact in Google | Low | Nice UX touch |
-| **Sync from "Other Contacts"** | Access contacts auto-created from email replies | Low | Many users have more contacts there than in "My Contacts" |
-
-### Why These Differentiate
-
-The [HubSpot community forums](https://community.hubspot.com/t5/CRM/google-contacts-sync-wrong-with-crm-Hubspot/td-p/964692) and [Less Annoying CRM help docs](https://www.lessannoyingcrm.com/help/how-do-i-sync-with-google-contacts) reveal common user complaints:
-
-1. **Field limitations:** "Most built-in integrations (even Zapier) limit what you can sync - only transferring basic details like name, email, and phone number."
-2. **No conflict visibility:** "If you make changes to the same contact in both Google and [CRM] between syncs, some of the changes may be overwritten."
-3. **Duplicate creation:** "If you delete or merge contacts in Google, they will be re-added during the next sync."
-
-Stadion can differentiate by solving these pain points explicitly.
-
----
-
-## User Expectations
-
-What users expect from the experience.
-
-### Setup Experience
-
-| Expectation | Source | Priority |
-|-------------|--------|----------|
-| Connect in under 2 minutes | Industry standard | HIGH |
-| Single OAuth click, no manual config | [Google OAuth docs](https://developers.google.com/identity/protocols/oauth2) | HIGH |
-| Clear scope explanation (what access is granted) | Google best practices | MEDIUM |
-| Option to add Contacts scope to existing Calendar connection | Incremental authorization | HIGH |
-
-### Ongoing Experience
-
-| Expectation | Source | Priority |
-|-------------|--------|----------|
-| Sync happens automatically in background | All major CRMs | HIGH |
-| Changes reflect within reasonable time (15min-1hr typical) | [Pipeline CRM docs](https://help.pipelinecrm.com/article/134-google-contact-calendar-sync-overview) | MEDIUM |
-| Clear indication when contact is synced | UX best practice | MEDIUM |
-| Notification when conflicts need resolution | [WORKetc blog](https://www.worketc.com/blog/Development/two-way-google-contacts-sync-for-crm-now-live-for-everyone/) | MEDIUM |
-| No data loss, ever | Universal expectation | CRITICAL |
-
-### Conflict Resolution Expectations
-
-Research from [Resco docs](https://docs.resco.net/wiki/Conflict_resolution) and [WORKetc](https://www.worketc.com/blog/Development/two-way-google-contacts-sync-for-crm-now-live-for-everyone/) shows users expect:
-
-| Strategy | Description | When Users Expect It |
-|----------|-------------|---------------------|
-| **Last modified wins** | Most recent change takes priority | Default for most users |
-| **Server/CRM wins** | CRM is source of truth | For CRM-centric workflows |
-| **Client/Google wins** | Google is source of truth | For Google-centric users |
-| **Manual resolution** | User decides per conflict | For careful data managers |
-
-**User's stated preference:** "Stadion is source of truth" - this maps to "CRM wins" strategy as default.
-
-### Deletion Expectations
-
-| Scenario | User Expectation | Recommendation |
-|----------|------------------|----------------|
-| Delete in Stadion | Ask whether to delete in Google too | Default: propagate (user confirmed) |
-| Delete in Google | Ask whether to delete in Stadion | Default: unlink only (safe) |
-
-**User's stated preference:** "Stadion to Google deletion propagates, Google to Stadion deletion unlinks only" - this is exactly right and aligns with industry best practices for source-of-truth models.
-
-### Photo Sync Expectations
-
-Based on [Google People API documentation](https://developers.google.com/people/api/rest/v1/people/updateContactPhoto):
-
-| Scenario | Expectation | Implementation Note |
-|----------|-------------|---------------------|
-| Import from Google | Download and set as featured image | Requires authenticated URL fetch |
-| Export to Google | Upload photo to Google | Base64 encode, use updateContactPhoto |
-| Both have photos | Keep existing on initial sync | Don't overwrite existing photos |
-| Photo changed in either | Propagate change | After initial sync, newest wins |
-
-**User's stated preference:** "Preserve photos on initial sync, propagate changes after" - aligns with this research.
-
----
+| Feature | Value Proposition | Complexity | Dependencies |
+|---------|-------------------|------------|--------------|
+| **Smart install prompt** | Increases install rate by prompting at right moment | Medium | Android only (beforeinstallprompt API). Show custom UI after user performs 2-3 valuable actions |
+| **Pull-to-refresh gesture** | Native-like interaction for refreshing contact list | Medium | Requires disabling default browser pull behavior (overscroll-behavior-y: contain). iOS support is buggy |
+| **Offline data access** | View cached contacts/meetings without network | High | IndexedDB + TanStack Query offlineFirst mode. iOS: data evicts after 7 days of non-use |
+| **Background sync for mutations** | Queue activity logs when offline, sync when back online | High | Background Sync API (Android Chrome only). iOS requires alternative approach |
+| **App shortcuts** | Quick access to "Add Contact" or "Today's Meetings" from home screen icon | Medium | Android only. Defined in manifest.json |
+| **Update notification** | Prompt user when new version available | Low | Built into vite-plugin-pwa with React hook (useRegisterSW) |
+| **Share target** | Share contacts from other apps into CRM | Medium | Android only. Web Share Target API |
 
 ## Anti-Features
 
-What to deliberately NOT build and why.
+Features to explicitly NOT build in this milestone. Common mistakes or premature optimizations.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Real-time webhook sync** | Google Contacts doesn't support webhooks; adds complexity | Use cron-based polling (like Calendar) |
-| **Multi-account sync** | Massive complexity, unclear merge rules | Support single Google account per user |
-| **Full Google account access** | Security risk, unnecessary scope | Request only contacts scope |
-| **Automatic duplicate merging** | Can destroy data if wrong | Detect duplicates, let user decide |
-| **Relationship sync** | Google has limited relationship support (spouse, etc.) | Too complex and lossy, skip |
-| **Contact group/label sync** | Adds complexity, unclear mapping | Defer to future enhancement |
-| **Workspace-aware sync** | Business logic confusion (which workspace?) | Sync all contacts regardless of workspace |
-| **Sync frequency under 15 minutes** | Hits API rate limits, minimal benefit | Minimum 15-minute interval |
-| **Silent error handling** | Users left confused | Always surface errors clearly |
-| **Automatic retry without limit** | Can hammer API, cause account suspension | Exponential backoff with max retries |
+| **Push notifications** | Requires backend infrastructure (FCM/APNS), user permission prompt fatigue, iOS requires v16.4+ and installed PWA | Use existing reminder email system. Revisit post-MVP if user demand exists |
+| **Full offline editing** | Complex conflict resolution, requires queueing system, IndexedDB transaction complexity | Show cached data read-only when offline. Allow viewing but not editing |
+| **Native app features** (contacts API, calendar integration) | Poor browser support, iOS doesn't support, adds complexity | Stick to web-standard PWA features. Users can manually add to contacts/calendar |
+| **Precaching all contacts** | Storage limits (iOS: 50MB cache), wastes bandwidth, slow initial install | Cache app shell only. Fetch contacts on-demand with TanStack Query caching |
+| **Custom service worker logic** | Maintenance burden, hard to debug, vite-plugin-pwa covers 90% of use cases | Use vite-plugin-pwa's Workbox strategies. Only customize if specific need arises |
+| **iOS-specific web app meta tags overload** | Marginal benefit, maintenance cost, most are deprecated | Stick to Apple Touch icon + viewport meta. Skip status bar styling and obsolete tags |
 
-### Why These Are Anti-Features
+## Feature Dependencies & Relationships
 
-1. **Real-time sync:** Google Contacts API does not support push notifications/webhooks. Attempting real-time would require constant polling, wasting resources and hitting rate limits.
-
-2. **Multi-account sync:** The complexity of merging contacts from multiple Google accounts is enormous. Which account is authoritative? How do you handle the same contact in both? This is a future enhancement at best.
-
-3. **Automatic duplicate merging:** The [Dropcontact article](https://www.dropcontact.com/blog/crm-how-to-detect-and-merge-duplicate-contacts) warns: "A big concern when managing duplicates is the risk of overwriting or losing critical customer data when you merge records." Detection yes, auto-merge no.
-
-4. **Label/group sync:** Google uses "labels" for groups, Stadion uses labels differently (person_label taxonomy). Mapping these is non-trivial and the user explicitly said "all contacts sync regardless of workspace" - suggesting they don't want filtering.
-
----
-
-## Competitive Analysis
-
-What other CRMs do.
-
-### Feature Matrix
-
-| Feature | HubSpot | Pipedrive | Zoho CRM | Capsule | Less Annoying | Stadion (Planned) |
-|---------|---------|-----------|----------|---------|---------------|------------------|
-| **Sync direction** | Bidirectional | Bidirectional | Bidirectional | Bidirectional | Bidirectional | Bidirectional |
-| **OAuth connection** | Yes | Yes | Yes | Yes | Yes | Yes |
-| **Name sync** | Yes | Yes | Yes | Yes | Yes | Yes |
-| **Email sync** | Yes | Yes | Yes | Yes | Yes | Yes |
-| **Phone sync** | Yes | Yes | Yes | Yes | Yes | Yes |
-| **Address sync** | Limited | Limited | Yes | Yes | No | Yes |
-| **Birthday sync** | No | No | Yes | Yes | Yes | Yes |
-| **Photo sync** | No | No | Yes | Yes | No | Yes |
-| **Work history sync** | No | No | Limited | Limited | No | Yes |
-| **Conflict resolution** | Configurable | Auto | Configurable | Auto | Auto | Configurable |
-| **Sync frequency** | Real-time option | Hourly | Configurable | Hourly | Manual | Configurable |
-| **Per-contact control** | Yes | No | Yes | No | No | Yes |
-| **Sync audit log** | Yes (paid) | No | Yes | No | No | Yes |
-| **Custom field sync** | Paid add-on | No | Yes | No | No | Not in v1 |
-
-### Key Insights from Competitors
-
-**HubSpot:**
-- Most feature-complete integration via Operations Hub
-- Bidirectional data sync built by HubSpot team
-- Explicit conflict resolution configuration
-- Premium features (audit log) in paid tiers
-
-**Pipedrive:**
-- Email sync is excellent (two-way with tracking)
-- Contact sync requires third-party tools for full functionality
-- Advanced plan adds two-way email sync
-
-**Zoho CRM:**
-- Native deep integration
-- Most comprehensive field mapping
-- Configurable sync preferences
-
-**Less Annoying CRM:**
-- Honest about limitations: "Only default contact/team fields sync - custom fields will not sync"
-- Warns users about conflict overwrites
-
-### Stadion Positioning
-
-Based on the competitive analysis, Stadion should position as:
-
-1. **More comprehensive than lightweight CRMs** (Capsule, Less Annoying) - full field mapping including work history, photos, birthdays
-2. **Simpler than enterprise CRMs** (HubSpot, Salesforce) - no paid tiers, no complex setup
-3. **Personal CRM focused** - prioritize personal relationship data (birthdays, notes) over sales pipeline data
-
----
-
-## Feature Dependencies
-
+### Core Installation Flow
 ```
-OAuth Connection (existing)
-    │
-    ├── Contacts Scope Extension
-    │       │
-    │       ├── Import from Google
-    │       │       ├── Field Mapper
-    │       │       ├── Photo Sideloader
-    │       │       └── Duplicate Detector
-    │       │
-    │       ├── Export to Google
-    │       │       ├── Reverse Field Mapper
-    │       │       └── Photo Uploader
-    │       │
-    │       └── Bidirectional Sync
-    │               ├── Delta Sync (syncToken)
-    │               ├── Change Detection
-    │               ├── Conflict Resolution
-    │               └── Deletion Handling
-    │
-    └── Settings UI
-            ├── Connection Status
-            ├── Sync Preferences
-            └── Audit Log
+HTTPS + Manifest + Service Worker
+    ↓
+Installability criteria met
+    ↓
+Android: beforeinstallprompt fires → Custom install button → User installs
+iOS: User manually adds via Safari Share menu → App installed
 ```
 
----
+### Offline Data Access Flow
+```
+Service Worker (caching strategy)
+    +
+IndexedDB storage (TanStack Query persistence)
+    +
+TanStack Query offlineFirst mode
+    ↓
+Cached data available offline (up to 7 days on iOS)
+```
 
-## MVP Recommendation
+### Update Flow
+```
+Service Worker detects new version
+    ↓
+vite-plugin-pwa React hook fires
+    ↓
+Custom UI shows "Update available" prompt
+    ↓
+User clicks "Update" → skipWaiting → Page reloads
+```
 
-For MVP (v5.0), prioritize:
+## Platform-Specific Considerations
 
-### Must Have (Phase 1-4)
-1. OAuth connection with contacts scope
-2. Import from Google with comprehensive field mapping
-3. Export to Google for new contacts
-4. Delta sync with syncToken
-5. Basic conflict resolution (newest wins)
-6. Sync status visibility
-7. Settings UI with connect/disconnect
+### Android (Chrome, Edge, Samsung Internet)
 
-### Should Have (Phase 5-7)
-1. Per-contact sync toggle
-2. Configurable conflict resolution strategies
-3. Sync audit log
-4. Person detail sync status badge
-5. Deletion handling preferences
+**Strengths:**
+- Automatic install prompt after engagement criteria met
+- beforeinstallprompt API for custom install UI
+- Background Sync API for offline mutations
+- App shortcuts in manifest
+- Web Share Target API
+- Reliable IndexedDB persistence
+- No arbitrary cache eviction
+
+**Limitations:**
+- None significant for this use case
+
+**Recommended approach:** Full feature implementation
+
+### iOS (Safari only)
+
+**Strengths:**
+- Push notifications support (iOS 16.4+, requires installed PWA)
+- Improved IndexedDB stability in recent versions
+- Shares Service Worker + CacheStorage with Safari (iOS 14+)
+
+**Limitations:**
+- No automatic install prompt (manual only via Share > Add to Home Screen)
+- No beforeinstallprompt API
+- Cache storage limit: ~50MB (service worker cache)
+- IndexedDB limit: ~500MB (but can be cleared)
+- **7-day cache eviction:** If PWA not used for 7 days, all cached data cleared
+- No Background Sync API
+- No App Shortcuts support
+- No Web Share Target API
+- Pull-to-refresh buggy in Safari
+- Chrome/Edge on iOS don't support PWA installation at all (must use Safari)
+
+**Critical impact:** The 7-day eviction policy means offline data is NOT reliable for infrequent users. Mitigation: Accept this limitation and document clearly.
+
+**Recommended approach:**
+- Treat iOS as second-class PWA experience
+- Focus on installability + basic offline (app shell caching)
+- Don't invest in iOS-exclusive features this milestone
+- Provide clear messaging: "For best experience, open app at least weekly"
+
+## MVP Feature Prioritization
+
+For this milestone (adding PWA to existing React SPA), prioritize:
+
+### Phase 1: Basic Installability (1-2 days)
+1. Web app manifest with icons
+2. Service worker registration (vite-plugin-pwa)
+3. HTTPS in production
+4. Cache app shell (CSS, JS, fonts)
+5. Offline fallback page
+
+**Outcome:** Users can install to home screen (Android auto-prompt, iOS manual). App loads when offline but shows "reconnect" message for data.
+
+### Phase 2: Smart Installation & Updates (1 day)
+1. Custom install button (Android only, hidden on iOS)
+2. beforeinstallprompt handling
+3. Update notification UI using useRegisterSW hook
+4. Prompt install after 2-3 interactions (view person, add note)
+
+**Outcome:** Higher install rate on Android. Users get notified when updates available.
+
+### Phase 3: Offline Data Access (2-3 days)
+1. TanStack Query persistence with IndexedDB
+2. Configure networkMode: 'offlineFirst'
+3. Cache recently viewed contacts/meetings
+4. Show cached data when offline with "Last synced: X" timestamp
+5. Read-only mode when offline (no editing)
+
+**Outcome:** Users can view recently accessed data without network. Clear sync status.
 
 ### Defer to Post-MVP
-- **Contact group/label mapping**: Complex, unclear requirements
-- **Custom field sync**: Requires defining what "custom fields" means in Stadion
-- **Multi-account support**: Major complexity
-- **Real-time sync alternatives**: Google doesn't support webhooks
 
----
+**Pull-to-refresh:** Medium complexity, buggy on iOS, low priority for CRM use case (users rarely need to force refresh)
+
+**Background sync:** High complexity, Android-only, requires queueing mutations. Not critical for MVP.
+
+**Push notifications:** Requires backend work (FCM), user permission fatigue, iOS limitations. Use existing email reminders instead.
+
+**App shortcuts:** Android-only, nice-to-have. Easy to add later if user demand exists.
+
+## Technical Implementation Notes
+
+### Vite Plugin PWA Configuration
+
+Use vite-plugin-pwa with these recommended settings:
+
+```javascript
+VitePWA({
+  registerType: 'prompt', // Don't auto-reload, prompt user
+  includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+  manifest: {
+    name: 'Stadion CRM',
+    short_name: 'Stadion',
+    description: 'Personal CRM for managing contacts and teams',
+    theme_color: '#1e40af', // Match brand color
+    icons: [
+      { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+      { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    display: 'standalone',
+    start_url: '/',
+    scope: '/',
+  },
+  workbox: {
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/api\.stadion\.svawc\.nl\/.*/i, // API calls
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'api-cache',
+          expiration: { maxEntries: 100, maxAgeSeconds: 86400 }, // 24 hours
+        },
+      },
+    ],
+  },
+})
+```
+
+### TanStack Query Persistence
+
+```javascript
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
+
+const persister = createSyncStoragePersister({
+  storage: window.localStorage, // Use IndexedDB for larger datasets
+})
+
+// In app setup
+<PersistQueryClientProvider
+  client={queryClient}
+  persistOptions={{ persister }}
+>
+  <App />
+</PersistQueryClientProvider>
+```
+
+Configure queries with offline-first mode:
+
+```javascript
+useQuery({
+  queryKey: ['person', id],
+  queryFn: fetchPerson,
+  networkMode: 'offlineFirst', // Critical for PWA
+  staleTime: 1000 * 60 * 5, // 5 minutes
+})
+```
+
+## Success Metrics
+
+How to measure if PWA features are successful:
+
+| Metric | Target | How to Measure |
+|--------|--------|----------------|
+| Install rate (Android) | 15-20% of weekly active users | Track beforeinstallprompt → actual install |
+| Install rate (iOS) | 5-8% (lower due to manual flow) | Track standalone display mode visits |
+| Offline access usage | 10%+ of sessions start offline | Track service worker cache hits vs network |
+| Update acceptance rate | 80%+ click "Update" when prompted | Track update prompt → reload action |
+| Return visit rate (installed) | 2x higher than web-only | Compare installed users vs browser users |
+
+## Confidence Assessment
+
+| Area | Level | Reason |
+|------|-------|--------|
+| Android features | HIGH | Well-documented, stable APIs, multiple verified sources |
+| iOS limitations | MEDIUM | Documented in multiple sources, but specific behaviors (7-day eviction) may vary by iOS version |
+| vite-plugin-pwa | HIGH | Official documentation, active maintenance, proven in production |
+| TanStack Query offline | MEDIUM | Official docs + community examples, but integration patterns require testing |
+| Offline sync complexity | MEDIUM | Multiple implementation patterns exist; need to choose based on actual usage |
+
+## Open Questions for Implementation
+
+1. **Storage strategy:** Use localStorage (simple) or IndexedDB (more storage) for TanStack Query persistence?
+   - Recommendation: Start with localStorage for MVP, migrate to IndexedDB if hitting limits
+
+2. **Cache duration:** How long should API responses be cached?
+   - Recommendation: 24 hours for contacts, 1 hour for meetings (more time-sensitive)
+
+3. **Install prompt timing:** When to show install button?
+   - Recommendation: After viewing 2 people OR adding 1 note (engaged user signal)
+
+4. **iOS install instructions:** Show modal with screenshots?
+   - Recommendation: Yes, but only show once per device, use subtle hint after
+
+5. **Offline editing:** Allow or block?
+   - Recommendation: Block for MVP (read-only offline), add queuing in future milestone if demanded
 
 ## Sources
 
-### Authoritative Sources (HIGH confidence)
-- [Google People API Documentation](https://developers.google.com/people)
-- [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
-- [Google People API - updateContactPhoto](https://developers.google.com/people/api/rest/v1/people/updateContactPhoto)
+### PWA Installation & Manifest
+- [Making PWAs installable - MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)
+- [Installation prompt - web.dev](https://web.dev/learn/pwa/installation-prompt)
+- [iOS PWA install - Brainhub](https://brainhub.eu/library/pwa-on-ios)
+- [Android manifest requirements - MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)
 
-### CRM Integration Documentation (MEDIUM confidence)
-- [Pipeline CRM - Google Contact & Calendar Sync Overview](https://help.pipelinecrm.com/article/134-google-contact-calendar-sync-overview)
-- [Less Annoying CRM - Syncing with Google Contacts](https://www.lessannoyingcrm.com/help/how-do-i-sync-with-google-contacts)
-- [Agile CRM - Google Contacts Sync](https://www.agilecrm.com/google-contacts-sync)
-- [Jetpack CRM - Google Contacts Sync](https://jetpackcrm.com/product/google-contacts-sync/)
+### Offline Support & Service Workers
+- [PWA offline strategies - MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Offline_and_background_operation)
+- [Service worker caching strategies - MagicBell](https://www.magicbell.com/blog/offline-first-pwas-service-worker-caching-strategies)
+- [PWA capabilities 2026 - Progressier](https://progressier.com/pwa-capabilities)
 
-### Industry Analysis (MEDIUM confidence)
-- [RealSynch - How to Sync Google Contacts with Any CRM](https://www.realsynch.com/how-to-sync-google-contacts-with-any-crm-without-losing-data/)
-- [GetSharedContacts - Synchronize Google Contacts with Any CRM](https://getsharedcontacts.com/integration/synchronize-google-contacts-with-any-software-or-crm/)
-- [SmartSuite - CRM Google Contacts Sync using Make](https://www.smartsuite.com/blog/crm-google-contacts-sync)
-- [Dropcontact - Duplicate Detection and Merging](https://www.dropcontact.com/blog/crm-how-to-detect-and-merge-duplicate-contacts)
+### iOS Limitations
+- [PWA iOS limitations - MagicBell](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide)
+- [Safari PWA storage persistence - Vinova](https://vinova.sg/navigating-safari-ios-pwa-limitations/)
+- [iOS PWA status 2025 - Brainhub](https://brainhub.eu/library/pwa-on-ios)
 
-### User Feedback and Community (LOW-MEDIUM confidence)
-- [HubSpot Community - Google Contacts Sync Issues](https://community.hubspot.com/t5/CRM/google-contacts-sync-wrong-with-crm-Hubspot/td-p/964692)
-- [WORKetc - Two-Way Google Contacts Sync](https://www.worketc.com/blog/Development/two-way-google-contacts-sync-for-crm-now-live-for-everyone/)
-- [Resco Wiki - Conflict Resolution](https://docs.resco.net/wiki/Conflict_resolution)
+### React & Vite Implementation
+- [vite-plugin-pwa React docs](https://vite-pwa-org.netlify.app/frameworks/react)
+- [TanStack Query network modes](https://tanstack.com/query/v4/docs/framework/react/guides/network-mode)
+- [TanStack Query offline - TkDodo](https://tkdodo.eu/blog/offline-react-query)
 
-### Comparison and Market Analysis (MEDIUM confidence)
-- [GetApp - Best CRM Integrations with Google Contacts 2025](https://www.getapp.com/customer-management-software/crm/w/google-contacts/)
-- [Pipedrive Blog - HubSpot vs Salesforce vs Pipedrive](https://www.pipedrive.com/en/blog/hubspot-vs-salesforce-vs-pipedrive)
-- [CloudSponge - Incremental Authorization with Google Contacts API](https://www.cloudsponge.com/blog/embracing-incremental-authorization-with-google-contacts-api/)
+### Pull-to-Refresh
+- [Pull to refresh implementation - DEV](https://dev.to/chicio/implement-a-pull-to-refresh-component-for-you-web-application-1pcg)
+- [iOS PWA pull to refresh issues - Discourse](https://meta.discourse.org/t/ios-pwa-app-pull-to-refresh/343262)
 
----
-
-## Alignment with User Requirements
-
-The user specified several preferences that align well with research findings:
-
-| User Preference | Research Finding | Recommendation |
-|-----------------|------------------|----------------|
-| All contacts sync regardless of workspace | Anti-feature: label/group filtering adds complexity | Agree - sync all |
-| Stadion is source of truth | Industry pattern: "CRM wins" conflict resolution | Agree - default to Stadion wins |
-| Photos: preserve on initial, propagate after | Best practice for avoiding overwrites | Agree - implement as stated |
-| Delete Stadion->Google: propagate | Standard for source-of-truth model | Agree |
-| Delete Google->Stadion: unlink only | Safe default, prevents data loss | Agree |
-
-All user preferences align with industry best practices for a CRM-as-source-of-truth model.
-
----
-
-*Last updated: 2026-01-17*
+### PWA Market Trends
+- [Best PWA frameworks 2026 - WebOsmotic](https://webosmotic.com/blog/pwa-frameworks/)
+- [PWA vs Native 2026 - Progressier](https://progressier.com/pwa-vs-native-app-comparison-table)
