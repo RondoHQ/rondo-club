@@ -260,7 +260,13 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(No active requirements - ready for next milestone)
+<!-- v8.0 PWA Enhancement - current scope -->
+
+- [ ] Web App Manifest with app icon, splash screen, theme colors, standalone display mode
+- [ ] Service Worker for asset caching and basic offline support (show cached data)
+- [ ] Pull-to-refresh gesture to refresh current view in standalone mode
+- [ ] Smart install prompt after a few visits (dismissable, remembers preference)
+- [ ] iOS and Android PWA support
 
 ### Out of Scope
 
@@ -400,4 +406,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | RelationshipItemCompact for list view | Async fetch for relationship names in compact column display | ✓ Good |
 
 ---
-*Last updated: 2026-01-25 after v7.0 Dutch Localization milestone shipped*
+*Last updated: 2026-01-28 after v8.0 PWA Enhancement milestone started*
