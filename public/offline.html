@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - Stadion</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f9fafb;
+      color: #111827;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #111827;
+        color: #f9fafb;
+      }
+      h1 {
+        color: #f9fafb !important;
+      }
+      p {
+        color: #9ca3af !important;
+      }
+      .btn-secondary {
+        background: #374151 !important;
+        color: #f9fafb !important;
+      }
+      .btn-secondary:hover {
+        background: #4b5563 !important;
+      }
+      .icon {
+        color: #9ca3af !important;
+      }
+    }
+
+    .container {
+      text-align: center;
+      padding: 2rem;
+      max-width: 400px;
+    }
+
+    .icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1.5rem;
+      color: #6b7280;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+      color: #111827;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #6b7280;
+      margin: 0 0 2rem;
+      line-height: 1.5;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 0.625rem 1.25rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #f97316;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #ea580c;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- WiFi-off icon (SVG from lucide-react) -->
+    <svg class="icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <line x1="2" x2="22" y1="2" y2="22"></line>
+      <path d="M8.5 16.5a5 5 0 0 1 7 0"></path>
+      <path d="M2 8.82a15 15 0 0 1 4.17-2.65"></path>
+      <path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"></path>
+      <path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"></path>
+      <path d="M5 13a10 10 0 0 1 5.24-2.76"></path>
+      <circle cx="12" cy="20" r="1"></circle>
+    </svg>
+
+    <h1>Je bent offline</h1>
+    <p>We kunnen deze pagina nu niet laden. Controleer je internetverbinding en probeer het opnieuw.</p>
+
+    <div class="buttons">
+      <button class="btn-primary" onclick="location.reload()">
+        Opnieuw proberen
+      </button>
+      <button class="btn-secondary" onclick="history.back()">
+        Ga terug
+      </button>
+    </div>
+  </div>
+</body>
+</html>

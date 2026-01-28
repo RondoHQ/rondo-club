@@ -58,7 +58,16 @@ export default defineConfig({
             },
           },
         ],
+        // Offline fallback page
+        navigateFallback: '/offline.html',
+        navigateFallbackDenylist: [
+          /^\/wp-json\//,   // Don't use offline page for API requests
+          /^\/wp-admin\//,  // Don't use offline page for admin
+          /^\/wp-login/,    // Don't use offline page for login
+        ],
       },
+      // Include offline.html in build
+      includeAssets: ['offline.html', 'icons/**/*'],
     }),
   ],
 
