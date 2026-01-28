@@ -257,6 +257,17 @@
                     }
                 },
                 {
+                    "key": "field_work_entity_type",
+                    "label": "Entity Type",
+                    "name": "entity_type",
+                    "type": "text",
+                    "readonly": 1,
+                    "wrapper": {
+                        "width": "0",
+                        "class": "acf-hidden"
+                    }
+                },
+                {
                     "key": "field_work_job_title",
                     "label": "Job Title",
                     "name": "job_title",

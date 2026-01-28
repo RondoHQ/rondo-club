@@ -4,18 +4,19 @@ import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 
-function TeamSelector({ value, onChange, teams, isLoading }) {
+function EntitySelector({ value, onChange, entities, isLoading }) {
+  // value is now "{type}:{id}" format, e.g., "team:123" or "commissie:456"
   return (
     <select
       value={value || ''}
-      onChange={(e) => onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
+      onChange={(e) => onChange(e.target.value || null)}
       className="input"
       disabled={isLoading}
     >
       <option value="">Selecteer een organisatie...</option>
-      {teams.map(team => (
-        <option key={team.id} value={team.id}>
-          {team.title?.rendered || team.title}
+      {entities.map(entity => (
+        <option key={`${entity.type}:${entity.id}`} value={`${entity.type}:${entity.id}`}>
+          {entity.title?.rendered || entity.title}
         </option>
       ))}
     </select>
@@ -39,19 +40,32 @@ export default function WorkHistoryEditModal({
       return response.data;
     },
   });
-  
-  // Sort teams alphabetically by title
-  const teams = useMemo(() => {
-    return [...teamsData].sort((a, b) => {
+
+  // Fetch commissies for the selector
+  const { data: commissiesData = [], isLoading: isCommissiesLoading } = useQuery({
+    queryKey: ['commissies', 'all'],
+    queryFn: async () => {
+      const response = await wpApi.getCommissies({ per_page: 100 });
+      return response.data;
+    },
+  });
+
+  // Combine and sort entities alphabetically by title
+  const entities = useMemo(() => {
+    const teams = teamsData.map(t => ({ ...t, type: 'team' }));
+    const commissies = commissiesData.map(c => ({ ...c, type: 'commissie' }));
+    return [...teams, ...commissies].sort((a, b) => {
       const titleA = (a.title?.rendered || a.title || '').toLowerCase();
       const titleB = (b.title?.rendered || b.title || '').toLowerCase();
       return titleA.localeCompare(titleB);
     });
-  }, [teamsData]);
+  }, [teamsData, commissiesData]);
+
+  const isEntitiesLoading = isTeamsLoading || isCommissiesLoading;
 
   const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm({
     defaultValues: {
-      team: null,
+      entity: null, // format: "type:id" e.g., "team:123" or "commissie:456"
       job_title: '',
       description: '',
       start_date: '',
@@ -66,8 +80,14 @@ export default function WorkHistoryEditModal({
   useEffect(() => {
     if (isOpen) {
       if (workHistoryItem) {
+        // Convert old format (team ID only) to new format (type:id)
+        let entityValue = null;
+        if (workHistoryItem.team) {
+          const entityType = workHistoryItem.entity_type || 'team'; // default to team for backward compatibility
+          entityValue = `${entityType}:${workHistoryItem.team}`;
+        }
         reset({
-          team: workHistoryItem.team || null,
+          entity: entityValue,
           job_title: workHistoryItem.job_title || '',
           description: workHistoryItem.description || '',
           start_date: workHistoryItem.start_date || '',
@@ -76,7 +96,7 @@ export default function WorkHistoryEditModal({
         });
       } else {
         reset({
-          team: null,
+          entity: null,
           job_title: '',
           description: '',
           start_date: '',
@@ -90,8 +110,18 @@ export default function WorkHistoryEditModal({
   if (!isOpen) return null;
 
   const handleFormSubmit = (data) => {
+    // Parse entity value ("type:id" format) back to team ID and entity_type
+    let teamId = null;
+    let entityType = null;
+    if (data.entity) {
+      const [type, id] = data.entity.split(':');
+      entityType = type;
+      teamId = parseInt(id, 10);
+    }
+
     onSubmit({
-      team: data.team || null,
+      team: teamId,
+      entity_type: entityType,
       job_title: data.job_title || '',
       description: data.description || '',
       start_date: data.start_date || '',
@@ -116,18 +146,18 @@ export default function WorkHistoryEditModal({
         
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Team */}
+            {/* Entity (Team or Commissie) */}
             <div>
               <label className="label">Organisatie</label>
               <Controller
-                name="team"
+                name="entity"
                 control={control}
                 render={({ field }) => (
-                  <TeamSelector
+                  <EntitySelector
                     value={field.value}
                     onChange={field.onChange}
-                    teams={teams}
-                    isLoading={isTeamsLoading || isLoading}
+                    entities={entities}
+                    isLoading={isEntitiesLoading || isLoading}
                   />
                 )}
               />
