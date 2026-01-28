@@ -74,10 +74,12 @@ Plans:
   1. User can pull-to-refresh on mobile to reload current view
   2. iOS standalone mode does not accidentally reload page from overscroll bounce
   3. Pull-to-refresh gesture feels native and responsive
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 109-01: [To be planned]
+- [ ] 109-01-PLAN.md — Install react-simple-pull-to-refresh and create PullToRefreshWrapper component, add overscroll CSS
+- [ ] 109-02-PLAN.md — Integrate pull-to-refresh into all list views, detail views, and Dashboard
+- [ ] 109-03-PLAN.md — Deploy and verify on devices
 
 ### Phase 110: Install & Polish
 **Goal**: Optimize install experience and handle app updates gracefully
@@ -103,5 +105,5 @@ Phases execute in numeric order: 107 → 108 → 109 → 110
 |-------|-----------|----------------|--------|-----------|
 | 107. PWA Foundation | v8.0 | 4/4 | ✓ Complete | 2026-01-28 |
 | 108. Offline Support | v8.0 | 4/4 | ✓ Complete | 2026-01-28 |
-| 109. Mobile UX | v8.0 | 0/? | Not started | - |
+| 109. Mobile UX | v8.0 | 0/3 | Not started | - |
 | 110. Install & Polish | v8.0 | 0/? | Not started | - |
