@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent iOS standalone mode bounce/reload on overscroll */
+@supports (overscroll-behavior-y: none) {
+  /* Apply to html/body for full coverage */
+  html, body {
+    overscroll-behavior-y: none;
+  }
+}
+
 /* Custom base styles */
 @layer base {
   html {
