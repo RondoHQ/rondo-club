@@ -50,6 +50,12 @@ export default function CustomFieldColumn({ field, value }) {
     case 'textarea':
       return <span className="truncate block max-w-32" title={String(value)}>{String(value)}</span>;
 
+    case 'wysiwyg': {
+      // Strip HTML tags for list view preview
+      const plainText = String(value).replace(/<[^>]*>/g, '').trim();
+      return <span className="truncate block max-w-32" title={plainText}>{plainText || '-'}</span>;
+    }
+
     case 'number':
       return (
         <span>
