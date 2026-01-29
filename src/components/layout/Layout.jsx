@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, lazy, Suspense } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -10,10 +10,7 @@ import {
   Home,
   LogOut,
   Search,
-  User,
   ChevronDown,
-  CheckSquare,
-  Plus,
   Command,
   UsersRound,
   MessageSquare
@@ -35,19 +32,11 @@ const StadiumIcon = ({ className }) => (
   </svg>
 );
 import { useAuth } from '@/hooks/useAuth';
-import { useCreatePerson } from '@/hooks/usePeople';
-import { useCreateDate } from '@/hooks/useDates';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { prmApi, wpApi } from '@/api/client';
 import { APP_NAME } from '@/constants/app';
-// Lazy load modals to reduce initial bundle size
-// These pull in TipTap editor (~370 KB) which should only load when needed
-const GlobalTodoModal = lazy(() => import('@/components/Timeline/GlobalTodoModal'));
-const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
-const ImportantDateModal = lazy(() => import('@/components/ImportantDateModal'));
-import { usePeople } from '@/hooks/usePeople';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -447,84 +436,7 @@ function SearchModal({ isOpen, onClose }) {
   );
 }
 
-function QuickAddMenu({ onAddTodo, onAddPerson, onAddDate }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [isOpen]);
-
-  const handleAddTodo = () => {
-    setIsOpen(false);
-    onAddTodo();
-  };
-
-  const handleAddPerson = () => {
-    setIsOpen(false);
-    onAddPerson();
-  };
-
-  const handleAddDate = () => {
-    setIsOpen(false);
-    onAddDate();
-  };
-
-  return (
-    <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-9 h-9 rounded-lg bg-accent-600 hover:bg-accent-700 text-white transition-colors"
-        aria-label="Snelle actie"
-        title="Snelle actie"
-      >
-        <Plus className="w-5 h-5" />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 dark:bg-gray-800 dark:border-gray-700">
-          <div className="py-1">
-            <button
-              onClick={handleAddPerson}
-              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
-            >
-              <User className="w-4 h-4 mr-3 text-gray-400" />
-              Nieuw lid
-            </button>
-            <button
-              onClick={handleAddTodo}
-              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
-            >
-              <CheckSquare className="w-4 h-4 mr-3 text-gray-400" />
-              Nieuwe taak
-            </button>
-            <button
-              onClick={handleAddDate}
-              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
-            >
-              <Calendar className="w-4 h-4 mr-3 text-gray-400" />
-              Nieuwe datum
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Header({ onMenuClick, onAddTodo, onAddPerson, onAddDate, onOpenSearch }) {
+function Header({ onMenuClick, onOpenSearch }) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -590,15 +502,6 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddDate, onOpenSearch }
         </kbd>
       </button>
       
-      {/* Quick Add menu */}
-      <div className="ml-2">
-        <QuickAddMenu
-          onAddTodo={onAddTodo}
-          onAddPerson={onAddPerson}
-          onAddDate={onAddDate}
-        />
-      </div>
-      
       {/* User menu - right aligned */}
       <div className="ml-2">
         <UserMenu />
@@ -609,18 +512,7 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddDate, onOpenSearch }
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showTodoModal, setShowTodoModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
-  const [showPersonModal, setShowPersonModal] = useState(false);
-  const [showDateModal, setShowDateModal] = useState(false);
-  const [isCreatingPerson, setIsCreatingPerson] = useState(false);
-  const [isCreatingDate, setIsCreatingDate] = useState(false);
-  
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  
-  // Fetch people for date modal
-  const { data: allPeople = [], isLoading: isPeopleLoading } = usePeople();
 
   // Fetch dashboard stats for navigation counts
   const { data: dashboardData } = useDashboard();
@@ -628,40 +520,7 @@ export default function Layout({ children }) {
 
   // Update document title based on route
   useRouteTitle();
-  
-  // Create person mutation (using shared hook)
-  const createPersonMutation = useCreatePerson({
-    onSuccess: (result) => {
-      setShowPersonModal(false);
-      navigate(`/people/${result.id}`);
-    },
-  });
 
-  // Create date mutation
-  const createDateMutation = useCreateDate({
-    onSuccess: () => setShowDateModal(false),
-  });
-  
-  // Handle creating person
-  const handleCreatePerson = async (data) => {
-    setIsCreatingPerson(true);
-    try {
-      await createPersonMutation.mutateAsync(data);
-    } finally {
-      setIsCreatingPerson(false);
-    }
-  };
-
-  // Handle creating date
-  const handleCreateDate = async (data) => {
-    setIsCreatingDate(true);
-    try {
-      await createDateMutation.mutateAsync(data);
-    } finally {
-      setIsCreatingDate(false);
-    }
-  };
-  
   // Handle Cmd+K keyboard shortcut
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -703,9 +562,6 @@ export default function Layout({ children }) {
       <div className="flex flex-col flex-1 min-w-0">
         <Header
           onMenuClick={() => setSidebarOpen(true)}
-          onAddTodo={() => setShowTodoModal(true)}
-          onAddPerson={() => setShowPersonModal(true)}
-          onAddDate={() => setShowDateModal(true)}
           onOpenSearch={() => setShowSearchModal(true)}
         />
 
@@ -719,36 +575,6 @@ export default function Layout({ children }) {
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
       />
-
-      {/* Global Todo Modal (lazy loaded) */}
-      <Suspense fallback={null}>
-        <GlobalTodoModal
-          isOpen={showTodoModal}
-          onClose={() => setShowTodoModal(false)}
-        />
-      </Suspense>
-
-      {/* Person Modal (lazy loaded) */}
-      <Suspense fallback={null}>
-        <PersonEditModal
-          isOpen={showPersonModal}
-          onClose={() => setShowPersonModal(false)}
-          onSubmit={handleCreatePerson}
-          isLoading={isCreatingPerson}
-        />
-      </Suspense>
-
-      {/* Date Modal (lazy loaded) */}
-      <Suspense fallback={null}>
-        <ImportantDateModal
-          isOpen={showDateModal}
-          onClose={() => setShowDateModal(false)}
-          onSubmit={handleCreateDate}
-          isLoading={isCreatingDate}
-          allPeople={allPeople}
-          isPeopleLoading={isPeopleLoading}
-        />
-      </Suspense>
     </div>
   );
 }
