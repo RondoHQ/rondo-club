@@ -317,6 +317,12 @@ export default function TeamDetail() {
               </Link>
             )}
             <h1 className="text-2xl font-bold">{getTeamName(team)}</h1>
+            {/* Subtitle: Activiteit - Gender */}
+            {(acf.activiteit || acf.gender) && (
+              <p className="text-gray-500 dark:text-gray-400">
+                {[acf.activiteit, acf.gender].filter(Boolean).join(' - ')}
+              </p>
+            )}
             {acf.website && (
               <a 
                 href={acf.website} 
@@ -372,7 +378,7 @@ export default function TeamDetail() {
       {/* Members section - 3 columns: Spelers, Staf, Voormalig spelers */}
       {(() => {
         // Player roles that identify someone as a player vs staff
-        const playerRoles = ['Aanvaller', 'Verdediger', 'Keeper', 'Middenvelder', 'Teamspeler'];
+        const playerRoles = ['Aanvaller', 'Verdediger', 'Keeper', 'Middenvelder', 'Teamspeler', 'Speler'];
         const isPlayerRole = (jobTitle) => playerRoles.includes(jobTitle);
 
         // Split current members into players and staff
