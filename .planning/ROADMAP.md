@@ -54,8 +54,8 @@ This milestone transforms the People list from load-all-at-once to server-side p
 **Plans:** 2 plans
 
 Plans:
-- [ ] 112-01-PLAN.md — Birthdate sync hooks and WP-CLI migration
-- [ ] 112-02-PLAN.md — Birth year filter on filtered endpoint
+- [x] 112-01-PLAN.md — Birthdate sync hooks and WP-CLI migration
+- [x] 112-02-PLAN.md — Birth year filter on filtered endpoint
 
 **Success Criteria:**
 1. Birthdate is stored in `wp_postmeta` with key `_birthdate` (full date, denormalized from important_date)
@@ -160,7 +160,7 @@ Plans:
 | Phase | Status | Requirements | Completion |
 |-------|--------|--------------|------------|
 | Phase 111: Server-Side Foundation | ✓ Complete | DATA-01, DATA-02, DATA-03, DATA-04, DATA-06, DATA-07, DATA-08, DATA-10, DATA-13, DATA-14 | 100% |
-| Phase 112: Birthdate Denormalization | Pending | DATA-05, DATA-11, DATA-12 | 0% |
+| Phase 112: Birthdate Denormalization | ✓ Complete | DATA-05, DATA-11, DATA-12 | 100% |
 | Phase 113: Frontend Pagination | Pending | PAGE-01, PAGE-02, PAGE-03, PAGE-04, PAGE-05, PAGE-06, DATA-09 | 0% |
 | Phase 114: User Preferences Backend | Pending | COL-03 | 0% |
 | Phase 115: Column Preferences UI | Pending | COL-01, COL-02, COL-04, COL-05, COL-06, COL-07 | 0% |
