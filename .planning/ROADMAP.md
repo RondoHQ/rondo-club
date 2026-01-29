@@ -69,7 +69,7 @@ Plans:
 
 ### Phase 113: Frontend Pagination
 
-**Goal:** People list loads data on-demand with infinite scroll.
+**Goal:** People list displays paginated data with navigation controls and custom field sorting.
 
 **Dependencies:** Phase 112
 
@@ -82,10 +82,11 @@ Plans:
 - PAGE-06: Empty state when no results match filters
 - DATA-09: Server sorts people by custom ACF fields (text, number, date types)
 
-**Plans:** TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 113-01-PLAN.md — Backend custom field sorting support
+- [ ] 113-02-PLAN.md — Frontend pagination UI integration
 
 **Success Criteria:**
 1. People list displays 100 people per page (not all 1400+ at once)
