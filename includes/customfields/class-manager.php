@@ -100,6 +100,8 @@ class Manager {
 		'menu_order',
 		// Unique validation.
 		'unique',
+		// UI visibility.
+		'editable_in_ui',
 	);
 
 	/**
