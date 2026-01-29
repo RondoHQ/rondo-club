@@ -138,7 +138,6 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
       // Initialize with current values for core fields and custom fields
       const initialValues = {
         _name: team.title?.rendered || team.title || '',
-        _website: team.acf?.website || '',
       };
       listViewFields.forEach(field => {
         initialValues[field.name] = team.acf?.[field.name] ?? '';
@@ -216,28 +215,6 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
             {getTeamName(team)}
           </span>
         )}
-      </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 max-w-48">
-        {isEditing ? (
-          <input
-            type="url"
-            value={editedFields._website ?? ''}
-            onChange={(e) => handleFieldChange('_website', e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
-            placeholder="https://..."
-            disabled={isUpdating}
-          />
-        ) : team.acf?.website ? (
-          <a
-            href={team.acf.website.startsWith('http') ? team.acf.website : `https://${team.acf.website}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-accent-600 dark:text-accent-400 hover:underline truncate block"
-          >
-            {team.acf.website}
-          </a>
-        ) : '-'}
       </td>
       {listViewFields.map(field => (
         <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(team.id)}>
@@ -341,7 +318,6 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
             </th>
             <th scope="col" className="w-10 px-2 bg-gray-50 dark:bg-gray-800"></th>
             <SortableHeader field="name" label="Naam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="website" label="Website" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
               <SortableHeader
                 key={field.key}
@@ -409,18 +385,13 @@ export default function TeamsList() {
   const updateRowMutation = useMutation({
     mutationFn: async ({ teamId, editedFields, existingAcf }) => {
       // Extract core fields (prefixed with _) from custom fields
-      const { _name, _website, ...customFields } = editedFields;
+      const { _name, ...customFields } = editedFields;
 
       // Merge custom fields with existing ACF data
       const mergedAcf = {
         ...existingAcf,
         ...customFields
       };
-
-      // Update website in ACF if changed
-      if (_website !== undefined) {
-        mergedAcf.website = _website;
-      }
 
       // Sanitize null values for array-type fields (REST API requires [] not null)
       arrayTypeAcfFields.forEach(fieldName => {
@@ -579,9 +550,6 @@ export default function TeamsList() {
       if (sortField === 'name') {
         valueA = (a.title?.rendered || a.title || '').toLowerCase();
         valueB = (b.title?.rendered || b.title || '').toLowerCase();
-      } else if (sortField === 'website') {
-        valueA = (a.acf?.website || '').toLowerCase();
-        valueB = (b.acf?.website || '').toLowerCase();
       } else if (sortField.startsWith('custom_')) {
         // Handle custom field sorting
         const fieldName = sortField.replace('custom_', '');
@@ -654,30 +622,6 @@ export default function TeamsList() {
               onChange={(e) => setSearch(e.target.value)}
               className="input pl-9"
             />
-          </div>
-
-          {/* Sort Controls */}
-          <div className="flex items-center gap-2 border border-gray-200 dark:border-gray-600 rounded-lg p-1">
-            <select
-              value={sortField}
-              onChange={(e) => setSortField(e.target.value)}
-              className="text-sm border-0 bg-transparent dark:text-gray-200 focus:ring-0 focus:outline-none cursor-pointer"
-            >
-              <option value="name">Naam</option>
-              <option value="website">Website</option>
-            </select>
-            <div className="h-4 w-px bg-gray-300 dark:bg-gray-600"></div>
-            <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-              title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
-            >
-              {sortOrder === 'asc' ? (
-                <ArrowUp className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              ) : (
-                <ArrowDown className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              )}
-            </button>
           </div>
 
           <div className="relative" ref={filterRef}>
