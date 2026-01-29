@@ -90,6 +90,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 | 115-03-001 | Use pointer events instead of mouse events for unified touch/mouse handling | 115-03 | 2026-01-29 |
 | 115-03-002 | Return resizeHandlers object for easy spread onto resize handle element | 115-03 | 2026-01-29 |
 | 115-03-003 | Handle onPointerCancel same as onPointerUp for edge case reliability | 115-03 | 2026-01-29 |
+| 115-04-001 | Combined first_name/last_name into single "Naam" column | 115-04 | 2026-01-29 |
+| 115-04-002 | Sticky checkbox, photo, name columns at left: 0, 10, 88px | 115-04 | 2026-01-29 |
 | 115-05-001 | Remove show_in_list_view without data migration | 115-05 | 2026-01-29 |
 
 ### Pending Todos
