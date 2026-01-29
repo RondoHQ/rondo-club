@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 111 of 5 (Server-Side Foundation)
-Plan: 1 of 2 in phase
-Status: In progress - Plan 111-01 complete
-Last activity: 2026-01-29 - Completed 111-01-PLAN.md
+Plan: 2 of 2 in phase
+Status: Phase complete - All plans in phase 111 complete
+Last activity: 2026-01-29 - Completed 111-02-PLAN.md
 
-Progress: [██░░░░░░░░] 10% (1/10 plans complete, 0/5 phases complete)
+Progress: [██░░░░░░░░] 20% (2/10 plans complete, 1/5 phases complete)
 
 ## Milestone History
 
@@ -33,9 +33,9 @@ Progress: [██░░░░░░░░] 10% (1/10 plans complete, 0/5 phases 
 - Total phases: 5
 - Total requirements: 27
 - Requirements mapped: 27/27 (100%)
-- Phases complete: 0/5 (0%)
-- Plans complete: 1/10 (10%)
-- Plans remaining: 9
+- Phases complete: 1/5 (20%)
+- Plans complete: 2/10 (20%)
+- Plans remaining: 8
 
 ## Accumulated Context
 
@@ -58,6 +58,9 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 | 111-01-001 | Use wpdb with LEFT JOIN for meta fields | 111-01 | 2026-01-29 |
 | 111-01-002 | Use INNER JOIN for taxonomy filters | 111-01 | 2026-01-29 |
 | 111-01-003 | Post-query fetch for thumbnail and labels | 111-01 | 2026-01-29 |
+| 111-02-001 | Create new hook instead of modifying usePeople | 111-02 | 2026-01-29 |
+| 111-02-002 | Use placeholderData instead of keepPreviousData | 111-02 | 2026-01-29 |
+| 111-02-003 | Include all filter params in query key | 111-02 | 2026-01-29 |
 
 ### Pending Todos
 
@@ -76,6 +79,11 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 - Cache strategy undefined (consider transient caching for repeated queries)
 - N+1 queries for thumbnails/labels (acceptable for paginated results but should monitor)
 
+**New concerns from 111-02:**
+- Cache invalidation strategy for filtered queries (need to invalidate peopleKeys.all, not just peopleKeys.lists)
+- Initial page load performance with 100 results (may need to adjust default perPage)
+- Empty state handling when filters return 0 results (UI must distinguish "no people" vs "no matches")
+
 **Pre-existing lint errors:** 143 ESLint errors in unrelated files (not blocking)
 
 ### Quick Tasks Completed
@@ -88,8 +96,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-01-29 14:45 UTC
-Stopped at: Completed 111-01-PLAN.md
+Last session: 2026-01-29 15:07 UTC
+Stopped at: Completed 111-02-PLAN.md - Phase 111 complete
 Resume file: None
 
-Next: Execute 111-02-PLAN.md (Frontend Hook Integration) - Wave 2 depends on 111-01
+Next: Phase 111 complete. Ready for phase 112 (UI Layer) planning and execution
