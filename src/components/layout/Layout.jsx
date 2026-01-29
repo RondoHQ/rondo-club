@@ -37,7 +37,6 @@ const StadiumIcon = ({ className }) => (
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatePerson } from '@/hooks/usePeople';
 import { useCreateDate } from '@/hooks/useDates';
-import { useCreateTeam } from '@/hooks/useTeams';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -47,7 +46,6 @@ import { APP_NAME } from '@/constants/app';
 // These pull in TipTap editor (~370 KB) which should only load when needed
 const GlobalTodoModal = lazy(() => import('@/components/Timeline/GlobalTodoModal'));
 const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
-const TeamEditModal = lazy(() => import('@/components/TeamEditModal'));
 const ImportantDateModal = lazy(() => import('@/components/ImportantDateModal'));
 import { usePeople } from '@/hooks/usePeople';
 
@@ -449,10 +447,10 @@ function SearchModal({ isOpen, onClose }) {
   );
 }
 
-function QuickAddMenu({ onAddTodo, onAddPerson, onAddTeam, onAddDate }) {
+function QuickAddMenu({ onAddTodo, onAddPerson, onAddDate }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
-  
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -460,7 +458,7 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddTeam, onAddDate }) {
         setIsOpen(false);
       }
     };
-    
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
@@ -468,27 +466,22 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddTeam, onAddDate }) {
       };
     }
   }, [isOpen]);
-  
+
   const handleAddTodo = () => {
     setIsOpen(false);
     onAddTodo();
   };
-  
+
   const handleAddPerson = () => {
     setIsOpen(false);
     onAddPerson();
   };
-  
-  const handleAddTeam = () => {
-    setIsOpen(false);
-    onAddTeam();
-  };
-  
+
   const handleAddDate = () => {
     setIsOpen(false);
     onAddDate();
   };
-  
+
   return (
     <div className="relative" ref={menuRef}>
       <button
@@ -499,7 +492,7 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddTeam, onAddDate }) {
       >
         <Plus className="w-5 h-5" />
       </button>
-      
+
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 dark:bg-gray-800 dark:border-gray-700">
           <div className="py-1">
@@ -509,13 +502,6 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddTeam, onAddDate }) {
             >
               <User className="w-4 h-4 mr-3 text-gray-400" />
               Nieuw lid
-            </button>
-            <button
-              onClick={handleAddTeam}
-              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left dark:text-gray-200 dark:hover:bg-gray-700"
-            >
-              <Building2 className="w-4 h-4 mr-3 text-gray-400" />
-              Nieuw team
             </button>
             <button
               onClick={handleAddTodo}
@@ -538,7 +524,7 @@ function QuickAddMenu({ onAddTodo, onAddPerson, onAddTeam, onAddDate }) {
   );
 }
 
-function Header({ onMenuClick, onAddTodo, onAddPerson, onAddTeam, onAddDate, onOpenSearch }) {
+function Header({ onMenuClick, onAddTodo, onAddPerson, onAddDate, onOpenSearch }) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -606,10 +592,9 @@ function Header({ onMenuClick, onAddTodo, onAddPerson, onAddTeam, onAddDate, onO
       
       {/* Quick Add menu */}
       <div className="ml-2">
-        <QuickAddMenu 
-          onAddTodo={onAddTodo} 
+        <QuickAddMenu
+          onAddTodo={onAddTodo}
           onAddPerson={onAddPerson}
-          onAddTeam={onAddTeam}
           onAddDate={onAddDate}
         />
       </div>
@@ -627,10 +612,8 @@ export default function Layout({ children }) {
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showPersonModal, setShowPersonModal] = useState(false);
-  const [showTeamModal, setShowTeamModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [isCreatingPerson, setIsCreatingPerson] = useState(false);
-  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [isCreatingDate, setIsCreatingDate] = useState(false);
   
   const navigate = useNavigate();
@@ -653,15 +636,7 @@ export default function Layout({ children }) {
       navigate(`/people/${result.id}`);
     },
   });
-  
-  // Create team mutation
-  const createTeamMutation = useCreateTeam({
-    onSuccess: (result) => {
-      setShowTeamModal(false);
-      navigate(`/teams/${result.id}`);
-    },
-  });
-  
+
   // Create date mutation
   const createDateMutation = useCreateDate({
     onSuccess: () => setShowDateModal(false),
@@ -676,17 +651,7 @@ export default function Layout({ children }) {
       setIsCreatingPerson(false);
     }
   };
-  
-  // Handle creating team
-  const handleCreateTeam = async (data) => {
-    setIsCreatingTeam(true);
-    try {
-      await createTeamMutation.mutateAsync(data);
-    } finally {
-      setIsCreatingTeam(false);
-    }
-  };
-  
+
   // Handle creating date
   const handleCreateDate = async (data) => {
     setIsCreatingDate(true);
@@ -740,7 +705,6 @@ export default function Layout({ children }) {
           onMenuClick={() => setSidebarOpen(true)}
           onAddTodo={() => setShowTodoModal(true)}
           onAddPerson={() => setShowPersonModal(true)}
-          onAddTeam={() => setShowTeamModal(true)}
           onAddDate={() => setShowDateModal(true)}
           onOpenSearch={() => setShowSearchModal(true)}
         />
@@ -771,16 +735,6 @@ export default function Layout({ children }) {
           onClose={() => setShowPersonModal(false)}
           onSubmit={handleCreatePerson}
           isLoading={isCreatingPerson}
-        />
-      </Suspense>
-
-      {/* Team Modal (lazy loaded) */}
-      <Suspense fallback={null}>
-        <TeamEditModal
-          isOpen={showTeamModal}
-          onClose={() => setShowTeamModal(false)}
-          onSubmit={handleCreateTeam}
-          isLoading={isCreatingTeam}
         />
       </Suspense>
 
