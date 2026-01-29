@@ -238,11 +238,18 @@ function ResizableHeader({
       {/* Resize handle */}
       <div
         {...resizeHandlers}
-        className={`absolute top-0 right-0 w-2 h-full cursor-col-resize hover:bg-accent-300 dark:hover:bg-accent-600 transition-colors ${
-          isResizing ? 'bg-accent-400 dark:bg-accent-500' : ''
+        className={`absolute top-0 right-0 w-2 h-full cursor-col-resize group/resize flex items-center justify-center hover:bg-accent-300/50 dark:hover:bg-accent-600/50 transition-colors ${
+          isResizing ? 'bg-accent-400/50 dark:bg-accent-500/50' : ''
         }`}
         style={{ touchAction: 'none' }}
-      />
+      >
+        {/* Visual indicator line */}
+        <div className={`w-px h-4 rounded-full transition-colors ${
+          isResizing
+            ? 'bg-accent-500 dark:bg-accent-400'
+            : 'bg-gray-300 dark:bg-gray-600 group-hover/resize:bg-accent-400 dark:group-hover/resize:bg-accent-500'
+        }`} />
+      </div>
     </th>
   );
 }

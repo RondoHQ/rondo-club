@@ -181,23 +181,23 @@ export function useListPreferences() {
       const currentWidths = loadColumnWidthsFromStorage();
       saveColumnWidthsToStorage({ ...currentWidths, ...widths });
 
-      // Optimistically update cache immediately
-      queryClient.setQueryData(['user', 'list-preferences'], (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          column_widths: { ...old.column_widths, ...widths },
-        };
-      });
-
       // Clear existing timer
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
 
       // Set new timer to batch and send after 300ms
+      // Also update cache here (deferred) to avoid render loops during pointer events
       debounceTimerRef.current = setTimeout(() => {
         if (pendingWidthsRef.current && Object.keys(pendingWidthsRef.current).length > 0) {
+          // Update cache before mutation to show changes immediately
+          queryClient.setQueryData(['user', 'list-preferences'], (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              column_widths: { ...old.column_widths, ...pendingWidthsRef.current },
+            };
+          });
           updateMutation.mutate({ column_widths: pendingWidthsRef.current });
           pendingWidthsRef.current = null;
         }
