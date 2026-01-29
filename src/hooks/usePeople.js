@@ -9,6 +9,7 @@ export const peopleKeys = {
   all: ['people'],
   lists: () => [...peopleKeys.all, 'list'],
   list: (filters) => [...peopleKeys.lists(), filters],
+  filtered: (filters) => [...peopleKeys.all, 'filtered', filters],
   details: () => [...peopleKeys.all, 'detail'],
   detail: (id) => [...peopleKeys.details(), id],
   timeline: (id) => [...peopleKeys.detail(id), 'timeline'],
@@ -53,7 +54,7 @@ export function usePeople(params = {}) {
       const allPeople = [];
       let page = 1;
       const perPage = 100;
-      
+
       while (true) {
         const response = await wpApi.getPeople({
           per_page: perPage,
@@ -61,26 +62,69 @@ export function usePeople(params = {}) {
           _embed: true,
           ...params,
         });
-        
+
         const people = response.data.map(transformPerson);
         allPeople.push(...people);
-        
+
         // If we got fewer results than per_page, we're on the last page
         if (people.length < perPage) {
           break;
         }
-        
+
         // Also check x-wp-totalpages header as a safety check
         const totalPages = parseInt(response.headers['x-wp-totalpages'] || response.headers['X-WP-TotalPages'] || '0', 10);
         if (totalPages > 0 && page >= totalPages) {
           break;
         }
-        
+
         page++;
       }
-      
+
       return allPeople;
     },
+  });
+}
+
+/**
+ * Hook for fetching filtered and paginated people
+ *
+ * Uses the server-side filtering endpoint for efficient queries
+ * on large datasets (1400+ contacts).
+ *
+ * @param {Object} filters - Filter and pagination options
+ * @param {number} filters.page - Page number (default: 1)
+ * @param {number} filters.perPage - Results per page (default: 100, max: 100)
+ * @param {number[]} filters.labels - Array of label term IDs (OR logic)
+ * @param {string} filters.ownership - 'mine', 'shared', or 'all' (default: 'all')
+ * @param {number} filters.modifiedDays - Only people modified within N days
+ * @param {string} filters.orderby - 'first_name', 'last_name', or 'modified' (default: 'first_name')
+ * @param {string} filters.order - 'asc' or 'desc' (default: 'asc')
+ * @returns {Object} TanStack Query result with data, isLoading, error, etc.
+ */
+export function useFilteredPeople(filters = {}) {
+  // Normalize filter keys for backend (snake_case)
+  const params = {
+    page: filters.page || 1,
+    per_page: filters.perPage || 100,
+    labels: filters.labels || [],
+    ownership: filters.ownership || 'all',
+    modified_days: filters.modifiedDays || null,
+    orderby: filters.orderby || 'first_name',
+    order: filters.order || 'asc',
+  };
+
+  return useQuery({
+    // Include all filter params in query key for proper cache separation
+    queryKey: peopleKeys.filtered(params),
+    queryFn: async () => {
+      const response = await prmApi.getFilteredPeople(params);
+
+      // Response is already in correct shape from backend:
+      // { people: [...], total: N, page: N, total_pages: N }
+      return response.data;
+    },
+    // Keep previous data while fetching new page for smoother UX
+    placeholderData: (previousData) => previousData,
   });
 }
 
