@@ -228,6 +228,10 @@ export const prmApi = {
   getDashboardSettings: () => api.get('/stadion/v1/user/dashboard-settings'),
   updateDashboardSettings: (settings) => api.patch('/stadion/v1/user/dashboard-settings', settings),
 
+  // List preferences (column visibility, order, widths)
+  getListPreferences: () => api.get('/stadion/v1/user/list-preferences'),
+  updateListPreferences: (prefs) => api.patch('/stadion/v1/user/list-preferences', prefs),
+
   // Linked person (for filtering current user from attendee lists)
   getLinkedPerson: () => api.get('/stadion/v1/user/linked-person'),
   updateLinkedPerson: (personId) => api.post('/stadion/v1/user/linked-person', { person_id: personId }),
