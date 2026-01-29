@@ -36,12 +36,11 @@ class VolunteerStatus {
 	];
 
 	/**
-	 * The custom field key for huidig-vrijwilliger.
-	 * This is the ACF field name used in custom fields.
+	 * The ACF field key for huidig-vrijwilliger.
 	 *
 	 * @var string
 	 */
-	private const VOLUNTEER_FIELD = 'huidig-vrijwilliger';
+	private const VOLUNTEER_FIELD_KEY = 'field_custom_person_huidig-vrijwilliger';
 
 	/**
 	 * Constructor.
@@ -95,9 +94,8 @@ class VolunteerStatus {
 	private function calculate_and_update_status( $post_id ) {
 		$is_volunteer = $this->is_current_volunteer( $post_id );
 
-		// Update the custom field
-		// Use update_post_meta directly as this is a dynamic custom field
-		update_post_meta( $post_id, self::VOLUNTEER_FIELD, $is_volunteer ? '1' : '0' );
+		// Update the custom field using ACF's update_field for proper reference handling
+		update_field( self::VOLUNTEER_FIELD_KEY, $is_volunteer ? '1' : '0', $post_id );
 	}
 
 	/**
