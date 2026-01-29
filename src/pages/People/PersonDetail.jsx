@@ -446,20 +446,6 @@ export default function PersonDetail() {
     // Sort by date ascending (earliest first)
     return dateA - dateB;
   }) : [];
-  
-  const handleDelete = async () => {
-    if (!window.confirm('Weet je zeker dat je dit lid wilt verwijderen?')) {
-      return;
-    }
-
-    try {
-      await deletePerson.mutateAsync(id);
-      // Navigation will happen in onSuccess callback
-      navigate('/people');
-    } catch {
-      alert('Lid kon niet worden verwijderd. Probeer het opnieuw.');
-    }
-  };
 
   // Helper function to format phone number for tel: and WhatsApp links
   // Removes all non-digit characters except + at the start, removes Unicode marks,
@@ -1562,10 +1548,6 @@ export default function PersonDetail() {
           <button onClick={() => setShowPersonEditModal(true)} className="btn-secondary">
             <Edit className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Bewerken</span>
-          </button>
-          <button onClick={handleDelete} className="btn-danger-outline">
-            <Trash2 className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Verwijderen</span>
           </button>
         </div>
       </div>
