@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-28)
+See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** Personal CRM with multi-user collaboration, now as installable PWA
-**Current focus:** v8.0 PWA Enhancement complete — ready for next milestone
+**Current focus:** v9.0 People List Performance & Customization
 
 ## Current Position
 
-Phase: 110 of 110 (Install & Polish) - MILESTONE COMPLETE
-Plan: All complete
-Status: v8.0 shipped, ready for next milestone
-Last activity: 2026-01-28 — v8.0 PWA Enhancement archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v9.0
+Last activity: 2026-01-29 — Milestone v9.0 started
 
-Progress: [██████████] 100% (v8.0 complete)
+Progress: [░░░░░░░░░░] 0%
 
 ## Milestone History
 
@@ -57,8 +57,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-01-28
-Stopped at: Quick task 010 completed
+Last session: 2026-01-29
+Stopped at: Milestone v9.0 started, defining requirements
 Resume file: None
 
-Next: Run `/gsd:new-milestone` to start next milestone
+Next: Complete requirements definition, then `/gsd:plan-phase 111`
