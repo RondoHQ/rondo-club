@@ -1,0 +1,254 @@
+{
+    "key": "group_custom_fields_person",
+    "title": "Custom Fields",
+    "fields": [
+        {
+            "key": "field_custom_person_isparent",
+            "label": "isParent",
+            "name": "isparent",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "",
+            "required": false,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "ui": true,
+            "ui_on_text": "Yes",
+            "ui_off_text": "No",
+            "show_in_list_view": false,
+            "list_view_order": 999,
+            "unique": false,
+            "default_value": 0,
+            "message": "",
+            "active": 0
+        },
+        {
+            "key": "field_custom_person_knvb-id",
+            "label": "KNVB ID",
+            "name": "knvb-id",
+            "aria-label": "",
+            "type": "text",
+            "instructions": "",
+            "required": false,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "show_in_list_view": true,
+            "list_view_order": 1,
+            "unique": false,
+            "default_value": "",
+            "maxlength": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_custom_person_leeftijdsgroep",
+            "label": "Leeftijdsgroep",
+            "name": "leeftijdsgroep",
+            "aria-label": "",
+            "type": "text",
+            "instructions": "",
+            "required": false,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "show_in_list_view": false,
+            "list_view_order": 999,
+            "unique": false,
+            "default_value": "",
+            "maxlength": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_custom_person_type-lid",
+            "label": "Type lid",
+            "name": "type-lid",
+            "aria-label": "",
+            "type": "text",
+            "instructions": "",
+            "required": false,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "show_in_list_view": false,
+            "list_view_order": 999,
+            "unique": false,
+            "default_value": "",
+            "maxlength": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_custom_person_lid-sinds",
+            "label": "Lid sinds",
+            "name": "lid-sinds",
+            "aria-label": "",
+            "type": "date_picker",
+            "instructions": "",
+            "required": false,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "display_format": "Y-m-d",
+            "return_format": "Y-m-d",
+            "first_day": 1,
+            "show_in_list_view": false,
+            "list_view_order": 999,
+            "unique": false,
+            "default_to_current_date": 0
+        },
+        {
+            "key": "field_custom_person_datum-foto",
+            "label": "Datum foto",
+            "name": "datum-foto",
+            "aria-label": "",
+            "type": "date_picker",
+            "instructions": "",
+            "required": false,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "display_format": "Y-m-d",
+            "return_format": "Y-m-d",
+            "first_day": 1,
+            "show_in_list_view": false,
+            "list_view_order": 999,
+            "unique": false,
+            "default_to_current_date": 0
+        },
+        {
+            "key": "field_custom_person_datum-vog",
+            "label": "Datum VOG",
+            "name": "datum-vog",
+            "aria-label": "",
+            "type": "date_picker",
+            "instructions": "",
+            "required": false,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "display_format": "d\/m\/Y",
+            "return_format": "d\/m\/Y",
+            "first_day": 1,
+            "show_in_list_view": false,
+            "list_view_order": 999,
+            "unique": false,
+            "default_to_current_date": 0
+        },
+        {
+            "key": "field_custom_person_freescout-id",
+            "label": "Freescout ID",
+            "name": "freescout-id",
+            "aria-label": "",
+            "type": "number",
+            "instructions": "",
+            "required": false,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "show_in_list_view": false,
+            "list_view_order": 999,
+            "unique": false,
+            "default_value": "",
+            "min": "",
+            "max": "",
+            "step": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_custom_person_financiele-blokkade",
+            "label": "Financiële blokkade",
+            "name": "financiele-blokkade",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "",
+            "required": false,
+            "conditional_logic": false,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "ui": true,
+            "ui_on_text": "Ja",
+            "ui_off_text": "Nee",
+            "show_in_list_view": false,
+            "list_view_order": 999,
+            "unique": false,
+            "default_value": 0,
+            "message": ""
+        },
+        {
+            "key": "field_custom_person_nikki-contributie-status",
+            "label": "NIKKI contributie status",
+            "name": "nikki-contributie-status",
+            "aria-label": "",
+            "type": "wysiwyg",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "allow_in_bindings": 0,
+            "tabs": "all",
+            "toolbar": "full",
+            "media_upload": 1,
+            "delay": 0
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "person"
+            }
+        ]
+    ],
+    "menu_order": 100,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "",
+    "show_in_rest": 1,
+    "display_title": "",
+    "modified": 1769601574
+}
