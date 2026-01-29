@@ -293,6 +293,9 @@ class CustomFields extends WP_REST_Controller {
 					$display_props['append'] = $field['append'];
 				}
 
+				// UI editability flag (defaults to true for backward compatibility).
+				$display_props['editable_in_ui'] = $field['editable_in_ui'] ?? true;
+
 				return $display_props;
 			},
 			$fields
@@ -339,6 +342,8 @@ class CustomFields extends WP_REST_Controller {
 			'enable_opacity',
 			// Unique validation.
 			'unique',
+			// UI editability.
+			'editable_in_ui',
 		);
 		foreach ( $optional_params as $param ) {
 			if ( $request->has_param( $param ) ) {
@@ -416,6 +421,8 @@ class CustomFields extends WP_REST_Controller {
 			'enable_opacity',
 			// Unique validation.
 			'unique',
+			// UI editability.
+			'editable_in_ui',
 		);
 		foreach ( $updatable_params as $param ) {
 			if ( $request->has_param( $param ) ) {
@@ -686,6 +693,12 @@ class CustomFields extends WP_REST_Controller {
 				'type'        => 'boolean',
 				'default'     => false,
 				'description' => 'Enforce unique values per post type',
+			),
+			// UI editability.
+			'editable_in_ui' => array(
+				'type'        => 'boolean',
+				'default'     => true,
+				'description' => 'Whether field can be edited in UI (API access unaffected)',
 			),
 		);
 	}
