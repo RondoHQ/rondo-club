@@ -1,5 +1,35 @@
 # Project Milestones: Stadion
 
+## v9.0 People List Performance & Customization (Shipped: 2026-01-29)
+
+**Delivered:** Server-side pagination with optimized SQL queries, birthdate denormalization for fast filtering, custom field sorting, and per-user column customization with drag-drop reordering and resize.
+
+**Phases completed:** 111-115 (10 plans total)
+
+**Key accomplishments:**
+
+- Server-side pagination with wpdb JOINs reducing data transfer 14x (1400+ → 100 per page)
+- Birthdate denormalization syncing birthday dates to `_birthdate` meta for fast birth year filtering
+- Custom field sorting with type-appropriate ORDER BY clauses (text, number, date)
+- User preferences backend storing column visibility, order, and widths in user_meta
+- Column customization UI with show/hide toggles, drag-drop reordering, and resize handles
+- Removed "show in list view" from custom field settings (replaced by per-user selection)
+
+**Stats:**
+
+- 66 files changed
+- +13,341 / -855 lines changed
+- 5 phases, 10 plans
+- 1 day (2026-01-29)
+
+**Git range:** `58f4e44` → `74cddcd`
+
+**Tech debt:** Cross-tab sync for column preferences (minor, non-blocking)
+
+**What's next:** To be determined
+
+---
+
 ## v8.0 PWA Enhancement (Shipped: 2026-01-28)
 
 **Delivered:** Progressive Web App transformation with installable app experience on iOS and Android, offline support with cached data access, pull-to-refresh gesture, and smart install prompts.

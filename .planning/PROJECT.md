@@ -270,22 +270,20 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Dutch localization of all PWA notifications and prompts — v8.0
 - Lighthouse PWA score 90+ verified on real devices — v8.0
 
+**v9.0 People List Performance & Customization (shipped 2026-01-29):**
+- Server-side pagination with `/stadion/v1/people/filtered` endpoint (100 per page) — v9.0
+- Server-side filtering by labels, ownership, modified date, birth year — v9.0
+- Server-side sorting by name, modified, custom fields with type-appropriate ORDER BY — v9.0
+- Birthdate denormalized to `_birthdate` meta for fast birth year filtering — v9.0
+- Custom $wpdb endpoint with JOINs for single-query data fetch — v9.0
+- Per-user column preferences (visibility, order, width) stored in user_meta — v9.0
+- Column customization UI with drag-drop reordering and resize handles — v9.0
+- "Tonen als kolom in lijstweergave" removed from custom field settings — v9.0
+- 14x data transfer reduction (1400+ → 100 per page) — v9.0
+
 ### Active
 
-<!-- v9.0 People List Performance & Customization -->
-
-## Current Milestone: v9.0 People List Performance & Customization
-
-**Goal:** Transform the People list from load-all-at-once to infinite scroll with server-side filtering/sorting, and add dynamic per-user column customization.
-
-**Target features:**
-- Infinite scroll with server-side pagination (1400+ people, currently loads all)
-- Server-side filtering (labels, birth year, modified date, ownership)
-- Server-side sorting (name, modified, custom fields)
-- Denormalize birth_year onto person posts for fast filtering
-- Custom SQL endpoint via $wpdb with JOIN for single-query data fetch
-- Dynamic per-user column selection/ordering on PeopleList (stored in user_meta)
-- Remove "show in list view" from custom field settings (replaced by per-user column selection)
+<!-- Next milestone to be determined -->
 
 ### Out of Scope
 
