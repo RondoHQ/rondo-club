@@ -2400,10 +2400,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * [--dry-run]
 		 * : Preview changes without making them.
 		 *
+		 * [--force]
+		 * : Force update all records even if value unchanged (fixes ACF refs).
+		 *
 		 * ## EXAMPLES
 		 *
 		 *     wp prm people backfill_volunteer_status
 		 *     wp prm people backfill_volunteer_status --dry-run
+		 *     wp prm people backfill_volunteer_status --force
 		 *
 		 * @when after_wp_load
 		 */
@@ -2411,9 +2415,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			global $wpdb;
 
 			$dry_run = isset( $assoc_args['dry-run'] );
+			$force   = isset( $assoc_args['force'] );
 
 			if ( $dry_run ) {
 				WP_CLI::log( 'Dry run mode - no changes will be made.' );
+			}
+
+			if ( $force ) {
+				WP_CLI::log( 'Force mode - updating all records to fix ACF references.' );
 			}
 
 			// Get all person IDs using direct DB query to bypass access control hooks
@@ -2450,10 +2459,13 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				$new_value = $is_volunteer ? '1' : '0';
 
-				// Check if value needs updating
-				if ( $current_value !== $new_value ) {
+				// Check if value needs updating (or force mode is enabled)
+				$needs_update = $force || $current_value !== $new_value;
+
+				if ( $needs_update ) {
 					if ( ! $dry_run ) {
-						update_post_meta( $person_id, 'huidig-vrijwilliger', $new_value );
+						// Use update_field() to properly set ACF reference key
+						update_field( 'field_custom_person_huidig-vrijwilliger', $new_value, $person_id );
 					}
 					$updated++;
 
@@ -2463,15 +2475,17 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						$set_false++;
 					}
 
-					// Log the change
-					$name = get_the_title( $person_id );
-					WP_CLI::log( sprintf(
-						'  %s (ID: %d): %s -> %s',
-						$name,
-						$person_id,
-						$current_value === '' ? '(empty)' : ( $current_value === '1' ? 'true' : 'false' ),
-						$is_volunteer ? 'true' : 'false'
-					) );
+					// Only log actual changes (not force-updates with same value)
+					if ( $current_value !== $new_value ) {
+						$name = get_the_title( $person_id );
+						WP_CLI::log( sprintf(
+							'  %s (ID: %d): %s -> %s',
+							$name,
+							$person_id,
+							$current_value === '' ? '(empty)' : ( $current_value === '1' ? 'true' : 'false' ),
+							$is_volunteer ? 'true' : 'false'
+						) );
+					}
 				} else {
 					$skipped++;
 				}
