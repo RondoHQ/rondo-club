@@ -7,10 +7,10 @@
 
 ### Person Edit Restrictions — 4 requirements
 
-- [ ] **PERSON-01**: "Verwijderen" (delete) button is removed from PersonDetail
-- [ ] **PERSON-02**: "Voeg adres toe" (add address) button is removed from PersonDetail
-- [ ] **PERSON-03**: "Functie toevoegen" (add function) button is removed from work history section
-- [ ] **PERSON-04**: Work history items cannot be edited in the UI (no edit button, no click-to-edit)
+- [x] **PERSON-01**: "Verwijderen" (delete) button is removed from PersonDetail
+- [x] **PERSON-02**: "Voeg adres toe" (add address) button is removed from PersonDetail
+- [x] **PERSON-03**: "Functie toevoegen" (add function) button is removed from work history section
+- [x] **PERSON-04**: Work history items cannot be edited in the UI (no edit button, no click-to-edit)
 
 ### Custom Field Edit Control — 2 requirements
 
@@ -44,10 +44,10 @@ None identified for this milestone.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERSON-01 | Phase 116 | Pending |
-| PERSON-02 | Phase 116 | Pending |
-| PERSON-03 | Phase 116 | Pending |
-| PERSON-04 | Phase 116 | Pending |
+| PERSON-01 | Phase 116 | Complete |
+| PERSON-02 | Phase 116 | Complete |
+| PERSON-03 | Phase 116 | Complete |
+| PERSON-04 | Phase 116 | Complete |
 | FIELD-01 | Phase 118 | Pending |
 | FIELD-02 | Phase 118 | Pending |
 | ORG-01 | Phase 117 | Pending |
