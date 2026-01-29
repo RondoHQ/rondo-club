@@ -47,7 +47,7 @@ This milestone transforms the People list from load-all-at-once to server-side p
 **Dependencies:** Phase 111
 
 **Requirements:**
-- DATA-05: Server filters people by birth year (exact match)
+- DATA-05: Server filters people by birth year (range: from-to)
 - DATA-11: Birthdate is denormalized to person post_meta (_birthdate) for fast filtering
 - DATA-12: Birthdate syncs when birthday important_date is created/updated/deleted
 
