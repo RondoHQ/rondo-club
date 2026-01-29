@@ -942,6 +942,21 @@ class Api extends Base {
 	}
 
 	/**
+	 * Default visible columns for People list.
+	 * Name column is always visible and first - not included here.
+	 */
+	private const DEFAULT_LIST_COLUMNS = [ 'team', 'labels', 'modified' ];
+
+	/**
+	 * Core columns (non-custom-field columns).
+	 */
+	private const CORE_LIST_COLUMNS = [
+		[ 'id' => 'team', 'label' => 'Team', 'type' => 'core' ],
+		[ 'id' => 'labels', 'label' => 'Labels', 'type' => 'core' ],
+		[ 'id' => 'modified', 'label' => 'Last Modified', 'type' => 'core' ],
+	];
+
+	/**
 	 * Valid dashboard card IDs
 	 */
 	private const VALID_DASHBOARD_CARDS = [
@@ -1056,6 +1071,141 @@ class Api extends Base {
 				'card_order'    => $updated_order,
 			]
 		);
+	}
+
+	/**
+	 * Get user's people list column preferences
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with visible_columns and available_columns.
+	 */
+	public function get_list_preferences( $request ) {
+		$user_id = get_current_user_id();
+
+		// Get stored preferences
+		$visible_columns = get_user_meta( $user_id, 'stadion_people_list_preferences', true );
+
+		// Default visible columns if not set or empty
+		if ( empty( $visible_columns ) || ! is_array( $visible_columns ) ) {
+			$visible_columns = self::DEFAULT_LIST_COLUMNS;
+		}
+
+		// Get available columns for UI rendering
+		$available_columns = $this->get_available_columns_metadata();
+
+		return rest_ensure_response(
+			[
+				'visible_columns'   => $visible_columns,
+				'available_columns' => $available_columns,
+			]
+		);
+	}
+
+	/**
+	 * Update user's people list column preferences
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with updated preferences.
+	 */
+	public function update_list_preferences( $request ) {
+		$user_id = get_current_user_id();
+
+		// Handle reset action
+		if ( $request->get_param( 'reset' ) === true ) {
+			delete_user_meta( $user_id, 'stadion_people_list_preferences' );
+
+			return rest_ensure_response(
+				[
+					'visible_columns'   => self::DEFAULT_LIST_COLUMNS,
+					'available_columns' => $this->get_available_columns_metadata(),
+					'reset'             => true,
+				]
+			);
+		}
+
+		// Get requested columns
+		$columns = $request->get_param( 'visible_columns' );
+
+		// Empty array = reset to defaults (per CONTEXT.md)
+		if ( ! is_array( $columns ) || count( $columns ) === 0 ) {
+			delete_user_meta( $user_id, 'stadion_people_list_preferences' );
+
+			return rest_ensure_response(
+				[
+					'visible_columns'   => self::DEFAULT_LIST_COLUMNS,
+					'available_columns' => $this->get_available_columns_metadata(),
+				]
+			);
+		}
+
+		// Validate columns against available fields
+		$valid_columns      = $this->get_valid_column_ids();
+		$validated_columns = array_values( array_intersect( $columns, $valid_columns ) );
+
+		// Log if filtering occurred (deleted fields)
+		if ( count( $validated_columns ) !== count( $columns ) ) {
+			error_log(
+				sprintf(
+					'Stadion: Filtered %d invalid column IDs from user %d preferences',
+					count( $columns ) - count( $validated_columns ),
+					$user_id
+				)
+			);
+		}
+
+		// Persist validated preferences
+		update_user_meta( $user_id, 'stadion_people_list_preferences', $validated_columns );
+
+		return rest_ensure_response(
+			[
+				'visible_columns'   => $validated_columns,
+				'available_columns' => $this->get_available_columns_metadata(),
+			]
+		);
+	}
+
+	/**
+	 * Get valid column IDs (core + active custom fields)
+	 *
+	 * @return array Column IDs
+	 */
+	private function get_valid_column_ids(): array {
+		// Core columns
+		$core = [ 'team', 'labels', 'modified' ];
+
+		// Custom fields from ACF
+		$manager       = new \Stadion\CustomFields\Manager();
+		$custom_fields = $manager->get_fields( 'person', false ); // active only
+		$custom_names  = array_column( $custom_fields, 'name' );
+
+		return array_merge( $core, $custom_names );
+	}
+
+	/**
+	 * Get metadata for all available columns
+	 *
+	 * @return array Column definitions with id, label, type, custom flag
+	 */
+	private function get_available_columns_metadata(): array {
+		$columns = [];
+
+		// Core columns (always available, order matters for UI)
+		$columns = array_merge( $columns, self::CORE_LIST_COLUMNS );
+
+		// Custom fields from ACF
+		$manager       = new \Stadion\CustomFields\Manager();
+		$custom_fields = $manager->get_fields( 'person', false ); // active only
+
+		foreach ( $custom_fields as $field ) {
+			$columns[] = [
+				'id'     => $field['name'],
+				'label'  => $field['label'],
+				'type'   => $field['type'],
+				'custom' => true,
+			];
+		}
+
+		return $columns;
 	}
 
 	/**
