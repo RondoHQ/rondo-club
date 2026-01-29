@@ -924,13 +924,15 @@ class People extends Base {
 		global $wpdb;
 
 		// Extract validated parameters
-		$page          = (int) $request->get_param( 'page' );
-		$per_page      = (int) $request->get_param( 'per_page' );
-		$labels        = $request->get_param( 'labels' ) ?: [];
-		$ownership     = $request->get_param( 'ownership' );
-		$modified_days = $request->get_param( 'modified_days' );
-		$orderby       = $request->get_param( 'orderby' );
-		$order         = strtoupper( $request->get_param( 'order' ) );
+		$page            = (int) $request->get_param( 'page' );
+		$per_page        = (int) $request->get_param( 'per_page' );
+		$labels          = $request->get_param( 'labels' ) ?: [];
+		$ownership       = $request->get_param( 'ownership' );
+		$modified_days   = $request->get_param( 'modified_days' );
+		$birth_year_from = $request->get_param( 'birth_year_from' );
+		$birth_year_to   = $request->get_param( 'birth_year_to' );
+		$orderby         = $request->get_param( 'orderby' );
+		$order           = strtoupper( $request->get_param( 'order' ) );
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -984,6 +986,26 @@ class People extends Base {
 			$placeholders     = implode( ',', array_fill( 0, count( $labels ), '%d' ) );
 			$where_clauses[]  = "tt.term_id IN ($placeholders)";
 			$prepare_values   = array_merge( $prepare_values, $labels );
+		}
+
+		// Birth year filter (uses denormalized _birthdate meta from Phase 112)
+		if ( $birth_year_from !== null || $birth_year_to !== null ) {
+			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} bd ON p.ID = bd.post_id AND bd.meta_key = '_birthdate'";
+
+			if ( $birth_year_from !== null && $birth_year_to !== null ) {
+				// Range filter
+				$where_clauses[]  = "YEAR(bd.meta_value) BETWEEN %d AND %d";
+				$prepare_values[] = $birth_year_from;
+				$prepare_values[] = $birth_year_to;
+			} elseif ( $birth_year_from !== null ) {
+				// Minimum year only (treat as exact match for single year)
+				$where_clauses[]  = "YEAR(bd.meta_value) = %d";
+				$prepare_values[] = $birth_year_from;
+			} else {
+				// Maximum year only (treat as exact match for single year)
+				$where_clauses[]  = "YEAR(bd.meta_value) = %d";
+				$prepare_values[] = $birth_year_to;
+			}
 		}
 
 		// Build ORDER BY clause (columns are whitelisted in args validation)
