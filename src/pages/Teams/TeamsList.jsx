@@ -1,12 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, ChevronDown, Tag, Check, Pencil } from 'lucide-react';
+import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, ChevronDown, Tag, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCreateTeam, useBulkUpdateTeams } from '@/hooks/useTeams';
+import { useBulkUpdateTeams } from '@/hooks/useTeams';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getTeamName } from '@/utils/formatters';
-import TeamEditModal from '@/components/TeamEditModal';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
 
@@ -383,8 +382,6 @@ export default function TeamsList() {
   const [search, setSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all', 'mine', 'shared'
-  const [showTeamModal, setShowTeamModal] = useState(false);
-  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -508,23 +505,6 @@ export default function TeamsList() {
       .filter(f => f.show_in_list_view)
       .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
   }, [customFields]);
-
-  // Create team mutation
-  const createTeamMutation = useCreateTeam({
-    onSuccess: (result) => {
-      setShowTeamModal(false);
-      navigate(`/teams/${result.id}`);
-    },
-  });
-
-  const handleCreateTeam = async (data) => {
-    setIsCreatingTeam(true);
-    try {
-      await createTeamMutation.mutateAsync(data);
-    } finally {
-      setIsCreatingTeam(false);
-    }
-  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -786,11 +766,6 @@ export default function TeamsList() {
               )}
             </div>
           )}
-
-          <button onClick={() => setShowTeamModal(true)} className="btn-primary">
-            <Plus className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Nieuw team</span>
-          </button>
         </div>
       </div>
       
@@ -816,14 +791,8 @@ export default function TeamsList() {
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">Geen teams gevonden</h3>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
-            {search ? 'Probeer een andere zoekopdracht.' : 'Voeg je eerste team toe.'}
+            {search ? 'Probeer een andere zoekopdracht.' : 'Teams worden via de API of data import toegevoegd.'}
           </p>
-          {!search && (
-            <button onClick={() => setShowTeamModal(true)} className="btn-primary">
-              <Plus className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Nieuw team</span>
-            </button>
-          )}
         </div>
       )}
 
@@ -913,14 +882,6 @@ export default function TeamsList() {
           onCancelEdit={handleCancelEdit}
         />
       )}
-      
-      {/* Team Modal */}
-      <TeamEditModal
-        isOpen={showTeamModal}
-        onClose={() => setShowTeamModal(false)}
-        onSubmit={handleCreateTeam}
-        isLoading={isCreatingTeam}
-      />
 
       {/* Bulk Labels Modal */}
       <BulkLabelsModal
