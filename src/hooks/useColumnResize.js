@@ -3,42 +3,27 @@ import { useState, useCallback, useRef } from 'react';
 /**
  * Hook for handling column resize via pointer events
  *
- * Usage:
- * ```jsx
- * function ResizableHeader({ column, onWidthChange }) {
- *   const { width, isResizing, resizeHandlers } = useColumnResize(
- *     column.id,
- *     column.width || 150,
- *     50
- *   );
- *
- *   return (
- *     <th style={{ width: `${width}px` }}>
- *       {column.label}
- *       <div
- *         {...resizeHandlers}
- *         className="resize-handle"
- *         style={{ touchAction: 'none' }}
- *       />
- *     </th>
- *   );
- * }
- * ```
- *
- * @param {string} columnId - Unique column identifier (used for tracking)
  * @param {number} initialWidth - Starting width in pixels (default: 150)
  * @param {number} minWidth - Minimum width constraint (default: 50)
+ * @param {Function} onResizeEnd - Callback when resize ends with final width
  * @returns {Object} - { width, isResizing, resizeHandlers }
  */
-export function useColumnResize(columnId, initialWidth = 150, minWidth = 50) {
+export function useColumnResize(initialWidth = 150, minWidth = 50, onResizeEnd = null) {
   const [width, setWidth] = useState(initialWidth);
   const [isResizing, setIsResizing] = useState(false);
   const startXRef = useRef(null);
   const startWidthRef = useRef(null);
+  const currentWidthRef = useRef(width);
+
+  // Keep currentWidthRef in sync
+  currentWidthRef.current = width;
+
+  // Store callback in ref to avoid dependency issues
+  const onResizeEndRef = useRef(onResizeEnd);
+  onResizeEndRef.current = onResizeEnd;
 
   /**
    * Handle pointer down - start resize drag
-   * Captures pointer for smooth tracking outside element
    */
   const onPointerDown = useCallback(
     (e) => {
@@ -49,7 +34,6 @@ export function useColumnResize(columnId, initialWidth = 150, minWidth = 50) {
       startXRef.current = e.clientX;
       startWidthRef.current = width;
 
-      // Capture pointer to track movement outside element bounds
       e.currentTarget.setPointerCapture(e.pointerId);
     },
     [width]
@@ -57,7 +41,6 @@ export function useColumnResize(columnId, initialWidth = 150, minWidth = 50) {
 
   /**
    * Handle pointer move - update width during drag
-   * Enforces minimum width constraint
    */
   const onPointerMove = useCallback(
     (e) => {
@@ -72,8 +55,7 @@ export function useColumnResize(columnId, initialWidth = 150, minWidth = 50) {
   );
 
   /**
-   * Handle pointer up - end resize drag
-   * Releases pointer capture
+   * Handle pointer up - end resize drag and notify
    */
   const onPointerUp = useCallback(
     (e) => {
@@ -81,13 +63,17 @@ export function useColumnResize(columnId, initialWidth = 150, minWidth = 50) {
 
       setIsResizing(false);
       e.currentTarget.releasePointerCapture(e.pointerId);
+
+      // Call resize end callback with final width
+      if (onResizeEndRef.current) {
+        onResizeEndRef.current(currentWidthRef.current);
+      }
     },
     [isResizing]
   );
 
   /**
    * Handle pointer cancel - same as pointer up
-   * Handles edge cases like losing focus
    */
   const onPointerCancel = useCallback(
     (e) => {
@@ -95,6 +81,11 @@ export function useColumnResize(columnId, initialWidth = 150, minWidth = 50) {
 
       setIsResizing(false);
       e.currentTarget.releasePointerCapture(e.pointerId);
+
+      // Call resize end callback with final width
+      if (onResizeEndRef.current) {
+        onResizeEndRef.current(currentWidthRef.current);
+      }
     },
     [isResizing]
   );

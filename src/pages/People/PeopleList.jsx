@@ -194,29 +194,12 @@ function ResizableHeader({
   stickyLeft,
   className = '',
 }) {
-  const { width, isResizing, resizeHandlers } = useColumnResize(colId, initialWidth, 50);
+  // Handle resize end - callback is stored in ref inside hook to avoid loops
+  const handleResizeEnd = useCallback((newWidth) => {
+    onWidthChange(colId, newWidth);
+  }, [colId, onWidthChange]);
 
-  // Use ref for callback to avoid dependency issues
-  const onWidthChangeRef = useRef(onWidthChange);
-  onWidthChangeRef.current = onWidthChange;
-
-  // Track if we've notified for current resize session to prevent duplicates
-  const hasNotifiedRef = useRef(false);
-
-  // Reset notification flag when resize starts
-  useEffect(() => {
-    if (isResizing) {
-      hasNotifiedRef.current = false;
-    }
-  }, [isResizing]);
-
-  // Notify parent when resize ends (not during drag for performance)
-  useEffect(() => {
-    if (!isResizing && !hasNotifiedRef.current && width !== initialWidth) {
-      hasNotifiedRef.current = true;
-      onWidthChangeRef.current(colId, width);
-    }
-  }, [isResizing, width, colId, initialWidth]);
+  const { width, isResizing, resizeHandlers } = useColumnResize(initialWidth, 50, handleResizeEnd);
 
   // Determine sort field for this column
   const columnSortField = COLUMN_SORT_FIELDS[colId] || (colId.startsWith('custom_') ? colId : `custom_${colId}`);
