@@ -19,8 +19,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **DATA-08**: Server sorts people by modified date (asc/desc)
 - [ ] **DATA-09**: Server sorts people by custom ACF fields (text, number, date types)
 - [ ] **DATA-10**: Custom endpoint uses $wpdb JOIN to fetch posts + meta in single query
-- [ ] **DATA-11**: Birth year is denormalized to person post_meta for fast filtering
-- [ ] **DATA-12**: Birth year syncs when birthday important_date is created/updated/deleted
+- [ ] **DATA-11**: Birthdate is denormalized to person post_meta (_birthdate) for fast filtering
+- [ ] **DATA-12**: Birthdate syncs when birthday important_date is created/updated/deleted
 - [ ] **DATA-13**: Access control is preserved in custom $wpdb queries (unapproved users see nothing)
 - [ ] **DATA-14**: All filter parameters are validated/escaped to prevent SQL injection
 
@@ -78,39 +78,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
-| DATA-05 | TBD | Pending |
-| DATA-06 | TBD | Pending |
-| DATA-07 | TBD | Pending |
-| DATA-08 | TBD | Pending |
-| DATA-09 | TBD | Pending |
-| DATA-10 | TBD | Pending |
-| DATA-11 | TBD | Pending |
-| DATA-12 | TBD | Pending |
-| DATA-13 | TBD | Pending |
-| DATA-14 | TBD | Pending |
-| PAGE-01 | TBD | Pending |
-| PAGE-02 | TBD | Pending |
-| PAGE-03 | TBD | Pending |
-| PAGE-04 | TBD | Pending |
-| PAGE-05 | TBD | Pending |
-| PAGE-06 | TBD | Pending |
-| COL-01 | TBD | Pending |
-| COL-02 | TBD | Pending |
-| COL-03 | TBD | Pending |
-| COL-04 | TBD | Pending |
-| COL-05 | TBD | Pending |
-| COL-06 | TBD | Pending |
-| COL-07 | TBD | Pending |
+| DATA-01 | Phase 111 | Pending |
+| DATA-02 | Phase 111 | Pending |
+| DATA-03 | Phase 111 | Pending |
+| DATA-04 | Phase 111 | Pending |
+| DATA-05 | Phase 112 | Pending |
+| DATA-06 | Phase 111 | Pending |
+| DATA-07 | Phase 111 | Pending |
+| DATA-08 | Phase 111 | Pending |
+| DATA-09 | Phase 113 | Pending |
+| DATA-10 | Phase 111 | Pending |
+| DATA-11 | Phase 112 | Pending |
+| DATA-12 | Phase 112 | Pending |
+| DATA-13 | Phase 111 | Pending |
+| DATA-14 | Phase 111 | Pending |
+| PAGE-01 | Phase 113 | Pending |
+| PAGE-02 | Phase 113 | Pending |
+| PAGE-03 | Phase 113 | Pending |
+| PAGE-04 | Phase 113 | Pending |
+| PAGE-05 | Phase 113 | Pending |
+| PAGE-06 | Phase 113 | Pending |
+| COL-01 | Phase 115 | Pending |
+| COL-02 | Phase 115 | Pending |
+| COL-03 | Phase 114 | Pending |
+| COL-04 | Phase 115 | Pending |
+| COL-05 | Phase 115 | Pending |
+| COL-06 | Phase 115 | Pending |
+| COL-07 | Phase 115 | Pending |
 
 **Coverage:**
 - v9.0 requirements: 27 total
-- Mapped to phases: 0
-- Unmapped: 27 ⚠️
+- Mapped to phases: 27
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-29*
-*Last updated: 2026-01-29 after initial definition*
+*Last updated: 2026-01-29 after roadmap creation*
