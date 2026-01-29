@@ -14,7 +14,8 @@ import {
   CheckSquare,
   Command,
   UsersRound,
-  MessageSquare
+  MessageSquare,
+  User
 } from 'lucide-react';
 
 // Stadium icon component matching favicon
