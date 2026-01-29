@@ -11,6 +11,7 @@ import {
   LogOut,
   Search,
   ChevronDown,
+  CheckSquare,
   Command,
   UsersRound,
   MessageSquare
