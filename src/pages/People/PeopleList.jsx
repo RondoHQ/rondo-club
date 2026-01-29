@@ -890,33 +890,6 @@ export default function PeopleList() {
         {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Sort Controls */}
-          <div className="flex items-center gap-2 border border-gray-200 dark:border-gray-600 rounded-lg p-1">
-            <select
-              value={sortField}
-              onChange={(e) => setSortField(e.target.value)}
-              className="text-sm border-0 bg-transparent dark:text-gray-200 focus:ring-0 focus:outline-none cursor-pointer"
-            >
-              <option value="first_name">Voornaam</option>
-              <option value="last_name">Achternaam</option>
-              <option value="modified">Laatst gewijzigd</option>
-              <option value="organization">Team</option>
-              <option value="labels">Labels</option>
-            </select>
-            <div className="h-4 w-px bg-gray-300 dark:bg-gray-600"></div>
-            <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-              title={`Sorteer ${sortOrder === 'asc' ? 'aflopend' : 'oplopend'}`}
-            >
-              {sortOrder === 'asc' ? (
-                <ArrowUp className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              ) : (
-                <ArrowDown className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              )}
-            </button>
-          </div>
-
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
