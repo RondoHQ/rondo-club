@@ -44,12 +44,12 @@ None identified for this milestone.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERSON-01 | TBD | Pending |
-| PERSON-02 | TBD | Pending |
-| PERSON-03 | TBD | Pending |
-| PERSON-04 | TBD | Pending |
-| FIELD-01 | TBD | Pending |
-| FIELD-02 | TBD | Pending |
-| ORG-01 | TBD | Pending |
-| ORG-02 | TBD | Pending |
-| API-01 | TBD | Pending |
+| PERSON-01 | Phase 116 | Pending |
+| PERSON-02 | Phase 116 | Pending |
+| PERSON-03 | Phase 116 | Pending |
+| PERSON-04 | Phase 116 | Pending |
+| FIELD-01 | Phase 118 | Pending |
+| FIELD-02 | Phase 118 | Pending |
+| ORG-01 | Phase 117 | Pending |
+| ORG-02 | Phase 117 | Pending |
+| API-01 | All Phases | Pending |
