@@ -72,6 +72,7 @@ const getDefaultFormData = () => ({
   // Validation options
   required: false,
   unique: false,
+  editable_in_ui: true,
 });
 
 // Convert choices object to newline-separated string
@@ -179,6 +180,7 @@ export default function FieldFormPanel({
           // Validation options
           required: field.required ?? false,
           unique: field.unique ?? false,
+          editable_in_ui: field.editable_in_ui ?? true,
         });
       } else {
         setFormData(getDefaultFormData());
@@ -348,6 +350,7 @@ export default function FieldFormPanel({
     // Validation options
     submitData.required = formData.required;
     submitData.unique = formData.unique;
+    submitData.editable_in_ui = formData.editable_in_ui;
 
     await onSubmit(submitData);
   };
@@ -1272,6 +1275,21 @@ export default function FieldFormPanel({
                     </label>
                   </div>
                   <p className={hintClass}>Geen twee records kunnen dezelfde waarde hebben voor dit veld</p>
+
+                  <div className="flex items-center gap-2 mt-4">
+                    <input
+                      id="editable_in_ui"
+                      name="editable_in_ui"
+                      type="checkbox"
+                      checked={formData.editable_in_ui}
+                      onChange={handleChange}
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                    />
+                    <label htmlFor="editable_in_ui" className="text-sm text-gray-700 dark:text-gray-300">
+                      Bewerkbaar in UI
+                    </label>
+                  </div>
+                  <p className={hintClass}>Schakel uit voor velden die via API worden beheerd (bijv. Sportlink)</p>
                 </div>
               </div>
 
