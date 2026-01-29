@@ -1923,16 +1923,16 @@ class Api extends Base {
 		return $recently_contacted;
 	}
 	/**
-	 * Get teams where a person or company is listed as an investor
+	 * Get teams and commissies where a person or company is listed as an investor
 	 */
 	public function get_investments( $request ) {
 		$investor_id = (int) $request->get_param( 'investor_id' );
 
-		// Query teams where this ID appears in the investors field
+		// Query both teams and commissies where this ID appears in the investors field
 		// Access control applied automatically via WP_Query filters (all approved users see all data)
-		$teams = get_posts(
+		$entities = get_posts(
 			[
-				'post_type'      => 'team',
+				'post_type'      => [ 'team', 'commissie' ],
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
 				'meta_query'     => [
@@ -1946,9 +1946,9 @@ class Api extends Base {
 		);
 
 		// Also check with serialized format (ACF stores as serialized array)
-		$teams_serialized = get_posts(
+		$entities_serialized = get_posts(
 			[
-				'post_type'      => 'team',
+				'post_type'      => [ 'team', 'commissie' ],
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
 				'meta_query'     => [
@@ -1962,27 +1962,28 @@ class Api extends Base {
 		);
 
 		// Merge and dedupe
-		$all_teams    = array_merge( $teams, $teams_serialized );
-		$seen_ids         = [];
-		$unique_teams = [];
-		foreach ( $all_teams as $team ) {
-			if ( ! in_array( $team->ID, $seen_ids ) ) {
-				$seen_ids[]         = $team->ID;
-				$unique_teams[] = $team;
+		$all_entities   = array_merge( $entities, $entities_serialized );
+		$seen_ids       = [];
+		$unique_entities = [];
+		foreach ( $all_entities as $entity ) {
+			if ( ! in_array( $entity->ID, $seen_ids ) ) {
+				$seen_ids[]        = $entity->ID;
+				$unique_entities[] = $entity;
 			}
 		}
 
 		// Format response
 		$investments = [];
-		foreach ( $unique_teams as $team ) {
-			$thumbnail_id  = get_post_thumbnail_id( $team->ID );
+		foreach ( $unique_entities as $entity ) {
+			$thumbnail_id  = get_post_thumbnail_id( $entity->ID );
 			$thumbnail_url = $thumbnail_id ? wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' ) : '';
 
 			$investments[] = [
-				'id'        => $team->ID,
-				'name'      => $this->sanitize_text( $team->post_title ),
-				'industry'  => $this->sanitize_text( get_field( 'industry', $team->ID ) ),
-				'website'   => $this->sanitize_url( get_field( 'website', $team->ID ) ),
+				'id'        => $entity->ID,
+				'type'      => $entity->post_type,
+				'name'      => $this->sanitize_text( $entity->post_title ),
+				'industry'  => $this->sanitize_text( get_field( 'industry', $entity->ID ) ),
+				'website'   => $this->sanitize_url( get_field( 'website', $entity->ID ) ),
 				'thumbnail' => $this->sanitize_url( $thumbnail_url ),
 			];
 		}

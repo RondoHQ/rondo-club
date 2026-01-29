@@ -97,7 +97,7 @@ export default function CommissieDetail() {
 
       return {
         id: post.id,
-        type: isPerson ? 'person' : 'commissie',
+        type: post.type,
         name: isPerson
           ? decodeHtml(post.title?.rendered || '')
           : getCommissieName(post),
@@ -453,9 +453,12 @@ export default function CommissieDetail() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {investorDetails.map((investor) => {
               const isPerson = investor.type === 'person';
-              const linkPath = isPerson 
-                ? `/people/${investor.id}` 
-                : `/commissies/${investor.id}`;
+              const isTeam = investor.type === 'team';
+              const linkPath = isPerson
+                ? `/people/${investor.id}`
+                : isTeam
+                  ? `/teams/${investor.id}`
+                  : `/commissies/${investor.id}`;
               
               return (
                 <Link
@@ -482,7 +485,7 @@ export default function CommissieDetail() {
                   <div className="ml-3">
                     <p className="text-sm font-medium">{investor.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {isPerson ? 'Lid' : 'Commissie'}
+                      {isPerson ? 'Lid' : isTeam ? 'Team' : 'Commissie'}
                     </p>
                   </div>
                 </Link>
@@ -492,7 +495,7 @@ export default function CommissieDetail() {
         </div>
       )}
       
-      {/* Invested in (commissies this organization has invested in) */}
+      {/* Invested in (teams/commissies this organization has invested in) */}
       {investments.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold mb-4 flex items-center">
@@ -500,32 +503,38 @@ export default function CommissieDetail() {
             Investeert in
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {investments.map((commissie) => (
-              <Link
-                key={commissie.id}
-                to={`/commissies/${commissie.id}`}
-                className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
-              >
-                {commissie.thumbnail ? (
-                  <img
-                    src={commissie.thumbnail}
-                    alt={commissie.name}
-                    loading="lazy"
-                    className="w-10 h-10 object-contain rounded"
-                  />
-                ) : (
-                  <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded">
-                    <Building2 className="w-5 h-5 text-gray-400" />
-                  </div>
-                )}
-                <div className="ml-3">
-                  <p className="text-sm font-medium">{commissie.name}</p>
-                  {commissie.industry && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{commissie.industry}</p>
+            {investments.map((investment) => {
+              const isTeam = investment.type === 'team';
+              const linkPath = isTeam
+                ? `/teams/${investment.id}`
+                : `/commissies/${investment.id}`;
+              return (
+                <Link
+                  key={investment.id}
+                  to={linkPath}
+                  className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+                >
+                  {investment.thumbnail ? (
+                    <img
+                      src={investment.thumbnail}
+                      alt={investment.name}
+                      loading="lazy"
+                      className="w-10 h-10 object-contain rounded"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded">
+                      <Building2 className="w-5 h-5 text-gray-400" />
+                    </div>
                   )}
-                </div>
-              </Link>
-            ))}
+                  <div className="ml-3">
+                    <p className="text-sm font-medium">{investment.name}</p>
+                    {investment.industry && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{investment.industry}</p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
