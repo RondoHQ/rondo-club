@@ -110,10 +110,10 @@ Plans:
 **Requirements:**
 - COL-03: Column preferences persist per user (stored in user_meta)
 
-**Plans:** TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD
+- [ ] 114-01-PLAN.md — REST API endpoints for list column preferences
 
 **Success Criteria:**
 1. User can save column preferences via `/stadion/v1/user/list-preferences` PATCH endpoint
