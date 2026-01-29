@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 
 ## Current Position
 
-Phase: 111 of 5 (Server-Side Foundation)
-Plan: 2 of 2 in phase
-Status: Phase complete - All plans in phase 111 complete
-Last activity: 2026-01-29 - Completed 111-02-PLAN.md
+Phase: 112 of 5 (Birthdate Denormalization)
+Plan: 1 of 2 in phase
+Status: In progress
+Last activity: 2026-01-29 - Completed 112-01-PLAN.md
 
-Progress: [██░░░░░░░░] 20% (2/10 plans complete, 1/5 phases complete)
+Progress: [███░░░░░░░] 30% (3/10 plans complete, 1/5 phases complete)
 
 ## Milestone History
 
@@ -34,8 +34,8 @@ Progress: [██░░░░░░░░] 20% (2/10 plans complete, 1/5 phases 
 - Total requirements: 27
 - Requirements mapped: 27/27 (100%)
 - Phases complete: 1/5 (20%)
-- Plans complete: 2/10 (20%)
-- Plans remaining: 8
+- Plans complete: 3/10 (30%)
+- Plans remaining: 7
 
 ## Accumulated Context
 
@@ -61,6 +61,10 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 | 111-02-001 | Create new hook instead of modifying usePeople | 111-02 | 2026-01-29 |
 | 111-02-002 | Use placeholderData instead of keepPreviousData | 111-02 | 2026-01-29 |
 | 111-02-003 | Include all filter params in query key | 111-02 | 2026-01-29 |
+| 112-01-001 | Store birthdate as YYYY-MM-DD in _birthdate meta | 112-01 | 2026-01-29 |
+| 112-01-002 | Use save_post_important_date hook at priority 20 | 112-01 | 2026-01-29 |
+| 112-01-003 | Sync on save, clear on permanent delete only | 112-01 | 2026-01-29 |
+| 112-01-004 | Migration uses suppress_filters => true | 112-01 | 2026-01-29 |
 
 ### Pending Todos
 
@@ -96,8 +100,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-01-29 15:07 UTC
-Stopped at: Completed 111-02-PLAN.md - Phase 111 complete
+Last session: 2026-01-29 14:25 UTC
+Stopped at: Completed 112-01-PLAN.md
 Resume file: None
 
-Next: `/gsd:discuss-phase 112` or `/gsd:plan-phase 112` to plan Birthdate Denormalization
+Next: Execute 112-02-PLAN.md or continue to Phase 113
