@@ -7,6 +7,8 @@
 
 namespace Stadion\REST;
 
+use Stadion\CustomFields\Manager;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -259,9 +261,7 @@ class People extends Base {
 					],
 					'orderby'       => [
 						'default'           => 'first_name',
-						'validate_callback' => function ( $param ) {
-							return in_array( $param, [ 'first_name', 'last_name', 'modified' ], true );
-						},
+						'validate_callback' => [ $this, 'validate_orderby_param' ],
 					],
 					'order'         => [
 						'default'           => 'asc',
@@ -909,6 +909,44 @@ class People extends Base {
 				'failed'  => $failed,
 			]
 		);
+	}
+
+	/**
+	 * Validate orderby parameter - accepts built-in fields or custom_ prefixed fields.
+	 *
+	 * @param string $param The orderby value to validate.
+	 * @return bool True if valid, false otherwise.
+	 */
+	public function validate_orderby_param( $param ) {
+		// Check built-in fields first.
+		$built_in_fields = [ 'first_name', 'last_name', 'modified' ];
+		if ( in_array( $param, $built_in_fields, true ) ) {
+			return true;
+		}
+
+		// Check for custom field (must start with 'custom_').
+		if ( strpos( $param, 'custom_' ) !== 0 ) {
+			return false;
+		}
+
+		// Extract field name (remove 'custom_' prefix).
+		$field_name = substr( $param, 7 );
+
+		// Get all active custom fields for person entity.
+		$manager = new Manager();
+		$fields  = $manager->get_fields( 'person', false );
+
+		// Find field by name and validate it's sortable.
+		foreach ( $fields as $field ) {
+			if ( $field['name'] === $field_name ) {
+				// Only allow sortable field types.
+				$sortable_types = [ 'text', 'textarea', 'number', 'date', 'select', 'email', 'url' ];
+				return in_array( $field['type'], $sortable_types, true );
+			}
+		}
+
+		// Field not found or inactive.
+		return false;
 	}
 
 	/**
