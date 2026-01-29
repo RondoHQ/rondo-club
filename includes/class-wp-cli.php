@@ -2390,6 +2390,117 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 
 		/**
+		 * Backfill volunteer status for all people
+		 *
+		 * Recalculates and updates the huidig-vrijwilliger field for all people
+		 * based on their current work history entries.
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--dry-run]
+		 * : Preview changes without making them.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp prm people backfill_volunteer_status
+		 *     wp prm people backfill_volunteer_status --dry-run
+		 *
+		 * @when after_wp_load
+		 */
+		public function backfill_volunteer_status( $args, $assoc_args ) {
+			global $wpdb;
+
+			$dry_run = isset( $assoc_args['dry-run'] );
+
+			if ( $dry_run ) {
+				WP_CLI::log( 'Dry run mode - no changes will be made.' );
+			}
+
+			// Get all person IDs using direct DB query to bypass access control hooks
+			$person_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
+					'person',
+					'publish'
+				)
+			);
+
+			$total   = count( $person_ids );
+			$updated = 0;
+			$skipped = 0;
+			$set_true  = 0;
+			$set_false = 0;
+
+			WP_CLI::log( sprintf( 'Processing %d people...', $total ) );
+
+			$volunteer_status = new \Stadion\Core\VolunteerStatus();
+			$progress         = \WP_CLI\Utils\make_progress_bar( 'Backfilling volunteer status', $total );
+
+			foreach ( $person_ids as $person_id ) {
+				$person_id = (int) $person_id;
+
+				// Get current value
+				$current_value = get_post_meta( $person_id, 'huidig-vrijwilliger', true );
+
+				// Calculate new value using reflection to access private method
+				$reflection = new \ReflectionClass( $volunteer_status );
+				$method     = $reflection->getMethod( 'is_current_volunteer' );
+				$method->setAccessible( true );
+				$is_volunteer = $method->invoke( $volunteer_status, $person_id );
+
+				$new_value = $is_volunteer ? '1' : '0';
+
+				// Check if value needs updating
+				if ( $current_value !== $new_value ) {
+					if ( ! $dry_run ) {
+						update_post_meta( $person_id, 'huidig-vrijwilliger', $new_value );
+					}
+					$updated++;
+
+					if ( $is_volunteer ) {
+						$set_true++;
+					} else {
+						$set_false++;
+					}
+
+					// Log the change
+					$name = get_the_title( $person_id );
+					WP_CLI::log( sprintf(
+						'  %s (ID: %d): %s -> %s',
+						$name,
+						$person_id,
+						$current_value === '' ? '(empty)' : ( $current_value === '1' ? 'true' : 'false' ),
+						$is_volunteer ? 'true' : 'false'
+					) );
+				} else {
+					$skipped++;
+				}
+
+				$progress->tick();
+			}
+
+			$progress->finish();
+
+			if ( $dry_run ) {
+				WP_CLI::success( sprintf(
+					'Would update %d people (%d set to true, %d set to false), %d already correct.',
+					$updated,
+					$set_true,
+					$set_false,
+					$skipped
+				) );
+			} else {
+				WP_CLI::success( sprintf(
+					'Updated %d people (%d set to true, %d set to false), %d already correct.',
+					$updated,
+					$set_true,
+					$set_false,
+					$skipped
+				) );
+			}
+		}
+
+		/**
 		 * Clear all work history entries from all people
 		 *
 		 * ## OPTIONS
