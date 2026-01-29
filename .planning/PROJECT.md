@@ -281,12 +281,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - "Tonen als kolom in lijstweergave" removed from custom field settings — v9.0
 - 14x data transfer reduction (1400+ → 100 per page) — v9.0
 
-### Active
-
-**v10.0 Read-Only UI for Sportlink Data:**
-
-This milestone restricts editing capabilities in the UI for data that comes from Sportlink, while preserving full REST API functionality for automation and sync.
-
+**v10.0 Read-Only UI for Sportlink Data (shipped 2026-01-29):**
 - Remove "Verwijderen" (delete) button from PersonDetail — v10.0
 - Remove "Voeg adres toe" (add address) button from PersonDetail — v10.0
 - Remove "Functie toevoegen" (add function) button from work history — v10.0
@@ -295,6 +290,10 @@ This milestone restricts editing capabilities in the UI for data that comes from
 - Disable creating new teams in Stadion UI — v10.0
 - Disable creating new commissies in Stadion UI — v10.0
 - Keep all edit/add/remove functionality available in REST API — v10.0
+
+### Active
+
+(To be determined for next milestone)
 
 ### Out of Scope
 
@@ -434,4 +433,4 @@ This milestone restricts editing capabilities in the UI for data that comes from
 | RelationshipItemCompact for list view | Async fetch for relationship names in compact column display | ✓ Good |
 
 ---
-*Last updated: 2026-01-29 after v9.0 People List Performance & Customization milestone started*
+*Last updated: 2026-01-29 after v10.0 Read-Only UI for Sportlink Data milestone*
