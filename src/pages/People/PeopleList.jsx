@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getTeamName } from '@/utils/formatters';
+import { format } from '@/utils/dateFormat';
 import PersonEditModal from '@/components/PersonEditModal';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
@@ -169,7 +170,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
               style={style}
             >
-              {person.modified ? new Date(person.modified).toLocaleDateString('nl-NL') : '-'}
+              {person.modified ? format(new Date(person.modified), 'yyyy-MM-dd') : '-'}
             </td>
           );
         }

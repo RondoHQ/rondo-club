@@ -93,7 +93,7 @@ export default function CustomFieldColumn({ field, value }) {
 
     case 'date':
       try {
-        return <span>{format(new Date(value), 'MMM d, yyyy')}</span>;
+        return <span>{format(new Date(value), 'yyyy-MM-dd')}</span>;
       } catch {
         return <span>{value}</span>;
       }
