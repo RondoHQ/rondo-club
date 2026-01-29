@@ -60,10 +60,10 @@ Plans:
   3. Fields with editable_in_ui=false display their value but show no edit button
   4. Fields with editable_in_ui=false can still be updated via REST API
   5. Default value for new fields is editable_in_ui=true (backward compatible)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 118-01: TBD
+- [ ] 118-01-PLAN.md — Add editable_in_ui property to backend, settings UI, and display components
 
 ## Progress
 
@@ -71,4 +71,4 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 116. Person Edit Restrictions | v10.0 | 1/1 | Complete | 2026-01-29 |
 | 117. Organization Creation Restrictions | v10.0 | 1/1 | Complete | 2026-01-29 |
-| 118. Custom Field Edit Control | v10.0 | 0/TBD | Not started | - |
+| 118. Custom Field Edit Control | v10.0 | 0/1 | Planned | - |
