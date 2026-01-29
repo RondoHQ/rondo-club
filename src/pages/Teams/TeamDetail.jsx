@@ -369,79 +369,136 @@ export default function TeamDetail() {
         </div>
       )}
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Current Members */}
-        <div className="card p-6">
-          <h2 className="font-semibold mb-4 flex items-center">
-            <Users className="w-5 h-5 mr-2" />
-            Huidige leden
-          </h2>
+      {/* Members section - 3 columns: Spelers, Staf, Voormalig spelers */}
+      {(() => {
+        // Player roles that identify someone as a player vs staff
+        const playerRoles = ['Aanvaller', 'Verdediger', 'Keeper', 'Middenvelder', 'Teamspeler'];
+        const isPlayerRole = (jobTitle) => playerRoles.includes(jobTitle);
 
-          {employees?.current?.length > 0 ? (
-            <div className="space-y-2">
-              {employees.current.map((person) => (
-                <Link
-                  key={person.id}
-                  to={`/people/${person.id}`}
-                  className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  {person.thumbnail ? (
-                    <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
-                  ) : (
-                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                      <span className="text-xs text-gray-500 dark:text-gray-300">{person.name?.[0] || '?'}</span>
-                    </div>
-                  )}
-                  <div className="ml-2">
-                    <p className="text-sm font-medium">{person.name}</p>
-                    {person.job_title && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{person.job_title}</p>
-                    )}
-                  </div>
-                </Link>
-              ))}
+        // Split current members into players and staff
+        const players = employees?.current?.filter(p => isPlayerRole(p.job_title)) || [];
+        const staff = employees?.current?.filter(p => !isPlayerRole(p.job_title)) || [];
+
+        // Filter former members to only show former players
+        const formerPlayers = employees?.former?.filter(p => isPlayerRole(p.job_title)) || [];
+
+        // Only show the section if there are any members
+        const hasAnyMembers = players.length > 0 || staff.length > 0 || formerPlayers.length > 0;
+
+        if (!hasAnyMembers) return null;
+
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Spelers */}
+            <div className="card p-6">
+              <h2 className="font-semibold mb-4 flex items-center">
+                <Users className="w-5 h-5 mr-2" />
+                Spelers
+              </h2>
+
+              {players.length > 0 ? (
+                <div className="space-y-2">
+                  {players.map((person) => (
+                    <Link
+                      key={person.id}
+                      to={`/people/${person.id}`}
+                      className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      {person.thumbnail ? (
+                        <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
+                      ) : (
+                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                          <span className="text-xs text-gray-500 dark:text-gray-300">{person.name?.[0] || '?'}</span>
+                        </div>
+                      )}
+                      <div className="ml-2">
+                        <p className="text-sm font-medium">{person.name}</p>
+                        {person.job_title && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{person.job_title}</p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Geen spelers.</p>
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">Geen huidige leden.</p>
-          )}
-        </div>
 
-        {/* Former Members */}
-        <div className="card p-6">
-          <h2 className="font-semibold mb-4 flex items-center">
-            <Users className="w-5 h-5 mr-2" />
-            Voormalige leden
-          </h2>
+            {/* Staf */}
+            <div className="card p-6">
+              <h2 className="font-semibold mb-4 flex items-center">
+                <Users className="w-5 h-5 mr-2" />
+                Staf
+              </h2>
 
-          {employees?.former?.length > 0 ? (
-            <div className="space-y-2">
-              {employees.former.map((person) => (
-                <Link
-                  key={person.id}
-                  to={`/people/${person.id}`}
-                  className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  {person.thumbnail ? (
-                    <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full opacity-75" />
-                  ) : (
-                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center opacity-75">
-                      <span className="text-xs text-gray-500 dark:text-gray-300">{person.name?.[0] || '?'}</span>
-                    </div>
-                  )}
-                  <div className="ml-2">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{person.name}</p>
-                    {person.job_title && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{person.job_title}</p>
-                    )}
-                  </div>
-                </Link>
-              ))}
+              {staff.length > 0 ? (
+                <div className="space-y-2">
+                  {staff.map((person) => (
+                    <Link
+                      key={person.id}
+                      to={`/people/${person.id}`}
+                      className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      {person.thumbnail ? (
+                        <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
+                      ) : (
+                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                          <span className="text-xs text-gray-500 dark:text-gray-300">{person.name?.[0] || '?'}</span>
+                        </div>
+                      )}
+                      <div className="ml-2">
+                        <p className="text-sm font-medium">{person.name}</p>
+                        {person.job_title && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{person.job_title}</p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Geen staf.</p>
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">Geen voormalige leden.</p>
-          )}
-        </div>
-      </div>
+
+            {/* Voormalig spelers */}
+            <div className="card p-6">
+              <h2 className="font-semibold mb-4 flex items-center">
+                <Users className="w-5 h-5 mr-2" />
+                Voormalig spelers
+              </h2>
+
+              {formerPlayers.length > 0 ? (
+                <div className="space-y-2">
+                  {formerPlayers.map((person) => (
+                    <Link
+                      key={person.id}
+                      to={`/people/${person.id}`}
+                      className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      {person.thumbnail ? (
+                        <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full opacity-75" />
+                      ) : (
+                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center opacity-75">
+                          <span className="text-xs text-gray-500 dark:text-gray-300">{person.name?.[0] || '?'}</span>
+                        </div>
+                      )}
+                      <div className="ml-2">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{person.name}</p>
+                        {person.job_title && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{person.job_title}</p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Geen voormalig spelers.</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       
       {/* Sponsors */}
       {investorDetails.length > 0 && (
