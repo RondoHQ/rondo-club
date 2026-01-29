@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { X, Upload, Trash2, Search, User, Building2 } from 'lucide-react';
+import { X, Upload, Trash2, Search, User, Building2, Lock } from 'lucide-react';
 import Sketch from '@uiw/react-color-sketch';
 import { wpApi, prmApi } from '@/api/client';
 import { useQuery } from '@tanstack/react-query';
@@ -480,6 +480,52 @@ export default function CustomFieldsEditModal({
 
   if (!isOpen) return null;
 
+  // Render read-only display of a field value for non-editable fields
+  const renderReadOnlyValue = (field, value) => {
+    if (value === null || value === undefined || value === '') {
+      return <span className="text-gray-400 dark:text-gray-500 italic">Niet ingesteld</span>;
+    }
+
+    switch (field.type) {
+      case 'true_false':
+        return <span>{value ? (field.ui_on_text || 'Ja') : (field.ui_off_text || 'Nee')}</span>;
+      case 'checkbox':
+        if (Array.isArray(value) && value.length > 0) {
+          return <span>{value.join(', ')}</span>;
+        }
+        return <span className="text-gray-400 dark:text-gray-500 italic">Niets geselecteerd</span>;
+      case 'image':
+        if (typeof value === 'object' && value?.url) {
+          return <img src={value.sizes?.thumbnail || value.url} alt="" className="w-12 h-12 rounded object-cover" />;
+        }
+        return <span>Afbeelding #{typeof value === 'number' ? value : 'geladen'}</span>;
+      case 'file':
+        if (typeof value === 'object' && value?.filename) {
+          return <span>{value.filename}</span>;
+        }
+        return <span>Bestand geladen</span>;
+      case 'link':
+        if (typeof value === 'object' && value?.url) {
+          return <span>{value.title || value.url}</span>;
+        }
+        return <span className="text-gray-400 dark:text-gray-500 italic">Niet ingesteld</span>;
+      case 'color_picker':
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: value }} />
+            <span className="font-mono text-sm">{value}</span>
+          </div>
+        );
+      case 'relationship':
+        if (Array.isArray(value) && value.length > 0) {
+          return <span>{value.length} item(s) gekoppeld</span>;
+        }
+        return <span className="text-gray-400 dark:text-gray-500 italic">Niet gekoppeld</span>;
+      default:
+        return <span>{String(value)}</span>;
+    }
+  };
+
   const handleFormSubmit = (data) => {
     // Process form data for submission
     const processedData = {};
@@ -521,6 +567,22 @@ export default function CustomFieldsEditModal({
   };
 
   const renderFieldInput = (field) => {
+    // Check if field is editable (treat missing property as true for backward compatibility)
+    if (field.editable_in_ui === false) {
+      const currentValue = watch(field.name);
+      return (
+        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+            <Lock className="w-3.5 h-3.5" />
+            <span>Wordt beheerd via API</span>
+          </div>
+          <div className="text-gray-900 dark:text-gray-100">
+            {renderReadOnlyValue(field, currentValue)}
+          </div>
+        </div>
+      );
+    }
+
     const inputClass =
       'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-accent-500 focus:border-accent-500';
 
