@@ -142,11 +142,11 @@ Plans:
 **Plans:** 5 plans
 
 Plans:
-- [ ] 115-01-PLAN.md — Backend column_order/column_widths storage + useListPreferences hook
-- [ ] 115-02-PLAN.md — ColumnSettingsModal with drag-drop reordering
-- [ ] 115-03-PLAN.md — useColumnResize hook for column width adjustment
-- [ ] 115-04-PLAN.md — PeopleList integration with preferences, modal, and resize
-- [ ] 115-05-PLAN.md — Remove show_in_list_view from custom field settings
+- [x] 115-01-PLAN.md — Backend column_order/column_widths storage + useListPreferences hook
+- [x] 115-02-PLAN.md — ColumnSettingsModal with drag-drop reordering
+- [x] 115-03-PLAN.md — useColumnResize hook for column width adjustment
+- [x] 115-04-PLAN.md — PeopleList integration with preferences, modal, and resize
+- [x] 115-05-PLAN.md — Remove show_in_list_view from custom field settings
 
 **Success Criteria:**
 1. User can open column settings modal from People list header
@@ -168,7 +168,7 @@ Plans:
 | Phase 112: Birthdate Denormalization | ✓ Complete | DATA-05, DATA-11, DATA-12 | 100% |
 | Phase 113: Frontend Pagination | ✓ Complete | PAGE-01, PAGE-02, PAGE-03, PAGE-04, PAGE-05, PAGE-06, DATA-09 | 100% |
 | Phase 114: User Preferences Backend | ✓ Complete | COL-03 | 100% |
-| Phase 115: Column Preferences UI | Pending | COL-01, COL-02, COL-04, COL-05, COL-06, COL-07 | 0% |
+| Phase 115: Column Preferences UI | ✓ Complete | COL-01, COL-02, COL-04, COL-05, COL-06, COL-07 | 100% |
 
 ## Requirement Coverage
 
