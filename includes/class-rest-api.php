@@ -235,6 +235,18 @@ class Api extends Base {
 							return $param === null || is_array( $param );
 						},
 					],
+					'column_order'    => [
+						'required'          => false,
+						'validate_callback' => function ( $param ) {
+							return $param === null || is_array( $param );
+						},
+					],
+					'column_widths'   => [
+						'required'          => false,
+						'validate_callback' => function ( $param ) {
+							return $param === null || is_object( $param ) || is_array( $param );
+						},
+					],
 					'reset'           => [
 						'required'          => false,
 						'validate_callback' => function ( $param ) {
@@ -1077,13 +1089,15 @@ class Api extends Base {
 	 * Get user's people list column preferences
 	 *
 	 * @param \WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response Response with visible_columns and available_columns.
+	 * @return \WP_REST_Response Response with visible_columns, column_order, column_widths, and available_columns.
 	 */
 	public function get_list_preferences( $request ) {
 		$user_id = get_current_user_id();
 
 		// Get stored preferences
 		$visible_columns = get_user_meta( $user_id, 'stadion_people_list_preferences', true );
+		$column_order    = get_user_meta( $user_id, 'stadion_people_list_column_order', true );
+		$column_widths   = get_user_meta( $user_id, 'stadion_people_list_column_widths', true );
 
 		// Default visible columns if not set or empty
 		if ( empty( $visible_columns ) || ! is_array( $visible_columns ) ) {
@@ -1093,9 +1107,21 @@ class Api extends Base {
 		// Get available columns for UI rendering
 		$available_columns = $this->get_available_columns_metadata();
 
+		// Default column order if not set: use available_columns order (excluding name which is always first)
+		if ( empty( $column_order ) || ! is_array( $column_order ) ) {
+			$column_order = array_column( $available_columns, 'id' );
+		}
+
+		// Default column widths if not set or empty
+		if ( empty( $column_widths ) || ! is_array( $column_widths ) ) {
+			$column_widths = new \stdClass(); // Empty object for JSON encoding
+		}
+
 		return rest_ensure_response(
 			[
 				'visible_columns'   => $visible_columns,
+				'column_order'      => $column_order,
+				'column_widths'     => $column_widths,
 				'available_columns' => $available_columns,
 			]
 		);
@@ -1113,53 +1139,141 @@ class Api extends Base {
 		// Handle reset action
 		if ( $request->get_param( 'reset' ) === true ) {
 			delete_user_meta( $user_id, 'stadion_people_list_preferences' );
+			delete_user_meta( $user_id, 'stadion_people_list_column_order' );
+			delete_user_meta( $user_id, 'stadion_people_list_column_widths' );
+
+			$available_columns = $this->get_available_columns_metadata();
 
 			return rest_ensure_response(
 				[
 					'visible_columns'   => self::DEFAULT_LIST_COLUMNS,
-					'available_columns' => $this->get_available_columns_metadata(),
+					'column_order'      => array_column( $available_columns, 'id' ),
+					'column_widths'     => new \stdClass(),
+					'available_columns' => $available_columns,
 					'reset'             => true,
 				]
 			);
 		}
 
-		// Get requested columns
-		$columns = $request->get_param( 'visible_columns' );
+		$valid_columns     = $this->get_valid_column_ids();
+		$available_columns = $this->get_available_columns_metadata();
 
-		// Empty array = reset to defaults (per CONTEXT.md)
-		if ( ! is_array( $columns ) || count( $columns ) === 0 ) {
-			delete_user_meta( $user_id, 'stadion_people_list_preferences' );
+		// Handle visible_columns update
+		$visible_columns = $request->get_param( 'visible_columns' );
+		if ( $visible_columns !== null ) {
+			// Empty array = reset to defaults (per CONTEXT.md)
+			if ( ! is_array( $visible_columns ) || count( $visible_columns ) === 0 ) {
+				delete_user_meta( $user_id, 'stadion_people_list_preferences' );
+			} else {
+				// Validate columns against available fields
+				$validated_columns = array_values( array_intersect( $visible_columns, $valid_columns ) );
 
-			return rest_ensure_response(
-				[
-					'visible_columns'   => self::DEFAULT_LIST_COLUMNS,
-					'available_columns' => $this->get_available_columns_metadata(),
-				]
-			);
+				// Log if filtering occurred (deleted fields)
+				if ( count( $validated_columns ) !== count( $visible_columns ) ) {
+					error_log(
+						sprintf(
+							'Stadion: Filtered %d invalid column IDs from user %d visible_columns preferences',
+							count( $visible_columns ) - count( $validated_columns ),
+							$user_id
+						)
+					);
+				}
+
+				// Persist validated preferences
+				update_user_meta( $user_id, 'stadion_people_list_preferences', $validated_columns );
+			}
 		}
 
-		// Validate columns against available fields
-		$valid_columns      = $this->get_valid_column_ids();
-		$validated_columns = array_values( array_intersect( $columns, $valid_columns ) );
+		// Handle column_order update
+		$column_order = $request->get_param( 'column_order' );
+		if ( $column_order !== null ) {
+			// Empty array = reset to defaults
+			if ( ! is_array( $column_order ) || count( $column_order ) === 0 ) {
+				delete_user_meta( $user_id, 'stadion_people_list_column_order' );
+			} else {
+				// Validate column IDs (silently filter invalid)
+				$validated_order = array_values( array_intersect( $column_order, $valid_columns ) );
 
-		// Log if filtering occurred (deleted fields)
-		if ( count( $validated_columns ) !== count( $columns ) ) {
-			error_log(
-				sprintf(
-					'Stadion: Filtered %d invalid column IDs from user %d preferences',
-					count( $columns ) - count( $validated_columns ),
-					$user_id
-				)
-			);
+				// Log if filtering occurred
+				if ( count( $validated_order ) !== count( $column_order ) ) {
+					error_log(
+						sprintf(
+							'Stadion: Filtered %d invalid column IDs from user %d column_order preferences',
+							count( $column_order ) - count( $validated_order ),
+							$user_id
+						)
+					);
+				}
+
+				// Only store if non-empty after validation
+				if ( count( $validated_order ) > 0 ) {
+					update_user_meta( $user_id, 'stadion_people_list_column_order', $validated_order );
+				} else {
+					delete_user_meta( $user_id, 'stadion_people_list_column_order' );
+				}
+			}
 		}
 
-		// Persist validated preferences
-		update_user_meta( $user_id, 'stadion_people_list_preferences', $validated_columns );
+		// Handle column_widths update
+		$column_widths = $request->get_param( 'column_widths' );
+		if ( $column_widths !== null ) {
+			// Convert to array if object
+			$widths_array = (array) $column_widths;
+
+			// Empty object/array = reset to defaults
+			if ( count( $widths_array ) === 0 ) {
+				delete_user_meta( $user_id, 'stadion_people_list_column_widths' );
+			} else {
+				// Validate: filter to valid column IDs and ensure values are positive integers
+				$validated_widths = [];
+				foreach ( $widths_array as $column_id => $width ) {
+					if ( in_array( $column_id, $valid_columns, true ) && is_numeric( $width ) && (int) $width > 0 ) {
+						$validated_widths[ $column_id ] = (int) $width;
+					}
+				}
+
+				// Log if filtering occurred
+				if ( count( $validated_widths ) !== count( $widths_array ) ) {
+					error_log(
+						sprintf(
+							'Stadion: Filtered %d invalid entries from user %d column_widths preferences',
+							count( $widths_array ) - count( $validated_widths ),
+							$user_id
+						)
+					);
+				}
+
+				// Only store if non-empty after validation
+				if ( count( $validated_widths ) > 0 ) {
+					update_user_meta( $user_id, 'stadion_people_list_column_widths', $validated_widths );
+				} else {
+					delete_user_meta( $user_id, 'stadion_people_list_column_widths' );
+				}
+			}
+		}
+
+		// Return current state
+		$stored_visible  = get_user_meta( $user_id, 'stadion_people_list_preferences', true );
+		$stored_order    = get_user_meta( $user_id, 'stadion_people_list_column_order', true );
+		$stored_widths   = get_user_meta( $user_id, 'stadion_people_list_column_widths', true );
+
+		// Apply defaults for response
+		if ( empty( $stored_visible ) || ! is_array( $stored_visible ) ) {
+			$stored_visible = self::DEFAULT_LIST_COLUMNS;
+		}
+		if ( empty( $stored_order ) || ! is_array( $stored_order ) ) {
+			$stored_order = array_column( $available_columns, 'id' );
+		}
+		if ( empty( $stored_widths ) || ! is_array( $stored_widths ) ) {
+			$stored_widths = new \stdClass();
+		}
 
 		return rest_ensure_response(
 			[
-				'visible_columns'   => $validated_columns,
-				'available_columns' => $this->get_available_columns_metadata(),
+				'visible_columns'   => $stored_visible,
+				'column_order'      => $stored_order,
+				'column_widths'     => $stored_widths,
+				'available_columns' => $available_columns,
 			]
 		);
 	}
