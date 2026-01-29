@@ -2102,7 +2102,7 @@ export default function PersonDetail() {
             <h2 className="font-semibold mb-4">Functiegeschiedenis</h2>
             {sortedWorkHistory?.length > 0 ? (
               <div className="space-y-4">
-                {sortedWorkHistory.map((job, index) => {
+                {sortedWorkHistory.map((job) => {
                   const teamData = job.team ? teamMap[job.team] : null;
                   const originalIndex = job.originalIndex;
 
