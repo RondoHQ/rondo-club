@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 
 ## Current Position
 
-Phase: 114 of 5 (User Preferences Backend)
-Plan: 1 of 1 in phase
-Status: Phase complete
-Last activity: 2026-01-29 - Completed 114-01-PLAN.md
+Phase: 115 of 5 (Column Preferences UI)
+Plan: 1 of 3 in phase
+Status: In progress
+Last activity: 2026-01-29 - Completed 115-01-PLAN.md
 
-Progress: [███████░░░] 70% (7/10 plans complete, 4/5 phases complete)
+Progress: [████████░░] 80% (8/10 plans complete, 4/5 phases in progress)
 
 ## Milestone History
 
@@ -34,8 +34,8 @@ Progress: [███████░░░] 70% (7/10 plans complete, 4/5 phases 
 - Total requirements: 27
 - Requirements mapped: 27/27 (100%)
 - Phases complete: 4/5 (80%)
-- Plans complete: 7/10 (70%)
-- Plans remaining: 3
+- Plans complete: 8/10 (80%)
+- Plans remaining: 2
 
 ## Accumulated Context
 
@@ -79,6 +79,10 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 | 114-01-002 | Empty array and reset:true both reset to defaults | 114-01 | 2026-01-29 |
 | 114-01-003 | Invalid column IDs filtered silently (not rejected) | 114-01 | 2026-01-29 |
 | 114-01-004 | Core columns always available | 114-01 | 2026-01-29 |
+| 115-01-001 | Store column_order separately from visible_columns in user_meta | 115-01 | 2026-01-29 |
+| 115-01-002 | Store column_widths as object in separate user_meta key | 115-01 | 2026-01-29 |
+| 115-01-003 | Use localStorage as instant cache for column widths to prevent flicker | 115-01 | 2026-01-29 |
+| 115-01-004 | Debounce width updates by 300ms to prevent excessive API calls | 115-01 | 2026-01-29 |
 
 ### Pending Todos
 
@@ -125,8 +129,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-01-29 16:00 UTC
-Stopped at: Completed 114-01-PLAN.md (Phase 114 complete)
+Last session: 2026-01-29 17:49 UTC
+Stopped at: Completed 115-01-PLAN.md
 Resume file: None
 
-Next: Phase 115 - Column Preferences UI
+Next: Phase 115 Plan 02 - Column Settings Modal
