@@ -7,13 +7,13 @@ This milestone restricts UI editing capabilities for Sportlink-managed data whil
 ## Milestones
 
 - v1.0 through v9.0 - shipped (see PROJECT.md for history)
-- **v10.0 Read-Only UI for Sportlink Data** - Phases 116-118 (in progress)
+- **v10.0 Read-Only UI for Sportlink Data** - Phases 116-118 (complete)
 
 ## Phases
 
 - [x] **Phase 116: Person Edit Restrictions** - Remove delete, address, and work history editing from PersonDetail
 - [x] **Phase 117: Organization Creation Restrictions** - Disable team and commissie creation in UI
-- [ ] **Phase 118: Custom Field Edit Control** - Add editable_in_ui setting to custom fields
+- [x] **Phase 118: Custom Field Edit Control** - Add editable_in_ui setting to custom fields
 
 ## Phase Details
 
@@ -63,7 +63,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 118-01-PLAN.md — Add editable_in_ui property to backend, settings UI, and display components
+- [x] 118-01-PLAN.md — Add editable_in_ui property to backend, settings UI, and display components
 
 ## Progress
 
@@ -71,4 +71,4 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 116. Person Edit Restrictions | v10.0 | 1/1 | Complete | 2026-01-29 |
 | 117. Organization Creation Restrictions | v10.0 | 1/1 | Complete | 2026-01-29 |
-| 118. Custom Field Edit Control | v10.0 | 0/1 | Planned | - |
+| 118. Custom Field Edit Control | v10.0 | 1/1 | Complete | 2026-01-29 |

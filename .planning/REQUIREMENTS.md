@@ -14,8 +14,8 @@
 
 ### Custom Field Edit Control — 2 requirements
 
-- [ ] **FIELD-01**: Custom fields have an `editable_in_ui` setting (checkbox in custom field configuration)
-- [ ] **FIELD-02**: Custom fields with `editable_in_ui=false` display their value but show no edit button
+- [x] **FIELD-01**: Custom fields have an `editable_in_ui` setting (checkbox in custom field configuration)
+- [x] **FIELD-02**: Custom fields with `editable_in_ui=false` display their value but show no edit button
 
 ### Organization Edit Restrictions — 2 requirements
 
@@ -24,7 +24,7 @@
 
 ### API Preservation — 1 requirement
 
-- [ ] **API-01**: All current REST API edit/create/delete functionality remains fully available and unchanged
+- [x] **API-01**: All current REST API edit/create/delete functionality remains fully available and unchanged
 
 ## Future Requirements (Deferred)
 
@@ -48,8 +48,8 @@ None identified for this milestone.
 | PERSON-02 | Phase 116 | Complete |
 | PERSON-03 | Phase 116 | Complete |
 | PERSON-04 | Phase 116 | Complete |
-| FIELD-01 | Phase 118 | Pending |
-| FIELD-02 | Phase 118 | Pending |
+| FIELD-01 | Phase 118 | Complete |
+| FIELD-02 | Phase 118 | Complete |
 | ORG-01 | Phase 117 | Complete |
 | ORG-02 | Phase 117 | Complete |
-| API-01 | All Phases | Pending |
+| API-01 | All Phases | Complete |
