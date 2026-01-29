@@ -1,13 +1,14 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag } from 'lucide-react';
-import { usePeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeople';
+import { useFilteredPeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getTeamName } from '@/utils/formatters';
 import PersonEditModal from '@/components/PersonEditModal';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
+import Pagination from '@/components/Pagination';
 
 // Helper function to get current team ID from person's work history
 function getCurrentTeamId(person) {
@@ -418,12 +419,13 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
 
 export default function PeopleList() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedLabels, setSelectedLabels] = useState([]);
+  const [selectedLabelIds, setSelectedLabelIds] = useState([]);
   const [selectedBirthYear, setSelectedBirthYear] = useState('');
   const [lastModifiedFilter, setLastModifiedFilter] = useState('');
   const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all', 'mine', 'shared'
   const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
+  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showPersonModal, setShowPersonModal] = useState(false);
   const [isCreatingPerson, setIsCreatingPerson] = useState(false);
@@ -437,8 +439,29 @@ export default function PeopleList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: people, isLoading, error } = usePeople();
+  const { data, isLoading, isFetching, error } = useFilteredPeople({
+    page,
+    perPage: 100,
+    labels: selectedLabelIds,
+    ownership: ownershipFilter,
+    modifiedDays: lastModifiedFilter ? parseInt(lastModifiedFilter, 10) : null,
+    birthYearFrom: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
+    birthYearTo: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
+    orderby: sortField.startsWith('custom_') ? sortField : sortField === 'organization' || sortField === 'labels' ? 'first_name' : sortField,
+    order: sortOrder,
+  });
+
+  // Extract data from response
+  const people = data?.people || [];
+  const totalPeople = data?.total || 0;
+  const totalPages = data?.total_pages || 0;
+
   const bulkUpdateMutation = useBulkUpdatePeople();
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, ownershipFilter, sortField, sortOrder]);
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['people', 'list'] });
@@ -507,15 +530,15 @@ export default function PeopleList() {
     },
   });
   
-  // Get available birth years from people data
+  // Generate reasonable birth year range instead of deriving from data
   const availableBirthYears = useMemo(() => {
-    if (!people) return [];
-    const years = people
-      .map(p => p.birth_year)
-      .filter(year => year !== null && year !== undefined);
-    // Sort descending (most recent first)
-    return [...new Set(years)].sort((a, b) => b - a);
-  }, [people]);
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let year = currentYear - 5; year >= 1950; year--) {
+      years.push(year);
+    }
+    return years;
+  }, []);
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -543,82 +566,22 @@ export default function PeopleList() {
     };
   }, []);
   
-  // Filter and sort people
-  const filteredAndSortedPeople = useMemo(() => {
-    if (!people) return [];
-    
-    let filtered = [...people];
-    
-    // Apply label filters
-    if (selectedLabels.length > 0) {
-      filtered = filtered.filter(person => {
-        const personLabels = person.labels || [];
-        return selectedLabels.some(label => personLabels.includes(label));
-      });
-    }
-    
-    // Apply birth year filter
-    if (selectedBirthYear) {
-      const year = parseInt(selectedBirthYear, 10);
-      filtered = filtered.filter(person => person.birth_year === year);
-    }
-    
-    // Apply last modified filter
-    if (lastModifiedFilter) {
-      const now = new Date();
-      let cutoffDate;
+  const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter || ownershipFilter !== 'all';
 
-      switch (lastModifiedFilter) {
-        case '7':
-          cutoffDate = new Date(now.setDate(now.getDate() - 7));
-          break;
-        case '30':
-          cutoffDate = new Date(now.setDate(now.getDate() - 30));
-          break;
-        case '90':
-          cutoffDate = new Date(now.setDate(now.getDate() - 90));
-          break;
-        case '365':
-          cutoffDate = new Date(now.setDate(now.getDate() - 365));
-          break;
-        default:
-          cutoffDate = null;
-      }
-
-      if (cutoffDate) {
-        filtered = filtered.filter(person => {
-          if (!person.modified) return false;
-          const modifiedDate = new Date(person.modified);
-          return modifiedDate >= cutoffDate;
-        });
-      }
-    }
-
-    // Apply ownership filter
-    if (ownershipFilter === 'mine') {
-      filtered = filtered.filter(person => person.author === currentUserId);
-    } else if (ownershipFilter === 'shared') {
-      filtered = filtered.filter(person => person.author !== currentUserId);
-    }
-
-    return filtered;
-  }, [people, selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, currentUserId]);
-
-  const hasActiveFilters = selectedLabels.length > 0 || selectedBirthYear || lastModifiedFilter || ownershipFilter !== 'all';
-  
-  const handleLabelToggle = (label) => {
-    setSelectedLabels(prev => 
-      prev.includes(label)
-        ? prev.filter(l => l !== label)
-        : [...prev, label]
+  const handleLabelToggle = (labelId) => {
+    setSelectedLabelIds(prev =>
+      prev.includes(labelId)
+        ? prev.filter(id => id !== labelId)
+        : [...prev, labelId]
     );
   };
-  
+
   const clearFilters = () => {
-    setSelectedLabels([]);
+    setSelectedLabelIds([]);
     setSelectedBirthYear('');
     setLastModifiedFilter('');
     setOwnershipFilter('all');
+    // page will auto-reset via useEffect
   };
 
   // Selection helper functions
@@ -635,34 +598,34 @@ export default function PeopleList() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === filteredAndSortedPeople.length) {
+    if (selectedIds.size === people.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredAndSortedPeople.map(p => p.id)));
+      setSelectedIds(new Set(people.map(p => p.id)));
     }
   };
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const isAllSelected = filteredAndSortedPeople.length > 0 &&
-    selectedIds.size === filteredAndSortedPeople.length;
+  const isAllSelected = people.length > 0 &&
+    selectedIds.size === people.length;
   const isSomeSelected = selectedIds.size > 0 &&
-    selectedIds.size < filteredAndSortedPeople.length;
+    selectedIds.size < people.length;
 
-  // Clear selection when filters change or data changes
+  // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedLabels, selectedBirthYear, lastModifiedFilter, ownershipFilter, people]);
+  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, ownershipFilter, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
-    if (!filteredAndSortedPeople) return [];
-    const ids = filteredAndSortedPeople
+    if (!people) return [];
+    const ids = people
       .map(person => getCurrentTeamId(person))
       .filter(Boolean);
     // Remove duplicates
     return [...new Set(ids)];
-  }, [filteredAndSortedPeople]);
+  }, [people]);
 
   // Batch fetch all teams at once instead of individual queries
   const { data: teamsData } = useQuery({
@@ -693,113 +656,14 @@ export default function PeopleList() {
   // Create a map of person ID to team name
   const personTeamMap = useMemo(() => {
     const map = {};
-    filteredAndSortedPeople.forEach(person => {
+    people.forEach(person => {
       const teamId = getCurrentTeamId(person);
       if (teamId && teamMap[teamId]) {
         map[person.id] = teamMap[teamId];
       }
     });
     return map;
-  }, [filteredAndSortedPeople, teamMap]);
-
-  // Sort the filtered people
-  const sortedPeople = useMemo(() => {
-    if (!filteredAndSortedPeople) return [];
-
-    return [...filteredAndSortedPeople].sort((a, b) => {
-      let valueA, valueB;
-
-      if (sortField === 'modified') {
-        // Sort by last modified date
-        valueA = a.modified ? new Date(a.modified).getTime() : 0;
-        valueB = b.modified ? new Date(b.modified).getTime() : 0;
-        const comparison = valueA - valueB;
-        return sortOrder === 'asc' ? comparison : -comparison;
-      }
-
-      if (sortField === 'organization') {
-        // Sort by team name (from personTeamMap)
-        valueA = (personTeamMap[a.id] || '').toLowerCase();
-        valueB = (personTeamMap[b.id] || '').toLowerCase();
-        // Empty values sort last
-        if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
-        if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
-        if (!valueA && !valueB) return 0;
-        const comparison = valueA.localeCompare(valueB);
-        return sortOrder === 'asc' ? comparison : -comparison;
-      }
-
-      if (sortField === 'labels') {
-        // Sort by first label name
-        valueA = (a.labels?.[0] || '').toLowerCase();
-        valueB = (b.labels?.[0] || '').toLowerCase();
-        // Empty values sort last
-        if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
-        if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
-        if (!valueA && !valueB) return 0;
-        const comparison = valueA.localeCompare(valueB);
-        return sortOrder === 'asc' ? comparison : -comparison;
-      }
-
-      if (sortField.startsWith('custom_')) {
-        // Handle custom field sorting
-        const fieldName = sortField.replace('custom_', '');
-        const fieldMeta = listViewFields.find(f => f.name === fieldName);
-        valueA = a.acf?.[fieldName];
-        valueB = b.acf?.[fieldName];
-
-        // Handle different field types
-        if (fieldMeta?.type === 'number') {
-          valueA = parseFloat(valueA) || 0;
-          valueB = parseFloat(valueB) || 0;
-          return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
-        }
-
-        if (fieldMeta?.type === 'date') {
-          valueA = valueA ? new Date(valueA).getTime() : 0;
-          valueB = valueB ? new Date(valueB).getTime() : 0;
-          return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
-        }
-
-        // Text comparison for other types
-        valueA = String(valueA || '').toLowerCase();
-        valueB = String(valueB || '').toLowerCase();
-
-        // Empty values sort last
-        if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
-        if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
-        if (!valueA && !valueB) return 0;
-
-        const comparison = valueA.localeCompare(valueB);
-        return sortOrder === 'asc' ? comparison : -comparison;
-      }
-
-      // Default: first_name or last_name
-      if (sortField === 'first_name') {
-        valueA = (a.acf?.first_name || a.first_name || '').toLowerCase();
-        valueB = (b.acf?.first_name || b.first_name || '').toLowerCase();
-      } else {
-        valueA = (a.acf?.last_name || a.last_name || '').toLowerCase();
-        valueB = (b.acf?.last_name || b.last_name || '').toLowerCase();
-      }
-
-      // If values are equal, sort by the other field as tiebreaker
-      if (valueA === valueB) {
-        const tiebreakerA = sortField === 'first_name'
-          ? (a.acf?.last_name || a.last_name || '').toLowerCase()
-          : (a.acf?.first_name || a.first_name || '').toLowerCase();
-        const tiebreakerB = sortField === 'first_name'
-          ? (b.acf?.last_name || b.last_name || '').toLowerCase()
-          : (b.acf?.first_name || b.first_name || '').toLowerCase();
-
-        const tiebreakerResult = tiebreakerA.localeCompare(tiebreakerB);
-        return sortOrder === 'asc' ? tiebreakerResult : -tiebreakerResult;
-      }
-
-      const comparison = valueA.localeCompare(valueB);
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  }, [filteredAndSortedPeople, sortField, sortOrder, personTeamMap, listViewFields]);
+  }, [people, teamMap]);
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -843,7 +707,7 @@ export default function PeopleList() {
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
                 <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
-                  {selectedLabels.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0)}
+                  {selectedLabelIds.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0) + (ownershipFilter !== 'all' ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -856,33 +720,33 @@ export default function PeopleList() {
               >
                 <div className="p-4 space-y-4">
                   {/* Labels Filter */}
-                  {availableLabels.length > 0 && (
+                  {availableLabelsWithIds.length > 0 && (
                     <div>
                       <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                         Labels
                       </h3>
                       <div className="space-y-1 max-h-48 overflow-y-auto">
-                        {availableLabels.map(label => (
+                        {availableLabelsWithIds.map(label => (
                           <label
-                            key={label}
+                            key={label.id}
                             className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
                           >
                             <input
                               type="checkbox"
-                              checked={selectedLabels.includes(label)}
-                              onChange={() => handleLabelToggle(label)}
+                              checked={selectedLabelIds.includes(label.id)}
+                              onChange={() => handleLabelToggle(label.id)}
                               className="sr-only"
                             />
                             <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                              selectedLabels.includes(label)
+                              selectedLabelIds.includes(label.id)
                                 ? 'bg-accent-600 border-accent-600'
                                 : 'border-gray-300 dark:border-gray-500'
                             }`}>
-                              {selectedLabels.includes(label) && (
+                              {selectedLabelIds.includes(label.id) && (
                                 <Check className="w-3 h-3 text-white" />
                               )}
                             </div>
-                            <span className="text-sm text-gray-700 dark:text-gray-200">{label}</span>
+                            <span className="text-sm text-gray-700 dark:text-gray-200">{label.name}</span>
                           </label>
                         ))}
                       </div>
@@ -981,20 +845,23 @@ export default function PeopleList() {
           {/* Active Filter Chips */}
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2">
-              {selectedLabels.map(label => (
-                <span
-                  key={label}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs"
-                >
-                  {label}
-                  <button
-                    onClick={() => handleLabelToggle(label)}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
+              {selectedLabelIds.map(labelId => {
+                const label = availableLabelsWithIds.find(l => l.id === labelId);
+                return label ? (
+                  <span
+                    key={labelId}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs"
                   >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
+                    {label.name}
+                    <button
+                      onClick={() => handleLabelToggle(labelId)}
+                      className="hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ) : null;
+              })}
               {selectedBirthYear && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
                   Geboren {selectedBirthYear}
@@ -1051,8 +918,8 @@ export default function PeopleList() {
         </div>
       )}
 
-      {/* Empty state */}
-      {!isLoading && !error && people?.length === 0 && (
+      {/* Empty state - no people at all */}
+      {!isLoading && !error && totalPeople === 0 && !hasActiveFilters && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
@@ -1122,9 +989,9 @@ export default function PeopleList() {
       )}
 
       {/* People list */}
-      {!isLoading && !error && sortedPeople?.length > 0 && (
+      {!isLoading && !error && people.length > 0 && (
         <PersonListView
-          people={sortedPeople}
+          people={people}
           teamMap={personTeamMap}
           listViewFields={listViewFields}
           selectedIds={selectedIds}
@@ -1146,7 +1013,7 @@ export default function PeopleList() {
       )}
 
       {/* No results with filters */}
-      {!isLoading && !error && people?.length > 0 && sortedPeople?.length === 0 && (
+      {!isLoading && !error && people.length === 0 && totalPeople === 0 && hasActiveFilters && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <Filter className="w-6 h-6 text-gray-400 dark:text-gray-500" />
