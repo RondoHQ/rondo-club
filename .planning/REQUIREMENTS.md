@@ -19,8 +19,8 @@
 
 ### Organization Edit Restrictions — 2 requirements
 
-- [ ] **ORG-01**: Team creation is disabled in UI (no "Nieuw team" button or equivalent)
-- [ ] **ORG-02**: Commissie creation is disabled in UI (no "Nieuwe commissie" button or equivalent)
+- [x] **ORG-01**: Team creation is disabled in UI (no "Nieuw team" button or equivalent)
+- [x] **ORG-02**: Commissie creation is disabled in UI (no "Nieuwe commissie" button or equivalent)
 
 ### API Preservation — 1 requirement
 
@@ -50,6 +50,6 @@ None identified for this milestone.
 | PERSON-04 | Phase 116 | Complete |
 | FIELD-01 | Phase 118 | Pending |
 | FIELD-02 | Phase 118 | Pending |
-| ORG-01 | Phase 117 | Pending |
-| ORG-02 | Phase 117 | Pending |
+| ORG-01 | Phase 117 | Complete |
+| ORG-02 | Phase 117 | Complete |
 | API-01 | All Phases | Pending |
