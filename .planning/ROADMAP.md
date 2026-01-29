@@ -28,10 +28,10 @@ This milestone restricts UI editing capabilities for Sportlink-managed data whil
   3. Work history section has no "Functie toevoegen" button
   4. Work history items have no edit button and clicking them does not open edit mode
   5. REST API DELETE /wp/v2/people/{id} still works for automation
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 116-01: TBD
+- [ ] 116-01-PLAN.md — Remove delete, address, and work history editing from PersonDetail
 
 ### Phase 117: Organization Creation Restrictions
 **Goal**: Users cannot create new teams or commissies in the UI
@@ -69,6 +69,6 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 116. Person Edit Restrictions | v10.0 | 0/TBD | Not started | - |
+| 116. Person Edit Restrictions | v10.0 | 0/1 | Planned | - |
 | 117. Organization Creation Restrictions | v10.0 | 0/TBD | Not started | - |
 | 118. Custom Field Edit Control | v10.0 | 0/TBD | Not started | - |
