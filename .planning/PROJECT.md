@@ -283,7 +283,18 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-<!-- Next milestone to be determined -->
+**v10.0 Read-Only UI for Sportlink Data:**
+
+This milestone restricts editing capabilities in the UI for data that comes from Sportlink, while preserving full REST API functionality for automation and sync.
+
+- Remove "Verwijderen" (delete) button from PersonDetail — v10.0
+- Remove "Voeg adres toe" (add address) button from PersonDetail — v10.0
+- Remove "Functie toevoegen" (add function) button from work history — v10.0
+- Make work history items non-editable in UI — v10.0
+- Add `editable_in_ui` setting to custom fields — v10.0
+- Disable creating new teams in Stadion UI — v10.0
+- Disable creating new commissies in Stadion UI — v10.0
+- Keep all edit/add/remove functionality available in REST API — v10.0
 
 ### Out of Scope
 
