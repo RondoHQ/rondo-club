@@ -113,7 +113,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 114-01-PLAN.md — REST API endpoints for list column preferences
+- [x] 114-01-PLAN.md — REST API endpoints for list column preferences
 
 **Success Criteria:**
 1. User can save column preferences via `/stadion/v1/user/list-preferences` PATCH endpoint
@@ -163,7 +163,7 @@ Plans:
 | Phase 111: Server-Side Foundation | ✓ Complete | DATA-01, DATA-02, DATA-03, DATA-04, DATA-06, DATA-07, DATA-08, DATA-10, DATA-13, DATA-14 | 100% |
 | Phase 112: Birthdate Denormalization | ✓ Complete | DATA-05, DATA-11, DATA-12 | 100% |
 | Phase 113: Frontend Pagination | ✓ Complete | PAGE-01, PAGE-02, PAGE-03, PAGE-04, PAGE-05, PAGE-06, DATA-09 | 100% |
-| Phase 114: User Preferences Backend | Pending | COL-03 | 0% |
+| Phase 114: User Preferences Backend | ✓ Complete | COL-03 | 100% |
 | Phase 115: Column Preferences UI | Pending | COL-01, COL-02, COL-04, COL-05, COL-06, COL-07 | 0% |
 
 ## Requirement Coverage

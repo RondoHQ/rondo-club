@@ -17,7 +17,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **DATA-06**: Server sorts people by first_name (asc/desc)
 - [x] **DATA-07**: Server sorts people by last_name (asc/desc)
 - [x] **DATA-08**: Server sorts people by modified date (asc/desc)
-- [ ] **DATA-09**: Server sorts people by custom ACF fields (text, number, date types)
+- [x] **DATA-09**: Server sorts people by custom ACF fields (text, number, date types)
 - [x] **DATA-10**: Custom endpoint uses $wpdb JOIN to fetch posts + meta in single query
 - [x] **DATA-11**: Birthdate is denormalized to person post_meta (_birthdate) for fast filtering
 - [x] **DATA-12**: Birthdate syncs when birthday important_date is created/updated/deleted
@@ -26,18 +26,18 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Pagination (Frontend)
 
-- [ ] **PAGE-01**: PeopleList displays paginated results (100 per page)
-- [ ] **PAGE-02**: User can navigate between pages (prev/next/page numbers)
-- [ ] **PAGE-03**: Current page and total pages are displayed
-- [ ] **PAGE-04**: Filter changes reset to page 1
-- [ ] **PAGE-05**: Loading indicator shows while fetching page
-- [ ] **PAGE-06**: Empty state when no results match filters
+- [x] **PAGE-01**: PeopleList displays paginated results (100 per page)
+- [x] **PAGE-02**: User can navigate between pages (prev/next/page numbers)
+- [x] **PAGE-03**: Current page and total pages are displayed
+- [x] **PAGE-04**: Filter changes reset to page 1
+- [x] **PAGE-05**: Loading indicator shows while fetching page
+- [x] **PAGE-06**: Empty state when no results match filters
 
 ### Column Customization
 
 - [ ] **COL-01**: User can show/hide columns on PeopleList
 - [ ] **COL-02**: User can reorder columns via drag-and-drop
-- [ ] **COL-03**: Column preferences persist per user (stored in user_meta)
+- [x] **COL-03**: Column preferences persist per user (stored in user_meta)
 - [ ] **COL-04**: Available columns include: name, team, labels, modified, all active custom fields
 - [ ] **COL-05**: Column width preferences persist per user
 - [ ] **COL-06**: Settings modal provides column customization UI
@@ -86,21 +86,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-06 | Phase 111 | ✓ Complete |
 | DATA-07 | Phase 111 | ✓ Complete |
 | DATA-08 | Phase 111 | ✓ Complete |
-| DATA-09 | Phase 113 | Pending |
+| DATA-09 | Phase 113 | ✓ Complete |
 | DATA-10 | Phase 111 | ✓ Complete |
 | DATA-11 | Phase 112 | ✓ Complete |
 | DATA-12 | Phase 112 | ✓ Complete |
 | DATA-13 | Phase 111 | ✓ Complete |
 | DATA-14 | Phase 111 | ✓ Complete |
-| PAGE-01 | Phase 113 | Pending |
-| PAGE-02 | Phase 113 | Pending |
-| PAGE-03 | Phase 113 | Pending |
-| PAGE-04 | Phase 113 | Pending |
-| PAGE-05 | Phase 113 | Pending |
-| PAGE-06 | Phase 113 | Pending |
+| PAGE-01 | Phase 113 | ✓ Complete |
+| PAGE-02 | Phase 113 | ✓ Complete |
+| PAGE-03 | Phase 113 | ✓ Complete |
+| PAGE-04 | Phase 113 | ✓ Complete |
+| PAGE-05 | Phase 113 | ✓ Complete |
+| PAGE-06 | Phase 113 | ✓ Complete |
 | COL-01 | Phase 115 | Pending |
 | COL-02 | Phase 115 | Pending |
-| COL-03 | Phase 114 | Pending |
+| COL-03 | Phase 114 | ✓ Complete |
 | COL-04 | Phase 115 | Pending |
 | COL-05 | Phase 115 | Pending |
 | COL-06 | Phase 115 | Pending |
@@ -113,4 +113,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-29*
-*Last updated: 2026-01-29 after Phase 112 completion*
+*Last updated: 2026-01-29 after Phase 114 completion*
