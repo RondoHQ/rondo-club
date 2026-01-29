@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 115 of 5 (Column Preferences UI)
-Plan: 1 of 3 in phase
+Plan: 3 of 3 in phase
 Status: In progress
-Last activity: 2026-01-29 - Completed 115-01-PLAN.md
+Last activity: 2026-01-29 - Completed 115-03-PLAN.md
 
-Progress: [████████░░] 80% (8/10 plans complete, 4/5 phases in progress)
+Progress: [█████████░] 90% (9/10 plans complete, 4/5 phases in progress)
 
 ## Milestone History
 
@@ -34,8 +34,8 @@ Progress: [████████░░] 80% (8/10 plans complete, 4/5 phases 
 - Total requirements: 27
 - Requirements mapped: 27/27 (100%)
 - Phases complete: 4/5 (80%)
-- Plans complete: 8/10 (80%)
-- Plans remaining: 2
+- Plans complete: 9/10 (90%)
+- Plans remaining: 1
 
 ## Accumulated Context
 
@@ -83,6 +83,9 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 | 115-01-002 | Store column_widths as object in separate user_meta key | 115-01 | 2026-01-29 |
 | 115-01-003 | Use localStorage as instant cache for column widths to prevent flicker | 115-01 | 2026-01-29 |
 | 115-01-004 | Debounce width updates by 300ms to prevent excessive API calls | 115-01 | 2026-01-29 |
+| 115-03-001 | Use pointer events instead of mouse events for unified touch/mouse handling | 115-03 | 2026-01-29 |
+| 115-03-002 | Return resizeHandlers object for easy spread onto resize handle element | 115-03 | 2026-01-29 |
+| 115-03-003 | Handle onPointerCancel same as onPointerUp for edge case reliability | 115-03 | 2026-01-29 |
 
 ### Pending Todos
 
@@ -129,8 +132,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-01-29 17:49 UTC
-Stopped at: Completed 115-01-PLAN.md
+Last session: 2026-01-29 17:53 UTC
+Stopped at: Completed 115-03-PLAN.md
 Resume file: None
 
-Next: Phase 115 Plan 02 - Column Settings Modal
+Next: Phase 115 Plan 02 - Column Settings Modal (in parallel)
