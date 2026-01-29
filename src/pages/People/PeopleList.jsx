@@ -988,28 +988,47 @@ export default function PeopleList() {
         </div>
       )}
 
+      {/* Loading indicator for page navigation */}
+      {isFetching && !isLoading && (
+        <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg px-4 py-2 flex items-center gap-2 z-50">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-600" />
+          <span className="text-sm text-gray-600 dark:text-gray-300">Laden...</span>
+        </div>
+      )}
+
       {/* People list */}
       {!isLoading && !error && people.length > 0 && (
-        <PersonListView
-          people={people}
-          teamMap={personTeamMap}
-          listViewFields={listViewFields}
-          selectedIds={selectedIds}
-          onToggleSelection={toggleSelection}
-          onToggleSelectAll={toggleSelectAll}
-          isAllSelected={isAllSelected}
-          isSomeSelected={isSomeSelected}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSort={(field) => {
-            if (field === sortField) {
-              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-            } else {
-              setSortField(field);
-              setSortOrder('asc');
-            }
-          }}
-        />
+        <>
+          <PersonListView
+            people={people}
+            teamMap={personTeamMap}
+            listViewFields={listViewFields}
+            selectedIds={selectedIds}
+            onToggleSelection={toggleSelection}
+            onToggleSelectAll={toggleSelectAll}
+            isAllSelected={isAllSelected}
+            isSomeSelected={isSomeSelected}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            onSort={(field) => {
+              if (field === sortField) {
+                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+              } else {
+                setSortField(field);
+                setSortOrder('asc');
+              }
+            }}
+          />
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalPeople}
+              itemsPerPage={100}
+              onPageChange={setPage}
+            />
+          )}
+        </>
       )}
 
       {/* No results with filters */}
