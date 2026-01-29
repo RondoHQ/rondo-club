@@ -102,16 +102,28 @@ export default function ColumnSettingsModal({ isOpen, onClose }) {
 
   // Initialize local order from preferences
   useEffect(() => {
-    if (preferences?.column_order?.length > 0) {
-      // Filter out 'name' column - it's always first and not sortable
-      setLocalOrder(preferences.column_order.filter(id => id !== 'name'));
-    } else if (preferences?.available_columns?.length > 0) {
-      // Fall back to available columns order
-      setLocalOrder(
+    if (preferences?.available_columns?.length > 0) {
+      const availableIds = new Set(
         preferences.available_columns
           .map(col => col.id)
           .filter(id => id !== 'name')
       );
+
+      if (preferences?.column_order?.length > 0) {
+        // Start with saved order (excluding 'name' and any columns that no longer exist)
+        const savedOrder = preferences.column_order.filter(
+          id => id !== 'name' && availableIds.has(id)
+        );
+
+        // Find any new columns not in saved order and append them
+        const savedSet = new Set(savedOrder);
+        const newColumns = [...availableIds].filter(id => !savedSet.has(id));
+
+        setLocalOrder([...savedOrder, ...newColumns]);
+      } else {
+        // No saved order - use available columns order
+        setLocalOrder([...availableIds]);
+      }
     }
   }, [preferences?.column_order, preferences?.available_columns]);
 
