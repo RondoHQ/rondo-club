@@ -51,10 +51,11 @@ This milestone transforms the People list from load-all-at-once to server-side p
 - DATA-11: Birthdate is denormalized to person post_meta (_birthdate) for fast filtering
 - DATA-12: Birthdate syncs when birthday important_date is created/updated/deleted
 
-**Plans:** TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD
+- [ ] 112-01-PLAN.md — Birthdate sync hooks and WP-CLI migration
+- [ ] 112-02-PLAN.md — Birth year filter on filtered endpoint
 
 **Success Criteria:**
 1. Birthdate is stored in `wp_postmeta` with key `_birthdate` (full date, denormalized from important_date)
