@@ -4,6 +4,15 @@ import { wpApi } from '@/api/client';
 import { getPersonName, getTeamName } from '@/utils/formatters';
 
 /**
+ * Decode HTML entities in a string (e.g., &#8211; → –)
+ */
+function decodeHtmlEntities(text) {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
+/**
  * Compact relationship item for list view - fetches name if only ID is available
  */
 function RelationshipItemCompact({ itemId, allowedPostTypes }) {
@@ -51,8 +60,9 @@ export default function CustomFieldColumn({ field, value }) {
       return <span className="truncate block max-w-32" title={String(value)}>{String(value)}</span>;
 
     case 'wysiwyg': {
-      // Strip HTML tags for list view preview
-      const plainText = String(value).replace(/<[^>]*>/g, '').trim();
+      // Strip HTML tags and decode entities for list view preview
+      const strippedText = String(value).replace(/<[^>]*>/g, '').trim();
+      const plainText = decodeHtmlEntities(strippedText);
       return <span className="truncate block max-w-32" title={plainText}>{plainText || '-'}</span>;
     }
 
