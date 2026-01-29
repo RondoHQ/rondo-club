@@ -1,9 +1,9 @@
 import { useState, useMemo, useRef, useEffect, lazy, Suspense } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Edit, Trash2, Mail, Phone,
+  ArrowLeft, Trash2, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, Square, TrendingUp, StickyNote, Share2, Clock, User, Video, ExternalLink, AlertCircle
+  CheckSquare2, Square, TrendingUp, StickyNote, Clock, User, Video, ExternalLink, AlertCircle
 } from 'lucide-react';
 import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack, SiWhatsapp } from '@icons-pack/react-simple-icons';
 
@@ -37,8 +37,6 @@ import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import ContactEditModal from '@/components/ContactEditModal';
 import ImportantDateModal from '@/components/ImportantDateModal';
 import RelationshipEditModal from '@/components/RelationshipEditModal';
-import PersonEditModal from '@/components/PersonEditModal';
-import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 const MeetingDetailModal = lazy(() => import('@/components/MeetingDetailModal'));
 import { format, differenceInYears } from '@/utils/dateFormat';
@@ -349,12 +347,9 @@ export default function PersonDetail() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
-  const [showPersonEditModal, setShowPersonEditModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
   const [isSavingDate, setIsSavingDate] = useState(false);
   const [isSavingRelationship, setIsSavingRelationship] = useState(false);
-  const [isSavingPerson, setIsSavingPerson] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [editingDate, setEditingDate] = useState(null);
@@ -557,35 +552,6 @@ export default function PersonDetail() {
       alert('Relatie kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingRelationship(false);
-    }
-  };
-
-  // Handle saving person details
-  const handleSavePerson = async (data) => {
-    setIsSavingPerson(true);
-    try {
-      const acfData = sanitizePersonAcf(person.acf, {
-        first_name: data.first_name,
-        last_name: data.last_name,
-        nickname: data.nickname,
-        gender: data.gender || null,
-        pronouns: data.pronouns || null,
-        how_we_met: data.how_we_met,
-      });
-
-      await updatePerson.mutateAsync({
-        id,
-        data: {
-          title: `${data.first_name} ${data.last_name}`.trim(),
-          acf: acfData,
-        },
-      });
-      
-      setShowPersonEditModal(false);
-    } catch {
-      alert('Lid kon niet worden opgeslagen. Probeer het opnieuw.');
-    } finally {
-      setIsSavingPerson(false);
     }
   };
 
@@ -1402,14 +1368,6 @@ export default function PersonDetail() {
           <button onClick={handleExportVCard} className="btn-secondary">
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Exporteer vCard</span>
-          </button>
-          <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Delen">
-            <Share2 className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Delen</span>
-          </button>
-          <button onClick={() => setShowPersonEditModal(true)} className="btn-secondary">
-            <Edit className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Bewerken</span>
           </button>
         </div>
       </div>
@@ -2670,22 +2628,6 @@ export default function PersonDetail() {
             allPeople={allPeople || []}
             isPeopleLoading={isPeopleLoading}
           />
-
-      <PersonEditModal
-        isOpen={showPersonEditModal}
-        onClose={() => setShowPersonEditModal(false)}
-        onSubmit={handleSavePerson}
-        isLoading={isSavingPerson}
-        person={person}
-      />
-
-      <ShareModal
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-        postType="people"
-        postId={person.id}
-        postTitle={person.name || person.title?.rendered}
-      />
 
       <Suspense fallback={null}>
         <MeetingDetailModal
