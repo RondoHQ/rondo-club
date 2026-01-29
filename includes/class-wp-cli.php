@@ -415,6 +415,148 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				);
 			}
 		}
+
+		/**
+		 * Migrate birthdates from important_dates to person post_meta
+		 *
+		 * Finds all birthday important_dates and copies their date_value
+		 * to the _birthdate meta key on related persons.
+		 *
+		 * This command is idempotent - safe to re-run, it overwrites existing values.
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--dry-run]
+		 * : Preview changes without making them
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp stadion migrate-birthdates
+		 *     wp stadion migrate-birthdates --dry-run
+		 *
+		 * @when after_wp_load
+		 */
+		public function migrate_birthdates( $args, $assoc_args ) {
+			$dry_run = isset( $assoc_args['dry-run'] );
+
+			if ( $dry_run ) {
+				WP_CLI::log( 'DRY RUN MODE - No changes will be made' );
+			}
+
+			WP_CLI::log( '' );
+			WP_CLI::log( '╔════════════════════════════════════════════════════════════╗' );
+			WP_CLI::log( '║         Stadion Birthdate Migration                        ║' );
+			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
+			WP_CLI::log( '' );
+			WP_CLI::log( 'This migration will:' );
+			WP_CLI::log( '  1. Find all birthday important_dates with known years' );
+			WP_CLI::log( '  2. Copy date_value to _birthdate meta on related persons' );
+			WP_CLI::log( '  3. Clear _birthdate on persons with year_unknown birthdays' );
+			WP_CLI::log( '' );
+
+			// Query all birthday important_dates
+			$birthdays = new \WP_Query(
+				[
+					'post_type'        => 'important_date',
+					'post_status'      => 'publish',
+					'posts_per_page'   => -1,
+					'tax_query'        => [
+						[
+							'taxonomy' => 'date_type',
+							'field'    => 'slug',
+							'terms'    => 'birthday',
+						],
+					],
+					'suppress_filters' => true, // Bypass access control for migration
+				]
+			);
+
+			if ( ! $birthdays->have_posts() ) {
+				WP_CLI::success( 'No birthday dates found. Nothing to migrate.' );
+				return;
+			}
+
+			WP_CLI::log( sprintf( 'Found %d birthday date(s) to process.', $birthdays->post_count ) );
+			WP_CLI::log( '' );
+
+			$migrated = 0;
+			$cleared  = 0;
+			$skipped  = 0;
+
+			while ( $birthdays->have_posts() ) {
+				$birthdays->the_post();
+				$birthday_id = get_the_ID();
+
+				$date_value     = get_field( 'date_value', $birthday_id );
+				$year_unknown   = get_field( 'year_unknown', $birthday_id );
+				$related_people = get_field( 'related_people', $birthday_id );
+
+				if ( empty( $related_people ) || ! is_array( $related_people ) ) {
+					WP_CLI::log( sprintf( 'Skipping birthday ID %d: no related people', $birthday_id ) );
+					++$skipped;
+					continue;
+				}
+
+				$person_names = array_map(
+					function ( $id ) {
+						return get_the_title( $id );
+					},
+					$related_people
+				);
+
+				if ( $year_unknown || empty( $date_value ) ) {
+					WP_CLI::log(
+						sprintf(
+							'Birthday ID %d (year unknown): clearing _birthdate for %s',
+							$birthday_id,
+							implode( ', ', $person_names )
+						)
+					);
+
+					if ( ! $dry_run ) {
+						foreach ( $related_people as $person_id ) {
+							delete_post_meta( $person_id, '_birthdate' );
+						}
+					}
+					++$cleared;
+				} else {
+					WP_CLI::log(
+						sprintf(
+							'Birthday ID %d (%s): setting _birthdate for %s',
+							$birthday_id,
+							$date_value,
+							implode( ', ', $person_names )
+						)
+					);
+
+					if ( ! $dry_run ) {
+						foreach ( $related_people as $person_id ) {
+							update_post_meta( $person_id, '_birthdate', $date_value );
+						}
+					}
+					++$migrated;
+				}
+			}
+
+			wp_reset_postdata();
+
+			WP_CLI::log( '' );
+			WP_CLI::log( '────────────────────────────────────────────────────────────────' );
+			WP_CLI::log( 'Migration Summary:' );
+			WP_CLI::log( '────────────────────────────────────────────────────────────────' );
+
+			if ( $dry_run ) {
+				WP_CLI::log( sprintf( '  Would set birthdates: %d', $migrated ) );
+				WP_CLI::log( sprintf( '  Would clear birthdates: %d', $cleared ) );
+				WP_CLI::log( sprintf( '  Would skip: %d', $skipped ) );
+				WP_CLI::success( 'Dry run complete. Run without --dry-run to apply changes.' );
+			} else {
+				WP_CLI::log( sprintf( '  Set birthdates: %d', $migrated ) );
+				WP_CLI::log( sprintf( '  Cleared birthdates: %d', $cleared ) );
+				WP_CLI::log( sprintf( '  Skipped: %d', $skipped ) );
+				WP_CLI::success( 'Migration complete!' );
+			}
+		}
 	}
 
 	/**
@@ -2302,6 +2444,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'stadion google-contacts', 'STADION_Google_Contacts_CLI_Command' );
 	WP_CLI::add_command( 'prm reminders', 'STADION_Reminders_CLI_Command' );
 	WP_CLI::add_command( 'prm migrate', 'STADION_Migration_CLI_Command' );
+	WP_CLI::add_command( 'stadion migrate-birthdates', [ 'STADION_Migration_CLI_Command', 'migrate_birthdates' ] );
 	WP_CLI::add_command( 'prm vcard', 'STADION_VCard_CLI_Command' );
 	WP_CLI::add_command( 'prm carddav', 'STADION_CardDAV_CLI_Command' );
 	WP_CLI::add_command( 'prm dates', 'STADION_Dates_CLI_Command' );
