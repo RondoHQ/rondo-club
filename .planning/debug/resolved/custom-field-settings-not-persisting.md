@@ -1,5 +1,5 @@
 ---
-status: verifying
+status: resolved
 trigger: "custom-field-settings-not-persisting"
 created: 2026-01-29T10:00:00Z
 updated: 2026-01-29T10:00:00Z
@@ -66,7 +66,7 @@ started: Was working before, recently broke
 
 ## Resolution
 
-root_cause: ACF Local JSON feature is loading field definitions from acf-json/group_custom_fields_person.json which has show_in_list_view=false for all fields. JSON takes precedence over database, so any updates made via the Settings UI are immediately overwritten when ACF loads the JSON file. The JSON file exists on production but not in the git repository.
-fix: Added sync_field_group_to_json() method to Manager class that writes field group to JSON after every create, update, deactivate, reactivate, and reorder operation. This ensures JSON stays in sync with database changes.
-verification: After fix, user should be able to check the checkbox, save, reload page, and see checkbox still checked + column appearing in list view
-files_changed: ['includes/customfields/class-manager.php']
+root_cause: ACF Local JSON feature is loading field definitions from acf-json/group_custom_fields_person.json which has show_in_list_view=false for all fields. JSON takes precedence over database, so any updates made via the Settings UI are immediately overwritten when ACF loads the JSON file. The JSON file existed on production but not in the git repository, and the sync_field_group_to_json() method was not properly loading fields before writing to JSON.
+fix: Added and improved sync_field_group_to_json() method to Manager class that properly loads all fields from database using acf_get_fields() and includes them in the group array before calling acf_write_json_field_group(). This is called after every create, update, deactivate, reactivate, and reorder operation. Also added the JSON file to version control.
+verification: Tested by updating KNVB ID field via API with show_in_list_view=true and list_view_order=1. Confirmed JSON file was updated with correct values and subsequent API calls return the updated values. Fix is working correctly.
+files_changed: ['includes/customfields/class-manager.php', 'acf-json/group_custom_fields_person.json']
