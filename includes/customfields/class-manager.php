@@ -274,6 +274,12 @@ class Manager {
 			}
 		}
 
+		// Enforce Y-m-d format for date fields (ensures consistent sorting and JS parsing).
+		if ( 'date' === $acf_type ) {
+			$field['return_format']  = 'Y-m-d';
+			$field['display_format'] = 'Y-m-d';
+		}
+
 		// Persist to database.
 		$result = acf_update_field( $field );
 
@@ -313,6 +319,12 @@ class Manager {
 			if ( isset( $updates[ $prop ] ) ) {
 				$field[ $prop ] = $updates[ $prop ];
 			}
+		}
+
+		// Enforce Y-m-d format for date fields (ensures consistent sorting and JS parsing).
+		if ( 'date' === $field['type'] ) {
+			$field['return_format']  = 'Y-m-d';
+			$field['display_format'] = 'Y-m-d';
 		}
 
 		// Persist to database.

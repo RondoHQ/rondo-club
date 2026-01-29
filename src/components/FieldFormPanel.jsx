@@ -20,14 +20,6 @@ const FIELD_TYPES = [
   { value: 'relationship', label: 'Relatie' },
 ];
 
-// Date format options
-const DATE_FORMATS = [
-  { value: 'd/m/Y', label: 'DD/MM/YYYY (31/12/2024)' },
-  { value: 'm/d/Y', label: 'MM/DD/YYYY (12/31/2024)' },
-  { value: 'Y-m-d', label: 'YYYY-MM-DD (2024-12-31)' },
-  { value: 'F j, Y', label: 'Month Day, Year (December 31, 2024)' },
-];
-
 // Week start day options
 const WEEK_START_OPTIONS = [
   { value: 0, label: 'Zondag' },
@@ -297,8 +289,8 @@ export default function FieldFormPanel({
     }
 
     if (formData.type === 'date') {
-      submitData.display_format = formData.display_format;
-      submitData.return_format = formData.return_format;
+      // Note: display_format and return_format are enforced to Y-m-d on the backend
+      // for consistent sorting and JavaScript date parsing
       submitData.first_day = Number(formData.first_day);
     }
 
@@ -649,43 +641,7 @@ export default function FieldFormPanel({
         return (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400">Datumopties</h4>
-            <div>
-              <label htmlFor="display_format" className={labelClass}>
-                Weergaveformaat
-              </label>
-              <select
-                id="display_format"
-                name="display_format"
-                value={formData.display_format}
-                onChange={handleChange}
-                className={inputClass}
-              >
-                {DATE_FORMATS.map((fmt) => (
-                  <option key={fmt.value} value={fmt.value}>
-                    {fmt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="return_format" className={labelClass}>
-                Opslagformaat
-              </label>
-              <select
-                id="return_format"
-                name="return_format"
-                value={formData.return_format}
-                onChange={handleChange}
-                className={inputClass}
-              >
-                {DATE_FORMATS.map((fmt) => (
-                  <option key={fmt.value} value={fmt.value}>
-                    {fmt.label}
-                  </option>
-                ))}
-              </select>
-              <p className={hintClass}>Formaat voor opslag/ophalen van de datumwaarde</p>
-            </div>
+            <p className={hintClass}>Datums worden opgeslagen en weergegeven als JJJJ-MM-DD (bijv. 2024-01-31)</p>
             <div>
               <label htmlFor="first_day" className={labelClass}>
                 Week begint op
