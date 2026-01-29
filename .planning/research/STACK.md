@@ -1,398 +1,422 @@
-# Technology Stack - PWA Features
+# Technology Stack - People List Performance Features
 
-**Project:** Stadion (Personal CRM)
-**Researched:** 2026-01-28
+**Project:** Stadion People List Infinite Scroll
+**Researched:** 2026-01-29
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Adding PWA capabilities to the existing Vite + React + WordPress stack requires minimal additional dependencies. The recommended approach uses `vite-plugin-pwa` with Workbox's `generateSW` strategy for automatic service worker generation, custom React hooks for install prompts, and `react-simple-pull-to-refresh` for mobile pull-to-refresh functionality.
+No new dependencies required. All necessary technologies are already present in Stadion's stack. Implementation requires only pattern changes using existing TanStack Query v5.17.0, native Intersection Observer API, and WordPress core APIs (user_meta, wpdb, REST).
 
-## Recommended Stack
+## Core Stack (Already Present)
 
-### Core PWA Plugin
+| Technology | Version | Purpose | Notes |
+|------------|---------|---------|-------|
+| TanStack Query | ^5.17.0 | Server state management | Already includes `useInfiniteQuery` for pagination |
+| React | ^18.2.0 | UI framework | Already supports Intersection Observer via refs |
+| WordPress REST API | Core | Backend pagination | Built-in `per_page`, `page` params + headers |
+| WordPress User Meta API | Core | Per-user preferences | Native `get_user_meta`, `update_user_meta` |
+| WordPress $wpdb | Core | Custom JOIN queries | Global `$wpdb` object for performant queries |
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `vite-plugin-pwa` | ^0.20+ | PWA generation | Zero-config integration with Vite, handles manifest generation and service worker creation. Requires Vite 5+ (already satisfied). Actively maintained by Vite ecosystem. |
-| `workbox-window` | ^7.3+ | Service worker registration | Runtime library for service worker lifecycle management. Auto-installed as peer dependency of vite-plugin-pwa. |
+## No New Dependencies Required
 
-**Rationale:** `vite-plugin-pwa` is the de facto standard for Vite-based PWAs. It wraps Workbox's `generateSW` and `injectManifest` methods, providing seamless integration with Vite's build pipeline. Version 0.17+ requires Vite 5, which this project already uses.
+**CRITICAL FINDING:** The project already has everything needed:
+- TanStack Query v5.17.0 includes `useInfiniteQuery` (introduced in v4, stable in v5)
+- Intersection Observer API is native to all modern browsers (no polyfill needed)
+- WordPress core provides user_meta and wpdb without plugins
 
-### Pull-to-Refresh
+## Implementation Patterns
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `react-simple-pull-to-refresh` | ^1.3.3 | Mobile pull-to-refresh gesture | Zero dependencies, 40K+ weekly downloads, works on both mobile and desktop. Simple async/await API integrates cleanly with TanStack Query's refetch methods. |
+### 1. TanStack Query useInfiniteQuery Pattern
 
-**Rationale:** Among React pull-to-refresh libraries, `react-simple-pull-to-refresh` has the highest adoption (40K weekly downloads vs 667 for alternatives) and zero dependencies. While last updated 3 years ago, it's feature-complete and stable. Alternative considered: building custom hook using touch events, but this library provides cross-browser compatibility and resistance customization out of the box.
+**Current implementation (usePeople.js lines 49-84):** Loads ALL people in a while loop, client-side filtering.
 
-### Install Prompt (No External Library)
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Custom React Hook | N/A | Capture beforeinstallprompt | Native browser API, no library needed. Chrome/Edge/Samsung Internet support only. iOS Safari does not support programmatic install prompts. |
-
-**Rationale:** The `beforeinstallprompt` event is a browser-native API. Adding a library like `react-pwa-install` adds unnecessary dependencies for functionality that can be implemented in ~20 lines of custom hook code. iOS Safari requires manual "Add to Home Screen" from share menu regardless of library choice.
-
-### PWA Icon Generation (Build-time Tool)
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `@vite-pwa/assets-generator` | ^0.2+ | Generate PWA icons | Official tool from vite-pwa ecosystem. Generates all required icon sizes (192x192, 512x512) and maskable variants from single source image. |
-
-**Rationale:** Manually creating 8+ icon variants is error-prone. This CLI tool generates all required sizes and formats (including Apple touch icons) from a single source image. Used during development setup, not a runtime dependency.
-
-## Integration Architecture
-
-### Web App Manifest vs Vite Build Manifest
-
-**Critical:** Vite's `build.manifest: true` generates a `manifest.json` for asset mapping. Web App Manifest also uses `manifest.json`. To avoid conflicts:
-
-- **Vite build manifest:** Remains at `dist/.vite/manifest.json` (Vite 5+ default behavior)
-- **Web App Manifest:** Use `manifest.webmanifest` filename (W3C recommended standard)
-- `vite-plugin-pwa` automatically handles this separation
-
-Current `vite.config.js` has `manifest: true` for asset mapping. This remains unchanged. `vite-plugin-pwa` generates separate `manifest.webmanifest` for PWA functionality.
-
-### Service Worker Strategy: generateSW vs injectManifest
-
-**Recommendation:** Use `generateSW` (default) strategy.
-
-| Strategy | When to Use | Complexity |
-|----------|-------------|------------|
-| `generateSW` | Standard offline caching, precaching build assets | Low - Workbox generates SW code |
-| `injectManifest` | Custom SW logic, advanced features (background sync, push notifications) | High - Write custom SW code |
-
-**Rationale for generateSW:**
-- Milestone scope is basic PWA features (install, offline, pull-to-refresh)
-- No background sync or push notifications required yet
-- `generateSW` provides runtime caching for WordPress REST API via configuration
-- Can migrate to `injectManifest` later if advanced features needed
-
-### Runtime Caching Strategy
-
-For WordPress REST API endpoints, configure Workbox runtime caching:
-
+**New pattern:**
 ```javascript
-workbox: {
-  runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/.*\.stadion\..*\/wp-json\/.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'api-cache',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 5 * 60, // 5 minutes
-        },
-        networkTimeoutSeconds: 10,
-      },
+export function usePeopleInfinite(filters = {}) {
+  return useInfiniteQuery({
+    queryKey: peopleKeys.list(filters),
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await wpApi.getPeople({
+        per_page: 50, // Server-side pagination
+        page: pageParam,
+        _embed: true,
+        ...filters, // Pass filters to server
+      });
+
+      return {
+        people: response.data.map(transformPerson),
+        nextPage: pageParam + 1,
+        totalPages: parseInt(response.headers['x-wp-totalpages'] || '1', 10),
+      };
     },
-  ],
+    initialPageParam: 1, // REQUIRED in v5
+    getNextPageParam: (lastPage) => {
+      // Return undefined when no more pages (stops fetching)
+      return lastPage.nextPage <= lastPage.totalPages
+        ? lastPage.nextPage
+        : undefined;
+    },
+    getPreviousPageParam: (firstPage) => {
+      return firstPage.page > 1 ? firstPage.page - 1 : undefined;
+    },
+    maxPages: 10, // NEW in v5: Limit memory usage
+  });
 }
 ```
 
-**Strategy rationale:**
-- **NetworkFirst** for `/wp-json/` endpoints: Tries network first, falls back to cache on failure. Ensures fresh data when online while providing offline fallback.
-- **CacheFirst** for static assets (CSS, JS, images): vite-plugin-pwa handles this automatically via precaching.
-- **StaleWhileRevalidate** not recommended for WordPress REST: Would show stale data immediately, causing confusing UX when data has changed server-side.
+**Why this pattern:**
+- `initialPageParam` is REQUIRED in v5 (breaking change from v4)
+- `maxPages` prevents infinite memory growth (limits stored pages to 10)
+- `getNextPageParam` returning `undefined` signals end of data
+- Data structure: `data.pages` array, each page contains `people` array
+- Access via: `data.pages.flatMap(page => page.people)`
 
-## Installation
+**Source:** [TanStack Query v5 useInfiniteQuery Reference](https://tanstack.com/query/v5/docs/framework/react/reference/useInfiniteQuery)
 
-```bash
-# Core PWA dependencies
-npm install -D vite-plugin-pwa
+### 2. Intersection Observer for Scroll Detection
 
-# Pull-to-refresh
-npm install react-simple-pull-to-refresh
+**Pattern (no libraries needed):**
+```javascript
+import { useEffect, useRef } from 'react';
 
-# Icon generation (one-time setup)
-npm install -D @vite-pwa/assets-generator
+function useInfiniteScroll(callback, hasMore, isFetching) {
+  const observerTarget = useRef(null);
+
+  useEffect(() => {
+    if (!hasMore || isFetching) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          callback();
+        }
+      },
+      { threshold: 0.1 } // Trigger when 10% visible
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [callback, hasMore, isFetching]);
+
+  return observerTarget;
+}
+
+// Usage in component:
+const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = usePeopleInfinite();
+const loadMoreRef = useInfiniteScroll(fetchNextPage, hasNextPage, isFetchingNextPage);
+
+// JSX:
+<div ref={loadMoreRef} className="h-10" />
 ```
 
-## Configuration Changes Required
+**Why native Intersection Observer:**
+- No external dependencies (87% browser support, all modern browsers)
+- More performant than scroll event listeners
+- Automatic viewport detection
+- Built-in threshold control
 
-### 1. Update vite.config.js
+**Sources:**
+- [MDN Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)
+- [Infinite Scroll in React with Intersection Observer](https://dev.to/matan3sh/infinite-scroll-in-react-with-intersection-observer-3932)
 
+### 3. WordPress wpdb JOIN Query Pattern
+
+**Current problem:** Multiple meta_query joins on wp_postmeta cause exponential performance degradation.
+
+**Research finding:** ACF stores relationships as serialized arrays in post_meta. Querying across work_history (repeater field) requires JOINing wp_postmeta multiple times, which is a known WordPress performance killer.
+
+**Recommended pattern (server-side PHP):**
+```php
+// In custom REST endpoint: /stadion/v1/people
+global $wpdb;
+
+// Single JOIN to wp_postmeta for work_history
+// Conditional aggregation instead of multiple JOINs
+$query = "
+  SELECT DISTINCT p.ID, p.post_title, p.post_modified,
+    MAX(CASE WHEN pm.meta_key = 'first_name' THEN pm.meta_value END) as first_name,
+    MAX(CASE WHEN pm.meta_key = 'last_name' THEN pm.meta_value END) as last_name,
+    MAX(CASE WHEN pm.meta_key = 'work_history' THEN pm.meta_value END) as work_history_serialized
+  FROM {$wpdb->posts} p
+  LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+  WHERE p.post_type = 'person'
+    AND p.post_status = 'publish'
+  GROUP BY p.ID
+  ORDER BY %s %s
+  LIMIT %d OFFSET %d
+";
+
+$prepared = $wpdb->prepare($query, $orderby, $order, $per_page, $offset);
+$results = $wpdb->get_results($prepared);
+
+// Post-process: Unserialize work_history, extract current team
+foreach ($results as &$row) {
+  $work_history = maybe_unserialize($row->work_history_serialized);
+  $row->current_team_id = extract_current_team($work_history);
+}
+```
+
+**Why this pattern:**
+- Single LEFT JOIN instead of multiple meta_query JOINs
+- Conditional aggregation (CASE) pivots meta rows into columns
+- Post-processing in PHP for complex ACF repeater logic
+- Reduces query time from 4s to <1s (per research findings)
+
+**Critical optimization:** Use `LIMIT` and `OFFSET` for pagination at SQL level, not PHP.
+
+**Sources:**
+- [ACF WordPress Post Meta Query Performance Best Practices](https://www.advancedcustomfields.com/blog/wordpress-post-meta-query/)
+- [Delicious Brains SQL Query Optimization](https://deliciousbrains.com/sql-query-optimization/)
+- [WooCommerce Issue #27746: Double-left join performance killer](https://github.com/woocommerce/woocommerce/issues/27746)
+
+### 4. WordPress User Meta for Column Preferences
+
+**Pattern (already used in Stadion - see class-rest-api.php theme preferences):**
+
+**Frontend (React):**
 ```javascript
-import { VitePWA } from 'vite-plugin-pwa';
+// In custom hook: useColumnPreferences.js
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { prmApi } from '@/api/client';
 
-export default defineConfig({
-  plugins: [
-    react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      manifest: {
-        name: 'Stadion Personal CRM',
-        short_name: 'Stadion',
-        description: 'Personal relationship management system',
-        theme_color: '#ffffff',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-        ],
-      },
-      workbox: {
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.stadion\..*\/wp-json\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 300,
-              },
-              networkTimeoutSeconds: 10,
-            },
-          },
-        ],
-      },
-    }),
-  ],
-  // Existing config remains unchanged
+export function useColumnPreferences() {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: ['user-preferences', 'people-columns'],
+    queryFn: async () => {
+      const response = await prmApi.getUserPreference('people_list_columns');
+      // Returns array of column keys: ['first_name', 'last_name', 'organization', 'labels']
+      return response.data.columns || DEFAULT_COLUMNS;
+    },
+  });
+}
+
+export function useUpdateColumnPreferences() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (columns) =>
+      prmApi.updateUserPreference('people_list_columns', { columns }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
+    },
+  });
+}
+```
+
+**Backend (PHP REST endpoint):**
+```php
+// In includes/class-rest-api.php (pattern already exists for theme_preferences)
+register_rest_route('stadion/v1', '/user/list-preferences', [
+  'methods' => 'GET',
+  'callback' => function() {
+    $user_id = get_current_user_id();
+    $columns = get_user_meta($user_id, 'people_list_columns', true);
+
+    return rest_ensure_response([
+      'columns' => $columns ?: ['first_name', 'last_name', 'organization', 'labels']
+    ]);
+  },
+]);
+
+register_rest_route('stadion/v1', '/user/list-preferences', [
+  'methods' => 'PATCH',
+  'callback' => function($request) {
+    $user_id = get_current_user_id();
+    $columns = $request->get_param('columns');
+
+    update_user_meta($user_id, 'people_list_columns', $columns);
+
+    return rest_ensure_response(['success' => true]);
+  },
+]);
+```
+
+**Why user_meta:**
+- Per-user storage (not global)
+- Survives cache clears
+- Native WordPress API (no custom tables)
+- Already used in Stadion (theme_preferences, dashboard_settings)
+
+**Sources:**
+- [WordPress Working with User Metadata](https://developer.wordpress.org/plugins/users/working-with-user-metadata/)
+- [update_user_meta() Function Reference](https://developer.wordpress.org/reference/functions/update_user_meta/)
+
+### 5. WordPress REST API Pagination Headers
+
+**WordPress native headers (already available):**
+```javascript
+// Response headers from wpApi.getPeople():
+const totalRecords = response.headers['x-wp-total'];      // Total count of all records
+const totalPages = response.headers['x-wp-totalpages'];   // Total pages for current per_page
+
+// Standard query params (already working):
+wpApi.getPeople({
+  per_page: 50,  // Max 100 per WordPress core
+  page: 2,       // Current page
+  orderby: 'title', // 'title', 'date', 'modified', 'id'
+  order: 'asc'   // 'asc' or 'desc'
 });
 ```
 
-### 2. Add PWA Icons to public/
+**No custom implementation needed.** WordPress REST API handles pagination headers automatically for custom post types.
 
-Generate icons using assets-generator, place in `public/` directory:
-- `pwa-192x192.png`
-- `pwa-512x512.png`
-- `apple-touch-icon.png` (180x180 for iOS)
+**Source:** [WordPress REST API Pagination Handbook](https://developer.wordpress.org/rest-api/using-the-rest-api/pagination/)
 
-### 3. Custom React Hook for Install Prompt
+## Server-Side Filtering Requirements
 
-No external library needed. Implement custom hook:
+**New REST endpoint pattern:**
+```php
+// Extend wp/v2/people endpoint with meta_query support
+add_filter('rest_person_query', function($args, $request) {
+  // Server-side search filter
+  if ($search = $request->get_param('search')) {
+    $args['s'] = $search;
+  }
 
-```javascript
-// src/hooks/usePWAInstall.js
-import { useState, useEffect } from 'react';
+  // Server-side label filter
+  if ($labels = $request->get_param('person_label')) {
+    $args['tax_query'] = [
+      [
+        'taxonomy' => 'person_label',
+        'field' => 'term_id',
+        'terms' => $labels,
+      ]
+    ];
+  }
 
-export function usePWAInstall() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isInstallable, setIsInstallable] = useState(false);
+  // Server-side team filter (via work_history meta)
+  // NOTE: This will still be slow with meta_query
+  // Prefer custom wpdb endpoint for performance
+  if ($team_id = $request->get_param('team_id')) {
+    $args['meta_query'] = [
+      [
+        'key' => 'work_history',
+        'value' => serialize(strval($team_id)),
+        'compare' => 'LIKE'
+      ]
+    ];
+  }
 
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setIsInstallable(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  const promptInstall = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    setDeferredPrompt(null);
-    setIsInstallable(false);
-
-    return outcome === 'accepted';
-  };
-
-  return { isInstallable, promptInstall };
-}
+  return $args;
+}, 10, 2);
 ```
 
-## Alternatives Considered
+**For complex filters (team, custom fields), use custom wpdb endpoint instead of extending wp/v2/people.**
 
-### Service Worker Management
+## Performance Optimizations
 
-| Recommended | Alternative | Why Not |
-|-------------|-------------|---------|
-| vite-plugin-pwa | Custom service worker | Requires manual Workbox setup, no Vite integration, increases maintenance burden |
-| vite-plugin-pwa | Parcel/Webpack plugins | Not compatible with Vite |
+### TanStack Query maxPages (NEW in v5)
 
-### Pull-to-Refresh Libraries
+**Problem:** Infinite scroll can consume infinite memory.
+**Solution:** `maxPages` option limits stored pages.
 
-| Recommended | Alternative | Why Not |
-|-------------|-------------|---------|
-| react-simple-pull-to-refresh | react-pull-to-refresh | Lower adoption (3K vs 40K weekly downloads), similar API |
-| react-simple-pull-to-refresh | Custom touch event implementation | Requires handling touch events, resistance physics, scroll detection—all already solved by library |
-| react-simple-pull-to-refresh | Native CSS overscroll-behavior | Only works on Chromium browsers, no iOS Safari support |
+```javascript
+useInfiniteQuery({
+  // ... other options
+  maxPages: 10, // Only keep 10 pages in memory
+});
+```
 
-### Install Prompt Libraries
+When user scrolls past 10 pages, oldest pages are evicted from cache. Scrolling back up triggers refetch.
 
-| Recommended | Alternative | Why Not |
-|-------------|-------------|---------|
-| Custom hook | react-pwa-install | Adds 50KB dependency for ~20 lines of code. Library handles iOS Safari detection but can't bypass Apple's restrictions anyway. |
-| Custom hook | pwa-install | Similar issue—unnecessary dependency for simple event handler |
+**Source:** [TanStack Query v5 Migration Guide](https://tanstack.com/query/v5/docs/react/guides/migrating-to-v5)
 
-## iOS Safari Limitations (Critical)
+### WordPress Query Performance
 
-**SERVICE WORKER:** Supported but with severe restrictions.
-- Background execution extremely limited (battery conservation)
-- Cache storage limited to 50MB
-- Service worker may be killed aggressively when app in background
+**Best practices for custom wpdb queries:**
+1. **Avoid multiple JOINs on wp_postmeta** - Use conditional aggregation (CASE statements)
+2. **Use LIMIT/OFFSET at SQL level** - Not array_slice in PHP
+3. **Add indexes** - `ALTER TABLE wp_postmeta ADD INDEX meta_key_value (meta_key, meta_value(20))`
+4. **Set no_found_rows** - For WP_Query: `'no_found_rows' => true` (skips SQL_CALC_FOUND_ROWS)
+5. **Use fields parameter** - Return only needed fields: `'fields' => 'ids'`
 
-**INSTALL PROMPT:** NOT supported.
-- No `beforeinstallprompt` event fires on iOS Safari
-- Must use manual "Add to Home Screen" from share menu
-- No programmatic prompt possible
+**Source:** [WordPress VIP WP_Query Performance](https://wpvip.com/blog/wp-query-performance/)
 
-**PUSH NOTIFICATIONS:** Supported only on iOS 16.4+ (outside EU).
-- In EU, Apple removed standalone PWA support in iOS 17.4
-- PWAs open in Safari tabs instead of standalone windows
-- Push notifications don't work in EU
+## Integration with Existing Stack
 
-**RECOMMENDATION:** Design UI to gracefully handle absence of install prompt on iOS. Show instruction modal with screenshot of share menu for iOS users.
+### Existing Patterns to Preserve
 
-## Platform Support Matrix
+1. **Access Control (class-access-control.php):** Apply to new endpoint
+2. **Nonce Authentication (api/client.js):** Already configured
+3. **TanStack Query Keys (peopleKeys):** Extend with filter params
+4. **Error Handling (axios interceptors):** Already handles 401/403
 
-| Feature | Chrome/Edge Desktop | Chrome Android | iOS Safari | Samsung Internet |
-|---------|---------------------|----------------|------------|------------------|
-| Service Worker | Full | Full | Limited | Full |
-| Install Prompt | Yes | Yes | No | Yes |
-| Pull-to-Refresh | Yes (via library) | Yes (native + library) | Yes (via library) | Yes |
-| Offline Caching | Yes | Yes | Yes (50MB limit) | Yes |
-| Standalone Mode | Yes | Yes | Yes (No in EU) | Yes |
+### Files to Modify
 
-## Build Pipeline Integration
+**Backend:**
+- `includes/class-rest-api.php` - Add `/stadion/v1/people` endpoint with wpdb query
+- `includes/class-rest-api.php` - Add `/stadion/v1/user/list-preferences` endpoints
 
-### Development Mode
-- `npm run dev` - Vite dev server on port 5173
-- Service worker NOT active in dev (prevents caching issues)
-- Enable via `devOptions: { enabled: true }` if testing SW locally
+**Frontend:**
+- `src/hooks/usePeople.js` - Add `usePeopleInfinite` hook
+- `src/hooks/` - Add `useColumnPreferences.js`
+- `src/pages/People/PeopleList.jsx` - Replace table rendering with infinite scroll
+- `src/api/client.js` - Add `prmApi.getUserPreference`, `prmApi.updateUserPreference`
 
-### Production Build
-- `npm run build` - Generates:
-  - `dist/.vite/manifest.json` (Vite asset manifest)
-  - `dist/manifest.webmanifest` (Web App Manifest)
-  - `dist/sw.js` (Service worker)
-  - `dist/workbox-*.js` (Workbox runtime)
-  - All existing assets (CSS, JS, images)
+## Libraries NOT Needed
 
-### Deployment
-- Existing `bin/deploy.sh` script works unchanged
-- Syncs entire `dist/` folder including new SW files
-- Service worker registers automatically on first page load
+**Confirmed NOT required (research findings):**
+- ❌ `react-intersection-observer` - Native API is sufficient
+- ❌ `react-infinite-scroll-component` - TanStack Query handles state
+- ❌ `react-virtualized` / `react-window` - Not needed for 1400 records with pagination
+- ❌ ACF custom table addon - Standard ACF + wpdb optimization is sufficient
 
 ## Version Compatibility
 
-| Dependency | Minimum Version | Current Project | Compatible |
-|------------|-----------------|-----------------|------------|
-| Node.js | 18+ | 18+ | Yes |
-| Vite | 5.0+ | 5.0+ | Yes |
-| React | 16.8+ (hooks) | 18+ | Yes |
-| PHP | 8.0+ | 8.0+ | Yes |
+| Component | Version | Compatibility |
+|-----------|---------|---------------|
+| TanStack Query | 5.17.0 | ✅ v5.0+ supports useInfiniteQuery with maxPages |
+| React | 18.2.0 | ✅ useEffect, useRef support Intersection Observer |
+| WordPress | 6.0+ | ✅ REST API pagination headers native |
+| PHP | 8.0+ | ✅ $wpdb global available |
+| Browsers | Modern | ✅ Intersection Observer 87% support (IE11 not supported) |
 
-## Migration Path to Advanced Features
+## Recommended Approach
 
-If future milestones require advanced PWA features:
+### Phase 1: Backend Foundation
+1. Create custom `/stadion/v1/people` endpoint with wpdb JOIN query
+2. Implement server-side filtering (search, labels, team)
+3. Add `/stadion/v1/user/list-preferences` endpoints for column storage
+4. Add indexes to wp_postmeta if needed
 
-### Background Sync (for offline actions)
-- Switch to `injectManifest` strategy
-- Add custom SW code with Workbox BackgroundSync
-- Complexity: Medium
+### Phase 2: Frontend Integration
+1. Create `usePeopleInfinite` hook with TanStack Query
+2. Create `useColumnPreferences` hook for user settings
+3. Build Intersection Observer custom hook
+4. Migrate PeopleList.jsx to infinite scroll pattern
 
-### Push Notifications
-- Switch to `injectManifest` strategy
-- Add backend support for Web Push API (PHP library)
-- Add notification permission UI
-- Complexity: High
-- Note: Won't work on iOS in EU
-
-### Periodic Background Sync
-- Switch to `injectManifest` strategy
-- Limited browser support (Chrome 80+, not iOS)
-- Complexity: Medium
-
-**Current recommendation:** Stay with `generateSW` until these features are explicitly required.
-
-## Security Considerations
-
-### Service Worker Scope
-- Service worker at `/wp-content/themes/stadion/dist/sw.js` has scope of `/wp-content/themes/stadion/dist/`
-- **Issue:** Won't intercept requests to WordPress root or other paths
-- **Solution:** Configure `scope: '/'` in VitePWA options and serve SW from root via WordPress routing
-
-### HTTPS Requirement
-- Service workers require HTTPS (or localhost for dev)
-- Production environment must serve over HTTPS
-- Current deployment: Verify SSL certificate is active
-
-### Cache Poisoning
-- NetworkFirst strategy prevents serving indefinitely stale data
-- 5-minute cache expiration for API responses
-- Workbox automatically versions precached assets
-
-## Performance Impact
-
-### Bundle Size
-- `vite-plugin-pwa`: 0 KB (build-time only)
-- `workbox-window`: ~4 KB gzipped (runtime)
-- `react-simple-pull-to-refresh`: ~3 KB gzipped
-- **Total runtime impact:** ~7 KB additional bundle size
-
-### Service Worker Overhead
-- Initial SW registration: ~50ms
-- Precache size: ~500 KB (estimated for current React app)
-- API cache: 50 entries max, 5-minute TTL, minimal storage impact
-
-### Perceived Performance
-- **First visit:** Slightly slower (SW registration + precache download)
-- **Repeat visits:** Significantly faster (instant load from cache)
-- **Offline:** Functional instead of broken
-
-## Testing Requirements
-
-### Browser Testing
-- Chrome/Edge: Full PWA features
-- Firefox: Service worker only (no install prompt)
-- Safari macOS: Service worker only (no install prompt)
-- Safari iOS: Service worker (limited), no install prompt
-- Chrome Android: Full PWA features
-
-### Testing Checklist
-- [ ] Install prompt appears on Chrome/Edge desktop and Android
-- [ ] App installs successfully
-- [ ] Offline mode works (disconnect network, app still loads)
-- [ ] Pull-to-refresh triggers data refetch on mobile
-- [ ] iOS Safari shows app in standalone mode (when added to home screen)
-- [ ] Service worker updates automatically on new deployments
+### Phase 3: Optimization
+1. Add `maxPages` limit to prevent memory growth
+2. Profile wpdb query performance with WP_Query debugging
+3. Add loading states and error boundaries
+4. Implement optimistic updates for column preferences
 
 ## Sources
 
-### Official Documentation (HIGH confidence)
-- [Vite Plugin PWA Guide](https://vite-pwa-org.netlify.app/guide/)
-- [Workbox Strategies - Chrome for Developers](https://developer.chrome.com/docs/workbox/modules/workbox-strategies)
-- [MDN: Web App Manifest](https://developer.mozilla.org/en-US/docs/Web/Manifest)
-- [MDN: Progressive Web Apps](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
-- [BeforeInstallPromptEvent - MDN](https://developer.mozilla.org/en-US/docs/Web/API/BeforeInstallPromptEvent)
+**TanStack Query:**
+- [Infinite Queries Guide](https://tanstack.com/query/v5/docs/react/guides/infinite-queries)
+- [useInfiniteQuery Reference](https://tanstack.com/query/v5/docs/framework/react/reference/useInfiniteQuery)
+- [TanStack Query v5 useInfiniteQuery Discussion #5921](https://github.com/TanStack/query/discussions/5921)
 
-### Library Sources (MEDIUM confidence)
-- [vite-plugin-pwa GitHub](https://github.com/vite-pwa/vite-plugin-pwa)
-- [react-simple-pull-to-refresh npm](https://www.npmjs.com/package/react-simple-pull-to-refresh)
-- [react-simple-pull-to-refresh vs alternatives - npm trends](https://npmtrends.com/react-pullable-vs-react-simple-pull-to-refresh)
+**WordPress Performance:**
+- [ACF Post Meta Query Performance](https://www.advancedcustomfields.com/blog/wordpress-post-meta-query/)
+- [Delicious Brains SQL Query Optimization](https://deliciousbrains.com/sql-query-optimization/)
+- [WordPress VIP WP_Query Performance](https://wpvip.com/blog/wp-query-performance/)
+- [WooCommerce Issue #27746: Double-left join performance](https://github.com/woocommerce/woocommerce/issues/27746)
 
-### Platform Limitations (MEDIUM confidence - rapidly evolving)
-- [PWA on iOS - Current Status & Limitations [2025]](https://brainhub.eu/library/pwa-on-ios)
-- [PWA iOS Limitations and Safari Support Guide](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide)
-- [Do PWAs Work on iPhone?](https://www.mobiloud.com/blog/progressive-web-apps-ios)
+**Intersection Observer:**
+- [MDN Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)
+- [FreeCodeCamp: Infinite Scrolling in React](https://www.freecodecamp.org/news/infinite-scrolling-in-react/)
+- [DEV: Infinite Scroll with Intersection Observer](https://dev.to/matan3sh/infinite-scroll-in-react-with-intersection-observer-3932)
 
-### Technical Implementation (MEDIUM confidence)
-- [Advanced Caching Strategies with Workbox](https://medium.com/animall-engineering/advanced-caching-strategies-with-workbox-beyond-stalewhilerevalidate-d000f1d27d0a)
-- [Vite manifest.json vs Web App Manifest - GitHub Issue #9636](https://github.com/vitejs/vite/issues/9636)
-- [Progressive Web App (PWA) with Vite Development Guide](https://dev.to/hamdankhan364/simplifying-progressive-web-app-pwa-development-with-vite-a-beginners-guide-38cf)
+**WordPress APIs:**
+- [WordPress REST API Pagination](https://developer.wordpress.org/rest-api/using-the-rest-api/pagination/)
+- [WordPress User Metadata](https://developer.wordpress.org/plugins/users/working-with-user-metadata/)
+- [update_user_meta() Function](https://developer.wordpress.org/reference/functions/update_user_meta/)
+- [get_user_meta() Function](https://developer.wordpress.org/reference/functions/get_user_meta/)

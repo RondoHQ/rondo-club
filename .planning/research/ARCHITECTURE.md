@@ -1,795 +1,936 @@
-# PWA Architecture Integration
+# Architecture Patterns: People List Performance & Customization
 
-**Domain:** React SPA + WordPress Theme
-**Researched:** 2026-01-28
-**Confidence:** HIGH (verified with official Vite PWA plugin docs and WordPress PWA patterns)
+**Project:** Stadion - Personal CRM
+**Researched:** 2026-01-29
+**Confidence:** HIGH
 
 ## Executive Summary
 
-PWA features integrate into the existing Stadion architecture through the **vite-plugin-pwa**, which generates manifest and service worker at build time. The plugin extends the Vite build pipeline to produce PWA assets that WordPress then serves alongside the existing React SPA. Critical integration points include: manifest injection into `index.php`, service worker registration in `main.jsx`, and scope configuration to exclude WordPress admin areas.
+This research analyzes how to integrate infinite scroll with server-side filtering and per-user column preferences into Stadion's existing WordPress/React architecture. The system currently loads all people client-side (via paginated loop in `usePeople()`) and performs filtering/sorting in-memory. The milestone requires:
 
-**Key architectural decision:** Service worker must be served from theme root (not `/dist/`) to control the entire frontend scope while excluding `/wp-admin/`.
+1. **Infinite scroll** with server-side filtering to handle large datasets (100+ people)
+2. **Per-user column preferences** for customizable list views
+3. **Server-side sorting** including ACF custom fields
 
-## Integration Points
+Key findings: Stadion's architecture is well-suited for these enhancements. The existing REST endpoint pattern (`/wp/v2/people` + `/stadion/v1/*` for custom endpoints) provides clear integration points. TanStack Query's `useInfiniteQuery` replaces the current `usePeople()` implementation. User preferences fit naturally into existing user_meta storage patterns.
 
-### 1. Manifest Location and Serving
+## Current Architecture Analysis
 
-**Where it lives:**
-- Generated: `dist/manifest.webmanifest` (by vite-plugin-pwa during build)
-- Served from: Theme root via WordPress `wp_head` hook
-- Referenced in: `index.php` via `<link rel="manifest">` tag
+### Existing Data Flow
 
-**How it's served:**
+```
+Frontend (React SPA)
+├── PeopleList.jsx
+│   ├── Uses usePeople() hook
+│   ├── Client-side filtering (labels, birth year, last modified, ownership)
+│   ├── Client-side sorting (first_name, last_name, organization, labels, custom fields)
+│   └── Renders PersonListRow components
+│
+└── usePeople() hook
+    ├── TanStack Query useQuery
+    ├── Pagination loop (per_page: 100, fetches all pages)
+    ├── Transforms person data (thumbnail, labels, computed fields)
+    └── Returns flattened array of all people
+
+Backend (WordPress)
+├── /wp/v2/people (standard REST)
+│   ├── WordPress core pagination (page, per_page)
+│   ├── Standard WP_Query parameters
+│   └── ACF fields in response via _embed
+│
+├── /stadion/v1/people/* (custom endpoints)
+│   ├── /people/bulk-update - bulk operations
+│   ├── /people/{id}/dates - person dates
+│   └── /people/{id}/timeline - person timeline
+│
+└── Access Control (STADION_Access_Control)
+    ├── Hooks into WP_Query (pre_get_posts)
+    ├── Approved users see all data
+    └── Unapproved users see nothing
+```
+
+### Current Components
+
+**Frontend:**
+- `src/hooks/usePeople.js` - Data fetching with TanStack Query
+- `src/pages/People/PeopleList.jsx` - List view with filtering/sorting
+- `src/api/client.js` - Axios wrapper with nonce injection
+
+**Backend:**
+- `includes/class-rest-people.php` - Custom people endpoints
+- `includes/class-rest-api.php` - General custom endpoints
+- `includes/class-access-control.php` - Row-level filtering
+- `includes/class-rest-custom-fields.php` - Custom field management
+
+### Current Limitations
+
+1. **All-or-nothing loading:** Current `usePeople()` fetches ALL people in a loop, poor performance with 100+ records
+2. **Client-side operations:** All filtering and sorting happens in-memory in `PeopleList.jsx`
+3. **No server-side ACF sorting:** Cannot sort by custom fields on server (requires meta_query)
+4. **No user preferences:** Column visibility/order not persisted per-user
+5. **No cursor-based pagination:** Uses page numbers, can miss new records
+
+## Recommended Architecture
+
+### Overview Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Frontend: React SPA with TanStack Query                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  PeopleList.jsx (Modified)                                   │
+│  ├── useInfiniteQuery for infinite scroll                   │
+│  ├── Server-side filtering via query params                 │
+│  ├── Server-side sorting via query params                   │
+│  └── Column preferences from useUserPreferences()            │
+│                                                               │
+│  usePeopleInfinite() (New Hook)                              │
+│  ├── Replaces usePeople() for list view                     │
+│  ├── useInfiniteQuery with page-based pagination            │
+│  ├── queryFn: GET /stadion/v1/people/filtered               │
+│  ├── getNextPageParam: page+1 if hasMore                    │
+│  └── Flattens pages for rendering                           │
+│                                                               │
+│  useUserPreferences() (New Hook)                             │
+│  ├── GET /stadion/v1/user/list-preferences                  │
+│  ├── PATCH /stadion/v1/user/list-preferences                │
+│  └── Manages column visibility, order, and default sort     │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Backend: WordPress REST API + Custom Endpoints              │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  /stadion/v1/people/filtered (New Endpoint)                  │
+│  ├── Server-side filtering (labels, birth_year, modified)   │
+│  ├── Server-side sorting (including ACF fields via JOIN)    │
+│  ├── Efficient pagination (LIMIT/OFFSET)                    │
+│  ├── Response: { people: [], hasMore: bool, total: int }    │
+│  └── Respects AccessControl (approved users only)           │
+│                                                               │
+│  /stadion/v1/user/list-preferences (New Endpoint)            │
+│  ├── GET: Returns visible_columns, column_order, sort       │
+│  ├── PATCH: Updates preferences in user_meta                │
+│  └── Stored: wp_usermeta with key 'stadion_people_list_prefs'│
+│                                                               │
+│  Custom SQL Query Builder (New Class)                        │
+│  ├── Uses $wpdb for efficient JOINs                          │
+│  ├── JOINs wp_postmeta for ACF fields when sorting          │
+│  ├── Builds dynamic WHERE clauses for filters               │
+│  ├── Applies AccessControl at SQL level                     │
+│  └── Returns post IDs + total count                         │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Component Integration Points
+
+### 1. New REST Endpoint: `/stadion/v1/people/filtered`
+
+**Purpose:** Server-side filtering, sorting, and pagination for People list.
+
+**Location:** Add to `includes/class-rest-people.php`
+
+**Request Parameters:**
 ```php
-// In functions.php
-function stadion_add_pwa_manifest() {
-    $manifest_url = STADION_THEME_URL . '/dist/manifest.webmanifest';
-    echo '<link rel="manifest" href="' . esc_url($manifest_url) . '">';
-}
-add_action('wp_head', 'stadion_add_pwa_manifest', 2);
-```
-
-**Configuration location:** `vite.config.js`
-```javascript
-import { VitePWA } from 'vite-plugin-pwa'
-
-export default defineConfig({
-  plugins: [
-    react(),
-    VitePWA({
-      registerType: 'prompt', // or 'autoUpdate'
-      manifest: {
-        name: 'Stadion',
-        short_name: 'Stadion',
-        start_url: '/',
-        display: 'standalone',
-        background_color: '#fffbeb',
-        theme_color: '#f59e0b',
-        icons: [
-          // Icon configurations
-        ]
-      }
-    })
-  ]
-})
-```
-
-**Why this location:**
-- Vite PWA plugin automatically injects manifest link into build output
-- WordPress `wp_head` ensures proper HTML head ordering
-- Theme URL constant ensures correct absolute paths
-
-### 2. Service Worker Location and Scope
-
-**Critical architectural requirement:** Service worker MUST be served from theme root to control frontend scope.
-
-**Where it lives:**
-- Generated: `dist/sw.js` (by vite-plugin-pwa)
-- **Must be copied to:** `sw.js` (theme root)
-- Registered from: `src/main.jsx`
-
-**Why theme root:**
-Service worker scope is determined by its location. A service worker at `/wp-content/themes/stadion/sw.js` can only control URLs under `/wp-content/themes/stadion/`, which is too restrictive. The service worker needs to control `/` to intercept frontend routes like `/people`, `/teams`, etc.
-
-**Service Worker-Allowed header alternative:**
-If copying to root is not possible, WordPress can serve the service worker from `/dist/sw.js` with a `Service-Worker-Allowed: /` HTTP header to broaden scope. However, this requires server configuration and is less portable.
-
-**Recommended approach:** Post-build copy step
-```json
-// package.json
-{
-  "scripts": {
-    "build": "vite build && npm run copy-sw",
-    "copy-sw": "cp dist/sw.js sw.js"
-  }
-}
-```
-
-**Scope configuration:**
-```javascript
-// vite.config.js
-VitePWA({
-  scope: '/',
-  workbox: {
-    navigateFallback: null, // WordPress handles routing
-    runtimeCaching: [
-      {
-        urlPattern: /^https:\/\/.*\/wp-json\/.*/,
-        handler: 'NetworkFirst',
-        options: {
-          cacheName: 'api-cache',
-          networkTimeoutSeconds: 10,
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 5 * 60 // 5 minutes
-          }
-        }
-      }
-    ]
-  }
-})
-```
-
-### 3. Service Worker Registration
-
-**Where:** `src/main.jsx` (after React root render)
-
-**Strategy:** Use vite-plugin-pwa virtual modules for lifecycle control
-
-```javascript
-// src/main.jsx
-import { registerSW } from 'virtual:pwa-register'
-
-// After ReactDOM.createRoot(...).render(...)
-
-const updateSW = registerSW({
-  onNeedRefresh() {
-    // Show update prompt to user
-    // Store updateSW callback for user-triggered reload
-  },
-  onOfflineReady() {
-    // Notify user app is ready for offline use
-  },
-  onRegistered(registration) {
-    // Service worker registered successfully
-    console.log('SW registered:', registration)
-  },
-  onRegisterError(error) {
-    console.error('SW registration error:', error)
-  }
-})
-```
-
-**registerType options:**
-- `'prompt'` (recommended): User controls when to reload for updates. Better UX for data-heavy forms.
-- `'autoUpdate'`: Silent background updates. Simpler but can interrupt user work.
-
-**Why main.jsx:** Ensures service worker registers only after React mounts, avoiding race conditions with initial app state.
-
-### 4. Interaction with TanStack Query Cache
-
-**Cache layer coordination:**
-
-PWA introduces two cache layers:
-1. **Service Worker cache** (via Workbox) - network/HTTP level
-2. **TanStack Query cache** - application/React level
-
-**Recommended strategy: NetworkFirst for API, CacheFirst for assets**
-
-```javascript
-// Service Worker caching (Workbox config)
-runtimeCaching: [
-  {
-    // API requests: Network first, fallback to cache
-    urlPattern: /^https:\/\/.*\/wp-json\/.*/,
-    handler: 'NetworkFirst',
-    options: {
-      cacheName: 'api-cache',
-      networkTimeoutSeconds: 10,
-    }
-  },
-  {
-    // Static assets: Cache first
-    urlPattern: /\.(?:js|css|woff2?|png|jpg|jpeg|svg)$/,
-    handler: 'CacheFirst',
-    options: {
-      cacheName: 'assets-cache',
-      expiration: {
-        maxEntries: 60,
-        maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
-      }
-    }
-  }
+[
+    'page' => 1,              // Current page (default: 1)
+    'per_page' => 20,         // Items per page (default: 20, max: 100)
+    'orderby' => 'first_name',// Sort field (default: 'first_name')
+    'order' => 'asc',         // Sort direction (default: 'asc')
+    'labels' => [1, 2, 3],    // person_label term IDs (OR filter)
+    'birth_year' => 1985,     // Birth year filter
+    'modified_after' => '2025-12-01', // Modified after date
+    'search' => 'John',       // Search query (first_name, last_name)
 ]
 ```
 
-```javascript
-// TanStack Query config (src/main.jsx)
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes in memory
-      retry: 1,
-      networkMode: 'offlineFirst' // Use SW cache before failing
-    }
-  }
-})
-```
-
-**Why NetworkFirst for API:**
-- Ensures fresh data when online
-- Falls back to cached data when offline
-- Respects TanStack Query's staleTime (5 min)
-- Network timeout (10s) prevents long waits on poor connections
-
-**Why offlineFirst networkMode:**
-TanStack Query's `offlineFirst` mode works with service workers: queries run even when offline, using cached responses from the service worker. This prevents query errors during offline periods.
-
-**Cache coordination:**
-```
-User action → TanStack Query
-               ↓
-           axios request → Service Worker
-                            ↓
-                        Network attempt (with timeout)
-                            ↓
-                     [success] or [timeout/offline]
-                            ↓
-                    [return fresh] or [return cached]
-                            ↓
-                        TanStack Query
-                            ↓
-                        Update UI
-```
-
-### 5. WordPress Admin Area Exclusion
-
-**Critical requirement:** Service worker MUST NOT interfere with `/wp-admin/`
-
-**Implementation: Scope-based exclusion**
-
-The service worker scope (`/`) naturally includes admin URLs. Explicit exclusion is required in the service worker fetch handler:
-
-```javascript
-// vite.config.js
-VitePWA({
-  workbox: {
-    // Exclude admin and WordPress core from precaching
-    globIgnores: ['**/wp-admin/**', '**/wp-includes/**'],
-
-    // Navigation requests exclusion
-    navigateFallbackDenylist: [
-      /^\/wp-admin/,
-      /^\/wp-login/,
-      /^\/?wp-json/,
+**Response Format:**
+```php
+[
+    'people' => [
+        // Array of person objects (same format as /wp/v2/people)
+        // Includes ACF fields, thumbnail, labels (via transformPerson)
     ],
-
-    // Runtime caching exclusions handled per route
-  }
-})
+    'pagination' => [
+        'page' => 1,
+        'per_page' => 20,
+        'total_items' => 143,
+        'total_pages' => 8,
+        'has_more' => true,
+    ],
+]
 ```
 
-**Why this approach:**
-- WordPress admin uses different authentication (cookies vs REST nonce)
-- Admin requests should never be cached (always fresh)
-- Prevents service worker from breaking admin features
-- Preview functionality (`?preview=true`) remains unaffected
+**Implementation Strategy:**
 
-**Additional safeguard in custom service worker (if needed):**
-```javascript
-// src/sw-custom.js (optional)
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url)
+1. **Custom SQL Builder** - Build efficient queries with $wpdb
+2. **ACF JOIN for sorting** - Join wp_postmeta when orderby is custom field
+3. **Access Control Integration** - Apply approved-user filter at SQL level
+4. **Transform results** - Use existing `transformPerson()` from usePeople.js
 
-  // Don't intercept admin, login, or API requests
-  if (
-    url.pathname.startsWith('/wp-admin') ||
-    url.pathname.startsWith('/wp-login') ||
-    url.pathname.includes('wp-json')
-  ) {
-    return // Let WordPress handle it
-  }
+**Query Construction Pattern:**
 
-  // Handle other requests with Workbox strategies
-})
+```php
+// Pseudo-code for server-side query
+SELECT DISTINCT p.ID
+FROM wp_posts p
+-- Join for label filtering
+LEFT JOIN wp_term_relationships tr ON p.ID = tr.object_id
+LEFT JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+-- Join for custom field sorting
+LEFT JOIN wp_postmeta pm_sort ON p.ID = pm_sort.post_id
+    AND pm_sort.meta_key = '{custom_field_name}'
+-- Join for birth_year filtering (requires subquery for important_date)
+LEFT JOIN (
+    SELECT pm.meta_value as person_id, d.birth_year
+    FROM wp_posts d
+    JOIN wp_postmeta pm ON d.ID = pm.post_id AND pm.meta_key = 'related_people'
+    WHERE d.post_type = 'important_date'
+) dates ON p.ID = dates.person_id
+WHERE p.post_type = 'person'
+  AND p.post_status = 'publish'
+  -- Label filter (if provided)
+  AND (tt.taxonomy = 'person_label' AND tt.term_id IN ({label_ids}))
+  -- Birth year filter (if provided)
+  AND dates.birth_year = {birth_year}
+  -- Modified after filter (if provided)
+  AND p.post_modified >= '{modified_after}'
+  -- Search filter (if provided)
+  AND (pm_first.meta_value LIKE '%{search}%' OR pm_last.meta_value LIKE '%{search}%')
+ORDER BY {orderby_clause}
+LIMIT {per_page} OFFSET {offset}
 ```
 
-## Service Worker Strategy
+**Performance Considerations:**
 
-### Registration Strategy: Prompt for Update
+- **Index wp_postmeta.meta_key** - Essential for ACF field JOINs
+- **Cache results** - Use WordPress transients for expensive queries (5 min TTL)
+- **Avoid LIKE on large tables** - Use full-text search for large datasets (100k+ records)
+- **Limit JOIN depth** - Maximum 3 JOINs per query to avoid exponential complexity
 
-**Recommended:** `registerType: 'prompt'`
+### 2. New REST Endpoint: `/stadion/v1/user/list-preferences`
 
-**Rationale:**
-- Users control when to reload (preserves form state)
-- Clear communication about updates
-- Better for data-heavy CRM app
-- Prevents mid-workflow interruptions
+**Purpose:** Store and retrieve per-user column preferences for People list.
 
-**UX Flow:**
-1. Service worker detects new version
-2. `onNeedRefresh()` callback triggers
-3. App shows update notification banner
-4. User clicks "Update" when ready
-5. `updateSW()` called → reload with new version
+**Location:** Add to `includes/class-rest-api.php` (or new `class-rest-user-preferences.php`)
 
-**Alternative: autoUpdate**
-Use if seamless updates are more important than preserving user state. Suitable for read-heavy apps, not ideal for form-heavy CRM.
+**Storage:**
+- **Table:** `wp_usermeta`
+- **Meta Key:** `stadion_people_list_preferences`
+- **Value Format:** JSON-encoded array
 
-### Caching Strategy
-
-**Three-tier caching:**
-
-| Resource Type | Strategy | Cache Name | Rationale |
-|---------------|----------|------------|-----------|
-| HTML shell (`index.php` output) | NetworkFirst (timeout 5s) | `shell-cache` | Always try for fresh, fast fallback |
-| API requests (`/wp-json/*`) | NetworkFirst (timeout 10s) | `api-cache` | Fresh data priority, offline fallback |
-| Static assets (JS/CSS/images) | CacheFirst | `assets-cache` | Immutable, versioned by Vite |
-| WordPress uploads | CacheFirst | `media-cache` | Immutable, user-uploaded content |
-
-**Cache expiration:**
-```javascript
-workbox: {
-  runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/.*\/wp-json\/.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'api-cache',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 5 * 60 // Match TanStack Query staleTime
-        }
-      }
-    },
-    {
-      urlPattern: /\/wp-content\/uploads\/.*/,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'media-cache',
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
-        }
-      }
-    }
-  ]
-}
+**Data Structure:**
+```php
+[
+    'visible_columns' => [
+        'first_name',     // Core fields
+        'last_name',
+        'organization',
+        'labels',
+        'custom_field_1', // Custom fields
+        'custom_field_2',
+    ],
+    'column_order' => [
+        'first_name',
+        'organization',
+        'custom_field_1',
+        'last_name',
+        'labels',
+        'custom_field_2',
+    ],
+    'default_sort' => [
+        'field' => 'first_name',
+        'order' => 'asc',
+    ],
+]
 ```
 
-### Precaching Strategy
+**Endpoints:**
 
-**What to precache:**
-- App shell (HTML)
-- Core JS bundle (vendor chunk)
-- Core CSS
-- Critical icons/assets
+**GET** `/stadion/v1/user/list-preferences`
+- Returns current user's preferences
+- Defaults if not set:
+  - `visible_columns`: All core columns + active custom fields with `show_in_list_view: true`
+  - `column_order`: Core columns first, then custom fields by `list_view_order`
+  - `default_sort`: `{ field: 'first_name', order: 'asc' }`
 
-**What NOT to precache:**
-- API responses (runtime cached instead)
-- User uploads (too large, runtime cached)
-- Dynamic route data
+**PATCH** `/stadion/v1/user/list-preferences`
+- Updates preferences (partial updates supported)
+- Validates:
+  - `visible_columns` must be subset of available columns
+  - `column_order` must match `visible_columns` length
+  - `default_sort.field` must be in `visible_columns`
+- Returns updated preferences
 
-**Configuration:**
-```javascript
-VitePWA({
-  includeAssets: ['favicon.svg'], // Static assets to precache
-  workbox: {
-    globPatterns: ['**/*.{js,css,html,svg,woff2}'],
-    maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB limit
-  }
-})
+**Integration Pattern:**
+```php
+// Get preferences
+$preferences = get_user_meta(
+    get_current_user_id(),
+    'stadion_people_list_preferences',
+    true
+);
+
+// Update preferences (merge with defaults)
+update_user_meta(
+    get_current_user_id(),
+    'stadion_people_list_preferences',
+    wp_parse_args($new_prefs, $default_prefs)
+);
 ```
 
-## Build Order and Dependencies
+### 3. Modified Hook: `usePeopleInfinite()`
 
-### Phase 1: Foundation Setup (No code changes)
-**Goal:** Add vite-plugin-pwa and configure basic manifest
+**Purpose:** Replace `usePeople()` for list view with infinite scroll support.
 
-**Tasks:**
-1. Install dependencies: `npm install -D vite-plugin-pwa workbox-window`
-2. Configure `vite.config.js` with VitePWA plugin
-3. Configure manifest (name, icons, theme colors)
-4. Test build produces `dist/manifest.webmanifest`
-
-**Verification:**
-- `npm run build` succeeds
-- `dist/manifest.webmanifest` exists
-- Manifest contains correct app metadata
-
-**Dependencies:** None (standalone)
-
-### Phase 2: Manifest Integration
-**Goal:** Serve manifest from WordPress, add PWA meta tags
-
-**Tasks:**
-1. Add `stadion_add_pwa_manifest()` function to `functions.php`
-2. Add theme color meta tags to `index.php`
-3. Add apple-touch-icon links
-4. Test manifest loads in browser
-
-**Verification:**
-- Manifest appears in DevTools → Application → Manifest
-- No console errors about manifest
-- Theme colors applied correctly
-
-**Dependencies:** Phase 1 (requires manifest file)
-
-### Phase 3: Service Worker Generation
-**Goal:** Generate service worker, configure caching strategies
-
-**Tasks:**
-1. Configure Workbox runtime caching in `vite.config.js`
-2. Add API caching strategy (NetworkFirst)
-3. Add static asset caching (CacheFirst)
-4. Exclude `/wp-admin/` and `/wp-login/`
-5. Test build produces `dist/sw.js`
-
-**Verification:**
-- `npm run build` produces `dist/sw.js`
-- Service worker includes cache strategies
-- Admin URLs excluded from caching
-
-**Dependencies:** Phase 1 (requires plugin setup)
-
-### Phase 4: Service Worker Deployment
-**Goal:** Copy service worker to theme root, make it accessible
-
-**Tasks:**
-1. Add post-build script to `package.json`: `"copy-sw": "cp dist/sw.js sw.js"`
-2. Update `npm run build` to run copy-sw
-3. Test service worker accessible at theme root
-4. Update `.gitignore` to track `sw.js`
-
-**Verification:**
-- `sw.js` exists in theme root after build
-- Service worker accessible via browser
-- File tracked in git (intentional)
-
-**Dependencies:** Phase 3 (requires sw.js to exist)
-
-**Why copy step:** Service worker needs root scope to control frontend routes. Serving from `/dist/sw.js` would limit scope to `/dist/` only.
-
-### Phase 5: Service Worker Registration
-**Goal:** Register service worker in React app, wire up update UI
-
-**Tasks:**
-1. Import `registerSW` from `virtual:pwa-register` in `main.jsx`
-2. Implement `onNeedRefresh()` callback (show update banner)
-3. Implement `onOfflineReady()` callback (show offline indicator)
-4. Create UpdateBanner component (user-triggered reload)
-5. Store `updateSW` callback in state/context
-
-**Verification:**
-- Service worker registers on app load
-- Update banner appears when new version detected
-- Clicking "Update" reloads with new version
-- Offline indicator appears when service worker ready
-
-**Dependencies:** Phase 4 (requires accessible service worker)
-
-### Phase 6: TanStack Query Integration
-**Goal:** Configure TanStack Query for offline-first mode
-
-**Tasks:**
-1. Update QueryClient config: add `networkMode: 'offlineFirst'`
-2. Test API requests work offline (using cached data)
-3. Test online/offline transitions
-4. Add error boundaries for offline failures
-
-**Verification:**
-- Queries work offline (use cached SW responses)
-- No query errors during offline periods
-- UI updates when transitioning online/offline
-- Error messages clear when online
-
-**Dependencies:** Phase 5 (requires registered service worker)
-
-### Phase 7: Testing and Optimization
-**Goal:** Verify PWA features work correctly, optimize performance
-
-**Tasks:**
-1. Test install prompt on mobile/desktop
-2. Test offline functionality (airplane mode)
-3. Test update flow (deploy new version, trigger update)
-4. Run Lighthouse PWA audit
-5. Optimize cache sizes and expiration
-
-**Verification:**
-- Lighthouse PWA score > 90
-- Install prompt appears on supported browsers
-- App works offline (cached routes accessible)
-- Updates apply cleanly without data loss
-
-**Dependencies:** Phase 6 (requires full integration)
-
-### Dependency Graph
-
-```
-Phase 1: Foundation Setup
-    ↓
-Phase 2: Manifest Integration (requires manifest file)
-    ↓
-Phase 3: Service Worker Generation (parallel with Phase 2)
-    ↓
-Phase 4: Service Worker Deployment (requires sw.js)
-    ↓
-Phase 5: Service Worker Registration (requires accessible sw.js)
-    ↓
-Phase 6: TanStack Query Integration (requires registered SW)
-    ↓
-Phase 7: Testing and Optimization (requires full stack)
-```
-
-**Critical path:** 1 → 3 → 4 → 5 → 6 → 7
-**Parallel work:** Phase 2 can be done alongside Phase 3
-
-## WordPress Considerations
-
-### Admin Area Protection
-
-**Requirement:** Service worker MUST NOT interfere with WordPress admin.
+**Location:** `src/hooks/usePeople.js` (add new export)
 
 **Implementation:**
-1. **Scope-based exclusion:** Service worker at `/` but with fetch handler checks
-2. **Navigation exclusion:** `navigateFallbackDenylist` prevents admin route interception
-3. **Cache exclusion:** `globIgnores` prevents admin asset caching
-
-**Testing checklist:**
-- [ ] `/wp-admin/` loads without service worker interception
-- [ ] Login redirects work correctly
-- [ ] Admin AJAX requests not cached
-- [ ] Plugin/theme updates work
-- [ ] Media uploads work
-
-### Authentication Considerations
-
-**WordPress uses two auth mechanisms:**
-1. **Session cookies** (admin, traditional pages)
-2. **REST nonce** (REST API, React app)
-
-**Service worker implications:**
-- API requests include `X-WP-Nonce` header (short-lived, 24h)
-- Cached API responses may have stale nonces
-- Nonce refresh required after cache expiration
-
-**Solution:** NetworkFirst strategy with timeout
-- Always attempts fresh request (gets fresh nonce)
-- Falls back to cache only when truly offline
-- TanStack Query handles 401 errors (nonce expired)
-
-**Nonce refresh flow:**
 ```javascript
-// In axios interceptor (already exists in src/api/client.js)
-axios.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response?.status === 401) {
-      // Nonce expired, redirect to login
-      window.location.href = window.stadionConfig.loginUrl
-    }
-    return Promise.reject(error)
-  }
-)
-```
-
-### Asset Versioning
-
-**Current system:** Vite generates hashed filenames (`main-abc123.js`)
-
-**PWA integration:** Service worker precache automatically includes hashed assets
-
-**Update flow:**
-1. Deploy new build (new hashes)
-2. Service worker detects manifest change
-3. Triggers `onNeedRefresh()` callback
-4. User clicks update
-5. New assets downloaded and cached
-6. Page reloads with new version
-
-**No changes required** - existing Vite versioning works seamlessly with PWA.
-
-### Development vs Production
-
-**Development (WP_DEBUG = true):**
-- Vite dev server at `localhost:5173` (HMR enabled)
-- Service worker disabled (interferes with HMR)
-- Manifest served but not functional
-
-**Production (WP_DEBUG = false):**
-- Assets from `dist/` folder
-- Service worker active
-- Full PWA functionality
-
-**Configuration:**
-```javascript
-// vite.config.js
-export default defineConfig(({ mode }) => ({
-  plugins: [
-    react(),
-    VitePWA({
-      // Disable in dev mode to avoid HMR conflicts
-      disable: mode === 'development',
-      // ... other config
-    })
-  ]
-}))
-```
-
-**Why disable in dev:**
-- Service worker caching conflicts with HMR hot reload
-- Development workflow prioritizes speed over offline capability
-- Manifest still served for testing installation
-
-### Deployment Process
-
-**Current:** `bin/deploy.sh` syncs files to production
-
-**PWA additions:**
-1. Ensure `sw.js` copied to theme root before deploy
-2. Deploy syncs `sw.js` along with other theme files
-3. Service worker updates trigger automatically on client
-
-**Updated deployment checklist:**
-- [ ] Run `npm run build` (generates dist/ and copies sw.js)
-- [ ] Verify `sw.js` exists in theme root
-- [ ] Run `bin/deploy.sh`
-- [ ] Test service worker updates on production
-- [ ] Verify update prompt appears for existing users
-
-**No script changes required** - `sw.js` at theme root deploys like any other PHP/JS file.
-
-## Anti-Patterns to Avoid
-
-### 1. Service Worker in /dist/
-**Why bad:** Scope limited to `/dist/`, can't control frontend routes
-**Instead:** Copy `sw.js` to theme root, scope to `/`
-
-### 2. Caching /wp-admin/ URLs
-**Why bad:** Breaks admin functionality, caches sensitive data
-**Instead:** Explicitly exclude admin paths in service worker config
-
-### 3. CacheFirst for API requests
-**Why bad:** Serves stale data indefinitely, nonces expire
-**Instead:** NetworkFirst with timeout, cache as fallback
-
-### 4. Precaching all API responses
-**Why bad:** Bloats cache, stale data, nonce issues
-**Instead:** Runtime caching with expiration, NetworkFirst strategy
-
-### 5. autoUpdate without user notification
-**Why bad:** Interrupts user workflows, loses form data
-**Instead:** Use `prompt` strategy, let users control updates
-
-### 6. Ignoring offline error states
-**Why bad:** Users see broken UI when offline
-**Instead:** Detect online/offline, show appropriate UI, use error boundaries
-
-### 7. Not testing offline transitions
-**Why bad:** Edge cases (going offline mid-request) break app
-**Instead:** Test airplane mode, throttle network, test partial offline states
-
-### 8. Mixing WordPress session auth with cached responses
-**Why bad:** Session cookies cached, auth state inconsistent
-**Instead:** Exclude session-based URLs, use NetworkFirst for authenticated requests
-
-## Scalability Considerations
-
-### Cache Size Management
-
-| User Load | Cache Strategy | Considerations |
-|-----------|---------------|----------------|
-| 1-10 users | Default (50 API entries, 60 assets) | Minimal overhead, ~5-10MB per user |
-| 10-100 users | Same as default | No server impact, browser handles caching |
-| 100+ users | Same as default | No backend changes needed, scales infinitely |
-
-**Why PWA scales:** Caching is client-side. Server load actually *decreases* as more users cache assets.
-
-### API Request Optimization
-
-**Current:** TanStack Query with 5-minute staleTime
-**With PWA:** NetworkFirst adds 10s timeout fallback
-
-**Impact on API load:**
-- Online users: No change (network first)
-- Intermittently offline: Reduced API calls (fallback to cache during timeouts)
-- Fully offline: Zero API calls
-
-**Recommendation:** Monitor API response times. If consistently > 10s, increase `networkTimeoutSeconds` to reduce cache fallbacks.
-
-### Storage Quotas
-
-**Browser storage limits:**
-- Chrome/Edge: ~60% of disk space (temporary storage)
-- Safari: ~1GB on desktop, ~500MB on iOS
-- Firefox: ~50% of disk space
-
-**Stadion PWA cache estimate:**
-- Precached assets: ~2-3MB (JS/CSS bundles)
-- API cache (50 entries): ~1-2MB (JSON responses)
-- Media cache (100 entries): ~10-20MB (profile photos)
-- **Total:** ~15-25MB per user
-
-**Quota exceeded handling:**
-```javascript
-// Service worker automatically evicts oldest entries
-// No manual handling required with Workbox
-workbox: {
-  runtimeCaching: [
-    {
-      // ... config
-      options: {
-        expiration: {
-          maxEntries: 50, // Automatic LRU eviction
-          maxAgeSeconds: 5 * 60
-        }
-      }
-    }
-  ]
+export function usePeopleInfinite(filters = {}, sort = { field: 'first_name', order: 'asc' }) {
+  return useInfiniteQuery({
+    queryKey: ['people', 'infinite', filters, sort],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await prmApi.getPeopleFiltered({
+        page: pageParam,
+        per_page: 20,
+        orderby: sort.field,
+        order: sort.order,
+        ...filters,
+      });
+      return response.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.has_more
+        ? lastPage.pagination.page + 1
+        : undefined;
+    },
+  });
 }
 ```
 
-**Monitoring:** Browser DevTools → Application → Storage → Cache Storage
+**Usage in PeopleList.jsx:**
+```javascript
+const {
+  data,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+} = usePeopleInfinite(filters, sort);
 
-## Performance Impact
+// Flatten pages for rendering
+const people = useMemo(() => {
+  return data?.pages.flatMap(page => page.people) || [];
+}, [data]);
+```
 
-### Initial Load
+**Intersection Observer Pattern:**
+```javascript
+import { useInView } from 'react-intersection-observer';
 
-**Before PWA:**
-- First visit: Load HTML → JS → CSS → API requests
-- Return visit: Browser cache (if not expired)
+// In component
+const { ref, inView } = useInView();
 
-**After PWA:**
-- First visit: Same as before + service worker installation (~200ms overhead)
-- Return visit: Service worker active, instant load from cache
+useEffect(() => {
+  if (inView && hasNextPage && !isFetchingNextPage) {
+    fetchNextPage();
+  }
+}, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-**Metrics:**
-- Time to Interactive (TTI): +200ms on first visit, -1000ms on repeat visits
-- Largest Contentful Paint (LCP): No change first visit, -500ms repeat visits
+// Render sentinel element
+<div ref={ref} className="h-10 w-full" />
+```
 
-### API Request Performance
+### 4. New Hook: `useUserPreferences()`
 
-**Online, good connection:**
-- Before PWA: Direct API request
-- After PWA: +20ms overhead (service worker interception, still makes network request)
+**Purpose:** Manage per-user column preferences with optimistic updates.
 
-**Online, poor connection:**
-- Before PWA: 2-10s wait, possible timeout
-- After PWA: 10s timeout → cache fallback (~50ms)
+**Location:** `src/hooks/useUserPreferences.js` (new file)
 
-**Offline:**
-- Before PWA: Request fails, UI breaks
-- After PWA: Instant cache response (~50ms)
+**Implementation:**
+```javascript
+export function useUserPreferences() {
+  const queryClient = useQueryClient();
 
-**Recommendation:** NetworkFirst strategy optimizes for online performance while providing offline fallback.
+  const { data: preferences, isLoading } = useQuery({
+    queryKey: ['user-preferences', 'people-list'],
+    queryFn: async () => {
+      const response = await prmApi.getListPreferences();
+      return response.data;
+    },
+  });
 
-### Build Performance
+  const updatePreferences = useMutation({
+    mutationFn: (updates) => prmApi.updateListPreferences(updates),
+    onMutate: async (updates) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ['user-preferences', 'people-list'] });
+      const previous = queryClient.getQueryData(['user-preferences', 'people-list']);
+      queryClient.setQueryData(['user-preferences', 'people-list'], (old) => ({
+        ...old,
+        ...updates,
+      }));
+      return { previous };
+    },
+    onError: (err, updates, context) => {
+      // Rollback on error
+      queryClient.setQueryData(['user-preferences', 'people-list'], context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-preferences', 'people-list'] });
+    },
+  });
 
-**Build time impact:**
-- Before PWA: ~10-15s (Vite build)
-- After PWA: +2-3s (Workbox service worker generation)
-- Total: ~12-18s
+  return {
+    preferences,
+    isLoading,
+    updatePreferences: updatePreferences.mutate,
+  };
+}
+```
 
-**Disk usage:**
-- Additional files: `sw.js` (~50KB), `manifest.webmanifest` (~1KB)
-- Negligible impact on deployment size
+**Usage in PeopleList.jsx:**
+```javascript
+const { preferences, updatePreferences } = useUserPreferences();
+
+// Toggle column visibility
+const toggleColumn = (columnKey) => {
+  const visible = preferences.visible_columns.includes(columnKey)
+    ? preferences.visible_columns.filter(c => c !== columnKey)
+    : [...preferences.visible_columns, columnKey];
+
+  updatePreferences({ visible_columns: visible });
+};
+```
+
+## Data Flow Changes
+
+### Before (Current)
+
+```
+User opens People list
+└── PeopleList.jsx renders
+    └── usePeople() hook
+        ├── Fetches page 1 (100 items)
+        ├── Fetches page 2 (100 items)
+        ├── ... continues until all pages fetched
+        └── Returns flattened array [all 500+ people]
+    └── Client-side filtering (useMemo)
+        └── Filters by labels, birth year, modified date
+    └── Client-side sorting (useMemo)
+        └── Sorts by first_name, last_name, etc.
+    └── Render ALL filtered/sorted people at once
+```
+
+**Issues:**
+- Initial load fetches ALL records (slow with 500+ people)
+- Memory overhead storing all records client-side
+- Network overhead transferring all records
+- Sorting custom fields requires loading all ACF data
+
+### After (Proposed)
+
+```
+User opens People list
+└── PeopleList.jsx renders
+    ├── useUserPreferences() - Fetches column settings
+    │   └── GET /stadion/v1/user/list-preferences
+    │       └── Returns: visible_columns, column_order, default_sort
+    │
+    └── usePeopleInfinite(filters, sort) - Fetches first page
+        ├── GET /stadion/v1/people/filtered?page=1&per_page=20&orderby=first_name&order=asc
+        │   └── Server applies filters, sorts, returns 20 people
+        ├── Renders 20 people
+        │
+        └── User scrolls to bottom
+            ├── Intersection Observer triggers
+            ├── fetchNextPage() called
+            ├── GET /stadion/v1/people/filtered?page=2&per_page=20
+            └── Appends next 20 people to list
+
+User changes filter (e.g., adds label filter)
+└── usePeopleInfinite(newFilters, sort) - Query key changes
+    ├── TanStack Query cache miss
+    ├── GET /stadion/v1/people/filtered?page=1&labels=3&orderby=first_name
+    └── Renders filtered results
+
+User changes sort (e.g., sort by custom field)
+└── usePeopleInfinite(filters, newSort) - Query key changes
+    ├── GET /stadion/v1/people/filtered?page=1&orderby=custom_field_name&order=desc
+    └── Server JOINs wp_postmeta, sorts by ACF field
+```
+
+**Benefits:**
+- Initial load only fetches 20 records (10-20x faster)
+- Memory usage proportional to displayed records
+- Server-side filtering/sorting reduces client computation
+- Custom field sorting uses database indexes
+
+## Build Order Recommendation
+
+### Phase 1: Server-Side Foundation (Backend First)
+
+**Goal:** Build new REST endpoint with server-side filtering/sorting
+
+**Components:**
+1. **Custom SQL Query Builder** (`includes/class-people-query-builder.php`)
+   - Build efficient queries with $wpdb
+   - Support filtering: labels, birth_year, modified_after, search
+   - Support sorting: core fields + ACF fields
+   - Handle AccessControl at SQL level
+   - Return post IDs + pagination metadata
+
+2. **New REST Endpoint** (`/stadion/v1/people/filtered`)
+   - Add to `includes/class-rest-people.php`
+   - Use Query Builder for data fetching
+   - Transform results with existing `transformPerson()` pattern
+   - Return paginated response with hasMore flag
+
+3. **Testing:**
+   - Test with Query Monitor for SQL performance
+   - Verify AccessControl (approved users only)
+   - Test edge cases: empty results, last page, invalid filters
+
+**Why backend first:** Frontend can't use infinite scroll until endpoint exists. Server-side filtering is the foundation for all subsequent work.
+
+### Phase 2: Frontend Infinite Scroll (No UI Changes)
+
+**Goal:** Replace client-side loading with server-side pagination
+
+**Components:**
+1. **New Hook** (`src/hooks/usePeopleInfinite.js`)
+   - Implement useInfiniteQuery with new endpoint
+   - Flatten pages for backward compatibility
+   - Keep existing transformPerson() on client
+
+2. **Update API Client** (`src/api/client.js`)
+   - Add `getPeopleFiltered()` method
+   - Map parameters to query string
+
+3. **Modify PeopleList.jsx**
+   - Replace `usePeople()` with `usePeopleInfinite()`
+   - Keep existing filtering/sorting state management
+   - Add Intersection Observer for infinite scroll
+   - Add "Load More" button as fallback
+
+4. **Testing:**
+   - Verify infinite scroll works (scroll to load more)
+   - Verify filters still work (query key changes trigger refetch)
+   - Verify sorting still works (query key changes trigger refetch)
+
+**Why this order:** Proves server-side pagination works before adding preferences complexity. Keeps existing UI flow.
+
+### Phase 3: User Preferences Backend
+
+**Goal:** Store and retrieve per-user column preferences
+
+**Components:**
+1. **New REST Endpoints** (`/stadion/v1/user/list-preferences`)
+   - Add to `includes/class-rest-api.php`
+   - GET: Return user preferences with defaults
+   - PATCH: Update user preferences with validation
+   - Use wp_usermeta for storage
+
+2. **Default Preferences Logic**
+   - Pull from custom fields metadata (show_in_list_view)
+   - Merge user overrides with defaults
+
+3. **Testing:**
+   - Test preferences persist across sessions
+   - Test validation (invalid columns rejected)
+   - Test defaults for new users
+
+**Why after infinite scroll:** Infinite scroll must work before adding preference-driven column visibility.
+
+### Phase 4: Frontend Column Preferences UI
+
+**Goal:** Allow users to customize visible columns
+
+**Components:**
+1. **New Hook** (`src/hooks/useUserPreferences.js`)
+   - Fetch preferences with useQuery
+   - Update preferences with useMutation
+   - Optimistic updates for instant feedback
+
+2. **Column Settings Modal** (new component)
+   - Drag-and-drop column reordering
+   - Checkbox list for visibility
+   - Default sort selection
+
+3. **Update PeopleList.jsx**
+   - Render columns based on preferences
+   - Show column settings button
+   - Apply default sort from preferences
+
+4. **Testing:**
+   - Test column visibility changes persist
+   - Test column reordering works
+   - Test default sort applies on load
+
+**Why last:** Preferences are enhancement, not blocker. Can ship Phase 1-3 without UI for preferences.
+
+## Performance Considerations
+
+### Database Optimization
+
+**1. Required Indexes:**
+```sql
+-- Index for person_label filtering
+CREATE INDEX idx_term_taxonomy_type
+ON wp_term_taxonomy (taxonomy, term_id);
+
+-- Index for ACF field sorting
+CREATE INDEX idx_postmeta_key_value
+ON wp_postmeta (meta_key, meta_value(100));
+
+-- Index for modified date filtering
+CREATE INDEX idx_posts_type_status_modified
+ON wp_posts (post_type, post_status, post_modified);
+```
+
+**2. Query Caching Strategy:**
+- **Transient cache for expensive queries** (5 min TTL)
+- **Cache key:** `stadion_people_filtered_{hash_of_params}`
+- **Invalidation:** On person create/update/delete
+- **Benefits:** 10-50x speedup for repeated queries
+
+**3. Pagination Best Practices:**
+- **Use LIMIT/OFFSET** for page-based pagination
+- **Maximum per_page: 100** to prevent memory issues
+- **Default per_page: 20** for optimal UX (fast load + minimal scrolling)
+- **Avoid COUNT(\*) on every request** - cache total count
+
+### Frontend Optimization
+
+**1. TanStack Query Caching:**
+- **staleTime: 60000** (1 minute) - Reduce refetches
+- **cacheTime: 300000** (5 minutes) - Keep in memory
+- **keepPreviousData: true** - Smooth filter transitions
+
+**2. Infinite Scroll Settings:**
+- **Threshold: 500px** from bottom (start loading before user reaches end)
+- **Debounce: 300ms** for filter changes (avoid query spam)
+- **Optimistic updates:** for preference changes (instant feedback)
+
+**3. Render Optimization:**
+- **React.memo** for PersonListRow (avoid re-renders)
+- **Virtual scrolling** if list exceeds 500 items (optional enhancement)
+- **Skeleton loading** for first page (better perceived performance)
+
+## Migration Strategy
+
+### Backward Compatibility
+
+**Keep existing usePeople() for:**
+- Person detail pages (still need full person object)
+- Dashboard recent people (small list)
+- Bulk operations (need all IDs)
+
+**Deprecate usePeople() for:**
+- PeopleList.jsx (replace with usePeopleInfinite)
+
+**No breaking changes:**
+- `/wp/v2/people` endpoint unchanged
+- Existing API clients continue working
+- `/stadion/v1/people/filtered` is additive
+
+### Rollout Plan
+
+**Step 1:** Deploy Phase 1-2 (backend + infinite scroll)
+- Feature flag: `STADION_ENABLE_INFINITE_SCROLL` (default: true)
+- Monitor performance with Query Monitor
+- Rollback plan: Revert to usePeople() if issues
+
+**Step 2:** Deploy Phase 3-4 (preferences)
+- Feature flag: `STADION_ENABLE_COLUMN_PREFS` (default: true)
+- Graceful degradation: Show all columns if preferences endpoint fails
+
+**Step 3:** Remove feature flags after 1 week stable
+
+## Risks and Mitigations
+
+### Risk 1: ACF JOIN Performance
+
+**Issue:** Joining wp_postmeta for custom field sorting may be slow with large datasets.
+
+**Mitigation:**
+- Add index on wp_postmeta.meta_key
+- Cache expensive queries with transients (5 min TTL)
+- Limit custom field JOINs to 3 per query
+- Fallback to client-side sorting if query exceeds 2 seconds
+
+**Detection:** Query Monitor shows query execution time
+
+### Risk 2: Pagination Race Conditions
+
+**Issue:** New records inserted while user scrolling may cause duplicate/skipped records.
+
+**Mitigation:**
+- Use cursor-based pagination (future enhancement)
+- Document limitation: "Sorting/filtering may miss very recent changes"
+- Add "Refresh" button for manual updates
+
+**Detection:** User reports seeing duplicates in list
+
+### Risk 3: User Preference Conflicts
+
+**Issue:** User preferences reference deleted custom fields.
+
+**Mitigation:**
+- Validate preferences against current custom field definitions
+- Remove deleted fields from visible_columns on GET
+- Show warning: "Some columns were removed because they no longer exist"
+
+**Detection:** GET /stadion/v1/user/list-preferences returns fewer columns than saved
+
+### Risk 4: AccessControl Bypass
+
+**Issue:** Custom SQL query might bypass AccessControl filters.
+
+**Mitigation:**
+- Apply AccessControl at SQL level (WHERE post_author IN / user approval check)
+- Test with unapproved user (should see 0 results)
+- Code review by security-focused developer
+
+**Detection:** Unapproved user can see people records (critical bug)
+
+## Alternative Approaches Considered
+
+### Alternative 1: Cursor-Based Pagination
+
+**Description:** Use cursor (last record ID) instead of page numbers for pagination.
+
+**Pros:**
+- No duplicate/skipped records if data changes during scroll
+- Better performance (no OFFSET calculation)
+
+**Cons:**
+- More complex implementation (need to track cursor in multiple sort scenarios)
+- Cannot jump to specific page
+- WordPress REST API uses page-based by default
+
+**Decision:** Deferred to future enhancement. Page-based is simpler and works for current use case.
+
+### Alternative 2: Virtual Scrolling
+
+**Description:** Only render visible rows in viewport (react-window, react-virtualized).
+
+**Pros:**
+- Render 1000+ items without performance issues
+- Memory efficient (only ~20 DOM nodes at a time)
+
+**Cons:**
+- Complex integration with TanStack Query
+- Breaks accessibility (screen readers need full list)
+- Height calculations tricky with variable row heights
+
+**Decision:** Not needed for current dataset size (100-500 people). Revisit if dataset exceeds 1000 records.
+
+### Alternative 3: GraphQL Instead of REST
+
+**Description:** Use WPGraphQL plugin for flexible querying.
+
+**Pros:**
+- Single request for nested data (no _embed needed)
+- Client specifies exact fields needed
+- Built-in pagination (first/after, last/before)
+
+**Cons:**
+- Major architectural change (entire API surface)
+- Learning curve for team
+- Overkill for this use case (REST works fine)
+
+**Decision:** Rejected. REST API is sufficient and already integrated.
+
+## Security Considerations
+
+### Access Control
+
+**Critical:** Custom SQL queries MUST respect AccessControl.
+
+**Implementation:**
+```php
+// In query builder
+if (!$access_control->is_user_approved()) {
+    // Unapproved users see nothing
+    $sql .= " AND p.ID IN (0)";
+} else {
+    // Approved users see all posts
+    // No additional filtering needed
+}
+```
+
+**Testing:** Create test user, deny approval, verify they see empty list.
+
+### User Preference Validation
+
+**Risk:** User could inject malicious column names in preferences.
+
+**Mitigation:**
+- Whitelist allowed columns (core + active custom fields)
+- Validate field names against whitelist on PATCH
+- Sanitize all input with `sanitize_text_field()`
+
+**Example:**
+```php
+$allowed_columns = array_merge(
+    ['first_name', 'last_name', 'organization', 'labels'],
+    $this->get_active_custom_field_keys('person')
+);
+
+$visible = array_intersect($request['visible_columns'], $allowed_columns);
+```
+
+### SQL Injection Prevention
+
+**Risk:** User-provided filters could inject SQL.
+
+**Mitigation:**
+- Use `$wpdb->prepare()` for all queries
+- Validate filter types (labels = array of ints, birth_year = int, etc.)
+- Escape LIKE wildcards with `$wpdb->esc_like()`
+
+**Example:**
+```php
+if ($labels) {
+    $labels = array_map('intval', $labels);
+    $placeholders = implode(',', array_fill(0, count($labels), '%d'));
+    $sql .= $wpdb->prepare(" AND tt.term_id IN ($placeholders)", $labels);
+}
+```
+
+## Testing Strategy
+
+### Unit Tests
+
+**Backend (PHPUnit):**
+1. Query Builder
+   - Test filter combinations (labels + birth_year + modified)
+   - Test sorting (core fields + custom fields)
+   - Test pagination (LIMIT/OFFSET calculation)
+   - Test AccessControl integration
+
+2. REST Endpoints
+   - Test request validation (invalid params return 400)
+   - Test permission checks (unapproved users return 403)
+   - Test response format (matches schema)
+
+**Frontend (Vitest):**
+1. usePeopleInfinite
+   - Test page fetching (mock API responses)
+   - Test getNextPageParam (hasMore = true/false)
+   - Test query key changes (filters/sort trigger refetch)
+
+2. useUserPreferences
+   - Test optimistic updates (immediate UI change)
+   - Test rollback on error (reverts to previous state)
+
+### Integration Tests
+
+**E2E (Playwright/Cypress):**
+1. Infinite scroll flow
+   - Load list → scroll to bottom → verify next page loads
+   - Filter list → verify filtered results → scroll → verify pagination continues
+
+2. Column preferences flow
+   - Open settings → hide column → verify column disappears
+   - Reorder columns → verify order persists on refresh
+
+3. Performance tests
+   - Load list with 100 people → verify initial load < 2 seconds
+   - Scroll through 500 people → verify no lag
+
+### Manual Testing Checklist
+
+- [ ] Infinite scroll works on desktop
+- [ ] Infinite scroll works on mobile (touch drag)
+- [ ] Filters update results without breaking scroll
+- [ ] Sorting updates results without breaking scroll
+- [ ] Column preferences persist across sessions
+- [ ] Default preferences work for new users
+- [ ] AccessControl prevents unapproved users from seeing data
+- [ ] Query Monitor shows no slow queries (< 0.1s)
+
+## Documentation Requirements
+
+### Developer Documentation
+
+**API Reference:**
+- Document `/stadion/v1/people/filtered` endpoint (request/response schemas)
+- Document `/stadion/v1/user/list-preferences` endpoint
+- Add examples to API client (`src/api/client.js` JSDoc comments)
+
+**Architecture Decision Record (ADR):**
+- Why server-side pagination (performance)
+- Why page-based over cursor-based (simplicity)
+- Why user_meta for preferences (WordPress native pattern)
+
+### User Documentation
+
+**Help Text:**
+- "Column Settings" tooltip explaining drag-to-reorder
+- "Default Sort" explanation (sorts list on load)
+- Warning if custom field deleted ("Column X no longer exists")
+
+**Release Notes:**
+- "Infinite scroll for faster loading with large contact lists"
+- "Customize visible columns to show only what you need"
+- "Sort by custom fields (e.g., 'Industry', 'Score')"
+
+## Success Criteria
+
+### Performance Metrics
+
+- **Initial page load:** < 1 second (from click to first render)
+- **Scroll to next page:** < 500ms (from trigger to append)
+- **Filter change:** < 1 second (from change to updated results)
+- **Preference update:** < 200ms perceived (optimistic update)
+
+### Functional Requirements
+
+- [ ] Users can scroll infinitely through people list
+- [ ] Users can filter by labels, birth year, modified date
+- [ ] Users can sort by core fields + custom fields
+- [ ] Users can show/hide columns in list view
+- [ ] Users can reorder columns in list view
+- [ ] Preferences persist across browser sessions
+- [ ] AccessControl prevents data leaks
+
+### Code Quality
+
+- [ ] Query Monitor shows all queries < 0.1s
+- [ ] No N+1 queries detected
+- [ ] Unit test coverage > 80%
+- [ ] No console errors in browser
+- [ ] Lighthouse Performance score > 90
 
 ## Sources
 
-### High Confidence (Official Documentation)
+### TanStack Query & Infinite Scroll
+- [TanStack Query Infinite Queries](https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries)
+- [How to use Infinity Queries (TanStack Query) to do infinite scrolling](https://dev.to/davi_rezende/how-to-use-infinity-queries-tanstack-query-to-do-infinite-scrolling-2i2e)
+- [React TanStack Query Load More Infinite Scroll Example](https://tanstack.com/query/latest/docs/framework/react/examples/load-more-infinite-scroll)
+- [Caching, Pagination, and Infinite Scrolling with TanStack Query](https://medium.com/@lakshaykapoor08/%EF%B8%8F-caching-pagination-and-infinite-scrolling-with-tanstack-query-4212b24d3806)
+- [How to Implement React Infinite Scrolling with React Query v5](https://pieces.app/blog/how-to-implement-react-infinite-scrolling-with-react-query-v5)
 
-- [Vite Plugin PWA Guide](https://vite-pwa-org.netlify.app/guide/) - Official Vite PWA plugin documentation
-- [TanStack Query Network Mode](https://tanstack.com/query/v4/docs/framework/react/guides/network-mode) - Official TanStack Query docs on network modes
-- [MDN Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers) - Authoritative web standards reference
-- [web.dev PWA Service Workers](https://web.dev/learn/pwa/service-workers) - Google's official PWA learning resource
+### WordPress REST API & Filtering
+- [Sorting/Orderby for custom meta fields in WordPress REST API](https://iamshishir.com/sorting-orderby-for-custom-meta-fields-in-wordpress/)
+- [WordPress REST API order by meta_value](https://www.timrosswebdevelopment.com/wordpress-rest-api-order-by-meta_value/)
+- [Enabling Filters for Meta Fields in the WordPress Rest API](https://iamshishir.com/enabling-filters-for-meta-fields-in-the-wordpress-rest-api/)
+- [Adding meta fields with orderby endpoint to WordPress rest API](https://gist.github.com/aaronsummers/8518b0d70c4bc34e0bde4049fabac08c)
 
-### Medium Confidence (Community Best Practices)
+### WordPress Performance & ACF Optimization
+- [ACF WordPress Post Meta Query Performance Best Practices](https://www.advancedcustomfields.com/blog/wordpress-post-meta-query/)
+- [Optimizing Advanced Custom Fields for Fast WordPress Sites](https://acfcopilotplugin.com/blog/optimizing-advanced-custom-fields-for-fast-wordpress-sites/)
+- [Tips & Tricks for Optimizing ACF Performance in WordPress](https://wpfieldwork.com/optimizing-acf-performance/)
+- [How to Optimize ACF Relationship and Repeater Queries](https://www.lexo.ch/blog/2025/04/optimize-acf-relationship-and-repeater-queries/)
 
-- [Making totally offline-available PWAs with Vite and React](https://adueck.github.io/blog/caching-everything-for-totally-offline-pwa-vite-react/) - Real-world implementation guide
-- [How to turn your Vite React App into a PWA with Ease](https://www.timsanteford.com/posts/transform-your-vite-react-app-into-a-pwa-with-ease/) - Tutorial on Vite PWA integration
-- [Offline React Query](https://tkdodo.eu/blog/offline-react-query) - TanStack Query offline strategies by TkDodo (TanStack maintainer)
-- [Supporting Offline Mode in TanStack Query](https://lucas-barake.github.io/persisting-tantsack-query-data-locally/) - Offline mode implementation patterns
-
-### Low Confidence (Requires Verification)
-
-- [WordPress PWA Service Worker Integration](https://github.com/GoogleChromeLabs/pwa-wp/wiki/Service-Worker) - GoogleChromeLabs WordPress PWA plugin (archived project, patterns still relevant)
-- [Implementing A Service Worker For Single-Page App WordPress Sites](https://www.smashingmagazine.com/2017/10/service-worker-single-page-application-wordpress-sites/) - 2017 article, patterns outdated but architectural concepts valid
-
-## Confidence Assessment
-
-| Area | Level | Rationale |
-|------|-------|-----------|
-| Vite PWA Plugin Integration | HIGH | Official documentation, well-established plugin |
-| Service Worker Scope | HIGH | Web standards (MDN), verified with multiple sources |
-| TanStack Query Offline Mode | MEDIUM | Official docs limited, community patterns validated |
-| WordPress Admin Exclusion | MEDIUM | Community patterns, no official WordPress PWA guidance |
-| Cache Strategies | HIGH | Workbox official patterns, standard web performance practice |
-
-## Open Questions (for Phase-Specific Research)
-
-1. **Background sync:** Should form submissions queue when offline? (Defer to Phase 7)
-2. **Push notifications:** Are reminders better as push vs email? (Defer to separate milestone)
-3. **Install prompt timing:** When should install banner appear? (Defer to Phase 7, UX testing)
-4. **iOS install instructions:** How to guide iOS users through "Add to Home Screen"? (Defer to Phase 2, UX content)
-5. **Cache invalidation:** Should admin actions invalidate frontend caches? (Defer to Phase 6, test first)
+### WordPress User Meta & Preferences
+- [Working with User Metadata – Plugin Handbook](https://developer.wordpress.org/plugins/users/working-with-user-metadata/)
+- [How WordPress user data is stored in the database](https://usersinsights.com/wordpress-user-database-tables/)
+- [What Is the User Meta Function in WordPress? A Practical, Real-World Guide](https://thelinuxcode.com/what-is-the-user-meta-function-in-wordpress-a-practical-realworld-guide/)
+- [Choosing Between WordPress User Meta System and Custom User-Related Tables](https://www.voxfor.com/choosing-between-wordpress-user-meta-system-and-custom-user-related-tables/)
