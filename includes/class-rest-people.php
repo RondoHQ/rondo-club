@@ -940,7 +940,7 @@ class People extends Base {
 		foreach ( $fields as $field ) {
 			if ( $field['name'] === $field_name ) {
 				// Only allow sortable field types.
-				$sortable_types = [ 'text', 'textarea', 'number', 'date', 'select', 'email', 'url' ];
+				$sortable_types = [ 'text', 'textarea', 'number', 'date', 'select', 'email', 'url', 'true_false' ];
 				return in_array( $field['type'], $sortable_types, true );
 			}
 		}
@@ -1089,6 +1089,9 @@ class People extends Base {
 					} elseif ( $field_type === 'date' ) {
 						// Date sort (ACF stores dates as Ymd format) with NULLS LAST
 						$order_clause = "ORDER BY STR_TO_DATE(cf.meta_value, '%Y%m%d') $order, fn.meta_value ASC";
+					} elseif ( $field_type === 'true_false' ) {
+						// Boolean sort (ACF stores as 1 or 0/empty) - cast to integer
+						$order_clause = "ORDER BY CAST(COALESCE(cf.meta_value, '0') AS UNSIGNED) $order, fn.meta_value ASC";
 					} else {
 						// Text-based sort (text, textarea, select, email, url) with NULLS LAST
 						$order_clause = "ORDER BY COALESCE(cf.meta_value, '') $order, fn.meta_value ASC";
