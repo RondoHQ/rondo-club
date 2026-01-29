@@ -272,6 +272,22 @@ class People extends Base {
 							return strtolower( $param );
 						},
 					],
+					'birth_year_from' => [
+						'description'       => 'Filter by birth year (minimum year, inclusive)',
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'validate_callback' => function ( $value ) {
+							return $value >= 1900 && $value <= 2100;
+						},
+					],
+					'birth_year_to' => [
+						'description'       => 'Filter by birth year (maximum year, inclusive)',
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'validate_callback' => function ( $value ) {
+							return $value >= 1900 && $value <= 2100;
+						},
+					],
 				],
 			]
 		);
