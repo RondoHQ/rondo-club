@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 116 of 118 (Person Edit Restrictions)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-29 — Roadmap created for v10.0
+Plan: 1 of 1 complete
+Status: Phase complete
+Last activity: 2026-01-29 — Completed 116-01-PLAN.md
 
-Progress: [..........] 0% (0/3 phases)
+Progress: [███.......] 33% (1/3 phases)
 
 ## Milestone History
 
@@ -33,7 +33,7 @@ Progress: [..........] 0% (0/3 phases)
 **v10.0 Milestone:**
 - Total phases: 3
 - Total requirements: 9
-- Total plans: TBD (pending phase planning)
+- Total plans: 1 of 1 complete in Phase 116
 
 ## Accumulated Context
 
@@ -41,6 +41,12 @@ Progress: [..........] 0% (0/3 phases)
 
 Decisions are logged in PROJECT.md Key Decisions table.
 v9.0 milestone decisions archived to milestones/v9.0-ROADMAP.md.
+
+**v10.0 Decisions:**
+
+| ID | Decision | Phase | Impact |
+|----|----------|-------|--------|
+| restrict-ui-not-api | Remove UI controls but keep REST API endpoints functional | 116 | Sportlink sync preserved, manual editing blocked |
 
 ### Pending Todos
 
@@ -65,8 +71,8 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29 23:30 UTC
-Stopped at: Roadmap created for v10.0
+Last session: 2026-01-29 20:39 UTC
+Stopped at: Completed 116-01-PLAN.md
 Resume file: None
 
-Next: Plan Phase 116 (Person Edit Restrictions)
+Next: Phase 117 (Team Edit Restrictions)
