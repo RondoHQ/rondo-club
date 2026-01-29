@@ -1087,8 +1087,8 @@ class People extends Base {
 						// Numeric sort with NULLS LAST
 						$order_clause = "ORDER BY CAST(cf.meta_value AS DECIMAL(10,2)) $order, fn.meta_value ASC";
 					} elseif ( $field_type === 'date' ) {
-						// Date sort (ACF stores dates as Ymd format) with NULLS LAST
-						$order_clause = "ORDER BY STR_TO_DATE(cf.meta_value, '%Y%m%d') $order, fn.meta_value ASC";
+						// Date sort (ACF stores dates as Y-m-d format) with NULLS LAST
+						$order_clause = "ORDER BY STR_TO_DATE(cf.meta_value, '%Y-%m-%d') $order, fn.meta_value ASC";
 					} elseif ( $field_type === 'true_false' ) {
 						// Boolean sort (ACF stores as 1 or 0/empty) - cast to integer
 						$order_clause = "ORDER BY CAST(COALESCE(cf.meta_value, '0') AS UNSIGNED) $order, fn.meta_value ASC";
