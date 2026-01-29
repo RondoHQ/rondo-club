@@ -4,17 +4,17 @@
 
 See: .planning/PROJECT.md (updated 2026-01-29)
 
-**Core value:** Personal CRM with multi-user collaboration, now with scalable people list
-**Current focus:** v9.0 People List Performance & Customization
+**Core value:** Personal CRM with multi-user collaboration and scalable people list
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 115 of 5 (Column Preferences UI)
-Plan: 5 of 5 in phase (COMPLETE)
-Status: Phase complete
-Last activity: 2026-01-29 - Completed 115-05-PLAN.md
+Phase: Between milestones
+Plan: N/A
+Status: Ready to plan next milestone
+Last activity: 2026-01-29 - v9.0 milestone complete
 
-Progress: [██████████] 100% (10/10 plans complete, 5/5 phases complete)
+Progress: v9.0 shipped, ready for next milestone
 
 ## Milestone History
 
@@ -26,73 +26,23 @@ Progress: [██████████] 100% (10/10 plans complete, 5/5 phase
 - v6.0 Custom Fields - shipped 2026-01-21
 - v7.0 Dutch Localization - shipped 2026-01-25
 - v8.0 PWA Enhancement - shipped 2026-01-28
-- v9.0 People List Performance & Customization - ready to ship 2026-01-29
+- v9.0 People List Performance & Customization - shipped 2026-01-29
 
 ## Performance Metrics
 
-**v9.0 Milestone:**
-- Total phases: 5
-- Total requirements: 27
-- Requirements mapped: 27/27 (100%)
-- Phases complete: 5/5 (100%)
-- Plans complete: 10/10 (100%)
-- Plans remaining: 0
+**v9.0 Milestone (completed):**
+- Total phases: 5 (111-115)
+- Total requirements: 27/27 (100%)
+- Total plans: 10/10 (100%)
+- Files changed: 66
+- Lines changed: +13,341 / -855
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
-
-**v9.0 architectural decisions (from research):**
-- Traditional pagination over infinite scroll (better for goal-oriented tasks)
-- Birth year denormalization required (ACF repeater queries too slow)
-- 100 per page default (research: optimal range 20-100)
-- Server-side filtering/sorting (client-side doesn't scale beyond 100 records)
-- User_meta storage for column preferences (follows theme_preferences pattern)
-
-**v9.0 implementation decisions (from execution):**
-
-| ID | Decision | Plan | Date |
-|----|----------|------|------|
-| 111-01-001 | Use wpdb with LEFT JOIN for meta fields | 111-01 | 2026-01-29 |
-| 111-01-002 | Use INNER JOIN for taxonomy filters | 111-01 | 2026-01-29 |
-| 111-01-003 | Post-query fetch for thumbnail and labels | 111-01 | 2026-01-29 |
-| 111-02-001 | Create new hook instead of modifying usePeople | 111-02 | 2026-01-29 |
-| 111-02-002 | Use placeholderData instead of keepPreviousData | 111-02 | 2026-01-29 |
-| 111-02-003 | Include all filter params in query key | 111-02 | 2026-01-29 |
-| 112-01-001 | Store birthdate as YYYY-MM-DD in _birthdate meta | 112-01 | 2026-01-29 |
-| 112-01-002 | Use save_post_important_date hook at priority 20 | 112-01 | 2026-01-29 |
-| 112-01-003 | Sync on save, clear on permanent delete only | 112-01 | 2026-01-29 |
-| 112-01-004 | Migration uses suppress_filters => true | 112-01 | 2026-01-29 |
-| 112-02-001 | Single parameter treated as exact year match | 112-02 | 2026-01-29 |
-| 112-02-002 | LEFT JOIN on _birthdate (not INNER) | 112-02 | 2026-01-29 |
-| 112-02-003 | Validate years between 1900-2100 | 112-02 | 2026-01-29 |
-| 113-01-001 | Use Manager::get_fields() for validation and type lookup | 113-01 | 2026-01-29 |
-| 113-01-002 | Sort NULL values last via COALESCE and type-specific logic | 113-01 | 2026-01-29 |
-| 113-01-003 | Secondary sort by first_name for consistent ordering | 113-01 | 2026-01-29 |
-| 113-02-001 | Generate birth year range 1950-current instead of deriving from data | 113-02 | 2026-01-29 |
-| 113-02-002 | Use placeholderData instead of keepPreviousData | 113-02 | 2026-01-29 |
-| 113-02-003 | Show loading toast for page navigation, not full spinner | 113-02 | 2026-01-29 |
-| 113-02-004 | Store label filter as IDs (not names) | 113-02 | 2026-01-29 |
-| 114-01-001 | Store preferences in wp_usermeta with key 'stadion_people_list_preferences' | 114-01 | 2026-01-29 |
-| 114-01-002 | Empty array and reset:true both reset to defaults | 114-01 | 2026-01-29 |
-| 114-01-003 | Invalid column IDs filtered silently (not rejected) | 114-01 | 2026-01-29 |
-| 114-01-004 | Core columns always available | 114-01 | 2026-01-29 |
-| 115-01-001 | Store column_order separately from visible_columns in user_meta | 115-01 | 2026-01-29 |
-| 115-01-002 | Store column_widths as object in separate user_meta key | 115-01 | 2026-01-29 |
-| 115-01-003 | Use localStorage as instant cache for column widths to prevent flicker | 115-01 | 2026-01-29 |
-| 115-01-004 | Debounce width updates by 300ms to prevent excessive API calls | 115-01 | 2026-01-29 |
-| 115-02-001 | Name column always first and not in sortable list | 115-02 | 2026-01-29 |
-| 115-02-002 | Use RotateCcw icon for reset functionality | 115-02 | 2026-01-29 |
-| 115-02-003 | Local state for drag preview, sync to preferences on drop | 115-02 | 2026-01-29 |
-| 115-03-001 | Use pointer events instead of mouse events for unified touch/mouse handling | 115-03 | 2026-01-29 |
-| 115-03-002 | Return resizeHandlers object for easy spread onto resize handle element | 115-03 | 2026-01-29 |
-| 115-03-003 | Handle onPointerCancel same as onPointerUp for edge case reliability | 115-03 | 2026-01-29 |
-| 115-04-001 | Combined first_name/last_name into single "Naam" column | 115-04 | 2026-01-29 |
-| 115-04-002 | Sticky checkbox, photo, name columns at left: 0, 10, 88px | 115-04 | 2026-01-29 |
-| 115-05-001 | Remove show_in_list_view without data migration | 115-05 | 2026-01-29 |
+v9.0 milestone decisions archived to milestones/v9.0-ROADMAP.md.
 
 ### Pending Todos
 
@@ -100,34 +50,11 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ### Blockers/Concerns
 
-**Known risks for v9.0 (from research):**
-- ✅ Access control bypass in custom $wpdb queries - MITIGATED in 111-01 (explicit is_user_approved() check)
-- ✅ SQL injection via unsanitized filter params - MITIGATED in 111-01 (whitelist + wpdb->prepare())
-- JOIN performance degradation with 4+ meta filters (limit to 3-4, use caching)
-- TanStack Query stale data after mutations (use resetQueries() not invalidateQueries())
+None - v9.0 shipped successfully.
 
-**New concerns from 111-01:**
-- Performance testing needed with 1400+ records and complex filters
-- Cache strategy undefined (consider transient caching for repeated queries)
-- N+1 queries for thumbnails/labels (acceptable for paginated results but should monitor)
-
-**New concerns from 111-02:**
-- Cache invalidation strategy for filtered queries (need to invalidate peopleKeys.all, not just peopleKeys.lists)
-- Initial page load performance with 100 results (may need to adjust default perPage)
-- Empty state handling when filters return 0 results (UI must distinguish "no people" vs "no matches")
-
-**New concerns from 113-01:**
-- ACF date field format assumption (code assumes Ymd, needs production verification)
-- Custom field sorting performance with 1400+ records (requires authenticated testing)
-- Full test coverage requires browser console with authentication session
-
-**New concerns from 113-02:**
-- Team column shows "-" for all rows (backend doesn't return team data in filtered endpoint)
-- Sort by "Team" and "Labels" falls back to first_name (backend doesn't support these yet)
-- Full pagination testing requires production access with authenticated session
-- Performance benchmarks need production testing (< 500ms target)
-
-**Pre-existing lint errors:** 143 ESLint errors in unrelated files (not blocking)
+**Tech debt from v9.0:**
+- Cross-tab synchronization not implemented for column preferences (minor)
+- refetchOnWindowFocus not enabled in TanStack Query config (minor)
 
 ### Quick Tasks Completed
 
@@ -140,8 +67,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-01-29 20:30 UTC
-Stopped at: Completed quick task 011 - Remove Eigenaar filter and move gear icon
+Last session: 2026-01-29 21:30 UTC
+Stopped at: v9.0 milestone complete
 Resume file: None
 
-Next: v9.0 milestone complete - ready for version bump and deployment
+Next: `/gsd:new-milestone` to plan next milestone
