@@ -587,7 +587,6 @@ export default function PeopleList() {
   const [selectedLabelIds, setSelectedLabelIds] = useState([]);
   const [selectedBirthYear, setSelectedBirthYear] = useState('');
   const [lastModifiedFilter, setLastModifiedFilter] = useState('');
-  const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all', 'mine', 'shared'
   const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
   const [page, setPage] = useState(1);
@@ -616,7 +615,7 @@ export default function PeopleList() {
     page,
     perPage: 100,
     labels: selectedLabelIds,
-    ownership: ownershipFilter,
+    ownership: 'all',
     modifiedDays: lastModifiedFilter ? parseInt(lastModifiedFilter, 10) : null,
     birthYearFrom: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
     birthYearTo: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
@@ -634,7 +633,7 @@ export default function PeopleList() {
   // Reset page to 1 when filters change
   useEffect(() => {
     setPage(1);
-  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, ownershipFilter, sortField, sortOrder]);
+  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, sortField, sortOrder]);
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['people', 'list'] });
@@ -771,7 +770,7 @@ export default function PeopleList() {
     };
   }, []);
 
-  const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter || ownershipFilter !== 'all';
+  const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter;
 
   const handleLabelToggle = (labelId) => {
     setSelectedLabelIds(prev =>
@@ -785,7 +784,6 @@ export default function PeopleList() {
     setSelectedLabelIds([]);
     setSelectedBirthYear('');
     setLastModifiedFilter('');
-    setOwnershipFilter('all');
     // page will auto-reset via useEffect
   };
 
@@ -820,7 +818,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, ownershipFilter, page, people]);
+  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -922,7 +920,7 @@ export default function PeopleList() {
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
                 <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
-                  {selectedLabelIds.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0) + (ownershipFilter !== 'all' ? 1 : 0)}
+                  {selectedLabelIds.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1005,44 +1003,6 @@ export default function PeopleList() {
                     </select>
                   </div>
 
-                  {/* Ownership Filter */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      Eigenaar
-                    </h3>
-                    <div className="space-y-1">
-                      {[
-                        { value: 'all', label: 'Alle leden' },
-                        { value: 'mine', label: 'Mijn leden' },
-                        { value: 'shared', label: 'Gedeeld met mij' },
-                      ].map(option => (
-                        <label
-                          key={option.value}
-                          className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
-                        >
-                          <input
-                            type="radio"
-                            name="ownership"
-                            value={option.value}
-                            checked={ownershipFilter === option.value}
-                            onChange={(e) => setOwnershipFilter(e.target.value)}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-4 h-4 border-2 rounded-full mr-3 ${
-                            ownershipFilter === option.value
-                              ? 'border-accent-600'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {ownershipFilter === option.value && (
-                              <div className="w-2 h-2 bg-accent-600 rounded-full" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">{option.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Clear Filters */}
                   {hasActiveFilters && (
                     <button
@@ -1056,15 +1016,6 @@ export default function PeopleList() {
               </div>
             )}
           </div>
-
-          {/* Column Settings Button */}
-          <button
-            onClick={() => setShowColumnSettings(true)}
-            className="btn-secondary"
-            title="Kolommen aanpassen"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
 
           {/* Active Filter Chips */}
           {hasActiveFilters && (
@@ -1110,20 +1061,20 @@ export default function PeopleList() {
                   </button>
                 </span>
               )}
-              {ownershipFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-900/50 text-accent-800 dark:text-accent-200 rounded-full text-xs">
-                  {ownershipFilter === 'mine' ? 'Mijn leden' : 'Gedeeld met mij'}
-                  <button onClick={() => setOwnershipFilter('all')} className="hover:text-accent-600 dark:hover:text-accent-300">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
             </div>
           )}
-
+        </div>
+        <div className="flex items-center gap-2">
           <button onClick={() => setShowPersonModal(true)} className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Lid toevoegen</span>
+          </button>
+          <button
+            onClick={() => setShowColumnSettings(true)}
+            className="btn-secondary"
+            title="Kolommen aanpassen"
+          >
+            <Settings className="w-4 h-4" />
           </button>
         </div>
       </div>
