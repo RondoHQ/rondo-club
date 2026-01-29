@@ -83,6 +83,9 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 | 115-01-002 | Store column_widths as object in separate user_meta key | 115-01 | 2026-01-29 |
 | 115-01-003 | Use localStorage as instant cache for column widths to prevent flicker | 115-01 | 2026-01-29 |
 | 115-01-004 | Debounce width updates by 300ms to prevent excessive API calls | 115-01 | 2026-01-29 |
+| 115-02-001 | Name column always first and not in sortable list | 115-02 | 2026-01-29 |
+| 115-02-002 | Use RotateCcw icon for reset functionality | 115-02 | 2026-01-29 |
+| 115-02-003 | Local state for drag preview, sync to preferences on drop | 115-02 | 2026-01-29 |
 | 115-03-001 | Use pointer events instead of mouse events for unified touch/mouse handling | 115-03 | 2026-01-29 |
 | 115-03-002 | Return resizeHandlers object for easy spread onto resize handle element | 115-03 | 2026-01-29 |
 | 115-03-003 | Handle onPointerCancel same as onPointerUp for edge case reliability | 115-03 | 2026-01-29 |
@@ -132,8 +135,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-01-29 17:53 UTC
-Stopped at: Completed 115-03-PLAN.md
+Last session: 2026-01-29 17:57 UTC
+Stopped at: Completed 115-02-PLAN.md
 Resume file: None
 
-Next: Phase 115 Plan 02 - Column Settings Modal (in parallel)
+Next: Phase 115 Plan 04 - PeopleList Integration
