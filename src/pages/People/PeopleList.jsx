@@ -196,15 +196,27 @@ function ResizableHeader({
 }) {
   const { width, isResizing, resizeHandlers } = useColumnResize(colId, initialWidth, 50);
 
-  // Notify parent when resize ends (not during drag for performance)
-  const prevIsResizing = useRef(isResizing);
+  // Use ref for callback to avoid dependency issues
+  const onWidthChangeRef = useRef(onWidthChange);
+  onWidthChangeRef.current = onWidthChange;
+
+  // Track if we've notified for current resize session to prevent duplicates
+  const hasNotifiedRef = useRef(false);
+
+  // Reset notification flag when resize starts
   useEffect(() => {
-    // Only notify when transitioning from resizing to not resizing
-    if (prevIsResizing.current && !isResizing) {
-      onWidthChange(colId, width);
+    if (isResizing) {
+      hasNotifiedRef.current = false;
     }
-    prevIsResizing.current = isResizing;
-  }, [isResizing, width, colId, onWidthChange]);
+  }, [isResizing]);
+
+  // Notify parent when resize ends (not during drag for performance)
+  useEffect(() => {
+    if (!isResizing && !hasNotifiedRef.current && width !== initialWidth) {
+      hasNotifiedRef.current = true;
+      onWidthChangeRef.current(colId, width);
+    }
+  }, [isResizing, width, colId, initialWidth]);
 
   // Determine sort field for this column
   const columnSortField = COLUMN_SORT_FIELDS[colId] || (colId.startsWith('custom_') ? colId : `custom_${colId}`);
