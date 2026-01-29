@@ -29,6 +29,7 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 use Stadion\Core\PostTypes;
 use Stadion\Core\Taxonomies;
 use Stadion\Core\AutoTitle;
+use Stadion\Core\VolunteerStatus;
 use Stadion\Core\AccessControl;
 use Stadion\Core\UserRoles;
 use Stadion\REST\Api;
@@ -330,6 +331,7 @@ function stadion_init() {
 	// Classes needed for content creation/editing (admin, REST, or cron)
 	if ( $is_admin || $is_rest || $is_cron ) {
 		new AutoTitle();
+		new VolunteerStatus();
 		new InverseRelationships();
 		new CommentTypes();
 		new MentionNotifications();
