@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 
 ## Current Position
 
-Phase: 113 of 5 (Frontend Pagination)
-Plan: 2 of 2 in phase
+Phase: 114 of 5 (User Preferences Backend)
+Plan: 1 of 1 in phase
 Status: Phase complete
-Last activity: 2026-01-29 - Completed 113-02-PLAN.md
+Last activity: 2026-01-29 - Completed 114-01-PLAN.md
 
-Progress: [██████░░░░] 60% (6/10 plans complete, 3/5 phases complete)
+Progress: [███████░░░] 70% (7/10 plans complete, 4/5 phases complete)
 
 ## Milestone History
 
@@ -33,9 +33,9 @@ Progress: [██████░░░░] 60% (6/10 plans complete, 3/5 phases 
 - Total phases: 5
 - Total requirements: 27
 - Requirements mapped: 27/27 (100%)
-- Phases complete: 3/5 (60%)
-- Plans complete: 6/10 (60%)
-- Plans remaining: 4
+- Phases complete: 4/5 (80%)
+- Plans complete: 7/10 (70%)
+- Plans remaining: 3
 
 ## Accumulated Context
 
@@ -75,6 +75,10 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 | 113-02-002 | Use placeholderData instead of keepPreviousData | 113-02 | 2026-01-29 |
 | 113-02-003 | Show loading toast for page navigation, not full spinner | 113-02 | 2026-01-29 |
 | 113-02-004 | Store label filter as IDs (not names) | 113-02 | 2026-01-29 |
+| 114-01-001 | Store preferences in wp_usermeta with key 'stadion_people_list_preferences' | 114-01 | 2026-01-29 |
+| 114-01-002 | Empty array and reset:true both reset to defaults | 114-01 | 2026-01-29 |
+| 114-01-003 | Invalid column IDs filtered silently (not rejected) | 114-01 | 2026-01-29 |
+| 114-01-004 | Core columns always available | 114-01 | 2026-01-29 |
 
 ### Pending Todos
 
@@ -121,8 +125,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-01-29 15:23 UTC
-Stopped at: Completed 113-02-PLAN.md (Phase 113 complete)
+Last session: 2026-01-29 16:00 UTC
+Stopped at: Completed 114-01-PLAN.md (Phase 114 complete)
 Resume file: None
 
-Next: Phase 114 - Column Customization UI
+Next: Phase 115 - Column Preferences UI
