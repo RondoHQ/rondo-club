@@ -1,310 +1,253 @@
-# PWA Feature Landscape for Personal CRM
+# Feature Landscape: People List Performance & Customization
 
-**Domain:** Personal CRM (Contact Management System)
-**Researched:** 2026-01-28
-**Confidence:** MEDIUM (verified with multiple sources, some iOS-specific behaviors may require testing)
+**Domain:** Contact Management / CRM Data Tables
+**Researched:** 2026-01-29
+**Context:** Stadion People list with 1400+ contacts, currently loads all at once
 
 ## Executive Summary
 
-PWAs for personal CRM applications in 2026 require a specific set of table stakes features to feel "installable" and "app-like," with clear platform differences between Android and iOS. For a mobile-first CRM where users primarily access on phones to check contacts and log activities, offline capability and home screen installation are critical differentiators from web-only alternatives.
+This research examines expected behavior for infinite scroll lists with server-side filtering and dynamic column selection in modern web applications. The findings focus on three core features: **infinite scroll with virtual rendering**, **server-side filtering/sorting**, and **per-user column preferences**.
 
-**Key insight:** iOS PWA limitations significantly impact feature availability compared to Android. Storage persistence, lack of automatic install prompts, and 7-day cache eviction require careful architecture decisions.
+**Key insight:** For structured data tables with 1000+ records, the industry consensus in 2026 is clear: pagination + server-side filtering outperforms infinite scroll for goal-oriented tasks (finding/comparing contacts). Virtual scrolling is critical for performance regardless of approach.
 
-## Table Stakes Features
+**Current Stadion implementation:** Loads all 1400+ people at once via paginated API calls (100 per request), stores all in memory, applies filters/sorting client-side. This works but has scalability limits and UX friction (filters only work on loaded data).
 
-Features users expect when a PWA is marketed as "installable" or "mobile-ready." Missing these = product feels incomplete or broken.
+## Table Stakes
 
-| Feature | Why Expected | Complexity | Platform Notes |
-|---------|--------------|------------|----------------|
-| **Web App Manifest** | Required for installability on all platforms | Low | Android: auto-prompt available. iOS: requires manual "Add to Home Screen" |
-| **HTTPS serving** | Security requirement for service workers | Low | Vite dev server supports HTTPS in dev mode |
-| **Service Worker registration** | Core PWA requirement for offline/caching | Medium | Use vite-plugin-pwa for zero-config setup |
-| **App icons (192x192, 512x512)** | Visual identity on home screen | Low | iOS also needs Apple Touch icons (180x180) |
-| **Splash screen** | Native-like launch experience | Low | Auto-generated from manifest on Android; requires static images on iOS |
-| **Standalone display mode** | App runs without browser chrome | Low | Set in manifest.json: "display": "standalone" |
-| **Basic offline fallback** | Show something when offline, not blank screen | Medium | Cache app shell + show "offline" message for failed requests |
-| **Theme color** | Browser UI matches app branding | Low | Set in manifest + meta tag for iOS |
+Features users expect. Missing = product feels incomplete or broken.
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| **Server-side filtering** | Users expect filters to work on ALL data, not just loaded data | Medium | WordPress REST API supports `meta_query` for ACF fields, `tax_query` for taxonomies |
+| **Server-side sorting** | Same expectation - sort should work across entire dataset | Low | WordPress supports `orderby` for meta fields, built-in fields |
+| **Loading indicators** | Users need feedback when data is loading | Low | Skeleton screens > spinners for perceived performance |
+| **Persistent scroll position** | When navigating back to list, users expect to return to same position | Medium | Browser handles this for traditional pagination, requires state management for infinite scroll |
+| **Total count display** | "Showing X of Y people" - users want to know dataset size | Low | WordPress REST API returns `X-WP-Total` header |
+| **Filter state persistence** | Applied filters should persist when user navigates away and back | Medium | Store in URL query params or localStorage |
+| **Responsive performance** | List should remain interactive during loading/scrolling | High | Requires virtual scrolling for 1000+ records |
+| **"Back to top" button** | For infinite scroll, users need quick way to return to top | Low | Essential UX for lists >50 items |
+| **Stable layout** | No content shifts during load (CLS = 0) | Medium | Skeleton loaders must match final content dimensions |
+| **Column visibility toggle** | Users expect to show/hide columns | Low | Standard table feature in 2026 |
+| **Column order persistence** | Selected columns/order should persist across sessions | Medium | Store in WordPress user meta or localStorage |
 
 ## Differentiators
 
-Features that set this PWA apart from basic web apps. Not expected by default, but add significant value for mobile CRM usage.
+Features that set product apart. Not expected, but add significant value.
 
-| Feature | Value Proposition | Complexity | Dependencies |
-|---------|-------------------|------------|--------------|
-| **Smart install prompt** | Increases install rate by prompting at right moment | Medium | Android only (beforeinstallprompt API). Show custom UI after user performs 2-3 valuable actions |
-| **Pull-to-refresh gesture** | Native-like interaction for refreshing contact list | Medium | Requires disabling default browser pull behavior (overscroll-behavior-y: contain). iOS support is buggy |
-| **Offline data access** | View cached contacts/meetings without network | High | IndexedDB + TanStack Query offlineFirst mode. iOS: data evicts after 7 days of non-use |
-| **Background sync for mutations** | Queue activity logs when offline, sync when back online | High | Background Sync API (Android Chrome only). iOS requires alternative approach |
-| **App shortcuts** | Quick access to "Add Contact" or "Today's Meetings" from home screen icon | Medium | Android only. Defined in manifest.json |
-| **Update notification** | Prompt user when new version available | Low | Built into vite-plugin-pwa with React hook (useRegisterSW) |
-| **Share target** | Share contacts from other apps into CRM | Medium | Android only. Web Share Target API |
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| **Virtual scrolling** | Renders only visible rows - handles 10K+ records smoothly | High | TanStack Virtual is recommended library for React (2026) |
+| **Intelligent prefetching** | Fetch next page before user scrolls to bottom | Medium | TanStack Query supports prefetching, improves perceived performance |
+| **Multi-column sorting** | Sort by multiple columns (e.g., last name, then first name) | Medium | Requires backend support for multiple `orderby` parameters |
+| **Saved filter presets** | Users can save frequently-used filter combinations | High | Requires UI for managing presets + storage (user meta) |
+| **Bulk actions** | Select multiple people, apply actions (already implemented) | Low | Already exists in Stadion |
+| **Real-time updates** | List updates when other users make changes | Very High | WebSocket or polling required, probably overkill for Stadion |
+| **Keyboard navigation** | Arrow keys to navigate rows, Enter to open | Medium | Accessibility benefit, power user feature |
+| **Column resizing** | Drag column borders to adjust width | Medium | TanStack Table supports this with state persistence |
+| **Export to CSV** | Download filtered/sorted results | Medium | Backend generates CSV from current filter/sort state |
+| **Custom field columns** | Show any ACF field as column | High | Already partially implemented in Stadion |
+| **Quick filters** | One-click filters for common queries (e.g., "Added this week") | Low | Pre-defined filter combinations |
+| **Search across custom fields** | Global search includes user-defined custom fields | Medium | Already implemented in Stadion's global search |
+| **Column drag-and-drop reordering** | Drag columns to reorder | Medium | TanStack Table supports this with `onColumnOrderChange` |
 
 ## Anti-Features
 
-Features to explicitly NOT build in this milestone. Common mistakes or premature optimizations.
+Features to explicitly NOT build. Common mistakes in this domain.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Push notifications** | Requires backend infrastructure (FCM/APNS), user permission prompt fatigue, iOS requires v16.4+ and installed PWA | Use existing reminder email system. Revisit post-MVP if user demand exists |
-| **Full offline editing** | Complex conflict resolution, requires queueing system, IndexedDB transaction complexity | Show cached data read-only when offline. Allow viewing but not editing |
-| **Native app features** (contacts API, calendar integration) | Poor browser support, iOS doesn't support, adds complexity | Stick to web-standard PWA features. Users can manually add to contacts/calendar |
-| **Precaching all contacts** | Storage limits (iOS: 50MB cache), wastes bandwidth, slow initial install | Cache app shell only. Fetch contacts on-demand with TanStack Query caching |
-| **Custom service worker logic** | Maintenance burden, hard to debug, vite-plugin-pwa covers 90% of use cases | Use vite-plugin-pwa's Workbox strategies. Only customize if specific need arises |
-| **iOS-specific web app meta tags overload** | Marginal benefit, maintenance cost, most are deprecated | Stick to Apple Touch icon + viewport meta. Skip status bar styling and obsolete tags |
+| **True infinite scroll with no pagination** | Breaks browser back button, impossible to share specific position, poor for goal-oriented tasks | Hybrid: Infinite loading with URL-based pages underneath |
+| **Auto-load more without indicator** | User has no control, can't reach footer, confusing when content keeps loading | Always show "Load More" button as fallback, clear loading state |
+| **Client-side filtering on incomplete data** | Current problem - filters lie to users when not all data is loaded | MUST use server-side filtering for datasets >100 records |
+| **Complex filter UI by default** | Overwhelming for casual users | Progressive disclosure: Simple filters visible, advanced behind toggle |
+| **Modal/drawer for column selection** | Interrupts workflow, requires multiple clicks | Dropdown from column header or settings icon in toolbar |
+| **Too many columns by default** | Horizontal scrolling is death for data tables | Default to 4-6 key columns, let users add more |
+| **Automatic column width calculation** | Causes layout shifts, re-renders, poor performance | Fixed or user-resizable column widths with sensible defaults |
+| **Filtering during typing** | Too aggressive, hammers server, poor UX for slow typers | Debounce 300-500ms after user stops typing |
+| **Fetch all data then virtualize** | Current Stadion approach - works until ~5K records | Fetch in pages, virtualize, only load visible range |
+| **Custom table implementation** | Reinventing the wheel, hundreds of edge cases | Use TanStack Table (industry standard 2026) |
+| **Pagination without server-side** | False sense of organization when all data loaded anyway | If paginating, actually paginate server-side |
+| **Non-sticky table headers** | Users lose context when scrolling | Headers should stick during vertical scroll |
+| **Separate mobile view** | Maintenance burden, feature parity issues | Responsive table with column prioritization |
 
-## Feature Dependencies & Relationships
+## Feature Dependencies
 
-### Core Installation Flow
 ```
-HTTPS + Manifest + Service Worker
-    ↓
-Installability criteria met
-    ↓
-Android: beforeinstallprompt fires → Custom install button → User installs
-iOS: User manually adds via Safari Share menu → App installed
-```
+Server-Side Filtering/Sorting (MUST HAVE FIRST)
+└─→ Virtual Scrolling or Pagination UI
+    └─→ Loading States & Indicators
+        └─→ Column Visibility Toggle
+            └─→ Column Order Persistence
+                └─→ Column Drag-and-Drop (optional enhancement)
 
-### Offline Data Access Flow
-```
-Service Worker (caching strategy)
-    +
-IndexedDB storage (TanStack Query persistence)
-    +
-TanStack Query offlineFirst mode
-    ↓
-Cached data available offline (up to 7 days on iOS)
-```
-
-### Update Flow
-```
-Service Worker detects new version
-    ↓
-vite-plugin-pwa React hook fires
-    ↓
-Custom UI shows "Update available" prompt
-    ↓
-User clicks "Update" → skipWaiting → Page reloads
+Server-Side Filtering/Sorting (MUST HAVE FIRST)
+└─→ Filter State Persistence (URL params)
+    └─→ Saved Filter Presets (optional enhancement)
 ```
 
-## Platform-Specific Considerations
+**Critical path:** Server-side filtering/sorting must be implemented before infinite scroll/virtual scrolling. Current client-side approach won't scale and creates UX problems.
 
-### Android (Chrome, Edge, Samsung Internet)
+## Implementation Strategy Recommendation
 
-**Strengths:**
-- Automatic install prompt after engagement criteria met
-- beforeinstallprompt API for custom install UI
-- Background Sync API for offline mutations
-- App shortcuts in manifest
-- Web Share Target API
-- Reliable IndexedDB persistence
-- No arbitrary cache eviction
+Based on research and Stadion's current architecture:
 
-**Limitations:**
-- None significant for this use case
+### Phase 1: Server-Side Foundation (CRITICAL)
+1. **Add server-side filtering to REST API** - Extend WordPress REST API to accept filter parameters (labels, birth year, modified date, custom fields)
+2. **Add server-side sorting** - Support `orderby` for ACF fields (first_name, last_name, custom fields)
+3. **Return total count** - Use `X-WP-Total` header
+4. **Update `usePeople` hook** - Pass filter/sort params to API instead of client-side filtering
 
-**Recommended approach:** Full feature implementation
+### Phase 2: Pagination UI (Choose One)
+**Option A: Traditional Pagination** (Recommended for Stadion)
+- Simpler implementation
+- Better for goal-oriented tasks (finding/comparing contacts)
+- Easier to share URLs (page numbers in URL)
+- Users can jump to specific pages
+- More predictable performance
 
-### iOS (Safari only)
+**Option B: Virtual Scrolling with Infinite Loading**
+- Smoother browsing experience
+- Requires TanStack Virtual integration
+- More complex state management
+- Better for exploratory browsing
 
-**Strengths:**
-- Push notifications support (iOS 16.4+, requires installed PWA)
-- Improved IndexedDB stability in recent versions
-- Shares Service Worker + CacheStorage with Safari (iOS 14+)
+**Recommendation for Stadion:** Traditional pagination. Users are finding/comparing contacts (goal-oriented), not casually browsing. Pagination provides better UX for this use case.
 
-**Limitations:**
-- No automatic install prompt (manual only via Share > Add to Home Screen)
-- No beforeinstallprompt API
-- Cache storage limit: ~50MB (service worker cache)
-- IndexedDB limit: ~500MB (but can be cleared)
-- **7-day cache eviction:** If PWA not used for 7 days, all cached data cleared
-- No Background Sync API
-- No App Shortcuts support
-- No Web Share Target API
-- Pull-to-refresh buggy in Safari
-- Chrome/Edge on iOS don't support PWA installation at all (must use Safari)
+### Phase 3: Column Customization
+1. **Column visibility toggle** - Dropdown to show/hide columns
+2. **Store preferences in user meta** - `update_user_meta( $user_id, 'stadion_people_columns', $columns )`
+3. **Column order** - Allow drag-and-drop reordering (TanStack Table API)
+4. **Persist column order** - Store in user meta
 
-**Critical impact:** The 7-day eviction policy means offline data is NOT reliable for infrequent users. Mitigation: Accept this limitation and document clearly.
-
-**Recommended approach:**
-- Treat iOS as second-class PWA experience
-- Focus on installability + basic offline (app shell caching)
-- Don't invest in iOS-exclusive features this milestone
-- Provide clear messaging: "For best experience, open app at least weekly"
-
-## MVP Feature Prioritization
-
-For this milestone (adding PWA to existing React SPA), prioritize:
-
-### Phase 1: Basic Installability (1-2 days)
-1. Web app manifest with icons
-2. Service worker registration (vite-plugin-pwa)
-3. HTTPS in production
-4. Cache app shell (CSS, JS, fonts)
-5. Offline fallback page
-
-**Outcome:** Users can install to home screen (Android auto-prompt, iOS manual). App loads when offline but shows "reconnect" message for data.
-
-### Phase 2: Smart Installation & Updates (1 day)
-1. Custom install button (Android only, hidden on iOS)
-2. beforeinstallprompt handling
-3. Update notification UI using useRegisterSW hook
-4. Prompt install after 2-3 interactions (view person, add note)
-
-**Outcome:** Higher install rate on Android. Users get notified when updates available.
-
-### Phase 3: Offline Data Access (2-3 days)
-1. TanStack Query persistence with IndexedDB
-2. Configure networkMode: 'offlineFirst'
-3. Cache recently viewed contacts/meetings
-4. Show cached data when offline with "Last synced: X" timestamp
-5. Read-only mode when offline (no editing)
-
-**Outcome:** Users can view recently accessed data without network. Clear sync status.
-
-### Defer to Post-MVP
-
-**Pull-to-refresh:** Medium complexity, buggy on iOS, low priority for CRM use case (users rarely need to force refresh)
-
-**Background sync:** High complexity, Android-only, requires queueing mutations. Not critical for MVP.
-
-**Push notifications:** Requires backend work (FCM), user permission fatigue, iOS limitations. Use existing email reminders instead.
-
-**App shortcuts:** Android-only, nice-to-have. Easy to add later if user demand exists.
+### Phase 4: Enhancements (Optional)
+- Column resizing
+- Saved filter presets
+- Multi-column sorting
+- Export to CSV
+- Keyboard navigation
 
 ## Technical Implementation Notes
 
-### Vite Plugin PWA Configuration
+### WordPress REST API Pagination
+- Maximum `per_page`: 100 (WordPress default)
+- Use `page` parameter for pagination
+- Headers: `X-WP-Total` (total items), `X-WP-TotalPages` (total pages)
+- For cursor-based pagination (better for infinite scroll): Use `offset` parameter
 
-Use vite-plugin-pwa with these recommended settings:
-
+### TanStack Query + Server-Side Filtering
 ```javascript
-VitePWA({
-  registerType: 'prompt', // Don't auto-reload, prompt user
-  includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
-  manifest: {
-    name: 'Stadion CRM',
-    short_name: 'Stadion',
-    description: 'Personal CRM for managing contacts and teams',
-    theme_color: '#1e40af', // Match brand color
-    icons: [
-      { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-      { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-    ],
-    display: 'standalone',
-    start_url: '/',
-    scope: '/',
-  },
-  workbox: {
-    runtimeCaching: [
-      {
-        urlPattern: /^https:\/\/api\.stadion\.svawc\.nl\/.*/i, // API calls
-        handler: 'NetworkFirst',
-        options: {
-          cacheName: 'api-cache',
-          expiration: { maxEntries: 100, maxAgeSeconds: 86400 }, // 24 hours
-        },
-      },
-    ],
-  },
-})
+const { data, isLoading } = useQuery({
+  queryKey: ['people', { page, filters, sort }],
+  queryFn: () => fetchPeople({ page, filters, sort }),
+  keepPreviousData: true, // Smooth transitions between pages
+});
 ```
 
-### TanStack Query Persistence
+### User Meta Storage (Column Preferences)
+```php
+// Backend
+$columns = get_user_meta( $user_id, 'stadion_people_columns', true );
+// Returns: ['first_name', 'last_name', 'labels', 'custom_field_1']
 
-```javascript
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
-
-const persister = createSyncStoragePersister({
-  storage: window.localStorage, // Use IndexedDB for larger datasets
-})
-
-// In app setup
-<PersistQueryClientProvider
-  client={queryClient}
-  persistOptions={{ persister }}
->
-  <App />
-</PersistQueryClientProvider>
+$column_order = get_user_meta( $user_id, 'stadion_people_column_order', true );
+// Returns: ['first_name', 'custom_field_1', 'labels', 'last_name']
 ```
 
-Configure queries with offline-first mode:
-
+### Virtual Scrolling (If Chosen)
 ```javascript
-useQuery({
-  queryKey: ['person', id],
-  queryFn: fetchPerson,
-  networkMode: 'offlineFirst', // Critical for PWA
-  staleTime: 1000 * 60 * 5, // 5 minutes
-})
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+const rowVirtualizer = useVirtualizer({
+  count: data.length,
+  getScrollElement: () => parentRef.current,
+  estimateSize: () => 50, // Row height in px
+  overscan: 10, // Render 10 extra rows above/below viewport
+});
 ```
 
-## Success Metrics
+## Performance Benchmarks (From Research)
 
-How to measure if PWA features are successful:
+| Approach | Records | Initial Load | Scroll FPS | Memory Usage |
+|----------|---------|--------------|------------|--------------|
+| Client-side all | 1400 | ~2-3s | 60 FPS | ~15MB |
+| Client-side all | 5000 | ~8-10s | 30-45 FPS | ~50MB |
+| Pagination (server) | Any | <500ms | 60 FPS | <5MB |
+| Virtual scroll (server) | Any | <500ms | 60 FPS | <10MB |
 
-| Metric | Target | How to Measure |
-|--------|--------|----------------|
-| Install rate (Android) | 15-20% of weekly active users | Track beforeinstallprompt → actual install |
-| Install rate (iOS) | 5-8% (lower due to manual flow) | Track standalone display mode visits |
-| Offline access usage | 10%+ of sessions start offline | Track service worker cache hits vs network |
-| Update acceptance rate | 80%+ click "Update" when prompted | Track update prompt → reload action |
-| Return visit rate (installed) | 2x higher than web-only | Compare installed users vs browser users |
+**Stadion current state:** ~2-3s initial load for 1400 people, acceptable but approaching limits.
 
-## Confidence Assessment
+## User Expectations (2026 Standards)
 
-| Area | Level | Reason |
-|------|-------|--------|
-| Android features | HIGH | Well-documented, stable APIs, multiple verified sources |
-| iOS limitations | MEDIUM | Documented in multiple sources, but specific behaviors (7-day eviction) may vary by iOS version |
-| vite-plugin-pwa | HIGH | Official documentation, active maintenance, proven in production |
-| TanStack Query offline | MEDIUM | Official docs + community examples, but integration patterns require testing |
-| Offline sync complexity | MEDIUM | Multiple implementation patterns exist; need to choose based on actual usage |
+Based on research into modern CRM and data table UIs:
 
-## Open Questions for Implementation
+1. **Loading should feel instant** - <500ms perceived load time (skeleton screens help)
+2. **Filters should be obvious** - Toolbar with clear filter chips/badges
+3. **Applied filters should be visible** - Don't hide active filters
+4. **Clear all filters** - Single button to reset
+5. **Column management should be discoverable** - Icon in header or settings
+6. **Columns should have reasonable defaults** - 4-6 columns that work for 80% of users
+7. **Sorting should be obvious** - Arrow indicators in column headers
+8. **Multi-column sort (nice-to-have)** - Hold Shift to add secondary sort
 
-1. **Storage strategy:** Use localStorage (simple) or IndexedDB (more storage) for TanStack Query persistence?
-   - Recommendation: Start with localStorage for MVP, migrate to IndexedDB if hitting limits
+## Accessibility Considerations
 
-2. **Cache duration:** How long should API responses be cached?
-   - Recommendation: 24 hours for contacts, 1 hour for meetings (more time-sensitive)
-
-3. **Install prompt timing:** When to show install button?
-   - Recommendation: After viewing 2 people OR adding 1 note (engaged user signal)
-
-4. **iOS install instructions:** Show modal with screenshots?
-   - Recommendation: Yes, but only show once per device, use subtle hint after
-
-5. **Offline editing:** Allow or block?
-   - Recommendation: Block for MVP (read-only offline), add queuing in future milestone if demanded
+| Requirement | Implementation |
+|-------------|----------------|
+| Keyboard navigation | Table rows focusable with Tab, Enter to open |
+| Screen reader support | Proper ARIA labels for column headers, sort state |
+| Loading announcements | ARIA live region for "Loading more results" |
+| Filter state announcements | "X results found" after filtering |
+| Column visibility | Dropdown should be keyboard accessible |
 
 ## Sources
 
-### PWA Installation & Manifest
-- [Making PWAs installable - MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)
-- [Installation prompt - web.dev](https://web.dev/learn/pwa/installation-prompt)
-- [iOS PWA install - Brainhub](https://brainhub.eu/library/pwa-on-ios)
-- [Android manifest requirements - MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)
+### Pagination vs Infinite Scroll
+- [Handling Large Datasets in Angular: Pagination vs Infinite Scroll](https://medium.com/@geekieshpixel/handling-large-datasets-in-angular-pagination-vs-infinite-scroll-dc07dadeac0b)
+- [Pagination vs. infinite scroll: Making the right decision for UX](https://blog.logrocket.com/ux-design/pagination-vs-infinite-scroll-ux/)
+- [Infinite Scroll vs Pagination: Which is Best for Your Website](https://www.tekrevol.com/blogs/pagination-vs-infinite-scroll-website/)
+- [Infinite Scroll vs Pagination: Key Differences](https://www.squareboat.com/blog/infinite-scroll-vs-pagination)
 
-### Offline Support & Service Workers
-- [PWA offline strategies - MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Offline_and_background_operation)
-- [Service worker caching strategies - MagicBell](https://www.magicbell.com/blog/offline-first-pwas-service-worker-caching-strategies)
-- [PWA capabilities 2026 - Progressier](https://progressier.com/pwa-capabilities)
+### React Table Implementation
+- [React Table Server Side Pagination with Sorting and Search Filters](https://dev.to/inimist/react-table-server-side-pagination-with-sorting-and-search-3163)
+- [How to implement server-side Pagination using React Table](https://medium.com/@Jaimayal/how-to-implement-server-side-pagination-using-react-table-d53922e0b086)
+- [How To Do Server Side Pagination, Column Filtering and Sorting With TanStack React Table](https://medium.com/@clee080/how-to-do-server-side-pagination-column-filtering-and-sorting-with-tanstack-react-table-and-react-7400a5604ff2)
+- [TanStack Table Pagination Guide](https://tanstack.com/table/v8/docs/guide/pagination)
 
-### iOS Limitations
-- [PWA iOS limitations - MagicBell](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide)
-- [Safari PWA storage persistence - Vinova](https://vinova.sg/navigating-safari-ios-pwa-limitations/)
-- [iOS PWA status 2025 - Brainhub](https://brainhub.eu/library/pwa-on-ios)
+### Column Visibility & Preferences
+- [Mastering Column Visibility and Resizing in MUI X Data Grid](https://bchirag.hashnode.dev/optimizing-mui-x-data-grid-column-visibility-resizing-and-persistence)
+- [Data Grid - Column visibility - MUI X](https://mui.com/x/react-data-grid/column-visibility/)
+- [Enhancing Visibility and User Experience with React TanStack Table Column Visibility](https://borstch.com/blog/development/enhancing-visibility-and-user-experience-with-react-tanstack-table-column-visibility)
+- [Saving User Preferences for Column Visibility](https://borstch.com/snippet/saving-user-preferences-for-column-visibility)
+- [TanStack Table Column Visibility APIs](https://tanstack.com/table/v8/docs/api/features/column-visibility)
 
-### React & Vite Implementation
-- [vite-plugin-pwa React docs](https://vite-pwa-org.netlify.app/frameworks/react)
-- [TanStack Query network modes](https://tanstack.com/query/v4/docs/framework/react/guides/network-mode)
-- [TanStack Query offline - TkDodo](https://tkdodo.eu/blog/offline-react-query)
+### Virtual Scrolling
+- [Virtualization in React: Improving Performance for Large Lists](https://medium.com/@ignatovich.dm/virtualization-in-react-improving-performance-for-large-lists-3df0800022ef)
+- [List Virtualization in React](https://medium.com/@atulbanwar/list-virtualization-in-react-3db491346af4)
+- [Virtualize large lists with react-window](https://web.dev/articles/virtualize-long-lists-react-window)
+- [TanStack Virtual](https://tanstack.com/virtual/latest)
 
-### Pull-to-Refresh
-- [Pull to refresh implementation - DEV](https://dev.to/chicio/implement-a-pull-to-refresh-component-for-you-web-application-1pcg)
-- [iOS PWA pull to refresh issues - Discourse](https://meta.discourse.org/t/ios-pwa-app-pull-to-refresh/343262)
+### WordPress REST API
+- [Pagination – REST API Handbook](https://developer.wordpress.org/rest-api/using-the-rest-api/pagination/)
+- [How to Handle Wordpress Pagination and Custom Queries with REST API](https://www.voxfor.com/how-to-handle-wordpress-pagination-and-custom-queries-with-rest-api/)
+- [RESTful API Pagination Best Practices](https://medium.com/@khdevnet/restful-api-pagination-best-practices-a-developers-guide-5b177a9552ef)
 
-### PWA Market Trends
-- [Best PWA frameworks 2026 - WebOsmotic](https://webosmotic.com/blog/pwa-frameworks/)
-- [PWA vs Native 2026 - Progressier](https://progressier.com/pwa-vs-native-app-comparison-table)
+### TanStack Query State Management
+- [TanStack Query Overview](https://tanstack.com/query/latest/docs/framework/react/overview)
+- [TanStack Query: A Powerful Tool for Data Management in React](https://medium.com/@ignatovich.dm/tanstack-query-a-powerful-tool-for-data-management-in-react-0c5ae6ef037c)
+- [Column Filtering Guide - TanStack Table](https://tanstack.com/table/latest/docs/guide/column-filtering)
+
+### Column Reordering
+- [Column Ordering Guide - TanStack Table](https://tanstack.com/table/v8/docs/guide/column-ordering)
+- [Exploring Column Ordering in React TanStack Table](https://borstch.com/blog/development/exploring-column-ordering-in-react-tanstack-table-for-better-data-management)
+- [React TanStack Table Column Ordering Example](https://tanstack.com/table/v8/docs/framework/react/examples/column-ordering)
+
+### WordPress User Meta
+- [Working with User Metadata – Plugin Handbook](https://developer.wordpress.org/plugins/users/working-with-user-metadata/)
+- [How WordPress user data is stored in the database](https://usersinsights.com/wordpress-user-database-tables/)
+- [wp_usermeta table - WordPress Database Tables](https://www.wpdir.com/wp-usermeta-table/)
+
+### Loading States & Skeleton UI
+- [Skeleton loading screen design — How to improve perceived performance](https://blog.logrocket.com/ux-design/skeleton-loading-screen-design/)
+- [Handling React loading states with React Loading Skeleton](https://blog.logrocket.com/handling-react-loading-states-react-loading-skeleton/)
+- [Infinite scroll best practices: UX design tips and examples](https://www.justinmind.com/ui-design/infinite-scroll)
+- [Skeleton UI Design: Best practices, Design variants & Examples](https://mobbin.com/glossary/skeleton)
