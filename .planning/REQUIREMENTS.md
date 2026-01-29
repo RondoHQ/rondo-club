@@ -13,14 +13,14 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **DATA-02**: Server filters people by label taxonomy (multiple labels, OR logic)
 - [x] **DATA-03**: Server filters people by ownership (mine/shared/all)
 - [x] **DATA-04**: Server filters people by modified date (within last N days)
-- [ ] **DATA-05**: Server filters people by birth year (exact match)
+- [x] **DATA-05**: Server filters people by birth year (range: from-to)
 - [x] **DATA-06**: Server sorts people by first_name (asc/desc)
 - [x] **DATA-07**: Server sorts people by last_name (asc/desc)
 - [x] **DATA-08**: Server sorts people by modified date (asc/desc)
 - [ ] **DATA-09**: Server sorts people by custom ACF fields (text, number, date types)
 - [x] **DATA-10**: Custom endpoint uses $wpdb JOIN to fetch posts + meta in single query
-- [ ] **DATA-11**: Birthdate is denormalized to person post_meta (_birthdate) for fast filtering
-- [ ] **DATA-12**: Birthdate syncs when birthday important_date is created/updated/deleted
+- [x] **DATA-11**: Birthdate is denormalized to person post_meta (_birthdate) for fast filtering
+- [x] **DATA-12**: Birthdate syncs when birthday important_date is created/updated/deleted
 - [x] **DATA-13**: Access control is preserved in custom $wpdb queries (unapproved users see nothing)
 - [x] **DATA-14**: All filter parameters are validated/escaped to prevent SQL injection
 
@@ -82,14 +82,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | Phase 111 | ✓ Complete |
 | DATA-03 | Phase 111 | ✓ Complete |
 | DATA-04 | Phase 111 | ✓ Complete |
-| DATA-05 | Phase 112 | Pending |
+| DATA-05 | Phase 112 | ✓ Complete |
 | DATA-06 | Phase 111 | ✓ Complete |
 | DATA-07 | Phase 111 | ✓ Complete |
 | DATA-08 | Phase 111 | ✓ Complete |
 | DATA-09 | Phase 113 | Pending |
 | DATA-10 | Phase 111 | ✓ Complete |
-| DATA-11 | Phase 112 | Pending |
-| DATA-12 | Phase 112 | Pending |
+| DATA-11 | Phase 112 | ✓ Complete |
+| DATA-12 | Phase 112 | ✓ Complete |
 | DATA-13 | Phase 111 | ✓ Complete |
 | DATA-14 | Phase 111 | ✓ Complete |
 | PAGE-01 | Phase 113 | Pending |
@@ -113,4 +113,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-29*
-*Last updated: 2026-01-29 after Phase 111 completion*
+*Last updated: 2026-01-29 after Phase 112 completion*
