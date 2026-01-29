@@ -1059,7 +1059,44 @@ class People extends Base {
 				$order_clause = "ORDER BY p.post_modified $order";
 				break;
 			default:
-				$order_clause = "ORDER BY fn.meta_value $order";
+				// Check if this is a custom field (starts with 'custom_')
+				if ( strpos( $orderby, 'custom_' ) === 0 ) {
+					$field_name = substr( $orderby, 7 );
+
+					// Get the field definition to determine type-appropriate sorting
+					$manager = new Manager();
+					$fields  = $manager->get_fields( 'person', false );
+					$field_type = null;
+
+					foreach ( $fields as $field ) {
+						if ( $field['name'] === $field_name ) {
+							$field_type = $field['type'];
+							break;
+						}
+					}
+
+					// Add LEFT JOIN for the custom field meta
+					$join_clauses[] = $wpdb->prepare(
+						"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
+						$field_name
+					);
+
+					// Build type-appropriate ORDER BY clause
+					// Always include first_name as secondary sort for consistent ordering
+					if ( $field_type === 'number' ) {
+						// Numeric sort with NULLS LAST
+						$order_clause = "ORDER BY CAST(cf.meta_value AS DECIMAL(10,2)) $order, fn.meta_value ASC";
+					} elseif ( $field_type === 'date' ) {
+						// Date sort (ACF stores dates as Ymd format) with NULLS LAST
+						$order_clause = "ORDER BY STR_TO_DATE(cf.meta_value, '%Y%m%d') $order, fn.meta_value ASC";
+					} else {
+						// Text-based sort (text, textarea, select, email, url) with NULLS LAST
+						$order_clause = "ORDER BY COALESCE(cf.meta_value, '') $order, fn.meta_value ASC";
+					}
+				} else {
+					// Fallback to first_name
+					$order_clause = "ORDER BY fn.meta_value $order";
+				}
 		}
 
 		// Combine clauses
