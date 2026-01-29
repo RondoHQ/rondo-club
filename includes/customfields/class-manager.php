@@ -287,9 +287,6 @@ class Manager {
 			);
 		}
 
-		// Sync field group to JSON to ensure changes persist.
-		$this->sync_field_group_to_json( $group['ID'] );
-
 		return $result;
 	}
 
@@ -331,10 +328,6 @@ class Manager {
 			);
 		}
 
-		// Sync field group to JSON to ensure changes persist.
-		// ACF loads JSON with priority over database, so we must update JSON.
-		$this->sync_field_group_to_json( $field['parent'] );
-
 		return $result;
 	}
 
@@ -371,9 +364,6 @@ class Manager {
 			);
 		}
 
-		// Sync field group to JSON to ensure changes persist.
-		$this->sync_field_group_to_json( $field['parent'] );
-
 		return $result;
 	}
 
@@ -408,9 +398,6 @@ class Manager {
 				'Failed to reactivate field in database.'
 			);
 		}
-
-		// Sync field group to JSON to ensure changes persist.
-		$this->sync_field_group_to_json( $field['parent'] );
 
 		return $result;
 	}
@@ -498,22 +485,12 @@ class Manager {
 			return new WP_Error( 'invalid_post_type', 'Invalid post type.' );
 		}
 
-		$group_id = null;
 		foreach ( $field_keys as $menu_order => $field_key ) {
 			$field = acf_get_field( $field_key );
 			if ( $field ) {
-				// Capture group ID from first field for JSON sync.
-				if ( ! $group_id && isset( $field['parent'] ) ) {
-					$group_id = $field['parent'];
-				}
 				$field['menu_order'] = $menu_order + 1; // Start at 1, not 0.
 				acf_update_field( $field );
 			}
-		}
-
-		// Sync field group to JSON to ensure changes persist.
-		if ( $group_id ) {
-			$this->sync_field_group_to_json( $group_id );
 		}
 
 		return true;
@@ -558,50 +535,5 @@ class Manager {
 	private function map_type_from_acf( string $acf_type ): string {
 		$reverse_map = array_flip( self::TYPE_MAP );
 		return $reverse_map[ $acf_type ] ?? $acf_type;
-	}
-
-	/**
-	 * Sync a field group to JSON file.
-	 *
-	 * When ACF Local JSON is enabled, field groups loaded from JSON take precedence
-	 * over database values. This method ensures database changes are written to JSON
-	 * so they persist across page loads.
-	 *
-	 * @param int|string $group_id_or_key Field group ID or key.
-	 * @return bool True on success, false on failure.
-	 */
-	private function sync_field_group_to_json( $group_id_or_key ): bool {
-		// Get the field group. We need to use the database ID if possible.
-		// When JSON is loaded, acf_get_field_group() returns ID=0, so we use get_page_by_path.
-		if ( is_numeric( $group_id_or_key ) ) {
-			$group = acf_get_field_group( $group_id_or_key );
-		} else {
-			// It's a key, get the post.
-			$group_post = get_page_by_path( $group_id_or_key, OBJECT, 'acf-field-group' );
-			if ( ! $group_post ) {
-				return false;
-			}
-			$group = acf_get_field_group( $group_post->ID );
-			if ( $group ) {
-				// Ensure we use the database ID.
-				$group['ID'] = $group_post->ID;
-			}
-		}
-
-		if ( ! $group ) {
-			return false;
-		}
-
-		// Load fields from database and add to group array.
-		// acf_write_json_field_group expects fields to be in the group array.
-		$fields = acf_get_fields( $group['ID'] );
-		if ( $fields ) {
-			$group['fields'] = $fields;
-		}
-
-		// Write to JSON. ACF will handle the file path based on acf/settings/save_json filter.
-		acf_write_json_field_group( $group );
-
-		return true;
 	}
 }
