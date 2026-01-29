@@ -37,7 +37,6 @@ import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import ContactEditModal from '@/components/ContactEditModal';
 import ImportantDateModal from '@/components/ImportantDateModal';
 import RelationshipEditModal from '@/components/RelationshipEditModal';
-import WorkHistoryEditModal from '@/components/WorkHistoryEditModal';
 import PersonEditModal from '@/components/PersonEditModal';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
@@ -350,21 +349,17 @@ export default function PersonDetail() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
-  const [showWorkHistoryModal, setShowWorkHistoryModal] = useState(false);
   const [showPersonEditModal, setShowPersonEditModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
   const [isSavingDate, setIsSavingDate] = useState(false);
   const [isSavingRelationship, setIsSavingRelationship] = useState(false);
-  const [isSavingWorkHistory, setIsSavingWorkHistory] = useState(false);
   const [isSavingPerson, setIsSavingPerson] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [editingDate, setEditingDate] = useState(null);
   const [editingRelationship, setEditingRelationship] = useState(null);
   const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
-  const [editingWorkHistory, setEditingWorkHistory] = useState(null);
-  const [editingWorkHistoryIndex, setEditingWorkHistoryIndex] = useState(null);
   
   // Complete todo flow states
   const [todoToComplete, setTodoToComplete] = useState(null);
@@ -562,49 +557,6 @@ export default function PersonDetail() {
       alert('Relatie kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingRelationship(false);
-    }
-  };
-
-  // Handle saving work history from modal
-  const handleSaveWorkHistory = async (data) => {
-    setIsSavingWorkHistory(true);
-    try {
-      const workHistory = [...(person.acf?.work_history || [])];
-      
-      const workHistoryItem = {
-        team: data.team || null,
-        entity_type: data.entity_type || null,
-        job_title: data.job_title || '',
-        description: data.description || '',
-        start_date: data.start_date || '',
-        end_date: data.end_date || '',
-        is_current: data.is_current || false,
-      };
-
-      if (editingWorkHistoryIndex !== null) {
-        workHistory[editingWorkHistoryIndex] = workHistoryItem;
-      } else {
-        workHistory.push(workHistoryItem);
-      }
-
-      const acfData = sanitizePersonAcf(person.acf, {
-        work_history: workHistory,
-      });
-
-      await updatePerson.mutateAsync({
-        id,
-        data: {
-          acf: acfData,
-        },
-      });
-      
-      setShowWorkHistoryModal(false);
-      setEditingWorkHistory(null);
-      setEditingWorkHistoryIndex(null);
-    } catch {
-      alert('Functie kon niet worden opgeslagen. Probeer het opnieuw.');
-    } finally {
-      setIsSavingWorkHistory(false);
     }
   };
 
@@ -974,27 +926,6 @@ export default function PersonDetail() {
     } else if (item.type === 'todo') {
       handleDeleteTodo(item.id);
     }
-  };
-
-  // Handle deleting a work history item
-  const handleDeleteWorkHistory = async (index) => {
-    if (!window.confirm('Weet je zeker dat je dit werkverleden wilt verwijderen?')) {
-      return;
-    }
-    
-    const updatedWorkHistory = [...(person.acf?.work_history || [])];
-    updatedWorkHistory.splice(index, 1);
-    
-    const acfData = sanitizePersonAcf(person.acf, {
-      work_history: updatedWorkHistory,
-    });
-    
-    await updatePerson.mutateAsync({
-      id,
-      data: {
-        acf: acfData,
-      },
-    });
   };
 
   // Handle removing a label
@@ -2168,28 +2099,15 @@ export default function PersonDetail() {
           <div className="columns-1 md:columns-2 gap-6">
             {/* Work history - spans both columns */}
           <div className="card p-6 mb-6 [column-span:all]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Functiegeschiedenis</h2>
-              <button
-                onClick={() => {
-                  setEditingWorkHistory(null);
-                  setEditingWorkHistoryIndex(null);
-                  setShowWorkHistoryModal(true);
-                }}
-                className="btn-secondary text-sm"
-                title="Functie toevoegen"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
+            <h2 className="font-semibold mb-4">Functiegeschiedenis</h2>
             {sortedWorkHistory?.length > 0 ? (
               <div className="space-y-4">
                 {sortedWorkHistory.map((job, index) => {
                   const teamData = job.team ? teamMap[job.team] : null;
                   const originalIndex = job.originalIndex;
-                  
+
                   return (
-                    <div key={originalIndex} className="flex items-start group">
+                    <div key={originalIndex} className="flex items-start">
                       {teamData?.logo ? (
                         <img
                           src={teamData.logo}
@@ -2220,34 +2138,13 @@ export default function PersonDetail() {
                           <p className="text-sm text-gray-600 mt-1">{job.description}</p>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                        <button
-                          onClick={() => {
-                            const jobData = person?.acf?.work_history?.[originalIndex];
-                            setEditingWorkHistory(jobData);
-                            setEditingWorkHistoryIndex(originalIndex);
-                            setShowWorkHistoryModal(true);
-                          }}
-                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title="Functie bewerken"
-                        >
-                          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteWorkHistory(originalIndex)}
-                          className="p-1 hover:bg-red-50 rounded"
-                          title="Functie verwijderen"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                        </button>
-                      </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                Nog geen functiegeschiedenis. <button onClick={() => { setEditingWorkHistory(null); setEditingWorkHistoryIndex(null); setShowWorkHistoryModal(true); }} className="text-accent-600 hover:underline">Toevoegen</button>
+                Nog geen functiegeschiedenis.
               </p>
             )}
           </div>
@@ -2774,18 +2671,6 @@ export default function PersonDetail() {
             isPeopleLoading={isPeopleLoading}
           />
 
-          <WorkHistoryEditModal
-            isOpen={showWorkHistoryModal}
-            onClose={() => {
-              setShowWorkHistoryModal(false);
-              setEditingWorkHistory(null);
-              setEditingWorkHistoryIndex(null);
-            }}
-            onSubmit={handleSaveWorkHistory}
-            isLoading={isSavingWorkHistory}
-            workHistoryItem={editingWorkHistory}
-          />
-          
       <PersonEditModal
         isOpen={showPersonEditModal}
         onClose={() => setShowPersonEditModal(false)}
