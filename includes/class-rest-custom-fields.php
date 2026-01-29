@@ -293,14 +293,6 @@ class CustomFields extends WP_REST_Controller {
 					$display_props['append'] = $field['append'];
 				}
 
-				// List view display settings.
-				if ( isset( $field['show_in_list_view'] ) ) {
-					$display_props['show_in_list_view'] = (bool) $field['show_in_list_view'];
-				}
-				if ( isset( $field['list_view_order'] ) ) {
-					$display_props['list_view_order'] = (int) $field['list_view_order'];
-				}
-
 				return $display_props;
 			},
 			$fields
@@ -345,8 +337,6 @@ class CustomFields extends WP_REST_Controller {
 			'relation_post_types', 'filters',
 			// Color picker options.
 			'enable_opacity',
-			// List view display settings.
-			'show_in_list_view', 'list_view_order',
 			// Unique validation.
 			'unique',
 		);
@@ -424,8 +414,6 @@ class CustomFields extends WP_REST_Controller {
 			'relation_post_types', 'filters',
 			// Color picker options.
 			'enable_opacity',
-			// List view display settings.
-			'show_in_list_view', 'list_view_order',
 			// Unique validation.
 			'unique',
 		);
@@ -692,17 +680,6 @@ class CustomFields extends WP_REST_Controller {
 			'enable_opacity' => array(
 				'type'        => 'boolean',
 				'description' => 'Enable opacity/alpha slider (Color field)',
-			),
-			// List view display settings.
-			'show_in_list_view' => array(
-				'type'        => 'boolean',
-				'default'     => false,
-				'description' => 'Show field as column in list view',
-			),
-			'list_view_order' => array(
-				'type'        => 'integer',
-				'default'     => 999,
-				'description' => 'Column order in list view (lower = leftmost)',
 			),
 			// Unique validation.
 			'unique' => array(
