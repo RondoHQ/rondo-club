@@ -1892,31 +1892,37 @@ export default function PersonDetail() {
                 Investments
               </h2>
               <div className="space-y-3">
-                {investments.map((team) => (
-                  <Link
-                    key={team.id}
-                    to={`/teams/${team.id}`}
-                    className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
-                  >
-                    {team.thumbnail ? (
-                      <img
-                        src={team.thumbnail}
-                        alt={team.name}
-                        className="w-12 h-12 rounded-lg object-contain border border-gray-200"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200">
-                        <Building2 className="w-6 h-6 text-gray-400" />
-                      </div>
-                    )}
-                    <div className="ml-3">
-                      <p className="text-sm font-medium group-hover:text-accent-600">{team.name}</p>
-                      {team.industry && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{team.industry}</p>
+                {investments.map((investment) => {
+                  const isCommissie = investment.type === 'commissie';
+                  const linkPath = isCommissie
+                    ? `/commissies/${investment.id}`
+                    : `/teams/${investment.id}`;
+                  return (
+                    <Link
+                      key={investment.id}
+                      to={linkPath}
+                      className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                    >
+                      {investment.thumbnail ? (
+                        <img
+                          src={investment.thumbnail}
+                          alt={investment.name}
+                          className="w-12 h-12 rounded-lg object-contain border border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                          <Building2 className="w-6 h-6 text-gray-400" />
+                        </div>
                       )}
-                    </div>
-                  </Link>
-                ))}
+                      <div className="ml-3">
+                        <p className="text-sm font-medium group-hover:text-accent-600">{investment.name}</p>
+                        {investment.industry && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{investment.industry}</p>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}
