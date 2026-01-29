@@ -9,20 +9,20 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Data Layer (Backend)
 
-- [ ] **DATA-01**: Server returns paginated people (100 per page by default)
-- [ ] **DATA-02**: Server filters people by label taxonomy (multiple labels, OR logic)
-- [ ] **DATA-03**: Server filters people by ownership (mine/shared/all)
-- [ ] **DATA-04**: Server filters people by modified date (within last N days)
+- [x] **DATA-01**: Server returns paginated people (100 per page by default)
+- [x] **DATA-02**: Server filters people by label taxonomy (multiple labels, OR logic)
+- [x] **DATA-03**: Server filters people by ownership (mine/shared/all)
+- [x] **DATA-04**: Server filters people by modified date (within last N days)
 - [ ] **DATA-05**: Server filters people by birth year (exact match)
-- [ ] **DATA-06**: Server sorts people by first_name (asc/desc)
-- [ ] **DATA-07**: Server sorts people by last_name (asc/desc)
-- [ ] **DATA-08**: Server sorts people by modified date (asc/desc)
+- [x] **DATA-06**: Server sorts people by first_name (asc/desc)
+- [x] **DATA-07**: Server sorts people by last_name (asc/desc)
+- [x] **DATA-08**: Server sorts people by modified date (asc/desc)
 - [ ] **DATA-09**: Server sorts people by custom ACF fields (text, number, date types)
-- [ ] **DATA-10**: Custom endpoint uses $wpdb JOIN to fetch posts + meta in single query
+- [x] **DATA-10**: Custom endpoint uses $wpdb JOIN to fetch posts + meta in single query
 - [ ] **DATA-11**: Birthdate is denormalized to person post_meta (_birthdate) for fast filtering
 - [ ] **DATA-12**: Birthdate syncs when birthday important_date is created/updated/deleted
-- [ ] **DATA-13**: Access control is preserved in custom $wpdb queries (unapproved users see nothing)
-- [ ] **DATA-14**: All filter parameters are validated/escaped to prevent SQL injection
+- [x] **DATA-13**: Access control is preserved in custom $wpdb queries (unapproved users see nothing)
+- [x] **DATA-14**: All filter parameters are validated/escaped to prevent SQL injection
 
 ### Pagination (Frontend)
 
@@ -78,20 +78,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 111 | Pending |
-| DATA-02 | Phase 111 | Pending |
-| DATA-03 | Phase 111 | Pending |
-| DATA-04 | Phase 111 | Pending |
+| DATA-01 | Phase 111 | ✓ Complete |
+| DATA-02 | Phase 111 | ✓ Complete |
+| DATA-03 | Phase 111 | ✓ Complete |
+| DATA-04 | Phase 111 | ✓ Complete |
 | DATA-05 | Phase 112 | Pending |
-| DATA-06 | Phase 111 | Pending |
-| DATA-07 | Phase 111 | Pending |
-| DATA-08 | Phase 111 | Pending |
+| DATA-06 | Phase 111 | ✓ Complete |
+| DATA-07 | Phase 111 | ✓ Complete |
+| DATA-08 | Phase 111 | ✓ Complete |
 | DATA-09 | Phase 113 | Pending |
-| DATA-10 | Phase 111 | Pending |
+| DATA-10 | Phase 111 | ✓ Complete |
 | DATA-11 | Phase 112 | Pending |
 | DATA-12 | Phase 112 | Pending |
-| DATA-13 | Phase 111 | Pending |
-| DATA-14 | Phase 111 | Pending |
+| DATA-13 | Phase 111 | ✓ Complete |
+| DATA-14 | Phase 111 | ✓ Complete |
 | PAGE-01 | Phase 113 | Pending |
 | PAGE-02 | Phase 113 | Pending |
 | PAGE-03 | Phase 113 | Pending |
@@ -113,4 +113,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-29*
-*Last updated: 2026-01-29 after roadmap creation*
+*Last updated: 2026-01-29 after Phase 111 completion*
