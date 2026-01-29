@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 115 of 5 (Column Preferences UI)
-Plan: 3 of 3 in phase
-Status: In progress
-Last activity: 2026-01-29 - Completed 115-03-PLAN.md
+Plan: 5 of 5 in phase (COMPLETE)
+Status: Phase complete
+Last activity: 2026-01-29 - Completed 115-05-PLAN.md
 
-Progress: [█████████░] 90% (9/10 plans complete, 4/5 phases in progress)
+Progress: [██████████] 100% (10/10 plans complete, 5/5 phases complete)
 
 ## Milestone History
 
@@ -26,6 +26,7 @@ Progress: [█████████░] 90% (9/10 plans complete, 4/5 phases 
 - v6.0 Custom Fields - shipped 2026-01-21
 - v7.0 Dutch Localization - shipped 2026-01-25
 - v8.0 PWA Enhancement - shipped 2026-01-28
+- v9.0 People List Performance & Customization - ready to ship 2026-01-29
 
 ## Performance Metrics
 
@@ -33,9 +34,9 @@ Progress: [█████████░] 90% (9/10 plans complete, 4/5 phases 
 - Total phases: 5
 - Total requirements: 27
 - Requirements mapped: 27/27 (100%)
-- Phases complete: 4/5 (80%)
-- Plans complete: 9/10 (90%)
-- Plans remaining: 1
+- Phases complete: 5/5 (100%)
+- Plans complete: 10/10 (100%)
+- Plans remaining: 0
 
 ## Accumulated Context
 
@@ -89,6 +90,7 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 | 115-03-001 | Use pointer events instead of mouse events for unified touch/mouse handling | 115-03 | 2026-01-29 |
 | 115-03-002 | Return resizeHandlers object for easy spread onto resize handle element | 115-03 | 2026-01-29 |
 | 115-03-003 | Handle onPointerCancel same as onPointerUp for edge case reliability | 115-03 | 2026-01-29 |
+| 115-05-001 | Remove show_in_list_view without data migration | 115-05 | 2026-01-29 |
 
 ### Pending Todos
 
@@ -135,8 +137,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-01-29 17:57 UTC
-Stopped at: Completed 115-02-PLAN.md
+Last session: 2026-01-29 18:15 UTC
+Stopped at: Completed 115-05-PLAN.md (Phase 115 complete)
 Resume file: None
 
-Next: Phase 115 Plan 04 - PeopleList Integration
+Next: v9.0 milestone complete - ready for version bump and deployment
