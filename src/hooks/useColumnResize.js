@@ -62,7 +62,14 @@ export function useColumnResize(initialWidth = 150, minWidth = 50, onResizeEnd =
       if (!isResizing) return;
 
       setIsResizing(false);
-      e.currentTarget.releasePointerCapture(e.pointerId);
+
+      // Release pointer capture - wrap in try-catch as it can fail
+      // if pointer was already released or left the window
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        // Pointer capture may already be released
+      }
 
       // Call resize end callback with final width
       if (onResizeEndRef.current) {
@@ -80,7 +87,14 @@ export function useColumnResize(initialWidth = 150, minWidth = 50, onResizeEnd =
       if (!isResizing) return;
 
       setIsResizing(false);
-      e.currentTarget.releasePointerCapture(e.pointerId);
+
+      // Release pointer capture - wrap in try-catch as it can fail
+      // if pointer was already released or left the window
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        // Pointer capture may already be released
+      }
 
       // Call resize end callback with final width
       if (onResizeEndRef.current) {
