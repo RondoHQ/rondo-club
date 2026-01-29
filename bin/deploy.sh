@@ -126,9 +126,14 @@ else
         "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_REMOTE_THEME_PATH/"
 fi
 
-# Step 3: Clear caches
+# Step 3: Regenerate composer autoloader (for new PHP classes)
+echo -e "${YELLOW}Step 3: Regenerating composer autoloader...${NC}"
+$SSH_CMD "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
+    "cd $DEPLOY_REMOTE_THEME_PATH && composer dump-autoload -o --quiet"
+
+# Step 4: Clear caches
 if [ "$SKIP_CACHE_CLEAR" = false ]; then
-    echo -e "${YELLOW}Step 3: Clearing caches...${NC}"
+    echo -e "${YELLOW}Step 4: Clearing caches...${NC}"
     $SSH_CMD "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
         "cd $DEPLOY_REMOTE_WP_PATH && wp cache flush && wp sg purge"
 fi
