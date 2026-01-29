@@ -816,7 +816,7 @@ export default function PersonDetail() {
           return { ...response.data, _entityType: 'commissie' };
         }
         // Legacy data without entity_type: use unified endpoint
-        const response = await prmApi.getEntity(entityId);
+        const response = await wpApi.getEntity(entityId);
         return { ...response.data, _entityType: response.data._entity_type || response.data.type };
       },
       enabled: !!entityId,
