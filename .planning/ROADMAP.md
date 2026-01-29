@@ -44,10 +44,10 @@ Plans:
   3. No other UI path allows creating teams or commissies
   4. REST API POST /wp/v2/teams still works for automation
   5. REST API POST /wp/v2/commissies still works for automation
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 117-01: TBD
+- [ ] 117-01-PLAN.md — Remove organization creation controls from TeamsList and CommissiesList
 
 ### Phase 118: Custom Field Edit Control
 **Goal**: Custom fields can be marked as non-editable in UI while remaining API-accessible
