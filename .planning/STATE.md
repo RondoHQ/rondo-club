@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 Phase: Ready for next milestone
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-01-29 — v10.0 milestone complete
+Last activity: 2026-01-30 — Completed quick task 013: Rename Organisatievelden to Teamvelden
 
 Progress: Milestone complete, awaiting next milestone definition
 
@@ -38,7 +38,7 @@ v10.0 milestone decisions archived to milestones/v10.0-ROADMAP.md.
 
 ### Pending Todos
 
-1 todo in `.planning/todos/pending/`
+2 todos in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
@@ -57,6 +57,7 @@ None.
 | 010 | VOG status indicator and Sportlink link | 2026-01-29 | 0857a5f | [010-vog-status-indicator-and-sportlink-link-](./quick/010-vog-status-indicator-and-sportlink-link-/) |
 | 011 | Remove Eigenaar filter and move gear icon | 2026-01-29 | 87c8f3f | [011-remove-eigenaar-filter-and-move-gear-ico](./quick/011-remove-eigenaar-filter-and-move-gear-ico/) |
 | 012 | Team detail three column layout (Spelers/Staf/Voormalig) | 2026-01-30 | 49fdf43 | [012-team-detail-three-column-layout](./quick/012-team-detail-three-column-layout/) |
+| 013 | Rename Organisatievelden to Teamvelden | 2026-01-30 | d83b7ac | [013-rename-organisatievelden-to-teamvelden](./quick/013-rename-organisatievelden-to-teamvelden/) |
 
 ## Session Continuity
 

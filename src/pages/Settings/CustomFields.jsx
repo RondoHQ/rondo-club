@@ -27,7 +27,7 @@ import DeleteFieldDialog from '@/components/DeleteFieldDialog';
 // Tab configuration
 const TABS = [
   { id: 'person', label: 'Ledenvelden' },
-  { id: 'team', label: 'Organisatievelden' },
+  { id: 'team', label: 'Teamvelden' },
 ];
 
 // Field type display labels
