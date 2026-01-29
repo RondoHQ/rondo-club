@@ -139,10 +139,14 @@ Plans:
 - COL-06: Settings modal provides column customization UI
 - COL-07: "Tonen als kolom in lijstweergave" removed from custom field settings (replaced by per-user selection)
 
-**Plans:** TBD
+**Plans:** 5 plans
 
 Plans:
-- [ ] TBD
+- [ ] 115-01-PLAN.md — Backend column_order/column_widths storage + useListPreferences hook
+- [ ] 115-02-PLAN.md — ColumnSettingsModal with drag-drop reordering
+- [ ] 115-03-PLAN.md — useColumnResize hook for column width adjustment
+- [ ] 115-04-PLAN.md — PeopleList integration with preferences, modal, and resize
+- [ ] 115-05-PLAN.md — Remove show_in_list_view from custom field settings
 
 **Success Criteria:**
 1. User can open column settings modal from People list header
