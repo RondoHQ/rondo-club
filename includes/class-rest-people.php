@@ -201,6 +201,80 @@ class People extends Base {
 				],
 			]
 		);
+
+		// Filtered people with server-side pagination, filtering, and sorting
+		register_rest_route(
+			'stadion/v1',
+			'/people/filtered',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_filtered_people' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'page'          => [
+						'default'           => 1,
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && (int) $param > 0;
+						},
+						'sanitize_callback' => 'absint',
+					],
+					'per_page'      => [
+						'default'           => 100,
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && (int) $param > 0 && (int) $param <= 100;
+						},
+						'sanitize_callback' => 'absint',
+					],
+					'labels'        => [
+						'default'           => [],
+						'validate_callback' => function ( $param ) {
+							if ( ! is_array( $param ) ) {
+								return false;
+							}
+							foreach ( $param as $id ) {
+								if ( ! is_numeric( $id ) ) {
+									return false;
+								}
+							}
+							return true;
+						},
+						'sanitize_callback' => function ( $param ) {
+							return array_map( 'absint', $param );
+						},
+					],
+					'ownership'     => [
+						'default'           => 'all',
+						'validate_callback' => function ( $param ) {
+							return in_array( $param, [ 'mine', 'shared', 'all' ], true );
+						},
+					],
+					'modified_days' => [
+						'default'           => null,
+						'validate_callback' => function ( $param ) {
+							return $param === null || $param === '' || ( is_numeric( $param ) && (int) $param > 0 );
+						},
+						'sanitize_callback' => function ( $param ) {
+							return $param === null || $param === '' ? null : absint( $param );
+						},
+					],
+					'orderby'       => [
+						'default'           => 'first_name',
+						'validate_callback' => function ( $param ) {
+							return in_array( $param, [ 'first_name', 'last_name', 'modified' ], true );
+						},
+					],
+					'order'         => [
+						'default'           => 'asc',
+						'validate_callback' => function ( $param ) {
+							return in_array( strtolower( $param ), [ 'asc', 'desc' ], true );
+						},
+						'sanitize_callback' => function ( $param ) {
+							return strtolower( $param );
+						},
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -819,5 +893,153 @@ class People extends Base {
 				'failed'  => $failed,
 			]
 		);
+	}
+
+	/**
+	 * Get filtered and paginated people
+	 *
+	 * Returns people with server-side filtering, sorting, and pagination.
+	 * Uses optimized $wpdb queries with JOINs to fetch data in minimal queries.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Response with people array and pagination info.
+	 */
+	public function get_filtered_people( $request ) {
+		global $wpdb;
+
+		// Extract validated parameters
+		$page          = (int) $request->get_param( 'page' );
+		$per_page      = (int) $request->get_param( 'per_page' );
+		$labels        = $request->get_param( 'labels' ) ?: [];
+		$ownership     = $request->get_param( 'ownership' );
+		$modified_days = $request->get_param( 'modified_days' );
+		$orderby       = $request->get_param( 'orderby' );
+		$order         = strtoupper( $request->get_param( 'order' ) );
+
+		// Double-check access control (permission_callback should have caught this,
+		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
+		$access_control = new \Stadion\Core\AccessControl();
+		if ( ! $access_control->is_user_approved() ) {
+			return rest_ensure_response( [
+				'people'      => [],
+				'total'       => 0,
+				'page'        => $page,
+				'total_pages' => 0,
+			] );
+		}
+
+		$offset = ( $page - 1 ) * $per_page;
+
+		// Build query components
+		$select_fields  = "p.ID, p.post_modified, p.post_author";
+		$join_clauses   = [];
+		$where_clauses  = [
+			"p.post_type = 'person'",
+			"p.post_status = 'publish'",
+		];
+		$prepare_values = [];
+
+		// Always JOIN meta for first_name and last_name (needed for display and sorting)
+		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} fn ON p.ID = fn.post_id AND fn.meta_key = 'first_name'";
+		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ln ON p.ID = ln.post_id AND ln.meta_key = 'last_name'";
+		$select_fields .= ", fn.meta_value AS first_name, ln.meta_value AS last_name";
+
+		// Ownership filter
+		if ( $ownership === 'mine' ) {
+			$where_clauses[]  = 'p.post_author = %d';
+			$prepare_values[] = get_current_user_id();
+		} elseif ( $ownership === 'shared' ) {
+			$where_clauses[]  = 'p.post_author != %d';
+			$prepare_values[] = get_current_user_id();
+		}
+
+		// Modified date filter
+		if ( $modified_days !== null ) {
+			$date_threshold   = gmdate( 'Y-m-d H:i:s', strtotime( "-{$modified_days} days" ) );
+			$where_clauses[]  = 'p.post_modified >= %s';
+			$prepare_values[] = $date_threshold;
+		}
+
+		// Label filter (taxonomy terms with OR logic)
+		if ( ! empty( $labels ) ) {
+			$join_clauses[] = "INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id";
+			$join_clauses[] = "INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = 'person_label'";
+
+			$placeholders     = implode( ',', array_fill( 0, count( $labels ), '%d' ) );
+			$where_clauses[]  = "tt.term_id IN ($placeholders)";
+			$prepare_values   = array_merge( $prepare_values, $labels );
+		}
+
+		// Build ORDER BY clause (columns are whitelisted in args validation)
+		// ORDER and orderby are safe - validated against whitelist
+		switch ( $orderby ) {
+			case 'first_name':
+				$order_clause = "ORDER BY fn.meta_value $order, ln.meta_value $order";
+				break;
+			case 'last_name':
+				$order_clause = "ORDER BY ln.meta_value $order, fn.meta_value $order";
+				break;
+			case 'modified':
+				$order_clause = "ORDER BY p.post_modified $order";
+				break;
+			default:
+				$order_clause = "ORDER BY fn.meta_value $order";
+		}
+
+		// Combine clauses
+		$join_sql  = implode( ' ', $join_clauses );
+		$where_sql = implode( ' AND ', $where_clauses );
+
+		// Main query with DISTINCT (needed when filtering by taxonomy to avoid duplicates)
+		$main_sql = "SELECT DISTINCT $select_fields
+					 FROM {$wpdb->posts} p
+					 $join_sql
+					 WHERE $where_sql
+					 $order_clause";
+
+		// Add pagination
+		$prepare_values[] = $per_page;
+		$prepare_values[] = $offset;
+		$paginated_sql    = $main_sql . ' LIMIT %d OFFSET %d';
+
+		// Prepare and execute main query
+		$prepared_sql = $wpdb->prepare( $paginated_sql, $prepare_values );
+		$results      = $wpdb->get_results( $prepared_sql );
+
+		// Count query (same joins/where, no order/limit)
+		// Need to rebuild prepare_values without the pagination values
+		$count_prepare_values = array_slice( $prepare_values, 0, -2 );
+		$count_sql            = "SELECT COUNT(DISTINCT p.ID)
+								 FROM {$wpdb->posts} p
+								 $join_sql
+								 WHERE $where_sql";
+
+		if ( ! empty( $count_prepare_values ) ) {
+			$prepared_count_sql = $wpdb->prepare( $count_sql, $count_prepare_values );
+		} else {
+			$prepared_count_sql = $count_sql;
+		}
+		$total = (int) $wpdb->get_var( $prepared_count_sql );
+
+		// Format results
+		$people = [];
+		foreach ( $results as $row ) {
+			$people[] = [
+				'id'         => (int) $row->ID,
+				'first_name' => $this->sanitize_text( $row->first_name ?: '' ),
+				'last_name'  => $this->sanitize_text( $row->last_name ?: '' ),
+				'modified'   => $row->post_modified,
+				// These are fetched post-query to avoid complex JOINs
+				'thumbnail'  => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
+				'labels'     => wp_get_post_terms( $row->ID, 'person_label', [ 'fields' => 'names' ] ),
+			];
+		}
+
+		return rest_ensure_response( [
+			'people'      => $people,
+			'total'       => $total,
+			'page'        => $page,
+			'total_pages' => (int) ceil( $total / $per_page ),
+		] );
 	}
 }
