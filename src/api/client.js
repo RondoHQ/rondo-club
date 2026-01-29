@@ -121,6 +121,9 @@ export const prmApi = {
   bulkUpdateTeams: (ids, updates) => api.post('/stadion/v1/teams/bulk-update', { ids, updates }),
   bulkUpdateCommissies: (ids, updates) => api.post('/stadion/v1/commissies/bulk-update', { ids, updates }),
 
+  // Filtered people with server-side pagination/filtering/sorting
+  getFilteredPeople: (params = {}) => api.get('/stadion/v1/people/filtered', { params }),
+
   // Current user
   getCurrentUser: () => api.get('/stadion/v1/user/me'),
   
