@@ -136,11 +136,12 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 | 008 | WYSIWYG custom fields render as HTML | 2026-01-29 | 8f84f75 | [008-wysiwyg-html-render](./quick/008-wysiwyg-html-render/) |
 | 009 | Person header job display improvements | 2026-01-29 | cdcf587 | [009-person-header-job-display](./quick/009-person-header-job-display/) |
 | 010 | VOG status indicator and Sportlink link | 2026-01-29 | 0857a5f | [010-vog-status-indicator-and-sportlink-link-](./quick/010-vog-status-indicator-and-sportlink-link-/) |
+| 011 | Remove Eigenaar filter and move gear icon | 2026-01-29 | 87c8f3f | [011-remove-eigenaar-filter-and-move-gear-ico](./quick/011-remove-eigenaar-filter-and-move-gear-ico/) |
 
 ## Session Continuity
 
-Last session: 2026-01-29 18:15 UTC
-Stopped at: Completed 115-05-PLAN.md (Phase 115 complete)
+Last session: 2026-01-29 20:30 UTC
+Stopped at: Completed quick task 011 - Remove Eigenaar filter and move gear icon
 Resume file: None
 
 Next: v9.0 milestone complete - ready for version bump and deployment
