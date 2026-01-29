@@ -1,6 +1,6 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag } from 'lucide-react';
+import { Plus, Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag, Settings } from 'lucide-react';
 import { useFilteredPeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
@@ -9,16 +9,19 @@ import { getTeamName } from '@/utils/formatters';
 import PersonEditModal from '@/components/PersonEditModal';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
+import { useListPreferences } from '@/hooks/useListPreferences';
+import { useColumnResize } from '@/hooks/useColumnResize';
+import ColumnSettingsModal from './ColumnSettingsModal';
 
 // Helper function to get current team ID from person's work history
 function getCurrentTeamId(person) {
   const workHistory = person.acf?.work_history || [];
   if (workHistory.length === 0) return null;
-  
+
   // First, try to find current position
   const currentJob = workHistory.find(job => job.is_current && job.team);
   if (currentJob) return currentJob.team;
-  
+
   // Otherwise, get the most recent (by start_date)
   const jobsWithTeam = workHistory
     .filter(job => job.team)
@@ -27,14 +30,24 @@ function getCurrentTeamId(person) {
       const dateB = b.start_date ? new Date(b.start_date) : new Date(0);
       return dateB - dateA; // Most recent first
     });
-  
+
   return jobsWithTeam.length > 0 ? jobsWithTeam[0].team : null;
 }
 
-function PersonListRow({ person, teamName, listViewFields, isSelected, onToggleSelection, isOdd }) {
+// Map column IDs to sort field names
+const COLUMN_SORT_FIELDS = {
+  name: 'first_name',
+  first_name: 'first_name',
+  last_name: 'last_name',
+  team: 'organization',
+  labels: 'labels',
+  modified: 'modified',
+};
+
+function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidths, customFieldsMap, isSelected, onToggleSelection, isOdd }) {
   return (
     <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'}`}>
-      <td className="pl-4 pr-2 py-3 w-10">
+      <td className="pl-4 pr-2 py-3 w-10 sticky left-0 z-[1] bg-inherit">
         <button
           onClick={(e) => { e.preventDefault(); onToggleSelection(person.id); }}
           className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
@@ -46,7 +59,11 @@ function PersonListRow({ person, teamName, listViewFields, isSelected, onToggleS
           )}
         </button>
       </td>
-      <td className="w-10 px-2 py-3">
+      {/* Photo - sticky with checkbox */}
+      <td
+        className="w-10 px-2 py-3 sticky left-10 z-[1] bg-inherit"
+        style={{ minWidth: '40px' }}
+      >
         <Link to={`/people/${person.id}`} className="flex items-center justify-center">
           {person.thumbnail ? (
             <img
@@ -63,78 +80,201 @@ function PersonListRow({ person, teamName, listViewFields, isSelected, onToggleS
           )}
         </Link>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap">
+      {/* Name - sticky */}
+      <td
+        className="px-4 py-3 whitespace-nowrap sticky left-[88px] z-[1] bg-inherit"
+        style={{
+          width: columnWidths['name'] ? `${columnWidths['name']}px` : '200px',
+          minWidth: columnWidths['name'] ? `${columnWidths['name']}px` : '200px',
+        }}
+      >
         <Link to={`/people/${person.id}`} className="flex items-center">
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            {person.first_name || ''}
+            {person.first_name || ''} {person.last_name || ''}
             {person.is_deceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
           </span>
         </Link>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-        {person.last_name || '-'}
-      </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-        {teamName || '-'}
-      </td>
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-        {person.labels && person.labels.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {person.labels.slice(0, 3).map((label) => (
-              <span
-                key={label}
-                className="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-              >
-                {label}
-              </span>
-            ))}
-            {person.labels.length > 3 && (
-              <span className="text-xs text-gray-400 dark:text-gray-500">+{person.labels.length - 3} meer</span>
-            )}
-          </div>
-        ) : (
-          '-'
-        )}
-      </td>
-      {listViewFields.map(field => (
-        <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-          <CustomFieldColumn field={field} value={person.acf?.[field.name]} />
-        </td>
-      ))}
+      {/* Dynamic columns based on visible_columns order */}
+      {visibleColumns.map(colId => {
+        const column = columnMap[colId];
+        if (!column) return null;
+
+        const width = columnWidths[colId];
+        const style = width ? {
+          width: `${width}px`,
+          minWidth: `${width}px`,
+          maxWidth: `${width}px`,
+        } : {};
+
+        // Check if this is a custom field
+        const customField = customFieldsMap[colId];
+        if (customField) {
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              <CustomFieldColumn field={customField} value={person.acf?.[customField.name]} />
+            </td>
+          );
+        }
+
+        // Core columns
+        if (colId === 'team') {
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              {teamName || '-'}
+            </td>
+          );
+        }
+
+        if (colId === 'labels') {
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              {person.labels && person.labels.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {person.labels.slice(0, 3).map((label) => (
+                    <span
+                      key={label}
+                      className="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                  {person.labels.length > 3 && (
+                    <span className="text-xs text-gray-400 dark:text-gray-500">+{person.labels.length - 3} meer</span>
+                  )}
+                </div>
+              ) : (
+                '-'
+              )}
+            </td>
+          );
+        }
+
+        if (colId === 'modified') {
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              {person.modified ? new Date(person.modified).toLocaleDateString('nl-NL') : '-'}
+            </td>
+          );
+        }
+
+        return null;
+      })}
     </tr>
   );
 }
 
-// Sortable header component for clickable column headers
-function SortableHeader({ field, label, currentSortField, currentSortOrder, onSort }) {
-  const isActive = currentSortField === field;
+// Resizable header component for column resizing
+function ResizableHeader({
+  colId,
+  label,
+  width: initialWidth,
+  sortField,
+  sortOrder,
+  onSort,
+  onWidthChange,
+  isSticky,
+  stickyLeft,
+  className = '',
+}) {
+  const { width, isResizing, resizeHandlers } = useColumnResize(colId, initialWidth, 50);
+
+  // Notify parent of width changes
+  useEffect(() => {
+    if (!isResizing && width !== initialWidth) {
+      onWidthChange(colId, width);
+    }
+  }, [isResizing, width, initialWidth, colId, onWidthChange]);
+
+  // Determine sort field for this column
+  const columnSortField = COLUMN_SORT_FIELDS[colId] || (colId.startsWith('custom_') ? colId : `custom_${colId}`);
+  const isActive = sortField === columnSortField;
+
+  const stickyStyles = isSticky ? {
+    position: 'sticky',
+    left: stickyLeft,
+    zIndex: 11,
+  } : {};
 
   return (
-    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+    <th
+      scope="col"
+      className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800 relative select-none ${className}`}
+      style={{
+        width: `${width}px`,
+        minWidth: `${width}px`,
+        maxWidth: `${width}px`,
+        ...stickyStyles,
+      }}
+    >
       <button
-        onClick={() => onSort(field)}
+        onClick={() => onSort(columnSortField)}
         className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
       >
         {label}
         {isActive && (
-          currentSortOrder === 'asc' ? (
+          sortOrder === 'asc' ? (
             <ArrowUp className="w-3 h-3" />
           ) : (
             <ArrowDown className="w-3 h-3" />
           )
         )}
       </button>
+      {/* Resize handle */}
+      <div
+        {...resizeHandlers}
+        className={`absolute top-0 right-0 w-2 h-full cursor-col-resize hover:bg-accent-300 dark:hover:bg-accent-600 transition-colors ${
+          isResizing ? 'bg-accent-400 dark:bg-accent-500' : ''
+        }`}
+        style={{ touchAction: 'none' }}
+      />
     </th>
   );
 }
 
-function PersonListView({ people, teamMap, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort }) {
+function PersonListView({
+  people,
+  teamMap,
+  visibleColumns,
+  columnMap,
+  columnWidths,
+  customFieldsMap,
+  selectedIds,
+  onToggleSelection,
+  onToggleSelectAll,
+  isAllSelected,
+  isSomeSelected,
+  sortField,
+  sortOrder,
+  onSort,
+  onColumnWidthChange,
+}) {
   return (
     <div className="card overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
           <tr className="shadow-sm dark:shadow-gray-900/50">
-            <th scope="col" className="pl-4 pr-2 py-3 w-10 bg-gray-50 dark:bg-gray-800">
+            {/* Checkbox column - sticky */}
+            <th
+              scope="col"
+              className="pl-4 pr-2 py-3 w-10 bg-gray-50 dark:bg-gray-800 sticky left-0 z-[11]"
+            >
               <button
                 onClick={onToggleSelectAll}
                 className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
@@ -149,21 +289,43 @@ function PersonListView({ people, teamMap, listViewFields, selectedIds, onToggle
                 )}
               </button>
             </th>
-            <th scope="col" className="w-10 px-2 bg-gray-50 dark:bg-gray-800"></th>
-            <SortableHeader field="first_name" label="Voornaam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="last_name" label="Achternaam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="organization" label="Team" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="labels" label="Labels" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            {listViewFields.map(field => (
-              <SortableHeader
-                key={field.key}
-                field={`custom_${field.name}`}
-                label={field.label}
-                currentSortField={sortField}
-                currentSortOrder={sortOrder}
-                onSort={onSort}
-              />
-            ))}
+            {/* Photo column - sticky */}
+            <th
+              scope="col"
+              className="w-10 px-2 bg-gray-50 dark:bg-gray-800 sticky left-10 z-[11]"
+              style={{ minWidth: '40px' }}
+            ></th>
+            {/* Name column - sticky and resizable */}
+            <ResizableHeader
+              colId="name"
+              label="Naam"
+              width={columnWidths['name'] || 200}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={onSort}
+              onWidthChange={onColumnWidthChange}
+              isSticky={true}
+              stickyLeft="88px"
+              className="sticky left-[88px] z-[11]"
+            />
+            {/* Dynamic columns based on visible_columns order */}
+            {visibleColumns.map(colId => {
+              const column = columnMap[colId];
+              if (!column) return null;
+
+              return (
+                <ResizableHeader
+                  key={colId}
+                  colId={colId}
+                  label={column.label}
+                  width={columnWidths[colId] || 150}
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  onSort={onSort}
+                  onWidthChange={onColumnWidthChange}
+                />
+              );
+            })}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -172,7 +334,10 @@ function PersonListView({ people, teamMap, listViewFields, selectedIds, onToggle
               key={person.id}
               person={person}
               teamName={teamMap[person.id]}
-              listViewFields={listViewFields}
+              visibleColumns={visibleColumns}
+              columnMap={columnMap}
+              columnWidths={columnWidths}
+              customFieldsMap={customFieldsMap}
               isSelected={selectedIds.has(person.id)}
               onToggleSelection={onToggleSelection}
               isOdd={index % 2 === 1}
@@ -433,11 +598,19 @@ export default function PeopleList() {
   const [showBulkOrganizationModal, setShowBulkOrganizationModal] = useState(false);
   const [showBulkLabelsModal, setShowBulkLabelsModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [showColumnSettings, setShowColumnSettings] = useState(false);
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
   const bulkDropdownRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Column preferences hook
+  const {
+    preferences,
+    isLoading: prefsLoading,
+    updateColumnWidths
+  } = useListPreferences();
 
   const { data, isLoading, isFetching, error } = useFilteredPeople({
     page,
@@ -467,9 +640,6 @@ export default function PeopleList() {
     await queryClient.invalidateQueries({ queryKey: ['people', 'list'] });
   };
 
-  // Get current user ID from stadionConfig
-  const currentUserId = window.stadionConfig?.userId;
-  
   // Create person mutation (using shared hook)
   const createPersonMutation = useCreatePerson({
     onSuccess: (result) => {
@@ -477,7 +647,7 @@ export default function PeopleList() {
       navigate(`/people/${result.id}`);
     },
   });
-  
+
   const handleCreatePerson = async (data) => {
     setIsCreatingPerson(true);
     try {
@@ -486,7 +656,7 @@ export default function PeopleList() {
       setIsCreatingPerson(false);
     }
   };
-  
+
   // Fetch person labels
   const { data: labelsData } = useQuery({
     queryKey: ['person-labels'],
@@ -496,7 +666,6 @@ export default function PeopleList() {
     },
   });
 
-  const availableLabels = labelsData?.map(label => label.name) || [];
   // Labels with IDs for the bulk modal
   const availableLabelsWithIds = labelsData || [];
 
@@ -509,12 +678,48 @@ export default function PeopleList() {
     },
   });
 
-  // Filter to list-view-enabled fields, sorted by order
-  const listViewFields = useMemo(() => {
-    return customFields
-      .filter(f => f.show_in_list_view)
-      .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
+  // Create map of custom field name to field definition
+  const customFieldsMap = useMemo(() => {
+    const map = {};
+    customFields.forEach(field => {
+      // Custom fields in available_columns use their name as the ID
+      map[field.name] = field;
+    });
+    return map;
   }, [customFields]);
+
+  // Create column map from preferences
+  const columnMap = useMemo(() => {
+    const map = {};
+    if (preferences?.available_columns) {
+      preferences.available_columns.forEach(col => {
+        map[col.id] = col;
+      });
+    }
+    return map;
+  }, [preferences?.available_columns]);
+
+  // Get visible columns (excluding 'name' which is always shown in a fixed position)
+  const visibleColumns = useMemo(() => {
+    if (!preferences?.visible_columns || !preferences?.column_order) {
+      // Fallback to default columns if preferences not loaded
+      return ['team', 'labels'];
+    }
+
+    // Filter column_order to only visible columns, excluding 'name'
+    const visibleSet = new Set(preferences.visible_columns);
+    return preferences.column_order.filter(colId =>
+      colId !== 'name' && visibleSet.has(colId)
+    );
+  }, [preferences?.visible_columns, preferences?.column_order]);
+
+  // Get column widths from preferences
+  const columnWidths = preferences?.column_widths || {};
+
+  // Handle column width change from resize
+  const handleColumnWidthChange = useCallback((colId, newWidth) => {
+    updateColumnWidths({ [colId]: newWidth });
+  }, [updateColumnWidths]);
 
   // Fetch all teams for bulk organization modal (sorted alphabetically)
   const { data: allTeamsData } = useQuery({
@@ -529,7 +734,7 @@ export default function PeopleList() {
         .sort((a, b) => a.name.localeCompare(b.name));
     },
   });
-  
+
   // Generate reasonable birth year range instead of deriving from data
   const availableBirthYears = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -539,7 +744,7 @@ export default function PeopleList() {
     }
     return years;
   }, []);
-  
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -565,7 +770,7 @@ export default function PeopleList() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-  
+
   const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter || ownershipFilter !== 'all';
 
   const handleLabelToggle = (labelId) => {
@@ -633,7 +838,7 @@ export default function PeopleList() {
     queryFn: async () => {
       if (teamIds.length === 0) return [];
       // Fetch all teams in one request
-      const response = await wpApi.getTeams({ 
+      const response = await wpApi.getTeams({
         per_page: 100,
         include: teamIds.join(','),
       });
@@ -664,6 +869,16 @@ export default function PeopleList() {
     });
     return map;
   }, [people, teamMap]);
+
+  // Handle sort from table header
+  const handleSort = useCallback((field) => {
+    if (field === sortField) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  }, [sortField, sortOrder]);
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -699,7 +914,7 @@ export default function PeopleList() {
           </div>
 
           <div className="relative" ref={filterRef}>
-            <button 
+            <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className={`btn-secondary ${hasActiveFilters ? 'bg-accent-50 text-accent-700 border-accent-200' : ''}`}
             >
@@ -711,7 +926,7 @@ export default function PeopleList() {
                 </span>
               )}
             </button>
-            
+
             {/* Filter Dropdown */}
             {isFilterOpen && (
               <div
@@ -842,6 +1057,15 @@ export default function PeopleList() {
             )}
           </div>
 
+          {/* Column Settings Button */}
+          <button
+            onClick={() => setShowColumnSettings(true)}
+            className="btn-secondary"
+            title="Kolommen aanpassen"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+
           {/* Active Filter Chips */}
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2">
@@ -896,16 +1120,16 @@ export default function PeopleList() {
               )}
             </div>
           )}
-          
+
           <button onClick={() => setShowPersonModal(true)} className="btn-primary">
             <Plus className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Lid toevoegen</span>
           </button>
         </div>
       </div>
-      
+
       {/* Loading state */}
-      {isLoading && (
+      {(isLoading || prefsLoading) && (
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
         </div>
@@ -919,7 +1143,7 @@ export default function PeopleList() {
       )}
 
       {/* Empty state - no people at all */}
-      {!isLoading && !error && totalPeople === 0 && !hasActiveFilters && (
+      {!isLoading && !prefsLoading && !error && totalPeople === 0 && !hasActiveFilters && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
@@ -997,12 +1221,15 @@ export default function PeopleList() {
       )}
 
       {/* People list */}
-      {!isLoading && !error && people.length > 0 && (
+      {!isLoading && !prefsLoading && !error && people.length > 0 && (
         <>
           <PersonListView
             people={people}
             teamMap={personTeamMap}
-            listViewFields={listViewFields}
+            visibleColumns={visibleColumns}
+            columnMap={columnMap}
+            columnWidths={columnWidths}
+            customFieldsMap={customFieldsMap}
             selectedIds={selectedIds}
             onToggleSelection={toggleSelection}
             onToggleSelectAll={toggleSelectAll}
@@ -1010,14 +1237,8 @@ export default function PeopleList() {
             isSomeSelected={isSomeSelected}
             sortField={sortField}
             sortOrder={sortOrder}
-            onSort={(field) => {
-              if (field === sortField) {
-                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-              } else {
-                setSortField(field);
-                setSortOrder('asc');
-              }
-            }}
+            onSort={handleSort}
+            onColumnWidthChange={handleColumnWidthChange}
           />
           {totalPages > 1 && (
             <Pagination
@@ -1032,7 +1253,7 @@ export default function PeopleList() {
       )}
 
       {/* No results with filters */}
-      {!isLoading && !error && people.length === 0 && totalPeople === 0 && hasActiveFilters && (
+      {!isLoading && !prefsLoading && !error && people.length === 0 && totalPeople === 0 && hasActiveFilters && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <Filter className="w-6 h-6 text-gray-400 dark:text-gray-500" />
@@ -1046,13 +1267,19 @@ export default function PeopleList() {
           </button>
         </div>
       )}
-      
+
       {/* Person Modal */}
       <PersonEditModal
         isOpen={showPersonModal}
         onClose={() => setShowPersonModal(false)}
         onSubmit={handleCreatePerson}
         isLoading={isCreatingPerson}
+      />
+
+      {/* Column Settings Modal */}
+      <ColumnSettingsModal
+        isOpen={showColumnSettings}
+        onClose={() => setShowColumnSettings(false)}
       />
 
       {/* Bulk Organization Modal */}
