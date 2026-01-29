@@ -209,6 +209,42 @@ class Api extends Base {
 			]
 		);
 
+		// Get user's people list preferences
+		register_rest_route(
+			'stadion/v1',
+			'/user/list-preferences',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_list_preferences' ],
+				'permission_callback' => 'is_user_logged_in',
+			]
+		);
+
+		// Update user's people list preferences
+		register_rest_route(
+			'stadion/v1',
+			'/user/list-preferences',
+			[
+				'methods'             => 'PATCH',
+				'callback'            => [ $this, 'update_list_preferences' ],
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => [
+					'visible_columns' => [
+						'required'          => false,
+						'validate_callback' => function ( $param ) {
+							return $param === null || is_array( $param );
+						},
+					],
+					'reset'           => [
+						'required'          => false,
+						'validate_callback' => function ( $param ) {
+							return is_bool( $param );
+						},
+					],
+				],
+			]
+		);
+
 		// Get user's linked person ID
 		register_rest_route(
 			'stadion/v1',
