@@ -1137,7 +1137,7 @@ class People extends Base {
 		// Format results
 		$people = [];
 		foreach ( $results as $row ) {
-			$people[] = [
+			$person = [
 				'id'         => (int) $row->ID,
 				'first_name' => $this->sanitize_text( $row->first_name ?: '' ),
 				'last_name'  => $this->sanitize_text( $row->last_name ?: '' ),
@@ -1146,6 +1146,16 @@ class People extends Base {
 				'thumbnail'  => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
 				'labels'     => wp_get_post_terms( $row->ID, 'person_label', [ 'fields' => 'names' ] ),
 			];
+
+			// Add ACF fields for custom field columns
+			if ( function_exists( 'get_fields' ) ) {
+				$acf_fields = get_fields( $row->ID );
+				if ( $acf_fields ) {
+					$person['acf'] = $acf_fields;
+				}
+			}
+
+			$people[] = $person;
 		}
 
 		return rest_ensure_response( [
