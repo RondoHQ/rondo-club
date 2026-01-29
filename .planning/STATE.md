@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 
 ## Current Position
 
-Phase: 112 of 5 (Birthdate Denormalization)
-Plan: 2 of 2 in phase
-Status: Phase complete
-Last activity: 2026-01-29 - Completed 112-02-PLAN.md
+Phase: 113 of 5 (Frontend Pagination)
+Plan: 1 of 2 in phase
+Status: In progress
+Last activity: 2026-01-29 - Completed 113-01-PLAN.md
 
-Progress: [████░░░░░░] 40% (4/10 plans complete, 2/5 phases complete)
+Progress: [█████░░░░░] 50% (5/10 plans complete, 2/5 phases complete)
 
 ## Milestone History
 
@@ -34,8 +34,8 @@ Progress: [████░░░░░░] 40% (4/10 plans complete, 2/5 phases 
 - Total requirements: 27
 - Requirements mapped: 27/27 (100%)
 - Phases complete: 2/5 (40%)
-- Plans complete: 4/10 (40%)
-- Plans remaining: 6
+- Plans complete: 5/10 (50%)
+- Plans remaining: 5
 
 ## Accumulated Context
 
@@ -68,6 +68,9 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 | 112-02-001 | Single parameter treated as exact year match | 112-02 | 2026-01-29 |
 | 112-02-002 | LEFT JOIN on _birthdate (not INNER) | 112-02 | 2026-01-29 |
 | 112-02-003 | Validate years between 1900-2100 | 112-02 | 2026-01-29 |
+| 113-01-001 | Use Manager::get_fields() for validation and type lookup | 113-01 | 2026-01-29 |
+| 113-01-002 | Sort NULL values last via COALESCE and type-specific logic | 113-01 | 2026-01-29 |
+| 113-01-003 | Secondary sort by first_name for consistent ordering | 113-01 | 2026-01-29 |
 
 ### Pending Todos
 
@@ -91,6 +94,11 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 - Initial page load performance with 100 results (may need to adjust default perPage)
 - Empty state handling when filters return 0 results (UI must distinguish "no people" vs "no matches")
 
+**New concerns from 113-01:**
+- ACF date field format assumption (code assumes Ymd, needs production verification)
+- Custom field sorting performance with 1400+ records (requires authenticated testing)
+- Full test coverage requires browser console with authentication session
+
 **Pre-existing lint errors:** 143 ESLint errors in unrelated files (not blocking)
 
 ### Quick Tasks Completed
@@ -103,8 +111,8 @@ v8.0 milestone decisions archived to milestones/v8.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-01-29 14:18 UTC
-Stopped at: Completed 112-02-PLAN.md (Phase 112 complete)
+Last session: 2026-01-29 15:13 UTC
+Stopped at: Completed 113-01-PLAN.md
 Resume file: None
 
-Next: Continue to Phase 113 (Frontend Pagination)
+Next: Continue to 113-02 (Frontend Column Customization)
