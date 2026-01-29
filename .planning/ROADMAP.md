@@ -24,10 +24,9 @@ This milestone transforms the People list from load-all-at-once to server-side p
 - DATA-13: Access control is preserved in custom $wpdb queries (unapproved users see nothing)
 - DATA-14: All filter parameters are validated/escaped to prevent SQL injection
 
-**Plans:** TBD
-
-Plans:
-- [ ] TBD
+**Plans:**
+- Plan 1: Backend Filtered Endpoint (Wave 1) - `111-plan-1-filtered-endpoint.md`
+- Plan 2: Frontend Hook Integration (Wave 2) - `111-plan-2-frontend-hook.md`
 
 **Success Criteria:**
 1. User can fetch people with pagination (page=1, per_page=100) via `/stadion/v1/people/filtered` endpoint
@@ -159,7 +158,7 @@ Plans:
 
 | Phase | Status | Requirements | Completion |
 |-------|--------|--------------|------------|
-| Phase 111: Server-Side Foundation | Pending | DATA-01, DATA-02, DATA-03, DATA-04, DATA-06, DATA-07, DATA-08, DATA-10, DATA-13, DATA-14 | 0% |
+| Phase 111: Server-Side Foundation | ✓ Complete | DATA-01, DATA-02, DATA-03, DATA-04, DATA-06, DATA-07, DATA-08, DATA-10, DATA-13, DATA-14 | 100% |
 | Phase 112: Birthdate Denormalization | Pending | DATA-05, DATA-11, DATA-12 | 0% |
 | Phase 113: Frontend Pagination | Pending | PAGE-01, PAGE-02, PAGE-03, PAGE-04, PAGE-05, PAGE-06, DATA-09 | 0% |
 | Phase 114: User Preferences Backend | Pending | COL-03 | 0% |

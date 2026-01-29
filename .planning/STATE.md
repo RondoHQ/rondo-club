@@ -100,4 +100,4 @@ Last session: 2026-01-29 15:07 UTC
 Stopped at: Completed 111-02-PLAN.md - Phase 111 complete
 Resume file: None
 
-Next: Phase 111 complete. Ready for phase 112 (UI Layer) planning and execution
+Next: `/gsd:discuss-phase 112` or `/gsd:plan-phase 112` to plan Birthdate Denormalization
