@@ -48,6 +48,10 @@ class AutoTitle {
 
 		// Set temporary title for REST API person creation
 		add_filter( 'rest_pre_insert_person', [ $this, 'set_temporary_title_rest' ], 5, 2 );
+
+		// Sync birthdate to person post_meta when birthday important_date is saved/deleted (priority 20 = after ACF saves fields)
+		add_action( 'save_post_important_date', [ $this, 'sync_birthdate_to_person' ], 20, 3 );
+		add_action( 'before_delete_post', [ $this, 'clear_birthdate_on_delete' ], 10, 2 );
 	}
 
 	/**
@@ -520,6 +524,86 @@ class AutoTitle {
 	 */
 	public function handle_async_calendar_rematch( int $post_id ): void {
 		\Stadion\Calendar\Matcher::on_person_saved( $post_id );
+	}
+
+	/**
+	 * Sync birthdate to related persons when birthday important_date is saved
+	 *
+	 * Stores birthdate in _birthdate meta key on person posts for fast filtering by birth year.
+	 * If year_unknown is true or date_value is empty, clears the _birthdate meta.
+	 *
+	 * @param int     $post_id Post ID of important_date being saved.
+	 * @param WP_Post $post    Post object.
+	 * @param bool    $update  Whether this is an update or new post.
+	 */
+	public function sync_birthdate_to_person( $post_id, $post, $update ) {
+		// Prevent infinite loops
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Only process published posts
+		if ( $post->post_status !== 'publish' ) {
+			return;
+		}
+
+		// Check if this is a birthday type
+		$date_types = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'slugs' ] );
+		if ( ! in_array( 'birthday', $date_types, true ) ) {
+			return; // Not a birthday, nothing to sync
+		}
+
+		// Get the date value and related people
+		$date_value     = get_field( 'date_value', $post_id );
+		$year_unknown   = get_field( 'year_unknown', $post_id );
+		$related_people = get_field( 'related_people', $post_id );
+
+		if ( empty( $related_people ) || ! is_array( $related_people ) ) {
+			return; // No people to sync to
+		}
+
+		// If year is unknown or date is empty, clear birthdate on all related people
+		if ( $year_unknown || empty( $date_value ) ) {
+			foreach ( $related_people as $person_id ) {
+				delete_post_meta( $person_id, '_birthdate' );
+			}
+			return;
+		}
+
+		// Update birthdate on all related people
+		foreach ( $related_people as $person_id ) {
+			update_post_meta( $person_id, '_birthdate', $date_value );
+		}
+	}
+
+	/**
+	 * Clear birthdate from persons when birthday important_date is deleted
+	 *
+	 * Runs on permanent delete only (not when trashed).
+	 *
+	 * @param int     $post_id Post ID being deleted.
+	 * @param WP_Post $post    Post object.
+	 */
+	public function clear_birthdate_on_delete( $post_id, $post ) {
+		if ( $post->post_type !== 'important_date' ) {
+			return;
+		}
+
+		// Check if this is a birthday type
+		$date_types = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'slugs' ] );
+		if ( ! in_array( 'birthday', $date_types, true ) ) {
+			return;
+		}
+
+		// Clear birthdate from all related people
+		$related_people = get_field( 'related_people', $post_id );
+		if ( empty( $related_people ) || ! is_array( $related_people ) ) {
+			return;
+		}
+
+		foreach ( $related_people as $person_id ) {
+			delete_post_meta( $person_id, '_birthdate' );
+		}
 	}
 
 }
