@@ -1,9 +1,9 @@
-import { useState, useMemo, useRef, useEffect, lazy, Suspense } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, Square, TrendingUp, StickyNote, Clock, User, Video, ExternalLink, AlertCircle
+  CheckSquare2, Square, TrendingUp, StickyNote, Clock, User, ExternalLink, AlertCircle
 } from 'lucide-react';
 import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack, SiWhatsapp } from '@icons-pack/react-simple-icons';
 
@@ -27,7 +27,6 @@ const LinkedInIcon = ({ className }) => (
   </svg>
 );
 import { usePerson, usePersonTimeline, usePersonDates, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople, peopleKeys } from '@/hooks/usePeople';
-import { usePersonMeetings, useLogMeetingAsActivity } from '@/hooks/useMeetings';
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import NoteModal from '@/components/Timeline/NoteModal';
@@ -38,7 +37,6 @@ import ContactEditModal from '@/components/ContactEditModal';
 import ImportantDateModal from '@/components/ImportantDateModal';
 import RelationshipEditModal from '@/components/RelationshipEditModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
-const MeetingDetailModal = lazy(() => import('@/components/MeetingDetailModal'));
 import { format, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -113,187 +111,6 @@ function getVogStatus(acf) {
   }
 }
 
-// MeetingCard component for displaying meeting info
-function MeetingCard({ meeting, showLogButton, onLog, isLogging, onClick, currentPersonId }) {
-  // Format the meeting date/time
-  const startDate = meeting.start_time ? new Date(meeting.start_time) : null;
-  const endDate = meeting.end_time ? new Date(meeting.end_time) : null;
-
-  // Format time display
-  const formatTime = (date) => {
-    if (!date) return '';
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-  };
-
-  const formatDate = (date) => {
-    if (!date) return '';
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  const isLowConfidence = meeting.confidence && meeting.confidence < 80;
-
-  return (
-    <div
-      className={`flex items-start p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 ${onClick ? 'cursor-pointer hover:border-accent-300 dark:hover:border-accent-600 transition-colors' : ''}`}
-      onClick={onClick ? () => onClick(meeting) : undefined}
-    >
-      {/* Calendar icon */}
-      <div className="flex-shrink-0 mr-3">
-        <div className="w-10 h-10 rounded-lg bg-accent-100 dark:bg-accent-800 flex items-center justify-center">
-          <Calendar className="w-5 h-5 text-accent-600 dark:text-accent-100" />
-        </div>
-      </div>
-
-      {/* Meeting details */}
-      <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
-          {meeting.title}
-        </h3>
-
-        {/* Date and time */}
-        {startDate && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {formatDate(startDate)}
-            {!meeting.all_day && (
-              <>
-                {' '}{formatTime(startDate)}
-                {endDate && <> - {formatTime(endDate)}</>}
-              </>
-            )}
-            {meeting.all_day && ' (Hele dag)'}
-          </p>
-        )}
-
-        {/* Location or meeting URL */}
-        {(meeting.location || meeting.meeting_url) && (
-          <div className="flex items-center gap-1 mt-1">
-            {meeting.meeting_url ? (
-              <a
-                href={meeting.meeting_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-accent-600 dark:text-accent-400 hover:underline flex items-center gap-1"
-              >
-                <Video className="w-3.5 h-3.5" />
-                <span className="truncate">{meeting.location || 'Video meeting'}</span>
-                <ExternalLink className="w-3 h-3 flex-shrink-0" />
-              </a>
-            ) : (
-              <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5" />
-                <span className="truncate">{meeting.location}</span>
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Calendar name badge */}
-        {meeting.calendar_name && (
-          <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-            {meeting.calendar_name}
-          </span>
-        )}
-
-        {/* Other attendees - show photos for matched, initials for unmatched */}
-        {meeting.attendees && meeting.attendees.length > 0 && (() => {
-          // Filter out the current person being viewed and the current user's linked person
-          const currentUserPersonId = window.stadionConfig?.currentUserPersonId;
-          const otherAttendees = meeting.attendees.filter(att => {
-            if (!att.person_id) return true; // Keep unmatched attendees
-            const personId = parseInt(att.person_id);
-            // Filter out the person being viewed
-            if (personId === parseInt(currentPersonId)) return false;
-            // Filter out the current user's linked person
-            if (currentUserPersonId && personId === currentUserPersonId) return false;
-            return true;
-          });
-          if (otherAttendees.length === 0) return null;
-
-          const displayedAttendees = otherAttendees.slice(0, 5);
-          const remainingCount = otherAttendees.length - 5;
-
-          return (
-            <div className="mt-2 flex items-center gap-1">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1">Ook aanwezig:</span>
-              <div className="flex -space-x-2">
-                {displayedAttendees.map((attendee, index) => {
-                  const displayName = attendee.person_name || attendee.name || attendee.email || 'Unknown';
-                  const initials = getInitials(attendee.name, attendee.email);
-
-                  const avatar = attendee.matched && attendee.thumbnail ? (
-                    <img
-                      src={attendee.thumbnail}
-                      alt={displayName}
-                      className="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
-                    />
-                  ) : (
-                    <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 ring-2 ring-white dark:ring-gray-800 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300">
-                      {initials}
-                    </div>
-                  );
-
-                  // Wrap matched attendees in a Link
-                  if (attendee.matched && attendee.person_id) {
-                    return (
-                      <Link
-                        key={attendee.email || index}
-                        to={`/people/${attendee.person_id}`}
-                        title={displayName}
-                        className="hover:z-10 transition-transform hover:scale-110"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {avatar}
-                      </Link>
-                    );
-                  }
-
-                  return (
-                    <div key={attendee.email || index} title={displayName}>
-                      {avatar}
-                    </div>
-                  );
-                })}
-                {remainingCount > 0 && (
-                  <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-800 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                    +{remainingCount}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Low confidence warning */}
-        {isLowConfidence && (
-          <div className="flex items-center gap-1 mt-2 text-xs text-amber-600 dark:text-amber-400">
-            <AlertCircle className="w-3.5 h-3.5" />
-            <span>Betrouwbaarheid: {meeting.confidence}%</span>
-          </div>
-        )}
-      </div>
-
-      {/* Log as Activity button */}
-      {showLogButton && (
-        <div className="flex-shrink-0 ml-2">
-          {meeting.logged_as_activity ? (
-            <span className="text-xs text-green-600 dark:text-green-400 px-2 py-1 rounded bg-green-50 dark:bg-green-900/20">
-              Vastgelegd
-            </span>
-          ) : (
-            <button
-              onClick={onLog}
-              disabled={isLogging}
-              className="text-xs px-3 py-1.5 rounded-md bg-accent-600 hover:bg-accent-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isLogging ? 'Vastleggen...' : 'Activiteit vastleggen'}
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function PersonDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -330,10 +147,6 @@ export default function PersonDetail() {
     enabled: !!id,
   });
 
-  // Fetch meetings for this person
-  const { data: meetings, isLoading: meetingsLoading } = usePersonMeetings(id);
-  const logMeeting = useLogMeetingAsActivity();
-
   const [activeTab, setActiveTab] = useState('profile');
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [selectedLabelToAdd, setSelectedLabelToAdd] = useState('');
@@ -363,13 +176,6 @@ export default function PersonDetail() {
 
   // Mobile todos panel state
   const [showMobileTodos, setShowMobileTodos] = useState(false);
-
-  // Meeting logging state
-  const [loggingMeetingId, setLoggingMeetingId] = useState(null);
-
-  // Meeting detail modal state
-  const [selectedMeeting, setSelectedMeeting] = useState(null);
-  const [showMeetingModal, setShowMeetingModal] = useState(false);
 
   // Fetch available labels
   const { data: availableLabelsData } = useQuery({
@@ -837,20 +643,6 @@ export default function PersonDetail() {
 
     setShowCompleteModal(false);
     setShowActivityModal(true);
-  };
-
-  // Handle logging a meeting as activity
-  const handleLogMeeting = async (meeting) => {
-    setLoggingMeetingId(meeting.id);
-    try {
-      await logMeeting.mutateAsync(meeting.id);
-      // Success - invalidation happens in the mutation hook
-    } catch (error) {
-      console.error('Failed to log meeting:', error);
-      alert('Afspraak kon niet als activiteit worden vastgelegd. Probeer het opnieuw.');
-    } finally {
-      setLoggingMeetingId(null);
-    }
   };
 
   // Handle deleting an activity
@@ -1624,21 +1416,6 @@ export default function PersonDetail() {
           >
             Rollen
           </button>
-          <button
-            onClick={() => setActiveTab('meetings')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'meetings'
-                ? 'border-accent-600 text-accent-600'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
-            }`}
-          >
-            Afspraken
-            {meetings?.total_upcoming > 0 && (
-              <span className="ml-1 text-xs bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-100 px-1.5 py-0.5 rounded-full">
-                {meetings.total_upcoming}
-              </span>
-            )}
-          </button>
         </nav>
       </div>
 
@@ -2147,60 +1924,6 @@ export default function PersonDetail() {
           </div>
         )}
 
-        {/* Meetings Tab */}
-        {activeTab === 'meetings' && (
-          <div className="space-y-6">
-            {/* Upcoming Meetings */}
-            <div className="card p-6">
-              <h2 className="font-semibold mb-4">Aankomende afspraken</h2>
-              {meetingsLoading ? (
-                <div className="text-gray-500 dark:text-gray-400">Laden...</div>
-              ) : meetings?.upcoming?.length > 0 ? (
-                <div className="space-y-3">
-                  {meetings.upcoming.map(meeting => (
-                    <MeetingCard
-                      key={meeting.id}
-                      meeting={meeting}
-                      showLogButton={false}
-                      currentPersonId={id}
-                      onClick={(m) => {
-                        setSelectedMeeting(m);
-                        setShowMeetingModal(true);
-                      }}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-gray-500 dark:text-gray-400 text-sm">Geen aankomende afspraken</div>
-              )}
-            </div>
-
-            {/* Past Meetings */}
-            <div className="card p-6">
-              <h2 className="font-semibold mb-4">Afspraken in het verleden</h2>
-              {meetings?.past?.length > 0 ? (
-                <div className="space-y-3">
-                  {meetings.past.map(meeting => (
-                    <MeetingCard
-                      key={meeting.id}
-                      meeting={meeting}
-                      showLogButton={true}
-                      currentPersonId={id}
-                      onLog={() => handleLogMeeting(meeting)}
-                      isLogging={loggingMeetingId === meeting.id}
-                      onClick={(m) => {
-                        setSelectedMeeting(m);
-                        setShowMeetingModal(true);
-                      }}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-gray-500 dark:text-gray-400 text-sm">Geen afspraken in het verleden gevonden</div>
-              )}
-            </div>
-          </div>
-        )}
         </div>
 
         {/* Todos Sidebar - always visible */}
@@ -2629,16 +2352,6 @@ export default function PersonDetail() {
             isPeopleLoading={isPeopleLoading}
           />
 
-      <Suspense fallback={null}>
-        <MeetingDetailModal
-          isOpen={showMeetingModal}
-          onClose={() => {
-            setShowMeetingModal(false);
-            setSelectedMeeting(null);
-          }}
-          meeting={selectedMeeting}
-        />
-      </Suspense>
       </div>
     </PullToRefreshWrapper>
   );
