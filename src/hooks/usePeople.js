@@ -97,6 +97,8 @@ export function usePeople(params = {}) {
  * @param {number[]} filters.labels - Array of label term IDs (OR logic)
  * @param {string} filters.ownership - 'mine', 'shared', or 'all' (default: 'all')
  * @param {number} filters.modifiedDays - Only people modified within N days
+ * @param {number} filters.birthYearFrom - Filter by birth year (minimum, inclusive)
+ * @param {number} filters.birthYearTo - Filter by birth year (maximum, inclusive)
  * @param {string} filters.orderby - 'first_name', 'last_name', or 'modified' (default: 'first_name')
  * @param {string} filters.order - 'asc' or 'desc' (default: 'asc')
  * @returns {Object} TanStack Query result with data, isLoading, error, etc.
@@ -109,6 +111,8 @@ export function useFilteredPeople(filters = {}) {
     labels: filters.labels || [],
     ownership: filters.ownership || 'all',
     modified_days: filters.modifiedDays || null,
+    birth_year_from: filters.birthYearFrom || null,
+    birth_year_to: filters.birthYearTo || null,
     orderby: filters.orderby || 'first_name',
     order: filters.order || 'asc',
   };
