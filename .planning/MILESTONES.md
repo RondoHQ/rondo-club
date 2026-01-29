@@ -1,5 +1,32 @@
 # Project Milestones: Stadion
 
+## v10.0 Read-Only UI for Sportlink Data (Shipped: 2026-01-29)
+
+**Delivered:** Restricted UI editing capabilities for Sportlink-managed data (person delete, address, work history) while preserving full REST API functionality for automation and sync, plus custom field edit control.
+
+**Phases completed:** 116-118 (3 plans total)
+
+**Key accomplishments:**
+
+- Removed delete, address editing, and work history editing from PersonDetail UI
+- Disabled team and commissie creation in UI (list pages and quick-add menu)
+- Added `editable_in_ui` property to custom fields with settings toggle
+- Implemented read-only display with Lock icon for API-managed fields
+- All REST API endpoints preserved for Sportlink automation
+
+**Stats:**
+
+- 25 files changed
+- +2,871 / -716 lines changed
+- 3 phases, 3 plans
+- 1 day (2026-01-29)
+
+**Git range:** `feat(116-01)` → `docs(118)`
+
+**What's next:** To be determined
+
+---
+
 ## v9.0 People List Performance & Customization (Shipped: 2026-01-29)
 
 **Delivered:** Server-side pagination with optimized SQL queries, birthdate denormalization for fast filtering, custom field sorting, and per-user column customization with drag-drop reordering and resize.

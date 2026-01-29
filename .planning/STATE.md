@@ -4,17 +4,17 @@
 
 See: .planning/PROJECT.md (updated 2026-01-29)
 
-**Core value:** Personal CRM with multi-user collaboration, now restricting UI for Sportlink data
-**Current focus:** v10.0 Read-Only UI for Sportlink Data
+**Core value:** Personal CRM with multi-user collaboration
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 118 of 118 (Custom Field Edit Control)
-Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-01-29 - Completed 118-01-PLAN.md
+Phase: Ready for next milestone
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-29 — v10.0 milestone complete
 
-Progress: [##########] 100% (3/3 phases)
+Progress: Milestone complete, awaiting next milestone definition
 
 ## Milestone History
 
@@ -27,30 +27,14 @@ Progress: [##########] 100% (3/3 phases)
 - v7.0 Dutch Localization - shipped 2026-01-25
 - v8.0 PWA Enhancement - shipped 2026-01-28
 - v9.0 People List Performance & Customization - shipped 2026-01-29
-
-## Performance Metrics
-
-**v10.0 Milestone:**
-- Total phases: 3
-- Total requirements: 9
-- Total plans: 3 of 3 complete (Phase 116: 1/1, Phase 117: 1/1, Phase 118: 1/1)
+- v10.0 Read-Only UI for Sportlink Data - shipped 2026-01-29
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-v9.0 milestone decisions archived to milestones/v9.0-ROADMAP.md.
-
-**v10.0 Decisions:**
-
-| ID | Decision | Phase | Impact |
-|----|----------|-------|--------|
-| restrict-ui-not-api | Remove UI controls but keep REST API endpoints functional | 116, 117 | Sportlink sync preserved, manual editing/creation blocked in UI |
-| ui-restriction-complete-removal | Remove creation controls entirely rather than conditionally hiding | 117 | Cleaner code, no conditional logic |
-| empty-state-messaging | Update empty state messages to inform about API/import data flow | 117 | Clear communication that organizations come from external source |
-| editable-in-ui-default-true | Default editable_in_ui to true for backward compatibility | 118 | Existing fields remain editable without migration |
-| lock-icon-api-managed | Use Lock icon with "Wordt beheerd via API" for non-editable fields | 118 | Clear visual communication for API-managed fields |
+v10.0 milestone decisions archived to milestones/v10.0-ROADMAP.md.
 
 ### Pending Todos
 
@@ -75,8 +59,8 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-29 22:45 UTC
-Stopped at: Completed 118-01-PLAN.md (v10.0 milestone complete)
+Last session: 2026-01-29 23:45 UTC
+Stopped at: Completed v10.0 milestone archival
 Resume file: None
 
-Next: v10.0 version bump and changelog update
+Next: /gsd:new-milestone for next milestone
