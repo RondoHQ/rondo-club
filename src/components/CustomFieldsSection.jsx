@@ -442,18 +442,23 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
     return null;
   }
 
+  // Check if any fields are editable in the UI
+  const hasEditableFields = fieldDefs.some(field => field.editable_in_ui !== false);
+
   return (
     <>
       <div className="card p-6 break-inside-avoid mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold">Aangepaste velden</h2>
-          <button
-            onClick={() => setShowModal(true)}
-            className="btn-secondary text-sm"
-          >
-            <Pencil className="w-4 h-4 md:mr-1" />
-            <span className="hidden md:inline">Bewerken</span>
-          </button>
+          {hasEditableFields && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="btn-secondary text-sm"
+            >
+              <Pencil className="w-4 h-4 md:mr-1" />
+              <span className="hidden md:inline">Bewerken</span>
+            </button>
+          )}
         </div>
 
         <div className="space-y-3">
