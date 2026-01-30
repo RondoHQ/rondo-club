@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 Phase: Ready for next milestone
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-01-30 — Completed quick task 014: Team Activiteit column and subtitle
+Last activity: 2026-01-30 — Completed quick task 015: People list filtered count in header
 
 Progress: Milestone complete, awaiting next milestone definition
 
@@ -59,11 +59,12 @@ None.
 | 012 | Team detail three column layout (Spelers/Staf/Voormalig) | 2026-01-30 | 49fdf43 | [012-team-detail-three-column-layout](./quick/012-team-detail-three-column-layout/) |
 | 013 | Rename Organisatievelden to Teamvelden | 2026-01-30 | d83b7ac | [013-rename-organisatievelden-to-teamvelden](./quick/013-rename-organisatievelden-to-teamvelden/) |
 | 014 | Team Activiteit column and subtitle | 2026-01-30 | 61ff9d0 | [014-team-activiteit-column-and-subtitle](./quick/014-team-activiteit-column-and-subtitle/) |
+| 015 | People list filtered count in header | 2026-01-30 | f01c1cd | [015-people-list-filtered-count-in-header](./quick/015-people-list-filtered-count-in-header/) |
 
 ## Session Continuity
 
-Last session: 2026-01-29 23:45 UTC
-Stopped at: Completed v10.0 milestone archival
+Last session: 2026-01-30 07:25 UTC
+Stopped at: Completed quick task 015
 Resume file: None
 
 Next: /gsd:new-milestone for next milestone
