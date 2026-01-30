@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from '@/utils/dateFormat';
 import {
   Phone, Mail, Users, Coffee, Utensils, FileText, Circle, MessageCircle, Video,
-  CheckSquare2, Square, Pencil, Trash2, Link as LinkIcon, Lock, Globe, Clock
+  CheckSquare2, Square, Pencil, Trash2, Link as LinkIcon, Lock, Globe, Clock,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -36,6 +37,21 @@ export default function TimelineView({
   personId,
   allPeople = [],
 }) {
+  // State for tracking expanded email entries
+  const [expandedEmails, setExpandedEmails] = useState(new Set());
+
+  const toggleEmailExpanded = (itemId) => {
+    setExpandedEmails(prev => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  };
+
   const groupedTimeline = useMemo(() => {
     return groupTimelineByDate(timeline || []);
   }, [timeline]);
@@ -57,6 +73,7 @@ export default function TimelineView({
     if (item.type === 'note') {
       return FileText;
     }
+    if (item.type === 'email') return Mail;
     return Circle;
   };
 
@@ -65,16 +82,63 @@ export default function TimelineView({
     const isTodo = item.type === 'todo';
     const isActivity = item.type === 'activity';
     const isNote = item.type === 'note';
-    
+    const isEmail = item.type === 'email';
+    const isEmailExpanded = expandedEmails.has(item.id);
+
     // Combine date and time for proper relative time calculation
     let displayDateTime = item.activity_date || item.created;
     if (item.activity_date && item.activity_time) {
       displayDateTime = `${item.activity_date}T${item.activity_time}`;
     }
     const formattedDate = formatTimelineDate(displayDateTime);
-    
+
     const todoClasses = getTodoStatusClass(item);
     const isOverdue = isTodo && isTodoOverdue(item);
+
+    // Handle email type separately with custom rendering
+    if (isEmail) {
+      return (
+        <div key={item.id} className="relative pl-8 pb-6 group">
+          {/* Timeline dot */}
+          <div className="absolute left-0 top-1">
+            <div className="w-4 h-4 rounded-full border-2 bg-green-500 border-green-500" />
+          </div>
+
+          {/* Email summary - clickable to expand */}
+          <button
+            onClick={() => toggleEmailExpanded(item.id)}
+            className="w-full text-left"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Mail className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                VOG Email ({item.email_template_type === 'new' ? 'nieuw' : 'vernieuwing'})
+              </span>
+              <span className="text-xs text-gray-400">•</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{formattedDate}</span>
+              {isEmailExpanded ? (
+                <ChevronUp className="w-4 h-4 text-gray-400 ml-auto" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-gray-400 ml-auto" />
+              )}
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Verzonden naar {item.email_recipient}
+            </p>
+          </button>
+
+          {/* Expanded content */}
+          {isEmailExpanded && item.email_content_snapshot && (
+            <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+              <div
+                className="text-sm prose prose-sm dark:prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: item.email_content_snapshot }}
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
 
     return (
       <div key={item.id} className={`relative ${isTodo ? 'pl-0' : 'pl-8'} pb-6 group`}>
