@@ -191,14 +191,14 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
       {/* Verzonden date */}
       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
         {person.acf?.['vog_email_sent_date']
-          ? format(new Date(person.acf['vog_email_sent_date']), 'd MMM yyyy')
+          ? format(new Date(person.acf['vog_email_sent_date']), 'yyyy-MM-dd')
           : '-'}
       </td>
 
       {/* Justis date */}
       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
         {person.acf?.['vog_justis_submitted_date']
-          ? format(new Date(person.acf['vog_justis_submitted_date']), 'd MMM yyyy')
+          ? format(new Date(person.acf['vog_justis_submitted_date']), 'yyyy-MM-dd')
           : '-'}
       </td>
     </tr>
