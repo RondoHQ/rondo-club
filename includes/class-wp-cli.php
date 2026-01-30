@@ -2648,8 +2648,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						}
 					}
 
-					// Check if this is a Child relationship (type 9)
-					if ( $relationship_type_id == 9 && $related_person_id ) {
+					// Check if this is a Parent relationship (type 8)
+					// Type 8 means "the related person is my parent"
+					if ( $relationship_type_id == 8 && $related_person_id ) {
 						// person->ID is the child, related_person_id is the parent
 						if ( ! isset( $parent_children_map[ $related_person_id ] ) ) {
 							$parent_children_map[ $related_person_id ] = [];
