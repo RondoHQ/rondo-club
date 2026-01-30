@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 ## Current Position
 
 Phase: 121 of 122 (Bulk Actions)
-Plan: 01 of 01
-Status: In progress
-Last activity: 2026-01-30 — Completed 121-01-PLAN.md
+Plan: 02 of 02
+Status: Phase complete
+Last activity: 2026-01-30 — Completed 121-02-PLAN.md
 
-Progress: [██████████████------] 75% (3/4 phases)
+Progress: [██████████████████--] 90% (3.5/4 phases)
 
 ## Milestone History
 
@@ -44,6 +44,12 @@ v11.0 Phase 120 decisions:
 - Nieuw badge (blue) for no VOG, Vernieuwing badge (purple) for expired
 - Celebratory green checkmark empty state for all VOGs valid
 
+v11.0 Phase 121 decisions:
+- Use Set for selectedIds state for efficient O(1) operations
+- Memoize people array to prevent useEffect dependency warnings
+- Clear selection when data changes to avoid stale selections
+- Show results in modal before closing for better user feedback
+
 ### Pending Todos
 
 No pending todos.
@@ -65,7 +71,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-30
-Stopped at: Completed 121-01-PLAN.md
+Stopped at: Completed 121-02-PLAN.md
 Resume file: None
 
 Next: /gsd:plan-phase 122
