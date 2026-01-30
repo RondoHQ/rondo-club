@@ -26,6 +26,7 @@ const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
 const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
 const FeedbackDetail = lazy(() => import('@/pages/Feedback/FeedbackDetail'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
+const VOGList = lazy(() => import('@/pages/VOG/VOGList'));
 const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
 const Labels = lazy(() => import('@/pages/Settings/Labels'));
 const UserApproval = lazy(() => import('@/pages/Settings/UserApproval'));
@@ -193,6 +194,9 @@ function App() {
                   <Route path="/people" element={<PeopleList />} />
                   <Route path="/people/:id/family-tree" element={<FamilyTree />} />
                   <Route path="/people/:id" element={<PersonDetail />} />
+
+                  {/* VOG route */}
+                  <Route path="/vog" element={<VOGList />} />
 
                   {/* Teams routes */}
                   <Route path="/teams" element={<TeamsList />} />

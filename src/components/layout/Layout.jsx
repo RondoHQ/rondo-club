@@ -15,7 +15,8 @@ import {
   Command,
   UsersRound,
   MessageSquare,
-  User
+  User,
+  FileCheck
 } from 'lucide-react';
 
 // Stadium icon component matching favicon
@@ -39,10 +40,12 @@ import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { prmApi, wpApi } from '@/api/client';
 import { APP_NAME } from '@/constants/app';
+import { useVOGCount } from '@/hooks/useVOGCount';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Leden', href: '/people', icon: Users },
+  { name: 'VOG', href: '/vog', icon: FileCheck, indent: true },
   { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
   { name: 'Datums', href: '/dates', icon: Calendar },
@@ -53,6 +56,7 @@ const navigation = [
 
 function Sidebar({ mobile = false, onClose, stats }) {
   const { logoutUrl } = useAuth();
+  const { count: vogCount } = useVOGCount();
 
   // Map navigation items to their counts
   const getCounts = (name) => {
@@ -61,6 +65,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
       case 'Leden': return stats.total_people;
       case 'Teams': return stats.total_teams;
       case 'Datums': return stats.total_dates;
+      case 'VOG': return vogCount > 0 ? vogCount : null;
       default: return null;
     }
   };
@@ -90,7 +95,9 @@ function Sidebar({ mobile = false, onClose, stats }) {
               to={item.href}
               onClick={mobile ? onClose : undefined}
               className={({ isActive }) =>
-                `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                `flex items-center py-2 text-sm font-medium rounded-lg transition-colors ${
+                  item.indent ? 'pl-8 pr-3' : 'px-3'
+                } ${
                   isActive
                     ? 'bg-accent-50 text-accent-700 dark:bg-gray-700 dark:text-accent-300'
                     : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
@@ -449,6 +456,7 @@ function Header({ onMenuClick, onOpenSearch }) {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people')) return 'Leden';
+    if (path.startsWith('/vog')) return 'VOG';
     if (path.startsWith('/teams')) return 'Teams';
     if (path.startsWith('/commissies')) return 'Commissies';
     if (path.startsWith('/dates')) return 'Datums';
