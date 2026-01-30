@@ -163,11 +163,14 @@ class InverseRelationships {
 				);
 
 				// If this was a parent-child relationship, handle sibling cleanup
-				if ( $relationship_type_id == 9 ) {
-					// post_id is the child, related_person_id is the parent
+				// Type 8 = "Parent" means "the related person is my parent"
+				// So post_id is the child, related_person_id is the parent
+				if ( $relationship_type_id == 8 ) {
 					$this->remove_siblings_on_parent_removal( $post_id, $related_person_id );
-				} elseif ( $relationship_type_id == 8 ) {
-					// post_id is the parent, related_person_id is the child
+				}
+				// Type 9 = "Child" means "the related person is my child"
+				// So post_id is the parent, related_person_id is the child
+				elseif ( $relationship_type_id == 9 ) {
 					$this->remove_siblings_on_parent_removal( $related_person_id, $post_id );
 				}
 			}
@@ -367,14 +370,14 @@ class InverseRelationships {
 		// After creating a parent-child or child-parent inverse relationship, sync siblings
 		// Check if this is a parent-child relationship (type 8 or 9)
 		if ( $relationship_type_id == 8 || $relationship_type_id == 9 ) {
-			// If from_person_id has type 9 (Child) pointing to to_person_id (parent)
-			// then to_person_id is the parent and from_person_id is the child
-			if ( $relationship_type_id == 9 ) {
+			// Type 8 = "Parent" means "the related person is my parent"
+			// So from_person_id is the child, to_person_id is the parent
+			if ( $relationship_type_id == 8 ) {
 				$this->sync_siblings_from_parent( $from_person_id, $to_person_id );
 			}
-			// If from_person_id has type 8 (Parent) pointing to to_person_id (child)
-			// then from_person_id is the parent and to_person_id is the child
-			elseif ( $relationship_type_id == 8 ) {
+			// Type 9 = "Child" means "the related person is my child"
+			// So from_person_id is the parent, to_person_id is the child
+			elseif ( $relationship_type_id == 9 ) {
 				$this->sync_siblings_from_parent( $to_person_id, $from_person_id );
 			}
 		}
@@ -755,8 +758,9 @@ class InverseRelationships {
 					}
 				}
 
-				// Check if this is a Child relationship (type 9) pointing to our parent
-				if ( $relationship_type_id == 9 && $related_person_id == $parent_id ) {
+				// Check if this is a Parent relationship (type 8) pointing to our parent
+				// Type 8 means "the related person is my parent"
+				if ( $relationship_type_id == 8 && $related_person_id == $parent_id ) {
 					$children[] = $person_id;
 					break; // Found relationship to parent, no need to check other relationships
 				}
@@ -882,8 +886,9 @@ class InverseRelationships {
 				}
 			}
 
-			// Check if this is a Child relationship (type 9)
-			if ( $relationship_type_id == 9 ) {
+			// Check if this is a Parent relationship (type 8)
+			// Type 8 means "the related person is my parent"
+			if ( $relationship_type_id == 8 ) {
 				$has_parent = true;
 				break;
 			}
