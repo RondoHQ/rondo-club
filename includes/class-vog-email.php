@@ -228,6 +228,18 @@ class VOGEmail {
 		// Record email sent date in post meta
 		update_post_meta( $person_id, 'vog_email_sent_date', current_time( 'Y-m-d H:i:s' ) );
 
+		// Log email to timeline
+		$comment_types = new \Stadion\Collaboration\CommentTypes();
+		$comment_types->create_email_log(
+			$person_id,
+			[
+				'template_type' => $template_type,
+				'recipient'     => $recipient_email,
+				'subject'       => $subject,
+				'content'       => $html_message,
+			]
+		);
+
 		return true;
 	}
 
