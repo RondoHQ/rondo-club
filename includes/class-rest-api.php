@@ -496,6 +496,38 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// VOG settings (admin only)
+		register_rest_route(
+			'stadion/v1',
+			'/vog/settings',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_vog_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_vog_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'from_email'       => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return empty( $param ) || is_email( $param );
+							},
+						],
+						'template_new'     => [
+							'required' => false,
+						],
+						'template_renewal' => [
+							'required' => false,
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -2262,5 +2294,46 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Get VOG settings
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with VOG settings.
+	 */
+	public function get_vog_settings( $request ) {
+		$vog_email = new \Stadion\VOG\VOGEmail();
+		return rest_ensure_response( $vog_email->get_all_settings() );
+	}
+
+	/**
+	 * Update VOG settings
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with updated VOG settings.
+	 */
+	public function update_vog_settings( $request ) {
+		$vog_email = new \Stadion\VOG\VOGEmail();
+
+		$from_email       = $request->get_param( 'from_email' );
+		$template_new     = $request->get_param( 'template_new' );
+		$template_renewal = $request->get_param( 'template_renewal' );
+
+		// Update provided settings
+		if ( $from_email !== null ) {
+			$vog_email->update_from_email( $from_email );
+		}
+
+		if ( $template_new !== null ) {
+			$vog_email->update_template_new( $template_new );
+		}
+
+		if ( $template_renewal !== null ) {
+			$vog_email->update_template_renewal( $template_renewal );
+		}
+
+		// Return updated settings
+		return rest_ensure_response( $vog_email->get_all_settings() );
 	}
 }
