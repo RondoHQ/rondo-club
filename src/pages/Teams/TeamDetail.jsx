@@ -1,11 +1,10 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch, TrendingUp, User, Camera, Share2 } from 'lucide-react';
+import { ArrowLeft, Building2, Globe, Users, GitBranch, TrendingUp, User, Camera, Share2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { getTeamName, decodeHtml, sanitizeTeamAcf } from '@/utils/formatters';
-import TeamEditModal from '@/components/TeamEditModal';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -16,9 +15,7 @@ export default function TeamDetail() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   
   const { data: team, isLoading, error } = useQuery({
     queryKey: ['team', id],
@@ -116,14 +113,6 @@ export default function TeamDetail() {
     enabled: !!id,
   });
   
-  const deleteTeam = useMutation({
-    mutationFn: () => wpApi.deleteTeam(id, { force: true }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      navigate('/teams');
-    },
-  });
   
   const updateTeam = useMutation({
     mutationFn: (data) => wpApi.updateTeam(id, data),
@@ -151,39 +140,6 @@ export default function TeamDetail() {
     }
   }, [team, navigate]);
 
-  const handleDelete = async () => {
-    if (!window.confirm('Weet je zeker dat je dit team wilt verwijderen?')) {
-      return;
-    }
-
-    try {
-      await deleteTeam.mutateAsync();
-      // Navigation will happen in onSuccess callback
-    } catch {
-      alert('Team kon niet worden verwijderd. Probeer het opnieuw.');
-    }
-  };
-  
-  const handleSaveTeam = async (data) => {
-    setIsSaving(true);
-    try {
-      const payload = {
-        title: data.title,
-        parent: data.parentId || 0,
-        acf: {
-          website: data.website,
-          investors: data.investors || [],
-        },
-      };
-
-      await updateTeam.mutateAsync(payload);
-      setShowEditModal(false);
-    } catch {
-      alert('Team kon niet worden opgeslagen. Probeer het opnieuw.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
   
   // Handle logo upload
   const handleLogoUpload = async (event) => {
@@ -258,14 +214,6 @@ export default function TeamDetail() {
           <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Delen">
             <Share2 className="w-4 h-4 mr-2" />
             Delen
-          </button>
-          <button onClick={() => setShowEditModal(true)} className="btn-secondary">
-            <Edit className="w-4 h-4 mr-2" />
-            Bewerken
-          </button>
-          <button onClick={handleDelete} className="btn-danger-outline">
-            <Trash2 className="w-4 h-4 mr-2" />
-            Verwijderen
           </button>
         </div>
       </div>
@@ -629,14 +577,6 @@ export default function TeamDetail() {
           updateTeam.mutateAsync({ acf: acfData });
         }}
         isUpdating={updateTeam.isPending}
-      />
-
-      <TeamEditModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onSubmit={handleSaveTeam}
-        isLoading={isSaving}
-        team={team}
       />
 
       <ShareModal
