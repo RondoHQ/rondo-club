@@ -33,6 +33,11 @@ class GoogleOAuth {
 	public const CONTACTS_SCOPE_READWRITE = 'https://www.googleapis.com/auth/contacts';
 
 	/**
+	 * Google Sheets scope
+	 */
+	public const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
+
+	/**
 	 * Check if Google OAuth is configured
 	 *
 	 * @return bool True if client ID and secret are configured
@@ -353,5 +358,107 @@ class GoogleOAuth {
 			return 'readonly';
 		}
 		return 'none';
+	}
+
+	/**
+	 * Get Google API client configured for Sheets authorization
+	 *
+	 * Creates a client configured for Google Sheets API scope with
+	 * incremental authorization enabled to preserve existing scopes.
+	 *
+	 * @param bool $include_granted_scopes Enable incremental auth to preserve existing scopes.
+	 * @return \Google\Client|null Configured client or null if not configured.
+	 */
+	public static function get_sheets_client( bool $include_granted_scopes = true ): ?\Google\Client {
+		if ( ! self::is_configured() ) {
+			return null;
+		}
+
+		$client = new \Google\Client();
+		$client->setClientId( GOOGLE_OAUTH_CLIENT_ID );
+		$client->setClientSecret( GOOGLE_OAUTH_CLIENT_SECRET );
+		$client->setRedirectUri( rest_url( 'stadion/v1/google-sheets/callback' ) );
+
+		// Set Sheets scope
+		$client->setScopes( [ self::SHEETS_SCOPE ] );
+
+		// CRITICAL: Enable incremental authorization to preserve existing scopes
+		$client->setIncludeGrantedScopes( $include_granted_scopes );
+
+		$client->setAccessType( 'offline' );
+		$client->setPrompt( 'consent' ); // Ensure refresh token is returned
+
+		return $client;
+	}
+
+	/**
+	 * Generate OAuth authorization URL for Sheets scope
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return string Authorization URL or empty string on failure.
+	 */
+	public static function get_sheets_auth_url( int $user_id ): string {
+		$client = self::get_sheets_client( true );
+		if ( ! $client ) {
+			return '';
+		}
+
+		// Create state with a random token stored in transient
+		// Use separate transient key to distinguish from other OAuth flows
+		$token = wp_generate_password( 32, false );
+		set_transient(
+			'google_sheets_oauth_' . $token,
+			[ 'user_id' => $user_id ],
+			10 * MINUTE_IN_SECONDS
+		);
+
+		$client->setState( $token );
+
+		return $client->createAuthUrl();
+	}
+
+	/**
+	 * Exchange authorization code for tokens (sheets-specific)
+	 *
+	 * @param string $code    Authorization code from Google.
+	 * @param int    $user_id WordPress user ID (for logging/verification).
+	 * @return array Token data array with access_token, refresh_token, expires_at, etc.
+	 * @throws Exception On token exchange failure.
+	 */
+	public static function handle_sheets_callback( string $code, int $user_id ): array {
+		$client = self::get_sheets_client( true );
+		if ( ! $client ) {
+			throw new \Exception( 'Google OAuth is not configured' );
+		}
+
+		// Exchange code for tokens
+		$token = $client->fetchAccessTokenWithAuthCode( $code );
+
+		if ( isset( $token['error'] ) ) {
+			throw new \Exception( $token['error_description'] ?? $token['error'] );
+		}
+
+		// Build token credential structure
+		return [
+			'access_token'  => $token['access_token'] ?? '',
+			'refresh_token' => $token['refresh_token'] ?? '',
+			'expires_at'    => time() + ( $token['expires_in'] ?? 3600 ),
+			'token_type'    => $token['token_type'] ?? 'Bearer',
+			'scope'         => $token['scope'] ?? '',
+			'id_token'      => $token['id_token'] ?? '',
+		];
+	}
+
+	/**
+	 * Check if credentials include Sheets scope
+	 *
+	 * @param array $credentials Token credentials with scope field.
+	 * @return bool True if Sheets scope is present.
+	 */
+	public static function has_sheets_scope( array $credentials ): bool {
+		$scope_string = $credentials['scope'] ?? '';
+		$scopes       = explode( ' ', $scope_string );
+
+		return in_array( self::SHEETS_SCOPE, $scopes, true );
 	}
 }

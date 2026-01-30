@@ -61,6 +61,7 @@ use Stadion\Export\VCard as VCardExport;
 use Stadion\Export\ICalFeed;
 use Stadion\Export\GoogleContactsExport;
 use Stadion\Contacts\GoogleContactsSync;
+use Stadion\Sheets\GoogleSheetsConnection;
 use Stadion\CardDAV\Server as CardDAVServer;
 use Stadion\Data\InverseRelationships;
 use Stadion\Data\TodoMigration;
@@ -179,6 +180,11 @@ if ( ! class_exists( 'STADION_CalDAV_Provider' ) ) {
 }
 if ( ! class_exists( 'STADION_Google_OAuth' ) ) {
 	class_alias( GoogleOAuth::class, 'STADION_Google_OAuth' );
+}
+
+// Google Sheets class
+if ( ! class_exists( 'STADION_Google_Sheets_Connection' ) ) {
+	class_alias( GoogleSheetsConnection::class, 'STADION_Google_Sheets_Connection' );
 }
 
 // Notification classes
