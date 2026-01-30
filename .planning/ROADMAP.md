@@ -56,10 +56,11 @@ Plans:
   2. User can send VOG email to all selected people with one action
   3. System automatically selects new volunteer vs renewal template based on datum-vog
   4. User can mark selected people as "VOG requested" (records current date)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 121-01: TBD
+- [ ] 121-01-PLAN.md — Backend: Bulk VOG REST endpoints for send and mark-requested
+- [ ] 121-02-PLAN.md — Frontend: Selection UI and bulk actions in VOGList
 
 ### Phase 122: Tracking & Polish
 **Goal**: Users can track VOG email status and view history
@@ -81,7 +82,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 119. Backend Foundation | 2/2 | Complete | 2026-01-30 |
 | 120. VOG List Page | 1/1 | Complete | 2026-01-30 |
-| 121. Bulk Actions | 0/TBD | Not started | - |
+| 121. Bulk Actions | 0/2 | Planned | - |
 | 122. Tracking & Polish | 0/TBD | Not started | - |
 
 ---
