@@ -69,6 +69,7 @@ use Stadion\Data\TodoMigration;
 use Stadion\CustomFields\Manager as CustomFieldsManager;
 use Stadion\CustomFields\Validation as CustomFieldsValidation;
 use Stadion\REST\CustomFields as RESTCustomFields;
+use Stadion\VOG\VOGEmail;
 
 define( 'STADION_THEME_DIR', get_template_directory() );
 define( 'STADION_THEME_URL', get_template_directory_uri() );
@@ -263,6 +264,11 @@ if ( ! class_exists( 'STADION_Custom_Fields_Validation' ) ) {
 }
 if ( ! class_exists( 'STADION_REST_Custom_Fields' ) ) {
 	class_alias( RESTCustomFields::class, 'STADION_REST_Custom_Fields' );
+}
+
+// VOG classes
+if ( ! class_exists( 'STADION_VOG_Email' ) ) {
+	class_alias( VOGEmail::class, 'STADION_VOG_Email' );
 }
 
 /**
