@@ -569,6 +569,25 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Bulk mark VOG as submitted to Justis
+		register_rest_route(
+			'stadion/v1',
+			'/vog/bulk-mark-justis',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'bulk_mark_vog_justis' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'ids' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_array( $param ) && ! empty( $param );
+						},
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -2465,6 +2484,55 @@ class Api extends Base {
 
 			// Update ACF field
 			update_field( 'vog-email-verzonden', $current_date, $person_id );
+			++$marked;
+			$results[] = [
+				'id'      => $person_id,
+				'success' => true,
+			];
+		}
+
+		return rest_ensure_response(
+			[
+				'results' => $results,
+				'marked'  => $marked,
+				'failed'  => $failed,
+				'total'   => count( $ids ),
+			]
+		);
+	}
+
+	/**
+	 * Bulk mark VOG as submitted to Justis
+	 *
+	 * Records the current date in the vog_justis_submitted_date post meta.
+	 * Used to track when the VOG request was submitted to the Justis system.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with results.
+	 */
+	public function bulk_mark_vog_justis( $request ) {
+		$ids          = $request->get_param( 'ids' );
+		$current_date = current_time( 'Y-m-d' );
+
+		$marked  = 0;
+		$failed  = 0;
+		$results = [];
+
+		foreach ( $ids as $person_id ) {
+			$person = get_post( (int) $person_id );
+
+			if ( ! $person || 'person' !== $person->post_type ) {
+				++$failed;
+				$results[] = [
+					'id'      => $person_id,
+					'success' => false,
+					'error'   => 'Invalid person ID',
+				];
+				continue;
+			}
+
+			// Update post meta for Justis submission date
+			update_post_meta( $person_id, 'vog_justis_submitted_date', $current_date );
 			++$marked;
 			$results[] = [
 				'id'      => $person_id,

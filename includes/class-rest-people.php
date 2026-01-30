@@ -1283,6 +1283,16 @@ class People extends Base {
 				}
 			}
 
+			// Add VOG-related post meta fields to acf array for frontend consistency
+			$vog_email_sent = get_post_meta( $row->ID, 'vog_email_sent_date', true );
+			$vog_justis     = get_post_meta( $row->ID, 'vog_justis_submitted_date', true );
+			if ( $vog_email_sent ) {
+				$person['acf']['vog_email_sent_date'] = $vog_email_sent;
+			}
+			if ( $vog_justis ) {
+				$person['acf']['vog_justis_submitted_date'] = $vog_justis;
+			}
+
 			$people[] = $person;
 		}
 
