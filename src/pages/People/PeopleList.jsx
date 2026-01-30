@@ -852,6 +852,20 @@ export default function PeopleList() {
   const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter ||
     huidigeVrijwilliger || financieleBlokkade || typeLid || fotoMissing || vogMissing || vogOlderThanYears;
 
+  // Update filteredCount URL param when filters are active and data is loaded
+  useEffect(() => {
+    if (hasActiveFilters && !isLoading) {
+      // Set filteredCount param when filters are active
+      updateSearchParams({ filteredCount: totalPeople });
+    } else {
+      // Remove filteredCount param when no filters
+      const current = searchParams.get('filteredCount');
+      if (current !== null) {
+        updateSearchParams({ filteredCount: null });
+      }
+    }
+  }, [hasActiveFilters, totalPeople, isLoading, searchParams, updateSearchParams]);
+
   const handleLabelToggle = (labelId) => {
     setSelectedLabelIds(prev =>
       prev.includes(labelId)
