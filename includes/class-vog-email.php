@@ -24,6 +24,11 @@ class VOGEmail {
 	const OPTION_FROM_EMAIL = 'stadion_vog_from_email';
 
 	/**
+	 * Option key for from name
+	 */
+	const OPTION_FROM_NAME = 'stadion_vog_from_name';
+
+	/**
 	 * Option key for new volunteer template
 	 */
 	const OPTION_TEMPLATE_NEW = 'stadion_vog_template_new';
@@ -51,6 +56,19 @@ class VOGEmail {
 			return get_option( 'admin_email' );
 		}
 		return $email;
+	}
+
+	/**
+	 * Get the from name for VOG emails
+	 *
+	 * @return string Name to display as sender
+	 */
+	public function get_from_name(): string {
+		$name = get_option( self::OPTION_FROM_NAME, '' );
+		if ( empty( $name ) ) {
+			return get_bloginfo( 'name' );
+		}
+		return $name;
 	}
 
 	/**
@@ -82,11 +100,12 @@ class VOGEmail {
 	/**
 	 * Get all VOG settings
 	 *
-	 * @return array Settings array with from_email, template_new, template_renewal
+	 * @return array Settings array with from_email, from_name, template_new, template_renewal
 	 */
 	public function get_all_settings(): array {
 		return [
 			'from_email'       => $this->get_from_email(),
+			'from_name'        => $this->get_from_name(),
 			'template_new'     => $this->get_template_new(),
 			'template_renewal' => $this->get_template_renewal(),
 		];
@@ -104,6 +123,17 @@ class VOGEmail {
 			return false; // Invalid email provided
 		}
 		return update_option( self::OPTION_FROM_EMAIL, $sanitized );
+	}
+
+	/**
+	 * Update the from name
+	 *
+	 * @param string $name Sender name
+	 * @return bool True on success
+	 */
+	public function update_from_name( string $name ): bool {
+		$sanitized = sanitize_text_field( $name );
+		return update_option( self::OPTION_FROM_NAME, $sanitized );
 	}
 
 	/**
@@ -263,7 +293,7 @@ class VOGEmail {
 	 * @return string Modified from name
 	 */
 	public function filter_mail_from_name( $from_name ): string {
-		return get_bloginfo( 'name' );
+		return $this->get_from_name();
 	}
 
 	/**
