@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from '@/utils/dateFormat';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
-import { prmApi } from '@/api/client';
+import { prmApi, wpApi } from '@/api/client';
 import { useTheme, COLOR_SCHEMES, ACCENT_COLORS } from '@/hooks/useTheme';
 import { useSearch } from '@/hooks/useDashboard';
 import MonicaImport from '@/components/import/MonicaImport';
@@ -122,10 +122,12 @@ export default function Settings() {
     from_name: '',
     template_new: '',
     template_renewal: '',
+    exempt_commissies: [],
   });
   const [vogLoading, setVogLoading] = useState(true);
   const [vogSaving, setVogSaving] = useState(false);
   const [vogMessage, setVogMessage] = useState('');
+  const [vogCommissies, setVogCommissies] = useState([]);
 
   // Fetch Applicatiewachtwoorden and CardDAV URLs on mount
   useEffect(() => {
@@ -291,8 +293,12 @@ export default function Settings() {
         return;
       }
       try {
-        const response = await prmApi.getVOGSettings();
-        setVogSettings(response.data);
+        const [settingsResponse, commissiesResponse] = await Promise.all([
+          prmApi.getVOGSettings(),
+          wpApi.getCommissies({ per_page: 100, _fields: 'id,title' }),
+        ]);
+        setVogSettings(settingsResponse.data);
+        setVogCommissies(commissiesResponse.data || []);
       } catch {
         // VOG settings fetch failed silently
       } finally {
@@ -308,8 +314,14 @@ export default function Settings() {
     setVogMessage('');
     try {
       const response = await prmApi.updateVOGSettings(vogSettings);
-      setVogSettings(response.data);
-      setVogMessage('VOG-instellingen opgeslagen');
+      // Extract people_recalculated before setting state (it's not part of persistent settings)
+      const { people_recalculated, ...settingsData } = response.data;
+      setVogSettings(settingsData);
+      setVogMessage(
+        people_recalculated !== undefined && people_recalculated !== null
+          ? `VOG-instellingen opgeslagen. ${people_recalculated} personen herberekend.`
+          : 'VOG-instellingen opgeslagen'
+      );
     } catch (error) {
       setVogMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
     } finally {
@@ -725,6 +737,7 @@ export default function Settings() {
           vogSaving={vogSaving}
           vogMessage={vogMessage}
           handleVogSave={handleVogSave}
+          commissies={vogCommissies}
         /> : null;
       case 'about':
         return <AboutTab config={config} />;
@@ -3320,6 +3333,7 @@ function VOGTab({
   vogSaving,
   vogMessage,
   handleVogSave,
+  commissies,
 }) {
   return (
     <div className="space-y-6">
@@ -3406,6 +3420,45 @@ function VOGTab({
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Beschikbare variabelen: {'{first_name}'}, {'{previous_vog_date}'}
             </p>
+          </div>
+
+          {/* Exempt commissies */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Vrijgestelde commissies
+            </label>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 mb-2">
+              Selecteer commissies die vrijgesteld zijn van de VOG-verplichting. Leden van deze commissies verschijnen niet in de VOG-lijst.
+            </p>
+            <div className="mt-2 border rounded-md border-gray-300 dark:border-gray-600 max-h-48 overflow-y-auto">
+              {commissies.length > 0 ? (
+                commissies.map(commissie => (
+                  <label key={commissie.id} className="flex items-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={vogSettings.exempt_commissies?.includes(commissie.id)}
+                      onChange={(e) => {
+                        const id = commissie.id;
+                        setVogSettings(prev => ({
+                          ...prev,
+                          exempt_commissies: e.target.checked
+                            ? [...(prev.exempt_commissies || []), id]
+                            : (prev.exempt_commissies || []).filter(i => i !== id)
+                        }));
+                      }}
+                      className="h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300 rounded"
+                    />
+                    <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                      {commissie.title?.rendered || commissie.title}
+                    </span>
+                  </label>
+                ))
+              ) : (
+                <p className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                  Geen commissies gevonden
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Save button and message */}
