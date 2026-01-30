@@ -342,6 +342,14 @@ class People extends Base {
 							return in_array( $value, [ '', 'sent', 'not_sent' ], true );
 						},
 					],
+					'vog_type' => [
+						'description'       => 'Filter by VOG type (nieuw=no VOG, vernieuwing=expired VOG)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', 'nieuw', 'vernieuwing' ], true );
+						},
+					],
 				],
 			]
 		);
@@ -1034,6 +1042,7 @@ class People extends Base {
 		$vog_missing          = $request->get_param( 'vog_missing' );
 		$vog_older_than_years = $request->get_param( 'vog_older_than_years' );
 		$vog_email_status     = $request->get_param( 'vog_email_status' );
+		$vog_type             = $request->get_param( 'vog_type' );
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -1141,9 +1150,19 @@ class People extends Base {
 			$where_clauses[] = "(df.meta_value IS NULL OR df.meta_value = '')";
 		}
 
-		// Datum VOG - missing or older than N years filter
-		// When both are set, OR them together (show both new volunteers AND renewals)
-		if ( $vog_missing === '1' && $vog_older_than_years !== null ) {
+		// Datum VOG filtering based on vog_type
+		if ( $vog_type === 'nieuw' ) {
+			// Only show people WITHOUT a VOG date
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
+			$where_clauses[] = "(dv.meta_value IS NULL OR dv.meta_value = '')";
+		} elseif ( $vog_type === 'vernieuwing' && $vog_older_than_years !== null ) {
+			// Only show people WITH an expired VOG date
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
+			$cutoff_date      = gmdate( 'Y-m-d', strtotime( "-{$vog_older_than_years} years" ) );
+			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value < %s)";
+			$prepare_values[] = $cutoff_date;
+		} elseif ( $vog_missing === '1' && $vog_older_than_years !== null ) {
+			// Default: OR both conditions (show all needing VOG)
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
 			$cutoff_date      = gmdate( 'Y-m-d', strtotime( "-{$vog_older_than_years} years" ) );
 			$where_clauses[]  = "((dv.meta_value IS NULL OR dv.meta_value = '') OR (dv.meta_value < %s))";
