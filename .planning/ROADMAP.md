@@ -11,7 +11,7 @@ This milestone adds VOG (Verklaring Omtrent Gedrag) compliance management for vo
 
 ## Phases
 
-- [ ] **Phase 119: Backend Foundation** - Email infrastructure, settings, and tracking data model
+- [x] **Phase 119: Backend Foundation** - Email infrastructure, settings, and tracking data model
 - [ ] **Phase 120: VOG List Page** - Navigation and filtered volunteer list
 - [ ] **Phase 121: Bulk Actions** - Multi-select, send emails, mark requested
 - [ ] **Phase 122: Tracking & Polish** - Email status filtering and history display
@@ -31,8 +31,8 @@ This milestone adds VOG (Verklaring Omtrent Gedrag) compliance management for vo
 **Plans:** 2 plans
 
 Plans:
-- [ ] 119-01-PLAN.md — PHP backend: VOG email service class and REST endpoints
-- [ ] 119-02-PLAN.md — Frontend: VOG settings tab in Settings page
+- [x] 119-01-PLAN.md — PHP backend: VOG email service class and REST endpoints
+- [x] 119-02-PLAN.md — Frontend: VOG settings tab in Settings page
 
 ### Phase 120: VOG List Page
 **Goal**: Users can see which volunteers need VOG action
@@ -79,7 +79,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 119. Backend Foundation | 0/2 | Planned | - |
+| 119. Backend Foundation | 2/2 | Complete | 2026-01-30 |
 | 120. VOG List Page | 0/TBD | Not started | - |
 | 121. Bulk Actions | 0/TBD | Not started | - |
 | 122. Tracking & Polish | 0/TBD | Not started | - |
