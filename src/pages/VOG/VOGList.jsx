@@ -194,6 +194,13 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
           ? format(new Date(person.acf['vog_email_sent_date']), 'd MMM yyyy')
           : '-'}
       </td>
+
+      {/* Justis date */}
+      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+        {person.acf?.['vog_justis_submitted_date']
+          ? format(new Date(person.acf['vog_justis_submitted_date']), 'd MMM yyyy')
+          : '-'}
+      </td>
     </tr>
   );
 }
@@ -216,6 +223,7 @@ export default function VOGList() {
   // Modal state
   const [showSendEmailModal, setShowSendEmailModal] = useState(false);
   const [showMarkRequestedModal, setShowMarkRequestedModal] = useState(false);
+  const [showMarkJustisModal, setShowMarkJustisModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [bulkActionResult, setBulkActionResult] = useState(null);
 
@@ -333,6 +341,14 @@ export default function VOGList() {
     },
   });
 
+  const markJustisMutation = useMutation({
+    mutationFn: ({ ids }) => prmApi.bulkMarkVOGJustis(ids),
+    onSuccess: (response) => {
+      setBulkActionResult(response.data);
+      queryClient.invalidateQueries({ queryKey: ['people', 'filtered'] });
+    },
+  });
+
   // Bulk action handlers
   const handleSendEmails = async () => {
     setBulkActionLoading(true);
@@ -354,9 +370,20 @@ export default function VOGList() {
     }
   };
 
+  const handleMarkJustis = async () => {
+    setBulkActionLoading(true);
+    setBulkActionResult(null);
+    try {
+      await markJustisMutation.mutateAsync({ ids: Array.from(selectedIds) });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   const handleCloseModal = () => {
     setShowSendEmailModal(false);
     setShowMarkRequestedModal(false);
+    setShowMarkJustisModal(false);
     setBulkActionResult(null);
     if (bulkActionResult && (bulkActionResult.sent > 0 || bulkActionResult?.marked > 0)) {
       clearSelection();
@@ -454,6 +481,16 @@ export default function VOGList() {
                         <CheckCircle className="w-4 h-4" />
                         Markeren als aangevraagd...
                       </button>
+                      <button
+                        onClick={() => {
+                          setShowBulkDropdown(false);
+                          setShowMarkJustisModal(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Markeren bij Justis aangevraagd...
+                      </button>
                     </div>
                   </div>
                 )}
@@ -544,6 +581,13 @@ export default function VOGList() {
                 <SortableHeader
                   label="Verzonden"
                   columnId="custom_vog_email_sent_date"
+                  sortField={orderby}
+                  sortOrder={order}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Justis"
+                  columnId="custom_vog_justis_submitted_date"
                   sortField={orderby}
                   sortOrder={order}
                   onSort={handleSort}
@@ -671,6 +715,61 @@ export default function VOGList() {
                       Annuleren
                     </button>
                     <button onClick={handleMarkRequested} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md disabled:opacity-50">
+                      {bulkActionLoading ? 'Markeren...' : `Markeer ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mark Justis Modal */}
+        {showMarkJustisModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+              <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Markeren bij Justis aangevraagd</h2>
+                <button onClick={handleCloseModal} disabled={bulkActionLoading} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                {bulkActionResult ? (
+                  <div className="space-y-2">
+                    {bulkActionResult.marked > 0 && (
+                      <p className="text-sm text-green-600 dark:text-green-400">
+                        {bulkActionResult.marked} vrijwilliger{bulkActionResult.marked > 1 ? 's' : ''} gemarkeerd
+                      </p>
+                    )}
+                    {bulkActionResult.failed > 0 && (
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        {bulkActionResult.failed} mislukt
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Markeer {selectedIds.size} {selectedIds.size === 1 ? 'vrijwilliger' : 'vrijwilligers'} als &quot;bij Justis aangevraagd&quot;.
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Dit registreert de huidige datum als datum van indiening bij het Justis-systeem.
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
+                {bulkActionResult ? (
+                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md">
+                    Sluiten
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
+                      Annuleren
+                    </button>
+                    <button onClick={handleMarkJustis} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md disabled:opacity-50">
                       {bulkActionLoading ? 'Markeren...' : `Markeer ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
                     </button>
                   </>
