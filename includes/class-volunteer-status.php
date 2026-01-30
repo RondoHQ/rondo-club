@@ -36,6 +36,18 @@ class VolunteerStatus {
 	];
 
 	/**
+	 * Honorary/membership roles that do NOT count as volunteer positions.
+	 * These are passive membership types, not active volunteering.
+	 *
+	 * @var array
+	 */
+	private const EXCLUDED_ROLES = [
+		'Donateur',
+		'Lid van Verdienste',
+		'Verenigingslid voor het leven (contributievrij)',
+	];
+
+	/**
 	 * The ACF field key for huidig-vrijwilliger.
 	 *
 	 * @var string
@@ -163,8 +175,8 @@ class VolunteerStatus {
 	 * Check if a position qualifies as a volunteer position.
 	 *
 	 * Volunteer positions are:
-	 * - Any position in a commissie
-	 * - Staff positions in a team (non-player roles)
+	 * - Any position in a commissie (except excluded roles)
+	 * - Staff positions in a team (non-player, non-excluded roles)
 	 *
 	 * @param array $position The position data.
 	 * @return bool True if this is a volunteer position.
@@ -173,7 +185,12 @@ class VolunteerStatus {
 		$entity_type = $position['entity_type'] ?? '';
 		$job_title   = $position['job_title'] ?? '';
 
-		// Any commissie position is a volunteer position
+		// Check if it's an excluded role (honorary/membership positions)
+		if ( ! empty( $job_title ) && in_array( $job_title, self::EXCLUDED_ROLES, true ) ) {
+			return false;
+		}
+
+		// Commissie positions are volunteer positions (unless excluded above)
 		if ( $entity_type === 'commissie' ) {
 			return true;
 		}
