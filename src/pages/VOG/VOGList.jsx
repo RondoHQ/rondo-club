@@ -383,6 +383,59 @@ export default function VOGList() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-4">
+        {/* Selection toolbar - sticky */}
+        {selectedIds.size > 0 && (
+          <div className="sticky top-0 z-20 flex items-center justify-between bg-accent-50 dark:bg-accent-800 border border-accent-200 dark:border-accent-700 rounded-lg px-4 py-2 shadow-sm">
+            <span className="text-sm text-accent-800 dark:text-accent-200 font-medium">
+              {selectedIds.size} {selectedIds.size === 1 ? 'vrijwilliger' : 'vrijwilligers'} geselecteerd
+            </span>
+            <div className="flex items-center gap-3">
+              {/* Bulk Actions Dropdown */}
+              <div className="relative" ref={bulkDropdownRef}>
+                <button
+                  onClick={() => setShowBulkDropdown(!showBulkDropdown)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-accent-700 dark:text-accent-200 bg-white dark:bg-gray-800 border border-accent-300 dark:border-accent-600 rounded-md hover:bg-accent-50 dark:hover:bg-gray-700"
+                >
+                  Acties
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showBulkDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                {showBulkDropdown && (
+                  <div className="absolute right-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setShowBulkDropdown(false);
+                          setShowSendEmailModal(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        <Mail className="w-4 h-4" />
+                        VOG email verzenden...
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowBulkDropdown(false);
+                          setShowMarkRequestedModal(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Markeren als aangevraagd...
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={clearSelection}
+                className="text-sm text-accent-600 dark:text-accent-400 hover:text-accent-800 dark:hover:text-accent-300 font-medium"
+              >
+                Selectie wissen
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* VOG list table */}
         <div className="card overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -458,6 +511,121 @@ export default function VOGList() {
             </tbody>
           </table>
         </div>
+
+        {/* Send Email Modal */}
+        {showSendEmailModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+              <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">VOG email verzenden</h2>
+                <button onClick={handleCloseModal} disabled={bulkActionLoading} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                {bulkActionResult ? (
+                  <div className="space-y-2">
+                    {bulkActionResult.sent > 0 && (
+                      <p className="text-sm text-green-600 dark:text-green-400">
+                        {bulkActionResult.sent} email{bulkActionResult.sent > 1 ? 's' : ''} verzonden
+                      </p>
+                    )}
+                    {bulkActionResult.failed > 0 && (
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        {bulkActionResult.failed} mislukt
+                      </p>
+                    )}
+                    {bulkActionResult.results?.filter(r => !r.success).map((r, i) => (
+                      <p key={i} className="text-xs text-gray-500 dark:text-gray-400 pl-2">
+                        ID {r.id}: {r.error}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Verstuur VOG email naar {selectedIds.size} {selectedIds.size === 1 ? 'vrijwilliger' : 'vrijwilligers'}.
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Het systeem selecteert automatisch de juiste template (nieuw of vernieuwing) op basis van de bestaande VOG datum.
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
+                {bulkActionResult ? (
+                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md">
+                    Sluiten
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
+                      Annuleren
+                    </button>
+                    <button onClick={handleSendEmails} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md disabled:opacity-50">
+                      {bulkActionLoading ? 'Verzenden...' : `Verstuur naar ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mark Requested Modal */}
+        {showMarkRequestedModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+              <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Markeren als aangevraagd</h2>
+                <button onClick={handleCloseModal} disabled={bulkActionLoading} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                {bulkActionResult ? (
+                  <div className="space-y-2">
+                    {bulkActionResult.marked > 0 && (
+                      <p className="text-sm text-green-600 dark:text-green-400">
+                        {bulkActionResult.marked} vrijwilliger{bulkActionResult.marked > 1 ? 's' : ''} gemarkeerd
+                      </p>
+                    )}
+                    {bulkActionResult.failed > 0 && (
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        {bulkActionResult.failed} mislukt
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Markeer {selectedIds.size} {selectedIds.size === 1 ? 'vrijwilliger' : 'vrijwilligers'} als "VOG aangevraagd".
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Dit registreert de huidige datum als datum van VOG-aanvraag, zonder een email te versturen.
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
+                {bulkActionResult ? (
+                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md">
+                    Sluiten
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
+                      Annuleren
+                    </button>
+                    <button onClick={handleMarkRequested} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md disabled:opacity-50">
+                      {bulkActionLoading ? 'Markeren...' : `Markeer ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PullToRefreshWrapper>
   );
