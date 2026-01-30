@@ -69,10 +69,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User can filter VOG list by email status (sent/not sent)
   2. User can see email history on person profile page
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 122-01: TBD
+- [ ] 122-01-PLAN.md — Backend: Email tracking infrastructure (TYPE_EMAIL, logging, API filter)
+- [ ] 122-02-PLAN.md — Frontend: VOG list filter UI and timeline email display
 
 ## Progress
 
@@ -83,7 +84,7 @@ Plans:
 | 119. Backend Foundation | 2/2 | Complete | 2026-01-30 |
 | 120. VOG List Page | 1/1 | Complete | 2026-01-30 |
 | 121. Bulk Actions | 2/2 | Complete | 2026-01-30 |
-| 122. Tracking & Polish | 0/TBD | Not started | - |
+| 122. Tracking & Polish | 0/2 | Ready | - |
 
 ---
 *Roadmap created: 2026-01-30*
