@@ -138,7 +138,11 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
       {/* Name with badge */}
       <td className="px-4 py-3 whitespace-nowrap">
         <Link to={`/people/${person.id}`} className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          <span className={`text-sm font-medium ${
+            isSelected
+              ? 'text-gray-900 dark:text-white'
+              : 'text-gray-900 dark:text-gray-50'
+          }`}>
             {person.first_name || ''} {person.last_name || ''}
           </span>
           <VOGBadge person={person} />
@@ -147,7 +151,11 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
       </td>
 
       {/* KNVB ID */}
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+      <td className={`px-4 py-3 text-sm ${
+        isSelected
+          ? 'text-gray-700 dark:text-gray-100'
+          : 'text-gray-500 dark:text-gray-400'
+      }`}>
         {customFieldsMap['knvb-id'] ? (
           <CustomFieldColumn
             field={customFieldsMap['knvb-id']}
@@ -159,7 +167,11 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
       </td>
 
       {/* Email */}
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+      <td className={`px-4 py-3 whitespace-nowrap text-sm ${
+        isSelected
+          ? 'text-gray-700 dark:text-gray-100'
+          : 'text-gray-500 dark:text-gray-400'
+      }`}>
         {email ? (
           <a href={`mailto:${email}`} className="hover:text-accent-600 dark:hover:text-accent-400">
             {email}
@@ -168,7 +180,11 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
       </td>
 
       {/* Phone */}
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+      <td className={`px-4 py-3 whitespace-nowrap text-sm ${
+        isSelected
+          ? 'text-gray-700 dark:text-gray-100'
+          : 'text-gray-500 dark:text-gray-400'
+      }`}>
         {phone ? (
           <a href={`tel:${phone}`} className="hover:text-accent-600 dark:hover:text-accent-400">
             {phone}
@@ -177,7 +193,11 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
       </td>
 
       {/* Datum VOG */}
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+      <td className={`px-4 py-3 text-sm ${
+        isSelected
+          ? 'text-gray-700 dark:text-gray-100'
+          : 'text-gray-500 dark:text-gray-400'
+      }`}>
         {customFieldsMap['datum-vog'] ? (
           <CustomFieldColumn
             field={customFieldsMap['datum-vog']}
@@ -189,14 +209,22 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
       </td>
 
       {/* Verzonden date */}
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+      <td className={`px-4 py-3 text-sm ${
+        isSelected
+          ? 'text-gray-700 dark:text-gray-100'
+          : 'text-gray-500 dark:text-gray-400'
+      }`}>
         {person.acf?.['vog_email_sent_date']
           ? format(new Date(person.acf['vog_email_sent_date']), 'yyyy-MM-dd')
           : '-'}
       </td>
 
       {/* Justis date */}
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+      <td className={`px-4 py-3 text-sm ${
+        isSelected
+          ? 'text-gray-700 dark:text-gray-100'
+          : 'text-gray-500 dark:text-gray-400'
+      }`}>
         {person.acf?.['vog_justis_submitted_date']
           ? format(new Date(person.acf['vog_justis_submitted_date']), 'yyyy-MM-dd')
           : '-'}
