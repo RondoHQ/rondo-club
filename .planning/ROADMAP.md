@@ -42,10 +42,10 @@ Plans:
   1. User sees VOG section in sidebar navigation
   2. VOG list shows only volunteers with huidig-vrijwilliger=true AND (no datum-vog OR datum-vog 3+ years ago)
   3. List displays Name, KNVB ID, Email, Phone, and Datum VOG columns
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 120-01: TBD
+- [ ] 120-01-PLAN.md — VOG list page with navigation, filtering, and badges
 
 ### Phase 121: Bulk Actions
 **Goal**: Users can send VOG emails to multiple volunteers at once
@@ -80,7 +80,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 119. Backend Foundation | 2/2 | Complete | 2026-01-30 |
-| 120. VOG List Page | 0/TBD | Not started | - |
+| 120. VOG List Page | 0/1 | Planned | - |
 | 121. Bulk Actions | 0/TBD | Not started | - |
 | 122. Tracking & Polish | 0/TBD | Not started | - |
 
