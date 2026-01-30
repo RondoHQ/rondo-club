@@ -43,6 +43,7 @@ class VolunteerStatus {
 	 */
 	private const EXCLUDED_ROLES = [
 		'Donateur',
+		'Erelid',
 		'Lid van Verdienste',
 		'Verenigingslid voor het leven (contributievrij)',
 	];
