@@ -528,6 +528,44 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Bulk send VOG emails
+		register_rest_route(
+			'stadion/v1',
+			'/vog/bulk-send',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'bulk_send_vog_emails' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'ids' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_array( $param ) && ! empty( $param );
+						},
+					],
+				],
+			]
+		);
+
+		// Bulk mark VOG as requested (records current date)
+		register_rest_route(
+			'stadion/v1',
+			'/vog/bulk-mark-requested',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'bulk_mark_vog_requested' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'ids' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_array( $param ) && ! empty( $param );
+						},
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -2335,5 +2373,104 @@ class Api extends Base {
 
 		// Return updated settings
 		return rest_ensure_response( $vog_email->get_all_settings() );
+	}
+
+	/**
+	 * Bulk send VOG emails to multiple people
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with results per person.
+	 */
+	public function bulk_send_vog_emails( $request ) {
+		$ids       = $request->get_param( 'ids' );
+		$vog_email = new \Stadion\VOG\VOGEmail();
+
+		$results = [];
+		$sent    = 0;
+		$failed  = 0;
+
+		foreach ( $ids as $person_id ) {
+			// Determine template type based on datum-vog
+			$datum_vog     = get_field( 'datum-vog', $person_id );
+			$template_type = empty( $datum_vog ) ? 'new' : 'renewal';
+
+			$result = $vog_email->send( (int) $person_id, $template_type );
+
+			if ( $result === true ) {
+				// Update ACF field for email sent date
+				update_field( 'vog-email-verzonden', current_time( 'Y-m-d' ), $person_id );
+				++$sent;
+				$results[] = [
+					'id'      => $person_id,
+					'success' => true,
+					'type'    => $template_type,
+				];
+			} else {
+				++$failed;
+				$results[] = [
+					'id'      => $person_id,
+					'success' => false,
+					'error'   => is_wp_error( $result ) ? $result->get_error_message() : 'Unknown error',
+				];
+			}
+		}
+
+		return rest_ensure_response(
+			[
+				'results' => $results,
+				'sent'    => $sent,
+				'failed'  => $failed,
+				'total'   => count( $ids ),
+			]
+		);
+	}
+
+	/**
+	 * Bulk mark VOG as requested for multiple people
+	 *
+	 * Records the current date in the vog-email-verzonden field without sending email.
+	 * Used when VOG request was made through other channels (phone, in-person).
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with results.
+	 */
+	public function bulk_mark_vog_requested( $request ) {
+		$ids          = $request->get_param( 'ids' );
+		$current_date = current_time( 'Y-m-d' );
+
+		$marked  = 0;
+		$failed  = 0;
+		$results = [];
+
+		foreach ( $ids as $person_id ) {
+			$person = get_post( (int) $person_id );
+
+			if ( ! $person || 'person' !== $person->post_type ) {
+				++$failed;
+				$results[] = [
+					'id'      => $person_id,
+					'success' => false,
+					'error'   => 'Invalid person ID',
+				];
+				continue;
+			}
+
+			// Update ACF field
+			update_field( 'vog-email-verzonden', $current_date, $person_id );
+			++$marked;
+			$results[] = [
+				'id'      => $person_id,
+				'success' => true,
+			];
+		}
+
+		return rest_ensure_response(
+			[
+				'results' => $results,
+				'marked'  => $marked,
+				'failed'  => $failed,
+				'total'   => count( $ids ),
+			]
+		);
 	}
 }
