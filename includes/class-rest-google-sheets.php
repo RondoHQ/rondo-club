@@ -353,6 +353,10 @@ class GoogleSheets extends Base {
 			$created_spreadsheet = $sheets_service->spreadsheets->create( $spreadsheet );
 			$spreadsheet_id      = $created_spreadsheet->getSpreadsheetId();
 
+			// Get the actual sheet ID from the created spreadsheet
+			$sheets   = $created_spreadsheet->getSheets();
+			$sheet_id = $sheets[0]->getProperties()->getSheetId();
+
 			// Write data to sheet
 			$range = 'Leden!A1';
 			$body  = new \Google\Service\Sheets\ValueRange(
@@ -370,7 +374,7 @@ class GoogleSheets extends Base {
 				$requests[] = [
 					'autoResizeDimensions' => [
 						'dimensions' => [
-							'sheetId'    => 0,
+							'sheetId'    => $sheet_id,
 							'dimension'  => 'COLUMNS',
 							'startIndex' => $i,
 							'endIndex'   => $i + 1,
