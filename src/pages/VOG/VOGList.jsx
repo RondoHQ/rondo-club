@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, CheckCircle, Mail, RefreshCw, Square, CheckSquare, MinusSquare, ChevronDown, X } from 'lucide-react';
+import { ArrowUp, ArrowDown, CheckCircle, Mail, RefreshCw, Square, CheckSquare, MinusSquare, ChevronDown, X, Filter, Check, FileSpreadsheet } from 'lucide-react';
 import { useFilteredPeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
@@ -212,6 +212,7 @@ export default function VOGList() {
 
   // Email status filter state
   const [emailStatusFilter, setEmailStatusFilter] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -219,6 +220,11 @@ export default function VOGList() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
   const bulkDropdownRef = useRef(null);
+  const filterRef = useRef(null);
+  const filterDropdownRef = useRef(null);
+
+  // Google Sheets export state
+  const [isExporting, setIsExporting] = useState(false);
 
   // Modal state
   const [showSendEmailModal, setShowSendEmailModal] = useState(false);
@@ -272,6 +278,15 @@ export default function VOGList() {
     },
   });
 
+  // Google Sheets connection status
+  const { data: sheetsStatus } = useQuery({
+    queryKey: ['google-sheets-status'],
+    queryFn: async () => {
+      const response = await prmApi.getSheetsStatus();
+      return response.data;
+    },
+  });
+
   // Create map of custom field name to field definition
   const customFieldsMap = useMemo(() => {
     const map = {};
@@ -313,11 +328,15 @@ export default function VOGList() {
     setSelectedIds(new Set());
   }, [people]);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (bulkDropdownRef.current && !bulkDropdownRef.current.contains(event.target)) {
         setShowBulkDropdown(false);
+      }
+      if (filterRef.current && !filterRef.current.contains(event.target) &&
+          filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+        setIsFilterOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -387,6 +406,57 @@ export default function VOGList() {
     setBulkActionResult(null);
     if (bulkActionResult && (bulkActionResult.sent > 0 || bulkActionResult?.marked > 0)) {
       clearSelection();
+    }
+  };
+
+  // Handle export to Google Sheets
+  const handleExportToSheets = async () => {
+    if (isExporting) return;
+
+    setIsExporting(true);
+
+    // Open window immediately (before async) to avoid popup blocker
+    const newWindow = window.open('about:blank', '_blank');
+
+    try {
+      // VOG-specific columns
+      const columns = ['name', 'knvb-id', 'email', 'phone', 'datum-vog', 'vog_email_sent_date', 'vog_justis_submitted_date'];
+
+      // VOG-specific filters (matching the useFilteredPeople params in VOGList)
+      const filters = {
+        huidig_vrijwilliger: '1',
+        vog_missing: '1',
+        vog_older_than_years: 3,
+        vog_email_status: emailStatusFilter || undefined,
+        orderby,
+        order,
+      };
+
+      const response = await prmApi.exportPeopleToSheets({ columns, filters });
+
+      if (response.data.spreadsheet_url && newWindow) {
+        newWindow.location.href = response.data.spreadsheet_url;
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      if (newWindow) newWindow.close();
+      const message = error.response?.data?.message || 'Export mislukt. Probeer het opnieuw.';
+      alert(message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Handle connect to Google Sheets
+  const handleConnectSheets = async () => {
+    try {
+      const response = await prmApi.getSheetsAuthUrl();
+      if (response.data.auth_url) {
+        window.location.href = response.data.auth_url;
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      alert('Kon geen verbinding maken met Google Sheets. Probeer het opnieuw.');
     }
   };
 
@@ -505,18 +575,155 @@ export default function VOGList() {
           </div>
         )}
 
-        {/* Email status filter */}
-        <div className="flex items-center gap-4">
-          <label className="text-sm text-gray-600 dark:text-gray-400">Filter:</label>
-          <select
-            value={emailStatusFilter}
-            onChange={(e) => setEmailStatusFilter(e.target.value)}
-            className="text-sm border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:border-accent-500 focus:ring-accent-500 dark:bg-gray-700 dark:text-gray-200"
-          >
-            <option value="">Alle ({emailCounts.total})</option>
-            <option value="not_sent">Niet verzonden ({emailCounts.notSent})</option>
-            <option value="sent">Wel verzonden ({emailCounts.sent})</option>
-          </select>
+        {/* Filter and Export Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Filter Dropdown Button */}
+            <div className="relative" ref={filterRef}>
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={`btn-secondary ${emailStatusFilter ? 'bg-accent-50 text-accent-700 border-accent-200 dark:bg-accent-900/30 dark:text-accent-300 dark:border-accent-700' : ''}`}
+              >
+                <Filter className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Filter</span>
+                {emailStatusFilter && (
+                  <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
+                    1
+                  </span>
+                )}
+              </button>
+
+              {/* Filter Dropdown Panel */}
+              {isFilterOpen && (
+                <div
+                  ref={filterDropdownRef}
+                  className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
+                >
+                  <div className="p-4 space-y-4">
+                    {/* Email Status Filter */}
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        Email status
+                      </h3>
+                      <div className="space-y-1">
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            checked={emailStatusFilter === ''}
+                            onChange={() => setEmailStatusFilter('')}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            emailStatusFilter === ''
+                              ? 'bg-accent-600 border-accent-600'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {emailStatusFilter === '' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Alle ({emailCounts.total})
+                          </span>
+                        </label>
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            checked={emailStatusFilter === 'not_sent'}
+                            onChange={() => setEmailStatusFilter('not_sent')}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            emailStatusFilter === 'not_sent'
+                              ? 'bg-accent-600 border-accent-600'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {emailStatusFilter === 'not_sent' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Niet verzonden ({emailCounts.notSent})
+                          </span>
+                        </label>
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            checked={emailStatusFilter === 'sent'}
+                            onChange={() => setEmailStatusFilter('sent')}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            emailStatusFilter === 'sent'
+                              ? 'bg-accent-600 border-accent-600'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {emailStatusFilter === 'sent' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Wel verzonden ({emailCounts.sent})
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Clear Filters */}
+                    {emailStatusFilter && (
+                      <button
+                        onClick={() => setEmailStatusFilter('')}
+                        className="w-full text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
+                      >
+                        Alle filters wissen
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Active Filter Chip */}
+            {emailStatusFilter && (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700 rounded">
+                  Email: {emailStatusFilter === 'sent' ? 'Wel verzonden' : 'Niet verzonden'}
+                  <button
+                    onClick={() => setEmailStatusFilter('')}
+                    className="hover:text-accent-900 dark:hover:text-accent-100"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Export Button */}
+          <div className="flex gap-2">
+            {sheetsStatus?.connected ? (
+              <button
+                onClick={handleExportToSheets}
+                disabled={isExporting}
+                className="btn-secondary"
+                title="Exporteren naar Google Sheets"
+              >
+                {isExporting ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                ) : (
+                  <FileSpreadsheet className="w-4 h-4" />
+                )}
+              </button>
+            ) : sheetsStatus?.google_configured ? (
+              <button
+                onClick={handleConnectSheets}
+                className="btn-secondary"
+                title="Verbinden met Google Sheets"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {/* VOG list table */}
