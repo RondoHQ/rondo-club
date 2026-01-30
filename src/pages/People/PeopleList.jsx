@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag, Settings } from 'lucide-react';
 import { useFilteredPeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -589,13 +589,103 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
 }
 
 export default function PeopleList() {
+  // URL-based filter state for persistence on back navigation
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Parse filters from URL
+  const selectedLabelIds = useMemo(() => {
+    const labels = searchParams.get('labels');
+    return labels ? labels.split(',').map(Number).filter(Boolean) : [];
+  }, [searchParams]);
+
+  const selectedBirthYear = searchParams.get('birthYear') || '';
+  const lastModifiedFilter = searchParams.get('modified') || '';
+  const sortField = searchParams.get('sort') || 'first_name';
+  const sortOrder = searchParams.get('order') || 'asc';
+  const page = parseInt(searchParams.get('page') || '1', 10);
+
+  // Custom field filters from URL
+  const huidigeVrijwilliger = searchParams.get('vrijwilliger') || '';
+  const financieleBlokkade = searchParams.get('blokkade') || '';
+  const typeLid = searchParams.get('typeLid') || '';
+  const fotoMissing = searchParams.get('fotoMissing') || '';
+  const vogMissing = searchParams.get('vogMissing') || '';
+  const vogOlderThanYears = searchParams.get('vogOuder') ? parseInt(searchParams.get('vogOuder'), 10) : null;
+
+  // Helper to update URL params
+  const updateSearchParams = useCallback((updates) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null || value === '' || value === undefined || (Array.isArray(value) && value.length === 0)) {
+          next.delete(key);
+        } else if (Array.isArray(value)) {
+          next.set(key, value.join(','));
+        } else {
+          next.set(key, String(value));
+        }
+      });
+      // Reset page when filters change (except when explicitly setting page)
+      if (!('page' in updates)) {
+        next.delete('page');
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  // Filter setters that update URL
+  const setSelectedLabelIds = useCallback((value) => {
+    const newValue = typeof value === 'function' ? value(selectedLabelIds) : value;
+    updateSearchParams({ labels: newValue });
+  }, [selectedLabelIds, updateSearchParams]);
+
+  const setSelectedBirthYear = useCallback((value) => {
+    updateSearchParams({ birthYear: value });
+  }, [updateSearchParams]);
+
+  const setLastModifiedFilter = useCallback((value) => {
+    updateSearchParams({ modified: value });
+  }, [updateSearchParams]);
+
+  const setSortField = useCallback((value) => {
+    updateSearchParams({ sort: value });
+  }, [updateSearchParams]);
+
+  const setSortOrder = useCallback((value) => {
+    updateSearchParams({ order: value });
+  }, [updateSearchParams]);
+
+  const setPage = useCallback((value) => {
+    updateSearchParams({ page: value === 1 ? null : value });
+  }, [updateSearchParams]);
+
+  // Custom field filter setters
+  const setHuidigeVrijwilliger = useCallback((value) => {
+    updateSearchParams({ vrijwilliger: value });
+  }, [updateSearchParams]);
+
+  const setFinancieleBlokkade = useCallback((value) => {
+    updateSearchParams({ blokkade: value });
+  }, [updateSearchParams]);
+
+  const setTypeLid = useCallback((value) => {
+    updateSearchParams({ typeLid: value });
+  }, [updateSearchParams]);
+
+  const setFotoMissing = useCallback((value) => {
+    updateSearchParams({ fotoMissing: value });
+  }, [updateSearchParams]);
+
+  const setVogMissing = useCallback((value) => {
+    updateSearchParams({ vogMissing: value });
+  }, [updateSearchParams]);
+
+  const setVogOlderThanYears = useCallback((value) => {
+    updateSearchParams({ vogOuder: value });
+  }, [updateSearchParams]);
+
+  // Local UI state (not persisted in URL)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedLabelIds, setSelectedLabelIds] = useState([]);
-  const [selectedBirthYear, setSelectedBirthYear] = useState('');
-  const [lastModifiedFilter, setLastModifiedFilter] = useState('');
-  const [sortField, setSortField] = useState('first_name'); // 'first_name' or 'last_name'
-  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
-  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showPersonModal, setShowPersonModal] = useState(false);
   const [isCreatingPerson, setIsCreatingPerson] = useState(false);
@@ -627,6 +717,13 @@ export default function PeopleList() {
     birthYearTo: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
     orderby: sortField.startsWith('custom_') ? sortField : sortField === 'organization' || sortField === 'labels' ? 'first_name' : sortField,
     order: sortOrder,
+    // Custom field filters
+    huidigeVrijwilliger,
+    financieleBlokkade,
+    typeLid,
+    fotoMissing,
+    vogMissing,
+    vogOlderThanYears,
   });
 
   // Extract data from response
@@ -636,10 +733,7 @@ export default function PeopleList() {
 
   const bulkUpdateMutation = useBulkUpdatePeople();
 
-  // Reset page to 1 when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, sortField, sortOrder]);
+  // Note: Page reset is handled automatically in updateSearchParams when filters change
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['people', 'list'] });
@@ -776,7 +870,8 @@ export default function PeopleList() {
     };
   }, []);
 
-  const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter;
+  const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter ||
+    huidigeVrijwilliger || financieleBlokkade || typeLid || fotoMissing || vogMissing || vogOlderThanYears;
 
   const handleLabelToggle = (labelId) => {
     setSelectedLabelIds(prev =>
@@ -787,10 +882,13 @@ export default function PeopleList() {
   };
 
   const clearFilters = () => {
-    setSelectedLabelIds([]);
-    setSelectedBirthYear('');
-    setLastModifiedFilter('');
-    // page will auto-reset via useEffect
+    setSearchParams(prev => {
+      const next = new URLSearchParams();
+      // Keep sort preferences
+      if (prev.get('sort')) next.set('sort', prev.get('sort'));
+      if (prev.get('order')) next.set('order', prev.get('order'));
+      return next;
+    }, { replace: true });
   };
 
   // Selection helper functions
@@ -824,7 +922,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, page, people]);
+  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, fotoMissing, vogMissing, vogOlderThanYears, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -899,7 +997,9 @@ export default function PeopleList() {
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
                 <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
-                  {selectedLabelIds.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0)}
+                  {selectedLabelIds.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0) +
+                   (huidigeVrijwilliger ? 1 : 0) + (financieleBlokkade ? 1 : 0) + (typeLid ? 1 : 0) +
+                   (fotoMissing ? 1 : 0) + (vogMissing ? 1 : 0) + (vogOlderThanYears ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -982,6 +1082,100 @@ export default function PeopleList() {
                     </select>
                   </div>
 
+                  {/* Huidig Vrijwilliger Filter */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                      Huidig vrijwilliger
+                    </h3>
+                    <select
+                      value={huidigeVrijwilliger}
+                      onChange={(e) => setHuidigeVrijwilliger(e.target.value)}
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                    >
+                      <option value="">Alle</option>
+                      <option value="1">Ja</option>
+                      <option value="0">Nee</option>
+                    </select>
+                  </div>
+
+                  {/* Financiele Blokkade Filter */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                      Financiële blokkade
+                    </h3>
+                    <select
+                      value={financieleBlokkade}
+                      onChange={(e) => setFinancieleBlokkade(e.target.value)}
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                    >
+                      <option value="">Alle</option>
+                      <option value="1">Ja</option>
+                      <option value="0">Nee</option>
+                    </select>
+                  </div>
+
+                  {/* Type Lid Filter */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                      Type lid
+                    </h3>
+                    <select
+                      value={typeLid}
+                      onChange={(e) => setTypeLid(e.target.value)}
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                    >
+                      <option value="">Alle</option>
+                      <option value="Junior">Junior</option>
+                      <option value="Senior">Senior</option>
+                      <option value="Donateur">Donateur</option>
+                      <option value="Lid van Verdienste">Lid van Verdienste</option>
+                    </select>
+                  </div>
+
+                  {/* Foto Missing Filter */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                      Foto datum
+                    </h3>
+                    <select
+                      value={fotoMissing}
+                      onChange={(e) => setFotoMissing(e.target.value)}
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                    >
+                      <option value="">Alle</option>
+                      <option value="1">Ontbreekt</option>
+                    </select>
+                  </div>
+
+                  {/* VOG Filter */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                      VOG datum
+                    </h3>
+                    <select
+                      value={vogMissing === '1' ? 'missing' : (vogOlderThanYears ? `older_${vogOlderThanYears}` : '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'missing') {
+                          setVogMissing('1');
+                          setVogOlderThanYears(null);
+                        } else if (val.startsWith('older_')) {
+                          setVogMissing('');
+                          setVogOlderThanYears(parseInt(val.split('_')[1], 10));
+                        } else {
+                          setVogMissing('');
+                          setVogOlderThanYears(null);
+                        }
+                      }}
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                    >
+                      <option value="">Alle</option>
+                      <option value="missing">Ontbreekt</option>
+                      <option value="older_3">Ouder dan 3 jaar</option>
+                      <option value="older_5">Ouder dan 5 jaar</option>
+                    </select>
+                  </div>
+
                   {/* Clear Filters */}
                   {hasActiveFilters && (
                     <button
@@ -1034,6 +1228,72 @@ export default function PeopleList() {
                              lastModifiedFilter === '90' ? 'laatste 90 dagen' : 'laatste jaar'}
                   <button
                     onClick={() => setLastModifiedFilter('')}
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {huidigeVrijwilliger && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
+                  Vrijwilliger: {huidigeVrijwilliger === '1' ? 'Ja' : 'Nee'}
+                  <button
+                    onClick={() => setHuidigeVrijwilliger('')}
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {financieleBlokkade && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
+                  Blokkade: {financieleBlokkade === '1' ? 'Ja' : 'Nee'}
+                  <button
+                    onClick={() => setFinancieleBlokkade('')}
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {typeLid && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
+                  Type: {typeLid}
+                  <button
+                    onClick={() => setTypeLid('')}
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {fotoMissing === '1' && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
+                  Foto ontbreekt
+                  <button
+                    onClick={() => setFotoMissing('')}
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {vogMissing === '1' && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
+                  VOG ontbreekt
+                  <button
+                    onClick={() => setVogMissing('')}
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {vogOlderThanYears && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
+                  VOG ouder dan {vogOlderThanYears} jaar
+                  <button
+                    onClick={() => setVogOlderThanYears(null)}
                     className="hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <X className="w-3 h-3" />

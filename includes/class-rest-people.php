@@ -288,6 +288,52 @@ class People extends Base {
 							return $value >= 1900 && $value <= 2100;
 						},
 					],
+					// Custom field filters
+					'huidig_vrijwilliger' => [
+						'description'       => 'Filter by current volunteer status (1=yes, 0=no, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1', '0' ], true );
+						},
+					],
+					'financiele_blokkade' => [
+						'description'       => 'Filter by financial block status (1=yes, 0=no, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1', '0' ], true );
+						},
+					],
+					'type_lid' => [
+						'description'       => 'Filter by member type',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+					'foto_missing' => [
+						'description'       => 'Filter for people without photo date (1=missing, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
+					'vog_missing' => [
+						'description'       => 'Filter for people without VOG date (1=missing, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
+					'vog_older_than_years' => [
+						'description'       => 'Filter for VOG older than N years',
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'validate_callback' => function ( $value ) {
+							return $value >= 1 && $value <= 10;
+						},
+					],
 				],
 			]
 		);
@@ -972,6 +1018,14 @@ class People extends Base {
 		$orderby         = $request->get_param( 'orderby' );
 		$order           = strtoupper( $request->get_param( 'order' ) );
 
+		// Custom field filter parameters
+		$huidig_vrijwilliger  = $request->get_param( 'huidig_vrijwilliger' );
+		$financiele_blokkade  = $request->get_param( 'financiele_blokkade' );
+		$type_lid             = $request->get_param( 'type_lid' );
+		$foto_missing         = $request->get_param( 'foto_missing' );
+		$vog_missing          = $request->get_param( 'vog_missing' );
+		$vog_older_than_years = $request->get_param( 'vog_older_than_years' );
+
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
 		$access_control = new \Stadion\Core\AccessControl();
@@ -1044,6 +1098,49 @@ class People extends Base {
 				$where_clauses[]  = "YEAR(bd.meta_value) = %d";
 				$prepare_values[] = $birth_year_to;
 			}
+		}
+
+		// Custom field filters
+		// Note: These use hardcoded field names for the specific Sportlink integration fields
+
+		// Huidig vrijwilliger (current volunteer) - boolean filter
+		if ( $huidig_vrijwilliger !== null && $huidig_vrijwilliger !== '' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} hv ON p.ID = hv.post_id AND hv.meta_key = 'huidig-vrijwilliger'";
+			$where_clauses[] = $huidig_vrijwilliger === '1'
+				? "(hv.meta_value = '1')"
+				: "(hv.meta_value IS NULL OR hv.meta_value = '' OR hv.meta_value = '0')";
+		}
+
+		// Financiele blokkade (financial block) - boolean filter
+		if ( $financiele_blokkade !== null && $financiele_blokkade !== '' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} fb ON p.ID = fb.post_id AND fb.meta_key = 'financiele-blokkade'";
+			$where_clauses[] = $financiele_blokkade === '1'
+				? "(fb.meta_value = '1' OR fb.meta_value = 'Ja')"
+				: "(fb.meta_value IS NULL OR fb.meta_value = '' OR fb.meta_value = '0' OR fb.meta_value = 'Nee')";
+		}
+
+		// Type lid (member type) - select filter
+		if ( ! empty( $type_lid ) ) {
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} tl ON p.ID = tl.post_id AND tl.meta_key = 'type-lid'";
+			$where_clauses[]  = "tl.meta_value = %s";
+			$prepare_values[] = $type_lid;
+		}
+
+		// Datum foto (photo date) - missing filter
+		if ( $foto_missing === '1' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} df ON p.ID = df.post_id AND df.meta_key = 'datum-foto'";
+			$where_clauses[] = "(df.meta_value IS NULL OR df.meta_value = '')";
+		}
+
+		// Datum VOG - missing or older than N years filter
+		if ( $vog_missing === '1' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
+			$where_clauses[] = "(dv.meta_value IS NULL OR dv.meta_value = '')";
+		} elseif ( $vog_older_than_years !== null ) {
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
+			$cutoff_date      = gmdate( 'Y-m-d', strtotime( "-{$vog_older_than_years} years" ) );
+			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value < %s)";
+			$prepare_values[] = $cutoff_date;
 		}
 
 		// Build ORDER BY clause (columns are whitelisted in args validation)

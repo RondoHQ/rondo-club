@@ -101,6 +101,12 @@ export function usePeople(params = {}) {
  * @param {number} filters.birthYearTo - Filter by birth year (maximum, inclusive)
  * @param {string} filters.orderby - 'first_name', 'last_name', or 'modified' (default: 'first_name')
  * @param {string} filters.order - 'asc' or 'desc' (default: 'asc')
+ * @param {string} filters.huidigeVrijwilliger - '1' for yes, '0' for no, '' for all
+ * @param {string} filters.financieleBlokkade - '1' for yes, '0' for no, '' for all
+ * @param {string} filters.typeLid - Filter by member type value
+ * @param {string} filters.fotoMissing - '1' to show only people without photo date
+ * @param {string} filters.vogMissing - '1' to show only people without VOG date
+ * @param {number} filters.vogOlderThanYears - Filter for VOG older than N years
  * @returns {Object} TanStack Query result with data, isLoading, error, etc.
  */
 export function useFilteredPeople(filters = {}) {
@@ -115,6 +121,13 @@ export function useFilteredPeople(filters = {}) {
     birth_year_to: filters.birthYearTo || null,
     orderby: filters.orderby || 'first_name',
     order: filters.order || 'asc',
+    // Custom field filters
+    huidig_vrijwilliger: filters.huidigeVrijwilliger || null,
+    financiele_blokkade: filters.financieleBlokkade || null,
+    type_lid: filters.typeLid || null,
+    foto_missing: filters.fotoMissing || null,
+    vog_missing: filters.vogMissing || null,
+    vog_older_than_years: filters.vogOlderThanYears || null,
   };
 
   return useQuery({
