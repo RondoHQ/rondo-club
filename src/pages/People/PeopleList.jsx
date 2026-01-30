@@ -13,6 +13,20 @@ import { useListPreferences } from '@/hooks/useListPreferences';
 import { useColumnResize } from '@/hooks/useColumnResize';
 import ColumnSettingsModal from './ColumnSettingsModal';
 
+// Helper function to get first contact value by type
+function getFirstContactByType(person, type) {
+  const contactInfo = person.acf?.contact_info || [];
+  const contact = contactInfo.find(c => c.contact_type === type);
+  return contact?.contact_value || null;
+}
+
+// Helper function to get first phone (includes mobile)
+function getFirstPhone(person) {
+  const contactInfo = person.acf?.contact_info || [];
+  const contact = contactInfo.find(c => c.contact_type === 'phone' || c.contact_type === 'mobile');
+  return contact?.contact_value || null;
+}
+
 // Helper function to get current team ID from person's work history
 function getCurrentTeamId(person) {
   const workHistory = person.acf?.work_history || [];
@@ -170,6 +184,40 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               style={style}
             >
               {person.modified ? format(new Date(person.modified), 'yyyy-MM-dd') : '-'}
+            </td>
+          );
+        }
+
+        if (colId === 'email') {
+          const email = getFirstContactByType(person, 'email');
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              {email ? (
+                <a href={`mailto:${email}`} className="hover:text-accent-600 dark:hover:text-accent-400">
+                  {email}
+                </a>
+              ) : '-'}
+            </td>
+          );
+        }
+
+        if (colId === 'phone') {
+          const phone = getFirstPhone(person);
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              {phone ? (
+                <a href={`tel:${phone}`} className="hover:text-accent-600 dark:hover:text-accent-400">
+                  {phone}
+                </a>
+              ) : '-'}
             </td>
           );
         }
