@@ -41,6 +41,7 @@ use Stadion\REST\Slack;
 use Stadion\REST\ImportExport;
 use Stadion\REST\Calendar as RESTCalendar;
 use Stadion\REST\GoogleContacts as RESTGoogleContacts;
+use Stadion\REST\GoogleSheets as RESTGoogleSheets;
 use Stadion\REST\Feedback as RESTFeedback;
 use Stadion\Calendar\Connections;
 use Stadion\Calendar\Matcher;
@@ -360,6 +361,7 @@ function stadion_init() {
 		new ImportExport();
 		new RESTCalendar();
 		new RESTGoogleContacts();
+		new RESTGoogleSheets();
 		new RESTCustomFields();
 		new RESTFeedback();
 		new Monica();
