@@ -6,6 +6,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
+import { format } from '@/utils/dateFormat';
 
 // Helper function to get first contact value by type
 function getFirstContactByType(person, type) {
@@ -186,6 +187,13 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
           person.acf?.['datum-vog'] || '-'
         )}
       </td>
+
+      {/* Verzonden date */}
+      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+        {person.acf?.['vog_email_sent_date']
+          ? format(new Date(person.acf['vog_email_sent_date']), 'd MMM yyyy')
+          : '-'}
+      </td>
     </tr>
   );
 }
@@ -194,6 +202,9 @@ export default function VOGList() {
   // Sort state
   const [orderby, setOrderby] = useState('custom_datum-vog');
   const [order, setOrder] = useState('asc');
+
+  // Email status filter state
+  const [emailStatusFilter, setEmailStatusFilter] = useState('');
 
   const queryClient = useQueryClient();
 
@@ -215,13 +226,34 @@ export default function VOGList() {
     huidigeVrijwilliger: '1',
     vogMissing: '1',
     vogOlderThanYears: 3,
+    vogEmailStatus: emailStatusFilter,
     orderby,
     order,
+  });
+
+  // Fetch all data for counts (without email filter)
+  const { data: allData } = useFilteredPeople({
+    page: 1,
+    perPage: 100,
+    huidigeVrijwilliger: '1',
+    vogMissing: '1',
+    vogOlderThanYears: 3,
+    orderby,
+    order,
+    // Note: no vogEmailStatus - fetches all to calculate counts
   });
 
   // Extract data from response - memoize to avoid effect dependency issues
   const people = useMemo(() => data?.people || [], [data?.people]);
   const totalPeople = data?.total || 0;
+
+  // Calculate counts from allData for filter dropdown
+  const emailCounts = useMemo(() => {
+    const allPeople = allData?.people || [];
+    const sent = allPeople.filter(p => p.acf?.['vog_email_sent_date']).length;
+    const notSent = allPeople.length - sent;
+    return { total: allPeople.length, sent, notSent };
+  }, [allData?.people]);
 
   // Fetch custom field definitions for list view columns
   const { data: customFields = [] } = useQuery({
@@ -436,6 +468,20 @@ export default function VOGList() {
           </div>
         )}
 
+        {/* Email status filter */}
+        <div className="flex items-center gap-4">
+          <label className="text-sm text-gray-600 dark:text-gray-400">Filter:</label>
+          <select
+            value={emailStatusFilter}
+            onChange={(e) => setEmailStatusFilter(e.target.value)}
+            className="text-sm border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:border-accent-500 focus:ring-accent-500 dark:bg-gray-700 dark:text-gray-200"
+          >
+            <option value="">Alle ({emailCounts.total})</option>
+            <option value="not_sent">Niet verzonden ({emailCounts.notSent})</option>
+            <option value="sent">Wel verzonden ({emailCounts.sent})</option>
+          </select>
+        </div>
+
         {/* VOG list table */}
         <div className="card overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -491,6 +537,13 @@ export default function VOGList() {
                 <SortableHeader
                   label="Datum VOG"
                   columnId="custom_datum-vog"
+                  sortField={orderby}
+                  sortOrder={order}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Verzonden"
+                  columnId="custom_vog_email_sent_date"
                   sortField={orderby}
                   sortOrder={order}
                   onSort={handleSort}
