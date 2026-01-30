@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 Phase: 122 of 122 (Tracking & Polish)
 Plan: 02 of 2
 Status: Verified complete
-Last activity: 2026-01-30 — Completed quick task 020: Add From name to VOG settings
+Last activity: 2026-01-30 — Completed quick task 021: Add Justis date to VOG overview
 
 Progress: [███████████████████-] 100% (4/4 phases)
 
@@ -78,6 +78,7 @@ None.
 |---|-------------|------|--------|-----------|
 | 019 | Remove Edit/Delete buttons from Teams and Commissies single pages | 2026-01-30 | 7718707 | [019-remove-edit-delete-buttons-teams-single](./quick/019-remove-edit-delete-buttons-teams-single/) |
 | 020 | Add From name to VOG settings | 2026-01-30 | df86797 | [020-add-from-name-to-vog-settings](./quick/020-add-from-name-to-vog-settings/) |
+| 021 | Add Justis date to VOG overview | 2026-01-30 | 244d45a | [021-add-justis-date-to-vog-overview](./quick/021-add-justis-date-to-vog-overview/) |
 
 ## Session Continuity
 
