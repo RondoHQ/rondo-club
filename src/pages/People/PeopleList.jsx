@@ -1043,11 +1043,19 @@ export default function PeopleList() {
       // Build column list: always include 'name', then visible columns
       const columns = ['name', ...visibleColumns];
 
-      // Build filter params from current URL state
+      // Build filter params from current URL state (matching useFilteredPeople params)
       const filters = {
         search: searchParams.get('search') || undefined,
-        label: searchParams.get('label') || undefined,
-        team: searchParams.get('team') || undefined,
+        labels: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
+        modified_days: lastModifiedFilter ? parseInt(lastModifiedFilter, 10) : undefined,
+        birth_year_from: selectedBirthYear || undefined,
+        birth_year_to: selectedBirthYear || undefined,
+        huidig_vrijwilliger: huidigeVrijwilliger || undefined,
+        financiele_blokkade: financieleBlokkade || undefined,
+        type_lid: typeLid || undefined,
+        foto_missing: fotoMissing || undefined,
+        vog_missing: vogMissing || undefined,
+        vog_older_than_years: vogOlderThanYears || undefined,
         orderby: sortField,
         order: sortOrder,
       };
