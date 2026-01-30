@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 Phase: 122 of 122 (Tracking & Polish)
 Plan: 02 of 2
 Status: Verified complete
-Last activity: 2026-01-30 — Completed quick task 021: Add Justis date to VOG overview
+Last activity: 2026-01-30 — Completed quick task 022: VOG filter dropdown and Google Sheets export
 
 Progress: [███████████████████-] 100% (4/4 phases)
 
@@ -79,11 +79,12 @@ None.
 | 019 | Remove Edit/Delete buttons from Teams and Commissies single pages | 2026-01-30 | 7718707 | [019-remove-edit-delete-buttons-teams-single](./quick/019-remove-edit-delete-buttons-teams-single/) |
 | 020 | Add From name to VOG settings | 2026-01-30 | df86797 | [020-add-from-name-to-vog-settings](./quick/020-add-from-name-to-vog-settings/) |
 | 021 | Add Justis date to VOG overview | 2026-01-30 | 244d45a | [021-add-justis-date-to-vog-overview](./quick/021-add-justis-date-to-vog-overview/) |
+| 022 | VOG filter dropdown and Google Sheets export | 2026-01-30 | 4369166 | [022-vog-filter-dropdown-and-export](./quick/022-vog-filter-dropdown-and-export/) |
 
 ## Session Continuity
 
 Last session: 2026-01-30
-Stopped at: v11.0 VOG Management milestone complete
+Stopped at: Completed quick task 022
 Resume file: None
 
-Next: /gsd:audit-milestone — verify requirements, cross-phase integration, E2E flows
+Next: Continue with quick tasks or milestone work as needed
