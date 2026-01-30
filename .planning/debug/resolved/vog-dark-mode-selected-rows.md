@@ -1,8 +1,8 @@
 ---
-status: verifying
+status: resolved
 trigger: "vog-dark-mode-selected-rows"
 created: 2026-01-30T00:00:00Z
-updated: 2026-01-30T00:04:00Z
+updated: 2026-01-30T00:05:00Z
 ---
 
 ## Current Focus
