@@ -39,6 +39,11 @@ class VOGEmail {
 	const OPTION_TEMPLATE_RENEWAL = 'stadion_vog_template_renewal';
 
 	/**
+	 * Option key for exempt commissies (commissies that don't require VOG)
+	 */
+	const OPTION_EXEMPT_COMMISSIES = 'stadion_vog_exempt_commissies';
+
+	/**
 	 * Custom from email for current send operation
 	 *
 	 * @var string|null
@@ -98,16 +103,41 @@ class VOGEmail {
 	}
 
 	/**
+	 * Get exempt commissies (commissies that don't require VOG)
+	 *
+	 * @return array Array of commissie IDs that are exempt from VOG requirements
+	 */
+	public function get_exempt_commissies(): array {
+		$exempt = get_option( self::OPTION_EXEMPT_COMMISSIES, [] );
+		if ( ! is_array( $exempt ) ) {
+			return [];
+		}
+		return array_map( 'intval', $exempt );
+	}
+
+	/**
+	 * Update exempt commissies
+	 *
+	 * @param array $ids Array of commissie IDs
+	 * @return bool True on success
+	 */
+	public function update_exempt_commissies( array $ids ): bool {
+		$sanitized = array_map( 'intval', array_filter( $ids, 'is_numeric' ) );
+		return update_option( self::OPTION_EXEMPT_COMMISSIES, $sanitized );
+	}
+
+	/**
 	 * Get all VOG settings
 	 *
-	 * @return array Settings array with from_email, from_name, template_new, template_renewal
+	 * @return array Settings array with from_email, from_name, template_new, template_renewal, exempt_commissies
 	 */
 	public function get_all_settings(): array {
 		return [
-			'from_email'       => $this->get_from_email(),
-			'from_name'        => $this->get_from_name(),
-			'template_new'     => $this->get_template_new(),
-			'template_renewal' => $this->get_template_renewal(),
+			'from_email'         => $this->get_from_email(),
+			'from_name'          => $this->get_from_name(),
+			'template_new'       => $this->get_template_new(),
+			'template_renewal'   => $this->get_template_renewal(),
+			'exempt_commissies'  => $this->get_exempt_commissies(),
 		];
 	}
 

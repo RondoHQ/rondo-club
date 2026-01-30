@@ -104,7 +104,7 @@ class VolunteerStatus {
 	 *
 	 * @param int $post_id The person post ID.
 	 */
-	private function calculate_and_update_status( $post_id ) {
+	public function calculate_and_update_status( $post_id ) {
 		$is_volunteer = $this->is_current_volunteer( $post_id );
 
 		// Update the custom field using ACF's update_field for proper reference handling
@@ -177,7 +177,7 @@ class VolunteerStatus {
 	 * Check if a position qualifies as a volunteer position.
 	 *
 	 * Volunteer positions are:
-	 * - Any position in a commissie (except excluded roles)
+	 * - Any position in a commissie (except excluded roles and exempt commissies)
 	 * - Staff positions in a team (non-player, non-excluded roles)
 	 *
 	 * @param array $position The position data.
@@ -192,8 +192,19 @@ class VolunteerStatus {
 			return false;
 		}
 
-		// Commissie positions are volunteer positions (unless excluded above)
+		// Get exempt commissies list
+		$exempt_commissies = get_option( 'stadion_vog_exempt_commissies', [] );
+		if ( ! is_array( $exempt_commissies ) ) {
+			$exempt_commissies = [];
+		}
+
+		// Commissie positions are volunteer positions (unless excluded above or commissie is exempt)
 		if ( $entity_type === 'commissie' ) {
+			// Check if the commissie is exempt from VOG requirements
+			$commissie_id = $position['team'] ?? 0;
+			if ( $commissie_id && in_array( (int) $commissie_id, array_map( 'intval', $exempt_commissies ), true ) ) {
+				return false; // Exempt commissie - not a volunteer position for VOG purposes
+			}
 			return true;
 		}
 
@@ -210,9 +221,14 @@ class VolunteerStatus {
 
 		// If entity_type is not set but team is set, try to determine from post type
 		if ( ! empty( $position['team'] ) ) {
-			$team_post_type = get_post_type( $position['team'] );
+			$team_id        = $position['team'];
+			$team_post_type = get_post_type( $team_id );
 
 			if ( $team_post_type === 'commissie' ) {
+				// Check if the commissie is exempt from VOG requirements
+				if ( in_array( (int) $team_id, array_map( 'intval', $exempt_commissies ), true ) ) {
+					return false; // Exempt commissie - not a volunteer position for VOG purposes
+				}
 				return true;
 			}
 
