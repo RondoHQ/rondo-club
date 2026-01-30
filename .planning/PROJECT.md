@@ -293,7 +293,12 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(To be determined for next milestone)
+**v11.0 VOG Management:**
+
+- [ ] VOG section in sidebar with filtered volunteer list
+- [ ] Bulk email sending with configurable templates
+- [ ] VOG request tracking with email history
+- [ ] Settings for email templates and from address
 
 ### Out of Scope
 
@@ -433,4 +438,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | RelationshipItemCompact for list view | Async fetch for relationship names in compact column display | ✓ Good |
 
 ---
-*Last updated: 2026-01-29 after v10.0 Read-Only UI for Sportlink Data milestone*
+*Last updated: 2026-01-30 after starting v11.0 VOG Management milestone*
