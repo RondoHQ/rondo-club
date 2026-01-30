@@ -288,4 +288,8 @@ export const prmApi = {
   createFeedback: (data) => api.post('/stadion/v1/feedback', data),
   updateFeedback: (id, data) => api.put(`/stadion/v1/feedback/${id}`, data),
   deleteFeedback: (id) => api.delete(`/stadion/v1/feedback/${id}`),
+
+  // VOG Settings (admin only)
+  getVOGSettings: () => api.get('/stadion/v1/vog/settings'),
+  updateVOGSettings: (settings) => api.post('/stadion/v1/vog/settings', settings),
 };
