@@ -963,9 +963,11 @@ class Api extends Base {
 	 * Core columns (non-custom-field columns).
 	 */
 	private const CORE_LIST_COLUMNS = [
+		[ 'id' => 'email', 'label' => 'E-mail', 'type' => 'core' ],
+		[ 'id' => 'phone', 'label' => 'Telefoon', 'type' => 'core' ],
 		[ 'id' => 'team', 'label' => 'Team', 'type' => 'core' ],
 		[ 'id' => 'labels', 'label' => 'Labels', 'type' => 'core' ],
-		[ 'id' => 'modified', 'label' => 'Last Modified', 'type' => 'core' ],
+		[ 'id' => 'modified', 'label' => 'Laatst gewijzigd', 'type' => 'core' ],
 	];
 
 	/**
@@ -1285,7 +1287,7 @@ class Api extends Base {
 	 */
 	private function get_valid_column_ids(): array {
 		// Core columns
-		$core = [ 'team', 'labels', 'modified' ];
+		$core = [ 'email', 'phone', 'team', 'labels', 'modified' ];
 
 		// Custom fields from ACF
 		$manager       = new \Stadion\CustomFields\Manager();
