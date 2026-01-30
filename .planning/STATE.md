@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 Phase: 122 of 122 (Tracking & Polish)
 Plan: 02 of 2
 Status: Verified complete
-Last activity: 2026-01-30 — Completed quick task 023: VOG date format change to yyyy-MM-dd
+Last activity: 2026-01-30 — Completed quick task 024: Auto-focus main for instant scroll
 
 Progress: [███████████████████-] 100% (4/4 phases)
 
@@ -81,11 +81,12 @@ None.
 | 021 | Add Justis date to VOG overview | 2026-01-30 | 244d45a | [021-add-justis-date-to-vog-overview](./quick/021-add-justis-date-to-vog-overview/) |
 | 022 | VOG filter dropdown and Google Sheets export | 2026-01-30 | 4369166 | [022-vog-filter-dropdown-and-export](./quick/022-vog-filter-dropdown-and-export/) |
 | 023 | Change VOG date format to yyyy-MM-dd | 2026-01-30 | 423589e | [023-vog-date-format-yyyy-mm-dd](./quick/023-vog-date-format-yyyy-mm-dd/) |
+| 024 | Auto-focus main for instant keyboard scrolling | 2026-01-30 | c669a72 | [024-auto-focus-main-for-instant-scroll](./quick/024-auto-focus-main-for-instant-scroll/) |
 
 ## Session Continuity
 
 Last session: 2026-01-30
-Stopped at: Completed quick task 023
+Stopped at: Completed quick task 024
 Resume file: None
 
 Next: Continue with quick tasks or milestone work as needed
