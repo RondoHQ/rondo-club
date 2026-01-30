@@ -38,7 +38,7 @@ v10.0 milestone decisions archived to milestones/v10.0-ROADMAP.md.
 
 ### Pending Todos
 
-1 todo in `.planning/todos/pending/`
+No pending todos.
 
 ### Blockers/Concerns
 
