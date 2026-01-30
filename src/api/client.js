@@ -256,6 +256,12 @@ export const prmApi = {
   triggerContactsSync: () => api.post('/stadion/v1/google-contacts/sync'),
   updateContactsSyncFrequency: (frequency) => api.post('/stadion/v1/google-contacts/sync-frequency', { frequency }),
 
+  // Google Sheets OAuth
+  getSheetsStatus: () => api.get('/stadion/v1/google-sheets/status'),
+  getSheetsAuthUrl: () => api.get('/stadion/v1/google-sheets/auth'),
+  disconnectSheets: () => api.delete('/stadion/v1/google-sheets/disconnect'),
+  exportPeopleToSheets: (data) => api.post('/stadion/v1/google-sheets/export-people', data),
+
   // Custom Fields management (admin only)
   getCustomFields: (postType) => api.get(`/stadion/v1/custom-fields/${postType}`),
   createCustomField: (postType, data) => api.post(`/stadion/v1/custom-fields/${postType}`, data),

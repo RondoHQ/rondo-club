@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag, Settings } from 'lucide-react';
+import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag, Settings, FileSpreadsheet } from 'lucide-react';
 import { useFilteredPeople, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
@@ -739,10 +739,20 @@ export default function PeopleList() {
   const [showBulkLabelsModal, setShowBulkLabelsModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
   const bulkDropdownRef = useRef(null);
   const queryClient = useQueryClient();
+
+  // Google Sheets connection status
+  const { data: sheetsStatus } = useQuery({
+    queryKey: ['google-sheets-status'],
+    queryFn: async () => {
+      const response = await prmApi.getSheetsStatus();
+      return response.data;
+    },
+  });
 
   // Column preferences hook
   const {
@@ -1022,6 +1032,58 @@ export default function PeopleList() {
       setSortOrder('asc');
     }
   }, [sortField, sortOrder]);
+
+  // Handle export to Google Sheets
+  const handleExportToSheets = async () => {
+    if (isExporting) return;
+
+    setIsExporting(true);
+
+    try {
+      // Build column list: always include 'name', then visible columns
+      const columns = ['name', ...visibleColumns];
+
+      // Build filter params from current URL state
+      const filters = {
+        search: searchParams.get('search') || undefined,
+        label: searchParams.get('label') || undefined,
+        team: searchParams.get('team') || undefined,
+        orderby: sortField,
+        order: sortOrder,
+      };
+
+      // Call export endpoint
+      const response = await prmApi.exportPeopleToSheets({ columns, filters });
+
+      // Open the created spreadsheet in a new tab
+      if (response.data.spreadsheet_url) {
+        window.open(response.data.spreadsheet_url, '_blank');
+      }
+
+      // Show success message (could use a toast notification here)
+      alert(`Export succesvol! ${response.data.rows_exported} leden geëxporteerd naar Google Sheets.`);
+
+    } catch (error) {
+      console.error('Export error:', error);
+      const message = error.response?.data?.message || 'Export mislukt. Probeer het opnieuw.';
+      alert(message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Handle connect to Google Sheets
+  const handleConnectSheets = async () => {
+    try {
+      const response = await prmApi.getSheetsAuthUrl();
+      if (response.data.auth_url) {
+        window.location.href = response.data.auth_url;
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      alert('Kon geen verbinding maken met Google Sheets. Probeer het opnieuw.');
+    }
+  };
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -1342,13 +1404,40 @@ export default function PeopleList() {
             </div>
           )}
         </div>
-        <button
-          onClick={() => setShowColumnSettings(true)}
-          className="btn-secondary"
-          title="Kolommen aanpassen"
-        >
-          <Settings className="w-4 h-4" />
-        </button>
+        <div className="flex gap-2">
+          {/* Google Sheets Export Button */}
+          {sheetsStatus?.connected ? (
+            <button
+              onClick={handleExportToSheets}
+              disabled={isExporting}
+              className="btn-secondary"
+              title="Exporteren naar Google Sheets"
+            >
+              {isExporting ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+              ) : (
+                <FileSpreadsheet className="w-4 h-4" />
+              )}
+            </button>
+          ) : sheetsStatus?.google_configured ? (
+            <button
+              onClick={handleConnectSheets}
+              className="btn-secondary"
+              title="Verbinden met Google Sheets"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+            </button>
+          ) : null}
+
+          {/* Column Settings Button */}
+          <button
+            onClick={() => setShowColumnSettings(true)}
+            className="btn-secondary"
+            title="Kolommen aanpassen"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Loading state */}
