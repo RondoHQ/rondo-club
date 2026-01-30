@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 Phase: 120 of 122 (VOG List Page)
 Plan: — (not yet planned)
 Status: Ready to plan
-Last activity: 2026-01-30 — Phase 119 Backend Foundation complete
+Last activity: 2026-01-30 — Completed quick task 019: Remove Edit/Delete buttons from Teams/Commissies
 
 Progress: [█████---------------] 25% (1/4 phases)
 
@@ -50,6 +50,12 @@ None.
 **Tech debt from v9.0:**
 - Cross-tab synchronization not implemented for column preferences (minor)
 - refetchOnWindowFocus not enabled in TanStack Query config (minor)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 019 | Remove Edit/Delete buttons from Teams and Commissies single pages | 2026-01-30 | 7718707 | [019-remove-edit-delete-buttons-teams-single](./quick/019-remove-edit-delete-buttons-teams-single/) |
 
 ## Session Continuity
 
