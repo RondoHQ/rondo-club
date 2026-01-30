@@ -17,7 +17,7 @@ export default function UserApproval() {
       const response = await prmApi.getUsers();
       return response.data;
     },
-    enabled: isAdmin, // Only fetch if user is admin
+    enabled: !!isAdmin, // Only fetch if user is admin
   });
 
   const approveMutation = useMutation({
