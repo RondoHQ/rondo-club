@@ -2563,6 +2563,249 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 
 	/**
+	 * Relationships WP-CLI Commands
+	 */
+	class STADION_Relationships_CLI_Command {
+
+		/**
+		 * Sync sibling relationships based on existing parent-child data
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--dry-run]
+		 * : Show what would be created without making changes
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp prm relationships sync-siblings
+		 *     wp prm relationships sync-siblings --dry-run
+		 *
+		 * @when after_wp_load
+		 */
+		public function sync_siblings( $args, $assoc_args ) {
+			$dry_run = isset( $assoc_args['dry-run'] );
+
+			if ( $dry_run ) {
+				WP_CLI::log( 'DRY RUN MODE - No changes will be made' );
+				WP_CLI::log( '' );
+			}
+
+			WP_CLI::log( 'Analyzing parent-child relationships...' );
+
+			// Get the sibling relationship type
+			$sibling_term = get_term_by( 'slug', 'sibling', 'relationship_type' );
+			if ( ! $sibling_term || is_wp_error( $sibling_term ) ) {
+				WP_CLI::error( 'Sibling relationship type not found.' );
+				return;
+			}
+			$sibling_type_id = $sibling_term->term_id;
+
+			// Get all people
+			$people = get_posts(
+				[
+					'post_type'      => 'person',
+					'posts_per_page' => -1,
+					'post_status'    => 'publish',
+				]
+			);
+
+			if ( empty( $people ) ) {
+				WP_CLI::warning( 'No people found in the system.' );
+				return;
+			}
+
+			WP_CLI::log( sprintf( 'Found %d people to analyze.', count( $people ) ) );
+			WP_CLI::log( '' );
+
+			// Build a map of parents to their children
+			$parent_children_map = [];
+
+			foreach ( $people as $person ) {
+				$relationships = get_field( 'relationships', $person->ID );
+				if ( ! is_array( $relationships ) ) {
+					continue;
+				}
+
+				foreach ( $relationships as $rel ) {
+					// Normalize relationship data
+					$related_person_id = null;
+					if ( isset( $rel['related_person'] ) ) {
+						if ( is_numeric( $rel['related_person'] ) ) {
+							$related_person_id = (int) $rel['related_person'];
+						} elseif ( is_object( $rel['related_person'] ) && isset( $rel['related_person']->ID ) ) {
+							$related_person_id = (int) $rel['related_person']->ID;
+						}
+					}
+
+					$relationship_type_id = null;
+					if ( isset( $rel['relationship_type'] ) ) {
+						if ( is_numeric( $rel['relationship_type'] ) ) {
+							$relationship_type_id = (int) $rel['relationship_type'];
+						} elseif ( is_object( $rel['relationship_type'] ) && isset( $rel['relationship_type']->term_id ) ) {
+							$relationship_type_id = (int) $rel['relationship_type']->term_id;
+						} elseif ( is_array( $rel['relationship_type'] ) && isset( $rel['relationship_type']['term_id'] ) ) {
+							$relationship_type_id = (int) $rel['relationship_type']['term_id'];
+						}
+					}
+
+					// Check if this is a Child relationship (type 9)
+					if ( $relationship_type_id == 9 && $related_person_id ) {
+						// person->ID is the child, related_person_id is the parent
+						if ( ! isset( $parent_children_map[ $related_person_id ] ) ) {
+							$parent_children_map[ $related_person_id ] = [];
+						}
+						$parent_children_map[ $related_person_id ][] = $person->ID;
+					}
+				}
+			}
+
+			// Count parents with multiple children
+			$families_count     = 0;
+			$total_siblings     = 0;
+			$created_count      = 0;
+			$already_exist      = 0;
+
+			foreach ( $parent_children_map as $parent_id => $children ) {
+				if ( count( $children ) < 2 ) {
+					continue; // Skip parents with only one child
+				}
+
+				$families_count++;
+				$parent = get_post( $parent_id );
+				$parent_name = $parent ? $parent->post_title : "ID $parent_id";
+
+				WP_CLI::log( sprintf( 'Family: %s (%d children)', $parent_name, count( $children ) ) );
+
+				// Create sibling relationships between all pairs of children
+				for ( $i = 0; $i < count( $children ); $i++ ) {
+					for ( $j = $i + 1; $j < count( $children ); $j++ ) {
+						$child_a = $children[ $i ];
+						$child_b = $children[ $j ];
+						$total_siblings++;
+
+						// Check if A -> B sibling relationship exists
+						$a_to_b_exists = $this->has_sibling_relationship( $child_a, $child_b, $sibling_type_id );
+						// Check if B -> A sibling relationship exists
+						$b_to_a_exists = $this->has_sibling_relationship( $child_b, $child_a, $sibling_type_id );
+
+						$child_a_post = get_post( $child_a );
+						$child_b_post = get_post( $child_b );
+						$child_a_name = $child_a_post ? $child_a_post->post_title : "ID $child_a";
+						$child_b_name = $child_b_post ? $child_b_post->post_title : "ID $child_b";
+
+						if ( ! $a_to_b_exists ) {
+							if ( $dry_run ) {
+								WP_CLI::log( sprintf( '  Would create: %s -> %s', $child_a_name, $child_b_name ) );
+							} else {
+								$this->add_sibling_relationship( $child_a, $child_b, $sibling_type_id );
+								WP_CLI::log( sprintf( '  Created: %s -> %s', $child_a_name, $child_b_name ) );
+							}
+							$created_count++;
+						} else {
+							$already_exist++;
+						}
+
+						if ( ! $b_to_a_exists ) {
+							if ( $dry_run ) {
+								WP_CLI::log( sprintf( '  Would create: %s -> %s', $child_b_name, $child_a_name ) );
+							} else {
+								$this->add_sibling_relationship( $child_b, $child_a, $sibling_type_id );
+								WP_CLI::log( sprintf( '  Created: %s -> %s', $child_b_name, $child_a_name ) );
+							}
+							$created_count++;
+						} else {
+							$already_exist++;
+						}
+					}
+				}
+
+				WP_CLI::log( '' );
+			}
+
+			// Summary
+			WP_CLI::log( '---' );
+			WP_CLI::log( sprintf( 'Families processed: %d', $families_count ) );
+			WP_CLI::log( sprintf( 'Total sibling pairs: %d', $total_siblings ) );
+			WP_CLI::log( sprintf( 'Already existed: %d', $already_exist ) );
+
+			if ( $dry_run ) {
+				WP_CLI::success( sprintf( 'Would create %d sibling relationships.', $created_count ) );
+				WP_CLI::log( '' );
+				WP_CLI::log( 'Run without --dry-run to apply changes.' );
+			} else {
+				WP_CLI::success( sprintf( 'Created %d sibling relationships.', $created_count ) );
+			}
+		}
+
+		/**
+		 * Check if a sibling relationship exists from person A to person B
+		 *
+		 * @param int $from_person_id Person who has the relationship
+		 * @param int $to_person_id The sibling they're related to
+		 * @param int $sibling_type_id The sibling relationship type ID
+		 * @return bool True if relationship exists
+		 */
+		private function has_sibling_relationship( $from_person_id, $to_person_id, $sibling_type_id ) {
+			$relationships = get_field( 'relationships', $from_person_id );
+			if ( ! is_array( $relationships ) ) {
+				return false;
+			}
+
+			foreach ( $relationships as $rel ) {
+				$related_person_id = null;
+				if ( isset( $rel['related_person'] ) ) {
+					if ( is_numeric( $rel['related_person'] ) ) {
+						$related_person_id = (int) $rel['related_person'];
+					} elseif ( is_object( $rel['related_person'] ) && isset( $rel['related_person']->ID ) ) {
+						$related_person_id = (int) $rel['related_person']->ID;
+					}
+				}
+
+				$relationship_type_id = null;
+				if ( isset( $rel['relationship_type'] ) ) {
+					if ( is_numeric( $rel['relationship_type'] ) ) {
+						$relationship_type_id = (int) $rel['relationship_type'];
+					} elseif ( is_object( $rel['relationship_type'] ) && isset( $rel['relationship_type']->term_id ) ) {
+						$relationship_type_id = (int) $rel['relationship_type']->term_id;
+					} elseif ( is_array( $rel['relationship_type'] ) && isset( $rel['relationship_type']['term_id'] ) ) {
+						$relationship_type_id = (int) $rel['relationship_type']['term_id'];
+					}
+				}
+
+				if ( $related_person_id == $to_person_id && $relationship_type_id == $sibling_type_id ) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		/**
+		 * Add a sibling relationship from person A to person B
+		 *
+		 * @param int $from_person_id Person who will have the relationship added
+		 * @param int $to_person_id The sibling they're related to
+		 * @param int $sibling_type_id The sibling relationship type ID
+		 */
+		private function add_sibling_relationship( $from_person_id, $to_person_id, $sibling_type_id ) {
+			$relationships = get_field( 'relationships', $from_person_id );
+			if ( ! is_array( $relationships ) ) {
+				$relationships = [];
+			}
+
+			// Add the sibling relationship
+			$relationships[] = [
+				'related_person'     => $to_person_id,
+				'relationship_type'  => $sibling_type_id,
+				'relationship_label' => '',
+			];
+
+			// Save relationships
+			update_field( 'relationships', $relationships, $from_person_id );
+		}
+	}
+
+	/**
 	 * Register WP-CLI commands
 	 */
 	WP_CLI::add_command( 'prm people', 'STADION_People_CLI_Command' );
@@ -2576,4 +2819,5 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'prm todos', 'STADION_Todos_CLI_Command' );
 	WP_CLI::add_command( 'prm calendar', 'STADION_Calendar_CLI_Command' );
 	WP_CLI::add_command( 'prm event', 'STADION_Event_CLI_Command' );
+	WP_CLI::add_command( 'prm relationships', 'STADION_Relationships_CLI_Command' );
 }
