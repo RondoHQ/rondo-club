@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Users,
   Building2,
@@ -441,6 +441,8 @@ function SearchModal({ isOpen, onClose }) {
 function Header({ onMenuClick, onOpenSearch }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const filteredCount = searchParams.get('filteredCount');
 
   // Get page title from location
   const getPageTitle = () => {
@@ -474,6 +476,11 @@ function Header({ onMenuClick, onOpenSearch }) {
       {/* Page title */}
       <h1 className="ml-2 text-lg font-semibold lg:ml-0 dark:text-gray-100">
         {getPageTitle()}
+        {filteredCount && (
+          <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+            ({filteredCount})
+          </span>
+        )}
       </h1>
 
       {/* Dashboard customize button */}
