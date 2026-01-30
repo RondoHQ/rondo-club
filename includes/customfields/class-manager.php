@@ -28,7 +28,7 @@ class Manager {
 	/**
 	 * Supported post types for custom fields.
 	 */
-	const SUPPORTED_POST_TYPES = array( 'person', 'team' );
+	const SUPPORTED_POST_TYPES = array( 'person', 'team', 'commissie' );
 
 	/**
 	 * Map Stadion field types to ACF field types.
