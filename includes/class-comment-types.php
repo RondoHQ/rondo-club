@@ -16,6 +16,7 @@ class CommentTypes {
 	 */
 	const TYPE_NOTE     = 'stadion_note';
 	const TYPE_ACTIVITY = 'stadion_activity';
+	const TYPE_EMAIL    = 'stadion_email';
 
 	public function __construct() {
 		// Register REST API routes for notes and activities
@@ -84,6 +85,51 @@ class CommentTypes {
 						'items' => [ 'type' => 'integer' ],
 					],
 				],
+			]
+		);
+
+		// Email-specific meta
+		register_comment_meta(
+			'comment',
+			'email_template_type',
+			[
+				'type'         => 'string',
+				'description'  => 'Email template type (new or renewal)',
+				'single'       => true,
+				'show_in_rest' => true,
+			]
+		);
+
+		register_comment_meta(
+			'comment',
+			'email_recipient',
+			[
+				'type'         => 'string',
+				'description'  => 'Email recipient address',
+				'single'       => true,
+				'show_in_rest' => true,
+			]
+		);
+
+		register_comment_meta(
+			'comment',
+			'email_subject',
+			[
+				'type'         => 'string',
+				'description'  => 'Email subject line',
+				'single'       => true,
+				'show_in_rest' => true,
+			]
+		);
+
+		register_comment_meta(
+			'comment',
+			'email_content_snapshot',
+			[
+				'type'         => 'string',
+				'description'  => 'Full rendered HTML content of the email',
+				'single'       => true,
+				'show_in_rest' => true,
 			]
 		);
 
@@ -478,7 +524,7 @@ class CommentTypes {
 		$comments = get_comments(
 			[
 				'post_id'  => $person_id,
-				'type__in' => [ self::TYPE_NOTE, self::TYPE_ACTIVITY ],
+				'type__in' => [ self::TYPE_NOTE, self::TYPE_ACTIVITY, self::TYPE_EMAIL ],
 				'status'   => 'approve',
 				'orderby'  => 'comment_date',
 				'order'    => 'DESC',
@@ -491,6 +537,8 @@ class CommentTypes {
 			$type = 'note';
 			if ( self::TYPE_ACTIVITY === $comment->comment_type ) {
 				$type = 'activity';
+			} elseif ( self::TYPE_EMAIL === $comment->comment_type ) {
+				$type = 'email';
 			}
 
 			// Apply visibility filtering for notes.
@@ -633,6 +681,14 @@ class CommentTypes {
 			$data['visibility'] = $visibility ?: 'private';
 		}
 
+		// Add email-specific meta.
+		if ( 'email' === $type ) {
+			$data['email_template_type']   = get_comment_meta( $comment->comment_ID, 'email_template_type', true );
+			$data['email_recipient']       = get_comment_meta( $comment->comment_ID, 'email_recipient', true );
+			$data['email_subject']         = get_comment_meta( $comment->comment_ID, 'email_subject', true );
+			$data['email_content_snapshot'] = get_comment_meta( $comment->comment_ID, 'email_content_snapshot', true );
+		}
+
 		return $data;
 	}
 
@@ -692,7 +748,37 @@ class CommentTypes {
 		// Exclude our custom types from regular comment displays
 		$query->query_vars['type__not_in'] = array_merge(
 			$existing_types,
-			[ self::TYPE_NOTE, self::TYPE_ACTIVITY ]
+			[ self::TYPE_NOTE, self::TYPE_ACTIVITY, self::TYPE_EMAIL ]
 		);
+	}
+
+	/**
+	 * Create an email log comment
+	 *
+	 * @param int   $person_id Person post ID.
+	 * @param array $data      Email data (template_type, recipient, subject, content).
+	 * @return int|WP_Error Comment ID on success, WP_Error on failure.
+	 */
+	public function create_email_log( $person_id, $data ) {
+		$comment_id = wp_insert_comment(
+			[
+				'comment_post_ID'  => $person_id,
+				'comment_content'  => $data['subject'], // Summary for display
+				'comment_type'     => self::TYPE_EMAIL,
+				'user_id'          => get_current_user_id(),
+				'comment_approved' => 1,
+			]
+		);
+
+		if ( ! $comment_id ) {
+			return new \WP_Error( 'create_failed', 'Failed to log email.' );
+		}
+
+		update_comment_meta( $comment_id, 'email_template_type', $data['template_type'] );
+		update_comment_meta( $comment_id, 'email_recipient', $data['recipient'] );
+		update_comment_meta( $comment_id, 'email_subject', $data['subject'] );
+		update_comment_meta( $comment_id, 'email_content_snapshot', $data['content'] );
+
+		return $comment_id;
 	}
 }
