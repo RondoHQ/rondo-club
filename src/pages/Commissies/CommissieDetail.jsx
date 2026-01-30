@@ -1,11 +1,10 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { ArrowLeft, Edit, Trash2, Building2, Globe, Users, GitBranch, TrendingUp, User, Camera, Share2 } from 'lucide-react';
+import { ArrowLeft, Building2, Globe, Users, GitBranch, TrendingUp, User, Camera, Share2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { getCommissieName, decodeHtml, sanitizeCommissieAcf } from '@/utils/formatters';
-import CommissieEditModal from '@/components/CommissieEditModal';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -16,9 +15,7 @@ export default function CommissieDetail() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   
   const { data: commissie, isLoading, error } = useQuery({
     queryKey: ['commissie', id],
@@ -116,14 +113,6 @@ export default function CommissieDetail() {
     enabled: !!id,
   });
   
-  const deleteCommissie = useMutation({
-    mutationFn: () => wpApi.deleteCommissie(id, { force: true }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['commissies'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      navigate('/commissies');
-    },
-  });
   
   const updateCommissie = useMutation({
     mutationFn: (data) => wpApi.updateCommissie(id, data),
@@ -151,39 +140,6 @@ export default function CommissieDetail() {
     }
   }, [commissie, navigate]);
   
-  const handleDelete = async () => {
-    if (!window.confirm('Weet je zeker dat je deze commissie wilt verwijderen?')) {
-      return;
-    }
-
-    try {
-      await deleteCommissie.mutateAsync();
-      // Navigation will happen in onSuccess callback
-    } catch {
-      alert('Commissie kon niet worden verwijderd. Probeer het opnieuw.');
-    }
-  };
-  
-  const handleSaveCommissie = async (data) => {
-    setIsSaving(true);
-    try {
-      const payload = {
-        title: data.title,
-        parent: data.parentId || 0,
-        acf: {
-          website: data.website,
-          investors: data.investors || [],
-        },
-      };
-
-      await updateCommissie.mutateAsync(payload);
-      setShowEditModal(false);
-    } catch {
-      alert('Commissie kon niet worden opgeslagen. Probeer het opnieuw.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
   
   // Handle logo upload
   const handleLogoUpload = async (event) => {
@@ -258,14 +214,6 @@ export default function CommissieDetail() {
           <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Delen">
             <Share2 className="w-4 h-4 mr-2" />
             Delen
-          </button>
-          <button onClick={() => setShowEditModal(true)} className="btn-secondary">
-            <Edit className="w-4 h-4 mr-2" />
-            Bewerken
-          </button>
-          <button onClick={handleDelete} className="btn-danger-outline">
-            <Trash2 className="w-4 h-4 mr-2" />
-            Verwijderen
           </button>
         </div>
       </div>
@@ -566,14 +514,6 @@ export default function CommissieDetail() {
           updateCommissie.mutateAsync({ acf: acfData });
         }}
         isUpdating={updateCommissie.isPending}
-      />
-
-      <CommissieEditModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onSubmit={handleSaveCommissie}
-        isLoading={isSaving}
-        commissie={commissie}
       />
 
       <ShareModal
