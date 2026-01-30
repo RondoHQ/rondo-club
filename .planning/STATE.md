@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 Phase: 122 of 122 (Tracking & Polish)
 Plan: 02 of 2
 Status: Verified complete
-Last activity: 2026-01-30 — Completed quick task 025: VOG dark mode selected row contrast
+Last activity: 2026-01-30 — Completed quick task 026: VOG Nieuw/Vernieuwing filter
 
 Progress: [███████████████████-] 100% (4/4 phases)
 
@@ -83,11 +83,12 @@ None.
 | 023 | Change VOG date format to yyyy-MM-dd | 2026-01-30 | 423589e | [023-vog-date-format-yyyy-mm-dd](./quick/023-vog-date-format-yyyy-mm-dd/) |
 | 024 | Auto-focus main for instant keyboard scrolling | 2026-01-30 | c669a72 | [024-auto-focus-main-for-instant-scroll](./quick/024-auto-focus-main-for-instant-scroll/) |
 | 025 | VOG dark mode selected row contrast | 2026-01-30 | 73b2ed1 | [025-vog-dark-mode-selected-row-contrast](./quick/025-vog-dark-mode-selected-row-contrast/) |
+| 026 | VOG Nieuw/Vernieuwing filter | 2026-01-30 | 3d427d0 | [026-vog-nieuw-vernieuwing-filter](./quick/026-vog-nieuw-vernieuwing-filter/) |
 
 ## Session Continuity
 
 Last session: 2026-01-30
-Stopped at: Completed quick task 025
+Stopped at: Completed quick task 026
 Resume file: None
 
 Next: Continue with quick tasks or milestone work as needed
