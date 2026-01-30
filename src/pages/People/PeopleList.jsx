@@ -1156,15 +1156,13 @@ export default function PeopleList() {
                       value={vogMissing === '1' ? 'missing' : (vogOlderThanYears ? `older_${vogOlderThanYears}` : '')}
                       onChange={(e) => {
                         const val = e.target.value;
+                        // Update both params in single call to avoid race conditions
                         if (val === 'missing') {
-                          setVogMissing('1');
-                          setVogOlderThanYears(null);
+                          updateSearchParams({ vogMissing: '1', vogOuder: null });
                         } else if (val.startsWith('older_')) {
-                          setVogMissing('');
-                          setVogOlderThanYears(parseInt(val.split('_')[1], 10));
+                          updateSearchParams({ vogMissing: '', vogOuder: parseInt(val.split('_')[1], 10) });
                         } else {
-                          setVogMissing('');
-                          setVogOlderThanYears(null);
+                          updateSearchParams({ vogMissing: '', vogOuder: null });
                         }
                       }}
                       className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
