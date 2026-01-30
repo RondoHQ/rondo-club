@@ -1,13 +1,12 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag, Settings } from 'lucide-react';
-import { useFilteredPeople, useCreatePerson, useBulkUpdatePeople } from '@/hooks/usePeople';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag, Settings } from 'lucide-react';
+import { useFilteredPeople, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getTeamName } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
-import PersonEditModal from '@/components/PersonEditModal';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
 import { useListPreferences } from '@/hooks/useListPreferences';
@@ -687,8 +686,6 @@ export default function PeopleList() {
   // Local UI state (not persisted in URL)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [showPersonModal, setShowPersonModal] = useState(false);
-  const [isCreatingPerson, setIsCreatingPerson] = useState(false);
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
   const [showBulkOrganizationModal, setShowBulkOrganizationModal] = useState(false);
   const [showBulkLabelsModal, setShowBulkLabelsModal] = useState(false);
@@ -697,7 +694,6 @@ export default function PeopleList() {
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
   const bulkDropdownRef = useRef(null);
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Column preferences hook
@@ -737,23 +733,6 @@ export default function PeopleList() {
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['people', 'list'] });
-  };
-
-  // Create person mutation (using shared hook)
-  const createPersonMutation = useCreatePerson({
-    onSuccess: (result) => {
-      setShowPersonModal(false);
-      navigate(`/people/${result.id}`);
-    },
-  });
-
-  const handleCreatePerson = async (data) => {
-    setIsCreatingPerson(true);
-    try {
-      await createPersonMutation.mutateAsync(data);
-    } finally {
-      setIsCreatingPerson(false);
-    }
   };
 
   // Fetch person labels
@@ -1301,19 +1280,13 @@ export default function PeopleList() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setShowPersonModal(true)} className="btn-primary">
-            <Plus className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Lid toevoegen</span>
-          </button>
-          <button
-            onClick={() => setShowColumnSettings(true)}
-            className="btn-secondary"
-            title="Kolommen aanpassen"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-        </div>
+        <button
+          onClick={() => setShowColumnSettings(true)}
+          className="btn-secondary"
+          title="Kolommen aanpassen"
+        >
+          <Settings className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Loading state */}
@@ -1334,16 +1307,12 @@ export default function PeopleList() {
       {!isLoading && !prefsLoading && !error && totalPeople === 0 && !hasActiveFilters && (
         <div className="card p-12 text-center">
           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+            <Filter className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">Geen leden gevonden</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            Voeg je eerste lid toe om te beginnen.
+          <p className="text-gray-500 dark:text-gray-400">
+            Leden worden gesynchroniseerd vanuit Sportlink.
           </p>
-          <button onClick={() => setShowPersonModal(true)} className="btn-primary">
-            <Plus className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Lid toevoegen</span>
-          </button>
         </div>
       )}
 
@@ -1455,14 +1424,6 @@ export default function PeopleList() {
           </button>
         </div>
       )}
-
-      {/* Person Modal */}
-      <PersonEditModal
-        isOpen={showPersonModal}
-        onClose={() => setShowPersonModal(false)}
-        onSubmit={handleCreatePerson}
-        isLoading={isCreatingPerson}
-      />
 
       {/* Column Settings Modal */}
       <ColumnSettingsModal
