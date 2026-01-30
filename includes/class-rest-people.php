@@ -1133,7 +1133,13 @@ class People extends Base {
 		}
 
 		// Datum VOG - missing or older than N years filter
-		if ( $vog_missing === '1' ) {
+		// When both are set, OR them together (show both new volunteers AND renewals)
+		if ( $vog_missing === '1' && $vog_older_than_years !== null ) {
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
+			$cutoff_date      = gmdate( 'Y-m-d', strtotime( "-{$vog_older_than_years} years" ) );
+			$where_clauses[]  = "((dv.meta_value IS NULL OR dv.meta_value = '') OR (dv.meta_value < %s))";
+			$prepare_values[] = $cutoff_date;
+		} elseif ( $vog_missing === '1' ) {
 			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
 			$where_clauses[] = "(dv.meta_value IS NULL OR dv.meta_value = '')";
 		} elseif ( $vog_older_than_years !== null ) {
