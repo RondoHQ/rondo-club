@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, MessageSquare, Search, User, Link as LinkIcon, Loader2, CheckCircle, Key, Copy } from 'lucide-react';
+import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, MessageSquare, Search, User, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, FileCheck } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from '@/utils/dateFormat';
 import { APP_NAME } from '@/constants/app';
@@ -19,6 +19,7 @@ const TABS = [
   { id: 'notifications', label: 'Meldingen', icon: Bell },
   { id: 'data', label: 'Gegevens', icon: Database },
   { id: 'admin', label: 'Beheer', icon: Shield, adminOnly: true },
+  { id: 'vog', label: 'VOG', icon: FileCheck, adminOnly: true },
   { id: 'about', label: 'Info', icon: Info },
 ];
 
@@ -114,6 +115,16 @@ export default function Settings() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState(null);
   const [syncSuccess, setSyncSuccess] = useState(null);
+
+  // VOG settings state
+  const [vogSettings, setVogSettings] = useState({
+    from_email: '',
+    template_new: '',
+    template_renewal: '',
+  });
+  const [vogLoading, setVogLoading] = useState(true);
+  const [vogSaving, setVogSaving] = useState(false);
+  const [vogMessage, setVogMessage] = useState('');
 
   // Fetch Applicatiewachtwoorden and CardDAV URLs on mount
   useEffect(() => {
@@ -270,6 +281,40 @@ export default function Settings() {
       handleImportGoogleContacts();
     }
   }, [googleContactsStatus?.has_pending_import]);
+
+  // Fetch VOG settings on mount (admin only)
+  useEffect(() => {
+    const fetchVogSettings = async () => {
+      if (!isAdmin) {
+        setVogLoading(false);
+        return;
+      }
+      try {
+        const response = await prmApi.getVOGSettings();
+        setVogSettings(response.data);
+      } catch {
+        // VOG settings fetch failed silently
+      } finally {
+        setVogLoading(false);
+      }
+    };
+    fetchVogSettings();
+  }, [isAdmin]);
+
+  // Handle VOG settings save
+  const handleVogSave = async () => {
+    setVogSaving(true);
+    setVogMessage('');
+    try {
+      const response = await prmApi.updateVOGSettings(vogSettings);
+      setVogSettings(response.data);
+      setVogMessage('VOG-instellingen opgeslagen');
+    } catch (error) {
+      setVogMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
+    } finally {
+      setVogSaving(false);
+    }
+  };
 
   const handleConnectSlack = async () => {
     try {
@@ -670,6 +715,15 @@ export default function Settings() {
           handleRescheduleCron={handleRescheduleCron}
           reschedulingCron={reschedulingCron}
           cronMessage={cronMessage}
+        /> : null;
+      case 'vog':
+        return isAdmin ? <VOGTab
+          vogSettings={vogSettings}
+          setVogSettings={setVogSettings}
+          vogLoading={vogLoading}
+          vogSaving={vogSaving}
+          vogMessage={vogMessage}
+          handleVogSave={handleVogSave}
         /> : null;
       case 'about':
         return <AboutTab config={config} />;
@@ -3253,6 +3307,112 @@ function AdminTab({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// VOG Tab Component
+function VOGTab({
+  vogSettings,
+  setVogSettings,
+  vogLoading,
+  vogSaving,
+  vogMessage,
+  handleVogSave,
+}) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          VOG E-mail Instellingen
+        </h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Configureer de e-mails die verstuurd worden voor VOG-aanvragen.
+        </p>
+      </div>
+
+      {vogLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-accent-500" />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* From Email */}
+          <div>
+            <label htmlFor="vog-from-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Afzender e-mailadres
+            </label>
+            <input
+              type="email"
+              id="vog-from-email"
+              value={vogSettings.from_email}
+              onChange={(e) => setVogSettings(prev => ({ ...prev, from_email: e.target.value }))}
+              placeholder="vog@vereniging.nl"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Het e-mailadres dat als afzender wordt gebruikt voor VOG e-mails.
+            </p>
+          </div>
+
+          {/* Template for new volunteers */}
+          <div>
+            <label htmlFor="vog-template-new" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Template nieuwe vrijwilliger
+            </label>
+            <textarea
+              id="vog-template-new"
+              rows={8}
+              value={vogSettings.template_new}
+              onChange={(e) => setVogSettings(prev => ({ ...prev, template_new: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm font-mono"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Beschikbare variabelen: {'{first_name}'}
+            </p>
+          </div>
+
+          {/* Template for renewals */}
+          <div>
+            <label htmlFor="vog-template-renewal" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Template verlenging
+            </label>
+            <textarea
+              id="vog-template-renewal"
+              rows={8}
+              value={vogSettings.template_renewal}
+              onChange={(e) => setVogSettings(prev => ({ ...prev, template_renewal: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm font-mono"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Beschikbare variabelen: {'{first_name}'}, {'{previous_vog_date}'}
+            </p>
+          </div>
+
+          {/* Save button and message */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleVogSave}
+              disabled={vogSaving}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+            >
+              {vogSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Opslaan...
+                </>
+              ) : (
+                'Opslaan'
+              )}
+            </button>
+            {vogMessage && (
+              <span className={`text-sm ${vogMessage.includes('Fout') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                {vogMessage}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
