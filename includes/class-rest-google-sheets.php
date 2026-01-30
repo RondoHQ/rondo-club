@@ -426,82 +426,45 @@ class GoogleSheets extends Base {
 	/**
 	 * Fetch people data matching current filters
 	 *
+	 * Uses internal REST request to reuse all filtering logic from People endpoint.
+	 *
 	 * @param array $filters Filter parameters from frontend.
 	 * @return array People data.
 	 */
 	private function fetch_people_data( array $filters ): array {
-		// Use the existing filtered people endpoint logic
-		$params = [
-			'per_page' => 999999, // Get all matching records
-			'page'     => 1,
-		];
+		// Build query params for internal REST request
+		$params = array_merge(
+			[
+				'per_page' => 10000, // Get all matching records
+				'page'     => 1,
+			],
+			$filters
+		);
 
-		// Merge filters
-		$params = array_merge( $params, $filters );
-
-		// Use WP_Query to fetch people (same logic as REST endpoint)
-		$args = [
-			'post_type'      => 'person',
-			'posts_per_page' => $params['per_page'],
-			'paged'          => $params['page'],
-			'post_status'    => 'publish',
-		];
-
-		// Apply search
-		if ( ! empty( $params['search'] ) ) {
-			$args['s'] = $params['search'];
-		}
-
-		// Apply label filter
-		if ( ! empty( $params['label'] ) ) {
-			$args['tax_query'] = [
-				[
-					'taxonomy' => 'person_label',
-					'field'    => 'term_id',
-					'terms'    => absint( $params['label'] ),
-				],
-			];
-		}
-
-		// Apply team filter
-		if ( ! empty( $params['team'] ) ) {
-			$args['meta_query'] = [
-				[
-					'key'     => 'work_history',
-					'value'   => '"team";i:' . absint( $params['team'] ),
-					'compare' => 'LIKE',
-				],
-			];
-		}
-
-		// Apply sorting
-		if ( ! empty( $params['orderby'] ) ) {
-			switch ( $params['orderby'] ) {
-				case 'first_name':
-					$args['meta_key'] = 'first_name';
-					$args['orderby']  = 'meta_value';
-					break;
-				case 'last_name':
-					$args['meta_key'] = 'last_name';
-					$args['orderby']  = 'meta_value';
-					break;
-				case 'modified':
-					$args['orderby'] = 'modified';
-					break;
+		// Make internal REST request to reuse all filtering logic
+		$request = new \WP_REST_Request( 'GET', '/stadion/v1/people' );
+		foreach ( $params as $key => $value ) {
+			if ( $value !== null && $value !== '' ) {
+				$request->set_param( $key, $value );
 			}
-
-			$args['order'] = ! empty( $params['order'] ) ? strtoupper( $params['order'] ) : 'ASC';
 		}
 
-		$query  = new \WP_Query( $args );
+		$response = rest_do_request( $request );
+
+		if ( $response->is_error() ) {
+			return [];
+		}
+
+		$data   = $response->get_data();
 		$people = [];
 
-		foreach ( $query->posts as $post ) {
+		// Transform to format expected by build_spreadsheet_data
+		foreach ( $data['people'] as $person ) {
 			$people[] = [
-				'id'         => $post->ID,
-				'first_name' => get_post_meta( $post->ID, 'first_name', true ),
-				'last_name'  => get_post_meta( $post->ID, 'last_name', true ),
-				'acf'        => get_fields( $post->ID ),
+				'id'         => $person['id'],
+				'first_name' => $person['first_name'] ?? '',
+				'last_name'  => $person['last_name'] ?? '',
+				'acf'        => get_fields( $person['id'] ),
 			];
 		}
 
