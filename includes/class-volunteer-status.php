@@ -124,7 +124,8 @@ class VolunteerStatus {
 			return false;
 		}
 
-		$today = gmdate( 'Y-m-d' );
+		// Use tomorrow's date so positions ending today are no longer considered current
+		$today = gmdate( 'Y-m-d', strtotime( '+1 day' ) );
 
 		foreach ( $work_history as $position ) {
 			// Check if position is current
@@ -147,10 +148,10 @@ class VolunteerStatus {
 	 * A position is current if:
 	 * - is_current flag is true, OR
 	 * - end_date is empty/null, OR
-	 * - end_date is in the future or today
+	 * - end_date is in the future (positions ending today are NOT considered current)
 	 *
 	 * @param array  $position The position data.
-	 * @param string $today    Today's date in Y-m-d format.
+	 * @param string $today    The cutoff date in Y-m-d format (tomorrow, so end_date=today is not current).
 	 * @return bool True if the position is current.
 	 */
 	private function is_position_current( $position, $today ) {
