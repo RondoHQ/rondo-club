@@ -518,6 +518,9 @@ class Api extends Base {
 								return empty( $param ) || is_email( $param );
 							},
 						],
+						'from_name'        => [
+							'required' => false,
+						],
 						'template_new'     => [
 							'required' => false,
 						],
@@ -2355,12 +2358,17 @@ class Api extends Base {
 		$vog_email = new \Stadion\VOG\VOGEmail();
 
 		$from_email       = $request->get_param( 'from_email' );
+		$from_name        = $request->get_param( 'from_name' );
 		$template_new     = $request->get_param( 'template_new' );
 		$template_renewal = $request->get_param( 'template_renewal' );
 
 		// Update provided settings
 		if ( $from_email !== null ) {
 			$vog_email->update_from_email( $from_email );
+		}
+
+		if ( $from_name !== null ) {
+			$vog_email->update_from_name( $from_name );
 		}
 
 		if ( $template_new !== null ) {

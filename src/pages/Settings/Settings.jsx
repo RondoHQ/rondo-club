@@ -119,6 +119,7 @@ export default function Settings() {
   // VOG settings state
   const [vogSettings, setVogSettings] = useState({
     from_email: '',
+    from_name: '',
     template_new: '',
     template_renewal: '',
   });
@@ -3352,6 +3353,24 @@ function VOGTab({
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Het e-mailadres dat als afzender wordt gebruikt voor VOG e-mails.
+            </p>
+          </div>
+
+          {/* From Name */}
+          <div>
+            <label htmlFor="vog-from-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Afzender naam
+            </label>
+            <input
+              type="text"
+              id="vog-from-name"
+              value={vogSettings.from_name}
+              onChange={(e) => setVogSettings(prev => ({ ...prev, from_name: e.target.value }))}
+              placeholder="Vereniging VOG"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              De naam die als afzender wordt weergegeven voor VOG e-mails.
             </p>
           </div>
 
