@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** Personal CRM with multi-user collaboration
-**Current focus:** v11.0 VOG Management - Phase 120
+**Current focus:** v11.0 VOG Management - Phase 120 complete
 
 ## Current Position
 
 Phase: 120 of 122 (VOG List Page)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-01-30 — Completed quick task 019: Remove Edit/Delete buttons from Teams/Commissies
+Plan: 01 of 01 (complete)
+Status: Phase complete
+Last activity: 2026-01-30 - Completed 120-01-PLAN.md
 
-Progress: [█████---------------] 25% (1/4 phases)
+Progress: [██████████----------] 50% (2/4 phases)
 
 ## Milestone History
 
@@ -39,6 +39,11 @@ v10.0 milestone decisions archived to milestones/v10.0-ROADMAP.md.
 v11.0 Phase 119 decisions:
 - Use FileCheck icon for VOG tab (Shield already used by Admin tab)
 
+v11.0 Phase 120 decisions:
+- VOG appears as indented sub-item under Leden in navigation
+- Nieuw badge (blue) for no VOG, Vernieuwing badge (purple) for expired
+- Celebratory green checkmark empty state for all VOGs valid
+
 ### Pending Todos
 
 No pending todos.
@@ -60,7 +65,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-30
-Stopped at: Phase 119 Backend Foundation complete
+Stopped at: Completed 120-01-PLAN.md (VOG List Page)
 Resume file: None
 
-Next: /gsd:plan-phase 120
+Next: /gsd:plan-phase 121 (VOG Bulk Actions)
