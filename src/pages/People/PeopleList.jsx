@@ -1039,6 +1039,9 @@ export default function PeopleList() {
 
     setIsExporting(true);
 
+    // Open window immediately (before async) to avoid popup blocker
+    const newWindow = window.open('about:blank', '_blank');
+
     try {
       // Build column list: always include 'name', then visible columns
       const columns = ['name', ...visibleColumns];
@@ -1063,16 +1066,15 @@ export default function PeopleList() {
       // Call export endpoint
       const response = await prmApi.exportPeopleToSheets({ columns, filters });
 
-      // Open the created spreadsheet in a new tab
-      if (response.data.spreadsheet_url) {
-        window.open(response.data.spreadsheet_url, '_blank');
+      // Navigate the opened window to the spreadsheet
+      if (response.data.spreadsheet_url && newWindow) {
+        newWindow.location.href = response.data.spreadsheet_url;
       }
-
-      // Show success message (could use a toast notification here)
-      alert(`Export succesvol! ${response.data.rows_exported} leden geëxporteerd naar Google Sheets.`);
 
     } catch (error) {
       console.error('Export error:', error);
+      // Close the blank window on error
+      if (newWindow) newWindow.close();
       const message = error.response?.data?.message || 'Export mislukt. Probeer het opnieuw.';
       alert(message);
     } finally {
