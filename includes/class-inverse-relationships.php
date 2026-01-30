@@ -161,6 +161,15 @@ class InverseRelationships {
 					$post_id,
 					$relationship_type_id
 				);
+
+				// If this was a parent-child relationship, handle sibling cleanup
+				if ( $relationship_type_id == 9 ) {
+					// post_id is the child, related_person_id is the parent
+					$this->remove_siblings_on_parent_removal( $post_id, $related_person_id );
+				} elseif ( $relationship_type_id == 8 ) {
+					// post_id is the parent, related_person_id is the child
+					$this->remove_siblings_on_parent_removal( $related_person_id, $post_id );
+				}
 			}
 		}
 	}
@@ -354,6 +363,21 @@ class InverseRelationships {
 
 		// Unmark as processing
 		unset( $this->processing[ $to_person_id ] );
+
+		// After creating a parent-child or child-parent inverse relationship, sync siblings
+		// Check if this is a parent-child relationship (type 8 or 9)
+		if ( $relationship_type_id == 8 || $relationship_type_id == 9 ) {
+			// If from_person_id has type 9 (Child) pointing to to_person_id (parent)
+			// then to_person_id is the parent and from_person_id is the child
+			if ( $relationship_type_id == 9 ) {
+				$this->sync_siblings_from_parent( $from_person_id, $to_person_id );
+			}
+			// If from_person_id has type 8 (Parent) pointing to to_person_id (child)
+			// then from_person_id is the parent and to_person_id is the child
+			elseif ( $relationship_type_id == 8 ) {
+				$this->sync_siblings_from_parent( $to_person_id, $from_person_id );
+			}
+		}
 	}
 
 	/**
@@ -648,5 +672,324 @@ class InverseRelationships {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Auto-link siblings when parent-child relationships are created
+	 *
+	 * When a child is linked to a parent, this method finds all other children
+	 * of the same parent and creates sibling relationships between them.
+	 *
+	 * @param int $child_id The child person ID
+	 * @param int $parent_id The parent person ID
+	 */
+	private function sync_siblings_from_parent( $child_id, $parent_id ) {
+		// Get all children of this parent (excluding the current child)
+		$other_children = $this->get_children_of_parent( $parent_id, $child_id );
+
+		if ( empty( $other_children ) ) {
+			return;
+		}
+
+		// Create sibling relationships between current child and all other children
+		foreach ( $other_children as $other_child_id ) {
+			$this->sync_sibling_relationship( $child_id, $other_child_id );
+		}
+	}
+
+	/**
+	 * Get all children of a parent
+	 *
+	 * @param int $parent_id The parent person ID
+	 * @param int|null $exclude_child_id Optional child ID to exclude from results
+	 * @return array Array of child person IDs
+	 */
+	private function get_children_of_parent( $parent_id, $exclude_child_id = null ) {
+		$children = [];
+
+		// Query all people
+		$args = [
+			'post_type'      => 'person',
+			'posts_per_page' => -1,
+			'post_status'    => 'publish',
+			'fields'         => 'ids',
+		];
+
+		$people = get_posts( $args );
+
+		if ( empty( $people ) ) {
+			return $children;
+		}
+
+		// Check each person's relationships for Child (type 9) pointing to this parent
+		foreach ( $people as $person_id ) {
+			// Skip the excluded child
+			if ( $exclude_child_id && $person_id == $exclude_child_id ) {
+				continue;
+			}
+
+			$relationships = get_field( 'relationships', $person_id );
+			if ( ! is_array( $relationships ) ) {
+				continue;
+			}
+
+			foreach ( $relationships as $rel ) {
+				// Normalize relationship data
+				$related_person_id = null;
+				if ( isset( $rel['related_person'] ) ) {
+					if ( is_numeric( $rel['related_person'] ) ) {
+						$related_person_id = (int) $rel['related_person'];
+					} elseif ( is_object( $rel['related_person'] ) && isset( $rel['related_person']->ID ) ) {
+						$related_person_id = (int) $rel['related_person']->ID;
+					}
+				}
+
+				$relationship_type_id = null;
+				if ( isset( $rel['relationship_type'] ) ) {
+					if ( is_numeric( $rel['relationship_type'] ) ) {
+						$relationship_type_id = (int) $rel['relationship_type'];
+					} elseif ( is_object( $rel['relationship_type'] ) && isset( $rel['relationship_type']->term_id ) ) {
+						$relationship_type_id = (int) $rel['relationship_type']->term_id;
+					} elseif ( is_array( $rel['relationship_type'] ) && isset( $rel['relationship_type']['term_id'] ) ) {
+						$relationship_type_id = (int) $rel['relationship_type']['term_id'];
+					}
+				}
+
+				// Check if this is a Child relationship (type 9) pointing to our parent
+				if ( $relationship_type_id == 9 && $related_person_id == $parent_id ) {
+					$children[] = $person_id;
+					break; // Found relationship to parent, no need to check other relationships
+				}
+			}
+		}
+
+		return $children;
+	}
+
+	/**
+	 * Create symmetric sibling relationships between two people
+	 *
+	 * @param int $person_a First person ID
+	 * @param int $person_b Second person ID
+	 */
+	private function sync_sibling_relationship( $person_a, $person_b ) {
+		// Get the sibling relationship type ID
+		$sibling_term = get_term_by( 'slug', 'sibling', 'relationship_type' );
+		if ( ! $sibling_term || is_wp_error( $sibling_term ) ) {
+			return;
+		}
+		$sibling_type_id = $sibling_term->term_id;
+
+		// Create A -> B sibling relationship
+		$this->add_sibling_if_not_exists( $person_a, $person_b, $sibling_type_id );
+
+		// Create B -> A sibling relationship
+		$this->add_sibling_if_not_exists( $person_b, $person_a, $sibling_type_id );
+	}
+
+	/**
+	 * Add a sibling relationship if it doesn't already exist
+	 *
+	 * @param int $from_person_id Person who will have the relationship added
+	 * @param int $to_person_id The sibling they're related to
+	 * @param int $sibling_type_id The sibling relationship type ID
+	 */
+	private function add_sibling_if_not_exists( $from_person_id, $to_person_id, $sibling_type_id ) {
+		// Prevent infinite loops
+		if ( isset( $this->processing[ $from_person_id ] ) ) {
+			return;
+		}
+
+		$relationships = get_field( 'relationships', $from_person_id );
+		if ( ! is_array( $relationships ) ) {
+			$relationships = [];
+		}
+
+		// Check if sibling relationship already exists
+		$sibling_exists = false;
+		foreach ( $relationships as $rel ) {
+			$related_person_id = null;
+			if ( isset( $rel['related_person'] ) ) {
+				if ( is_numeric( $rel['related_person'] ) ) {
+					$related_person_id = (int) $rel['related_person'];
+				} elseif ( is_object( $rel['related_person'] ) && isset( $rel['related_person']->ID ) ) {
+					$related_person_id = (int) $rel['related_person']->ID;
+				}
+			}
+
+			$relationship_type_id = null;
+			if ( isset( $rel['relationship_type'] ) ) {
+				if ( is_numeric( $rel['relationship_type'] ) ) {
+					$relationship_type_id = (int) $rel['relationship_type'];
+				} elseif ( is_object( $rel['relationship_type'] ) && isset( $rel['relationship_type']->term_id ) ) {
+					$relationship_type_id = (int) $rel['relationship_type']->term_id;
+				} elseif ( is_array( $rel['relationship_type'] ) && isset( $rel['relationship_type']['term_id'] ) ) {
+					$relationship_type_id = (int) $rel['relationship_type']['term_id'];
+				}
+			}
+
+			if ( $related_person_id == $to_person_id && $relationship_type_id == $sibling_type_id ) {
+				$sibling_exists = true;
+				break;
+			}
+		}
+
+		if ( ! $sibling_exists ) {
+			// Add the sibling relationship
+			$relationships[] = [
+				'related_person'     => $to_person_id,
+				'relationship_type'  => $sibling_type_id,
+				'relationship_label' => '',
+			];
+
+			// Mark as processing to prevent infinite loop
+			$this->processing[ $from_person_id ] = true;
+
+			// Save relationships
+			update_field( 'relationships', $relationships, $from_person_id );
+
+			// Unmark as processing
+			unset( $this->processing[ $from_person_id ] );
+		}
+	}
+
+	/**
+	 * Remove sibling relationships when parent-child relationships are removed
+	 *
+	 * This is called from remove_inverse_relationship after a parent-child link is removed.
+	 * For v1 implementation: only remove sibling links if the child has NO remaining parent relationships.
+	 *
+	 * @param int $child_id The child person ID
+	 * @param int $parent_id The parent person ID that was just removed
+	 */
+	private function remove_siblings_on_parent_removal( $child_id, $parent_id ) {
+		// Check if child still has any parent relationships
+		$relationships = get_field( 'relationships', $child_id );
+		if ( ! is_array( $relationships ) ) {
+			$relationships = [];
+		}
+
+		$has_parent = false;
+		foreach ( $relationships as $rel ) {
+			$relationship_type_id = null;
+			if ( isset( $rel['relationship_type'] ) ) {
+				if ( is_numeric( $rel['relationship_type'] ) ) {
+					$relationship_type_id = (int) $rel['relationship_type'];
+				} elseif ( is_object( $rel['relationship_type'] ) && isset( $rel['relationship_type']->term_id ) ) {
+					$relationship_type_id = (int) $rel['relationship_type']->term_id;
+				} elseif ( is_array( $rel['relationship_type'] ) && isset( $rel['relationship_type']['term_id'] ) ) {
+					$relationship_type_id = (int) $rel['relationship_type']['term_id'];
+				}
+			}
+
+			// Check if this is a Child relationship (type 9)
+			if ( $relationship_type_id == 9 ) {
+				$has_parent = true;
+				break;
+			}
+		}
+
+		// If child still has parents, don't remove sibling relationships
+		if ( $has_parent ) {
+			return;
+		}
+
+		// Child has no more parents - remove all sibling relationships
+		// Get the sibling relationship type ID
+		$sibling_term = get_term_by( 'slug', 'sibling', 'relationship_type' );
+		if ( ! $sibling_term || is_wp_error( $sibling_term ) ) {
+			return;
+		}
+		$sibling_type_id = $sibling_term->term_id;
+
+		// Remove all sibling relationships from this child
+		$updated_relationships = [];
+		$siblings_to_clean     = [];
+
+		foreach ( $relationships as $rel ) {
+			$relationship_type_id = null;
+			if ( isset( $rel['relationship_type'] ) ) {
+				if ( is_numeric( $rel['relationship_type'] ) ) {
+					$relationship_type_id = (int) $rel['relationship_type'];
+				} elseif ( is_object( $rel['relationship_type'] ) && isset( $rel['relationship_type']->term_id ) ) {
+					$relationship_type_id = (int) $rel['relationship_type']->term_id;
+				} elseif ( is_array( $rel['relationship_type'] ) && isset( $rel['relationship_type']['term_id'] ) ) {
+					$relationship_type_id = (int) $rel['relationship_type']['term_id'];
+				}
+			}
+
+			if ( $relationship_type_id == $sibling_type_id ) {
+				// This is a sibling relationship - don't keep it
+				// But track the sibling so we can remove the inverse
+				$related_person_id = null;
+				if ( isset( $rel['related_person'] ) ) {
+					if ( is_numeric( $rel['related_person'] ) ) {
+						$related_person_id = (int) $rel['related_person'];
+					} elseif ( is_object( $rel['related_person'] ) && isset( $rel['related_person']->ID ) ) {
+						$related_person_id = (int) $rel['related_person']->ID;
+					}
+				}
+				if ( $related_person_id ) {
+					$siblings_to_clean[] = $related_person_id;
+				}
+			} else {
+				// Keep non-sibling relationships
+				$updated_relationships[] = $rel;
+			}
+		}
+
+		// Update child's relationships (removing siblings)
+		if ( count( $updated_relationships ) != count( $relationships ) ) {
+			$this->processing[ $child_id ] = true;
+			update_field( 'relationships', $updated_relationships, $child_id );
+			unset( $this->processing[ $child_id ] );
+		}
+
+		// Remove inverse sibling relationships from all siblings
+		foreach ( $siblings_to_clean as $sibling_id ) {
+			$sibling_relationships = get_field( 'relationships', $sibling_id );
+			if ( ! is_array( $sibling_relationships ) ) {
+				continue;
+			}
+
+			$sibling_updated = [];
+			$needs_update    = false;
+
+			foreach ( $sibling_relationships as $rel ) {
+				$related_person_id = null;
+				if ( isset( $rel['related_person'] ) ) {
+					if ( is_numeric( $rel['related_person'] ) ) {
+						$related_person_id = (int) $rel['related_person'];
+					} elseif ( is_object( $rel['related_person'] ) && isset( $rel['related_person']->ID ) ) {
+						$related_person_id = (int) $rel['related_person']->ID;
+					}
+				}
+
+				$relationship_type_id = null;
+				if ( isset( $rel['relationship_type'] ) ) {
+					if ( is_numeric( $rel['relationship_type'] ) ) {
+						$relationship_type_id = (int) $rel['relationship_type'];
+					} elseif ( is_object( $rel['relationship_type'] ) && isset( $rel['relationship_type']->term_id ) ) {
+						$relationship_type_id = (int) $rel['relationship_type']->term_id;
+					} elseif ( is_array( $rel['relationship_type'] ) && isset( $rel['relationship_type']['term_id'] ) ) {
+						$relationship_type_id = (int) $rel['relationship_type']['term_id'];
+					}
+				}
+
+				// If this is a sibling relationship pointing back to our child, skip it
+				if ( $relationship_type_id == $sibling_type_id && $related_person_id == $child_id ) {
+					$needs_update = true;
+					continue;
+				}
+
+				$sibling_updated[] = $rel;
+			}
+
+			if ( $needs_update ) {
+				$this->processing[ $sibling_id ] = true;
+				update_field( 'relationships', $sibling_updated, $sibling_id );
+				unset( $this->processing[ $sibling_id ] );
+			}
+		}
 	}
 }
