@@ -14,7 +14,7 @@ This milestone adds VOG (Verklaring Omtrent Gedrag) compliance management for vo
 - [x] **Phase 119: Backend Foundation** - Email infrastructure, settings, and tracking data model
 - [x] **Phase 120: VOG List Page** - Navigation and filtered volunteer list
 - [x] **Phase 121: Bulk Actions** - Multi-select, send emails, mark requested
-- [ ] **Phase 122: Tracking & Polish** - Email status filtering and history display
+- [x] **Phase 122: Tracking & Polish** - Email status filtering and history display
 
 ## Phase Details
 
@@ -72,8 +72,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 122-01-PLAN.md — Backend: Email tracking infrastructure (TYPE_EMAIL, logging, API filter)
-- [ ] 122-02-PLAN.md — Frontend: VOG list filter UI and timeline email display
+- [x] 122-01-PLAN.md — Backend: Email tracking infrastructure (TYPE_EMAIL, logging, API filter)
+- [x] 122-02-PLAN.md — Frontend: VOG list filter UI and timeline email display
 
 ## Progress
 
@@ -84,7 +84,7 @@ Plans:
 | 119. Backend Foundation | 2/2 | Complete | 2026-01-30 |
 | 120. VOG List Page | 1/1 | Complete | 2026-01-30 |
 | 121. Bulk Actions | 2/2 | Complete | 2026-01-30 |
-| 122. Tracking & Polish | 0/2 | Ready | - |
+| 122. Tracking & Polish | 2/2 | Complete | 2026-01-30 |
 
 ---
 *Roadmap created: 2026-01-30*
