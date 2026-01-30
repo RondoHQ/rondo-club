@@ -334,6 +334,14 @@ class People extends Base {
 							return $value >= 1 && $value <= 10;
 						},
 					],
+					'vog_email_status' => [
+						'description'       => 'Filter by VOG email status (sent, not_sent, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', 'sent', 'not_sent' ], true );
+						},
+					],
 				],
 			]
 		);
@@ -1025,6 +1033,7 @@ class People extends Base {
 		$foto_missing         = $request->get_param( 'foto_missing' );
 		$vog_missing          = $request->get_param( 'vog_missing' );
 		$vog_older_than_years = $request->get_param( 'vog_older_than_years' );
+		$vog_email_status     = $request->get_param( 'vog_email_status' );
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -1147,6 +1156,18 @@ class People extends Base {
 			$cutoff_date      = gmdate( 'Y-m-d', strtotime( "-{$vog_older_than_years} years" ) );
 			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value < %s)";
 			$prepare_values[] = $cutoff_date;
+		}
+
+		// VOG email status filter (sent/not_sent based on stadion_email comments)
+		if ( ! empty( $vog_email_status ) ) {
+			// Subquery to find people with email comments
+			$email_subquery = "SELECT DISTINCT comment_post_ID FROM {$wpdb->comments} WHERE comment_type = 'stadion_email'";
+
+			if ( $vog_email_status === 'sent' ) {
+				$where_clauses[] = "p.ID IN ($email_subquery)";
+			} elseif ( $vog_email_status === 'not_sent' ) {
+				$where_clauses[] = "p.ID NOT IN ($email_subquery)";
+			}
 		}
 
 		// Build ORDER BY clause (columns are whitelisted in args validation)
