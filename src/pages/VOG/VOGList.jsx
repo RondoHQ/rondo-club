@@ -219,8 +219,8 @@ export default function VOGList() {
     order,
   });
 
-  // Extract data from response
-  const people = data?.people || [];
+  // Extract data from response - memoize to avoid effect dependency issues
+  const people = useMemo(() => data?.people || [], [data?.people]);
   const totalPeople = data?.total || 0;
 
   // Fetch custom field definitions for list view columns
@@ -599,7 +599,7 @@ export default function VOGList() {
                 ) : (
                   <>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Markeer {selectedIds.size} {selectedIds.size === 1 ? 'vrijwilliger' : 'vrijwilligers'} als "VOG aangevraagd".
+                      Markeer {selectedIds.size} {selectedIds.size === 1 ? 'vrijwilliger' : 'vrijwilligers'} als &quot;VOG aangevraagd&quot;.
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Dit registreert de huidige datum als datum van VOG-aanvraag, zonder een email te versturen.
