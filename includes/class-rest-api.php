@@ -527,6 +527,12 @@ class Api extends Base {
 						'template_renewal' => [
 							'required' => false,
 						],
+						'exempt_commissies' => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+						],
 					],
 				],
 			]
@@ -2376,10 +2382,11 @@ class Api extends Base {
 	public function update_vog_settings( $request ) {
 		$vog_email = new \Stadion\VOG\VOGEmail();
 
-		$from_email       = $request->get_param( 'from_email' );
-		$from_name        = $request->get_param( 'from_name' );
-		$template_new     = $request->get_param( 'template_new' );
-		$template_renewal = $request->get_param( 'template_renewal' );
+		$from_email        = $request->get_param( 'from_email' );
+		$from_name         = $request->get_param( 'from_name' );
+		$template_new      = $request->get_param( 'template_new' );
+		$template_renewal  = $request->get_param( 'template_renewal' );
+		$exempt_commissies = $request->get_param( 'exempt_commissies' );
 
 		// Update provided settings
 		if ( $from_email !== null ) {
@@ -2398,8 +2405,52 @@ class Api extends Base {
 			$vog_email->update_template_renewal( $template_renewal );
 		}
 
+		// Track if exempt commissies changed for recalculation
+		$people_recalculated = null;
+		if ( $exempt_commissies !== null ) {
+			$old_exempt = $vog_email->get_exempt_commissies();
+			$vog_email->update_exempt_commissies( $exempt_commissies );
+
+			// If exempt commissies changed, trigger volunteer status recalculation
+			$new_exempt = $vog_email->get_exempt_commissies();
+			if ( $old_exempt !== $new_exempt ) {
+				$people_recalculated = $this->trigger_vog_recalculation();
+			}
+		}
+
 		// Return updated settings
-		return rest_ensure_response( $vog_email->get_all_settings() );
+		$response = $vog_email->get_all_settings();
+		if ( $people_recalculated !== null ) {
+			$response['people_recalculated'] = $people_recalculated;
+		}
+
+		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * Trigger VOG recalculation for all people
+	 *
+	 * Recalculates volunteer status for all people to reflect changes in exempt commissies.
+	 *
+	 * @return int Number of people recalculated
+	 */
+	private function trigger_vog_recalculation(): int {
+		$volunteer_status = new \Stadion\Core\VolunteerStatus();
+
+		$people = get_posts(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+			]
+		);
+
+		foreach ( $people as $person_id ) {
+			$volunteer_status->calculate_and_update_status( $person_id );
+		}
+
+		return count( $people );
 	}
 
 	/**
