@@ -56,28 +56,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VOG-01 | TBD | Pending |
-| VOG-02 | TBD | Pending |
-| VOG-03 | TBD | Pending |
-| BULK-01 | TBD | Pending |
-| BULK-02 | TBD | Pending |
-| BULK-03 | TBD | Pending |
-| EMAIL-01 | TBD | Pending |
-| EMAIL-02 | TBD | Pending |
-| EMAIL-03 | TBD | Pending |
-| EMAIL-04 | TBD | Pending |
-| SET-01 | TBD | Pending |
-| SET-02 | TBD | Pending |
-| SET-03 | TBD | Pending |
-| TRACK-01 | TBD | Pending |
-| TRACK-02 | TBD | Pending |
-| TRACK-03 | TBD | Pending |
+| VOG-01 | 120 | Pending |
+| VOG-02 | 120 | Pending |
+| VOG-03 | 120 | Pending |
+| BULK-01 | 121 | Pending |
+| BULK-02 | 121 | Pending |
+| BULK-03 | 121 | Pending |
+| EMAIL-01 | 119 | Pending |
+| EMAIL-02 | 119 | Pending |
+| EMAIL-03 | 119 | Pending |
+| EMAIL-04 | 121 | Pending |
+| SET-01 | 119 | Pending |
+| SET-02 | 119 | Pending |
+| SET-03 | 119 | Pending |
+| TRACK-01 | 119 | Pending |
+| TRACK-02 | 122 | Pending |
+| TRACK-03 | 122 | Pending |
 
 **Coverage:**
 - v11.0 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16
+- Mapped to phases: 16
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-30*
-*Last updated: 2026-01-30 after initial definition*
+*Last updated: 2026-01-30 after roadmap creation*
