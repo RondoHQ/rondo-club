@@ -1,8 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, CheckCircle, Mail, RefreshCw } from 'lucide-react';
+import { ArrowUp, ArrowDown, CheckCircle, Mail, RefreshCw, Square, CheckSquare, MinusSquare, ChevronDown, X } from 'lucide-react';
 import { useFilteredPeople } from '@/hooks/usePeople';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
@@ -111,12 +111,29 @@ function VOGEmptyState() {
 }
 
 // VOG row component
-function VOGRow({ person, customFieldsMap, isOdd }) {
+function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection }) {
   const email = getFirstContactByType(person, 'email');
   const phone = getFirstPhone(person);
 
   return (
-    <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'}`}>
+    <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${
+      isSelected
+        ? 'bg-accent-50 dark:bg-accent-900/30'
+        : isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
+    }`}>
+      {/* Checkbox column */}
+      <td className="pl-4 pr-2 py-3 w-10">
+        <button
+          onClick={(e) => { e.preventDefault(); onToggleSelection(person.id); }}
+          className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+        >
+          {isSelected ? (
+            <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+          ) : (
+            <Square className="w-5 h-5" />
+          )}
+        </button>
+      </td>
       {/* Name with badge */}
       <td className="px-4 py-3 whitespace-nowrap">
         <Link to={`/people/${person.id}`} className="flex items-center gap-2">
@@ -180,6 +197,17 @@ export default function VOGList() {
 
   const queryClient = useQueryClient();
 
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [showBulkDropdown, setShowBulkDropdown] = useState(false);
+  const bulkDropdownRef = useRef(null);
+
+  // Modal state
+  const [showSendEmailModal, setShowSendEmailModal] = useState(false);
+  const [showMarkRequestedModal, setShowMarkRequestedModal] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [bulkActionResult, setBulkActionResult] = useState(null);
+
   // Fetch filtered people with VOG-specific filters
   const { data, isLoading, error } = useFilteredPeople({
     page: 1,
@@ -212,6 +240,96 @@ export default function VOGList() {
     });
     return map;
   }, [customFields]);
+
+  // Selection helpers
+  const toggleSelection = (personId) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(personId)) {
+        next.delete(personId);
+      } else {
+        next.add(personId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === people.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(people.map(p => p.id)));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  // Derived state
+  const isAllSelected = people.length > 0 && selectedIds.size === people.length;
+  const isSomeSelected = selectedIds.size > 0 && selectedIds.size < people.length;
+
+  // Clear selection when data changes
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [people]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (bulkDropdownRef.current && !bulkDropdownRef.current.contains(event.target)) {
+        setShowBulkDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Bulk action mutations
+  const sendEmailsMutation = useMutation({
+    mutationFn: ({ ids }) => prmApi.bulkSendVOGEmails(ids),
+    onSuccess: (response) => {
+      setBulkActionResult(response.data);
+      queryClient.invalidateQueries({ queryKey: ['people', 'filtered'] });
+    },
+  });
+
+  const markRequestedMutation = useMutation({
+    mutationFn: ({ ids }) => prmApi.bulkMarkVOGRequested(ids),
+    onSuccess: (response) => {
+      setBulkActionResult(response.data);
+      queryClient.invalidateQueries({ queryKey: ['people', 'filtered'] });
+    },
+  });
+
+  // Bulk action handlers
+  const handleSendEmails = async () => {
+    setBulkActionLoading(true);
+    setBulkActionResult(null);
+    try {
+      await sendEmailsMutation.mutateAsync({ ids: Array.from(selectedIds) });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleMarkRequested = async () => {
+    setBulkActionLoading(true);
+    setBulkActionResult(null);
+    try {
+      await markRequestedMutation.mutateAsync({ ids: Array.from(selectedIds) });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowSendEmailModal(false);
+    setShowMarkRequestedModal(false);
+    setBulkActionResult(null);
+    if (bulkActionResult && (bulkActionResult.sent > 0 || bulkActionResult?.marked > 0)) {
+      clearSelection();
+    }
+  };
 
   // Handle sort
   const handleSort = useCallback((columnId, newOrder) => {
@@ -270,6 +388,22 @@ export default function VOGList() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
+                {/* Checkbox header */}
+                <th scope="col" className="pl-4 pr-2 py-3 w-10 bg-gray-50 dark:bg-gray-800">
+                  <button
+                    onClick={toggleSelectAll}
+                    className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                    title={isAllSelected ? 'Deselecteer alles' : 'Selecteer alles'}
+                  >
+                    {isAllSelected ? (
+                      <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                    ) : isSomeSelected ? (
+                      <MinusSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                    ) : (
+                      <Square className="w-5 h-5" />
+                    )}
+                  </button>
+                </th>
                 <SortableHeader
                   label="Naam"
                   columnId="first_name"
@@ -317,6 +451,8 @@ export default function VOGList() {
                   person={person}
                   customFieldsMap={customFieldsMap}
                   isOdd={index % 2 === 1}
+                  isSelected={selectedIds.has(person.id)}
+                  onToggleSelection={toggleSelection}
                 />
               ))}
             </tbody>
