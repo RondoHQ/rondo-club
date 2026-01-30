@@ -238,8 +238,9 @@ export default function VOGList() {
   const [orderby, setOrderby] = useState('custom_datum-vog');
   const [order, setOrder] = useState('asc');
 
-  // Email status filter state
+  // Filter state
   const [emailStatusFilter, setEmailStatusFilter] = useState('');
+  const [vogTypeFilter, setVogTypeFilter] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const queryClient = useQueryClient();
@@ -269,6 +270,7 @@ export default function VOGList() {
     vogMissing: '1',
     vogOlderThanYears: 3,
     vogEmailStatus: emailStatusFilter,
+    vogType: vogTypeFilter,
     orderby,
     order,
   });
@@ -295,6 +297,13 @@ export default function VOGList() {
     const sent = allPeople.filter(p => p.acf?.['vog_email_sent_date']).length;
     const notSent = allPeople.length - sent;
     return { total: allPeople.length, sent, notSent };
+  }, [allData?.people]);
+
+  const vogTypeCounts = useMemo(() => {
+    const allPeople = allData?.people || [];
+    const nieuw = allPeople.filter(p => !p.acf?.['datum-vog']).length;
+    const vernieuwing = allPeople.length - nieuw;
+    return { total: allPeople.length, nieuw, vernieuwing };
   }, [allData?.people]);
 
   // Fetch custom field definitions for list view columns
@@ -456,6 +465,7 @@ export default function VOGList() {
         vog_missing: '1',
         vog_older_than_years: 3,
         vog_email_status: emailStatusFilter || undefined,
+        vog_type: vogTypeFilter || undefined,
         orderby,
         order,
       };
@@ -610,13 +620,13 @@ export default function VOGList() {
             <div className="relative" ref={filterRef}>
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`btn-secondary ${emailStatusFilter ? 'bg-accent-50 text-accent-700 border-accent-200 dark:bg-accent-900/30 dark:text-accent-300 dark:border-accent-700' : ''}`}
+                className={`btn-secondary ${(emailStatusFilter || vogTypeFilter) ? 'bg-accent-50 text-accent-700 border-accent-200 dark:bg-accent-900/30 dark:text-accent-300 dark:border-accent-700' : ''}`}
               >
                 <Filter className="w-4 h-4 md:mr-2" />
                 <span className="hidden md:inline">Filter</span>
-                {emailStatusFilter && (
+                {(emailStatusFilter || vogTypeFilter) && (
                   <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
-                    1
+                    {(emailStatusFilter ? 1 : 0) + (vogTypeFilter ? 1 : 0)}
                   </span>
                 )}
               </button>
@@ -628,6 +638,75 @@ export default function VOGList() {
                   className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
                 >
                   <div className="p-4 space-y-4">
+                    {/* VOG Type Filter */}
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        VOG type
+                      </h3>
+                      <div className="space-y-1">
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            checked={vogTypeFilter === ''}
+                            onChange={() => setVogTypeFilter('')}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            vogTypeFilter === ''
+                              ? 'bg-accent-600 border-accent-600'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {vogTypeFilter === '' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Alle ({vogTypeCounts.total})
+                          </span>
+                        </label>
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            checked={vogTypeFilter === 'nieuw'}
+                            onChange={() => setVogTypeFilter('nieuw')}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            vogTypeFilter === 'nieuw'
+                              ? 'bg-accent-600 border-accent-600'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {vogTypeFilter === 'nieuw' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Nieuw ({vogTypeCounts.nieuw})
+                          </span>
+                        </label>
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            checked={vogTypeFilter === 'vernieuwing'}
+                            onChange={() => setVogTypeFilter('vernieuwing')}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            vogTypeFilter === 'vernieuwing'
+                              ? 'bg-accent-600 border-accent-600'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {vogTypeFilter === 'vernieuwing' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Vernieuwing ({vogTypeCounts.vernieuwing})
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
                     {/* Email Status Filter */}
                     <div>
                       <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
@@ -698,9 +777,12 @@ export default function VOGList() {
                     </div>
 
                     {/* Clear Filters */}
-                    {emailStatusFilter && (
+                    {(emailStatusFilter || vogTypeFilter) && (
                       <button
-                        onClick={() => setEmailStatusFilter('')}
+                        onClick={() => {
+                          setEmailStatusFilter('');
+                          setVogTypeFilter('');
+                        }}
                         className="w-full text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
                       >
                         Alle filters wissen
@@ -711,18 +793,31 @@ export default function VOGList() {
               )}
             </div>
 
-            {/* Active Filter Chip */}
-            {emailStatusFilter && (
+            {/* Active Filter Chips */}
+            {(emailStatusFilter || vogTypeFilter) && (
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700 rounded">
-                  Email: {emailStatusFilter === 'sent' ? 'Wel verzonden' : 'Niet verzonden'}
-                  <button
-                    onClick={() => setEmailStatusFilter('')}
-                    className="hover:text-accent-900 dark:hover:text-accent-100"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
+                {emailStatusFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700 rounded">
+                    Email: {emailStatusFilter === 'sent' ? 'Wel verzonden' : 'Niet verzonden'}
+                    <button
+                      onClick={() => setEmailStatusFilter('')}
+                      className="hover:text-accent-900 dark:hover:text-accent-100"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {vogTypeFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700 rounded">
+                    Type: {vogTypeFilter === 'nieuw' ? 'Nieuw' : 'Vernieuwing'}
+                    <button
+                      onClick={() => setVogTypeFilter('')}
+                      className="hover:text-accent-900 dark:hover:text-accent-100"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
               </div>
             )}
           </div>
