@@ -28,10 +28,11 @@ This milestone adds VOG (Verklaring Omtrent Gedrag) compliance management for vo
   3. New volunteer template supports {first_name} variable substitution
   4. Renewal template supports {first_name} and {previous_vog_date} variables
   5. VOG email sent date is stored per person (ACF field)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 119-01: TBD
+- [ ] 119-01-PLAN.md — PHP backend: VOG email service class and REST endpoints
+- [ ] 119-02-PLAN.md — Frontend: VOG settings tab in Settings page
 
 ### Phase 120: VOG List Page
 **Goal**: Users can see which volunteers need VOG action
@@ -78,7 +79,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 119. Backend Foundation | 0/TBD | Not started | - |
+| 119. Backend Foundation | 0/2 | Planned | - |
 | 120. VOG List Page | 0/TBD | Not started | - |
 | 121. Bulk Actions | 0/TBD | Not started | - |
 | 122. Tracking & Polish | 0/TBD | Not started | - |
