@@ -368,8 +368,49 @@ class GoogleSheets extends Base {
 			$params = [ 'valueInputOption' => 'RAW' ];
 			$sheets_service->spreadsheets_values->update( $spreadsheet_id, $range, $body, $params );
 
-			// Auto-resize columns
+			// Build formatting requests
 			$requests = [];
+
+			// 1. Format header row: bold text, light gray background
+			$requests[] = [
+				'repeatCell' => [
+					'range'  => [
+						'sheetId'          => $sheet_id,
+						'startRowIndex'    => 0,
+						'endRowIndex'      => 1,
+						'startColumnIndex' => 0,
+						'endColumnIndex'   => count( $columns ),
+					],
+					'cell'   => [
+						'userEnteredFormat' => [
+							'backgroundColor' => [
+								'red'   => 0.9,
+								'green' => 0.9,
+								'blue'  => 0.9,
+							],
+							'textFormat'      => [
+								'bold' => true,
+							],
+						],
+					],
+					'fields' => 'userEnteredFormat(backgroundColor,textFormat)',
+				],
+			];
+
+			// 2. Freeze header row
+			$requests[] = [
+				'updateSheetProperties' => [
+					'properties' => [
+						'sheetId'          => $sheet_id,
+						'gridProperties'   => [
+							'frozenRowCount' => 1,
+						],
+					],
+					'fields'     => 'gridProperties.frozenRowCount',
+				],
+			];
+
+			// 3. Auto-resize columns
 			for ( $i = 0; $i < count( $columns ); $i++ ) {
 				$requests[] = [
 					'autoResizeDimensions' => [
@@ -441,7 +482,10 @@ class GoogleSheets extends Base {
 			$filters
 		);
 
-		// Make internal REST request to reuse all filtering logic
+		// Use the People REST class directly to get filtered results
+		$people_api = new People();
+
+		// Create a mock REST request with our parameters
 		$request = new \WP_REST_Request( 'GET', '/stadion/v1/people' );
 		foreach ( $params as $key => $value ) {
 			if ( $value !== null && $value !== '' ) {
@@ -449,9 +493,11 @@ class GoogleSheets extends Base {
 			}
 		}
 
-		$response = rest_do_request( $request );
+		// Call the get_filtered_people method directly
+		$response = $people_api->get_filtered_people( $request );
 
-		if ( $response->is_error() ) {
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Google Sheets Export - Error: ' . $response->get_error_message() );
 			return [];
 		}
 
@@ -503,22 +549,41 @@ class GoogleSheets extends Base {
 	/**
 	 * Get column header label
 	 *
+	 * Uses column metadata from API class for consistent labeling.
+	 *
 	 * @param string $col_id Column ID.
 	 * @return string Header label.
 	 */
 	private function get_column_header( string $col_id ): string {
-		$headers = [
+		// Core columns with Dutch labels
+		$core_headers = [
 			'name'       => 'Naam',
 			'first_name' => 'Voornaam',
 			'last_name'  => 'Achternaam',
-			'email'      => 'Email',
+			'email'      => 'E-mail',
 			'phone'      => 'Telefoon',
 			'team'       => 'Team',
 			'labels'     => 'Labels',
-			'modified'   => 'Gewijzigd',
+			'modified'   => 'Laatst gewijzigd',
 		];
 
-		return $headers[ $col_id ] ?? ucfirst( $col_id );
+		// Check core headers first
+		if ( isset( $core_headers[ $col_id ] ) ) {
+			return $core_headers[ $col_id ];
+		}
+
+		// Check custom fields for label
+		$manager       = new \Stadion\CustomFields\Manager();
+		$custom_fields = $manager->get_fields( 'person', false );
+
+		foreach ( $custom_fields as $field ) {
+			if ( $field['name'] === $col_id ) {
+				return $field['label'];
+			}
+		}
+
+		// Fallback: capitalize the column ID
+		return ucfirst( str_replace( '_', ' ', $col_id ) );
 	}
 
 	/**
