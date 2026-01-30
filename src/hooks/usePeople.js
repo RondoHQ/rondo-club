@@ -107,6 +107,7 @@ export function usePeople(params = {}) {
  * @param {string} filters.fotoMissing - '1' to show only people without photo date
  * @param {string} filters.vogMissing - '1' to show only people without VOG date
  * @param {number} filters.vogOlderThanYears - Filter for VOG older than N years
+ * @param {string} filters.vogEmailStatus - 'sent' or 'not_sent' to filter by email status
  * @returns {Object} TanStack Query result with data, isLoading, error, etc.
  */
 export function useFilteredPeople(filters = {}) {
@@ -128,6 +129,7 @@ export function useFilteredPeople(filters = {}) {
     foto_missing: filters.fotoMissing || null,
     vog_missing: filters.vogMissing || null,
     vog_older_than_years: filters.vogOlderThanYears || null,
+    vog_email_status: filters.vogEmailStatus || null,
   };
 
   return useQuery({
