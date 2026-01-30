@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 Phase: Ready for next milestone
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-01-30 — Completed quick task 016: Email and phone columns in People list
+Last activity: 2026-01-30 — Completed quick task 017: Google Sheets export for People list
 
 Progress: Milestone complete, awaiting next milestone definition
 
@@ -61,11 +61,12 @@ None.
 | 014 | Team Activiteit column and subtitle | 2026-01-30 | 61ff9d0 | [014-team-activiteit-column-and-subtitle](./quick/014-team-activiteit-column-and-subtitle/) |
 | 015 | People list filtered count in header | 2026-01-30 | f01c1cd | [015-people-list-filtered-count-in-header](./quick/015-people-list-filtered-count-in-header/) |
 | 016 | Email and phone columns in People list | 2026-01-30 | 8a794e6 | [016-email-phone-columns-people-list](./quick/016-email-phone-columns-people-list/) |
+| 017 | Google Sheets export for People list | 2026-01-30 | 0f82bd7 | [017-google-sheets-export-people-list](./quick/017-google-sheets-export-people-list/) |
 
 ## Session Continuity
 
-Last session: 2026-01-30 13:31 UTC
-Stopped at: Completed quick task 016
+Last session: 2026-01-30 07:44 UTC
+Stopped at: Completed quick task 017
 Resume file: None
 
 Next: /gsd:new-milestone for next milestone
