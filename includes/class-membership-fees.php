@@ -550,6 +550,55 @@ class MembershipFees {
 	}
 
 	/**
+	 * Normalize a Dutch postal code
+	 *
+	 * Removes whitespace and converts to uppercase. Dutch postal codes
+	 * have format "1234AB" (4 digits + 2 letters).
+	 *
+	 * @param string $postal_code The postal code to normalize.
+	 * @return string Normalized postal code (e.g., "1234 ab" -> "1234AB").
+	 */
+	public function normalize_postal_code( string $postal_code ): string {
+		// Trim, remove all whitespace, and convert to uppercase
+		$trimmed    = trim( $postal_code );
+		$no_spaces  = preg_replace( '/\s+/', '', $trimmed );
+
+		return strtoupper( $no_spaces );
+	}
+
+	/**
+	 * Extract house number from a street address
+	 *
+	 * Parses the house number (with optional addition) from a street address.
+	 * Supports formats like "Kerkstraat 12", "Kerkstraat 12A", "Straat 7-bis".
+	 *
+	 * @param string $street The street address to parse.
+	 * @return string|null House number with addition (e.g., "12A") or null if not found.
+	 */
+	public function extract_house_number( string $street ): ?string {
+		$trimmed = trim( $street );
+
+		if ( empty( $trimmed ) ) {
+			return null;
+		}
+
+		// Match number at end of street, optionally followed by addition
+		// Examples: "Straat 12", "Straat 12A", "Straat 12-A", "Straat 12/A"
+		if ( preg_match( '/(\d+)\s*[-\/]?\s*([a-zA-Z0-9]*)$/', $trimmed, $matches ) ) {
+			$number   = $matches[1];
+			$addition = strtoupper( trim( $matches[2] ) );
+
+			if ( ! empty( $addition ) ) {
+				return $number . $addition;
+			}
+
+			return $number;
+		}
+
+		return null;
+	}
+
+	/**
 	 * Get calculation status for a person
 	 *
 	 * Returns diagnostic information about why a person might be excluded from
