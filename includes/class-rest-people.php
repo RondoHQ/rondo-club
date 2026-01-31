@@ -350,6 +350,11 @@ class People extends Base {
 							return in_array( $value, [ '', 'nieuw', 'vernieuwing' ], true );
 						},
 					],
+					'leeftijdsgroep' => [
+						'description'       => 'Filter by age group',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
 				],
 			]
 		);
@@ -1043,6 +1048,7 @@ class People extends Base {
 		$vog_older_than_years = $request->get_param( 'vog_older_than_years' );
 		$vog_email_status     = $request->get_param( 'vog_email_status' );
 		$vog_type             = $request->get_param( 'vog_type' );
+		$leeftijdsgroep       = $request->get_param( 'leeftijdsgroep' );
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -1144,6 +1150,13 @@ class People extends Base {
 			$prepare_values[] = $type_lid;
 		}
 
+		// Leeftijdsgroep (age group) - select filter
+		if ( ! empty( $leeftijdsgroep ) ) {
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} lg ON p.ID = lg.post_id AND lg.meta_key = 'leeftijdsgroep'";
+			$where_clauses[]  = "lg.meta_value = %s";
+			$prepare_values[] = $leeftijdsgroep;
+		}
+
 		// Datum foto (photo date) - missing filter
 		if ( $foto_missing === '1' ) {
 			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} df ON p.ID = df.post_id AND df.meta_key = 'datum-foto'";
@@ -1226,7 +1239,21 @@ class People extends Base {
 
 					// Build type-appropriate ORDER BY clause
 					// Always include first_name as secondary sort for consistent ordering
-					if ( $field_type === 'number' ) {
+					if ( $field_name === 'leeftijdsgroep' ) {
+						// Custom sort for leeftijdsgroep: Onder 6 < Onder 7 < ... < Onder 19 < Senioren
+						// Extract numeric part from "Onder X" values, treat "Senioren" as 99
+						$order_clause = "ORDER BY
+							CASE
+								WHEN cf.meta_value LIKE 'Onder %' THEN CAST(SUBSTRING(cf.meta_value, 7) AS UNSIGNED)
+								WHEN cf.meta_value LIKE 'Senioren%' THEN 99
+								ELSE 100
+							END $order,
+							CASE
+								WHEN cf.meta_value LIKE '%Meiden%' OR cf.meta_value LIKE '%Vrouwen%' THEN 1
+								ELSE 0
+							END $order,
+							fn.meta_value ASC";
+					} elseif ( $field_type === 'number' ) {
 						// Numeric sort with NULLS LAST
 						$order_clause = "ORDER BY CAST(cf.meta_value AS DECIMAL(10,2)) $order, fn.meta_value ASC";
 					} elseif ( $field_type === 'date' ) {
