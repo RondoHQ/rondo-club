@@ -293,6 +293,10 @@ export const prmApi = {
   getVOGSettings: () => api.get('/stadion/v1/vog/settings'),
   updateVOGSettings: (settings) => api.post('/stadion/v1/vog/settings', settings),
 
+  // Membership Fee Settings (admin only)
+  getMembershipFeeSettings: () => api.get('/stadion/v1/membership-fees/settings'),
+  updateMembershipFeeSettings: (settings) => api.post('/stadion/v1/membership-fees/settings', settings),
+
   // VOG Bulk Operations
   bulkSendVOGEmails: (ids) => api.post('/stadion/v1/vog/bulk-send', { ids }),
   bulkMarkVOGRequested: (ids) => api.post('/stadion/v1/vog/bulk-mark-requested', { ids }),
