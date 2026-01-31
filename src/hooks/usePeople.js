@@ -132,6 +132,7 @@ export function useFilteredPeople(filters = {}) {
     vog_older_than_years: filters.vogOlderThanYears || null,
     vog_email_status: filters.vogEmailStatus || null,
     vog_type: filters.vogType || null,
+    leeftijdsgroep: filters.leeftijdsgroep || null,
   };
 
   return useQuery({
