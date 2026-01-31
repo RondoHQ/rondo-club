@@ -103,4 +103,167 @@ class MembershipFees {
 
 		return update_option( self::OPTION_KEY, $current );
 	}
+
+	/**
+	 * Parse leeftijdsgroep (age group) to fee category
+	 *
+	 * Normalizes the age group string and maps it to the appropriate fee category.
+	 * Strips " Meiden" and " Vrouwen" suffixes before matching.
+	 *
+	 * @param string $leeftijdsgroep The age group string (e.g., "Onder 14", "Senioren", "Onder 8 Meiden").
+	 * @return string|null The fee category (mini, pupil, junior, senior) or null if unrecognized.
+	 */
+	public function parse_age_group( string $leeftijdsgroep ): ?string {
+		// Normalize: trim and strip " Meiden" / " Vrouwen" suffixes
+		$normalized = preg_replace( '/\s+(Meiden|Vrouwen)$/i', '', trim( $leeftijdsgroep ) );
+
+		// Handle empty string after normalization
+		if ( empty( $normalized ) ) {
+			return null;
+		}
+
+		// Handle "Senioren" (case-insensitive)
+		if ( strcasecmp( $normalized, 'Senioren' ) === 0 ) {
+			return 'senior';
+		}
+
+		// Handle "JO23" format (treated as senior)
+		if ( preg_match( '/^JO\s*23$/i', $normalized ) ) {
+			return 'senior';
+		}
+
+		// Extract number from "Onder X" format
+		if ( preg_match( '/^Onder\s+(\d+)$/i', $normalized, $matches ) ) {
+			$age = (int) $matches[1];
+
+			// Map age ranges to fee categories
+			if ( $age >= 6 && $age <= 7 ) {
+				return 'mini';
+			}
+			if ( $age >= 8 && $age <= 11 ) {
+				return 'pupil';
+			}
+			if ( $age >= 12 && $age <= 19 ) {
+				return 'junior';
+			}
+		}
+
+		// Handle "JO" format (e.g., JO14, JO8)
+		if ( preg_match( '/^JO\s*(\d+)$/i', $normalized, $matches ) ) {
+			$age = (int) $matches[1];
+
+			if ( $age >= 6 && $age <= 7 ) {
+				return 'mini';
+			}
+			if ( $age >= 8 && $age <= 11 ) {
+				return 'pupil';
+			}
+			if ( $age >= 12 && $age <= 19 ) {
+				return 'junior';
+			}
+		}
+
+		// Unrecognized format
+		return null;
+	}
+
+	/**
+	 * Get current team IDs for a person
+	 *
+	 * Retrieves team IDs from the work_history ACF repeater field where the person
+	 * is currently active (is_current flag or end_date in future/not set).
+	 *
+	 * @param int $person_id The person post ID.
+	 * @return array<int> Array of unique team IDs.
+	 */
+	public function get_current_teams( int $person_id ): array {
+		$work_history = get_field( 'work_history', $person_id ) ?: [];
+		$team_ids     = [];
+
+		if ( empty( $work_history ) ) {
+			return [];
+		}
+
+		$today = strtotime( 'today' );
+
+		foreach ( $work_history as $job ) {
+			// Skip if no team reference
+			if ( ! isset( $job['team'] ) || empty( $job['team'] ) ) {
+				continue;
+			}
+
+			$team_id  = (int) $job['team'];
+			$job_post = get_post( $team_id );
+
+			// Verify the post is actually a team
+			if ( ! $job_post || $job_post->post_type !== 'team' ) {
+				continue;
+			}
+
+			// Determine if person is currently on this team
+			$is_current = false;
+
+			if ( ! empty( $job['is_current'] ) ) {
+				// is_current flag is set
+				if ( ! empty( $job['end_date'] ) ) {
+					$end_date   = strtotime( $job['end_date'] );
+					$is_current = ( $end_date >= $today );
+				} else {
+					$is_current = true;
+				}
+			} elseif ( empty( $job['end_date'] ) ) {
+				// No end date means still current
+				$is_current = true;
+			} else {
+				// Check if end date is in future
+				$end_date   = strtotime( $job['end_date'] );
+				$is_current = ( $end_date >= $today );
+			}
+
+			if ( $is_current && ! in_array( $team_id, $team_ids, true ) ) {
+				$team_ids[] = $team_id;
+			}
+		}
+
+		return $team_ids;
+	}
+
+	/**
+	 * Check if a team is a recreational team
+	 *
+	 * Recreational teams have "recreant" or "walking football" in their name.
+	 *
+	 * @param int $team_id The team post ID.
+	 * @return bool True if the team is recreational.
+	 */
+	public function is_recreational_team( int $team_id ): bool {
+		$team = get_post( $team_id );
+
+		if ( ! $team || $team->post_type !== 'team' ) {
+			return false;
+		}
+
+		$title = strtolower( $team->post_title );
+
+		return ( stripos( $title, 'recreant' ) !== false || stripos( $title, 'walking football' ) !== false );
+	}
+
+	/**
+	 * Check if a person is a donateur (donor) only
+	 *
+	 * Returns true only if the person has exactly one werkfunctie and it is "Donateur".
+	 *
+	 * @param int $person_id The person post ID.
+	 * @return bool True if the person is a donateur only.
+	 */
+	public function is_donateur( int $person_id ): bool {
+		$werkfuncties = get_field( 'werkfuncties', $person_id ) ?: [];
+
+		if ( empty( $werkfuncties ) ) {
+			return false;
+		}
+
+		// True only if exactly one function and it's "Donateur"
+		return ( count( $werkfuncties ) === 1 && in_array( 'Donateur', $werkfuncties, true ) );
+	}
 }
