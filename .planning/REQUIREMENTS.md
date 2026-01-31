@@ -68,11 +68,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | NAV-01 | Phase 126 | Pending |
 | NAV-02 | Phase 126 | Pending |
-| FEE-01 | Phase 124 | Pending |
-| FEE-02 | Phase 124 | Pending |
-| FEE-03 | Phase 124 | Pending |
-| FEE-04 | Phase 124 | Pending |
-| FEE-05 | Phase 124 | Pending |
+| FEE-01 | Phase 124 | Complete |
+| FEE-02 | Phase 124 | Complete |
+| FEE-03 | Phase 124 | Complete |
+| FEE-04 | Phase 124 | Complete |
+| FEE-05 | Phase 124 | Complete |
 | FAM-01 | Phase 125 | Pending |
 | FAM-02 | Phase 125 | Pending |
 | FAM-03 | Phase 125 | Pending |
@@ -96,4 +96,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 (Phase 123 complete - SET-01 through SET-06)*
+*Last updated: 2026-01-31 (Phase 124 complete - FEE-01 through FEE-05)*
