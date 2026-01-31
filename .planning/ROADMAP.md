@@ -66,17 +66,17 @@ Plans:
 **Depends on**: Phase 124
 **Requirements**: FAM-01, FAM-02, FAM-03, FAM-04, FAM-05
 **Success Criteria** (what must be TRUE):
-  1. System groups members by normalized address (street, number, postal code)
+  1. System groups members by normalized address (postal code + house number)
   2. First (most expensive) youth member pays full fee
   3. Second youth member at same address gets 25% discount
   4. Third and subsequent youth members get 50% discount
-  5. Discount applies to youngest/cheapest member first (descending by base fee)
+  5. Discount applies to cheapest member first (descending by base fee)
   6. Recreants and donateurs do not receive family discount
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 125-01: Address normalization and family grouping
-- [ ] 125-02: Tiered discount calculation logic
+- [ ] 125-01-PLAN.md — Address normalization and family grouping (normalize_postal_code, extract_house_number, get_family_key, build_family_groups)
+- [ ] 125-02-PLAN.md — Tiered discount calculation logic (get_family_discount_rate, calculate_fee_with_family_discount)
 
 ### Phase 126: Pro-rata & UI
 **Goal**: Users can view calculated fees with pro-rata and filter by address issues
@@ -107,9 +107,9 @@ Phases execute in numeric order: 123 -> 124 -> 125 -> 126
 |-------|----------------|--------|-----------|
 | 123. Settings & Backend Foundation | 2/2 | ✓ Complete | 2026-01-31 |
 | 124. Fee Calculation Engine | 2/2 | ✓ Complete | 2026-01-31 |
-| 125. Family Discount | 0/2 | Not started | - |
+| 125. Family Discount | 0/2 | Planned | - |
 | 126. Pro-rata & UI | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-01-31 (Phase 124 complete)*
+*Last updated: 2026-01-31 (Phase 125 planned)*
