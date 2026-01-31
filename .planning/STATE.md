@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 
 ## Current Position
 
-Phase: 124 of 126 (Fee Calculation Engine) - COMPLETE
-Plan: 2 of 2 in current phase - COMPLETE
-Status: Phase complete
-Last activity: 2026-01-31 - Completed 124-02-PLAN.md
+Phase: 125 of 126 (Family Discounts)
+Plan: 1 of 2 in current phase - COMPLETE
+Status: In progress
+Last activity: 2026-01-31 - Completed 125-01-PLAN.md
 
-Progress: [████░░░░░░] 44%
+Progress: [█████░░░░░] 56%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 4 min
-- Total execution time: 0.27 hours
+- Total execution time: 0.33 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [████░░░░░░] 44%
 |-------|-------|-------|----------|
 | 123 | 2/2 | 8 min | 4 min |
 | 124 | 2/2 | 8 min | 4 min |
-| 125 | 0/2 | - | - |
+| 125 | 1/2 | 4 min | 4 min |
 | 126 | 0/3 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 123-01 (3 min), 123-02 (5 min), 124-01 (4 min), 124-02 (4 min)
+- Last 5 plans: 123-01 (3 min), 123-02 (5 min), 124-01 (4 min), 124-02 (4 min), 125-01 (4 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -54,6 +54,9 @@ Recent decisions affecting current work:
 | 2026-01-31 | Recreant fee only when ALL teams recreational | Higher fee wins principle |
 | 2026-01-31 | Members with teams but no leeftijdsgroep excluded | Data issue flagging |
 | 2026-01-31 | Season key format: YYYY-YYYY (e.g., 2025-2026) | Human-readable, standard sports season format |
+| 2026-01-31 | Family key format: POSTALCODE-HOUSENUMBER | Postal code + house number only (street name ignored) |
+| 2026-01-31 | House number additions significant | 12A and 12B = different families |
+| 2026-01-31 | Family sort order: base_fee descending | Highest fee = position 1 (full price), lower fees get discount |
 
 ### Pending Todos
 
@@ -61,12 +64,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None - Phase 124 completed successfully. Ready for Phase 125 (Family Discounts).
+None - Plan 125-01 completed successfully. Ready for Plan 125-02 (Family discount calculation).
 
 ## Session Continuity
 
-Last session: 2026-01-31 15:30 UTC
-Stopped at: Completed 124-02-PLAN.md (Phase 124 complete)
+Last session: 2026-01-31 21:12 UTC
+Stopped at: Completed 125-01-PLAN.md
 Resume file: None
 
 ---
