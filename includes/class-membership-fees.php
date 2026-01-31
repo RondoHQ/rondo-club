@@ -759,6 +759,134 @@ class MembershipFees {
 	}
 
 	/**
+	 * Calculate fee with family discount for a person
+	 *
+	 * Calculates the base fee and applies family discount based on position
+	 * within the family group. Most expensive youth member pays full fee,
+	 * second gets 25% off, third+ get 50% off.
+	 *
+	 * Non-youth members (senior, recreant, donateur) are not eligible for
+	 * family discount per FAM-05 requirement.
+	 *
+	 * @param int         $person_id The person post ID.
+	 * @param string|null $season    Optional season key, defaults to current season.
+	 * @return array|null Fee data with family discount info, or null if not calculable.
+	 */
+	public function calculate_fee_with_family_discount( int $person_id, ?string $season = null ): ?array {
+		// Get base fee using calculate_fee
+		$fee_data = $this->calculate_fee( $person_id );
+
+		if ( $fee_data === null ) {
+			return null;
+		}
+
+		// Youth categories eligible for family discount
+		$youth_categories = [ 'mini', 'pupil', 'junior' ];
+
+		// Non-youth: no family discount eligible
+		if ( ! in_array( $fee_data['category'], $youth_categories, true ) ) {
+			return array_merge(
+				$fee_data,
+				[
+					'family_discount_rate'   => 0.0,
+					'family_discount_amount' => 0,
+					'final_fee'              => $fee_data['base_fee'],
+					'family_position'        => null,
+					'family_key'             => null,
+					'family_size'            => null,
+				]
+			);
+		}
+
+		// Get family key for this person
+		$family_key = $this->get_family_key( $person_id );
+
+		// No valid address: no discount possible
+		if ( $family_key === null ) {
+			return array_merge(
+				$fee_data,
+				[
+					'family_discount_rate'   => 0.0,
+					'family_discount_amount' => 0,
+					'final_fee'              => $fee_data['base_fee'],
+					'family_position'        => null,
+					'family_key'             => null,
+					'family_size'            => 1,
+				]
+			);
+		}
+
+		// Build family groups
+		$groups         = $this->build_family_groups( $season );
+		$families       = $groups['families'];
+		$person_data    = $groups['person_data'];
+		$family_members = $families[ $family_key ] ?? [];
+
+		// Family has only 1 member: no discount
+		if ( count( $family_members ) <= 1 ) {
+			return array_merge(
+				$fee_data,
+				[
+					'family_discount_rate'   => 0.0,
+					'family_discount_amount' => 0,
+					'final_fee'              => $fee_data['base_fee'],
+					'family_position'        => 1,
+					'family_key'             => $family_key,
+					'family_size'            => count( $family_members ),
+				]
+			);
+		}
+
+		// Build sorted list by base_fee descending (most expensive first)
+		$sorted = [];
+		foreach ( $family_members as $member_id ) {
+			$sorted[] = [
+				'person_id' => $member_id,
+				'base_fee'  => $person_data[ $member_id ]['base_fee'],
+			];
+		}
+
+		usort(
+			$sorted,
+			function ( $a, $b ) {
+				// Sort descending by base_fee
+				$cmp = $b['base_fee'] <=> $a['base_fee'];
+				if ( $cmp !== 0 ) {
+					return $cmp;
+				}
+				// Tie-breaker: lower person_id first (older record = full fee)
+				return $a['person_id'] <=> $b['person_id'];
+			}
+		);
+
+		// Find position of current person (1-indexed)
+		$position = 1;
+		foreach ( $sorted as $index => $member ) {
+			if ( $member['person_id'] === $person_id ) {
+				$position = $index + 1;
+				break;
+			}
+		}
+
+		// Calculate discount
+		$discount_rate   = $this->get_family_discount_rate( $position );
+		$discount_amount = (int) round( $fee_data['base_fee'] * $discount_rate );
+		$final_fee       = $fee_data['base_fee'] - $discount_amount;
+
+		return array_merge(
+			$fee_data,
+			[
+				'family_discount_rate'   => $discount_rate,
+				'family_discount_amount' => $discount_amount,
+				'final_fee'              => $final_fee,
+				'family_position'        => $position,
+				'family_key'             => $family_key,
+				'family_size'            => count( $family_members ),
+			]
+		);
+	}
+
+	/**
 	 * Get calculation status for a person
 	 *
 	 * Returns diagnostic information about why a person might be excluded from
