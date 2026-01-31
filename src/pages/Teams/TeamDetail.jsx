@@ -326,7 +326,7 @@ export default function TeamDetail() {
       {/* Members section - 3 columns: Spelers, Staf, Voormalig spelers */}
       {(() => {
         // Player roles that identify someone as a player vs staff
-        const playerRoles = ['Aanvaller', 'Verdediger', 'Keeper', 'Middenvelder', 'Teamspeler', 'Speler'];
+        const playerRoles = ['Aanvaller', 'Verdediger', 'Keeper', 'Middenvelder', 'Teamspeler', 'Speler', 'Champions league', 'Zondag recranten', 'Zaterdag recreanten'];
         const isPlayerRole = (jobTitle) => playerRoles.includes(jobTitle);
 
         // Split current members into players and staff
