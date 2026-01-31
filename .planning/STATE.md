@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 ## Current Position
 
 Phase: 126 of 126 (Pro-rata UI)
-Plan: 1 of 3 in current phase - COMPLETE
+Plan: 2 of 3 in current phase - COMPLETE
 Status: In progress
-Last activity: 2026-01-31 - Completed 126-01-PLAN.md
+Last activity: 2026-01-31 - Completed 126-02-PLAN.md
 
-Progress: [███████░░░] 78%
+Progress: [████████░░] 89%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 3.6 min
-- Total execution time: 0.42 hours
+- Total plans completed: 8
+- Average duration: 3.9 min
+- Total execution time: 0.50 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [███████░░░] 78%
 | 123 | 2/2 | 8 min | 4 min |
 | 124 | 2/2 | 8 min | 4 min |
 | 125 | 2/2 | 7 min | 3.5 min |
-| 126 | 1/3 | 3 min | 3 min |
+| 126 | 2/3 | 8 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 124-01 (4 min), 124-02 (4 min), 125-01 (4 min), 125-02 (3 min), 126-01 (3 min)
-- Trend: Improving
+- Last 5 plans: 124-02 (4 min), 125-01 (4 min), 125-02 (3 min), 126-01 (3 min), 126-02 (5 min)
+- Trend: Stable
 
 *Updated after each plan completion*
 
@@ -61,6 +61,11 @@ Recent decisions affecting current work:
 | 2026-01-31 | Tiered discount: 0%/25%/50% for pos 1/2/3+ | Per FAM-02, FAM-03 requirements |
 | 2026-01-31 | Quarterly pro-rata tiers: 100%/75%/50%/25% | Simple, fair for sports season structure |
 | 2026-01-31 | Registration date as parameter | Testability and separation of concerns |
+| 2026-01-31 | Contributie positioned between Leden and VOG | Logical grouping - sub-function of Leden management |
+| 2026-01-31 | Client-side sorting for fee list | Small dataset (< 500 members), simpler implementation |
+| 2026-01-31 | Category sort order: mini, pupil, junior, senior, recreant, donateur | Age progression, then membership type |
+| 2026-01-31 | Amber row highlighting for pro-rata members | Visual distinction for mid-season joins |
+| 2026-01-31 | Green percentage for family discounts | Positive color for savings, distinguishes from pro-rata |
 
 ### Pending Todos
 
@@ -68,12 +73,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None - Phase 126 Plan 01 completed successfully. Ready for 126-02 (REST API integration).
+None - Phase 126 Plans 01 and 02 completed successfully. Ready for 126-03 (Pro-rata Admin UI).
 
 ## Session Continuity
 
-Last session: 2026-01-31 21:48 UTC
-Stopped at: Completed 126-01-PLAN.md
+Last session: 2026-01-31 21:57 UTC
+Stopped at: Completed 126-02-PLAN.md
 Resume file: None
 
 ---
