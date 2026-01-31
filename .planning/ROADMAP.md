@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 123: Settings & Backend Foundation** - Fee configuration UI and calculation service scaffolding
 - [x] **Phase 124: Fee Calculation Engine** - Age-based and flat fee calculations
-- [ ] **Phase 125: Family Discount** - Address grouping and tiered discount logic
+- [x] **Phase 125: Family Discount** - Address grouping and tiered discount logic
 - [ ] **Phase 126: Pro-rata & UI** - Join date calculation, list page, and filters
 
 ## Phase Details
@@ -75,8 +75,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 125-01-PLAN.md — Address normalization and family grouping (normalize_postal_code, extract_house_number, get_family_key, build_family_groups)
-- [ ] 125-02-PLAN.md — Tiered discount calculation logic (get_family_discount_rate, calculate_fee_with_family_discount)
+- [x] 125-01-PLAN.md — Address normalization and family grouping (normalize_postal_code, extract_house_number, get_family_key, build_family_groups)
+- [x] 125-02-PLAN.md — Tiered discount calculation logic (get_family_discount_rate, calculate_fee_with_family_discount)
 
 ### Phase 126: Pro-rata & UI
 **Goal**: Users can view calculated fees with pro-rata and filter by address issues
@@ -107,9 +107,9 @@ Phases execute in numeric order: 123 -> 124 -> 125 -> 126
 |-------|----------------|--------|-----------|
 | 123. Settings & Backend Foundation | 2/2 | ✓ Complete | 2026-01-31 |
 | 124. Fee Calculation Engine | 2/2 | ✓ Complete | 2026-01-31 |
-| 125. Family Discount | 0/2 | Planned | - |
+| 125. Family Discount | 2/2 | ✓ Complete | 2026-01-31 |
 | 126. Pro-rata & UI | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-01-31 (Phase 125 planned)*
+*Last updated: 2026-01-31 (Phase 125 complete)*
