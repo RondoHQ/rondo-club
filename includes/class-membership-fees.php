@@ -266,4 +266,107 @@ class MembershipFees {
 		// True only if exactly one function and it's "Donateur"
 		return ( count( $werkfuncties ) === 1 && in_array( 'Donateur', $werkfuncties, true ) );
 	}
+
+	/**
+	 * Calculate the fee for a person
+	 *
+	 * Determines the correct fee category and amount based on the person's
+	 * age group, team membership, and work functions.
+	 *
+	 * Priority order: Youth > Senior/Recreant > Donateur
+	 * - Youth (mini/pupil/junior): Always get age-based fee
+	 * - Senior: Regular senior fee, unless ALL teams are recreational
+	 * - Recreant: Senior with only recreational teams
+	 * - Donateur: Only if no valid age group and no teams
+	 *
+	 * @param int $person_id The person post ID.
+	 * @return array{category: string, base_fee: int, leeftijdsgroep: string|null, person_id: int}|null
+	 *         Fee data array or null if person cannot be calculated.
+	 */
+	public function calculate_fee( int $person_id ): ?array {
+		// Get leeftijdsgroep from person
+		$leeftijdsgroep = get_field( 'leeftijdsgroep', $person_id );
+		$category       = null;
+
+		// Parse age group if available
+		if ( ! empty( $leeftijdsgroep ) ) {
+			$category = $this->parse_age_group( $leeftijdsgroep );
+		}
+
+		// Youth categories: Return immediately (priority over everything)
+		if ( in_array( $category, [ 'mini', 'pupil', 'junior' ], true ) ) {
+			return [
+				'category'       => $category,
+				'base_fee'       => $this->get_fee( $category ),
+				'leeftijdsgroep' => $leeftijdsgroep,
+				'person_id'      => $person_id,
+			];
+		}
+
+		// Senior category: Check for recreational teams
+		if ( $category === 'senior' ) {
+			$teams = $this->get_current_teams( $person_id );
+
+			// Senior with no teams: check donateur status
+			if ( empty( $teams ) ) {
+				// If senior with no teams but is donateur, they're still a senior member
+				// If no teams and not a playing member, exclude
+				if ( $this->is_donateur( $person_id ) ) {
+					// Has senior leeftijdsgroep but only donateur function, no teams
+					// Treat as donateur
+					return [
+						'category'       => 'donateur',
+						'base_fee'       => $this->get_fee( 'donateur' ),
+						'leeftijdsgroep' => $leeftijdsgroep,
+						'person_id'      => $person_id,
+					];
+				}
+
+				// Senior with no teams and not donateur - exclude
+				return null;
+			}
+
+			// Check if ALL teams are recreational
+			$all_recreational = true;
+			foreach ( $teams as $team_id ) {
+				if ( ! $this->is_recreational_team( $team_id ) ) {
+					$all_recreational = false;
+					break;
+				}
+			}
+
+			// If ALL teams are recreational, use recreant fee
+			// Otherwise, use senior fee (higher fee wins)
+			$fee_category = $all_recreational ? 'recreant' : 'senior';
+
+			return [
+				'category'       => $fee_category,
+				'base_fee'       => $this->get_fee( $fee_category ),
+				'leeftijdsgroep' => $leeftijdsgroep,
+				'person_id'      => $person_id,
+			];
+		}
+
+		// No valid leeftijdsgroep or parse failed
+		// Check if person has teams (data issue - exclude)
+		$teams = $this->get_current_teams( $person_id );
+
+		if ( ! empty( $teams ) ) {
+			// Has teams but no valid age group - data issue, exclude
+			return null;
+		}
+
+		// No teams, check if donateur
+		if ( $this->is_donateur( $person_id ) ) {
+			return [
+				'category'       => 'donateur',
+				'base_fee'       => $this->get_fee( 'donateur' ),
+				'leeftijdsgroep' => $leeftijdsgroep,
+				'person_id'      => $person_id,
+			];
+		}
+
+		// No valid category, no teams, not donateur - exclude
+		return null;
+	}
 }
