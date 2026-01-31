@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-29)
 Phase: 122 of 122 (Tracking & Polish)
 Plan: 02 of 2
 Status: Verified complete
-Last activity: 2026-01-30 — Completed quick task 027: VOG exempt commissies setting
+Last activity: 2026-01-31 — Completed quick task 028: Leeftijdsgroep filter and sort
 
 Progress: [███████████████████-] 100% (4/4 phases)
 
@@ -85,11 +85,12 @@ None.
 | 025 | VOG dark mode selected row contrast | 2026-01-30 | 73b2ed1 | [025-vog-dark-mode-selected-row-contrast](./quick/025-vog-dark-mode-selected-row-contrast/) |
 | 026 | VOG Nieuw/Vernieuwing filter | 2026-01-30 | 3d427d0 | [026-vog-nieuw-vernieuwing-filter](./quick/026-vog-nieuw-vernieuwing-filter/) |
 | 027 | VOG exempt commissies setting | 2026-01-30 | cbe8d54 | [027-vog-exempt-commissies-setting](./quick/027-vog-exempt-commissies-setting/) |
+| 028 | Leeftijdsgroep filter and sort | 2026-01-31 | 45d9583 | [028-leeftijdsgroep-filter-and-sort](./quick/028-leeftijdsgroep-filter-and-sort/) |
 
 ## Session Continuity
 
-Last session: 2026-01-30
-Stopped at: Completed quick task 027
+Last session: 2026-01-31
+Stopped at: Completed quick task 028
 Resume file: None
 
 Next: Continue with quick tasks or milestone work as needed
