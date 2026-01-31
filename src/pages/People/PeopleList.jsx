@@ -655,6 +655,7 @@ export default function PeopleList() {
   const huidigeVrijwilliger = searchParams.get('vrijwilliger') || '';
   const financieleBlokkade = searchParams.get('blokkade') || '';
   const typeLid = searchParams.get('typeLid') || '';
+  const leeftijdsgroep = searchParams.get('leeftijdsgroep') || '';
   const fotoMissing = searchParams.get('fotoMissing') || '';
   const vogMissing = searchParams.get('vogMissing') || '';
   const vogOlderThanYears = searchParams.get('vogOuder') ? parseInt(searchParams.get('vogOuder'), 10) : null;
@@ -719,6 +720,10 @@ export default function PeopleList() {
     updateSearchParams({ typeLid: value });
   }, [updateSearchParams]);
 
+  const setLeeftijdsgroep = useCallback((value) => {
+    updateSearchParams({ leeftijdsgroep: value });
+  }, [updateSearchParams]);
+
   const setFotoMissing = useCallback((value) => {
     updateSearchParams({ fotoMissing: value });
   }, [updateSearchParams]);
@@ -775,6 +780,7 @@ export default function PeopleList() {
     huidigeVrijwilliger,
     financieleBlokkade,
     typeLid,
+    leeftijdsgroep,
     fotoMissing,
     vogMissing,
     vogOlderThanYears,
@@ -908,7 +914,7 @@ export default function PeopleList() {
   }, []);
 
   const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter ||
-    huidigeVrijwilliger || financieleBlokkade || typeLid || fotoMissing || vogMissing || vogOlderThanYears;
+    huidigeVrijwilliger || financieleBlokkade || typeLid || leeftijdsgroep || fotoMissing || vogMissing || vogOlderThanYears;
 
   // Update filteredCount URL param when filters are active and data is loaded
   useEffect(() => {
@@ -973,7 +979,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, fotoMissing, vogMissing, vogOlderThanYears, page, people]);
+  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1112,7 +1118,7 @@ export default function PeopleList() {
                 <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
                   {selectedLabelIds.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0) +
                    (huidigeVrijwilliger ? 1 : 0) + (financieleBlokkade ? 1 : 0) + (typeLid ? 1 : 0) +
-                   (fotoMissing ? 1 : 0) + (vogMissing ? 1 : 0) + (vogOlderThanYears ? 1 : 0)}
+                   (leeftijdsgroep ? 1 : 0) + (fotoMissing ? 1 : 0) + (vogMissing ? 1 : 0) + (vogOlderThanYears ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1245,6 +1251,41 @@ export default function PeopleList() {
                     </select>
                   </div>
 
+                  {/* Leeftijdsgroep Filter */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                      Leeftijdsgroep
+                    </h3>
+                    <select
+                      value={leeftijdsgroep}
+                      onChange={(e) => setLeeftijdsgroep(e.target.value)}
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                    >
+                      <option value="">Alle</option>
+                      <option value="Onder 6">Onder 6</option>
+                      <option value="Onder 7">Onder 7</option>
+                      <option value="Onder 8">Onder 8</option>
+                      <option value="Onder 9">Onder 9</option>
+                      <option value="Onder 9 Meiden">Onder 9 Meiden</option>
+                      <option value="Onder 10">Onder 10</option>
+                      <option value="Onder 11">Onder 11</option>
+                      <option value="Onder 11 Meiden">Onder 11 Meiden</option>
+                      <option value="Onder 12">Onder 12</option>
+                      <option value="Onder 13">Onder 13</option>
+                      <option value="Onder 13 Meiden">Onder 13 Meiden</option>
+                      <option value="Onder 14">Onder 14</option>
+                      <option value="Onder 15">Onder 15</option>
+                      <option value="Onder 15 Meiden">Onder 15 Meiden</option>
+                      <option value="Onder 16">Onder 16</option>
+                      <option value="Onder 17">Onder 17</option>
+                      <option value="Onder 17 Meiden">Onder 17 Meiden</option>
+                      <option value="Onder 18">Onder 18</option>
+                      <option value="Onder 19">Onder 19</option>
+                      <option value="Senioren">Senioren</option>
+                      <option value="Senioren Vrouwen">Senioren Vrouwen</option>
+                    </select>
+                  </div>
+
                   {/* Foto Missing Filter */}
                   <div>
                     <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
@@ -1372,6 +1413,17 @@ export default function PeopleList() {
                   Type: {typeLid}
                   <button
                     onClick={() => setTypeLid('')}
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {leeftijdsgroep && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
+                  Leeftijdsgroep: {leeftijdsgroep}
+                  <button
+                    onClick={() => setLeeftijdsgroep('')}
                     className="hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <X className="w-3 h-3" />
