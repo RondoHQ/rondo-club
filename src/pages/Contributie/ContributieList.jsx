@@ -176,10 +176,11 @@ export default function ContributieList() {
       case 'name':
         cmp = a.name.localeCompare(b.name);
         break;
-      case 'category':
+      case 'category': {
         const catOrder = { mini: 1, pupil: 2, junior: 3, senior: 4, recreant: 5, donateur: 6 };
         cmp = (catOrder[a.category] || 99) - (catOrder[b.category] || 99);
         break;
+      }
       case 'base_fee':
         cmp = a.base_fee - b.base_fee;
         break;
