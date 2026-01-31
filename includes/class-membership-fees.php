@@ -369,4 +369,90 @@ class MembershipFees {
 		// No valid category, no teams, not donateur - exclude
 		return null;
 	}
+
+	/**
+	 * Get the season key for a given date
+	 *
+	 * Season starts July 1 (month 7). Returns format "YYYY-YYYY" (e.g., "2025-2026").
+	 * If date is July or later, season is current year to next year.
+	 * If date is before July, season is previous year to current year.
+	 *
+	 * @param string|null $date Optional date string (parseable by strtotime), defaults to current date.
+	 * @return string Season key in "YYYY-YYYY" format.
+	 */
+	public function get_season_key( ?string $date = null ): string {
+		$timestamp = $date ? strtotime( $date ) : time();
+		$month     = (int) date( 'n', $timestamp );
+		$year      = (int) date( 'Y', $timestamp );
+
+		// Season starts July 1: if month >= 7, season is current year to next year
+		$season_start_year = $month >= 7 ? $year : $year - 1;
+
+		return $season_start_year . '-' . ( $season_start_year + 1 );
+	}
+
+	/**
+	 * Get the post meta key for storing fee snapshots
+	 *
+	 * @param string|null $season Optional season key, defaults to current season.
+	 * @return string Meta key for fee snapshot storage.
+	 */
+	public function get_snapshot_meta_key( ?string $season = null ): string {
+		return 'fee_snapshot_' . ( $season ?: $this->get_season_key() );
+	}
+
+	/**
+	 * Save a fee snapshot for a person
+	 *
+	 * Stores fee calculation result in post meta with a timestamp.
+	 * This locks the fee for the season, preventing recalculation unless explicitly requested.
+	 *
+	 * @param int         $person_id The person post ID.
+	 * @param array       $fee_data  Fee calculation result (category, base_fee, etc.).
+	 * @param string|null $season    Optional season key, defaults to current season.
+	 * @return bool True on success, false on failure.
+	 */
+	public function save_fee_snapshot( int $person_id, array $fee_data, ?string $season = null ): bool {
+		$meta_key = $this->get_snapshot_meta_key( $season );
+
+		// Add calculated_at timestamp
+		$fee_data['calculated_at'] = current_time( 'Y-m-d H:i:s' );
+
+		return (bool) update_post_meta( $person_id, $meta_key, $fee_data );
+	}
+
+	/**
+	 * Get the fee snapshot for a person
+	 *
+	 * Retrieves the stored fee calculation for the specified season.
+	 *
+	 * @param int         $person_id The person post ID.
+	 * @param string|null $season    Optional season key, defaults to current season.
+	 * @return array|null Fee snapshot data or null if not found.
+	 */
+	public function get_fee_snapshot( int $person_id, ?string $season = null ): ?array {
+		$meta_key = $this->get_snapshot_meta_key( $season );
+		$snapshot = get_post_meta( $person_id, $meta_key, true );
+
+		if ( empty( $snapshot ) || ! is_array( $snapshot ) ) {
+			return null;
+		}
+
+		return $snapshot;
+	}
+
+	/**
+	 * Clear the fee snapshot for a person
+	 *
+	 * Removes the stored fee calculation, allowing fresh recalculation.
+	 *
+	 * @param int         $person_id The person post ID.
+	 * @param string|null $season    Optional season key, defaults to current season.
+	 * @return bool True on success, false on failure.
+	 */
+	public function clear_fee_snapshot( int $person_id, ?string $season = null ): bool {
+		$meta_key = $this->get_snapshot_meta_key( $season );
+
+		return delete_post_meta( $person_id, $meta_key );
+	}
 }
