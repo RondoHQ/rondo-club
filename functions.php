@@ -70,6 +70,7 @@ use Stadion\CustomFields\Manager as CustomFieldsManager;
 use Stadion\CustomFields\Validation as CustomFieldsValidation;
 use Stadion\REST\CustomFields as RESTCustomFields;
 use Stadion\VOG\VOGEmail;
+use Stadion\Fees\MembershipFees;
 
 define( 'STADION_THEME_DIR', get_template_directory() );
 define( 'STADION_THEME_URL', get_template_directory_uri() );
