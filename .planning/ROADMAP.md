@@ -91,12 +91,12 @@ Plans:
   6. April-June joins pay 25% of calculated fee
   7. Pro-rata applies after family discount calculation
   8. User can filter to show address mismatches (siblings at different addresses)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 126-01: Pro-rata calculation based on Sportlink join date
-- [ ] 126-02: Contributie list page and REST endpoint
-- [ ] 126-03: Address mismatch filter
+- [ ] 126-01-PLAN.md — Pro-rata calculation based on Sportlink join date (get_prorata_percentage, calculate_full_fee)
+- [ ] 126-02-PLAN.md — Contributie list page and REST endpoint (sidebar nav, /fees endpoint, ContributieList.jsx)
+- [ ] 126-03-PLAN.md — Address mismatch filter (detect_address_mismatches, filter dropdown)
 
 ## Progress
 
@@ -112,4 +112,4 @@ Phases execute in numeric order: 123 -> 124 -> 125 -> 126
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-01-31 (Phase 125 complete)*
+*Last updated: 2026-01-31 (Phase 126 planned - 3 plans in 3 waves)*
