@@ -109,6 +109,7 @@ export function usePeople(params = {}) {
  * @param {number} filters.vogOlderThanYears - Filter for VOG older than N years
  * @param {string} filters.vogEmailStatus - 'sent' or 'not_sent' to filter by email status
  * @param {string} filters.vogType - 'nieuw', 'vernieuwing', or '' for all
+ * @param {string} filters.vogJustisStatus - 'submitted' or 'not_submitted' to filter by Justis status
  * @returns {Object} TanStack Query result with data, isLoading, error, etc.
  */
 export function useFilteredPeople(filters = {}) {
@@ -133,6 +134,7 @@ export function useFilteredPeople(filters = {}) {
     vog_email_status: filters.vogEmailStatus || null,
     vog_type: filters.vogType || null,
     leeftijdsgroep: filters.leeftijdsgroep || null,
+    vog_justis_status: filters.vogJustisStatus || null,
   };
 
   return useQuery({
