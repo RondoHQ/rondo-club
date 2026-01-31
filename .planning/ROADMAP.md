@@ -1,91 +1,115 @@
-# Roadmap: Stadion v11.0 VOG Management
+# Roadmap: Stadion v12.0 Membership Fees
 
 ## Overview
 
-This milestone adds VOG (Verklaring Omtrent Gedrag) compliance management for volunteers. Users will be able to identify volunteers needing VOG certification, send templated emails in bulk, and track the status of VOG requests. The system handles both new volunteers and renewals (VOG expires after 3 years).
+This milestone implements a membership fee calculation system for Stadion. Starting with configurable fee settings, then building the calculation engine for age-based fees, adding family discount logic with address grouping, and finally integrating pro-rata calculations with a user-facing list view. The system calculates fees but does not track payments (deferred to future milestone).
 
 ## Milestones
 
-- v1.0 through v10.0: shipped (see milestones/ archive)
-- v11.0 VOG Management: Phases 119-122 (in progress)
+- 🚧 **v12.0 Membership Fees** - Phases 123-126 (in progress)
 
 ## Phases
 
-- [x] **Phase 119: Backend Foundation** - Email infrastructure, settings, and tracking data model
-- [x] **Phase 120: VOG List Page** - Navigation and filtered volunteer list
-- [x] **Phase 121: Bulk Actions** - Multi-select, send emails, mark requested
-- [x] **Phase 122: Tracking & Polish** - Email status filtering and history display
+**Phase Numbering:**
+- Integer phases (123, 124, 125, 126): Planned milestone work
+- Decimal phases (123.1, 123.2): Urgent insertions if needed (marked with INSERTED)
+
+Decimal phases appear between their surrounding integers in numeric order.
+
+- [ ] **Phase 123: Settings & Backend Foundation** - Fee configuration UI and calculation service scaffolding
+- [ ] **Phase 124: Fee Calculation Engine** - Age-based and flat fee calculations
+- [ ] **Phase 125: Family Discount** - Address grouping and tiered discount logic
+- [ ] **Phase 126: Pro-rata & UI** - Join date calculation, list page, and filters
 
 ## Phase Details
 
-### Phase 119: Backend Foundation
-**Goal**: Email sending infrastructure and configuration are ready for VOG workflows
+### Phase 123: Settings & Backend Foundation
+**Goal**: Admin can configure all fee amounts through settings UI
 **Depends on**: Nothing (first phase of milestone)
-**Requirements**: SET-01, SET-02, SET-03, EMAIL-01, EMAIL-02, EMAIL-03, TRACK-01
+**Requirements**: SET-01, SET-02, SET-03, SET-04, SET-05, SET-06
 **Success Criteria** (what must be TRUE):
-  1. User can configure VOG email settings in Settings page (from address, templates)
-  2. System can send emails via wp_mail() with configured from address
-  3. New volunteer template supports {first_name} variable substitution
-  4. Renewal template supports {first_name} and {previous_vog_date} variables
-  5. VOG email sent date is stored per person (ACF field)
-**Plans:** 2 plans
+  1. Admin sees "Contributie" settings subtab under Settings
+  2. Admin can set Mini fee amount (default: 130)
+  3. Admin can set Pupil fee amount (default: 180)
+  4. Admin can set Junior fee amount (default: 230)
+  5. Admin can set Senior fee amount (default: 255)
+  6. Admin can set Recreant fee amount (default: 65)
+  7. Admin can set Donateur fee amount (default: 55)
+  8. Fee amounts persist across page reloads
+**Plans**: TBD
 
 Plans:
-- [x] 119-01-PLAN.md — PHP backend: VOG email service class and REST endpoints
-- [x] 119-02-PLAN.md — Frontend: VOG settings tab in Settings page
+- [ ] 123-01: Settings backend and calculation service class
+- [ ] 123-02: Settings UI subtab with fee configuration form
 
-### Phase 120: VOG List Page
-**Goal**: Users can see which volunteers need VOG action
-**Depends on**: Phase 119 (needs tracking field to exist)
-**Requirements**: VOG-01, VOG-02, VOG-03
+### Phase 124: Fee Calculation Engine
+**Goal**: System calculates correct base fees based on member type and age group
+**Depends on**: Phase 123
+**Requirements**: FEE-01, FEE-02, FEE-03, FEE-04, FEE-05
 **Success Criteria** (what must be TRUE):
-  1. User sees VOG section in sidebar navigation
-  2. VOG list shows only volunteers with huidig-vrijwilliger=true AND (no datum-vog OR datum-vog 3+ years ago)
-  3. List displays Name, KNVB ID, Email, Phone, and Datum VOG columns
-**Plans:** 1 plan
+  1. Mini members (JO6-JO7) get configured Mini fee
+  2. Pupil members (JO8-JO11) get configured Pupil fee
+  3. Junior members (JO12-JO19) get configured Junior fee
+  4. Senior members (JO23/Senioren) get configured Senior fee
+  5. Recreant/Walking Football members get flat Recreant fee
+  6. Donateur members get flat Donateur fee
+  7. "Meiden" suffix in leeftijdsgroep is stripped before matching
+  8. Members without leeftijdsgroep are excluded from age-based calculation
+**Plans**: TBD
 
 Plans:
-- [x] 120-01-PLAN.md — VOG list page with navigation, filtering, and badges
+- [ ] 124-01: Age group parsing and fee calculation logic
+- [ ] 124-02: Fee type detection (youth, recreant, donateur)
 
-### Phase 121: Bulk Actions
-**Goal**: Users can send VOG emails to multiple volunteers at once
-**Depends on**: Phase 120 (needs list to select from)
-**Requirements**: BULK-01, BULK-02, BULK-03, EMAIL-04
+### Phase 125: Family Discount
+**Goal**: Youth members at same address receive tiered family discounts
+**Depends on**: Phase 124
+**Requirements**: FAM-01, FAM-02, FAM-03, FAM-04, FAM-05
 **Success Criteria** (what must be TRUE):
-  1. User can select multiple people in VOG list via checkboxes
-  2. User can send VOG email to all selected people with one action
-  3. System automatically selects new volunteer vs renewal template based on datum-vog
-  4. User can mark selected people as "VOG requested" (records current date)
-**Plans:** 2 plans
+  1. System groups members by normalized address (street, number, postal code)
+  2. First (most expensive) youth member pays full fee
+  3. Second youth member at same address gets 25% discount
+  4. Third and subsequent youth members get 50% discount
+  5. Discount applies to youngest/cheapest member first (descending by base fee)
+  6. Recreants and donateurs do not receive family discount
+**Plans**: TBD
 
 Plans:
-- [x] 121-01-PLAN.md — Backend: Bulk VOG REST endpoints for send and mark-requested
-- [x] 121-02-PLAN.md — Frontend: Selection UI and bulk actions in VOGList
+- [ ] 125-01: Address normalization and family grouping
+- [ ] 125-02: Tiered discount calculation logic
 
-### Phase 122: Tracking & Polish
-**Goal**: Users can track VOG email status and view history
-**Depends on**: Phase 121 (needs emails to have been sent)
-**Requirements**: TRACK-02, TRACK-03
+### Phase 126: Pro-rata & UI
+**Goal**: Users can view calculated fees with pro-rata and filter by address issues
+**Depends on**: Phase 125
+**Requirements**: NAV-01, NAV-02, PRO-01, PRO-02, PRO-03, FIL-01
 **Success Criteria** (what must be TRUE):
-  1. User can filter VOG list by email status (sent/not sent)
-  2. User can see email history on person profile page
-**Plans:** 2 plans
+  1. "Contributie" section appears in sidebar below Leden, above VOG
+  2. List displays Name, Age Group, Base Fee, Family Discount, Final Amount columns
+  3. July-September joins pay 100% of calculated fee
+  4. October-December joins pay 75% of calculated fee
+  5. January-March joins pay 50% of calculated fee
+  6. April-June joins pay 25% of calculated fee
+  7. Pro-rata applies after family discount calculation
+  8. User can filter to show address mismatches (siblings at different addresses)
+**Plans**: TBD
 
 Plans:
-- [x] 122-01-PLAN.md — Backend: Email tracking infrastructure (TYPE_EMAIL, logging, API filter)
-- [x] 122-02-PLAN.md — Frontend: VOG list filter UI and timeline email display
+- [ ] 126-01: Pro-rata calculation based on Sportlink join date
+- [ ] 126-02: Contributie list page and REST endpoint
+- [ ] 126-03: Address mismatch filter
 
 ## Progress
 
-**Execution Order:** 119 -> 120 -> 121 -> 122
+**Execution Order:**
+Phases execute in numeric order: 123 -> 124 -> 125 -> 126
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 119. Backend Foundation | 2/2 | Complete | 2026-01-30 |
-| 120. VOG List Page | 1/1 | Complete | 2026-01-30 |
-| 121. Bulk Actions | 2/2 | Complete | 2026-01-30 |
-| 122. Tracking & Polish | 2/2 | Complete | 2026-01-30 |
+| 123. Settings & Backend Foundation | 0/2 | Not started | - |
+| 124. Fee Calculation Engine | 0/2 | Not started | - |
+| 125. Family Discount | 0/2 | Not started | - |
+| 126. Pro-rata & UI | 0/3 | Not started | - |
 
 ---
-*Roadmap created: 2026-01-30*
-*Requirements: 16 mapped, 0 orphaned*
+*Roadmap created: 2026-01-31*
+*Last updated: 2026-01-31*

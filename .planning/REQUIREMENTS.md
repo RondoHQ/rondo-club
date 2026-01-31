@@ -66,34 +66,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | TBD | Pending |
-| NAV-02 | TBD | Pending |
-| FEE-01 | TBD | Pending |
-| FEE-02 | TBD | Pending |
-| FEE-03 | TBD | Pending |
-| FEE-04 | TBD | Pending |
-| FEE-05 | TBD | Pending |
-| FAM-01 | TBD | Pending |
-| FAM-02 | TBD | Pending |
-| FAM-03 | TBD | Pending |
-| FAM-04 | TBD | Pending |
-| FAM-05 | TBD | Pending |
-| PRO-01 | TBD | Pending |
-| PRO-02 | TBD | Pending |
-| PRO-03 | TBD | Pending |
-| SET-01 | TBD | Pending |
-| SET-02 | TBD | Pending |
-| SET-03 | TBD | Pending |
-| SET-04 | TBD | Pending |
-| SET-05 | TBD | Pending |
-| SET-06 | TBD | Pending |
-| FIL-01 | TBD | Pending |
+| NAV-01 | Phase 126 | Pending |
+| NAV-02 | Phase 126 | Pending |
+| FEE-01 | Phase 124 | Pending |
+| FEE-02 | Phase 124 | Pending |
+| FEE-03 | Phase 124 | Pending |
+| FEE-04 | Phase 124 | Pending |
+| FEE-05 | Phase 124 | Pending |
+| FAM-01 | Phase 125 | Pending |
+| FAM-02 | Phase 125 | Pending |
+| FAM-03 | Phase 125 | Pending |
+| FAM-04 | Phase 125 | Pending |
+| FAM-05 | Phase 125 | Pending |
+| PRO-01 | Phase 126 | Pending |
+| PRO-02 | Phase 126 | Pending |
+| PRO-03 | Phase 126 | Pending |
+| SET-01 | Phase 123 | Pending |
+| SET-02 | Phase 123 | Pending |
+| SET-03 | Phase 123 | Pending |
+| SET-04 | Phase 123 | Pending |
+| SET-05 | Phase 123 | Pending |
+| SET-06 | Phase 123 | Pending |
+| FIL-01 | Phase 126 | Pending |
 
 **Coverage:**
 - v12.0 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22
+- Mapped to phases: 22
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 after initial definition*
+*Last updated: 2026-01-31 after roadmap creation*
