@@ -650,6 +650,25 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Get membership fee list
+		register_rest_route(
+			'stadion/v1',
+			'/fees',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_fee_list' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'season' => [
+						'default'           => null,
+						'validate_callback' => function ( $param ) {
+							return $param === null || preg_match( '/^\d{4}-\d{4}$/', $param );
+						},
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -2518,6 +2537,91 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $membership_fees->get_all_settings() );
+	}
+
+	/**
+	 * Get membership fee list for all calculable members
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with fee list.
+	 */
+	public function get_fee_list( $request ) {
+		$season = $request->get_param( 'season' );
+		$fees   = new \Stadion\Fees\MembershipFees();
+
+		if ( $season === null ) {
+			$season = $fees->get_season_key();
+		}
+
+		// Query all person posts
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+				'orderby'        => 'meta_value',
+				'meta_key'       => 'first_name',
+				'order'          => 'ASC',
+			]
+		);
+
+		$results = [];
+
+		foreach ( $query->posts as $person ) {
+			// Get registration date from ACF (Sportlink field)
+			$registration_date = get_field( 'registratiedatum', $person->ID );
+
+			// Calculate full fee with pro-rata
+			$fee_data = $fees->calculate_full_fee( $person->ID, $registration_date, $season );
+
+			// Skip non-calculable members
+			if ( $fee_data === null ) {
+				continue;
+			}
+
+			// Get person name
+			$first_name = get_field( 'first_name', $person->ID ) ?: '';
+			$last_name  = get_field( 'last_name', $person->ID ) ?: '';
+			$name       = trim( $first_name . ' ' . $last_name );
+
+			$results[] = [
+				'id'                     => $person->ID,
+				'name'                   => $name ?: $person->post_title,
+				'category'               => $fee_data['category'],
+				'leeftijdsgroep'         => $fee_data['leeftijdsgroep'],
+				'base_fee'               => $fee_data['base_fee'],
+				'family_discount_rate'   => $fee_data['family_discount_rate'],
+				'family_discount_amount' => $fee_data['family_discount_amount'],
+				'fee_after_discount'     => $fee_data['fee_after_discount'],
+				'prorata_percentage'     => $fee_data['prorata_percentage'],
+				'final_fee'              => $fee_data['final_fee'],
+				'family_key'             => $fee_data['family_key'],
+				'family_size'            => $fee_data['family_size'],
+				'family_position'        => $fee_data['family_position'],
+				'registration_date'      => $registration_date,
+			];
+		}
+
+		// Sort by category priority, then name
+		$category_order = [ 'mini' => 1, 'pupil' => 2, 'junior' => 3, 'senior' => 4, 'recreant' => 5, 'donateur' => 6 ];
+		usort(
+			$results,
+			function ( $a, $b ) use ( $category_order ) {
+				$cat_cmp = ( $category_order[ $a['category'] ] ?? 99 ) <=> ( $category_order[ $b['category'] ] ?? 99 );
+				if ( $cat_cmp !== 0 ) {
+					return $cat_cmp;
+				}
+				return strcasecmp( $a['name'], $b['name'] );
+			}
+		);
+
+		return rest_ensure_response(
+			[
+				'season'  => $season,
+				'total'   => count( $results ),
+				'members' => $results,
+			]
+		);
 	}
 
 	/**
