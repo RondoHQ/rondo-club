@@ -1190,15 +1190,14 @@ class People extends Base {
 			$prepare_values[] = $cutoff_date;
 		}
 
-		// VOG email status filter (sent/not_sent based on stadion_email comments)
+		// VOG email status filter (sent/not_sent based on vog_email_sent_date meta field)
 		if ( $vog_email_status !== null && $vog_email_status !== '' ) {
-			// Subquery to find people with email comments
-			$email_subquery = "SELECT DISTINCT comment_post_ID FROM {$wpdb->comments} WHERE comment_type = 'stadion_email'";
+			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ves ON p.ID = ves.post_id AND ves.meta_key = 'vog_email_sent_date'";
 
 			if ( $vog_email_status === 'sent' ) {
-				$where_clauses[] = "p.ID IN ($email_subquery)";
+				$where_clauses[] = "(ves.meta_value IS NOT NULL AND ves.meta_value != '')";
 			} elseif ( $vog_email_status === 'not_sent' ) {
-				$where_clauses[] = "p.ID NOT IN ($email_subquery)";
+				$where_clauses[] = "(ves.meta_value IS NULL OR ves.meta_value = '')";
 			}
 		}
 
