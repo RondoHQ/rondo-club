@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Calculate membership fees with family discounts and pro-rata for mid-season joins
-**Current focus:** Phase 125 - Family Discounts
+**Current focus:** Phase 125 - Family Discounts (COMPLETE)
 
 ## Current Position
 
-Phase: 125 of 126 (Family Discounts)
-Plan: 1 of 2 in current phase - COMPLETE
-Status: In progress
-Last activity: 2026-01-31 - Completed 125-01-PLAN.md
+Phase: 125 of 126 (Family Discounts) - COMPLETE
+Plan: 2 of 2 in current phase - COMPLETE
+Status: Phase complete, ready for Phase 126
+Last activity: 2026-01-31 - Completed 125-02-PLAN.md
 
-Progress: [█████░░░░░] 56%
+Progress: [██████░░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
+- Total plans completed: 6
 - Average duration: 4 min
-- Total execution time: 0.33 hours
+- Total execution time: 0.38 hours
 
 **By Phase:**
 
@@ -29,12 +29,12 @@ Progress: [█████░░░░░] 56%
 |-------|-------|-------|----------|
 | 123 | 2/2 | 8 min | 4 min |
 | 124 | 2/2 | 8 min | 4 min |
-| 125 | 1/2 | 4 min | 4 min |
+| 125 | 2/2 | 7 min | 3.5 min |
 | 126 | 0/3 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 123-01 (3 min), 123-02 (5 min), 124-01 (4 min), 124-02 (4 min), 125-01 (4 min)
-- Trend: Stable
+- Last 5 plans: 123-02 (5 min), 124-01 (4 min), 124-02 (4 min), 125-01 (4 min), 125-02 (3 min)
+- Trend: Stable/Improving
 
 *Updated after each plan completion*
 
@@ -57,6 +57,8 @@ Recent decisions affecting current work:
 | 2026-01-31 | Family key format: POSTALCODE-HOUSENUMBER | Postal code + house number only (street name ignored) |
 | 2026-01-31 | House number additions significant | 12A and 12B = different families |
 | 2026-01-31 | Family sort order: base_fee descending | Highest fee = position 1 (full price), lower fees get discount |
+| 2026-01-31 | Position 1 (most expensive) pays full fee | Maximum revenue, discounts to cheaper members |
+| 2026-01-31 | Tiered discount: 0%/25%/50% for pos 1/2/3+ | Per FAM-02, FAM-03 requirements |
 
 ### Pending Todos
 
@@ -64,12 +66,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None - Plan 125-01 completed successfully. Ready for Plan 125-02 (Family discount calculation).
+None - Phase 125 completed successfully. Ready for Phase 126 (Pro-rata calculations).
 
 ## Session Continuity
 
-Last session: 2026-01-31 21:12 UTC
-Stopped at: Completed 125-01-PLAN.md
+Last session: 2026-01-31 21:17 UTC
+Stopped at: Completed 125-02-PLAN.md
 Resume file: None
 
 ---
