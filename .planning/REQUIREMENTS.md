@@ -73,11 +73,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FEE-03 | Phase 124 | Complete |
 | FEE-04 | Phase 124 | Complete |
 | FEE-05 | Phase 124 | Complete |
-| FAM-01 | Phase 125 | Pending |
-| FAM-02 | Phase 125 | Pending |
-| FAM-03 | Phase 125 | Pending |
-| FAM-04 | Phase 125 | Pending |
-| FAM-05 | Phase 125 | Pending |
+| FAM-01 | Phase 125 | Complete |
+| FAM-02 | Phase 125 | Complete |
+| FAM-03 | Phase 125 | Complete |
+| FAM-04 | Phase 125 | Complete |
+| FAM-05 | Phase 125 | Complete |
 | PRO-01 | Phase 126 | Pending |
 | PRO-02 | Phase 126 | Pending |
 | PRO-03 | Phase 126 | Pending |
@@ -96,4 +96,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 (Phase 124 complete - FEE-01 through FEE-05)*
+*Last updated: 2026-01-31 (Phase 125 complete - FAM-01 through FAM-05)*
