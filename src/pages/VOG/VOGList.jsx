@@ -241,6 +241,7 @@ export default function VOGList() {
   // Filter state
   const [emailStatusFilter, setEmailStatusFilter] = useState('');
   const [vogTypeFilter, setVogTypeFilter] = useState('');
+  const [justisStatusFilter, setJustisStatusFilter] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const queryClient = useQueryClient();
@@ -271,6 +272,7 @@ export default function VOGList() {
     vogOlderThanYears: 3,
     vogEmailStatus: emailStatusFilter,
     vogType: vogTypeFilter,
+    vogJustisStatus: justisStatusFilter,
     orderby,
     order,
   });
@@ -304,6 +306,13 @@ export default function VOGList() {
     const nieuw = allPeople.filter(p => !p.acf?.['datum-vog']).length;
     const vernieuwing = allPeople.length - nieuw;
     return { total: allPeople.length, nieuw, vernieuwing };
+  }, [allData?.people]);
+
+  const justisCounts = useMemo(() => {
+    const allPeople = allData?.people || [];
+    const submitted = allPeople.filter(p => p.acf?.['vog_justis_submitted_date']).length;
+    const notSubmitted = allPeople.length - submitted;
+    return { total: allPeople.length, submitted, notSubmitted };
   }, [allData?.people]);
 
   // Fetch custom field definitions for list view columns
@@ -466,6 +475,7 @@ export default function VOGList() {
         vog_older_than_years: 3,
         vog_email_status: emailStatusFilter || undefined,
         vog_type: vogTypeFilter || undefined,
+        vog_justis_status: justisStatusFilter || undefined,
         orderby,
         order,
       };
@@ -620,13 +630,13 @@ export default function VOGList() {
             <div className="relative" ref={filterRef}>
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`btn-secondary ${(emailStatusFilter || vogTypeFilter) ? 'bg-accent-50 text-accent-700 border-accent-200 dark:bg-accent-900/30 dark:text-accent-300 dark:border-accent-700' : ''}`}
+                className={`btn-secondary ${(emailStatusFilter || vogTypeFilter || justisStatusFilter) ? 'bg-accent-50 text-accent-700 border-accent-200 dark:bg-accent-900/30 dark:text-accent-300 dark:border-accent-700' : ''}`}
               >
                 <Filter className="w-4 h-4 md:mr-2" />
                 <span className="hidden md:inline">Filter</span>
-                {(emailStatusFilter || vogTypeFilter) && (
+                {(emailStatusFilter || vogTypeFilter || justisStatusFilter) && (
                   <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
-                    {(emailStatusFilter ? 1 : 0) + (vogTypeFilter ? 1 : 0)}
+                    {(emailStatusFilter ? 1 : 0) + (vogTypeFilter ? 1 : 0) + (justisStatusFilter ? 1 : 0)}
                   </span>
                 )}
               </button>
@@ -776,12 +786,82 @@ export default function VOGList() {
                       </div>
                     </div>
 
+                    {/* Justis Status Filter */}
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        Justis status
+                      </h3>
+                      <div className="space-y-1">
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            checked={justisStatusFilter === ''}
+                            onChange={() => setJustisStatusFilter('')}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            justisStatusFilter === ''
+                              ? 'bg-accent-600 border-accent-600'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {justisStatusFilter === '' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Alle ({justisCounts.total})
+                          </span>
+                        </label>
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            checked={justisStatusFilter === 'not_submitted'}
+                            onChange={() => setJustisStatusFilter('not_submitted')}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            justisStatusFilter === 'not_submitted'
+                              ? 'bg-accent-600 border-accent-600'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {justisStatusFilter === 'not_submitted' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Niet aangevraagd ({justisCounts.notSubmitted})
+                          </span>
+                        </label>
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            checked={justisStatusFilter === 'submitted'}
+                            onChange={() => setJustisStatusFilter('submitted')}
+                            className="sr-only"
+                          />
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            justisStatusFilter === 'submitted'
+                              ? 'bg-accent-600 border-accent-600'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {justisStatusFilter === 'submitted' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Aangevraagd ({justisCounts.submitted})
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
                     {/* Clear Filters */}
-                    {(emailStatusFilter || vogTypeFilter) && (
+                    {(emailStatusFilter || vogTypeFilter || justisStatusFilter) && (
                       <button
                         onClick={() => {
                           setEmailStatusFilter('');
                           setVogTypeFilter('');
+                          setJustisStatusFilter('');
                         }}
                         className="w-full text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
                       >
@@ -794,7 +874,7 @@ export default function VOGList() {
             </div>
 
             {/* Active Filter Chips */}
-            {(emailStatusFilter || vogTypeFilter) && (
+            {(emailStatusFilter || vogTypeFilter || justisStatusFilter) && (
               <div className="flex items-center gap-2">
                 {emailStatusFilter && (
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700 rounded">
@@ -812,6 +892,17 @@ export default function VOGList() {
                     Type: {vogTypeFilter === 'nieuw' ? 'Nieuw' : 'Vernieuwing'}
                     <button
                       onClick={() => setVogTypeFilter('')}
+                      className="hover:text-accent-900 dark:hover:text-accent-100"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {justisStatusFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700 rounded">
+                    Justis: {justisStatusFilter === 'submitted' ? 'Aangevraagd' : 'Niet aangevraagd'}
+                    <button
+                      onClick={() => setJustisStatusFilter('')}
                       className="hover:text-accent-900 dark:hover:text-accent-100"
                     >
                       <X className="w-3 h-3" />
