@@ -666,6 +666,12 @@ class Api extends Base {
 							return $param === null || preg_match( '/^\d{4}-\d{4}$/', $param );
 						},
 					],
+					'filter' => [
+						'default'           => 'all',
+						'validate_callback' => function ( $param ) {
+							return in_array( $param, [ 'all', 'mismatches' ], true );
+						},
+					],
 				],
 			]
 		);
@@ -2602,6 +2608,23 @@ class Api extends Base {
 			];
 		}
 
+		// Detect address mismatches
+		$mismatch_ids = $fees->detect_address_mismatches();
+
+		// Add mismatch flag to results
+		foreach ( $results as &$result ) {
+			$result['has_mismatch'] = in_array( $result['id'], $mismatch_ids, true );
+		}
+		unset( $result );
+
+		// Apply filter
+		$filter = $request->get_param( 'filter' );
+		if ( $filter === 'mismatches' ) {
+			$results = array_values( array_filter( $results, function ( $r ) {
+				return $r['has_mismatch'];
+			} ) );
+		}
+
 		// Sort by category priority, then name
 		$category_order = [ 'mini' => 1, 'pupil' => 2, 'junior' => 3, 'senior' => 4, 'recreant' => 5, 'donateur' => 6 ];
 		usort(
@@ -2617,9 +2640,12 @@ class Api extends Base {
 
 		return rest_ensure_response(
 			[
-				'season'  => $season,
-				'total'   => count( $results ),
-				'members' => $results,
+				'season'         => $season,
+				'total'          => count( $results ),
+				'mismatch_count' => count( array_filter( $results, function ( $r ) {
+					return $r['has_mismatch'] ?? false;
+				} ) ),
+				'members'        => $results,
 			]
 		);
 	}
