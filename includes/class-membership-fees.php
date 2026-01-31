@@ -740,6 +740,25 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get discount rate based on family position
+	 *
+	 * Position is 1-indexed where position 1 is the most expensive youth member
+	 * who pays full fee. Position 2 gets 25% off, position 3+ gets 50% off.
+	 *
+	 * @param int $position 1-indexed position in family (1=most expensive, pays full).
+	 * @return float Discount rate (0.0, 0.25, or 0.50).
+	 */
+	public function get_family_discount_rate( int $position ): float {
+		if ( $position <= 1 ) {
+			return 0.0;  // First member pays full fee
+		}
+		if ( $position === 2 ) {
+			return 0.25; // Second member gets 25% off
+		}
+		return 0.50;     // Third+ get 50% off
+	}
+
+	/**
 	 * Get calculation status for a person
 	 *
 	 * Returns diagnostic information about why a person might be excluded from
