@@ -646,6 +646,100 @@ class MembershipFees {
 	}
 
 	/**
+	 * Build family groups from youth members
+	 *
+	 * Groups youth members (mini, pupil, junior) by family key (address).
+	 * Only includes members with valid addresses and calculable fees.
+	 * Members within each family are sorted by base_fee descending.
+	 *
+	 * @param string|null $season Optional season key, defaults to current season.
+	 * @return array{
+	 *     families: array<string, array<int>>,
+	 *     person_data: array<int, array{person_id: int, family_key: string, base_fee: int, category: string}>
+	 * } Family groups and person data.
+	 */
+	public function build_family_groups( ?string $season = null ): array {
+		// Query all person posts
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			]
+		);
+
+		$families    = [];
+		$person_data = [];
+
+		// Youth categories eligible for family discount
+		$youth_categories = [ 'mini', 'pupil', 'junior' ];
+
+		foreach ( $query->posts as $person_id ) {
+			// Calculate fee for this person
+			$fee_data = $this->calculate_fee( $person_id );
+
+			// Skip if not calculable
+			if ( $fee_data === null ) {
+				continue;
+			}
+
+			// Skip if not a youth category (FAM-05: only youth eligible)
+			if ( ! in_array( $fee_data['category'], $youth_categories, true ) ) {
+				continue;
+			}
+
+			// Get family key from address
+			$family_key = $this->get_family_key( $person_id );
+
+			// Skip if no valid address
+			if ( $family_key === null ) {
+				continue;
+			}
+
+			// Store person data
+			$person_data[ $person_id ] = [
+				'person_id'  => $person_id,
+				'family_key' => $family_key,
+				'base_fee'   => $fee_data['base_fee'],
+				'category'   => $fee_data['category'],
+			];
+
+			// Add to family group
+			if ( ! isset( $families[ $family_key ] ) ) {
+				$families[ $family_key ] = [];
+			}
+			$families[ $family_key ][] = $person_id;
+		}
+
+		// Sort members within each family by base_fee descending (highest fee = position 1)
+		foreach ( $families as $key => $members ) {
+			usort(
+				$members,
+				function ( $a, $b ) use ( $person_data ) {
+					$fee_a = $person_data[ $a ]['base_fee'];
+					$fee_b = $person_data[ $b ]['base_fee'];
+
+					// Sort by fee descending (highest first)
+					if ( $fee_a !== $fee_b ) {
+						return $fee_b - $fee_a;
+					}
+
+					// Tie-breaker: lower person_id first
+					return $a - $b;
+				}
+			);
+
+			$families[ $key ] = $members;
+		}
+
+		return [
+			'families'    => $families,
+			'person_data' => $person_data,
+		];
+	}
+
+	/**
 	 * Get calculation status for a person
 	 *
 	 * Returns diagnostic information about why a person might be excluded from
