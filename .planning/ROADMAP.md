@@ -16,7 +16,7 @@ This milestone implements a membership fee calculation system for Stadion. Start
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 123: Settings & Backend Foundation** - Fee configuration UI and calculation service scaffolding
+- [x] **Phase 123: Settings & Backend Foundation** - Fee configuration UI and calculation service scaffolding
 - [ ] **Phase 124: Fee Calculation Engine** - Age-based and flat fee calculations
 - [ ] **Phase 125: Family Discount** - Address grouping and tiered discount logic
 - [ ] **Phase 126: Pro-rata & UI** - Join date calculation, list page, and filters
@@ -39,8 +39,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: TBD
 
 Plans:
-- [ ] 123-01: Settings backend and calculation service class
-- [ ] 123-02: Settings UI subtab with fee configuration form
+- [x] 123-01: Settings backend and calculation service class
+- [x] 123-02: Settings UI subtab with fee configuration form
 
 ### Phase 124: Fee Calculation Engine
 **Goal**: System calculates correct base fees based on member type and age group
@@ -105,11 +105,11 @@ Phases execute in numeric order: 123 -> 124 -> 125 -> 126
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 123. Settings & Backend Foundation | 0/2 | Not started | - |
+| 123. Settings & Backend Foundation | 2/2 | ✓ Complete | 2026-01-31 |
 | 124. Fee Calculation Engine | 0/2 | Not started | - |
 | 125. Family Discount | 0/2 | Not started | - |
 | 126. Pro-rata & UI | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-01-31*
+*Last updated: 2026-01-31 (Phase 123 complete)*
