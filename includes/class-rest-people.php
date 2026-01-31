@@ -355,6 +355,14 @@ class People extends Base {
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
+					'vog_justis_status' => [
+						'description'       => 'Filter by VOG Justis status (submitted, not_submitted, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', 'submitted', 'not_submitted' ], true );
+						},
+					],
 				],
 			]
 		);
@@ -1049,6 +1057,7 @@ class People extends Base {
 		$vog_email_status     = $request->get_param( 'vog_email_status' );
 		$vog_type             = $request->get_param( 'vog_type' );
 		$leeftijdsgroep       = $request->get_param( 'leeftijdsgroep' );
+		$vog_justis_status    = $request->get_param( 'vog_justis_status' );
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -1198,6 +1207,17 @@ class People extends Base {
 				$where_clauses[] = "(ves.meta_value IS NOT NULL AND ves.meta_value != '')";
 			} elseif ( $vog_email_status === 'not_sent' ) {
 				$where_clauses[] = "(ves.meta_value IS NULL OR ves.meta_value = '')";
+			}
+		}
+
+		// VOG Justis status filter (submitted/not_submitted based on vog_justis_submitted_date meta field)
+		if ( $vog_justis_status !== null && $vog_justis_status !== '' ) {
+			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} vjs ON p.ID = vjs.post_id AND vjs.meta_key = 'vog_justis_submitted_date'";
+
+			if ( $vog_justis_status === 'submitted' ) {
+				$where_clauses[] = "(vjs.meta_value IS NOT NULL AND vjs.meta_value != '')";
+			} elseif ( $vog_justis_status === 'not_submitted' ) {
+				$where_clauses[] = "(vjs.meta_value IS NULL OR vjs.meta_value = '')";
 			}
 		}
 
