@@ -1,8 +1,8 @@
 ---
-status: verifying
+status: resolved
 trigger: "vog-email-status-filter-broken"
 created: 2026-01-31T00:00:00Z
-updated: 2026-01-31T00:15:00Z
+updated: 2026-01-31T00:20:00Z
 ---
 
 ## Current Focus
