@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, MessageSquare, Search, User, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, FileCheck } from 'lucide-react';
+import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, Coins, X, Users, MessageSquare, Search, User, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, FileCheck } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from '@/utils/dateFormat';
 import { APP_NAME } from '@/constants/app';
@@ -32,6 +32,12 @@ const CONNECTION_SUBTABS = [
   { id: 'api-access', label: 'API-toegang', icon: Key },
 ];
 
+// Admin subtabs configuration
+const ADMIN_SUBTABS = [
+  { id: 'users', label: 'Gebruikers', icon: Users },
+  { id: 'fees', label: 'Contributie', icon: Coins },
+];
+
 export default function Settings() {
   const { tab: urlTab, subtab: urlSubtab } = useParams();
   const navigate = useNavigate();
@@ -51,6 +57,9 @@ export default function Settings() {
     } else if (tab === 'connections') {
       // Default to agendas subtab when switching to connections
       navigate(`/settings/${tab}/calendars`);
+    } else if (tab === 'admin') {
+      // Default to users subtab when switching to admin
+      navigate(`/settings/${tab}/users`);
     } else {
       navigate(`/settings/${tab}`);
     }
@@ -128,6 +137,19 @@ export default function Settings() {
   const [vogSaving, setVogSaving] = useState(false);
   const [vogMessage, setVogMessage] = useState('');
   const [vogCommissies, setVogCommissies] = useState([]);
+
+  // Membership fee settings state
+  const [feeSettings, setFeeSettings] = useState({
+    mini: 130,
+    pupil: 180,
+    junior: 230,
+    senior: 255,
+    recreant: 65,
+    donateur: 55,
+  });
+  const [feeLoading, setFeeLoading] = useState(true);
+  const [feeSaving, setFeeSaving] = useState(false);
+  const [feeMessage, setFeeMessage] = useState('');
 
   // Fetch Applicatiewachtwoorden and CardDAV URLs on mount
   useEffect(() => {
@@ -308,6 +330,25 @@ export default function Settings() {
     fetchVogSettings();
   }, [isAdmin]);
 
+  // Fetch membership fee settings on mount (admin only)
+  useEffect(() => {
+    const fetchFeeSettings = async () => {
+      if (!isAdmin) {
+        setFeeLoading(false);
+        return;
+      }
+      try {
+        const response = await prmApi.getMembershipFeeSettings();
+        setFeeSettings(response.data);
+      } catch {
+        // Fee settings fetch failed silently
+      } finally {
+        setFeeLoading(false);
+      }
+    };
+    fetchFeeSettings();
+  }, [isAdmin]);
+
   // Handle VOG settings save
   const handleVogSave = async () => {
     setVogSaving(true);
@@ -326,6 +367,21 @@ export default function Settings() {
       setVogMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
     } finally {
       setVogSaving(false);
+    }
+  };
+
+  // Handle membership fee settings save
+  const handleFeeSave = async () => {
+    setFeeSaving(true);
+    setFeeMessage('');
+    try {
+      const response = await prmApi.updateMembershipFeeSettings(feeSettings);
+      setFeeSettings(response.data);
+      setFeeMessage('Contributie-instellingen opgeslagen');
+    } catch (error) {
+      setFeeMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
+    } finally {
+      setFeeSaving(false);
     }
   };
 
@@ -721,14 +777,24 @@ export default function Settings() {
       case 'data':
         return <DataTab />;
       case 'admin':
-        return isAdmin ? <AdminTab
-          handleTriggerReminders={handleTriggerReminders}
-          triggeringReminders={triggeringReminders}
-          reminderMessage={reminderMessage}
-          handleRescheduleCron={handleRescheduleCron}
-          reschedulingCron={reschedulingCron}
-          cronMessage={cronMessage}
-        /> : null;
+        return isAdmin ? (
+          <AdminTabWithSubtabs
+            activeSubtab={activeSubtab}
+            setActiveSubtab={(subtab) => navigate(`/settings/admin/${subtab}`)}
+            handleTriggerReminders={handleTriggerReminders}
+            triggeringReminders={triggeringReminders}
+            reminderMessage={reminderMessage}
+            handleRescheduleCron={handleRescheduleCron}
+            reschedulingCron={reschedulingCron}
+            cronMessage={cronMessage}
+            feeSettings={feeSettings}
+            setFeeSettings={setFeeSettings}
+            feeLoading={feeLoading}
+            feeSaving={feeSaving}
+            feeMessage={feeMessage}
+            handleFeeSave={handleFeeSave}
+          />
+        ) : null;
       case 'vog':
         return isAdmin ? <VOGTab
           vogSettings={vogSettings}
@@ -3236,8 +3302,178 @@ function DataTab() {
   );
 }
 
+// Admin Tab with Subtabs
+function AdminTabWithSubtabs({
+  activeSubtab,
+  setActiveSubtab,
+  handleTriggerReminders,
+  triggeringReminders,
+  reminderMessage,
+  handleRescheduleCron,
+  reschedulingCron,
+  cronMessage,
+  feeSettings,
+  setFeeSettings,
+  feeLoading,
+  feeSaving,
+  feeMessage,
+  handleFeeSave,
+}) {
+  return (
+    <div className="space-y-6">
+      {/* Subtab Navigation */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="-mb-px flex space-x-6" aria-label="Admin subtabs">
+          {ADMIN_SUBTABS.map((subtab) => {
+            const Icon = subtab.icon;
+            const isActive = activeSubtab === subtab.id;
+            return (
+              <button
+                key={subtab.id}
+                onClick={() => setActiveSubtab(subtab.id)}
+                className={`
+                  flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap
+                  ${isActive
+                    ? 'border-accent-500 text-accent-600 dark:border-accent-400 dark:text-accent-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'}
+                `}
+              >
+                <Icon className="w-4 h-4" />
+                {subtab.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Subtab Content */}
+      {activeSubtab === 'users' || !activeSubtab ? (
+        <AdminTab
+          handleTriggerReminders={handleTriggerReminders}
+          triggeringReminders={triggeringReminders}
+          reminderMessage={reminderMessage}
+          handleRescheduleCron={handleRescheduleCron}
+          reschedulingCron={reschedulingCron}
+          cronMessage={cronMessage}
+        />
+      ) : activeSubtab === 'fees' ? (
+        <FeesSubtab
+          feeSettings={feeSettings}
+          setFeeSettings={setFeeSettings}
+          feeLoading={feeLoading}
+          feeSaving={feeSaving}
+          feeMessage={feeMessage}
+          handleFeeSave={handleFeeSave}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+// Fees Subtab Component
+function FeesSubtab({
+  feeSettings,
+  setFeeSettings,
+  feeLoading,
+  feeSaving,
+  feeMessage,
+  handleFeeSave,
+}) {
+  const FEE_TYPES = [
+    { key: 'mini', label: 'Mini', description: 'Leeftijd 4-6 jaar' },
+    { key: 'pupil', label: 'Pupil', description: 'Leeftijd 7-12 jaar' },
+    { key: 'junior', label: 'Junior', description: 'Leeftijd 13-17 jaar' },
+    { key: 'senior', label: 'Senior', description: 'Leeftijd 18+ jaar' },
+    { key: 'recreant', label: 'Recreant', description: 'Recreatief lid' },
+    { key: 'donateur', label: 'Donateur', description: 'Steunend lid' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          Contributie-instellingen
+        </h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Configureer de contributiebedragen per leeftijdscategorie.
+        </p>
+      </div>
+
+      {feeLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-accent-500" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {FEE_TYPES.map(({ key, label, description }) => (
+            <div key={key} className="flex items-center gap-4">
+              <div className="flex-1">
+                <label
+                  htmlFor={`fee-${key}`}
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  {label}
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                  &euro;
+                </span>
+                <input
+                  type="number"
+                  id={`fee-${key}`}
+                  min="0"
+                  step="1"
+                  value={feeSettings[key] ?? 0}
+                  onChange={(e) =>
+                    setFeeSettings((prev) => ({
+                      ...prev,
+                      [key]: parseInt(e.target.value, 10) || 0,
+                    }))
+                  }
+                  className="w-28 pl-8 pr-3 py-2 text-right rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
+                />
+              </div>
+            </div>
+          ))}
+
+          {/* Save button and message */}
+          <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={handleFeeSave}
+              disabled={feeSaving}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+            >
+              {feeSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Opslaan...
+                </>
+              ) : (
+                'Opslaan'
+              )}
+            </button>
+            {feeMessage && (
+              <span
+                className={`text-sm ${
+                  feeMessage.startsWith('Fout')
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-green-600 dark:text-green-400'
+                }`}
+              >
+                {feeMessage}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Admin Tab Component
-function AdminTab({ 
+function AdminTab({
   handleTriggerReminders, triggeringReminders, reminderMessage,
   handleRescheduleCron, reschedulingCron, cronMessage
 }) {
