@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Calculate membership fees with family discounts and pro-rata for mid-season joins
-**Current focus:** Phase 125 - Family Discounts (COMPLETE)
+**Current focus:** Phase 126 - Pro-rata UI (IN PROGRESS)
 
 ## Current Position
 
-Phase: 125 of 126 (Family Discounts) - COMPLETE
-Plan: 2 of 2 in current phase - COMPLETE
-Status: Phase complete, ready for Phase 126
-Last activity: 2026-01-31 - Completed 125-02-PLAN.md
+Phase: 126 of 126 (Pro-rata UI)
+Plan: 1 of 3 in current phase - COMPLETE
+Status: In progress
+Last activity: 2026-01-31 - Completed 126-01-PLAN.md
 
-Progress: [██████░░░░] 67%
+Progress: [███████░░░] 78%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 4 min
-- Total execution time: 0.38 hours
+- Total plans completed: 7
+- Average duration: 3.6 min
+- Total execution time: 0.42 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [██████░░░░] 67%
 | 123 | 2/2 | 8 min | 4 min |
 | 124 | 2/2 | 8 min | 4 min |
 | 125 | 2/2 | 7 min | 3.5 min |
-| 126 | 0/3 | - | - |
+| 126 | 1/3 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 123-02 (5 min), 124-01 (4 min), 124-02 (4 min), 125-01 (4 min), 125-02 (3 min)
-- Trend: Stable/Improving
+- Last 5 plans: 124-01 (4 min), 124-02 (4 min), 125-01 (4 min), 125-02 (3 min), 126-01 (3 min)
+- Trend: Improving
 
 *Updated after each plan completion*
 
@@ -59,6 +59,8 @@ Recent decisions affecting current work:
 | 2026-01-31 | Family sort order: base_fee descending | Highest fee = position 1 (full price), lower fees get discount |
 | 2026-01-31 | Position 1 (most expensive) pays full fee | Maximum revenue, discounts to cheaper members |
 | 2026-01-31 | Tiered discount: 0%/25%/50% for pos 1/2/3+ | Per FAM-02, FAM-03 requirements |
+| 2026-01-31 | Quarterly pro-rata tiers: 100%/75%/50%/25% | Simple, fair for sports season structure |
+| 2026-01-31 | Registration date as parameter | Testability and separation of concerns |
 
 ### Pending Todos
 
@@ -66,12 +68,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None - Phase 125 completed successfully. Ready for Phase 126 (Pro-rata calculations).
+None - Phase 126 Plan 01 completed successfully. Ready for 126-02 (REST API integration).
 
 ## Session Continuity
 
-Last session: 2026-01-31 21:17 UTC
-Stopped at: Completed 125-02-PLAN.md
+Last session: 2026-01-31 21:48 UTC
+Stopped at: Completed 126-01-PLAN.md
 Resume file: None
 
 ---
