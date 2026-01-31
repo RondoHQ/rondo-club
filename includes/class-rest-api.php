@@ -594,6 +594,62 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Membership fee settings (admin only)
+		register_rest_route(
+			'stadion/v1',
+			'/membership-fees/settings',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_membership_fee_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_membership_fee_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'mini'     => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param ) && $param >= 0;
+							},
+						],
+						'pupil'    => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param ) && $param >= 0;
+							},
+						],
+						'junior'   => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param ) && $param >= 0;
+							},
+						],
+						'senior'   => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param ) && $param >= 0;
+							},
+						],
+						'recreant' => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param ) && $param >= 0;
+							},
+						],
+						'donateur' => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param ) && $param >= 0;
+							},
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -2425,6 +2481,43 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * Get membership fee settings
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with membership fee settings.
+	 */
+	public function get_membership_fee_settings( $request ) {
+		$membership_fees = new \Stadion\Fees\MembershipFees();
+		return rest_ensure_response( $membership_fees->get_all_settings() );
+	}
+
+	/**
+	 * Update membership fee settings
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with updated membership fee settings.
+	 */
+	public function update_membership_fee_settings( $request ) {
+		$membership_fees = new \Stadion\Fees\MembershipFees();
+
+		$fees = [];
+		$fee_types = [ 'mini', 'pupil', 'junior', 'senior', 'recreant', 'donateur' ];
+
+		foreach ( $fee_types as $type ) {
+			$value = $request->get_param( $type );
+			if ( $value !== null ) {
+				$fees[ $type ] = (int) $value;
+			}
+		}
+
+		if ( ! empty( $fees ) ) {
+			$membership_fees->update_settings( $fees );
+		}
+
+		return rest_ensure_response( $membership_fees->get_all_settings() );
 	}
 
 	/**
