@@ -759,6 +759,86 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get pro-rata percentage based on registration month.
+	 *
+	 * Season starts July 1. Pro-rata tiers by quarter:
+	 * - Q1 (July-September): 100% - full season
+	 * - Q2 (October-December): 75% - 3/4 season
+	 * - Q3 (January-March): 50% - 1/2 season
+	 * - Q4 (April-June): 25% - 1/4 season
+	 *
+	 * @param string|null $registration_date Date in Y-m-d format, or null for 100%.
+	 * @return float Pro-rata percentage (0.25 to 1.0).
+	 */
+	public function get_prorata_percentage( ?string $registration_date ): float {
+		// Null date = full fee (100%)
+		if ( $registration_date === null || trim( $registration_date ) === '' ) {
+			return 1.0;
+		}
+
+		$timestamp = strtotime( $registration_date );
+		if ( $timestamp === false ) {
+			return 1.0; // Invalid date = full fee
+		}
+
+		$month = (int) date( 'n', $timestamp );
+
+		// Q1: July-September = 100%
+		if ( $month >= 7 && $month <= 9 ) {
+			return 1.0;
+		}
+		// Q2: October-December = 75%
+		if ( $month >= 10 && $month <= 12 ) {
+			return 0.75;
+		}
+		// Q3: January-March = 50%
+		if ( $month >= 1 && $month <= 3 ) {
+			return 0.50;
+		}
+		// Q4: April-June = 25%
+		return 0.25;
+	}
+
+	/**
+	 * Calculate complete fee with family discount and pro-rata
+	 *
+	 * Calculates: base_fee -> apply family discount -> apply pro-rata -> final_fee
+	 *
+	 * The registration_date should come from Sportlink data (ACF field 'registratiedatum').
+	 *
+	 * @param int         $person_id         The person post ID.
+	 * @param string|null $registration_date Sportlink registration date (Y-m-d format).
+	 * @param string|null $season            Optional season key, defaults to current season.
+	 * @return array|null Complete fee data or null if not calculable.
+	 */
+	public function calculate_full_fee( int $person_id, ?string $registration_date = null, ?string $season = null ): ?array {
+		// Get fee with family discount
+		$fee_data = $this->calculate_fee_with_family_discount( $person_id, $season );
+
+		if ( $fee_data === null ) {
+			return null;
+		}
+
+		// Get pro-rata percentage
+		$prorata_percentage = $this->get_prorata_percentage( $registration_date );
+
+		// Calculate pro-rata amount (applied to fee after family discount)
+		$fee_after_discount = $fee_data['final_fee'];
+		$prorata_amount     = (int) round( $fee_after_discount * $prorata_percentage );
+
+		// Add pro-rata fields to result
+		return array_merge(
+			$fee_data,
+			[
+				'registration_date'   => $registration_date,
+				'prorata_percentage'  => $prorata_percentage,
+				'fee_after_discount'  => $fee_after_discount,
+				'final_fee'           => $prorata_amount,  // Override final_fee with pro-rata amount
+			]
+		);
+	}
+
+	/**
 	 * Calculate fee with family discount for a person
 	 *
 	 * Calculates the base fee and applies family discount based on position
