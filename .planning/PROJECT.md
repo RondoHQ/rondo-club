@@ -293,12 +293,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-**v11.0 VOG Management:**
+**v12.0 Membership Fees:**
 
-- [ ] VOG section in sidebar with filtered volunteer list
-- [ ] Bulk email sending with configurable templates
-- [ ] VOG request tracking with email history
-- [ ] Settings for email templates and from address
+- [ ] Membership fees section in sidebar (below Leden, above VOG)
+- [ ] Age-based fee calculation (Mini €130, Pupil €180, Junior €230, Senior €255)
+- [ ] Recreational/Donateur flat fees (€65/€55)
+- [ ] Family discount calculation (25% 2nd child, 50% 3rd+ at same address)
+- [ ] Pro-rata calculation based on Sportlink join date
+- [ ] Configurable fee amounts in Settings
+- [ ] Address mismatch filter for siblings with different addresses
 
 ### Out of Scope
 
@@ -438,4 +441,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | RelationshipItemCompact for list view | Async fetch for relationship names in compact column display | ✓ Good |
 
 ---
-*Last updated: 2026-01-30 after starting v11.0 VOG Management milestone*
+*Last updated: 2026-01-31 after starting v12.0 Membership Fees milestone*
