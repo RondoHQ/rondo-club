@@ -24,6 +24,9 @@ class InverseRelationships {
 	private $old_relationships = [];
 
 	public function __construct() {
+		// Validate relationships before saving (remove self-refs and duplicates)
+		add_filter( 'acf/update_value/name=relationships', [ $this, 'validate_relationships' ], 4, 3 );
+
 		// Capture old value before update
 		add_filter( 'acf/update_value/name=relationships', [ $this, 'capture_old_relationships' ], 5, 3 );
 
@@ -33,6 +36,83 @@ class InverseRelationships {
 		// Also hook into REST API updates to ensure sync happens
 		add_action( 'rest_after_insert_person', [ $this, 'sync_inverse_relationships' ], 20, 1 );
 		add_action( 'rest_after_update_person', [ $this, 'sync_inverse_relationships' ], 20, 1 );
+	}
+
+	/**
+	 * Validate relationships before saving
+	 *
+	 * Removes self-relationships and duplicate relationships (same person + same type).
+	 *
+	 * @param mixed $value The value to be saved
+	 * @param int $post_id The post ID
+	 * @param array $field The field array
+	 * @return array Cleaned relationships array
+	 */
+	public function validate_relationships( $value, $post_id, $field ) {
+		if ( ! is_array( $value ) ) {
+			return $value;
+		}
+
+		// Ensure we have a valid integer post ID
+		if ( is_object( $post_id ) && isset( $post_id->ID ) ) {
+			$post_id = $post_id->ID;
+		}
+		$post_id = (int) $post_id;
+
+		$cleaned     = [];
+		$seen_combos = []; // Track person+type combinations we've seen
+
+		foreach ( $value as $rel ) {
+			if ( ! is_array( $rel ) ) {
+				continue;
+			}
+
+			// Extract related person ID
+			$related_person_id = null;
+			if ( isset( $rel['related_person'] ) ) {
+				if ( is_numeric( $rel['related_person'] ) ) {
+					$related_person_id = (int) $rel['related_person'];
+				} elseif ( is_object( $rel['related_person'] ) && isset( $rel['related_person']->ID ) ) {
+					$related_person_id = (int) $rel['related_person']->ID;
+				}
+			}
+
+			// Skip if no related person
+			if ( ! $related_person_id ) {
+				continue;
+			}
+
+			// Skip self-relationships
+			if ( $related_person_id === $post_id ) {
+				continue;
+			}
+
+			// Extract relationship type ID
+			$relationship_type_id = null;
+			if ( isset( $rel['relationship_type'] ) ) {
+				if ( is_numeric( $rel['relationship_type'] ) ) {
+					$relationship_type_id = (int) $rel['relationship_type'];
+				} elseif ( is_object( $rel['relationship_type'] ) && isset( $rel['relationship_type']->term_id ) ) {
+					$relationship_type_id = (int) $rel['relationship_type']->term_id;
+				} elseif ( is_array( $rel['relationship_type'] ) && isset( $rel['relationship_type']['term_id'] ) ) {
+					$relationship_type_id = (int) $rel['relationship_type']['term_id'];
+				}
+			}
+
+			// Create a unique key for this person+type combination
+			$combo_key = $related_person_id . '_' . $relationship_type_id;
+
+			// Skip duplicates (same person with same relationship type)
+			if ( isset( $seen_combos[ $combo_key ] ) ) {
+				continue;
+			}
+
+			// Mark this combination as seen and add to cleaned list
+			$seen_combos[ $combo_key ] = true;
+			$cleaned[]                 = $rel;
+		}
+
+		return $cleaned;
 	}
 
 	/**

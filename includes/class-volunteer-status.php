@@ -33,6 +33,9 @@ class VolunteerStatus {
 		'Middenvelder',
 		'Teamspeler',
 		'Speler',
+		'Champions league',
+		'Zondag recranten',
+		'Zaterdag recreanten',
 	];
 
 	/**
