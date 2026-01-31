@@ -1191,7 +1191,7 @@ class People extends Base {
 		}
 
 		// VOG email status filter (sent/not_sent based on stadion_email comments)
-		if ( ! empty( $vog_email_status ) ) {
+		if ( $vog_email_status !== null && $vog_email_status !== '' ) {
 			// Subquery to find people with email comments
 			$email_subquery = "SELECT DISTINCT comment_post_ID FROM {$wpdb->comments} WHERE comment_type = 'stadion_email'";
 
