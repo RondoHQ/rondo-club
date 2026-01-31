@@ -599,6 +599,53 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get the family grouping key for a person
+	 *
+	 * Generates a unique key based on the person's address for grouping
+	 * family members. Uses postal code + house number (ignores street name).
+	 * House number additions ARE significant (12A and 12B are different families).
+	 *
+	 * @param int $person_id The person post ID.
+	 * @return string|null Family key (e.g., "1234AB-12A") or null if address incomplete.
+	 */
+	public function get_family_key( int $person_id ): ?string {
+		// Get addresses from person
+		$addresses = get_field( 'addresses', $person_id ) ?: [];
+
+		if ( empty( $addresses ) ) {
+			return null;
+		}
+
+		// Use first address as primary
+		$primary     = $addresses[0];
+		$postal_code = $primary['postal_code'] ?? '';
+		$street      = $primary['street'] ?? '';
+
+		// Require both postal code and street
+		if ( empty( $postal_code ) || empty( $street ) ) {
+			return null;
+		}
+
+		// Normalize postal code
+		$normalized_postal = $this->normalize_postal_code( $postal_code );
+
+		// Extract house number from street
+		$house_number = $this->extract_house_number( $street );
+
+		if ( $house_number === null ) {
+			return null;
+		}
+
+		// Validate postal code format (4 digits + 2 letters)
+		if ( ! preg_match( '/^\d{4}[A-Z]{2}$/', $normalized_postal ) ) {
+			return null;
+		}
+
+		// Return family key: POSTALCODE-HOUSENUMBER
+		return $normalized_postal . '-' . $house_number;
+	}
+
+	/**
 	 * Get calculation status for a person
 	 *
 	 * Returns diagnostic information about why a person might be excluded from
