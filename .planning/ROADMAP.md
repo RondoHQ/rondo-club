@@ -36,7 +36,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   6. Admin can set Recreant fee amount (default: 65)
   7. Admin can set Donateur fee amount (default: 55)
   8. Fee amounts persist across page reloads
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [x] 123-01: Settings backend and calculation service class
@@ -55,11 +55,11 @@ Plans:
   6. Donateur members get flat Donateur fee
   7. "Meiden" suffix in leeftijdsgroep is stripped before matching
   8. Members without leeftijdsgroep are excluded from age-based calculation
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 124-01: Age group parsing and fee calculation logic
-- [ ] 124-02: Fee type detection (youth, recreant, donateur)
+- [ ] 124-01-PLAN.md — Core calculation logic (age group parsing, member type detection, calculate_fee method)
+- [ ] 124-02-PLAN.md — Season snapshot and caching (season key, snapshot storage, get_fee_for_person API)
 
 ### Phase 125: Family Discount
 **Goal**: Youth members at same address receive tiered family discounts
@@ -106,10 +106,10 @@ Phases execute in numeric order: 123 -> 124 -> 125 -> 126
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 123. Settings & Backend Foundation | 2/2 | ✓ Complete | 2026-01-31 |
-| 124. Fee Calculation Engine | 0/2 | Not started | - |
+| 124. Fee Calculation Engine | 0/2 | Planned | - |
 | 125. Family Discount | 0/2 | Not started | - |
 | 126. Pro-rata & UI | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-01-31 (Phase 123 complete)*
+*Last updated: 2026-01-31 (Phase 124 planned)*
