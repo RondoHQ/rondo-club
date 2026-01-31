@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-29)
 
 **Core value:** Personal CRM with multi-user collaboration
-**Current focus:** v11.0 VOG Management - Phase 122
+**Current focus:** v12.0 Membership Fees
 
 ## Current Position
 
-Phase: 122 of 122 (Tracking & Polish)
-Plan: 02 of 2
-Status: Verified complete
-Last activity: 2026-01-31 — Completed quick task 029: VOG Justis status filter
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-01-31 — Milestone v12.0 started
 
-Progress: [███████████████████-] 100% (4/4 phases)
+Progress: [░░░░░░░░░░░░░░░░░░░░] 0%
 
 ## Milestone History
 
