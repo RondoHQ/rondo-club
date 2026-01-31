@@ -514,4 +514,90 @@ class MembershipFees {
 
 		return $result;
 	}
+
+	/**
+	 * Clear all fee snapshots for a season
+	 *
+	 * Removes all stored fee calculations for the specified season across all people.
+	 * This enables the admin "recalculate all" functionality.
+	 *
+	 * @param string $season The season key (e.g., "2025-2026").
+	 * @return int Number of snapshots deleted.
+	 */
+	public function clear_all_snapshots_for_season( string $season ): int {
+		$meta_key = $this->get_snapshot_meta_key( $season );
+		$deleted  = 0;
+
+		// Query all person posts
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			]
+		);
+
+		if ( ! empty( $query->posts ) ) {
+			foreach ( $query->posts as $person_id ) {
+				if ( delete_post_meta( $person_id, $meta_key ) ) {
+					$deleted++;
+				}
+			}
+		}
+
+		return $deleted;
+	}
+
+	/**
+	 * Get calculation status for a person
+	 *
+	 * Returns diagnostic information about why a person might be excluded from
+	 * fee calculation. Useful for admin UI and debugging.
+	 *
+	 * @param int $person_id The person post ID.
+	 * @return array{
+	 *     has_leeftijdsgroep: bool,
+	 *     leeftijdsgroep_value: string|null,
+	 *     parsed_category: string|null,
+	 *     has_teams: bool,
+	 *     team_count: int,
+	 *     is_donateur: bool,
+	 *     calculable: bool,
+	 *     reason: string
+	 * } Diagnostic information array.
+	 */
+	public function get_calculation_status( int $person_id ): array {
+		$leeftijdsgroep = get_field( 'leeftijdsgroep', $person_id );
+		$parsed         = ! empty( $leeftijdsgroep ) ? $this->parse_age_group( $leeftijdsgroep ) : null;
+		$teams          = $this->get_current_teams( $person_id );
+		$is_donateur    = $this->is_donateur( $person_id );
+		$fee_result     = $this->calculate_fee( $person_id );
+
+		// Determine reason if not calculable
+		$reason = 'calculable';
+
+		if ( $fee_result === null ) {
+			if ( ! empty( $leeftijdsgroep ) && $parsed === null ) {
+				$reason = 'unknown_age_group';
+			} elseif ( ! empty( $teams ) && empty( $leeftijdsgroep ) ) {
+				$reason = 'has_team_but_no_age_group';
+			} elseif ( ! empty( $teams ) && $parsed === null ) {
+				$reason = 'has_team_but_no_age_group';
+			} else {
+				$reason = 'no_age_group_no_team_not_donateur';
+			}
+		}
+
+		return [
+			'has_leeftijdsgroep'  => ! empty( $leeftijdsgroep ),
+			'leeftijdsgroep_value' => $leeftijdsgroep ?: null,
+			'parsed_category'     => $parsed,
+			'has_teams'           => ! empty( $teams ),
+			'team_count'          => count( $teams ),
+			'is_donateur'         => $is_donateur,
+			'calculable'          => $fee_result !== null,
+			'reason'              => $reason,
+		];
+	}
 }
