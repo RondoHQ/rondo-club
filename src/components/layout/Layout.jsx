@@ -16,7 +16,8 @@ import {
   UsersRound,
   MessageSquare,
   User,
-  FileCheck
+  FileCheck,
+  Coins
 } from 'lucide-react';
 
 // Stadium icon component matching favicon
@@ -45,6 +46,7 @@ import { useVOGCount } from '@/hooks/useVOGCount';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Leden', href: '/people', icon: Users },
+  { name: 'Contributie', href: '/contributie', icon: Coins, indent: true },
   { name: 'VOG', href: '/vog', icon: FileCheck, indent: true },
   { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
@@ -456,6 +458,7 @@ function Header({ onMenuClick, onOpenSearch }) {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people')) return 'Leden';
+    if (path.startsWith('/contributie')) return 'Contributie';
     if (path.startsWith('/vog')) return 'VOG';
     if (path.startsWith('/teams')) return 'Teams';
     if (path.startsWith('/commissies')) return 'Commissies';
