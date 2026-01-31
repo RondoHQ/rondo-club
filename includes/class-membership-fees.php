@@ -455,4 +455,63 @@ class MembershipFees {
 
 		return delete_post_meta( $person_id, $meta_key );
 	}
+
+	/**
+	 * Get the fee for a person with caching support
+	 *
+	 * This is the primary public API for fee retrieval. It checks for cached snapshots
+	 * first, and calculates fresh if needed. Results can be automatically saved to
+	 * the snapshot cache for future retrieval.
+	 *
+	 * @param int   $person_id The person post ID.
+	 * @param array $options   {
+	 *     Optional. Configuration options.
+	 *
+	 *     @type bool        $use_cache         Whether to check for cached snapshot. Default true.
+	 *     @type bool        $save_snapshot     Whether to save result to cache. Default true.
+	 *     @type string|null $season            Season key to use. Default current season.
+	 *     @type bool        $force_recalculate Whether to ignore cache and recalculate. Default false.
+	 * }
+	 * @return array|null Fee data with season and cache info, or null if not calculable.
+	 */
+	public function get_fee_for_person( int $person_id, array $options = [] ): ?array {
+		// Parse options with defaults
+		$use_cache         = $options['use_cache'] ?? true;
+		$save_snapshot     = $options['save_snapshot'] ?? true;
+		$season            = $options['season'] ?? $this->get_season_key();
+		$force_recalculate = $options['force_recalculate'] ?? false;
+
+		// Check cache first (unless force recalculate)
+		if ( $use_cache && ! $force_recalculate ) {
+			$cached = $this->get_fee_snapshot( $person_id, $season );
+
+			if ( $cached !== null ) {
+				// Return cached result with cache flag
+				$cached['from_cache'] = true;
+				$cached['season']     = $season;
+
+				return $cached;
+			}
+		}
+
+		// Calculate fresh
+		$result = $this->calculate_fee( $person_id );
+
+		if ( $result === null ) {
+			return null;
+		}
+
+		// Add metadata
+		$result['season']     = $season;
+		$result['from_cache'] = false;
+
+		// Save to snapshot if requested
+		if ( $save_snapshot ) {
+			$this->save_fee_snapshot( $person_id, $result, $season );
+			// Add calculated_at timestamp to return value (save_fee_snapshot adds it to stored data)
+			$result['calculated_at'] = current_time( 'Y-m-d H:i:s' );
+		}
+
+		return $result;
+	}
 }
