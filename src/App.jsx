@@ -27,6 +27,7 @@ const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
 const FeedbackDetail = lazy(() => import('@/pages/Feedback/FeedbackDetail'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const VOGList = lazy(() => import('@/pages/VOG/VOGList'));
+const ContributieList = lazy(() => import('@/pages/Contributie/ContributieList'));
 const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
 const Labels = lazy(() => import('@/pages/Settings/Labels'));
 const UserApproval = lazy(() => import('@/pages/Settings/UserApproval'));
@@ -197,6 +198,9 @@ function App() {
 
                   {/* VOG route */}
                   <Route path="/vog" element={<VOGList />} />
+
+                  {/* Contributie route */}
+                  <Route path="/contributie" element={<ContributieList />} />
 
                   {/* Teams routes */}
                   <Route path="/teams" element={<TeamsList />} />
