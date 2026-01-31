@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 123: Settings & Backend Foundation** - Fee configuration UI and calculation service scaffolding
 - [x] **Phase 124: Fee Calculation Engine** - Age-based and flat fee calculations
 - [x] **Phase 125: Family Discount** - Address grouping and tiered discount logic
-- [ ] **Phase 126: Pro-rata & UI** - Join date calculation, list page, and filters
+- [x] **Phase 126: Pro-rata & UI** - Join date calculation, list page, and filters
 
 ## Phase Details
 
@@ -94,9 +94,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 126-01-PLAN.md — Pro-rata calculation based on Sportlink join date (get_prorata_percentage, calculate_full_fee)
-- [ ] 126-02-PLAN.md — Contributie list page and REST endpoint (sidebar nav, /fees endpoint, ContributieList.jsx)
-- [ ] 126-03-PLAN.md — Address mismatch filter (detect_address_mismatches, filter dropdown)
+- [x] 126-01-PLAN.md — Pro-rata calculation based on Sportlink join date (get_prorata_percentage, calculate_full_fee)
+- [x] 126-02-PLAN.md — Contributie list page and REST endpoint (sidebar nav, /fees endpoint, ContributieList.jsx)
+- [x] 126-03-PLAN.md — Address mismatch filter (detect_address_mismatches, filter dropdown)
 
 ## Progress
 
@@ -108,8 +108,8 @@ Phases execute in numeric order: 123 -> 124 -> 125 -> 126
 | 123. Settings & Backend Foundation | 2/2 | ✓ Complete | 2026-01-31 |
 | 124. Fee Calculation Engine | 2/2 | ✓ Complete | 2026-01-31 |
 | 125. Family Discount | 2/2 | ✓ Complete | 2026-01-31 |
-| 126. Pro-rata & UI | 0/3 | Not started | - |
+| 126. Pro-rata & UI | 3/3 | ✓ Complete | 2026-01-31 |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-01-31 (Phase 126 planned - 3 plans in 3 waves)*
+*Last updated: 2026-01-31 (Phase 126 complete - 3 plans executed)*
