@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 125: Family Discount** - Address grouping and tiered discount logic
 - [x] **Phase 126: Pro-rata & UI** - Join date calculation, list page, and filters
 - [x] **Phase 127: Fee Caching** - Fix pro-rata field, denormalize fees to person meta
-- [ ] **Phase 127.1: Nikki Integration** - Import Nikki data, add columns to Contributie list (INSERTED)
+- [x] **Phase 127.1: Nikki Integration** - Import Nikki data, add columns to Contributie list (INSERTED)
 - [ ] **Phase 128: Google Sheets Export** - Export fee data to Google Sheets
 
 ## Phase Details
@@ -124,18 +124,18 @@ Plans:
 **Depends on**: Phase 127
 **Requirements**: NIK-01, NIK-02, NIK-03, NIK-04
 **Success Criteria** (what must be TRUE):
-  1. WP-CLI command imports Nikki data from external SQLite into person meta
-  2. Nikki records matched to persons via relatiecode (KNVB ID)
-  3. Nikki data stored as _nikki_{year}_total and _nikki_{year}_saldo in person meta
-  4. Contributie list shows Nikki Total column
-  5. Contributie list shows Saldo (Outstanding) column
-  6. All monetary values display with 2 decimal places
-  7. Nikki year mapping: 2025 data = season 2025-2026
-**Plans**: 2 plans
+  1. ~~WP-CLI command imports Nikki data from external SQLite into person meta~~ (SKIPPED - external process)
+  2. ~~Nikki records matched to persons via relatiecode (KNVB ID)~~ (SKIPPED - external process)
+  3. ~~Nikki data stored as _nikki_{year}_total and _nikki_{year}_saldo in person meta~~ (SKIPPED - external process)
+  4. Contributie list shows Nikki Total column ✓
+  5. Contributie list shows Saldo (Outstanding) column ✓
+  6. All monetary values display with 2 decimal places ✓
+  7. Nikki year mapping: 2025 data = season 2025-2026 ✓
+**Plans**: 2 plans (1 skipped)
 
 Plans:
-- [ ] 127.1-01-PLAN.md — WP-CLI import command (SQLite reader, KNVB ID matching, meta storage)
-- [ ] 127.1-02-PLAN.md — REST API and UI extension (nikki_total/nikki_saldo in API, new columns in ContributieList)
+- [x] 127.1-01-PLAN.md — WP-CLI import command (SKIPPED - external process handles import)
+- [x] 127.1-02-PLAN.md — REST API and UI extension (nikki_total/nikki_saldo in API, new columns in ContributieList)
 
 ### Phase 128: Google Sheets Export
 **Goal**: Users can export fee data to Google Sheets
@@ -159,9 +159,9 @@ Phases execute in numeric order: 123 -> 124 -> 125 -> 126 -> 127 -> 127.1 -> 128
 | 125. Family Discount | 2/2 | ✓ Complete | 2026-01-31 |
 | 126. Pro-rata & UI | 2/2 | ✓ Complete | 2026-01-31 |
 | 127. Fee Caching | 3/3 | ✓ Complete | 2026-02-01 |
-| 127.1. Nikki Integration (INSERTED) | 0/2 | Not started | - |
+| 127.1. Nikki Integration (INSERTED) | 2/2 | ✓ Complete | 2026-02-01 |
 | 128. Google Sheets Export | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-02-01 (Phase 127.1 planned: 2 plans in 2 waves)*
+*Last updated: 2026-02-01 (Phase 127.1 complete: UI columns added, import skipped - external process)*
