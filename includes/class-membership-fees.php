@@ -804,7 +804,7 @@ class MembershipFees {
 	 *
 	 * Calculates: base_fee -> apply family discount -> apply pro-rata -> final_fee
 	 *
-	 * The registration_date should come from Sportlink data (ACF field 'registratiedatum').
+	 * The registration_date should come from ACF field 'lid-sinds' (membership join date).
 	 *
 	 * @param int         $person_id         The person post ID.
 	 * @param string|null $registration_date Sportlink registration date (Y-m-d format).

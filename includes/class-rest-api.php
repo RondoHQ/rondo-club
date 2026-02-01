@@ -2568,8 +2568,8 @@ class Api extends Base {
 		$results = [];
 
 		foreach ( $query->posts as $person ) {
-			// Get registration date from ACF (Sportlink field)
-			$registration_date = get_field( 'registratiedatum', $person->ID );
+			// Get membership join date from ACF (lid-sinds field for pro-rata)
+			$registration_date = get_field( 'lid-sinds', $person->ID );
 
 			// Calculate full fee with pro-rata
 			$fee_data = $fees->calculate_full_fee( $person->ID, $registration_date, $season );
@@ -2598,7 +2598,7 @@ class Api extends Base {
 				'family_key'             => $fee_data['family_key'],
 				'family_size'            => $fee_data['family_size'],
 				'family_position'        => $fee_data['family_position'],
-				'registration_date'      => $registration_date,
+				'lid_sinds'              => $registration_date,
 			];
 		}
 
