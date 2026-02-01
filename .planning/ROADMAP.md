@@ -139,13 +139,19 @@ Plans:
 
 ### Phase 128: Google Sheets Export
 **Goal**: Users can export fee data to Google Sheets
-**Depends on**: Phase 127
+**Depends on**: Phase 127.1
 **Requirements**: EXP-01
 **Success Criteria** (what must be TRUE):
   1. Export button on Contributie page
-  2. Exports to Google Sheets with columns: Name, Age Group, Base Fee, Family Discount, Pro-rata %, Final Amount
+  2. Exports to Google Sheets with columns: Naam, Relatiecode, Categorie, Leeftijdsgroep, Basis, Gezinskorting, Pro-rata %, Bedrag, Nikki Total, Saldo
   3. Uses existing Google OAuth connection
-**Plans**: TBD
+  4. Spreadsheet opens in new browser tab automatically
+  5. Euro currency formatting via nl_NL locale
+  6. Totals row at bottom (sums for Basis and Bedrag only)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 128-01-PLAN.md — Backend export endpoint and frontend button
 
 ## Progress
 
@@ -160,8 +166,8 @@ Phases execute in numeric order: 123 -> 124 -> 125 -> 126 -> 127 -> 127.1 -> 128
 | 126. Pro-rata & UI | 2/2 | ✓ Complete | 2026-01-31 |
 | 127. Fee Caching | 3/3 | ✓ Complete | 2026-02-01 |
 | 127.1. Nikki Integration (INSERTED) | 2/2 | ✓ Complete | 2026-02-01 |
-| 128. Google Sheets Export | 0/? | Not started | - |
+| 128. Google Sheets Export | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-02-01 (Phase 127.1 complete: UI columns added, import skipped - external process)*
+*Last updated: 2026-02-01 (Phase 128 planned: 1 plan for backend endpoint + frontend button)*
