@@ -100,7 +100,7 @@ function FeeRow({ member, isOdd }) {
 
       {/* Base Fee */}
       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
-        {formatCurrency(member.base_fee)}
+        {formatCurrency(member.base_fee, 2)}
       </td>
 
       {/* Family Discount */}
@@ -127,7 +127,7 @@ function FeeRow({ member, isOdd }) {
 
       {/* Final Fee */}
       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-50 text-right">
-        {formatCurrency(member.final_fee)}
+        {formatCurrency(member.final_fee, 2)}
       </td>
 
       {/* Nikki Total */}
@@ -353,7 +353,7 @@ export default function ContributieList() {
           </div>
           <div className="flex items-center gap-3">
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              Totaal: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.finalFee)}</span>
+              Totaal: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.finalFee, 2)}</span>
             </div>
             {/* Filter: No Nikki Data */}
             {noNikkiCount > 0 && (
@@ -485,11 +485,11 @@ export default function ContributieList() {
                   Totaal
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
-                  {formatCurrency(totals.baseFee)}
+                  {formatCurrency(totals.baseFee, 2)}
                 </td>
                 <td colSpan="2"></td>
                 <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
-                  {formatCurrency(totals.finalFee)}
+                  {formatCurrency(totals.finalFee, 2)}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
                   {formatCurrency(totals.nikkiTotal, 2)}
