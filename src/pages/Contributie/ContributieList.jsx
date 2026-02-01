@@ -264,6 +264,21 @@ export default function ContributieList() {
       case 'final_fee':
         cmp = a.final_fee - b.final_fee;
         break;
+      case 'leeftijdsgroep':
+        cmp = (a.leeftijdsgroep || '').localeCompare(b.leeftijdsgroep || '');
+        break;
+      case 'family_discount_rate':
+        cmp = a.family_discount_rate - b.family_discount_rate;
+        break;
+      case 'prorata_percentage':
+        cmp = a.prorata_percentage - b.prorata_percentage;
+        break;
+      case 'nikki_total':
+        cmp = (a.nikki_total || 0) - (b.nikki_total || 0);
+        break;
+      case 'nikki_saldo':
+        cmp = (a.nikki_saldo || 0) - (b.nikki_saldo || 0);
+        break;
       default:
         cmp = 0;
     }
@@ -377,12 +392,13 @@ export default function ContributieList() {
                   sortOrder={sortOrder}
                   onSort={handleSort}
                 />
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
-                >
-                  Leeftijdsgroep
-                </th>
+                <SortableHeader
+                  label="Leeftijdsgroep"
+                  columnId="leeftijdsgroep"
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                />
                 <SortableHeader
                   label="Basis"
                   columnId="base_fee"
@@ -391,18 +407,22 @@ export default function ContributieList() {
                   onSort={handleSort}
                   className="text-right"
                 />
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
-                >
-                  Gezin
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
-                >
-                  Pro-rata
-                </th>
+                <SortableHeader
+                  label="Gezin"
+                  columnId="family_discount_rate"
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                  className="text-right"
+                />
+                <SortableHeader
+                  label="Pro-rata"
+                  columnId="prorata_percentage"
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                  className="text-right"
+                />
                 <SortableHeader
                   label="Bedrag"
                   columnId="final_fee"
@@ -411,18 +431,22 @@ export default function ContributieList() {
                   onSort={handleSort}
                   className="text-right"
                 />
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
-                >
-                  Nikki
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
-                >
-                  Saldo
-                </th>
+                <SortableHeader
+                  label="Nikki"
+                  columnId="nikki_total"
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                  className="text-right"
+                />
+                <SortableHeader
+                  label="Saldo"
+                  columnId="nikki_saldo"
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                  className="text-right"
+                />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
