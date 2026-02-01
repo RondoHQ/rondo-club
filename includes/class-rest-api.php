@@ -2575,6 +2575,9 @@ class Api extends Base {
 			$season = $fees->get_season_key();
 		}
 
+		// Nikki year = first 4 chars of season (2025-2026 => 2025)
+		$nikki_year = substr( $season, 0, 4 );
+
 		// Query all person posts
 		$query = new \WP_Query(
 			[
@@ -2603,6 +2606,10 @@ class Api extends Base {
 			$last_name  = get_field( 'last_name', $person->ID ) ?: '';
 			$name       = trim( $first_name . ' ' . $last_name );
 
+			// Get Nikki data for this year
+			$nikki_total = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_total', true );
+			$nikki_saldo = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_saldo', true );
+
 			$results[] = [
 				'id'                     => $person->ID,
 				'name'                   => $name ?: $person->post_title,
@@ -2620,6 +2627,8 @@ class Api extends Base {
 				'lid_sinds'              => $fee_data['registration_date'] ?? null,
 				'from_cache'             => $fee_data['from_cache'] ?? false,
 				'calculated_at'          => $fee_data['calculated_at'] ?? null,
+				'nikki_total'            => $nikki_total !== '' ? (float) $nikki_total : null,
+				'nikki_saldo'            => $nikki_saldo !== '' ? (float) $nikki_saldo : null,
 			];
 		}
 
