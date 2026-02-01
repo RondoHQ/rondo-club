@@ -37,6 +37,7 @@ import ContactEditModal from '@/components/ContactEditModal';
 import ImportantDateModal from '@/components/ImportantDateModal';
 import RelationshipEditModal from '@/components/RelationshipEditModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
+import FinancesCard from '@/components/FinancesCard';
 import { format, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -1789,7 +1790,7 @@ export default function PersonDetail() {
                 });
               }}
               isUpdating={updatePerson.isPending}
-              excludeLabelPrefixes={['Nikki']}
+              excludeLabelPrefixes={['Nikki', 'Financiele']}
             />
           </div>
         )}
@@ -1933,9 +1934,13 @@ export default function PersonDetail() {
 
         </div>
 
-        {/* Todos Sidebar - always visible */}
+        {/* Sidebar - always visible */}
         <aside className="hidden lg:block">
           <div className="sticky top-6">
+            {/* Finances Card */}
+            <FinancesCard personId={parseInt(id)} />
+
+            {/* Todos Card */}
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">

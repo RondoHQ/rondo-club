@@ -670,6 +670,31 @@ class Api extends Base {
 			]
 		);
 
+		// Get single person fee data
+		register_rest_route(
+			'stadion/v1',
+			'/fees/person/(?P<id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_person_fee' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'id'     => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && $param > 0;
+						},
+					],
+					'season' => [
+						'default'           => null,
+						'validate_callback' => function ( $param ) {
+							return $param === null || preg_match( '/^\d{4}-\d{4}$/', $param );
+						},
+					],
+				],
+			]
+		);
+
 		// Bulk recalculate fees endpoint
 		register_rest_route(
 			'stadion/v1',
@@ -2650,6 +2675,77 @@ class Api extends Base {
 				'season'  => $season,
 				'total'   => count( $results ),
 				'members' => $results,
+			]
+		);
+	}
+
+	/**
+	 * Get fee data for a single person
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error Response with fee data or error.
+	 */
+	public function get_person_fee( $request ) {
+		$person_id = (int) $request->get_param( 'id' );
+		$season    = $request->get_param( 'season' );
+
+		// Verify person exists
+		$person = get_post( $person_id );
+		if ( ! $person || $person->post_type !== 'person' ) {
+			return new \WP_Error( 'not_found', 'Person not found', [ 'status' => 404 ] );
+		}
+
+		$fees = new \Stadion\Fees\MembershipFees();
+
+		if ( $season === null ) {
+			$season = $fees->get_season_key();
+		}
+
+		// Get fee data with caching
+		$fee_data = $fees->get_fee_for_person_cached( $person_id, $season );
+
+		if ( $fee_data === null ) {
+			// Person is not calculable (no valid category)
+			return rest_ensure_response(
+				[
+					'person_id'  => $person_id,
+					'season'     => $season,
+					'calculable' => false,
+					'message'    => 'Geen contributie berekening mogelijk voor deze persoon.',
+				]
+			);
+		}
+
+		// Get Nikki data for this year
+		$nikki_year  = substr( $season, 0, 4 );
+		$nikki_total = get_post_meta( $person_id, '_nikki_' . $nikki_year . '_total', true );
+		$nikki_saldo = get_post_meta( $person_id, '_nikki_' . $nikki_year . '_saldo', true );
+
+		// Get financiele-blokkade field
+		$financiele_blokkade = get_field( 'financiele-blokkade', $person_id );
+
+		return rest_ensure_response(
+			[
+				'person_id'              => $person_id,
+				'season'                 => $season,
+				'calculable'             => true,
+				'category'               => $fee_data['category'],
+				'leeftijdsgroep'         => $fee_data['leeftijdsgroep'],
+				'base_fee'               => $fee_data['base_fee'],
+				'family_discount_rate'   => $fee_data['family_discount_rate'],
+				'family_discount_amount' => $fee_data['family_discount_amount'],
+				'fee_after_discount'     => $fee_data['fee_after_discount'],
+				'prorata_percentage'     => $fee_data['prorata_percentage'],
+				'final_fee'              => $fee_data['final_fee'],
+				'family_key'             => $fee_data['family_key'],
+				'family_size'            => $fee_data['family_size'],
+				'family_position'        => $fee_data['family_position'],
+				'lid_sinds'              => $fee_data['registration_date'] ?? null,
+				'from_cache'             => $fee_data['from_cache'] ?? false,
+				'calculated_at'          => $fee_data['calculated_at'] ?? null,
+				'nikki_total'            => $nikki_total !== '' ? (float) $nikki_total : null,
+				'nikki_saldo'            => $nikki_saldo !== '' ? (float) $nikki_saldo : null,
+				'financiele_blokkade'    => (bool) $financiele_blokkade,
 			]
 		);
 	}
