@@ -178,6 +178,7 @@ export default function ContributieList() {
   const [sortField, setSortField] = useState('category');
   const [sortOrder, setSortOrder] = useState('asc');
   const [showNoNikkiOnly, setShowNoNikkiOnly] = useState(false);
+  const [showMismatchOnly, setShowMismatchOnly] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -246,7 +247,11 @@ export default function ContributieList() {
 
   // Filter and sort members client-side
   const filteredMembers = data?.members
-    ? data.members.filter(m => !showNoNikkiOnly || m.nikki_total === null)
+    ? data.members.filter(m => {
+        if (showNoNikkiOnly) return m.nikki_total === null;
+        if (showMismatchOnly) return m.nikki_total !== null && m.nikki_total !== m.final_fee;
+        return true;
+      })
     : [];
 
   const sortedMembers = filteredMembers.length ? [...filteredMembers].sort((a, b) => {
@@ -289,6 +294,9 @@ export default function ContributieList() {
 
   // Count members without Nikki data
   const noNikkiCount = data?.members?.filter(m => m.nikki_total === null).length || 0;
+
+  // Count members with mismatch between Nikki and calculated fee (excluding those without Nikki data)
+  const mismatchCount = data?.members?.filter(m => m.nikki_total !== null && m.nikki_total !== m.final_fee).length || 0;
 
   // Calculate totals
   const totals = sortedMembers.reduce(
@@ -355,10 +363,29 @@ export default function ContributieList() {
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Nog te ontvangen: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.nikkiSaldo, 2)}</span>
             </div>
+            {/* Filter: Mismatch */}
+            {mismatchCount > 0 && (
+              <button
+                onClick={() => {
+                  setShowMismatchOnly(!showMismatchOnly);
+                  if (!showMismatchOnly) setShowNoNikkiOnly(false);
+                }}
+                className={`btn-secondary inline-flex items-center gap-1.5 ${
+                  showMismatchOnly ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700' : ''
+                }`}
+                title={showMismatchOnly ? 'Toon alle leden' : 'Toon alleen leden waar Nikki afwijkt van Bedrag'}
+              >
+                <Filter className="w-4 h-4" />
+                <span className="text-xs">Afwijking ({mismatchCount})</span>
+              </button>
+            )}
             {/* Filter: No Nikki Data */}
             {noNikkiCount > 0 && (
               <button
-                onClick={() => setShowNoNikkiOnly(!showNoNikkiOnly)}
+                onClick={() => {
+                  setShowNoNikkiOnly(!showNoNikkiOnly);
+                  if (!showNoNikkiOnly) setShowMismatchOnly(false);
+                }}
                 className={`btn-secondary inline-flex items-center gap-1.5 ${
                   showNoNikkiOnly ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700' : ''
                 }`}
