@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, RefreshCw, Coins } from 'lucide-react';
+import { ArrowUp, ArrowDown, RefreshCw, Coins, FileSpreadsheet } from 'lucide-react';
 import { useFeeList } from '@/hooks/useFees';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 
 // Format currency in euros
@@ -179,10 +180,20 @@ function EmptyState() {
 export default function ContributieList() {
   const [sortField, setSortField] = useState('category');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [isExporting, setIsExporting] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch fee data
   const { data, isLoading, error } = useFeeList();
+
+  // Check Google Sheets connection status
+  const { data: sheetsStatus } = useQuery({
+    queryKey: ['google-sheets-status'],
+    queryFn: async () => {
+      const response = await prmApi.getSheetsStatus();
+      return response.data;
+    },
+  });
 
   // Handle sort
   const handleSort = useCallback((field, order) => {
@@ -193,6 +204,46 @@ export default function ContributieList() {
   // Handle refresh
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['fees'] });
+  };
+
+  // Handle export to Google Sheets
+  const handleExportToSheets = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+
+    // Open window immediately to avoid popup blocker
+    const newWindow = window.open('about:blank', '_blank');
+
+    try {
+      const response = await prmApi.exportFeesToSheets({
+        sort_field: sortField,
+        sort_order: sortOrder,
+      });
+
+      if (response.data.spreadsheet_url && newWindow) {
+        newWindow.location.href = response.data.spreadsheet_url;
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      if (newWindow) newWindow.close();
+      const message = error.response?.data?.message || 'Export mislukt. Probeer het opnieuw.';
+      alert(message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Handle connect to Google Sheets
+  const handleConnectSheets = async () => {
+    try {
+      const response = await prmApi.getSheetsAuthUrl();
+      if (response.data.auth_url) {
+        window.location.href = response.data.auth_url;
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      alert('Kon geen verbinding maken met Google Sheets. Probeer het opnieuw.');
+    }
   };
 
   // Sort members client-side
@@ -277,8 +328,33 @@ export default function ContributieList() {
             Seizoen: <span className="font-medium text-gray-900 dark:text-gray-100">{data?.season}</span>
             <span className="ml-4">{sortedMembers.length} leden</span>
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Totaal: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.finalFee)}</span>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Totaal: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.finalFee)}</span>
+            </div>
+            {/* Export Button */}
+            {sheetsStatus?.connected ? (
+              <button
+                onClick={handleExportToSheets}
+                disabled={isExporting}
+                className="btn-secondary"
+                title="Exporteren naar Google Sheets"
+              >
+                {isExporting ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                ) : (
+                  <FileSpreadsheet className="w-4 h-4" />
+                )}
+              </button>
+            ) : sheetsStatus?.google_configured ? (
+              <button
+                onClick={handleConnectSheets}
+                className="btn-secondary"
+                title="Verbinden met Google Sheets"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+              </button>
+            ) : null}
           </div>
         </div>
 
