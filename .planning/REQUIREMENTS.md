@@ -87,15 +87,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRO-01 | Phase 126 | Complete |
 | PRO-02 | Phase 126 | Complete |
 | PRO-03 | Phase 126 | Complete |
-| PRO-04 | Phase 127 | Pending |
+| PRO-04 | Phase 127 | Complete |
 | SET-01 | Phase 123 | Complete |
 | SET-02 | Phase 123 | Complete |
 | SET-03 | Phase 123 | Complete |
 | SET-04 | Phase 123 | Complete |
 | SET-05 | Phase 123 | Complete |
 | SET-06 | Phase 123 | Complete |
-| CACHE-01 | Phase 127 | Pending |
-| CACHE-02 | Phase 127 | Pending |
+| CACHE-01 | Phase 127 | Complete |
+| CACHE-02 | Phase 127 | Complete |
 | EXP-01 | Phase 128 | Pending |
 
 **Coverage:**
