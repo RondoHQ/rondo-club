@@ -669,6 +669,28 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Bulk recalculate fees endpoint
+		register_rest_route(
+			'stadion/v1',
+			'/fees/recalculate',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'recalculate_all_fees' ],
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+				'args'                => [
+					'season' => [
+						'default'           => null,
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $param ) {
+							return $param === null || preg_match( '/^\d{4}-\d{4}$/', $param );
+						},
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -2619,6 +2641,44 @@ class Api extends Base {
 				'season'  => $season,
 				'total'   => count( $results ),
 				'members' => $results,
+			]
+		);
+	}
+
+	/**
+	 * Trigger bulk fee recalculation
+	 *
+	 * Admin-only endpoint to clear all fee caches and schedule recalculation.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with recalculation status.
+	 */
+	public function recalculate_all_fees( $request ) {
+		$fees   = new \Stadion\Fees\MembershipFees();
+		$season = $request->get_param( 'season' );
+
+		if ( $season === null ) {
+			$season = $fees->get_season_key();
+		}
+
+		// Clear all caches
+		$cleared = $fees->clear_all_fee_caches( $season );
+
+		// Schedule background recalculation
+		if ( ! wp_next_scheduled( 'stadion_recalculate_all_fees', [ $season ] ) ) {
+			wp_schedule_single_event( time() + 10, 'stadion_recalculate_all_fees', [ $season ] );
+		}
+
+		return rest_ensure_response(
+			[
+				'success'       => true,
+				'season'        => $season,
+				'cleared_count' => $cleared,
+				'message'       => sprintf(
+					'Cleared %d fee caches for season %s. Background recalculation scheduled.',
+					$cleared,
+					$season
+				),
 			]
 		);
 	}
