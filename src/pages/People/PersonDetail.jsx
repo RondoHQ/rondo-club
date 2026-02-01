@@ -1791,7 +1791,7 @@ export default function PersonDetail() {
                 });
               }}
               isUpdating={updatePerson.isPending}
-              excludeLabelPrefixes={['Nikki', 'Financiele', 'Datum VOG', 'VOG']}
+              excludeLabelPrefixes={['Nikki', 'Financiële', 'Datum VOG', 'VOG']}
             />
           </div>
         )}
