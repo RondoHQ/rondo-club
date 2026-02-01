@@ -2675,7 +2675,8 @@ class Api extends Base {
 
 			$results[] = [
 				'id'                     => $person->ID,
-				'name'                   => $name ?: $person->post_title,
+				'first_name'             => $first_name,
+				'last_name'              => $last_name,
 				'category'               => $fee_data['category'],
 				'leeftijdsgroep'         => $fee_data['leeftijdsgroep'],
 				'base_fee'               => $fee_data['base_fee'],
