@@ -249,7 +249,7 @@ export default function ContributieList() {
   const filteredMembers = data?.members
     ? data.members.filter(m => {
         if (showNoNikkiOnly) return m.nikki_total === null;
-        if (showMismatchOnly) return m.nikki_total !== null && m.nikki_total !== m.final_fee;
+        if (showMismatchOnly) return m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1;
         return true;
       })
     : [];
@@ -295,8 +295,8 @@ export default function ContributieList() {
   // Count members without Nikki data
   const noNikkiCount = data?.members?.filter(m => m.nikki_total === null).length || 0;
 
-  // Count members with mismatch between Nikki and calculated fee (excluding those without Nikki data)
-  const mismatchCount = data?.members?.filter(m => m.nikki_total !== null && m.nikki_total !== m.final_fee).length || 0;
+  // Count members with mismatch between Nikki and calculated fee (difference >= 1 euro, excluding those without Nikki data)
+  const mismatchCount = data?.members?.filter(m => m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1).length || 0;
 
   // Calculate totals
   const totals = sortedMembers.reduce(
