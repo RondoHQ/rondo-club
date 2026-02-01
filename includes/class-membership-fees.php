@@ -954,7 +954,7 @@ class MembershipFees {
 
 		// Calculate pro-rata amount (applied to fee after family discount)
 		$fee_after_discount = $fee_data['final_fee'];
-		$prorata_amount     = (int) round( $fee_after_discount * $prorata_percentage );
+		$prorata_amount     = round( $fee_after_discount * $prorata_percentage, 2 );
 
 		// Add pro-rata fields to result
 		return array_merge(
@@ -1080,7 +1080,7 @@ class MembershipFees {
 
 		// Calculate discount
 		$discount_rate   = $this->get_family_discount_rate( $position );
-		$discount_amount = (int) round( $fee_data['base_fee'] * $discount_rate );
+		$discount_amount = round( $fee_data['base_fee'] * $discount_rate, 2 );
 		$final_fee       = $fee_data['base_fee'] - $discount_amount;
 
 		return array_merge(
