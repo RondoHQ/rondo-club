@@ -299,6 +299,7 @@ export const prmApi = {
 
   // Membership fees
   getFeeList: (params = {}) => api.get('/stadion/v1/fees', { params }),
+  exportFeesToSheets: (data) => api.post('/stadion/v1/google-sheets/export-fees', data),
 
   // VOG Bulk Operations
   bulkSendVOGEmails: (ids) => api.post('/stadion/v1/vog/bulk-send', { ids }),
