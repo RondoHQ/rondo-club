@@ -51,7 +51,7 @@ Requirements for membership fee calculation system. Each maps to roadmap phases.
 
 ### Export
 
-- [ ] **EXP-01**: Export fee data to Google Sheets
+- [x] **EXP-01**: Export fee data to Google Sheets
 
 ## Future Requirements
 
@@ -96,7 +96,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SET-06 | Phase 123 | Complete |
 | CACHE-01 | Phase 127 | Complete |
 | CACHE-02 | Phase 127 | Complete |
-| EXP-01 | Phase 128 | Pending |
+| EXP-01 | Phase 128 | Complete |
 
 **Coverage:**
 - v12.0 requirements: 25 total
@@ -105,4 +105,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-02-01 (Scope adjusted - removed FIL-01, added PRO-04, CACHE-01, CACHE-02, EXP-01)*
+*Last updated: 2026-02-01 (EXP-01 complete - All requirements complete)*
