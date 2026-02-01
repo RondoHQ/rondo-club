@@ -2568,11 +2568,8 @@ class Api extends Base {
 		$results = [];
 
 		foreach ( $query->posts as $person ) {
-			// Get membership join date from ACF (lid-sinds field for pro-rata)
-			$registration_date = get_field( 'lid-sinds', $person->ID );
-
-			// Calculate full fee with pro-rata
-			$fee_data = $fees->calculate_full_fee( $person->ID, $registration_date, $season );
+			// Get fee with caching (uses lid-sinds for pro-rata internally)
+			$fee_data = $fees->get_fee_for_person_cached( $person->ID, $season );
 
 			// Skip non-calculable members
 			if ( $fee_data === null ) {
@@ -2598,7 +2595,9 @@ class Api extends Base {
 				'family_key'             => $fee_data['family_key'],
 				'family_size'            => $fee_data['family_size'],
 				'family_position'        => $fee_data['family_position'],
-				'lid_sinds'              => $registration_date,
+				'lid_sinds'              => $fee_data['registration_date'] ?? null,
+				'from_cache'             => $fee_data['from_cache'] ?? false,
+				'calculated_at'          => $fee_data['calculated_at'] ?? null,
 			];
 		}
 
