@@ -2778,6 +2778,7 @@ class Api extends Base {
 				'family_key'             => $fee_data['family_key'],
 				'family_size'            => $fee_data['family_size'],
 				'family_position'        => $fee_data['family_position'],
+				'family_members'         => $fee_data['family_members'] ?? [],
 				'lid_sinds'              => $fee_data['registration_date'] ?? null,
 				'from_cache'             => $fee_data['from_cache'] ?? false,
 				'calculated_at'          => $fee_data['calculated_at'] ?? null,
