@@ -873,18 +873,22 @@ class MembershipFees {
 	}
 
 	/**
-	 * Get pro-rata percentage based on registration month.
+	 * Get pro-rata percentage based on registration date relative to season.
 	 *
-	 * Season starts July 1. Pro-rata tiers by quarter:
+	 * Members who joined BEFORE the current season starts (before July 1 of season start year)
+	 * pay 100% - they were already members when the season began.
+	 *
+	 * Members who join DURING the current season get pro-rata based on quarter:
 	 * - Q1 (July-September): 100% - full season
 	 * - Q2 (October-December): 75% - 3/4 season
 	 * - Q3 (January-March): 50% - 1/2 season
 	 * - Q4 (April-June): 25% - 1/4 season
 	 *
-	 * @param string|null $registration_date Date in Y-m-d format, or null for 100%.
+	 * @param string|null $registration_date Date in Y-m-d format (lid-sinds field), or null for 100%.
+	 * @param string|null $season            Optional season key (e.g., "2025-2026"), defaults to current season.
 	 * @return float Pro-rata percentage (0.25 to 1.0).
 	 */
-	public function get_prorata_percentage( ?string $registration_date ): float {
+	public function get_prorata_percentage( ?string $registration_date, ?string $season = null ): float {
 		// Null date = full fee (100%)
 		if ( $registration_date === null || trim( $registration_date ) === '' ) {
 			return 1.0;
@@ -895,6 +899,17 @@ class MembershipFees {
 			return 1.0; // Invalid date = full fee
 		}
 
+		// Determine the season start date
+		$season           = $season ?: $this->get_season_key();
+		$season_start_year = (int) substr( $season, 0, 4 );
+		$season_start_date = strtotime( $season_start_year . '-07-01' );
+
+		// If member joined BEFORE the season started, they pay 100%
+		if ( $timestamp < $season_start_date ) {
+			return 1.0;
+		}
+
+		// Member joined during the current season - apply quarterly pro-rata
 		$month = (int) date( 'n', $timestamp );
 
 		// Q1: July-September = 100%
@@ -933,8 +948,9 @@ class MembershipFees {
 			return null;
 		}
 
-		// Get pro-rata percentage
-		$prorata_percentage = $this->get_prorata_percentage( $registration_date );
+		// Get pro-rata percentage (pass season to compare against season start date)
+		$season             = $season ?: $this->get_season_key();
+		$prorata_percentage = $this->get_prorata_percentage( $registration_date, $season );
 
 		// Calculate pro-rata amount (applied to fee after family discount)
 		$fee_after_discount = $fee_data['final_fee'];
