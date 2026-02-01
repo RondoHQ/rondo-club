@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, RefreshCw, Coins, FileSpreadsheet } from 'lucide-react';
+import { ArrowUp, ArrowDown, RefreshCw, Coins, FileSpreadsheet, Filter } from 'lucide-react';
 import { useFeeList } from '@/hooks/useFees';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
@@ -180,6 +180,7 @@ function EmptyState() {
 export default function ContributieList() {
   const [sortField, setSortField] = useState('category');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [showNoNikkiOnly, setShowNoNikkiOnly] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -246,8 +247,12 @@ export default function ContributieList() {
     }
   };
 
-  // Sort members client-side
-  const sortedMembers = data?.members ? [...data.members].sort((a, b) => {
+  // Filter and sort members client-side
+  const filteredMembers = data?.members
+    ? data.members.filter(m => !showNoNikkiOnly || m.nikki_total === null)
+    : [];
+
+  const sortedMembers = filteredMembers.length ? [...filteredMembers].sort((a, b) => {
     let cmp = 0;
     switch (sortField) {
       case 'name':
@@ -283,7 +288,10 @@ export default function ContributieList() {
         cmp = 0;
     }
     return sortOrder === 'asc' ? cmp : -cmp;
-  }) : [];
+  }) : []
+
+  // Count members without Nikki data
+  const noNikkiCount = data?.members?.filter(m => m.nikki_total === null).length || 0;
 
   // Calculate totals
   const totals = sortedMembers.reduce(
@@ -347,6 +355,19 @@ export default function ContributieList() {
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Totaal: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.finalFee)}</span>
             </div>
+            {/* Filter: No Nikki Data */}
+            {noNikkiCount > 0 && (
+              <button
+                onClick={() => setShowNoNikkiOnly(!showNoNikkiOnly)}
+                className={`btn-secondary inline-flex items-center gap-1.5 ${
+                  showNoNikkiOnly ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700' : ''
+                }`}
+                title={showNoNikkiOnly ? 'Toon alle leden' : 'Toon alleen leden zonder Nikki data'}
+              >
+                <Filter className="w-4 h-4" />
+                <span className="text-xs">Geen Nikki ({noNikkiCount})</span>
+              </button>
+            )}
             {/* Export Button */}
             {sheetsStatus?.connected ? (
               <button
