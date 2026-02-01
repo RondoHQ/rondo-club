@@ -5,23 +5,27 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Calculate membership fees with family discounts and pro-rata for mid-season joins
-**Current focus:** Milestone v12.0 - Phase 128 (Google Sheets Export)
+**Current focus:** Milestone v12.0 - Phase 127.1 (Nikki Integration)
 
 ## Current Position
 
-Phase: 128 of 128 (Google Sheets Export)
-Plan: Not started
-Status: Phase 127 complete, ready for final phase
-Last activity: 2026-02-01 - Completed Phase 127 (Fee Caching)
+Phase: 127.1 of 128 (Nikki Integration)
+Plan: 2 of 2 complete
+Status: Phase 127.1 complete
+Last activity: 2026-02-01 - Completed 127.1-02-PLAN.md (Nikki UI Integration)
 
-Progress: [█████████░] 90%
+Progress: [████████░░] 82%
+
+### Roadmap Evolution
+
+- Phase 127.1 inserted after Phase 127: Nikki Integration (URGENT) - COMPLETE
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: 3.6 min
-- Total execution time: 0.72 hours
+- Total plans completed: 14
+- Average duration: 3.4 min
+- Total execution time: 0.79 hours
 
 **By Phase:**
 
@@ -32,9 +36,10 @@ Progress: [█████████░] 90%
 | 125 | 2/2 | 7 min | 3.5 min |
 | 126 | 3/3 | 11 min | 3.7 min |
 | 127 | 3/3 | 9 min | 3 min |
+| 127.1 | 2/2 | 4 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 126-02 (5 min), 126-03 (3 min), 127-01 (4 min), 127-02 (3 min), 127-03 (2 min)
+- Last 5 plans: 127-01 (4 min), 127-02 (3 min), 127-03 (2 min), 127.1-01 (2 min), 127.1-02 (2 min)
 - Trend: Stable/improving
 
 *Updated after each plan completion*
@@ -56,6 +61,9 @@ Recent decisions affecting current work:
 | 2026-02-01 | Separate cache meta key from snapshot | Cache uses stadion_fee_cache_, snapshot uses fee_snapshot_ |
 | 2026-02-01 | Address invalidation uses OLD family key | Ensures siblings in old family get cache cleared |
 | 2026-02-01 | 10-second cron delay for bulk recalculation | Gives system time to settle after settings save |
+| 2026-02-01 | Nikki year from season first 4 chars | 2025-2026 => 2025 for meta key lookup |
+| 2026-02-01 | Null vs 0 for missing Nikki data | Distinguishes "no data" from "zero balance" in UI |
+| 2026-02-01 | Red/green color coding for saldo | Positive (owes money) = red, zero/negative = green |
 
 ### Pending Todos
 
@@ -63,12 +71,12 @@ None.
 
 ### Blockers/Concerns
 
-None - Phase 127 (Fee Caching) complete. Ready for Phase 128.
+None - Phase 127.1 complete. Ready for Phase 128.
 
 ## Session Continuity
 
-Last session: 2026-02-01 09:08 UTC
-Stopped at: Completed 127-03-PLAN.md
+Last session: 2026-02-01 13:07 UTC
+Stopped at: Completed 127.1-02-PLAN.md
 Resume file: None
 
 ---
