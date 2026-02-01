@@ -773,13 +773,14 @@ class MembershipFees {
 	 * } Family groups and person data.
 	 */
 	public function build_family_groups( ?string $season = null ): array {
-		// Query all person posts
+		// Query all person posts (suppress_filters to bypass access control in CLI/cron contexts)
 		$query = new \WP_Query(
 			[
-				'post_type'      => 'person',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'no_found_rows'  => true,
+				'post_type'        => 'person',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
 			]
 		);
 
