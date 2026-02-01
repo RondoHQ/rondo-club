@@ -76,23 +76,23 @@ function FeeRow({ member, isOdd }) {
     <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${
       isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
     } ${hasProrata ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
-      {/* Last Name */}
+      {/* First Name */}
       <td className="px-4 py-3 whitespace-nowrap">
         <Link
           to={`/people/${member.id}`}
           className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-accent-600 dark:hover:text-accent-400"
         >
-          {member.last_name}
+          {member.first_name}
         </Link>
       </td>
 
-      {/* First Name */}
+      {/* Last Name */}
       <td className="px-4 py-3 whitespace-nowrap">
         <Link
           to={`/people/${member.id}`}
           className="text-sm text-gray-700 dark:text-gray-300 hover:text-accent-600 dark:hover:text-accent-400"
         >
-          {member.first_name}
+          {member.last_name}
         </Link>
       </td>
 
@@ -269,9 +269,17 @@ export default function ContributieList() {
     switch (sortField) {
       case 'last_name':
         cmp = (a.last_name || '').localeCompare(b.last_name || '');
+        // Secondary sort by first_name
+        if (cmp === 0) {
+          cmp = (a.first_name || '').localeCompare(b.first_name || '');
+        }
         break;
       case 'first_name':
         cmp = (a.first_name || '').localeCompare(b.first_name || '');
+        // Secondary sort by last_name
+        if (cmp === 0) {
+          cmp = (a.last_name || '').localeCompare(b.last_name || '');
+        }
         break;
       case 'category': {
         const catOrder = { mini: 1, pupil: 2, junior: 3, senior: 4, recreant: 5, donateur: 6 };
@@ -440,15 +448,15 @@ export default function ContributieList() {
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <SortableHeader
-                  label="Achternaam"
-                  columnId="last_name"
+                  label="Voornaam"
+                  columnId="first_name"
                   sortField={sortField}
                   sortOrder={sortOrder}
                   onSort={handleSort}
                 />
                 <SortableHeader
-                  label="Voornaam"
-                  columnId="first_name"
+                  label="Achternaam"
+                  columnId="last_name"
                   sortField={sortField}
                   sortOrder={sortOrder}
                   onSort={handleSort}
