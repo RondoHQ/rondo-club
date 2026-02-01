@@ -52,6 +52,12 @@ class FeeCacheInvalidator {
 
 		// REST API updates
 		add_action( 'rest_after_insert_person', [ $this, 'invalidate_person_cache_rest' ], 10, 2 );
+
+		// Settings changes affect all people - trigger bulk recalculation
+		add_action( 'update_option_stadion_membership_fees', [ $this, 'schedule_bulk_recalculation' ], 10, 2 );
+
+		// Cron hook for background recalculation
+		add_action( 'stadion_recalculate_all_fees', [ $this, 'recalculate_all_fees_background' ] );
 	}
 
 	/**
@@ -157,5 +163,72 @@ class FeeCacheInvalidator {
 	public function invalidate_all_caches( ?string $season = null ): int {
 		$season = $season ?: $this->fees->get_season_key();
 		return $this->fees->clear_all_fee_caches( $season );
+	}
+
+	/**
+	 * Schedule bulk recalculation when fee settings change
+	 *
+	 * Uses wp_schedule_single_event to avoid timeouts with large member counts.
+	 *
+	 * @param mixed $old_value The old option value.
+	 * @param mixed $new_value The new option value.
+	 */
+	public function schedule_bulk_recalculation( $old_value, $new_value ) {
+		$season = $this->fees->get_season_key();
+
+		// Clear all caches immediately
+		$cleared = $this->fees->clear_all_fee_caches( $season );
+
+		// Schedule background recalculation (10 seconds from now)
+		if ( ! wp_next_scheduled( 'stadion_recalculate_all_fees', [ $season ] ) ) {
+			wp_schedule_single_event( time() + 10, 'stadion_recalculate_all_fees', [ $season ] );
+		}
+
+		// Log for debugging
+		error_log( sprintf(
+			'[Stadion Fee Cache] Settings changed: cleared %d caches for season %s, recalculation scheduled',
+			$cleared,
+			$season
+		) );
+	}
+
+	/**
+	 * Background job to recalculate all fees
+	 *
+	 * Called by WordPress cron after settings change.
+	 * Calculates and caches fees for all people to pre-warm cache.
+	 *
+	 * @param string $season The season key.
+	 */
+	public function recalculate_all_fees_background( $season ) {
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			]
+		);
+
+		$calculated = 0;
+		$skipped    = 0;
+
+		foreach ( $query->posts as $person_id ) {
+			// Use get_fee_for_person_cached which calculates and saves
+			$result = $this->fees->get_fee_for_person_cached( (int) $person_id, $season );
+
+			if ( $result !== null ) {
+				$calculated++;
+			} else {
+				$skipped++;
+			}
+		}
+
+		error_log( sprintf(
+			'[Stadion Fee Cache] Bulk recalculation complete: %d calculated, %d skipped for season %s',
+			$calculated,
+			$skipped,
+			$season
+		) );
 	}
 }
