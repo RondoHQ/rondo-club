@@ -6,7 +6,7 @@ This milestone implements a membership fee calculation system for Stadion. Start
 
 ## Milestones
 
-- 🚧 **v12.0 Membership Fees** - Phases 123-126 (in progress)
+- ✓ **v12.0 Membership Fees** - Phases 123-128 (complete)
 
 ## Phases
 
@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 126: Pro-rata & UI** - Join date calculation, list page, and filters
 - [x] **Phase 127: Fee Caching** - Fix pro-rata field, denormalize fees to person meta
 - [x] **Phase 127.1: Nikki Integration** - Import Nikki data, add columns to Contributie list (INSERTED)
-- [ ] **Phase 128: Google Sheets Export** - Export fee data to Google Sheets
+- [x] **Phase 128: Google Sheets Export** - Export fee data to Google Sheets
 
 ## Phase Details
 
@@ -151,7 +151,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 128-01-PLAN.md — Backend export endpoint and frontend button
+- [x] 128-01-PLAN.md — Backend export endpoint and frontend button
 
 ## Progress
 
@@ -166,8 +166,8 @@ Phases execute in numeric order: 123 -> 124 -> 125 -> 126 -> 127 -> 127.1 -> 128
 | 126. Pro-rata & UI | 2/2 | ✓ Complete | 2026-01-31 |
 | 127. Fee Caching | 3/3 | ✓ Complete | 2026-02-01 |
 | 127.1. Nikki Integration (INSERTED) | 2/2 | ✓ Complete | 2026-02-01 |
-| 128. Google Sheets Export | 0/1 | Not started | - |
+| 128. Google Sheets Export | 1/1 | ✓ Complete | 2026-02-01 |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-02-01 (Phase 128 planned: 1 plan for backend endpoint + frontend button)*
+*Last updated: 2026-02-01 (Phase 128 complete: Google Sheets Export)*
