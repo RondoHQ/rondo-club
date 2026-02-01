@@ -1090,6 +1090,8 @@ export default function PersonDetail() {
     'facebook': 6,
     'whatsapp': 7,
     'website': 8,
+    'sportlink': 9,
+    'freescout': 10,
   };
   
   // Sort social links by display order, and add WhatsApp and Sportlink if applicable
@@ -1109,6 +1111,14 @@ export default function PersonDetail() {
       links.push({
         contact_type: 'sportlink',
         contact_value: `https://club.sportlink.com/member/member-details/${acf['knvb-id']}/general`,
+      });
+    }
+
+    // Add Freescout if there's a Freescout ID
+    if (acf['freescout-id']) {
+      links.push({
+        contact_type: 'freescout',
+        contact_value: `https://box.svawc.nl/customers/${acf['freescout-id']}`,
       });
     }
 
@@ -1357,6 +1367,22 @@ export default function PersonDetail() {
                           title="Bekijk in Sportlink Club"
                         >
                           <img src={`${window.stadionConfig?.themeUrl}/public/icons/sportlink.png`} alt="Sportlink" className="w-5 h-5" />
+                        </a>
+                      );
+                    }
+
+                    // Handle Freescout specially with custom icon
+                    if (contact.contact_type === 'freescout') {
+                      return (
+                        <a
+                          key={index}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                          title="Bekijk in Freescout"
+                        >
+                          <img src={`${window.stadionConfig?.themeUrl}/public/icons/freescout.png`} alt="Freescout" className="w-5 h-5" />
                         </a>
                       );
                     }
@@ -1791,7 +1817,7 @@ export default function PersonDetail() {
                 });
               }}
               isUpdating={updatePerson.isPending}
-              excludeLabelPrefixes={['Nikki', 'Financiële', 'Datum VOG', 'VOG']}
+              excludeLabelPrefixes={['Nikki', 'Financiële', 'Datum VOG', 'VOG', 'Freescout']}
             />
           </div>
         )}
