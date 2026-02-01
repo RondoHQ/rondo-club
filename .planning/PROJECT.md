@@ -291,17 +291,19 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Disable creating new commissies in Stadion UI — v10.0
 - Keep all edit/add/remove functionality available in REST API — v10.0
 
+**v12.0 Membership Fees (shipped 2026-02-01):**
+- Contributie section in sidebar below Leden, above VOG — v12.0
+- Age-based fee calculation (Mini, Pupil, Junior, Senior) with configurable amounts — v12.0
+- Recreational/Donateur flat fees with configurable amounts — v12.0
+- Family discount calculation (25% 2nd child, 50% 3rd+ at same address) — v12.0
+- Pro-rata calculation based on lid-sinds field (quarterly tiers) — v12.0
+- Fee caching with automatic invalidation on relevant field changes — v12.0
+- Nikki integration showing contributions vs calculated fees — v12.0
+- Google Sheets export with Dutch formatting and auto-open — v12.0
+
 ### Active
 
-**v12.0 Membership Fees:**
-
-- [ ] Membership fees section in sidebar (below Leden, above VOG)
-- [ ] Age-based fee calculation (Mini €130, Pupil €180, Junior €230, Senior €255)
-- [ ] Recreational/Donateur flat fees (€65/€55)
-- [ ] Family discount calculation (25% 2nd child, 50% 3rd+ at same address)
-- [ ] Pro-rata calculation based on Sportlink join date
-- [ ] Configurable fee amounts in Settings
-- [ ] Address mismatch filter for siblings with different addresses
+(None - ready for next milestone)
 
 ### Out of Scope
 
@@ -439,6 +441,12 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Unique validation per user | Scoped to current user's posts, not global uniqueness | ✓ Good |
 | SortableFieldRow with dnd-kit | Consistent drag-drop pattern for table rows in Settings | ✓ Good |
 | RelationshipItemCompact for list view | Async fetch for relationship names in compact column display | ✓ Good |
+| Season key format YYYY-YYYY | Human-readable, standard sports season format | ✓ Good |
+| Family key format POSTALCODE-HOUSENUMBER | Street name ignored for flexible matching | ✓ Good |
+| Tiered discount 0%/25%/50% | Position 1/2/3+ per FAM requirements | ✓ Good |
+| Quarterly pro-rata tiers | 100%/75%/50%/25% for Jul-Sep/Oct-Dec/Jan-Mar/Apr-Jun | ✓ Good |
+| Null vs 0 for missing Nikki data | Distinguishes "no data" from "zero balance" | ✓ Good |
+| Red/green color coding for saldo | Positive (owes money) = red, zero/negative = green | ✓ Good |
 
 ---
-*Last updated: 2026-01-31 after starting v12.0 Membership Fees milestone*
+*Last updated: 2026-02-01 after completing v12.0 Membership Fees milestone*

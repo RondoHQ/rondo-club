@@ -1,5 +1,35 @@
 # Project Milestones: Stadion
 
+## v12.0 Membership Fees (Shipped: 2026-02-01)
+
+**Delivered:** Complete membership fee calculation system with configurable fee amounts, age-based calculation, family discounts (25%/50% tiers), pro-rata for mid-season joins, Nikki integration for contribution comparison, and Google Sheets export.
+
+**Phases completed:** 123-128 (15 plans total)
+
+**Key accomplishments:**
+
+- Admin settings UI for configuring 6 fee amounts (Mini, Pupil, Junior, Senior, Recreant, Donateur)
+- Age-based fee calculation engine with season caching and diagnostics
+- Family discount system with address grouping and tiered discounts (25%/50% for 2nd/3rd+ member)
+- Pro-rata calculation for mid-season joins (quarterly tiers: 100%/75%/50%/25%)
+- Contributie list page with sortable columns, category badges, and visual indicators
+- Fee caching with automatic invalidation on relevant field changes
+- Nikki integration showing actual contributions vs calculated fees with red/green saldo display
+- Google Sheets export with Dutch formatting and auto-open
+
+**Stats:**
+
+- 62 files changed
+- +13,289 / -357 lines changed
+- 7 phases (including 127.1 insertion), 15 plans
+- 2 days (2026-01-31 → 2026-02-01)
+
+**Git range:** `feat(123-01)` → `feat(128-01)`
+
+**What's next:** To be determined
+
+---
+
 ## v10.0 Read-Only UI for Sportlink Data (Shipped: 2026-01-29)
 
 **Delivered:** Restricted UI editing capabilities for Sportlink-managed data (person delete, address, work history) while preserving full REST API functionality for automation and sync, plus custom field edit control.
