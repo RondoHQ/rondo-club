@@ -727,6 +727,44 @@ class Api extends Base {
 
 		// Allow updating ACF fields via REST API
 		add_action( 'rest_insert_relationship_type', [ $this, 'update_relationship_type_acf' ], 10, 3 );
+
+		// Add VOG post meta fields to person REST API response
+		add_filter( 'rest_prepare_person', [ $this, 'add_vog_fields_to_person' ], 10, 3 );
+	}
+
+	/**
+	 * Add VOG-related post meta fields to person REST API response
+	 *
+	 * These fields are stored as post meta (not ACF fields) and need to be
+	 * exposed in the REST API for the VOG status card on the person detail page.
+	 *
+	 * @param \WP_REST_Response $response The response object.
+	 * @param \WP_Post          $post     The post object.
+	 * @param \WP_REST_Request  $request  The request object.
+	 * @return \WP_REST_Response Modified response with VOG fields.
+	 */
+	public function add_vog_fields_to_person( $response, $post, $request ) {
+		$data = $response->get_data();
+
+		// Ensure acf array exists
+		if ( ! isset( $data['acf'] ) ) {
+			$data['acf'] = [];
+		}
+
+		// Add VOG email sent date from post meta
+		$vog_email_sent = get_post_meta( $post->ID, 'vog_email_sent_date', true );
+		if ( $vog_email_sent ) {
+			$data['acf']['vog_email_sent_date'] = $vog_email_sent;
+		}
+
+		// Add VOG Justis submitted date from post meta
+		$vog_justis = get_post_meta( $post->ID, 'vog_justis_submitted_date', true );
+		if ( $vog_justis ) {
+			$data['acf']['vog_justis_submitted_date'] = $vog_justis;
+		}
+
+		$response->set_data( $data );
+		return $response;
 	}
 
 	/**
