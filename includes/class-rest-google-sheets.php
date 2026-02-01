@@ -104,6 +104,30 @@ class GoogleSheets extends Base {
 				],
 			]
 		);
+
+		// POST /stadion/v1/google-sheets/export-fees - Export fee list to Sheets
+		register_rest_route(
+			'stadion/v1',
+			'/google-sheets/export-fees',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'export_fees' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'sort_field' => [
+						'required' => false,
+						'type'     => 'string',
+						'default'  => 'category',
+					],
+					'sort_order' => [
+						'required' => false,
+						'type'     => 'string',
+						'default'  => 'asc',
+						'enum'     => [ 'asc', 'desc' ],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -462,6 +486,521 @@ class GoogleSheets extends Base {
 				[ 'status' => 500 ]
 			);
 		}
+	}
+
+	/**
+	 * Export fee list to Google Sheets
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response with spreadsheet URL or error.
+	 */
+	public function export_fees( $request ) {
+		$user_id = get_current_user_id();
+
+		// Check if connected
+		if ( ! GoogleSheetsConnection::is_connected( $user_id ) ) {
+			return new \WP_Error(
+				'not_connected',
+				__( 'Google Sheets is not connected. Please connect first.', 'stadion' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$sort_field = $request->get_param( 'sort_field' );
+		$sort_order = $request->get_param( 'sort_order' );
+
+		try {
+			// Get connection and credentials
+			$connection  = GoogleSheetsConnection::get_connection( $user_id );
+			$credentials = GoogleSheetsConnection::get_decrypted_credentials( $user_id );
+
+			if ( ! $credentials ) {
+				throw new \Exception( 'Failed to decrypt credentials' );
+			}
+
+			// Refresh token if needed
+			$access_token = GoogleOAuth::get_access_token( array_merge( $connection, [ 'user_id' => $user_id ] ) );
+			if ( ! $access_token ) {
+				throw new \Exception( 'Failed to get valid access token' );
+			}
+
+			// Create Google Sheets client
+			$client = new \Google\Client();
+			$client->setClientId( GOOGLE_OAUTH_CLIENT_ID );
+			$client->setClientSecret( GOOGLE_OAUTH_CLIENT_SECRET );
+			$client->setAccessToken( [ 'access_token' => $access_token ] );
+
+			$sheets_service = new \Google\Service\Sheets( $client );
+
+			// Fetch fee data
+			$fee_data = $this->fetch_fee_data( $sort_field, $sort_order );
+
+			// Build spreadsheet data
+			$spreadsheet_data = $this->build_fee_spreadsheet_data( $fee_data );
+
+			// Create title: "Contributie {season} - {date}"
+			$season = $fee_data['season'] ?? gmdate( 'Y' ) . '-' . ( gmdate( 'Y' ) + 1 );
+			$title  = 'Contributie ' . $season . ' - ' . gmdate( 'Y-m-d' );
+
+			// Create spreadsheet with nl_NL locale for Euro formatting
+			$spreadsheet = new \Google\Service\Sheets\Spreadsheet(
+				[
+					'properties' => [
+						'title'  => $title,
+						'locale' => 'nl_NL',
+					],
+					'sheets'     => [
+						[
+							'properties' => [
+								'title' => 'Contributie',
+							],
+						],
+					],
+				]
+			);
+
+			$created_spreadsheet = $sheets_service->spreadsheets->create( $spreadsheet );
+			$spreadsheet_id      = $created_spreadsheet->getSpreadsheetId();
+
+			// Get the actual sheet ID from the created spreadsheet
+			$sheets   = $created_spreadsheet->getSheets();
+			$sheet_id = $sheets[0]->getProperties()->getSheetId();
+
+			// Write data to sheet
+			$range = 'Contributie!A1';
+			$body  = new \Google\Service\Sheets\ValueRange(
+				[
+					'values' => $spreadsheet_data,
+				]
+			);
+
+			$params = [ 'valueInputOption' => 'RAW' ];
+			$sheets_service->spreadsheets_values->update( $spreadsheet_id, $range, $body, $params );
+
+			// Build formatting requests
+			$num_columns = 10; // Fixed 10 columns
+			$num_rows    = count( $spreadsheet_data );
+			$requests    = [];
+
+			// 1. Format header row: bold text, light gray background
+			$requests[] = [
+				'repeatCell' => [
+					'range'  => [
+						'sheetId'          => $sheet_id,
+						'startRowIndex'    => 0,
+						'endRowIndex'      => 1,
+						'startColumnIndex' => 0,
+						'endColumnIndex'   => $num_columns,
+					],
+					'cell'   => [
+						'userEnteredFormat' => [
+							'backgroundColor' => [
+								'red'   => 0.9,
+								'green' => 0.9,
+								'blue'  => 0.9,
+							],
+							'textFormat'      => [
+								'bold' => true,
+							],
+						],
+					],
+					'fields' => 'userEnteredFormat(backgroundColor,textFormat)',
+				],
+			];
+
+			// 2. Freeze header row
+			$requests[] = [
+				'updateSheetProperties' => [
+					'properties' => [
+						'sheetId'        => $sheet_id,
+						'gridProperties' => [
+							'frozenRowCount' => 1,
+						],
+					],
+					'fields'     => 'gridProperties.frozenRowCount',
+				],
+			];
+
+			// 3. Currency format for Basis (column E, index 4) - whole numbers
+			$requests[] = [
+				'repeatCell' => [
+					'range'  => [
+						'sheetId'          => $sheet_id,
+						'startRowIndex'    => 1,
+						'endRowIndex'      => $num_rows,
+						'startColumnIndex' => 4,
+						'endColumnIndex'   => 5,
+					],
+					'cell'   => [
+						'userEnteredFormat' => [
+							'numberFormat' => [
+								'type'    => 'CURRENCY',
+								'pattern' => '[$EUR] #,##0',
+							],
+						],
+					],
+					'fields' => 'userEnteredFormat.numberFormat',
+				],
+			];
+
+			// 4. Percentage format for Gezinskorting (column F, index 5)
+			$requests[] = [
+				'repeatCell' => [
+					'range'  => [
+						'sheetId'          => $sheet_id,
+						'startRowIndex'    => 1,
+						'endRowIndex'      => $num_rows,
+						'startColumnIndex' => 5,
+						'endColumnIndex'   => 6,
+					],
+					'cell'   => [
+						'userEnteredFormat' => [
+							'numberFormat' => [
+								'type'    => 'PERCENT',
+								'pattern' => '0%',
+							],
+						],
+					],
+					'fields' => 'userEnteredFormat.numberFormat',
+				],
+			];
+
+			// 5. Percentage format for Pro-rata % (column G, index 6)
+			$requests[] = [
+				'repeatCell' => [
+					'range'  => [
+						'sheetId'          => $sheet_id,
+						'startRowIndex'    => 1,
+						'endRowIndex'      => $num_rows,
+						'startColumnIndex' => 6,
+						'endColumnIndex'   => 7,
+					],
+					'cell'   => [
+						'userEnteredFormat' => [
+							'numberFormat' => [
+								'type'    => 'PERCENT',
+								'pattern' => '0%',
+							],
+						],
+					],
+					'fields' => 'userEnteredFormat.numberFormat',
+				],
+			];
+
+			// 6. Currency format for Bedrag (column H, index 7) - whole numbers
+			$requests[] = [
+				'repeatCell' => [
+					'range'  => [
+						'sheetId'          => $sheet_id,
+						'startRowIndex'    => 1,
+						'endRowIndex'      => $num_rows,
+						'startColumnIndex' => 7,
+						'endColumnIndex'   => 8,
+					],
+					'cell'   => [
+						'userEnteredFormat' => [
+							'numberFormat' => [
+								'type'    => 'CURRENCY',
+								'pattern' => '[$EUR] #,##0',
+							],
+						],
+					],
+					'fields' => 'userEnteredFormat.numberFormat',
+				],
+			];
+
+			// 7. Currency format for Nikki Total (column I, index 8) - 2 decimals
+			$requests[] = [
+				'repeatCell' => [
+					'range'  => [
+						'sheetId'          => $sheet_id,
+						'startRowIndex'    => 1,
+						'endRowIndex'      => $num_rows,
+						'startColumnIndex' => 8,
+						'endColumnIndex'   => 9,
+					],
+					'cell'   => [
+						'userEnteredFormat' => [
+							'numberFormat' => [
+								'type'    => 'CURRENCY',
+								'pattern' => '[$EUR] #,##0.00',
+							],
+						],
+					],
+					'fields' => 'userEnteredFormat.numberFormat',
+				],
+			];
+
+			// 8. Currency format for Saldo (column J, index 9) - 2 decimals
+			$requests[] = [
+				'repeatCell' => [
+					'range'  => [
+						'sheetId'          => $sheet_id,
+						'startRowIndex'    => 1,
+						'endRowIndex'      => $num_rows,
+						'startColumnIndex' => 9,
+						'endColumnIndex'   => 10,
+					],
+					'cell'   => [
+						'userEnteredFormat' => [
+							'numberFormat' => [
+								'type'    => 'CURRENCY',
+								'pattern' => '[$EUR] #,##0.00',
+							],
+						],
+					],
+					'fields' => 'userEnteredFormat.numberFormat',
+				],
+			];
+
+			// 9. Bold formatting for totals row (last row)
+			$requests[] = [
+				'repeatCell' => [
+					'range'  => [
+						'sheetId'          => $sheet_id,
+						'startRowIndex'    => $num_rows - 1,
+						'endRowIndex'      => $num_rows,
+						'startColumnIndex' => 0,
+						'endColumnIndex'   => $num_columns,
+					],
+					'cell'   => [
+						'userEnteredFormat' => [
+							'textFormat' => [
+								'bold' => true,
+							],
+						],
+					],
+					'fields' => 'userEnteredFormat.textFormat',
+				],
+			];
+
+			// 10. Auto-resize columns
+			for ( $i = 0; $i < $num_columns; $i++ ) {
+				$requests[] = [
+					'autoResizeDimensions' => [
+						'dimensions' => [
+							'sheetId'    => $sheet_id,
+							'dimension'  => 'COLUMNS',
+							'startIndex' => $i,
+							'endIndex'   => $i + 1,
+						],
+					],
+				];
+			}
+
+			$batch_update_request = new \Google\Service\Sheets\BatchUpdateSpreadsheetRequest(
+				[
+					'requests' => $requests,
+				]
+			);
+			$sheets_service->spreadsheets->batchUpdate( $spreadsheet_id, $batch_update_request );
+
+			$spreadsheet_url = 'https://docs.google.com/spreadsheets/d/' . $spreadsheet_id;
+
+			return rest_ensure_response(
+				[
+					'success'         => true,
+					'spreadsheet_url' => $spreadsheet_url,
+					'spreadsheet_id'  => $spreadsheet_id,
+					'rows_exported'   => count( $fee_data['members'] ),
+				]
+			);
+
+		} catch ( \Exception $e ) {
+			// Log error
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Google Sheets fee export error: ' . $e->getMessage() );
+			}
+
+			// Store error in connection
+			GoogleSheetsConnection::update_connection(
+				$user_id,
+				[
+					'last_error' => $e->getMessage(),
+				]
+			);
+
+			return new \WP_Error(
+				'export_failed',
+				$e->getMessage(),
+				[ 'status' => 500 ]
+			);
+		}
+	}
+
+	/**
+	 * Fetch fee data with sorting
+	 *
+	 * @param string $sort_field Sort field (name, category, base_fee, final_fee).
+	 * @param string $sort_order Sort order (asc, desc).
+	 * @return array Fee data with season and members.
+	 */
+	private function fetch_fee_data( string $sort_field, string $sort_order ): array {
+		$fees   = new \Stadion\Fees\MembershipFees();
+		$season = $fees->get_season_key();
+
+		// Nikki year = first 4 chars of season (2025-2026 => 2025)
+		$nikki_year = substr( $season, 0, 4 );
+
+		// Query all person posts
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+				'orderby'        => 'meta_value',
+				'meta_key'       => 'first_name',
+				'order'          => 'ASC',
+			]
+		);
+
+		$results = [];
+
+		foreach ( $query->posts as $person ) {
+			// Get fee with caching
+			$fee_data = $fees->get_fee_for_person_cached( $person->ID, $season );
+
+			// Skip non-calculable members
+			if ( $fee_data === null ) {
+				continue;
+			}
+
+			// Get person name
+			$first_name = get_field( 'first_name', $person->ID ) ?: '';
+			$last_name  = get_field( 'last_name', $person->ID ) ?: '';
+			$name       = trim( $first_name . ' ' . $last_name );
+
+			// Get relatiecode (KNVB ID)
+			$relatiecode = get_field( 'relatiecode', $person->ID ) ?: '';
+
+			// Get Nikki data for this year
+			$nikki_total = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_total', true );
+			$nikki_saldo = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_saldo', true );
+
+			$results[] = [
+				'id'                   => $person->ID,
+				'name'                 => $name ?: $person->post_title,
+				'relatiecode'          => $relatiecode,
+				'category'             => $fee_data['category'],
+				'leeftijdsgroep'       => $fee_data['leeftijdsgroep'],
+				'base_fee'             => $fee_data['base_fee'],
+				'family_discount_rate' => $fee_data['family_discount_rate'],
+				'prorata_percentage'   => $fee_data['prorata_percentage'],
+				'final_fee'            => $fee_data['final_fee'],
+				'nikki_total'          => $nikki_total !== '' ? (float) $nikki_total : null,
+				'nikki_saldo'          => $nikki_saldo !== '' ? (float) $nikki_saldo : null,
+			];
+		}
+
+		// Sort results based on sort_field and sort_order
+		$category_order = [ 'mini' => 1, 'pupil' => 2, 'junior' => 3, 'senior' => 4, 'recreant' => 5, 'donateur' => 6 ];
+
+		usort(
+			$results,
+			function ( $a, $b ) use ( $sort_field, $sort_order, $category_order ) {
+				$cmp = 0;
+
+				switch ( $sort_field ) {
+					case 'name':
+						$cmp = strcasecmp( $a['name'], $b['name'] );
+						break;
+					case 'category':
+						$cmp = ( $category_order[ $a['category'] ] ?? 99 ) - ( $category_order[ $b['category'] ] ?? 99 );
+						break;
+					case 'base_fee':
+						$cmp = $a['base_fee'] - $b['base_fee'];
+						break;
+					case 'final_fee':
+						$cmp = $a['final_fee'] - $b['final_fee'];
+						break;
+					default:
+						$cmp = ( $category_order[ $a['category'] ] ?? 99 ) - ( $category_order[ $b['category'] ] ?? 99 );
+				}
+
+				return $sort_order === 'asc' ? $cmp : -$cmp;
+			}
+		);
+
+		return [
+			'season'  => $season,
+			'members' => $results,
+		];
+	}
+
+	/**
+	 * Build spreadsheet data from fee data
+	 *
+	 * Builds 2D array with header row, data rows, and totals row.
+	 * Columns: Naam, Relatiecode, Categorie, Leeftijdsgroep, Basis, Gezinskorting, Pro-rata %, Bedrag, Nikki Total, Saldo
+	 *
+	 * @param array $fee_data Fee data with season and members.
+	 * @return array 2D array for spreadsheet.
+	 */
+	private function build_fee_spreadsheet_data( array $fee_data ): array {
+		$data = [];
+
+		// Header row with Dutch labels
+		$data[] = [
+			'Naam',
+			'Relatiecode',
+			'Categorie',
+			'Leeftijdsgroep',
+			'Basis',
+			'Gezinskorting',
+			'Pro-rata %',
+			'Bedrag',
+			'Nikki Total',
+			'Saldo',
+		];
+
+		// Category labels
+		$category_labels = [
+			'mini'     => 'Mini',
+			'pupil'    => 'Pupil',
+			'junior'   => 'Junior',
+			'senior'   => 'Senior',
+			'recreant' => 'Recreant',
+			'donateur' => 'Donateur',
+		];
+
+		// Totals
+		$total_base_fee  = 0;
+		$total_final_fee = 0;
+
+		// Data rows
+		foreach ( $fee_data['members'] as $member ) {
+			$data[] = [
+				$member['name'],
+				$member['relatiecode'] ?: '',
+				$category_labels[ $member['category'] ] ?? $member['category'],
+				$member['leeftijdsgroep'] ?: '',
+				$member['base_fee'],
+				$member['family_discount_rate'],
+				$member['prorata_percentage'],
+				$member['final_fee'],
+				$member['nikki_total'],
+				$member['nikki_saldo'],
+			];
+
+			$total_base_fee  += $member['base_fee'];
+			$total_final_fee += $member['final_fee'];
+		}
+
+		// Totals row (per CONTEXT.md: only Base Fee and Bedrag, not Nikki columns)
+		$data[] = [
+			'Totaal',
+			'',
+			'',
+			'',
+			$total_base_fee,
+			'',
+			'',
+			$total_final_fee,
+			'',
+			'',
+		];
+
+		return $data;
 	}
 
 	/**
