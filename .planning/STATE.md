@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 ## Current Position
 
 Phase: 127 of 128 (Fee Caching)
-Plan: 1 of 3
+Plan: 2 of 3
 Status: In progress
-Last activity: 2026-02-01 - Completed 127-01-PLAN.md
+Last activity: 2026-02-01 - Completed 127-02-PLAN.md
 
-Progress: [████████░░] 82%
+Progress: [████████░░] 84%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 3.8 min
-- Total execution time: 0.64 hours
+- Total plans completed: 11
+- Average duration: 3.7 min
+- Total execution time: 0.68 hours
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: [████████░░] 82%
 | 124 | 2/2 | 8 min | 4 min |
 | 125 | 2/2 | 7 min | 3.5 min |
 | 126 | 3/3 | 11 min | 3.7 min |
-| 127 | 1/3 | 4 min | 4 min |
+| 127 | 2/3 | 7 min | 3.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 125-02 (3 min), 126-01 (3 min), 126-02 (5 min), 126-03 (3 min), 127-01 (4 min)
+- Last 5 plans: 126-01 (3 min), 126-02 (5 min), 126-03 (3 min), 127-01 (4 min), 127-02 (3 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -54,6 +54,7 @@ Recent decisions affecting current work:
 | 2026-01-31 | Tiered discount: 0%/25%/50% for pos 1/2/3+ | Per FAM-02, FAM-03 requirements |
 | 2026-01-31 | Quarterly pro-rata tiers: 100%/75%/50%/25% | Simple, fair for sports season structure |
 | 2026-02-01 | Separate cache meta key from snapshot | Cache uses stadion_fee_cache_, snapshot uses fee_snapshot_ |
+| 2026-02-01 | Address invalidation uses OLD family key | Ensures siblings in old family get cache cleared |
 
 ### Pending Todos
 
@@ -61,12 +62,12 @@ None.
 
 ### Blockers/Concerns
 
-**PRO-04 FIXED:** Pro-rata now uses correct field (`lid-sinds` instead of `registratiedatum`). Fix deployed to production.
+None - all phases progressing smoothly.
 
 ## Session Continuity
 
-Last session: 2026-02-01 09:04 UTC
-Stopped at: Completed 127-01-PLAN.md
+Last session: 2026-02-01 09:13 UTC
+Stopped at: Completed 127-02-PLAN.md
 Resume file: None
 
 ---
