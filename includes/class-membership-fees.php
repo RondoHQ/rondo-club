@@ -550,6 +550,120 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get the post meta key for storing fee cache
+	 *
+	 * @param string|null $season Optional season key, defaults to current season.
+	 * @return string Meta key for fee cache storage.
+	 */
+	public function get_fee_cache_meta_key( ?string $season = null ): string {
+		return 'stadion_fee_cache_' . ( $season ?: $this->get_season_key() );
+	}
+
+	/**
+	 * Save calculated fee to cache for fast retrieval
+	 *
+	 * Stores the complete fee calculation result in post meta.
+	 * This is separate from the snapshot system which is used for season locking.
+	 *
+	 * @param int         $person_id The person post ID.
+	 * @param array       $fee_data  Complete fee calculation result.
+	 * @param string|null $season    Optional season key, defaults to current season.
+	 * @return bool True on success, false on failure.
+	 */
+	public function save_fee_cache( int $person_id, array $fee_data, ?string $season = null ): bool {
+		$meta_key = $this->get_fee_cache_meta_key( $season );
+
+		// Add metadata
+		$fee_data['calculated_at'] = current_time( 'Y-m-d H:i:s' );
+		$fee_data['season']        = $season ?: $this->get_season_key();
+
+		return (bool) update_post_meta( $person_id, $meta_key, $fee_data );
+	}
+
+	/**
+	 * Get fee for a person with caching for performance
+	 *
+	 * Checks cache first, calculates if cache miss, saves to cache.
+	 * Uses the lid-sinds field for pro-rata calculation (PRO-04).
+	 *
+	 * @param int         $person_id The person post ID.
+	 * @param string|null $season    Optional season key, defaults to current season.
+	 * @return array|null Fee data with cache info, or null if not calculable.
+	 */
+	public function get_fee_for_person_cached( int $person_id, ?string $season = null ): ?array {
+		$season   = $season ?: $this->get_season_key();
+		$meta_key = $this->get_fee_cache_meta_key( $season );
+
+		// Try cache first
+		$cached = get_post_meta( $person_id, $meta_key, true );
+
+		if ( ! empty( $cached ) && is_array( $cached ) ) {
+			$cached['from_cache'] = true;
+			return $cached;
+		}
+
+		// Cache miss - calculate fresh using lid-sinds (PRO-04 fix)
+		$lid_sinds = get_field( 'lid-sinds', $person_id );
+		$result    = $this->calculate_full_fee( $person_id, $lid_sinds, $season );
+
+		if ( $result === null ) {
+			return null;
+		}
+
+		// Save to cache
+		$this->save_fee_cache( $person_id, $result, $season );
+
+		// Add cache flag
+		$result['from_cache']    = false;
+		$result['calculated_at'] = current_time( 'Y-m-d H:i:s' );
+		$result['season']        = $season;
+
+		return $result;
+	}
+
+	/**
+	 * Clear the fee cache for a person
+	 *
+	 * @param int         $person_id The person post ID.
+	 * @param string|null $season    Optional season key, defaults to current season.
+	 * @return bool True on success, false on failure.
+	 */
+	public function clear_fee_cache( int $person_id, ?string $season = null ): bool {
+		$meta_key = $this->get_fee_cache_meta_key( $season );
+		return delete_post_meta( $person_id, $meta_key );
+	}
+
+	/**
+	 * Clear all fee caches for a season
+	 *
+	 * @param string $season The season key (e.g., "2025-2026").
+	 * @return int Number of caches cleared.
+	 */
+	public function clear_all_fee_caches( string $season ): int {
+		$meta_key = $this->get_fee_cache_meta_key( $season );
+		$cleared  = 0;
+
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			]
+		);
+
+		if ( ! empty( $query->posts ) ) {
+			foreach ( $query->posts as $person_id ) {
+				if ( delete_post_meta( $person_id, $meta_key ) ) {
+					$cleared++;
+				}
+			}
+		}
+
+		return $cleared;
+	}
+
+	/**
 	 * Normalize a Dutch postal code
 	 *
 	 * Removes whitespace and converts to uppercase. Dutch postal codes
