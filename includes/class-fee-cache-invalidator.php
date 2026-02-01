@@ -214,7 +214,10 @@ class FeeCacheInvalidator {
 		$skipped    = 0;
 
 		foreach ( $query->posts as $person_id ) {
-			// Use get_fee_for_person_cached which calculates and saves
+			// Clear existing cache first to force fresh calculation
+			$this->fees->clear_fee_cache( (int) $person_id, $season );
+
+			// Now get_fee_for_person_cached will calculate fresh and save
 			$result = $this->fees->get_fee_for_person_cached( (int) $person_id, $season );
 
 			if ( $result !== null ) {
