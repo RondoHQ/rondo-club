@@ -6,12 +6,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 
 // Format currency in euros
-function formatCurrency(amount) {
+function formatCurrency(amount, decimals = 0) {
+  if (amount === null || amount === undefined) return '-';
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency: 'EUR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(amount);
 }
 
@@ -127,6 +128,31 @@ function FeeRow({ member, isOdd }) {
       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-50 text-right">
         {formatCurrency(member.final_fee)}
       </td>
+
+      {/* Nikki Total */}
+      <td className="px-4 py-3 text-sm text-right">
+        {member.nikki_total !== null ? (
+          <span className="text-gray-700 dark:text-gray-300">
+            {formatCurrency(member.nikki_total, 2)}
+          </span>
+        ) : (
+          <span className="text-gray-400 dark:text-gray-500">-</span>
+        )}
+      </td>
+
+      {/* Saldo (Outstanding) */}
+      <td className="px-4 py-3 text-sm text-right">
+        {member.nikki_saldo !== null ? (
+          <span className={member.nikki_saldo > 0
+            ? 'text-red-600 dark:text-red-400 font-medium'
+            : 'text-green-600 dark:text-green-400'
+          }>
+            {formatCurrency(member.nikki_saldo, 2)}
+          </span>
+        ) : (
+          <span className="text-gray-400 dark:text-gray-500">-</span>
+        )}
+      </td>
     </tr>
   );
 }
@@ -198,8 +224,10 @@ export default function ContributieList() {
     (acc, m) => ({
       baseFee: acc.baseFee + m.base_fee,
       finalFee: acc.finalFee + m.final_fee,
+      nikkiTotal: acc.nikkiTotal + (m.nikki_total || 0),
+      nikkiSaldo: acc.nikkiSaldo + (m.nikki_saldo || 0),
     }),
-    { baseFee: 0, finalFee: 0 }
+    { baseFee: 0, finalFee: 0, nikkiTotal: 0, nikkiSaldo: 0 }
   );
 
   // Loading state
@@ -307,6 +335,18 @@ export default function ContributieList() {
                   onSort={handleSort}
                   className="text-right"
                 />
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
+                >
+                  Nikki
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
+                >
+                  Saldo
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -329,6 +369,17 @@ export default function ContributieList() {
                 <td colSpan="2"></td>
                 <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
                   {formatCurrency(totals.finalFee)}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                  {formatCurrency(totals.nikkiTotal, 2)}
+                </td>
+                <td className="px-4 py-3 text-sm font-medium text-right">
+                  <span className={totals.nikkiSaldo > 0
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-green-600 dark:text-green-400'
+                  }>
+                    {formatCurrency(totals.nikkiSaldo, 2)}
+                  </span>
                 </td>
               </tr>
             </tfoot>
