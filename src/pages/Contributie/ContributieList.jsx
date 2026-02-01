@@ -355,6 +355,9 @@ export default function ContributieList() {
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Totaal: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.finalFee, 2)}</span>
             </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Nog te ontvangen: <span className={`font-medium ${totals.nikkiSaldo > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>{formatCurrency(totals.nikkiSaldo, 2)}</span>
+            </div>
             {/* Filter: No Nikki Data */}
             {noNikkiCount > 0 && (
               <button
