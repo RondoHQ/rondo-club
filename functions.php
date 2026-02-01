@@ -71,6 +71,7 @@ use Stadion\CustomFields\Validation as CustomFieldsValidation;
 use Stadion\REST\CustomFields as RESTCustomFields;
 use Stadion\VOG\VOGEmail;
 use Stadion\Fees\MembershipFees;
+use Stadion\Fees\FeeCacheInvalidator;
 
 define( 'STADION_THEME_DIR', get_template_directory() );
 define( 'STADION_THEME_URL', get_template_directory_uri() );
@@ -352,6 +353,9 @@ function stadion_init() {
 
 		// Initialize custom field validation (unique constraint).
 		new CustomFieldsValidation();
+
+		// Initialize fee cache invalidation hooks
+		new FeeCacheInvalidator();
 
 		// Initialize Google Contacts export hooks (save_post triggers cron job)
 		GoogleContactsExport::init();
