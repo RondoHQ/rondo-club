@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Calculate membership fees with family discounts and pro-rata for mid-season joins
-**Current focus:** Milestone v12.0 - COMPLETE (ready for audit)
+**Current focus:** Milestone v12.0 - Phase 127 (Fee Caching)
 
 ## Current Position
 
-Phase: 126 of 126 (Pro-rata UI) - COMPLETE
-Plan: 3 of 3 in current phase - COMPLETE
-Status: All phases complete, milestone ready for audit
-Last activity: 2026-01-31 - Completed 126-03-PLAN.md
+Phase: 127 of 128 (Fee Caching)
+Plan: Not started
+Status: Scope adjusted - 2 new phases added
+Last activity: 2026-02-01 - Scope adjustment (removed FIL-01, added 127/128)
 
-Progress: [██████████] 100%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -76,7 +76,7 @@ None yet.
 
 ### Blockers/Concerns
 
-None - All 4 phases complete. Milestone v12.0 ready for audit.
+**Known bug:** Pro-rata uses wrong field (`registratiedatum` instead of `lid-sinds`). 84 members have incorrect pro-rata calculation. Fix in Phase 127.
 
 ## Session Continuity
 

@@ -20,6 +20,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 124: Fee Calculation Engine** - Age-based and flat fee calculations
 - [x] **Phase 125: Family Discount** - Address grouping and tiered discount logic
 - [x] **Phase 126: Pro-rata & UI** - Join date calculation, list page, and filters
+- [ ] **Phase 127: Fee Caching** - Fix pro-rata field, denormalize fees to person meta
+- [ ] **Phase 128: Google Sheets Export** - Export fee data to Google Sheets
 
 ## Phase Details
 
@@ -79,9 +81,9 @@ Plans:
 - [x] 125-02-PLAN.md — Tiered discount calculation logic (get_family_discount_rate, calculate_fee_with_family_discount)
 
 ### Phase 126: Pro-rata & UI
-**Goal**: Users can view calculated fees with pro-rata and filter by address issues
+**Goal**: Users can view calculated fees with pro-rata
 **Depends on**: Phase 125
-**Requirements**: NAV-01, NAV-02, PRO-01, PRO-02, PRO-03, FIL-01
+**Requirements**: NAV-01, NAV-02, PRO-01, PRO-02, PRO-03
 **Success Criteria** (what must be TRUE):
   1. "Contributie" section appears in sidebar below Leden, above VOG
   2. List displays Name, Age Group, Base Fee, Family Discount, Final Amount columns
@@ -90,26 +92,51 @@ Plans:
   5. January-March joins pay 50% of calculated fee
   6. April-June joins pay 25% of calculated fee
   7. Pro-rata applies after family discount calculation
-  8. User can filter to show address mismatches (siblings at different addresses)
-**Plans**: 3 plans
+**Plans**: 2 plans
 
 Plans:
 - [x] 126-01-PLAN.md — Pro-rata calculation based on Sportlink join date (get_prorata_percentage, calculate_full_fee)
 - [x] 126-02-PLAN.md — Contributie list page and REST endpoint (sidebar nav, /fees endpoint, ContributieList.jsx)
-- [x] 126-03-PLAN.md — Address mismatch filter (detect_address_mismatches, filter dropdown)
+
+### Phase 127: Fee Caching
+**Goal**: Fees are cached per person for fast list loading and correct pro-rata calculation
+**Depends on**: Phase 126
+**Requirements**: PRO-04, CACHE-01, CACHE-02
+**Success Criteria** (what must be TRUE):
+  1. Pro-rata uses `lid-sinds` field (not `registratiedatum`)
+  2. Calculated fees stored in person meta (_fee_base, _fee_family_discount, _fee_prorata, _fee_final)
+  3. Fees recalculated when age group changes
+  4. Fees recalculated when address changes
+  5. Fees recalculated when team membership changes
+  6. Fees recalculated when lid-sinds changes
+  7. Fees recalculated when fee settings change (bulk recalculation)
+  8. Contributie list loads in < 1 second
+**Plans**: TBD
+
+### Phase 128: Google Sheets Export
+**Goal**: Users can export fee data to Google Sheets
+**Depends on**: Phase 127
+**Requirements**: EXP-01
+**Success Criteria** (what must be TRUE):
+  1. Export button on Contributie page
+  2. Exports to Google Sheets with columns: Name, Age Group, Base Fee, Family Discount, Pro-rata %, Final Amount
+  3. Uses existing Google OAuth connection
+**Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 123 -> 124 -> 125 -> 126
+Phases execute in numeric order: 123 -> 124 -> 125 -> 126 -> 127 -> 128
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 123. Settings & Backend Foundation | 2/2 | ✓ Complete | 2026-01-31 |
 | 124. Fee Calculation Engine | 2/2 | ✓ Complete | 2026-01-31 |
 | 125. Family Discount | 2/2 | ✓ Complete | 2026-01-31 |
-| 126. Pro-rata & UI | 3/3 | ✓ Complete | 2026-01-31 |
+| 126. Pro-rata & UI | 2/2 | ✓ Complete | 2026-01-31 |
+| 127. Fee Caching | 0/? | Not started | - |
+| 128. Google Sheets Export | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-01-31 (Phase 126 complete - 3 plans executed)*
+*Last updated: 2026-02-01 (Scope adjusted - added Phase 127, 128; removed FIL-01)*

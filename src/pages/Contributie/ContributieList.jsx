@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, RefreshCw, Coins, Filter, AlertTriangle, X } from 'lucide-react';
+import { ArrowUp, ArrowDown, RefreshCw, Coins } from 'lucide-react';
 import { useFeeList } from '@/hooks/useFees';
 import { useQueryClient } from '@tanstack/react-query';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -69,30 +69,19 @@ function SortableHeader({ label, columnId, sortField, sortOrder, onSort, classNa
 function FeeRow({ member, isOdd }) {
   const hasDiscount = member.family_discount_rate > 0;
   const hasProrata = member.prorata_percentage < 1.0;
-  const hasMismatch = member.has_mismatch;
 
   return (
     <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${
       isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
     } ${hasProrata ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
-      {/* Name with mismatch indicator */}
+      {/* Name */}
       <td className="px-4 py-3 whitespace-nowrap">
-        <div className="flex items-center gap-2">
-          <Link
-            to={`/people/${member.id}`}
-            className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-accent-600 dark:hover:text-accent-400"
-          >
-            {member.name}
-          </Link>
-          {hasMismatch && (
-            <span
-              className="text-amber-500 dark:text-amber-400"
-              title="Mogelijk adres afwijking: zelfde achternaam, ander adres"
-            >
-              <AlertTriangle className="w-4 h-4" />
-            </span>
-          )}
-        </div>
+        <Link
+          to={`/people/${member.id}`}
+          className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-accent-600 dark:hover:text-accent-400"
+        >
+          {member.name}
+        </Link>
       </td>
 
       {/* Category */}
@@ -164,24 +153,10 @@ function EmptyState() {
 export default function ContributieList() {
   const [sortField, setSortField] = useState('category');
   const [sortOrder, setSortOrder] = useState('asc');
-  const [addressFilter, setAddressFilter] = useState('all');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const filterRef = useRef(null);
   const queryClient = useQueryClient();
 
   // Fetch fee data
-  const { data, isLoading, error } = useFeeList({ filter: addressFilter });
-
-  // Click outside handler for filter dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (filterRef.current && !filterRef.current.contains(event.target)) {
-        setIsFilterOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const { data, isLoading, error } = useFeeList();
 
   // Handle sort
   const handleSort = useCallback((field, order) => {
@@ -268,71 +243,6 @@ export default function ContributieList() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-4">
-        {/* Filter Section */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative" ref={filterRef}>
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`btn-secondary ${addressFilter !== 'all' ? 'bg-accent-50 text-accent-700 border-accent-200 dark:bg-accent-900/30 dark:text-accent-300 dark:border-accent-700' : ''}`}
-            >
-              <Filter className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Filter</span>
-              {addressFilter !== 'all' && (
-                <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">1</span>
-              )}
-            </button>
-
-            {isFilterOpen && (
-              <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
-                <div className="p-4 space-y-2">
-                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                    Adres filter
-                  </h3>
-                  <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
-                    <input
-                      type="radio"
-                      name="addressFilter"
-                      checked={addressFilter === 'all'}
-                      onChange={() => { setAddressFilter('all'); setIsFilterOpen(false); }}
-                      className="mr-3"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-200">
-                      Alle leden ({data?.total || 0})
-                    </span>
-                  </label>
-                  <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
-                    <input
-                      type="radio"
-                      name="addressFilter"
-                      checked={addressFilter === 'mismatches'}
-                      onChange={() => { setAddressFilter('mismatches'); setIsFilterOpen(false); }}
-                      className="mr-3"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-200">
-                      Adres afwijkingen ({data?.mismatch_count || 0})
-                    </span>
-                  </label>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Active Filter Chip */}
-          {addressFilter !== 'all' && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700 rounded">
-              <AlertTriangle className="w-3 h-3" />
-              Adres afwijkingen
-              <button
-                onClick={() => setAddressFilter('all')}
-                className="hover:text-amber-900 dark:hover:text-amber-100"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          )}
-        </div>
-
         {/* Season indicator */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-500 dark:text-gray-400">
