@@ -155,18 +155,28 @@ const parseDate = (dateStr) => {
  * @param {Object} props.acfData - The ACF data object from the post
  * @param {Function} props.onUpdate - Callback after successful save, receives updated ACF data
  * @param {boolean} props.isUpdating - Whether parent is currently saving
+ * @param {string[]} props.excludeLabelPrefixes - Array of label prefixes to exclude from display
  */
-export default function CustomFieldsSection({ postType, postId, acfData, onUpdate, isUpdating }) {
+export default function CustomFieldsSection({ postType, postId, acfData, onUpdate, isUpdating, excludeLabelPrefixes = [] }) {
   const [showModal, setShowModal] = useState(false);
 
   // Fetch field definitions
-  const { data: fieldDefs = [], isLoading } = useQuery({
+  const { data: allFieldDefs = [], isLoading } = useQuery({
     queryKey: ['custom-fields-metadata', postType],
     queryFn: async () => {
       const response = await prmApi.getCustomFieldsMetadata(postType);
       return response.data;
     },
   });
+
+  // Filter out fields based on label prefixes
+  const fieldDefs = excludeLabelPrefixes.length > 0
+    ? allFieldDefs.filter(field =>
+        !excludeLabelPrefixes.some(prefix =>
+          field.label?.toLowerCase().startsWith(prefix.toLowerCase())
+        )
+      )
+    : allFieldDefs;
 
   // Render a value for display based on field type
   const renderFieldValue = (field, value) => {

@@ -1789,6 +1789,7 @@ export default function PersonDetail() {
                 });
               }}
               isUpdating={updatePerson.isPending}
+              excludeLabelPrefixes={['Nikki']}
             />
           </div>
         )}
