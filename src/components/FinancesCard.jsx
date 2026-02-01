@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Coins, AlertTriangle, Users, Calendar } from 'lucide-react';
 import { usePersonFee } from '@/hooks/useFees';
 
@@ -106,9 +107,20 @@ export default function FinancesCard({ personId }) {
         )}
 
         {/* Family Info */}
-        {feeData.family_size > 1 && (
+        {feeData.family_size > 1 && feeData.family_members?.length > 0 && (
           <div className="text-xs text-gray-400 dark:text-gray-500 pl-4">
-            Positie {feeData.family_position} van {feeData.family_size} in gezin
+            Positie {feeData.family_position} van {feeData.family_size} in gezin met{' '}
+            {feeData.family_members.map((member, index) => (
+              <span key={member.id}>
+                {index > 0 && (index === feeData.family_members.length - 1 ? ' en ' : ', ')}
+                <Link
+                  to={`/people/${member.id}`}
+                  className="text-accent-600 dark:text-accent-400 hover:underline"
+                >
+                  {member.name}
+                </Link>
+              </span>
+            ))}
           </div>
         )}
 

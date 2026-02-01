@@ -1043,6 +1043,7 @@ class MembershipFees {
 					'family_position'        => 1,
 					'family_key'             => $family_key,
 					'family_size'            => count( $family_members ),
+					'family_members'         => [],
 				]
 			);
 		}
@@ -1083,6 +1084,23 @@ class MembershipFees {
 		$discount_amount = round( $fee_data['base_fee'] * $discount_rate, 2 );
 		$final_fee       = $fee_data['base_fee'] - $discount_amount;
 
+		// Build family members array with names (excluding current person)
+		$siblings = [];
+		foreach ( $sorted as $member ) {
+			if ( $member['person_id'] !== $person_id ) {
+				$first_name = get_field( 'first_name', $member['person_id'] ) ?: '';
+				$last_name  = get_field( 'last_name', $member['person_id'] ) ?: '';
+				$name       = trim( $first_name . ' ' . $last_name );
+				if ( empty( $name ) ) {
+					$name = get_the_title( $member['person_id'] );
+				}
+				$siblings[] = [
+					'id'   => $member['person_id'],
+					'name' => $name,
+				];
+			}
+		}
+
 		return array_merge(
 			$fee_data,
 			[
@@ -1092,6 +1110,7 @@ class MembershipFees {
 				'family_position'        => $position,
 				'family_key'             => $family_key,
 				'family_size'            => count( $family_members ),
+				'family_members'         => $siblings,
 			]
 		);
 	}
