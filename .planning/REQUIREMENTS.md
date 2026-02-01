@@ -33,6 +33,7 @@ Requirements for membership fee calculation system. Each maps to roadmap phases.
 - [ ] **PRO-01**: System uses Sportlink join date field for pro-rata calculation
 - [ ] **PRO-02**: July-Sept = 100%, Oct-Dec = 75%, Jan-Mar = 50%, Apr-Jun = 25%
 - [ ] **PRO-03**: Pro-rata applies to all fee types
+- [ ] **PRO-04**: Pro-rata uses `lid-sinds` field (not `registratiedatum`)
 
 ### Settings
 
@@ -43,9 +44,14 @@ Requirements for membership fee calculation system. Each maps to roadmap phases.
 - [ ] **SET-05**: Admin can configure Recreant fee amount
 - [ ] **SET-06**: Admin can configure Donateur fee amount
 
-### Filters
+### Caching
 
-- [ ] **FIL-01**: User can filter by address mismatch (siblings with different addresses)
+- [ ] **CACHE-01**: Calculated fees stored in person meta for fast list loading
+- [ ] **CACHE-02**: Fees recalculated when relevant fields change (age group, address, team, lid-sinds, settings)
+
+### Export
+
+- [ ] **EXP-01**: Export fee data to Google Sheets
 
 ## Future Requirements
 
@@ -81,19 +87,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRO-01 | Phase 126 | Complete |
 | PRO-02 | Phase 126 | Complete |
 | PRO-03 | Phase 126 | Complete |
+| PRO-04 | Phase 127 | Pending |
 | SET-01 | Phase 123 | Complete |
 | SET-02 | Phase 123 | Complete |
 | SET-03 | Phase 123 | Complete |
 | SET-04 | Phase 123 | Complete |
 | SET-05 | Phase 123 | Complete |
 | SET-06 | Phase 123 | Complete |
-| FIL-01 | Phase 126 | Complete |
+| CACHE-01 | Phase 127 | Pending |
+| CACHE-02 | Phase 127 | Pending |
+| EXP-01 | Phase 128 | Pending |
 
 **Coverage:**
-- v12.0 requirements: 22 total
-- Mapped to phases: 22
+- v12.0 requirements: 25 total
+- Mapped to phases: 25
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 (Phase 126 complete - All requirements complete)*
+*Last updated: 2026-02-01 (Scope adjusted - removed FIL-01, added PRO-04, CACHE-01, CACHE-02, EXP-01)*
