@@ -114,9 +114,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 127-01-PLAN.md - Fix PRO-04 bug (lid-sinds), cache storage methods
-- [ ] 127-02-PLAN.md - FeeCacheInvalidator class with ACF hooks
-- [ ] 127-03-PLAN.md - REST endpoint optimization, bulk recalculation
+- [x] 127-01-PLAN.md - Fix PRO-04 bug (lid-sinds), cache storage methods
+- [x] 127-02-PLAN.md - FeeCacheInvalidator class with ACF hooks
+- [x] 127-03-PLAN.md - REST endpoint optimization, bulk recalculation
 
 ### Phase 128: Google Sheets Export
 **Goal**: Users can export fee data to Google Sheets
@@ -139,7 +139,7 @@ Phases execute in numeric order: 123 -> 124 -> 125 -> 126 -> 127 -> 128
 | 124. Fee Calculation Engine | 2/2 | ✓ Complete | 2026-01-31 |
 | 125. Family Discount | 2/2 | ✓ Complete | 2026-01-31 |
 | 126. Pro-rata & UI | 2/2 | ✓ Complete | 2026-01-31 |
-| 127. Fee Caching | 0/3 | Not started | - |
+| 127. Fee Caching | 3/3 | ✓ Complete | 2026-02-01 |
 | 128. Google Sheets Export | 0/? | Not started | - |
 
 ---
