@@ -1,6 +1,7 @@
 # Phase 128: Google Sheets Export - Context
 
 **Gathered:** 2026-02-01
+**Updated:** 2026-02-01
 **Status:** Ready for planning
 
 <domain>
@@ -29,9 +30,12 @@ Export fee data from the Contributie page to Google Sheets. Uses the existing Go
   6. Family Discount (Gezinskorting)
   7. Pro-rata %
   8. Final Amount (Bedrag)
+  9. Nikki Total
+  10. Saldo
 - Monetary values: raw numbers (not strings) with Google Sheets CURRENCY formatting
 - Spreadsheet locale set to European (nl_NL) for proper Euro formatting
-- Include totals row at bottom (sums for Base Fee and Final Amount)
+- Include totals row at bottom (sums for Base Fee and Final Amount only — not Nikki columns)
+- Nikki columns: plain numbers, no conditional formatting (unlike UI which has red/green for saldo)
 
 ### Sheet naming
 - Spreadsheet title: "Contributie [Season] - [Date]" (e.g., "Contributie 2025-2026 - 2026-02-01")
@@ -71,3 +75,4 @@ None — discussion stayed within phase scope
 
 *Phase: 128-google-sheets-export*
 *Context gathered: 2026-02-01*
+*Context updated: 2026-02-01 (added Nikki columns after Phase 127.1)*
