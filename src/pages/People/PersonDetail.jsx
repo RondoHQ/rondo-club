@@ -38,6 +38,7 @@ import ImportantDateModal from '@/components/ImportantDateModal';
 import RelationshipEditModal from '@/components/RelationshipEditModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import FinancesCard from '@/components/FinancesCard';
+import VOGCard from '@/components/VOGCard';
 import { format, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -1790,7 +1791,7 @@ export default function PersonDetail() {
                 });
               }}
               isUpdating={updatePerson.isPending}
-              excludeLabelPrefixes={['Nikki', 'Financiele']}
+              excludeLabelPrefixes={['Nikki', 'Financiele', 'Datum VOG', 'VOG']}
             />
           </div>
         )}
@@ -1939,6 +1940,9 @@ export default function PersonDetail() {
           <div className="sticky top-6">
             {/* Finances Card */}
             <FinancesCard personId={parseInt(id)} />
+
+            {/* VOG Card */}
+            <VOGCard acfData={person?.acf} />
 
             {/* Todos Card */}
             <div className="card p-6">
