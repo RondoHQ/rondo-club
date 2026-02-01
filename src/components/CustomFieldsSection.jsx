@@ -474,7 +474,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
         <div className="space-y-3">
           {fieldDefs.map((field) => (
             <div key={field.key} className="flex items-start">
-              <div className="w-1/3 text-sm text-gray-500 dark:text-gray-400 pt-0.5">
+              <div className="w-1/3 text-sm text-gray-500 dark:text-gray-400">
                 {field.label}
               </div>
               <div className="w-2/3 text-sm">
