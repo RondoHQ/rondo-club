@@ -41,7 +41,8 @@ Add next season forecast capability to the contributie page, enabling budget pla
   2. Selecting forecast updates table to show projected fees
   3. Forecast view hides Nikki and Saldo columns
   4. Clear visual indicator (label/badge) shows this is a projection, not actual data
-**Plans**: TBD
+**Plans**: 1 plan
+  - [ ] 130-01-PLAN.md - Add season dropdown with forecast toggle and conditional column rendering
 
 ### Phase 131: Forecast Export
 **Goal**: Users can export forecast data to Google Sheets for budget planning
@@ -58,9 +59,9 @@ Add next season forecast capability to the contributie page, enabling budget pla
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 129. Backend Forecast Calculation | v12.1 | 1/1 | Complete | 2026-02-02 |
-| 130. Frontend Season Selector | v12.1 | 0/TBD | Not started | - |
+| 130. Frontend Season Selector | v12.1 | 0/1 | Planned | - |
 | 131. Forecast Export | v12.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 129 complete*
+*Last updated: 2026-02-02 — Phase 130 planned*
