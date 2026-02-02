@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 ## Current Position
 
-Phase: 130 of 131 (Frontend Season Selector)
+Phase: 131 of 131 (Forecast Export Integration)
 Plan: 01 of 01 complete
-Status: Phase complete
-Last activity: 2026-02-02 - Completed 130-01-PLAN.md
+Status: Phase complete - Milestone v12.1 complete
+Last activity: 2026-02-02 - Completed 131-01-PLAN.md
 
-Progress: [######----] 67% (2 of 3 phases in v12.1)
+Progress: [##########] 100% (3 of 3 phases in v12.1)
 
 ### Recent Milestones
 
@@ -41,6 +41,8 @@ Recent decisions from v12.0 and v12.1:
 | 2026-02-02 | Nikki fields omitted from forecast | Future season has no billing data |
 | 2026-02-02 | Native select for season dropdown | Consistent with existing UI patterns |
 | 2026-02-02 | Instant column hiding without animation | Immediate table reflow per UX decision |
+| 2026-02-02 | Forecast export title includes (Prognose) | Clear visual indicator in exported spreadsheet |
+| 2026-02-02 | Forecast exports use 8-column layout | Nikki columns excluded from future season |
 
 ### Pending Todos
 
@@ -55,9 +57,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: Completed 130-01-PLAN.md (Frontend Season Selector)
+Stopped at: Completed 131-01-PLAN.md (Forecast Export Integration)
 Resume file: None
-Next: Phase 131 (Final Integration & Polish)
+Next: Milestone v12.1 complete - ready for next milestone
 
 ---
 *State updated: 2026-02-02*
