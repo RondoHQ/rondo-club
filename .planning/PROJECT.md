@@ -303,7 +303,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(None - ready for next milestone)
+**v12.1 Contributie Forecast**
+
+Goal: Add next season forecast to contributie page for budget planning.
+
+Target features:
+- Season toggle to switch between current and forecast view
+- Forecast uses current members at 100% pro-rata
+- Family discounts maintained based on current groupings
+- Total forecast amount for budget planning
 
 ### Out of Scope
 
@@ -449,4 +457,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Red/green color coding for saldo | Positive (owes money) = red, zero/negative = green | ✓ Good |
 
 ---
-*Last updated: 2026-02-01 after completing v12.0 Membership Fees milestone*
+*Last updated: 2026-02-02 after starting v12.1 Contributie Forecast milestone*
