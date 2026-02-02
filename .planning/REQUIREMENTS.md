@@ -9,11 +9,11 @@ Requirements for contributie forecast feature. Builds on existing v12.0 fee calc
 
 ### Forecast Calculation
 
-- [ ] **FORE-01**: System calculates next season key from current date (2025-2026 → 2026-2027)
-- [ ] **FORE-02**: Forecast uses all current season members as base population
-- [ ] **FORE-03**: Forecast applies 100% pro-rata to all members (no mid-season adjustments)
-- [ ] **FORE-04**: Forecast maintains family discount groupings from current membership
-- [ ] **FORE-05**: Forecast recalculates family positions based on current groupings
+- [x] **FORE-01**: System calculates next season key from current date (2025-2026 → 2026-2027)
+- [x] **FORE-02**: Forecast uses all current season members as base population
+- [x] **FORE-03**: Forecast applies 100% pro-rata to all members (no mid-season adjustments)
+- [x] **FORE-04**: Forecast maintains family discount groupings from current membership
+- [x] **FORE-05**: Forecast recalculates family positions based on current groupings
 
 ### User Interface
 
@@ -26,9 +26,9 @@ Requirements for contributie forecast feature. Builds on existing v12.0 fee calc
 
 ### Backend API
 
-- [ ] **API-01**: Fees endpoint accepts optional `forecast=true` parameter
-- [ ] **API-02**: Forecast response includes next season key
-- [ ] **API-03**: Forecast response omits nikki_total and nikki_saldo fields
+- [x] **API-01**: Fees endpoint accepts optional `forecast=true` parameter
+- [x] **API-02**: Forecast response includes next season key
+- [x] **API-03**: Forecast response omits nikki_total and nikki_saldo fields
 
 ### Export
 
@@ -64,20 +64,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FORE-01 | Phase 129 | Pending |
-| FORE-02 | Phase 129 | Pending |
-| FORE-03 | Phase 129 | Pending |
-| FORE-04 | Phase 129 | Pending |
-| FORE-05 | Phase 129 | Pending |
+| FORE-01 | Phase 129 | Complete |
+| FORE-02 | Phase 129 | Complete |
+| FORE-03 | Phase 129 | Complete |
+| FORE-04 | Phase 129 | Complete |
+| FORE-05 | Phase 129 | Complete |
 | UI-01 | Phase 130 | Pending |
 | UI-02 | Phase 130 | Pending |
 | UI-03 | Phase 130 | Pending |
 | UI-04 | Phase 130 | Pending |
 | UI-05 | Phase 130 | Pending |
 | UI-06 | Phase 130 | Pending |
-| API-01 | Phase 129 | Pending |
-| API-02 | Phase 129 | Pending |
-| API-03 | Phase 129 | Pending |
+| API-01 | Phase 129 | Complete |
+| API-02 | Phase 129 | Complete |
+| API-03 | Phase 129 | Complete |
 | EXP-01 | Phase 131 | Pending |
 | EXP-02 | Phase 131 | Pending |
 | EXP-03 | Phase 131 | Pending |
@@ -89,4 +89,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 after roadmap creation*
+*Last updated: 2026-02-02 — Phase 129 complete*
