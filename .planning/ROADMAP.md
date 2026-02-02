@@ -29,7 +29,8 @@ Add next season forecast capability to the contributie page, enabling budget pla
   2. Forecast response includes all current season members with 100% pro-rata fees
   3. Forecast correctly applies family discounts based on current address groupings
   4. Forecast response omits nikki_total and nikki_saldo fields (no billing data exists)
-**Plans**: TBD
+**Plans**: 1 plan
+  - [ ] 129-01-PLAN.md - Add forecast parameter to /fees endpoint with next season calculation
 
 ### Phase 130: Frontend Season Selector
 **Goal**: Users can switch between current and forecast view with clear visual distinction
@@ -56,7 +57,7 @@ Add next season forecast capability to the contributie page, enabling budget pla
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 129. Backend Forecast Calculation | v12.1 | 0/TBD | Not started | - |
+| 129. Backend Forecast Calculation | v12.1 | 0/1 | Planned | - |
 | 130. Frontend Season Selector | v12.1 | 0/TBD | Not started | - |
 | 131. Forecast Export | v12.1 | 0/TBD | Not started | - |
 
