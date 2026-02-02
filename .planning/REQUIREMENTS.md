@@ -32,9 +32,9 @@ Requirements for contributie forecast feature. Builds on existing v12.0 fee calc
 
 ### Export
 
-- [ ] **EXP-01**: Google Sheets export works for forecast view
-- [ ] **EXP-02**: Exported sheet title includes season and "(Prognose)" indicator
-- [ ] **EXP-03**: Exported forecast excludes Nikki columns
+- [x] **EXP-01**: Google Sheets export works for forecast view
+- [x] **EXP-02**: Exported sheet title includes season and "(Prognose)" indicator
+- [x] **EXP-03**: Exported forecast excludes Nikki columns
 
 ## Future Requirements
 
@@ -78,9 +78,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | API-01 | Phase 129 | Complete |
 | API-02 | Phase 129 | Complete |
 | API-03 | Phase 129 | Complete |
-| EXP-01 | Phase 131 | Pending |
-| EXP-02 | Phase 131 | Pending |
-| EXP-03 | Phase 131 | Pending |
+| EXP-01 | Phase 131 | Complete |
+| EXP-02 | Phase 131 | Complete |
+| EXP-03 | Phase 131 | Complete |
 
 **Coverage:**
 - v12.1 requirements: 17 total
@@ -89,4 +89,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 130 complete*
+*Last updated: 2026-02-02 — Milestone v12.1 complete*
