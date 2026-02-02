@@ -17,12 +17,12 @@ Requirements for contributie forecast feature. Builds on existing v12.0 fee calc
 
 ### User Interface
 
-- [ ] **UI-01**: Season dropdown selector shows current and next season options
-- [ ] **UI-02**: Dropdown displays "(huidig)" label for current season
-- [ ] **UI-03**: Dropdown displays "(prognose)" label for forecast season
-- [ ] **UI-04**: Selected season updates table to show corresponding data
-- [ ] **UI-05**: Forecast view hides Nikki and Saldo columns (no billing data)
-- [ ] **UI-06**: Forecast view shows clear visual indicator that this is a projection
+- [x] **UI-01**: Season dropdown selector shows current and next season options
+- [x] **UI-02**: Dropdown displays "(huidig)" label for current season
+- [x] **UI-03**: Dropdown displays "(prognose)" label for forecast season
+- [x] **UI-04**: Selected season updates table to show corresponding data
+- [x] **UI-05**: Forecast view hides Nikki and Saldo columns (no billing data)
+- [x] **UI-06**: Forecast view shows clear visual indicator that this is a projection
 
 ### Backend API
 
@@ -69,12 +69,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FORE-03 | Phase 129 | Complete |
 | FORE-04 | Phase 129 | Complete |
 | FORE-05 | Phase 129 | Complete |
-| UI-01 | Phase 130 | Pending |
-| UI-02 | Phase 130 | Pending |
-| UI-03 | Phase 130 | Pending |
-| UI-04 | Phase 130 | Pending |
-| UI-05 | Phase 130 | Pending |
-| UI-06 | Phase 130 | Pending |
+| UI-01 | Phase 130 | Complete |
+| UI-02 | Phase 130 | Complete |
+| UI-03 | Phase 130 | Complete |
+| UI-04 | Phase 130 | Complete |
+| UI-05 | Phase 130 | Complete |
+| UI-06 | Phase 130 | Complete |
 | API-01 | Phase 129 | Complete |
 | API-02 | Phase 129 | Complete |
 | API-03 | Phase 129 | Complete |
@@ -89,4 +89,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 129 complete*
+*Last updated: 2026-02-02 — Phase 130 complete*
