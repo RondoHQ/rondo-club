@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, RefreshCw, Coins, FileSpreadsheet, Filter } from 'lucide-react';
+import { ArrowUp, ArrowDown, RefreshCw, Coins, FileSpreadsheet, Filter, TrendingUp } from 'lucide-react';
 import { useFeeList } from '@/hooks/useFees';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
@@ -20,6 +20,12 @@ function formatCurrency(amount, decimals = 0) {
 // Format percentage
 function formatPercentage(rate) {
   return `${Math.round(rate * 100)}%`;
+}
+
+// Get next season label from current season
+function getNextSeasonLabel(currentSeason) {
+  const startYear = parseInt(currentSeason.substring(0, 4));
+  return `${startYear + 1}-${startYear + 2}`;
 }
 
 // Category badge colors
@@ -190,10 +196,13 @@ export default function ContributieList() {
   const [showNoNikkiOnly, setShowNoNikkiOnly] = useState(false);
   const [showMismatchOnly, setShowMismatchOnly] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isForecast, setIsForecast] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch fee data
-  const { data, isLoading, error } = useFeeList();
+  const { data, isLoading, error } = useFeeList(
+    isForecast ? { forecast: true } : {}
+  );
 
   // Check Google Sheets connection status
   const { data: sheetsStatus } = useQuery({
@@ -209,6 +218,13 @@ export default function ContributieList() {
     setSortField(field);
     setSortOrder(order);
   }, []);
+
+  // Reset sort field if switching to forecast while sorting by nikki columns
+  useEffect(() => {
+    if (isForecast && (sortField === 'nikki_total' || sortField === 'nikki_saldo')) {
+      setSortField('last_name');
+    }
+  }, [isForecast, sortField]);
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -373,9 +389,28 @@ export default function ContributieList() {
       <div className="space-y-4">
         {/* Season indicator */}
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Seizoen: <span className="font-medium text-gray-900 dark:text-gray-100">{data?.season}</span>
-            <span className="ml-4">{sortedMembers.length} leden</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <span>Seizoen:</span>
+              <select
+                value={isForecast ? 'forecast' : 'current'}
+                onChange={(e) => setIsForecast(e.target.value === 'forecast')}
+                className="btn-secondary appearance-none pr-8 bg-no-repeat bg-right"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                  backgroundSize: '1.25rem',
+                  paddingRight: '2rem',
+                }}
+              >
+                <option value="current">{data?.season || '2025-2026'} (huidig)</option>
+                <option value="forecast">
+                  {data?.season ? getNextSeasonLabel(data.season) : '2026-2027'} (prognose)
+                </option>
+              </select>
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {sortedMembers.length} leden
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-sm text-gray-500 dark:text-gray-400">
