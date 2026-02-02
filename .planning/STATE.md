@@ -39,7 +39,8 @@ Recent decisions from v12.0:
 
 ### Pending Todos
 
-None.
+1 todo(s) in `.planning/todos/pending/`:
+- **next-season-contributie-forecast**: Add next season forecast to contributie page (area: ui)
 
 ### Blockers/Concerns
 
