@@ -247,6 +247,7 @@ export default function ContributieList() {
       const response = await prmApi.exportFeesToSheets({
         sort_field: sortField,
         sort_order: sortOrder,
+        forecast: isForecast,
       });
 
       if (response.data.spreadsheet_url && newWindow) {
