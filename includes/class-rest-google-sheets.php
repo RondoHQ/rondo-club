@@ -125,6 +125,11 @@ class GoogleSheets extends Base {
 						'default'  => 'asc',
 						'enum'     => [ 'asc', 'desc' ],
 					],
+					'forecast'   => [
+						'required' => false,
+						'type'     => 'boolean',
+						'default'  => false,
+					],
 				],
 			]
 		);
@@ -508,6 +513,7 @@ class GoogleSheets extends Base {
 
 		$sort_field = $request->get_param( 'sort_field' );
 		$sort_order = $request->get_param( 'sort_order' );
+		$forecast   = $request->get_param( 'forecast' );
 
 		try {
 			// Get connection and credentials
@@ -533,14 +539,18 @@ class GoogleSheets extends Base {
 			$sheets_service = new \Google\Service\Sheets( $client );
 
 			// Fetch fee data
-			$fee_data = $this->fetch_fee_data( $sort_field, $sort_order );
+			$fee_data = $this->fetch_fee_data( $sort_field, $sort_order, $forecast );
 
 			// Build spreadsheet data
-			$spreadsheet_data = $this->build_fee_spreadsheet_data( $fee_data );
+			$spreadsheet_data = $this->build_fee_spreadsheet_data( $fee_data, $forecast );
 
-			// Create title: "Contributie {season} - {date}"
+			// Create title: "Contributie {season} - {date}" or "Contributie {season} (Prognose) - {date}"
 			$season = $fee_data['season'] ?? gmdate( 'Y' ) . '-' . ( gmdate( 'Y' ) + 1 );
-			$title  = 'Contributie ' . $season . ' - ' . gmdate( 'Y-m-d' );
+			$title  = 'Contributie ' . $season;
+			if ( $forecast ) {
+				$title .= ' (Prognose)';
+			}
+			$title .= ' - ' . gmdate( 'Y-m-d' );
 
 			// Create spreadsheet with nl_NL locale for Euro formatting
 			$spreadsheet = new \Google\Service\Sheets\Spreadsheet(
@@ -578,7 +588,7 @@ class GoogleSheets extends Base {
 			$sheets_service->spreadsheets_values->update( $spreadsheet_id, $range, $body, $params );
 
 			// Build formatting requests
-			$num_columns = 10; // Fixed 10 columns
+			$num_columns = $forecast ? 8 : 10; // 8 columns in forecast mode, 10 in current mode
 			$num_rows    = count( $spreadsheet_data );
 			$requests    = [];
 
@@ -709,49 +719,51 @@ class GoogleSheets extends Base {
 				],
 			];
 
-			// 7. Currency format for Nikki Total (column I, index 8) - 2 decimals
-			$requests[] = [
-				'repeatCell' => [
-					'range'  => [
-						'sheetId'          => $sheet_id,
-						'startRowIndex'    => 1,
-						'endRowIndex'      => $num_rows,
-						'startColumnIndex' => 8,
-						'endColumnIndex'   => 9,
-					],
-					'cell'   => [
-						'userEnteredFormat' => [
-							'numberFormat' => [
-								'type'    => 'CURRENCY',
-								'pattern' => '[$EUR] #,##0.00',
+			// 7. Currency format for Nikki Total (column I, index 8) - 2 decimals (only for current season)
+			if ( ! $forecast ) {
+				$requests[] = [
+					'repeatCell' => [
+						'range'  => [
+							'sheetId'          => $sheet_id,
+							'startRowIndex'    => 1,
+							'endRowIndex'      => $num_rows,
+							'startColumnIndex' => 8,
+							'endColumnIndex'   => 9,
+						],
+						'cell'   => [
+							'userEnteredFormat' => [
+								'numberFormat' => [
+									'type'    => 'CURRENCY',
+									'pattern' => '[$EUR] #,##0.00',
+								],
 							],
 						],
+						'fields' => 'userEnteredFormat.numberFormat',
 					],
-					'fields' => 'userEnteredFormat.numberFormat',
-				],
-			];
+				];
 
-			// 8. Currency format for Saldo (column J, index 9) - 2 decimals
-			$requests[] = [
-				'repeatCell' => [
-					'range'  => [
-						'sheetId'          => $sheet_id,
-						'startRowIndex'    => 1,
-						'endRowIndex'      => $num_rows,
-						'startColumnIndex' => 9,
-						'endColumnIndex'   => 10,
-					],
-					'cell'   => [
-						'userEnteredFormat' => [
-							'numberFormat' => [
-								'type'    => 'CURRENCY',
-								'pattern' => '[$EUR] #,##0.00',
+				// 8. Currency format for Saldo (column J, index 9) - 2 decimals (only for current season)
+				$requests[] = [
+					'repeatCell' => [
+						'range'  => [
+							'sheetId'          => $sheet_id,
+							'startRowIndex'    => 1,
+							'endRowIndex'      => $num_rows,
+							'startColumnIndex' => 9,
+							'endColumnIndex'   => 10,
+						],
+						'cell'   => [
+							'userEnteredFormat' => [
+								'numberFormat' => [
+									'type'    => 'CURRENCY',
+									'pattern' => '[$EUR] #,##0.00',
+								],
 							],
 						],
+						'fields' => 'userEnteredFormat.numberFormat',
 					],
-					'fields' => 'userEnteredFormat.numberFormat',
-				],
-			];
+				];
+			}
 
 			// 9. Bold formatting for totals row (last row)
 			$requests[] = [
@@ -833,11 +845,16 @@ class GoogleSheets extends Base {
 	 *
 	 * @param string $sort_field Sort field (name, category, base_fee, final_fee).
 	 * @param string $sort_order Sort order (asc, desc).
+	 * @param bool   $forecast   Whether to fetch forecast data for next season.
 	 * @return array Fee data with season and members.
 	 */
-	private function fetch_fee_data( string $sort_field, string $sort_order ): array {
-		$fees   = new \Stadion\Fees\MembershipFees();
-		$season = $fees->get_season_key();
+	private function fetch_fee_data( string $sort_field, string $sort_order, bool $forecast = false ): array {
+		$fees = new \Stadion\Fees\MembershipFees();
+
+		// Use next season for forecast
+		$season = $forecast
+			? $fees->get_next_season_key()
+			: $fees->get_season_key();
 
 		// Nikki year = first 4 chars of season (2025-2026 => 2025)
 		$nikki_year = substr( $season, 0, 4 );
@@ -857,14 +874,6 @@ class GoogleSheets extends Base {
 		$results = [];
 
 		foreach ( $query->posts as $person ) {
-			// Get fee with caching
-			$fee_data = $fees->get_fee_for_person_cached( $person->ID, $season );
-
-			// Skip non-calculable members
-			if ( $fee_data === null ) {
-				continue;
-			}
-
 			// Get person name
 			$first_name = get_field( 'first_name', $person->ID ) ?: '';
 			$last_name  = get_field( 'last_name', $person->ID ) ?: '';
@@ -873,11 +882,23 @@ class GoogleSheets extends Base {
 			// Get relatiecode (KNVB ID)
 			$relatiecode = get_field( 'relatiecode', $person->ID ) ?: '';
 
-			// Get Nikki data for this year
-			$nikki_total = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_total', true );
-			$nikki_saldo = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_saldo', true );
+			if ( $forecast ) {
+				// Calculate with 100% pro-rata for forecast
+				$fee_data = $fees->calculate_fee_with_family_discount( $person->ID, $season );
+				if ( $fee_data === null ) {
+					continue;
+				}
+				$fee_data['prorata_percentage'] = 1.0;
+				$fee_data['final_fee']          = $fee_data['fee_after_discount'] ?? $fee_data['final_fee'];
+			} else {
+				// Use cached calculation for current season
+				$fee_data = $fees->get_fee_for_person_cached( $person->ID, $season );
+				if ( $fee_data === null ) {
+					continue;
+				}
+			}
 
-			$results[] = [
+			$result = [
 				'id'                   => $person->ID,
 				'name'                 => $name ?: $person->post_title,
 				'relatiecode'          => $relatiecode,
@@ -887,9 +908,19 @@ class GoogleSheets extends Base {
 				'family_discount_rate' => $fee_data['family_discount_rate'],
 				'prorata_percentage'   => $fee_data['prorata_percentage'],
 				'final_fee'            => $fee_data['final_fee'],
-				'nikki_total'          => $nikki_total !== '' ? (float) $nikki_total : null,
-				'nikki_saldo'          => $nikki_saldo !== '' ? (float) $nikki_saldo : null,
 			];
+
+			// Only include Nikki data for current season
+			if ( ! $forecast ) {
+				// Get Nikki data for this year
+				$nikki_total = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_total', true );
+				$nikki_saldo = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_saldo', true );
+
+				$result['nikki_total'] = $nikki_total !== '' ? (float) $nikki_total : null;
+				$result['nikki_saldo'] = $nikki_saldo !== '' ? (float) $nikki_saldo : null;
+			}
+
+			$results[] = $result;
 		}
 
 		// Sort results based on sort_field and sort_order
@@ -922,8 +953,9 @@ class GoogleSheets extends Base {
 		);
 
 		return [
-			'season'  => $season,
-			'members' => $results,
+			'season'   => $season,
+			'forecast' => $forecast,
+			'members'  => $results,
 		];
 	}
 
@@ -932,15 +964,17 @@ class GoogleSheets extends Base {
 	 *
 	 * Builds 2D array with header row, data rows, and totals row.
 	 * Columns: Naam, Relatiecode, Categorie, Leeftijdsgroep, Basis, Gezinskorting, Pro-rata %, Bedrag, Nikki Total, Saldo
+	 * For forecast mode: Only first 8 columns (no Nikki Total, no Saldo)
 	 *
 	 * @param array $fee_data Fee data with season and members.
+	 * @param bool  $forecast Whether to build forecast data (excludes Nikki columns).
 	 * @return array 2D array for spreadsheet.
 	 */
-	private function build_fee_spreadsheet_data( array $fee_data ): array {
+	private function build_fee_spreadsheet_data( array $fee_data, bool $forecast = false ): array {
 		$data = [];
 
-		// Header row with Dutch labels
-		$data[] = [
+		// Header row with Dutch labels (conditional Nikki columns)
+		$headers = [
 			'Naam',
 			'Relatiecode',
 			'Categorie',
@@ -949,9 +983,12 @@ class GoogleSheets extends Base {
 			'Gezinskorting',
 			'Pro-rata %',
 			'Bedrag',
-			'Nikki Total',
-			'Saldo',
 		];
+		if ( ! $forecast ) {
+			$headers[] = 'Nikki Total';
+			$headers[] = 'Saldo';
+		}
+		$data[] = $headers;
 
 		// Category labels
 		$category_labels = [
@@ -967,9 +1004,9 @@ class GoogleSheets extends Base {
 		$total_base_fee  = 0;
 		$total_final_fee = 0;
 
-		// Data rows
+		// Data rows (conditional Nikki columns)
 		foreach ( $fee_data['members'] as $member ) {
-			$data[] = [
+			$row = [
 				$member['name'],
 				$member['relatiecode'] ?: '',
 				$category_labels[ $member['category'] ] ?? $member['category'],
@@ -978,27 +1015,24 @@ class GoogleSheets extends Base {
 				$member['family_discount_rate'],
 				$member['prorata_percentage'],
 				$member['final_fee'],
-				$member['nikki_total'],
-				$member['nikki_saldo'],
 			];
+			if ( ! $forecast ) {
+				$row[] = $member['nikki_total'];
+				$row[] = $member['nikki_saldo'];
+			}
+			$data[] = $row;
 
 			$total_base_fee  += $member['base_fee'];
 			$total_final_fee += $member['final_fee'];
 		}
 
 		// Totals row (per CONTEXT.md: only Base Fee and Bedrag, not Nikki columns)
-		$data[] = [
-			'Totaal',
-			'',
-			'',
-			'',
-			$total_base_fee,
-			'',
-			'',
-			$total_final_fee,
-			'',
-			'',
-		];
+		$totals_row = [ 'Totaal', '', '', '', $total_base_fee, '', '', $total_final_fee ];
+		if ( ! $forecast ) {
+			$totals_row[] = '';
+			$totals_row[] = '';
+		}
+		$data[] = $totals_row;
 
 		return $data;
 	}
