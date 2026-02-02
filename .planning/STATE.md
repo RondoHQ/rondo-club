@@ -42,7 +42,8 @@ Recent decisions from v12.0 and v12.1:
 
 ### Pending Todos
 
-1 todo(s) in `.planning/todos/pending/`:
+2 todo(s) in `.planning/todos/pending/`:
+- **public-vog-upload-and-validation**: Public VOG Upload and Validation (area: api)
 - **next-season-contributie-forecast**: Add next season forecast to contributie page (area: ui) - **ACTIVE MILESTONE**
 
 ### Blockers/Concerns
