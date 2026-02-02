@@ -52,7 +52,8 @@ Add next season forecast capability to the contributie page, enabling budget pla
   1. Export button works when viewing forecast
   2. Exported sheet title includes season and "(Prognose)" indicator
   3. Exported forecast excludes Nikki columns
-**Plans**: TBD
+**Plans**: 1 plan
+  - [ ] 131-01-PLAN.md - Add forecast parameter to export-fees endpoint with conditional columns
 
 ## Progress
 
@@ -60,8 +61,8 @@ Add next season forecast capability to the contributie page, enabling budget pla
 |-------|-----------|----------------|--------|-----------|
 | 129. Backend Forecast Calculation | v12.1 | 1/1 | Complete | 2026-02-02 |
 | 130. Frontend Season Selector | v12.1 | 1/1 | Complete | 2026-02-02 |
-| 131. Forecast Export | v12.1 | 0/TBD | Not started | - |
+| 131. Forecast Export | v12.1 | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 130 complete*
+*Last updated: 2026-02-02 — Phase 131 planned*
