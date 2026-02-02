@@ -173,6 +173,9 @@ class MembershipFees {
 	 * Retrieves team IDs from the work_history ACF repeater field where the person
 	 * is currently active (is_current flag or end_date in future/not set).
 	 *
+	 * For fee calculation purposes, excludes teams where the job_title is "Donateur"
+	 * since donateurs are non-playing members and shouldn't affect team-based fees.
+	 *
 	 * @param int $person_id The person post ID.
 	 * @return array<int> Array of unique team IDs.
 	 */
@@ -189,6 +192,11 @@ class MembershipFees {
 		foreach ( $work_history as $job ) {
 			// Skip if no team reference
 			if ( ! isset( $job['team'] ) || empty( $job['team'] ) ) {
+				continue;
+			}
+
+			// Skip donateur roles - they are non-playing members
+			if ( ! empty( $job['job_title'] ) && strcasecmp( trim( $job['job_title'] ), 'Donateur' ) === 0 ) {
 				continue;
 			}
 
@@ -231,7 +239,7 @@ class MembershipFees {
 	/**
 	 * Check if a team is a recreational team
 	 *
-	 * Recreational teams have "recreant" or "walking football" in their name.
+	 * Recreational teams have "recreant" or "walking football" or "walking voetbal" in their name.
 	 *
 	 * @param int $team_id The team post ID.
 	 * @return bool True if the team is recreational.
@@ -245,7 +253,7 @@ class MembershipFees {
 
 		$title = strtolower( $team->post_title );
 
-		return ( stripos( $title, 'recreant' ) !== false || stripos( $title, 'walking football' ) !== false );
+		return ( stripos( $title, 'recreant' ) !== false || stripos( $title, 'walking football' ) !== false || stripos( $title, 'walking voetbal' ) !== false );
 	}
 
 	/**
