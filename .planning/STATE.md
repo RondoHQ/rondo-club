@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-01)
+See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Personal CRM with team collaboration while maintaining relationship-focused experience
-**Current focus:** Milestone v12.0 complete - ready for next milestone
+**Current focus:** Milestone v12.1 Contributie Forecast
 
 ## Current Position
 
-Phase: N/A (between milestones)
-Plan: N/A
-Status: Ready for `/gsd:new-milestone`
-Last activity: 2026-02-01 — v12.0 Membership Fees milestone completed
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-02 — Milestone v12.1 started
 
-Progress: [##########] v12.0 SHIPPED
+Progress: [░░░░░░░░░░] 0%
 
 ### Recent Milestones
 
@@ -40,17 +40,17 @@ Recent decisions from v12.0:
 ### Pending Todos
 
 1 todo(s) in `.planning/todos/pending/`:
-- **next-season-contributie-forecast**: Add next season forecast to contributie page (area: ui)
+- **next-season-contributie-forecast**: Add next season forecast to contributie page (area: ui) — **ACTIVE MILESTONE**
 
 ### Blockers/Concerns
 
-None - ready for next milestone.
+None.
 
 ## Session Continuity
 
-Last session: 2026-02-01
-Stopped at: v12.0 milestone archived
+Last session: 2026-02-02
+Stopped at: Defining v12.1 requirements
 Resume file: None
 
 ---
-*State updated: 2026-02-01*
+*State updated: 2026-02-02*
