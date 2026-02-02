@@ -392,6 +392,29 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get the next season key (one year ahead of current/specified season)
+	 *
+	 * Takes a season key in "YYYY-YYYY" format and returns the next season.
+	 * Example: "2025-2026" returns "2026-2027"
+	 *
+	 * @param string|null $current_season Optional season key, defaults to current season.
+	 * @return string Next season key in "YYYY-YYYY" format.
+	 */
+	public function get_next_season_key( ?string $current_season = null ): string {
+		if ( $current_season === null ) {
+			$current_season = $this->get_season_key();
+		}
+
+		// Extract start year from "YYYY-YYYY" format
+		$season_start_year = (int) substr( $current_season, 0, 4 );
+
+		// Next season is +1 year
+		$next_start_year = $season_start_year + 1;
+
+		return $next_start_year . '-' . ( $next_start_year + 1 );
+	}
+
+	/**
 	 * Get the post meta key for storing fee snapshots
 	 *
 	 * @param string|null $season Optional season key, defaults to current season.
