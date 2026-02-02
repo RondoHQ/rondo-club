@@ -74,7 +74,7 @@ function SortableHeader({ label, columnId, sortField, sortOrder, onSort, classNa
 }
 
 // Fee row component
-function FeeRow({ member, isOdd }) {
+function FeeRow({ member, isOdd, isForecast }) {
   const hasDiscount = member.family_discount_rate > 0;
   const hasProrata = member.prorata_percentage < 1.0;
 
@@ -146,27 +146,31 @@ function FeeRow({ member, isOdd }) {
         {formatCurrency(member.final_fee, 2)}
       </td>
 
-      {/* Nikki Total */}
-      <td className="px-4 py-3 text-sm text-right">
-        {member.nikki_total !== null ? (
-          <span className="text-gray-700 dark:text-gray-300">
-            {formatCurrency(member.nikki_total, 2)}
-          </span>
-        ) : (
-          <span className="text-gray-400 dark:text-gray-500">-</span>
-        )}
-      </td>
+      {/* Nikki Total - Only in current season mode */}
+      {!isForecast && (
+        <>
+          <td className="px-4 py-3 text-sm text-right">
+            {member.nikki_total !== null ? (
+              <span className="text-gray-700 dark:text-gray-300">
+                {formatCurrency(member.nikki_total, 2)}
+              </span>
+            ) : (
+              <span className="text-gray-400 dark:text-gray-500">-</span>
+            )}
+          </td>
 
-      {/* Saldo (Outstanding) */}
-      <td className="px-4 py-3 text-sm text-right">
-        {member.nikki_saldo !== null ? (
-          <span className="text-gray-700 dark:text-gray-300">
-            {formatCurrency(member.nikki_saldo, 2)}
-          </span>
-        ) : (
-          <span className="text-gray-400 dark:text-gray-500">-</span>
-        )}
-      </td>
+          {/* Saldo (Outstanding) */}
+          <td className="px-4 py-3 text-sm text-right">
+            {member.nikki_saldo !== null ? (
+              <span className="text-gray-700 dark:text-gray-300">
+                {formatCurrency(member.nikki_saldo, 2)}
+              </span>
+            ) : (
+              <span className="text-gray-400 dark:text-gray-500">-</span>
+            )}
+          </td>
+        </>
+      )}
     </tr>
   );
 }
@@ -408,6 +412,15 @@ export default function ContributieList() {
                 </option>
               </select>
             </div>
+            {isForecast && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
+                <TrendingUp className="w-4 h-4" />
+                <span className="font-medium">Prognose</span>
+                <span className="text-blue-600 dark:text-blue-400">
+                  (o.b.v. huidige ledenstand)
+                </span>
+              </div>
+            )}
             <div className="text-sm text-gray-500 dark:text-gray-400">
               {sortedMembers.length} leden
             </div>
@@ -416,11 +429,13 @@ export default function ContributieList() {
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Totaal: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.finalFee, 2)}</span>
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Nog te ontvangen: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.nikkiSaldo, 2)}</span>
-            </div>
-            {/* Filter: Mismatch */}
-            {mismatchCount > 0 && (
+            {!isForecast && (
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Nog te ontvangen: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.nikkiSaldo, 2)}</span>
+              </div>
+            )}
+            {/* Filter: Mismatch - Only in current season mode */}
+            {!isForecast && mismatchCount > 0 && (
               <button
                 onClick={() => {
                   setShowMismatchOnly(!showMismatchOnly);
@@ -435,8 +450,8 @@ export default function ContributieList() {
                 <span className="text-xs">Afwijking ({mismatchCount})</span>
               </button>
             )}
-            {/* Filter: No Nikki Data */}
-            {noNikkiCount > 0 && (
+            {/* Filter: No Nikki Data - Only in current season mode */}
+            {!isForecast && noNikkiCount > 0 && (
               <button
                 onClick={() => {
                   setShowNoNikkiOnly(!showNoNikkiOnly);
@@ -542,22 +557,26 @@ export default function ContributieList() {
                   onSort={handleSort}
                   className="text-right"
                 />
-                <SortableHeader
-                  label="Nikki"
-                  columnId="nikki_total"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                  className="text-right"
-                />
-                <SortableHeader
-                  label="Saldo"
-                  columnId="nikki_saldo"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                  className="text-right"
-                />
+                {!isForecast && (
+                  <>
+                    <SortableHeader
+                      label="Nikki"
+                      columnId="nikki_total"
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                      className="text-right"
+                    />
+                    <SortableHeader
+                      label="Saldo"
+                      columnId="nikki_saldo"
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                      className="text-right"
+                    />
+                  </>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -566,6 +585,7 @@ export default function ContributieList() {
                   key={member.id}
                   member={member}
                   isOdd={index % 2 === 1}
+                  isForecast={isForecast}
                 />
               ))}
             </tbody>
@@ -581,12 +601,16 @@ export default function ContributieList() {
                 <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
                   {formatCurrency(totals.finalFee, 2)}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
-                  {formatCurrency(totals.nikkiTotal, 2)}
-                </td>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
-                  {formatCurrency(totals.nikkiSaldo, 2)}
-                </td>
+                {!isForecast && (
+                  <>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                      {formatCurrency(totals.nikkiTotal, 2)}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
+                      {formatCurrency(totals.nikkiSaldo, 2)}
+                    </td>
+                  </>
+                )}
               </tr>
             </tfoot>
           </table>
