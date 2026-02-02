@@ -660,11 +660,17 @@ class Api extends Base {
 				'callback'            => [ $this, 'get_fee_list' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
-					'season' => [
+					'season'   => [
 						'default'           => null,
 						'validate_callback' => function ( $param ) {
 							return $param === null || preg_match( '/^\d{4}-\d{4}$/', $param );
 						},
+					],
+					'forecast' => [
+						'default'           => false,
+						'sanitize_callback' => 'rest_sanitize_boolean',
+						'validate_callback' => 'rest_is_boolean',
+						'description'       => 'Calculate forecast for next season with 100% pro-rata',
 					],
 				],
 			]
@@ -2627,15 +2633,27 @@ class Api extends Base {
 	/**
 	 * Get membership fee list for all calculable members
 	 *
+	 * Supports forecast mode via ?forecast=true parameter which:
+	 * - Returns next season key instead of current season
+	 * - Uses 100% pro-rata for all members (full year assumption)
+	 * - Omits Nikki billing data (not available for future season)
+	 *
 	 * @param \WP_REST_Request $request The request object.
 	 * @return \WP_REST_Response Response with fee list.
 	 */
 	public function get_fee_list( $request ) {
-		$season = $request->get_param( 'season' );
-		$fees   = new \Stadion\Fees\MembershipFees();
+		$forecast = $request->get_param( 'forecast' );
+		$fees     = new \Stadion\Fees\MembershipFees();
 
-		if ( $season === null ) {
-			$season = $fees->get_season_key();
+		// Determine season
+		if ( $forecast ) {
+			// Forecast always uses next season (ignore season parameter)
+			$season = $fees->get_next_season_key();
+		} else {
+			$season = $request->get_param( 'season' );
+			if ( $season === null ) {
+				$season = $fees->get_season_key();
+			}
 		}
 
 		// Nikki year = first 4 chars of season (2025-2026 => 2025)
@@ -2650,30 +2668,43 @@ class Api extends Base {
 				'orderby'        => 'meta_value',
 				'meta_key'       => 'first_name',
 				'order'          => 'ASC',
+				'no_found_rows'  => true,
 			]
 		);
 
 		$results = [];
 
 		foreach ( $query->posts as $person ) {
-			// Get fee with caching (uses lid-sinds for pro-rata internally)
-			$fee_data = $fees->get_fee_for_person_cached( $person->ID, $season );
+			if ( $forecast ) {
+				// Forecast: calculate fee with family discount, override pro-rata to 100%
+				$fee_data = $fees->calculate_fee_with_family_discount( $person->ID, $season );
 
-			// Skip non-calculable members
-			if ( $fee_data === null ) {
-				continue;
+				// Skip non-calculable members
+				if ( $fee_data === null ) {
+					continue;
+				}
+
+				// Override pro-rata to 100% for forecast
+				$fee_data['prorata_percentage'] = 1.0;
+				$fee_data['final_fee']          = $fee_data['fee_after_discount'] ?? $fee_data['final_fee'];
+				$fee_data['registration_date']  = null;
+				$fee_data['from_cache']         = false;
+				$fee_data['calculated_at']      = current_time( 'Y-m-d H:i:s' );
+			} else {
+				// Normal: use cached calculation with lid-sinds pro-rata
+				$fee_data = $fees->get_fee_for_person_cached( $person->ID, $season );
+
+				// Skip non-calculable members
+				if ( $fee_data === null ) {
+					continue;
+				}
 			}
 
 			// Get person name
 			$first_name = get_field( 'first_name', $person->ID ) ?: '';
 			$last_name  = get_field( 'last_name', $person->ID ) ?: '';
-			$name       = trim( $first_name . ' ' . $last_name );
 
-			// Get Nikki data for this year
-			$nikki_total = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_total', true );
-			$nikki_saldo = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_saldo', true );
-
-			$results[] = [
+			$result = [
 				'id'                     => $person->ID,
 				'first_name'             => $first_name,
 				'last_name'              => $last_name,
@@ -2682,7 +2713,7 @@ class Api extends Base {
 				'base_fee'               => $fee_data['base_fee'],
 				'family_discount_rate'   => $fee_data['family_discount_rate'],
 				'family_discount_amount' => $fee_data['family_discount_amount'],
-				'fee_after_discount'     => $fee_data['fee_after_discount'],
+				'fee_after_discount'     => $fee_data['fee_after_discount'] ?? $fee_data['final_fee'],
 				'prorata_percentage'     => $fee_data['prorata_percentage'],
 				'final_fee'              => $fee_data['final_fee'],
 				'family_key'             => $fee_data['family_key'],
@@ -2691,9 +2722,17 @@ class Api extends Base {
 				'lid_sinds'              => $fee_data['registration_date'] ?? null,
 				'from_cache'             => $fee_data['from_cache'] ?? false,
 				'calculated_at'          => $fee_data['calculated_at'] ?? null,
-				'nikki_total'            => $nikki_total !== '' ? (float) $nikki_total : null,
-				'nikki_saldo'            => $nikki_saldo !== '' ? (float) $nikki_saldo : null,
 			];
+
+			// Only include Nikki data for current season (not forecast)
+			if ( ! $forecast ) {
+				$nikki_total           = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_total', true );
+				$nikki_saldo           = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_saldo', true );
+				$result['nikki_total'] = $nikki_total !== '' ? (float) $nikki_total : null;
+				$result['nikki_saldo'] = $nikki_saldo !== '' ? (float) $nikki_saldo : null;
+			}
+
+			$results[] = $result;
 		}
 
 		// Sort by category priority, then name
@@ -2705,15 +2744,16 @@ class Api extends Base {
 				if ( $cat_cmp !== 0 ) {
 					return $cat_cmp;
 				}
-				return strcasecmp( $a['name'], $b['name'] );
+				return strcasecmp( $a['first_name'] . ' ' . $a['last_name'], $b['first_name'] . ' ' . $b['last_name'] );
 			}
 		);
 
 		return rest_ensure_response(
 			[
-				'season'  => $season,
-				'total'   => count( $results ),
-				'members' => $results,
+				'season'   => $season,
+				'forecast' => (bool) $forecast,
+				'total'    => count( $results ),
+				'members'  => $results,
 			]
 		);
 	}
