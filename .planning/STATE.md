@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 ## Current Position
 
-Phase: 129 of 131 (Backend Forecast Calculation)
+Phase: 130 of 131 (Frontend Season Selector)
 Plan: 01 of 01 complete
 Status: Phase complete
-Last activity: 2026-02-02 - Completed 129-01-PLAN.md
+Last activity: 2026-02-02 - Completed 130-01-PLAN.md
 
-Progress: [###-------] 33% (1 of 3 phases in v12.1)
+Progress: [######----] 67% (2 of 3 phases in v12.1)
 
 ### Recent Milestones
 
@@ -39,6 +39,8 @@ Recent decisions from v12.0 and v12.1:
 | 2026-02-02 | Forecast ignores season parameter | Always uses next season for consistency |
 | 2026-02-02 | 100% pro-rata for forecast | Full year assumption for budget planning |
 | 2026-02-02 | Nikki fields omitted from forecast | Future season has no billing data |
+| 2026-02-02 | Native select for season dropdown | Consistent with existing UI patterns |
+| 2026-02-02 | Instant column hiding without animation | Immediate table reflow per UX decision |
 
 ### Pending Todos
 
@@ -53,9 +55,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: Completed 129-01-PLAN.md (Backend Forecast Calculation)
+Stopped at: Completed 130-01-PLAN.md (Frontend Season Selector)
 Resume file: None
-Next: Phase 130 (Frontend Forecast UI)
+Next: Phase 131 (Final Integration & Polish)
 
 ---
 *State updated: 2026-02-02*
