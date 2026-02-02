@@ -6,17 +6,17 @@ Add next season forecast capability to the contributie page, enabling budget pla
 
 ## Milestones
 
-- 🚧 **v12.1 Contributie Forecast** - Phases 129-131 (in progress)
+- ✅ **v12.1 Contributie Forecast** - Phases 129-131 (complete)
 
 ## Phases
 
-### 🚧 v12.1 Contributie Forecast (In Progress)
+### ✅ v12.1 Contributie Forecast (Complete)
 
 **Milestone Goal:** Enable budget planning with next season fee forecast
 
 - [x] **Phase 129: Backend Forecast Calculation** - Next season calculation logic and API support
 - [x] **Phase 130: Frontend Season Selector** - Dropdown UI and forecast display
-- [ ] **Phase 131: Forecast Export** - Google Sheets export for forecast view
+- [x] **Phase 131: Forecast Export** - Google Sheets export for forecast view
 
 ## Phase Details
 
@@ -53,7 +53,7 @@ Add next season forecast capability to the contributie page, enabling budget pla
   2. Exported sheet title includes season and "(Prognose)" indicator
   3. Exported forecast excludes Nikki columns
 **Plans**: 1 plan
-  - [ ] 131-01-PLAN.md - Add forecast parameter to export-fees endpoint with conditional columns
+  - [x] 131-01-PLAN.md - Add forecast parameter to export-fees endpoint with conditional columns
 
 ## Progress
 
@@ -61,8 +61,8 @@ Add next season forecast capability to the contributie page, enabling budget pla
 |-------|-----------|----------------|--------|-----------|
 | 129. Backend Forecast Calculation | v12.1 | 1/1 | Complete | 2026-02-02 |
 | 130. Frontend Season Selector | v12.1 | 1/1 | Complete | 2026-02-02 |
-| 131. Forecast Export | v12.1 | 0/1 | Not started | - |
+| 131. Forecast Export | v12.1 | 1/1 | Complete | 2026-02-02 |
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 — Phase 131 planned*
+*Last updated: 2026-02-02 — Milestone v12.1 complete*

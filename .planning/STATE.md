@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Personal CRM with team collaboration while maintaining relationship-focused experience
-**Current focus:** Milestone v12.1 Contributie Forecast - Phase 129 Backend Forecast Calculation
+**Current focus:** Milestone v12.1 Contributie Forecast - Complete
 
 ## Current Position
 
