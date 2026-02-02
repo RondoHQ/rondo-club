@@ -64,29 +64,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FORE-01 | TBD | Pending |
-| FORE-02 | TBD | Pending |
-| FORE-03 | TBD | Pending |
-| FORE-04 | TBD | Pending |
-| FORE-05 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| UI-06 | TBD | Pending |
-| API-01 | TBD | Pending |
-| API-02 | TBD | Pending |
-| API-03 | TBD | Pending |
-| EXP-01 | TBD | Pending |
-| EXP-02 | TBD | Pending |
-| EXP-03 | TBD | Pending |
+| FORE-01 | Phase 129 | Pending |
+| FORE-02 | Phase 129 | Pending |
+| FORE-03 | Phase 129 | Pending |
+| FORE-04 | Phase 129 | Pending |
+| FORE-05 | Phase 129 | Pending |
+| UI-01 | Phase 130 | Pending |
+| UI-02 | Phase 130 | Pending |
+| UI-03 | Phase 130 | Pending |
+| UI-04 | Phase 130 | Pending |
+| UI-05 | Phase 130 | Pending |
+| UI-06 | Phase 130 | Pending |
+| API-01 | Phase 129 | Pending |
+| API-02 | Phase 129 | Pending |
+| API-03 | Phase 129 | Pending |
+| EXP-01 | Phase 131 | Pending |
+| EXP-02 | Phase 131 | Pending |
+| EXP-03 | Phase 131 | Pending |
 
 **Coverage:**
 - v12.1 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 after initial definition*
+*Last updated: 2026-02-02 after roadmap creation*
