@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 Phase: 134 of 134 (Discipline Cases UI) — MILESTONE COMPLETE
 Plan: All complete
 Status: Ready to plan next milestone
-Last activity: 2026-02-03 — v13.0 Discipline Cases shipped
+Last activity: 2026-02-03 — Completed quick task 035: Doorbelast/Card columns
 
 Progress: [██████████] 100%
 
@@ -52,6 +52,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ### Blockers/Concerns
 
 None.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 035 | Add Doorbelast and Card columns to discipline cases table | 2026-02-03 | 6f75c16f | [035-doorbelast-card-columns](./quick/035-doorbelast-card-columns/) |
 
 ## Session Continuity
 
