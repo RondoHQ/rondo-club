@@ -3,32 +3,13 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, Square, TrendingUp, StickyNote, Clock, User, ExternalLink, AlertCircle
+  CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel
 } from 'lucide-react';
-import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiSlack, SiWhatsapp } from '@icons-pack/react-simple-icons';
-
-// Custom LinkedIn SVG component
-const LinkedInIcon = ({ className }) => (
-  <svg 
-    className={className}
-    viewBox="0 0 382 382" 
-    xmlns="http://www.w3.org/2000/svg"
-    fill="currentColor"
-  >
-    <path d="M347.445,0H34.555C15.471,0,0,15.471,0,34.555v312.889C0,366.529,15.471,382,34.555,382h312.889
-      C366.529,382,382,366.529,382,347.444V34.555C382,15.471,366.529,0,347.445,0z M118.207,329.844c0,5.554-4.502,10.056-10.056,10.056
-      H65.345c-5.554,0-10.056-4.502-10.056-10.056V150.403c0-5.554,4.502-10.056,10.056-10.056h42.806
-      c5.554,0,10.056,4.502,10.056,10.056V329.844z M86.748,123.432c-22.459,0-40.666-18.207-40.666-40.666S64.289,42.1,86.748,42.1
-      s40.666,18.207,40.666,40.666S109.208,123.432,86.748,123.432z M341.91,330.654c0,5.106-4.14,9.246-9.246,9.246H286.73
-      c-5.106,0-9.246-4.14-9.246-9.246v-84.168c0-12.556,3.683-55.021-32.813-55.021c-28.309,0-34.051,29.066-35.204,42.11v97.079
-      c0,5.106-4.139,9.246-9.246,9.246h-44.426c-5.106,0-9.246-4.14-9.246-9.246V149.593c0-5.106,4.14-9.246,9.246-9.246h44.426
-      c5.106,0,9.246,4.14,9.246,9.246v15.655c10.497-15.753,26.097-27.912,59.312-27.912c73.552,0,73.131,68.716,73.131,106.472
-      L341.91,330.654L341.91,330.654z"/>
-  </svg>
-);
+import { SiSlack } from '@icons-pack/react-simple-icons';
 import { usePerson, usePersonTimeline, usePersonDates, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople, peopleKeys } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
+import PersonAvatar from '@/components/PersonAvatar';
 import NoteModal from '@/components/Timeline/NoteModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import TodoModal from '@/components/Timeline/TodoModal';
@@ -43,75 +24,11 @@ import { format, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, getTeamName, sanitizePersonAcf } from '@/utils/formatters';
+import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, getVogStatus, formatPhoneForTel } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
-import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
-import { stripHtmlTags } from '@/utils/richTextUtils';
-
-// Helper to validate date strings
-function isValidDate(dateString) {
-  if (!dateString) return false;
-  const date = new Date(dateString);
-  return date instanceof Date && !isNaN(date.getTime());
-}
-
-// Helper to get gender symbol
-function getGenderSymbol(gender) {
-  if (!gender) return null;
-  switch (gender) {
-    case 'male':
-      return '♂';
-    case 'female':
-      return '♀';
-    case 'non_binary':
-    case 'other':
-    case 'prefer_not_to_say':
-      return '⚧';
-    default:
-      return null;
-  }
-}
-
-// Helper to get initials from a name or email
-function getInitials(name, email) {
-  if (name && !name.includes('@')) {
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name[0].toUpperCase();
-  }
-  if (email) {
-    return email[0].toUpperCase();
-  }
-  return '?';
-}
-
-// Helper to calculate VOG status
-function getVogStatus(acf) {
-  // Check if person has work functions other than "Donateur"
-  const werkfuncties = acf?.werkfuncties || [];
-  const hasNonDonateurFunction = werkfuncties.some(fn => fn !== 'Donateur');
-
-  if (!hasNonDonateurFunction) {
-    return null; // Don't show VOG indicator for Donateurs only
-  }
-
-  const vogDate = acf?.vog_datum;
-  if (!vogDate) {
-    return { status: 'missing', label: 'Geen VOG', color: 'red' };
-  }
-
-  const vogDateObj = new Date(vogDate);
-  const threeYearsAgo = new Date();
-  threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
-
-  if (vogDateObj >= threeYearsAgo) {
-    return { status: 'valid', label: 'VOG OK', color: 'green' };
-  } else {
-    return { status: 'expired', label: 'VOG verlopen', color: 'orange' };
-  }
-}
+import { getSocialIcon, getSocialIconColor, sortSocialLinks, SOCIAL_TYPES } from '@/utils/socialIcons';
+import TodoItem from '@/components/TodoItem.jsx';
+import TabButton from '@/components/TabButton.jsx';
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -148,6 +65,17 @@ export default function PersonDetail() {
     },
     enabled: !!id,
   });
+
+  // Fetch current user for capability check
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const response = await prmApi.getCurrentUser();
+      return response.data;
+    },
+  });
+
+  const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
 
   const [activeTab, setActiveTab] = useState('profile');
   const [isAddingLabel, setIsAddingLabel] = useState(false);
@@ -238,25 +166,6 @@ export default function PersonDetail() {
     // Sort by date ascending (earliest first)
     return dateA - dateB;
   }) : [];
-
-  // Helper function to format phone number for tel: and WhatsApp links
-  // Removes all non-digit characters except + at the start, removes Unicode marks,
-  // and converts Dutch mobile numbers (06...) to international format (+316...)
-  const formatPhoneForTel = (phone) => {
-    if (!phone) return '';
-    // Remove all Unicode marks and invisible characters
-    let cleaned = phone.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E]/g, '');
-    // Extract + if present at the start
-    const hasPlus = cleaned.startsWith('+');
-    // Remove all non-digit characters
-    cleaned = cleaned.replace(/\D/g, '');
-    // Convert Dutch mobile numbers (06...) to international format (+316...)
-    if (!hasPlus && cleaned.startsWith('06')) {
-      return `+316${cleaned.slice(2)}`;
-    }
-    // Prepend + if it was at the start
-    return hasPlus ? `+${cleaned}` : cleaned;
-  };
 
   // Handle saving all contacts from modal
   const handleSaveContacts = async (contacts) => {
@@ -1074,27 +983,12 @@ export default function PersonDetail() {
   const vogStatus = getVogStatus(acf);
 
   // Extract social links for header display (slack is now in contact details, not social)
-  const socialTypes = ['facebook', 'linkedin', 'instagram', 'twitter', 'bluesky', 'threads', 'website'];
-  const socialLinks = acf.contact_info?.filter(contact => socialTypes.includes(contact.contact_type)) || [];
-  
+  const socialLinks = acf.contact_info?.filter(contact => SOCIAL_TYPES.includes(contact.contact_type)) || [];
+
   // Check if there's a mobile number for WhatsApp
   const mobileContact = acf.contact_info?.find(contact => contact.contact_type === 'mobile');
-  
-  // Define display order for social icons
-  const socialIconOrder = {
-    'linkedin': 1,
-    'twitter': 2,
-    'bluesky': 3,
-    'threads': 4,
-    'instagram': 5,
-    'facebook': 6,
-    'whatsapp': 7,
-    'website': 8,
-    'sportlink': 9,
-    'freescout': 10,
-  };
-  
-  // Sort social links by display order, and add WhatsApp and Sportlink if applicable
+
+  // Sort social links by display order, and add WhatsApp, Sportlink, and Freescout if applicable
   const sortedSocialLinks = (() => {
     const links = [...socialLinks];
 
@@ -1122,42 +1016,8 @@ export default function PersonDetail() {
       });
     }
 
-    return links.sort((a, b) => {
-      const orderA = socialIconOrder[a.contact_type] || 99;
-      const orderB = socialIconOrder[b.contact_type] || 99;
-      return orderA - orderB;
-    });
+    return sortSocialLinks(links);
   })();
-  
-  // Helper to get social icon
-  const getSocialIcon = (type) => {
-    switch (type) {
-      case 'facebook': return SiFacebook;
-      case 'linkedin': return LinkedInIcon;
-      case 'instagram': return SiInstagram;
-      case 'twitter': return SiX; // Twitter/X uses SiX in Simple Icons
-      case 'bluesky': return SiBluesky;
-      case 'threads': return SiThreads;
-      case 'whatsapp': return SiWhatsapp;
-      case 'website': return Globe; // Use Lucide Globe for website
-      default: return Globe;
-    }
-  };
-  
-  // Helper to get social icon color
-  const getSocialIconColor = (type) => {
-    switch (type) {
-      case 'facebook': return 'text-[#1877F2]';
-      case 'linkedin': return 'text-[#0077B7]'; // LinkedIn brand color
-      case 'instagram': return 'text-[#E4405F]';
-      case 'twitter': return 'text-[#000000] dark:text-white';
-      case 'bluesky': return 'text-[#00A8E8]'; // Bluesky brand color
-      case 'threads': return 'text-[#000000] dark:text-white'; // Threads brand color (black, white in dark mode)
-      case 'whatsapp': return 'text-[#25D366]'; // WhatsApp brand color
-      case 'website': return 'text-gray-600';
-      default: return 'text-gray-600';
-    }
-  };
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -1414,36 +1274,12 @@ export default function PersonDetail() {
       {/* Tab Navigation */}
       <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="flex gap-8">
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'profile'
-                ? 'border-accent-600 text-accent-600'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
-            }`}
-          >
-            Profiel
-          </button>
-          <button
-            onClick={() => setActiveTab('timeline')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'timeline'
-                ? 'border-accent-600 text-accent-600'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
-            }`}
-          >
-            Tijdlijn
-          </button>
-          <button
-            onClick={() => setActiveTab('work')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'work'
-                ? 'border-accent-600 text-accent-600'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
-            }`}
-          >
-            Rollen
-          </button>
+          <TabButton label="Profiel" isActive={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+          <TabButton label="Tijdlijn" isActive={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} />
+          <TabButton label="Rollen" isActive={activeTab === 'work'} onClick={() => setActiveTab('work')} />
+          {canAccessFairplay && (
+            <TabButton label="Tuchtzaken" isActive={activeTab === 'discipline'} onClick={() => setActiveTab('discipline')} />
+          )}
         </nav>
       </div>
 
@@ -1467,7 +1303,7 @@ export default function PersonDetail() {
                   <span className="hidden md:inline">Bewerken</span>
                 </button>
               </div>
-            {acf.contact_info?.filter(contact => !socialTypes.includes(contact.contact_type)).length > 0 ? (
+            {acf.contact_info?.filter(contact => !SOCIAL_TYPES.includes(contact.contact_type)).length > 0 ? (
               <div className="space-y-2">
                 {(() => {
                   // Define display order for contact information
@@ -1482,7 +1318,7 @@ export default function PersonDetail() {
                   
                   // Filter and sort contact information
                   const nonSocialContacts = acf.contact_info
-                    .filter(contact => !socialTypes.includes(contact.contact_type))
+                    .filter(contact => !SOCIAL_TYPES.includes(contact.contact_type))
                     .map((contact, originalIndex) => ({ ...contact, originalIndex }))
                     .sort((a, b) => {
                       const orderA = contactOrder[a.contact_type] || 99;
@@ -1749,19 +1585,12 @@ export default function PersonDetail() {
                           to={`/people/${rel.related_person}`}
                           className="flex items-center flex-1 min-w-0"
                         >
-                          {rel.person_thumbnail ? (
-                            <img
-                              src={rel.person_thumbnail}
-                              alt={decodeHtml(rel.person_name) || ''}
-                              className="w-8 h-8 rounded-full object-cover mr-2"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full mr-2 flex items-center justify-center">
-                              <span className="text-xs font-medium text-gray-500">
-                                {decodeHtml(rel.person_name)?.[0] || '?'}
-                              </span>
-                            </div>
-                          )}
+                          <PersonAvatar
+                            thumbnail={rel.person_thumbnail}
+                            name={decodeHtml(rel.person_name)}
+                            size="md"
+                            className="mr-2"
+                          />
                           <div>
                             <p className="text-sm font-medium">
                               {decodeHtml(rel.person_name) || `Person #${rel.related_person}`}
@@ -1959,6 +1788,19 @@ export default function PersonDetail() {
           </div>
         )}
 
+        {/* Discipline Cases Tab - placeholder for Phase 134 */}
+        {activeTab === 'discipline' && canAccessFairplay && (
+          <div className="card p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Gavel className="w-5 h-5 text-gray-500" />
+              <h2 className="font-semibold">Tuchtzaken</h2>
+            </div>
+            <p className="text-sm text-gray-500 text-center py-8">
+              Tuchtzaken worden in een volgende fase toegevoegd.
+            </p>
+          </div>
+        )}
+
         </div>
 
         {/* Sidebar - always visible */}
@@ -1994,120 +1836,19 @@ export default function PersonDetail() {
               </div>
               {sortedTodos.length > 0 ? (
                 <div className="space-y-2">
-                  {sortedTodos.map((todo) => {
-                    const isOverdue = isTodoOverdue(todo);
-                    const awaitingDays = getAwaitingDays(todo);
-                    return (
-                      <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 group">
-                        <button
-                          onClick={() => handleToggleTodo(todo)}
-                          className="mt-0.5 mr-2 flex-shrink-0"
-                          title={todo.status === 'completed' ? 'Heropenen' : todo.status === 'awaiting' ? 'Markeer als voltooid' : 'Voltooien'}
-                        >
-                          {todo.status === 'completed' ? (
-                            <CheckSquare2 className="w-5 h-5 text-accent-600" />
-                          ) : todo.status === 'awaiting' ? (
-                            <Clock className="w-5 h-5 text-orange-500" />
-                          ) : (
-                            <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'}`} />
-                          )}
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${
-                            todo.status === 'completed'
-                              ? 'line-through text-gray-400 dark:text-gray-500'
-                              : todo.status === 'awaiting'
-                              ? 'text-orange-700 dark:text-orange-400'
-                              : isOverdue
-                              ? 'text-red-600 dark:text-red-300'
-                              : 'dark:text-gray-100'
-                          }`}>
-                            {todo.content}
-                          </p>
-                          {/* Notes preview */}
-                          {todo.notes && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
-                              {stripHtmlTags(todo.notes).slice(0, 60)}{stripHtmlTags(todo.notes).length > 60 ? '...' : ''}
-                            </p>
-                          )}
-                          {/* Due date - only show for open todos */}
-                          {todo.due_date && todo.status === 'open' && (
-                            <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                              Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
-                              {isOverdue && ' (overdue)'}
-                            </p>
-                          )}
-                          {/* Awaiting indicator */}
-                          {todo.status === 'awaiting' && awaitingDays !== null && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1 ${getAwaitingUrgencyClass(awaitingDays)}`}>
-                              <Clock className="w-3 h-3" />
-                              {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
-                            </span>
-                          )}
-                          {/* Multi-person indicator with stacked avatars */}
-                          {todo.persons && todo.persons.length > 1 && (() => {
-                            // Get other persons (exclude the current person we're viewing)
-                            const currentPersonId = parseInt(id, 10);
-                            const otherPersons = todo.persons.filter(p => p.id !== currentPersonId);
-                            if (otherPersons.length === 0) return null;
-
-                            return (
-                              <div className="flex items-center gap-1 mt-1">
-                                <span className="text-xs text-gray-500 dark:text-gray-400">Also:</span>
-                                <div className="flex -space-x-1.5" title={otherPersons.map(p => p.name).join(', ')}>
-                                  {otherPersons.slice(0, 2).map((person, idx) => (
-                                    <Link
-                                      key={person.id}
-                                      to={`/people/${person.id}`}
-                                      className="relative hover:z-10"
-                                      style={{ zIndex: 2 - idx }}
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      {person.thumbnail ? (
-                                        <img
-                                          src={person.thumbnail}
-                                          alt={person.name}
-                                          className="w-5 h-5 rounded-full object-cover border border-white"
-                                        />
-                                      ) : (
-                                        <div className="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center border border-white">
-                                          <User className="w-2.5 h-2.5 text-gray-500" />
-                                        </div>
-                                      )}
-                                    </Link>
-                                  ))}
-                                  {otherPersons.length > 2 && (
-                                    <span className="w-5 h-5 rounded-full bg-gray-200 text-[10px] flex items-center justify-center border border-white text-gray-600">
-                                      +{otherPersons.length - 2}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                          <button
-                            onClick={() => {
-                              setEditingTodo(todo);
-                              setShowTodoModal(true);
-                            }}
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                            title="Taak bewerken"
-                          >
-                            <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteTodo(todo.id)}
-                            className="p-1 hover:bg-red-50 rounded"
-                            title="Taak verwijderen"
-                          >
-                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {sortedTodos.map((todo) => (
+                    <TodoItem
+                      key={todo.id}
+                      todo={todo}
+                      currentPersonId={parseInt(id, 10)}
+                      onToggle={handleToggleTodo}
+                      onEdit={(t) => {
+                        setEditingTodo(t);
+                        setShowTodoModal(true);
+                      }}
+                      onDelete={handleDeleteTodo}
+                    />
+                  ))}
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
@@ -2182,121 +1923,21 @@ export default function PersonDetail() {
             <div className="flex-1 overflow-y-auto p-4">
               {sortedTodos.length > 0 ? (
                 <div className="space-y-2">
-                  {sortedTodos.map((todo) => {
-                    const isOverdue = isTodoOverdue(todo);
-                    const awaitingDays = getAwaitingDays(todo);
-                    return (
-                      <div key={todo.id} className="flex items-start p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 group">
-                        <button
-                          onClick={() => handleToggleTodo(todo)}
-                          className="mt-0.5 mr-2 flex-shrink-0"
-                          title={todo.status === 'completed' ? 'Heropenen' : todo.status === 'awaiting' ? 'Markeer als voltooid' : 'Voltooien'}
-                        >
-                          {todo.status === 'completed' ? (
-                            <CheckSquare2 className="w-5 h-5 text-accent-600" />
-                          ) : todo.status === 'awaiting' ? (
-                            <Clock className="w-5 h-5 text-orange-500" />
-                          ) : (
-                            <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'}`} />
-                          )}
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${
-                            todo.status === 'completed'
-                              ? 'line-through text-gray-400 dark:text-gray-500'
-                              : todo.status === 'awaiting'
-                              ? 'text-orange-700 dark:text-orange-400'
-                              : isOverdue
-                              ? 'text-red-600 dark:text-red-300'
-                              : 'dark:text-gray-100'
-                          }`}>
-                            {todo.content}
-                          </p>
-                          {/* Notes preview */}
-                          {todo.notes && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
-                              {stripHtmlTags(todo.notes).slice(0, 60)}{stripHtmlTags(todo.notes).length > 60 ? '...' : ''}
-                            </p>
-                          )}
-                          {/* Due date - only show for open todos */}
-                          {todo.due_date && todo.status === 'open' && (
-                            <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                              Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
-                              {isOverdue && ' (overdue)'}
-                            </p>
-                          )}
-                          {/* Awaiting indicator */}
-                          {todo.status === 'awaiting' && awaitingDays !== null && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-1 ${getAwaitingUrgencyClass(awaitingDays)}`}>
-                              <Clock className="w-3 h-3" />
-                              {awaitingDays === 0 ? 'Waiting since today' : `Waiting ${awaitingDays}d`}
-                            </span>
-                          )}
-                          {/* Multi-person indicator with stacked avatars */}
-                          {todo.persons && todo.persons.length > 1 && (() => {
-                            // Get other persons (exclude the current person we're viewing)
-                            const currentPersonId = parseInt(id, 10);
-                            const otherPersons = todo.persons.filter(p => p.id !== currentPersonId);
-                            if (otherPersons.length === 0) return null;
-
-                            return (
-                              <div className="flex items-center gap-1 mt-1">
-                                <span className="text-xs text-gray-500 dark:text-gray-400">Also:</span>
-                                <div className="flex -space-x-1.5" title={otherPersons.map(p => p.name).join(', ')}>
-                                  {otherPersons.slice(0, 2).map((person, idx) => (
-                                    <Link
-                                      key={person.id}
-                                      to={`/people/${person.id}`}
-                                      className="relative hover:z-10"
-                                      style={{ zIndex: 2 - idx }}
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      {person.thumbnail ? (
-                                        <img
-                                          src={person.thumbnail}
-                                          alt={person.name}
-                                          className="w-5 h-5 rounded-full object-cover border border-white"
-                                        />
-                                      ) : (
-                                        <div className="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center border border-white">
-                                          <User className="w-2.5 h-2.5 text-gray-500" />
-                                        </div>
-                                      )}
-                                    </Link>
-                                  ))}
-                                  {otherPersons.length > 2 && (
-                                    <span className="w-5 h-5 rounded-full bg-gray-200 text-[10px] flex items-center justify-center border border-white text-gray-600">
-                                      +{otherPersons.length - 2}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                        <div className="flex items-center gap-1 ml-2">
-                          <button
-                            onClick={() => {
-                              setEditingTodo(todo);
-                              setShowTodoModal(true);
-                              setShowMobileTodos(false);
-                            }}
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                            title="Taak bewerken"
-                          >
-                            <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteTodo(todo.id)}
-                            className="p-1 hover:bg-red-50 rounded"
-                            title="Taak verwijderen"
-                          >
-                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {sortedTodos.map((todo) => (
+                    <TodoItem
+                      key={todo.id}
+                      todo={todo}
+                      currentPersonId={parseInt(id, 10)}
+                      onToggle={handleToggleTodo}
+                      onEdit={(t) => {
+                        setEditingTodo(t);
+                        setShowTodoModal(true);
+                        setShowMobileTodos(false);
+                      }}
+                      onDelete={handleDeleteTodo}
+                      showActionsAlways
+                    />
+                  ))}
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
