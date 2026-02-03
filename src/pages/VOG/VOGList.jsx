@@ -7,6 +7,7 @@ import { prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import { format } from '@/utils/dateFormat';
+import { formatPhoneForTel } from '@/utils/formatters';
 
 // Helper function to get first contact value by type
 function getFirstContactByType(person, type) {
@@ -186,7 +187,7 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
           : 'text-gray-500 dark:text-gray-400'
       }`}>
         {phone ? (
-          <a href={`tel:${phone}`} className="hover:text-accent-600 dark:hover:text-accent-400">
+          <a href={`tel:${formatPhoneForTel(phone)}`} className="hover:text-accent-600 dark:hover:text-accent-400">
             {phone}
           </a>
         ) : '-'}

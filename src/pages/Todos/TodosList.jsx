@@ -1,14 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { CheckSquare, Square, Clock, Pencil, Trash2, Plus, RotateCcw, User } from 'lucide-react';
+import { CheckSquare, Square, Clock, Plus } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTodos, useUpdateTodo, useDeleteTodo } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format } from '@/utils/dateFormat';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
-import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
-import { stripHtmlTags } from '@/utils/richTextUtils';
+import TodoItem from '@/components/TodoItem.jsx';
 import TodoModal from '@/components/Timeline/TodoModal';
 import GlobalTodoModal from '@/components/Timeline/GlobalTodoModal';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
@@ -272,10 +269,11 @@ export default function TodosList() {
               <TodoItem
                 key={todo.id}
                 todo={todo}
+                variant="full"
                 onToggle={handleToggleTodo}
                 onReopen={handleReopen}
-                onEdit={(todo) => {
-                  setEditingTodo(todo);
+                onEdit={(t) => {
+                  setEditingTodo(t);
                   setShowTodoModal(true);
                 }}
                 onDelete={handleDeleteTodo}
@@ -342,165 +340,5 @@ export default function TodosList() {
       />
       </div>
     </PullToRefreshWrapper>
-  );
-}
-
-function TodoItem({ todo, onToggle, onReopen, onEdit, onDelete }) {
-  const isOverdue = isTodoOverdue(todo);
-  const awaitingDays = getAwaitingDays(todo);
-
-  // Support both new persons array and legacy person fields
-  const persons = todo.persons || (todo.person_id ? [{
-    id: todo.person_id,
-    name: todo.person_name,
-    thumbnail: todo.person_thumbnail
-  }] : []);
-
-  // Get notes preview (stripped of HTML, truncated)
-  const notesPreview = useMemo(() => {
-    if (!todo.notes) return null;
-    const stripped = stripHtmlTags(todo.notes);
-    if (!stripped) return null;
-    return stripped.length > 100 ? stripped.slice(0, 100) + '...' : stripped;
-  }, [todo.notes]);
-
-  // Determine checkbox icon based on status
-  const getStatusIcon = () => {
-    if (todo.status === 'completed') {
-      return <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />;
-    }
-    if (todo.status === 'awaiting') {
-      return <Clock className="w-5 h-5 text-orange-500 dark:text-orange-400" />;
-    }
-    // Open
-    return <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'}`} />;
-  };
-
-  // Get title for the toggle button
-  const getToggleTitle = () => {
-    if (todo.status === 'completed') return 'Taak heropenen';
-    if (todo.status === 'awaiting') return 'Markeren als afgerond';
-    return 'Taak afronden';
-  };
-
-  return (
-    <div className="flex items-start p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group">
-      <button
-        onClick={() => onToggle(todo)}
-        className="mt-0.5 mr-3 flex-shrink-0"
-        title={getToggleTitle()}
-      >
-        {getStatusIcon()}
-      </button>
-
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm ${
-          todo.status === 'completed'
-            ? 'line-through text-gray-400 dark:text-gray-500'
-            : todo.status === 'awaiting'
-            ? 'text-orange-700 dark:text-orange-400'
-            : isOverdue
-            ? 'text-red-600 dark:text-red-300 font-medium'
-            : 'text-gray-900 dark:text-gray-100'
-        }`}>
-          {todo.content}
-        </p>
-
-        {/* Notes preview */}
-        {notesPreview && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-            {notesPreview}
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center gap-3 mt-2">
-          {/* Multi-person avatars */}
-          <div className="flex items-center">
-            <div className="flex items-center -space-x-2" title={persons.map(p => p.name).join(', ')}>
-              {persons.slice(0, 3).map((person, idx) => (
-                <Link
-                  key={person.id}
-                  to={`/people/${person.id}`}
-                  className="relative hover:z-10"
-                  style={{ zIndex: 3 - idx }}
-                >
-                  {person.thumbnail ? (
-                    <img
-                      src={person.thumbnail}
-                      alt={person.name}
-                      className="w-6 h-6 rounded-full object-cover border-2 border-white dark:border-gray-800"
-                    />
-                  ) : (
-                    <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-800">
-                      <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
-                    </div>
-                  )}
-                </Link>
-              ))}
-              {persons.length > 3 && (
-                <span className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-xs flex items-center justify-center border-2 border-white dark:border-gray-800 text-gray-600 dark:text-gray-300">
-                  +{persons.length - 3}
-                </span>
-              )}
-            </div>
-            {/* Primary person name link */}
-            {persons.length > 0 && (
-              <Link
-                to={`/people/${persons[0].id}`}
-                className="ml-2 text-xs text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
-              >
-                {persons[0].name}
-                {persons.length > 1 && (
-                  <span className="text-gray-500 dark:text-gray-400"> +{persons.length - 1}</span>
-                )}
-              </Link>
-            )}
-          </div>
-
-          {/* Due date - only show prominently for open todos */}
-          {todo.due_date && todo.status === 'open' && (
-            <span className={`text-xs ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-              Deadline: {format(new Date(todo.due_date), 'MMM d, yyyy')}
-              {isOverdue && ' (te laat)'}
-            </span>
-          )}
-
-          {/* Awaiting indicator - shows how long we've been waiting */}
-          {todo.status === 'awaiting' && awaitingDays !== null && (
-            <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${getAwaitingUrgencyClass(awaitingDays)}`}>
-              <Clock className="w-3 h-3" />
-              {awaitingDays === 0 ? 'Wacht sinds vandaag' : `Wacht ${awaitingDays}d`}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-        {/* Reopen button for awaiting/completed todos */}
-        {todo.status !== 'open' && (
-          <button
-            onClick={() => onReopen(todo)}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-            title="Taak heropenen"
-          >
-            <RotateCcw className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-          </button>
-        )}
-        <button
-          onClick={() => onEdit(todo)}
-          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-          title="Taak bewerken"
-        >
-          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-        </button>
-        <button
-          onClick={() => onDelete(todo.id)}
-          className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-          title="Taak verwijderen"
-        >
-          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600 dark:hover:text-red-400" />
-        </button>
-      </div>
-    </div>
   );
 }

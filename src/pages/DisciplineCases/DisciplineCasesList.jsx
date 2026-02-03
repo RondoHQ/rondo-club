@@ -72,12 +72,15 @@ export default function DisciplineCasesList() {
     const map = new Map();
     if (personsData) {
       personsData.forEach((person) => {
+        // Person name fields are in the acf object, not at root level
+        const firstName = person.acf?.first_name || '';
+        const lastName = person.acf?.last_name || '';
+        const fullName = person.title?.rendered || `${firstName} ${lastName}`.trim();
+
         map.set(person.id, {
           id: person.id,
-          first_name: person.first_name,
-          name:
-            person.name ||
-            `${person.first_name || ''} ${person.last_name || ''}`.trim(),
+          first_name: firstName,
+          name: fullName,
           thumbnail: person.thumbnail,
         });
       });

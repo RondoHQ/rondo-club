@@ -5,7 +5,8 @@ import { useFilteredPeople, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
-import { getTeamName } from '@/utils/formatters';
+import PersonAvatar from '@/components/PersonAvatar';
+import { getTeamName, formatPhoneForTel } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
@@ -79,19 +80,12 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
         style={{ minWidth: '40px' }}
       >
         <Link to={`/people/${person.id}`} className="flex items-center justify-center">
-          {person.thumbnail ? (
-            <img
-              src={person.thumbnail}
-              alt=""
-              className="w-8 h-8 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-300">
-                {person.first_name?.[0] || '?'}
-              </span>
-            </div>
-          )}
+          <PersonAvatar
+            thumbnail={person.thumbnail}
+            name={person.first_name}
+            firstName={person.first_name}
+            size="md"
+          />
         </Link>
       </td>
       {/* Name - sticky */}
@@ -214,7 +208,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               style={style}
             >
               {phone ? (
-                <a href={`tel:${phone}`} className="hover:text-accent-600 dark:hover:text-accent-400">
+                <a href={`tel:${formatPhoneForTel(phone)}`} className="hover:text-accent-600 dark:hover:text-accent-400">
                   {phone}
                 </a>
               ) : '-'}
