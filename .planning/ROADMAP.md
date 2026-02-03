@@ -21,7 +21,7 @@ This milestone adds discipline case tracking to Stadion. Cases are synced from S
 
 - [x] **Phase 132: Data Foundation** - CPT, ACF fields, seizoen taxonomy, REST endpoints
 - [x] **Phase 133: Access Control** - Fairplay capability registration and enforcement
-- [ ] **Phase 134: Discipline Cases UI** - List page and person integration
+- [x] **Phase 134: Discipline Cases UI** - List page and person integration
 
 ## Phase Details
 
@@ -70,9 +70,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 134-01-PLAN.md — API integration and React hooks for discipline cases
-- [ ] 134-02-PLAN.md — List page with table view and season filter
-- [ ] 134-03-PLAN.md — Person detail tab integration
+- [x] 134-01-PLAN.md — API integration and React hooks for discipline cases
+- [x] 134-02-PLAN.md — List page with table view and season filter
+- [x] 134-03-PLAN.md — Person detail tab integration
 
 ## Progress
 
@@ -83,8 +83,8 @@ Phases execute in numeric order: 132 -> 133 -> 134
 |-------|----------------|--------|-----------|
 | 132. Data Foundation | 1/1 | Complete | 2026-02-03 |
 | 133. Access Control | 1/1 | Complete | 2026-02-03 |
-| 134. Discipline Cases UI | 0/3 | Ready | - |
+| 134. Discipline Cases UI | 3/3 | Complete | 2026-02-03 |
 
 ---
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-03 after Phase 134 planning*
+*Last updated: 2026-02-03 after Phase 134 execution*
