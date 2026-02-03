@@ -2298,14 +2298,15 @@ class Api extends Base {
 
 		return rest_ensure_response(
 			[
-				'id'          => $user_id,
-				'name'        => $user->display_name,
-				'email'       => $user->user_email,
-				'avatar_url'  => $avatar_url,
-				'is_admin'    => $is_admin,
-				'is_approved' => $is_approved,
-				'profile_url' => $profile_url,
-				'admin_url'   => $admin_url,
+				'id'                  => $user_id,
+				'name'                => $user->display_name,
+				'email'               => $user->user_email,
+				'avatar_url'          => $avatar_url,
+				'is_admin'            => $is_admin,
+				'is_approved'         => $is_approved,
+				'can_access_fairplay' => current_user_can( 'fairplay' ),
+				'profile_url'         => $profile_url,
+				'admin_url'           => $admin_url,
 			]
 		);
 	}

@@ -16,6 +16,7 @@ class UserRoles {
 	const ROLE_NAME         = 'stadion_user';
 	const ROLE_DISPLAY_NAME = 'Stadion User';
 	const APPROVAL_META_KEY = 'stadion_user_approved';
+	const FAIRPLAY_CAPABILITY = 'fairplay';
 
 	public function __construct() {
 		// Register role on theme activation
@@ -73,12 +74,24 @@ class UserRoles {
 			self::ROLE_DISPLAY_NAME,
 			$capabilities
 		);
+
+		// Add fairplay capability to administrator role
+		$admin_role = get_role( 'administrator' );
+		if ( $admin_role ) {
+			$admin_role->add_cap( self::FAIRPLAY_CAPABILITY );
+		}
 	}
 
 	/**
 	 * Remove the Stadion User role
 	 */
 	public function remove_role() {
+		// Remove fairplay capability from administrator role
+		$admin_role = get_role( 'administrator' );
+		if ( $admin_role ) {
+			$admin_role->remove_cap( self::FAIRPLAY_CAPABILITY );
+		}
+
 		// Get all users with this role
 		$users = get_users( [ 'role' => self::ROLE_NAME ] );
 
