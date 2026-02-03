@@ -69,29 +69,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
-| ACCESS-01 | TBD | Pending |
-| ACCESS-02 | TBD | Pending |
-| ACCESS-03 | TBD | Pending |
-| ACCESS-04 | TBD | Pending |
-| LIST-01 | TBD | Pending |
-| LIST-02 | TBD | Pending |
-| LIST-03 | TBD | Pending |
-| LIST-04 | TBD | Pending |
-| LIST-05 | TBD | Pending |
-| PERSON-01 | TBD | Pending |
-| PERSON-02 | TBD | Pending |
-| PERSON-03 | TBD | Pending |
-| PERSON-04 | TBD | Pending |
+| DATA-01 | 132 | Pending |
+| DATA-02 | 132 | Pending |
+| DATA-03 | 132 | Pending |
+| DATA-04 | 132 | Pending |
+| ACCESS-01 | 133 | Pending |
+| ACCESS-02 | 133 | Pending |
+| ACCESS-03 | 133 | Pending |
+| ACCESS-04 | 133 | Pending |
+| LIST-01 | 134 | Pending |
+| LIST-02 | 134 | Pending |
+| LIST-03 | 134 | Pending |
+| LIST-04 | 134 | Pending |
+| LIST-05 | 134 | Pending |
+| PERSON-01 | 134 | Pending |
+| PERSON-02 | 134 | Pending |
+| PERSON-03 | 134 | Pending |
+| PERSON-04 | 134 | Pending |
 
 **Coverage:**
 - v13.0 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-03 after initial definition*
+*Last updated: 2026-02-03 after roadmap creation*
