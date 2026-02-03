@@ -17,7 +17,8 @@ import {
   MessageSquare,
   User,
   FileCheck,
-  Coins
+  Coins,
+  Gavel
 } from 'lucide-react';
 
 // Stadium icon component matching favicon
@@ -48,6 +49,7 @@ const navigation = [
   { name: 'Leden', href: '/people', icon: Users },
   { name: 'Contributie', href: '/contributie', icon: Coins, indent: true },
   { name: 'VOG', href: '/vog', icon: FileCheck, indent: true },
+  { name: 'Tuchtzaken', href: '/discipline-cases', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
   { name: 'Datums', href: '/dates', icon: Calendar },
@@ -59,6 +61,17 @@ const navigation = [
 function Sidebar({ mobile = false, onClose, stats }) {
   const { logoutUrl } = useAuth();
   const { count: vogCount } = useVOGCount();
+
+  // Fetch current user for capability check
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const response = await prmApi.getCurrentUser();
+      return response.data;
+    },
+  });
+
+  const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
 
   // Map navigation items to their counts
   const getCounts = (name) => {
@@ -89,31 +102,33 @@ function Sidebar({ mobile = false, onClose, stats }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-        {navigation.map((item) => {
-          const count = getCounts(item.name);
-          return (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              onClick={mobile ? onClose : undefined}
-              className={({ isActive }) =>
-                `flex items-center py-2 text-sm font-medium rounded-lg transition-colors ${
-                  item.indent ? 'pl-8 pr-3' : 'px-3'
-                } ${
-                  isActive
-                    ? 'bg-accent-50 text-accent-700 dark:bg-gray-700 dark:text-accent-300'
-                    : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5 mr-3" />
-              {item.name}
-              {count !== null && count > 0 && (
-                <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{count}</span>
-              )}
-            </NavLink>
-          );
-        })}
+        {navigation
+          .filter(item => !item.requiresFairplay || canAccessFairplay)
+          .map((item) => {
+            const count = getCounts(item.name);
+            return (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                onClick={mobile ? onClose : undefined}
+                className={({ isActive }) =>
+                  `flex items-center py-2 text-sm font-medium rounded-lg transition-colors ${
+                    item.indent ? 'pl-8 pr-3' : 'px-3'
+                  } ${
+                    isActive
+                      ? 'bg-accent-50 text-accent-700 dark:bg-gray-700 dark:text-accent-300'
+                      : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
+                  }`
+                }
+              >
+                <item.icon className="w-5 h-5 mr-3" />
+                {item.name}
+                {count !== null && count > 0 && (
+                  <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{count}</span>
+                )}
+              </NavLink>
+            );
+          })}
       </nav>
 
       {/* Logout */}
