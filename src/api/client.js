@@ -93,7 +93,14 @@ export const wpApi = {
   deleteRelationshipType: (id) => api.delete(`/wp/v2/relationship_type/${id}?force=true`),
   restoreRelationshipTypeDefaults: () => api.post('/stadion/v1/relationship-types/restore-defaults'),
   getDateTypes: () => api.get('/wp/v2/date_type', { params: { per_page: 100 } }),
-  
+
+  // Discipline Cases
+  getDisciplineCases: (params) => api.get('/wp/v2/discipline-cases', { params }),
+  getDisciplineCase: (id, params = {}) => api.get(`/wp/v2/discipline-cases/${id}`, { params }),
+
+  // Seizoen taxonomy (for season filter)
+  getSeasons: (params) => api.get('/wp/v2/seizoen', { params: { per_page: 100, orderby: 'name', order: 'desc', ...params } }),
+
   // Media
   getMedia: (params) => api.get('/wp/v2/media', { params }),
   uploadMedia: (file) => {
@@ -109,6 +116,9 @@ export const wpApi = {
 export const prmApi = {
   // Version check (for cache invalidation)
   getVersion: () => api.get('/stadion/v1/version'),
+
+  // Current season helper
+  getCurrentSeason: () => api.get('/stadion/v1/current-season'),
   
   // Dashboard
   getDashboard: () => api.get('/stadion/v1/dashboard'),
