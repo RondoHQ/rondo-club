@@ -144,6 +144,18 @@ export default function DisciplineCaseTable({
             </th>
             <th
               scope="col"
+              className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+            >
+              Kaart
+            </th>
+            <th
+              scope="col"
+              className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+            >
+              Doorbelast
+            </th>
+            <th
+              scope="col"
               className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
             >
               Boete
@@ -203,6 +215,20 @@ export default function DisciplineCaseTable({
                       {acf.sanction_description || '-'}
                     </div>
                   </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="text-lg">
+                      {acf.charge_codes ? (
+                        acf.charge_codes.endsWith('-1') ? '🟨' : '🟥'
+                      ) : (
+                        <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
+                      )}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="text-sm text-gray-900 dark:text-gray-100">
+                      {acf.is_charged ? 'Ja' : 'Nee'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {formatCurrency(parseFloat(acf.administrative_fee) || 0, 2)}
@@ -218,7 +244,7 @@ export default function DisciplineCaseTable({
                 </tr>
                 {isExpanded && (
                   <tr className="bg-gray-50 dark:bg-gray-700/50">
-                    <td colSpan={showPersonColumn ? 5 : 4} className="px-4 py-4">
+                    <td colSpan={showPersonColumn ? 7 : 6} className="px-4 py-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                           <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-1">
