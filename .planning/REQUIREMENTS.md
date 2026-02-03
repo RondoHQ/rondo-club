@@ -23,18 +23,18 @@ Requirements for discipline cases milestone. Each maps to roadmap phases.
 
 ### List Page
 
-- [ ] **LIST-01**: Discipline cases list page at `/discipline-cases` route
-- [ ] **LIST-02**: Table with columns: Person, Match, Date, Sanction, Season
-- [ ] **LIST-03**: Season filter dropdown (from seizoen taxonomy)
-- [ ] **LIST-04**: Sortable by date column
-- [ ] **LIST-05**: Navigation item visible only to users with fairplay capability
+- [x] **LIST-01**: Discipline cases list page at `/discipline-cases` route
+- [x] **LIST-02**: Table with columns: Person, Match, Date, Sanction, Season
+- [x] **LIST-03**: Season filter dropdown (from seizoen taxonomy)
+- [x] **LIST-04**: Sortable by date column
+- [x] **LIST-05**: Navigation item visible only to users with fairplay capability
 
 ### Person Integration
 
-- [ ] **PERSON-01**: "Tuchtzaken" tab on person detail page
-- [ ] **PERSON-02**: Tab shows all discipline cases linked to that person
-- [ ] **PERSON-03**: Read-only display with case details (match, charges, sanctions, fee)
-- [ ] **PERSON-04**: Tab only visible to users with fairplay capability
+- [x] **PERSON-01**: "Tuchtzaken" tab on person detail page
+- [x] **PERSON-02**: Tab shows all discipline cases linked to that person
+- [x] **PERSON-03**: Read-only display with case details (match, charges, sanctions, fee)
+- [x] **PERSON-04**: Tab only visible to users with fairplay capability
 
 ## Future Requirements
 
@@ -77,15 +77,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ACCESS-02 | 133 | Complete |
 | ACCESS-03 | 133 | Complete |
 | ACCESS-04 | 133 | Complete |
-| LIST-01 | 134 | Pending |
-| LIST-02 | 134 | Pending |
-| LIST-03 | 134 | Pending |
-| LIST-04 | 134 | Pending |
-| LIST-05 | 134 | Pending |
-| PERSON-01 | 134 | Pending |
-| PERSON-02 | 134 | Pending |
-| PERSON-03 | 134 | Pending |
-| PERSON-04 | 134 | Pending |
+| LIST-01 | 134 | Complete |
+| LIST-02 | 134 | Complete |
+| LIST-03 | 134 | Complete |
+| LIST-04 | 134 | Complete |
+| LIST-05 | 134 | Complete |
+| PERSON-01 | 134 | Complete |
+| PERSON-02 | 134 | Complete |
+| PERSON-03 | 134 | Complete |
+| PERSON-04 | 134 | Complete |
 
 **Coverage:**
 - v13.0 requirements: 17 total
@@ -94,4 +94,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-03 after Phase 133 completion*
+*Last updated: 2026-02-03 after Phase 134 completion*
