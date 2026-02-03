@@ -310,15 +310,17 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Forecast indicator badge with TrendingUp icon — v12.1
 - Google Sheets export with "(Prognose)" title suffix and 8-column layout — v12.1
 
+**v13.0 Discipline Cases (shipped 2026-02-03):**
+- Discipline case CPT with 11 ACF fields (dossier-id, person, match/charges/sanctions/fees) — v13.0
+- Shared `seizoen` taxonomy with current season support — v13.0
+- `fairplay` capability for access control (admins auto-assigned) — v13.0
+- Discipline cases list page with season filter (fairplay users only) — v13.0
+- Person detail Tuchtzaken tab showing linked cases — v13.0
+- Read-only UI consistent with Sportlink data model — v13.0
+
 ### Active
 
-**v13.0 Discipline Cases:**
-- [ ] Discipline case CPT with ACF fields (dossier-id, person link, match/charges/sanctions/fees)
-- [ ] Shared `seizoen` taxonomy (reusable across features)
-- [ ] `fairplay` capability for access control (admins auto-assigned)
-- [ ] Discipline cases list page in main navigation (FairPlay users only)
-- [ ] Person detail "Tuchtzaken" tab showing linked cases
-- [ ] Read-only UI (data managed via Sportlink sync)
+(No active requirements — use `/gsd:new-milestone` to define next milestone)
 
 ### Out of Scope
 
@@ -469,6 +471,12 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Instant column hiding without animation | Immediate table reflow per UX decision | ✓ Good |
 | Forecast export title includes (Prognose) | Clear visual indicator in exported spreadsheet | ✓ Good |
 | Forecast exports 8-column layout | Nikki columns excluded from future season | ✓ Good |
+| Post Object for person link | Returns single integer (not array), cleaner REST response | ✓ Good |
+| Single charge code field | Matches Sportlink data model, simplifies storage | ✓ Good |
+| seizoen as shared taxonomy | Enables reuse across future features (fees, events) | ✓ Good |
+| Client-side person filtering | More reliable than ACF meta queries for discipline cases | ✓ Good |
+| FairplayRoute wrapper pattern | Consistent with existing ProtectedRoute, reusable | ✓ Good |
+| Hide tab if zero cases | Reduces UI clutter, better UX for persons without discipline history | ✓ Good |
 
 ---
-*Last updated: 2026-02-03 after starting v13.0 Discipline Cases milestone*
+*Last updated: 2026-02-03 after v13.0 Discipline Cases milestone*

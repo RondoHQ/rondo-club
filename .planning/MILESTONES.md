@@ -1,5 +1,33 @@
 # Project Milestones: Stadion
 
+## v13.0 Discipline Cases (Shipped: 2026-02-03)
+
+**Delivered:** Discipline case tracking with capability-based access control - view Sportlink-synced discipline cases in a dedicated list page with season filtering and on person profile Tuchtzaken tabs, restricted to users with the `fairplay` capability.
+
+**Phases completed:** 132-134 (5 plans total)
+
+**Key accomplishments:**
+
+- `discipline_case` CPT with 11 ACF fields (dossier-id, person, match/charges/sanctions/fee)
+- Shared `seizoen` taxonomy with current season support
+- `fairplay` capability for access control (admins auto-assigned)
+- Discipline cases list page with season filter and expandable table rows
+- Person detail Tuchtzaken tab (hidden if no cases)
+- Read-only UI consistent with Sportlink data model
+
+**Stats:**
+
+- 30 files changed
+- +5,853 / -843 lines changed
+- 3 phases, 5 plans
+- Same day (2026-02-03, ~2 hours)
+
+**Git range:** `feat(132-01)` → `docs(134)`
+
+**What's next:** To be determined
+
+---
+
 ## v12.1 Contributie Forecast (Shipped: 2026-02-03)
 
 **Delivered:** Next season fee forecast for budget planning - toggle between current season (actual billing data) and next season (projected fees based on current membership with 100% pro-rata and family discounts).
