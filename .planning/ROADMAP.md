@@ -35,10 +35,10 @@ This milestone adds discipline case tracking to Stadion. Cases are synced from S
   3. `seizoen` taxonomy is registered, non-hierarchical, and REST-enabled
   4. REST API returns discipline cases with all fields via standard wp/v2 endpoints
   5. Cases can be created/updated via REST (Sportlink sync compatibility)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 132-01: TBD
+- [ ] 132-01-PLAN.md — Register discipline_case CPT, seizoen taxonomy, and ACF fields
 
 ### Phase 133: Access Control
 **Goal**: Capability-based access restriction for discipline case data
@@ -80,7 +80,7 @@ Phases execute in numeric order: 132 → 133 → 134
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 132. Data Foundation | 0/TBD | Not started | - |
+| 132. Data Foundation | 0/1 | Ready | - |
 | 133. Access Control | 0/TBD | Not started | - |
 | 134. Discipline Cases UI | 0/TBD | Not started | - |
 
