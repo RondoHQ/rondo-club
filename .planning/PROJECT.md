@@ -301,17 +301,18 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Nikki integration showing contributions vs calculated fees — v12.0
 - Google Sheets export with Dutch formatting and auto-open — v12.0
 
+**v12.1 Contributie Forecast (shipped 2026-02-03):**
+- Backend forecast calculation with get_next_season_key() method — v12.1
+- API forecast parameter for next season projections (100% pro-rata) — v12.1
+- Family discounts applied using existing address grouping logic — v12.1
+- Season selector dropdown with "(huidig)" and "(prognose)" labels — v12.1
+- Conditional column rendering hiding Nikki/Saldo in forecast mode — v12.1
+- Forecast indicator badge with TrendingUp icon — v12.1
+- Google Sheets export with "(Prognose)" title suffix and 8-column layout — v12.1
+
 ### Active
 
-**v12.1 Contributie Forecast**
-
-Goal: Add next season forecast to contributie page for budget planning.
-
-Target features:
-- Season toggle to switch between current and forecast view
-- Forecast uses current members at 100% pro-rata
-- Family discounts maintained based on current groupings
-- Total forecast amount for budget planning
+(None — next milestone not yet defined)
 
 ### Out of Scope
 
@@ -455,6 +456,13 @@ Target features:
 | Quarterly pro-rata tiers | 100%/75%/50%/25% for Jul-Sep/Oct-Dec/Jan-Mar/Apr-Jun | ✓ Good |
 | Null vs 0 for missing Nikki data | Distinguishes "no data" from "zero balance" | ✓ Good |
 | Red/green color coding for saldo | Positive (owes money) = red, zero/negative = green | ✓ Good |
+| Forecast ignores season parameter | Always uses next season for consistency | ✓ Good |
+| 100% pro-rata for forecast | Full year assumption for budget planning | ✓ Good |
+| Nikki fields omitted from forecast | Future season has no billing data | ✓ Good |
+| Native select for season dropdown | Consistent with existing UI patterns | ✓ Good |
+| Instant column hiding without animation | Immediate table reflow per UX decision | ✓ Good |
+| Forecast export title includes (Prognose) | Clear visual indicator in exported spreadsheet | ✓ Good |
+| Forecast exports 8-column layout | Nikki columns excluded from future season | ✓ Good |
 
 ---
-*Last updated: 2026-02-02 after starting v12.1 Contributie Forecast milestone*
+*Last updated: 2026-02-03 after v12.1 Contributie Forecast milestone*
