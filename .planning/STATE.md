@@ -2,22 +2,23 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-02)
+See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Personal CRM with team collaboration while maintaining relationship-focused experience
-**Current focus:** Milestone v12.1 Contributie Forecast - Complete
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 131 of 131 (Forecast Export Integration)
-Plan: 01 of 01 complete
-Status: Phase complete - Milestone v12.1 complete
-Last activity: 2026-02-02 - Completed 131-01-PLAN.md
+Phase: Milestone v12.1 complete
+Plan: N/A
+Status: Ready for next milestone
+Last activity: 2026-02-03 — v12.1 Contributie Forecast shipped
 
-Progress: [##########] 100% (3 of 3 phases in v12.1)
+Progress: Milestone complete
 
 ### Recent Milestones
 
+- v12.1 Contributie Forecast (2026-02-03) - 3 phases, 3 plans
 - v12.0 Membership Fees (2026-02-01) - 7 phases, 15 plans
 - v10.0 Read-Only UI for Sportlink Data (2026-01-29) - 3 phases, 3 plans
 - v9.0 People List Performance & Customization (2026-01-29) - 5 phases, 10 plans
@@ -27,15 +28,10 @@ Progress: [##########] 100% (3 of 3 phases in v12.1)
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions from v12.0 and v12.1:
+Recent decisions from v12.1:
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-01-31 | Season key format YYYY-YYYY | Human-readable, standard sports season format |
-| 2026-01-31 | Family key format POSTALCODE-HOUSENUMBER | Street name ignored for flexible matching |
-| 2026-01-31 | Tiered discount 0%/25%/50% | Position 1/2/3+ per FAM requirements |
-| 2026-02-01 | Null vs 0 for missing Nikki data | Distinguishes "no data" from "zero balance" |
-| 2026-02-01 | Red/green color coding for saldo | Positive (owes money) = red |
 | 2026-02-02 | Forecast ignores season parameter | Always uses next season for consistency |
 | 2026-02-02 | 100% pro-rata for forecast | Full year assumption for budget planning |
 | 2026-02-02 | Nikki fields omitted from forecast | Future season has no billing data |
@@ -46,9 +42,8 @@ Recent decisions from v12.0 and v12.1:
 
 ### Pending Todos
 
-2 todo(s) in `.planning/todos/pending/`:
+1 todo(s) in `.planning/todos/pending/`:
 - **public-vog-upload-and-validation**: Public VOG Upload and Validation (area: api)
-- **next-season-contributie-forecast**: Add next season forecast to contributie page (area: ui) - **ACTIVE MILESTONE**
 
 ### Blockers/Concerns
 
@@ -56,10 +51,10 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-02
-Stopped at: Completed 131-01-PLAN.md (Forecast Export Integration)
+Last session: 2026-02-03
+Stopped at: Milestone v12.1 complete
 Resume file: None
-Next: Milestone v12.1 complete - ready for next milestone
+Next: Start next milestone with /gsd:new-milestone
 
 ---
-*State updated: 2026-02-02*
+*State updated: 2026-02-03*

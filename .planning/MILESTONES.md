@@ -1,5 +1,35 @@
 # Project Milestones: Stadion
 
+## v12.1 Contributie Forecast (Shipped: 2026-02-03)
+
+**Delivered:** Next season fee forecast for budget planning - toggle between current season (actual billing data) and next season (projected fees based on current membership with 100% pro-rata and family discounts).
+
+**Phases completed:** 129-131 (3 plans total)
+
+**Key accomplishments:**
+
+- Backend forecast calculation with `get_next_season_key()` method returning next season key
+- API extended with `forecast=true` parameter for next season projections
+- 100% pro-rata for all forecast members (full year assumption for budget planning)
+- Family discounts correctly applied using existing address grouping logic
+- Season selector dropdown with "(huidig)" and "(prognose)" labels
+- Conditional column rendering hiding Nikki/Saldo in forecast mode (no billing data exists)
+- Forecast indicator badge with visual distinction
+- Google Sheets export with "(Prognose)" title suffix and 8-column layout
+
+**Stats:**
+
+- 24 files changed
+- +2,825 / -503 lines changed
+- 3 phases, 3 plans
+- Same day (2026-02-02)
+
+**Git range:** `feat(129-01)` → `feat(131-01)`
+
+**What's next:** To be determined
+
+---
+
 ## v12.0 Membership Fees (Shipped: 2026-02-01)
 
 **Delivered:** Complete membership fee calculation system with configurable fee amounts, age-based calculation, family discounts (25%/50% tiers), pro-rata for mid-season joins, Nikki integration for contribution comparison, and Google Sheets export.
