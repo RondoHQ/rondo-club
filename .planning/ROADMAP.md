@@ -20,7 +20,7 @@ This milestone adds discipline case tracking to Stadion. Cases are synced from S
 **Milestone Goal:** Enable tracking and viewing of discipline cases from Sportlink with capability-based access control.
 
 - [x] **Phase 132: Data Foundation** - CPT, ACF fields, seizoen taxonomy, REST endpoints
-- [ ] **Phase 133: Access Control** - Fairplay capability registration and enforcement
+- [x] **Phase 133: Access Control** - Fairplay capability registration and enforcement
 - [ ] **Phase 134: Discipline Cases UI** - List page and person integration
 
 ## Phase Details
@@ -52,7 +52,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 133-01-PLAN.md — Register fairplay capability and implement UI access control
+- [x] 133-01-PLAN.md — Register fairplay capability and implement UI access control
 
 ### Phase 134: Discipline Cases UI
 **Goal**: Complete user interface for viewing discipline cases
@@ -81,7 +81,7 @@ Phases execute in numeric order: 132 -> 133 -> 134
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 132. Data Foundation | 1/1 | Complete | 2026-02-03 |
-| 133. Access Control | 0/1 | In progress | - |
+| 133. Access Control | 1/1 | Complete | 2026-02-03 |
 | 134. Discipline Cases UI | 0/TBD | Not started | - |
 
 ---

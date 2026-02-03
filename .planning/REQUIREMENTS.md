@@ -16,10 +16,10 @@ Requirements for discipline cases milestone. Each maps to roadmap phases.
 
 ### Access Control
 
-- [ ] **ACCESS-01**: `fairplay` capability defined and registered
-- [ ] **ACCESS-02**: Admins auto-assigned fairplay capability on theme activation
-- [ ] **ACCESS-03**: Discipline case list page restricted to users with fairplay capability
-- [ ] **ACCESS-04**: Person Tuchtzaken tab restricted to users with fairplay capability
+- [x] **ACCESS-01**: `fairplay` capability defined and registered
+- [x] **ACCESS-02**: Admins auto-assigned fairplay capability on theme activation
+- [x] **ACCESS-03**: Discipline case list page restricted to users with fairplay capability
+- [x] **ACCESS-04**: Person Tuchtzaken tab restricted to users with fairplay capability
 
 ### List Page
 
@@ -73,10 +73,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | 132 | Complete |
 | DATA-03 | 132 | Complete |
 | DATA-04 | 132 | Complete |
-| ACCESS-01 | 133 | Pending |
-| ACCESS-02 | 133 | Pending |
-| ACCESS-03 | 133 | Pending |
-| ACCESS-04 | 133 | Pending |
+| ACCESS-01 | 133 | Complete |
+| ACCESS-02 | 133 | Complete |
+| ACCESS-03 | 133 | Complete |
+| ACCESS-04 | 133 | Complete |
 | LIST-01 | 134 | Pending |
 | LIST-02 | 134 | Pending |
 | LIST-03 | 134 | Pending |
@@ -94,4 +94,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-03 after Phase 132 completion*
+*Last updated: 2026-02-03 after Phase 133 completion*
