@@ -1,0 +1,186 @@
+{
+    "key": "group_discipline_case_fields",
+    "title": "Tuchtzaak Details",
+    "fields": [
+        {
+            "key": "field_discipline_dossier_id",
+            "label": "Dossier ID",
+            "name": "dossier_id",
+            "type": "text",
+            "instructions": "Uniek identificatienummer uit Sportlink",
+            "required": 1,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_person",
+            "label": "Persoon",
+            "name": "person",
+            "type": "post_object",
+            "instructions": "Gekoppelde persoon (optioneel - kan later worden gekoppeld)",
+            "required": 0,
+            "post_type": ["person"],
+            "multiple": 0,
+            "return_format": "id",
+            "allow_null": 1,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_match_date",
+            "label": "Wedstrijddatum",
+            "name": "match_date",
+            "type": "date_picker",
+            "instructions": "Datum van de wedstrijd\/het incident",
+            "required": 0,
+            "display_format": "d-m-Y",
+            "return_format": "Ymd",
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_processing_date",
+            "label": "Verwerkingsdatum",
+            "name": "processing_date",
+            "type": "date_picker",
+            "instructions": "Datum waarop de zaak is verwerkt",
+            "required": 0,
+            "display_format": "d-m-Y",
+            "return_format": "Ymd",
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_match_description",
+            "label": "Wedstrijdomschrijving",
+            "name": "match_description",
+            "type": "text",
+            "instructions": "Omschrijving van de wedstrijd (bijv. Team A - Team B)",
+            "required": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_team_name",
+            "label": "Teamnaam",
+            "name": "team_name",
+            "type": "text",
+            "instructions": "Naam van het betrokken team",
+            "required": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_charge_codes",
+            "label": "Artikelnummer",
+            "name": "charge_codes",
+            "type": "text",
+            "instructions": "Artikelnummer van de overtreding",
+            "required": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_charge_description",
+            "label": "Artikelomschrijving",
+            "name": "charge_description",
+            "type": "textarea",
+            "instructions": "Omschrijving van de overtreding",
+            "required": 0,
+            "rows": 3,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_sanction_description",
+            "label": "Strafbeschrijving",
+            "name": "sanction_description",
+            "type": "textarea",
+            "instructions": "Omschrijving van de opgelegde straf",
+            "required": 0,
+            "rows": 3,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_administrative_fee",
+            "label": "Administratiekosten",
+            "name": "administrative_fee",
+            "type": "number",
+            "instructions": "Administratiekosten in euro's",
+            "required": 0,
+            "min": 0,
+            "step": 0.01,
+            "prepend": "\u20ac",
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_is_charged",
+            "label": "Is doorbelast",
+            "name": "is_charged",
+            "type": "true_false",
+            "instructions": "Zijn de kosten doorbelast aan de persoon?",
+            "message": "Kosten zijn doorbelast",
+            "default_value": 0,
+            "ui": 1,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "discipline_case"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": [
+        "excerpt",
+        "discussion",
+        "comments",
+        "slug"
+    ],
+    "active": true,
+    "show_in_rest": 1
+}
