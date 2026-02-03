@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useVersionCheck } from '@/hooks/useVersionCheck';
@@ -10,7 +10,7 @@ import { ReloadPrompt } from '@/components/ReloadPrompt';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { IOSInstallModal } from '@/components/IOSInstallModal';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Shield } from 'lucide-react';
 
 // Lazy-loaded page components
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
@@ -28,6 +28,7 @@ const FeedbackDetail = lazy(() => import('@/pages/Feedback/FeedbackDetail'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const VOGList = lazy(() => import('@/pages/VOG/VOGList'));
 const ContributieList = lazy(() => import('@/pages/Contributie/ContributieList'));
+const DisciplineCasesList = lazy(() => import('@/pages/DisciplineCases/DisciplineCasesList'));
 const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
 const Labels = lazy(() => import('@/pages/Settings/Labels'));
 const UserApproval = lazy(() => import('@/pages/Settings/UserApproval'));
@@ -121,6 +122,57 @@ function ApprovalCheck({ children }) {
   return children;
 }
 
+function FairplayRoute({ children }) {
+  const navigate = useNavigate();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const response = await prmApi.getCurrentUser();
+      return response.data;
+    },
+    retry: false,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
+      </div>
+    );
+  }
+
+  // User doesn't have fairplay capability
+  if (!user?.can_access_fairplay) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-md w-full mx-4">
+          <div className="card p-8 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-red-100 rounded-full dark:bg-red-900">
+                <Shield className="w-8 h-8 text-red-600 dark:text-red-400" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2 dark:text-gray-100">
+              Geen toegang
+            </h2>
+            <p className="text-gray-600 mb-6 dark:text-gray-400">
+              Je hebt geen toestemming om deze pagina te bekijken.
+            </p>
+            <button
+              onClick={() => navigate(-1)}
+              className="btn btn-secondary"
+            >
+              Ga terug
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+}
+
 function ProtectedRoute({ children }) {
   const { isLoggedIn, isLoading } = useAuth();
   
@@ -201,6 +253,13 @@ function App() {
 
                   {/* Contributie route */}
                   <Route path="/contributie" element={<ContributieList />} />
+
+                  {/* Discipline Cases route - requires fairplay capability */}
+                  <Route path="/discipline-cases" element={
+                    <FairplayRoute>
+                      <DisciplineCasesList />
+                    </FairplayRoute>
+                  } />
 
                   {/* Teams routes */}
                   <Route path="/teams" element={<TeamsList />} />
