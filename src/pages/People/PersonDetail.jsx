@@ -10,6 +10,8 @@ import { usePerson, usePersonTimeline, usePersonDates, useDeleteNote, useDeleteD
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
+import DisciplineCaseTable from '@/components/DisciplineCaseTable';
+import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
 import NoteModal from '@/components/Timeline/NoteModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import TodoModal from '@/components/Timeline/TodoModal';
@@ -76,6 +78,14 @@ export default function PersonDetail() {
   });
 
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
+
+  // Fetch discipline cases for this person (fairplay users only)
+  const { data: disciplineCases, isLoading: isDisciplineCasesLoading } = usePersonDisciplineCases(id, {
+    enabled: canAccessFairplay,
+  });
+
+  // Check if person has any discipline cases (for hiding empty tab)
+  const hasDisciplineCases = disciplineCases && disciplineCases.length > 0;
 
   const [activeTab, setActiveTab] = useState('profile');
   const [isAddingLabel, setIsAddingLabel] = useState(false);
@@ -954,7 +964,14 @@ export default function PersonDetail() {
       navigate('/people', { replace: true });
     }
   }, [person, navigate]);
-  
+
+  // If on discipline tab but no cases (after loading), switch to profile
+  useEffect(() => {
+    if (activeTab === 'discipline' && !isDisciplineCasesLoading && !hasDisciplineCases && canAccessFairplay) {
+      setActiveTab('profile');
+    }
+  }, [activeTab, isDisciplineCasesLoading, hasDisciplineCases, canAccessFairplay]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -1277,7 +1294,7 @@ export default function PersonDetail() {
           <TabButton label="Profiel" isActive={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
           <TabButton label="Tijdlijn" isActive={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} />
           <TabButton label="Rollen" isActive={activeTab === 'work'} onClick={() => setActiveTab('work')} />
-          {canAccessFairplay && (
+          {canAccessFairplay && hasDisciplineCases && (
             <TabButton label="Tuchtzaken" isActive={activeTab === 'discipline'} onClick={() => setActiveTab('discipline')} />
           )}
         </nav>
@@ -1788,16 +1805,19 @@ export default function PersonDetail() {
           </div>
         )}
 
-        {/* Discipline Cases Tab - placeholder for Phase 134 */}
+        {/* Discipline Cases Tab */}
         {activeTab === 'discipline' && canAccessFairplay && (
           <div className="card p-6">
             <div className="flex items-center gap-3 mb-4">
               <Gavel className="w-5 h-5 text-gray-500" />
               <h2 className="font-semibold">Tuchtzaken</h2>
             </div>
-            <p className="text-sm text-gray-500 text-center py-8">
-              Tuchtzaken worden in een volgende fase toegevoegd.
-            </p>
+            <DisciplineCaseTable
+              cases={disciplineCases}
+              showPersonColumn={false}
+              personMap={new Map()}
+              isLoading={isDisciplineCasesLoading}
+            />
           </div>
         )}
 
