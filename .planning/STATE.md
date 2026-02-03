@@ -42,8 +42,9 @@ Recent decisions from v12.1:
 
 ### Pending Todos
 
-1 todo(s) in `.planning/todos/pending/`:
+2 todo(s) in `.planning/todos/pending/`:
 - **public-vog-upload-and-validation**: Public VOG Upload and Validation (area: api)
+- **discipline-cases-data-foundation-and-ui**: Discipline Cases Data Foundation and UI (area: api)
 
 ### Blockers/Concerns
 
