@@ -312,7 +312,13 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(None — next milestone not yet defined)
+**v13.0 Discipline Cases:**
+- [ ] Discipline case CPT with ACF fields (dossier-id, person link, match/charges/sanctions/fees)
+- [ ] Shared `seizoen` taxonomy (reusable across features)
+- [ ] `fairplay` capability for access control (admins auto-assigned)
+- [ ] Discipline cases list page in main navigation (FairPlay users only)
+- [ ] Person detail "Tuchtzaken" tab showing linked cases
+- [ ] Read-only UI (data managed via Sportlink sync)
 
 ### Out of Scope
 
@@ -465,4 +471,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Forecast exports 8-column layout | Nikki columns excluded from future season | ✓ Good |
 
 ---
-*Last updated: 2026-02-03 after v12.1 Contributie Forecast milestone*
+*Last updated: 2026-02-03 after starting v13.0 Discipline Cases milestone*

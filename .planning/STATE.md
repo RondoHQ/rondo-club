@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Personal CRM with team collaboration while maintaining relationship-focused experience
-**Current focus:** Planning next milestone
+**Current focus:** v13.0 Discipline Cases — defining requirements
 
 ## Current Position
 
-Phase: Milestone v12.1 complete
-Plan: N/A
-Status: Ready for next milestone
-Last activity: 2026-02-03 — v12.1 Contributie Forecast shipped
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-03 — Milestone v13.0 started
 
-Progress: Milestone complete
+Progress: Requirements gathering
 
 ### Recent Milestones
 
@@ -28,23 +28,12 @@ Progress: Milestone complete
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions from v12.1:
-
-| Date | Decision | Rationale |
-|------|----------|-----------|
-| 2026-02-02 | Forecast ignores season parameter | Always uses next season for consistency |
-| 2026-02-02 | 100% pro-rata for forecast | Full year assumption for budget planning |
-| 2026-02-02 | Nikki fields omitted from forecast | Future season has no billing data |
-| 2026-02-02 | Native select for season dropdown | Consistent with existing UI patterns |
-| 2026-02-02 | Instant column hiding without animation | Immediate table reflow per UX decision |
-| 2026-02-02 | Forecast export title includes (Prognose) | Clear visual indicator in exported spreadsheet |
-| 2026-02-02 | Forecast exports use 8-column layout | Nikki columns excluded from future season |
 
 ### Pending Todos
 
 2 todo(s) in `.planning/todos/pending/`:
 - **public-vog-upload-and-validation**: Public VOG Upload and Validation (area: api)
-- **discipline-cases-data-foundation-and-ui**: Discipline Cases Data Foundation and UI (area: api)
+- **discipline-cases-data-foundation-and-ui**: Discipline Cases Data Foundation and UI (area: api) — **being addressed in v13.0**
 
 ### Blockers/Concerns
 
@@ -53,9 +42,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Milestone v12.1 complete
+Stopped at: Defining v13.0 requirements
 Resume file: None
-Next: Start next milestone with /gsd:new-milestone
+Next: Complete requirements and roadmap
 
 ---
 *State updated: 2026-02-03*
