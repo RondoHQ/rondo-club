@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Share2, Bell, Database, Shield, Info, FileCode, FileSpreadsheet, Download, Palette, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, Coins, X, Users, MessageSquare, Search, User, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, FileCheck } from 'lucide-react';
+import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, Coins, X, Users, MessageSquare, Search, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, Database } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from '@/utils/dateFormat';
 import { APP_NAME } from '@/constants/app';
@@ -11,16 +11,17 @@ import { useSearch } from '@/hooks/useDashboard';
 import MonicaImport from '@/components/import/MonicaImport';
 import VCardImport from '@/components/import/VCardImport';
 import GoogleContactsImport from '@/components/import/GoogleContactsImport';
+import PersonAvatar from '@/components/PersonAvatar';
+import TabButton from '@/components/TabButton';
 
-// Tab configuration
+// Tab configuration (no icons - using TabButton component)
 const TABS = [
-  { id: 'appearance', label: 'Weergave', icon: Palette },
-  { id: 'connections', label: 'Koppelingen', icon: Share2 },
-  { id: 'notifications', label: 'Meldingen', icon: Bell },
-  { id: 'data', label: 'Gegevens', icon: Database },
-  { id: 'admin', label: 'Beheer', icon: Shield, adminOnly: true },
-  { id: 'vog', label: 'VOG', icon: FileCheck, adminOnly: true },
-  { id: 'about', label: 'Info', icon: Info },
+  { id: 'appearance', label: 'Weergave' },
+  { id: 'connections', label: 'Koppelingen' },
+  { id: 'notifications', label: 'Meldingen' },
+  { id: 'data', label: 'Gegevens' },
+  { id: 'admin', label: 'Beheer', adminOnly: true },
+  { id: 'about', label: 'Info' },
 ];
 
 // Connections subtabs configuration
@@ -32,10 +33,11 @@ const CONNECTION_SUBTABS = [
   { id: 'api-access', label: 'API-toegang', icon: Key },
 ];
 
-// Admin subtabs configuration
+// Admin subtabs configuration (VOG moved here from main tabs)
 const ADMIN_SUBTABS = [
   { id: 'users', label: 'Gebruikers', icon: Users },
   { id: 'fees', label: 'Contributie', icon: Coins },
+  { id: 'vog', label: 'VOG' },
 ];
 
 export default function Settings() {
@@ -793,18 +795,15 @@ export default function Settings() {
             feeSaving={feeSaving}
             feeMessage={feeMessage}
             handleFeeSave={handleFeeSave}
-          />
-        ) : null;
-      case 'vog':
-        return isAdmin ? <VOGTab
           vogSettings={vogSettings}
           setVogSettings={setVogSettings}
           vogLoading={vogLoading}
           vogSaving={vogSaving}
           vogMessage={vogMessage}
           handleVogSave={handleVogSave}
-          commissies={vogCommissies}
-        /> : null;
+          vogCommissies={vogCommissies}
+          />
+        ) : null;
       case 'about':
         return <AboutTab config={config} />;
       default:
@@ -817,25 +816,14 @@ export default function Settings() {
       {/* Tab Navigation */}
       <div className="border-b border-gray-200 mb-6 dark:border-gray-700">
         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-          {visibleTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
-                  ${isActive
-                    ? 'border-accent-500 text-accent-600 dark:border-accent-400 dark:text-accent-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'}
-                `}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            );
-          })}
+          {visibleTabs.map((tab) => (
+            <TabButton
+              key={tab.id}
+              label={tab.label}
+              isActive={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+            />
+          ))}
         </nav>
       </div>
       
@@ -1028,17 +1016,11 @@ function AppearanceTab() {
             {/* Currently linked person */}
             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div className="flex items-center gap-3">
-                {linkedPerson.thumbnail ? (
-                  <img
-                    src={linkedPerson.thumbnail}
-                    alt={linkedPerson.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                  </div>
-                )}
+                <PersonAvatar
+                  thumbnail={linkedPerson.thumbnail}
+                  name={linkedPerson.name}
+                  size="lg"
+                />
                 <div>
                   <p className="font-medium text-gray-900 dark:text-gray-100">{linkedPerson.name}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Gekoppeld aan je account</p>
@@ -1085,17 +1067,11 @@ function AppearanceTab() {
                           disabled={savingLinkedPerson}
                           className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 text-left"
                         >
-                          {person.thumbnail ? (
-                            <img
-                              src={person.thumbnail}
-                              alt={person.name}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                              <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                            </div>
-                          )}
+                          <PersonAvatar
+                            thumbnail={person.thumbnail}
+                            name={person.name}
+                            size="md"
+                          />
                           <span className="text-sm text-gray-900 dark:text-gray-100">{person.name}</span>
                         </button>
                       ))
@@ -3318,31 +3294,27 @@ function AdminTabWithSubtabs({
   feeSaving,
   feeMessage,
   handleFeeSave,
+  vogSettings,
+  setVogSettings,
+  vogLoading,
+  vogSaving,
+  vogMessage,
+  handleVogSave,
+  vogCommissies,
 }) {
   return (
     <div className="space-y-6">
       {/* Subtab Navigation */}
       <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-6" aria-label="Admin subtabs">
-          {ADMIN_SUBTABS.map((subtab) => {
-            const Icon = subtab.icon;
-            const isActive = activeSubtab === subtab.id;
-            return (
-              <button
-                key={subtab.id}
-                onClick={() => setActiveSubtab(subtab.id)}
-                className={`
-                  flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap
-                  ${isActive
-                    ? 'border-accent-500 text-accent-600 dark:border-accent-400 dark:text-accent-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'}
-                `}
-              >
-                <Icon className="w-4 h-4" />
-                {subtab.label}
-              </button>
-            );
-          })}
+          {ADMIN_SUBTABS.map((subtab) => (
+            <TabButton
+              key={subtab.id}
+              label={subtab.label}
+              isActive={activeSubtab === subtab.id}
+              onClick={() => setActiveSubtab(subtab.id)}
+            />
+          ))}
         </nav>
       </div>
 
@@ -3364,6 +3336,16 @@ function AdminTabWithSubtabs({
           feeSaving={feeSaving}
           feeMessage={feeMessage}
           handleFeeSave={handleFeeSave}
+        />
+      ) : activeSubtab === 'vog' ? (
+        <VOGTab
+          vogSettings={vogSettings}
+          setVogSettings={setVogSettings}
+          vogLoading={vogLoading}
+          vogSaving={vogSaving}
+          vogMessage={vogMessage}
+          handleVogSave={handleVogSave}
+          commissies={vogCommissies}
         />
       ) : null}
     </div>
@@ -3599,7 +3581,7 @@ function VOGTab({
               value={vogSettings.from_email}
               onChange={(e) => setVogSettings(prev => ({ ...prev, from_email: e.target.value }))}
               placeholder="vog@vereniging.nl"
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Het e-mailadres dat als afzender wordt gebruikt voor VOG e-mails.
@@ -3617,7 +3599,7 @@ function VOGTab({
               value={vogSettings.from_name}
               onChange={(e) => setVogSettings(prev => ({ ...prev, from_name: e.target.value }))}
               placeholder="Vereniging VOG"
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               De naam die als afzender wordt weergegeven voor VOG e-mails.
@@ -3634,7 +3616,7 @@ function VOGTab({
               rows={8}
               value={vogSettings.template_new}
               onChange={(e) => setVogSettings(prev => ({ ...prev, template_new: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm font-mono"
+              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm font-mono"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Beschikbare variabelen: {'{first_name}'}
@@ -3651,7 +3633,7 @@ function VOGTab({
               rows={8}
               value={vogSettings.template_renewal}
               onChange={(e) => setVogSettings(prev => ({ ...prev, template_renewal: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm font-mono"
+              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm font-mono"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Beschikbare variabelen: {'{first_name}'}, {'{previous_vog_date}'}
