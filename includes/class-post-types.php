@@ -27,6 +27,7 @@ class PostTypes {
 		$this->register_todo_post_type();
 		$this->register_calendar_event_post_type();
 		$this->register_feedback_post_type();
+		$this->register_discipline_case_post_type();
 	}
 
 	/**
@@ -364,5 +365,48 @@ class PostTypes {
 		];
 
 		register_post_type( 'stadion_feedback', $args );
+	}
+
+	/**
+	 * Register Discipline Case CPT
+	 *
+	 * Discipline cases are synced from Sportlink and track sports disciplinary actions.
+	 * Each case is linked to a person and includes details about the incident, charges, and sanctions.
+	 */
+	private function register_discipline_case_post_type() {
+		$labels = [
+			'name'               => _x( 'Tuchtzaken', 'Post type general name', 'stadion' ),
+			'singular_name'      => _x( 'Tuchtzaak', 'Post type singular name', 'stadion' ),
+			'menu_name'          => _x( 'Tuchtzaken', 'Admin Menu text', 'stadion' ),
+			'add_new'            => __( 'Add New', 'stadion' ),
+			'add_new_item'       => __( 'Add New Tuchtzaak', 'stadion' ),
+			'edit_item'          => __( 'Edit Tuchtzaak', 'stadion' ),
+			'new_item'           => __( 'New Tuchtzaak', 'stadion' ),
+			'view_item'          => __( 'View Tuchtzaak', 'stadion' ),
+			'search_items'       => __( 'Search Tuchtzaken', 'stadion' ),
+			'not_found'          => __( 'No tuchtzaken found', 'stadion' ),
+			'not_found_in_trash' => __( 'No tuchtzaken found in Trash', 'stadion' ),
+			'all_items'          => __( 'All Tuchtzaken', 'stadion' ),
+		];
+
+		$args = [
+			'labels'             => $labels,
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'show_in_rest'       => true,
+			'rest_base'          => 'discipline-cases',
+			'query_var'          => false,
+			'rewrite'            => false, // React Router handles routing
+			'capability_type'    => 'post',
+			'has_archive'        => false,
+			'hierarchical'       => false,
+			'menu_position'      => 9,
+			'menu_icon'          => 'dashicons-warning',
+			'supports'           => [ 'title', 'author' ],
+		];
+
+		register_post_type( 'discipline_case', $args );
 	}
 }
