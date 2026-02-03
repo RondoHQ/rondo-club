@@ -722,6 +722,17 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Get current season term
+		register_rest_route(
+			'stadion/v1',
+			'/current-season',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_current_season' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
 	}
 
 	/**
@@ -3039,6 +3050,28 @@ class Api extends Base {
 				'marked'  => $marked,
 				'failed'  => $failed,
 				'total'   => count( $ids ),
+			]
+		);
+	}
+
+	/**
+	 * Get the current season term
+	 *
+	 * @return \WP_REST_Response Response with current season data or null.
+	 */
+	public function get_current_season() {
+		$taxonomies     = new \STADION_Taxonomies();
+		$current_season = $taxonomies->get_current_season();
+
+		if ( ! $current_season ) {
+			return rest_ensure_response( null );
+		}
+
+		return rest_ensure_response(
+			[
+				'id'   => $current_season->term_id,
+				'name' => $current_season->name,
+				'slug' => $current_season->slug,
 			]
 		);
 	}
