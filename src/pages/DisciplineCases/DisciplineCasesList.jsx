@@ -71,30 +71,24 @@ export default function DisciplineCasesList() {
   const personMap = useMemo(() => {
     const map = new Map();
     if (personsData) {
-      console.log('[DisciplineCases] Raw personsData:', personsData);
       personsData.forEach((person) => {
         // Person name fields are in the acf object, not at root level
         const firstName = person.acf?.first_name || '';
         const lastName = person.acf?.last_name || '';
         const fullName = person.title?.rendered || `${firstName} ${lastName}`.trim();
 
-        console.log('[DisciplineCases] Processing person:', {
-          id: person.id,
-          hasAcf: !!person.acf,
-          firstName,
-          lastName,
-          titleRendered: person.title?.rendered,
-          fullName
-        });
+        // Extract thumbnail from embedded featured media (same logic as transformPerson in usePeople.js)
+        const thumbnail = person._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
+                         person._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url ||
+                         null;
 
         map.set(person.id, {
           id: person.id,
           first_name: firstName,
           name: fullName,
-          thumbnail: person.thumbnail,
+          thumbnail,
         });
       });
-      console.log('[DisciplineCases] Final personMap:', Array.from(map.entries()));
     }
     return map;
   }, [personsData]);

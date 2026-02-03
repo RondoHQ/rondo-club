@@ -6,27 +6,54 @@ import { formatCurrency, getPersonName } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 
 /**
- * Parse ACF date format (Ymd) to Date object
- * @param {string} dateStr - ACF date string (e.g., "20241015")
+ * Parse ACF date format to Date object
+ * Handles both YYYYMMDD format (e.g., "20241015") and YYYY-MM-DD format (e.g., "2025-08-23")
+ * @param {string} dateStr - ACF date string
  * @returns {Date} Parsed date or epoch start if invalid
  */
 function parseAcfDate(dateStr) {
-  if (!dateStr || dateStr.length !== 8) return new Date(0);
-  const year = dateStr.slice(0, 4);
-  const month = parseInt(dateStr.slice(4, 6), 10) - 1;
-  const day = dateStr.slice(6, 8);
-  return new Date(year, month, day);
+  if (!dateStr) return new Date(0);
+
+  // Handle YYYY-MM-DD format (10 characters with dashes)
+  if (dateStr.length === 10 && dateStr.includes('-')) {
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? new Date(0) : date;
+  }
+
+  // Handle YYYYMMDD format (8 characters, no dashes)
+  if (dateStr.length === 8) {
+    const year = dateStr.slice(0, 4);
+    const month = parseInt(dateStr.slice(4, 6), 10) - 1;
+    const day = dateStr.slice(6, 8);
+    return new Date(year, month, day);
+  }
+
+  return new Date(0);
 }
 
 /**
- * Format ACF date (Ymd) to display format
- * @param {string} dateStr - ACF date string (e.g., "20241015")
+ * Format ACF date to display format
+ * Handles both YYYYMMDD format (e.g., "20260118") and YYYY-MM-DD format (e.g., "2025-08-23")
+ * @param {string} dateStr - ACF date string
  * @returns {string} Formatted date or '-' if invalid
  */
 function formatAcfDate(dateStr) {
-  if (!dateStr || dateStr.length !== 8) return '-';
-  const date = parseAcfDate(dateStr);
-  return format(date, 'd-M-yyyy');
+  if (!dateStr) return '-';
+
+  // Handle YYYY-MM-DD format (10 characters with dashes)
+  if (dateStr.length === 10 && dateStr.includes('-')) {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '-';
+    return format(date, 'd-M-yyyy');
+  }
+
+  // Handle YYYYMMDD format (8 characters, no dashes)
+  if (dateStr.length === 8) {
+    const date = parseAcfDate(dateStr);
+    return format(date, 'd-M-yyyy');
+  }
+
+  return '-';
 }
 
 /**
