@@ -67,11 +67,12 @@ Plans:
   6. Person detail page shows Tuchtzaken tab (fairplay users only)
   7. Tuchtzaken tab displays all discipline cases linked to that person
   8. Case details are read-only (match, charges, sanctions, fee displayed)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 134-01: TBD
-- [ ] 134-02: TBD
+- [ ] 134-01-PLAN.md — API integration and React hooks for discipline cases
+- [ ] 134-02-PLAN.md — List page with table view and season filter
+- [ ] 134-03-PLAN.md — Person detail tab integration
 
 ## Progress
 
@@ -82,8 +83,8 @@ Phases execute in numeric order: 132 -> 133 -> 134
 |-------|----------------|--------|-----------|
 | 132. Data Foundation | 1/1 | Complete | 2026-02-03 |
 | 133. Access Control | 1/1 | Complete | 2026-02-03 |
-| 134. Discipline Cases UI | 0/TBD | Not started | - |
+| 134. Discipline Cases UI | 0/3 | Ready | - |
 
 ---
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-03 after Phase 133 planning*
+*Last updated: 2026-02-03 after Phase 134 planning*
