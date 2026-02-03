@@ -255,7 +255,7 @@ function App() {
                   <Route path="/contributie" element={<ContributieList />} />
 
                   {/* Discipline Cases route - requires fairplay capability */}
-                  <Route path="/discipline-cases" element={
+                  <Route path="/tuchtzaken" element={
                     <FairplayRoute>
                       <DisciplineCasesList />
                     </FairplayRoute>
