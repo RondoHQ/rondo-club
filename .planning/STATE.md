@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Personal CRM with team collaboration while maintaining relationship-focused experience
-**Current focus:** v13.0 Discipline Cases — Phase 132 Data Foundation
+**Current focus:** v13.0 Discipline Cases — Phase 133 Access Control
 
 ## Current Position
 
-Phase: 132 of 134 (Data Foundation)
-Plan: 1 of 1 in phase
-Status: Phase complete
-Last activity: 2026-02-03 — Completed 132-01-PLAN.md
+Phase: 133 of 134 (Access Control)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-02-03 — Phase 132 Data Foundation verified complete
 
 Progress: [███░░░░░░░] 33%
 
@@ -55,12 +55,20 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 None.
 
+### Phase 132 Deliverables
+
+- `discipline_case` CPT with Dutch labels (Tuchtzaak/Tuchtzaken)
+- `seizoen` taxonomy (non-hierarchical, REST-enabled)
+- ACF field group with 11 fields for discipline case data
+- Unique dossier_id validation filter
+- Current season helper methods (`set_current_season`, `get_current_season`)
+
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 132-01-PLAN.md
+Stopped at: Phase 132 verified complete
 Resume file: None
-Next: Phase 133 (Business Logic)
+Next: `/gsd:discuss-phase 133`
 
 ---
 *State updated: 2026-02-03*

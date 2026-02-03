@@ -9,10 +9,10 @@ Requirements for discipline cases milestone. Each maps to roadmap phases.
 
 ### Data Foundation
 
-- [ ] **DATA-01**: `discipline_case` CPT registered with proper labels (Tuchtzaak/Tuchtzaken)
-- [ ] **DATA-02**: ACF field group with all case fields (dossier-id, person, match-date, match-description, team-name, charge-codes, charge-description, sanction-description, processing-date, administrative-fee, is-charged)
-- [ ] **DATA-03**: Shared `seizoen` taxonomy (non-hierarchical, REST-enabled, usable across features)
-- [ ] **DATA-04**: REST API endpoints for discipline case CRUD operations (Sportlink sync compatibility)
+- [x] **DATA-01**: `discipline_case` CPT registered with proper labels (Tuchtzaak/Tuchtzaken)
+- [x] **DATA-02**: ACF field group with all case fields (dossier-id, person, match-date, match-description, team-name, charge-codes, charge-description, sanction-description, processing-date, administrative-fee, is-charged)
+- [x] **DATA-03**: Shared `seizoen` taxonomy (non-hierarchical, REST-enabled, usable across features)
+- [x] **DATA-04**: REST API endpoints for discipline case CRUD operations (Sportlink sync compatibility)
 
 ### Access Control
 
@@ -69,10 +69,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | 132 | Pending |
-| DATA-02 | 132 | Pending |
-| DATA-03 | 132 | Pending |
-| DATA-04 | 132 | Pending |
+| DATA-01 | 132 | Complete |
+| DATA-02 | 132 | Complete |
+| DATA-03 | 132 | Complete |
+| DATA-04 | 132 | Complete |
 | ACCESS-01 | 133 | Pending |
 | ACCESS-02 | 133 | Pending |
 | ACCESS-03 | 133 | Pending |
@@ -94,4 +94,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-03 after roadmap creation*
+*Last updated: 2026-02-03 after Phase 132 completion*
