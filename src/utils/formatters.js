@@ -3,6 +3,56 @@
  */
 
 /**
+ * Format a number as currency in euros
+ *
+ * @param {number|null|undefined} amount - Amount to format
+ * @param {number} decimals - Number of decimal places (default 0)
+ * @returns {string} Formatted currency string or '-' if null/undefined
+ */
+export function formatCurrency(amount, decimals = 0) {
+  if (amount === null || amount === undefined) return '-';
+  return new Intl.NumberFormat('nl-NL', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(amount);
+}
+
+/**
+ * Format a decimal rate as a percentage
+ *
+ * @param {number} rate - Decimal rate (e.g., 0.25 for 25%)
+ * @returns {string} Formatted percentage string (e.g., "25%")
+ */
+export function formatPercentage(rate) {
+  return `${Math.round(rate * 100)}%`;
+}
+
+/**
+ * Membership fee category configuration
+ * Contains labels and colors for each category
+ */
+export const FEE_CATEGORIES = {
+  mini: { label: 'Mini', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
+  pupil: { label: 'Pupil', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+  junior: { label: 'Junior', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
+  senior: { label: 'Senior', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' },
+  recreant: { label: 'Recreant', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
+  donateur: { label: 'Donateur', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' },
+};
+
+/**
+ * Get the label for a fee category
+ *
+ * @param {string} category - Category key
+ * @returns {string} Category label
+ */
+export function getCategoryLabel(category) {
+  return FEE_CATEGORIES[category]?.label ?? category;
+}
+
+/**
  * Decode HTML entities in a string
  * Converts entities like &amp; to & and &#8211; to –
  * 
@@ -182,5 +232,93 @@ export function sanitizeCommissieAcf(acfData, overrides = {}) {
   Object.assign(sanitized, overrides);
 
   return sanitized;
+}
+
+/**
+ * Validate date strings
+ *
+ * @param {string|null|undefined} dateString - Date string to validate
+ * @returns {boolean} True if valid date
+ */
+export function isValidDate(dateString) {
+  if (!dateString) return false;
+  const date = new Date(dateString);
+  return date instanceof Date && !isNaN(date.getTime());
+}
+
+/**
+ * Get gender symbol for display
+ *
+ * @param {string|null|undefined} gender - Gender value
+ * @returns {string|null} Unicode gender symbol or null
+ */
+export function getGenderSymbol(gender) {
+  if (!gender) return null;
+  switch (gender) {
+    case 'male':
+      return '\u2642'; // Male symbol
+    case 'female':
+      return '\u2640'; // Female symbol
+    case 'non_binary':
+    case 'other':
+    case 'prefer_not_to_say':
+      return '\u26A7'; // Transgender symbol
+    default:
+      return null;
+  }
+}
+
+/**
+ * Calculate VOG (Certificate of Conduct) status based on ACF data
+ *
+ * @param {Object} acf - ACF data object containing werkfuncties and vog_datum
+ * @returns {Object|null} Status object with status, label, and color, or null if not applicable
+ */
+export function getVogStatus(acf) {
+  // Check if person has work functions other than "Donateur"
+  const werkfuncties = acf?.werkfuncties || [];
+  const hasNonDonateurFunction = werkfuncties.some(fn => fn !== 'Donateur');
+
+  if (!hasNonDonateurFunction) {
+    return null; // Don't show VOG indicator for Donateurs only
+  }
+
+  const vogDate = acf?.vog_datum;
+  if (!vogDate) {
+    return { status: 'missing', label: 'Geen VOG', color: 'red' };
+  }
+
+  const vogDateObj = new Date(vogDate);
+  const threeYearsAgo = new Date();
+  threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+
+  if (vogDateObj >= threeYearsAgo) {
+    return { status: 'valid', label: 'VOG OK', color: 'green' };
+  }
+  return { status: 'expired', label: 'VOG verlopen', color: 'orange' };
+}
+
+/**
+ * Format phone number for tel: and WhatsApp links
+ * Removes all non-digit characters except + at the start, removes Unicode marks,
+ * and converts Dutch mobile numbers (06...) to international format (+316...)
+ *
+ * @param {string|null|undefined} phone - Phone number to format
+ * @returns {string} Formatted phone number
+ */
+export function formatPhoneForTel(phone) {
+  if (!phone) return '';
+  // Remove all Unicode marks and invisible characters
+  let cleaned = phone.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E]/g, '');
+  // Extract + if present at the start
+  const hasPlus = cleaned.startsWith('+');
+  // Remove all non-digit characters
+  cleaned = cleaned.replace(/\D/g, '');
+  // Convert Dutch mobile numbers (06...) to international format (+316...)
+  if (!hasPlus && cleaned.startsWith('06')) {
+    return `+316${cleaned.slice(2)}`;
+  }
+  // Prepend + if it was at the start
+  return hasPlus ? `+${cleaned}` : cleaned;
 }
 

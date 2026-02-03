@@ -23,6 +23,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Link } from 'react-router-dom';
 import FieldFormPanel from '@/components/FieldFormPanel';
 import DeleteFieldDialog from '@/components/DeleteFieldDialog';
+import TabButton from '@/components/TabButton.jsx';
 
 // Tab configuration
 const TABS = [
@@ -340,23 +341,14 @@ export default function CustomFields() {
         {/* Tab Navigation */}
         <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`
-                    py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
-                    ${isActive
-                      ? 'border-accent-500 text-accent-600 dark:text-accent-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}
-                  `}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
+            {TABS.map((tab) => (
+              <TabButton
+                key={tab.id}
+                label={tab.label}
+                isActive={activeTab === tab.id}
+                onClick={() => handleTabChange(tab.id)}
+              />
+            ))}
           </nav>
         </div>
 

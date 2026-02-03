@@ -8,6 +8,7 @@ import { getTeamName, decodeHtml, sanitizeTeamAcf } from '@/utils/formatters';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
+import PersonAvatar from '@/components/PersonAvatar';
 
 export default function TeamDetail() {
   const { id } = useParams();
@@ -358,13 +359,11 @@ export default function TeamDetail() {
                       to={`/people/${person.id}`}
                       className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
-                      {person.thumbnail ? (
-                        <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
-                      ) : (
-                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                          <span className="text-xs text-gray-500 dark:text-gray-300">{person.name?.[0] || '?'}</span>
-                        </div>
-                      )}
+                      <PersonAvatar
+                        thumbnail={person.thumbnail}
+                        name={person.name}
+                        size="md"
+                      />
                       <div className="ml-2">
                         <p className="text-sm font-medium">{person.name}</p>
                         {person.job_title && (
@@ -394,13 +393,11 @@ export default function TeamDetail() {
                       to={`/people/${person.id}`}
                       className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
-                      {person.thumbnail ? (
-                        <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full" />
-                      ) : (
-                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                          <span className="text-xs text-gray-500 dark:text-gray-300">{person.name?.[0] || '?'}</span>
-                        </div>
-                      )}
+                      <PersonAvatar
+                        thumbnail={person.thumbnail}
+                        name={person.name}
+                        size="md"
+                      />
                       <div className="ml-2">
                         <p className="text-sm font-medium">{person.name}</p>
                         {person.job_title && (
@@ -430,13 +427,12 @@ export default function TeamDetail() {
                       to={`/people/${person.id}`}
                       className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
-                      {person.thumbnail ? (
-                        <img src={person.thumbnail} alt="" loading="lazy" className="w-8 h-8 rounded-full opacity-75" />
-                      ) : (
-                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center opacity-75">
-                          <span className="text-xs text-gray-500 dark:text-gray-300">{person.name?.[0] || '?'}</span>
-                        </div>
-                      )}
+                      <PersonAvatar
+                        thumbnail={person.thumbnail}
+                        name={person.name}
+                        size="md"
+                        className="opacity-75"
+                      />
                       <div className="ml-2">
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{person.name}</p>
                         {person.job_title && (

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Calendar, Gift, Heart, Star } from 'lucide-react';
+import { Plus, Calendar } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useReminders } from '@/hooks/useDashboard';
 import { usePeople } from '@/hooks/usePeople';
@@ -8,13 +8,7 @@ import { useCreateDate } from '@/hooks/useDates';
 import { format } from '@/utils/dateFormat';
 import ImportantDateModal from '@/components/ImportantDateModal';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
-
-const typeIcons = {
-  birthday: Gift,
-  wedding: Heart,
-  memorial: Star,
-  default: Calendar,
-};
+import PersonAvatar from '@/components/PersonAvatar';
 
 // Date type translations (Dutch labels for date type slugs/names)
 const DATE_TYPE_LABELS = {
@@ -72,18 +66,12 @@ function PersonDateEntry({ person, dateType }) {
   return (
     <div className="flex items-center gap-3 py-2">
       <Link to={`/people/${person.id}`} className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80">
-        {person.thumbnail ? (
-          <img
-            src={person.thumbnail}
-            alt={person.name}
-            loading="lazy"
-            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-300">{person.name?.[0]}</span>
-          </div>
-        )}
+        <PersonAvatar
+          thumbnail={person.thumbnail}
+          name={person.name}
+          size="lg"
+          className="flex-shrink-0"
+        />
         <span className="font-medium truncate">{person.name}</span>
         <span className="text-sm text-gray-500 dark:text-gray-400 capitalize flex-shrink-0">{getDateTypeLabel(dateType)}</span>
       </Link>

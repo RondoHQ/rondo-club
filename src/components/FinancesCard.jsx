@@ -1,32 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Coins, AlertTriangle, Users, Calendar } from 'lucide-react';
 import { usePersonFee } from '@/hooks/useFees';
-
-// Format currency in euros
-function formatCurrency(amount, decimals = 0) {
-  if (amount === null || amount === undefined) return '-';
-  return new Intl.NumberFormat('nl-NL', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(amount);
-}
-
-// Format percentage
-function formatPercentage(rate) {
-  return `${Math.round(rate * 100)}%`;
-}
-
-// Category labels
-const categoryLabels = {
-  mini: 'Mini',
-  pupil: 'Pupil',
-  junior: 'Junior',
-  senior: 'Senior',
-  recreant: 'Recreant',
-  donateur: 'Donateur',
-};
+import { formatCurrency, formatPercentage, getCategoryLabel } from '@/utils/formatters';
 
 /**
  * Finances card showing membership fee details for a person
@@ -85,7 +60,7 @@ export default function FinancesCard({ personId }) {
         {/* Category & Base Fee */}
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500 dark:text-gray-400">
-            {categoryLabels[feeData.category] || feeData.category}
+            {getCategoryLabel(feeData.category)}
             {feeData.leeftijdsgroep && (
               <span className="text-xs ml-1 text-gray-400">({feeData.leeftijdsgroep})</span>
             )}

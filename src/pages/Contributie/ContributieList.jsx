@@ -5,22 +5,7 @@ import { useFeeList } from '@/hooks/useFees';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
-
-// Format currency in euros
-function formatCurrency(amount, decimals = 0) {
-  if (amount === null || amount === undefined) return '-';
-  return new Intl.NumberFormat('nl-NL', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(amount);
-}
-
-// Format percentage
-function formatPercentage(rate) {
-  return `${Math.round(rate * 100)}%`;
-}
+import { formatCurrency, formatPercentage, FEE_CATEGORIES } from '@/utils/formatters';
 
 // Get next season label from current season
 function getNextSeasonLabel(currentSeason) {
@@ -28,30 +13,12 @@ function getNextSeasonLabel(currentSeason) {
   return `${startYear + 1}-${startYear + 2}`;
 }
 
-// Category badge colors
-const categoryColors = {
-  mini: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  pupil: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  junior: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  senior: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  recreant: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-  donateur: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-};
-
-// Category labels
-const categoryLabels = {
-  mini: 'Mini',
-  pupil: 'Pupil',
-  junior: 'Junior',
-  senior: 'Senior',
-  recreant: 'Recreant',
-  donateur: 'Donateur',
-};
 
 // Sortable header component
 function SortableHeader({ label, columnId, sortField, sortOrder, onSort, className = '' }) {
   const isActive = sortField === columnId;
   const nextOrder = isActive && sortOrder === 'asc' ? 'desc' : 'asc';
+  const SortIcon = sortOrder === 'asc' ? ArrowUp : ArrowDown;
 
   return (
     <th
@@ -61,13 +28,7 @@ function SortableHeader({ label, columnId, sortField, sortOrder, onSort, classNa
     >
       <div className="flex items-center gap-1">
         {label}
-        {isActive && (
-          sortOrder === 'asc' ? (
-            <ArrowUp className="w-3 h-3" />
-          ) : (
-            <ArrowDown className="w-3 h-3" />
-          )
-        )}
+        {isActive && <SortIcon className="w-3 h-3" />}
       </div>
     </th>
   );
@@ -104,8 +65,8 @@ function FeeRow({ member, isOdd, isForecast }) {
 
       {/* Category */}
       <td className="px-4 py-3 whitespace-nowrap">
-        <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${categoryColors[member.category] || 'bg-gray-100 text-gray-700'}`}>
-          {categoryLabels[member.category] || member.category}
+        <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${FEE_CATEGORIES[member.category]?.color ?? 'bg-gray-100 text-gray-700'}`}>
+          {FEE_CATEGORIES[member.category]?.label ?? member.category}
         </span>
       </td>
 
@@ -276,69 +237,55 @@ export default function ContributieList() {
     }
   };
 
-  // Filter and sort members client-side
-  const filteredMembers = data?.members
-    ? data.members.filter(m => {
-        if (showNoNikkiOnly) return m.nikki_total === null;
-        if (showMismatchOnly) return m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1;
-        return true;
-      })
-    : [];
+  // Filter members client-side
+  const filteredMembers = (data?.members ?? []).filter(m => {
+    if (showNoNikkiOnly) return m.nikki_total === null;
+    if (showMismatchOnly) return m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1;
+    return true;
+  });
 
-  const sortedMembers = filteredMembers.length ? [...filteredMembers].sort((a, b) => {
+  // Sort members client-side
+  const categoryOrder = { mini: 1, pupil: 2, junior: 3, senior: 4, recreant: 5, donateur: 6 };
+
+  const sortedMembers = [...filteredMembers].sort((a, b) => {
     let cmp = 0;
+
     switch (sortField) {
       case 'last_name':
         cmp = (a.last_name || '').localeCompare(b.last_name || '');
-        // Secondary sort by first_name
-        if (cmp === 0) {
-          cmp = (a.first_name || '').localeCompare(b.first_name || '');
-        }
+        if (cmp === 0) cmp = (a.first_name || '').localeCompare(b.first_name || '');
         break;
       case 'first_name':
         cmp = (a.first_name || '').localeCompare(b.first_name || '');
-        // Secondary sort by last_name
-        if (cmp === 0) {
-          cmp = (a.last_name || '').localeCompare(b.last_name || '');
-        }
+        if (cmp === 0) cmp = (a.last_name || '').localeCompare(b.last_name || '');
         break;
-      case 'category': {
-        const catOrder = { mini: 1, pupil: 2, junior: 3, senior: 4, recreant: 5, donateur: 6 };
-        cmp = (catOrder[a.category] || 99) - (catOrder[b.category] || 99);
-        break;
-      }
-      case 'base_fee':
-        cmp = a.base_fee - b.base_fee;
-        break;
-      case 'final_fee':
-        cmp = a.final_fee - b.final_fee;
+      case 'category':
+        cmp = (categoryOrder[a.category] ?? 99) - (categoryOrder[b.category] ?? 99);
         break;
       case 'leeftijdsgroep':
         cmp = (a.leeftijdsgroep || '').localeCompare(b.leeftijdsgroep || '');
         break;
+      case 'base_fee':
+      case 'final_fee':
       case 'family_discount_rate':
-        cmp = a.family_discount_rate - b.family_discount_rate;
-        break;
       case 'prorata_percentage':
-        cmp = a.prorata_percentage - b.prorata_percentage;
+        cmp = a[sortField] - b[sortField];
         break;
       case 'nikki_total':
-        cmp = (a.nikki_total || 0) - (b.nikki_total || 0);
-        break;
       case 'nikki_saldo':
-        cmp = (a.nikki_saldo || 0) - (b.nikki_saldo || 0);
+        cmp = (a[sortField] ?? 0) - (b[sortField] ?? 0);
         break;
       default:
         cmp = 0;
     }
+
     return sortOrder === 'asc' ? cmp : -cmp;
-  }) : []
+  });
 
-  // Count members without Nikki data
-  const noNikkiCount = data?.members?.filter(m => m.nikki_total === null).length || 0;
-
-  // Count members with mismatch between Nikki and calculated fee (difference >= 1 euro, excluding those without Nikki data)
-  const mismatchCount = data?.members?.filter(m => m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1).length || 0;
+  // Count members without Nikki data and with mismatch
+  const allMembers = data?.members ?? [];
+  const noNikkiCount = allMembers.filter(m => m.nikki_total === null).length;
+  const mismatchCount = allMembers.filter(m => m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1).length;
 
   // Calculate totals
   const totals = sortedMembers.reduce(

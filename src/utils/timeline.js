@@ -225,3 +225,22 @@ export function getAwaitingUrgencyClass(days) {
   return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
 }
 
+/**
+ * Get urgency class for upcoming reminders based on days until the event.
+ * Uses a color scale from green (today) through orange/yellow to gray (distant).
+ * @param {number} daysUntil - Number of days until the reminder
+ * @returns {string} Tailwind classes for badge styling
+ */
+export function getReminderUrgencyClass(daysUntil) {
+  if (daysUntil === 0) {
+    return 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400';
+  }
+  if (daysUntil <= 3) {
+    return 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400';
+  }
+  if (daysUntil <= 7) {
+    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400';
+  }
+  return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+}
+
