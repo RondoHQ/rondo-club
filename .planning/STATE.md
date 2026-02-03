@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 Phase: 134 of 134 (Discipline Cases UI) — MILESTONE COMPLETE
 Plan: All complete
 Status: Ready to plan next milestone
-Last activity: 2026-02-03 — Completed quick task 035: Doorbelast/Card columns
+Last activity: 2026-02-03 — Completed quick task 036: Change route to tuchtzaken
 
 Progress: [██████████] 100%
 
@@ -57,6 +57,7 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 036 | Change discipline cases route from /discipline-cases to /tuchtzaken | 2026-02-03 | 3fd7dfe9 | [036-change-route-to-tuchtzaken](./quick/036-change-route-to-tuchtzaken/) |
 | 035 | Add Doorbelast and Card columns to discipline cases table | 2026-02-03 | 6f75c16f | [035-doorbelast-card-columns](./quick/035-doorbelast-card-columns/) |
 
 ## Session Continuity
