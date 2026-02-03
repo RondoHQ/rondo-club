@@ -6,7 +6,7 @@ This milestone adds discipline case tracking to Stadion. Cases are synced from S
 
 ## Milestones
 
-- 🚧 **v13.0 Discipline Cases** - Phases 132-134 (in progress)
+- **v13.0 Discipline Cases** - Phases 132-134 (in progress)
 
 ## Phases
 
@@ -15,7 +15,7 @@ This milestone adds discipline case tracking to Stadion. Cases are synced from S
 - Integer phases (132, 133, 134): Planned milestone work
 - Decimal phases (132.1, etc.): Urgent insertions if needed
 
-### 🚧 v13.0 Discipline Cases (In Progress)
+### v13.0 Discipline Cases (In Progress)
 
 **Milestone Goal:** Enable tracking and viewing of discipline cases from Sportlink with capability-based access control.
 
@@ -49,10 +49,10 @@ Plans:
   2. Administrators automatically have fairplay capability after theme activation
   3. Users without fairplay capability cannot access /discipline-cases route (redirected or denied)
   4. Users without fairplay capability do not see Tuchtzaken tab on person detail pages
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 133-01: TBD
+- [ ] 133-01-PLAN.md — Register fairplay capability and implement UI access control
 
 ### Phase 134: Discipline Cases UI
 **Goal**: Complete user interface for viewing discipline cases
@@ -76,14 +76,14 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 132 → 133 → 134
+Phases execute in numeric order: 132 -> 133 -> 134
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 132. Data Foundation | 1/1 | ✓ Complete | 2026-02-03 |
-| 133. Access Control | 0/TBD | Not started | - |
+| 132. Data Foundation | 1/1 | Complete | 2026-02-03 |
+| 133. Access Control | 0/1 | In progress | - |
 | 134. Discipline Cases UI | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-03 after Phase 132 completion*
+*Last updated: 2026-02-03 after Phase 133 planning*
