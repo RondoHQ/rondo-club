@@ -19,8 +19,8 @@
 
 ### Query Deduplication
 
-- [ ] **QRY-01**: Single `current-user` query shared across ApprovalCheck, FairplayRoute, and Sidebar
-- [ ] **QRY-02**: VOG count is cached and not re-fetched on every page navigation
+- [x] **QRY-01**: Single `current-user` query shared across ApprovalCheck, FairplayRoute, and Sidebar
+- [x] **QRY-02**: VOG count is cached and not re-fetched on every page navigation
 
 ### Backend Optimization
 
@@ -45,8 +45,8 @@
 | MOD-01 | Phase 136 | Complete |
 | MOD-02 | Phase 136 | Complete |
 | MOD-03 | Phase 136 | Complete |
-| QRY-01 | Phase 137 | Pending |
-| QRY-02 | Phase 137 | Pending |
+| QRY-01 | Phase 137 | Complete |
+| QRY-02 | Phase 137 | Complete |
 | BE-01 | Phase 138 | Pending |
 | BE-02 | Phase 138 | Pending |
 
@@ -57,4 +57,4 @@
 
 ---
 *Requirements defined: 2026-02-04*
-*Last updated: 2026-02-04 after Phase 136 completion*
+*Last updated: 2026-02-04 after Phase 137 completion*

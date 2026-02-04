@@ -8,7 +8,7 @@ Eliminate unnecessary API calls and optimize dashboard load time by fixing dupli
 
 - [x] **Phase 135: Fix Duplicate API Calls** - Investigate and eliminate 2x API calls on every page load
 - [x] **Phase 136: Modal Lazy Loading** - Conditionally load data only when modals are opened
-- [ ] **Phase 137: Query Deduplication** - Share current-user query and cache VOG count
+- [x] **Phase 137: Query Deduplication** - Share current-user query and cache VOG count
 - [ ] **Phase 138: Backend Query Optimization** - Replace posts_per_page=-1 with COUNT queries
 
 ## Phase Details
@@ -63,7 +63,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 137-01-PLAN.md — Create useCurrentUser hook and configure VOG count caching
+- [x] 137-01-PLAN.md — Create useCurrentUser hook and configure VOG count caching
 
 ### Phase 138: Backend Query Optimization
 **Goal**: Todo count queries use SQL COUNT instead of fetching all records
@@ -88,7 +88,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 135. Fix Duplicate API Calls | 2/2 | ✓ Complete | 2026-02-04 |
 | 136. Modal Lazy Loading | 1/1 | ✓ Complete | 2026-02-04 |
-| 137. Query Deduplication | 0/1 | In Progress | - |
+| 137. Query Deduplication | 1/1 | ✓ Complete | 2026-02-04 |
 | 138. Backend Query Optimization | 0/TBD | Not started | - |
 
 ---
