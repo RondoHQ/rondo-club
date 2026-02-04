@@ -6,14 +6,16 @@ import { useVersionCheck } from '@/hooks/useVersionCheck';
 import { useTheme } from '@/hooks/useTheme';
 import { prmApi } from '@/api/client';
 import Layout from '@/components/layout/Layout';
-import { ReloadPrompt } from '@/components/ReloadPrompt';
+// import { ReloadPrompt } from '@/components/ReloadPrompt';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { IOSInstallModal } from '@/components/IOSInstallModal';
 import { AlertCircle, RefreshCw, Shield } from 'lucide-react';
 
+// Direct import for testing (no lazy loading)
+import Dashboard from '@/pages/Dashboard';
 // Lazy-loaded page components
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
+// const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const PeopleList = lazy(() => import('@/pages/People/PeopleList'));
 const PersonDetail = lazy(() => import('@/pages/People/PersonDetail'));
 const FamilyTree = lazy(() => import('@/pages/People/FamilyTree'));
@@ -52,74 +54,48 @@ function ApprovalCheck({ children }) {
     },
     retry: false, // Don't retry on error
   });
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
-      </div>
-    );
-  }
-  
-  // If there's an error or no user data, show approval screen as fallback
-  // This handles cases where the API call fails
-  if (error || !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="max-w-md w-full mx-4">
-          <div className="card p-8 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <AlertCircle className="w-8 h-8 text-yellow-600" />
+
+  // TEST A: Always render children, hide with CSS while loading
+  // This tests if conditional rendering is causing the double-mount issue
+  const showApprovalError = !isLoading && (error || !user || (!user.is_admin && !user.is_approved));
+
+  return (
+    <>
+      {/* Loading overlay - shown on top while loading */}
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
+        </div>
+      )}
+
+      {/* Approval error screen - shown on top when not approved */}
+      {showApprovalError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50">
+          <div className="max-w-md w-full mx-4">
+            <div className="card p-8 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-yellow-100 rounded-full">
+                  <AlertCircle className="w-8 h-8 text-yellow-600" />
+                </div>
               </div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                Account Pending Approval
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Your account is pending approval by an administrator. You will receive an email notification once your account has been approved.
+              </p>
+              <p className="text-sm text-gray-500">
+                If you have any questions, please contact your administrator.
+              </p>
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              Account Pending Approval
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Your account is pending approval by an administrator. You will receive an email notification once your account has been approved.
-            </p>
-            <p className="text-sm text-gray-500">
-              If you have any questions, please contact your administrator.
-            </p>
           </div>
         </div>
-      </div>
-    );
-  }
-  
-  // Admins are always approved
-  if (user?.is_admin) {
-    return children;
-  }
-  
-  // Check approval status
-  if (!user.is_approved) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="max-w-md w-full mx-4">
-          <div className="card p-8 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <AlertCircle className="w-8 h-8 text-yellow-600" />
-              </div>
-            </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              Account Pending Approval
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Your account is pending approval by an administrator. You will receive an email notification once your account has been approved.
-            </p>
-            <p className="text-sm text-gray-500">
-              If you have any questions, please contact your administrator.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  return children;
+      )}
+
+      {/* Always render children - they mount immediately and stay mounted */}
+      {children}
+    </>
+  );
 }
 
 function FairplayRoute({ children }) {
@@ -221,7 +197,7 @@ function App() {
   return (
     <div className="app-root">
       <UpdateBanner />
-      <ReloadPrompt />
+      {/* <ReloadPrompt /> */}
       <OfflineBanner />
       <InstallPrompt />
       <IOSInstallModal />

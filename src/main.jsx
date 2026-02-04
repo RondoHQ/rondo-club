@@ -25,6 +25,8 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false, // Prevents refetch on tab switch
+      refetchOnMount: false, // Prevents refetch when component remounts with cached data
+      refetchOnReconnect: false, // Prevents refetch on network reconnection
       retry: 1,
     },
   },
@@ -35,15 +37,11 @@ const rootElement = document.getElementById('root');
 if (rootElement) {
   try {
     ReactDOM.createRoot(rootElement).render(
-      <React.StrictMode>
-        <DomErrorBoundary>
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
-          </QueryClientProvider>
-        </DomErrorBoundary>
-      </React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </QueryClientProvider>
     );
   } catch {
     rootElement.innerHTML = '<div style="padding: 20px; color: red;"><h1>Error Loading Application</h1><p>Please check the browser console for details.</p></div>';
