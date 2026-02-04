@@ -410,18 +410,16 @@ export default function TeamDetail() {
             </div>
 
             {/* Custom Fields */}
-            <div className="card p-6">
-              <CustomFieldsSection
-                postType="team"
-                postId={parseInt(id)}
-                acfData={team?.acf}
-                onUpdate={(newAcfValues) => {
-                  const acfData = sanitizeTeamAcf(team?.acf, newAcfValues);
-                  updateTeam.mutateAsync({ acf: acfData });
-                }}
-                isUpdating={updateTeam.isPending}
-              />
-            </div>
+            <CustomFieldsSection
+              postType="team"
+              postId={parseInt(id)}
+              acfData={team?.acf}
+              onUpdate={(newAcfValues) => {
+                const acfData = sanitizeTeamAcf(team?.acf, newAcfValues);
+                updateTeam.mutateAsync({ acf: acfData });
+              }}
+              isUpdating={updateTeam.isPending}
+            />
           </div>
         );
       })()}
