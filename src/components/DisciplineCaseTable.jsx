@@ -1,9 +1,30 @@
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, Fragment, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, ArrowUp, ArrowDown } from 'lucide-react';
 import PersonAvatar from '@/components/PersonAvatar';
 import { formatCurrency, getPersonName } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
+
+/**
+ * Sortable table header component
+ */
+function SortableHeader({ label, columnId, sortField, sortOrder, onSort, className = '' }) {
+  const isActive = sortField === columnId;
+  const SortIcon = sortOrder === 'asc' ? ArrowUp : ArrowDown;
+
+  return (
+    <th
+      scope="col"
+      className={`px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 ${className}`}
+      onClick={() => onSort(columnId)}
+    >
+      <div className={`flex items-center gap-1 ${className.includes('text-right') ? 'justify-end' : className.includes('text-center') ? 'justify-center' : ''}`}>
+        {label}
+        {isActive && <SortIcon className="w-3 h-3" />}
+      </div>
+    </th>
+  );
+}
 
 /**
  * Parse ACF date format to Date object
@@ -71,21 +92,67 @@ export default function DisciplineCaseTable({
   isLoading = false,
 }) {
   const [expandedId, setExpandedId] = useState(null);
-  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc' for match_date
+  const [sortField, setSortField] = useState('match_date');
+  const [sortOrder, setSortOrder] = useState('desc');
 
-  // Sort cases by match_date
+  // Handle sort column click
+  const handleSort = useCallback((field) => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  }, [sortField]);
+
+  // Sort cases by selected field
   const sortedCases = useMemo(() => {
     if (!cases) return [];
     return [...cases].sort((a, b) => {
-      const dateA = parseAcfDate(a.acf?.match_date);
-      const dateB = parseAcfDate(b.acf?.match_date);
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-    });
-  }, [cases, sortOrder]);
+      let cmp = 0;
+      const acfA = a.acf || {};
+      const acfB = b.acf || {};
 
-  const toggleSort = () => {
-    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-  };
+      switch (sortField) {
+        case 'person': {
+          const personA = personMap.get(acfA.person);
+          const personB = personMap.get(acfB.person);
+          const nameA = personA ? getPersonName(personA) : '';
+          const nameB = personB ? getPersonName(personB) : '';
+          cmp = nameA.localeCompare(nameB);
+          break;
+        }
+        case 'match_date': {
+          const dateA = parseAcfDate(acfA.match_date);
+          const dateB = parseAcfDate(acfB.match_date);
+          cmp = dateA - dateB;
+          break;
+        }
+        case 'sanction':
+          cmp = (acfA.sanction_description || '').localeCompare(acfB.sanction_description || '');
+          break;
+        case 'card': {
+          // Sort by card type: red > yellow > none
+          const getCardValue = (codes) => {
+            if (!codes) return 0;
+            return codes.endsWith('-1') ? 1 : 2; // yellow = 1, red = 2
+          };
+          cmp = getCardValue(acfA.charge_codes) - getCardValue(acfB.charge_codes);
+          break;
+        }
+        case 'charged':
+          cmp = (acfA.is_charged ? 1 : 0) - (acfB.is_charged ? 1 : 0);
+          break;
+        case 'fee':
+          cmp = (parseFloat(acfA.administrative_fee) || 0) - (parseFloat(acfB.administrative_fee) || 0);
+          break;
+        default:
+          cmp = 0;
+      }
+
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+  }, [cases, sortField, sortOrder, personMap]);
 
   const toggleExpand = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -113,53 +180,55 @@ export default function DisciplineCaseTable({
         <thead className="bg-gray-50 dark:bg-gray-800">
           <tr>
             {showPersonColumn && (
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-              >
-                Persoon
-              </th>
+              <SortableHeader
+                label="Persoon"
+                columnId="person"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSort}
+                className="text-left"
+              />
             )}
-            <th
-              scope="col"
-              className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-            >
-              <button
-                onClick={toggleSort}
-                className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200"
-              >
-                Wedstrijd
-                {sortOrder === 'asc' ? (
-                  <ArrowUp className="w-3 h-3" />
-                ) : (
-                  <ArrowDown className="w-3 h-3" />
-                )}
-              </button>
-            </th>
-            <th
-              scope="col"
-              className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-            >
-              Sanctie
-            </th>
-            <th
-              scope="col"
-              className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-            >
-              Kaart
-            </th>
-            <th
-              scope="col"
-              className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-            >
-              Doorbelast
-            </th>
-            <th
-              scope="col"
-              className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-            >
-              Boete
-            </th>
+            <SortableHeader
+              label="Wedstrijd"
+              columnId="match_date"
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              className="text-left"
+            />
+            <SortableHeader
+              label="Sanctie"
+              columnId="sanction"
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              className="text-left"
+            />
+            <SortableHeader
+              label="Kaart"
+              columnId="card"
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              className="text-center"
+            />
+            <SortableHeader
+              label="Doorbelast"
+              columnId="charged"
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              className="text-center"
+            />
+            <SortableHeader
+              label="Boete"
+              columnId="fee"
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              className="text-right"
+            />
             <th scope="col" className="w-10"></th>
           </tr>
         </thead>
