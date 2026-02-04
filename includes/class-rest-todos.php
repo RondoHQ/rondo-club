@@ -125,7 +125,7 @@ class Todos extends Base {
 	 * Check if user can access a todo
 	 *
 	 * Permission callback for single-todo operations.
-	 * Verifies user is approved and can access the todo via access control.
+	 * Verifies user is approved and is the author of the todo (user isolation).
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return bool True if user can access the todo, false otherwise.
@@ -153,9 +153,12 @@ class Todos extends Base {
 			return false;
 		}
 
-		// Use access control to check if user can access this todo
-		$access_control = new \STADION_Access_Control();
-		return $access_control->user_can_access_post( $todo_id );
+		// User isolation: users can only access their own todos
+		if ( (int) $todo->post_author !== get_current_user_id() ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -169,20 +172,22 @@ class Todos extends Base {
 
 		// Use LIKE query since ACF stores serialized arrays
 		// The serialized format contains the ID as a quoted string: "123"
+		// Note: suppress_filters must be false for access control to apply
 		$todos = get_posts(
 			[
-				'post_type'      => 'stadion_todo',
-				'posts_per_page' => -1,
-				'post_status'    => [ 'stadion_open', 'stadion_awaiting', 'stadion_completed' ],
-				'meta_query'     => [
+				'post_type'        => 'stadion_todo',
+				'posts_per_page'   => -1,
+				'post_status'      => [ 'stadion_open', 'stadion_awaiting', 'stadion_completed' ],
+				'suppress_filters' => false,
+				'meta_query'       => [
 					[
 						'key'     => 'related_persons',
 						'value'   => sprintf( '"%d"', $person_id ),
 						'compare' => 'LIKE',
 					],
 				],
-				'orderby'        => 'date',
-				'order'          => 'DESC',
+				'orderby'          => 'date',
+				'order'            => 'DESC',
 			]
 		);
 
@@ -284,12 +289,14 @@ class Todos extends Base {
 		$post_statuses = $status_map[ $status ] ?? [ 'stadion_open' ];
 
 		// Build query args - access control filter will handle visibility
+		// Note: suppress_filters must be false for access control to apply
 		$args = [
-			'post_type'      => 'stadion_todo',
-			'posts_per_page' => 100, // Reasonable limit
-			'post_status'    => $post_statuses,
-			'orderby'        => 'date',
-			'order'          => 'DESC',
+			'post_type'        => 'stadion_todo',
+			'posts_per_page'   => 100, // Reasonable limit
+			'post_status'      => $post_statuses,
+			'suppress_filters' => false,
+			'orderby'          => 'date',
+			'order'            => 'DESC',
 		];
 
 		$todos     = get_posts( $args );
