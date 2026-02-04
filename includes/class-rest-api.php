@@ -2039,11 +2039,20 @@ class Api extends Base {
 	/**
 	 * Count open (non-completed) todos
 	 *
-	 * Uses wp_count_posts() for efficient SQL COUNT query.
+	 * Uses prepared SQL query with post_author filter for user isolation.
 	 * Only counts todos with 'stadion_open' status (not awaiting or completed).
 	 */
 	private function count_open_todos() {
-		return wp_count_posts( 'stadion_todo' )->stadion_open ?? 0;
+		global $wpdb;
+		return (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->posts}
+			 WHERE post_type = %s
+			 AND post_status = %s
+			 AND post_author = %d",
+			'stadion_todo',
+			'stadion_open',
+			get_current_user_id()
+		) );
 	}
 
 	/**
@@ -2122,11 +2131,20 @@ class Api extends Base {
 	/**
 	 * Count awaiting todos
 	 *
-	 * Uses wp_count_posts() for efficient SQL COUNT query.
+	 * Uses prepared SQL query with post_author filter for user isolation.
 	 * Only counts todos with 'stadion_awaiting' status.
 	 */
 	private function count_awaiting_todos() {
-		return wp_count_posts( 'stadion_todo' )->stadion_awaiting ?? 0;
+		global $wpdb;
+		return (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->posts}
+			 WHERE post_type = %s
+			 AND post_status = %s
+			 AND post_author = %d",
+			'stadion_todo',
+			'stadion_awaiting',
+			get_current_user_id()
+		) );
 	}
 
 	/**
