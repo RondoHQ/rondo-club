@@ -46,7 +46,7 @@ import { useVOGCount } from '@/hooks/useVOGCount';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Leden', href: '/people', icon: Users },
-  { name: 'Contributie', href: '/contributie', icon: Coins, indent: true, requiresUnrestricted: true },
+  { name: 'Contributie', href: '/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Teams', href: '/teams', icon: Building2, requiresFairplay: true },
@@ -66,6 +66,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
 
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
   const canAccessVOG = currentUser?.can_access_vog ?? false;
+  const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
   const isRestricted = (canAccessVOG || canAccessFairplay) && !isAdmin;
 
@@ -104,6 +105,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
             if (item.requiresUnrestricted && isRestricted) return false;
             if (item.requiresFairplay && !canAccessFairplay) return false;
             if (item.requiresVOG && !canAccessVOG) return false;
+            if (item.requiresFinancieel && !canAccessFinancieel) return false;
             return true;
           })
           .map((item) => {

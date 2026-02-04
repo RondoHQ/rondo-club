@@ -175,6 +175,33 @@ function RestrictedRoute({ children }) {
   return children;
 }
 
+function FinancieelRoute({ children }) {
+  const navigate = useNavigate();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const response = await prmApi.getCurrentUser();
+      return response.data;
+    },
+    retry: false,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
+      </div>
+    );
+  }
+
+  // User doesn't have financieel capability
+  if (!user?.can_access_financieel) {
+    return <AccessDenied navigate={navigate} />;
+  }
+
+  return children;
+}
+
 function ProtectedRoute({ children }) {
   const { isLoggedIn, isLoading } = useAuth();
 
@@ -243,13 +270,13 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Contributie route - restricted from VOG/Fair Play users
+          // Contributie route - requires financieel capability
           {
             path: 'contributie',
             element: (
-              <RestrictedRoute>
+              <FinancieelRoute>
                 <ContributieList />
-              </RestrictedRoute>
+              </FinancieelRoute>
             ),
           },
 
