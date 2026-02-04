@@ -92,3 +92,20 @@ export function useCurrentSeason() {
     },
   });
 }
+
+/**
+ * Hook to get count of discipline cases for the current season
+ * Used in navigation badge
+ */
+export function useDisciplineCasesCount() {
+  const { data: currentSeason, isLoading: isLoadingSeason } = useCurrentSeason();
+  const { data: cases, isLoading: isLoadingCases } = useDisciplineCases({
+    seizoen: currentSeason?.id || null,
+    enabled: !!currentSeason?.id,
+  });
+
+  return {
+    count: cases?.length || 0,
+    isLoading: isLoadingSeason || isLoadingCases,
+  };
+}

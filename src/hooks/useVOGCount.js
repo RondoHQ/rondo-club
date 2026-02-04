@@ -1,31 +1,66 @@
 import { useFilteredPeople } from '@/hooks/usePeople';
 
 /**
- * Hook for getting the count of volunteers needing VOG action.
- * Used in navigation badge to show how many volunteers need attention.
+ * Hook for getting VOG-related counts for the navigation badge.
  *
- * Filters:
- * - huidig-vrijwilliger = true (current volunteers only)
- * - No VOG date OR VOG date older than 3 years
+ * Returns three counts:
+ * - needsVog: Volunteers who need a new VOG (missing or expired)
+ * - emailSent: Volunteers who have received a VOG email (but don't have valid VOG yet)
+ * - justisSubmitted: Volunteers who have been submitted to Justis (but don't have valid VOG yet)
  *
- * @returns {Object} { count: number, isLoading: boolean }
+ * @returns {Object} { needsVog, emailSent, justisSubmitted, isLoading }
  */
 export function useVOGCount() {
-  const { data, isLoading } = useFilteredPeople(
+  // Count: needs VOG (no date or expired, no email sent yet)
+  const { data: needsVogData, isLoading: isLoadingNeedsVog } = useFilteredPeople(
     {
       page: 1,
-      perPage: 1, // Only need count, not full data
+      perPage: 1,
       huidigeVrijwilliger: '1',
       vogMissing: '1',
       vogOlderThanYears: 3,
+      vogEmailStatus: 'not_sent',
     },
     {
-      staleTime: 5 * 60 * 1000, // 5 minutes - badge doesn't need real-time updates
+      staleTime: 5 * 60 * 1000,
+    }
+  );
+
+  // Count: email sent (but VOG still missing/expired)
+  const { data: emailSentData, isLoading: isLoadingEmailSent } = useFilteredPeople(
+    {
+      page: 1,
+      perPage: 1,
+      huidigeVrijwilliger: '1',
+      vogMissing: '1',
+      vogOlderThanYears: 3,
+      vogEmailStatus: 'sent',
+      vogJustisStatus: 'not_submitted',
+    },
+    {
+      staleTime: 5 * 60 * 1000,
+    }
+  );
+
+  // Count: submitted to Justis (but VOG still missing/expired)
+  const { data: justisSubmittedData, isLoading: isLoadingJustis } = useFilteredPeople(
+    {
+      page: 1,
+      perPage: 1,
+      huidigeVrijwilliger: '1',
+      vogMissing: '1',
+      vogOlderThanYears: 3,
+      vogJustisStatus: 'submitted',
+    },
+    {
+      staleTime: 5 * 60 * 1000,
     }
   );
 
   return {
-    count: data?.total || 0,
-    isLoading,
+    needsVog: needsVogData?.total || 0,
+    emailSent: emailSentData?.total || 0,
+    justisSubmitted: justisSubmittedData?.total || 0,
+    isLoading: isLoadingNeedsVog || isLoadingEmailSent || isLoadingJustis,
   };
 }
