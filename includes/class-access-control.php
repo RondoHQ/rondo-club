@@ -61,6 +61,47 @@ class AccessControl {
 	}
 
 	/**
+	 * Check if user should only see volunteers (VOG-only users)
+	 *
+	 * VOG-only users (users with VOG capability but not Fair Play) should only
+	 * see people who are current volunteers (huidig-vrijwilliger=1).
+	 *
+	 * @param int|null $user_id User ID (optional, defaults to current user).
+	 * @return bool Whether the user should only see volunteers.
+	 */
+	public function should_filter_volunteers_only( $user_id = null ) {
+		if ( $user_id === null ) {
+			$user_id = get_current_user_id();
+		}
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		// Admins see everything
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return false;
+		}
+
+		// Check capabilities
+		$has_vog      = user_can( $user_id, 'vog' );
+		$has_fairplay = user_can( $user_id, 'fairplay' );
+
+		// Regular users (no special capabilities) see everything
+		if ( ! $has_vog && ! $has_fairplay ) {
+			return false;
+		}
+
+		// Fair Play users see all members
+		if ( $has_fairplay ) {
+			return false;
+		}
+
+		// VOG-only users see only volunteers
+		return true;
+	}
+
+	/**
 	 * Check if a user can access a post
 	 *
 	 * All approved users can access all posts. Only trashed posts are hidden.
@@ -142,9 +183,19 @@ class AccessControl {
 		if ( ! $this->is_user_approved() ) {
 			// Unapproved or not logged in - show nothing
 			$query->set( 'post__in', [ 0 ] );
+			return;
 		}
 
-		// Approved users see all posts - no filtering needed
+		// VOG-only users see only volunteers for person post type
+		if ( $post_type === 'person' && $this->should_filter_volunteers_only() ) {
+			$meta_query   = $query->get( 'meta_query' ) ?: [];
+			$meta_query[] = [
+				'key'     => 'huidig-vrijwilliger',
+				'value'   => '1',
+				'compare' => '=',
+			];
+			$query->set( 'meta_query', $meta_query );
+		}
 	}
 
 	/**
