@@ -412,12 +412,10 @@ function DashboardError({ error }) {
  * - In afwachting: total people on the VOG list
  */
 function VOGStatCard() {
-  const { needsVog, emailSent, justisSubmitted } = useVOGCount();
+  const { notSubmittedToJustis, submittedToJustis } = useVOGCount();
 
-  // People not yet in Justis (need to request)
-  const aanTeVragen = needsVog + emailSent;
-  // Total people on VOG list
-  const totaal = needsVog + emailSent + justisSubmitted;
+  // Total people needing VOG
+  const totaal = notSubmittedToJustis + submittedToJustis;
 
   return (
     <Link to="/vog" className="card p-4 hover:shadow-md dark:hover:shadow-gray-900/50 transition-shadow">
@@ -429,7 +427,7 @@ function VOGStatCard() {
       </div>
       <div className="flex items-center justify-between gap-4">
         <div className="text-center flex-1">
-          <p className="text-xl font-semibold dark:text-gray-50">{aanTeVragen}</p>
+          <p className="text-xl font-semibold dark:text-gray-50">{notSubmittedToJustis}</p>
           <p className="text-xs text-gray-400 dark:text-gray-500">Aan te vragen</p>
         </div>
         <div className="text-center flex-1 border-l border-gray-200 dark:border-gray-600 pl-4">
