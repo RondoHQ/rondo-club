@@ -211,9 +211,9 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
             autoFocus
           />
         ) : (
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-50 cursor-pointer">
+          <Link to={`/teams/${team.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-accent-600 dark:hover:text-accent-400">
             {getTeamName(team)}
-          </span>
+          </Link>
         )}
       </td>
       {listViewFields.map(field => (
