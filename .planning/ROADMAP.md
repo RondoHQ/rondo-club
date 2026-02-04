@@ -77,10 +77,10 @@ Plans:
   2. Backend count_open_todos() uses wp_count_posts() or wpdb COUNT query
   3. Backend count_awaiting_todos() uses wp_count_posts() or wpdb COUNT query
 
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 138-01: TBD (to be planned)
+- [ ] 138-01-PLAN.md — Optimize todo count functions with wp_count_posts()
 
 ## Progress
 
@@ -89,7 +89,7 @@ Plans:
 | 135. Fix Duplicate API Calls | 2/2 | ✓ Complete | 2026-02-04 |
 | 136. Modal Lazy Loading | 1/1 | ✓ Complete | 2026-02-04 |
 | 137. Query Deduplication | 1/1 | ✓ Complete | 2026-02-04 |
-| 138. Backend Query Optimization | 0/TBD | Not started | - |
+| 138. Backend Query Optimization | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-04*
