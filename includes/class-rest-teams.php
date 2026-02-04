@@ -202,15 +202,28 @@ class Teams extends Base {
 			);
 		}
 
-		// Get all people (if you can see the team, you can see who works there)
-		// Don't rely on meta_query with ACF repeater fields - filter in PHP instead
+		// Query people who have work_history data
+		// We filter at database level by checking for work_history count > 0
+		// This reduces the dataset before PHP filtering
 		$people = get_posts(
 			[
 				'post_type'      => 'person',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
+				'meta_query'     => [
+					[
+						'key'     => 'work_history',
+						'value'   => 0,
+						'compare' => '>',
+						'type'    => 'NUMERIC',
+					],
+				],
+				'fields'         => 'ids', // Only get IDs first for efficiency
 			]
 		);
+
+		// Convert IDs back to post objects for processing
+		$people = array_map( 'get_post', $people );
 
 		$current = [];
 		$former  = [];
