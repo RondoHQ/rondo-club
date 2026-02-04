@@ -63,7 +63,7 @@ const navigation = [
 
 function Sidebar({ mobile = false, onClose, stats }) {
   const { logoutUrl } = useAuth();
-  const { needsVog, emailSent, justisSubmitted } = useVOGCount();
+  const { notSubmittedToJustis, submittedToJustis } = useVOGCount();
   const { count: disciplineCasesCount } = useDisciplineCasesCount();
 
   // Fetch current user for capability check
@@ -83,10 +83,9 @@ function Sidebar({ mobile = false, onClose, stats }) {
       case 'Commissies': return stats?.total_commissies || null;
       case 'Datums': return stats?.total_dates || null;
       case 'VOG': {
-        // Show two counts: aan te vragen | in afwachting (total)
-        const aanTeVragen = needsVog + emailSent;
-        const totaal = needsVog + emailSent + justisSubmitted;
-        return totaal > 0 ? `${aanTeVragen} | ${totaal}` : null;
+        // Show two counts: not submitted to Justis | total needing VOG
+        const totaal = notSubmittedToJustis + submittedToJustis;
+        return totaal > 0 ? `${notSubmittedToJustis} | ${totaal}` : null;
       }
       case 'Tuchtzaken': return disciplineCasesCount > 0 ? disciplineCasesCount : null;
       default: return null;
