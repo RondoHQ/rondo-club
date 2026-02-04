@@ -134,14 +134,7 @@ function FairplayRoute({ children }) {
 
 function VOGRoute({ children }) {
   const navigate = useNavigate();
-  const { data: user, isLoading } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const response = await prmApi.getCurrentUser();
-      return response.data;
-    },
-    retry: false,
-  });
+  const { data: user, isLoading } = useCurrentUser();
 
   if (isLoading) {
     return (
@@ -161,14 +154,7 @@ function VOGRoute({ children }) {
 
 function RestrictedRoute({ children }) {
   const navigate = useNavigate();
-  const { data: user, isLoading } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const response = await prmApi.getCurrentUser();
-      return response.data;
-    },
-    retry: false,
-  });
+  const { data: user, isLoading } = useCurrentUser();
 
   if (isLoading) {
     return (
