@@ -988,8 +988,8 @@ function AppearanceTab() {
                   ${accentColorClasses[color]}
                   ${isSelected ? `ring-2 ring-offset-2 ${accentRingClasses[color]} dark:ring-offset-gray-800` : ''}
                 `}
-                title={color.charAt(0).toUpperCase() + color.slice(1)}
-                aria-label={`Selecteer ${color} accentkleur`}
+                title={color === 'awc' ? 'AWC' : color.charAt(0).toUpperCase() + color.slice(1)}
+                aria-label={`Selecteer ${color === 'awc' ? 'AWC' : color} accentkleur`}
               />
             );
           })}
@@ -997,7 +997,7 @@ function AppearanceTab() {
 
         {/* Current accent indicator */}
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          Geselecteerd: <span className="font-medium capitalize">{accentColor}</span>
+          Geselecteerd: <span className="font-medium">{accentColor === 'awc' ? 'AWC' : accentColor.charAt(0).toUpperCase() + accentColor.slice(1)}</span>
         </p>
       </div>
 
