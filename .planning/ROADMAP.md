@@ -25,10 +25,11 @@ Eliminate unnecessary API calls and optimize dashboard load time by fixing dupli
   2. Page transitions (People -> Dashboard -> Teams) show single API call per endpoint
   3. React Query request waterfall shows deduplication working (concurrent requests merged)
 
-**Plans:** 1 plan
+**Plans:** 2 plans
 
 Plans:
-- [ ] 135-01-PLAN.md - Optimize QueryClient defaults (add refetchOnWindowFocus: false)
+- [x] 135-01-PLAN.md - Optimize QueryClient defaults (add refetchOnWindowFocus: false)
+- [ ] 135-02-PLAN.md - Migrate to createBrowserRouter data router pattern (gap closure)
 
 ### Phase 136: Modal Lazy Loading
 **Goal**: Modals with people selectors do not load data until opened
