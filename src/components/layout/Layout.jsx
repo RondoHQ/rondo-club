@@ -41,6 +41,9 @@ import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { APP_NAME } from '@/constants/app';
+
+// Get site name from WordPress config or fall back to APP_NAME
+const getSiteName = () => window.stadionConfig?.siteName || APP_NAME;
 import { useVOGCount } from '@/hooks/useVOGCount';
 import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 
@@ -95,7 +98,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
         <Link to="/" className="flex items-center gap-2 text-xl font-bold text-accent-600 dark:text-accent-400">
           <StadiumIcon className="w-5 h-5" />
-          {APP_NAME}
+          {getSiteName()}
         </Link>
         {mobile && (
           <button onClick={onClose} className="p-2 -mr-2 dark:text-gray-300">
