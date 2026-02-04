@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, Outlet } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useVersionCheck } from '@/hooks/useVersionCheck';
@@ -151,7 +151,7 @@ function FairplayRoute({ children }) {
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -159,12 +159,25 @@ function ProtectedRoute({ children }) {
       </div>
     );
   }
-  
+
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return <ApprovalCheck>{children}</ApprovalCheck>;
+}
+
+// TEST B: Layout route component using Outlet instead of nested Routes
+function ProtectedLayout() {
+  return (
+    <ProtectedRoute>
+      <Layout>
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
+      </Layout>
+    </ProtectedRoute>
+  );
 }
 
 function UpdateBanner() {
@@ -209,70 +222,59 @@ function App() {
           </Suspense>
         } />
 
-      {/* Protected routes */}
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
+        {/* TEST B: Protected routes using layout route pattern (no nested Routes) */}
+        <Route element={<ProtectedLayout />}>
+          <Route path="/" element={<Dashboard />} />
 
-                  {/* People routes */}
-                  <Route path="/people" element={<PeopleList />} />
-                  <Route path="/people/:id/family-tree" element={<FamilyTree />} />
-                  <Route path="/people/:id" element={<PersonDetail />} />
+          {/* People routes */}
+          <Route path="/people" element={<PeopleList />} />
+          <Route path="/people/:id/family-tree" element={<FamilyTree />} />
+          <Route path="/people/:id" element={<PersonDetail />} />
 
-                  {/* VOG route */}
-                  <Route path="/vog" element={<VOGList />} />
+          {/* VOG route */}
+          <Route path="/vog" element={<VOGList />} />
 
-                  {/* Contributie route */}
-                  <Route path="/contributie" element={<ContributieList />} />
+          {/* Contributie route */}
+          <Route path="/contributie" element={<ContributieList />} />
 
-                  {/* Discipline Cases route - requires fairplay capability */}
-                  <Route path="/tuchtzaken" element={
-                    <FairplayRoute>
-                      <DisciplineCasesList />
-                    </FairplayRoute>
-                  } />
+          {/* Discipline Cases route - requires fairplay capability */}
+          <Route path="/tuchtzaken" element={
+            <FairplayRoute>
+              <DisciplineCasesList />
+            </FairplayRoute>
+          } />
 
-                  {/* Teams routes */}
-                  <Route path="/teams" element={<TeamsList />} />
-                  <Route path="/teams/:id" element={<TeamDetail />} />
+          {/* Teams routes */}
+          <Route path="/teams" element={<TeamsList />} />
+          <Route path="/teams/:id" element={<TeamDetail />} />
 
-                  {/* Commissies routes */}
-                  <Route path="/commissies" element={<CommissiesList />} />
-                  <Route path="/commissies/:id" element={<CommissieDetail />} />
+          {/* Commissies routes */}
+          <Route path="/commissies" element={<CommissiesList />} />
+          <Route path="/commissies/:id" element={<CommissieDetail />} />
 
-                  {/* Dates routes */}
-                  <Route path="/dates" element={<DatesList />} />
+          {/* Dates routes */}
+          <Route path="/dates" element={<DatesList />} />
 
-                  {/* Todos routes */}
-                  <Route path="/todos" element={<TodosList />} />
+          {/* Todos routes */}
+          <Route path="/todos" element={<TodosList />} />
 
-                  {/* Feedback routes */}
-                  <Route path="/feedback" element={<FeedbackList />} />
-                  <Route path="/feedback/:id" element={<FeedbackDetail />} />
+          {/* Feedback routes */}
+          <Route path="/feedback" element={<FeedbackList />} />
+          <Route path="/feedback/:id" element={<FeedbackDetail />} />
 
-                  {/* Settings */}
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/settings/:tab" element={<Settings />} />
-                  <Route path="/settings/:tab/:subtab" element={<Settings />} />
-                  <Route path="/settings/relationship-types" element={<RelationshipTypes />} />
-                  <Route path="/settings/labels" element={<Labels />} />
-                  <Route path="/settings/user-approval" element={<UserApproval />} />
-                  <Route path="/settings/custom-fields" element={<CustomFields />} />
-                  <Route path="/settings/feedback" element={<FeedbackManagement />} />
+          {/* Settings */}
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/:tab" element={<Settings />} />
+          <Route path="/settings/:tab/:subtab" element={<Settings />} />
+          <Route path="/settings/relationship-types" element={<RelationshipTypes />} />
+          <Route path="/settings/labels" element={<Labels />} />
+          <Route path="/settings/user-approval" element={<UserApproval />} />
+          <Route path="/settings/custom-fields" element={<CustomFields />} />
+          <Route path="/settings/feedback" element={<FeedbackManagement />} />
 
-                  {/* Fallback */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </Suspense>
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
       </Routes>
     </div>
   );
