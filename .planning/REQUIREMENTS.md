@@ -15,9 +15,9 @@
 
 ### User Experience
 
-- [ ] **UX-01**: Tasks section visible to all users in navigation (not capability-gated)
-- [ ] **UX-02**: Persistent note in Tasks UI indicating tasks are personal
-- [ ] **UX-03**: Note displayed when creating a new task that it will only be visible to the creator
+- [x] **UX-01**: Tasks section visible to all users in navigation (not capability-gated)
+- [x] **UX-02**: Persistent note in Tasks UI indicating tasks are personal
+- [x] **UX-03**: Note displayed when creating a new task that it will only be visible to the creator
 
 ### Migration
 
@@ -45,9 +45,9 @@
 | TASK-03 | Phase 139 | Complete |
 | TASK-04 | Phase 139 | Complete |
 | TASK-05 | Phase 139 | Complete |
-| UX-01 | Phase 140 | Pending |
-| UX-02 | Phase 140 | Pending |
-| UX-03 | Phase 140 | Pending |
+| UX-01 | Phase 140 | Complete |
+| UX-02 | Phase 140 | Complete |
+| UX-03 | Phase 140 | Complete |
 | MIG-01 | Phase 139 | Complete |
 | MIG-02 | Phase 139 | Complete |
 
@@ -58,4 +58,4 @@
 
 ---
 *Requirements defined: 2026-02-04*
-*Last updated: 2026-02-04 after phase 139 completion*
+*Last updated: 2026-02-04 after phase 140 completion*

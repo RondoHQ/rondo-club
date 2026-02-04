@@ -11,7 +11,7 @@ Transform the task system from shared visibility to personal isolation. Each use
 - Integer phases (139, 140): Planned milestone work
 
 - [x] **Phase 139: Backend & Migration** - Filter tasks by post_author, migrate existing tasks
-- [ ] **Phase 140: Frontend Messaging** - Add personal task indicators to UI
+- [x] **Phase 140: Frontend Messaging** - Add personal task indicators to UI
 
 ## Phase Details
 
@@ -41,7 +41,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 140-01-PLAN.md — Frontend personal task indicators (navigation + info messages)
+- [x] 140-01-PLAN.md — Frontend personal task indicators (navigation + info messages)
 
 ## Progress
 
@@ -51,7 +51,7 @@ Phases execute in numeric order: 139 -> 140
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 139. Backend & Migration | 1/1 | ✓ Complete | 2026-02-04 |
-| 140. Frontend Messaging | 0/1 | Not started | - |
+| 140. Frontend Messaging | 1/1 | ✓ Complete | 2026-02-04 |
 
 ---
 *Roadmap created: 2026-02-04*
