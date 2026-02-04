@@ -2316,6 +2316,7 @@ class Api extends Base {
 				'is_admin'            => $is_admin,
 				'is_approved'         => $is_approved,
 				'can_access_fairplay' => current_user_can( 'fairplay' ),
+				'can_access_vog'      => current_user_can( 'vog' ),
 				'profile_url'         => $profile_url,
 				'admin_url'           => $admin_url,
 			]

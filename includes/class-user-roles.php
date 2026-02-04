@@ -13,10 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class UserRoles {
 
-	const ROLE_NAME         = 'stadion_user';
-	const ROLE_DISPLAY_NAME = 'Stadion User';
-	const APPROVAL_META_KEY = 'stadion_user_approved';
+	const ROLE_NAME           = 'stadion_user';
+	const ROLE_DISPLAY_NAME   = 'Stadion User';
+	const APPROVAL_META_KEY   = 'stadion_user_approved';
 	const FAIRPLAY_CAPABILITY = 'fairplay';
+	const VOG_CAPABILITY      = 'vog';
 
 	public function __construct() {
 		// Register role on theme activation
@@ -75,10 +76,11 @@ class UserRoles {
 			$capabilities
 		);
 
-		// Add fairplay capability to administrator role
+		// Add fairplay and VOG capabilities to administrator role
 		$admin_role = get_role( 'administrator' );
 		if ( $admin_role ) {
 			$admin_role->add_cap( self::FAIRPLAY_CAPABILITY );
+			$admin_role->add_cap( self::VOG_CAPABILITY );
 		}
 	}
 
@@ -86,10 +88,11 @@ class UserRoles {
 	 * Remove the Stadion User role
 	 */
 	public function remove_role() {
-		// Remove fairplay capability from administrator role
+		// Remove fairplay and VOG capabilities from administrator role
 		$admin_role = get_role( 'administrator' );
 		if ( $admin_role ) {
 			$admin_role->remove_cap( self::FAIRPLAY_CAPABILITY );
+			$admin_role->remove_cap( self::VOG_CAPABILITY );
 		}
 
 		// Get all users with this role
