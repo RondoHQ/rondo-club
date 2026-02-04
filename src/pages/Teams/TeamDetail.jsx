@@ -324,7 +324,7 @@ export default function TeamDetail() {
         </div>
       )}
       
-      {/* Members section - 3 columns: Spelers, Staf, Voormalig spelers */}
+      {/* Members section - 3 columns: Staf, Spelers, Custom Fields */}
       {(() => {
         // Player roles that identify someone as a player vs staff
         const playerRoles = ['Aanvaller', 'Verdediger', 'Keeper', 'Middenvelder', 'Teamspeler', 'Speler', 'Champions league', 'Zondag recranten', 'Zaterdag recreanten'];
@@ -334,50 +334,13 @@ export default function TeamDetail() {
         const players = employees?.current?.filter(p => isPlayerRole(p.job_title)) || [];
         const staff = employees?.current?.filter(p => !isPlayerRole(p.job_title)) || [];
 
-        // Filter former members to only show former players
-        const formerPlayers = employees?.former?.filter(p => isPlayerRole(p.job_title)) || [];
-
         // Only show the section if there are any members
-        const hasAnyMembers = players.length > 0 || staff.length > 0 || formerPlayers.length > 0;
+        const hasAnyMembers = players.length > 0 || staff.length > 0;
 
         if (!hasAnyMembers) return null;
 
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Spelers */}
-            <div className="card p-6">
-              <h2 className="font-semibold mb-4 flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                Spelers
-              </h2>
-
-              {players.length > 0 ? (
-                <div className="space-y-2">
-                  {players.map((person) => (
-                    <Link
-                      key={person.id}
-                      to={`/people/${person.id}`}
-                      className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      <PersonAvatar
-                        thumbnail={person.thumbnail}
-                        name={person.name}
-                        size="md"
-                      />
-                      <div className="ml-2">
-                        <p className="text-sm font-medium">{person.name}</p>
-                        {person.job_title && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{person.job_title}</p>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">Geen spelers.</p>
-              )}
-            </div>
-
             {/* Staf */}
             <div className="card p-6">
               <h2 className="font-semibold mb-4 flex items-center">
@@ -412,16 +375,16 @@ export default function TeamDetail() {
               )}
             </div>
 
-            {/* Voormalig spelers */}
+            {/* Spelers */}
             <div className="card p-6">
               <h2 className="font-semibold mb-4 flex items-center">
                 <Users className="w-5 h-5 mr-2" />
-                Voormalig spelers
+                Spelers
               </h2>
 
-              {formerPlayers.length > 0 ? (
+              {players.length > 0 ? (
                 <div className="space-y-2">
-                  {formerPlayers.map((person) => (
+                  {players.map((person) => (
                     <Link
                       key={person.id}
                       to={`/people/${person.id}`}
@@ -431,10 +394,9 @@ export default function TeamDetail() {
                         thumbnail={person.thumbnail}
                         name={person.name}
                         size="md"
-                        className="opacity-75"
                       />
                       <div className="ml-2">
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{person.name}</p>
+                        <p className="text-sm font-medium">{person.name}</p>
                         {person.job_title && (
                           <p className="text-xs text-gray-500 dark:text-gray-400">{person.job_title}</p>
                         )}
@@ -443,8 +405,22 @@ export default function TeamDetail() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">Geen voormalig spelers.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Geen spelers.</p>
               )}
+            </div>
+
+            {/* Custom Fields */}
+            <div className="card p-6">
+              <CustomFieldsSection
+                postType="team"
+                postId={parseInt(id)}
+                acfData={team?.acf}
+                onUpdate={(newAcfValues) => {
+                  const acfData = sanitizeTeamAcf(team?.acf, newAcfValues);
+                  updateTeam.mutateAsync({ acf: acfData });
+                }}
+                isUpdating={updateTeam.isPending}
+              />
             </div>
           </div>
         );
@@ -562,18 +538,6 @@ export default function TeamDetail() {
           </div>
         </div>
       )}
-
-      {/* Custom Fields */}
-      <CustomFieldsSection
-        postType="team"
-        postId={parseInt(id)}
-        acfData={team?.acf}
-        onUpdate={(newAcfValues) => {
-          const acfData = sanitizeTeamAcf(team?.acf, newAcfValues);
-          updateTeam.mutateAsync({ acf: acfData });
-        }}
-        isUpdating={updateTeam.isPending}
-      />
 
       <ShareModal
         isOpen={showShareModal}
