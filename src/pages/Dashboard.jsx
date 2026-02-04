@@ -13,6 +13,7 @@ import {
   CalendarClock,
   ChevronLeft,
   ChevronRight,
+  FileCheck,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -34,6 +35,7 @@ import {
 } from '@/utils/timeline.js';
 import PersonAvatar from '@/components/PersonAvatar.jsx';
 import DashboardCard from '@/components/DashboardCard.jsx';
+import { useVOGCount } from '@/hooks/useVOGCount';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal.jsx';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal.jsx';
 import DashboardCustomizeModal from '@/components/DashboardCustomizeModal.jsx';
@@ -402,6 +404,38 @@ function DashboardError({ error }) {
 }
 
 /**
+ * VOG statistics card showing the three VOG status counts.
+ */
+function VOGStatCard() {
+  const { needsVog, emailSent, justisSubmitted } = useVOGCount();
+
+  return (
+    <Link to="/vog" className="card p-4 hover:shadow-md dark:hover:shadow-gray-900/50 transition-shadow">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">VOG Status</p>
+        <div className="p-2 bg-accent-50 dark:bg-gray-700 rounded-lg">
+          <FileCheck className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-center flex-1">
+          <p className="text-xl font-semibold dark:text-gray-50">{needsVog}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Nodig</p>
+        </div>
+        <div className="text-center flex-1 border-l border-r border-gray-200 dark:border-gray-600">
+          <p className="text-xl font-semibold dark:text-gray-50">{emailSent}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Email</p>
+        </div>
+        <div className="text-center flex-1">
+          <p className="text-xl font-semibold dark:text-gray-50">{justisSubmitted}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Justis</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/**
  * Stats row component for the dashboard header.
  */
 function StatsRow({ stats }) {
@@ -409,7 +443,7 @@ function StatsRow({ stats }) {
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       <StatCard title="Totaal leden" value={stats?.total_people || 0} icon={Users} href="/people" />
       <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
-      <StatCard title="Herinneringen" value={stats?.total_dates || 0} icon={Calendar} href="/dates" />
+      <VOGStatCard />
       <StatCard title="Open taken" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
       <StatCard title="In afwachting" value={stats?.awaiting_todos_count || 0} icon={Clock} href="/todos?status=awaiting" />
     </div>
