@@ -1,8 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { prmApi } from '@/api/client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import Layout from '@/components/layout/Layout';
 import { AlertCircle, Shield } from 'lucide-react';
 import App from './App';
@@ -41,14 +40,7 @@ const PageLoader = () => (
 );
 
 function ApprovalCheck({ children }) {
-  const { data: user, isLoading, error } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const response = await prmApi.getCurrentUser();
-      return response.data;
-    },
-    retry: false, // Don't retry on error
-  });
+  const { data: user, isLoading, error } = useCurrentUser();
 
   // Always render children, hide with CSS while loading
   const showApprovalError = !isLoading && (error || !user || (!user.is_admin && !user.is_approved));
@@ -94,14 +86,7 @@ function ApprovalCheck({ children }) {
 
 function FairplayRoute({ children }) {
   const navigate = useNavigate();
-  const { data: user, isLoading } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const response = await prmApi.getCurrentUser();
-      return response.data;
-    },
-    retry: false,
-  });
+  const { data: user, isLoading } = useCurrentUser();
 
   if (isLoading) {
     return (
