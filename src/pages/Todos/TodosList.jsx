@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { CheckSquare, Square, Clock, Plus } from 'lucide-react';
+import { CheckSquare, Square, Clock, Plus, Info } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTodos, useUpdateTodo, useDeleteTodo } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
@@ -214,6 +214,14 @@ export default function TodosList() {
             Taak toevoegen
           </button>
         </div>
+      </div>
+
+      {/* Personal tasks info message */}
+      <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm dark:bg-blue-900/30 dark:border-blue-700">
+        <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+        <p className="text-blue-700 dark:text-blue-300">
+          Taken zijn alleen zichtbaar voor jou
+        </p>
       </div>
 
       {/* Filter controls - now includes Awaiting as a primary tab */}
