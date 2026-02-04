@@ -13,7 +13,7 @@ export default defineConfig({
         name: 'Stadion',
         short_name: 'Stadion',
         description: 'Club data management',
-        theme_color: '#f97316',
+        theme_color: '#006935',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'any',

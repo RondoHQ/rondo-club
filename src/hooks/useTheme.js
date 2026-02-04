@@ -6,14 +6,15 @@ import { useState, useEffect, useCallback } from 'react';
 const COLOR_SCHEMES = ['light', 'dark', 'system'];
 
 /**
- * Valid accent color values
+ * Valid accent color values (awc is default)
  */
-const ACCENT_COLORS = ['orange', 'teal', 'indigo', 'emerald', 'violet', 'pink', 'fuchsia', 'rose'];
+const ACCENT_COLORS = ['awc', 'orange', 'teal', 'indigo', 'emerald', 'violet', 'pink', 'fuchsia', 'rose'];
 
 /**
- * Accent color hex values (Tailwind -500 values)
+ * Accent color hex values (used for favicon and light mode theme-color)
  */
 const ACCENT_HEX = {
+  awc: '#006935',
   orange: '#f97316',
   teal: '#14b8a6',
   indigo: '#6366f1',
@@ -25,9 +26,10 @@ const ACCENT_HEX = {
 };
 
 /**
- * Accent color hex values for dark mode (Tailwind -600 values)
+ * Accent color hex values for dark mode
  */
 const ACCENT_HEX_DARK = {
+  awc: '#22c560',
   orange: '#ea580c',
   teal: '#0d9488',
   indigo: '#4f46e5',
@@ -48,7 +50,7 @@ const STORAGE_KEY = 'theme-preferences';
  */
 const DEFAULT_PREFERENCES = {
   colorScheme: 'system',
-  accentColor: 'orange',
+  accentColor: 'awc',
 };
 
 /**
