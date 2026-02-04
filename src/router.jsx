@@ -274,15 +274,8 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Todos routes - restricted from VOG/Fair Play users
-          {
-            path: 'todos',
-            element: (
-              <RestrictedRoute>
-                <TodosList />
-              </RestrictedRoute>
-            ),
-          },
+          // Todos routes - accessible to all users (tasks are user-isolated at backend)
+          { path: 'todos', element: <TodosList /> },
 
           // Feedback routes - restricted from VOG/Fair Play users
           {
