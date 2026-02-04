@@ -22,13 +22,13 @@ Eliminate unnecessary API calls and optimize dashboard load time by fixing dupli
 
 **Success Criteria** (what must be TRUE):
   1. Dashboard page load shows one request per endpoint in network panel (not duplicate request IDs)
-  2. Page transitions (People → Dashboard → Teams) show single API call per endpoint
+  2. Page transitions (People -> Dashboard -> Teams) show single API call per endpoint
   3. React Query request waterfall shows deduplication working (concurrent requests merged)
 
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 135-01: TBD (to be planned)
+- [ ] 135-01-PLAN.md - Optimize QueryClient defaults (add refetchOnWindowFocus: false)
 
 ### Phase 136: Modal Lazy Loading
 **Goal**: Modals with people selectors do not load data until opened
@@ -85,7 +85,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 135. Fix Duplicate API Calls | 0/TBD | Not started | - |
+| 135. Fix Duplicate API Calls | 0/1 | Planned | - |
 | 136. Modal Lazy Loading | 0/TBD | Not started | - |
 | 137. Query Deduplication | 0/TBD | Not started | - |
 | 138. Backend Query Optimization | 0/TBD | Not started | - |
