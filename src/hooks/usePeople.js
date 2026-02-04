@@ -47,7 +47,9 @@ function transformPerson(person) {
 }
 
 // Hooks
-export function usePeople(params = {}) {
+export function usePeople(params = {}, options = {}) {
+  const { enabled = true } = options;
+
   return useQuery({
     queryKey: peopleKeys.list(params),
     queryFn: async () => {
@@ -82,6 +84,7 @@ export function usePeople(params = {}) {
 
       return allPeople;
     },
+    enabled,
   });
 }
 
