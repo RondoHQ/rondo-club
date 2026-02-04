@@ -932,19 +932,20 @@ add_filter( 'acf/update_value/name=datum-vog', 'stadion_reset_vog_tracking_on_da
  */
 function stadion_login_styles() {
 	$favicon_url = STADION_THEME_URL . '/favicon.svg';
+	$site_name   = get_bloginfo( 'name' );
 	?>
 	<style type="text/css">
-		/* Background */
+		/* Background - AWC Green gradient */
 		body.login {
-			background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%);
+			background: linear-gradient(135deg, #f0fdf5 0%, #dcfce8 50%, #bbf7d1 100%);
 			font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 		}
-		
+
 		/* Login form container */
 		#login {
 			padding: 8% 0 0;
 		}
-		
+
 		/* Logo */
 		#login h1 a {
 			background-image: url('<?php echo esc_url( $favicon_url ); ?>');
@@ -955,52 +956,52 @@ function stadion_login_styles() {
 			height: 84px;
 			margin-bottom: 20px;
 		}
-		
+
 		/* App name below logo */
 		#login h1::after {
-			content: 'Stadion';
+			content: '<?php echo esc_js( $site_name ); ?>';
 			display: block;
 			text-align: center;
 			font-size: 28px;
 			font-weight: 600;
-			color: #92400e;
+			color: #004924;
 			margin-top: 10px;
 			letter-spacing: -0.5px;
 		}
-		
+
 		/* Form box */
 		.login form {
 			background: #ffffff;
-			border: 1px solid #fde68a;
+			border: 1px solid #bbf7d1;
 			border-radius: 12px;
-			box-shadow: 0 10px 25px rgba(180, 83, 9, 0.1);
+			box-shadow: 0 10px 25px rgba(0, 105, 53, 0.1);
 			padding: 26px 24px;
 		}
-		
+
 		/* Input fields */
 		.login input[type="text"],
 		.login input[type="password"] {
-			border: 1px solid #fde68a;
+			border: 1px solid #bbf7d1;
 			border-radius: 8px;
 			padding: 10px 14px;
 			font-size: 15px;
 			transition: border-color 0.2s, box-shadow 0.2s;
 		}
-		
+
 		.login input[type="text"]:focus,
 		.login input[type="password"]:focus {
-			border-color: #d97706;
-			box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+			border-color: #006935;
+			box-shadow: 0 0 0 3px rgba(0, 105, 53, 0.15);
 			outline: none;
 		}
-		
+
 		/* Labels */
 		.login label {
-			color: #78350f;
+			color: #003d1e;
 			font-weight: 500;
 			font-size: 14px;
 		}
-		
+
 		/* Submit button container */
 		.login .submit {
 			margin-top: 20px 0 !important;
@@ -1010,10 +1011,10 @@ function stadion_login_styles() {
 		.login .button-primary,
 		.login #wp-submit,
 		.wp-core-ui .button-primary {
-			background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+			background: linear-gradient(135deg, #22c560 0%, #006935 100%) !important;
 			border: none !important;
 			border-radius: 8px !important;
-			box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3) !important;
+			box-shadow: 0 4px 12px rgba(0, 105, 53, 0.3) !important;
 			color: #ffffff !important;
 			font-weight: 600 !important;
 			font-size: 15px !important;
@@ -1023,69 +1024,69 @@ function stadion_login_styles() {
 			width: 100%;
 			height: auto !important;
 		}
-		
+
 		.login .button-primary:hover,
 		.login .button-primary:focus,
 		.login #wp-submit:hover,
 		.login #wp-submit:focus,
 		.wp-core-ui .button-primary:hover,
 		.wp-core-ui .button-primary:focus {
-			background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
-			box-shadow: 0 6px 16px rgba(180, 83, 9, 0.4) !important;
+			background: linear-gradient(135deg, #006935 0%, #004924 100%) !important;
+			box-shadow: 0 6px 16px rgba(0, 73, 36, 0.4) !important;
 			border-color: transparent !important;
 		}
-		
+
 		.login .button-primary:active,
 		.login #wp-submit:active {
 			transform: translateY(1px);
 		}
-		
+
 		/* Remember me checkbox */
 		.login .forgetmenot {
 			margin-top: 10px;
 		}
-		
+
 		.login input[type="checkbox"] {
-			accent-color: #d97706;
+			accent-color: #006935;
 		}
-		
+
 		/* Links */
 		.login #nav a,
 		.login #backtoblog a {
-			color: #b45309;
+			color: #005a2d;
 			text-decoration: none;
 			font-size: 13px;
 			transition: color 0.2s;
 		}
-		
+
 		.login #nav a:hover,
 		.login #backtoblog a:hover {
-			color: #92400e;
+			color: #003d1e;
 			text-decoration: underline;
 		}
-		
+
 		/* Error/message boxes */
 		.login .message,
 		.login .success {
-			border-left-color: #d97706;
-			background: #fffbeb;
+			border-left-color: #006935;
+			background: #f0fdf5;
 		}
-		
+
 		/* Notice info message styling */
 		.login .notice.notice-info.message {
-			border-left-color: #d97706 !important;
+			border-left-color: #006935 !important;
 			margin-top: 20px !important;
 		}
-		
+
 		.login #login_error {
 			border-left-color: #dc2626;
 		}
-		
+
 		/* Privacy policy link */
 		.login .privacy-policy-page-link a {
-			color: #b45309;
+			color: #005a2d;
 		}
-		
+
 		/* Hide "Go to site" for cleaner look */
 		#backtoblog {
 			display: none;
@@ -1117,7 +1118,7 @@ add_filter( 'login_headerurl', 'stadion_login_logo_url' );
  * Change login logo title
  */
 function stadion_login_logo_title() {
-	return 'Stadion';
+	return get_bloginfo( 'name' );
 }
 add_filter( 'login_headertext', 'stadion_login_logo_title' );
 
