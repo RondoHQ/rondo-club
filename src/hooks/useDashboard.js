@@ -16,9 +16,13 @@ export function useDashboard() {
   return useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
+      console.log('[useDashboard] Fetching at', new Date().toISOString());
       const response = await prmApi.getDashboard();
       return response.data;
     },
+    // Explicitly set to ensure these options are applied
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnMount: false,
   });
 }
 
