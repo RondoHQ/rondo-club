@@ -1,6 +1,10 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Coins, AlertTriangle, Users, Calendar } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Coins, AlertTriangle, Users, Calendar, Gavel } from 'lucide-react';
 import { usePersonFee } from '@/hooks/useFees';
+import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
+import { prmApi } from '@/api/client';
 import { formatCurrency, formatPercentage, getCategoryLabel } from '@/utils/formatters';
 
 /**
@@ -8,6 +12,43 @@ import { formatCurrency, formatPercentage, getCategoryLabel } from '@/utils/form
  */
 export default function FinancesCard({ personId }) {
   const { data: feeData, isLoading } = usePersonFee(personId);
+
+  // Fetch current user for fairplay capability check
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const response = await prmApi.getCurrentUser();
+      return response.data;
+    },
+  });
+
+  const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
+
+  // Fetch discipline cases (only if user has fairplay access)
+  const { data: disciplineCases } = usePersonDisciplineCases(personId, {
+    enabled: canAccessFairplay,
+  });
+
+  // Calculate discipline fee totals
+  const disciplineTotals = useMemo(() => {
+    if (!disciplineCases || disciplineCases.length === 0) {
+      return { doorbelast: 0, notDoorbelast: 0 };
+    }
+    return disciplineCases.reduce(
+      (acc, dc) => {
+        const fee = parseFloat(dc.acf?.administrative_fee) || 0;
+        if (fee > 0) {
+          if (dc.acf?.is_charged) {
+            acc.doorbelast += fee;
+          } else {
+            acc.notDoorbelast += fee;
+          }
+        }
+        return acc;
+      },
+      { doorbelast: 0, notDoorbelast: 0 }
+    );
+  }, [disciplineCases]);
 
   // Don't render if loading or no data
   if (isLoading) {
@@ -125,6 +166,19 @@ export default function FinancesCard({ personId }) {
           </span>
         </div>
 
+        {/* Discipline Fees - Doorbelast (only for fairplay users with doorbelast fees) */}
+        {canAccessFairplay && disciplineTotals.doorbelast > 0 && (
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <Gavel className="w-3.5 h-3.5" />
+              Tuchtzaken (doorbelast)
+            </span>
+            <span className="text-sm font-medium">
+              {formatCurrency(disciplineTotals.doorbelast, 2)}
+            </span>
+          </div>
+        )}
+
         {/* Nikki Data */}
         {hasNikkiData && (
           <>
@@ -143,6 +197,19 @@ export default function FinancesCard({ personId }) {
               </span>
             </div>
           </>
+        )}
+
+        {/* Discipline Fees - Not Doorbelast (only for fairplay users with non-doorbelast fees) */}
+        {canAccessFairplay && disciplineTotals.notDoorbelast > 0 && (
+          <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
+            <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <Gavel className="w-3.5 h-3.5" />
+              Tuchtzaken (niet doorbelast)
+            </span>
+            <span className="text-sm text-amber-600 dark:text-amber-400">
+              {formatCurrency(disciplineTotals.notDoorbelast, 2)}
+            </span>
+          </div>
         )}
       </div>
     </div>
