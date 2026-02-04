@@ -42,6 +42,7 @@ import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { APP_NAME } from '@/constants/app';
 import { useVOGCount } from '@/hooks/useVOGCount';
+import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -59,7 +60,8 @@ const navigation = [
 
 function Sidebar({ mobile = false, onClose, stats }) {
   const { logoutUrl } = useAuth();
-  const { count: vogCount } = useVOGCount();
+  const { needsVog, emailSent, justisSubmitted } = useVOGCount();
+  const { count: disciplineCasesCount } = useDisciplineCasesCount();
 
   // Fetch current user for capability check
   const { data: currentUser } = useCurrentUser();
@@ -72,13 +74,17 @@ function Sidebar({ mobile = false, onClose, stats }) {
 
   // Map navigation items to their counts
   const getCounts = (name) => {
-    if (!stats) return null;
     switch (name) {
-      case 'Leden': return stats.total_people;
-      case 'Teams': return stats.total_teams;
-      case 'Commissies': return stats.total_commissies;
-      case 'Datums': return stats.total_dates;
-      case 'VOG': return vogCount > 0 ? vogCount : null;
+      case 'Leden': return stats?.total_people || null;
+      case 'Teams': return stats?.total_teams || null;
+      case 'Commissies': return stats?.total_commissies || null;
+      case 'Datums': return stats?.total_dates || null;
+      case 'VOG': {
+        // Show three-part count: needs VOG | email sent | justis submitted
+        const hasAny = needsVog > 0 || emailSent > 0 || justisSubmitted > 0;
+        return hasAny ? `${needsVog} | ${emailSent} | ${justisSubmitted}` : null;
+      }
+      case 'Tuchtzaken': return disciplineCasesCount > 0 ? disciplineCasesCount : null;
       default: return null;
     }
   };
