@@ -263,23 +263,9 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Teams routes - requires fairplay capability
-          {
-            path: 'teams',
-            element: (
-              <FairplayRoute>
-                <TeamsList />
-              </FairplayRoute>
-            ),
-          },
-          {
-            path: 'teams/:id',
-            element: (
-              <FairplayRoute>
-                <TeamDetail />
-              </FairplayRoute>
-            ),
-          },
+          // Teams routes
+          { path: 'teams', element: <TeamsList /> },
+          { path: 'teams/:id', element: <TeamDetail /> },
 
           // Commissies routes
           { path: 'commissies', element: <CommissiesList /> },
