@@ -1,5 +1,6 @@
 import { ShieldCheck, ShieldAlert, ShieldX, Mail, FileCheck } from 'lucide-react';
 import { format } from '@/utils/dateFormat';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 /**
  * Calculate VOG status based on date
@@ -27,6 +28,13 @@ function calculateVogStatus(vogDate) {
  * Shows VOG information only for current volunteers
  */
 export default function VOGCard({ acfData }) {
+  const { data: currentUser } = useCurrentUser();
+
+  // Hide card if user doesn't have VOG capability
+  if (!currentUser?.can_access_vog) {
+    return null;
+  }
+
   // Check if person is a current volunteer (auto-calculated field)
   const isVolunteer = acfData?.['huidig-vrijwilliger'] === true || acfData?.['huidig-vrijwilliger'] === '1';
 
