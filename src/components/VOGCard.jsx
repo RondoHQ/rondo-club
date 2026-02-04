@@ -4,7 +4,7 @@ import { format } from '@/utils/dateFormat';
 /**
  * Calculate VOG status based on date
  * @param {string|null} vogDate - The VOG date in ISO format
- * @returns {Object|null} Status object with status, label, and color
+ * @returns {Object} Status object with status, label, and color
  */
 function calculateVogStatus(vogDate) {
   if (!vogDate) {
@@ -17,9 +17,9 @@ function calculateVogStatus(vogDate) {
 
   if (vogDateObj >= threeYearsAgo) {
     return { status: 'valid', label: 'VOG geldig', color: 'green' };
-  } else {
-    return { status: 'expired', label: 'VOG verlopen', color: 'orange' };
   }
+
+  return { status: 'expired', label: 'VOG verlopen', color: 'orange' };
 }
 
 /**
@@ -43,11 +43,17 @@ export default function VOGCard({ acfData }) {
   const justisSubmittedDate = acfData?.vog_justis_submitted_date;
 
   // Determine which icon to show
-  const StatusIcon = vogStatus.status === 'valid'
-    ? ShieldCheck
-    : vogStatus.status === 'expired'
-      ? ShieldAlert
-      : ShieldX;
+  function getStatusIcon(status) {
+    switch (status) {
+      case 'valid':
+        return ShieldCheck;
+      case 'expired':
+        return ShieldAlert;
+      default:
+        return ShieldX;
+    }
+  }
+  const StatusIcon = getStatusIcon(vogStatus.status);
 
   const statusColorClass = {
     valid: 'text-green-600 dark:text-green-400',

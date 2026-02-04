@@ -22,7 +22,7 @@ export default function FinancesCard({ personId }) {
     },
   });
 
-  const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
+  const canAccessFairplay = Boolean(currentUser?.can_access_fairplay);
 
   // Fetch discipline cases (only if user has fairplay access)
   const { data: disciplineCases } = usePersonDisciplineCases(personId, {
@@ -31,23 +31,18 @@ export default function FinancesCard({ personId }) {
 
   // Calculate discipline fee totals
   const disciplineTotals = useMemo(() => {
-    if (!disciplineCases || disciplineCases.length === 0) {
+    if (!disciplineCases?.length) {
       return { doorbelast: 0, notDoorbelast: 0 };
     }
-    return disciplineCases.reduce(
-      (acc, dc) => {
-        const fee = parseFloat(dc.acf?.administrative_fee) || 0;
-        if (fee > 0) {
-          if (dc.acf?.is_charged) {
-            acc.doorbelast += fee;
-          } else {
-            acc.notDoorbelast += fee;
-          }
-        }
-        return acc;
-      },
-      { doorbelast: 0, notDoorbelast: 0 }
-    );
+
+    return disciplineCases.reduce((acc, dc) => {
+      const fee = parseFloat(dc.acf?.administrative_fee) || 0;
+      if (fee > 0) {
+        const key = dc.acf?.is_charged ? 'doorbelast' : 'notDoorbelast';
+        acc[key] += fee;
+      }
+      return acc;
+    }, { doorbelast: 0, notDoorbelast: 0 });
   }, [disciplineCases]);
 
   // Don't render if loading or no data
@@ -188,11 +183,11 @@ export default function FinancesCard({ personId }) {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500 dark:text-gray-400">Saldo</span>
-              <span className={`text-sm font-medium ${
-                feeData.nikki_saldo > 0
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-green-600 dark:text-green-400'
-              }`}>
+              <span className={
+              feeData.nikki_saldo > 0
+                ? 'text-sm font-medium text-red-600 dark:text-red-400'
+                : 'text-sm font-medium text-green-600 dark:text-green-400'
+            }>
                 {formatCurrency(feeData.nikki_saldo, 2)}
               </span>
             </div>
