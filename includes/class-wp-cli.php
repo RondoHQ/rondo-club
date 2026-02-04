@@ -2807,6 +2807,163 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 
 	/**
+	 * Tasks WP-CLI Commands
+	 */
+	class STADION_Tasks_CLI_Command {
+
+		/**
+		 * Verify or fix task ownership
+		 *
+		 * Ensures all stadion_todo posts have valid post_author.
+		 * Tasks with invalid authors can be fixed by inferring from related persons.
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--verify]
+		 * : Only verify ownership, report issues without fixing
+		 *
+		 * [--dry-run]
+		 * : Show what would be fixed without making changes
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp stadion tasks verify-ownership --verify
+		 *     wp stadion tasks verify-ownership --dry-run
+		 *     wp stadion tasks verify-ownership
+		 *
+		 * @when after_wp_load
+		 */
+		public function verify_ownership( $args, $assoc_args ) {
+			$verify  = isset( $assoc_args['verify'] );
+			$dry_run = isset( $assoc_args['dry-run'] );
+
+			if ( $dry_run ) {
+				WP_CLI::log( 'DRY RUN MODE - No changes will be made' );
+			}
+
+			WP_CLI::log( '' );
+			WP_CLI::log( '╔════════════════════════════════════════════════════════════╗' );
+			WP_CLI::log( '║         Task Ownership Verification                        ║' );
+			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
+			WP_CLI::log( '' );
+
+			// Query all stadion_todo posts, bypass access control
+			$todos = get_posts( [
+				'post_type'        => 'stadion_todo',
+				'posts_per_page'   => -1,
+				'post_status'      => [ 'stadion_open', 'stadion_awaiting', 'stadion_completed', 'publish' ],
+				'suppress_filters' => true,
+			] );
+
+			if ( empty( $todos ) ) {
+				WP_CLI::success( 'No tasks found in the system.' );
+				return;
+			}
+
+			WP_CLI::log( sprintf( 'Found %d task(s) to check.', count( $todos ) ) );
+			WP_CLI::log( '' );
+
+			$valid   = 0;
+			$invalid = 0;
+			$fixed   = 0;
+			$failed  = 0;
+
+			foreach ( $todos as $todo ) {
+				$author_id = (int) $todo->post_author;
+				$user      = get_userdata( $author_id );
+
+				if ( $user && $author_id > 0 ) {
+					if ( ! $verify && ! $dry_run ) {
+						// Silent in fix mode for valid tasks
+					} else {
+						WP_CLI::log( sprintf( '  ✓ Task #%d: %s (author: %s, ID: %d)',
+							$todo->ID,
+							wp_trim_words( $todo->post_title, 8 ),
+							$user->user_login,
+							$author_id
+						) );
+					}
+					$valid++;
+				} else {
+					WP_CLI::warning( sprintf( '  ✗ Task #%d has invalid author ID: %d', $todo->ID, $author_id ) );
+					$invalid++;
+
+					if ( ! $verify ) {
+						// Attempt to determine correct author from related_persons
+						$person_ids = get_field( 'related_persons', $todo->ID );
+						if ( ! is_array( $person_ids ) ) {
+							$person_ids = $person_ids ? [ $person_ids ] : [];
+						}
+
+						if ( empty( $person_ids ) ) {
+							WP_CLI::warning( sprintf( '    Cannot fix: No related persons found' ) );
+							$failed++;
+							continue;
+						}
+
+						// Use the first related person's author
+						$person_id = (int) $person_ids[0];
+						$person    = get_post( $person_id );
+
+						if ( ! $person ) {
+							WP_CLI::warning( sprintf( '    Cannot fix: Related person #%d not found', $person_id ) );
+							$failed++;
+							continue;
+						}
+
+						$new_author_id = (int) $person->post_author;
+						$new_user      = get_userdata( $new_author_id );
+
+						if ( ! $new_user ) {
+							WP_CLI::warning( sprintf( '    Cannot fix: Person #%d has invalid author ID: %d', $person_id, $new_author_id ) );
+							$failed++;
+							continue;
+						}
+
+						if ( $dry_run ) {
+							WP_CLI::log( sprintf( '    Would set author to: %s (ID: %d)', $new_user->user_login, $new_author_id ) );
+							$fixed++;
+						} else {
+							wp_update_post( [
+								'ID'          => $todo->ID,
+								'post_author' => $new_author_id,
+							] );
+							WP_CLI::log( sprintf( '    Fixed: Set author to %s (ID: %d)', $new_user->user_login, $new_author_id ) );
+							$fixed++;
+						}
+					}
+				}
+			}
+
+			WP_CLI::log( '' );
+			WP_CLI::log( '────────────────────────────────────────────────────────────' );
+			WP_CLI::log( 'Summary:' );
+			WP_CLI::log( '────────────────────────────────────────────────────────────' );
+			WP_CLI::log( sprintf( '  Total tasks: %d', count( $todos ) ) );
+			WP_CLI::log( sprintf( '  Valid: %d', $valid ) );
+			WP_CLI::log( sprintf( '  Invalid: %d', $invalid ) );
+
+			if ( ! $verify ) {
+				WP_CLI::log( sprintf( '  Fixed: %d', $fixed ) );
+				WP_CLI::log( sprintf( '  Could not fix: %d', $failed ) );
+
+				if ( $failed > 0 ) {
+					WP_CLI::warning( sprintf( 'Completed with %d task(s) that could not be fixed.', $failed ) );
+				} else {
+					WP_CLI::success( $dry_run ? 'Dry run complete.' : 'All tasks verified/fixed!' );
+				}
+			} else {
+				if ( $invalid > 0 ) {
+					WP_CLI::warning( sprintf( 'Found %d task(s) with invalid ownership.', $invalid ) );
+					WP_CLI::log( 'Run without --verify to fix.' );
+				} else {
+					WP_CLI::success( 'All tasks have valid ownership.' );
+				}
+			}
+		}
+	}
+
+	/**
 	 * Register WP-CLI commands
 	 */
 	WP_CLI::add_command( 'prm people', 'STADION_People_CLI_Command' );
@@ -2821,4 +2978,5 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'prm calendar', 'STADION_Calendar_CLI_Command' );
 	WP_CLI::add_command( 'prm event', 'STADION_Event_CLI_Command' );
 	WP_CLI::add_command( 'prm relationships', 'STADION_Relationships_CLI_Command' );
+	WP_CLI::add_command( 'stadion tasks', 'STADION_Tasks_CLI_Command' );
 }
