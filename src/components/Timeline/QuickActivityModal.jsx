@@ -26,7 +26,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
   const [showParticipantSelect, setShowParticipantSelect] = useState(false);
   const [participantSearch, setParticipantSearch] = useState('');
 
-  const { data: allPeople } = usePeople();
+  const { data: allPeople } = usePeople({}, { enabled: isOpen });
   
   // Determine if we're in edit mode
   const isEditing = !!activity;
