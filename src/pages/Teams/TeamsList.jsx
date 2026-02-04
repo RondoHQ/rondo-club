@@ -5,128 +5,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBulkUpdateTeams } from '@/hooks/useTeams';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
+import BulkLabelsModal from '@/components/BulkLabelsModal';
 import { getTeamName } from '@/utils/formatters';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
-
-// Bulk Labels Modal Component for Teams
-function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isLoading }) {
-  const [mode, setMode] = useState('add'); // 'add' or 'remove'
-  const [selectedLabelIds, setSelectedLabelIds] = useState([]);
-
-  // Reset when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setMode('add');
-      setSelectedLabelIds([]);
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleLabelToggle = (labelId) => {
-    setSelectedLabelIds(prev =>
-      prev.includes(labelId)
-        ? prev.filter(id => id !== labelId)
-        : [...prev, labelId]
-    );
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-          <h2 className="text-lg font-semibold dark:text-gray-50">Labels beheren</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" disabled={isLoading}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {mode === 'add' ? 'Labels toevoegen aan' : 'Labels verwijderen van'} {selectedCount} {selectedCount === 1 ? 'team' : 'teams'}:
-          </p>
-
-          {/* Mode toggle */}
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 p-1">
-            <button
-              type="button"
-              onClick={() => { setMode('add'); setSelectedLabelIds([]); }}
-              className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'add' ? 'bg-accent-100 dark:bg-accent-900/50 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              Labels toevoegen
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMode('remove'); setSelectedLabelIds([]); }}
-              className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'remove' ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              Labels verwijderen
-            </button>
-          </div>
-
-          {/* Label list */}
-          {(!labels || labels.length === 0) ? (
-            <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-              <Tag className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
-              <p className="text-sm">Geen labels beschikbaar.</p>
-              <p className="text-xs">Maak eerst labels aan om deze functie te gebruiken.</p>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {labels.map((label) => {
-                const isChecked = selectedLabelIds.includes(label.id);
-                return (
-                  <button
-                    key={label.id}
-                    type="button"
-                    onClick={() => handleLabelToggle(label.id)}
-                    disabled={isLoading}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
-                      isChecked
-                        ? mode === 'add' ? 'border-accent-500 bg-accent-50 dark:bg-accent-800' : 'border-red-500 bg-red-50 dark:bg-red-900/30'
-                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                    }`}
-                  >
-                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
-                      isChecked
-                        ? mode === 'add' ? 'bg-accent-600 border-accent-600' : 'bg-red-600 border-red-600'
-                        : 'border-gray-300 dark:border-gray-500'
-                    }`}>
-                      {isChecked && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-50">{label.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          <button type="button" onClick={onClose} className="btn-secondary" disabled={isLoading}>
-            Annuleren
-          </button>
-          <button
-            type="button"
-            onClick={() => onSubmit(mode, selectedLabelIds)}
-            className={mode === 'add' ? 'btn-primary' : 'bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50'}
-            disabled={isLoading || selectedLabelIds.length === 0}
-          >
-            {isLoading
-              ? (mode === 'add' ? 'Toevoegen...' : 'Verwijderen...')
-              : `${selectedLabelIds.length} ${selectedLabelIds.length === 1 ? 'label' : 'labels'} ${mode === 'add' ? 'toevoegen' : 'verwijderen'}`
-            }
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit }) {
   // Local state for edited field values (includes name, website, and custom fields)
@@ -850,6 +732,8 @@ export default function TeamsList() {
           }
         }}
         isLoading={bulkActionLoading}
+        entityName="team"
+        entityNamePlural="teams"
       />
 
       </div>

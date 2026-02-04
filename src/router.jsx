@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, Outlet, useNavigate } from 'react-router
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import Layout from '@/components/layout/Layout';
+import LoadingSpinner, { PageLoadingSpinner, ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { AlertCircle, Shield } from 'lucide-react';
 import App from './App';
 
@@ -32,12 +33,10 @@ const CustomFields = lazy(() => import('@/pages/Settings/CustomFields'));
 const FeedbackManagement = lazy(() => import('@/pages/Settings/FeedbackManagement'));
 const Login = lazy(() => import('@/pages/Login'));
 
-// Page loading spinner
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[50vh]">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
-  </div>
-);
+// Page loader for Suspense fallback
+function PageLoader() {
+  return <ContentLoadingSpinner />;
+}
 
 function ApprovalCheck({ children }) {
   const { data: user, isLoading, error } = useCurrentUser();
@@ -50,7 +49,7 @@ function ApprovalCheck({ children }) {
       {/* Loading overlay - shown on top while loading */}
       {isLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
+          <LoadingSpinner />
         </div>
       )}
 
@@ -84,7 +83,9 @@ function ApprovalCheck({ children }) {
   );
 }
 
-function AccessDenied({ navigate }) {
+function AccessDenied() {
+  const navigate = useNavigate();
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-md w-full mx-4">
@@ -112,98 +113,70 @@ function AccessDenied({ navigate }) {
   );
 }
 
-function FairplayRoute({ children }) {
-  const navigate = useNavigate();
+/**
+ * Generic capability-based route guard.
+ * @param {Object} props
+ * @param {Function} props.checkAccess - Function that receives user object and returns boolean
+ * @param {React.ReactNode} props.children - Child components to render if access is granted
+ */
+function CapabilityRoute({ checkAccess, children }) {
   const { data: user, isLoading } = useCurrentUser();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
-      </div>
-    );
+    return <PageLoadingSpinner />;
   }
 
-  // User doesn't have fairplay capability
-  if (!user?.can_access_fairplay) {
-    return <AccessDenied navigate={navigate} />;
+  if (!checkAccess(user)) {
+    return <AccessDenied />;
   }
 
   return children;
+}
+
+// Specific capability routes using the generic guard
+function FairplayRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_fairplay}>
+      {children}
+    </CapabilityRoute>
+  );
 }
 
 function VOGRoute({ children }) {
-  const navigate = useNavigate();
-  const { data: user, isLoading } = useCurrentUser();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
-      </div>
-    );
-  }
-
-  // User doesn't have VOG capability
-  if (!user?.can_access_vog) {
-    return <AccessDenied navigate={navigate} />;
-  }
-
-  return children;
-}
-
-function RestrictedRoute({ children }) {
-  const navigate = useNavigate();
-  const { data: user, isLoading } = useCurrentUser();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
-      </div>
-    );
-  }
-
-  // Restricted users (VOG or Fair Play without admin) cannot access
-  const isRestricted = !user?.is_admin &&
-    (user?.can_access_vog || user?.can_access_fairplay);
-
-  if (isRestricted) {
-    return <AccessDenied navigate={navigate} />;
-  }
-
-  return children;
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_vog}>
+      {children}
+    </CapabilityRoute>
+  );
 }
 
 function FinancieelRoute({ children }) {
-  const navigate = useNavigate();
-  const { data: user, isLoading } = useCurrentUser();
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_financieel}>
+      {children}
+    </CapabilityRoute>
+  );
+}
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
-      </div>
-    );
-  }
+function RestrictedRoute({ children }) {
+  // Restricted users (VOG or Fair Play without admin) cannot access
+  const checkAccess = (user) => {
+    const isRestricted = !user?.is_admin && (user?.can_access_vog || user?.can_access_fairplay);
+    return !isRestricted;
+  };
 
-  // User doesn't have financieel capability
-  if (!user?.can_access_financieel) {
-    return <AccessDenied navigate={navigate} />;
-  }
-
-  return children;
+  return (
+    <CapabilityRoute checkAccess={checkAccess}>
+      {children}
+    </CapabilityRoute>
+  );
 }
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
-      </div>
-    );
+    return <PageLoadingSpinner />;
   }
 
   if (!isLoggedIn) {
