@@ -38,10 +38,10 @@ Plans:
   1. Tasks navigation item is visible to all users (no capability gating)
   2. Tasks list page shows persistent note indicating tasks are personal
   3. Task creation modal shows note that task will only be visible to creator
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 140-01: Frontend personal task indicators
+- [ ] 140-01-PLAN.md — Frontend personal task indicators (navigation + info messages)
 
 ## Progress
 
