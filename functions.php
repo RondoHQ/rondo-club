@@ -906,6 +906,28 @@ function stadion_invalidate_email_lookup_on_person_save( $post_id ) {
 add_action( 'acf/save_post', 'stadion_invalidate_email_lookup_on_person_save', 20 );
 
 /**
+ * Reset VOG tracking fields when datum-vog is updated
+ *
+ * When a new VOG date is set, clear the email sent and Justis submitted
+ * tracking fields since the VOG request process is now complete.
+ *
+ * @param mixed  $value   The new value.
+ * @param int    $post_id The post ID.
+ * @param array  $field   The field array.
+ * @param mixed  $original The original value.
+ * @return mixed The value (unchanged).
+ */
+function stadion_reset_vog_tracking_on_datum_update( $value, $post_id, $field, $original ) {
+	// Only process if datum-vog is actually changing to a new value
+	if ( $value !== $original && ! empty( $value ) ) {
+		delete_post_meta( $post_id, 'vog_email_sent_date' );
+		delete_post_meta( $post_id, 'vog_justis_submitted_date' );
+	}
+	return $value;
+}
+add_filter( 'acf/update_value/name=datum-vog', 'stadion_reset_vog_tracking_on_datum_update', 10, 4 );
+
+/**
  * Custom login page styling
  */
 function stadion_login_styles() {
