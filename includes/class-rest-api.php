@@ -2035,23 +2035,13 @@ class Api extends Base {
 	}
 
 	/**
-	 * Count open (non-completed) todos for current user
+	 * Count open (non-completed) todos
 	 *
-	 * Uses the stadion_todo CPT with access control filtering.
+	 * Uses wp_count_posts() for efficient SQL COUNT query.
 	 * Only counts todos with 'stadion_open' status (not awaiting or completed).
 	 */
 	private function count_open_todos() {
-		// Query todos with access control (STADION_Access_Control hooks into WP_Query)
-		$todos = get_posts(
-			[
-				'post_type'      => 'stadion_todo',
-				'post_status'    => 'stadion_open',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-			]
-		);
-
-		return count( $todos );
+		return wp_count_posts( 'stadion_todo' )->stadion_open ?? 0;
 	}
 
 	/**
@@ -2128,23 +2118,13 @@ class Api extends Base {
 	}
 
 	/**
-	 * Count awaiting todos for current user
+	 * Count awaiting todos
 	 *
-	 * Uses the stadion_todo CPT with access control filtering.
+	 * Uses wp_count_posts() for efficient SQL COUNT query.
 	 * Only counts todos with 'stadion_awaiting' status.
 	 */
 	private function count_awaiting_todos() {
-		// Query todos with access control (STADION_Access_Control hooks into WP_Query)
-		$todos = get_posts(
-			[
-				'post_type'      => 'stadion_todo',
-				'post_status'    => 'stadion_awaiting',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-			]
-		);
-
-		return count( $todos );
+		return wp_count_posts( 'stadion_todo' )->stadion_awaiting ?? 0;
 	}
 
 	/**
