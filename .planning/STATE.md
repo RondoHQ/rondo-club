@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Personal CRM with team collaboration while maintaining relationship-focused experience
-**Current focus:** Phase 135 - Fix Duplicate API Calls
+**Current focus:** Phase 136 - Modal Lazy Loading
 
 ## Current Position
 
-Phase: 135 of 138 (Fix Duplicate API Calls)
-Plan: 2 of 2
-Status: Phase complete - awaiting verification
-Last activity: 2026-02-04 — Completed 135-02-PLAN.md (createBrowserRouter migration)
+Phase: 136 of 138 (Modal Lazy Loading)
+Plan: 0 of TBD
+Status: Ready to plan
+Last activity: 2026-02-04 — Completed Phase 135 (Fix Duplicate API Calls)
 
-Progress: [█░░░░░░░░░] 11%
+Progress: [██░░░░░░░░] 25%
 
 ## Performance Metrics
 
@@ -49,8 +49,9 @@ Recent decisions affecting current work:
 - Investigation completed identifying 5 performance issues: duplicate API calls (all endpoints 2x), QuickActivityModal loading 1400+ people on dashboard, multiple current-user queries, VOG count on every navigation, backend posts_per_page=-1 for counts
 - Disabled refetchOnWindowFocus in QueryClient to prevent tab-switch refetches (Phase 135)
 - Documented React Query's built-in concurrent request deduplication - no additional code needed (Phase 135)
-- Migrated from BrowserRouter to createBrowserRouter data router pattern to eliminate double-mount (Phase 135-02)
-- Routes now defined at module scope in router.jsx, preventing router recreation on renders (Phase 135-02)
+- Migrated from BrowserRouter to createBrowserRouter data router pattern (Phase 135-02)
+- Routes now defined at module scope in router.jsx (Phase 135-02)
+- Fixed ES module double-load: removed ?ver= from wp_enqueue_script for Vite bundles - browser ES module cache keys by full URL, so different query strings caused React to execute twice (Phase 135)
 
 ### Pending Todos
 
@@ -71,9 +72,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed 135-02-PLAN.md (createBrowserRouter migration) - awaiting verification
+Stopped at: Completed Phase 135 (Fix Duplicate API Calls) - verified
 Resume file: None
-Next: Verify single API calls in production, then `/gsd:plan-phase 136` — plan next phase (Optimize QuickActivityModal)
+Next: `/gsd:plan-phase 136` — plan Modal Lazy Loading phase
 
 ---
 *State updated: 2026-02-04*
