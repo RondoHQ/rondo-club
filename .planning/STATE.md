@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 ## Current Position
 
 Phase: 135 of 138 (Fix Duplicate API Calls)
-Plan: 1 of 1
-Status: Phase complete
-Last activity: 2026-02-04 — Completed 135-01-PLAN.md (Fix Duplicate API Calls)
+Plan: 2 of 2
+Status: Phase complete - awaiting verification
+Last activity: 2026-02-04 — Completed 135-02-PLAN.md (createBrowserRouter migration)
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [█░░░░░░░░░] 11%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6 (v14.0 milestone in progress)
-- Average duration: 2m 13s
-- Total execution time: 13m 34s
+- Total plans completed: 7 (v14.0 milestone in progress)
+- Average duration: 2m 20s
+- Total execution time: 16m 56s
 
 **By Phase:**
 
@@ -30,7 +30,7 @@ Progress: [█░░░░░░░░░] 10%
 | 132 | 1 | 2m 33s | 2m 33s |
 | 133 | 1 | 3m 42s | 3m 42s |
 | 134 | 3 | 6m 18s | 2m 06s |
-| 135 | 1 | 1m 01s | 1m 01s |
+| 135 | 2 | 4m 23s | 2m 12s |
 
 ### Recent Milestones
 
@@ -49,6 +49,8 @@ Recent decisions affecting current work:
 - Investigation completed identifying 5 performance issues: duplicate API calls (all endpoints 2x), QuickActivityModal loading 1400+ people on dashboard, multiple current-user queries, VOG count on every navigation, backend posts_per_page=-1 for counts
 - Disabled refetchOnWindowFocus in QueryClient to prevent tab-switch refetches (Phase 135)
 - Documented React Query's built-in concurrent request deduplication - no additional code needed (Phase 135)
+- Migrated from BrowserRouter to createBrowserRouter data router pattern to eliminate double-mount (Phase 135-02)
+- Routes now defined at module scope in router.jsx, preventing router recreation on renders (Phase 135-02)
 
 ### Pending Todos
 
@@ -69,9 +71,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed 135-01-PLAN.md (Fix Duplicate API Calls)
+Stopped at: Completed 135-02-PLAN.md (createBrowserRouter migration) - awaiting verification
 Resume file: None
-Next: `/gsd:plan-phase 136` — plan next phase (Optimize QuickActivityModal)
+Next: Verify single API calls in production, then `/gsd:plan-phase 136` — plan next phase (Optimize QuickActivityModal)
 
 ---
 *State updated: 2026-02-04*
