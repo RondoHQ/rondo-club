@@ -92,6 +92,34 @@ function ApprovalCheck({ children }) {
   );
 }
 
+function AccessDenied({ navigate }) {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-md w-full mx-4">
+        <div className="card p-8 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 bg-red-100 rounded-full dark:bg-red-900">
+              <Shield className="w-8 h-8 text-red-600 dark:text-red-400" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2 dark:text-gray-100">
+            Geen toegang
+          </h2>
+          <p className="text-gray-600 mb-6 dark:text-gray-400">
+            Je hebt geen toestemming om deze pagina te bekijken.
+          </p>
+          <button
+            onClick={() => navigate(-1)}
+            className="btn btn-secondary"
+          >
+            Ga terug
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FairplayRoute({ children }) {
   const navigate = useNavigate();
   const { data: user, isLoading } = useQuery({
@@ -113,31 +141,64 @@ function FairplayRoute({ children }) {
 
   // User doesn't have fairplay capability
   if (!user?.can_access_fairplay) {
+    return <AccessDenied navigate={navigate} />;
+  }
+
+  return children;
+}
+
+function VOGRoute({ children }) {
+  const navigate = useNavigate();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const response = await prmApi.getCurrentUser();
+      return response.data;
+    },
+    retry: false,
+  });
+
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-md w-full mx-4">
-          <div className="card p-8 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-red-100 rounded-full dark:bg-red-900">
-                <Shield className="w-8 h-8 text-red-600 dark:text-red-400" />
-              </div>
-            </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2 dark:text-gray-100">
-              Geen toegang
-            </h2>
-            <p className="text-gray-600 mb-6 dark:text-gray-400">
-              Je hebt geen toestemming om deze pagina te bekijken.
-            </p>
-            <button
-              onClick={() => navigate(-1)}
-              className="btn btn-secondary"
-            >
-              Ga terug
-            </button>
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
       </div>
     );
+  }
+
+  // User doesn't have VOG capability
+  if (!user?.can_access_vog) {
+    return <AccessDenied navigate={navigate} />;
+  }
+
+  return children;
+}
+
+function RestrictedRoute({ children }) {
+  const navigate = useNavigate();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const response = await prmApi.getCurrentUser();
+      return response.data;
+    },
+    retry: false,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
+      </div>
+    );
+  }
+
+  // Restricted users (VOG or Fair Play without admin) cannot access
+  const isRestricted = !user?.is_admin &&
+    (user?.can_access_vog || user?.can_access_fairplay);
+
+  if (isRestricted) {
+    return <AccessDenied navigate={navigate} />;
   }
 
   return children;
@@ -201,11 +262,25 @@ const router = createBrowserRouter([
           { path: 'people/:id/family-tree', element: <FamilyTree /> },
           { path: 'people/:id', element: <PersonDetail /> },
 
-          // VOG route
-          { path: 'vog', element: <VOGList /> },
+          // VOG route - requires VOG capability
+          {
+            path: 'vog',
+            element: (
+              <VOGRoute>
+                <VOGList />
+              </VOGRoute>
+            ),
+          },
 
-          // Contributie route
-          { path: 'contributie', element: <ContributieList /> },
+          // Contributie route - restricted from VOG/Fair Play users
+          {
+            path: 'contributie',
+            element: (
+              <RestrictedRoute>
+                <ContributieList />
+              </RestrictedRoute>
+            ),
+          },
 
           // Discipline Cases route - requires fairplay capability
           {
@@ -217,23 +292,65 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Teams routes
-          { path: 'teams', element: <TeamsList /> },
-          { path: 'teams/:id', element: <TeamDetail /> },
+          // Teams routes - requires fairplay capability
+          {
+            path: 'teams',
+            element: (
+              <FairplayRoute>
+                <TeamsList />
+              </FairplayRoute>
+            ),
+          },
+          {
+            path: 'teams/:id',
+            element: (
+              <FairplayRoute>
+                <TeamDetail />
+              </FairplayRoute>
+            ),
+          },
 
           // Commissies routes
           { path: 'commissies', element: <CommissiesList /> },
           { path: 'commissies/:id', element: <CommissieDetail /> },
 
-          // Dates routes
-          { path: 'dates', element: <DatesList /> },
+          // Dates routes - restricted from VOG/Fair Play users
+          {
+            path: 'dates',
+            element: (
+              <RestrictedRoute>
+                <DatesList />
+              </RestrictedRoute>
+            ),
+          },
 
-          // Todos routes
-          { path: 'todos', element: <TodosList /> },
+          // Todos routes - restricted from VOG/Fair Play users
+          {
+            path: 'todos',
+            element: (
+              <RestrictedRoute>
+                <TodosList />
+              </RestrictedRoute>
+            ),
+          },
 
-          // Feedback routes
-          { path: 'feedback', element: <FeedbackList /> },
-          { path: 'feedback/:id', element: <FeedbackDetail /> },
+          // Feedback routes - restricted from VOG/Fair Play users
+          {
+            path: 'feedback',
+            element: (
+              <RestrictedRoute>
+                <FeedbackList />
+              </RestrictedRoute>
+            ),
+          },
+          {
+            path: 'feedback/:id',
+            element: (
+              <RestrictedRoute>
+                <FeedbackDetail />
+              </RestrictedRoute>
+            ),
+          },
 
           // Settings routes
           { path: 'settings', element: <Settings /> },
