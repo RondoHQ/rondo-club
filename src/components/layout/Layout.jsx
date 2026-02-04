@@ -83,9 +83,10 @@ function Sidebar({ mobile = false, onClose, stats }) {
       case 'Commissies': return stats?.total_commissies || null;
       case 'Datums': return stats?.total_dates || null;
       case 'VOG': {
-        // Show three-part count: needs VOG | email sent | justis submitted
-        const hasAny = needsVog > 0 || emailSent > 0 || justisSubmitted > 0;
-        return hasAny ? `${needsVog} | ${emailSent} | ${justisSubmitted}` : null;
+        // Show two counts: aan te vragen | in afwachting (total)
+        const aanTeVragen = needsVog + emailSent;
+        const totaal = needsVog + emailSent + justisSubmitted;
+        return totaal > 0 ? `${aanTeVragen} | ${totaal}` : null;
       }
       case 'Tuchtzaken': return disciplineCasesCount > 0 ? disciplineCasesCount : null;
       default: return null;
