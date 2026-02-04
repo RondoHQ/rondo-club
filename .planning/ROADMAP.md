@@ -10,7 +10,7 @@ Transform the task system from shared visibility to personal isolation. Each use
 - Continues from v14.0 (last phase: 138)
 - Integer phases (139, 140): Planned milestone work
 
-- [ ] **Phase 139: Backend & Migration** - Filter tasks by post_author, migrate existing tasks
+- [x] **Phase 139: Backend & Migration** - Filter tasks by post_author, migrate existing tasks
 - [ ] **Phase 140: Frontend Messaging** - Add personal task indicators to UI
 
 ## Phase Details
@@ -28,7 +28,7 @@ Transform the task system from shared visibility to personal isolation. Each use
 **Plans:** 1 plan
 
 Plans:
-- [ ] 139-01-PLAN.md — Backend task filtering and WP-CLI migration command
+- [x] 139-01-PLAN.md — Backend task filtering and WP-CLI migration command
 
 ### Phase 140: Frontend Messaging
 **Goal**: Users understand tasks are personal through clear UI messaging
@@ -50,7 +50,7 @@ Phases execute in numeric order: 139 -> 140
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 139. Backend & Migration | 0/1 | Not started | - |
+| 139. Backend & Migration | 1/1 | ✓ Complete | 2026-02-04 |
 | 140. Frontend Messaging | 0/1 | Not started | - |
 
 ---

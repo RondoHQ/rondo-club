@@ -7,11 +7,11 @@
 
 ### Task Isolation
 
-- [ ] **TASK-01**: User only sees tasks they created in the Tasks list page
-- [ ] **TASK-02**: User only sees their own tasks in the PersonDetail sidebar
-- [ ] **TASK-03**: User only sees their own tasks in the GlobalTodoModal
-- [ ] **TASK-04**: Dashboard open todos count reflects only user's own tasks
-- [ ] **TASK-05**: Dashboard awaiting todos count reflects only user's own tasks
+- [x] **TASK-01**: User only sees tasks they created in the Tasks list page
+- [x] **TASK-02**: User only sees their own tasks in the PersonDetail sidebar
+- [x] **TASK-03**: User only sees their own tasks in the GlobalTodoModal
+- [x] **TASK-04**: Dashboard open todos count reflects only user's own tasks
+- [x] **TASK-05**: Dashboard awaiting todos count reflects only user's own tasks
 
 ### User Experience
 
@@ -21,8 +21,8 @@
 
 ### Migration
 
-- [ ] **MIG-01**: Existing tasks assigned to their original post_author
-- [ ] **MIG-02**: WP-CLI migration command to verify/fix task ownership
+- [x] **MIG-01**: Existing tasks assigned to their original post_author
+- [x] **MIG-02**: WP-CLI migration command to verify/fix task ownership
 
 ## Future Requirements
 
@@ -40,16 +40,16 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TASK-01 | Phase 139 | Pending |
-| TASK-02 | Phase 139 | Pending |
-| TASK-03 | Phase 139 | Pending |
-| TASK-04 | Phase 139 | Pending |
-| TASK-05 | Phase 139 | Pending |
+| TASK-01 | Phase 139 | Complete |
+| TASK-02 | Phase 139 | Complete |
+| TASK-03 | Phase 139 | Complete |
+| TASK-04 | Phase 139 | Complete |
+| TASK-05 | Phase 139 | Complete |
 | UX-01 | Phase 140 | Pending |
 | UX-02 | Phase 140 | Pending |
 | UX-03 | Phase 140 | Pending |
-| MIG-01 | Phase 139 | Pending |
-| MIG-02 | Phase 139 | Pending |
+| MIG-01 | Phase 139 | Complete |
+| MIG-02 | Phase 139 | Complete |
 
 **Coverage:**
 - v15.0 requirements: 10 total
@@ -58,4 +58,4 @@
 
 ---
 *Requirements defined: 2026-02-04*
-*Last updated: 2026-02-04 after roadmap creation*
+*Last updated: 2026-02-04 after phase 139 completion*
