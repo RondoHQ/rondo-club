@@ -49,7 +49,7 @@ const navigation = [
   { name: 'Contributie', href: '/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
-  { name: 'Teams', href: '/teams', icon: Building2, requiresFairplay: true },
+  { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
   { name: 'Datums', href: '/dates', icon: Calendar, requiresUnrestricted: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresUnrestricted: true },
