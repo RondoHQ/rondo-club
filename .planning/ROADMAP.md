@@ -29,7 +29,7 @@ Eliminate unnecessary API calls and optimize dashboard load time by fixing dupli
 
 Plans:
 - [x] 135-01-PLAN.md - Optimize QueryClient defaults (add refetchOnWindowFocus: false)
-- [ ] 135-02-PLAN.md - Migrate to createBrowserRouter data router pattern (gap closure)
+- [x] 135-02-PLAN.md - Migrate to createBrowserRouter data router pattern (gap closure)
 
 ### Phase 136: Modal Lazy Loading
 **Goal**: Modals with people selectors do not load data until opened
@@ -86,7 +86,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 135. Fix Duplicate API Calls | 0/1 | Planned | - |
+| 135. Fix Duplicate API Calls | 2/2 | Human verification needed | - |
 | 136. Modal Lazy Loading | 0/TBD | Not started | - |
 | 137. Query Deduplication | 0/TBD | Not started | - |
 | 138. Backend Query Optimization | 0/TBD | Not started | - |
