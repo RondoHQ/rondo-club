@@ -1990,9 +1990,10 @@ class Api extends Base {
 
 		// Get post counts (all approved users see all data)
 		// Access control is already applied via WP_Query filters
-		$total_people = wp_count_posts( 'person' )->publish;
-		$total_teams  = wp_count_posts( 'team' )->publish;
-		$total_dates  = wp_count_posts( 'important_date' )->publish;
+		$total_people     = wp_count_posts( 'person' )->publish;
+		$total_teams      = wp_count_posts( 'team' )->publish;
+		$total_commissies = wp_count_posts( 'commissie' )->publish;
+		$total_dates      = wp_count_posts( 'important_date' )->publish;
 
 		// Recent people
 		$recent_people = get_posts(
@@ -2022,7 +2023,8 @@ class Api extends Base {
 			[
 				'stats'              => [
 					'total_people'         => $total_people,
-					'total_teams'      => $total_teams,
+					'total_teams'          => $total_teams,
+					'total_commissies'     => $total_commissies,
 					'total_dates'          => $total_dates,
 					'open_todos_count'     => $open_todos_count,
 					'awaiting_todos_count' => $awaiting_todos_count,

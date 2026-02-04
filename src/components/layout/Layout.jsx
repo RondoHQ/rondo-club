@@ -76,6 +76,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     switch (name) {
       case 'Leden': return stats.total_people;
       case 'Teams': return stats.total_teams;
+      case 'Commissies': return stats.total_commissies;
       case 'Datums': return stats.total_dates;
       case 'VOG': return vogCount > 0 ? vogCount : null;
       default: return null;
