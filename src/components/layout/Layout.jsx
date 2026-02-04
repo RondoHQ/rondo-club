@@ -134,7 +134,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
               >
                 <item.icon className="w-5 h-5 mr-3" />
                 {item.name}
-                {count !== null && count > 0 && (
+                {count != null && (
                   <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{count}</span>
                 )}
               </NavLink>
