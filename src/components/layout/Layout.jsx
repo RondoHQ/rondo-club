@@ -56,7 +56,7 @@ const navigation = [
   { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
   { name: 'Datums', href: '/dates', icon: Calendar, requiresUnrestricted: true },
-  { name: 'Taken', href: '/todos', icon: CheckSquare, requiresUnrestricted: true },
+  { name: 'Taken', href: '/todos', icon: CheckSquare },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresUnrestricted: true },
   { name: 'Instellingen', href: '/settings', icon: Settings },
 ];
