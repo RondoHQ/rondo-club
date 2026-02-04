@@ -2295,8 +2295,9 @@ class Api extends Base {
 				'avatar_url'          => $avatar_url,
 				'is_admin'            => $is_admin,
 				'is_approved'         => $is_approved,
-				'can_access_fairplay' => current_user_can( 'fairplay' ),
-				'can_access_vog'      => current_user_can( 'vog' ),
+				'can_access_fairplay'   => current_user_can( 'fairplay' ),
+				'can_access_vog'        => current_user_can( 'vog' ),
+				'can_access_financieel' => current_user_can( 'financieel' ),
 				'profile_url'         => $profile_url,
 				'admin_url'           => $admin_url,
 			]

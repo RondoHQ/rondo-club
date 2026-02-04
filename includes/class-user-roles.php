@@ -13,11 +13,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class UserRoles {
 
-	const ROLE_NAME           = 'stadion_user';
-	const ROLE_DISPLAY_NAME   = 'Stadion User';
-	const APPROVAL_META_KEY   = 'stadion_user_approved';
-	const FAIRPLAY_CAPABILITY = 'fairplay';
-	const VOG_CAPABILITY      = 'vog';
+	const ROLE_NAME              = 'stadion_user';
+	const ROLE_DISPLAY_NAME      = 'Stadion User';
+	const APPROVAL_META_KEY      = 'stadion_user_approved';
+	const FAIRPLAY_CAPABILITY    = 'fairplay';
+	const VOG_CAPABILITY         = 'vog';
+	const FINANCIEEL_CAPABILITY  = 'financieel';
 
 	public function __construct() {
 		// Register role on theme activation
@@ -76,11 +77,12 @@ class UserRoles {
 			$capabilities
 		);
 
-		// Add fairplay and VOG capabilities to administrator role
+		// Add fairplay, VOG, and financieel capabilities to administrator role
 		$admin_role = get_role( 'administrator' );
 		if ( $admin_role ) {
 			$admin_role->add_cap( self::FAIRPLAY_CAPABILITY );
 			$admin_role->add_cap( self::VOG_CAPABILITY );
+			$admin_role->add_cap( self::FINANCIEEL_CAPABILITY );
 		}
 	}
 
@@ -88,11 +90,12 @@ class UserRoles {
 	 * Remove the Stadion User role
 	 */
 	public function remove_role() {
-		// Remove fairplay and VOG capabilities from administrator role
+		// Remove fairplay, VOG, and financieel capabilities from administrator role
 		$admin_role = get_role( 'administrator' );
 		if ( $admin_role ) {
 			$admin_role->remove_cap( self::FAIRPLAY_CAPABILITY );
 			$admin_role->remove_cap( self::VOG_CAPABILITY );
+			$admin_role->remove_cap( self::FINANCIEEL_CAPABILITY );
 		}
 
 		// Get all users with this role

@@ -38,6 +38,11 @@ export default function FinancesCard({ personId }) {
     }, { doorbelast: 0, notDoorbelast: 0 });
   }, [disciplineCases]);
 
+  // Hide card if user doesn't have financieel capability
+  if (!currentUser?.can_access_financieel) {
+    return null;
+  }
+
   // Don't render if loading or no data
   if (isLoading) {
     return (
