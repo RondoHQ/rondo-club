@@ -25,10 +25,10 @@ Transform the task system from shared visibility to personal isolation. Each use
   3. User A cannot see User B's tasks in the GlobalTodoModal
   4. Dashboard open/awaiting counts reflect only the current user's tasks
   5. WP-CLI command can verify and fix task ownership for existing data
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 139-01: Backend task filtering and migration
+- [ ] 139-01-PLAN.md — Backend task filtering and WP-CLI migration command
 
 ### Phase 140: Frontend Messaging
 **Goal**: Users understand tasks are personal through clear UI messaging
