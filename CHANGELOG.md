@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [14.0.0] - 2026-02-04
+
+### Changed
+- Optimized QueryClient defaults to prevent duplicate API calls on page load
+- Migrated from BrowserRouter to createBrowserRouter for better route handling
+- Modal people selectors now load data only when modal opens (lazy loading)
+- Created centralized useCurrentUser hook for query deduplication
+- VOG count now cached with 5-minute staleTime
+- Backend todo count queries now use SQL COUNT instead of fetching all records
+
 ## [8.4.0] - 2026-02-01
 
 ### Added
