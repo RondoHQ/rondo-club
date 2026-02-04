@@ -407,42 +407,6 @@ class Api extends Base {
 
 		register_rest_route(
 			'stadion/v1',
-			'/users/(?P<user_id>\d+)/approve',
-			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'approve_user' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
-				'args'                => [
-					'user_id' => [
-						'required'          => true,
-						'validate_callback' => function ( $param ) {
-							return is_numeric( $param );
-						},
-					],
-				],
-			]
-		);
-
-		register_rest_route(
-			'stadion/v1',
-			'/users/(?P<user_id>\d+)/deny',
-			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'deny_user' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
-				'args'                => [
-					'user_id' => [
-						'required'          => true,
-						'validate_callback' => function ( $param ) {
-							return is_numeric( $param );
-						},
-					],
-				],
-			]
-		);
-
-		register_rest_route(
-			'stadion/v1',
 			'/users/(?P<user_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -2342,38 +2306,6 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $user_list );
-	}
-
-	/**
-	 * Approve a user (admin only)
-	 */
-	public function approve_user( $request ) {
-		$user_id    = (int) $request->get_param( 'user_id' );
-		$user_roles = new \STADION_User_Roles();
-		$user_roles->approve_user( $user_id );
-
-		return rest_ensure_response(
-			[
-				'success' => true,
-				'message' => __( 'User approved.', 'stadion' ),
-			]
-		);
-	}
-
-	/**
-	 * Deny a user (admin only)
-	 */
-	public function deny_user( $request ) {
-		$user_id    = (int) $request->get_param( 'user_id' );
-		$user_roles = new \STADION_User_Roles();
-		$user_roles->deny_user( $user_id );
-
-		return rest_ensure_response(
-			[
-				'success' => true,
-				'message' => __( 'User denied.', 'stadion' ),
-			]
-		);
 	}
 
 	/**

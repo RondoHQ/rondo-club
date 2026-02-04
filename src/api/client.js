@@ -139,8 +139,6 @@ export const prmApi = {
   
   // User management (admin only)
   getUsers: () => api.get('/stadion/v1/users'),
-  approveUser: (userId) => api.post(`/stadion/v1/users/${userId}/approve`),
-  denyUser: (userId) => api.post(`/stadion/v1/users/${userId}/deny`),
   deleteUser: (userId) => api.delete(`/stadion/v1/users/${userId}`),
   
   // Search

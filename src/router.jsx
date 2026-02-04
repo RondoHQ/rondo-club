@@ -3,8 +3,8 @@ import { createBrowserRouter, Navigate, Outlet, useNavigate } from 'react-router
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import Layout from '@/components/layout/Layout';
-import LoadingSpinner, { PageLoadingSpinner, ContentLoadingSpinner } from '@/components/LoadingSpinner';
-import { AlertCircle, Shield } from 'lucide-react';
+import { PageLoadingSpinner, ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import { Shield } from 'lucide-react';
 import App from './App';
 
 // Direct import for Dashboard (no lazy loading)
@@ -36,51 +36,6 @@ const Login = lazy(() => import('@/pages/Login'));
 // Page loader for Suspense fallback
 function PageLoader() {
   return <ContentLoadingSpinner />;
-}
-
-function ApprovalCheck({ children }) {
-  const { data: user, isLoading, error } = useCurrentUser();
-
-  // Always render children, hide with CSS while loading
-  const showApprovalError = !isLoading && (error || !user || (!user.is_admin && !user.is_approved));
-
-  return (
-    <>
-      {/* Loading overlay - shown on top while loading */}
-      {isLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50">
-          <LoadingSpinner />
-        </div>
-      )}
-
-      {/* Approval error screen - shown on top when not approved */}
-      {showApprovalError && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full mx-4">
-            <div className="card p-8 text-center">
-              <div className="flex justify-center mb-4">
-                <div className="p-3 bg-yellow-100 rounded-full">
-                  <AlertCircle className="w-8 h-8 text-yellow-600" />
-                </div>
-              </div>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                Account Pending Approval
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Your account is pending approval by an administrator. You will receive an email notification once your account has been approved.
-              </p>
-              <p className="text-sm text-gray-500">
-                If you have any questions, please contact your administrator.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Always render children - they mount immediately and stay mounted */}
-      {children}
-    </>
-  );
 }
 
 function AccessDenied() {
@@ -183,7 +138,7 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <ApprovalCheck>{children}</ApprovalCheck>;
+  return children;
 }
 
 // Layout route component using Outlet for nested routes
