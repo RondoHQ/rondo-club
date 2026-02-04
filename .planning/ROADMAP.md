@@ -43,10 +43,10 @@ Plans:
   2. QuickActivityModal fetches people data only when user clicks to open modal
   3. TodoModal and GlobalTodoModal fetch people data only when opened
 
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 136-01: TBD (to be planned)
+- [ ] 136-01-PLAN.md - Add enabled option to usePeople and update modals
 
 ### Phase 137: Query Deduplication
 **Goal**: Single shared queries for current-user and cached VOG count
@@ -87,7 +87,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 135. Fix Duplicate API Calls | 2/2 | ✓ Complete | 2026-02-04 |
-| 136. Modal Lazy Loading | 0/TBD | Not started | - |
+| 136. Modal Lazy Loading | 0/1 | In progress | - |
 | 137. Query Deduplication | 0/TBD | Not started | - |
 | 138. Backend Query Optimization | 0/TBD | Not started | - |
 
