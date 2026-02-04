@@ -320,7 +320,13 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(No active requirements — use `/gsd:new-milestone` to define next milestone)
+**v14.0 Performance Optimization** — Eliminate duplicate API calls, lazy-load modals, optimize backend queries
+
+- [ ] Fix duplicate API calls on page load (all endpoints called 2x)
+- [ ] Lazy-load QuickActivityModal to prevent loading all 1400+ people on dashboard
+- [ ] Deduplicate current-user queries across components
+- [ ] Optimize VOG count to not call API on every page load
+- [ ] Replace `posts_per_page=-1` with proper count queries in backend
 
 ### Out of Scope
 
@@ -479,4 +485,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Hide tab if zero cases | Reduces UI clutter, better UX for persons without discipline history | ✓ Good |
 
 ---
-*Last updated: 2026-02-03 after v13.0 Discipline Cases milestone*
+*Last updated: 2026-02-04 after v14.0 Performance Optimization milestone started*
