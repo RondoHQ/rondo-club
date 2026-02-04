@@ -60,10 +60,10 @@ Plans:
   2. VOG count is fetched once and cached with appropriate staleTime (not on every navigation)
   3. React Query devtools shows shared queryKey usage across components
 
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 137-01: TBD (to be planned)
+- [ ] 137-01-PLAN.md — Create useCurrentUser hook and configure VOG count caching
 
 ### Phase 138: Backend Query Optimization
 **Goal**: Todo count queries use SQL COUNT instead of fetching all records
@@ -88,7 +88,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 135. Fix Duplicate API Calls | 2/2 | ✓ Complete | 2026-02-04 |
 | 136. Modal Lazy Loading | 1/1 | ✓ Complete | 2026-02-04 |
-| 137. Query Deduplication | 0/TBD | Not started | - |
+| 137. Query Deduplication | 0/1 | In Progress | - |
 | 138. Backend Query Optimization | 0/TBD | Not started | - |
 
 ---
