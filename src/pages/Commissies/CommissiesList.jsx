@@ -211,9 +211,9 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
             autoFocus
           />
         ) : (
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-50 cursor-pointer">
+          <Link to={`/commissies/${commissie.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-accent-600 dark:hover:text-accent-400">
             {getCommissieName(commissie)}
-          </span>
+          </Link>
         )}
       </td>
       {listViewFields.map(field => (
