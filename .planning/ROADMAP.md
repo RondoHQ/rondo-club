@@ -6,7 +6,7 @@ Eliminate unnecessary API calls and optimize dashboard load time by fixing dupli
 
 ## Phases
 
-- [ ] **Phase 135: Fix Duplicate API Calls** - Investigate and eliminate 2x API calls on every page load
+- [x] **Phase 135: Fix Duplicate API Calls** - Investigate and eliminate 2x API calls on every page load
 - [ ] **Phase 136: Modal Lazy Loading** - Conditionally load data only when modals are opened
 - [ ] **Phase 137: Query Deduplication** - Share current-user query and cache VOG count
 - [ ] **Phase 138: Backend Query Optimization** - Replace posts_per_page=-1 with COUNT queries
@@ -86,7 +86,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 135. Fix Duplicate API Calls | 2/2 | Human verification needed | - |
+| 135. Fix Duplicate API Calls | 2/2 | ✓ Complete | 2026-02-04 |
 | 136. Modal Lazy Loading | 0/TBD | Not started | - |
 | 137. Query Deduplication | 0/TBD | Not started | - |
 | 138. Backend Query Optimization | 0/TBD | Not started | - |
