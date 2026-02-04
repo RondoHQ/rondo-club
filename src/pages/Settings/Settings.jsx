@@ -906,6 +906,7 @@ function AppearanceTab() {
 
   // Map accent color names to Tailwind color classes
   const accentColorClasses = {
+    awc: 'bg-awc-600',
     orange: 'bg-orange-500',
     teal: 'bg-teal-500',
     indigo: 'bg-indigo-500',
@@ -917,6 +918,7 @@ function AppearanceTab() {
   };
 
   const accentRingClasses = {
+    awc: 'ring-awc-600',
     orange: 'ring-orange-500',
     teal: 'ring-teal-500',
     indigo: 'ring-indigo-500',
