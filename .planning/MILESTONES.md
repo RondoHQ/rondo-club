@@ -1,5 +1,32 @@
 # Project Milestones: Stadion
 
+## v15.0 Personal Tasks (Shipped: 2026-02-04)
+
+**Delivered:** Transformed the task system from shared visibility to personal isolation - each user manages their own task list with clear UI messaging indicating tasks are personal.
+
+**Phases completed:** 139-140 (2 plans total)
+
+**Key accomplishments:**
+
+- User isolation for tasks via post_author filtering in WP_Query and REST API
+- Dashboard todo counts (open/awaiting) now filter by current user only
+- WP-CLI command (`wp stadion tasks verify_ownership`) for task ownership verification
+- Tasks navigation accessible to all users without capability gating
+- Personal tasks info messages in TodosList page and GlobalTodoModal with Dutch text
+
+**Stats:**
+
+- 27 files changed
+- +3,079 / -920 lines changed
+- 2 phases, 2 plans
+- Same day (2026-02-04)
+
+**Git range:** `726070b2` → `07338c46` (19 commits)
+
+**What's next:** To be determined
+
+---
+
 ## v14.0 Performance Optimization (Shipped: 2026-02-04)
 
 **Delivered:** Eliminated duplicate API calls on page load, implemented modal lazy loading for people selectors, centralized query deduplication for current-user and VOG count, and optimized backend todo count queries to use efficient SQL COUNT instead of fetching all records.

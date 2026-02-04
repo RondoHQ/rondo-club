@@ -325,14 +325,16 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - VOG count caching preventing refetch on every navigation — v14.0
 - Backend todo counts using wp_count_posts() instead of get_posts() — v14.0
 
+**v15.0 Personal Tasks (shipped 2026-02-04):**
+- User isolation for tasks via post_author filtering in WP_Query and REST API — v15.0
+- Dashboard todo counts filtered by current user — v15.0
+- WP-CLI command for task ownership verification — v15.0
+- Tasks navigation accessible to all users (no capability gating) — v15.0
+- Personal tasks info messages in UI with Dutch text — v15.0
+
 ### Active
 
-**v15.0 Personal Tasks:**
-- [ ] Task isolation — Users only see tasks they created (filter by post_author)
-- [ ] Migration — Existing tasks assigned to their original creator
-- [ ] Multi-person tasks — Task links to people remain, but only creator can view/edit
-- [ ] Personal note — Persistent indicator in Tasks UI reminding users tasks are personal
-- [ ] Dashboard counts — Show only user's own open/awaiting task counts
+(None — next milestone to be defined)
 
 ### Out of Scope
 
@@ -495,6 +497,9 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Modal lazy-loading pattern | `usePeople({}, { enabled: isOpen })` pattern for conditional data fetching | ✓ Good |
 | Centralized useCurrentUser hook | Single cache entry shared by 6 components with 5-minute staleTime | ✓ Good |
 | wp_count_posts() for todo counts | Efficient SQL COUNT instead of fetching all post IDs | ✓ Good |
+| Task isolation via post_author filter | Users see only their own tasks, consistent UX for all including admins | ✓ Good |
+| suppress_filters=false for get_posts() | WordPress get_posts() bypasses pre_get_posts by default; must explicitly enable filters | ✓ Good |
+| Direct author check in permission callback | Single-todo endpoints verify post_author matches current user for isolation | ✓ Good |
 
 ---
-*Last updated: 2026-02-04 after v14.0 Performance Optimization milestone complete*
+*Last updated: 2026-02-04 after v15.0 Personal Tasks milestone complete*
