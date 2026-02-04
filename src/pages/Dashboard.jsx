@@ -407,10 +407,17 @@ function DashboardError({ error }) {
 }
 
 /**
- * VOG statistics card showing the three VOG status counts.
+ * VOG statistics card showing two counts:
+ * - Aan te vragen: people not yet submitted to Justis
+ * - In afwachting: total people on the VOG list
  */
 function VOGStatCard() {
   const { needsVog, emailSent, justisSubmitted } = useVOGCount();
+
+  // People not yet in Justis (need to request)
+  const aanTeVragen = needsVog + emailSent;
+  // Total people on VOG list
+  const totaal = needsVog + emailSent + justisSubmitted;
 
   return (
     <Link to="/vog" className="card p-4 hover:shadow-md dark:hover:shadow-gray-900/50 transition-shadow">
@@ -420,18 +427,14 @@ function VOGStatCard() {
           <FileCheck className="w-5 h-5 text-accent-600 dark:text-accent-400" />
         </div>
       </div>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-4">
         <div className="text-center flex-1">
-          <p className="text-xl font-semibold dark:text-gray-50">{needsVog}</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">Nodig</p>
+          <p className="text-xl font-semibold dark:text-gray-50">{aanTeVragen}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Aan te vragen</p>
         </div>
-        <div className="text-center flex-1 border-l border-r border-gray-200 dark:border-gray-600">
-          <p className="text-xl font-semibold dark:text-gray-50">{emailSent}</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">Email</p>
-        </div>
-        <div className="text-center flex-1">
-          <p className="text-xl font-semibold dark:text-gray-50">{justisSubmitted}</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">Justis</p>
+        <div className="text-center flex-1 border-l border-gray-200 dark:border-gray-600 pl-4">
+          <p className="text-xl font-semibold dark:text-gray-50">{totaal}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">In afwachting</p>
         </div>
       </div>
     </Link>
