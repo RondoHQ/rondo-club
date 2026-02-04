@@ -7,15 +7,15 @@
 
 ### Duplicate API Calls
 
-- [ ] **DUP-01**: Dashboard page load makes single API call per endpoint (not 2x)
-- [ ] **DUP-02**: All page transitions make single API call per endpoint
-- [ ] **DUP-03**: React Query properly deduplicates concurrent requests
+- [x] **DUP-01**: Dashboard page load makes single API call per endpoint (not 2x)
+- [x] **DUP-02**: All page transitions make single API call per endpoint
+- [x] **DUP-03**: React Query properly deduplicates concurrent requests
 
 ### Modal Optimization
 
-- [ ] **MOD-01**: QuickActivityModal does not load people data until opened
-- [ ] **MOD-02**: TodoModal does not load people data until opened
-- [ ] **MOD-03**: GlobalTodoModal does not load people data until opened
+- [x] **MOD-01**: QuickActivityModal does not load people data until opened
+- [x] **MOD-02**: TodoModal does not load people data until opened
+- [x] **MOD-03**: GlobalTodoModal does not load people data until opened
 
 ### Query Deduplication
 
@@ -39,12 +39,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DUP-01 | Phase 135 | Pending |
-| DUP-02 | Phase 135 | Pending |
-| DUP-03 | Phase 135 | Pending |
-| MOD-01 | Phase 136 | Pending |
-| MOD-02 | Phase 136 | Pending |
-| MOD-03 | Phase 136 | Pending |
+| DUP-01 | Phase 135 | Complete |
+| DUP-02 | Phase 135 | Complete |
+| DUP-03 | Phase 135 | Complete |
+| MOD-01 | Phase 136 | Complete |
+| MOD-02 | Phase 136 | Complete |
+| MOD-03 | Phase 136 | Complete |
 | QRY-01 | Phase 137 | Pending |
 | QRY-02 | Phase 137 | Pending |
 | BE-01 | Phase 138 | Pending |
@@ -57,4 +57,4 @@
 
 ---
 *Requirements defined: 2026-02-04*
-*Last updated: 2026-02-04 after initial definition*
+*Last updated: 2026-02-04 after Phase 136 completion*
