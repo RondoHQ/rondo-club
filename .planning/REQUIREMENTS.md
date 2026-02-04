@@ -24,8 +24,8 @@
 
 ### Backend Optimization
 
-- [ ] **BE-01**: `count_open_todos()` uses `COUNT(*)` or `found_posts` instead of fetching all IDs
-- [ ] **BE-02**: `count_awaiting_todos()` uses `COUNT(*)` or `found_posts` instead of fetching all IDs
+- [x] **BE-01**: `count_open_todos()` uses `COUNT(*)` or `found_posts` instead of fetching all IDs
+- [x] **BE-02**: `count_awaiting_todos()` uses `COUNT(*)` or `found_posts` instead of fetching all IDs
 
 ## Out of Scope
 
@@ -47,8 +47,8 @@
 | MOD-03 | Phase 136 | Complete |
 | QRY-01 | Phase 137 | Complete |
 | QRY-02 | Phase 137 | Complete |
-| BE-01 | Phase 138 | Pending |
-| BE-02 | Phase 138 | Pending |
+| BE-01 | Phase 138 | Complete |
+| BE-02 | Phase 138 | Complete |
 
 **Coverage:**
 - v14.0 requirements: 10 total
@@ -57,4 +57,4 @@
 
 ---
 *Requirements defined: 2026-02-04*
-*Last updated: 2026-02-04 after Phase 137 completion*
+*Last updated: 2026-02-04 after Phase 138 completion*
