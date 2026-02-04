@@ -14,7 +14,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
   const [showNotes, setShowNotes] = useState(false);
   const [isViewMode, setIsViewMode] = useState(false);
 
-  const { data: people = [], isLoading: isPeopleLoading } = usePeople();
+  const { data: people = [], isLoading: isPeopleLoading } = usePeople({}, { enabled: isOpen });
 
   // Filter and sort people based on search query
   const filteredPeople = useMemo(() => {
