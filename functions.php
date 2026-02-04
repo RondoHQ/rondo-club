@@ -503,7 +503,7 @@ function stadion_theme_enqueue_assets() {
 					'prm-theme-script',
 					$dist_url . '/' . $main_js['file'],
 					[],
-					STADION_THEME_VERSION,
+					null, // Don't add version query string - Vite hashes filenames for cache busting. Query strings break ES module deduplication.
 					true
 				);
 
