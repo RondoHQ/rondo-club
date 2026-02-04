@@ -606,9 +606,9 @@ function stadion_pwa_meta_tags() {
 	<!-- Manifest -->
 	<link rel="manifest" href="<?php echo esc_url( $theme_url . '/dist/manifest.webmanifest' ); ?>">
 
-	<!-- Theme Color (default orange, React will update dynamically) -->
-	<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f97316">
-	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#ea580c">
+	<!-- Theme Color (default AWC green, React will update dynamically) -->
+	<meta name="theme-color" media="(prefers-color-scheme: light)" content="#006935">
+	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#22c560">
 	<?php
 }
 add_action( 'wp_head', 'stadion_pwa_meta_tags', 2 );

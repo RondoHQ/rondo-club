@@ -117,7 +117,20 @@
 /* Theme custom properties for accent colors */
 @layer base {
   :root {
-    /* Default accent: orange */
+    /* Default accent: AWC green (#006935) */
+    --color-accent-50: #f0fdf5;
+    --color-accent-100: #dcfce8;
+    --color-accent-200: #bbf7d1;
+    --color-accent-300: #86efad;
+    --color-accent-400: #4ade81;
+    --color-accent-500: #22c560;
+    --color-accent-600: #006935;
+    --color-accent-700: #005a2d;
+    --color-accent-800: #004924;
+    --color-accent-900: #003d1e;
+  }
+
+  [data-accent="orange"] {
     --color-accent-50: theme('colors.orange.50');
     --color-accent-100: theme('colors.orange.100');
     --color-accent-200: theme('colors.orange.200');
@@ -223,7 +236,20 @@
 
   /* Dark mode variants - reverse the scale for better contrast */
   .dark {
-    /* Default accent: orange */
+    /* Default accent: AWC green */
+    --color-accent-50: #003d1e;
+    --color-accent-100: #004924;
+    --color-accent-200: #005a2d;
+    --color-accent-300: #006935;
+    --color-accent-400: #22c560;
+    --color-accent-500: #4ade81;
+    --color-accent-600: #86efad;
+    --color-accent-700: #bbf7d1;
+    --color-accent-800: #dcfce8;
+    --color-accent-900: #f0fdf5;
+  }
+
+  .dark[data-accent="orange"] {
     --color-accent-50: theme('colors.orange.900');
     --color-accent-100: theme('colors.orange.800');
     --color-accent-200: theme('colors.orange.700');

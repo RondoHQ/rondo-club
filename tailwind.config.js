@@ -20,6 +20,20 @@ export default {
           800: 'var(--color-accent-800)',
           900: 'var(--color-accent-900)',
         },
+        // AWC Green palette (main color: #006935)
+        awc: {
+          50: '#f0fdf5',
+          100: '#dcfce8',
+          200: '#bbf7d1',
+          300: '#86efad',
+          400: '#4ade81',
+          500: '#22c560',
+          600: '#006935',
+          700: '#005a2d',
+          800: '#004924',
+          900: '#003d1e',
+          950: '#002912',
+        },
         primary: {
           50: '#fffbeb',
           100: '#fef3c7',
