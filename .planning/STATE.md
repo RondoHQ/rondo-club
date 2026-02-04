@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Personal CRM with team collaboration while maintaining relationship-focused experience
-**Current focus:** Phase 136 - Modal Lazy Loading
+**Current focus:** Phase 136 - Modal Lazy Loading (complete)
 
 ## Current Position
 
 Phase: 136 of 138 (Modal Lazy Loading)
-Plan: 0 of TBD
-Status: Ready to plan
-Last activity: 2026-02-04 — Completed Phase 135 (Fix Duplicate API Calls)
+Plan: 1 of 1 (complete)
+Status: Phase complete
+Last activity: 2026-02-04 — Completed 136-01-PLAN.md
 
-Progress: [██░░░░░░░░] 25%
+Progress: [███░░░░░░░] 30%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7 (v14.0 milestone in progress)
-- Average duration: 2m 20s
-- Total execution time: 16m 56s
+- Total plans completed: 8 (v14.0 milestone in progress)
+- Average duration: 2m 16s
+- Total execution time: 18m 56s
 
 **By Phase:**
 
@@ -31,6 +31,7 @@ Progress: [██░░░░░░░░] 25%
 | 133 | 1 | 3m 42s | 3m 42s |
 | 134 | 3 | 6m 18s | 2m 06s |
 | 135 | 2 | 4m 23s | 2m 12s |
+| 136 | 1 | 2m 00s | 2m 00s |
 
 ### Recent Milestones
 
@@ -52,6 +53,8 @@ Recent decisions affecting current work:
 - Migrated from BrowserRouter to createBrowserRouter data router pattern (Phase 135-02)
 - Routes now defined at module scope in router.jsx (Phase 135-02)
 - Fixed ES module double-load: removed ?ver= from wp_enqueue_script for Vite bundles - browser ES module cache keys by full URL, so different query strings caused React to execute twice (Phase 135)
+- Added enabled option to usePeople hook with default true for backward compatibility (Phase 136)
+- Established modal lazy-loading pattern: usePeople({}, { enabled: isOpen }) (Phase 136)
 
 ### Pending Todos
 
@@ -72,9 +75,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed Phase 135 (Fix Duplicate API Calls) - verified
+Stopped at: Completed Phase 136 (Modal Lazy Loading)
 Resume file: None
-Next: `/gsd:plan-phase 136` — plan Modal Lazy Loading phase
+Next: Phase 137 or next milestone
 
 ---
 *State updated: 2026-02-04*
