@@ -327,7 +327,12 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(No active requirements - ready for next milestone)
+**v15.0 Personal Tasks:**
+- [ ] Task isolation — Users only see tasks they created (filter by post_author)
+- [ ] Migration — Existing tasks assigned to their original creator
+- [ ] Multi-person tasks — Task links to people remain, but only creator can view/edit
+- [ ] Personal note — Persistent indicator in Tasks UI reminding users tasks are personal
+- [ ] Dashboard counts — Show only user's own open/awaiting task counts
 
 ### Out of Scope
 

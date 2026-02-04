@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: Ready for next milestone
-Plan: Not started
-Status: v14.0 milestone complete, archived
-Last activity: 2026-02-04 — v14.0 milestone completed and archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v15.0
+Last activity: 2026-02-04 — Milestone v15.0 Personal Tasks started
 
-Progress: Ready for `/gsd:new-milestone`
+Progress: Ready for roadmap creation
 
 ## Performance Metrics
 
