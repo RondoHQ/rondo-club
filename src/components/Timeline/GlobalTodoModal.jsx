@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { X, User, ChevronDown, Search, Plus } from 'lucide-react';
+import { X, User, ChevronDown, Search, Plus, Info } from 'lucide-react';
 import { usePeople, useCreateTodo } from '@/hooks/usePeople';
 import { useQueryClient } from '@tanstack/react-query';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -136,6 +136,14 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Personal tasks info message */}
+        <div className="mx-4 mt-4 mb-2 flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs dark:bg-blue-900/30 dark:border-blue-700">
+          <Info className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <p className="text-blue-700 dark:text-blue-300">
+            Deze taak is alleen zichtbaar voor jou
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4">
