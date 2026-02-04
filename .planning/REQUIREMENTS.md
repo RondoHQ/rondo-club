@@ -40,22 +40,22 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TASK-01 | TBD | Pending |
-| TASK-02 | TBD | Pending |
-| TASK-03 | TBD | Pending |
-| TASK-04 | TBD | Pending |
-| TASK-05 | TBD | Pending |
-| UX-01 | TBD | Pending |
-| UX-02 | TBD | Pending |
-| UX-03 | TBD | Pending |
-| MIG-01 | TBD | Pending |
-| MIG-02 | TBD | Pending |
+| TASK-01 | Phase 139 | Pending |
+| TASK-02 | Phase 139 | Pending |
+| TASK-03 | Phase 139 | Pending |
+| TASK-04 | Phase 139 | Pending |
+| TASK-05 | Phase 139 | Pending |
+| UX-01 | Phase 140 | Pending |
+| UX-02 | Phase 140 | Pending |
+| UX-03 | Phase 140 | Pending |
+| MIG-01 | Phase 139 | Pending |
+| MIG-02 | Phase 139 | Pending |
 
 **Coverage:**
 - v15.0 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10 ⚠️
+- Mapped to phases: 10
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-04*
-*Last updated: 2026-02-04 after initial definition*
+*Last updated: 2026-02-04 after roadmap creation*
