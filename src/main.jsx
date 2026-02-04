@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
 import DomErrorBoundary from './components/DomErrorBoundary';
-import App from './App';
+import router from './router';
 import './index.css';
 
 // Configure TanStack Query to use browser online/offline events
@@ -38,9 +38,7 @@ if (rootElement) {
   try {
     ReactDOM.createRoot(rootElement).render(
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <RouterProvider router={router} />
       </QueryClientProvider>
     );
   } catch {
