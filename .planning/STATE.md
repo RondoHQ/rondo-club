@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 Phase: 140 of 140 (Frontend Messaging)
 Plan: 01 of 01 (complete)
 Status: Phase complete - v15.0 Personal Tasks finished
-Last activity: 2026-02-04 — Completed 140-01-PLAN.md (Frontend messaging for personal tasks)
+Last activity: 2026-02-04 — Completed quick task 039 (Remove user approval workflow)
 
 Progress: [██████████] 100% (2/2 phases)
 
@@ -69,6 +69,7 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 039 | Remove user approval workflow and default Stadion User role | 2026-02-04 | 4433c8e1 | [039-remove-user-approval-stadion-user-role](./quick/039-remove-user-approval-stadion-user-role/) |
 | 038 | Remove duplicate card wrapper from CustomFieldsSection on team detail | 2026-02-04 | 45fd6e58 | - |
 | 037 | Hide former players column and swap staff/player order on team detail page | 2026-02-04 | c7eb9a0b | [037-hide-voormalig-spelers-column-swap-playe](./quick/037-hide-voormalig-spelers-column-swap-playe/) |
 | 036 | Change discipline cases route from /discipline-cases to /tuchtzaken | 2026-02-03 | 3fd7dfe9 | [036-change-route-to-tuchtzaken](./quick/036-change-route-to-tuchtzaken/) |
@@ -79,7 +80,7 @@ None.
 Last session: 2026-02-04
 Stopped at: Completed 140-01-PLAN.md (Frontend messaging for personal tasks)
 Resume file: None
-Next: `/gsd:audit-milestone`
+Next: `/gsd:complete-milestone v15.0`
 
 ---
 *State updated: 2026-02-04*
