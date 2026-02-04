@@ -39,8 +39,7 @@ const StadiumIcon = ({ className }) => (
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { prmApi, wpApi } from '@/api/client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { APP_NAME } from '@/constants/app';
 import { useVOGCount } from '@/hooks/useVOGCount';
 
@@ -63,13 +62,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const { count: vogCount } = useVOGCount();
 
   // Fetch current user for capability check
-  const { data: currentUser } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const response = await prmApi.getCurrentUser();
-      return response.data;
-    },
-  });
+  const { data: currentUser } = useCurrentUser();
 
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
 
@@ -148,14 +141,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
 function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
-  
-  const { data: user, isLoading } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const response = await prmApi.getCurrentUser();
-      return response.data;
-    },
-  });
+
+  const { data: user, isLoading } = useCurrentUser();
   
   // Close dropdown when clicking outside
   useEffect(() => {

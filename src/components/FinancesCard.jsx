@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { Coins, AlertTriangle, Users, Calendar, Gavel } from 'lucide-react';
 import { usePersonFee } from '@/hooks/useFees';
 import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
-import { prmApi } from '@/api/client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { formatCurrency, formatPercentage, getCategoryLabel } from '@/utils/formatters';
 
 /**
@@ -14,13 +13,7 @@ export default function FinancesCard({ personId }) {
   const { data: feeData, isLoading } = usePersonFee(personId);
 
   // Fetch current user for fairplay capability check
-  const { data: currentUser } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const response = await prmApi.getCurrentUser();
-      return response.data;
-    },
-  });
+  const { data: currentUser } = useCurrentUser();
 
   const canAccessFairplay = Boolean(currentUser?.can_access_fairplay);
 

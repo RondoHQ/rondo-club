@@ -25,6 +25,7 @@ import VOGCard from '@/components/VOGCard';
 import { format, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
 import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, getVogStatus, formatPhoneForTel } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
@@ -69,13 +70,7 @@ export default function PersonDetail() {
   });
 
   // Fetch current user for capability check
-  const { data: currentUser } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const response = await prmApi.getCurrentUser();
-      return response.data;
-    },
-  });
+  const { data: currentUser } = useCurrentUser();
 
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
 
