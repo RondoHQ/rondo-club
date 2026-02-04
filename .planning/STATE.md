@@ -79,7 +79,7 @@ None.
 Last session: 2026-02-04
 Stopped at: Completed 140-01-PLAN.md (Frontend messaging for personal tasks)
 Resume file: None
-Next: v15.0 Personal Tasks complete - ready for next feature
+Next: `/gsd:audit-milestone`
 
 ---
 *State updated: 2026-02-04*
