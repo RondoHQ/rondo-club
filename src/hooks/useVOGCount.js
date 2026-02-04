@@ -11,13 +11,18 @@ import { useFilteredPeople } from '@/hooks/usePeople';
  * @returns {Object} { count: number, isLoading: boolean }
  */
 export function useVOGCount() {
-  const { data, isLoading } = useFilteredPeople({
-    page: 1,
-    perPage: 1, // Only need count, not full data
-    huidigeVrijwilliger: '1',
-    vogMissing: '1',
-    vogOlderThanYears: 3,
-  });
+  const { data, isLoading } = useFilteredPeople(
+    {
+      page: 1,
+      perPage: 1, // Only need count, not full data
+      huidigeVrijwilliger: '1',
+      vogMissing: '1',
+      vogOlderThanYears: 3,
+    },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes - badge doesn't need real-time updates
+    }
+  );
 
   return {
     count: data?.total || 0,

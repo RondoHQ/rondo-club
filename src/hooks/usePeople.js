@@ -113,9 +113,10 @@ export function usePeople(params = {}, options = {}) {
  * @param {string} filters.vogEmailStatus - 'sent' or 'not_sent' to filter by email status
  * @param {string} filters.vogType - 'nieuw', 'vernieuwing', or '' for all
  * @param {string} filters.vogJustisStatus - 'submitted' or 'not_submitted' to filter by Justis status
+ * @param {Object} options - TanStack Query options (staleTime, enabled, etc.)
  * @returns {Object} TanStack Query result with data, isLoading, error, etc.
  */
-export function useFilteredPeople(filters = {}) {
+export function useFilteredPeople(filters = {}, options = {}) {
   // Normalize filter keys for backend (snake_case)
   const params = {
     page: filters.page || 1,
@@ -152,6 +153,8 @@ export function useFilteredPeople(filters = {}) {
     },
     // Keep previous data while fetching new page for smoother UX
     placeholderData: (previousData) => previousData,
+    // Allow staleTime, enabled, etc. to be passed
+    ...options,
   });
 }
 
