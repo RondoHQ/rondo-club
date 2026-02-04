@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileCheck,
+  Gavel,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -36,6 +37,8 @@ import {
 import PersonAvatar from '@/components/PersonAvatar.jsx';
 import DashboardCard from '@/components/DashboardCard.jsx';
 import { useVOGCount } from '@/hooks/useVOGCount';
+import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal.jsx';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal.jsx';
 import DashboardCustomizeModal from '@/components/DashboardCustomizeModal.jsx';
@@ -436,15 +439,38 @@ function VOGStatCard() {
 }
 
 /**
+ * Tuchtzaken statistics card showing the count of discipline cases.
+ */
+function TuchtzakenStatCard() {
+  const { count } = useDisciplineCasesCount();
+
+  return (
+    <StatCard title="Tuchtzaken" value={count} icon={Gavel} href="/tuchtzaken" />
+  );
+}
+
+/**
  * Stats row component for the dashboard header.
  */
 function StatsRow({ stats }) {
+  const { data: currentUser } = useCurrentUser();
+  const canAccessVOG = currentUser?.can_access_vog ?? false;
+  const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       <StatCard title="Totaal leden" value={stats?.total_people || 0} icon={Users} href="/people" />
       <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
-      <VOGStatCard />
-      <StatCard title="Open taken" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
+      {canAccessVOG ? (
+        <VOGStatCard />
+      ) : (
+        <StatCard title="Herinneringen" value={stats?.total_dates || 0} icon={Calendar} href="/dates" />
+      )}
+      {canAccessFairplay ? (
+        <TuchtzakenStatCard />
+      ) : (
+        <StatCard title="Open taken" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
+      )}
       <StatCard title="In afwachting" value={stats?.awaiting_todos_count || 0} icon={Clock} href="/todos?status=awaiting" />
     </div>
   );
