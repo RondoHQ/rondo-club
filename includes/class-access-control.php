@@ -186,6 +186,11 @@ class AccessControl {
 			return;
 		}
 
+		// User isolation for tasks - users only see their own tasks
+		if ( $post_type === 'stadion_todo' ) {
+			$query->set( 'author', get_current_user_id() );
+		}
+
 		// VOG-only users see only volunteers for person post type
 		if ( $post_type === 'person' && $this->should_filter_volunteers_only() ) {
 			$meta_query   = $query->get( 'meta_query' ) ?: [];
@@ -207,9 +212,16 @@ class AccessControl {
 		if ( ! $this->is_user_approved() ) {
 			// Unapproved or not logged in - show nothing
 			$args['post__in'] = [ 0 ];
+			return $args;
 		}
 
-		// Approved users see all posts - no filtering needed
+		// User isolation for tasks - users only see their own tasks
+		// Check if this is a stadion_todo query by examining current filter
+		$current_filter = current_filter();
+		if ( $current_filter === 'rest_stadion_todo_query' ) {
+			$args['author'] = get_current_user_id();
+		}
+
 		return $args;
 	}
 
