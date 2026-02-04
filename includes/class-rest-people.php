@@ -1073,6 +1073,9 @@ class People extends Base {
 
 		$offset = ( $page - 1 ) * $per_page;
 
+		// Check if VOG-only user (should only see volunteers)
+		$volunteers_only = $access_control->should_filter_volunteers_only();
+
 		// Build query components
 		$select_fields  = "p.ID, p.post_modified, p.post_author";
 		$join_clauses   = [];
@@ -1086,6 +1089,12 @@ class People extends Base {
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} fn ON p.ID = fn.post_id AND fn.meta_key = 'first_name'";
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ln ON p.ID = ln.post_id AND ln.meta_key = 'last_name'";
 		$select_fields .= ", fn.meta_value AS first_name, ln.meta_value AS last_name";
+
+		// VOG-only users can only see volunteers
+		if ( $volunteers_only ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} vog_hv ON p.ID = vog_hv.post_id AND vog_hv.meta_key = 'huidig-vrijwilliger'";
+			$where_clauses[] = "(vog_hv.meta_value = '1')";
+		}
 
 		// Ownership filter
 		if ( $ownership === 'mine' ) {

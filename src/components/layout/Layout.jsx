@@ -46,14 +46,14 @@ import { useVOGCount } from '@/hooks/useVOGCount';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Leden', href: '/people', icon: Users },
-  { name: 'Contributie', href: '/contributie', icon: Coins, indent: true },
-  { name: 'VOG', href: '/vog', icon: FileCheck, indent: true },
+  { name: 'Contributie', href: '/contributie', icon: Coins, indent: true, requiresUnrestricted: true },
+  { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
-  { name: 'Teams', href: '/teams', icon: Building2 },
+  { name: 'Teams', href: '/teams', icon: Building2, requiresFairplay: true },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
-  { name: 'Datums', href: '/dates', icon: Calendar },
-  { name: 'Taken', href: '/todos', icon: CheckSquare },
-  { name: 'Feedback', href: '/feedback', icon: MessageSquare },
+  { name: 'Datums', href: '/dates', icon: Calendar, requiresUnrestricted: true },
+  { name: 'Taken', href: '/todos', icon: CheckSquare, requiresUnrestricted: true },
+  { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresUnrestricted: true },
   { name: 'Instellingen', href: '/settings', icon: Settings },
 ];
 
@@ -65,6 +65,9 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const { data: currentUser } = useCurrentUser();
 
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
+  const canAccessVOG = currentUser?.can_access_vog ?? false;
+  const isAdmin = currentUser?.is_admin ?? false;
+  const isRestricted = (canAccessVOG || canAccessFairplay) && !isAdmin;
 
   // Map navigation items to their counts
   const getCounts = (name) => {
@@ -96,7 +99,13 @@ function Sidebar({ mobile = false, onClose, stats }) {
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         {navigation
-          .filter(item => !item.requiresFairplay || canAccessFairplay)
+          .filter(item => {
+            if (isAdmin) return true;
+            if (item.requiresUnrestricted && isRestricted) return false;
+            if (item.requiresFairplay && !canAccessFairplay) return false;
+            if (item.requiresVOG && !canAccessVOG) return false;
+            return true;
+          })
           .map((item) => {
             const count = getCounts(item.name);
             return (
