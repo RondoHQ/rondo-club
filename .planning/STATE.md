@@ -66,6 +66,7 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 038 | Remove duplicate card wrapper from CustomFieldsSection on team detail | 2026-02-04 | 45fd6e58 | - |
 | 037 | Hide former players column and swap staff/player order on team detail page | 2026-02-04 | c7eb9a0b | [037-hide-voormalig-spelers-column-swap-playe](./quick/037-hide-voormalig-spelers-column-swap-playe/) |
 | 036 | Change discipline cases route from /discipline-cases to /tuchtzaken | 2026-02-03 | 3fd7dfe9 | [036-change-route-to-tuchtzaken](./quick/036-change-route-to-tuchtzaken/) |
 | 035 | Add Doorbelast and Card columns to discipline cases table | 2026-02-03 | 6f75c16f | [035-doorbelast-card-columns](./quick/035-doorbelast-card-columns/) |
