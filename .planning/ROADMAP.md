@@ -9,7 +9,7 @@ Eliminate unnecessary API calls and optimize dashboard load time by fixing dupli
 - [x] **Phase 135: Fix Duplicate API Calls** - Investigate and eliminate 2x API calls on every page load
 - [x] **Phase 136: Modal Lazy Loading** - Conditionally load data only when modals are opened
 - [x] **Phase 137: Query Deduplication** - Share current-user query and cache VOG count
-- [ ] **Phase 138: Backend Query Optimization** - Replace posts_per_page=-1 with COUNT queries
+- [x] **Phase 138: Backend Query Optimization** - Replace posts_per_page=-1 with COUNT queries
 
 ## Phase Details
 
@@ -80,7 +80,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 138-01-PLAN.md — Optimize todo count functions with wp_count_posts()
+- [x] 138-01-PLAN.md — Optimize todo count functions with wp_count_posts()
 
 ## Progress
 
@@ -89,7 +89,7 @@ Plans:
 | 135. Fix Duplicate API Calls | 2/2 | ✓ Complete | 2026-02-04 |
 | 136. Modal Lazy Loading | 1/1 | ✓ Complete | 2026-02-04 |
 | 137. Query Deduplication | 1/1 | ✓ Complete | 2026-02-04 |
-| 138. Backend Query Optimization | 0/1 | Not started | - |
+| 138. Backend Query Optimization | 1/1 | ✓ Complete | 2026-02-04 |
 
 ---
 *Roadmap created: 2026-02-04*
