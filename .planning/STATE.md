@@ -50,9 +50,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-2 todo(s) in `.planning/todos/pending/`:
+1 todo(s) in `.planning/todos/pending/`:
 - **public-vog-upload-and-validation**: Public VOG Upload and Validation (area: api)
-- **personal-tasks-with-user-isolation**: Personal Tasks with User Isolation (area: api)
 
 ### Blockers/Concerns
 
