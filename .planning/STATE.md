@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 ## Current Position
 
 Phase: 135 of 138 (Fix Duplicate API Calls)
-Plan: 0 of TBD
-Status: Ready to plan
-Last activity: 2026-02-04 — Roadmap created for v14.0 Performance Optimization
+Plan: 1 of 1
+Status: Phase complete
+Last activity: 2026-02-04 — Completed 135-01-PLAN.md (Fix Duplicate API Calls)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 10%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5 (v13.0 milestone)
-- Average duration: 2m 31s
-- Total execution time: 12m 33s
+- Total plans completed: 6 (v14.0 milestone in progress)
+- Average duration: 2m 13s
+- Total execution time: 13m 34s
 
 **By Phase:**
 
@@ -30,6 +30,7 @@ Progress: [░░░░░░░░░░] 0%
 | 132 | 1 | 2m 33s | 2m 33s |
 | 133 | 1 | 3m 42s | 3m 42s |
 | 134 | 3 | 6m 18s | 2m 06s |
+| 135 | 1 | 1m 01s | 1m 01s |
 
 ### Recent Milestones
 
@@ -44,8 +45,10 @@ Progress: [░░░░░░░░░░] 0%
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-Recent decision affecting current work:
+Recent decisions affecting current work:
 - Investigation completed identifying 5 performance issues: duplicate API calls (all endpoints 2x), QuickActivityModal loading 1400+ people on dashboard, multiple current-user queries, VOG count on every navigation, backend posts_per_page=-1 for counts
+- Disabled refetchOnWindowFocus in QueryClient to prevent tab-switch refetches (Phase 135)
+- Documented React Query's built-in concurrent request deduplication - no additional code needed (Phase 135)
 
 ### Pending Todos
 
@@ -66,9 +69,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Roadmap created for v14.0
+Stopped at: Completed 135-01-PLAN.md (Fix Duplicate API Calls)
 Resume file: None
-Next: `/gsd:plan-phase 135` — plan first phase (Fix Duplicate API Calls)
+Next: `/gsd:plan-phase 136` — plan next phase (Optimize QuickActivityModal)
 
 ---
 *State updated: 2026-02-04*
