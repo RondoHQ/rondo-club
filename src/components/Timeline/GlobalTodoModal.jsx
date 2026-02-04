@@ -13,7 +13,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
   const [notes, setNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
   
-  const { data: people = [], isLoading: isPeopleLoading } = usePeople();
+  const { data: people = [], isLoading: isPeopleLoading } = usePeople({}, { enabled: isOpen });
   const createTodo = useCreateTodo();
   const queryClient = useQueryClient();
   
