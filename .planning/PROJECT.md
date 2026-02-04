@@ -318,15 +318,16 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Person detail Tuchtzaken tab showing linked cases — v13.0
 - Read-only UI consistent with Sportlink data model — v13.0
 
+**v14.0 Performance Optimization (shipped 2026-02-04):**
+- Eliminated duplicate API calls via createBrowserRouter migration and ES module fix — v14.0
+- Modal lazy loading for QuickActivityModal, TodoModal, GlobalTodoModal — v14.0
+- Centralized useCurrentUser hook with 5-minute staleTime caching — v14.0
+- VOG count caching preventing refetch on every navigation — v14.0
+- Backend todo counts using wp_count_posts() instead of get_posts() — v14.0
+
 ### Active
 
-**v14.0 Performance Optimization** — Eliminate duplicate API calls, lazy-load modals, optimize backend queries
-
-- [ ] Fix duplicate API calls on page load (all endpoints called 2x)
-- [ ] Lazy-load QuickActivityModal to prevent loading all 1400+ people on dashboard
-- [ ] Deduplicate current-user queries across components
-- [ ] Optimize VOG count to not call API on every page load
-- [ ] Replace `posts_per_page=-1` with proper count queries in backend
+(No active requirements - ready for next milestone)
 
 ### Out of Scope
 
@@ -483,6 +484,12 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Client-side person filtering | More reliable than ACF meta queries for discipline cases | ✓ Good |
 | FairplayRoute wrapper pattern | Consistent with existing ProtectedRoute, reusable | ✓ Good |
 | Hide tab if zero cases | Reduces UI clutter, better UX for persons without discipline history | ✓ Good |
+| Disabled refetchOnWindowFocus | Prevents unnecessary API calls on tab switches for personal CRM use case | ✓ Good |
+| createBrowserRouter data router pattern | Module-scoped route configuration prevents router recreation on renders | ✓ Good |
+| ES module without version query string | Browser ES module cache keys by full URL; version query caused double execution | ✓ Good |
+| Modal lazy-loading pattern | `usePeople({}, { enabled: isOpen })` pattern for conditional data fetching | ✓ Good |
+| Centralized useCurrentUser hook | Single cache entry shared by 6 components with 5-minute staleTime | ✓ Good |
+| wp_count_posts() for todo counts | Efficient SQL COUNT instead of fetching all post IDs | ✓ Good |
 
 ---
-*Last updated: 2026-02-04 after v14.0 Performance Optimization milestone started*
+*Last updated: 2026-02-04 after v14.0 Performance Optimization milestone complete*

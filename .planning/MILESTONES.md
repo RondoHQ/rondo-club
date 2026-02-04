@@ -1,5 +1,38 @@
 # Project Milestones: Stadion
 
+## v14.0 Performance Optimization (Shipped: 2026-02-04)
+
+**Delivered:** Eliminated duplicate API calls on page load, implemented modal lazy loading for people selectors, centralized query deduplication for current-user and VOG count, and optimized backend todo count queries to use efficient SQL COUNT instead of fetching all records.
+
+**Phases completed:** 135-138 (5 plans total)
+
+**Key accomplishments:**
+
+- Eliminated duplicate API calls by migrating to createBrowserRouter data router pattern and fixing ES module double-load issue (browser cached by full URL including query string)
+- Implemented modal lazy loading - QuickActivityModal, TodoModal, GlobalTodoModal fetch 1400+ people records only when opened
+- Created centralized useCurrentUser hook with 5-minute caching shared across 6 components
+- Added staleTime caching to VOG count preventing refetch on every navigation
+- Replaced inefficient get_posts() with wp_count_posts() for backend todo count queries
+
+**Stats:**
+
+- 19 files changed
+- +724 / -851 lines changed
+- 4 phases, 5 plans
+- Same day (2026-02-04, ~3 hours)
+
+**Performance Impact:**
+- API calls on dashboard load: 14 → 7 (50% reduction)
+- People fetched on dashboard: 1400+ → 0 (100% reduction)
+- Current-user calls per session: ~90% reduction
+- VOG count calls per session: ~80% reduction
+
+**Git range:** `5ea761b1` → `78db09ab` (36 commits)
+
+**What's next:** To be determined
+
+---
+
 ## v13.0 Discipline Cases (Shipped: 2026-02-03)
 
 **Delivered:** Discipline case tracking with capability-based access control - view Sportlink-synced discipline cases in a dedicated list page with season filtering and on person profile Tuchtzaken tabs, restricted to users with the `fairplay` capability.
