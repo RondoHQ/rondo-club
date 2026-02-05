@@ -621,7 +621,7 @@ function stadion_pwa_meta_tags() {
 	<!-- Manifest -->
 	<link rel="manifest" href="<?php echo esc_url( $theme_url . '/dist/manifest.webmanifest' ); ?>">
 
-	<!-- Theme Color (default AWC green, React will update dynamically) -->
+	<!-- Theme Color (default club color, React will update dynamically) -->
 	<meta name="theme-color" media="(prefers-color-scheme: light)" content="#006935">
 	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#22c560">
 	<?php
@@ -950,7 +950,7 @@ function stadion_login_styles() {
 	$site_name   = get_bloginfo( 'name' );
 	?>
 	<style type="text/css">
-		/* Background - AWC Green gradient */
+		/* Background gradient */
 		body.login {
 			background: linear-gradient(135deg, #f0fdf5 0%, #dcfce8 50%, #bbf7d1 100%);
 			font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

@@ -906,7 +906,7 @@ function AppearanceTab() {
 
   // Map accent color names to Tailwind color classes
   const accentColorClasses = {
-    awc: 'bg-awc-600',
+    club: 'bg-club-600',
     orange: 'bg-orange-500',
     teal: 'bg-teal-500',
     indigo: 'bg-indigo-500',
@@ -918,7 +918,7 @@ function AppearanceTab() {
   };
 
   const accentRingClasses = {
-    awc: 'ring-awc-600',
+    club: 'ring-club-600',
     orange: 'ring-orange-500',
     teal: 'ring-teal-500',
     indigo: 'ring-indigo-500',
@@ -983,13 +983,14 @@ function AppearanceTab() {
               <button
                 key={color}
                 onClick={() => setAccentColor(color)}
+                style={color === 'club' ? { backgroundColor: window.stadionConfig?.accentColor || '#006935' } : undefined}
                 className={`
                   w-10 h-10 rounded-full transition-transform hover:scale-110
-                  ${accentColorClasses[color]}
-                  ${isSelected ? `ring-2 ring-offset-2 ${accentRingClasses[color]} dark:ring-offset-gray-800` : ''}
+                  ${color !== 'club' ? accentColorClasses[color] : ''}
+                  ${isSelected ? `ring-2 ring-offset-2 ${color !== 'club' ? accentRingClasses[color] : 'ring-current'} dark:ring-offset-gray-800` : ''}
                 `}
-                title={color === 'awc' ? 'AWC' : color.charAt(0).toUpperCase() + color.slice(1)}
-                aria-label={`Selecteer ${color === 'awc' ? 'AWC' : color} accentkleur`}
+                title={color === 'club' ? 'Club' : color.charAt(0).toUpperCase() + color.slice(1)}
+                aria-label={`Selecteer ${color === 'club' ? 'Club' : color} accentkleur`}
               />
             );
           })}
@@ -997,7 +998,10 @@ function AppearanceTab() {
 
         {/* Current accent indicator */}
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          Geselecteerd: <span className="font-medium">{accentColor === 'awc' ? 'AWC' : accentColor.charAt(0).toUpperCase() + accentColor.slice(1)}</span>
+          Geselecteerd: <span className="font-medium">{accentColor === 'club' ? 'Club' : accentColor.charAt(0).toUpperCase() + accentColor.slice(1)}</span>
+          {accentColor === 'club' && (
+            <span className="text-gray-400 dark:text-gray-500"> (past zich aan wanneer de beheerder de clubkleur wijzigt)</span>
+          )}
         </p>
       </div>
 

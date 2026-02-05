@@ -117,7 +117,7 @@
 /* Theme custom properties for accent colors */
 @layer base {
   :root {
-    /* Default accent: AWC green (#006935) */
+    /* Default accent: Club color (fallback #006935) */
     --color-accent-50: #f0fdf5;
     --color-accent-100: #dcfce8;
     --color-accent-200: #bbf7d1;
@@ -236,7 +236,7 @@
 
   /* Dark mode variants - reverse the scale for better contrast */
   .dark {
-    /* Default accent: AWC green */
+    /* Default accent: Club color */
     --color-accent-50: #003d1e;
     --color-accent-100: #004924;
     --color-accent-200: #005a2d;

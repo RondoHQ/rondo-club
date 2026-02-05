@@ -20,8 +20,8 @@ export default {
           800: 'var(--color-accent-800)',
           900: 'var(--color-accent-900)',
         },
-        // AWC Green palette (main color: #006935)
-        awc: {
+        // Club color palette (main color: #006935)
+        club: {
           50: '#f0fdf5',
           100: '#dcfce8',
           200: '#bbf7d1',
