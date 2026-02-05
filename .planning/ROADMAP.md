@@ -32,10 +32,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. REST API endpoint exists at `/stadion/v1/config` with admin write, all-users read permissions
   5. Sensible defaults apply when no config exists (empty club name, green #006935, FreeScout hidden)
 
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 144-01: TBD
+- [ ] 144-01-PLAN.md — ClubConfig service class, REST endpoint, stadionConfig extension, dynamic page title
 
 ### Phase 145: Frontend & Color Refactor
 **Goal**: Users see club configuration in Settings UI and AWC color scheme becomes dynamic club color throughout application
@@ -81,6 +81,6 @@ Phases execute in numeric order: 144 → 145 → 146
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 144. Backend Configuration System | 0/TBD | Not started | - |
+| 144. Backend Configuration System | 0/1 | Planned | - |
 | 145. Frontend & Color Refactor | 0/TBD | Not started | - |
 | 146. Integration Cleanup | 0/TBD | Not started | - |
