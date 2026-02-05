@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, Coins, X, Users, MessageSquare, Search, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, Database } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { format, formatDistanceToNow } from '@/utils/dateFormat';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
@@ -838,6 +839,16 @@ export default function Settings() {
 // Appearance Tab Component
 function AppearanceTab() {
   const { colorScheme, setColorScheme, effectiveColorScheme, accentColor, setAccentColor } = useTheme();
+  const config = window.stadionConfig || {};
+  const isAdmin = config.isAdmin || false;
+
+  // Club Configuration state (admin only)
+  const [clubName, setClubName] = useState(config.clubName || '');
+  const [clubColor, setClubColor] = useState(config.accentColor || '#006935');
+  const [freescoutUrl, setFreescoutUrl] = useState(config.freescoutUrl || '');
+  const [savingClubConfig, setSavingClubConfig] = useState(false);
+  const [clubConfigSaved, setClubConfigSaved] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   // Profile link state
   const [linkedPerson, setLinkedPerson] = useState(null);
@@ -898,6 +909,35 @@ function AppearanceTab() {
     }
   };
 
+  const handleSaveClubConfig = async () => {
+    setSavingClubConfig(true);
+    setClubConfigSaved(false);
+    try {
+      const response = await prmApi.post('/config', {
+        club_name: clubName,
+        accent_color: clubColor,
+        freescout_url: freescoutUrl,
+      });
+      // Update window.stadionConfig with saved values
+      window.stadionConfig.clubName = response.data.club_name;
+      window.stadionConfig.accentColor = response.data.accent_color;
+      window.stadionConfig.freescoutUrl = response.data.freescout_url;
+
+      // Force theme re-application if user is on 'club' accent
+      if (accentColor === 'club') {
+        // useTheme's applyTheme will pick up new stadionConfig value
+        setAccentColor('club');
+      }
+
+      setClubConfigSaved(true);
+      setTimeout(() => setClubConfigSaved(false), 3000);
+    } catch (error) {
+      alert('Kan clubconfiguratie niet opslaan. Probeer het opnieuw.');
+    } finally {
+      setSavingClubConfig(false);
+    }
+  };
+
   const colorSchemeOptions = [
     { id: 'light', label: 'Licht', icon: Sun },
     { id: 'dark', label: 'Donker', icon: Moon },
@@ -931,6 +971,95 @@ function AppearanceTab() {
 
   return (
     <div className="space-y-6">
+      {/* Club Configuration card (admin only) */}
+      {isAdmin && (
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold mb-2 dark:text-gray-100">Clubconfiguratie</h2>
+          <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
+            Configureer clubinstellingen. Wijzigingen gelden voor alle gebruikers.
+          </p>
+
+          <div className="space-y-5">
+            {/* Club Name */}
+            <div>
+              <label className="label">Clubnaam</label>
+              <input
+                type="text"
+                value={clubName}
+                onChange={(e) => setClubName(e.target.value)}
+                className="input max-w-md"
+                placeholder="bijv. Hockey Club Utrecht"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Wordt getoond op het inlogscherm en in de paginatitel.
+              </p>
+            </div>
+
+            {/* Club Color */}
+            <div>
+              <label className="label">Clubkleur</label>
+              <div className="flex gap-4 items-start">
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowColorPicker(!showColorPicker)}
+                    className="w-12 h-12 rounded-lg border-2 border-gray-300 dark:border-gray-600 cursor-pointer hover:scale-105 transition-transform"
+                    style={{ backgroundColor: clubColor }}
+                    title="Klik om kleurkiezer te openen"
+                  />
+                  {showColorPicker && (
+                    <div className="mt-2">
+                      <HexColorPicker color={clubColor} onChange={setClubColor} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 max-w-[200px]">
+                  <HexColorInput
+                    color={clubColor}
+                    onChange={setClubColor}
+                    className="input"
+                    prefixed
+                    placeholder="#006935"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* FreeScout URL */}
+            <div>
+              <label className="label">FreeScout URL</label>
+              <input
+                type="url"
+                value={freescoutUrl}
+                onChange={(e) => setFreescoutUrl(e.target.value)}
+                className="input max-w-md"
+                placeholder="https://support.example.com"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Basis-URL voor FreeScout klantkoppelingen. Laat leeg om te verbergen.
+              </p>
+            </div>
+
+            {/* Save Button */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSaveClubConfig}
+                disabled={savingClubConfig}
+                className="btn-primary"
+              >
+                {savingClubConfig ? 'Opslaan...' : 'Opslaan'}
+              </button>
+              {clubConfigSaved && (
+                <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                  <Check className="w-4 h-4" />
+                  Opgeslagen
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Color scheme card */}
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Kleurenschema</h2>
