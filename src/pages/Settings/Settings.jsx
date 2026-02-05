@@ -940,7 +940,7 @@ function AppearanceTab() {
     setSavingClubConfig(true);
     setClubConfigSaved(false);
     try {
-      const response = await prmApi.post('/config', {
+      const response = await prmApi.updateClubConfig({
         club_name: clubName,
         accent_color: clubColor,
         freescout_url: freescoutUrl,
