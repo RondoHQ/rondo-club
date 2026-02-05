@@ -75,6 +75,7 @@ The nonce is available in `window.stadionConfig.nonce` when logged in to Stadion
 | Field | Type | Description | Values/Format |
 |-------|------|-------------|---------------|
 | `acf.first_name` | string | First name | Any string |
+| `acf.infix` | string | Tussenvoegsel (e.g., van, de, van der) | Any string. Read-only in UI, synced from Sportlink |
 | `acf.last_name` | string | Last name | Any string |
 | `acf.nickname` | string | Nickname | Any string |
 | `acf.gender` | string | Gender | `male`, `female`, `non_binary`, `other`, `prefer_not_to_say` |
@@ -258,6 +259,7 @@ X-WP-Nonce: {nonce}
   "author": 1,
   "acf": {
     "first_name": "Jan",
+    "infix": "",
     "last_name": "de Vries",
     "gender": "male",
     "contact_info": [...],
@@ -271,7 +273,7 @@ X-WP-Nonce: {nonce}
 }
 ```
 
-**Note:** The `title` is automatically generated from `first_name` and `last_name`. You don't need to set it manually.
+**Note:** The `title` is automatically generated from `first_name`, `infix`, and `last_name`. You don't need to set it manually.
 
 ---
 
@@ -326,6 +328,7 @@ X-WP-Nonce: {nonce}
   "title": { "rendered": "Jan de Vries" },
   "acf": {
     "first_name": "Jan",
+    "infix": "",
     "last_name": "de Vries",
     "nickname": "",
     "gender": "male",
@@ -641,7 +644,7 @@ curl -X DELETE "https://your-site.com/wp-json/wp/v2/people/456" \
 
 ## Notes
 
-1. **Auto-generated Title:** The post title is automatically created from `first_name + last_name`. You don't need to set it.
+1. **Auto-generated Title:** The post title is automatically created from `first_name + infix + last_name` (e.g., "Jan van de Berg"). You don't need to set it.
 
 2. **Repeater Fields:** When updating `contact_info`, `addresses`, `work_history`, or `relationships`, always send the complete array. WordPress will replace the entire field.
 
