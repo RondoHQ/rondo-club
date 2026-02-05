@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [18.1.0] - 2026-02-05
+
+### Added
+- Per-season membership fee settings (current and next season)
+- Automatic migration of existing global fees to current season
+- Documentation for membership fees system (docs/membership-fees.md)
+
+### Changed
+- Settings UI shows two fee sections: current season and next season
+- API returns both seasons, accepts season parameter for updates
+- Each season saves independently with its own button
+
 ## [18.0.0] - 2026-02-05
 
 ### Removed
