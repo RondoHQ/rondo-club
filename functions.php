@@ -607,7 +607,20 @@ add_action( 'wp_head', 'stadion_theme_add_config_to_head', 0 );
  * inject meta tags since WordPress uses PHP templates, not index.html.
  */
 function stadion_pwa_meta_tags() {
-	$theme_url = STADION_THEME_URL;
+	$theme_url   = STADION_THEME_URL;
+	$club_config = new \Stadion\Config\ClubConfig();
+	$settings    = $club_config->get_all_settings();
+	$club_color  = esc_attr( $settings['accent_color'] );
+
+	// Calculate light variant for dark mode (same as useTheme.js)
+	$color_rgb = sscanf( $club_color, '#%02x%02x%02x' );
+	$r = $color_rgb[0];
+	$g = $color_rgb[1];
+	$b = $color_rgb[2];
+	$light_r = min( 255, round( $r + ( 255 - $r ) * 0.40 ) );
+	$light_g = min( 255, round( $g + ( 255 - $g ) * 0.40 ) );
+	$light_b = min( 255, round( $b + ( 255 - $b ) * 0.40 ) );
+	$club_color_dark = sprintf( '#%02x%02x%02x', $light_r, $light_g, $light_b );
 	?>
 	<!-- PWA Meta Tags -->
 	<meta name="mobile-web-app-capable" content="yes">
@@ -621,9 +634,9 @@ function stadion_pwa_meta_tags() {
 	<!-- Manifest -->
 	<link rel="manifest" href="<?php echo esc_url( $theme_url . '/dist/manifest.webmanifest' ); ?>">
 
-	<!-- Theme Color (default club color, React will update dynamically) -->
-	<meta name="theme-color" media="(prefers-color-scheme: light)" content="#006935">
-	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#22c560">
+	<!-- Theme Color (dynamic club color, React will update when accent changes) -->
+	<meta name="theme-color" media="(prefers-color-scheme: light)" content="<?php echo $club_color; ?>">
+	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="<?php echo $club_color_dark; ?>">
 	<?php
 }
 add_action( 'wp_head', 'stadion_pwa_meta_tags', 2 );
@@ -948,11 +961,56 @@ add_filter( 'acf/update_value/name=datum-vog', 'stadion_reset_vog_tracking_on_da
 function stadion_login_styles() {
 	$favicon_url = STADION_THEME_URL . '/favicon.svg';
 	$site_name   = get_bloginfo( 'name' );
+
+	// Get club configuration for dynamic theming
+	$club_config = new \Stadion\Config\ClubConfig();
+	$settings    = $club_config->get_all_settings();
+	$club_color  = $settings['accent_color']; // Defaults to #006935
+	$club_name   = $settings['club_name'];
+
+	// Pre-calculate color variants for CSS
+	$color_rgb = sscanf( $club_color, '#%02x%02x%02x' );
+	$r = $color_rgb[0];
+	$g = $color_rgb[1];
+	$b = $color_rgb[2];
+
+	// Darker variant (multiply by 0.75)
+	$dark_r = max( 0, round( $r * 0.75 ) );
+	$dark_g = max( 0, round( $g * 0.75 ) );
+	$dark_b = max( 0, round( $b * 0.75 ) );
+	$color_dark = sprintf( '#%02x%02x%02x', $dark_r, $dark_g, $dark_b );
+
+	// Darkest variant (multiply by 0.55)
+	$darkest_r = max( 0, round( $r * 0.55 ) );
+	$darkest_g = max( 0, round( $g * 0.55 ) );
+	$darkest_b = max( 0, round( $b * 0.55 ) );
+	$color_darkest = sprintf( '#%02x%02x%02x', $darkest_r, $darkest_g, $darkest_b );
+
+	// Very light tint for backgrounds (mix with white at 94%)
+	$light_r = min( 255, round( $r + ( 255 - $r ) * 0.94 ) );
+	$light_g = min( 255, round( $g + ( 255 - $g ) * 0.94 ) );
+	$light_b = min( 255, round( $b + ( 255 - $b ) * 0.94 ) );
+	$color_lightest = sprintf( '#%02x%02x%02x', $light_r, $light_g, $light_b );
+
+	// Light tint for gradients (mix with white at 85%)
+	$mid_r = min( 255, round( $r + ( 255 - $r ) * 0.85 ) );
+	$mid_g = min( 255, round( $g + ( 255 - $g ) * 0.85 ) );
+	$mid_b = min( 255, round( $b + ( 255 - $b ) * 0.85 ) );
+	$color_light = sprintf( '#%02x%02x%02x', $mid_r, $mid_g, $mid_b );
+
+	// Medium light tint for borders (mix with white at 72%)
+	$border_r = min( 255, round( $r + ( 255 - $r ) * 0.72 ) );
+	$border_g = min( 255, round( $g + ( 255 - $g ) * 0.72 ) );
+	$border_b = min( 255, round( $b + ( 255 - $b ) * 0.72 ) );
+	$color_border = sprintf( '#%02x%02x%02x', $border_r, $border_g, $border_b );
+
+	// Use club name if configured, otherwise site name
+	$display_name = ! empty( $club_name ) ? $club_name : $site_name;
 	?>
 	<style type="text/css">
 		/* Background gradient */
 		body.login {
-			background: linear-gradient(135deg, #f0fdf5 0%, #dcfce8 50%, #bbf7d1 100%);
+			background: linear-gradient(135deg, <?php echo esc_attr( $color_lightest ); ?> 0%, <?php echo esc_attr( $color_light ); ?> 50%, <?php echo esc_attr( $color_border ); ?> 100%);
 			font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 		}
 
@@ -974,12 +1032,12 @@ function stadion_login_styles() {
 
 		/* App name below logo */
 		#login h1::after {
-			content: '<?php echo esc_js( $site_name ); ?>';
+			content: '<?php echo esc_js( $display_name ); ?>';
 			display: block;
 			text-align: center;
 			font-size: 28px;
 			font-weight: 600;
-			color: #004924;
+			color: <?php echo esc_attr( $color_darkest ); ?>;
 			margin-top: 10px;
 			letter-spacing: -0.5px;
 		}
@@ -987,16 +1045,16 @@ function stadion_login_styles() {
 		/* Form box */
 		.login form {
 			background: #ffffff;
-			border: 1px solid #bbf7d1;
+			border: 1px solid <?php echo esc_attr( $color_border ); ?>;
 			border-radius: 12px;
-			box-shadow: 0 10px 25px rgba(0, 105, 53, 0.1);
+			box-shadow: 0 10px 25px rgba(<?php echo "$r, $g, $b"; ?>, 0.1);
 			padding: 26px 24px;
 		}
 
 		/* Input fields */
 		.login input[type="text"],
 		.login input[type="password"] {
-			border: 1px solid #bbf7d1;
+			border: 1px solid <?php echo esc_attr( $color_border ); ?>;
 			border-radius: 8px;
 			padding: 10px 14px;
 			font-size: 15px;
@@ -1005,14 +1063,14 @@ function stadion_login_styles() {
 
 		.login input[type="text"]:focus,
 		.login input[type="password"]:focus {
-			border-color: #006935;
-			box-shadow: 0 0 0 3px rgba(0, 105, 53, 0.15);
+			border-color: <?php echo esc_attr( $club_color ); ?>;
+			box-shadow: 0 0 0 3px rgba(<?php echo "$r, $g, $b"; ?>, 0.15);
 			outline: none;
 		}
 
 		/* Labels */
 		.login label {
-			color: #003d1e;
+			color: <?php echo esc_attr( $color_darkest ); ?>;
 			font-weight: 500;
 			font-size: 14px;
 		}
@@ -1026,10 +1084,10 @@ function stadion_login_styles() {
 		.login .button-primary,
 		.login #wp-submit,
 		.wp-core-ui .button-primary {
-			background: linear-gradient(135deg, #22c560 0%, #006935 100%) !important;
+			background: linear-gradient(135deg, <?php echo esc_attr( $color_light ); ?> 0%, <?php echo esc_attr( $club_color ); ?> 100%) !important;
 			border: none !important;
 			border-radius: 8px !important;
-			box-shadow: 0 4px 12px rgba(0, 105, 53, 0.3) !important;
+			box-shadow: 0 4px 12px rgba(<?php echo "$r, $g, $b"; ?>, 0.3) !important;
 			color: #ffffff !important;
 			font-weight: 600 !important;
 			font-size: 15px !important;
@@ -1046,8 +1104,8 @@ function stadion_login_styles() {
 		.login #wp-submit:focus,
 		.wp-core-ui .button-primary:hover,
 		.wp-core-ui .button-primary:focus {
-			background: linear-gradient(135deg, #006935 0%, #004924 100%) !important;
-			box-shadow: 0 6px 16px rgba(0, 73, 36, 0.4) !important;
+			background: linear-gradient(135deg, <?php echo esc_attr( $club_color ); ?> 0%, <?php echo esc_attr( $color_dark ); ?> 100%) !important;
+			box-shadow: 0 6px 16px rgba(<?php echo "$dark_r, $dark_g, $dark_b"; ?>, 0.4) !important;
 			border-color: transparent !important;
 		}
 
@@ -1062,13 +1120,13 @@ function stadion_login_styles() {
 		}
 
 		.login input[type="checkbox"] {
-			accent-color: #006935;
+			accent-color: <?php echo esc_attr( $club_color ); ?>;
 		}
 
 		/* Links */
 		.login #nav a,
 		.login #backtoblog a {
-			color: #005a2d;
+			color: <?php echo esc_attr( $color_dark ); ?>;
 			text-decoration: none;
 			font-size: 13px;
 			transition: color 0.2s;
@@ -1076,20 +1134,20 @@ function stadion_login_styles() {
 
 		.login #nav a:hover,
 		.login #backtoblog a:hover {
-			color: #003d1e;
+			color: <?php echo esc_attr( $color_darkest ); ?>;
 			text-decoration: underline;
 		}
 
 		/* Error/message boxes */
 		.login .message,
 		.login .success {
-			border-left-color: #006935;
-			background: #f0fdf5;
+			border-left-color: <?php echo esc_attr( $club_color ); ?>;
+			background: <?php echo esc_attr( $color_lightest ); ?>;
 		}
 
 		/* Notice info message styling */
 		.login .notice.notice-info.message {
-			border-left-color: #006935 !important;
+			border-left-color: <?php echo esc_attr( $club_color ); ?> !important;
 			margin-top: 20px !important;
 		}
 
@@ -1099,7 +1157,7 @@ function stadion_login_styles() {
 
 		/* Privacy policy link */
 		.login .privacy-policy-page-link a {
-			color: #005a2d;
+			color: <?php echo esc_attr( $color_dark ); ?>;
 		}
 
 		/* Hide "Go to site" for cleaner look */
@@ -1115,9 +1173,16 @@ add_action( 'login_enqueue_scripts', 'stadion_login_styles' );
  * Add favicon to login page
  */
 function stadion_login_favicon() {
-	$favicon_url = STADION_THEME_URL . '/favicon.svg';
-	echo '<link rel="icon" type="image/svg+xml" href="' . esc_url( $favicon_url ) . '">';
-	echo '<link rel="alternate icon" href="' . esc_url( $favicon_url ) . '">';
+	$club_config = new \Stadion\Config\ClubConfig();
+	$settings    = $club_config->get_all_settings();
+	$club_color  = esc_attr( $settings['accent_color'] );
+
+	$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' . $club_color . '">'
+		. '<path fill-rule="evenodd" d="M12 2C6.5 2 2 5.5 2 9v6c0 3.5 4.5 7 10 7s10-3.5 10-7V9c0-3.5-4.5-7-10-7zm0 2c4.4 0 8 2.7 8 5s-3.6 5-8 5-8-2.7-8-5 3.6-5 8-5zm0 4c-2.2 0-4 .9-4 2s1.8 2 4 2 4-.9 4-2-1.8-2-4-2z" clip-rule="evenodd"/>'
+		. '</svg>';
+	$data_url = 'data:image/svg+xml,' . rawurlencode( $svg );
+
+	echo '<link rel="icon" type="image/svg+xml" href="' . esc_url( $data_url ) . '">';
 }
 add_action( 'login_head', 'stadion_login_favicon' );
 
