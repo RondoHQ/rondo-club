@@ -35,6 +35,12 @@ Represents individual contacts in the CRM.
 | Work History | `work_history` | repeater | Employment history (see below) |
 | Relationships | `relationships` | repeater | Connections to other people (see below) |
 
+**Computed Fields (read-only, auto-calculated):**
+
+| Field | Key | Type | Description |
+|-------|-----|------|-------------|
+| Huidig Vrijwilliger | `huidig-vrijwilliger` | true_false | Current volunteer status. Auto-calculated from work history: `1` if the person has an active staff/commissie position, `0` otherwise. See `class-volunteer-status.php`. |
+
 **Contact Info Sub-fields:**
 
 | Field | Key | Type | Options |
