@@ -70,10 +70,10 @@ Plans:
   2. AGENTS.md documentation uses placeholder domain instead of svawc.nl references
   3. Theme installable by another club without any code changes (verified by code review)
 
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 146-01: TBD
+- [ ] 146-01-PLAN.md — Externalize FreeScout URL, remove AWC references, update documentation
 
 ## Progress
 
@@ -84,4 +84,4 @@ Phases execute in numeric order: 144 → 145 → 146
 |-------|----------------|--------|-----------|
 | 144. Backend Configuration System | 1/1 | Complete | 2026-02-05 |
 | 145. Frontend & Color Refactor | 2/2 | Complete | 2026-02-05 |
-| 146. Integration Cleanup | 0/TBD | Not started | - |
+| 146. Integration Cleanup | 0/1 | Not started | - |
