@@ -959,7 +959,6 @@ add_filter( 'acf/update_value/name=datum-vog', 'stadion_reset_vog_tracking_on_da
  * Custom login page styling
  */
 function stadion_login_styles() {
-	$favicon_url = STADION_THEME_URL . '/favicon.svg';
 	$site_name   = get_bloginfo( 'name' );
 
 	// Get club configuration for dynamic theming
@@ -1006,6 +1005,12 @@ function stadion_login_styles() {
 
 	// Use club name if configured, otherwise site name
 	$display_name = ! empty( $club_name ) ? $club_name : $site_name;
+
+	// Generate inline SVG logo with club color (avoids caching issues with static favicon.svg)
+	$logo_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' . esc_attr( $club_color ) . '">'
+		. '<path fill-rule="evenodd" d="M12 2C6.5 2 2 5.5 2 9v6c0 3.5 4.5 7 10 7s10-3.5 10-7V9c0-3.5-4.5-7-10-7zm0 2c4.4 0 8 2.7 8 5s-3.6 5-8 5-8-2.7-8-5 3.6-5 8-5zm0 4c-2.2 0-4 .9-4 2s1.8 2 4 2 4-.9 4-2-1.8-2-4-2z" clip-rule="evenodd"/>'
+		. '</svg>';
+	$logo_data_url = 'data:image/svg+xml,' . rawurlencode( $logo_svg );
 	?>
 	<style type="text/css">
 		/* Background gradient */
@@ -1021,7 +1026,7 @@ function stadion_login_styles() {
 
 		/* Logo */
 		#login h1 a {
-			background-image: url('<?php echo esc_url( $favicon_url ); ?>');
+			background-image: url('<?php echo esc_url( $logo_data_url ); ?>');
 			background-size: contain;
 			background-position: center center;
 			background-repeat: no-repeat;
