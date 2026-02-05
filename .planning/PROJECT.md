@@ -334,7 +334,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(None — next milestone to be defined)
+**v17.0 De-AWC — Club Configuration:**
+- [ ] Club-wide settings stored in WordPress options (club name, default accent color, FreeScout base URL)
+- [ ] Admin UI for managing club configuration in Settings
+- [ ] Rename 'awc' accent color key to 'club' throughout codebase
+- [ ] Club color becomes the configurable default, other accent colors remain as user choices
+- [ ] FreeScout URL configurable via settings (not hardcoded)
+- [ ] Remove all AWC-specific comments and references from code
+- [ ] Default accent color (theme-color meta, favicon, login screen) comes from club config
+- [ ] Theme is installable by any club without code changes
 
 ### Out of Scope
 
@@ -502,4 +510,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Direct author check in permission callback | Single-todo endpoints verify post_author matches current user for isolation | ✓ Good |
 
 ---
-*Last updated: 2026-02-04 after v15.0 Personal Tasks milestone complete*
+*Last updated: 2026-02-05 after v17.0 De-AWC milestone started*
