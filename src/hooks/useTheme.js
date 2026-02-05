@@ -6,15 +6,15 @@ import { useState, useEffect, useCallback } from 'react';
 const COLOR_SCHEMES = ['light', 'dark', 'system'];
 
 /**
- * Valid accent color values (awc is default)
+ * Valid accent color values (club is default)
  */
-const ACCENT_COLORS = ['awc', 'orange', 'teal', 'indigo', 'emerald', 'violet', 'pink', 'fuchsia', 'rose'];
+const ACCENT_COLORS = ['club', 'orange', 'teal', 'indigo', 'emerald', 'violet', 'pink', 'fuchsia', 'rose'];
 
 /**
  * Accent color hex values (used for favicon and light mode theme-color)
  */
 const ACCENT_HEX = {
-  awc: '#006935',
+  club: '#006935', // Fallback; getClubHex() reads from stadionConfig
   orange: '#f97316',
   teal: '#14b8a6',
   indigo: '#6366f1',
@@ -29,7 +29,7 @@ const ACCENT_HEX = {
  * Accent color hex values for dark mode
  */
 const ACCENT_HEX_DARK = {
-  awc: '#22c560',
+  club: '#22c560',
   orange: '#ea580c',
   teal: '#0d9488',
   indigo: '#4f46e5',
@@ -41,6 +41,60 @@ const ACCENT_HEX_DARK = {
 };
 
 /**
+ * Get dynamic club color from stadionConfig
+ * @returns {string} Club color hex
+ */
+function getClubHex() {
+  return window.stadionConfig?.accentColor || ACCENT_HEX.club;
+}
+
+/**
+ * Get dynamic club color for dark mode
+ * @returns {string} Club color hex for dark mode
+ */
+function getClubHexDark() {
+  const clubHex = getClubHex();
+  // If using default green, return the known dark variant
+  if (clubHex === '#006935') return '#22c560';
+  // For custom colors, lighten for dark mode visibility
+  return lightenHex(clubHex, 40);
+}
+
+/**
+ * Lighten a hex color by a percentage
+ * @param {string} hex - Hex color code
+ * @param {number} percent - Percentage to lighten (0-100)
+ * @returns {string} Lightened hex color
+ */
+function lightenHex(hex, percent) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const factor = percent / 100;
+  const newR = Math.min(255, Math.round(r + (255 - r) * factor));
+  const newG = Math.min(255, Math.round(g + (255 - g) * factor));
+  const newB = Math.min(255, Math.round(b + (255 - b) * factor));
+  return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * Darken a hex color by a percentage
+ * @param {string} hex - Hex color code
+ * @param {number} percent - Percentage to darken (0-100)
+ * @returns {string} Darkened hex color
+ */
+function darkenHex(hex, percent) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const factor = percent / 100;
+  const newR = Math.max(0, Math.round(r * (1 - factor)));
+  const newG = Math.max(0, Math.round(g * (1 - factor)));
+  const newB = Math.max(0, Math.round(b * (1 - factor)));
+  return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+}
+
+/**
  * localStorage key for theme preferences
  */
 const STORAGE_KEY = 'theme-preferences';
@@ -50,7 +104,7 @@ const STORAGE_KEY = 'theme-preferences';
  */
 const DEFAULT_PREFERENCES = {
   colorScheme: 'system',
-  accentColor: 'awc',
+  accentColor: 'club',
 };
 
 /**
@@ -73,6 +127,12 @@ function loadPreferences() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
+
+      // Auto-migrate 'awc' to 'club' for existing users
+      if (parsed.accentColor === 'awc') {
+        parsed.accentColor = 'club';
+      }
+
       return {
         colorScheme: COLOR_SCHEMES.includes(parsed.colorScheme)
           ? parsed.colorScheme
@@ -110,7 +170,7 @@ function savePreferences(preferences) {
 function updateFavicon(accentColor) {
   if (typeof document === 'undefined') return;
 
-  const hex = ACCENT_HEX[accentColor] || ACCENT_HEX.orange;
+  const hex = accentColor === 'club' ? getClubHex() : (ACCENT_HEX[accentColor] || ACCENT_HEX.orange);
 
   // SVG stadium icon (same as favicon.svg)
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${hex}">
@@ -138,8 +198,14 @@ function updateFavicon(accentColor) {
 function updateThemeColorMeta(accentColor) {
   if (typeof document === 'undefined') return;
 
-  const lightHex = ACCENT_HEX[accentColor] || ACCENT_HEX.orange;
-  const darkHex = ACCENT_HEX_DARK[accentColor] || ACCENT_HEX_DARK.orange;
+  let lightHex, darkHex;
+  if (accentColor === 'club') {
+    lightHex = getClubHex();
+    darkHex = getClubHexDark();
+  } else {
+    lightHex = ACCENT_HEX[accentColor] || ACCENT_HEX.orange;
+    darkHex = ACCENT_HEX_DARK[accentColor] || ACCENT_HEX_DARK.orange;
+  }
 
   // Update light mode theme-color
   const lightMeta = document.querySelector('meta[name="theme-color"][media*="light"]');
@@ -155,6 +221,48 @@ function updateThemeColorMeta(accentColor) {
 }
 
 /**
+ * Clear club color CSS variables from root
+ * @param {HTMLElement} root - Document root element
+ */
+function clearClubColorVars(root) {
+  for (let i = 0; i <= 9; i++) {
+    root.style.removeProperty(`--color-accent-${i === 0 ? '50' : i + '00'}`);
+  }
+}
+
+/**
+ * Inject club color CSS variables for custom colors
+ * @param {HTMLElement} root - Document root element
+ * @param {string} hex - Base club color hex
+ * @param {string} colorScheme - 'light' or 'dark'
+ */
+function injectClubColorVars(root, hex, colorScheme) {
+  if (colorScheme === 'light') {
+    root.style.setProperty('--color-accent-50', lightenHex(hex, 92));
+    root.style.setProperty('--color-accent-100', lightenHex(hex, 82));
+    root.style.setProperty('--color-accent-200', lightenHex(hex, 68));
+    root.style.setProperty('--color-accent-300', lightenHex(hex, 52));
+    root.style.setProperty('--color-accent-400', lightenHex(hex, 35));
+    root.style.setProperty('--color-accent-500', lightenHex(hex, 15));
+    root.style.setProperty('--color-accent-600', hex);
+    root.style.setProperty('--color-accent-700', darkenHex(hex, 15));
+    root.style.setProperty('--color-accent-800', darkenHex(hex, 30));
+    root.style.setProperty('--color-accent-900', darkenHex(hex, 45));
+  } else {
+    root.style.setProperty('--color-accent-50', darkenHex(hex, 45));
+    root.style.setProperty('--color-accent-100', darkenHex(hex, 30));
+    root.style.setProperty('--color-accent-200', darkenHex(hex, 15));
+    root.style.setProperty('--color-accent-300', hex);
+    root.style.setProperty('--color-accent-400', lightenHex(hex, 15));
+    root.style.setProperty('--color-accent-500', lightenHex(hex, 35));
+    root.style.setProperty('--color-accent-600', lightenHex(hex, 52));
+    root.style.setProperty('--color-accent-700', lightenHex(hex, 68));
+    root.style.setProperty('--color-accent-800', lightenHex(hex, 82));
+    root.style.setProperty('--color-accent-900', lightenHex(hex, 92));
+  }
+}
+
+/**
  * Apply theme to DOM
  * @param {string} effectiveColorScheme - 'light' or 'dark'
  * @param {string} accentColor - The accent color name
@@ -164,11 +272,23 @@ function applyTheme(effectiveColorScheme, accentColor) {
 
   const root = document.documentElement;
 
+  // Clear any previously injected club color variables
+  clearClubColorVars(root);
+
   // Apply dark mode class
   if (effectiveColorScheme === 'dark') {
     root.classList.add('dark');
   } else {
     root.classList.remove('dark');
+  }
+
+  // For club accent, inject dynamic CSS variables if custom color is configured
+  if (accentColor === 'club') {
+    const clubHex = getClubHex();
+    const defaultHex = '#006935';
+    if (clubHex !== defaultHex) {
+      injectClubColorVars(root, clubHex, effectiveColorScheme);
+    }
   }
 
   // Apply accent color via data attribute
