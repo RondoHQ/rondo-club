@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [17.0.0] - 2026-02-05
+
+### Added
+- ClubConfig backend service for club-wide settings (club name, accent color, FreeScout URL)
+- REST API endpoint `/stadion/v1/config` with admin write + all-users read permissions
+- Admin-only club configuration section in Settings with react-colorful color picker
+- Live preview for club color changes in Settings
+- Dynamic WordPress login page styling from club configuration
+- PWA theme-color meta tags read from club config
+
+### Changed
+- Renamed "awc" accent color to "club" throughout codebase (Tailwind, CSS, React, PHP)
+- FreeScout integration URL now reads from club config (hidden when not configured)
+- All AWC-specific comments and references removed from source code
+- Documentation uses generic placeholders instead of club-specific domains
+- Theme now installable by any sports club without code changes
+
+### Removed
+- Legacy awc→club migration code (users migrated in v16.0)
+- Hardcoded FreeScout URL in PersonDetail component
+
 ## [16.0.0] - 2026-02-05
 
 ### Added
