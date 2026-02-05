@@ -29,7 +29,7 @@ vCard is a universal standard format supported by virtually all contact manageme
 
 | vCard Field | Stadion Field |
 |-------------|--------------|
-| `N` (Name) | `first_name`, `last_name` |
+| `N` (Name) | `first_name`, `infix` (position 3), `last_name` |
 | `FN` (Formatted Name) | Fallback for `first_name`/`last_name` |
 | `NICKNAME` | `nickname` |
 | `TEL` | `contact_info` (phone/mobile) |
@@ -62,6 +62,7 @@ Export from Google Contacts using the "Google CSV" format.
 | Google Field | Stadion Field |
 |--------------|--------------|
 | `Given Name` or `First Name` | `first_name` |
+| `Additional Name` or `Middle Name` | `infix` (tussenvoegsel) |
 | `Family Name` or `Last Name` | `last_name` |
 | `Name` | Fallback for name parsing |
 | `Nickname` | `nickname` |

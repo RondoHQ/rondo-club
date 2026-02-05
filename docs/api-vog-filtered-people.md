@@ -38,13 +38,15 @@ The combination of `vog_missing=1` and `vog_older_than_years=3` creates an OR co
     {
       "id": 123,
       "first_name": "Jan",
-      "last_name": "de Vries",
+      "infix": "de",
+      "last_name": "Vries",
       "modified": "2026-01-15 10:30:00",
       "thumbnail": "https://example.com/wp-content/uploads/jan-de-vries-150x150.jpg",
       "labels": ["Vrijwilliger"],
       "acf": {
         "first_name": "Jan",
-        "last_name": "de Vries",
+        "infix": "de",
+        "last_name": "Vries",
         "knvb-id": "KNVB12345678",
         "datum-vog": "",
         "contact_info": [

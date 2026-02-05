@@ -112,6 +112,7 @@ Response includes:
   "id": 123,
   "acf": {
     "first_name": "Jan",
+    "infix": "",
     "last_name": "Jansen",
     "factuur-adres": "Kerkstraat 42\n1234 AB Amsterdam",
     "factuur-email": "finance@bedrijf.nl",
@@ -122,7 +123,7 @@ Response includes:
 
 ### Updates via API
 
-Invoice fields can be updated via PUT request (requires `first_name` and `last_name` as always):
+Invoice fields can be updated via PUT request (requires `first_name` and `last_name` as always, `infix` optional):
 
 ```bash
 PUT /wp/v2/people/{id}

@@ -102,7 +102,7 @@ In the CardDAV Sync section of Settings, you'll find:
 
 The following contact fields are synced:
 
-- First name, last name, nickname
+- First name, infix (tussenvoegsel), last name, nickname
 - Email addresses
 - Phone numbers (mobile, work, home)
 - Physical addresses (street, city, state/province, postal code, country)
