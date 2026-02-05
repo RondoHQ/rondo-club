@@ -1020,11 +1020,12 @@ export default function PersonDetail() {
       });
     }
 
-    // Add Freescout if there's a Freescout ID
-    if (acf['freescout-id']) {
+    // Add FreeScout if there's a FreeScout ID AND a configured URL
+    const freescoutUrl = window.stadionConfig?.freescoutUrl;
+    if (acf['freescout-id'] && freescoutUrl) {
       links.push({
         contact_type: 'freescout',
-        contact_value: `https://box.svawc.nl/customers/${acf['freescout-id']}`,
+        contact_value: `${freescoutUrl}/customers/${acf['freescout-id']}`,
       });
     }
 
