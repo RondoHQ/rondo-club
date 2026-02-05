@@ -1187,7 +1187,7 @@ function stadion_login_favicon() {
 		. '</svg>';
 	$data_url = 'data:image/svg+xml,' . rawurlencode( $svg );
 
-	echo '<link rel="icon" type="image/svg+xml" href="' . esc_url( $data_url ) . '">';
+	echo '<link rel="icon" type="image/svg+xml" href="' . esc_url( $data_url, array( 'data' ) ) . '">';
 }
 add_action( 'login_head', 'stadion_login_favicon' );
 
