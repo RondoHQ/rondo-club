@@ -69,7 +69,7 @@ Each task was committed atomically:
 2. **Task 2: Remove AWC references and update documentation** - `fc474115` (refactor)
 3. **Task 3: Verify internal keys and final build** - (verification only, no commit)
 
-**Plan metadata:** [will be added after summary creation]
+**Plan metadata:** `e7179d73` (docs: complete plan)
 
 ## Files Created/Modified
 - `src/pages/People/PersonDetail.jsx` - FreeScout URL reads from `window.stadionConfig.freescoutUrl`; link hidden when URL not configured
