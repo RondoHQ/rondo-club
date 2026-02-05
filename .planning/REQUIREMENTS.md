@@ -7,11 +7,11 @@
 
 ### Club Configuration (Backend)
 
-- [ ] **CFG-01**: Admin can set club name via WordPress options (used in page title, PWA manifest)
-- [ ] **CFG-02**: Admin can set club default accent color (hex value) stored in WordPress options
-- [ ] **CFG-03**: Admin can set FreeScout base URL via WordPress options
-- [ ] **CFG-04**: REST API endpoint exposes club config (admin write, all-users read)
-- [ ] **CFG-05**: Sensible defaults when no config exists (no club name = "Stadion", green default color, FreeScout hidden)
+- [x] **CFG-01**: Admin can set club name via WordPress options (used in page title, PWA manifest)
+- [x] **CFG-02**: Admin can set club default accent color (hex value) stored in WordPress options
+- [x] **CFG-03**: Admin can set FreeScout base URL via WordPress options
+- [x] **CFG-04**: REST API endpoint exposes club config (admin write, all-users read)
+- [x] **CFG-05**: Sensible defaults when no config exists (no club name = "Stadion", green default color, FreeScout hidden)
 
 ### Frontend Settings UI
 
@@ -48,11 +48,11 @@ None deferred — this milestone is self-contained.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CFG-01 | Phase 144 | Pending |
-| CFG-02 | Phase 144 | Pending |
-| CFG-03 | Phase 144 | Pending |
-| CFG-04 | Phase 144 | Pending |
-| CFG-05 | Phase 144 | Pending |
+| CFG-01 | Phase 144 | Complete |
+| CFG-02 | Phase 144 | Complete |
+| CFG-03 | Phase 144 | Complete |
+| CFG-04 | Phase 144 | Complete |
+| CFG-05 | Phase 144 | Complete |
 | UI-01 | Phase 145 | Pending |
 | UI-02 | Phase 145 | Pending |
 | UI-03 | Phase 145 | Pending |
