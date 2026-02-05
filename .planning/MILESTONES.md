@@ -1,5 +1,34 @@
 # Project Milestones: Stadion
 
+## v17.0 De-AWC (Shipped: 2026-02-05)
+
+**Delivered:** Transformed Stadion from club-specific to fully configurable — any sports club can install and configure without code changes via admin settings for club name, accent color, and FreeScout URL.
+
+**Phases completed:** 144-146 (3 phases, 4 plans)
+
+**Key accomplishments:**
+
+- ClubConfig backend service with WordPress Options API for club name, accent color, and FreeScout URL
+- REST API endpoint `/stadion/v1/config` with admin write + all-users read permissions
+- Admin-only club configuration UI in Settings with react-colorful color picker and live preview
+- Dynamic color system renaming "awc" to "club" throughout codebase (Tailwind, CSS, React, PHP)
+- Dynamic WordPress login page styling and PWA theme-color from club configuration
+- FreeScout integration URL externalized (hidden when not configured)
+- Zero club-specific hardcoded references — theme now installable by any sports club
+
+**Stats:**
+
+- 67 files modified
+- +6,215 / -1,403 lines changed (net: +4,812)
+- 3 phases, 4 plans
+- 1 day (2026-02-05)
+
+**Git range:** `db380e95` → `a2617711`
+
+**What's next:** To be determined
+
+---
+
 ## v16.0 Infix / Tussenvoegsel (Shipped: 2026-02-05)
 
 **Delivered:** Added infix (tussenvoegsel) field to person data model for Dutch naming convention support. Covers storage, display, auto-title, search, REST API, vCard import/export, Google Contacts sync, CardDAV, and frontend UI.

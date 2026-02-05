@@ -332,17 +332,26 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Tasks navigation accessible to all users (no capability gating) — v15.0
 - Personal tasks info messages in UI with Dutch text — v15.0
 
+**v16.0 Infix / Tussenvoegsel (shipped 2026-02-05):**
+- ACF infix text field between first_name and last_name (read-only in UI) — v16.0
+- Auto-title generation uses array_filter + implode pattern for safe concatenation — v16.0
+- REST API filtered endpoint includes infix JOIN and response field — v16.0
+- Global search includes infix with score 50 — v16.0
+- vCard/Google Contacts/CardDAV import/export maps infix to middle name — v16.0
+- formatPersonName() utility for consistent name formatting — v16.0
+
+**v17.0 De-AWC (shipped 2026-02-05):**
+- ClubConfig service class with Options API storage for club_name, accent_color, freescout_url — v17.0
+- REST API endpoint /stadion/v1/config (admin write, all-users read) — v17.0
+- Admin-only club configuration UI in Settings with react-colorful color picker — v17.0
+- Renamed awc accent color to club throughout codebase (Tailwind, CSS, React, PHP) — v17.0
+- Dynamic login page and PWA theme-color from club configuration — v17.0
+- FreeScout URL externalized to club config (hidden when not configured) — v17.0
+- Zero club-specific hardcoded references in source code — v17.0
+
 ### Active
 
-**v17.0 De-AWC — Club Configuration:**
-- [ ] Club-wide settings stored in WordPress options (club name, default accent color, FreeScout base URL)
-- [ ] Admin UI for managing club configuration in Settings
-- [ ] Rename 'awc' accent color key to 'club' throughout codebase
-- [ ] Club color becomes the configurable default, other accent colors remain as user choices
-- [ ] FreeScout URL configurable via settings (not hardcoded)
-- [ ] Remove all AWC-specific comments and references from code
-- [ ] Default accent color (theme-color meta, favicon, login screen) comes from club config
-- [ ] Theme is installable by any club without code changes
+(None currently — milestone complete)
 
 ### Out of Scope
 
@@ -508,6 +517,12 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Task isolation via post_author filter | Users see only their own tasks, consistent UX for all including admins | ✓ Good |
 | suppress_filters=false for get_posts() | WordPress get_posts() bypasses pre_get_posts by default; must explicitly enable filters | ✓ Good |
 | Direct author check in permission callback | Single-todo endpoints verify post_author matches current user for isolation | ✓ Good |
+| Individual WordPress option keys for club config | Separate options (stadion_club_name, stadion_accent_color, stadion_freescout_url) allow independent updates | ✓ Good |
+| REST partial updates via null-checking | POST endpoint checks $request->get_param() !== null before updating each field | ✓ Good |
+| Dynamic CSS variable injection for club color | When club color differs from default, useTheme.js injects full 50-900 scale as inline styles on :root | ✓ Good |
+| Auto-migration for breaking localStorage changes | loadPreferences() auto-converts 'awc' to 'club' on load for zero user disruption | ✓ Good |
+| Lighthouse artifact exclusion from AWC cleanup | lighthouse-full.json contains svawc.nl references but is historical test data, not source code | ✓ Good |
+| Integration URLs externalized to config | FreeScout link checks window.stadionConfig first, hides feature if not configured | ✓ Good |
 
 ---
-*Last updated: 2026-02-05 after v17.0 De-AWC milestone started*
+*Last updated: 2026-02-05 after v17.0 De-AWC milestone complete*
