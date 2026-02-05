@@ -270,5 +270,5 @@ source .env && ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "co
 For WP-CLI commands on production:
 
 ```bash
-source .env && ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "cd ~/www/stadion.svawc.nl/public_html/wp-content/themes/stadion && wp <command>"
+source .env && ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "cd $DEPLOY_REMOTE_THEME_PATH && wp <command>"
 ```

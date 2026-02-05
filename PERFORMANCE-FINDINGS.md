@@ -1,4 +1,4 @@
-# Performance Analysis: stadion.svawc.nl
+# Performance Analysis: Stadion Dashboard
 
 **Date:** 2026-02-03
 **Page tested:** Dashboard (authenticated)
