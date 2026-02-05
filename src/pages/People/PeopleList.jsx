@@ -98,7 +98,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
       >
         <Link to={`/people/${person.id}`} className="flex items-center">
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            {person.first_name || ''} {person.last_name || ''}
+            {[person.first_name, person.infix, person.last_name].filter(Boolean).join(' ')}
             {person.is_deceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
           </span>
         </Link>

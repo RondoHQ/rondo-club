@@ -1,5 +1,32 @@
 # Project Milestones: Stadion
 
+## v16.0 Infix / Tussenvoegsel (Shipped: 2026-02-05)
+
+**Delivered:** Added infix (tussenvoegsel) field to person data model for Dutch naming convention support. Covers storage, display, auto-title, search, REST API, vCard import/export, Google Contacts sync, CardDAV, and frontend UI.
+
+**Phases completed:** 141-143 (3 phases)
+
+**Key accomplishments:**
+
+- ACF `infix` text field between first_name and last_name (read-only in UI)
+- Auto-title generation uses `array_filter` + `implode` pattern for safe "First Infix Last" concatenation
+- REST API filtered endpoint includes infix JOIN and response field
+- Global search includes infix with score 50
+- vCard export/import maps infix to N field position 3 (Additional Names)
+- Google Contacts export uses `setMiddleName()`, import reads `getMiddleName()` at all 3 locations
+- Google CSV export populates "Additional Name" column, import reads it
+- CardDAV create/update flows include infix
+- Frontend: read-only infix field in PersonEditModal, name display in PeopleList, VOGList, and all other name surfaces
+- `formatPersonName()` utility for consistent name formatting
+
+**Files changed:** 20 files across PHP backend, React frontend, and documentation
+
+**Git range:** TBD
+
+**What's next:** To be determined
+
+---
+
 ## v15.0 Personal Tasks (Shipped: 2026-02-04)
 
 **Delivered:** Transformed the task system from shared visibility to personal isolation - each user manages their own task list with clear UI messaging indicating tasks are personal.

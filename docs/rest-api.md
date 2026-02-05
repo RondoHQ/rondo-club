@@ -94,6 +94,7 @@ Returns summary statistics and recent activity for the dashboard.
       "id": 123,
       "name": "John Doe",
       "first_name": "John",
+      "infix": "",
       "last_name": "Doe",
       "thumbnail": "https://...",
       "is_favorite": true,

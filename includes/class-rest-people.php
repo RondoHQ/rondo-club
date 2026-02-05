@@ -1085,10 +1085,11 @@ class People extends Base {
 		];
 		$prepare_values = [];
 
-		// Always JOIN meta for first_name and last_name (needed for display and sorting)
+		// Always JOIN meta for first_name, infix, and last_name (needed for display and sorting)
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} fn ON p.ID = fn.post_id AND fn.meta_key = 'first_name'";
+		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ix ON p.ID = ix.post_id AND ix.meta_key = 'infix'";
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ln ON p.ID = ln.post_id AND ln.meta_key = 'last_name'";
-		$select_fields .= ", fn.meta_value AS first_name, ln.meta_value AS last_name";
+		$select_fields .= ", fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name";
 
 		// VOG-only users can only see volunteers
 		if ( $volunteers_only ) {
@@ -1342,6 +1343,7 @@ class People extends Base {
 			$person = [
 				'id'         => (int) $row->ID,
 				'first_name' => $this->sanitize_text( $row->first_name ?: '' ),
+				'infix'      => $this->sanitize_text( $row->infix ?: '' ),
 				'last_name'  => $this->sanitize_text( $row->last_name ?: '' ),
 				'modified'   => $row->post_modified,
 				// These are fetched post-query to avoid complex JOINs

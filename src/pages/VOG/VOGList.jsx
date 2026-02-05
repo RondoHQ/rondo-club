@@ -144,7 +144,7 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
               ? 'text-gray-900 dark:text-white'
               : 'text-gray-900 dark:text-gray-50'
           }`}>
-            {person.first_name || ''} {person.last_name || ''}
+            {[person.first_name, person.infix, person.last_name].filter(Boolean).join(' ')}
           </span>
           <VOGBadge person={person} />
           <VOGEmailIndicator person={person} />

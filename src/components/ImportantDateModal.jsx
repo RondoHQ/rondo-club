@@ -155,8 +155,9 @@ export default function ImportantDateModal({
         if (person) {
           // Use full name from first_name + last_name fields
           const firstName = decodeHtml(person.acf?.first_name || person.first_name || '');
+          const infix = decodeHtml(person.acf?.infix || person.infix || '');
           const lastName = decodeHtml(person.acf?.last_name || person.last_name || '');
-          const fullName = `${firstName} ${lastName}`.trim();
+          const fullName = [firstName, infix, lastName].filter(Boolean).join(' ');
 
           // Fall back to title.rendered (already contains full name)
           return fullName || decodeHtml(person.title?.rendered || '');

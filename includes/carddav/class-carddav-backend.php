@@ -384,6 +384,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 
 		// Determine name fields
 		$first_name = $parsed['first_name'] ?: '';
+		$infix      = $parsed['infix'] ?? '';
 		$last_name  = $parsed['last_name'] ?: '';
 
 		if ( empty( $first_name ) && empty( $last_name ) && ! empty( $parsed['full_name'] ) ) {
@@ -399,7 +400,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 				'post_type'   => 'person',
 				'post_status' => 'publish',
 				'post_author' => $addressBookId,
-				'post_title'  => trim( $first_name . ' ' . $last_name ) ?: 'Unknown',
+				'post_title'  => implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ) ?: 'Unknown',
 			]
 		);
 
@@ -410,6 +411,9 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 
 		// Update ACF fields
 		update_field( 'first_name', $first_name, $post_id );
+		if ( ! empty( $infix ) ) {
+			update_field( 'infix', $infix, $post_id );
+		}
 		update_field( 'last_name', $last_name, $post_id );
 
 		if ( ! empty( $parsed['nickname'] ) ) {
@@ -510,6 +514,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 
 		// Update name fields
 		$first_name = $parsed['first_name'] ?: '';
+		$infix      = $parsed['infix'] ?? '';
 		$last_name  = $parsed['last_name'] ?: '';
 
 		if ( empty( $first_name ) && empty( $last_name ) && ! empty( $parsed['full_name'] ) ) {
@@ -522,12 +527,13 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		wp_update_post(
 			[
 				'ID'         => $person_id,
-				'post_title' => trim( $first_name . ' ' . $last_name ) ?: 'Unknown',
+				'post_title' => implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ) ?: 'Unknown',
 			]
 		);
 
 		// Update ACF fields
 		update_field( 'first_name', $first_name, $person_id );
+		update_field( 'infix', $infix, $person_id );
 		update_field( 'last_name', $last_name, $person_id );
 
 		if ( isset( $parsed['nickname'] ) ) {

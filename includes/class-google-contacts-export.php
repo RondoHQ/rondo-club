@@ -654,6 +654,7 @@ class GoogleContactsExport {
 	 */
 	private function build_name( int $post_id ): ?Name {
 		$first_name = get_field( 'first_name', $post_id );
+		$infix      = get_field( 'infix', $post_id );
 		$last_name  = get_field( 'last_name', $post_id );
 
 		if ( empty( $first_name ) && empty( $last_name ) ) {
@@ -664,6 +665,10 @@ class GoogleContactsExport {
 
 		if ( ! empty( $first_name ) ) {
 			$name->setGivenName( $first_name );
+		}
+
+		if ( ! empty( $infix ) ) {
+			$name->setMiddleName( $infix );
 		}
 
 		if ( ! empty( $last_name ) ) {

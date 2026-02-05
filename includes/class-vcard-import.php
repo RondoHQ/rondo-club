@@ -322,10 +322,11 @@ class VCard {
 
 			switch ( $property ) {
 				case 'N':
-					// Name: Last;First;Middle;Prefix;Suffix
+					// Name: Last;First;Additional(infix);Prefix;Suffix
 					$parts               = explode( ';', $value );
 					$vcard['last_name']  = $this->decode_vcard_value( $parts[0] ?? '' );
 					$vcard['first_name'] = $this->decode_vcard_value( $parts[1] ?? '' );
+					$vcard['infix']      = $this->decode_vcard_value( $parts[2] ?? '' );
 					break;
 
 				case 'FN':
@@ -709,6 +710,7 @@ class VCard {
 	 */
 	private function import_single_vcard( array $vcard ): void {
 		$first_name = $vcard['first_name'];
+		$infix      = $vcard['infix'] ?? '';
 		$last_name  = $vcard['last_name'];
 
 		if ( empty( $first_name ) && empty( $last_name ) ) {
@@ -729,7 +731,7 @@ class VCard {
 				[
 					'post_type'   => 'person',
 					'post_status' => 'publish',
-					'post_title'  => trim( $first_name . ' ' . $last_name ),
+					'post_title'  => implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ),
 					'post_author' => get_current_user_id(),
 				]
 			);
@@ -745,6 +747,9 @@ class VCard {
 		// Set basic ACF fields (only update if empty or different)
 		if ( ! empty( $first_name ) ) {
 			update_field( 'first_name', $first_name, $post_id );
+		}
+		if ( ! empty( $infix ) ) {
+			update_field( 'infix', $infix, $post_id );
 		}
 		if ( ! empty( $last_name ) ) {
 			update_field( 'last_name', $last_name, $post_id );

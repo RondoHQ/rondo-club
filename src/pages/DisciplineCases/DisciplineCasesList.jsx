@@ -74,8 +74,9 @@ export default function DisciplineCasesList() {
       personsData.forEach((person) => {
         // Person name fields are in the acf object, not at root level
         const firstName = person.acf?.first_name || '';
+        const infix = person.acf?.infix || '';
         const lastName = person.acf?.last_name || '';
-        const fullName = person.title?.rendered || `${firstName} ${lastName}`.trim();
+        const fullName = person.title?.rendered || [firstName, infix, lastName].filter(Boolean).join(' ');
 
         // Extract thumbnail from embedded featured media (same logic as transformPerson in usePeople.js)
         const thumbnail = person._embedded?.['wp:featuredmedia']?.[0]?.source_url ||

@@ -1,54 +1,50 @@
-# Feature Landscape: People List Performance & Customization
+# Feature Landscape: Infix/Tussenvoegsel Field
 
-**Domain:** Contact Management / CRM Data Tables
-**Researched:** 2026-01-29
-**Context:** Stadion People list with 1400+ contacts, currently loads all at once
+**Domain:** Dutch name handling in CRM systems
+**Researched:** 2026-02-05
+**Confidence:** HIGH (based on official Dutch naming conventions, vCard RFC 6350, and existing Stadion implementation analysis)
 
 ## Executive Summary
 
-This research examines expected behavior for infinite scroll lists with server-side filtering and dynamic column selection in modern web applications. The findings focus on three core features: **infinite scroll with virtual rendering**, **server-side filtering/sorting**, and **per-user column preferences**.
+Adding an infix/tussenvoegsel field to person records requires coordinated changes across 8 integration points: storage, display, auto-title generation, sorting, search, duplicate detection, vCard import/export, and Google Contacts sync. The Dutch naming convention is well-established: infixes are lowercase when preceded by a first name ("Jan van Dijk"), uppercase when standalone ("Van Dijk"), and ignored during alphabetical sorting (van Dijk files under "D").
 
-**Key insight:** For structured data tables with 1000+ records, the industry consensus in 2026 is clear: pagination + server-side filtering outperforms infinite scroll for goal-oriented tasks (finding/comparing contacts). Virtual scrolling is critical for performance regardless of approach.
-
-**Current Stadion implementation:** Loads all 1400+ people at once via paginated API calls (100 per request), stores all in memory, applies filters/sorting client-side. This works but has scalability limits and UX friction (filters only work on loaded data).
+The vCard standard (RFC 6350) does not have a dedicated infix position in the N field, requiring a workaround using the "Additional Names" field (position 3). This impacts import/export compatibility with systems that follow strict vCard interpretation.
 
 ## Table Stakes
 
-Features users expect. Missing = product feels incomplete or broken.
+Features users expect when an infix field exists. Missing these = incomplete implementation.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **Server-side filtering** | Users expect filters to work on ALL data, not just loaded data | Medium | WordPress REST API supports `meta_query` for ACF fields, `tax_query` for taxonomies |
-| **Server-side sorting** | Same expectation - sort should work across entire dataset | Low | WordPress supports `orderby` for meta fields, built-in fields |
-| **Loading indicators** | Users need feedback when data is loading | Low | Skeleton screens > spinners for perceived performance |
-| **Persistent scroll position** | When navigating back to list, users expect to return to same position | Medium | Browser handles this for traditional pagination, requires state management for infinite scroll |
-| **Total count display** | "Showing X of Y people" - users want to know dataset size | Low | WordPress REST API returns `X-WP-Total` header |
-| **Filter state persistence** | Applied filters should persist when user navigates away and back | Medium | Store in URL query params or localStorage |
-| **Responsive performance** | List should remain interactive during loading/scrolling | High | Requires virtual scrolling for 1000+ records |
-| **"Back to top" button** | For infinite scroll, users need quick way to return to top | Low | Essential UX for lists >50 items |
-| **Stable layout** | No content shifts during load (CLS = 0) | Medium | Skeleton loaders must match final content dimensions |
-| **Column visibility toggle** | Users expect to show/hide columns | Low | Standard table feature in 2026 |
-| **Column order persistence** | Selected columns/order should persist across sessions | Medium | Store in WordPress user meta or localStorage |
+| **Display format: "First Infix Last"** | Dutch convention for full names | Low | "Jan van Dijk" not "Jan Van Dijk" |
+| **Lowercase infix in display** | Dutch grammar rule when preceded by first name | Low | Apply in all display contexts |
+| **Sort by last name, ignore infix** | Dutch telephone directory convention | Medium | van Dijk under "D" not "V" |
+| **Auto-title includes infix** | Title = full display name | Low | Update AutoTitle class to include infix |
+| **vCard N field export with infix** | Standard contact exchange format | Medium | Use Additional Names field (position 3) |
+| **vCard N field import with infix** | Parse incoming contacts correctly | Medium | Parse position 3 as infix |
+| **Search finds "van dijk"** | Users type full name to search | Medium | Include infix in search index |
+| **Search finds "dijk" alone** | Users may omit infix when searching | Medium | Search last_name with and without infix |
+| **Empty infix handling** | Not all Dutch names have infixes | Low | Display and sort correctly when empty |
+| **Google Contacts sync with infix** | Bidirectional sync must preserve infix | High | Map to middle name or structured name field |
+| **Duplicate detection includes infix** | "Jan van Dijk" ≠ "Jan Dijk" | Medium | Match on all three name components |
+| **API returns infix field** | REST API consumers need access | Low | Add to person endpoint response |
+| **UI field for infix input** | Users must be able to set/edit | Low | Add between first_name and last_name |
 
 ## Differentiators
 
-Features that set product apart. Not expected, but add significant value.
+Features that enhance the infix implementation. Not expected, but valued.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Virtual scrolling** | Renders only visible rows - handles 10K+ records smoothly | High | TanStack Virtual is recommended library for React (2026) |
-| **Intelligent prefetching** | Fetch next page before user scrolls to bottom | Medium | TanStack Query supports prefetching, improves perceived performance |
-| **Multi-column sorting** | Sort by multiple columns (e.g., last name, then first name) | Medium | Requires backend support for multiple `orderby` parameters |
-| **Saved filter presets** | Users can save frequently-used filter combinations | High | Requires UI for managing presets + storage (user meta) |
-| **Bulk actions** | Select multiple people, apply actions (already implemented) | Low | Already exists in Stadion |
-| **Real-time updates** | List updates when other users make changes | Very High | WebSocket or polling required, probably overkill for Stadion |
-| **Keyboard navigation** | Arrow keys to navigate rows, Enter to open | Medium | Accessibility benefit, power user feature |
-| **Column resizing** | Drag column borders to adjust width | Medium | TanStack Table supports this with state persistence |
-| **Export to CSV** | Download filtered/sorted results | Medium | Backend generates CSV from current filter/sort state |
-| **Custom field columns** | Show any ACF field as column | High | Already partially implemented in Stadion |
-| **Quick filters** | One-click filters for common queries (e.g., "Added this week") | Low | Pre-defined filter combinations |
-| **Search across custom fields** | Global search includes user-defined custom fields | Medium | Already implemented in Stadion's global search |
-| **Column drag-and-drop reordering** | Drag columns to reorder | Medium | TanStack Table supports this with `onColumnOrderChange` |
+| **Capitalization context awareness** | "Van Dijk is hier" vs "Jan van Dijk" | High | Uppercase when no first name precedes |
+| **Infix validation list** | Prevent typos like "vam" or "dde" | Low | Validate against known list (van, de, van der, etc.) |
+| **Infix auto-suggestion** | Speed up data entry | Low | Dropdown/autocomplete from common list |
+| **Compound infix support** | Handle "van der", "van den", "van de" | Low | Store as single string, no special parsing |
+| **Infix normalization** | Standardize "v.d." → "van der" | Medium | Apply on save, preserve user intent |
+| **Formal address generation** | "Dhr. Van Dijk" (uppercase when formal) | Medium | Context-specific formatting rules |
+| **Bulk import infix detection** | Parse existing "last_name" fields to extract infixes | High | One-time migration helper |
+| **Infix statistics** | Show distribution of infixes in database | Low | Dashboard widget for data quality |
+| **vCard NICKNAME fallback** | Export "Dijk" as nickname for systems without infix | Low | Helps with systems that can't parse N field correctly |
 
 ## Anti-Features
 
@@ -56,198 +52,256 @@ Features to explicitly NOT build. Common mistakes in this domain.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **True infinite scroll with no pagination** | Breaks browser back button, impossible to share specific position, poor for goal-oriented tasks | Hybrid: Infinite loading with URL-based pages underneath |
-| **Auto-load more without indicator** | User has no control, can't reach footer, confusing when content keeps loading | Always show "Load More" button as fallback, clear loading state |
-| **Client-side filtering on incomplete data** | Current problem - filters lie to users when not all data is loaded | MUST use server-side filtering for datasets >100 records |
-| **Complex filter UI by default** | Overwhelming for casual users | Progressive disclosure: Simple filters visible, advanced behind toggle |
-| **Modal/drawer for column selection** | Interrupts workflow, requires multiple clicks | Dropdown from column header or settings icon in toolbar |
-| **Too many columns by default** | Horizontal scrolling is death for data tables | Default to 4-6 key columns, let users add more |
-| **Automatic column width calculation** | Causes layout shifts, re-renders, poor performance | Fixed or user-resizable column widths with sensible defaults |
-| **Filtering during typing** | Too aggressive, hammers server, poor UX for slow typers | Debounce 300-500ms after user stops typing |
-| **Fetch all data then virtualize** | Current Stadion approach - works until ~5K records | Fetch in pages, virtualize, only load visible range |
-| **Custom table implementation** | Reinventing the wheel, hundreds of edge cases | Use TanStack Table (industry standard 2026) |
-| **Pagination without server-side** | False sense of organization when all data loaded anyway | If paginating, actually paginate server-side |
-| **Non-sticky table headers** | Users lose context when scrolling | Headers should stick during vertical scroll |
-| **Separate mobile view** | Maintenance burden, feature parity issues | Responsive table with column prioritization |
+| **Uppercase infix by default** | Violates Dutch grammar rules | Always lowercase unless context requires uppercase |
+| **Sort by infix** | Not Dutch convention | Ignore infix, sort by last_name only |
+| **Separate "prefix" from "infix"** | Overcomplicates data model | Single "infix" field is sufficient |
+| **Split compound infixes** | "van der" is one unit, not two | Store as single string |
+| **Require infix for all persons** | Many names don't have infixes | Make field optional |
+| **Auto-capitalize infix in search** | Search should be case-insensitive anyway | Use case-insensitive search matching |
+| **Show infix in separate column in lists** | Takes up space, breaks name flow | Show as part of full name column |
+| **Validate infix against strict list** | Rare/historical infixes exist | Warn but don't block unknown infixes |
+| **Store infix with last_name** | Makes parsing and sorting complex | Keep as separate field |
 
 ## Feature Dependencies
 
 ```
-Server-Side Filtering/Sorting (MUST HAVE FIRST)
-└─→ Virtual Scrolling or Pagination UI
-    └─→ Loading States & Indicators
-        └─→ Column Visibility Toggle
-            └─→ Column Order Persistence
-                └─→ Column Drag-and-Drop (optional enhancement)
-
-Server-Side Filtering/Sorting (MUST HAVE FIRST)
-└─→ Filter State Persistence (URL params)
-    └─→ Saved Filter Presets (optional enhancement)
+Storage Schema Change (infix field)
+  ↓
+Auto-Title Generation (includes infix)
+  ↓
+Display in UI (PersonEditModal, PeopleList)
+  ↓
+├─ Search (full name with infix)
+├─ Sorting (ignore infix, sort by last_name)
+├─ Duplicate Detection (match first+infix+last)
+└─ Export/Import
+   ├─ vCard (N field position 3)
+   └─ Google Contacts (map to middle name)
 ```
 
-**Critical path:** Server-side filtering/sorting must be implemented before infinite scroll/virtual scrolling. Current client-side approach won't scale and creates UX problems.
+**Critical path:** Storage → Auto-Title → Display → Search
+**High-risk:** vCard import/export (no standard position), Google Contacts sync (custom mapping)
 
-## Implementation Strategy Recommendation
+## Integration Surface Analysis
 
-Based on research and Stadion's current architecture:
+### 1. Storage (ACF Field)
+**What changes:** Add `infix` text field to person CPT
+**Complexity:** Low
+**Risk:** Low (additive change)
 
-### Phase 1: Server-Side Foundation (CRITICAL)
-1. **Add server-side filtering to REST API** - Extend WordPress REST API to accept filter parameters (labels, birth year, modified date, custom fields)
-2. **Add server-side sorting** - Support `orderby` for ACF fields (first_name, last_name, custom fields)
-3. **Return total count** - Use `X-WP-Total` header
-4. **Update `usePeople` hook** - Pass filter/sort params to API instead of client-side filtering
+### 2. Auto-Title Generation (class-auto-title.php)
+**Current:** `$full_name = trim( $first_name . ' ' . $last_name );`
+**New:** `$full_name = trim( $first_name . ' ' . $infix . ' ' . $last_name );`
+**Complexity:** Low
+**Risk:** Low (affects display everywhere)
 
-### Phase 2: Pagination UI (Choose One)
-**Option A: Traditional Pagination** (Recommended for Stadion)
-- Simpler implementation
-- Better for goal-oriented tasks (finding/comparing contacts)
-- Easier to share URLs (page numbers in URL)
-- Users can jump to specific pages
-- More predictable performance
+### 3. Display Formatting
+**Surfaces:**
+- PersonEditModal: Input field between first and last name
+- PeopleList: Name column shows full name with infix
+- PersonDetail: Header shows full name with infix
+- Timeline entries: Author name includes infix
+- Search results: Highlighted name includes infix
 
-**Option B: Virtual Scrolling with Infinite Loading**
-- Smoother browsing experience
-- Requires TanStack Virtual integration
-- More complex state management
-- Better for exploratory browsing
+**Complexity:** Low (template changes)
+**Risk:** Low (visual only)
 
-**Recommendation for Stadion:** Traditional pagination. Users are finding/comparing contacts (goal-oriented), not casually browsing. Pagination provides better UX for this use case.
+### 4. Sorting (REST API + Frontend)
+**Current:** Sort by `first_name` or `last_name` meta query
+**New:** Continue sorting by `last_name` (ignore infix)
+**Complexity:** Low (no change needed if infix stored separately)
+**Risk:** Medium (must verify sorting doesn't break)
 
-### Phase 3: Column Customization
-1. **Column visibility toggle** - Dropdown to show/hide columns
-2. **Store preferences in user meta** - `update_user_meta( $user_id, 'stadion_people_columns', $columns )`
-3. **Column order** - Allow drag-and-drop reordering (TanStack Table API)
-4. **Persist column order** - Store in user meta
+### 5. Search (Global Search)
+**Current:** Searches `post_title` (auto-generated from first+last)
+**New:** Title includes infix, so search already works
+**Complexity:** Low (automatic via title)
+**Risk:** Low (inherits from auto-title)
 
-### Phase 4: Enhancements (Optional)
-- Column resizing
-- Saved filter presets
-- Multi-column sorting
-- Export to CSV
-- Keyboard navigation
+### 6. Duplicate Detection (vCard import, manual checks)
+**Current:** Match on `first_name` + `last_name` (exact)
+**New:** Match on `first_name` + `infix` + `last_name`
+**Complexity:** Medium
+**Risk:** High (may miss existing duplicates if infix added later)
 
-## Technical Implementation Notes
+### 7. vCard Export (class-vcard-export.php)
+**Current:** `N:last_name;first_name;;;`
+**New:** `N:last_name;first_name;infix;;`
+**Complexity:** Medium
+**Risk:** High (position 3 may not be interpreted as infix by all systems)
 
-### WordPress REST API Pagination
-- Maximum `per_page`: 100 (WordPress default)
-- Use `page` parameter for pagination
-- Headers: `X-WP-Total` (total items), `X-WP-TotalPages` (total pages)
-- For cursor-based pagination (better for infinite scroll): Use `offset` parameter
+### 8. vCard Import (class-vcard-import.php)
+**Current:** Parses `N` field parts[0]=last, parts[1]=first
+**New:** Parse parts[2]=infix (if present)
+**Complexity:** Medium
+**Risk:** High (incoming vCards may use position 3 for middle name, not infix)
 
-### TanStack Query + Server-Side Filtering
-```javascript
-const { data, isLoading } = useQuery({
-  queryKey: ['people', { page, filters, sort }],
-  queryFn: () => fetchPeople({ page, filters, sort }),
-  keepPreviousData: true, // Smooth transitions between pages
-});
-```
+### 9. Google Contacts Sync (if exists)
+**Status:** Unknown (not found in code review)
+**Expected mapping:** Use "middle name" field
+**Complexity:** High (if bidirectional sync)
+**Risk:** High (data loss if mapping incorrect)
 
-### User Meta Storage (Column Preferences)
-```php
-// Backend
-$columns = get_user_meta( $user_id, 'stadion_people_columns', true );
-// Returns: ['first_name', 'last_name', 'labels', 'custom_field_1']
+## Edge Cases
 
-$column_order = get_user_meta( $user_id, 'stadion_people_column_order', true );
-// Returns: ['first_name', 'custom_field_1', 'labels', 'last_name']
-```
+### Empty Infix
+**Scenario:** Person with no infix (e.g., "Jan Jansen")
+**Handling:**
+- Display: "Jan Jansen" (no extra space)
+- Sorting: By "Jansen"
+- vCard: `N:Jansen;Jan;;;` (position 3 empty)
+**Risk:** Low (trim whitespace in auto-title)
 
-### Virtual Scrolling (If Chosen)
-```javascript
-import { useVirtualizer } from '@tanstack/react-virtual';
+### Compound Infix
+**Scenario:** "van der", "van den", "van de"
+**Handling:** Store as single string "van der"
+**Display:** "Jan van der Berg"
+**Sorting:** By "Berg" (ignore entire "van der")
+**Risk:** Low (no parsing needed)
 
-const rowVirtualizer = useVirtualizer({
-  count: data.length,
-  getScrollElement: () => parentRef.current,
-  estimateSize: () => 50, // Row height in px
-  overscan: 10, // Render 10 extra rows above/below viewport
-});
-```
+### Capitalization
+**Scenario:** User enters "Van" instead of "van"
+**Handling:**
+- Option A: Auto-lowercase on save (opinionated)
+- Option B: Store as entered, lowercase in display (preserves intent)
+**Recommendation:** Option B (less data loss)
+**Risk:** Medium (inconsistent data entry)
 
-## Performance Benchmarks (From Research)
+### Unknown Infix
+**Scenario:** Historical or rare infix like "des", "d'"
+**Handling:** Allow any value, no strict validation
+**Risk:** Low (edge case)
 
-| Approach | Records | Initial Load | Scroll FPS | Memory Usage |
-|----------|---------|--------------|------------|--------------|
-| Client-side all | 1400 | ~2-3s | 60 FPS | ~15MB |
-| Client-side all | 5000 | ~8-10s | 30-45 FPS | ~50MB |
-| Pagination (server) | Any | <500ms | 60 FPS | <5MB |
-| Virtual scroll (server) | Any | <500ms | 60 FPS | <10MB |
+### vCard Import Ambiguity
+**Scenario:** Import vCard with position 3 = "Paul" (middle name, not infix)
+**Handling:**
+- Cannot distinguish middle name from infix programmatically
+- Require manual review if position 3 looks like middle name
+**Risk:** High (incorrect infix assignment)
 
-**Stadion current state:** ~2-3s initial load for 1400 people, acceptable but approaching limits.
+### Duplicate with/without Infix
+**Scenario:** Existing "Jan Dijk" vs new "Jan van Dijk"
+**Handling:**
+- Current: No match (different last_name)
+- New: Should these be flagged as potential duplicates?
+**Recommendation:** Fuzzy match warning, not hard block
+**Risk:** High (false negatives in duplicate detection)
 
-## User Expectations (2026 Standards)
+### Sportlink Sync Read-Only
+**Scenario:** Name fields are read-only in UI (Sportlink-synced)
+**Handling:** Infix field also read-only in UI, editable via API
+**Risk:** Low (consistent with existing fields)
 
-Based on research into modern CRM and data table UIs:
+## Display Context Matrix
 
-1. **Loading should feel instant** - <500ms perceived load time (skeleton screens help)
-2. **Filters should be obvious** - Toolbar with clear filter chips/badges
-3. **Applied filters should be visible** - Don't hide active filters
-4. **Clear all filters** - Single button to reset
-5. **Column management should be discoverable** - Icon in header or settings
-6. **Columns should have reasonable defaults** - 4-6 columns that work for 80% of users
-7. **Sorting should be obvious** - Arrow indicators in column headers
-8. **Multi-column sort (nice-to-have)** - Hold Shift to add secondary sort
+| Context | Format | Capitalization | Example |
+|---------|--------|----------------|---------|
+| Full name in list | First Infix Last | Lowercase infix | Jan van Dijk |
+| Full name in detail | First Infix Last | Lowercase infix | Jan van Dijk |
+| Formal address (if implemented) | Title Last | Uppercase infix | Dhr. Van Dijk |
+| Search result highlight | First Infix Last | Lowercase infix | Jan **van Dijk** |
+| Timeline byline | First Infix Last | Lowercase infix | Door Jan van Dijk |
+| Sorting key (invisible) | Last | Ignore infix | Dijk |
+| vCard FN field | First Infix Last | Lowercase infix | Jan van Dijk |
+| vCard N field | Last;First;Infix | Lowercase infix | Dijk;Jan;van |
 
-## Accessibility Considerations
+## MVP Recommendation
 
-| Requirement | Implementation |
-|-------------|----------------|
-| Keyboard navigation | Table rows focusable with Tab, Enter to open |
-| Screen reader support | Proper ARIA labels for column headers, sort state |
-| Loading announcements | ARIA live region for "Loading more results" |
-| Filter state announcements | "X results found" after filtering |
-| Column visibility | Dropdown should be keyboard accessible |
+For MVP (subsequent milestone), prioritize:
+
+### Phase 1: Core Implementation
+1. **Storage:** Add `infix` ACF field (text, optional)
+2. **Auto-title:** Include infix in title generation
+3. **Display:** Show infix in PersonEditModal, PeopleList, PersonDetail
+4. **UI field:** Add input between first_name and last_name (read-only if Sportlink-synced)
+
+**Rationale:** These four give immediate user value and are low-risk.
+
+### Phase 2: Search & Sort
+5. **Search:** Verify auto-title change makes infix searchable
+6. **Sorting:** Verify sorting by last_name ignores infix correctly
+
+**Rationale:** Search inherits from auto-title (free). Sorting needs verification.
+
+### Phase 3: Import/Export
+7. **vCard export:** Map infix to N field position 3
+8. **vCard import:** Parse N field position 3 as infix
+9. **Duplicate detection:** Include infix in match logic
+
+**Rationale:** Essential for data interchange, but highest risk (vCard ambiguity).
+
+### Defer to Post-MVP:
+- **Capitalization context awareness:** Complexity high, edge case
+- **Infix validation list:** Nice-to-have, not critical
+- **Bulk import infix detection:** One-time need, manual acceptable
+- **Google Contacts sync:** Requires investigation (not found in code)
+- **Formal address generation:** No use case identified yet
+
+## Implementation Risks
+
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| **vCard position 3 ambiguity** | High | Document expectation, test with major clients (Apple, Google, Outlook) |
+| **Existing data without infix** | Medium | Leave empty, do not attempt auto-parsing |
+| **Duplicate detection false negatives** | Medium | Add fuzzy matching for "van Dijk" vs "Dijk" |
+| **Sportlink sync override** | Medium | Confirm infix field included in Sportlink API |
+| **Google Contacts sync unmapped** | High | Investigate if sync exists, update mapping |
+| **Capitalization inconsistency** | Low | Store lowercase, document convention |
+| **Sorting regression** | Medium | Add test cases for "van Dijk" under "D" |
+
+## Data Quality Considerations
+
+**Current state:**
+- 0 person records have `infix` field (field doesn't exist yet)
+- Unknown how many existing last_name fields contain infixes
+
+**Post-implementation:**
+- New records: Infix entered during creation
+- Existing records: Remain empty unless manually updated
+- Import from vCard: Infix parsed from position 3 (if present)
+
+**Migration path:**
+- Do NOT attempt automatic parsing of existing last_name fields
+- Reason: Ambiguous (is "van Dijk" last_name or infix+last_name?)
+- Let infix field populate organically via:
+  1. Manual edits
+  2. vCard imports
+  3. Sportlink sync (if API includes infix)
+
+## Testing Checklist
+
+**Before deployment, verify:**
+
+- [ ] Person with infix displays correctly: "Jan van Dijk"
+- [ ] Person without infix displays correctly: "Jan Jansen"
+- [ ] Compound infix displays correctly: "Jan van der Berg"
+- [ ] Sorting places "van Dijk" under "D" not "V"
+- [ ] Search finds "van dijk" (full query)
+- [ ] Search finds "dijk" (last name only)
+- [ ] vCard export includes infix in N field position 3
+- [ ] vCard import parses infix from N field position 3
+- [ ] vCard import handles empty position 3 gracefully
+- [ ] Duplicate detection catches "Jan van Dijk" vs "Jan van Dijk"
+- [ ] Duplicate detection distinguishes "Jan van Dijk" vs "Jan Dijk"
+- [ ] Auto-title handles empty infix (no double space)
+- [ ] UI field is read-only when Sportlink-synced
+- [ ] API returns infix in person response
 
 ## Sources
 
-### Pagination vs Infinite Scroll
-- [Handling Large Datasets in Angular: Pagination vs Infinite Scroll](https://medium.com/@geekieshpixel/handling-large-datasets-in-angular-pagination-vs-infinite-scroll-dc07dadeac0b)
-- [Pagination vs. infinite scroll: Making the right decision for UX](https://blog.logrocket.com/ux-design/pagination-vs-infinite-scroll-ux/)
-- [Infinite Scroll vs Pagination: Which is Best for Your Website](https://www.tekrevol.com/blogs/pagination-vs-infinite-scroll-website/)
-- [Infinite Scroll vs Pagination: Key Differences](https://www.squareboat.com/blog/infinite-scroll-vs-pagination)
+### HIGH Confidence Sources:
+- [Tussenvoegsel - Wikipedia](https://en.wikipedia.org/wiki/Tussenvoegsel) - Comprehensive overview of Dutch name prefixes
+- [Dutch Genealogy: How to capitalize Dutch names with prefixes](https://www.dutchgenealogy.nl/how-to-capitalize-dutch-names-with-prefixes/) - Authoritative capitalization rules
+- [RFC 6350: vCard Format Specification](https://www.rfc-editor.org/rfc/rfc6350) - Official vCard standard
+- [Dutch name - Wikipedia](https://en.wikipedia.org/wiki/Dutch_name) - Dutch naming conventions
 
-### React Table Implementation
-- [React Table Server Side Pagination with Sorting and Search Filters](https://dev.to/inimist/react-table-server-side-pagination-with-sorting-and-search-3163)
-- [How to implement server-side Pagination using React Table](https://medium.com/@Jaimayal/how-to-implement-server-side-pagination-using-react-table-d53922e0b086)
-- [How To Do Server Side Pagination, Column Filtering and Sorting With TanStack React Table](https://medium.com/@clee080/how-to-do-server-side-pagination-column-filtering-and-sorting-with-tanstack-react-table-and-react-7400a5604ff2)
-- [TanStack Table Pagination Guide](https://tanstack.com/table/v8/docs/guide/pagination)
+### MEDIUM Confidence Sources:
+- [HubSpot Community: Dutch surnames](https://community.hubspot.com/t5/CRM/Searching-for-a-solution-for-Dutch-surnames/m-p/352499) - CRM implementation patterns
+- [Salesforce Ideas: Name Fields to support Dutch conventions](https://ideas.salesforce.com/s/idea/a0B8W00000GdhfWUAR/name-fields-to-support-dutch-conventions-tussenvoegsel) - Commercial CRM approaches
+- [Fuzzy Matching 101: Complete Guide for 2026](https://matchdatapro.com/fuzzy-matching-101-a-complete-guide-for-2026/) - Duplicate detection algorithms
 
-### Column Visibility & Preferences
-- [Mastering Column Visibility and Resizing in MUI X Data Grid](https://bchirag.hashnode.dev/optimizing-mui-x-data-grid-column-visibility-resizing-and-persistence)
-- [Data Grid - Column visibility - MUI X](https://mui.com/x/react-data-grid/column-visibility/)
-- [Enhancing Visibility and User Experience with React TanStack Table Column Visibility](https://borstch.com/blog/development/enhancing-visibility-and-user-experience-with-react-tanstack-table-column-visibility)
-- [Saving User Preferences for Column Visibility](https://borstch.com/snippet/saving-user-preferences-for-column-visibility)
-- [TanStack Table Column Visibility APIs](https://tanstack.com/table/v8/docs/api/features/column-visibility)
-
-### Virtual Scrolling
-- [Virtualization in React: Improving Performance for Large Lists](https://medium.com/@ignatovich.dm/virtualization-in-react-improving-performance-for-large-lists-3df0800022ef)
-- [List Virtualization in React](https://medium.com/@atulbanwar/list-virtualization-in-react-3db491346af4)
-- [Virtualize large lists with react-window](https://web.dev/articles/virtualize-long-lists-react-window)
-- [TanStack Virtual](https://tanstack.com/virtual/latest)
-
-### WordPress REST API
-- [Pagination – REST API Handbook](https://developer.wordpress.org/rest-api/using-the-rest-api/pagination/)
-- [How to Handle Wordpress Pagination and Custom Queries with REST API](https://www.voxfor.com/how-to-handle-wordpress-pagination-and-custom-queries-with-rest-api/)
-- [RESTful API Pagination Best Practices](https://medium.com/@khdevnet/restful-api-pagination-best-practices-a-developers-guide-5b177a9552ef)
-
-### TanStack Query State Management
-- [TanStack Query Overview](https://tanstack.com/query/latest/docs/framework/react/overview)
-- [TanStack Query: A Powerful Tool for Data Management in React](https://medium.com/@ignatovich.dm/tanstack-query-a-powerful-tool-for-data-management-in-react-0c5ae6ef037c)
-- [Column Filtering Guide - TanStack Table](https://tanstack.com/table/latest/docs/guide/column-filtering)
-
-### Column Reordering
-- [Column Ordering Guide - TanStack Table](https://tanstack.com/table/v8/docs/guide/column-ordering)
-- [Exploring Column Ordering in React TanStack Table](https://borstch.com/blog/development/exploring-column-ordering-in-react-tanstack-table-for-better-data-management)
-- [React TanStack Table Column Ordering Example](https://tanstack.com/table/v8/docs/framework/react/examples/column-ordering)
-
-### WordPress User Meta
-- [Working with User Metadata – Plugin Handbook](https://developer.wordpress.org/plugins/users/working-with-user-metadata/)
-- [How WordPress user data is stored in the database](https://usersinsights.com/wordpress-user-database-tables/)
-- [wp_usermeta table - WordPress Database Tables](https://www.wpdir.com/wp-usermeta-table/)
-
-### Loading States & Skeleton UI
-- [Skeleton loading screen design — How to improve perceived performance](https://blog.logrocket.com/ux-design/skeleton-loading-screen-design/)
-- [Handling React loading states with React Loading Skeleton](https://blog.logrocket.com/handling-react-loading-states-react-loading-skeleton/)
-- [Infinite scroll best practices: UX design tips and examples](https://www.justinmind.com/ui-design/infinite-scroll)
-- [Skeleton UI Design: Best practices, Design variants & Examples](https://mobbin.com/glossary/skeleton)
+### Code Analysis:
+- `/Users/joostdevalk/Code/stadion/includes/class-auto-title.php` - Current title generation
+- `/Users/joostdevalk/Code/stadion/includes/class-vcard-export.php` - Current vCard export (lines 254: N field)
+- `/Users/joostdevalk/Code/stadion/includes/class-vcard-import.php` - Current vCard import (lines 326: N field parsing)
+- `/Users/joostdevalk/Code/stadion/src/components/PersonEditModal.jsx` - Current UI form

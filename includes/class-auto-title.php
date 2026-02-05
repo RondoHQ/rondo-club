@@ -208,9 +208,10 @@ class AutoTitle {
 		}
 
 		$first_name = get_field( 'first_name', $post_id ) ?: '';
+		$infix      = get_field( 'infix', $post_id ) ?: '';
 		$last_name  = get_field( 'last_name', $post_id ) ?: '';
 
-		$full_name = trim( $first_name . ' ' . $last_name );
+		$full_name = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
 
 		if ( empty( $full_name ) ) {
 			$full_name = __( 'Unnamed Person', 'stadion' );
@@ -244,9 +245,10 @@ class AutoTitle {
 		$post_id = $post->ID;
 
 		$first_name = get_field( 'first_name', $post_id ) ?: '';
+		$infix      = get_field( 'infix', $post_id ) ?: '';
 		$last_name  = get_field( 'last_name', $post_id ) ?: '';
 
-		$full_name = trim( $first_name . ' ' . $last_name );
+		$full_name = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
 
 		if ( empty( $full_name ) ) {
 			$full_name = __( 'Unnamed Person', 'stadion' );

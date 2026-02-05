@@ -49,6 +49,7 @@ export default function PersonEditModal({
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
       first_name: '',
+      infix: '',
       last_name: '',
       nickname: '',
       gender: '',
@@ -78,6 +79,7 @@ export default function PersonEditModal({
 
         reset({
           first_name: person.acf?.first_name || '',
+          infix: person.acf?.infix || '',
           last_name: person.acf?.last_name || '',
           nickname: person.acf?.nickname || '',
           gender: person.acf?.gender || '',
@@ -92,6 +94,7 @@ export default function PersonEditModal({
         // Pre-fill mode - use provided data from external context (e.g., meeting attendee)
         reset({
           first_name: prefillData.first_name || '',
+          infix: prefillData.infix || '',
           last_name: prefillData.last_name || '',
           nickname: '',
           gender: '',
@@ -106,6 +109,7 @@ export default function PersonEditModal({
         // Creating - reset to defaults
         reset({
           first_name: '',
+          infix: '',
           last_name: '',
           nickname: '',
           gender: '',
@@ -155,6 +159,7 @@ export default function PersonEditModal({
         // Pre-fill the form with vCard data
         reset({
           first_name: data.first_name || '',
+          infix: data.infix || '',
           last_name: data.last_name || '',
           nickname: data.nickname || '',
           gender: data.gender || '',
@@ -281,7 +286,7 @@ export default function PersonEditModal({
             )}
             
             {/* Name fields */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="label">Voornaam *</label>
                 <input
@@ -294,6 +299,17 @@ export default function PersonEditModal({
                 {errors.first_name && (
                   <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.first_name.message}</p>
                 )}
+              </div>
+
+              <div>
+                <label className="label">Tussenvoegsel</label>
+                <input
+                  {...register('infix')}
+                  className="input bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                  placeholder="van de"
+                  disabled={true}
+                  title="Komt van Sportlink"
+                />
               </div>
 
               <div>

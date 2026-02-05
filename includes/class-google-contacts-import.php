@@ -139,6 +139,7 @@ class GoogleContacts {
 
 		foreach ( $contacts as $index => $contact ) {
 			$first_name = $this->get_field( $contact, [ 'Given Name', 'First Name' ] );
+			$infix      = $this->get_field( $contact, [ 'Additional Name', 'Middle Name' ] );
 			$last_name  = $this->get_field( $contact, [ 'Family Name', 'Last Name' ] );
 
 			// Fallback to Name field
@@ -152,7 +153,7 @@ class GoogleContacts {
 				continue;
 			}
 
-			$full_name   = trim( $first_name . ' ' . $last_name );
+			$full_name   = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
 			$existing_id = $this->find_existing_person( $first_name, $last_name );
 
 			if ( $existing_id ) {
@@ -385,6 +386,7 @@ class GoogleContacts {
 	private function import_single_contact( array $contact, int $index = 0 ): void {
 		// Extract name - support both old format (Given Name/Family Name) and new format (First Name/Last Name)
 		$first_name = $this->get_field( $contact, [ 'Given Name', 'First Name' ] );
+		$infix      = $this->get_field( $contact, [ 'Additional Name', 'Middle Name' ] );
 		$last_name  = $this->get_field( $contact, [ 'Family Name', 'Last Name' ] );
 
 		// Fallback to Name field if first/last name are empty
@@ -425,7 +427,7 @@ class GoogleContacts {
 				[
 					'post_type'   => 'person',
 					'post_status' => 'publish',
-					'post_title'  => trim( $first_name . ' ' . $last_name ),
+					'post_title'  => implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ),
 					'post_author' => get_current_user_id(),
 				]
 			);
@@ -440,6 +442,9 @@ class GoogleContacts {
 
 		// Set basic ACF fields
 		update_field( 'first_name', $first_name, $post_id );
+		if ( ! empty( $infix ) ) {
+			update_field( 'infix', $infix, $post_id );
+		}
 		update_field( 'last_name', $last_name, $post_id );
 
 		// Nickname
