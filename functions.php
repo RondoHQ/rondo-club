@@ -1026,7 +1026,7 @@ function stadion_login_styles() {
 
 		/* Logo */
 		#login h1 a {
-			background-image: url('<?php echo esc_url( $logo_data_url ); ?>');
+			background-image: url('<?php echo esc_attr( $logo_data_url ); ?>');
 			background-size: contain;
 			background-position: center center;
 			background-repeat: no-repeat;
