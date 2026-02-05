@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [16.0.0] - 2026-02-05
+
+### Added
+- Infix (tussenvoegsel) field for person records — supports Dutch naming convention (e.g., "Jan van de Berg")
+- ACF `infix` text field between first_name and last_name (read-only, synced from Sportlink)
+- Auto-title generation includes infix: "First Infix Last" with no double spaces when empty
+- Infix included in REST API filtered endpoint response and JOIN query
+- Global search matches infix field (score: 50)
+- vCard export/import: infix maps to N field position 3 (Additional Names)
+- Google Contacts export: infix maps to middleName
+- Google Contacts API import: reads middleName as infix at all 3 import locations
+- Google CSV export: populates "Additional Name" column
+- Google CSV import: reads "Additional Name" / "Middle Name" column
+- CardDAV: infix in create/update flows
+- Frontend PersonEditModal: read-only infix field with "Komt van Sportlink" tooltip
+- Frontend PeopleList, VOGList: display infix in name column
+- `formatPersonName()` utility for consistent name formatting across frontend
+
 ## [14.0.0] - 2026-02-04
 
 ### Changed

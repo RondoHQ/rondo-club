@@ -256,11 +256,13 @@ class ImportExport extends Base {
 
 			// Name fields
 			$first_name = $acf['first_name'] ?? '';
+			$infix      = $acf['infix'] ?? '';
 			$last_name  = $acf['last_name'] ?? '';
-			$full_name  = trim( "{$first_name} {$last_name}" );
+			$full_name  = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
 
 			$row[0]  = $full_name; // Name
 			$row[1]  = $first_name; // Given Name
+			$row[2]  = $infix; // Additional Name (tussenvoegsel)
 			$row[3]  = $last_name; // Family Name
 			$row[11] = $acf['nickname'] ?? ''; // Nickname
 

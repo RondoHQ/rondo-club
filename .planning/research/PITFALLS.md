@@ -1,902 +1,427 @@
-# Domain Pitfalls: Adding Infinite Scroll & Server-Side Filtering to WordPress/React
+# Domain Pitfalls: Adding Infix/Tussenvoegsel Field
 
-**Domain:** WordPress + React CRM with existing access control and ACF fields
-**Researched:** 2026-01-29
-**Context:** Subsequent milestone adding infinite scroll, $wpdb JOINs, and column preferences to existing People list
+**Domain:** Adding infix field to person names in WordPress/React CRM
+**Researched:** 2026-02-05
+**Context:** Subsequent milestone - adding read-only infix field synced from Sportlink API to ~1400 existing person records
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, security vulnerabilities, or major performance issues.
+Mistakes that cause rewrites or major issues.
 
-### Pitfall 1: Access Control Bypass with Custom $wpdb Queries
-
-**What goes wrong:** Custom $wpdb queries bypass WordPress's `pre_get_posts` filter, which is how `STADION_Access_Control` enforces user approval checks. Direct SQL queries return ALL records, exposing unapproved users' data or bypassing row-level security.
-
-**Why it happens:** Developers focus on performance optimization with $wpdb JOINs and forget that access control filters only work with `WP_Query`. The existing `filter_queries()` method in `class-access-control.php` explicitly checks for `suppress_filters` but $wpdb queries don't trigger these hooks at all.
-
+### Pitfall 1: Sorting by Infix Instead of Last Name
+**What goes wrong:** Records get sorted under "D", "V", "T" instead of actual last names. "de Vries" appears under D, "van Dijk" under V.
+**Why it happens:** Developers treat infix+last_name as a single sortable string, or sort by SQL column order (first_name, infix, last_name).
 **Consequences:**
-- Unapproved users see all CRM data (security breach)
-- Access control becomes inconsistent across endpoints
-- Audit/compliance violations
-
+- List views become unusable - massive clusters under common prefixes (van, de, der)
+- User reports "Everyone's under V now!"
+- Search for "Vries" fails because query matches "de Vries" under D
 **Prevention:**
-1. **Always add access control checks BEFORE running custom queries:**
-   ```php
-   $access_control = new \STADION_Access_Control();
-   if (!$access_control->is_user_approved()) {
-       return []; // or WP_Error
-   }
-   ```
-
-2. **Add post_author or post__in filters to WHERE clause:**
-   ```php
-   // In $wpdb query building
-   if (!current_user_can('manage_options')) {
-       // Add WHERE p.post_author IN (...approved_user_ids)
-       // OR use post__in array if needed
-   }
-   ```
-
-3. **Create reusable method in AccessControl class:**
-   ```php
-   public function get_sql_where_clause($table_alias = 'p') {
-       if (!$this->is_user_approved()) {
-           return "{$table_alias}.ID = 0"; // Returns nothing
-       }
-       // All approved users see everything
-       return "1=1";
-   }
-   ```
-
+- **ALWAYS sort by last_name alone**, ignoring infix for alphabetical order
+- Current code: `ORDER BY fn.meta_value, ln.meta_value` in `class-rest-people.php:1237`
+- After infix: Keep last_name as primary sort key: `ORDER BY ln.meta_value $order, fn.meta_value $order`
+- Document: "Dutch convention ignores tussenvoegsel in alphabetization"
 **Detection:**
-- Search for `global $wpdb` in new code
-- Check if `$wpdb->prepare()` queries include access control logic
-- Test with unapproved user account
-- Review security test coverage for custom endpoints
+- Run query: `SELECT first_name, infix, last_name FROM people ORDER BY last_name LIMIT 100`
+- Check if people with infix appear scattered (CORRECT) or clustered (WRONG)
+**Phase impact:** Phase 3 (Backend sorting) - This MUST be addressed before any UI displays sorted names
 
-**Phase impact:** Phase 2 (Server-side filtering endpoint) must address this before implementation.
+**Sources:**
+- [Dutch spelling and alphabetic ordering](https://www.van-diemen-de-jel.nl/Genea/Spelling.html)
+- [Prefixes in surnames](https://www.dutchgenealogy.nl/prefixes-in-surnames/)
 
-**References:**
-- [WordPress Modular DS Plugin CVE-2026-23550](https://thehackernews.com/2026/01/critical-wordpress-modular-ds-plugin.html) - Recent example of authentication bypass in custom routes
+---
 
-### Pitfall 2: SQL Injection via Unsanitized Filter Parameters
-
-**What goes wrong:** Filter values (labels, teams, custom fields) are inserted directly into SQL queries without proper escaping. ACF field names are particularly dangerous as they come from user configuration and may contain special characters.
-
-**Why it happens:**
-- Developers trust filter values as "internal" data (taxonomies, post IDs)
-- ACF field names look safe but can contain underscores, dashes that break SQL
-- `$wpdb->prepare()` placeholders (%s, %d) don't work for dynamic table/column names
-- Meta key comparisons require LIKE for serialized ACF data, increasing injection surface
-
+### Pitfall 2: Auto-Title Regeneration Creates Double Spaces
+**What goes wrong:** Existing auto-title logic: `trim(first_name + ' ' + last_name)`. Adding infix without conditionals: `first_name + ' ' + infix + ' ' + last_name`. When infix is empty (most existing records), titles become "John  Doe" (double space).
+**Why it happens:** String concatenation doesn't check for empty infix field before adding spaces.
 **Consequences:**
-- SQL injection vulnerability allowing data exfiltration
-- Database corruption or deletion
-- Server compromise
-
+- Visual: Double spaces in UI, list views, search results
+- Functional: String comparison breaks (`"John  Doe" !== "John Doe"`)
+- Search: Queries for "John Doe" don't match "John  Doe"
+- vCard: Double spaces in FN field violate expectations
 **Prevention:**
+```php
+// WRONG (creates double space when infix empty)
+$full_name = trim( $first_name . ' ' . $infix . ' ' . $last_name );
 
-1. **Always use $wpdb->prepare() with correct placeholders:**
-   ```php
-   // WRONG - direct interpolation
-   $query = "WHERE meta_key = '$field_name'";
-
-   // CORRECT - prepared statement
-   $query = $wpdb->prepare("WHERE meta_key = %s", $field_name);
-   ```
-
-2. **Whitelist ACF field names:**
-   ```php
-   // Get allowed field names from ACF configuration
-   $allowed_fields = array_map(function($field) {
-       return $field['name'];
-   }, acf_get_fields('group_person_fields'));
-
-   if (!in_array($field_name, $allowed_fields, true)) {
-       return new WP_Error('invalid_field');
-   }
-   ```
-
-3. **Sanitize filter arrays:**
-   ```php
-   // For label IDs (taxonomy terms)
-   $label_ids = array_map('absint', $filter_params['labels']);
-
-   // For custom field values
-   $field_value = sanitize_text_field($filter_params['field_value']);
-   ```
-
-4. **Never build dynamic column/table names from user input:**
-   ```php
-   // WRONG - meta_key from user input
-   $query = "SELECT * FROM {$wpdb->postmeta} WHERE meta_key = '{$_GET['field']}'";
-
-   // CORRECT - whitelist validation first
-   if (!in_array($field_name, $safe_fields)) {
-       return new WP_Error('invalid_field');
-   }
-   $query = $wpdb->prepare(
-       "SELECT * FROM {$wpdb->postmeta} WHERE meta_key = %s",
-       $field_name
-   );
-   ```
-
+// CORRECT (conditional spacing)
+$parts = array_filter( [ $first_name, $infix, $last_name ], function( $v ) { return $v !== null && $v !== ''; } );
+$full_name = implode( ' ', $parts );
+```
 **Detection:**
-- Code review: Search for `$wpdb->query()`, `$wpdb->get_results()` without `prepare()`
-- Check for string concatenation in SQL: `"WHERE " . $var`
-- Test with SQL injection payloads: `' OR '1'='1`, `'; DROP TABLE--`
-- Use tools like Psalm/PHPStan with security rulesets
+- Search post_title for double spaces: `SELECT ID, post_title FROM wp_posts WHERE post_type='person' AND post_title LIKE '%  %'`
+- Unit test: `test_auto_title_with_empty_infix()`, `test_auto_title_with_infix()`
+**Phase impact:** Phase 2 (Auto-title logic) - Must fix BEFORE bulk regeneration in Phase 5
 
-**Phase impact:** Phase 2 (Server-side filtering) - MUST validate all filter inputs before query building.
+**Current code location:** `includes/class-auto-title.php:213`
 
-**References:**
-- [WordPress SQL Injection Prevention Guide](https://patchstack.com/articles/sql-injection/)
-- [Malcure 2026 Prevention Guide](https://malcure.com/blog/malware-removal-guides/how-to-prevent-wordpress-sql-injection-attacks/)
+---
 
-### Pitfall 3: Post_Meta JOIN Performance Degradation at Scale
-
-**What goes wrong:** Each filter condition on ACF fields adds another LEFT JOIN to `wp_postmeta`. With 3-4 filters active, queries slow from 50ms to 2-5 seconds. MySQL query optimizer makes poor choices with multiple meta JOINs, especially without proper indexing.
-
-**Why it happens:**
-- `wp_postmeta` is a generic EAV table (post_id, meta_key, meta_value)
-- Each ACF field requires a separate JOIN to match meta_key
-- MySQL can't use indexes effectively with multiple LEFT JOINs
-- ACF stores complex data serialized, requiring LIKE comparisons
-- No composite indexes on (post_id, meta_key) by default
-
+### Pitfall 3: Search Fragmentation Across Three Fields
+**What goes wrong:** Users search "van Dijk" but query only checks `last_name='van Dijk'`. Actual data: `infix='van'`, `last_name='Dijk'`. Zero results returned.
+**Why it happens:** Search implementation doesn't concatenate fields for matching.
 **Consequences:**
-- People list becomes unusable with >5,000 records
-- Server CPU spikes during peak usage
-- Database locks causing timeout errors
-- Poor user experience, users stop filtering
-
+- Users report "Person not found" when person exists
+- Workarounds: Users search "Dijk" (ambiguous) or guess field structure
+- Support tickets: "Why can't I find van Dijk?"
 **Prevention:**
-
-1. **Use STRAIGHT_JOIN hint for complex meta queries:**
-   ```php
-   // Force MySQL to use joins in order specified
-   $query = "SELECT STRAIGHT_JOIN p.ID FROM {$wpdb->posts} p";
-   ```
-
-2. **Add composite index on postmeta:**
-   ```php
-   // In activation/migration
-   $wpdb->query(
-       "CREATE INDEX idx_meta_key_value ON {$wpdb->postmeta} (post_id, meta_key, meta_value(191))"
-   );
-   ```
-
-3. **Limit JOINs to 3-4 maximum:**
-   ```php
-   // If more than 4 filters, fall back to two-step query:
-   if (count($filters) > 4) {
-       // Step 1: Get matching IDs with WP_Query (cached)
-       // Step 2: Filter those IDs with fewer JOINs
-   }
-   ```
-
-4. **Cache filter results aggressively:**
-   ```php
-   $cache_key = 'people_filtered_' . md5(json_encode($filters));
-   $cached = get_transient($cache_key);
-   if ($cached !== false) {
-       return $cached;
-   }
-   // ... run query ...
-   set_transient($cache_key, $results, 5 * MINUTE_IN_SECONDS);
-   ```
-
-5. **Consider materialized view for common filters:**
-   ```php
-   // Store current_team in wp_posts meta (duplicated but indexed)
-   // Update on work_history changes
-   update_post_meta($person_id, '_current_team_id', $team_id);
-
-   // Query directly instead of JOIN
-   $query .= $wpdb->prepare(" AND pm.meta_key = '_current_team_id' AND pm.meta_value = %d", $team_id);
-   ```
-
+- Concatenate for search: `WHERE CONCAT_WS(' ', first_name, infix, last_name) LIKE '%search_term%'`
+- **OR** maintain denormalized `full_name_search` field (recommended for performance)
+- Frontend: Search across all permutations ("van Dijk", "Dijk, van", "Dijk")
 **Detection:**
-- Monitor query times with Query Monitor plugin
-- Check `EXPLAIN` output for queries with >3 JOINs
-- Load test with 10,000+ people records
-- Watch for "Using temporary; Using filesort" in EXPLAIN
+- Create test: Person with infix="van", last_name="Dijk"
+- Search "van Dijk" - must return result
+- Search "Dijk" - must return result
+**Phase impact:** Phase 4 (Search updates) - Critical for REST API `/stadion/v1/search` endpoint
 
-**Phase impact:** Phase 3 (Advanced filtering) - Must implement caching and JOIN limits.
+**Current search code:** Likely in `includes/class-rest-api.php` (search endpoint) - needs investigation
 
-**References:**
-- [ACF Post Meta Query Performance Best Practices](https://www.advancedcustomfields.com/blog/wordpress-post-meta-query/)
-- [WordPress Core Ticket #20134](https://core.trac.wordpress.org/ticket/20134) - Complex meta query performance issues
+---
 
-### Pitfall 4: TanStack Query Stale Data After Mutations
-
-**What goes wrong:** User creates/edits a person, returns to list, sees old data. Filter changes don't trigger refetch. Cache becomes permanently stale after invalidation because `useInfiniteQuery` doesn't refetch all pages when inactive.
-
-**Why it happens:**
-- `useInfiniteQuery` with `staleTime: Infinity` never refetches
-- `queryClient.invalidateQueries()` only marks as stale, doesn't trigger refetch for inactive queries
-- Filter changes modify `queryKey` but old key remains in cache
-- On page navigation back, stale data loads instantly (appears fast but wrong)
-
+### Pitfall 4: vCard N Field Mapping Breaks Standards
+**What goes wrong:** vCard N field: `N:FamilyName;GivenName;AdditionalNames;Prefix;Suffix`. Mapping infix to AdditionalNames: `N:Dijk;John;van;;` is semantically wrong - AdditionalNames is for middle names, not surname prefixes.
+**Why it happens:** No standard vCard field for tussenvoegsel, so developers misuse closest field.
 **Consequences:**
-- Users see outdated information
-- Confusion when edits "don't save"
-- Loss of trust in application
-- Support requests for "broken" features
-
+- CardDAV import/export: "van" appears as middle name in iOS Contacts
+- Google Contacts: Tussenvoegsel lost or corrupted on sync roundtrip
+- User confusion: "Why is 'van' my middle name?"
 **Prevention:**
-
-1. **Invalidate AND refetch on mutations:**
-   ```javascript
-   // WRONG - only invalidates
-   queryClient.invalidateQueries({ queryKey: ['people'] });
-
-   // CORRECT - invalidate and refetch active queries
-   await queryClient.invalidateQueries({
-       queryKey: ['people'],
-       refetchType: 'active'
-   });
-   ```
-
-2. **Use shorter staleTime for infinite queries:**
-   ```javascript
-   const { data, fetchNextPage } = useInfiniteQuery({
-       queryKey: ['people', filters],
-       queryFn: fetchPeoplePage,
-       staleTime: 30 * 1000, // 30 seconds, not Infinity
-       gcTime: 5 * 60 * 1000,  // Keep in cache 5 minutes
-   });
-   ```
-
-3. **Refetch on filter changes with reset:**
-   ```javascript
-   useEffect(() => {
-       // When filters change, refetch from page 1
-       queryClient.resetQueries({ queryKey: ['people', filters] });
-   }, [filters, queryClient]);
-   ```
-
-4. **Implement optimistic updates for create/edit:**
-   ```javascript
-   const createMutation = useMutation({
-       mutationFn: createPerson,
-       onMutate: async (newPerson) => {
-           // Cancel outgoing refetches
-           await queryClient.cancelQueries({ queryKey: ['people'] });
-
-           // Optimistically update cache
-           queryClient.setQueryData(['people', filters], (old) => {
-               return {
-                   ...old,
-                   pages: [
-                       { data: [newPerson, ...old.pages[0].data], hasMore: true },
-                       ...old.pages.slice(1)
-                   ]
-               };
-           });
-       },
-       onSettled: () => {
-           // Refetch to ensure consistency
-           queryClient.invalidateQueries({ queryKey: ['people'] });
-       }
-   });
-   ```
-
-5. **Reset query on mount if data might be stale:**
-   ```javascript
-   useEffect(() => {
-       // Refetch when returning to list page
-       queryClient.refetchQueries({
-           queryKey: ['people'],
-           type: 'active'
-       });
-   }, []); // Only on mount
-   ```
-
+- **Accept the limitation:** vCard 3.0 has no tussenvoegsel field
+- **Recommended mapping:** Include infix in FamilyName field for vCard: `N:van Dijk;John;;;`
+- Document: "vCard export combines infix + last_name for compatibility"
+- **Alternative:** Use X-INFIX extension for internal CardDAV, but expect it to be ignored by most clients
 **Detection:**
-- Manual testing: Create person → Navigate away → Return → Check if new person appears
-- Check React DevTools TanStack Query tab for stale queries
-- Add logging to mutation `onSuccess` handlers
-- Monitor refetch behavior in network tab
+- Export vCard for person with infix
+- Import to iOS Contacts / Google Contacts
+- Check if name displays correctly
+**Phase impact:** Phase 6 (vCard/CardDAV update) - Low priority unless users report sync issues
 
-**Phase impact:** Phase 1 (Infinite scroll) AND Phase 2 (Filters) - Cache strategy must be correct from start.
+**Current vCard code:** `includes/class-vcard-export.php:254` (N field generation)
 
-**References:**
-- [TanStack Query Issue #5648](https://github.com/TanStack/query/issues/5648) - Programmatic invalidation issues
-- [Query Invalidation Docs](https://tanstack.com/query/latest/docs/framework/react/guides/query-invalidation)
+**Sources:**
+- [Notes on the vCard format](https://www.w3.org/2002/12/cal/vcard-notes.html)
+- [vCard middleName vs additionalNames discussion](https://discussions.apple.com/thread/2743303?tstart=0)
+
+---
+
+### Pitfall 5: Google Contacts Sync Loses Infix on Roundtrip
+**What goes wrong:** Export: `infix='van'`, `last_name='Dijk'` → Google Contacts: `familyName='van Dijk'`. Import: Google returns `familyName='van Dijk'` → Stadion tries to parse back to infix+last_name → Fails, creates `infix=null`, `last_name='van Dijk'`.
+**Why it happens:** Google People API has no infix/tussenvoegsel field. Data structure is lossy.
+**Consequences:**
+- Sync corruption: Infix disappears after export→edit→import cycle
+- Data integrity: Sportlink source of truth overwritten with corrupted data
+- User report: "My 'van' disappeared!"
+**Prevention:**
+- **Make infix read-only in UI** (already planned) ✓
+- Store `_google_original_family_name` meta on export for comparison
+- On import, if `_google_original_family_name` matches Google's `familyName`, skip update (no changes)
+- If different, log warning: "Google Contacts name changed, but infix is read-only"
+- Document: "Infix field syncs from Sportlink only, not editable via Google"
+**Detection:**
+- Export person with infix to Google
+- Edit person in Google Contacts (change first name only)
+- Trigger import
+- Verify infix unchanged in Stadion
+**Phase impact:** Phase 7 (Google Contacts sync) - Critical if Google sync is active
+
+**Current Google export code:** `includes/class-google-contacts-export.php:655-673` (build_name method)
+
+---
 
 ## Moderate Pitfalls
 
-Mistakes that cause delays, technical debt, or user confusion.
+Mistakes that cause delays or technical debt.
 
-### Pitfall 5: Race Conditions with Rapid Filter Changes
-
-**What goes wrong:** User changes filter dropdown rapidly (Team A → Team B → Team C). Three API requests fire. Response C arrives first, then B, then A. UI shows results for Team A (wrong).
-
-**Why it happens:**
-- Network responses don't arrive in request order
-- `useInfiniteQuery` doesn't cancel previous queries automatically
-- React state updates from old requests overwrite new ones
-- No request cancellation tokens
-
-**Consequences:**
-- Wrong data displayed when filtering quickly
-- User sees "Team B" selected but "Team A" results
-- Intermittent bugs that are hard to reproduce
-- Users learn to "wait" after filtering (bad UX)
-
+### Pitfall 6: Display Inconsistency - Sometimes Shown, Sometimes Hidden
+**What goes wrong:** Frontend shows full name in some components (`PersonDetail.jsx`: "John van Dijk"), but only first+last in others (`PeopleList.jsx`: "John Dijk"). User confusion: "Where did 'van' go?"
+**Why it happens:** Developers update some components to use new `getFullName()` utility, but forget others. No centralized display logic.
 **Prevention:**
-
-1. **Use TanStack Query's automatic request cancellation:**
-   ```javascript
-   const fetchPeople = async ({ queryKey, pageParam, signal }) => {
-       const [_key, filters] = queryKey;
-       const response = await axios.get('/wp-json/stadion/v1/people-filtered', {
-           params: { ...filters, page: pageParam },
-           signal // Pass AbortSignal to axios
-       });
-       return response.data;
-   };
-   ```
-
-2. **Debounce filter changes:**
-   ```javascript
-   import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-
-   const [filterInput, setFilterInput] = useState({});
-   const debouncedFilters = useDebouncedValue(filterInput, 300); // 300ms delay
-
-   const { data } = useInfiniteQuery({
-       queryKey: ['people', debouncedFilters],
-       // ...
-   });
-   ```
-
-3. **Show loading state during filter changes:**
-   ```javascript
-   const isRefetching = isFetching && !isFetchingNextPage;
-
-   {isRefetching && (
-       <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
-           <LoadingSpinner />
-       </div>
-   )}
-   ```
-
+- Audit ALL components rendering person names (grep: `person.first_name`, `person.acf.first_name`, `getPersonName`)
+- Create centralized utility: `formatPersonFullName(person, includeInfix=true)`
+- Update all 7+ components identified in grep results
+- Test checklist: PeopleList, PersonDetail, ImportantDateModal, MeetingDetailModal, VOGList, Timeline, Search results
 **Detection:**
-- Test by rapidly changing filters
-- Check Network tab for overlapping requests
-- Add request IDs to logging
-- Monitor for "Request aborted" errors (expected/good)
+- Visual regression test: Screenshot all person name displays
+- Verify infix appears consistently (or document intentional differences)
+**Phase impact:** Phase 8 (Frontend display) - Must complete before UAT
 
-**Phase impact:** Phase 2 (Filters) - Must implement debouncing and cancellation.
+**Components to audit:**
+- `src/pages/People/PeopleList.jsx`
+- `src/pages/People/PersonDetail.jsx`
+- `src/components/ImportantDateModal.jsx`
+- `src/components/MeetingDetailModal.jsx`
+- `src/pages/VOG/VOGList.jsx`
 
-**References:**
-- [DEV Community: Infinite Scroll Race Conditions](https://dev.to/pipipi-dev/infinite-scroll-with-zustand-and-react-19-async-pitfalls-57c) (2025)
+---
 
-### Pitfall 6: Memory Leaks with Large Result Sets
-
-**What goes wrong:** Fetching 10,000 people records with `posts_per_page: -1` consumes 500MB+ memory. `$wpdb->get_results()` loads entire result set into memory. With multiple concurrent users, server runs out of memory.
-
-**Why it happens:**
-- `$wpdb->get_results()` stores full result array in `$wpdb->last_result`
-- WordPress doesn't stream large result sets
-- ACF field loading for each person multiplies memory usage
-- No pagination or limit on initial data fetch
-
+### Pitfall 7: Capitalization Inconsistency - "Van" vs "van"
+**What goes wrong:** Dutch rules: "Jan van Dijk" (van lowercase in full name), but "Van Dijk" (Van capitalized when last name standalone). System stores `infix='van'` (lowercase), displays "van Dijk" everywhere, violates Dutch convention for standalone contexts.
+**Why it happens:** Developers store one canonical form, don't apply context-sensitive capitalization.
 **Consequences:**
-- PHP "Allowed memory size exhausted" errors
-- 502 Bad Gateway responses
-- Server crashes requiring restart
-- Can't scale beyond 5-10 concurrent users
-
+- Looks wrong to Dutch users in formal contexts (letters, reports)
+- Not technically broken, but unprofessional
 **Prevention:**
-
-1. **Always use pagination, never fetch all:**
-   ```php
-   // WRONG
-   $people = get_posts(['post_type' => 'person', 'posts_per_page' => -1]);
-
-   // CORRECT
-   $people = get_posts([
-       'post_type' => 'person',
-       'posts_per_page' => 50, // Match frontend page size
-       'paged' => $page
-   ]);
-   ```
-
-2. **Use $wpdb with LIMIT and OFFSET:**
-   ```php
-   $offset = ($page - 1) * $per_page;
-   $query = $wpdb->prepare(
-       "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'person' LIMIT %d OFFSET %d",
-       $per_page,
-       $offset
-   );
-   ```
-
-3. **Fetch only needed fields:**
-   ```php
-   // Don't load full post objects
-   $ids = get_posts([
-       'post_type' => 'person',
-       'fields' => 'ids', // Only IDs
-       'posts_per_page' => 50
-   ]);
-   ```
-
-4. **Lazy-load ACF fields:**
-   ```php
-   // Don't load all ACF fields for list view
-   $people = array_map(function($person) {
-       return [
-           'id' => $person->ID,
-           'first_name' => get_field('first_name', $person->ID),
-           'last_name' => get_field('last_name', $person->ID),
-           // Only fields needed for list display
-       ];
-   }, $people);
-   ```
-
-5. **Set memory limits in endpoint:**
-   ```php
-   // At top of expensive endpoint
-   if (defined('WP_DEBUG') && WP_DEBUG) {
-       ini_set('memory_limit', '512M');
-   }
-   ```
-
+- Store lowercase in database: `infix='van'`
+- Create display utility with context parameter:
+  ```javascript
+  formatInfix(infix, context='full') {
+    if (context === 'standalone' && infix) {
+      return infix.charAt(0).toUpperCase() + infix.slice(1); // "Van"
+    }
+    return infix; // "van"
+  }
+  ```
+- Use `standalone` context in: List views (last name column), formal letters, certificates
+- Use `full` context in: Full name displays, conversation UI
 **Detection:**
-- Monitor `memory_get_peak_usage()` in endpoints
-- Check error logs for memory errors
-- Load test with Apache Bench or k6
-- Profile with Xdebug or Blackfire
+- Check list view: Should show "Van Dijk" (capitalized) when only last name shown
+- Check detail page: Should show "Jan van Dijk" (lowercase) when full name shown
+**Phase impact:** Phase 8 (Frontend display) - Polish step, optional for MVP
 
-**Phase impact:** Phase 2 (Server-side filtering) - Must enforce pagination limits.
+**Sources:**
+- [How to capitalize Dutch names with prefixes](https://www.dutchgenealogy.nl/how-to-capitalize-dutch-names-with-prefixes/)
 
-**References:**
-- [WordPress Core Ticket #12257](https://core.trac.wordpress.org/ticket/12257) - wpdb memory issues with large result sets
-- [Tyche Software: wpdb get_results() limit](https://www.tychesoftwares.com/wordpress-wpdb-get_results-limit/)
+---
 
-### Pitfall 7: Nonce Validation Bypassed in Custom Endpoints
-
-**What goes wrong:** Custom REST endpoint at `/stadion/v1/people-filtered` has `permission_callback => 'is_user_logged_in'` but doesn't verify nonce. Logged-in user can forge requests, potentially bypassing access control or triggering CSRF attacks.
-
-**Why it happens:**
-- Developers assume `is_user_logged_in()` is sufficient security
-- Don't realize nonce validation is NOT automatic for custom endpoints
-- Confusion about when `rest_cookie_check_errors()` runs
-- REST API docs say "nonce is validated" but only for cookie auth
-
+### Pitfall 8: Compound Infixes Not Handled - "van de", "van der"
+**What goes wrong:** Sportlink sends `infix='van de'`, database field stores it correctly, but UI assumes single-word infix. Display logic splits on space: Shows "van" in infix field, "de Boer" as last name.
+**Why it happens:** Developers assume infix is single word (common in examples: "van", "de", "het").
 **Consequences:**
-- CSRF vulnerabilities allowing actions on behalf of logged-in users
-- Session hijacking via XSS + CSRF
-- Security audit failures
-- Compliance violations
-
+- Data corruption in display layer (not storage)
+- "van de Boer" becomes "van" + "de Boer"
 **Prevention:**
-
-1. **Use existing permission callback from STADION_REST_API:**
-   ```php
-   register_rest_route('stadion/v1', '/people-filtered', [
-       'methods' => 'GET',
-       'callback' => [$this, 'get_people_filtered'],
-       'permission_callback' => [$this, 'check_user_approved'], // From Base class
-   ]);
-   ```
-
-2. **Nonce is validated automatically for cookie auth:**
-   ```php
-   // WordPress handles this in rest_cookie_check_errors()
-   // As long as X-WP-Nonce header is sent (client.js already does this)
-   ```
-
-3. **Don't manually verify nonce unless needed:**
-   ```php
-   // WRONG - unnecessary and can cause issues
-   if (!wp_verify_nonce($_REQUEST['_wpnonce'], 'wp_rest')) {
-       return new WP_Error('invalid_nonce');
-   }
-
-   // CORRECT - WordPress handles it if using cookie auth
-   // Just use proper permission_callback
-   ```
-
-4. **For AJAX (non-REST), verify nonce:**
-   ```php
-   // In admin-ajax.php handlers
-   check_ajax_referer('stadion_action', 'nonce');
-   ```
-
+- **DO NOT parse infix** - treat as opaque string from Sportlink
+- Database: Store as `TEXT` or `VARCHAR(50)`, not `ENUM` of common prefixes
+- Validation: Accept any string containing letters, spaces, apostrophes: `^[a-zA-Z\s']+$`
+- Examples to test: "van de", "van der", "van den", "de l'", "van 't"
 **Detection:**
-- Security audit of all `register_rest_route()` calls
-- Check `permission_callback` isn't `__return_true` for protected endpoints
-- Verify client sends `X-WP-Nonce` header (check network tab)
-- Test with nonce removed from requests
+- Create test person: `infix='van de'`, `last_name='Boer'`
+- Verify UI shows full "van de Boer" correctly
+**Phase impact:** Phase 2 (Database schema) - Ensure field type accommodates multi-word infixes
 
-**Phase impact:** Phase 2 (Server-side filtering) - Verify permission callbacks correct.
+**Common compound infixes (from research):**
+- van de, van der, van den, van het
+- de la, de l', de le
+- van 't, van d'
 
-**References:**
-- [WordPress REST API Authentication](https://developer.wordpress.org/rest-api/using-the-rest-api/authentication/)
-- [Purple Turtle Creative: Why wp_verify_nonce() Fails in REST](https://purpleturtlecreative.com/blog/2022/10/why-wp_verify_nonce-fails-in-wordpress-rest-api-endpoints/)
+**Sources:**
+- [Tussenvoegsel Wikipedia](https://en.wikipedia.org/wiki/Tussenvoegsel)
 
-### Pitfall 8: ACF Repeater Query Complexity
+---
 
-**What goes wrong:** Filtering by work_history sub-fields (team, title, is_current) is extremely slow. ACF stores repeaters serialized, requiring LIKE queries. Each sub-field filter adds more complexity.
-
-**Why it happens:**
-- ACF repeater structure: `work_history_0_team`, `work_history_1_team`, etc.
-- Can't query "is_current = true" without checking all indices
-- Need to use `meta_key LIKE 'work_history_%_is_current'`
-- Multiple sub-field filters require multiple LIKEs
-
+### Pitfall 9: REST API Backward Compatibility - Existing Consumers Break
+**What goes wrong:** External system (e.g., Sportlink sync script) expects response: `{first_name, last_name}`. After update, response includes `infix` field. Consumer's parser breaks: "Unexpected field 'infix'".
+**Why it happens:** Adding fields to existing API responses without versioning.
 **Consequences:**
-- "Filter by current team" feature unusable
-- Timeouts on queries with repeater filters
-- Database CPU spikes
-- Can't implement advanced work history search
-
+- Sportlink sync stops working
+- Other integrations fail silently
+- Rollback pressure from production issues
 **Prevention:**
-
-1. **Denormalize current team to separate field:**
-   ```php
-   // On work_history save
-   add_action('acf/save_post', function($post_id) {
-       if (get_post_type($post_id) !== 'person') return;
-
-       $work_history = get_field('work_history', $post_id);
-       $current_team = null;
-
-       foreach ($work_history as $job) {
-           if ($job['is_current'] && $job['team']) {
-               $current_team = $job['team'];
-               break;
-           }
-       }
-
-       update_post_meta($post_id, '_current_team_id', $current_team);
-   });
-   ```
-
-2. **Query denormalized field instead:**
-   ```php
-   // Fast query
-   $query = new WP_Query([
-       'post_type' => 'person',
-       'meta_query' => [
-           [
-               'key' => '_current_team_id',
-               'value' => $team_id,
-               'compare' => '='
-           ]
-       ]
-   ]);
-   ```
-
-3. **If must query repeater, use two-step approach:**
-   ```php
-   // Step 1: Get all people with work_history
-   $people = get_posts(['post_type' => 'person', 'fields' => 'ids']);
-
-   // Step 2: Filter in PHP
-   $filtered = array_filter($people, function($person_id) use ($team_id) {
-       $work_history = get_field('work_history', $person_id);
-       foreach ($work_history as $job) {
-           if ($job['is_current'] && $job['team'] == $team_id) {
-               return true;
-           }
-       }
-       return false;
-   });
-   ```
-
-4. **Cache results aggressively:**
-   ```php
-   $cache_key = "people_current_team_{$team_id}";
-   $cached = wp_cache_get($cache_key, 'stadion');
-   if ($cached !== false) return $cached;
-
-   // ... expensive query ...
-
-   wp_cache_set($cache_key, $results, 'stadion', 300); // 5 min
-   ```
-
+- Check if REST API is consumed externally (ask: "Does Sportlink API use our REST endpoints?")
+- If YES: Add `infix` field but maintain backward compatibility
+  - Existing `/wp/v2/people` endpoint: Add `infix` to `acf` object (ACF already handles this automatically)
+  - New field appears in `.acf.infix`, doesn't break top-level structure
+- Document: API changelog noting new field
+- Notify: Email Sportlink team about new field availability
 **Detection:**
-- Profile queries with repeater LIKE conditions
-- Check for queries taking >1 second
-- Monitor `wp_postmeta` table scans in slow query log
+- Review API logs: Are there external consumers? (`wp-json/wp/v2/people` requests from non-WordPress IPs)
+- Test: Call endpoint before/after change, verify response structure compatibility
+**Phase impact:** Phase 9 (API documentation) - Must complete before deployment if external consumers exist
 
-**Phase impact:** Phase 3 (Advanced filtering) - Must denormalize before implementing team filters.
+**Current API structure:** WordPress REST API + ACF auto-includes custom fields in `.acf` object
 
-**References:**
-- [ACF Support: Querying Repeater Subfields](https://support.advancedcustomfields.com/forums/topic/querying-the-database-for-serialized-repeater-sub-field-values/)
+---
 
-### Pitfall 9: Infinite Scroll Doesn't Refetch All Pages on Invalidation
-
-**What goes wrong:** User scrolls to page 5, creates a person, returns to list. Only page 1 is refetched. Pages 2-5 show old data. New person doesn't appear until user scrolls to page 1 and refreshes.
-
-**Why it happens:**
-- `queryClient.invalidateQueries()` only refetches the first page of infinite queries
-- Pages 2+ remain in cache but marked stale
-- Refetching all pages would be slow (5+ API requests)
-- TanStack Query's design choice for performance
-
+### Pitfall 10: Bulk Migration Regenerates All 1400 Titles - Performance/Locking
+**What goes wrong:** Migration script loops through 1400 people, calls `wp_update_post()` for each. Takes 10+ minutes, locks database, users see errors.
+**Why it happens:** Synchronous bulk updates without batching or background processing.
 **Consequences:**
-- Confusing user experience (new data doesn't appear)
-- Users must "pull to refresh" or clear cache manually
-- Data consistency issues across pages
-- Support requests
-
+- Production downtime during migration
+- Users see "503 Service Unavailable"
+- Database locks cause failed requests
 **Prevention:**
-
-1. **Reset query instead of invalidate on mutations:**
-   ```javascript
-   // WRONG - only refetches page 1
-   queryClient.invalidateQueries({ queryKey: ['people'] });
-
-   // CORRECT - clears all pages, starts fresh
-   queryClient.resetQueries({ queryKey: ['people'] });
-   ```
-
-2. **Optimistically insert new items into page 1:**
-   ```javascript
-   onSuccess: (newPerson) => {
-       queryClient.setQueryData(['people', filters], (old) => {
-           if (!old) return old;
-
-           return {
-               ...old,
-               pages: [
-                   {
-                       data: [newPerson, ...old.pages[0].data],
-                       hasMore: old.pages[0].hasMore
-                   },
-                   ...old.pages.slice(1)
-               ]
-           };
-       });
-   }
-   ```
-
-3. **Use maxPages to limit cached pages:**
-   ```javascript
-   const { data } = useInfiniteQuery({
-       queryKey: ['people', filters],
-       queryFn: fetchPeople,
-       maxPages: 3, // Only keep 3 pages in cache
-       getNextPageParam: (lastPage) => lastPage.nextCursor,
-   });
-   ```
-
-4. **Show "data may be stale" warning on deep pages:**
-   ```javascript
-   {data.pages.length > 3 && (
-       <div className="bg-yellow-50 p-2 text-sm">
-           Data may be outdated. <button onClick={refetch}>Refresh</button>
-       </div>
-   )}
-   ```
-
+- Use WP-Cron for async processing (like existing `stadion_async_calendar_rematch`)
+- Batch: Process 50 people per cron run
+- Store progress: `update_option('infix_migration_progress', $completed_count)`
+- UI indicator: "Migration in progress: 347/1400 complete"
+- Run migration in maintenance window OR non-blocking background
 **Detection:**
-- Test: Scroll to page 3 → Create person → Check if person appears
-- Monitor cache size in React DevTools
-- Check refetch behavior in network tab
+- Before migration: `SELECT COUNT(*) FROM wp_posts WHERE post_type='person'` - verify count
+- Monitor: WP-Cron logs for completion
+**Phase impact:** Phase 5 (Data migration) - Critical for production deployment
 
-**Phase impact:** Phase 1 (Infinite scroll) - Must use resetQueries pattern.
+**Existing async pattern:** `includes/class-auto-title.php:498-518` (schedule_calendar_rematch)
 
-**References:**
-- [TanStack Query Discussion #3576](https://github.com/TanStack/query/discussions/3576) - refetchOnMount with infinite queries
-- [TanStack Query Discussion #7569](https://github.com/TanStack/query/discussions/7569) - Only last page refetches on invalidation
+---
 
 ## Minor Pitfalls
 
 Mistakes that cause annoyance but are fixable.
 
-### Pitfall 10: Column Preferences Not Synced Between Devices
-
-**What goes wrong:** User configures visible columns on desktop, switches to mobile, sees default columns. Configures differently on mobile, returns to desktop, loses original settings.
-
-**Why it happens:**
-- Column preferences stored in user_meta (server-side)
-- React state initialized from user_meta on mount
-- Two browser tabs/devices have separate React state
-- No real-time sync between sessions
-
+### Pitfall 11: Empty Infix Displays as "null" String in UI
+**What goes wrong:** Database: `infix=NULL`. React renders: "John null Dijk". Reason: JavaScript null coercion to string.
+**Why it happens:** Template literal without null check: ``${first_name} ${infix} ${last_name}``
 **Consequences:**
-- User frustration reconfiguring repeatedly
-- Inconsistent experience across devices
-- Support questions
-
+- Ugly display: "John null Dijk"
+- Users report: "Why does my name say 'null'?"
 **Prevention:**
+```javascript
+// WRONG
+const fullName = `${first_name} ${infix} ${last_name}`;
 
-1. **Save to server immediately on change:**
-   ```javascript
-   const saveColumnPrefs = useMutation({
-       mutationFn: (columns) =>
-           prmApi.patch('/user/column-preferences', { columns }),
-       onSuccess: () => {
-           // Also update local cache
-           queryClient.setQueryData(['user', 'preferences'], (old) => ({
-               ...old,
-               columns
-           }));
-       }
-   });
-
-   // Save on every change, not just on unmount
-   useEffect(() => {
-       if (visibleColumns !== initialColumns) {
-           saveColumnPrefs.mutate(visibleColumns);
-       }
-   }, [visibleColumns]);
-   ```
-
-2. **Refetch preferences on window focus:**
-   ```javascript
-   useQuery({
-       queryKey: ['user', 'preferences'],
-       queryFn: fetchUserPreferences,
-       refetchOnWindowFocus: true, // Sync when switching tabs
-   });
-   ```
-
-3. **Show sync status indicator:**
-   ```javascript
-   {saveColumnPrefs.isLoading && <span>Syncing...</span>}
-   {saveColumnPrefs.isError && <span>Failed to save</span>}
-   ```
-
+// CORRECT
+const fullName = [first_name, infix, last_name]
+  .filter(Boolean)
+  .join(' ');
+```
 **Detection:**
-- Test with two browser tabs open
-- Change preferences in tab 1, reload tab 2
-- Check if preferences persist
-
-**Phase impact:** Phase 4 (Column preferences) - Must implement immediate save.
-
-### Pitfall 11: Sort Direction Indicator Wrong After Server-Side Sort
-
-**What goes wrong:** User clicks "First Name" column header to sort ascending. UI shows ↑ arrow but results are actually descending. Clicking again doesn't change order.
-
-**Why it happens:**
-- Client-side state (`sortDirection`) doesn't match server response
-- Server returns data in wrong order but doesn't return sort metadata
-- No validation that server respected sort parameters
-
-**Consequences:**
-- Confusing UI (arrow points wrong direction)
-- Users think sorting is broken
-- Multiple clicks trying to fix it
-
-**Prevention:**
-
-1. **Server returns sort metadata in response:**
-   ```php
-   return [
-       'data' => $people,
-       'meta' => [
-           'sort_by' => $sort_by,
-           'sort_direction' => $sort_direction,
-           'page' => $page,
-           'total' => $total
-       ]
-   ];
-   ```
-
-2. **Client uses server metadata as source of truth:**
-   ```javascript
-   const { data } = useInfiniteQuery({
-       queryKey: ['people', filters, sortBy, sortDirection],
-       // ...
-   });
-
-   // Use server's actual sort state
-   const actualSortBy = data?.pages[0]?.meta?.sort_by || 'first_name';
-   const actualDirection = data?.pages[0]?.meta?.sort_direction || 'asc';
-   ```
-
-3. **Validate sort parameters server-side:**
-   ```php
-   $allowed_sort_fields = ['first_name', 'last_name', 'date_modified'];
-   if (!in_array($sort_by, $allowed_sort_fields)) {
-       $sort_by = 'first_name'; // Fallback to default
-   }
-   ```
-
-**Detection:**
-- Click column headers and verify sort order
-- Compare UI indicator with actual data order
-
-**Phase impact:** Phase 2 (Server-side filtering) - Include sort metadata in response.
-
-### Pitfall 12: Empty State Not Shown When All Filtered Out
-
-**What goes wrong:** User filters by "Team: X" with no results. Screen shows infinite loading spinner, no "No results" message.
-
-**Why it happens:**
-- Empty response `{ data: [], hasMore: false }` treated as loading state
-- No distinction between "loading first page" and "no results"
-- `isLoading` stays true even after empty response
-
-**Consequences:**
-- User doesn't know if query failed or has no results
-- Confusion whether to wait or change filters
-
-**Prevention:**
-
-1. **Check for empty data after loading:**
-   ```javascript
-   const isEmpty = !isLoading && data?.pages[0]?.data.length === 0;
-
-   if (isEmpty) {
-       return (
-           <EmptyState
-               title="No people found"
-               description="Try adjusting your filters"
-           />
-       );
-   }
-   ```
-
-2. **Show count in filter UI:**
-   ```javascript
-   <FilterPanel
-       filters={filters}
-       resultCount={data?.pages[0]?.meta?.total || 0}
-   />
-   ```
-
-**Detection:**
-- Test filters that return zero results
-- Check if empty state appears
-
-**Phase impact:** Phase 2 (Filters) - Add empty state component.
-
-## Phase-Specific Warnings
-
-| Phase | Likely Pitfall | Mitigation |
-|-------|---------------|------------|
-| **Phase 1: Infinite Scroll** | Pitfall 4 (Cache invalidation), Pitfall 9 (Refetching pages) | Use `resetQueries` on mutations, implement `maxPages`, test with scroll to page 3+ |
-| **Phase 2: Server-Side Filtering** | Pitfall 1 (Access control bypass), Pitfall 2 (SQL injection), Pitfall 6 (Memory leaks), Pitfall 7 (Nonce validation) | Audit all custom queries, use `$wpdb->prepare()`, enforce pagination, verify permission callbacks |
-| **Phase 3: Advanced Filtering** | Pitfall 3 (JOIN performance), Pitfall 8 (ACF repeater complexity) | Implement STRAIGHT_JOIN, denormalize current team, add caching, limit JOINs to 3-4 |
-| **Phase 4: Column Preferences** | Pitfall 10 (Sync between devices), Pitfall 11 (Sort indicator) | Save immediately to server, refetch on focus, include sort metadata in response |
-
-## Testing Checklist
-
-Before deploying server-side filtering:
-
-- [ ] Test with unapproved user account (should see nothing)
-- [ ] Test with 10,000+ people records (performance acceptable?)
-- [ ] Test SQL injection payloads in filter params
-- [ ] Test rapid filter changes (race conditions?)
-- [ ] Test infinite scroll to page 5+ then create person (appears in list?)
-- [ ] Test with two browser tabs (preferences sync?)
-- [ ] Test memory usage during peak load
-- [ ] Review all `$wpdb` queries for `prepare()` usage
-- [ ] Verify access control in custom queries
-- [ ] Check EXPLAIN output for >3 JOINs
-
-## Additional Resources
-
-### SQL Injection & Security
-- [Patchstack SQL Injection Guide](https://patchstack.com/articles/sql-injection/)
-- [WordPress REST API Security](https://developer.wordpress.org/rest-api/extending-the-rest-api/adding-custom-endpoints/)
-- [CVE-2026-23550 Case Study](https://thehackernews.com/2026/01/critical-wordpress-modular-ds-plugin.html)
-
-### Performance
-- [ACF Query Performance Best Practices](https://www.advancedcustomfields.com/blog/wordpress-post-meta-query/)
-- [WordPress Core: Complex Meta Queries](https://core.trac.wordpress.org/ticket/20134)
-- [wpdb Memory Issues](https://core.trac.wordpress.org/ticket/12257)
-
-### TanStack Query
-- [Query Invalidation Guide](https://tanstack.com/query/latest/docs/framework/react/guides/query-invalidation)
-- [Infinite Queries Documentation](https://tanstack.com/query/v4/docs/framework/react/guides/infinite-queries)
-- [Cache Invalidation Patterns](https://dev.to/ignasave/we-kept-breaking-cache-invalidation-in-tanstack-query-so-we-stopped-managing-it-manually-47k2)
+- Create person without infix
+- Check UI: Should show "John Dijk", not "John null Dijk"
+**Phase impact:** Phase 8 (Frontend display) - Easy fix, low priority
 
 ---
 
-**Next Steps:**
+### Pitfall 12: Search Highlighting Breaks on Infix Match
+**What goes wrong:** User searches "van", 100 results highlight "van" in infix field. Search result shows "John **van** Dijk" (bold), but also matches "E**van** Smith" (middle of first name).
+**Why it happens:** Simple substring highlighting without field-aware matching.
+**Consequences:**
+- False positive highlights confuse users
+- "Why is 'Evan' highlighted when I searched for 'van'?"
+**Prevention:**
+- Field-aware search: Match "van" specifically in infix field OR as word boundary
+- Regex: `\bvan\b` (word boundary)
+- Display: Show field label in results: "John **van** Dijk (infix match)"
+**Detection:**
+- Search "van", verify only full-word matches highlighted
+**Phase impact:** Phase 4 (Search updates) - Polish step, optional
 
-1. **Phase 2 Security Audit:** Review all planned custom queries for access control and SQL injection vulnerabilities BEFORE implementation
-2. **Performance Baseline:** Measure current query times with 10K records to set performance targets
-3. **Cache Strategy Document:** Define when to invalidate vs. reset queries for infinite scroll
-4. **Denormalization Plan:** Identify which ACF fields need to be denormalized for performant filtering
+---
+
+### Pitfall 13: ACF JSON Sync Conflict - Local vs Production Drift
+**What goes wrong:** Developer adds `infix` field to ACF locally, generates `acf-json/group_person_fields.json`. Production has old version. Git conflict on deploy.
+**Why it happens:** ACF JSON files change on both local and production when admins edit fields.
+**Consequences:**
+- Git merge conflict
+- Production field group out of sync with codebase
+- "I deployed but infix field doesn't show up"
+**Prevention:**
+- **Before migration:** Disable field editing in production (`define('ACF_DISABLE_LOCAL_SYNC', true)` for non-dev environments)
+- Document: "ACF field changes must happen in dev, never prod"
+- Deploy process: Sync ACF JSON first, then run migration
+**Detection:**
+- Compare ACF JSON checksums: `md5sum acf-json/group_person_fields.json` on local vs prod
+**Phase impact:** Phase 1 (ACF field addition) - Must handle before any coding
+
+**Current ACF JSON location:** `acf-json/group_person_fields.json`
+
+---
+
+### Pitfall 14: Infix Field Not Visible in WordPress Admin UI
+**What goes wrong:** Field added to ACF schema, visible in REST API, but doesn't appear in WP Admin person edit screen.
+**Why it happens:** ACF field group has conditional logic hiding it, or `show_in_rest=0` but no admin display config.
+**Consequences:**
+- Developers see it in API, but clients can't verify data in admin
+- Support: "Where do I see the infix?"
+**Prevention:**
+- Verify ACF field group settings:
+  - Location: `post_type == person` ✓
+  - Field placement: Within existing "Basic Information" tab
+  - `show_in_rest: 1` ✓
+  - `readonly: 1` (read-only, synced from Sportlink)
+- Test: Edit person in WP Admin, verify infix field visible but grayed out
+**Detection:**
+- Log into WP Admin, edit any person, verify field appears
+**Phase impact:** Phase 1 (ACF field addition) - Must verify immediately after field creation
+
+---
+
+## Phase-Specific Warnings
+
+| Phase Topic | Likely Pitfall | Mitigation |
+|-------------|---------------|------------|
+| Phase 1: ACF Field Addition | Field not visible in admin UI (Pitfall 14) | Verify ACF field group settings, test immediately |
+| Phase 2: Auto-title Logic | Double spaces when infix empty (Pitfall 2) | Use array_filter + implode, never raw concatenation |
+| Phase 3: Backend Sorting | Sorting by infix+last_name (Pitfall 1) | Keep last_name as primary sort key, document Dutch convention |
+| Phase 4: Search Logic | Search fragmentation (Pitfall 3) | Concatenate fields in WHERE clause or use denormalized search field |
+| Phase 5: Data Migration | Performance/locking during bulk update (Pitfall 10) | Use WP-Cron async processing, batch 50 at a time |
+| Phase 6: vCard Export | Incorrect N field mapping (Pitfall 4) | Combine infix+last_name in FamilyName, document limitation |
+| Phase 7: Google Sync | Infix lost on roundtrip (Pitfall 5) | Store original Google name, prevent overwrites from Google |
+| Phase 8: Frontend Display | Display inconsistency across components (Pitfall 6) | Audit all 7+ components, centralize name formatting utility |
+| Phase 9: API Documentation | Backward compatibility break (Pitfall 9) | Verify no external consumers, document new field in changelog |
+
+---
+
+## Sources
+
+Dutch naming conventions and technical implementation references:
+
+- [Tussenvoegsel - Wikipedia](https://en.wikipedia.org/wiki/Tussenvoegsel)
+- [Prefixes in surnames](https://www.dutchgenealogy.nl/prefixes-in-surnames/)
+- [Dutch spelling and alphabetic ordering](https://www.van-diemen-de-jel.nl/Genea/Spelling.html)
+- [How to capitalize Dutch names with prefixes](https://www.dutchgenealogy.nl/how-to-capitalize-dutch-names-with-prefixes/)
+- [HubSpot Community - Dutch surnames issue](https://community.hubspot.com/t5/CRM/Searching-for-a-solution-for-Dutch-surnames/m-p/352499)
+- [Salesforce Ideas - Tussenvoegsel support](https://ideas.salesforce.com/s/idea/a0B8W00000GdhfWUAR/name-fields-to-support-dutch-conventions-tussenvoegsel)
+- [Apple Community - Infix Address Book](https://discussions.apple.com/thread/2743303?tstart=0)
+- [Notes on the vCard format](https://www.w3.org/2002/12/cal/vcard-notes.html)
+- [OpenEMR Issue - Tussenvoegsel support](https://github.com/openemr/openemr/issues/2595)
+
+---
+
+## Confidence Assessment
+
+**Overall confidence:** HIGH
+
+| Area | Confidence | Reason |
+|------|------------|--------|
+| Sorting | HIGH | Multiple sources confirm Dutch convention, clear code location in class-rest-people.php |
+| Auto-title | HIGH | Existing code reviewed, pattern clear (line 213), common string concatenation mistake |
+| Search | MEDIUM | Logic location inferred, needs code verification in class-rest-api.php |
+| vCard mapping | HIGH | RFC 2426 reviewed, standard confirmed, existing code location identified |
+| Google Contacts | HIGH | Existing export code reviewed (lines 655-673), API limitation confirmed |
+| Display logic | HIGH | All React components identified via grep, centralization need clear |
+| Capitalization | MEDIUM | Dutch convention confirmed by sources, implementation detail optional |
+| Compound infixes | HIGH | Wikipedia examples documented, validation pattern clear |
+| API compatibility | MEDIUM | WordPress REST + ACF pattern understood, external consumer status unknown |
+| Migration performance | HIGH | Existing async pattern identified (class-auto-title.php:498-518) |
+
+---
+
+## Test Plan Recommendations
+
+Based on pitfall analysis, critical tests before UAT:
+
+**Unit Tests (Backend):**
+1. `test_auto_title_with_infix()` - Verify "John van Dijk" format
+2. `test_auto_title_without_infix()` - Verify no double spaces
+3. `test_auto_title_with_compound_infix()` - Verify "van de Boer" works
+4. `test_sorting_ignores_infix()` - Verify "van Dijk" sorts under D
+5. `test_search_with_infix()` - Verify "van Dijk" finds person
+
+**Integration Tests (API):**
+1. POST `/wp/v2/people` with infix - verify stored correctly
+2. GET `/wp/v2/people` - verify infix appears in `.acf.infix`
+3. GET `/wp/v2/people?orderby=last_name` - verify sorting correct
+4. GET `/stadion/v1/search?q=van+Dijk` - verify search works
+
+**Frontend Tests (E2E):**
+1. PeopleList displays "John van Dijk" consistently
+2. PersonDetail shows full name with infix
+3. Search "van Dijk" returns correct results
+4. No "null" strings in UI for persons without infix
+5. No double spaces in any name displays
+
+**vCard/Google Tests:**
+1. Export person with infix to vCard - verify N field format
+2. Import vCard to iOS Contacts - verify name displays correctly
+3. Export to Google Contacts - verify familyName includes infix
+4. Edit in Google, re-import - verify infix unchanged (read-only)
+
+---
+
+## Open Questions for Validation
+
+1. **Does Sportlink API consume our REST endpoints?** (Affects Pitfall 9 - API backward compatibility)
+2. **What percentage of existing records have tussenvoegsel?** (Affects migration priority)
+3. **Is Google Contacts sync actively used?** (Affects Pitfall 5 priority)
+4. **Are there other external API consumers?** (Check logs for `/wp-json/wp/v2/people` requests)
+5. **Should infix be editable in future, or always read-only from Sportlink?** (Affects long-term architecture)

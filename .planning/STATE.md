@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Personal CRM with team collaboration while maintaining relationship-focused experience
-**Current focus:** Planning next milestone
+**Current focus:** v16.0 Infix (Tussenvoegsel) shipped
 
 ## Current Position
 
 Phase: Milestone complete
 Plan: N/A
-Status: v15.0 Personal Tasks shipped
-Last activity: 2026-02-04 — Completed v15.0 milestone
+Status: v16.0 Infix shipped
+Last activity: 2026-02-05 — Completed v16.0 milestone
 
 Progress: Ready for next milestone
 

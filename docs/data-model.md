@@ -22,6 +22,7 @@ Represents individual contacts in the CRM.
 | Field | Key | Type | Description |
 |-------|-----|------|-------------|
 | First Name | `first_name` | text | Required. Person's first name |
+| Infix | `infix` | text | Tussenvoegsel (e.g., van, de, van der). Read-only, synced from Sportlink |
 | Last Name | `last_name` | text | Person's last name |
 | Nickname | `nickname` | text | Informal name or alias |
 | Gender | `gender` | select | Options: male, female, non_binary, other, prefer_not_to_say |

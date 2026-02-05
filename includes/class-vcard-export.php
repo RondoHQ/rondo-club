@@ -244,14 +244,15 @@ class VCard {
 
 		// Name fields
 		$first_name = $acf['first_name'] ?? '';
+		$infix      = $acf['infix'] ?? '';
 		$last_name  = $acf['last_name'] ?? '';
-		$full_name  = $person->post_title ?: trim( $first_name . ' ' . $last_name ) ?: 'Unknown';
+		$full_name  = $person->post_title ?: implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ) ?: 'Unknown';
 
 		// FN (Full Name) - required
 		$lines[] = 'FN:' . self::escape_value( $full_name );
 
 		// N (Name) - Family;Given;Additional;Prefix;Suffix
-		$lines[] = 'N:' . self::escape_value( $last_name ) . ';' . self::escape_value( $first_name ) . ';;;';
+		$lines[] = 'N:' . self::escape_value( $last_name ) . ';' . self::escape_value( $first_name ) . ';' . self::escape_value( $infix ) . ';;';
 
 		// Nickname
 		if ( ! empty( $acf['nickname'] ) ) {
@@ -425,14 +426,15 @@ class VCard {
 
 		// Name fields
 		$first_name = $data['first_name'] ?? '';
+		$infix      = $data['infix'] ?? '';
 		$last_name  = $data['last_name'] ?? '';
-		$full_name  = $data['full_name'] ?? trim( $first_name . ' ' . $last_name ) ?: 'Unknown';
+		$full_name  = $data['full_name'] ?? implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ) ?: 'Unknown';
 
 		// FN (Full Name) - required
 		$lines[] = 'FN:' . self::escape_value( $full_name );
 
-		// N (Name)
-		$lines[] = 'N:' . self::escape_value( $last_name ) . ';' . self::escape_value( $first_name ) . ';;;';
+		// N (Name) - Family;Given;Additional;Prefix;Suffix
+		$lines[] = 'N:' . self::escape_value( $last_name ) . ';' . self::escape_value( $first_name ) . ';' . self::escape_value( $infix ) . ';;';
 
 		// Nickname
 		if ( ! empty( $data['nickname'] ) ) {
@@ -589,6 +591,7 @@ class VCard {
 	private static function vobject_to_array( $vcard ) {
 		$data = [
 			'first_name'   => '',
+			'infix'        => '',
 			'last_name'    => '',
 			'full_name'    => '',
 			'nickname'     => '',
@@ -614,6 +617,7 @@ class VCard {
 			$n                  = $vcard->N->getParts();
 			$data['last_name']  = $n[0] ?? '';
 			$data['first_name'] = $n[1] ?? '';
+			$data['infix']      = $n[2] ?? '';
 		}
 
 		// Full name
@@ -891,6 +895,7 @@ class VCard {
 	private static function manual_parse( $vcard_data ) {
 		$data = [
 			'first_name'   => '',
+			'infix'        => '',
 			'last_name'    => '',
 			'full_name'    => '',
 			'nickname'     => '',
@@ -932,6 +937,7 @@ class VCard {
 					$parts              = explode( ';', $value );
 					$data['last_name']  = self::unescape_value( $parts[0] ?? '' );
 					$data['first_name'] = self::unescape_value( $parts[1] ?? '' );
+					$data['infix']      = self::unescape_value( $parts[2] ?? '' );
 					break;
 
 				case 'NICKNAME':

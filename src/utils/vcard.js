@@ -108,14 +108,15 @@ export function generateVCard(person, options = {}) {
   
   // Name fields
   const firstName = acf.first_name || '';
+  const infix = acf.infix || '';
   const lastName = acf.last_name || '';
-  const fullName = person.name || `${firstName} ${lastName}`.trim() || 'Unknown';
-  
+  const fullName = person.name || [firstName, infix, lastName].filter(Boolean).join(' ') || 'Unknown';
+
   // FN (Full Name) - required
   lines.push(`FN:${escapeVCardValue(fullName)}`);
-  
+
   // N (Name) - Family;Given;Additional;Prefix;Suffix
-  lines.push(`N:${escapeVCardValue(lastName)};${escapeVCardValue(firstName)};;;`);
+  lines.push(`N:${escapeVCardValue(lastName)};${escapeVCardValue(firstName)};${escapeVCardValue(infix)};;`);
   
   // Nickname
   if (acf.nickname) {

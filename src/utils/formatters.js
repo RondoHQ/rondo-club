@@ -102,6 +102,19 @@ export function getPersonName(person) {
 }
 
 /**
+ * Format a person's full name from first_name, infix, and last_name.
+ * Uses array_filter + join pattern to avoid double spaces when infix is empty.
+ *
+ * @param {string} firstName
+ * @param {string} infix
+ * @param {string} lastName
+ * @returns {string} Formatted full name
+ */
+export function formatPersonName(firstName, infix, lastName) {
+  return [firstName, infix, lastName].filter(Boolean).join(' ');
+}
+
+/**
  * Get the first initial of a person's name for avatars
  * 
  * @param {Object} person - Person object

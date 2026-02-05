@@ -16,7 +16,18 @@
             "type": "text",
             "required": 1,
             "wrapper": {
-                "width": "50"
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_infix",
+            "label": "Infix",
+            "name": "infix",
+            "type": "text",
+            "instructions": "Tussenvoegsel (e.g., van, de, van der)",
+            "readonly": 1,
+            "wrapper": {
+                "width": "34"
             }
         },
         {
@@ -26,7 +37,7 @@
             "type": "text",
             "required": 0,
             "wrapper": {
-                "width": "50"
+                "width": "33"
             }
         },
         {

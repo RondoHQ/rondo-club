@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml } from '@/utils/formatters';
+import { decodeHtml, formatPersonName } from '@/utils/formatters';
 import { meetingsKeys } from './useMeetings';
 import { trackNoteAdded } from '@/hooks/useEngagementTracking';
 
@@ -37,6 +37,7 @@ function transformPerson(person) {
     id: person.id,
     name: decodedName,
     first_name: person.acf?.first_name || '',
+    infix: person.acf?.infix || '',
     last_name: person.acf?.last_name || '',
     is_deceased: person.is_deceased || false,
     birth_year: person.birth_year || null,
@@ -234,10 +235,11 @@ export function useCreatePerson({ onSuccess } = {}) {
 
       // Build the full payload
       const payload = {
-        title: `${data.first_name} ${data.last_name}`.trim(),
+        title: formatPersonName(data.first_name, data.infix, data.last_name),
         status: 'publish',
         acf: {
           first_name: data.first_name,
+          infix: data.infix || '',
           last_name: data.last_name,
           nickname: data.nickname,
           gender: data.gender || null,
@@ -354,6 +356,7 @@ export function useAddEmailToPerson() {
       await wpApi.updatePerson(personId, {
         acf: {
           first_name: person.acf?.first_name || '',
+          infix: person.acf?.infix || '',
           last_name: person.acf?.last_name || '',
           contact_info: [...currentContacts, newContact],
         },

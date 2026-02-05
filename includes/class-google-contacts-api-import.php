@@ -351,6 +351,7 @@ class GoogleContactsAPI {
 			$names      = $person->getNames() ?: [];
 			$name       = $names[0] ?? null;
 			$first_name = $name ? $name->getGivenName() : '';
+			$infix      = $name ? ( $name->getMiddleName() ?: '' ) : '';
 			$last_name  = $name ? $name->getFamilyName() : '';
 
 			// Fallback to display name if given/family empty
@@ -367,7 +368,7 @@ class GoogleContactsAPI {
 				[
 					'post_type'   => 'person',
 					'post_status' => 'publish',
-					'post_title'  => trim( $first_name . ' ' . $last_name ),
+					'post_title'  => implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ),
 					'post_author' => $this->user_id,
 				]
 			);
@@ -513,9 +514,11 @@ class GoogleContactsAPI {
 		}
 
 		$existing_first = get_field( 'first_name', $post_id );
+		$existing_infix = get_field( 'infix', $post_id );
 		$existing_last  = get_field( 'last_name', $post_id );
 
 		$given_name  = $name->getGivenName();
+		$middle_name = $name->getMiddleName() ?: '';
 		$family_name = $name->getFamilyName();
 
 		// Fallback to display name if given/family empty
@@ -530,6 +533,9 @@ class GoogleContactsAPI {
 
 		if ( empty( $existing_first ) && $given_name ) {
 			update_field( 'first_name', $given_name, $post_id );
+		}
+		if ( empty( $existing_infix ) && $middle_name ) {
+			update_field( 'infix', $middle_name, $post_id );
 		}
 		if ( empty( $existing_last ) && $family_name ) {
 			update_field( 'last_name', $family_name, $post_id );
@@ -1099,6 +1105,7 @@ class GoogleContactsAPI {
 		$name  = $names[0] ?? null;
 		if ( $name ) {
 			$values['first_name'] = $name->getGivenName() ?: '';
+			$values['infix']      = $name->getMiddleName() ?: '';
 			$values['last_name']  = $name->getFamilyName() ?: '';
 		}
 

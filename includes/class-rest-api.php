@@ -1755,7 +1755,32 @@ class Api extends Base {
 			];
 		}
 
-		// Query 2: Last name matches (lower priority)
+		// Query 2: Infix matches (score: 50)
+		$infix_matches = get_posts(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => 20,
+				'post_status'    => 'publish',
+				'meta_query'     => [
+					[
+						'key'     => 'infix',
+						'value'   => $query,
+						'compare' => 'LIKE',
+					],
+				],
+			]
+		);
+
+		foreach ( $infix_matches as $person ) {
+			if ( ! isset( $people_results[ $person->ID ] ) ) {
+				$people_results[ $person->ID ] = [
+					'person' => $person,
+					'score'  => 50,
+				];
+			}
+		}
+
+		// Query 3: Last name matches (lower priority)
 		$last_name_matches = get_posts(
 			[
 				'post_type'      => 'person',
@@ -1780,7 +1805,7 @@ class Api extends Base {
 			}
 		}
 
-		// Query 3: General WordPress search (catches title, content)
+		// Query 4: General WordPress search (catches title, content)
 		$general_matches = get_posts(
 			[
 				'post_type'      => 'person',
@@ -1799,7 +1824,7 @@ class Api extends Base {
 			}
 		}
 
-		// Query 4: Custom field matches (score: 30)
+		// Query 5: Custom field matches (score: 30)
 		$custom_field_names = $this->get_searchable_custom_fields( 'person' );
 		if ( ! empty( $custom_field_names ) ) {
 			$custom_meta_query = $this->build_custom_field_meta_query( $custom_field_names, $query );
