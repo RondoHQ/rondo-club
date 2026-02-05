@@ -305,6 +305,10 @@ export const prmApi = {
   getMembershipFeeSettings: () => api.get('/stadion/v1/membership-fees/settings'),
   updateMembershipFeeSettings: (settings) => api.post('/stadion/v1/membership-fees/settings', settings),
 
+  // Club configuration (admin only)
+  getClubConfig: () => api.get('/stadion/v1/config'),
+  updateClubConfig: (data) => api.post('/stadion/v1/config', data),
+
   // Membership fees
   getFeeList: (params = {}) => api.get('/stadion/v1/fees', { params }),
   getPersonFee: (personId, params = {}) => api.get(`/stadion/v1/fees/person/${personId}`, { params }),
