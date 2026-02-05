@@ -15,15 +15,15 @@
 
 ### Frontend Settings UI
 
-- [ ] **UI-01**: Club configuration section in Settings (admin-only) with name, color picker, FreeScout URL fields
-- [ ] **UI-02**: Club color appears as first accent color option labeled "Club" in user accent color picker
-- [ ] **UI-03**: Club color falls back to green (#006935) when not configured by admin
+- [x] **UI-01**: Club configuration section in Settings (admin-only) with name, color picker, FreeScout URL fields
+- [x] **UI-02**: Club color appears as first accent color option labeled "Club" in user accent color picker
+- [x] **UI-03**: Club color falls back to green (#006935) when not configured by admin
 
 ### Color System Refactor
 
-- [ ] **CLR-01**: Rename `awc` color key to `club` in tailwind.config.js, useTheme.js, index.css, Settings.jsx
-- [ ] **CLR-02**: Login screen, favicon SVG, and PWA manifest theme-color read default from club config
-- [ ] **CLR-03**: All "AWC" comments removed from source code
+- [x] **CLR-01**: Rename `awc` color key to `club` in tailwind.config.js, useTheme.js, index.css, Settings.jsx
+- [x] **CLR-02**: Login screen, favicon SVG, and PWA manifest theme-color read default from club config
+- [x] **CLR-03**: All "AWC" comments removed from source code
 
 ### Integration Cleanup
 
@@ -53,12 +53,12 @@ None deferred — this milestone is self-contained.
 | CFG-03 | Phase 144 | Complete |
 | CFG-04 | Phase 144 | Complete |
 | CFG-05 | Phase 144 | Complete |
-| UI-01 | Phase 145 | Pending |
-| UI-02 | Phase 145 | Pending |
-| UI-03 | Phase 145 | Pending |
-| CLR-01 | Phase 145 | Pending |
-| CLR-02 | Phase 145 | Pending |
-| CLR-03 | Phase 145 | Pending |
+| UI-01 | Phase 145 | Complete |
+| UI-02 | Phase 145 | Complete |
+| UI-03 | Phase 145 | Complete |
+| CLR-01 | Phase 145 | Complete |
+| CLR-02 | Phase 145 | Complete |
+| CLR-03 | Phase 145 | Complete |
 | INT-01 | Phase 146 | Pending |
 | INT-02 | Phase 146 | Pending |
 | INT-03 | Phase 146 | Pending |

@@ -13,7 +13,7 @@ Transform Stadion from AWC-specific to club-configurable by implementing a backe
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 144: Backend Configuration System** - Club-wide settings stored in WordPress options with REST API
-- [ ] **Phase 145: Frontend & Color Refactor** - Settings UI and awc→club rename throughout codebase
+- [x] **Phase 145: Frontend & Color Refactor** - Settings UI and awc→club rename throughout codebase
 - [ ] **Phase 146: Integration Cleanup** - FreeScout URL configuration and documentation de-AWC
 
 ## Phase Details
@@ -55,8 +55,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 145-01-PLAN.md — AWC-to-club rename across Tailwind, CSS, useTheme, Settings; dynamic club color support
-- [ ] 145-02-PLAN.md — Club configuration section in Settings UI with color picker; dynamic login page styling
+- [x] 145-01-PLAN.md — AWC-to-club rename across Tailwind, CSS, useTheme, Settings; dynamic club color support
+- [x] 145-02-PLAN.md — Club configuration section in Settings UI with color picker; dynamic login page styling
 
 ### Phase 146: Integration Cleanup
 **Goal**: FreeScout integration reads URL from club config and all AWC/svawc.nl-specific references removed from documentation
@@ -83,5 +83,5 @@ Phases execute in numeric order: 144 → 145 → 146
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 144. Backend Configuration System | 1/1 | Complete | 2026-02-05 |
-| 145. Frontend & Color Refactor | 0/2 | Not started | - |
+| 145. Frontend & Color Refactor | 2/2 | Complete | 2026-02-05 |
 | 146. Integration Cleanup | 0/TBD | Not started | - |
