@@ -72,6 +72,7 @@ use Stadion\REST\CustomFields as RESTCustomFields;
 use Stadion\VOG\VOGEmail;
 use Stadion\Fees\MembershipFees;
 use Stadion\Fees\FeeCacheInvalidator;
+use Stadion\Config\ClubConfig;
 
 define( 'STADION_THEME_DIR', get_template_directory() );
 define( 'STADION_THEME_URL', get_template_directory_uri() );
@@ -273,6 +274,11 @@ if ( ! class_exists( 'STADION_VOG_Email' ) ) {
 	class_alias( VOGEmail::class, 'STADION_VOG_Email' );
 }
 
+// Club Config classes
+if ( ! class_exists( 'STADION_Club_Config' ) ) {
+	class_alias( ClubConfig::class, 'STADION_Club_Config' );
+}
+
 /**
  * Check if current request is a CardDAV request
  */
@@ -459,8 +465,10 @@ function stadion_theme_document_title_parts( $title ) {
 	}
 
 	// Set a default title - React will update it when routes change
-	$title['title'] = 'Stadion';
-	$title['site']  = '';
+	$club_config       = new \Stadion\Config\ClubConfig();
+	$club_name         = $club_config->get_club_name();
+	$title['title']    = ! empty( $club_name ) ? $club_name : 'Stadion';
+	$title['site']     = '';
 
 	return $title;
 }
@@ -557,6 +565,10 @@ function stadion_get_js_config() {
 	// Get user's linked person ID (for filtering current user from attendee lists)
 	$linked_person_id = $user_id ? (int) get_user_meta( $user_id, 'stadion_linked_person_id', true ) : null;
 
+	// Club configuration
+	$club_config   = new \Stadion\Config\ClubConfig();
+	$club_settings = $club_config->get_all_settings();
+
 	return [
 		'apiUrl'              => rest_url(),
 		'nonce'               => wp_create_nonce( 'wp_rest' ),
@@ -573,6 +585,9 @@ function stadion_get_js_config() {
 		'version'             => wp_get_theme()->get( 'Version' ),
 		'buildTime'           => $build_time,
 		'currentUserPersonId' => $linked_person_id ?: null,
+		'clubName'            => $club_settings['club_name'],
+		'accentColor'         => $club_settings['accent_color'],
+		'freescoutUrl'        => $club_settings['freescout_url'],
 	];
 }
 

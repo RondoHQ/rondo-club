@@ -697,6 +697,40 @@ class Api extends Base {
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
+
+		// Club configuration (admin write, all-users read)
+		register_rest_route(
+			'stadion/v1',
+			'/config',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_club_config' ],
+					'permission_callback' => [ $this, 'check_user_approved' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_club_config' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'club_name'     => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'accent_color'  => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return empty( $param ) || sanitize_hex_color( $param );
+							},
+						],
+						'freescout_url' => [
+							'required'          => false,
+							'sanitize_callback' => 'esc_url_raw',
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -2599,6 +2633,49 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $membership_fees->get_all_settings() );
+	}
+
+	/**
+	 * Get club configuration settings
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with club configuration settings.
+	 */
+	public function get_club_config( $request ) {
+		$club_config = new \Stadion\Config\ClubConfig();
+		return rest_ensure_response( $club_config->get_all_settings() );
+	}
+
+	/**
+	 * Update club configuration settings
+	 *
+	 * Supports partial updates - only provided fields will be updated.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with updated club configuration settings.
+	 */
+	public function update_club_config( $request ) {
+		$club_config = new \Stadion\Config\ClubConfig();
+
+		// Update club_name if provided
+		$club_name = $request->get_param( 'club_name' );
+		if ( $club_name !== null ) {
+			$club_config->update_club_name( $club_name );
+		}
+
+		// Update accent_color if provided
+		$accent_color = $request->get_param( 'accent_color' );
+		if ( $accent_color !== null ) {
+			$club_config->update_accent_color( $accent_color );
+		}
+
+		// Update freescout_url if provided
+		$freescout_url = $request->get_param( 'freescout_url' );
+		if ( $freescout_url !== null ) {
+			$club_config->update_freescout_url( $freescout_url );
+		}
+
+		return rest_ensure_response( $club_config->get_all_settings() );
 	}
 
 	/**
