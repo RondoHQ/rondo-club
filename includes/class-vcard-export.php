@@ -328,12 +328,6 @@ class VCard {
 						$lines[]     = "X-SOCIALPROFILE;TYPE={$social_type}:" . self::escape_value( $url );
 						break;
 
-					case 'slack':
-						// Use IMPP for instant messaging
-						$slack_url = $contact['contact_value'];
-						$lines[]   = 'IMPP;X-SERVICE-TYPE=Slack:' . self::escape_value( $slack_url );
-						break;
-
 					case 'calendar':
 						$url = $contact['contact_value'];
 						if ( ! preg_match( '/^https?:\/\//i', $url ) ) {
@@ -499,9 +493,6 @@ class VCard {
 						}
 						$social_type = $contact['contact_type'];
 						$lines[]     = "X-SOCIALPROFILE;TYPE={$social_type}:" . self::escape_value( $url );
-						break;
-					case 'slack':
-						$lines[] = 'IMPP;X-SERVICE-TYPE=Slack:' . self::escape_value( $contact['contact_value'] );
 						break;
 				}
 			}
@@ -843,24 +834,6 @@ class VCard {
 			}
 		}
 
-		// IMPP (Instant messaging)
-		if ( isset( $vcard->IMPP ) ) {
-			foreach ( $vcard->IMPP as $impp ) {
-				$value         = (string) $impp;
-				$service_param = $impp['X-SERVICE-TYPE'];
-				$service       = $service_param ? strtolower( (string) $service_param ) : '';
-
-				// Check for Slack
-				if ( $service === 'slack' || strpos( strtolower( $value ), 'slack' ) !== false ) {
-					$data['contact_info'][] = [
-						'contact_type'  => 'slack',
-						'contact_value' => $value,
-						'contact_label' => '',
-					];
-				}
-			}
-		}
-
 		return $data;
 	}
 
@@ -1056,24 +1029,6 @@ class VCard {
 						$data['contact_info'][] = [
 							'contact_type'  => $normalized_type,
 							'contact_value' => $url,
-							'contact_label' => '',
-						];
-					}
-					break;
-
-				case 'IMPP':
-					$impp_value = self::unescape_value( $value );
-					// Check for X-SERVICE-TYPE in property string
-					$service = '';
-					if ( stripos( $property, 'X-SERVICE-TYPE=' ) !== false ) {
-						preg_match( '/X-SERVICE-TYPE=([^;:]+)/i', $property, $matches );
-						$service = strtolower( $matches[1] ?? '' );
-					}
-					// Check for Slack
-					if ( $service === 'slack' || stripos( $impp_value, 'slack' ) !== false ) {
-						$data['contact_info'][] = [
-							'contact_type'  => 'slack',
-							'contact_value' => $impp_value,
 							'contact_label' => '',
 						];
 					}

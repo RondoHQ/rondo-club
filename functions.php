@@ -37,7 +37,6 @@ use Stadion\REST\People;
 use Stadion\REST\Teams;
 use Stadion\REST\Commissies;
 use Stadion\REST\Todos;
-use Stadion\REST\Slack;
 use Stadion\REST\ImportExport;
 use Stadion\REST\Calendar as RESTCalendar;
 use Stadion\REST\GoogleContacts as RESTGoogleContacts;
@@ -50,11 +49,9 @@ use Stadion\Calendar\GoogleProvider;
 use Stadion\Calendar\CalDAVProvider;
 use Stadion\Calendar\GoogleOAuth;
 use Stadion\Notifications\EmailChannel;
-use Stadion\Notifications\SlackChannel;
 use Stadion\Collaboration\CommentTypes;
 use Stadion\Collaboration\MentionNotifications;
 use Stadion\Collaboration\Reminders;
-use Stadion\Import\Monica;
 use Stadion\Import\VCard as VCardImport;
 use Stadion\Import\GoogleContacts;
 use Stadion\Import\GoogleContactsAPI;
@@ -153,9 +150,6 @@ if ( ! class_exists( 'STADION_REST_Commissies' ) ) {
 if ( ! class_exists( 'STADION_REST_Todos' ) ) {
 	class_alias( Todos::class, 'STADION_REST_Todos' );
 }
-if ( ! class_exists( 'STADION_REST_Slack' ) ) {
-	class_alias( Slack::class, 'STADION_REST_Slack' );
-}
 if ( ! class_exists( 'STADION_REST_Import_Export' ) ) {
 	class_alias( ImportExport::class, 'STADION_REST_Import_Export' );
 }
@@ -198,9 +192,6 @@ if ( ! class_exists( 'STADION_Notification_Channel' ) ) {
 if ( ! class_exists( 'STADION_Email_Channel' ) ) {
 	class_alias( EmailChannel::class, 'STADION_Email_Channel' );
 }
-if ( ! class_exists( 'STADION_Slack_Channel' ) ) {
-	class_alias( SlackChannel::class, 'STADION_Slack_Channel' );
-}
 
 // Collaboration classes
 if ( ! class_exists( 'STADION_Comment_Types' ) ) {
@@ -217,9 +208,6 @@ if ( ! class_exists( 'STADION_Reminders' ) ) {
 }
 
 // Import classes
-if ( ! class_exists( 'STADION_Monica_Import' ) ) {
-	class_alias( Monica::class, 'STADION_Monica_Import' );
-}
 if ( ! class_exists( 'STADION_VCard_Import' ) ) {
 	class_alias( VCardImport::class, 'STADION_VCard_Import' );
 }
@@ -368,14 +356,12 @@ function stadion_init() {
 		new Teams();
 		new Commissies();
 		new Todos();
-		new Slack();
 		new ImportExport();
 		new RESTCalendar();
 		new RESTGoogleContacts();
 		new RESTGoogleSheets();
 		new RESTCustomFields();
 		new RESTFeedback();
-		new Monica();
 		new VCardImport();
 		new GoogleContacts();
 	}

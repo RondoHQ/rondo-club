@@ -6,7 +6,7 @@ Add a feedback system to Stadion that allows users to submit bug reports and fea
 
 ## Problem Statement
 
-Currently, there's no built-in mechanism for users to report bugs or request features. Feedback is collected through external channels (email, Slack, etc.), making it difficult to track, prioritize, and manage. A native feedback system would:
+Currently, there's no built-in mechanism for users to report bugs or request features. Feedback is collected through external channels (email, chat, etc.), making it difficult to track, prioritize, and manage. A native feedback system would:
 
 - Centralize all feedback in one place
 - Enable programmatic access for integration with project management tools

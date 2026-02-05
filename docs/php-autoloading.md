@@ -67,7 +67,6 @@ Loaded for: Admin, REST API, Cron
 These classes provide REST API endpoints:
 
 - **STADION_REST_API** - Custom `/stadion/v1/` endpoints
-- **STADION_Monica_Import** - Monica CRM import
 - **STADION_VCard_Import** - vCard import
 - **STADION_Google_Contacts_Import** - Google Contacts import
 

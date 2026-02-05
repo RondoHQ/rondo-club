@@ -113,7 +113,6 @@ Contact info is stored as a repeater field with multiple entries:
 - `threads` - Threads
 - `instagram` - Instagram
 - `facebook` - Facebook
-- `slack` - Slack
 - `calendar` - Agenda link
 - `other` - Anders
 

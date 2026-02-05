@@ -827,16 +827,9 @@ class Api extends Base {
 
 			// Send via all enabled channels
 			$email_channel = new \STADION_Email_Channel();
-			$slack_channel = new \STADION_Slack_Channel();
 
 			if ( $email_channel->is_enabled_for_user( $user_id ) ) {
 				if ( $email_channel->send( $user_id, $digest_data ) ) {
-					++$notifications_sent;
-				}
-			}
-
-			if ( $slack_channel->is_enabled_for_user( $user_id ) ) {
-				if ( $slack_channel->send( $user_id, $digest_data ) ) {
 					++$notifications_sent;
 				}
 			}
@@ -985,8 +978,10 @@ class Api extends Base {
 			// Default to email only
 			$channels = [ 'email' ];
 		}
-
-		$slack_webhook = get_user_meta( $user_id, 'stadion_slack_webhook', true );
+		$channels = array_values( array_intersect( $channels, [ 'email' ] ) );
+		if ( empty( $channels ) ) {
+			$channels = [ 'email' ];
+		}
 
 		$notification_time = get_user_meta( $user_id, 'stadion_notification_time', true );
 		if ( empty( $notification_time ) ) {
@@ -1003,7 +998,6 @@ class Api extends Base {
 		return rest_ensure_response(
 			[
 				'channels'              => $channels,
-				'slack_webhook'         => $slack_webhook ?: '',
 				'notification_time'     => $notification_time,
 				'mention_notifications' => $mention_notifications,
 			]
@@ -1018,20 +1012,8 @@ class Api extends Base {
 		$channels = $request->get_param( 'channels' );
 
 		// Validate channels
-		$valid_channels = [ 'email', 'slack' ];
+		$valid_channels = [ 'email' ];
 		$channels       = array_intersect( $channels, $valid_channels );
-
-		// If Slack is enabled, check if webhook is configured
-		if ( in_array( 'slack', $channels ) ) {
-			$webhook = get_user_meta( $user_id, 'stadion_slack_webhook', true );
-			if ( empty( $webhook ) ) {
-				return new \WP_Error(
-					'slack_webhook_required',
-					__( 'Slack webhook URL must be configured before enabling Slack notifications.', 'stadion' ),
-					[ 'status' => 400 ]
-				);
-			}
-		}
 
 		update_user_meta( $user_id, 'stadion_notification_channels', $channels );
 

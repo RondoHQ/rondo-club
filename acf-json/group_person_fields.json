@@ -147,7 +147,6 @@
                         "threads": "Threads",
                         "instagram": "Instagram",
                         "facebook": "Facebook",
-                        "slack": "Slack",
                         "other": "Other"
                     },
                     "wrapper": {
