@@ -48,26 +48,28 @@ None deferred — this milestone is self-contained.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CFG-01 | TBD | Pending |
-| CFG-02 | TBD | Pending |
-| CFG-03 | TBD | Pending |
-| CFG-04 | TBD | Pending |
-| CFG-05 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| CLR-01 | TBD | Pending |
-| CLR-02 | TBD | Pending |
-| CLR-03 | TBD | Pending |
-| INT-01 | TBD | Pending |
-| INT-02 | TBD | Pending |
-| INT-03 | TBD | Pending |
+| CFG-01 | Phase 144 | Pending |
+| CFG-02 | Phase 144 | Pending |
+| CFG-03 | Phase 144 | Pending |
+| CFG-04 | Phase 144 | Pending |
+| CFG-05 | Phase 144 | Pending |
+| UI-01 | Phase 145 | Pending |
+| UI-02 | Phase 145 | Pending |
+| UI-03 | Phase 145 | Pending |
+| CLR-01 | Phase 145 | Pending |
+| CLR-02 | Phase 145 | Pending |
+| CLR-03 | Phase 145 | Pending |
+| INT-01 | Phase 146 | Pending |
+| INT-02 | Phase 146 | Pending |
+| INT-03 | Phase 146 | Pending |
 
 **Coverage:**
 - v17.0 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14
+- Mapped to phases: 14
+- Unmapped: 0
+
+✓ 100% requirement coverage achieved
 
 ---
 *Requirements defined: 2026-02-05*
-*Last updated: 2026-02-05 after initial definition*
+*Last updated: 2026-02-05 after roadmap creation*
