@@ -31,7 +31,6 @@ class Reminders {
 		// Initialize notification channels
 		$this->channels = [
 			new \STADION_Email_Channel(),
-			new \STADION_Slack_Channel(),
 		];
 	}
 
@@ -428,7 +427,7 @@ class Reminders {
 		$end_of_week    = ( clone $today )->modify( '+7 days' );
 
 		// Use direct database query to bypass access control filters
-		// This is needed for cron jobs and Slack commands that run without logged-in user
+		// This is needed for cron jobs that run without a logged-in user
 		global $wpdb;
 
 		$date_ids = $wpdb->get_col(

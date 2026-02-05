@@ -5,7 +5,6 @@ import {
   MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel
 } from 'lucide-react';
-import { SiSlack } from '@icons-pack/react-simple-icons';
 import { usePerson, usePersonTimeline, usePersonDates, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople, peopleKeys } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -994,7 +993,7 @@ export default function PersonDetail() {
   // Calculate VOG status
   const vogStatus = getVogStatus(acf);
 
-  // Extract social links for header display (slack is now in contact details, not social)
+  // Extract social links for header display
   const socialLinks = acf.contact_info?.filter(contact => SOCIAL_TYPES.includes(contact.contact_type)) || [];
 
   // Check if there's a mobile number for WhatsApp
@@ -1316,7 +1315,7 @@ export default function PersonDetail() {
                   <span className="hidden md:inline">Bewerken</span>
                 </button>
               </div>
-            {acf.contact_info?.filter(contact => !SOCIAL_TYPES.includes(contact.contact_type)).length > 0 ? (
+            {acf.contact_info?.filter(contact => !SOCIAL_TYPES.includes(contact.contact_type) && contact.contact_type !== 'slack').length > 0 ? (
               <div className="space-y-2">
                 {(() => {
                   // Define display order for contact information
@@ -1324,14 +1323,13 @@ export default function PersonDetail() {
                     'email': 1,
                     'phone': 2,
                     'mobile': 2, // Phone numbers grouped together
-                    'slack': 3,
-                    'calendar': 4,
-                    'other': 5,
+                    'calendar': 3,
+                    'other': 4,
                   };
                   
                   // Filter and sort contact information
                   const nonSocialContacts = acf.contact_info
-                    .filter(contact => !SOCIAL_TYPES.includes(contact.contact_type))
+                    .filter(contact => !SOCIAL_TYPES.includes(contact.contact_type) && contact.contact_type !== 'slack')
                     .map((contact, originalIndex) => ({ ...contact, originalIndex }))
                     .sort((a, b) => {
                       const orderA = contactOrder[a.contact_type] || 99;
@@ -1346,12 +1344,10 @@ export default function PersonDetail() {
                   return nonSocialContacts.map((contact) => {
                         const Icon = contact.contact_type === 'email' ? Mail :
                                      contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
-                                     contact.contact_type === 'slack' ? SiSlack :
                                      contact.contact_type === 'calendar' ? Calendar : Globe;
 
                         const isEmail = contact.contact_type === 'email';
                         const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
-                        const isSlack = contact.contact_type === 'slack';
                         const isCalendar = contact.contact_type === 'calendar';
                         
                         let linkHref = null;
@@ -1361,7 +1357,7 @@ export default function PersonDetail() {
                           linkHref = `mailto:${contact.contact_value}`;
                         } else if (isPhone) {
                           linkHref = `tel:${formatPhoneForTel(contact.contact_value)}`;
-                        } else if (isSlack || isCalendar) {
+                        } else if (isCalendar) {
                           linkHref = contact.contact_value;
                           linkTarget = '_blank';
                         }
@@ -1371,31 +1367,18 @@ export default function PersonDetail() {
                         <div className="flex items-center rounded-md -mx-2 px-2 py-1.5">
                           <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
                           <div className="flex-1 min-w-0 flex items-center gap-2">
-                            {isSlack ? (
+                            <span className="text-sm text-gray-500 dark:text-gray-400">{contact.contact_label || contact.contact_type}: </span>
+                            {linkHref ? (
                               <a
-                                href={contact.contact_value}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href={linkHref}
+                                target={linkTarget || undefined}
+                                rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
                                 className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
                               >
-                                {contact.contact_label || 'Slack'}
+                                {contact.contact_value}
                               </a>
                             ) : (
-                              <>
-                                <span className="text-sm text-gray-500 dark:text-gray-400">{contact.contact_label || contact.contact_type}: </span>
-                                {linkHref ? (
-                                  <a
-                                    href={linkHref}
-                                    target={linkTarget || undefined}
-                                    rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
-                                    className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
-                                  >
-                                    {contact.contact_value}
-                                  </a>
-                                ) : (
-                                  <span>{contact.contact_value}</span>
-                                )}
-                              </>
+                              <span>{contact.contact_value}</span>
                             )}
                           </div>
                         </div>
@@ -2019,7 +2002,7 @@ export default function PersonDetail() {
             onClose={() => setShowContactModal(false)}
             onSubmit={handleSaveContacts}
             isLoading={isSavingContacts}
-            contactInfo={acf.contact_info || []}
+            contactInfo={(acf.contact_info || []).filter(contact => contact.contact_type !== 'slack')}
           />
           
           <ImportantDateModal

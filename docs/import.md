@@ -6,7 +6,6 @@ Stadion supports importing contacts from multiple sources:
 
 - **vCard (.vcf)**: Universal contact format from Apple Contacts, Outlook, Android, and most contact apps
 - **Google Contacts CSV**: Export from Google Contacts
-- **Monica CRM SQL**: Database export from Monica CRM (legacy)
 
 All import methods support duplicate detection - contacts with matching first and last names are updated instead of duplicated.
 
@@ -80,12 +79,6 @@ Export from Google Contacts using the "Google CSV" format.
 - Photos are downloaded from Google's `lh3.googleusercontent.com` URLs
 - Only imported if the contact doesn't already have a profile photo
 - Filename is generated from the person's name (e.g., `john-doe.jpg`)
-
-### Monica CRM Import
-
-For users migrating from Monica CRM. Requires SQL database export.
-
-See: Monica CRM documentation for export instructions.
 
 ## API Endpoints
 
@@ -211,7 +204,6 @@ decisions: {"3": "merge", "7": "new", "12": "skip"}
 |-------|------|---------|
 | `STADION_VCard_Import` | `includes/class-vcard-import.php` | vCard parsing and import |
 | `STADION_Google_Contacts_Import` | `includes/class-google-contacts-import.php` | Google CSV parsing and import |
-| `STADION_Monica_Import` | `includes/class-monica-import.php` | Monica SQL parsing and import |
 
 ### Frontend Components
 
@@ -219,7 +211,6 @@ decisions: {"3": "merge", "7": "new", "12": "skip"}
 |-----------|------|---------|
 | `VCardImport` | `src/components/import/VCardImport.jsx` | vCard upload UI |
 | `GoogleContactsImport` | `src/components/import/GoogleContactsImport.jsx` | Google CSV upload UI |
-| `MonicaImport` | `src/components/import/MonicaImport.jsx` | Monica SQL upload UI |
 | `Import` | `src/pages/Settings/Import.jsx` | Tabbed import page |
 
 ### Data Flow
@@ -342,9 +333,9 @@ The `decisions` object maps CSV row indices to actions:
 - `new` - Create new contact
 - `skip` - Don't import
 
-### vCard and Monica Import (Automatic)
+### vCard Import (Automatic)
 
-For vCard and Monica imports, duplicate handling is automatic:
+For vCard imports, duplicate handling is automatic:
 
 When a duplicate is found:
 - The existing person record is updated
