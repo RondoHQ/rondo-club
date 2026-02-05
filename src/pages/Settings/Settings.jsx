@@ -845,6 +845,7 @@ function AppearanceTab() {
   // Club Configuration state (admin only)
   const [clubName, setClubName] = useState(config.clubName || '');
   const [clubColor, setClubColor] = useState(config.accentColor || '#006935');
+  const [originalClubColor] = useState(config.accentColor || '#006935');
   const [freescoutUrl, setFreescoutUrl] = useState(config.freescoutUrl || '');
   const [savingClubConfig, setSavingClubConfig] = useState(false);
   const [clubConfigSaved, setClubConfigSaved] = useState(false);
@@ -909,6 +910,32 @@ function AppearanceTab() {
     }
   };
 
+  const handleClubColorChange = (color) => {
+    setClubColor(color);
+    // Live preview: if user's current accent is 'club', update CSS vars immediately
+    if (accentColor === 'club') {
+      const root = document.documentElement;
+      // Set key shades for live preview (500, 600, 700 are most visible in UI)
+      root.style.setProperty('--color-accent-500', color);
+      root.style.setProperty('--color-accent-600', color);
+      root.style.setProperty('--color-accent-700', color);
+    }
+  };
+
+  // Cleanup effect: revert preview if navigating away without saving
+  useEffect(() => {
+    return () => {
+      // Revert preview if color was changed but not saved
+      if (accentColor === 'club') {
+        // Clear inline CSS overrides - useTheme will re-apply from stadionConfig
+        const root = document.documentElement;
+        for (const shade of ['500', '600', '700']) {
+          root.style.removeProperty(`--color-accent-${shade}`);
+        }
+      }
+    };
+  }, [accentColor]);
+
   const handleSaveClubConfig = async () => {
     setSavingClubConfig(true);
     setClubConfigSaved(false);
@@ -923,9 +950,13 @@ function AppearanceTab() {
       window.stadionConfig.accentColor = response.data.accent_color;
       window.stadionConfig.freescoutUrl = response.data.freescout_url;
 
-      // Force theme re-application if user is on 'club' accent
+      // Clear preview overrides so useTheme can apply full scale
       if (accentColor === 'club') {
-        // useTheme's applyTheme will pick up new stadionConfig value
+        const root = document.documentElement;
+        for (const shade of ['500', '600', '700']) {
+          root.style.removeProperty(`--color-accent-${shade}`);
+        }
+        // useTheme's applyTheme will now generate the full scale from the new stadionConfig value
         setAccentColor('club');
       }
 
@@ -1009,18 +1040,21 @@ function AppearanceTab() {
                   />
                   {showColorPicker && (
                     <div className="mt-2">
-                      <HexColorPicker color={clubColor} onChange={setClubColor} />
+                      <HexColorPicker color={clubColor} onChange={handleClubColorChange} />
                     </div>
                   )}
                 </div>
                 <div className="flex-1 max-w-[200px]">
                   <HexColorInput
                     color={clubColor}
-                    onChange={setClubColor}
+                    onChange={handleClubColorChange}
                     className="input"
                     prefixed
                     placeholder="#006935"
                   />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Live voorbeeld zichtbaar als je accentkleur op "Club" staat.
+                  </p>
                 </div>
               </div>
             </div>
