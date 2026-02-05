@@ -193,6 +193,22 @@ Link people to other people:
 | `relationship_type` | integer | Relationship type taxonomy term ID |
 | `relationship_label` | string | Custom label override |
 
+### Computed Fields (Read-Only)
+
+These fields are automatically calculated and should not be set manually. They are included in the API response but ignored on create/update.
+
+| Field | Type | Description | Values |
+|-------|------|-------------|--------|
+| `acf.huidig-vrijwilliger` | string | Current volunteer status, auto-calculated from work history | `"1"` (volunteer) or `"0"` (not) |
+| `acf.is_deceased` | boolean | Whether the person is deceased | `true`, `false` |
+| `acf.birth_year` | string/null | Birth year (derived from birthday important date) | e.g., `"1990"` or `null` |
+
+**Volunteer status logic:** A person is considered a current volunteer (`huidig-vrijwilliger = "1"`) if they have an active position where:
+- The position is in a commissie (any role, unless the commissie is exempt), OR
+- The position is in a team with a staff role (not a player role like Aanvaller, Keeper, etc.)
+
+Positions with honorary/membership roles (Donateur, Erelid, etc.) are excluded. The status is recalculated automatically whenever the person is saved.
+
 ### Visibility
 
 | Field | Type | Description | Values |
@@ -266,6 +282,7 @@ X-WP-Nonce: {nonce}
     "addresses": [...],
     "work_history": [],
     "relationships": [],
+    "huidig-vrijwilliger": "0",
     "is_deceased": false,
     "birth_year": null,
     "_visibility": "private"
@@ -340,6 +357,7 @@ X-WP-Nonce: {nonce}
     "addresses": [...],
     "work_history": [],
     "relationships": [],
+    "huidig-vrijwilliger": "0",
     "is_deceased": false,
     "birth_year": null,
     "_visibility": "private",

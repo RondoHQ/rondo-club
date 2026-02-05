@@ -1,10 +1,7 @@
-<!-- Sports team management system built as a WordPress theme with React SPA frontend -->
+<!-- Member administration CRM for sports clubs, built as a WordPress theme with React SPA frontend -->
 # Stadion
 
-A React-powered WordPress theme for sports team management. This theme provides a modern, single-page application interface for managing people, teams (synced from Sportlink), and important dates.
-
-Stadion is a fork of [Caelis](https://github.com/jdevalk/caelis), adapted for sports club administration.
-
+A member administration CRM for sports clubs, built as a React-powered WordPress theme. Tracks contacts, team and committee roles, volunteer status, and VOG compliance — with [Sportlink sync](https://github.com/jdevalk/sportlink-sync), calendar integration, and multi-user support.
 ## Requirements
 
 - WordPress 6.0+
