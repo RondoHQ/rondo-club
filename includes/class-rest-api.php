@@ -574,6 +574,15 @@ class Api extends Base {
 					'callback'            => [ $this, 'update_membership_fee_settings' ],
 					'permission_callback' => [ $this, 'check_admin_permission' ],
 					'args'                => [
+						'season'   => [
+							'required'          => true,
+							'type'              => 'string',
+							'validate_callback' => function ( $param, $request, $key ) {
+								$membership_fees = new \Stadion\Fees\MembershipFees();
+								$valid           = [ $membership_fees->get_season_key(), $membership_fees->get_next_season_key() ];
+								return in_array( $param, $valid, true );
+							},
+						],
 						'mini'     => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
@@ -2583,24 +2592,57 @@ class Api extends Base {
 	/**
 	 * Get membership fee settings
 	 *
+	 * Returns settings for both current and next season.
+	 *
 	 * @param \WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response Response with membership fee settings.
+	 * @return \WP_REST_Response Response with membership fee settings for both seasons.
 	 */
 	public function get_membership_fee_settings( $request ) {
 		$membership_fees = new \Stadion\Fees\MembershipFees();
-		return rest_ensure_response( $membership_fees->get_all_settings() );
+		$current_season  = $membership_fees->get_season_key();
+		$next_season     = $membership_fees->get_next_season_key();
+
+		return rest_ensure_response(
+			[
+				'current_season' => [
+					'key'  => $current_season,
+					'fees' => $membership_fees->get_settings_for_season( $current_season ),
+				],
+				'next_season'    => [
+					'key'  => $next_season,
+					'fees' => $membership_fees->get_settings_for_season( $next_season ),
+				],
+			]
+		);
 	}
 
 	/**
 	 * Update membership fee settings
 	 *
+	 * Updates settings for a specific season (current or next).
+	 *
 	 * @param \WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response Response with updated membership fee settings.
+	 * @return \WP_REST_Response Response with updated membership fee settings for both seasons.
 	 */
 	public function update_membership_fee_settings( $request ) {
 		$membership_fees = new \Stadion\Fees\MembershipFees();
+		$current_season  = $membership_fees->get_season_key();
+		$next_season     = $membership_fees->get_next_season_key();
 
-		$fees = [];
+		// Get season parameter
+		$season = $request->get_param( 'season' );
+
+		// Validate season is either current or next
+		if ( ! in_array( $season, [ $current_season, $next_season ], true ) ) {
+			return new \WP_Error(
+				'invalid_season',
+				'Season must be either current season or next season',
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Extract fee values
+		$fees      = [];
 		$fee_types = [ 'mini', 'pupil', 'junior', 'senior', 'recreant', 'donateur' ];
 
 		foreach ( $fee_types as $type ) {
@@ -2610,11 +2652,24 @@ class Api extends Base {
 			}
 		}
 
+		// Update settings for the specified season
 		if ( ! empty( $fees ) ) {
-			$membership_fees->update_settings( $fees );
+			$membership_fees->update_settings_for_season( $fees, $season );
 		}
 
-		return rest_ensure_response( $membership_fees->get_all_settings() );
+		// Return updated settings for both seasons
+		return rest_ensure_response(
+			[
+				'current_season' => [
+					'key'  => $current_season,
+					'fees' => $membership_fees->get_settings_for_season( $current_season ),
+				],
+				'next_season'    => [
+					'key'  => $next_season,
+					'fees' => $membership_fees->get_settings_for_season( $next_season ),
+				],
+			]
+		);
 	}
 
 	/**

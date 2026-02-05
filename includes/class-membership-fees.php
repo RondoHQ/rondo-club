@@ -45,18 +45,93 @@ class MembershipFees {
 	const VALID_TYPES = [ 'mini', 'pupil', 'junior', 'senior', 'recreant', 'donateur' ];
 
 	/**
+	 * Get the option key for a specific season
+	 *
+	 * @param string $season Season key in "YYYY-YYYY" format (e.g., "2025-2026").
+	 * @return string Option key for season-specific fee storage.
+	 */
+	public function get_option_key_for_season( string $season ): string {
+		return 'stadion_membership_fees_' . $season;
+	}
+
+	/**
+	 * Get fee settings for a specific season
+	 *
+	 * Handles automatic migration from old global option to current season on first read.
+	 *
+	 * @param string $season Season key in "YYYY-YYYY" format (e.g., "2025-2026").
+	 * @return array<string, int> Array of fee type => amount pairs.
+	 */
+	public function get_settings_for_season( string $season ): array {
+		$season_key = $this->get_option_key_for_season( $season );
+		$stored     = get_option( $season_key, false );
+
+		// If season option exists, use it
+		if ( $stored !== false && is_array( $stored ) ) {
+			$settings = array_merge( self::DEFAULTS, $stored );
+			return array_map( 'intval', $settings );
+		}
+
+		// Season option doesn't exist - check for migration
+		$current_season = $this->get_season_key();
+		if ( $season === $current_season ) {
+			// Check if old global option exists (migration needed)
+			$old_stored = get_option( self::OPTION_KEY, false );
+
+			if ( $old_stored !== false && is_array( $old_stored ) ) {
+				// Migrate: copy old global option to season-specific option
+				update_option( $season_key, $old_stored );
+				// Delete old global option (one-time migration)
+				delete_option( self::OPTION_KEY );
+				// Return the migrated values
+				$settings = array_merge( self::DEFAULTS, $old_stored );
+				return array_map( 'intval', $settings );
+			}
+		}
+
+		// No data for this season, return defaults
+		return self::DEFAULTS;
+	}
+
+	/**
+	 * Update fee settings for a specific season
+	 *
+	 * @param array<string, mixed> $fees   Array of fee type => amount pairs to update.
+	 * @param string               $season Season key in "YYYY-YYYY" format (e.g., "2025-2026").
+	 * @return bool True on success, false on failure.
+	 */
+	public function update_settings_for_season( array $fees, string $season ): bool {
+		// Get current settings for this season
+		$current = $this->get_settings_for_season( $season );
+
+		// Validate and merge new values
+		foreach ( $fees as $type => $amount ) {
+			// Skip invalid types
+			if ( ! in_array( $type, self::VALID_TYPES, true ) ) {
+				continue;
+			}
+
+			// Validate: must be numeric and non-negative
+			if ( ! is_numeric( $amount ) || $amount < 0 ) {
+				continue;
+			}
+
+			$current[ $type ] = (int) $amount;
+		}
+
+		// Save to season-specific option
+		$season_key = $this->get_option_key_for_season( $season );
+		return update_option( $season_key, $current );
+	}
+
+	/**
 	 * Get all fee settings
 	 *
 	 * @return array<string, int> Array of fee type => amount pairs
 	 */
 	public function get_all_settings(): array {
-		$stored = get_option( self::OPTION_KEY, [] );
-
-		// Merge with defaults to ensure all keys exist
-		$settings = array_merge( self::DEFAULTS, is_array( $stored ) ? $stored : [] );
-
-		// Ensure all values are integers
-		return array_map( 'intval', $settings );
+		// Use current season settings for backward compatibility
+		return $this->get_settings_for_season( $this->get_season_key() );
 	}
 
 	/**
@@ -83,25 +158,8 @@ class MembershipFees {
 	 * @return bool True on success, false on failure
 	 */
 	public function update_settings( array $fees ): bool {
-		// Get current settings
-		$current = $this->get_all_settings();
-
-		// Validate and merge new values
-		foreach ( $fees as $type => $amount ) {
-			// Skip invalid types
-			if ( ! in_array( $type, self::VALID_TYPES, true ) ) {
-				continue;
-			}
-
-			// Validate: must be numeric and non-negative
-			if ( ! is_numeric( $amount ) || $amount < 0 ) {
-				continue;
-			}
-
-			$current[ $type ] = (int) $amount;
-		}
-
-		return update_option( self::OPTION_KEY, $current );
+		// Use current season for backward compatibility
+		return $this->update_settings_for_season( $fees, $this->get_season_key() );
 	}
 
 	/**
