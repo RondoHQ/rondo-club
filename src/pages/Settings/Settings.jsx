@@ -128,13 +128,13 @@ export default function Settings() {
   const [vogCommissies, setVogCommissies] = useState([]);
 
   // Membership fee settings state
-  const [feeSettings, setFeeSettings] = useState({
-    mini: 130,
-    pupil: 180,
-    junior: 230,
-    senior: 255,
-    recreant: 65,
-    donateur: 55,
+  const [currentSeasonFees, setCurrentSeasonFees] = useState({
+    key: '',
+    fees: { mini: 130, pupil: 180, junior: 230, senior: 255, recreant: 65, donateur: 55 },
+  });
+  const [nextSeasonFees, setNextSeasonFees] = useState({
+    key: '',
+    fees: { mini: 130, pupil: 180, junior: 230, senior: 255, recreant: 65, donateur: 55 },
   });
   const [feeLoading, setFeeLoading] = useState(true);
   const [feeSaving, setFeeSaving] = useState(false);
@@ -273,7 +273,8 @@ export default function Settings() {
       }
       try {
         const response = await prmApi.getMembershipFeeSettings();
-        setFeeSettings(response.data);
+        setCurrentSeasonFees(response.data.current_season);
+        setNextSeasonFees(response.data.next_season);
       } catch {
         // Fee settings fetch failed silently
       } finally {
@@ -305,12 +306,13 @@ export default function Settings() {
   };
 
   // Handle membership fee settings save
-  const handleFeeSave = async () => {
+  const handleSeasonFeeSave = async (season, fees) => {
     setFeeSaving(true);
     setFeeMessage('');
     try {
-      const response = await prmApi.updateMembershipFeeSettings(feeSettings);
-      setFeeSettings(response.data);
+      const response = await prmApi.updateMembershipFeeSettings(fees, season);
+      setCurrentSeasonFees(response.data.current_season);
+      setNextSeasonFees(response.data.next_season);
       setFeeMessage('Contributie-instellingen opgeslagen');
     } catch (error) {
       setFeeMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
@@ -653,12 +655,14 @@ export default function Settings() {
             handleRescheduleCron={handleRescheduleCron}
             reschedulingCron={reschedulingCron}
             cronMessage={cronMessage}
-            feeSettings={feeSettings}
-            setFeeSettings={setFeeSettings}
+            currentSeasonFees={currentSeasonFees}
+            setCurrentSeasonFees={setCurrentSeasonFees}
+            nextSeasonFees={nextSeasonFees}
+            setNextSeasonFees={setNextSeasonFees}
             feeLoading={feeLoading}
             feeSaving={feeSaving}
             feeMessage={feeMessage}
-            handleFeeSave={handleFeeSave}
+            handleSeasonFeeSave={handleSeasonFeeSave}
           vogSettings={vogSettings}
           setVogSettings={setVogSettings}
           vogLoading={vogLoading}
@@ -3126,12 +3130,14 @@ function AdminTabWithSubtabs({
   handleRescheduleCron,
   reschedulingCron,
   cronMessage,
-  feeSettings,
-  setFeeSettings,
+  currentSeasonFees,
+  setCurrentSeasonFees,
+  nextSeasonFees,
+  setNextSeasonFees,
   feeLoading,
   feeSaving,
   feeMessage,
-  handleFeeSave,
+  handleSeasonFeeSave,
   vogSettings,
   setVogSettings,
   vogLoading,
@@ -3168,12 +3174,14 @@ function AdminTabWithSubtabs({
         />
       ) : activeSubtab === 'fees' ? (
         <FeesSubtab
-          feeSettings={feeSettings}
-          setFeeSettings={setFeeSettings}
+          currentSeasonFees={currentSeasonFees}
+          setCurrentSeasonFees={setCurrentSeasonFees}
+          nextSeasonFees={nextSeasonFees}
+          setNextSeasonFees={setNextSeasonFees}
           feeLoading={feeLoading}
           feeSaving={feeSaving}
           feeMessage={feeMessage}
-          handleFeeSave={handleFeeSave}
+          handleSeasonFeeSave={handleSeasonFeeSave}
         />
       ) : activeSubtab === 'vog' ? (
         <VOGTab
@@ -3192,12 +3200,14 @@ function AdminTabWithSubtabs({
 
 // Fees Subtab Component
 function FeesSubtab({
-  feeSettings,
-  setFeeSettings,
+  currentSeasonFees,
+  setCurrentSeasonFees,
+  nextSeasonFees,
+  setNextSeasonFees,
   feeLoading,
   feeSaving,
   feeMessage,
-  handleFeeSave,
+  handleSeasonFeeSave,
 }) {
   const FEE_TYPES = [
     { key: 'mini', label: 'Mini', description: 'Leeftijd 4-6 jaar' },
@@ -3208,6 +3218,67 @@ function FeesSubtab({
     { key: 'donateur', label: 'Donateur', description: 'Steunend lid' },
   ];
 
+  const renderSeasonSection = (seasonData, setSeasonData, seasonLabel) => (
+    <div className="card p-6">
+      <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        {seasonLabel}: {seasonData.key}
+      </h4>
+      <div className="space-y-4">
+        {FEE_TYPES.map(({ key, label, description }) => (
+          <div key={key} className="flex items-center gap-4">
+            <div className="flex-1">
+              <label
+                htmlFor={`fee-${seasonData.key}-${key}`}
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                {label}
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+            </div>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                &euro;
+              </span>
+              <input
+                type="number"
+                id={`fee-${seasonData.key}-${key}`}
+                min="0"
+                step="1"
+                value={seasonData.fees[key] ?? 0}
+                onChange={(e) =>
+                  setSeasonData((prev) => ({
+                    ...prev,
+                    fees: {
+                      ...prev.fees,
+                      [key]: parseInt(e.target.value, 10) || 0,
+                    },
+                  }))
+                }
+                className="w-28 pl-8 pr-3 py-2 text-right rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
+              />
+            </div>
+          </div>
+        ))}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => handleSeasonFeeSave(seasonData.key, seasonData.fees)}
+            disabled={feeSaving}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+          >
+            {feeSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Opslaan...
+              </>
+            ) : (
+              'Opslaan'
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -3215,7 +3286,7 @@ function FeesSubtab({
           Contributie-instellingen
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Configureer de contributiebedragen per leeftijdscategorie.
+          Configureer de contributiebedragen per leeftijdscategorie voor het huidige en volgende seizoen.
         </p>
       </div>
 
@@ -3224,68 +3295,21 @@ function FeesSubtab({
           <Loader2 className="w-6 h-6 animate-spin text-accent-500" />
         </div>
       ) : (
-        <div className="space-y-4">
-          {FEE_TYPES.map(({ key, label, description }) => (
-            <div key={key} className="flex items-center gap-4">
-              <div className="flex-1">
-                <label
-                  htmlFor={`fee-${key}`}
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  {label}
-                </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
-              </div>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                  &euro;
-                </span>
-                <input
-                  type="number"
-                  id={`fee-${key}`}
-                  min="0"
-                  step="1"
-                  value={feeSettings[key] ?? 0}
-                  onChange={(e) =>
-                    setFeeSettings((prev) => ({
-                      ...prev,
-                      [key]: parseInt(e.target.value, 10) || 0,
-                    }))
-                  }
-                  className="w-28 pl-8 pr-3 py-2 text-right rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
-                />
-              </div>
-            </div>
-          ))}
+        <div className="space-y-6">
+          {renderSeasonSection(currentSeasonFees, setCurrentSeasonFees, 'Huidig seizoen')}
+          {renderSeasonSection(nextSeasonFees, setNextSeasonFees, 'Volgend seizoen')}
 
-          {/* Save button and message */}
-          <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <button
-              onClick={handleFeeSave}
-              disabled={feeSaving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+          {feeMessage && (
+            <div
+              className={`text-sm ${
+                feeMessage.startsWith('Fout')
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-green-600 dark:text-green-400'
+              }`}
             >
-              {feeSaving ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Opslaan...
-                </>
-              ) : (
-                'Opslaan'
-              )}
-            </button>
-            {feeMessage && (
-              <span
-                className={`text-sm ${
-                  feeMessage.startsWith('Fout')
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-green-600 dark:text-green-400'
-                }`}
-              >
-                {feeMessage}
-              </span>
-            )}
-          </div>
+              {feeMessage}
+            </div>
+          )}
         </div>
       )}
     </div>
