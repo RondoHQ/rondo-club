@@ -907,23 +907,6 @@ class VCard {
 			}
 		}
 
-		// IMPP (Instant messaging - Slack, etc.)
-		foreach ( $vcard['impp'] ?? [] as $impp ) {
-			// Handle Slack specifically
-			if ( $impp['service'] === 'slack' ) {
-				$key = 'slack|' . strtolower( trim( $impp['value'] ) );
-				if ( ! isset( $existing_keys[ $key ] ) ) {
-					$contact_info[]        = [
-						'contact_type'  => 'slack',
-						'contact_label' => '',
-						'contact_value' => $impp['value'],
-					];
-					$existing_keys[ $key ] = true;
-				}
-			}
-			// Other IMPP types could be added here in the future
-		}
-
 		if ( ! empty( $contact_info ) ) {
 			update_field( 'contact_info', $contact_info, $post_id );
 		}

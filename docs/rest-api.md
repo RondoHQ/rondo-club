@@ -760,7 +760,6 @@ The preference is also returned by GET `/stadion/v1/user/notification-channels` 
 ```json
 {
   "channels": ["email"],
-  "slack_webhook": "",
   "notification_time": "09:00",
   "mention_notifications": "digest"
 }

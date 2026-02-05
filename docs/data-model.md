@@ -217,7 +217,7 @@ Categorizes important dates by event type.
 | Attached To | important_date |
 | REST Enabled | Yes |
 
-**Default Date Types** (aligned with Monica CRM):
+**Default Date Types**:
 
 | Category | Types |
 |----------|-------|

@@ -1,6 +1,6 @@
 # Daily Digest Reminders
 
-This document describes the daily digest reminder system that notifies users about upcoming important dates via multiple channels.
+This document describes the daily digest reminder system that notifies users about upcoming important dates via email.
 
 ## Overview
 
@@ -10,8 +10,7 @@ Stadion includes an automated reminder system that:
   - Important dates **today** + todos due today (including overdue)
   - Important dates **tomorrow** + todos due tomorrow
   - Important dates for the **rest of the week** (days 3-7) + todos due in that period
-- Supports multiple notification channels (Email, Slack)
-- Respects user preferences for which channels to use
+- Sends daily digest emails to users who have notifications enabled
 - Notifies all users who have access to the related people
 
 ## How It Works
@@ -75,10 +74,6 @@ Each user receives one notification per day containing:
 **STADION_Email_Channel** (`includes/class-notification-channels.php`)
 - Email notification implementation
 - Formats digest as plain text email
-
-**STADION_Slack_Channel** (`includes/class-notification-channels.php`)
-- Slack webhook notification implementation
-- Formats digest as Slack message blocks
 
 ### Cron Configuration
 
@@ -260,38 +255,13 @@ Visit Stadion to see more details.
 https://your-site.com
 ```
 
-### Slack Channel
-
-**User Meta:**
-- `stadion_notification_channels` (array containing `'slack'`)
-- `stadion_slack_bot_token` (Bot token from OAuth)
-- `stadion_slack_workspace_id` (Workspace ID)
-- `stadion_slack_workspace_name` (Workspace name)
-- `stadion_slack_user_id` (User's Slack ID for DMs)
-- `stadion_slack_targets` (Array of channel/user IDs to send to)
-
-**Slack Format:**
-- Uses Slack Block Kit format with `chat.postMessage` API
-- Section blocks for each date category (Today, Tomorrow, Rest of the week)
-- Links person names to their Stadion profile
-
-**OAuth Configuration:**
-- Users connect Slack via OAuth flow in Settings
-- Bot token stored for API calls
-- User can select which channels/users to receive notifications
-
 ## User Preferences
 
-Users can enable/disable notification channels in Settings:
-
-1. **Email** - Always available (default enabled)
-2. **Slack** - Requires OAuth connection
+Users can enable/disable email notifications in Settings.
 
 **User Meta Keys:**
-- `stadion_notification_channels` - Array of enabled channels: `['email', 'slack']`
+- `stadion_notification_channels` - Array of enabled channels: `['email']`
 - `stadion_notification_time` - Preferred notification time in HH:MM format, 5-minute increments (default: `09:00`)
-- `stadion_slack_bot_token` - Slack bot token (from OAuth)
-- `stadion_slack_targets` - Array of Slack channel/user IDs for notifications
 
 ## REST API Integration
 
@@ -382,8 +352,9 @@ Returns status of all user reminder cron jobs.
 **Response:**
 ```json
 {
-  "channels": ["email", "slack"],
-  "slack_webhook": "https://hooks.slack.com/services/..."
+  "channels": ["email"],
+  "notification_time": "09:00",
+  "mention_notifications": "digest"
 }
 ```
 
@@ -394,7 +365,7 @@ Returns status of all user reminder cron jobs.
 **Body:**
 ```json
 {
-  "channels": ["email", "slack"]
+  "channels": ["email"]
 }
 ```
 
@@ -428,7 +399,6 @@ Each important date can configure:
 
 - WordPress cron must be functioning
 - Email (wp_mail) must be configured for email channel
-- Slack webhook URL required for Slack channel
 - Consider using SMTP plugin for email reliability
 
 ## Testing Reminders
@@ -466,13 +436,6 @@ Test that `wp_mail()` works:
 wp_mail('test@example.com', 'Test Subject', 'Test message');
 ```
 
-### Test Slack Connection
-
-Slack connection is established via OAuth in Settings. After connecting:
-1. Enable the Slack channel toggle
-2. Select notification targets (channels/users)
-3. Use "Trigger reminders" button to test
-
 ## Troubleshooting
 
 ### Emails Not Sending
@@ -482,13 +445,6 @@ Slack connection is established via OAuth in Settings. After connecting:
 3. **Check spam folder** - Emails may be filtered
 4. **Check user emails** - Users must have valid email addresses
 5. **Check user preferences** - User must have email channel enabled
-
-### Slack Notifications Not Sending
-
-1. **Check OAuth connection** - User must have connected Slack via OAuth
-2. **Check user preferences** - User must have Slack channel enabled
-3. **Check notification targets** - User must have selected channels/users to receive notifications
-4. **Check bot permissions** - Slack app needs `chat:write` and `chat:write.public` scopes
 
 ### Wrong Reminder Dates
 

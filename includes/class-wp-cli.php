@@ -10,7 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Import namespaced classes for WP-CLI commands
 use Stadion\Collaboration\Reminders;
 use Stadion\Notifications\EmailChannel;
-use Stadion\Notifications\SlackChannel;
 use Stadion\Calendar\Connections;
 use Stadion\Calendar\Matcher;
 use Stadion\Calendar\Sync;
@@ -168,7 +167,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				// Send via all enabled channels
 				$email_channel = new EmailChannel();
-				$slack_channel = new SlackChannel();
 
 				$user_notifications_sent = 0;
 
@@ -179,16 +177,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						++$notifications_sent;
 					} else {
 						WP_CLI::warning( sprintf( '  ✗ Failed to send email to %s', $user->user_email ) );
-					}
-				}
-
-				if ( $slack_channel->is_enabled_for_user( $user_id ) ) {
-					if ( $slack_channel->send( $user_id, $digest_data ) ) {
-						WP_CLI::log( sprintf( '  ✓ Slack notification sent' ) );
-						++$user_notifications_sent;
-						++$notifications_sent;
-					} else {
-						WP_CLI::warning( sprintf( '  ✗ Failed to send Slack notification' ) );
 					}
 				}
 

@@ -45,11 +45,6 @@ Stadion uses PHP constants defined in `wp-config.php` for configuration. This is
 # Required: Generate and set encryption key
 wp config set STADION_ENCRYPTION_KEY "$(php -r 'echo bin2hex(random_bytes(16));')" --type=constant
 
-# Optional: Slack integration
-wp config set STADION_SLACK_CLIENT_ID 'your-client-id' --type=constant
-wp config set STADION_SLACK_CLIENT_SECRET 'your-client-secret' --type=constant
-wp config set STADION_SLACK_SIGNING_SECRET 'your-signing-secret' --type=constant
-
 # Optional: Google integration (Calendar + Contacts)
 wp config set GOOGLE_OAUTH_CLIENT_ID 'your-client-id.apps.googleusercontent.com' --type=constant
 wp config set GOOGLE_OAUTH_CLIENT_SECRET 'your-client-secret' --type=constant
@@ -60,9 +55,6 @@ wp config set GOOGLE_OAUTH_CLIENT_SECRET 'your-client-secret' --type=constant
 | Constant | Purpose | Required | Generation/Source |
 |----------|---------|----------|-------------------|
 | `STADION_ENCRYPTION_KEY` | Encryption for OAuth tokens | Yes | `php -r "echo bin2hex(random_bytes(16));"` |
-| `STADION_SLACK_CLIENT_ID` | Slack OAuth app client ID | Optional | Slack API Dashboard |
-| `STADION_SLACK_CLIENT_SECRET` | Slack OAuth app client secret | Optional | Slack API Dashboard |
-| `STADION_SLACK_SIGNING_SECRET` | Slack webhook verification | Optional | Slack API Dashboard |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID (Calendar + Contacts) | Optional | Google Cloud Console |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret | Optional | Google Cloud Console |
 
@@ -78,21 +70,6 @@ Add to `wp-config.php`:
 
 ```php
 define('STADION_ENCRYPTION_KEY', 'your-generated-32-byte-key-here');
-```
-
-### Slack Integration (Optional)
-
-To enable Slack notifications for reminders:
-
-1. Create a Slack app at [https://api.slack.com/apps](https://api.slack.com/apps)
-2. Under **OAuth & Permissions**, add the `chat:write` scope
-3. Install the app to your workspace
-4. Copy credentials from **Basic Information**
-
-```php
-define('STADION_SLACK_CLIENT_ID', '1234567890.1234567890');
-define('STADION_SLACK_CLIENT_SECRET', 'your-client-secret');
-define('STADION_SLACK_SIGNING_SECRET', 'your-signing-secret');
 ```
 
 ### Google Integration (Optional)
@@ -139,11 +116,6 @@ Supported providers:
 
 // Required: Encryption key (32 bytes)
 define('STADION_ENCRYPTION_KEY', 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4');
-
-// Optional: Slack Integration
-define('STADION_SLACK_CLIENT_ID', '1234567890.1234567890');
-define('STADION_SLACK_CLIENT_SECRET', 'abcdef1234567890abcdef1234567890');
-define('STADION_SLACK_SIGNING_SECRET', '1234abcd5678efgh9012ijkl3456mnop');
 
 // Optional: Google Integration (Calendar + Contacts)
 define('GOOGLE_OAUTH_CLIENT_ID', '123456789-abc123def456.apps.googleusercontent.com');
