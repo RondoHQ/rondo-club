@@ -52,10 +52,11 @@ Plans:
   5. All AWC color key references renamed to 'club' (tailwind.config.js, useTheme.js, index.css, Settings.jsx)
   6. All "AWC" comments removed from source code
 
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 145-01: TBD
+- [ ] 145-01-PLAN.md — AWC-to-club rename across Tailwind, CSS, useTheme, Settings; dynamic club color support
+- [ ] 145-02-PLAN.md — Club configuration section in Settings UI with color picker; dynamic login page styling
 
 ### Phase 146: Integration Cleanup
 **Goal**: FreeScout integration reads URL from club config and all AWC/svawc.nl-specific references removed from documentation
@@ -82,5 +83,5 @@ Phases execute in numeric order: 144 → 145 → 146
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 144. Backend Configuration System | 1/1 | Complete | 2026-02-05 |
-| 145. Frontend & Color Refactor | 0/TBD | Not started | - |
+| 145. Frontend & Color Refactor | 0/2 | Not started | - |
 | 146. Integration Cleanup | 0/TBD | Not started | - |
