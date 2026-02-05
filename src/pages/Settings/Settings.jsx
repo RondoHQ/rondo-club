@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, Coins, X, Users, MessageSquare, Search, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, Database } from 'lucide-react';
+import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, Coins, X, Users, Search, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, Database } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from '@/utils/dateFormat';
 import { APP_NAME } from '@/constants/app';
@@ -8,7 +8,6 @@ import apiClient from '@/api/client';
 import { prmApi, wpApi } from '@/api/client';
 import { useTheme, COLOR_SCHEMES, ACCENT_COLORS } from '@/hooks/useTheme';
 import { useSearch } from '@/hooks/useDashboard';
-import MonicaImport from '@/components/import/MonicaImport';
 import VCardImport from '@/components/import/VCardImport';
 import GoogleContactsImport from '@/components/import/GoogleContactsImport';
 import PersonAvatar from '@/components/PersonAvatar';
@@ -29,7 +28,6 @@ const CONNECTION_SUBTABS = [
   { id: 'calendars', label: 'Google Agenda', icon: Calendar },
   { id: 'contacts', label: 'Google Contacten', icon: Users },
   { id: 'carddav', label: 'CardDAV', icon: Database },
-  { id: 'slack', label: 'Slack', icon: MessageSquare },
   { id: 'api-access', label: 'API-toegang', icon: Key },
 ];
 
@@ -85,24 +83,12 @@ export default function Settings() {
   
   // Notification channels state
   const [notificationChannels, setNotificationChannels] = useState([]);
-  const [slackWebhook, setSlackWebhook] = useState('');
-  const [slackConnected, setSlackConnected] = useState(false);
-  const [slackWorkspaceName, setSlackWorkspaceName] = useState('');
   const [notificationTime, setNotificationTime] = useState('09:00');
   const [mentionNotifications, setMentionNotifications] = useState('digest');
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [savingChannels, setSavingChannels] = useState(false);
   const [savingTime, setSavingTime] = useState(false);
   const [savingMentionPref, setSavingMentionPref] = useState(false);
-  const [webhookTestMessage, setWebhookTestMessage] = useState('');
-  const [disconnectingSlack, setDisconnectingSlack] = useState(false);
-  
-  // Slack notification targets state
-  const [slackChannels, setSlackChannels] = useState([]);
-  const [slackUsers, setSlackUsers] = useState([]);
-  const [slackTargets, setSlackTargets] = useState([]);
-  const [loadingSlackData, setLoadingSlackData] = useState(false);
-  const [savingSlackTargets, setSavingSlackTargets] = useState(false);
   
   // Manual trigger state (admin only)
   const [triggeringReminders, setTriggeringReminders] = useState(false);
@@ -174,45 +160,14 @@ export default function Settings() {
     }
   }, [userId]);
   
-  // Fetch Slack channels, users, and targets
-  const fetchSlackData = async () => {
-    setLoadingSlackData(true);
-    try {
-      const [channelsResponse, targetsResponse] = await Promise.all([
-        prmApi.getSlackChannels(),
-        prmApi.getSlackTargets(),
-      ]);
-      
-      setSlackChannels(channelsResponse.data.channels || []);
-      setSlackUsers(channelsResponse.data.users || []);
-      setSlackTargets(targetsResponse.data.targets || []);
-    } catch {
-      setWebhookTestMessage('Kan Slack-kanalen en -gebruikers niet laden. Ververs de pagina.');
-    } finally {
-      setLoadingSlackData(false);
-    }
-  };
-  
   // Fetch notification channels on mount
   useEffect(() => {
     const fetchNotificationChannels = async () => {
       try {
         const response = await prmApi.getNotificationChannels();
         setNotificationChannels(response.data.channels || ['email']);
-        setSlackWebhook(response.data.slack_webhook || '');
         setNotificationTime(response.data.notification_time || '09:00');
         setMentionNotifications(response.data.mention_notifications || 'digest');
-        
-        // Check Slack OAuth status
-        const slackStatus = await prmApi.getSlackStatus();
-        const isConnected = slackStatus.data.connected || false;
-        setSlackConnected(isConnected);
-        setSlackWorkspaceName(slackStatus.data.workspace_name || '');
-        
-        // If connected, fetch channels/users and targets
-        if (isConnected) {
-          await fetchSlackData();
-        }
       } catch {
         // Notification channels fetch failed silently
       } finally {
@@ -222,13 +177,6 @@ export default function Settings() {
     fetchNotificationChannels();
   }, []);
   
-  // Fetch Slack data when connection status changes
-  useEffect(() => {
-    if (slackConnected) {
-      fetchSlackData();
-    }
-  }, [slackConnected]);
-
   // Fetch Google Contacts status on mount
   useEffect(() => {
     const fetchGoogleContactsStatus = async () => {
@@ -260,25 +208,8 @@ export default function Settings() {
   // Handle OAuth callback messages from URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const slackConnectedParam = params.get('slack_connected');
-    const slackError = params.get('slack_fout');
     const googleConnected = params.get('connected');
     const googleError = params.get('fout');
-
-    // Handle Slack OAuth callbacks
-    if (slackConnectedParam === '1') {
-      setWebhookTestMessage('Slack succesvol verbonden!');
-      // Refresh Slack status
-      prmApi.getSlackStatus().then(response => {
-        setSlackConnected(response.data.connected || false);
-        setSlackWorkspaceName(response.data.workspace_name || '');
-      });
-      // Clean URL but keep tab and subtab for connections/slack
-      navigate('/settings/connections/slack', { replace: true });
-    } else if (slackError) {
-      setWebhookTestMessage(`Slack-verbinding mislukt: ${slackError}`);
-      navigate('/settings/connections/slack', { replace: true });
-    }
 
     // Handle Google Calendar OAuth callbacks (redirected from PHP)
     if (googleConnected === 'google') {
@@ -384,59 +315,6 @@ export default function Settings() {
       setFeeMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
     } finally {
       setFeeSaving(false);
-    }
-  };
-
-  const handleConnectSlack = async () => {
-    try {
-      const response = await apiClient.get('/stadion/v1/slack/oauth/authorize');
-      window.location.href = response.data.oauth_url;
-    } catch (fout) {
-      alert(fout.response?.data?.message || 'Kan Slack niet verbinden');
-    }
-  };
-  
-  const handleDisconnectSlack = async () => {
-    if (!confirm('Weet je zeker dat je Slack wilt ontkoppelen? Je ontvangt dan geen Slack-meldingen meer.')) {
-      return;
-    }
-    
-    setDisconnectingSlack(true);
-    try {
-      await prmApi.disconnectSlack();
-      setSlackConnected(false);
-      setSlackWorkspaceName('');
-      setSlackChannels([]);
-      setSlackUsers([]);
-      setSlackTargets([]);
-      setWebhookTestMessage('Slack succesvol ontkoppeld');
-      if (notificationChannels.includes('slack')) {
-        await toggleChannel('slack');
-      }
-    } catch (fout) {
-      alert(fout.response?.data?.message || 'Kan Slack niet ontkoppelen');
-    } finally {
-      setDisconnectingSlack(false);
-    }
-  };
-  
-  const handleToggleSlackTarget = (targetId) => {
-    const newTargets = slackTargets.includes(targetId)
-      ? slackTargets.filter(id => id !== targetId)
-      : [...slackTargets, targetId];
-    setSlackTargets(newTargets);
-  };
-  
-  const handleSaveSlackTargets = async () => {
-    setSavingSlackTargets(true);
-    try {
-      await prmApi.updateSlackTargets(slackTargets);
-      setWebhookTestMessage('Meldingsdoelen succesvol opgeslagen');
-      setTimeout(() => setWebhookTestMessage(''), 3000);
-    } catch (fout) {
-      alert(fout.response?.data?.message || 'Kan meldingsdoelen niet opslaan');
-    } finally {
-      setSavingSlackTargets(false);
     }
   };
 
@@ -711,20 +589,6 @@ export default function Settings() {
           carddavUrls={carddavUrls}
           config={config}
           copyCarddavUrl={copyCarddavUrl}
-          // Slack props
-          slackConnected={slackConnected}
-          slackWorkspaceName={slackWorkspaceName}
-          handleConnectSlack={handleConnectSlack}
-          handleDisconnectSlack={handleDisconnectSlack}
-          disconnectingSlack={disconnectingSlack}
-          webhookTestMessage={webhookTestMessage}
-          slackChannels={slackChannels}
-          slackUsers={slackUsers}
-          slackTargets={slackTargets}
-          loadingSlackData={loadingSlackData}
-          handleToggleSlackTarget={handleToggleSlackTarget}
-          handleSaveSlackTargets={handleSaveSlackTargets}
-          savingSlackTargets={savingSlackTargets}
           // Google Contacts props
           googleContactsStatus={googleContactsStatus}
           googleContactsLoading={googleContactsLoading}
@@ -768,7 +632,6 @@ export default function Settings() {
           notificationChannels={notificationChannels}
           toggleChannel={toggleChannel}
           savingChannels={savingChannels}
-          slackConnected={slackConnected}
           notificationTime={notificationTime}
           handleNotificationTimeChange={handleNotificationTimeChange}
           savingTime={savingTime}
@@ -2180,15 +2043,11 @@ function EditConnectionModal({ connection, onSave, onClose }) {
   );
 }
 
-// ConnectionsTab Component - Container for Calendars, Contacts, CardDAV, and Slack subtabs
+// ConnectionsTab Component - Container for Calendars, Contacts, CardDAV, and API subtabs
 function ConnectionsTab({
   activeSubtab, setActiveSubtab, setActiveTab,
   // CardDAV props
   carddavUrls, config, copyCarddavUrl,
-  // Slack props
-  slackConnected, slackWorkspaceName, handleConnectSlack, handleDisconnectSlack,
-  disconnectingSlack, webhookTestMessage, slackChannels, slackUsers, slackTargets,
-  loadingSlackData, handleToggleSlackTarget, handleSaveSlackTargets, savingSlackTargets,
   // Google Contacts props
   googleContactsStatus, googleContactsLoading, connectingGoogleContacts,
   disconnectingGoogleContacts, googleContactsMessage,
@@ -2260,23 +2119,6 @@ function ConnectionsTab({
           config={config}
           copyCarddavUrl={copyCarddavUrl}
           setActiveTab={setActiveTab}
-        />
-      )}
-      {activeSubtab === 'slack' && (
-        <ConnectionsSlackSubtab
-          slackConnected={slackConnected}
-          slackWorkspaceName={slackWorkspaceName}
-          handleConnectSlack={handleConnectSlack}
-          handleDisconnectSlack={handleDisconnectSlack}
-          disconnectingSlack={disconnectingSlack}
-          webhookTestMessage={webhookTestMessage}
-          slackChannels={slackChannels}
-          slackUsers={slackUsers}
-          slackTargets={slackTargets}
-          loadingSlackData={loadingSlackData}
-          handleToggleSlackTarget={handleToggleSlackTarget}
-          handleSaveSlackTargets={handleSaveSlackTargets}
-          savingSlackTargets={savingSlackTargets}
         />
       )}
       {activeSubtab === 'api-access' && (
@@ -2740,147 +2582,10 @@ function ConnectionsCardDAVSubtab({
   );
 }
 
-// ConnectionsSlackSubtab - Slack-verbinding management
-function ConnectionsSlackSubtab({
-  slackConnected, slackWorkspaceName, handleConnectSlack, handleDisconnectSlack,
-  disconnectingSlack, webhookTestMessage, slackChannels, slackUsers, slackTargets,
-  loadingSlackData, handleToggleSlackTarget, handleSaveSlackTargets, savingSlackTargets,
-}) {
-  return (
-    <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Slack-verbinding</h2>
-      <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-        Koppel je Slack-workspace om meldingen te ontvangen en Slack-commando&apos;s te gebruiken.
-      </p>
-
-      {slackConnected ? (
-        <div className="space-y-4">
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-900/20 dark:border-green-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-green-900 dark:text-green-300">Verbonden met Slack</p>
-                {slackWorkspaceName && (
-                  <p className="text-sm text-green-700 dark:text-green-400">Workspace: {slackWorkspaceName}</p>
-                )}
-              </div>
-              <button
-                onClick={handleDisconnectSlack}
-                disabled={disconnectingSlack}
-                className="btn-secondary text-sm"
-              >
-                {disconnectingSlack ? 'Ontkoppelen...' : 'Ontkoppelen'}
-              </button>
-            </div>
-          </div>
-
-          {webhookTestMessage && (
-            <p className={`text-sm ${webhookTestMessage.includes('succesvol') || webhookTestMessage.includes('ontkoppeld') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-              {webhookTestMessage}
-            </p>
-          )}
-
-          {/* Meldingsdoelen configuration */}
-          <div className="mt-4 p-4 border border-gray-200 rounded-lg dark:border-gray-700">
-            <h3 className="font-medium mb-3 dark:text-gray-200">Meldingsdoelen</h3>
-            <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-              Kies waar je Slack-meldingen naartoe wilt sturen. Je kunt meerdere kanalen en gebruikers selecteren.
-            </p>
-
-            {loadingSlackData ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Kanalen en gebruikers laden...</p>
-            ) : (
-              <>
-                {slackChannels.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium mb-2 dark:text-gray-300">Kanalen</h4>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {slackChannels.map((channel) => (
-                        <label
-                          key={channel.id}
-                          className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer dark:hover:bg-gray-800"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={slackTargets.includes(channel.id)}
-                            onChange={() => handleToggleSlackTarget(channel.id)}
-                            className="mr-2 cursor-pointer"
-                          />
-                          <span className="text-sm dark:text-gray-300">{channel.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {slackUsers.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium mb-2 dark:text-gray-300">Directe berichten</h4>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {slackUsers.map((user) => (
-                        <label
-                          key={user.id}
-                          className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer dark:hover:bg-gray-800"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={slackTargets.includes(user.id)}
-                            onChange={() => handleToggleSlackTarget(user.id)}
-                            className="mr-2 cursor-pointer"
-                          />
-                          <span className="text-sm dark:text-gray-300">
-                            {user.name}
-                            {user.is_me && <span className="text-gray-500 ml-1 dark:text-gray-500">(jij)</span>}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {slackChannels.length === 0 && slackUsers.length === 0 && !loadingSlackData && (
-                  <p className="text-sm text-gray-500 mb-4 dark:text-gray-400">
-                    Geen kanalen of gebruikers gevonden. Zorg ervoor dat de Slack-app de benodigde rechten heeft.
-                  </p>
-                )}
-
-                <button
-                  onClick={handleSaveSlackTargets}
-                  disabled={savingSlackTargets}
-                  className="btn-primary text-sm mt-4"
-                >
-                  {savingSlackTargets ? 'Opslaan...' : 'Doelen opslaan'}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <button
-            onClick={handleConnectSlack}
-            className="btn-primary w-full"
-            disabled={disconnectingSlack}
-          >
-            Slack koppelen
-          </button>
-          {webhookTestMessage && (
-            <p className={`text-sm ${webhookTestMessage.includes('succesvol') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-              {webhookTestMessage}
-            </p>
-          )}
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Koppel je Slack-workspace om dagelijkse herinneringsmeldingen te ontvangen. Je kunt berichten naar kanalen sturen of directe berichten ontvangen.
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // Notifications Tab Component - Channel toggles and preferences only
 function NotificationsTab({
   notificationsLoading, notificationChannels, toggleChannel, savingChannels,
-  slackConnected, notificationTime, handleNotificationTimeChange, savingTime,
+  notificationTime, handleNotificationTimeChange, savingTime,
   mentionNotifications, handleMentionNotificationsChange, savingMentionPref
 }) {
   return (
@@ -2913,35 +2618,6 @@ function NotificationsTab({
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600 dark:bg-gray-600 dark:peer-checked:bg-accent-500"></div>
             </label>
-          </div>
-
-          {/* Slack channel */}
-          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div>
-              <p className="font-medium dark:text-gray-200">Slack</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {slackConnected ? 'Ontvang meldingen in Slack' : 'Koppel Slack om in te schakelen'}
-              </p>
-            </div>
-            {slackConnected ? (
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notificationChannels.includes('slack')}
-                  onChange={() => toggleChannel('slack')}
-                  disabled={savingChannels}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600 dark:bg-gray-600 dark:peer-checked:bg-accent-500"></div>
-              </label>
-            ) : (
-              <Link
-                to="/settings/connections/slack"
-                className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
-              >
-                Slack koppelen
-              </Link>
-            )}
           </div>
 
           {/* Notification time */}
@@ -3023,13 +2699,6 @@ const importTypes = [
     description: 'CSV-export van Google',
     icon: FileSpreadsheet,
     component: GoogleContactsImport,
-  },
-  {
-    id: 'monica',
-    name: 'Monica CRM',
-    description: 'SQL-export van Monica',
-    icon: Database,
-    component: MonicaImport,
   },
 ];
 

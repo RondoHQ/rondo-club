@@ -346,7 +346,7 @@ class Taxonomies {
 	}
 
 	/**
-	 * Add default date types - aligned with Monica CRM life event types
+	 * Add default date types
 	 */
 	private function add_default_date_types() {
 		$defaults = [
@@ -355,7 +355,7 @@ class Taxonomies {
 			'memorial'                => __( 'Memorial', 'stadion' ),
 			'first-met'               => __( 'First Met', 'stadion' ),
 
-			// Family & relationships (Monica category 2)
+		// Family & relationships
 			'new-relationship'        => __( 'New Relationship', 'stadion' ),
 			'engagement'              => __( 'Engagement', 'stadion' ),
 			'wedding'                 => __( 'Wedding', 'stadion' ),
@@ -367,7 +367,7 @@ class Taxonomies {
 			'end-of-relationship'     => __( 'End of Relationship', 'stadion' ),
 			'loss-of-a-loved-one'     => __( 'Loss of a Loved One', 'stadion' ),
 
-			// Work & education (Monica category 1)
+		// Work & education
 			'new-job'                 => __( 'New Job', 'stadion' ),
 			'retirement'              => __( 'Retirement', 'stadion' ),
 			'new-school'              => __( 'New School', 'stadion' ),
@@ -376,7 +376,7 @@ class Taxonomies {
 			'published-book-or-paper' => __( 'Published Book or Paper', 'stadion' ),
 			'military-service'        => __( 'Military Service', 'stadion' ),
 
-			// Home & living (Monica category 3)
+		// Home & living
 			'moved'                   => __( 'Moved', 'stadion' ),
 			'bought-a-home'           => __( 'Bought a Home', 'stadion' ),
 			'home-improvement'        => __( 'Home Improvement', 'stadion' ),
@@ -384,14 +384,14 @@ class Taxonomies {
 			'new-vehicle'             => __( 'New Vehicle', 'stadion' ),
 			'new-roommate'            => __( 'New Roommate', 'stadion' ),
 
-			// Health & wellness (Monica category 4)
+		// Health & wellness
 			'overcame-an-illness'     => __( 'Overcame an Illness', 'stadion' ),
 			'quit-a-habit'            => __( 'Quit a Habit', 'stadion' ),
 			'new-eating-habits'       => __( 'New Eating Habits', 'stadion' ),
 			'weight-loss'             => __( 'Weight Loss', 'stadion' ),
 			'surgery'                 => __( 'Surgery', 'stadion' ),
 
-			// Travel & experiences (Monica category 5)
+		// Travel & experiences
 			'new-sport'               => __( 'New Sport', 'stadion' ),
 			'new-hobby'               => __( 'New Hobby', 'stadion' ),
 			'new-instrument'          => __( 'New Instrument', 'stadion' ),

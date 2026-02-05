@@ -153,16 +153,8 @@ export const prmApi = {
   // Notification channels
   getNotificationChannels: () => api.get('/stadion/v1/user/notification-channels'),
   updateNotificationChannels: (channels) => api.post('/stadion/v1/user/notification-channels', { channels }),
-  updateSlackWebhook: (webhook) => api.post('/stadion/v1/user/slack-webhook', { webhook }),
   updateNotificationTime: (time) => api.post('/stadion/v1/user/notification-time', { time }),
   updateMentionNotifications: (preference) => api.post('/stadion/v1/user/mention-notifications', { preference }),
-  
-  // Slack OAuth
-  getSlackStatus: () => api.get('/stadion/v1/user/slack-status'),
-  disconnectSlack: () => api.post('/stadion/v1/slack/disconnect'),
-  getSlackChannels: () => api.get('/stadion/v1/slack/channels'),
-  getSlackTargets: () => api.get('/stadion/v1/slack/targets'),
-  updateSlackTargets: (targets) => api.post('/stadion/v1/slack/targets', { targets }),
   
   // Person-specific
   getPersonDates: (personId) => api.get(`/stadion/v1/people/${personId}/dates`),

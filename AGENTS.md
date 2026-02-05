@@ -4,7 +4,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 ## Project Overview
 
-**Stadion** is a personal CRM system built as a WordPress theme with integrated backend functionality and a modern React SPA frontend. Tracks contacts, teams, important dates, and interactions with user-specific access control.
+**Stadion** is a React-powered WordPress theme for sports team management. This theme provides a modern, single-page application interface for managing people, teams (synced from Sportlink), and important dates.
 
 **Tech Stack:**
 - Backend: WordPress 6.0+, PHP 8.0+, ACF Pro (required)
@@ -49,11 +49,9 @@ Entry point: `functions.php`
 - `STADION_User_Roles` - Registers custom "Stadion User" role with minimal permissions
 - `STADION_REST_API` - Custom `/stadion/v1/` endpoints (dashboard, search, timeline, reminders)
 - `STADION_Comment_Types` - Notes and Activities system using comments
-- `STADION_Reminders` - Daily digest reminder system with multi-channel support (Email, Slack)
+- `STADION_Reminders` - Daily digest reminder system with email notifications
 - `STADION_Notification_Channel` - Abstract base class for notification channels
 - `STADION_Email_Channel` - Email notification implementation
-- `STADION_Slack_Channel` - Slack webhook notification implementation
-- `STADION_Monica_Import` - Monica CRM import functionality
 
 **ACF field groups** are stored as JSON in `acf-json/` for version control.
 
@@ -239,6 +237,8 @@ git push
 ```
 
 ### Rule 8: Deploy to Production
+
+**WHEN you're in a worktree, do not EVER push to production**
 
 **ALWAYS deploy to production BEFORE asking for verification or UAT.** The user tests on production, not locally. Deploy after every phase execution, before presenting verification checklists.
 
