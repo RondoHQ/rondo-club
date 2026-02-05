@@ -128,11 +128,6 @@ function loadPreferences() {
     if (stored) {
       const parsed = JSON.parse(stored);
 
-      // Auto-migrate 'awc' to 'club' for existing users
-      if (parsed.accentColor === 'awc') {
-        parsed.accentColor = 'club';
-      }
-
       return {
         colorScheme: COLOR_SCHEMES.includes(parsed.colorScheme)
           ? parsed.colorScheme
