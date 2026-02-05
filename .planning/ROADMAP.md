@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 144: Backend Configuration System** - Club-wide settings stored in WordPress options with REST API
 - [x] **Phase 145: Frontend & Color Refactor** - Settings UI and awc→club rename throughout codebase
-- [ ] **Phase 146: Integration Cleanup** - FreeScout URL configuration and documentation de-AWC
+- [x] **Phase 146: Integration Cleanup** - FreeScout URL configuration and documentation de-AWC
 
 ## Phase Details
 
@@ -73,7 +73,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 146-01-PLAN.md — Externalize FreeScout URL, remove AWC references, update documentation
+- [x] 146-01-PLAN.md — Externalize FreeScout URL, remove AWC references, update documentation
 
 ## Progress
 
@@ -84,4 +84,4 @@ Phases execute in numeric order: 144 → 145 → 146
 |-------|----------------|--------|-----------|
 | 144. Backend Configuration System | 1/1 | Complete | 2026-02-05 |
 | 145. Frontend & Color Refactor | 2/2 | Complete | 2026-02-05 |
-| 146. Integration Cleanup | 0/1 | Not started | - |
+| 146. Integration Cleanup | 1/1 | Complete | 2026-02-05 |

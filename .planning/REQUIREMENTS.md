@@ -27,9 +27,9 @@
 
 ### Integration Cleanup
 
-- [ ] **INT-01**: FreeScout link in PersonDetail reads base URL from club config (hidden when URL not set)
-- [ ] **INT-02**: `svawc.nl` references removed from AGENTS.md documentation (use placeholder)
-- [ ] **INT-03**: Theme installable by another club without any code changes
+- [x] **INT-01**: FreeScout link in PersonDetail reads base URL from club config (hidden when URL not set)
+- [x] **INT-02**: `svawc.nl` references removed from AGENTS.md documentation (use placeholder)
+- [x] **INT-03**: Theme installable by another club without any code changes
 
 ## Future Requirements
 
@@ -59,9 +59,9 @@ None deferred — this milestone is self-contained.
 | CLR-01 | Phase 145 | Complete |
 | CLR-02 | Phase 145 | Complete |
 | CLR-03 | Phase 145 | Complete |
-| INT-01 | Phase 146 | Pending |
-| INT-02 | Phase 146 | Pending |
-| INT-03 | Phase 146 | Pending |
+| INT-01 | Phase 146 | Complete |
+| INT-02 | Phase 146 | Complete |
+| INT-03 | Phase 146 | Complete |
 
 **Coverage:**
 - v17.0 requirements: 14 total
