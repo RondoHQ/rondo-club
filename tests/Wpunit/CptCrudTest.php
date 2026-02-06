@@ -2,9 +2,9 @@
 
 namespace Tests\Wpunit;
 
-use Tests\Support\StadionTestCase;
-use STADION_Access_Control;
-use STADION_User_Roles;
+use Tests\Support\RondoTestCase;
+use RONDO_Access_Control;
+use RONDO_User_Roles;
 use WP_REST_Request;
 use WP_REST_Server;
 
@@ -14,7 +14,7 @@ use WP_REST_Server;
  * Verifies that standard REST API endpoints work correctly for person and team
  * post types with proper access control and ACF field handling.
  */
-class CptCrudTest extends StadionTestCase {
+class CptCrudTest extends RondoTestCase {
 
 	/**
 	 * REST server instance.
@@ -36,15 +36,15 @@ class CptCrudTest extends StadionTestCase {
 	}
 
 	/**
-	 * Helper to create an approved Stadion user with a unique login.
+	 * Helper to create an approved Rondo user with a unique login.
 	 *
 	 * @param string $prefix User login prefix for uniqueness
 	 * @return int User ID
 	 */
-	private function createApprovedStadionUser( string $prefix = 'user' ): int {
+	private function createApprovedRondoUser( string $prefix = 'user' ): int {
 		$unique_id = uniqid( $prefix . '_' );
-		$user_id   = $this->createStadionUser( [ 'user_login' => $unique_id ] );
-		update_user_meta( $user_id, STADION_User_Roles::APPROVAL_META_KEY, '1' );
+		$user_id   = $this->createRondoUser( [ 'user_login' => $unique_id ] );
+		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
 	}
 
@@ -74,7 +74,7 @@ class CptCrudTest extends StadionTestCase {
 	 * Test CREATE person via POST to /wp/v2/people.
 	 */
 	public function test_person_create_via_rest_api(): void {
-		$user_id = $this->createApprovedStadionUser( 'creator' );
+		$user_id = $this->createApprovedRondoUser( 'creator' );
 		wp_set_current_user( $user_id );
 
 		$response = $this->restRequest(
@@ -101,7 +101,7 @@ class CptCrudTest extends StadionTestCase {
 	 * Test READ person via GET as owner.
 	 */
 	public function test_person_read_as_owner_via_rest_api(): void {
-		$user_id = $this->createApprovedStadionUser( 'owner' );
+		$user_id = $this->createApprovedRondoUser( 'owner' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -124,8 +124,8 @@ class CptCrudTest extends StadionTestCase {
 	 * Test READ person denied for non-owner.
 	 */
 	public function test_person_read_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
-		$other_id = $this->createApprovedStadionUser( 'other' );
+		$owner_id = $this->createApprovedRondoUser( 'owner' );
+		$other_id = $this->createApprovedRondoUser( 'other' );
 
 		// Create person as owner
 		wp_set_current_user( $owner_id );
@@ -152,8 +152,8 @@ class CptCrudTest extends StadionTestCase {
 	 * Test person list only returns user's own posts.
 	 */
 	public function test_person_list_returns_only_user_posts(): void {
-		$alice_id = $this->createApprovedStadionUser( 'alice' );
-		$bob_id   = $this->createApprovedStadionUser( 'bob' );
+		$alice_id = $this->createApprovedRondoUser( 'alice' );
+		$bob_id   = $this->createApprovedRondoUser( 'bob' );
 
 		// Create persons for Alice
 		wp_set_current_user( $alice_id );
@@ -197,7 +197,7 @@ class CptCrudTest extends StadionTestCase {
 	 * Test UPDATE person via PATCH as owner.
 	 */
 	public function test_person_update_as_owner_via_rest_api(): void {
-		$user_id = $this->createApprovedStadionUser( 'updater' );
+		$user_id = $this->createApprovedRondoUser( 'updater' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -229,8 +229,8 @@ class CptCrudTest extends StadionTestCase {
 	 * Test UPDATE person denied for non-owner.
 	 */
 	public function test_person_update_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
-		$other_id = $this->createApprovedStadionUser( 'other' );
+		$owner_id = $this->createApprovedRondoUser( 'owner' );
+		$other_id = $this->createApprovedRondoUser( 'other' );
 
 		// Create person as owner
 		wp_set_current_user( $owner_id );
@@ -272,7 +272,7 @@ class CptCrudTest extends StadionTestCase {
 	 * and the post is moved to trash.
 	 */
 	public function test_person_delete_as_owner_via_rest_api(): void {
-		$user_id = $this->createApprovedStadionUser( 'deleter' );
+		$user_id = $this->createApprovedRondoUser( 'deleter' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -308,8 +308,8 @@ class CptCrudTest extends StadionTestCase {
 	 * Test DELETE person denied for non-owner.
 	 */
 	public function test_person_delete_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
-		$other_id = $this->createApprovedStadionUser( 'other' );
+		$owner_id = $this->createApprovedRondoUser( 'owner' );
+		$other_id = $this->createApprovedRondoUser( 'other' );
 
 		// Create person as owner
 		wp_set_current_user( $owner_id );
@@ -344,7 +344,7 @@ class CptCrudTest extends StadionTestCase {
 	 * Test team CREATE via POST.
 	 */
 	public function test_team_create_via_rest_api(): void {
-		$user_id = $this->createApprovedStadionUser( 'creator' );
+		$user_id = $this->createApprovedRondoUser( 'creator' );
 		wp_set_current_user( $user_id );
 
 		$response = $this->restRequest(
@@ -370,8 +370,8 @@ class CptCrudTest extends StadionTestCase {
 	 * Test team READ as owner vs non-owner.
 	 */
 	public function test_team_read_access_control(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
-		$other_id = $this->createApprovedStadionUser( 'other' );
+		$owner_id = $this->createApprovedRondoUser( 'owner' );
+		$other_id = $this->createApprovedRondoUser( 'other' );
 
 		wp_set_current_user( $owner_id );
 		$team_id = $this->createOrganization(
@@ -399,8 +399,8 @@ class CptCrudTest extends StadionTestCase {
 	 * Test team UPDATE access control.
 	 */
 	public function test_team_update_access_control(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
-		$other_id = $this->createApprovedStadionUser( 'other' );
+		$owner_id = $this->createApprovedRondoUser( 'owner' );
+		$other_id = $this->createApprovedRondoUser( 'other' );
 
 		wp_set_current_user( $owner_id );
 		$team_id = $this->createOrganization(
@@ -439,7 +439,7 @@ class CptCrudTest extends StadionTestCase {
 	 * The important assertion is that the post is actually trashed.
 	 */
 	public function test_team_delete_as_owner(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
+		$owner_id = $this->createApprovedRondoUser( 'owner' );
 
 		wp_set_current_user( $owner_id );
 		$team_id = $this->createOrganization(
@@ -470,8 +470,8 @@ class CptCrudTest extends StadionTestCase {
 	 * Test team DELETE denied for non-owner.
 	 */
 	public function test_team_delete_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
-		$other_id = $this->createApprovedStadionUser( 'other' );
+		$owner_id = $this->createApprovedRondoUser( 'owner' );
+		$other_id = $this->createApprovedRondoUser( 'other' );
 
 		wp_set_current_user( $owner_id );
 		$team_id = $this->createOrganization(
@@ -503,7 +503,7 @@ class CptCrudTest extends StadionTestCase {
 	 * Test person ACF fields appear in REST response.
 	 */
 	public function test_person_acf_fields_in_rest_response(): void {
-		$user_id = $this->createApprovedStadionUser( 'acfuser' );
+		$user_id = $this->createApprovedRondoUser( 'acfuser' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -535,7 +535,7 @@ class CptCrudTest extends StadionTestCase {
 	 * Test team ACF fields appear in REST response.
 	 */
 	public function test_team_acf_fields_in_rest_response(): void {
-		$user_id = $this->createApprovedStadionUser( 'acfuser' );
+		$user_id = $this->createApprovedRondoUser( 'acfuser' );
 		wp_set_current_user( $user_id );
 
 		$team_id = $this->createOrganization(
@@ -564,7 +564,7 @@ class CptCrudTest extends StadionTestCase {
 	 * Test ACF field updates via REST PATCH.
 	 */
 	public function test_person_acf_field_update_via_rest(): void {
-		$user_id = $this->createApprovedStadionUser( 'acfupdater' );
+		$user_id = $this->createApprovedRondoUser( 'acfupdater' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -602,7 +602,7 @@ class CptCrudTest extends StadionTestCase {
 	 * Test team ACF field update via REST.
 	 */
 	public function test_team_acf_field_update_via_rest(): void {
-		$user_id = $this->createApprovedStadionUser( 'acfupdater' );
+		$user_id = $this->createApprovedRondoUser( 'acfupdater' );
 		wp_set_current_user( $user_id );
 
 		$team_id = $this->createOrganization(

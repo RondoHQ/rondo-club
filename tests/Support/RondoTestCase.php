@@ -5,12 +5,12 @@ namespace Tests\Support;
 use lucatume\WPBrowser\TestCase\WPTestCase;
 
 /**
- * Base test case for Stadion theme tests.
+ * Base test case for Rondo Club theme tests.
  *
  * Provides helper methods for creating test fixtures and
  * ensures ACF is properly loaded.
  */
-abstract class StadionTestCase extends WPTestCase {
+abstract class RondoTestCase extends WPTestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
@@ -68,13 +68,13 @@ abstract class StadionTestCase extends WPTestCase {
 	}
 
 	/**
-	 * Create a Stadion User with the custom role.
+	 * Create a Rondo User with the custom role.
 	 *
 	 * @param array $args User arguments
 	 * @return int User ID
 	 */
-	protected function createStadionUser( array $args = [] ): int {
-		$defaults = [ 'role' => 'stadion_user' ];
+	protected function createRondoUser( array $args = [] ): int {
+		$defaults = [ 'role' => 'rondo_user' ];
 		return self::factory()->user->create( array_merge( $defaults, $args ) );
 	}
 

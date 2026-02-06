@@ -4,19 +4,19 @@
  *
  * Tests CRUD operations for ACF custom field definitions.
  *
- * @package Stadion\Tests\CustomFields
+ * @package Rondo\Tests\CustomFields
  */
 
 namespace Tests\Wpunit\CustomFields;
 
-use Stadion\CustomFields\Manager;
-use Tests\Support\StadionTestCase;
+use Rondo\CustomFields\Manager;
+use Tests\Support\RondoTestCase;
 use WP_Error;
 
 /**
  * Test class for CustomFields Manager.
  */
-class ManagerTest extends StadionTestCase {
+class ManagerTest extends RondoTestCase {
 
 	/**
 	 * Manager instance.

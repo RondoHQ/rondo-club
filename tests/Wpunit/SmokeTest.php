@@ -2,26 +2,26 @@
 
 namespace Tests\Wpunit;
 
-use Tests\Support\StadionTestCase;
+use Tests\Support\RondoTestCase;
 
 /**
  * Smoke test to verify PHPUnit/wp-browser setup is working.
  *
  * These tests verify:
  * - WordPress is loaded correctly
- * - Stadion theme is active
+ * - Rondo Club theme is active
  * - Custom post types are registered
  * - ACF Pro is available
  * - Factory methods work
  */
-class SmokeTest extends StadionTestCase {
+class SmokeTest extends RondoTestCase {
 
 	public function test_wordpress_is_loaded(): void {
 		$this->assertTrue( function_exists( 'wp_insert_post' ) );
 		$this->assertTrue( defined( 'ABSPATH' ) );
 	}
 
-	public function test_stadion_theme_is_active(): void {
+	public function test_rondo_theme_is_active(): void {
 		$theme = wp_get_theme();
 		$this->assertEquals( 'stadion', $theme->get_stylesheet() );
 	}
@@ -47,9 +47,9 @@ class SmokeTest extends StadionTestCase {
 		);
 	}
 
-	public function test_stadion_user_role_exists(): void {
-		$role = get_role( 'stadion_user' );
-		$this->assertNotNull( $role, 'Stadion User role should exist' );
+	public function test_rondo_user_role_exists(): void {
+		$role = get_role( 'rondo_user' );
+		$this->assertNotNull( $role, 'Rondo User role should exist' );
 	}
 
 	public function test_can_create_person_with_factory(): void {
@@ -60,12 +60,12 @@ class SmokeTest extends StadionTestCase {
 		$this->assertEquals( 'Test Person', get_the_title( $person_id ) );
 	}
 
-	public function test_can_create_stadion_user(): void {
-		$user_id = $this->createStadionUser( [ 'user_login' => 'testuser' ] );
+	public function test_can_create_rondo_user(): void {
+		$user_id = $this->createRondoUser( [ 'user_login' => 'testuser' ] );
 
 		$this->assertGreaterThan( 0, $user_id );
 		$user = get_user_by( 'id', $user_id );
-		$this->assertTrue( in_array( 'stadion_user', $user->roles, true ) );
+		$this->assertTrue( in_array( 'rondo_user', $user->roles, true ) );
 	}
 
 	public function test_database_transactions_rollback(): void {
