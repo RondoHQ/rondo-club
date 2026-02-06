@@ -406,6 +406,74 @@ function rondo_init() {
 add_action( 'after_setup_theme', 'rondo_init', 5 );
 add_action( 'plugins_loaded', 'rondo_init', 5 );
 
+/**
+ * Migrate WordPress options from stadion_ prefix to rondo_ prefix.
+ *
+ * Runs once after the v1.1 rebrand. Copies old option values to new option names
+ * (only if the new option doesn't already have a value), then deletes the old options.
+ */
+function rondo_migrate_options() {
+	if ( get_option( 'rondo_options_migrated' ) ) {
+		return;
+	}
+
+	$option_map = [
+		'stadion_vog_from_email'       => 'rondo_vog_from_email',
+		'stadion_vog_from_name'        => 'rondo_vog_from_name',
+		'stadion_vog_template_new'     => 'rondo_vog_template_new',
+		'stadion_vog_template_renewal' => 'rondo_vog_template_renewal',
+		'stadion_vog_exempt_commissies' => 'rondo_vog_exempt_commissies',
+		'stadion_club_name'            => 'rondo_club_name',
+		'stadion_accent_color'         => 'rondo_accent_color',
+		'stadion_freescout_url'        => 'rondo_freescout_url',
+	];
+
+	foreach ( $option_map as $old_key => $new_key ) {
+		$old_value = get_option( $old_key );
+		if ( false !== $old_value ) {
+			// Only copy if the new option doesn't already have a value.
+			$new_value = get_option( $new_key );
+			if ( false === $new_value || '' === $new_value ) {
+				update_option( $new_key, $old_value );
+			}
+			delete_option( $old_key );
+		}
+	}
+
+	// Migrate user meta keys from stadion_ to rondo_.
+	$user_meta_keys = [
+		'stadion_linked_person_id'         => 'rondo_linked_person_id',
+		'stadion_notification_channels'    => 'rondo_notification_channels',
+		'stadion_notification_time'        => 'rondo_notification_time',
+		'stadion_mention_notifications'    => 'rondo_mention_notifications',
+		'stadion_color_scheme'             => 'rondo_color_scheme',
+		'stadion_accent_color'             => 'rondo_accent_color',
+		'stadion_dashboard_visible_cards'  => 'rondo_dashboard_visible_cards',
+		'stadion_dashboard_card_order'     => 'rondo_dashboard_card_order',
+		'stadion_people_list_preferences'  => 'rondo_people_list_preferences',
+		'stadion_people_list_column_order' => 'rondo_people_list_column_order',
+		'stadion_people_list_column_widths' => 'rondo_people_list_column_widths',
+	];
+
+	$user_ids = get_users( [ 'fields' => 'ID' ] );
+	foreach ( $user_ids as $uid ) {
+		foreach ( $user_meta_keys as $old_meta => $new_meta ) {
+			$old_value = get_user_meta( $uid, $old_meta, true );
+			if ( '' !== $old_value && false !== $old_value ) {
+				$new_value = get_user_meta( $uid, $new_meta, true );
+				if ( '' === $new_value || false === $new_value ) {
+					update_user_meta( $uid, $new_meta, $old_value );
+				}
+				delete_user_meta( $uid, $old_meta );
+			}
+		}
+	}
+
+	update_option( 'rondo_options_migrated', '1' );
+}
+add_action( 'admin_init', 'rondo_migrate_options' );
+add_action( 'rest_api_init', 'rondo_migrate_options' );
+
 // Load WP-CLI commands if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once RONDO_PLUGIN_DIR . '/class-wp-cli.php';
