@@ -64,13 +64,6 @@ export const wpApi = {
   // Entity lookup (team or commissie by ID - avoids 404 fallback)
   getEntity: (id) => api.get(`/stadion/v1/entity/${id}`),
 
-  // Important Dates
-  getDates: (params) => api.get('/wp/v2/important-dates', { params }),
-  getDate: (id) => api.get(`/wp/v2/important-dates/${id}`),
-  createDate: (data) => api.post('/wp/v2/important-dates', data),
-  updateDate: (id, data) => api.put(`/wp/v2/important-dates/${id}`, data),
-  deleteDate: (id) => api.delete(`/wp/v2/important-dates/${id}`),
-  
   // Taxonomies
   getPersonLabels: () => api.get('/wp/v2/person_label', { params: { per_page: 100, _fields: 'id,name,slug,count' } }),
   createPersonLabel: (data) => api.post('/wp/v2/person_label', data),
@@ -92,8 +85,6 @@ export const wpApi = {
   updateRelationshipType: (id, data) => api.post(`/wp/v2/relationship_type/${id}`, data),
   deleteRelationshipType: (id) => api.delete(`/wp/v2/relationship_type/${id}?force=true`),
   restoreRelationshipTypeDefaults: () => api.post('/stadion/v1/relationship-types/restore-defaults'),
-  getDateTypes: () => api.get('/wp/v2/date_type', { params: { per_page: 100 } }),
-
   // Discipline Cases
   getDisciplineCases: (params) => api.get('/wp/v2/discipline-cases', { params }),
   getDisciplineCase: (id, params = {}) => api.get(`/wp/v2/discipline-cases/${id}`, { params }),
@@ -157,7 +148,6 @@ export const prmApi = {
   updateMentionNotifications: (preference) => api.post('/stadion/v1/user/mention-notifications', { preference }),
   
   // Person-specific
-  getPersonDates: (personId) => api.get(`/stadion/v1/people/${personId}/dates`),
   getPersonTimeline: (personId) => api.get(`/stadion/v1/people/${personId}/timeline`),
   getPersonNotes: (personId) => api.get(`/stadion/v1/people/${personId}/notes`),
   createNote: (personId, content, visibility = 'private') =>
