@@ -14,7 +14,7 @@ Simplify birthdate handling by moving from the Important Dates CPT to a simple p
 
 - [x] **Phase 147: Birthdate Field & Widget** - Add birthdate to person, display in header, update dashboard widget
 - [x] **Phase 148: Infrastructure Removal** - Delete data and remove Important Dates subsystem
-- [ ] **Phase 149: Fix vCard Birthday Export** - Update vCard export to read from person.birthdate
+- [x] **Phase 149: Fix vCard Birthday Export** - Update vCard export to read from person.birthdate
 - [ ] **Phase 150: Update Documentation** - Fix stale "important dates" references in docs
 
 ## Phase Details
@@ -45,7 +45,7 @@ Plans:
 **Plans:** 1 plans
 
 Plans:
-- [ ] 149-01-PLAN.md — Update vCard export to read from person.acf.birthdate
+- [x] 149-01-PLAN.md — Update vCard export to read from person.acf.birthdate
 
 ### Phase 150: Update Documentation
 **Goal**: Documentation reflects new birthdate model without "important dates" references
@@ -59,7 +59,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 147. Birthdate Field & Widget | 1/1 | Complete | 2026-02-06 |
 | 148. Infrastructure Removal | 2/2 | Complete | 2026-02-06 |
-| 149. Fix vCard Birthday Export | 0/1 | Planned | - |
+| 149. Fix vCard Birthday Export | 1/1 | Complete | 2026-02-06 |
 | 150. Update Documentation | 0/0 | Pending | - |
 
 ---
@@ -70,3 +70,4 @@ Plans:
 *Phase 148 completed: 2026-02-06*
 *Phases 149-150 added: 2026-02-06 (gap closure from audit)*
 *Phase 149 planned: 2026-02-06*
+*Phase 149 completed: 2026-02-06*
