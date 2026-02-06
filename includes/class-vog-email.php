@@ -7,7 +7,7 @@
  * @package Stadion\VOG
  */
 
-namespace Stadion\VOG;
+namespace Rondo\VOG;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

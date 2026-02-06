@@ -3,7 +3,7 @@
  * Handles @mention parsing, storage, and rendering
  */
 
-namespace Stadion\Collaboration;
+namespace Rondo\Collaboration;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

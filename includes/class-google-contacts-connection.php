@@ -19,9 +19,9 @@
  * - sync_frequency: int - Sync frequency in minutes (15, 60, 360, 1440)
  */
 
-namespace Stadion\Contacts;
+namespace Rondo\Contacts;
 
-use Stadion\Data\CredentialEncryption;
+use Rondo\Data\CredentialEncryption;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

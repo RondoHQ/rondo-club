@@ -8,7 +8,7 @@
  * @package Stadion\CustomFields
  */
 
-namespace Stadion\CustomFields;
+namespace Rondo\CustomFields;
 
 use WP_Error;
 

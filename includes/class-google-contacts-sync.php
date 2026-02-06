@@ -6,10 +6,10 @@
  * Processes users round-robin with configurable sync frequency.
  */
 
-namespace Stadion\Contacts;
+namespace Rondo\Contacts;
 
-use Stadion\Import\GoogleContactsAPI;
-use Stadion\Export\GoogleContactsExport;
+use Rondo\Import\GoogleContactsAPI;
+use Rondo\Export\GoogleContactsExport;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

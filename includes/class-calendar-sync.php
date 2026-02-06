@@ -6,7 +6,7 @@
  * with rate limiting and auto-logging of past meetings as activities.
  */
 
-namespace Stadion\Calendar;
+namespace Rondo\Calendar;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

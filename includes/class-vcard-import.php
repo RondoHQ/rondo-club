@@ -6,7 +6,7 @@
  * Supports vCard versions 2.1, 3.0, and 4.0.
  */
 
-namespace Stadion\Import;
+namespace Rondo\Import;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

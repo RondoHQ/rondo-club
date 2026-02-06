@@ -5,7 +5,7 @@
  * Registers custom user role for Stadion users with minimal permissions
  */
 
-namespace Stadion\Core;
+namespace Rondo\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

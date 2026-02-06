@@ -7,7 +7,7 @@
  * @package Stadion\Config
  */
 
-namespace Stadion\Config;
+namespace Rondo\Config;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

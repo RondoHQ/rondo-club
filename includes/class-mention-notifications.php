@@ -3,7 +3,7 @@
  * Handles notifications when users are @mentioned
  */
 
-namespace Stadion\Collaboration;
+namespace Rondo\Collaboration;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

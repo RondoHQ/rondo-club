@@ -3,7 +3,7 @@
  * Custom Comment Types for Notes and Activities
  */
 
-namespace Stadion\Collaboration;
+namespace Rondo\Collaboration;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

@@ -6,7 +6,7 @@
  * Uses the Google Calendar API to fetch events and upserts them locally.
  */
 
-namespace Stadion\Calendar;
+namespace Rondo\Calendar;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

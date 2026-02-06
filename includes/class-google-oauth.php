@@ -9,7 +9,7 @@
  * - Incremental authorization for additional scopes
  */
 
-namespace Stadion\Calendar;
+namespace Rondo\Calendar;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

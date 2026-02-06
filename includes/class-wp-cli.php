@@ -8,18 +8,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Import namespaced classes for WP-CLI commands
-use Stadion\Collaboration\Reminders;
-use Stadion\Notifications\EmailChannel;
-use Stadion\Calendar\Connections;
-use Stadion\Calendar\Matcher;
-use Stadion\Calendar\Sync;
-use Stadion\Calendar\GoogleProvider;
-use Stadion\Calendar\CalDAVProvider;
-use Stadion\Export\VCard;
-use Stadion\Contacts\GoogleContactsSync;
-use Stadion\Contacts\GoogleContactsConnection;
-use Stadion\Import\GoogleContactsAPI;
-use Stadion\Collaboration\CommentTypes;
+use Rondo\Collaboration\Reminders;
+use Rondo\Notifications\EmailChannel;
+use Rondo\Calendar\Connections;
+use Rondo\Calendar\Matcher;
+use Rondo\Calendar\Sync;
+use Rondo\Calendar\GoogleProvider;
+use Rondo\Calendar\CalDAVProvider;
+use Rondo\Export\VCard;
+use Rondo\Contacts\GoogleContactsSync;
+use Rondo\Contacts\GoogleContactsConnection;
+use Rondo\Import\GoogleContactsAPI;
+use Rondo\Collaboration\CommentTypes;
 
 // Only load if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {

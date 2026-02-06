@@ -6,7 +6,7 @@
  * a linked calendar (Google Calendar, CalDAV) with encrypted credentials.
  */
 
-namespace Stadion\Calendar;
+namespace Rondo\Calendar;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

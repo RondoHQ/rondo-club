@@ -6,7 +6,7 @@
  * OAuth flows, and calendar event operations.
  */
 
-namespace Stadion\REST;
+namespace Rondo\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

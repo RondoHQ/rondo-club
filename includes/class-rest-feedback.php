@@ -6,7 +6,7 @@
  * via the REST API at stadion/v1/feedback.
  */
 
-namespace Stadion\REST;
+namespace Rondo\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

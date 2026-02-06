@@ -6,7 +6,7 @@
  * to WordPress post status (stadion_open, stadion_awaiting, stadion_completed).
  */
 
-namespace Stadion\Data;
+namespace Rondo\Data;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

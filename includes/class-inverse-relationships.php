@@ -5,7 +5,7 @@
  * Automatically creates/updates/deletes inverse relationships when relationships are modified.
  */
 
-namespace Stadion\Data;
+namespace Rondo\Data;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

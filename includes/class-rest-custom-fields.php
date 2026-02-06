@@ -8,9 +8,9 @@
  * @package Stadion\REST
  */
 
-namespace Stadion\REST;
+namespace Rondo\REST;
 
-use Stadion\CustomFields\Manager;
+use Rondo\CustomFields\Manager;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;

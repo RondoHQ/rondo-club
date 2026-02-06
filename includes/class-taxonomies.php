@@ -3,7 +3,7 @@
  * Custom Taxonomies Registration
  */
 
-namespace Stadion\Core;
+namespace Rondo\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

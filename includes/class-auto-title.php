@@ -3,7 +3,7 @@
  * Auto-generate post titles from ACF fields
  */
 
-namespace Stadion\Core;
+namespace Rondo\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

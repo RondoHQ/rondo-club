@@ -13,9 +13,9 @@
  * - last_error: string|null - Last error message
  */
 
-namespace Stadion\Sheets;
+namespace Rondo\Sheets;
 
-use Stadion\Data\CredentialEncryption;
+use Rondo\Data\CredentialEncryption;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

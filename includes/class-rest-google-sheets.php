@@ -10,10 +10,10 @@
  * - People list export to Google Sheets
  */
 
-namespace Stadion\REST;
+namespace Rondo\REST;
 
-use Stadion\Calendar\GoogleOAuth;
-use Stadion\Sheets\GoogleSheetsConnection;
+use Rondo\Calendar\GoogleOAuth;
+use Rondo\Sheets\GoogleSheetsConnection;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

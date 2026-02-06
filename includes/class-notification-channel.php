@@ -5,7 +5,7 @@
  * Provides the contract for notification channel implementations.
  */
 
-namespace Stadion\Notifications;
+namespace Rondo\Notifications;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

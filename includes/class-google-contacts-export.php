@@ -8,10 +8,10 @@
  * @package Stadion
  */
 
-namespace Stadion\Export;
+namespace Rondo\Export;
 
-use Stadion\Calendar\GoogleOAuth;
-use Stadion\Contacts\GoogleContactsConnection;
+use Rondo\Calendar\GoogleOAuth;
+use Rondo\Contacts\GoogleContactsConnection;
 use Google\Service\PeopleService;
 use Google\Service\PeopleService\Person;
 use Google\Service\PeopleService\Name;

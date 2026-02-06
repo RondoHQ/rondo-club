@@ -5,7 +5,7 @@
  * Handles date-based reminders and notifications
  */
 
-namespace Stadion\Collaboration;
+namespace Rondo\Collaboration;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

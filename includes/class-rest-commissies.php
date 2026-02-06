@@ -5,7 +5,7 @@
  * Handles REST API endpoints related to commissies domain.
  */
 
-namespace Stadion\REST;
+namespace Rondo\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

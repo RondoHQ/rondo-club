@@ -6,7 +6,7 @@
  * authenticated via a secret token URL.
  */
 
-namespace Stadion\Export;
+namespace Rondo\Export;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

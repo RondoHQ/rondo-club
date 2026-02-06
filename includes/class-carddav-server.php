@@ -7,7 +7,7 @@
  * @package Stadion
  */
 
-namespace Stadion\CardDAV;
+namespace Rondo\CardDAV;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

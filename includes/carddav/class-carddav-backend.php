@@ -8,7 +8,7 @@
  * @package Stadion
  */
 
-namespace Stadion\CardDAV;
+namespace Rondo\CardDAV;
 
 use Sabre\CardDAV\Backend\AbstractBackend;
 use Sabre\CardDAV\Backend\SyncSupport;

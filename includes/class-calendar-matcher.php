@@ -6,7 +6,7 @@
  * Uses transient-based caching for performance.
  */
 
-namespace Stadion\Calendar;
+namespace Rondo\Calendar;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
