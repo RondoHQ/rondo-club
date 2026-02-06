@@ -137,11 +137,14 @@ class MembershipFees {
 	/**
 	 * Get a single fee amount by type
 	 *
-	 * @param string $type The fee type (mini, pupil, junior, senior, recreant, donateur).
+	 * @param string      $type   The fee type (mini, pupil, junior, senior, recreant, donateur).
+	 * @param string|null $season Optional season key, defaults to current season.
 	 * @return int The fee amount in euros
 	 */
-	public function get_fee( string $type ): int {
-		$settings = $this->get_all_settings();
+	public function get_fee( string $type, ?string $season = null ): int {
+		$settings = $season !== null
+			? $this->get_settings_for_season( $season )
+			: $this->get_all_settings();
 
 		if ( ! isset( $settings[ $type ] ) ) {
 			// Return 0 for unknown types
@@ -345,11 +348,12 @@ class MembershipFees {
 	 * - Recreant: Senior with only recreational teams
 	 * - Donateur: Only if no valid age group and no teams
 	 *
-	 * @param int $person_id The person post ID.
+	 * @param int         $person_id The person post ID.
+	 * @param string|null $season    Optional season key for fee lookup, defaults to current season.
 	 * @return array{category: string, base_fee: int, leeftijdsgroep: string|null, person_id: int}|null
 	 *         Fee data array or null if person cannot be calculated.
 	 */
-	public function calculate_fee( int $person_id ): ?array {
+	public function calculate_fee( int $person_id, ?string $season = null ): ?array {
 		// Get leeftijdsgroep from person
 		$leeftijdsgroep = get_field( 'leeftijdsgroep', $person_id );
 		$category       = null;
@@ -363,7 +367,7 @@ class MembershipFees {
 		if ( in_array( $category, [ 'mini', 'pupil', 'junior' ], true ) ) {
 			return [
 				'category'       => $category,
-				'base_fee'       => $this->get_fee( $category ),
+				'base_fee'       => $this->get_fee( $category, $season ),
 				'leeftijdsgroep' => $leeftijdsgroep,
 				'person_id'      => $person_id,
 			];
@@ -382,7 +386,7 @@ class MembershipFees {
 					// Treat as donateur
 					return [
 						'category'       => 'donateur',
-						'base_fee'       => $this->get_fee( 'donateur' ),
+						'base_fee'       => $this->get_fee( 'donateur', $season ),
 						'leeftijdsgroep' => $leeftijdsgroep,
 						'person_id'      => $person_id,
 					];
@@ -407,7 +411,7 @@ class MembershipFees {
 
 			return [
 				'category'       => $fee_category,
-				'base_fee'       => $this->get_fee( $fee_category ),
+				'base_fee'       => $this->get_fee( $fee_category, $season ),
 				'leeftijdsgroep' => $leeftijdsgroep,
 				'person_id'      => $person_id,
 			];
@@ -426,7 +430,7 @@ class MembershipFees {
 		if ( $this->is_donateur( $person_id ) ) {
 			return [
 				'category'       => 'donateur',
-				'base_fee'       => $this->get_fee( 'donateur' ),
+				'base_fee'       => $this->get_fee( 'donateur', $season ),
 				'leeftijdsgroep' => $leeftijdsgroep,
 				'person_id'      => $person_id,
 			];
@@ -862,6 +866,9 @@ class MembershipFees {
 	 * } Family groups and person data.
 	 */
 	public function build_family_groups( ?string $season = null ): array {
+		// Resolve season for consistent usage
+		$season = $season ?: $this->get_season_key();
+
 		// Query all person posts (suppress_filters to bypass access control in CLI/cron contexts)
 		$query = new \WP_Query(
 			[
@@ -880,8 +887,8 @@ class MembershipFees {
 		$youth_categories = [ 'mini', 'pupil', 'junior' ];
 
 		foreach ( $query->posts as $person_id ) {
-			// Calculate fee for this person
-			$fee_data = $this->calculate_fee( $person_id );
+			// Calculate fee for this person using season-specific rates
+			$fee_data = $this->calculate_fee( $person_id, $season );
 
 			// Skip if not calculable
 			if ( $fee_data === null ) {
@@ -1073,8 +1080,11 @@ class MembershipFees {
 	 * @return array|null Fee data with family discount info, or null if not calculable.
 	 */
 	public function calculate_fee_with_family_discount( int $person_id, ?string $season = null ): ?array {
-		// Get base fee using calculate_fee
-		$fee_data = $this->calculate_fee( $person_id );
+		// Resolve season for consistent usage
+		$season = $season ?: $this->get_season_key();
+
+		// Get base fee using calculate_fee with season
+		$fee_data = $this->calculate_fee( $person_id, $season );
 
 		if ( $fee_data === null ) {
 			return null;
