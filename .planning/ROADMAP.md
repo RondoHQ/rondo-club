@@ -51,7 +51,10 @@ Plans:
 **Goal**: Documentation reflects new birthdate model without "important dates" references
 **Depends on**: Phase 148
 **Gap Closure**: Closes tech debt from v19.0 audit (5 docs with stale references)
-**Plans:** 0 plans
+**Plans:** 1 plans
+
+Plans:
+- [ ] 150-01-PLAN.md — Fix stale "important dates" references in 4 docs
 
 ## Progress
 
@@ -60,7 +63,7 @@ Plans:
 | 147. Birthdate Field & Widget | 1/1 | Complete | 2026-02-06 |
 | 148. Infrastructure Removal | 2/2 | Complete | 2026-02-06 |
 | 149. Fix vCard Birthday Export | 1/1 | Complete | 2026-02-06 |
-| 150. Update Documentation | 0/0 | Pending | - |
+| 150. Update Documentation | 0/1 | In Progress | - |
 
 ---
 *Roadmap created: 2026-02-06*
@@ -71,3 +74,4 @@ Plans:
 *Phases 149-150 added: 2026-02-06 (gap closure from audit)*
 *Phase 149 planned: 2026-02-06*
 *Phase 149 completed: 2026-02-06*
+*Phase 150 planned: 2026-02-06*
