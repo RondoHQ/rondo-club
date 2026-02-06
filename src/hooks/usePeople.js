@@ -13,7 +13,6 @@ export const peopleKeys = {
   details: () => [...peopleKeys.all, 'detail'],
   detail: (id) => [...peopleKeys.details(), id],
   timeline: (id) => [...peopleKeys.detail(id), 'timeline'],
-  dates: (id) => [...peopleKeys.detail(id), 'dates'],
   todos: (id) => [...peopleKeys.detail(id), 'todos'],
 };
 
@@ -181,17 +180,6 @@ export function usePersonTimeline(id) {
   });
 }
 
-export function usePersonDates(id) {
-  return useQuery({
-    queryKey: peopleKeys.dates(id),
-    queryFn: async () => {
-      const response = await prmApi.getPersonDates(id);
-      return response.data;
-    },
-    enabled: !!id,
-  });
-}
-
 export function usePersonTodos(personId) {
   return useQuery({
     queryKey: peopleKeys.todos(personId),
@@ -259,24 +247,6 @@ export function useCreatePerson({ onSuccess } = {}) {
           await prmApi.sideloadGravatar(personId, data.email);
         } catch {
           // Gravatar sideload failed silently - not critical
-        }
-      }
-
-      // Create birthday if provided
-      if (data.birthday && data.birthdayType) {
-        try {
-          await wpApi.createDate({
-            title: `${data.first_name}'s Birthday`,
-            status: 'publish',
-            date_type: [data.birthdayType.id],
-            acf: {
-              date_value: data.birthday,
-              is_recurring: true,
-              related_people: [personId],
-            },
-          });
-        } catch {
-          // Birthday creation failed silently - not critical
         }
       }
 
@@ -522,18 +492,3 @@ export function useDeleteTodo() {
   });
 }
 
-// Date mutations
-export function useDeleteDate() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ dateId, personId }) => wpApi.deleteDate(dateId),
-    onSuccess: (_, { personId }) => {
-      if (personId) {
-        queryClient.invalidateQueries({ queryKey: peopleKeys.dates(personId) });
-        queryClient.invalidateQueries({ queryKey: peopleKeys.detail(personId) });
-      }
-      queryClient.invalidateQueries({ queryKey: ['reminders'] });
-    },
-  });
-}
