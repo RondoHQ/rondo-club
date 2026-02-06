@@ -322,8 +322,8 @@ export default function TeamsList() {
     setEditingRowId(null);
   };
 
-  // Get current user ID from stadionConfig
-  const currentUserId = window.stadionConfig?.userId;
+  // Get current user ID from rondoConfig
+  const currentUserId = window.rondoConfig?.userId;
 
   const { data: teams, isLoading, error } = useQuery({
     queryKey: ['teams', search],

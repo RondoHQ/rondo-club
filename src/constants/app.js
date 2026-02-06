@@ -3,5 +3,5 @@
  * Centralized configuration for app-wide values
  */
 
-export const APP_NAME = 'Stadion';
+export const APP_NAME = 'Rondo Club';
 

@@ -117,7 +117,7 @@ export default function FeedbackModal({
     // Capture system info if opted in
     if (data.include_system_info) {
       submitData.browser_info = navigator.userAgent;
-      submitData.app_version = window.stadionConfig?.version || 'unknown';
+      submitData.app_version = window.rondoConfig?.version || 'unknown';
       submitData.url_context = window.location.href;
     }
 

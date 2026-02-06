@@ -15,7 +15,7 @@ const TABS = [
 export default function Labels() {
   useDocumentTitle('Labels - Instellingen');
   const queryClient = useQueryClient();
-  const config = window.stadionConfig || {};
+  const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
 
   const [activeTab, setActiveTab] = useState('person');

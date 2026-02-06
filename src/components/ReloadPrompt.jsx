@@ -73,7 +73,7 @@ export function ReloadPrompt() {
               Klaar voor offline gebruik
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Stadion werkt nu ook zonder internet
+              Rondo Club werkt nu ook zonder internet
             </p>
           </div>
           <button
@@ -98,7 +98,7 @@ export function ReloadPrompt() {
                 Update beschikbaar
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Een nieuwe versie van Stadion is beschikbaar
+                Een nieuwe versie van Rondo Club is beschikbaar
               </p>
             </div>
           </div>

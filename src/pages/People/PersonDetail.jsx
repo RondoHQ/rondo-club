@@ -913,7 +913,7 @@ export default function PersonDetail() {
     }
 
     // Add FreeScout if there's a FreeScout ID AND a configured URL
-    const freescoutUrl = window.stadionConfig?.freescoutUrl;
+    const freescoutUrl = window.rondoConfig?.freescoutUrl;
     if (acf['freescout-id'] && freescoutUrl) {
       links.push({
         contact_type: 'freescout',
@@ -1123,7 +1123,7 @@ export default function PersonDetail() {
                           className="flex-shrink-0 hover:opacity-80 transition-opacity"
                           title="Bekijk in Sportlink Club"
                         >
-                          <img src={`${window.stadionConfig?.themeUrl}/public/icons/sportlink.png`} alt="Sportlink" className="w-5 h-5" />
+                          <img src={`${window.rondoConfig?.themeUrl}/public/icons/sportlink.png`} alt="Sportlink" className="w-5 h-5" />
                         </a>
                       );
                     }
@@ -1139,7 +1139,7 @@ export default function PersonDetail() {
                           className="flex-shrink-0 hover:opacity-80 transition-opacity"
                           title="Bekijk in Freescout"
                         >
-                          <img src={`${window.stadionConfig?.themeUrl}/public/icons/freescout.png`} alt="Freescout" className="w-5 h-5" />
+                          <img src={`${window.rondoConfig?.themeUrl}/public/icons/freescout.png`} alt="Freescout" className="w-5 h-5" />
                         </a>
                       );
                     }

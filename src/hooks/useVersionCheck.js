@@ -18,7 +18,7 @@ import { prmApi } from '../api/client';
  */
 export function useVersionCheck({ checkInterval = 5 * 60 * 1000 } = {}) {
   const [hasUpdate, setHasUpdate] = useState(false);
-  const [currentBuildTime] = useState(() => window.stadionConfig?.buildTime || null);
+  const [currentBuildTime] = useState(() => window.rondoConfig?.buildTime || null);
   const [latestVersion, setLatestVersion] = useState(null);
 
   const checkVersion = useCallback(async () => {
@@ -71,7 +71,7 @@ export function useVersionCheck({ checkInterval = 5 * 60 * 1000 } = {}) {
   }, [checkVersion]);
 
   // Keep currentVersion for backward compatibility with consumers
-  const currentVersion = window.stadionConfig?.version || null;
+  const currentVersion = window.rondoConfig?.version || null;
 
   return {
     hasUpdate,

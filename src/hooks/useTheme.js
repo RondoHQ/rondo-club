@@ -14,7 +14,7 @@ const ACCENT_COLORS = ['club', 'orange', 'teal', 'indigo', 'emerald', 'violet', 
  * Accent color hex values (used for favicon and light mode theme-color)
  */
 const ACCENT_HEX = {
-  club: '#006935', // Fallback; getClubHex() reads from stadionConfig
+  club: '#006935', // Fallback; getClubHex() reads from rondoConfig
   orange: '#f97316',
   teal: '#14b8a6',
   indigo: '#6366f1',
@@ -41,11 +41,11 @@ const ACCENT_HEX_DARK = {
 };
 
 /**
- * Get dynamic club color from stadionConfig
+ * Get dynamic club color from rondoConfig
  * @returns {string} Club color hex
  */
 function getClubHex() {
-  return window.stadionConfig?.accentColor || ACCENT_HEX.club;
+  return window.rondoConfig?.accentColor || ACCENT_HEX.club;
 }
 
 /**

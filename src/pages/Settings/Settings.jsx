@@ -43,7 +43,7 @@ export default function Settings() {
   const { tab: urlTab, subtab: urlSubtab } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const config = window.stadionConfig || {};
+  const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
   const userId = config.userId;
 
@@ -706,7 +706,7 @@ export default function Settings() {
 // Appearance Tab Component
 function AppearanceTab() {
   const { colorScheme, setColorScheme, effectiveColorScheme, accentColor, setAccentColor } = useTheme();
-  const config = window.stadionConfig || {};
+  const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
 
   // Club Configuration state (admin only)
@@ -755,7 +755,7 @@ function AppearanceTab() {
       setShowPersonSearch(false);
       setPersonSearchQuery('');
       // Update the global config so filtering works immediately
-      window.stadionConfig.currentUserPersonId = person.id;
+      window.rondoConfig.currentUserPersonId = person.id;
     } catch {
       alert('Kan persoon niet koppelen. Probeer het opnieuw.');
     } finally {
@@ -769,7 +769,7 @@ function AppearanceTab() {
       await prmApi.updateLinkedPerson(null);
       setLinkedPerson(null);
       // Update the global config
-      window.stadionConfig.currentUserPersonId = null;
+      window.rondoConfig.currentUserPersonId = null;
     } catch {
       alert('Kan persoon niet ontkoppelen. Probeer het opnieuw.');
     } finally {
@@ -794,7 +794,7 @@ function AppearanceTab() {
     return () => {
       // Revert preview if color was changed but not saved
       if (accentColor === 'club') {
-        // Clear inline CSS overrides - useTheme will re-apply from stadionConfig
+        // Clear inline CSS overrides - useTheme will re-apply from rondoConfig
         const root = document.documentElement;
         for (const shade of ['500', '600', '700']) {
           root.style.removeProperty(`--color-accent-${shade}`);
@@ -812,10 +812,10 @@ function AppearanceTab() {
         accent_color: clubColor,
         freescout_url: freescoutUrl,
       });
-      // Update window.stadionConfig with saved values
-      window.stadionConfig.clubName = response.data.club_name;
-      window.stadionConfig.accentColor = response.data.accent_color;
-      window.stadionConfig.freescoutUrl = response.data.freescout_url;
+      // Update window.rondoConfig with saved values
+      window.rondoConfig.clubName = response.data.club_name;
+      window.rondoConfig.accentColor = response.data.accent_color;
+      window.rondoConfig.freescoutUrl = response.data.freescout_url;
 
       // Clear preview overrides so useTheme can apply full scale
       if (accentColor === 'club') {
@@ -823,7 +823,7 @@ function AppearanceTab() {
         for (const shade of ['500', '600', '700']) {
           root.style.removeProperty(`--color-accent-${shade}`);
         }
-        // useTheme's applyTheme will now generate the full scale from the new stadionConfig value
+        // useTheme's applyTheme will now generate the full scale from the new rondoConfig value
         setAccentColor('club');
       }
 
@@ -1013,7 +1013,7 @@ function AppearanceTab() {
               <button
                 key={color}
                 onClick={() => setAccentColor(color)}
-                style={color === 'club' ? { backgroundColor: window.stadionConfig?.accentColor || '#006935' } : undefined}
+                style={color === 'club' ? { backgroundColor: window.rondoConfig?.accentColor || '#006935' } : undefined}
                 className={`
                   w-10 h-10 rounded-full transition-transform hover:scale-110
                   ${color !== 'club' ? accentColorClasses[color] : ''}
@@ -1191,7 +1191,7 @@ function CalendarsTab() {
   useEffect(() => {
     const fetchIcalUrl = async () => {
       try {
-        const response = await apiClient.get('/stadion/v1/user/ical-url');
+        const response = await apiClient.get('/rondo/v1/user/ical-url');
         setIcalUrl(response.data.url);
         setWebcalUrl(response.data.webcal_url);
       } catch {
@@ -1288,7 +1288,7 @@ function CalendarsTab() {
 
     setRegenerating(true);
     try {
-      const response = await apiClient.post('/stadion/v1/user/regenerate-ical-token');
+      const response = await apiClient.post('/rondo/v1/user/regenerate-ical-token');
       setIcalUrl(response.data.url);
       setWebcalUrl(response.data.webcal_url);
     } catch {
@@ -3003,7 +3003,7 @@ function APIAccessTab({
           </div>
           <div>
             <label className="text-xs text-gray-500 dark:text-gray-400">REST API Basis-URL</label>
-            <p className="font-mono text-sm dark:text-gray-200">{window.location.origin}/wp-json/stadion/v1/</p>
+            <p className="font-mono text-sm dark:text-gray-200">{window.location.origin}/wp-json/rondo/v1/</p>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
             Gebruik HTTP Basic Authentication met je gebruikersnaam en een applicatiewachtwoord.
@@ -3019,9 +3019,9 @@ function DataTab() {
 
   const handleExport = (format) => {
     if (format === 'vcard') {
-      window.location.href = '/wp-json/stadion/v1/export/vcard';
+      window.location.href = '/wp-json/rondo/v1/export/vcard';
     } else if (format === 'google-csv') {
-      window.location.href = '/wp-json/stadion/v1/export/google-csv';
+      window.location.href = '/wp-json/rondo/v1/export/google-csv';
     }
   };
   

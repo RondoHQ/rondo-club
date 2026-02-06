@@ -322,8 +322,8 @@ export default function CommissiesList() {
     setEditingRowId(null);
   };
 
-  // Get current user ID from stadionConfig
-  const currentUserId = window.stadionConfig?.userId;
+  // Get current user ID from rondoConfig
+  const currentUserId = window.rondoConfig?.userId;
 
   const { data: commissies, isLoading, error } = useQuery({
     queryKey: ['commissies', search],

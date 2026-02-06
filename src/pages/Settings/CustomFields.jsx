@@ -123,7 +123,7 @@ function SortableFieldRow({ field, onEdit, onDelete, getFieldTypeLabel }) {
 
 export default function CustomFields() {
   useDocumentTitle('Aangepaste velden - Instellingen');
-  const config = window.stadionConfig || {};
+  const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
   const queryClient = useQueryClient();
 

@@ -243,8 +243,8 @@ function MeetingCard({ meeting, onClick, isNext }) {
   const formattedEndTime = format(endTime, 'HH:mm');
 
   // Filter out current user from matched people
-  const currentUserPersonId = window.stadionConfig?.currentUserPersonId
-    ? Number(window.stadionConfig.currentUserPersonId)
+  const currentUserPersonId = window.rondoConfig?.currentUserPersonId
+    ? Number(window.rondoConfig.currentUserPersonId)
     : null;
   const filteredMatchedPeople = (meeting.matched_people || []).filter(
     (person) => !currentUserPersonId || person.person_id !== currentUserPersonId

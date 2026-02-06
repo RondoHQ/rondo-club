@@ -44,7 +44,7 @@ export function IOSInstallModal() {
       <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl p-6 max-w-sm w-full mx-4 sm:mx-0 shadow-lg">
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Installeer Stadion
+            Installeer Rondo Club
           </h3>
           <button
             onClick={handleDismiss}
@@ -56,7 +56,7 @@ export function IOSInstallModal() {
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          Voor snellere toegang kun je Stadion installeren op je beginscherm:
+          Voor snellere toegang kun je Rondo Club installeren op je beginscherm:
         </p>
 
         <ol className="space-y-4">
