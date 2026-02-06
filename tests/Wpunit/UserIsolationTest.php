@@ -45,22 +45,6 @@ class UserIsolationTest extends StadionTestCase {
 		return $user_id;
 	}
 
-	/**
-	 * Helper to create an important date post.
-	 *
-	 * @param array $args Post arguments
-	 * @return int Post ID
-	 */
-	private function createImportantDatePost( array $args = [] ): int {
-		$defaults = [
-			'post_type'   => 'important_date',
-			'post_status' => 'publish',
-			'post_author' => get_current_user_id() ?: 1,
-		];
-
-		return self::factory()->post->create( array_merge( $defaults, $args ) );
-	}
-
 	// =========================================================================
 	// Task 1: Test user_can_access_post() author check
 	// =========================================================================
@@ -124,35 +108,6 @@ class UserIsolationTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test that author can access their own important_date post.
-	 */
-	public function test_author_can_access_own_important_date_post(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
-
-		$date_id = $this->createImportantDatePost( [ 'post_author' => $alice_id ] );
-
-		$this->assertTrue(
-			$this->access_control->user_can_access_post( $date_id, $alice_id ),
-			'Alice should have access to her own important_date post'
-		);
-	}
-
-	/**
-	 * Test that non-author cannot access another user's important_date post.
-	 */
-	public function test_non_author_cannot_access_important_date_post(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
-		$bob_id   = $this->createApprovedStadionUser( [ 'user_login' => 'bob' ] );
-
-		$date_id = $this->createImportantDatePost( [ 'post_author' => $alice_id ] );
-
-		$this->assertFalse(
-			$this->access_control->user_can_access_post( $date_id, $bob_id ),
-			'Bob should NOT have access to Alice\'s important_date post'
-		);
-	}
-
-	/**
 	 * Test that unapproved user cannot access any posts.
 	 */
 	public function test_unapproved_user_cannot_access_posts(): void {
@@ -163,9 +118,8 @@ class UserIsolationTest extends StadionTestCase {
 		update_user_meta( $unapproved_id, STADION_User_Roles::APPROVAL_META_KEY, '0' );
 
 		// Create posts by Alice
-		$person_id  = $this->createPerson( [ 'post_author' => $alice_id ] );
-		$team_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
-		$date_id    = $this->createImportantDatePost( [ 'post_author' => $alice_id ] );
+		$person_id = $this->createPerson( [ 'post_author' => $alice_id ] );
+		$team_id   = $this->createOrganization( [ 'post_author' => $alice_id ] );
 
 		// Even posts created by the unapproved user shouldn't be accessible
 		$own_person_id = $this->createPerson( [ 'post_author' => $unapproved_id ] );
@@ -177,10 +131,6 @@ class UserIsolationTest extends StadionTestCase {
 		$this->assertFalse(
 			$this->access_control->user_can_access_post( $team_id, $unapproved_id ),
 			'Unapproved user should NOT access other\'s team post'
-		);
-		$this->assertFalse(
-			$this->access_control->user_can_access_post( $date_id, $unapproved_id ),
-			'Unapproved user should NOT access other\'s important_date post'
 		);
 		$this->assertFalse(
 			$this->access_control->user_can_access_post( $own_person_id, $unapproved_id ),
@@ -276,14 +226,12 @@ class UserIsolationTest extends StadionTestCase {
 		$bob_id   = $this->createApprovedStadionUser( [ 'user_login' => 'bob' ] );
 
 		// Create posts for Alice
-		$alice_person  = $this->createPerson( [ 'post_author' => $alice_id ] );
-		$alice_team = $this->createOrganization( [ 'post_author' => $alice_id ] );
-		$alice_date    = $this->createImportantDatePost( [ 'post_author' => $alice_id ] );
+		$alice_person = $this->createPerson( [ 'post_author' => $alice_id ] );
+		$alice_team   = $this->createOrganization( [ 'post_author' => $alice_id ] );
 
 		// Create posts for Bob
-		$bob_person  = $this->createPerson( [ 'post_author' => $bob_id ] );
-		$bob_team = $this->createOrganization( [ 'post_author' => $bob_id ] );
-		$bob_date    = $this->createImportantDatePost( [ 'post_author' => $bob_id ] );
+		$bob_person = $this->createPerson( [ 'post_author' => $bob_id ] );
+		$bob_team   = $this->createOrganization( [ 'post_author' => $bob_id ] );
 
 		// Test Alice's person access (cast to int - DB returns strings)
 		$alice_person_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'person', $alice_id ) );
@@ -294,11 +242,6 @@ class UserIsolationTest extends StadionTestCase {
 		$alice_team_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'team', $alice_id ) );
 		$this->assertContains( $alice_team, $alice_team_ids );
 		$this->assertNotContains( $bob_team, $alice_team_ids );
-
-		// Test Alice's important_date access
-		$alice_date_ids = array_map( 'intval', $this->access_control->get_accessible_post_ids( 'important_date', $alice_id ) );
-		$this->assertContains( $alice_date, $alice_date_ids );
-		$this->assertNotContains( $bob_date, $alice_date_ids );
 	}
 
 	/**

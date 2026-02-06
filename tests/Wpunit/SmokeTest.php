@@ -36,11 +36,6 @@ class SmokeTest extends StadionTestCase {
 		$this->assertNotNull( $post_type, 'Team post type should be registered' );
 	}
 
-	public function test_important_date_post_type_is_registered(): void {
-		$post_type = get_post_type_object( 'important_date' );
-		$this->assertNotNull( $post_type, 'Important Date post type should be registered' );
-	}
-
 	public function test_acf_pro_is_available(): void {
 		$this->assertTrue(
 			function_exists( 'get_field' ),

@@ -258,119 +258,22 @@ class RelationshipsSharesTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test person-dates relationship endpoint.
-	 * GET /stadion/v1/people/{id}/dates should return dates linked to the person.
-	 */
-	public function test_person_dates_endpoint_returns_linked_dates(): void {
-		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel3' ] );
-		wp_set_current_user( $alice_id );
-
-		// Create person
-		$person_id = $this->createPerson(
-			[
-				'post_author' => $alice_id,
-				'post_title'  => 'Jane Smith',
-			]
-		);
-
-		// Create important_date linked to person
-		$date_id = $this->createImportantDate(
-			$person_id,
-			[
-				'post_author' => $alice_id,
-				'post_title'  => 'Birthday',
-			],
-			[
-				'date_value'   => '1990-05-15',
-				'is_recurring' => true,
-			]
-		);
-
-		// The createImportantDate links via 'person' field, but REST expects 'related_people'
-		// Let's also set the related_people field explicitly
-		update_field( 'related_people', [ $person_id ], $date_id );
-
-		// GET /stadion/v1/people/{person_id}/dates
-		$response = $this->restRequest( 'GET', '/stadion/v1/people/' . $person_id . '/dates' );
-
-		$this->assertEquals( 200, $response->get_status(), 'Response should be 200 OK' );
-
-		$data = $response->get_data();
-		$this->assertIsArray( $data, 'Response should be an array' );
-		$this->assertCount( 1, $data, 'Should have 1 date' );
-		$this->assertEquals( $date_id, $data[0]['id'], 'Date should match' );
-	}
-
-	/**
-	 * Test person computed fields (is_deceased, birth_year).
-	 */
-	public function test_person_computed_fields_is_deceased(): void {
-		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel4' ] );
-		wp_set_current_user( $alice_id );
-
-		// Create person
-		$person_id = $this->createPerson(
-			[
-				'post_author' => $alice_id,
-				'post_title'  => 'Deceased Person',
-			]
-		);
-
-		// Create a death date linked to this person
-		$death_date_id = self::factory()->post->create(
-			[
-				'post_type'   => 'important_date',
-				'post_status' => 'publish',
-				'post_author' => $alice_id,
-				'post_title'  => 'Death',
-			]
-		);
-		update_field( 'related_people', [ $person_id ], $death_date_id );
-		update_field( 'date_value', '2020-01-15', $death_date_id );
-
-		// Set date_type taxonomy to 'died'
-		wp_set_object_terms( $death_date_id, 'died', 'date_type' );
-
-		// GET person via REST API
-		$response = $this->restRequest( 'GET', '/wp/v2/people/' . $person_id );
-
-		$this->assertEquals( 200, $response->get_status(), 'Response should be 200 OK' );
-
-		$data = $response->get_data();
-		$this->assertArrayHasKey( 'is_deceased', $data, 'Response should have is_deceased field' );
-		$this->assertTrue( $data['is_deceased'], 'Person with death date should be marked as deceased' );
-	}
-
-	/**
-	 * Test person computed field birth_year.
+	 * Test person computed field birth_year from birthdate field.
 	 */
 	public function test_person_computed_fields_birth_year(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel5' ] );
 		wp_set_current_user( $alice_id );
 
-		// Create person
+		// Create person with birthdate
 		$person_id = $this->createPerson(
 			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Person with Birthday',
-			]
-		);
-
-		// Create a birthday date linked to this person
-		$birthday_id = self::factory()->post->create(
+			],
 			[
-				'post_type'   => 'important_date',
-				'post_status' => 'publish',
-				'post_author' => $alice_id,
-				'post_title'  => 'Birthday',
+				'birthdate' => '1985-03-20',
 			]
 		);
-		update_field( 'related_people', [ $person_id ], $birthday_id );
-		update_field( 'date_value', '1985-03-20', $birthday_id );
-		update_field( 'year_unknown', false, $birthday_id );
-
-		// Set date_type taxonomy to 'birthday'
-		wp_set_object_terms( $birthday_id, 'birthday', 'date_type' );
 
 		// GET person via REST API
 		$response = $this->restRequest( 'GET', '/wp/v2/people/' . $person_id );
@@ -383,37 +286,28 @@ class RelationshipsSharesTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test that birth_year is null when year_unknown is true.
+	 * Test is_deceased is always false (death date feature removed).
 	 */
-	public function test_person_birth_year_null_when_year_unknown(): void {
-		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel6' ] );
+	public function test_person_is_deceased_always_false(): void {
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel4' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
 		$person_id = $this->createPerson(
 			[
 				'post_author' => $alice_id,
-				'post_title'  => 'Person Unknown Year',
+				'post_title'  => 'Test Person',
 			]
 		);
 
-		// Create birthday with year_unknown = true
-		$birthday_id = self::factory()->post->create(
-			[
-				'post_type'   => 'important_date',
-				'post_status' => 'publish',
-				'post_author' => $alice_id,
-			]
-		);
-		update_field( 'related_people', [ $person_id ], $birthday_id );
-		update_field( 'date_value', '1990-06-15', $birthday_id );
-		update_field( 'year_unknown', true, $birthday_id );
-		wp_set_object_terms( $birthday_id, 'birthday', 'date_type' );
-
+		// GET person via REST API
 		$response = $this->restRequest( 'GET', '/wp/v2/people/' . $person_id );
-		$data     = $response->get_data();
 
-		$this->assertNull( $data['birth_year'], 'Birth year should be null when year_unknown is true' );
+		$this->assertEquals( 200, $response->get_status(), 'Response should be 200 OK' );
+
+		$data = $response->get_data();
+		$this->assertArrayHasKey( 'is_deceased', $data, 'Response should have is_deceased field' );
+		$this->assertFalse( $data['is_deceased'], 'is_deceased should always be false (feature removed)' );
 	}
 
 	// =========================================================================
