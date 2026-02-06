@@ -1,5 +1,34 @@
 # Project Milestones: Stadion
 
+## v19.0 Birthdate Simplification (Shipped: 2026-02-06)
+
+**Delivered:** Simplified birthdate handling by moving from the Important Dates CPT to a direct person field, then removed the now-unnecessary Important Dates infrastructure entirely. Reduces complexity and aligns with the Sportlink data model.
+
+**Phases completed:** 147-150 (4 phases, 5 plans)
+
+**Key accomplishments:**
+
+- Birthdate ACF field on person records with Dutch-formatted display ("43 jaar (6 feb 1982)")
+- Dashboard birthday widget queries person birthdate meta directly
+- Deleted Important Dates CPT, date_type taxonomy, and 1,069 production records
+- Removed "Datums" navigation, DatesList page, ImportantDateModal component
+- Updated reminders and iCal systems to generate from person birthdate field
+- Fixed vCard export to read from person.acf.birthdate (gap closure from audit)
+- Updated 5 documentation files removing stale "important dates" references
+
+**Stats:**
+
+- 73 files changed
+- +3,331 / -3,605 lines changed (net: -274)
+- 4 phases, 5 plans
+- Same day (2026-02-06, ~4.5 hours)
+
+**Git range:** `e96940d3` → `80bda5e1` (30 commits)
+
+**What's next:** To be determined
+
+---
+
 ## v17.0 De-AWC (Shipped: 2026-02-05)
 
 **Delivered:** Transformed Stadion from club-specific to fully configurable — any sports club can install and configure without code changes via admin settings for club name, accent color, and FreeScout URL.

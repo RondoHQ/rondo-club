@@ -349,16 +349,18 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - FreeScout URL externalized to club config (hidden when not configured) — v17.0
 - Zero club-specific hardcoded references in source code — v17.0
 
+**v19.0 Birthdate Simplification (shipped 2026-02-06):**
+- Birthdate ACF field on person records (date picker, read-only in UI) — v19.0
+- Person header displays birthdate after age ("43 jaar (6 feb 1982)") — v19.0
+- Dashboard birthday widget queries person birthdate meta directly — v19.0
+- Important Dates CPT, date_type taxonomy completely removed — v19.0
+- Datums navigation, DatesList page, ImportantDateModal removed — v19.0
+- Reminders and iCal systems generate from person birthdate field — v19.0
+- Data model reduced from 3 CPTs to 2 (person, team) — v19.0
+
 ### Active
 
-**v19.0 Birthdate Simplification:**
-- [ ] Add birthdate ACF field to person (date field, read-only in UI)
-- [ ] Display birthdate in person header after age
-- [ ] Update dashboard upcoming birthdays widget to query person birthdate meta
-- [ ] Remove Important Dates CPT, taxonomy, and related infrastructure
-- [ ] Remove "Datums" menu item and DatesList page
-- [ ] Remove ImportantDateModal component
-- [ ] Remove important dates card from PersonDetail
+(Next milestone to be defined)
 
 ### Out of Scope
 
@@ -532,4 +534,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Integration URLs externalized to config | FreeScout link checks window.stadionConfig first, hides feature if not configured | ✓ Good |
 
 ---
-*Last updated: 2026-02-06 after v19.0 Birthdate Simplification milestone started*
+*Last updated: 2026-02-06 after v19.0 Birthdate Simplification milestone shipped*
