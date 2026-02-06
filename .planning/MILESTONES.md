@@ -1,4 +1,4 @@
-# Project Milestones: Stadion
+# Project Milestones: Rondo Club
 
 ## v19.0 Birthdate Simplification (Shipped: 2026-02-06)
 
@@ -31,7 +31,7 @@
 
 ## v17.0 De-AWC (Shipped: 2026-02-05)
 
-**Delivered:** Transformed Stadion from club-specific to fully configurable — any sports club can install and configure without code changes via admin settings for club name, accent color, and FreeScout URL.
+**Delivered:** Transformed Rondo Club from club-specific to fully configurable — any sports club can install and configure without code changes via admin settings for club name, accent color, and FreeScout URL.
 
 **Phases completed:** 144-146 (3 phases, 4 plans)
 
@@ -95,7 +95,7 @@
 
 - User isolation for tasks via post_author filtering in WP_Query and REST API
 - Dashboard todo counts (open/awaiting) now filter by current user only
-- WP-CLI command (`wp stadion tasks verify_ownership`) for task ownership verification
+- WP-CLI command (`wp rondo tasks verify_ownership`) for task ownership verification
 - Tasks navigation accessible to all users without capability gating
 - Personal tasks info messages in TodosList page and GlobalTodoModal with Dutch text
 
@@ -320,7 +320,7 @@
 
 ## v7.0 Dutch Localization (Shipped: 2026-01-25)
 
-**Delivered:** Complete Dutch translation of the entire Stadion React frontend, including navigation, dashboard, entity pages (Leden, Teams, Commissies, Datums, Taken), settings, and all global UI elements.
+**Delivered:** Complete Dutch translation of the entire Rondo Club React frontend, including navigation, dashboard, entity pages (Leden, Teams, Commissies, Datums, Taken), settings, and all global UI elements.
 
 **Phases completed:** 99-106 (22 plans total)
 
@@ -405,7 +405,7 @@
 
 ## v5.0 Google Contacts Sync (Shipped: 2026-01-18)
 
-**Delivered:** Bidirectional Google Contacts synchronization with import, export, delta sync, conflict resolution (Stadion wins), and WP-CLI commands for administration.
+**Delivered:** Bidirectional Google Contacts synchronization with import, export, delta sync, conflict resolution (Rondo Club wins), and WP-CLI commands for administration.
 
 **Phases completed:** 79-85 (16 plans total)
 
@@ -415,7 +415,7 @@
 - Import from Google with field mapping, email-based duplicate detection, and photo sideloading
 - Export to Google with reverse field mapping and etag conflict handling
 - Delta sync using Google syncToken for efficient change detection
-- Conflict resolution with Stadion-wins strategy and activity logging for audit
+- Conflict resolution with Rondo Club-wins strategy and activity logging for audit
 - Settings UI with sync history viewer and "View in Google Contacts" link on person profiles
 - WP-CLI commands: sync, sync --full, status, conflicts, unlink-all
 
@@ -655,8 +655,8 @@
 
 **Key accomplishments:**
 
-- stadion_todo custom post type (migrated from comments)
-- WordPress post statuses (stadion_open, stadion_awaiting, stadion_completed)
+- rondo_todo custom post type (migrated from comments)
+- WordPress post statuses (rondo_open, rondo_awaiting, rondo_completed)
 - Awaiting response tracking with timestamps and aging indicators
 - Filter UI (Open/Awaiting/Completed tabs) across all views
 - WP-CLI migration: `wp prm migrate-todos`
