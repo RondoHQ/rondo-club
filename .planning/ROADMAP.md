@@ -30,20 +30,21 @@ Plans:
 **Goal**: Important Dates subsystem completely removed from codebase
 **Depends on**: Phase 147
 **Requirements**: DATA-01, REMV-01, REMV-02, REMV-03, REMV-04, REMV-05, REMV-06, REMV-07, REMV-08
-**Plans:** 2 plans (estimated)
+**Plans:** 2 plans
 
 Plans:
-- [ ] 148-01: Delete important_date data and remove CPT/taxonomy registration
-- [ ] 148-02: Remove frontend components and navigation
+- [ ] 148-01-PLAN.md — Delete production data, remove backend PHP code and tests
+- [ ] 148-02-PLAN.md — Remove frontend components, update documentation, deploy
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 147. Birthdate Field & Widget | 1/1 | Complete ✓ | 2026-02-06 |
-| 148. Infrastructure Removal | 0/2 | Not started | - |
+| 147. Birthdate Field & Widget | 1/1 | Complete | 2026-02-06 |
+| 148. Infrastructure Removal | 0/2 | Planned | - |
 
 ---
 *Roadmap created: 2026-02-06*
 *Phase 147 planned: 2026-02-06*
 *Phase 147 completed: 2026-02-06*
+*Phase 148 planned: 2026-02-06*
