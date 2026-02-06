@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# Stadion Feedback Retrieval Script
-# Retrieves a single feedback item from Stadion for Claude Code to process.
+# Rondo Club Feedback Retrieval Script
+# Retrieves a single feedback item from Rondo Club for Claude Code to process.
 #
 # Usage:
 #   bin/get-feedback.sh                    # Get oldest new feedback item
@@ -21,7 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # Lock file to prevent concurrent runs
-LOCK_FILE="/tmp/stadion-feedback-claude.lock"
+LOCK_FILE="/tmp/rondo-feedback-claude.lock"
 LOCK_CREATED=false
 SCRIPT_COMPLETED=false
 
@@ -126,18 +126,18 @@ fi
 log "DEBUG" "After env setup - HOME=$HOME, PATH=${PATH:0:80}..."
 
 # Validate required variables
-if [ -z "$STADION_API_URL" ] || [ -z "$STADION_API_USER" ] || [ -z "$STADION_API_PASSWORD" ]; then
+if [ -z "$RONDO_API_URL" ] || [ -z "$RONDO_API_USER" ] || [ -z "$RONDO_API_PASSWORD" ]; then
     echo -e "${RED}Error: API credentials not configured in .env${NC}" >&2
-    echo "Required variables: STADION_API_URL, STADION_API_USER, STADION_API_PASSWORD" >&2
+    echo "Required variables: RONDO_API_URL, RONDO_API_USER, RONDO_API_PASSWORD" >&2
     echo "" >&2
     echo "To set up:" >&2
     echo "1. Go to WordPress Admin > Users > Your Profile" >&2
     echo "2. Scroll to 'Application Passwords'" >&2
-    echo "3. Create a new application password named 'Stadion CLI'" >&2
+    echo "3. Create a new application password named 'Rondo CLI'" >&2
     echo "4. Add to .env:" >&2
-    echo "   STADION_API_URL=https://your-site.com" >&2
-    echo "   STADION_API_USER=your-username" >&2
-    echo "   STADION_API_PASSWORD=xxxx xxxx xxxx xxxx xxxx xxxx" >&2
+    echo "   RONDO_API_URL=https://your-site.com" >&2
+    echo "   RONDO_API_USER=your-username" >&2
+    echo "   RONDO_API_PASSWORD=xxxx xxxx xxxx xxxx xxxx xxxx" >&2
     exit 1
 fi
 
@@ -189,7 +189,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help|-h)
-            echo "Stadion Feedback Retrieval Script"
+            echo "Rondo Club Feedback Retrieval Script"
             echo ""
             echo "Retrieves a single feedback item (oldest first) for Claude Code to process."
             echo ""
@@ -247,7 +247,7 @@ while true; do
     fi
 
     # Build API URL - fetch 1 item, oldest first
-API_BASE="${STADION_API_URL}/wp-json/stadion/v1/feedback"
+API_BASE="${RONDO_API_URL}/wp-json/rondo/v1/feedback"
 
 if [ -n "$FEEDBACK_ID" ]; then
     API_URL="${API_BASE}/${FEEDBACK_ID}"
@@ -259,10 +259,10 @@ fi
 
 # Fetch feedback
 log "INFO" "Fetching feedback from API (status=$STATUS, type=$TYPE)"
-echo -e "${YELLOW}Fetching feedback from Stadion...${NC}" >&2
+echo -e "${YELLOW}Fetching feedback from Rondo Club...${NC}" >&2
 
 RESPONSE=$(curl -s -w "\n%{http_code}" \
-    -u "${STADION_API_USER}:${STADION_API_PASSWORD}" \
+    -u "${RONDO_API_USER}:${RONDO_API_PASSWORD}" \
     -H "Accept: application/json" \
     "$API_URL")
 
@@ -371,7 +371,7 @@ format_feedback_for_claude() {
 
     echo "---"
     echo ""
-    echo "Please analyze this feedback and help address it in the Stadion codebase."
+    echo "Please analyze this feedback and help address it in the Rondo Club codebase."
     echo ""
     echo "IMPORTANT: When you're done, end your response with one of these status lines:"
     echo "- STATUS: RESOLVED - if you fixed the issue and deployed"
@@ -390,10 +390,10 @@ update_feedback_status() {
 
     local response=$(curl -s -w "\n%{http_code}" \
         -X PUT \
-        -u "${STADION_API_USER}:${STADION_API_PASSWORD}" \
+        -u "${RONDO_API_USER}:${RONDO_API_PASSWORD}" \
         -H "Content-Type: application/json" \
         -d "{\"status\": \"${new_status}\"}" \
-        "${STADION_API_URL}/wp-json/stadion/v1/feedback/${feedback_id}")
+        "${RONDO_API_URL}/wp-json/rondo/v1/feedback/${feedback_id}")
 
     local http_code=$(echo "$response" | tail -n1)
 

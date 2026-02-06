@@ -1,15 +1,15 @@
 /*
-Theme Name: Stadion
-Theme URI: https://github.com/jdevalk/stadion
+Theme Name: Rondo Club
+Theme URI: https://github.com/jdevalk/rondo
 Author: Joost de Valk
 Author URI: https://joost.blog/
-Description: A React-powered sports team management theme. Track people, teams, and birthdays.
+Description: A React-powered club management theme. Track people, teams, and important dates.
 Version: 19.0.1
 Requires at least: 6.0
 Requires PHP: 8.0
 License: GNU General Public License v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Text Domain: stadion
+Text Domain: rondo
 */
 
 /* Base styles - the React app handles most styling via Tailwind */
