@@ -48,10 +48,9 @@ Recent decisions from v17.0:
 
 ### Pending Todos
 
-4 todo(s) in `.planning/todos/pending/`:
+3 todo(s) in `.planning/todos/pending/`:
 - **public-vog-upload-and-validation**: Public VOG Upload and Validation (area: api)
 - **soft-delete-inactive-members**: Soft-delete inactive members instead of hard delete (area: data-model)
-- **simplify-birthdates-remove-important-dates**: Simplify birthdates - move to person field, remove Datums (area: data-model)
 - **store-sync-field-mappings-in-json**: Store Sportlink sync field mappings in ACF JSON (area: data-model)
 
 ### Blockers/Concerns
