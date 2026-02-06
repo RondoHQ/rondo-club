@@ -346,7 +346,7 @@ Builds vis.js network data from person relationships. See [Family Tree](./family
 ### `src/constants/app.js`
 
 ```js
-export const APP_NAME = 'Stadion';
+export const APP_NAME = 'Rondo Club';
 ```
 
 ## State Management

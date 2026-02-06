@@ -260,7 +260,7 @@ Located at: **Settings → Admin → Contributie**
 All existing code using the following methods continues to work unchanged:
 
 ```php
-$membership_fees = new \Stadion\Fees\MembershipFees();
+$membership_fees = new \Rondo\Fees\MembershipFees();
 
 // These methods now use current season internally
 $membership_fees->get_all_settings();        // Returns current season fees

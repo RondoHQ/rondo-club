@@ -123,7 +123,7 @@ Creates a new token, invalidating the old URL.
 ```ical
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Stadion//Site Name//EN
+PRODID:-//Rondo Club//Site Name//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 X-WR-CALNAME:Site Name - Birthdays
