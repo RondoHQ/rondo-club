@@ -36,7 +36,7 @@ vCard is a universal standard format supported by virtually all contact manageme
 | `ADR` | `contact_info` (address) |
 | `ORG` | Creates Team + `work_history` |
 | `TITLE` | `work_history.job_title` |
-| `BDAY` | Creates `important_date` (birthday) |
+| `BDAY` | `birthdate` field on person |
 | `PHOTO` | Post thumbnail |
 | `URL` | `contact_info` (detects LinkedIn, Twitter, etc.) |
 | `NOTE` | Creates note (comment) |
@@ -71,7 +71,7 @@ Export from Google Contacts using the "Google CSV" format.
 | `Website 1 - Value` (through 3) | `contact_info` (website/social) |
 | `Team 1 - Name` or `Team Name` | Creates Team |
 | `Team 1 - Title` or `Team Title` | `work_history.job_title` |
-| `Birthday` | Creates `important_date` (birthday) |
+| `Birthday` | `birthdate` field on person |
 | `Photo` | Profile photo (sideloaded from URL) |
 | `Notes` | Creates note (comment) |
 
@@ -124,7 +124,7 @@ file: <vCard file>
     "contacts_updated": 5,
     "contacts_skipped": 0,
     "teams_created": 8,
-    "dates_created": 15,
+    "birthdays_set": 15,
     "notes_created": 10,
     "photos_imported": 18,
     "errors": []
@@ -188,7 +188,7 @@ decisions: {"3": "merge", "7": "new", "12": "skip"}
     "contacts_updated": 5,
     "contacts_skipped": 2,
     "teams_created": 8,
-    "dates_created": 15,
+    "birthdays_set": 15,
     "notes_created": 10,
     "photos_imported": 10,
     "errors": []
@@ -235,7 +235,7 @@ flowchart TD
         Update[Update existing person]
         Team[Create/link team]
         ContactInfo[Save contact info]
-        Birthday[Create birthday date]
+        Birthdate[Set birthdate field]
         Photo[Import photo]
         Note[Create note]
     end
@@ -258,8 +258,8 @@ flowchart TD
     Create --> Team
     Update --> Team
     Team --> ContactInfo
-    ContactInfo --> Birthday
-    Birthday --> Photo
+    ContactInfo --> Birthdate
+    Birthdate --> Photo
     Photo --> Note
 ```
 
@@ -412,9 +412,9 @@ private function find_existing_person($first_name, $last_name): ?int
 private function get_or_create_team($name): int
 ```
 
-**Import birthday**:
+**Set birthdate**:
 ```php
-private function import_birthday($post_id, $date, $first_name, $last_name): void
+private function set_birthdate($post_id, $date): void
 ```
 
 **Import note**:

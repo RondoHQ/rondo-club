@@ -48,16 +48,6 @@ These endpoints are provided by WordPress with access control applied:
 | PUT | `/wp/v2/teams/{id}` | Update team |
 | DELETE | `/wp/v2/teams/{id}` | Delete team |
 
-### Important Dates
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/wp/v2/important-dates` | List all accessible dates |
-| GET | `/wp/v2/important-dates/{id}` | Get single date |
-| POST | `/wp/v2/important-dates` | Create new date |
-| PUT | `/wp/v2/important-dates/{id}` | Update date |
-| DELETE | `/wp/v2/important-dates/{id}` | Delete date |
-
 ### Taxonomies
 
 | Method | Endpoint | Description |
@@ -65,7 +55,6 @@ These endpoints are provided by WordPress with access control applied:
 | GET | `/wp/v2/person_label` | List person labels |
 | GET | `/wp/v2/team_label` | List team labels |
 | GET | `/wp/v2/relationship_type` | List relationship types |
-| GET | `/wp/v2/date_type` | List date types |
 
 ---
 
@@ -86,8 +75,7 @@ Returns summary statistics and recent activity for the dashboard.
 {
   "stats": {
     "total_people": 150,
-    "total_teams": 45,
-    "total_dates": 200
+    "total_teams": 45
   },
   "recent_people": [
     {
@@ -139,7 +127,7 @@ This endpoint is called periodically by the frontend to detect when a new versio
 
 **GET** `/stadion/v1/search`
 
-Search across people, teams, and dates.
+Search across people and teams.
 
 **Permission:** Logged in users only
 
@@ -157,9 +145,6 @@ Search across people, teams, and dates.
   ],
   "teams": [
     { "id": 2, "name": "Acme Corp", "thumbnail": "...", "website": "https://...", "labels": [] }
-  ],
-  "dates": [
-    { "id": 3, "title": "Anniversary", "date_value": "2025-06-15", "is_recurring": true }
   ]
 }
 ```
@@ -170,7 +155,7 @@ Search across people, teams, and dates.
 
 **GET** `/stadion/v1/reminders`
 
-Get upcoming important dates with reminders.
+Get upcoming birthdays for reminders.
 
 **Permission:** Logged in users only
 
@@ -186,16 +171,16 @@ Get upcoming important dates with reminders.
   {
     "id": 123,
     "title": "John's Birthday",
-    "date_value": "2025-01-20",
+    "next_occurrence": "2025-01-20",
     "days_until": 10,
-    "is_recurring": true,
-    "date_type": ["birthday"],
     "related_people": [
-      { "id": 456, "name": "John Doe" }
+      { "id": 456, "name": "John Doe", "thumbnail": "..." }
     ]
   }
 ]
 ```
+
+Birthdays are generated from the `birthdate` field on person records.
 
 ---
 
@@ -231,33 +216,6 @@ Get all people who work or worked at a team.
     }
   ]
 }
-```
-
----
-
-### Dates by Person
-
-**GET** `/stadion/v1/people/{person_id}/dates`
-
-Get all important dates related to a person.
-
-**Permission:** Must have access to the person
-
-**Response:**
-```json
-[
-  {
-    "id": 123,
-    "title": "Birthday",
-    "date_value": "1985-06-15",
-    "is_recurring": true,
-    "reminder_days_before": 7,
-    "date_type": ["birthday"],
-    "related_people": [
-      { "id": 456, "name": "John Doe" }
-    ]
-  }
-]
 ```
 
 ---

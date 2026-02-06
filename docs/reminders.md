@@ -1,17 +1,17 @@
 # Daily Digest Reminders
 
-This document describes the daily digest reminder system that notifies users about upcoming important dates via email.
+This document describes the daily digest reminder system that notifies users about upcoming birthdays and todos via email.
 
 ## Overview
 
 Stadion includes an automated reminder system that:
 - Runs via **per-user WordPress cron jobs** at each user's preferred notification time
 - Sends a **daily digest** email/notification listing:
-  - Important dates **today** + todos due today (including overdue)
-  - Important dates **tomorrow** + todos due tomorrow
-  - Important dates for the **rest of the week** (days 3-7) + todos due in that period
+  - Birthdays **today** + todos due today (including overdue)
+  - Birthdays **tomorrow** + todos due tomorrow
+  - Birthdays for the **rest of the week** (days 3-7) + todos due in that period
 - Sends daily digest emails to users who have notifications enabled
-- Notifies all users who have access to the related people
+- Notifies all users who have access to the people
 
 ## How It Works
 
@@ -30,7 +30,7 @@ Each user has an individual cron job scheduled at their preferred notification t
 ### Scheduling Events
 
 Cron jobs are scheduled when:
-- Theme is activated (for all existing users with dates)
+- Theme is activated (for all existing users)
 - User updates their notification time preference in Settings
 
 Cron jobs are unscheduled when:
@@ -49,9 +49,9 @@ Cron jobs are unscheduled when:
 
 Each user receives one notification per day containing:
 
-- **TODAY** - Dates occurring today + todos due today (including overdue)
-- **TOMORROW** - Dates occurring tomorrow + todos due tomorrow
-- **THIS WEEK** - Dates occurring in the next 5 days (days 3-7) + todos due in that period
+- **TODAY** - Birthdays today + todos due today (including overdue)
+- **TOMORROW** - Birthdays tomorrow + todos due tomorrow
+- **THIS WEEK** - Birthdays in the next 5 days (days 3-7) + todos due in that period
 
 **Example:** If today is Monday, June 15th:
 - **TODAY**: John's Birthday (June 15), ☐ Call about project → John Doe
@@ -64,7 +64,7 @@ Each user receives one notification per day containing:
 
 **STADION_Reminders** (`includes/class-reminders.php`)
 - Main orchestrator for reminder processing
-- Generates weekly digests per user
+- Generates weekly digests per user (birthdays from person records)
 - Coordinates notification channels
 
 **STADION_Notification_Channel** (`includes/class-notification-channels.php`)
@@ -147,7 +147,7 @@ This method is kept for backward compatibility. When called, it:
 
 ### `get_weekly_digest($user_id)`
 
-Returns weekly digest for a specific user, including both important dates and todos.
+Returns weekly digest for a specific user, including both birthdays and todos.
 
 **Parameters:**
 - `$user_id` - User ID
@@ -185,7 +185,7 @@ Returns weekly digest for a specific user, including both important dates and to
 
 ### `get_all_users_to_notify()`
 
-Gets all users who should receive reminders (users who have created people with important dates).
+Gets all users who should receive reminders.
 
 **Returns:** Array of user IDs
 
@@ -228,25 +228,20 @@ Subject: [Stadion] Your Reminders & Todos - June 15, 2025
 
 Hello User,
 
-Here are your important dates and to-dos for this week:
+Here are your upcoming birthdays and to-dos for this week:
 
 📅 TODAY
 • John's Birthday - June 15, 2025
-  John Doe
-• Wedding Anniversary - June 15, 2025
-  Jane Doe, John Doe
 ☐ Call about project (overdue)
   → John Doe
 
 📅 TOMORROW
 • Mom's Birthday - June 16, 2025
-  Mom
 ☐ Send gift
   → Mom
 
 📅 THIS WEEK
 • Friend's Birthday - June 18, 2025
-  Friend
 ☐ Schedule meeting (June 18, 2025)
   → Friend
 
@@ -384,16 +379,9 @@ Returns status of all user reminder cron jobs.
 
 ## Configuration
 
-### Date Settings
+### Birthday Detection
 
-Each important date can configure:
-
-| Field | Purpose |
-|-------|---------|
-| `is_recurring` | Whether date repeats yearly |
-| `date_value` | The date value (Y-m-d format) |
-
-**Note:** The `reminder_days_before` field has been removed. All dates are included in the daily digest if they occur within the next 7 days.
+Birthdays are detected from the `birthdate` field on person records. All birthdays are treated as recurring (yearly) events and are included in the daily digest if they occur within the next 7 days.
 
 ### Server Requirements
 
@@ -449,8 +437,7 @@ wp_mail('test@example.com', 'Test Subject', 'Test message');
 ### Wrong Reminder Dates
 
 1. **Check timezone** - Uses WordPress timezone (`wp_timezone()`)
-2. **Check recurring setting** - Non-recurring past dates won't appear
-3. **Check date format** - Dates must be in Y-m-d format
+2. **Check date format** - Birthdates must be in Y-m-d format
 
 ### Cron Not Running
 
@@ -506,6 +493,6 @@ class STADION_Telegram_Channel extends STADION_Notification_Channel {
 
 ## Related Documentation
 
-- [Data Model](./data-model.md) - Important date post type
+- [Data Model](./data-model.md) - Person post type with birthdate field
 - [iCal Feed](./ical-feed.md) - Calendar subscription
 - [Access Control](./access-control.md) - User permissions

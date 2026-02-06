@@ -4,19 +4,19 @@ This document describes the iCal calendar subscription feature that allows users
 
 ## Overview
 
-Stadion generates iCal feeds for users containing important dates. There are two types of feeds:
+Stadion generates iCal feeds for users containing birthdays from person records. There are two types of feeds:
 
-1. **Personal Feed** - Contains all important dates accessible to the user
-2. **Workspace Feed** - Contains important dates for contacts shared with a workspace
+1. **Personal Feed** - Contains birthdays for all people accessible to the user
+2. **Workspace Feed** - Contains birthdays for contacts shared with a workspace
 
 Both feed types use a secret token for authentication, allowing calendar apps to fetch updates without requiring login credentials.
 
 ## Features
 
 - **Token-based authentication** - No password needed for calendar apps
-- **User-specific feeds** - Only shows dates you can access
-- **Workspace feeds** - Subscribe to dates for all workspace contacts
-- **Recurring events** - Yearly dates (like birthdays) repeat automatically
+- **User-specific feeds** - Only shows birthdays for people you can access
+- **Workspace feeds** - Subscribe to birthdays for all workspace contacts
+- **Recurring events** - Birthdays repeat annually
 - **Real-time updates** - Calendar apps refresh periodically to get new dates
 - **Universal compatibility** - Works with Apple Calendar, Google Calendar, Outlook, and any iCal-compatible app
 
@@ -126,7 +126,7 @@ VERSION:2.0
 PRODID:-//Stadion//Site Name//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
-X-WR-CALNAME:Site Name - Important Dates
+X-WR-CALNAME:Site Name - Birthdays
 X-WR-TIMEZONE:UTC
 
 [VEVENT entries...]
@@ -138,12 +138,12 @@ END:VCALENDAR
 
 ```ical
 BEGIN:VEVENT
-UID:date-123@your-site.com
+UID:birthday-456@your-site.com
 DTSTAMP:20250104T120000Z
 DTSTART;VALUE=DATE:19850615
 DTEND;VALUE=DATE:19850616
 SUMMARY:John Doe's Birthday
-DESCRIPTION:Related to: John Doe
+DESCRIPTION:Birthday
 URL:https://your-site.com/people/456
 RRULE:FREQ=YEARLY
 CATEGORIES:Birthday
@@ -154,15 +154,15 @@ END:VEVENT
 
 | iCal Field | Source |
 |------------|--------|
-| `UID` | `date-{post_id}@{domain}` |
-| `DTSTAMP` | Post modified date (GMT) |
-| `DTSTART` | `date_value` ACF field |
-| `DTEND` | Start date + 1 day |
-| `SUMMARY` | Post title |
-| `DESCRIPTION` | Related people names |
-| `URL` | Link to first related person |
-| `RRULE` | `FREQ=YEARLY` if recurring |
-| `CATEGORIES` | Date type taxonomy term |
+| `UID` | `birthday-{person_id}@{domain}` |
+| `DTSTAMP` | Person modified date (GMT) |
+| `DTSTART` | `birthdate` ACF field on person |
+| `DTEND` | Birthdate + 1 day |
+| `SUMMARY` | `{Person Name}'s Birthday` |
+| `DESCRIPTION` | `Birthday` |
+| `URL` | Link to person |
+| `RRULE` | `FREQ=YEARLY` (always recurring) |
+| `CATEGORIES` | `Birthday` |
 
 ### All-Day Events
 
@@ -175,13 +175,13 @@ DTEND;VALUE=DATE:20250616
 
 ### Recurring Events
 
-When `is_recurring` is true, events include:
+All birthday events include:
 
 ```ical
 RRULE:FREQ=YEARLY
 ```
 
-This makes the event repeat annually on the same day.
+This makes birthdays repeat annually on the same day.
 
 ## Subscribing to the Feed
 
@@ -232,8 +232,8 @@ Any app supporting iCal/ICS format can subscribe using the feed URL.
 ### Access Control
 
 The feed respects the same access control as the web interface:
-- Only shows dates the user owns or that are shared with them
-- Administrators see all dates
+- Only shows birthdays for people the user can access
+- Administrators see all birthdays
 
 ### Workspace Feed Security
 
@@ -250,11 +250,11 @@ If any check fails, the request is rejected with an appropriate HTTP error:
 
 ### How It Works
 
-Workspace feeds aggregate important dates from all contacts shared with a workspace:
+Workspace feeds aggregate birthdays from all contacts shared with a workspace:
 
 1. Find all people (`person` posts) tagged with `workspace-{id}` in the `workspace_access` taxonomy
-2. Query all important dates linked to those people via the `related_people` field
-3. Generate iCal events for all dates found
+2. Query all people with a `birthdate` field set
+3. Generate iCal events for all birthdays found
 
 ### Accessing Workspace Feeds
 
@@ -336,12 +336,12 @@ Special characters are escaped per iCal spec:
 
 ### Events not appearing
 
-- Verify dates have the `date_value` field set
-- Check access control - user may not have access to those dates
+- Verify people have the `birthdate` field set
+- Check access control - user may not have access to those people
 
 ## Related Documentation
 
-- [Data Model](./data-model.md) - Important date post type
+- [Data Model](./data-model.md) - Person post type with birthdate field
 - [Reminders](./reminders.md) - Email reminder system
-- [Access Control](./access-control.md) - How date visibility works
+- [Access Control](./access-control.md) - How person visibility works
 

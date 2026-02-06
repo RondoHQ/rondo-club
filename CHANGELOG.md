@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [19.0.0] - 2026-02-06
+
+### Removed
+- Important Dates custom post type and all associated functionality
+- Important Dates page in frontend navigation
+- Date type taxonomy
+- Important Dates widget on PersonDetail page
+- ImportantDateModal component
+- useDates hook and all date-related API endpoints
+- Death date display (is_deceased flag now returns false)
+- Backend PHP classes: STADION_Important_Dates, STADION_Date_Types
+- 1069 important_date records deleted from production database
+
+### Changed
+- Birthdays now stored directly on person records via birthdate ACF field
+- iCal feeds generate birthday events from person.birthdate instead of important_date posts
+- Daily digest reminders now source birthdays from person records
+- FamilyTree and PersonDetail now use person.is_deceased flag from allPeople data
+- Import (vCard/Google Contacts) saves birthday to person.birthdate field instead of creating important_date
+
+### Fixed
+- Updated all documentation to reflect new birthday-only architecture
+
 ## [18.1.1] - 2026-02-06
 
 ### Fixed
