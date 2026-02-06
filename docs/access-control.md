@@ -38,7 +38,6 @@ Access control applies to these post types:
 
 - `person` - Contact records
 - `team` - Team/company records
-- `important_date` - Important date records
 - `stadion_todo` - Todo items
 
 Standard WordPress posts and pages are not affected.

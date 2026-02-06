@@ -4,7 +4,7 @@ This document describes the custom post types, taxonomies, and ACF field groups 
 
 ## Custom Post Types
 
-The CRM uses three custom post types, registered in `includes/class-post-types.php`.
+The CRM uses two custom post types, registered in `includes/class-post-types.php`.
 
 ### Person (`person`)
 
@@ -111,32 +111,9 @@ Represents teams where contacts work. Note: The post type slug remains `team` fo
 
 ---
 
-### Important Date (`important_date`)
-
-Represents significant dates to remember (birthdays, anniversaries, etc.).
-
-| Property | Value |
-|----------|-------|
-| REST Base | `/wp/v2/important-dates` |
-| Menu Icon | `dashicons-calendar-alt` |
-| Supports | title, editor, author |
-| Public | No (private, accessed via REST API) |
-
-**ACF Fields** (from `acf-json/group_important_date_fields.json`):
-
-| Field | Key | Type | Description |
-|-------|-----|------|-------------|
-| Date | `date_value` | date_picker | Required. The actual date (Y-m-d) |
-| Recurring | `is_recurring` | true_false | Repeats yearly (default: true) |
-| Related People | `related_people` | post_object | Required. People linked to this date |
-| Remind Days Before | `reminder_days_before` | number | Days before to send reminder (0-365, default: 7) |
-| Custom Label | `custom_label` | text | Override auto-generated title |
-
----
-
 ## Taxonomies
 
-The CRM uses four custom taxonomies, registered in `includes/class-taxonomies.php`.
+The CRM uses three custom taxonomies, registered in `includes/class-taxonomies.php`.
 
 ### Person Label (`person_label`)
 
@@ -207,30 +184,6 @@ For more details, see [Relationship Types](./relationship-types.md) and [Relatio
 
 ---
 
-### Date Type (`date_type`)
-
-Categorizes important dates by event type.
-
-| Property | Value |
-|----------|-------|
-| Hierarchical | Yes |
-| Attached To | important_date |
-| REST Enabled | Yes |
-
-**Default Date Types**:
-
-| Category | Types |
-|----------|-------|
-| Core | birthday, memorial, first-met |
-| Family & Relationships | new-relationship, engagement, wedding, marriage, expecting-a-baby, new-child, new-family-member, new-pet, end-of-relationship, loss-of-a-loved-one |
-| Work & Education | new-job, retirement, new-school, study-abroad, volunteer-work, published-book-or-paper, military-service |
-| Home & Living | moved, bought-a-home, home-improvement, holidays, new-vehicle, new-roommate |
-| Health & Wellness | overcame-an-illness, quit-a-habit, new-eating-habits, weight-loss, surgery |
-| Travel & Experiences | new-sport, new-hobby, new-instrument, new-language, travel, achievement-or-award, first-word, first-kiss |
-| Fallback | other |
-
----
-
 ### Workspace (`workspace`)
 
 Represents collaborative workspaces for multi-user features (Phase 7+).
@@ -248,7 +201,7 @@ Represents collaborative workspaces for multi-user features (Phase 7+).
 
 ## Visibility Settings
 
-All three main post types (Person, Team, Important Date) include visibility settings.
+Both main post types (Person, Team) include visibility settings.
 
 **ACF Fields** (from `acf-json/group_visibility_settings.json`):
 
@@ -307,7 +260,6 @@ ACF field groups are version-controlled in `acf-json/`:
 |------|---------|
 | `group_person_fields.json` | Person post type fields |
 | `group_team_fields.json` | Team post type fields |
-| `group_important_date_fields.json` | Important date post type fields |
 | `group_relationship_type_fields.json` | Relationship type taxonomy fields |
 | `group_visibility_settings.json` | Visibility settings for all main post types |
 
