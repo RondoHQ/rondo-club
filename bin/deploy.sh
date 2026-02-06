@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Stadion Deployment Script
+# Rondo Club Deployment Script
 # Deploys theme files to production server and clears caches.
 #
 # Usage:
@@ -65,7 +65,7 @@ for arg in "$@"; do
             shift
             ;;
         --help|-h)
-            echo "Stadion Deployment Script"
+            echo "Rondo Club Deployment Script"
             echo ""
             echo "Usage: bin/deploy.sh [OPTIONS]"
             echo ""
@@ -94,7 +94,7 @@ done
 SSH_CMD="ssh -p $DEPLOY_SSH_PORT"
 RSYNC_SSH="-e \"ssh -p $DEPLOY_SSH_PORT\""
 
-echo -e "${GREEN}=== Stadion Deployment ===${NC}"
+echo -e "${GREEN}=== Rondo Club Deployment ===${NC}"
 echo "Target: $DEPLOY_SSH_USER@$DEPLOY_SSH_HOST"
 echo "Theme path: $DEPLOY_REMOTE_THEME_PATH"
 echo ""
