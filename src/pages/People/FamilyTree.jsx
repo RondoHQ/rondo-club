@@ -1,9 +1,9 @@
 import { useMemo, lazy, Suspense } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useQuery, useQueries } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { usePerson, usePeople } from '@/hooks/usePeople';
-import { wpApi, prmApi } from '@/api/client';
+import { wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const TreeVisualization = lazy(() => import('@/components/family-tree/TreeVisualization'));
@@ -30,39 +30,16 @@ export default function FamilyTree() {
     },
   });
 
-  // Get all person IDs for fetching dates
-  const allPersonIds = useMemo(() => {
-    return allPeople.map(p => p.id).filter(Boolean);
-  }, [allPeople]);
-
-  // Fetch dates for all people to check deceased status
-  const personDatesQueries = useQueries({
-    queries: allPersonIds.map(pid => ({
-      queryKey: ['person-dates', pid],
-      queryFn: async () => {
-        const response = await prmApi.getPersonDates(pid);
-        return response.data;
-      },
-      enabled: !!pid,
-      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    })),
-  });
-
-  // Create a map of person ID to deceased status
+  // Create a map of person ID to deceased status (using is_deceased from allPeople)
   const personDeceasedMap = useMemo(() => {
     const map = {};
-    personDatesQueries.forEach((query, index) => {
-      if (query.data && allPersonIds[index]) {
-        const pid = allPersonIds[index];
-        const hasDiedDate = query.data.some(d => {
-          const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
-          return dateType?.toLowerCase() === 'died';
-        });
-        map[pid] = hasDiedDate;
-      }
+    if (!allPeople) return map;
+
+    allPeople.forEach(p => {
+      map[p.id] = p.is_deceased || false;
     });
     return map;
-  }, [personDatesQueries, allPersonIds]);
+  }, [allPeople]);
   
   useDocumentTitle(
     person ? `Family Tree - ${person.name || person.title?.rendered || person.title || 'Person'}` : 'Family Tree'

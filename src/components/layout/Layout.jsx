@@ -3,7 +3,6 @@ import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-
 import {
   Users,
   Building2,
-  Calendar,
   Settings,
   Menu,
   X,
@@ -55,7 +54,6 @@ const navigation = [
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
-  { name: 'Datums', href: '/dates', icon: Calendar, requiresUnrestricted: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresUnrestricted: true },
   { name: 'Instellingen', href: '/settings', icon: Settings },
@@ -81,7 +79,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
       case 'Leden': return stats?.total_people || null;
       case 'Teams': return stats?.total_teams || null;
       case 'Commissies': return stats?.total_commissies || null;
-      case 'Datums': return stats?.total_dates || null;
       case 'VOG': {
         // Show two counts: not submitted to Justis | total needing VOG
         const totaal = notSubmittedToJustis + submittedToJustis;
@@ -485,7 +482,6 @@ function Header({ onMenuClick, onOpenSearch }) {
     if (path.startsWith('/vog')) return 'VOG';
     if (path.startsWith('/teams')) return 'Teams';
     if (path.startsWith('/commissies')) return 'Commissies';
-    if (path.startsWith('/dates')) return 'Datums';
     if (path.startsWith('/todos')) return 'Taken';
     if (path.startsWith('/settings')) return 'Instellingen';
     return '';
