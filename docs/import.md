@@ -86,7 +86,7 @@ Export from Google Contacts using the "Google CSV" format.
 
 **Validate File**:
 ```
-POST /wp-json/stadion/v1/import/vcard/validate
+POST /wp-json/rondo/v1/import/vcard/validate
 Content-Type: multipart/form-data
 
 file: <vCard file>
@@ -109,7 +109,7 @@ file: <vCard file>
 
 **Import File**:
 ```
-POST /wp-json/stadion/v1/import/vcard
+POST /wp-json/rondo/v1/import/vcard
 Content-Type: multipart/form-data
 
 file: <vCard file>
@@ -136,7 +136,7 @@ file: <vCard file>
 
 **Validate File**:
 ```
-POST /wp-json/stadion/v1/import/google-contacts/validate
+POST /wp-json/rondo/v1/import/google-contacts/validate
 Content-Type: multipart/form-data
 
 file: <CSV file>
@@ -172,7 +172,7 @@ file: <CSV file>
 
 **Import File**:
 ```
-POST /wp-json/stadion/v1/import/google-contacts
+POST /wp-json/rondo/v1/import/google-contacts
 Content-Type: multipart/form-data
 
 file: <CSV file>
@@ -321,7 +321,7 @@ Google Contacts import provides **user-controlled duplicate handling**:
 **API: Import Request with Decisions:**
 
 ```json
-POST /wp-json/stadion/v1/import/google-contacts
+POST /wp-json/rondo/v1/import/google-contacts
 Content-Type: multipart/form-data
 
 file: <CSV file>

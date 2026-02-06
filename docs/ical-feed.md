@@ -83,7 +83,7 @@ WHERE meta_key = 'stadion_ical_token' AND meta_value = '{token}'
 
 ### Get Calendar URL
 
-**GET** `/stadion/v1/user/ical-url`
+**GET** `/rondo/v1/user/ical-url`
 
 Returns the current user's iCal feed URL.
 
@@ -100,7 +100,7 @@ The `token` field can be used to construct workspace calendar URLs on the fronte
 
 ### Regenerate Token
 
-**POST** `/stadion/v1/user/regenerate-ical-token`
+**POST** `/rondo/v1/user/regenerate-ical-token`
 
 Creates a new token, invalidating the old URL.
 

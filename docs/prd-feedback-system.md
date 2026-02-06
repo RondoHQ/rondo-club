@@ -116,7 +116,7 @@ All endpoints under namespace `stadion/v1/feedback`.
 #### 4.1 List Feedback
 
 ```
-GET /wp-json/stadion/v1/feedback
+GET /wp-json/rondo/v1/feedback
 ```
 
 **Query Parameters:**
@@ -173,7 +173,7 @@ GET /wp-json/stadion/v1/feedback
 #### 4.2 Get Single Feedback
 
 ```
-GET /wp-json/stadion/v1/feedback/{id}
+GET /wp-json/rondo/v1/feedback/{id}
 ```
 
 Returns single feedback item with same structure as list item.
@@ -181,7 +181,7 @@ Returns single feedback item with same structure as list item.
 #### 4.3 Create Feedback
 
 ```
-POST /wp-json/stadion/v1/feedback
+POST /wp-json/rondo/v1/feedback
 ```
 
 **Request Body:**
@@ -201,7 +201,7 @@ POST /wp-json/stadion/v1/feedback
 #### 4.4 Update Feedback
 
 ```
-PATCH /wp-json/stadion/v1/feedback/{id}
+PATCH /wp-json/rondo/v1/feedback/{id}
 ```
 
 **Request Body:** Partial update with any feedback fields.
@@ -211,7 +211,7 @@ PATCH /wp-json/stadion/v1/feedback/{id}
 #### 4.5 Delete Feedback
 
 ```
-DELETE /wp-json/stadion/v1/feedback/{id}
+DELETE /wp-json/rondo/v1/feedback/{id}
 ```
 
 **Permissions:** Author can delete their own; admins can delete any.
@@ -316,11 +316,11 @@ Add to `src/api/client.js`:
 
 ```javascript
 feedback: {
-  list: (params) => get('/stadion/v1/feedback', params),
-  get: (id) => get(`/stadion/v1/feedback/${id}`),
-  create: (data) => post('/stadion/v1/feedback', data),
-  update: (id, data) => patch(`/stadion/v1/feedback/${id}`, data),
-  delete: (id) => del(`/stadion/v1/feedback/${id}`),
+  list: (params) => get('/rondo/v1/feedback', params),
+  get: (id) => get(`/rondo/v1/feedback/${id}`),
+  create: (data) => post('/rondo/v1/feedback', data),
+  update: (id, data) => patch(`/rondo/v1/feedback/${id}`, data),
+  delete: (id) => del(`/rondo/v1/feedback/${id}`),
 }
 ```
 
@@ -491,12 +491,12 @@ curl -X POST \
     "expected_behavior": "Event should appear in Stadion",
     "actual_behavior": "Only first occurrence syncs"
   }' \
-  https://your-site.com/wp-json/stadion/v1/feedback
+  https://your-site.com/wp-json/rondo/v1/feedback
 ```
 
 **Listing feedback with filtering:**
 
 ```bash
 curl -u "joost:xxxx xxxx xxxx xxxx xxxx xxxx" \
-  "https://your-site.com/wp-json/stadion/v1/feedback?type=bug&status=new&priority=high"
+  "https://your-site.com/wp-json/rondo/v1/feedback?type=bug&status=new&priority=high"
 ```

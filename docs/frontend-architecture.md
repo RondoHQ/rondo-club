@@ -323,7 +323,7 @@ const { hasUpdate, currentVersion, latestVersion, reload, checkVersion } = useVe
 - Periodic check every 5 minutes (configurable)
 - When tab becomes visible (user returns to app)
 
-**Backend endpoint:** `/stadion/v1/version` returns `{ version: "1.42.0" }`
+**Backend endpoint:** `/rondo/v1/version` returns `{ version: "1.42.0" }`
 
 ## Utility Functions
 
@@ -414,13 +414,13 @@ All styling uses Tailwind utility classes. Configuration in `tailwind.config.js`
 
 When the app is installed as a PWA or loaded in a mobile browser (Add to Home Screen), browser caching can prevent users from receiving updates. The version check system addresses this:
 
-1. **Version Endpoint**: `/stadion/v1/version` returns the current theme version
+1. **Version Endpoint**: `/rondo/v1/version` returns the current theme version
 2. **Periodic Checking**: `useVersionCheck` hook polls for new versions
 3. **Update Banner**: When a new version is detected, a banner appears at the top of the screen with a "Reload" button
 
 **How it works:**
 1. On app load, the current version is stored from `window.stadionConfig.version`
-2. Every 5 minutes (and when the user returns to the tab), the hook fetches `/stadion/v1/version`
+2. Every 5 minutes (and when the user returns to the tab), the hook fetches `/rondo/v1/version`
 3. If the server version differs from the loaded version, `hasUpdate` becomes true
 4. The `UpdateBanner` component renders at the top of `App.jsx` when an update is available
 5. User clicks "Reload" → `window.location.reload(true)` forces a fresh load

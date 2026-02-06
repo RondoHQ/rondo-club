@@ -39,9 +39,9 @@ wp stadion approve-user <user_id>
 
 ## User Roles
 
-### Stadion User Role
+### Rondo User Role
 
-Stadion creates a custom WordPress role called **"Stadion User"** (`stadion_user`).
+Stadion creates a custom WordPress role called **"Rondo User"** (`stadion_user`).
 
 **Capabilities:**
 
