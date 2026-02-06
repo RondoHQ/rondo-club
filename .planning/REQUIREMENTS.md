@@ -7,13 +7,13 @@
 
 ### Birthdate Field
 
-- [ ] **BDAY-01**: Person has birthdate ACF field (date picker, read-only in UI)
-- [ ] **BDAY-02**: Person header displays birthdate after age (format: "34 jaar (6 feb)")
+- [x] **BDAY-01**: Person has birthdate ACF field (date picker, read-only in UI)
+- [x] **BDAY-02**: Person header displays birthdate after age (format: "34 jaar (6 feb)")
 
 ### Dashboard Widget
 
-- [ ] **DASH-01**: Upcoming birthdays widget queries person birthdate meta
-- [ ] **DASH-02**: Birthday calculation uses month/day comparison for "upcoming" logic
+- [x] **DASH-01**: Upcoming birthdays widget queries person birthdate meta
+- [x] **DASH-02**: Birthday calculation uses month/day comparison for "upcoming" logic
 
 ### Data Cleanup
 
@@ -42,10 +42,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BDAY-01 | Phase 147 | Pending |
-| BDAY-02 | Phase 147 | Pending |
-| DASH-01 | Phase 147 | Pending |
-| DASH-02 | Phase 147 | Pending |
+| BDAY-01 | Phase 147 | Complete |
+| BDAY-02 | Phase 147 | Complete |
+| DASH-01 | Phase 147 | Complete |
+| DASH-02 | Phase 147 | Complete |
 | DATA-01 | Phase 148 | Pending |
 | REMV-01 | Phase 148 | Pending |
 | REMV-02 | Phase 148 | Pending |
@@ -64,3 +64,4 @@
 ---
 *Requirements defined: 2026-02-06*
 *Traceability updated: 2026-02-06*
+*Phase 147 requirements completed: 2026-02-06*
