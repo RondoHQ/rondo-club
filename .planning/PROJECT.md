@@ -360,7 +360,13 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(Next milestone to be defined)
+**v20.0 Configurable Roles** — Replace hardcoded club-specific arrays with settings and dynamic queries so any club can use Rondo Club without code changes.
+
+- [ ] Admin can configure which job titles count as "player roles" (options populated from actual work_history data)
+- [ ] Admin can configure which roles are excluded/honorary (options populated from actual commissie data)
+- [ ] Age group filter options are derived dynamically from the database
+- [ ] Member type filter options are derived dynamically from the database
+- [ ] Default role fallbacks removed from rondo-sync
 
 ### Out of Scope
 
@@ -534,4 +540,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Integration URLs externalized to config | FreeScout link checks window.stadionConfig first, hides feature if not configured | ✓ Good |
 
 ---
-*Last updated: 2026-02-06 after v19.0 Birthdate Simplification milestone shipped*
+*Last updated: 2026-02-06 after v20.0 Configurable Roles milestone started*
