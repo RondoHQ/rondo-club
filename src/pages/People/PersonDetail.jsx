@@ -136,15 +136,10 @@ export default function PersonDetail() {
   // to ensure consistent hook calls on every render
   useDocumentTitle(person?.name || person?.title?.rendered || person?.title || 'Lid');
 
-  // Find birthday from person dates
-  // date_type is an array of term names from the API
-  const birthday = personDates?.find(d => {
-    const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
-    return dateType?.toLowerCase() === 'birthday';
-  });
-  // The API returns date_value, not date
-  const birthDate = birthday?.date_value ? new Date(birthday.date_value) : null;
-  const birthdayYearUnknown = birthday?.year_unknown ?? false;
+  // Get birthdate from ACF field
+  const birthDate = person?.acf?.birthdate && person.acf.birthdate !== ''
+    ? new Date(person.acf.birthdate)
+    : null;
 
   // Find death date from person dates
   const deathDate = personDates?.find(d => {
@@ -153,14 +148,16 @@ export default function PersonDetail() {
   });
   const deathDateValue = deathDate?.date_value ? new Date(deathDate.date_value) : null;
   const deathYearUnknown = deathDate?.year_unknown ?? false;
-  
+
   // Calculate age - if died, show age at death, otherwise current age
-  // Skip age calculation if birthday year is unknown
   const isDeceased = !!deathDateValue;
-  const age = (birthDate && !birthdayYearUnknown) ? (isDeceased 
+  const age = birthDate ? (isDeceased
     ? differenceInYears(deathDateValue, birthDate)
     : differenceInYears(new Date(), birthDate)
   ) : null;
+
+  // Format birthdate for display: "6 feb 1982"
+  const formattedBirthdate = birthDate ? format(birthDate, 'd MMM yyyy') : null;
 
   // Get all dates including birthday (for Important Dates card)
   // Sort by date ascending
@@ -1145,7 +1142,8 @@ export default function PersonDetail() {
                 {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
                 {acf.pronouns && <span>{acf.pronouns}</span>}
                 {(getGenderSymbol(acf.gender) || acf.pronouns) && age !== null && <span>&nbsp;—&nbsp;</span>}
-                {age !== null && <span>{age} jaar</span>}
+                {age !== null && formattedBirthdate && <span>{age} jaar ({formattedBirthdate})</span>}
+                {age !== null && !formattedBirthdate && <span>{age} jaar</span>}
                 {acf['financiele-blokkade'] && (
                   <>
                     {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}
