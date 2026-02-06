@@ -23,7 +23,7 @@ Rondo Club includes an automated reminder system that:
 ```
 
 Each user has an individual cron job scheduled at their preferred notification time:
-- **Cron Hook:** `stadion_user_reminder` (with user ID as argument)
+- **Cron Hook:** `rondo_user_reminder` (with user ID as argument)
 - **Schedule:** Daily recurring at user's preferred time (default: 09:00 UTC)
 - **Arguments:** `[$user_id]`
 
@@ -62,24 +62,24 @@ Each user receives one notification per day containing:
 
 ### Classes
 
-**STADION_Reminders** (`includes/class-reminders.php`)
+**Rondo\Core\Reminders** (`includes/class-reminders.php`)
 - Main orchestrator for reminder processing
 - Generates weekly digests per user (birthdays from person records)
 - Coordinates notification channels
 
-**STADION_Notification_Channel** (`includes/class-notification-channels.php`)
+**Rondo\Notifications\Channel** (`includes/class-notification-channels.php`)
 - Abstract base class for notification channels
 - Defines interface: `send()`, `is_enabled_for_user()`, `get_user_config()`
 
-**STADION_Email_Channel** (`includes/class-notification-channels.php`)
+**Rondo\Notifications\EmailChannel** (`includes/class-email-channel.php`)
 - Email notification implementation
 - Formats digest as plain text email
 
 ### Cron Configuration
 
-**Per-User Cron Hook:** `stadion_user_reminder` (with user ID argument)
+**Per-User Cron Hook:** `rondo_user_reminder` (with user ID argument)
 
-**Scheduling** (in `STADION_Reminders` class):
+**Scheduling** (in `Rondo\Core\Reminders` class):
 ```php
 // Schedule individual user's cron at their preferred time
 $reminders->schedule_user_reminder($user_id);
@@ -88,7 +88,7 @@ $reminders->schedule_user_reminder($user_id);
 $reminders->schedule_all_user_reminders();
 ```
 
-**Legacy Cron Hook:** `stadion_daily_reminder_check` (deprecated, kept for backward compatibility)
+**Legacy Cron Hook:** `rondo_daily_reminder_check` (deprecated, kept for backward compatibility)
 
 ## Key Methods
 
@@ -102,10 +102,10 @@ Schedules a cron job for a specific user at their preferred notification time.
 **Returns:** `true` on success, `WP_Error` on failure
 
 **Behavior:**
-- Gets user's preferred time from `stadion_notification_time` user meta (default: `09:00`)
+- Gets user's preferred time from `rondo_notification_time` user meta (default: `09:00`)
 - Calculates next occurrence (if time passed today, schedules for tomorrow)
 - Unschedules any existing cron for this user
-- Schedules new daily recurring cron with `stadion_user_reminder` hook
+- Schedules new daily recurring cron with `rondo_user_reminder` hook
 
 ### `unschedule_user_reminder($user_id)`
 
@@ -220,7 +220,7 @@ Background maintenance task that runs with reminders:
 
 ### Email Channel
 
-**User Meta:** `stadion_notification_channels` (array containing `'email'`)
+**User Meta:** `rondo_notification_channels` (array containing `'email'`)
 
 **Email Format:**
 ```
@@ -255,8 +255,8 @@ https://your-site.com
 Users can enable/disable email notifications in Settings.
 
 **User Meta Keys:**
-- `stadion_notification_channels` - Array of enabled channels: `['email']`
-- `stadion_notification_time` - Preferred notification time in HH:MM format, 5-minute increments (default: `09:00`)
+- `rondo_notification_channels` - Array of enabled channels: `['email']`
+- `rondo_notification_time` - Preferred notification time in HH:MM format, 5-minute increments (default: `09:00`)
 
 ## REST API Integration
 
@@ -403,12 +403,12 @@ This sends reminders for all users who have dates occurring today.
 wp cron event list
 ```
 
-Look for `stadion_user_reminder` events in the output. Each user should have their own scheduled event.
+Look for `rondo_user_reminder` events in the output. Each user should have their own scheduled event.
 
 **Check specific user's cron (PHP):**
 ```php
 $user_id = 123;
-$next_run = wp_next_scheduled('stadion_user_reminder', [$user_id]);
+$next_run = wp_next_scheduled('rondo_user_reminder', [$user_id]);
 if ($next_run) {
     echo "User $user_id next reminder: " . date('Y-m-d H:i:s', $next_run);
 } else {
@@ -470,15 +470,15 @@ wp prm reminders trigger --user=123
 
 To add a new notification channel:
 
-1. Create a new class extending `STADION_Notification_Channel` in `includes/class-notification-channels.php`
+1. Create a new class extending `Rondo\Notifications\Channel` in `includes/class-notification-channels.php`
 2. Implement required methods: `send()`, `is_enabled_for_user()`, `get_user_config()`, `get_channel_id()`, `get_channel_name()`
-3. Register the channel in `STADION_Reminders` constructor
+3. Register the channel in `Rondo\Core\Reminders` constructor
 4. Add UI toggle in Settings page
 5. Add REST API endpoint if needed for configuration
 
 **Example:**
 ```php
-class STADION_Telegram_Channel extends STADION_Notification_Channel {
+class Rondo_Telegram_Channel extends Rondo\Notifications\Channel {
     public function get_channel_id() {
         return 'telegram';
     }
