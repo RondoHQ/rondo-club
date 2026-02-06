@@ -361,7 +361,7 @@
   }
 
   .btn-primary {
-    @apply btn bg-accent-600 text-white hover:bg-accent-700 focus:ring-accent-500 dark:bg-accent-500 dark:hover:bg-accent-400;
+    @apply btn bg-accent-600 text-white hover:bg-accent-700 focus:ring-accent-500 dark:bg-gray-700 dark:text-accent-400 dark:border dark:border-accent-500 dark:hover:bg-gray-600 dark:hover:text-accent-300;
   }
 
   .btn-secondary {
