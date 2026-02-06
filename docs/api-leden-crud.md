@@ -201,7 +201,7 @@ These fields are automatically calculated and should not be set manually. They a
 |-------|------|-------------|--------|
 | `acf.huidig-vrijwilliger` | string | Current volunteer status, auto-calculated from work history | `"1"` (volunteer) or `"0"` (not) |
 | `acf.is_deceased` | boolean | Whether the person is deceased | `true`, `false` |
-| `acf.birth_year` | string/null | Birth year (derived from birthday important date) | e.g., `"1990"` or `null` |
+| `acf.birth_year` | string/null | Birth year (derived from birthdate field) | e.g., `"1990"` or `null` |
 
 **Volunteer status logic:** A person is considered a current volunteer (`huidig-vrijwilliger = "1"`) if they have an active position where:
 - The position is in a commissie (any role, unless the commissie is exempt), OR
