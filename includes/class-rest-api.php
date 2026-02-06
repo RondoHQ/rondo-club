@@ -3,7 +3,7 @@
  * Extended REST API Endpoints
  */
 
-namespace Stadion\REST;
+namespace Rondo\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

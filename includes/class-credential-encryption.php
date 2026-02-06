@@ -6,7 +6,7 @@
  * using sodium encryption (available via WordPress/PHP).
  */
 
-namespace Stadion\Data;
+namespace Rondo\Data;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

@@ -7,7 +7,7 @@
  * @package Stadion\Fees
  */
 
-namespace Stadion\Fees;
+namespace Rondo\Fees;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

@@ -7,7 +7,7 @@
  * @package Stadion
  */
 
-namespace Stadion\Export;
+namespace Rondo\Export;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

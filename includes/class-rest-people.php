@@ -5,9 +5,9 @@
  * Handles REST API endpoints related to people domain.
  */
 
-namespace Stadion\REST;
+namespace Rondo\REST;
 
-use Stadion\CustomFields\Manager;
+use Rondo\CustomFields\Manager;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

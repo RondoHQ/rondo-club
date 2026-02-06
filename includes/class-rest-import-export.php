@@ -5,7 +5,7 @@
  * Handles export endpoints (vCard, Google CSV) and CardDAV URL endpoints.
  */
 
-namespace Stadion\REST;
+namespace Rondo\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

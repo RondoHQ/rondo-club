@@ -6,7 +6,7 @@
  * Contains common permission checks and response formatting methods.
  */
 
-namespace Stadion\REST;
+namespace Rondo\REST;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

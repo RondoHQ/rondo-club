@@ -6,11 +6,11 @@
  * Matches existing contacts by email only, fills gaps without overwriting.
  */
 
-namespace Stadion\Import;
+namespace Rondo\Import;
 
-use Stadion\Calendar\GoogleOAuth;
-use Stadion\Collaboration\CommentTypes;
-use Stadion\Contacts\GoogleContactsConnection;
+use Rondo\Calendar\GoogleOAuth;
+use Rondo\Collaboration\CommentTypes;
+use Rondo\Contacts\GoogleContactsConnection;
 use Google\Service\PeopleService;
 
 if ( ! defined( 'ABSPATH' ) ) {

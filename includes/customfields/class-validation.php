@@ -7,7 +7,7 @@
  * @package Stadion\CustomFields
  */
 
-namespace Stadion\CustomFields;
+namespace Rondo\CustomFields;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

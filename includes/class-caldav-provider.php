@@ -14,7 +14,7 @@
  * - Generic: User provides full calendar URL
  */
 
-namespace Stadion\Calendar;
+namespace Rondo\Calendar;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

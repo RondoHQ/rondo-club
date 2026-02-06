@@ -5,7 +5,7 @@
  * Handles email-based notification delivery for daily digests.
  */
 
-namespace Stadion\Notifications;
+namespace Rondo\Notifications;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

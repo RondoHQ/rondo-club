@@ -5,7 +5,7 @@
  * All approved users can see all data. Unapproved users see nothing.
  */
 
-namespace Stadion\Core;
+namespace Rondo\Core;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

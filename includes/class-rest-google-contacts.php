@@ -9,13 +9,13 @@
  * - Disconnect functionality
  */
 
-namespace Stadion\REST;
+namespace Rondo\REST;
 
-use Stadion\Calendar\GoogleOAuth;
-use Stadion\Contacts\GoogleContactsConnection;
-use Stadion\Contacts\GoogleContactsSync;
-use Stadion\Import\GoogleContactsAPI;
-use Stadion\Export\GoogleContactsExport;
+use Rondo\Calendar\GoogleOAuth;
+use Rondo\Contacts\GoogleContactsConnection;
+use Rondo\Contacts\GoogleContactsSync;
+use Rondo\Import\GoogleContactsAPI;
+use Rondo\Export\GoogleContactsExport;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

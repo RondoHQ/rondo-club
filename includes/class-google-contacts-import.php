@@ -5,7 +5,7 @@
  * Imports contacts from Google Contacts CSV export files.
  */
 
-namespace Stadion\Import;
+namespace Rondo\Import;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
