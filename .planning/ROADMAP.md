@@ -6,7 +6,7 @@ Simplify birthdate handling by moving from the Important Dates CPT to a simple p
 
 ## Milestones
 
-- **v19.0 Birthdate Simplification** - Phases 147-148 (in progress)
+- **v19.0 Birthdate Simplification** - Phases 147-150 (in progress)
 
 ## Phases
 
@@ -14,6 +14,8 @@ Simplify birthdate handling by moving from the Important Dates CPT to a simple p
 
 - [x] **Phase 147: Birthdate Field & Widget** - Add birthdate to person, display in header, update dashboard widget
 - [x] **Phase 148: Infrastructure Removal** - Delete data and remove Important Dates subsystem
+- [ ] **Phase 149: Fix vCard Birthday Export** - Update vCard export to read from person.birthdate
+- [ ] **Phase 150: Update Documentation** - Fix stale "important dates" references in docs
 
 ## Phase Details
 
@@ -36,12 +38,26 @@ Plans:
 - [x] 148-01-PLAN.md — Delete production data, remove backend PHP code and tests
 - [x] 148-02-PLAN.md — Remove frontend components, update documentation, deploy
 
+### Phase 149: Fix vCard Birthday Export
+**Goal**: vCard exports include BDAY field from person.birthdate
+**Depends on**: Phase 148
+**Gap Closure**: Closes integration gap from v19.0 audit (vCard reads from deleted personDates)
+**Plans:** 0 plans
+
+### Phase 150: Update Documentation
+**Goal**: Documentation reflects new birthdate model without "important dates" references
+**Depends on**: Phase 148
+**Gap Closure**: Closes tech debt from v19.0 audit (5 docs with stale references)
+**Plans:** 0 plans
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 147. Birthdate Field & Widget | 1/1 | Complete | 2026-02-06 |
 | 148. Infrastructure Removal | 2/2 | Complete | 2026-02-06 |
+| 149. Fix vCard Birthday Export | 0/0 | Pending | - |
+| 150. Update Documentation | 0/0 | Pending | - |
 
 ---
 *Roadmap created: 2026-02-06*
@@ -49,3 +65,4 @@ Plans:
 *Phase 147 completed: 2026-02-06*
 *Phase 148 planned: 2026-02-06*
 *Phase 148 completed: 2026-02-06*
+*Phases 149-150 added: 2026-02-06 (gap closure from audit)*
