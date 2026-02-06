@@ -1,6 +1,6 @@
 <?php
 /**
- * Stadion Theme Functions
+ * Rondo Club Theme Functions
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,64 +26,64 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 }
 
 // PSR-4 namespaced class imports
-use Stadion\Core\PostTypes;
-use Stadion\Core\Taxonomies;
-use Stadion\Core\AutoTitle;
-use Stadion\Core\VolunteerStatus;
-use Stadion\Core\AccessControl;
-use Stadion\Core\UserRoles;
-use Stadion\REST\Api;
-use Stadion\REST\People;
-use Stadion\REST\Teams;
-use Stadion\REST\Commissies;
-use Stadion\REST\Todos;
-use Stadion\REST\ImportExport;
-use Stadion\REST\Calendar as RESTCalendar;
-use Stadion\REST\GoogleContacts as RESTGoogleContacts;
-use Stadion\REST\GoogleSheets as RESTGoogleSheets;
-use Stadion\REST\Feedback as RESTFeedback;
-use Stadion\Calendar\Connections;
-use Stadion\Calendar\Matcher;
-use Stadion\Calendar\Sync;
-use Stadion\Calendar\GoogleProvider;
-use Stadion\Calendar\CalDAVProvider;
-use Stadion\Calendar\GoogleOAuth;
-use Stadion\Notifications\EmailChannel;
-use Stadion\Collaboration\CommentTypes;
-use Stadion\Collaboration\MentionNotifications;
-use Stadion\Collaboration\Reminders;
-use Stadion\Import\VCard as VCardImport;
-use Stadion\Import\GoogleContacts;
-use Stadion\Import\GoogleContactsAPI;
-use Stadion\Export\VCard as VCardExport;
-use Stadion\Export\ICalFeed;
-use Stadion\Export\GoogleContactsExport;
-use Stadion\Contacts\GoogleContactsSync;
-use Stadion\Sheets\GoogleSheetsConnection;
-use Stadion\CardDAV\Server as CardDAVServer;
-use Stadion\Data\InverseRelationships;
-use Stadion\Data\TodoMigration;
-use Stadion\CustomFields\Manager as CustomFieldsManager;
-use Stadion\CustomFields\Validation as CustomFieldsValidation;
-use Stadion\REST\CustomFields as RESTCustomFields;
-use Stadion\VOG\VOGEmail;
-use Stadion\Fees\MembershipFees;
-use Stadion\Fees\FeeCacheInvalidator;
-use Stadion\Config\ClubConfig;
+use Rondo\Core\PostTypes;
+use Rondo\Core\Taxonomies;
+use Rondo\Core\AutoTitle;
+use Rondo\Core\VolunteerStatus;
+use Rondo\Core\AccessControl;
+use Rondo\Core\UserRoles;
+use Rondo\REST\Api;
+use Rondo\REST\People;
+use Rondo\REST\Teams;
+use Rondo\REST\Commissies;
+use Rondo\REST\Todos;
+use Rondo\REST\ImportExport;
+use Rondo\REST\Calendar as RESTCalendar;
+use Rondo\REST\GoogleContacts as RESTGoogleContacts;
+use Rondo\REST\GoogleSheets as RESTGoogleSheets;
+use Rondo\REST\Feedback as RESTFeedback;
+use Rondo\Calendar\Connections;
+use Rondo\Calendar\Matcher;
+use Rondo\Calendar\Sync;
+use Rondo\Calendar\GoogleProvider;
+use Rondo\Calendar\CalDAVProvider;
+use Rondo\Calendar\GoogleOAuth;
+use Rondo\Notifications\EmailChannel;
+use Rondo\Collaboration\CommentTypes;
+use Rondo\Collaboration\MentionNotifications;
+use Rondo\Collaboration\Reminders;
+use Rondo\Import\VCard as VCardImport;
+use Rondo\Import\GoogleContacts;
+use Rondo\Import\GoogleContactsAPI;
+use Rondo\Export\VCard as VCardExport;
+use Rondo\Export\ICalFeed;
+use Rondo\Export\GoogleContactsExport;
+use Rondo\Contacts\GoogleContactsSync;
+use Rondo\Sheets\GoogleSheetsConnection;
+use Rondo\CardDAV\Server as CardDAVServer;
+use Rondo\Data\InverseRelationships;
+use Rondo\Data\TodoMigration;
+use Rondo\CustomFields\Manager as CustomFieldsManager;
+use Rondo\CustomFields\Validation as CustomFieldsValidation;
+use Rondo\REST\CustomFields as RESTCustomFields;
+use Rondo\VOG\VOGEmail;
+use Rondo\Fees\MembershipFees;
+use Rondo\Fees\FeeCacheInvalidator;
+use Rondo\Config\ClubConfig;
 
-define( 'STADION_THEME_DIR', get_template_directory() );
-define( 'STADION_THEME_URL', get_template_directory_uri() );
-define( 'STADION_THEME_VERSION', wp_get_theme()->get( 'Version' ) );
+define( 'RONDO_THEME_DIR', get_template_directory() );
+define( 'RONDO_THEME_URL', get_template_directory_uri() );
+define( 'RONDO_THEME_VERSION', wp_get_theme()->get( 'Version' ) );
 
 // Plugin constants (now part of theme)
-define( 'STADION_VERSION', STADION_THEME_VERSION );
-define( 'STADION_PLUGIN_DIR', STADION_THEME_DIR . '/includes' );
-define( 'STADION_PLUGIN_URL', STADION_THEME_URL . '/includes' );
+define( 'RONDO_VERSION', RONDO_THEME_VERSION );
+define( 'RONDO_PLUGIN_DIR', RONDO_THEME_DIR . '/includes' );
+define( 'RONDO_PLUGIN_URL', RONDO_THEME_URL . '/includes' );
 
 /**
  * Check for required dependencies
  */
-function stadion_check_dependencies() {
+function rondo_check_dependencies() {
 	$missing = [];
 
 	// Check for ACF Pro
@@ -97,7 +97,7 @@ function stadion_check_dependencies() {
 			function () use ( $missing ) {
 				$message = sprintf(
 					// translators: %s is a comma-separated list of plugin names.
-					__( 'Stadion requires the following plugins: %s', 'stadion' ),
+					__( 'Rondo Club requires the following plugins: %s', 'rondo' ),
 					implode( ', ', $missing )
 				);
 				echo '<div class="notice notice-error"><p>' . esc_html( $message ) . '</p></div>';
@@ -112,165 +112,165 @@ function stadion_check_dependencies() {
 /**
  * Backward compatibility class aliases.
  *
- * These allow code using old STADION_* class names to continue working
+ * These allow code using old RONDO_* class names to continue working
  * while the codebase transitions to PSR-4 namespaced classes.
  */
 // Core classes
-if ( ! class_exists( 'STADION_Post_Types' ) ) {
-	class_alias( PostTypes::class, 'STADION_Post_Types' );
+if ( ! class_exists( 'RONDO_Post_Types' ) ) {
+	class_alias( PostTypes::class, 'RONDO_Post_Types' );
 }
-if ( ! class_exists( 'STADION_Taxonomies' ) ) {
-	class_alias( Taxonomies::class, 'STADION_Taxonomies' );
+if ( ! class_exists( 'RONDO_Taxonomies' ) ) {
+	class_alias( Taxonomies::class, 'RONDO_Taxonomies' );
 }
-if ( ! class_exists( 'STADION_Auto_Title' ) ) {
-	class_alias( AutoTitle::class, 'STADION_Auto_Title' );
+if ( ! class_exists( 'RONDO_Auto_Title' ) ) {
+	class_alias( AutoTitle::class, 'RONDO_Auto_Title' );
 }
-if ( ! class_exists( 'STADION_Access_Control' ) ) {
-	class_alias( AccessControl::class, 'STADION_Access_Control' );
+if ( ! class_exists( 'RONDO_Access_Control' ) ) {
+	class_alias( AccessControl::class, 'RONDO_Access_Control' );
 }
-if ( ! class_exists( 'STADION_User_Roles' ) ) {
-	class_alias( UserRoles::class, 'STADION_User_Roles' );
+if ( ! class_exists( 'RONDO_User_Roles' ) ) {
+	class_alias( UserRoles::class, 'RONDO_User_Roles' );
 }
 
 // REST classes
-if ( ! class_exists( 'STADION_REST_API' ) ) {
-	class_alias( Api::class, 'STADION_REST_API' );
+if ( ! class_exists( 'RONDO_REST_API' ) ) {
+	class_alias( Api::class, 'RONDO_REST_API' );
 }
-if ( ! class_exists( 'STADION_REST_Base' ) ) {
-	class_alias( \Stadion\REST\Base::class, 'STADION_REST_Base' );
+if ( ! class_exists( 'RONDO_REST_Base' ) ) {
+	class_alias( \Rondo\REST\Base::class, 'RONDO_REST_Base' );
 }
-if ( ! class_exists( 'STADION_REST_People' ) ) {
-	class_alias( People::class, 'STADION_REST_People' );
+if ( ! class_exists( 'RONDO_REST_People' ) ) {
+	class_alias( People::class, 'RONDO_REST_People' );
 }
-if ( ! class_exists( 'STADION_REST_Teams' ) ) {
-	class_alias( Teams::class, 'STADION_REST_Teams' );
+if ( ! class_exists( 'RONDO_REST_Teams' ) ) {
+	class_alias( Teams::class, 'RONDO_REST_Teams' );
 }
-if ( ! class_exists( 'STADION_REST_Commissies' ) ) {
-	class_alias( Commissies::class, 'STADION_REST_Commissies' );
+if ( ! class_exists( 'RONDO_REST_Commissies' ) ) {
+	class_alias( Commissies::class, 'RONDO_REST_Commissies' );
 }
-if ( ! class_exists( 'STADION_REST_Todos' ) ) {
-	class_alias( Todos::class, 'STADION_REST_Todos' );
+if ( ! class_exists( 'RONDO_REST_Todos' ) ) {
+	class_alias( Todos::class, 'RONDO_REST_Todos' );
 }
-if ( ! class_exists( 'STADION_REST_Import_Export' ) ) {
-	class_alias( ImportExport::class, 'STADION_REST_Import_Export' );
+if ( ! class_exists( 'RONDO_REST_Import_Export' ) ) {
+	class_alias( ImportExport::class, 'RONDO_REST_Import_Export' );
 }
-if ( ! class_exists( 'STADION_REST_Calendar' ) ) {
-	class_alias( RESTCalendar::class, 'STADION_REST_Calendar' );
+if ( ! class_exists( 'RONDO_REST_Calendar' ) ) {
+	class_alias( RESTCalendar::class, 'RONDO_REST_Calendar' );
 }
-if ( ! class_exists( 'STADION_REST_Feedback' ) ) {
-	class_alias( RESTFeedback::class, 'STADION_REST_Feedback' );
+if ( ! class_exists( 'RONDO_REST_Feedback' ) ) {
+	class_alias( RESTFeedback::class, 'RONDO_REST_Feedback' );
 }
 
 // Calendar classes
-if ( ! class_exists( 'STADION_Calendar_Connections' ) ) {
-	class_alias( Connections::class, 'STADION_Calendar_Connections' );
+if ( ! class_exists( 'RONDO_Calendar_Connections' ) ) {
+	class_alias( Connections::class, 'RONDO_Calendar_Connections' );
 }
-if ( ! class_exists( 'STADION_Calendar_Matcher' ) ) {
-	class_alias( Matcher::class, 'STADION_Calendar_Matcher' );
+if ( ! class_exists( 'RONDO_Calendar_Matcher' ) ) {
+	class_alias( Matcher::class, 'RONDO_Calendar_Matcher' );
 }
-if ( ! class_exists( 'STADION_Calendar_Sync' ) ) {
-	class_alias( Sync::class, 'STADION_Calendar_Sync' );
+if ( ! class_exists( 'RONDO_Calendar_Sync' ) ) {
+	class_alias( Sync::class, 'RONDO_Calendar_Sync' );
 }
-if ( ! class_exists( 'STADION_Google_Calendar_Provider' ) ) {
-	class_alias( GoogleProvider::class, 'STADION_Google_Calendar_Provider' );
+if ( ! class_exists( 'RONDO_Google_Calendar_Provider' ) ) {
+	class_alias( GoogleProvider::class, 'RONDO_Google_Calendar_Provider' );
 }
-if ( ! class_exists( 'STADION_CalDAV_Provider' ) ) {
-	class_alias( CalDAVProvider::class, 'STADION_CalDAV_Provider' );
+if ( ! class_exists( 'RONDO_CalDAV_Provider' ) ) {
+	class_alias( CalDAVProvider::class, 'RONDO_CalDAV_Provider' );
 }
-if ( ! class_exists( 'STADION_Google_OAuth' ) ) {
-	class_alias( GoogleOAuth::class, 'STADION_Google_OAuth' );
+if ( ! class_exists( 'RONDO_Google_OAuth' ) ) {
+	class_alias( GoogleOAuth::class, 'RONDO_Google_OAuth' );
 }
 
 // Google Sheets class
-if ( ! class_exists( 'STADION_Google_Sheets_Connection' ) ) {
-	class_alias( GoogleSheetsConnection::class, 'STADION_Google_Sheets_Connection' );
+if ( ! class_exists( 'RONDO_Google_Sheets_Connection' ) ) {
+	class_alias( GoogleSheetsConnection::class, 'RONDO_Google_Sheets_Connection' );
 }
 
 // Notification classes
-if ( ! class_exists( 'STADION_Notification_Channel' ) ) {
-	class_alias( \Stadion\Notifications\Channel::class, 'STADION_Notification_Channel' );
+if ( ! class_exists( 'RONDO_Notification_Channel' ) ) {
+	class_alias( \Rondo\Notifications\Channel::class, 'RONDO_Notification_Channel' );
 }
-if ( ! class_exists( 'STADION_Email_Channel' ) ) {
-	class_alias( EmailChannel::class, 'STADION_Email_Channel' );
+if ( ! class_exists( 'RONDO_Email_Channel' ) ) {
+	class_alias( EmailChannel::class, 'RONDO_Email_Channel' );
 }
 
 // Collaboration classes
-if ( ! class_exists( 'STADION_Comment_Types' ) ) {
-	class_alias( CommentTypes::class, 'STADION_Comment_Types' );
+if ( ! class_exists( 'RONDO_Comment_Types' ) ) {
+	class_alias( CommentTypes::class, 'RONDO_Comment_Types' );
 }
-if ( ! class_exists( 'STADION_Mentions' ) ) {
-	class_alias( \Stadion\Collaboration\Mentions::class, 'STADION_Mentions' );
+if ( ! class_exists( 'RONDO_Mentions' ) ) {
+	class_alias( \Rondo\Collaboration\Mentions::class, 'RONDO_Mentions' );
 }
-if ( ! class_exists( 'STADION_Mention_Notifications' ) ) {
-	class_alias( MentionNotifications::class, 'STADION_Mention_Notifications' );
+if ( ! class_exists( 'RONDO_Mention_Notifications' ) ) {
+	class_alias( MentionNotifications::class, 'RONDO_Mention_Notifications' );
 }
-if ( ! class_exists( 'STADION_Reminders' ) ) {
-	class_alias( Reminders::class, 'STADION_Reminders' );
+if ( ! class_exists( 'RONDO_Reminders' ) ) {
+	class_alias( Reminders::class, 'RONDO_Reminders' );
 }
 
 // Import classes
-if ( ! class_exists( 'STADION_VCard_Import' ) ) {
-	class_alias( VCardImport::class, 'STADION_VCard_Import' );
+if ( ! class_exists( 'RONDO_VCard_Import' ) ) {
+	class_alias( VCardImport::class, 'RONDO_VCard_Import' );
 }
-if ( ! class_exists( 'STADION_Google_Contacts_Import' ) ) {
-	class_alias( GoogleContacts::class, 'STADION_Google_Contacts_Import' );
+if ( ! class_exists( 'RONDO_Google_Contacts_Import' ) ) {
+	class_alias( GoogleContacts::class, 'RONDO_Google_Contacts_Import' );
 }
-if ( ! class_exists( 'STADION_Google_Contacts_API_Import' ) ) {
-	class_alias( GoogleContactsAPI::class, 'STADION_Google_Contacts_API_Import' );
+if ( ! class_exists( 'RONDO_Google_Contacts_API_Import' ) ) {
+	class_alias( GoogleContactsAPI::class, 'RONDO_Google_Contacts_API_Import' );
 }
 
 // Export classes
-if ( ! class_exists( 'STADION_VCard_Export' ) ) {
-	class_alias( VCardExport::class, 'STADION_VCard_Export' );
+if ( ! class_exists( 'RONDO_VCard_Export' ) ) {
+	class_alias( VCardExport::class, 'RONDO_VCard_Export' );
 }
-if ( ! class_exists( 'STADION_ICal_Feed' ) ) {
-	class_alias( ICalFeed::class, 'STADION_ICal_Feed' );
+if ( ! class_exists( 'RONDO_ICal_Feed' ) ) {
+	class_alias( ICalFeed::class, 'RONDO_ICal_Feed' );
 }
-if ( ! class_exists( 'STADION_Google_Contacts_Export' ) ) {
-	class_alias( GoogleContactsExport::class, 'STADION_Google_Contacts_Export' );
+if ( ! class_exists( 'RONDO_Google_Contacts_Export' ) ) {
+	class_alias( GoogleContactsExport::class, 'RONDO_Google_Contacts_Export' );
 }
 
 // CardDAV class
-if ( ! class_exists( 'STADION_CardDAV_Server' ) ) {
-	class_alias( CardDAVServer::class, 'STADION_CardDAV_Server' );
+if ( ! class_exists( 'RONDO_CardDAV_Server' ) ) {
+	class_alias( CardDAVServer::class, 'RONDO_CardDAV_Server' );
 }
 
 // Data classes
-if ( ! class_exists( 'STADION_Inverse_Relationships' ) ) {
-	class_alias( InverseRelationships::class, 'STADION_Inverse_Relationships' );
+if ( ! class_exists( 'RONDO_Inverse_Relationships' ) ) {
+	class_alias( InverseRelationships::class, 'RONDO_Inverse_Relationships' );
 }
-if ( ! class_exists( 'STADION_Todo_Migration' ) ) {
-	class_alias( TodoMigration::class, 'STADION_Todo_Migration' );
+if ( ! class_exists( 'RONDO_Todo_Migration' ) ) {
+	class_alias( TodoMigration::class, 'RONDO_Todo_Migration' );
 }
-if ( ! class_exists( 'STADION_Credential_Encryption' ) ) {
-	class_alias( \Stadion\Data\CredentialEncryption::class, 'STADION_Credential_Encryption' );
+if ( ! class_exists( 'RONDO_Credential_Encryption' ) ) {
+	class_alias( \Rondo\Data\CredentialEncryption::class, 'RONDO_Credential_Encryption' );
 }
 
 // CustomFields classes
-if ( ! class_exists( 'STADION_Custom_Fields_Manager' ) ) {
-	class_alias( CustomFieldsManager::class, 'STADION_Custom_Fields_Manager' );
+if ( ! class_exists( 'RONDO_Custom_Fields_Manager' ) ) {
+	class_alias( CustomFieldsManager::class, 'RONDO_Custom_Fields_Manager' );
 }
-if ( ! class_exists( 'STADION_Custom_Fields_Validation' ) ) {
-	class_alias( CustomFieldsValidation::class, 'STADION_Custom_Fields_Validation' );
+if ( ! class_exists( 'RONDO_Custom_Fields_Validation' ) ) {
+	class_alias( CustomFieldsValidation::class, 'RONDO_Custom_Fields_Validation' );
 }
-if ( ! class_exists( 'STADION_REST_Custom_Fields' ) ) {
-	class_alias( RESTCustomFields::class, 'STADION_REST_Custom_Fields' );
+if ( ! class_exists( 'RONDO_REST_Custom_Fields' ) ) {
+	class_alias( RESTCustomFields::class, 'RONDO_REST_Custom_Fields' );
 }
 
 // VOG classes
-if ( ! class_exists( 'STADION_VOG_Email' ) ) {
-	class_alias( VOGEmail::class, 'STADION_VOG_Email' );
+if ( ! class_exists( 'RONDO_VOG_Email' ) ) {
+	class_alias( VOGEmail::class, 'RONDO_VOG_Email' );
 }
 
 // Club Config classes
-if ( ! class_exists( 'STADION_Club_Config' ) ) {
-	class_alias( ClubConfig::class, 'STADION_Club_Config' );
+if ( ! class_exists( 'RONDO_Club_Config' ) ) {
+	class_alias( ClubConfig::class, 'RONDO_Club_Config' );
 }
 
 /**
  * Check if current request is a CardDAV request
  */
-function stadion_is_carddav_request() {
+function rondo_is_carddav_request() {
 	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
 	return strpos( $request_uri, '/carddav' ) === 0;
 }
@@ -278,7 +278,7 @@ function stadion_is_carddav_request() {
 /**
  * Check if current request is a REST API request
  */
-function stadion_is_rest_request() {
+function rondo_is_rest_request() {
 	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
 		return true;
 	}
@@ -293,7 +293,7 @@ function stadion_is_rest_request() {
 /**
  * Check if current request is for the iCal feed
  */
-function stadion_is_ical_request() {
+function rondo_is_ical_request() {
 	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
 	return strpos( $request_uri, '/prm-ical/' ) !== false || strpos( $request_uri, 'prm-ical' ) !== false;
 }
@@ -301,14 +301,14 @@ function stadion_is_ical_request() {
 /**
  * Initialize the CRM functionality with conditional class loading
  */
-function stadion_init() {
+function rondo_init() {
 	// Prevent double initialization
 	static $initialized = false;
 	if ( $initialized ) {
 		return;
 	}
 
-	if ( ! stadion_check_dependencies() ) {
+	if ( ! rondo_check_dependencies() ) {
 		return;
 	}
 
@@ -319,14 +319,14 @@ function stadion_init() {
 	new UserRoles();
 
 	// iCal feed - only load for iCal requests
-	if ( stadion_is_ical_request() ) {
+	if ( rondo_is_ical_request() ) {
 		new ICalFeed();
 		$initialized = true;
 		return; // iCal requests don't need other functionality
 	}
 
 	// CardDAV server - only load for CardDAV requests
-	if ( stadion_is_carddav_request() ) {
+	if ( rondo_is_carddav_request() ) {
 		new CardDAVServer();
 		$initialized = true;
 		return; // CardDAV requests don't need other functionality
@@ -334,7 +334,7 @@ function stadion_init() {
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
-	$is_rest  = stadion_is_rest_request();
+	$is_rest  = rondo_is_rest_request();
 	$is_cron  = defined( 'DOING_CRON' ) && DOING_CRON;
 
 	// Classes needed for content creation/editing (admin, REST, or cron)
@@ -386,36 +386,36 @@ function stadion_init() {
 
 	// iCal feed - also initialize on non-iCal requests for hook registration
 	// but we check for its specific request above for early return optimization
-	if ( ! stadion_is_ical_request() ) {
+	if ( ! rondo_is_ical_request() ) {
 		new ICalFeed();
 	}
 
 	// CardDAV server - initialize for rewrite rule registration
-	if ( ! stadion_is_carddav_request() ) {
+	if ( ! rondo_is_carddav_request() ) {
 		new CardDAVServer();
 	}
 
 	// Initialize CardDAV sync hooks to track changes made via web UI
 	// This must run on all requests, not just CardDAV requests
-	\Stadion\CardDAV\CardDAVBackend::init_hooks();
+	\Rondo\CardDAV\CardDAVBackend::init_hooks();
 
 	$initialized = true;
 }
 // Initialize early for REST API requests, but also check on plugins_loaded
 // in case ACF Pro isn't loaded yet (plugins load after themes)
-add_action( 'after_setup_theme', 'stadion_init', 5 );
-add_action( 'plugins_loaded', 'stadion_init', 5 );
+add_action( 'after_setup_theme', 'rondo_init', 5 );
+add_action( 'plugins_loaded', 'rondo_init', 5 );
 
 // Load WP-CLI commands if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
-	require_once STADION_PLUGIN_DIR . '/class-wp-cli.php';
+	require_once RONDO_PLUGIN_DIR . '/class-wp-cli.php';
 	new TodoMigration();
 }
 
 /**
  * Theme setup
  */
-function stadion_theme_setup() {
+function rondo_theme_setup() {
 	// Add theme support
 	add_theme_support( 'title-tag' );
 	add_theme_support( 'post-thumbnails' );
@@ -435,37 +435,37 @@ function stadion_theme_setup() {
 	// Register nav menus (optional, React handles navigation)
 	register_nav_menus(
 		[
-			'primary' => __( 'Primary Menu', 'stadion' ),
+			'primary' => __( 'Primary Menu', 'rondo' ),
 		]
 	);
 }
-add_action( 'after_setup_theme', 'stadion_theme_setup' );
+add_action( 'after_setup_theme', 'rondo_theme_setup' );
 
 /**
  * Set default page title for SPA (React will update it dynamically)
  */
-function stadion_theme_document_title_parts( $title ) {
+function rondo_theme_document_title_parts( $title ) {
 	// Only modify title on frontend (not admin)
 	if ( is_admin() ) {
 		return $title;
 	}
 
 	// Set a default title - React will update it when routes change
-	$club_config       = new \Stadion\Config\ClubConfig();
+	$club_config       = new \Rondo\Config\ClubConfig();
 	$club_name         = $club_config->get_club_name();
-	$title['title']    = ! empty( $club_name ) ? $club_name : 'Stadion';
+	$title['title']    = ! empty( $club_name ) ? $club_name : 'Rondo Club';
 	$title['site']     = '';
 
 	return $title;
 }
-add_filter( 'document_title_parts', 'stadion_theme_document_title_parts', 20 );
+add_filter( 'document_title_parts', 'rondo_theme_document_title_parts', 20 );
 
 /**
  * Enqueue scripts and styles
  */
-function stadion_theme_enqueue_assets() {
-	$dist_dir = STADION_THEME_DIR . '/dist';
-	$dist_url = STADION_THEME_URL . '/dist';
+function rondo_theme_enqueue_assets() {
+	$dist_dir = RONDO_THEME_DIR . '/dist';
+	$dist_url = RONDO_THEME_URL . '/dist';
 
 	// Check if we have built assets (Vite puts manifest in .vite subdirectory)
 	$manifest_path = $dist_dir . '/.vite/manifest.json';
@@ -487,7 +487,7 @@ function stadion_theme_enqueue_assets() {
 						'prm-theme-style',
 						$dist_url . '/' . $css_file,
 						[],
-						STADION_THEME_VERSION
+						RONDO_THEME_VERSION
 					);
 				}
 			}
@@ -502,7 +502,7 @@ function stadion_theme_enqueue_assets() {
 				);
 
 				// Localize script with WordPress data
-				wp_localize_script( 'prm-theme-script', 'stadionConfig', stadion_get_js_config() );
+				wp_localize_script( 'prm-theme-script', 'rondoConfig', rondo_get_js_config() );
 			}
 		}
 	} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -523,24 +523,24 @@ function stadion_theme_enqueue_assets() {
 			'wp_head',
 			function () {
 				// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript, WordPress.Security.EscapeOutput.OutputNotEscaped
-				echo '<script>console.error("Stadion: Build files not found. Please run npm run build.");</script>';
+				echo '<script>console.error("Rondo Club: Build files not found. Please run npm run build.");</script>';
 			}
 		);
 	}
 }
-add_action( 'wp_enqueue_scripts', 'stadion_theme_enqueue_assets' );
+add_action( 'wp_enqueue_scripts', 'rondo_theme_enqueue_assets' );
 
 /**
  * Get JavaScript configuration
  */
-function stadion_get_js_config() {
+function rondo_get_js_config() {
 	$user    = wp_get_current_user();
 	$user_id = get_current_user_id();
 
 	// Get build time from manifest file modification time.
 	// This ensures every build produces a unique timestamp.
 	$build_time    = null;
-	$manifest_path = STADION_THEME_DIR . '/dist/.vite/manifest.json';
+	$manifest_path = RONDO_THEME_DIR . '/dist/.vite/manifest.json';
 	if ( file_exists( $manifest_path ) ) {
 		$build_time = gmdate( 'c', filemtime( $manifest_path ) );
 	} else {
@@ -549,10 +549,10 @@ function stadion_get_js_config() {
 	}
 
 	// Get user's linked person ID (for filtering current user from attendee lists)
-	$linked_person_id = $user_id ? (int) get_user_meta( $user_id, 'stadion_linked_person_id', true ) : null;
+	$linked_person_id = $user_id ? (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) : null;
 
 	// Club configuration
-	$club_config   = new \Stadion\Config\ClubConfig();
+	$club_config   = new \Rondo\Config\ClubConfig();
 	$club_settings = $club_config->get_all_settings();
 
 	return [
@@ -567,7 +567,7 @@ function stadion_get_js_config() {
 		'loginUrl'            => wp_login_url(),
 		'logoutUrl'           => wp_logout_url( home_url() ),
 		'adminUrl'            => admin_url(),
-		'themeUrl'            => STADION_THEME_URL,
+		'themeUrl'            => RONDO_THEME_URL,
 		'version'             => wp_get_theme()->get( 'Version' ),
 		'buildTime'           => $build_time,
 		'currentUserPersonId' => $linked_person_id ?: null,
@@ -580,11 +580,11 @@ function stadion_get_js_config() {
 /**
  * Add config to head for initial page load
  */
-function stadion_theme_add_config_to_head() {
-	$config = stadion_get_js_config();
-	echo '<script>window.stadionConfig = ' . wp_json_encode( $config ) . ';</script>';
+function rondo_theme_add_config_to_head() {
+	$config = rondo_get_js_config();
+	echo '<script>window.rondoConfig = ' . wp_json_encode( $config ) . ';</script>';
 }
-add_action( 'wp_head', 'stadion_theme_add_config_to_head', 0 );
+add_action( 'wp_head', 'rondo_theme_add_config_to_head', 0 );
 
 /**
  * Output PWA meta tags for iOS and Android support
@@ -592,9 +592,9 @@ add_action( 'wp_head', 'stadion_theme_add_config_to_head', 0 );
  * vite-plugin-pwa handles manifest generation, but we need to manually
  * inject meta tags since WordPress uses PHP templates, not index.html.
  */
-function stadion_pwa_meta_tags() {
-	$theme_url   = STADION_THEME_URL;
-	$club_config = new \Stadion\Config\ClubConfig();
+function rondo_pwa_meta_tags() {
+	$theme_url   = RONDO_THEME_URL;
+	$club_config = new \Rondo\Config\ClubConfig();
 	$settings    = $club_config->get_all_settings();
 	$club_color  = esc_attr( $settings['accent_color'] );
 
@@ -612,7 +612,7 @@ function stadion_pwa_meta_tags() {
 	<meta name="mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="default">
-	<meta name="apple-mobile-web-app-title" content="Stadion">
+	<meta name="apple-mobile-web-app-title" content="Rondo Club">
 
 	<!-- Apple Touch Icon -->
 	<link rel="apple-touch-icon" href="<?php echo esc_url( $theme_url . '/public/icons/apple-touch-icon-180x180.png' ); ?>">
@@ -625,7 +625,7 @@ function stadion_pwa_meta_tags() {
 	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="<?php echo $club_color_dark; ?>">
 	<?php
 }
-add_action( 'wp_head', 'stadion_pwa_meta_tags', 2 );
+add_action( 'wp_head', 'rondo_pwa_meta_tags', 2 );
 
 /**
  * Add favicon to head
@@ -638,29 +638,29 @@ add_action( 'wp_head', 'stadion_pwa_meta_tags', 2 );
  * React will create the favicon link element on mount with the user's accent color.
  */
 // Removed static favicon output - React manages favicon dynamically via useTheme.js
-// function stadion_theme_add_favicon() {
-//     $favicon_url = STADION_THEME_URL . '/favicon.svg';
+// function rondo_theme_add_favicon() {
+//     $favicon_url = RONDO_THEME_URL . '/favicon.svg';
 //     echo '<link rel="icon" type="image/svg+xml" href="' . esc_url($favicon_url) . '">';
 //     echo '<link rel="alternate icon" href="' . esc_url($favicon_url) . '">';
 // }
-// add_action('wp_head', 'stadion_theme_add_favicon', 1);
+// add_action('wp_head', 'rondo_theme_add_favicon', 1);
 
 /**
  * Hide admin bar on frontend - it interferes with the SPA interface
  */
-function stadion_theme_remove_admin_bar() {
+function rondo_theme_remove_admin_bar() {
 	if ( ! is_admin() ) {
 		show_admin_bar( false );
 	}
 }
-add_action( 'after_setup_theme', 'stadion_theme_remove_admin_bar' );
+add_action( 'after_setup_theme', 'rondo_theme_remove_admin_bar' );
 
 /**
  * Redirect WordPress backend URLs to SPA frontend routes
  *
  * Handles URLs like ?post_type=person&p=123 → /people/123
  */
-function stadion_redirect_backend_urls() {
+function rondo_redirect_backend_urls() {
 	// Don't redirect admin, login, or API requests.
 	if ( is_admin() || 'wp-login.php' === $GLOBALS['pagenow'] ) {
 		return;
@@ -694,12 +694,12 @@ function stadion_redirect_backend_urls() {
 	wp_redirect( $redirect_url, 301 );
 	exit;
 }
-add_action( 'template_redirect', 'stadion_redirect_backend_urls', 0 ); // Priority 0 to run before other redirects
+add_action( 'template_redirect', 'rondo_redirect_backend_urls', 0 ); // Priority 0 to run before other redirects
 
 /**
  * Redirect all frontend requests to index.php (SPA)
  */
-function stadion_theme_template_redirect() {
+function rondo_theme_template_redirect() {
 	// Don't redirect admin, login, or API requests.
 	if ( is_admin() || 'wp-login.php' === $GLOBALS['pagenow'] ) {
 		return;
@@ -759,21 +759,21 @@ function stadion_theme_template_redirect() {
 		exit;
 	}
 }
-add_action( 'template_redirect', 'stadion_theme_template_redirect', 1 );
+add_action( 'template_redirect', 'rondo_theme_template_redirect', 1 );
 
 /**
  * Handle client-side routing - return index.php for all routes
  */
-function stadion_theme_rewrite_rules() {
+function rondo_theme_rewrite_rules() {
 	add_rewrite_rule( '^app/?', 'index.php', 'top' );
 	add_rewrite_rule( '^app/(.+)/?', 'index.php', 'top' );
 }
-add_action( 'init', 'stadion_theme_rewrite_rules' );
+add_action( 'init', 'rondo_theme_rewrite_rules' );
 
 /**
  * Theme activation - includes CRM initialization
  */
-function stadion_theme_activation() {
+function rondo_theme_activation() {
 	// Trigger post type registration (Composer autoloader handles class loading)
 	$post_types = new PostTypes();
 	$post_types->register_post_types();
@@ -800,23 +800,23 @@ function stadion_theme_activation() {
 	$contacts_sync->schedule_sync();
 
 	// Also handle theme-specific rewrite rules
-	stadion_theme_rewrite_rules();
+	rondo_theme_rewrite_rules();
 
 	// Initialize CardDAV server rewrite rules
 	$carddav = new CardDAVServer();
 	$carddav->register_rewrite_rules();
 }
-add_action( 'after_switch_theme', 'stadion_theme_activation' );
+add_action( 'after_switch_theme', 'rondo_theme_activation' );
 
 /**
  * Theme deactivation - cleanup CRM functionality
  */
-function stadion_theme_deactivation() {
+function rondo_theme_deactivation() {
 	// Clear all per-user reminder cron jobs
-	wp_clear_scheduled_hook( 'stadion_user_reminder' );
+	wp_clear_scheduled_hook( 'rondo_user_reminder' );
 
 	// Clear legacy scheduled hook (for backward compatibility)
-	wp_clear_scheduled_hook( 'stadion_daily_reminder_check' );
+	wp_clear_scheduled_hook( 'rondo_daily_reminder_check' );
 
 	// Clear calendar sync cron job
 	$calendar_sync = new Sync();
@@ -833,16 +833,16 @@ function stadion_theme_deactivation() {
 	// Flush rewrite rules
 	flush_rewrite_rules();
 }
-add_action( 'switch_theme', 'stadion_theme_deactivation' );
+add_action( 'switch_theme', 'rondo_theme_deactivation' );
 
 /**
  * Unschedule user reminder cron when user is deleted
  */
-function stadion_user_deleted( $user_id ) {
+function rondo_user_deleted( $user_id ) {
 	$reminders = new Reminders();
 	$reminders->unschedule_user_reminder( $user_id );
 }
-add_action( 'delete_user', 'stadion_user_deleted' );
+add_action( 'delete_user', 'rondo_user_deleted' );
 
 /**
  * Add type="module" to script tags
@@ -852,56 +852,56 @@ add_action( 'delete_user', 'stadion_user_deleted' );
  * @param string $src    Script source URL.
  * @return string Modified script tag.
  */
-function stadion_theme_script_type( $tag, $handle, $src ) {
+function rondo_theme_script_type( $tag, $handle, $src ) {
 	if ( 'prm-theme-script' === $handle ) {
 		// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript -- Modifying enqueued script tag.
 		return '<script type="module" src="' . esc_url( $src ) . '"></script>';
 	}
 	return $tag;
 }
-add_filter( 'script_loader_tag', 'stadion_theme_script_type', 10, 3 );
+add_filter( 'script_loader_tag', 'rondo_theme_script_type', 10, 3 );
 
 /**
  * Disable WordPress emojis (performance)
  */
-function stadion_theme_disable_emojis() {
+function rondo_theme_disable_emojis() {
 	remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
 	remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
 	remove_action( 'wp_print_styles', 'print_emoji_styles' );
 	remove_action( 'admin_print_styles', 'print_emoji_styles' );
 }
-add_action( 'init', 'stadion_theme_disable_emojis' );
+add_action( 'init', 'rondo_theme_disable_emojis' );
 
 /**
  * Clean up WordPress head
  */
-function stadion_theme_cleanup_head() {
+function rondo_theme_cleanup_head() {
 	remove_action( 'wp_head', 'rsd_link' );
 	remove_action( 'wp_head', 'wlwmanifest_link' );
 	remove_action( 'wp_head', 'wp_generator' );
 	remove_action( 'wp_head', 'wp_shortlink_wp_head' );
 }
-add_action( 'init', 'stadion_theme_cleanup_head' );
+add_action( 'init', 'rondo_theme_cleanup_head' );
 
 /**
  * Load ACF JSON from theme directory
  */
-function stadion_acf_json_load_point( $paths ) {
-	$paths[] = STADION_THEME_DIR . '/acf-json';
+function rondo_acf_json_load_point( $paths ) {
+	$paths[] = RONDO_THEME_DIR . '/acf-json';
 	return $paths;
 }
-add_filter( 'acf/settings/load_json', 'stadion_acf_json_load_point' );
+add_filter( 'acf/settings/load_json', 'rondo_acf_json_load_point' );
 
 /**
  * Save ACF JSON to theme directory (for development)
  */
-function stadion_acf_json_save_point( $path ) {
+function rondo_acf_json_save_point( $path ) {
 	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		$path = STADION_THEME_DIR . '/acf-json';
+		$path = RONDO_THEME_DIR . '/acf-json';
 	}
 	return $path;
 }
-add_filter( 'acf/settings/save_json', 'stadion_acf_json_save_point' );
+add_filter( 'acf/settings/save_json', 'rondo_acf_json_save_point' );
 
 /**
  * Invalidate email lookup cache when a person is saved
@@ -909,7 +909,7 @@ add_filter( 'acf/settings/save_json', 'stadion_acf_json_save_point' );
  * This ensures that the contact matching cache stays in sync
  * when contact info (emails) are updated on person records.
  */
-function stadion_invalidate_email_lookup_on_person_save( $post_id ) {
+function rondo_invalidate_email_lookup_on_person_save( $post_id ) {
 	if ( get_post_type( $post_id ) === 'person' ) {
 		$user_id = get_post_field( 'post_author', $post_id );
 		if ( $user_id ) {
@@ -917,7 +917,7 @@ function stadion_invalidate_email_lookup_on_person_save( $post_id ) {
 		}
 	}
 }
-add_action( 'acf/save_post', 'stadion_invalidate_email_lookup_on_person_save', 20 );
+add_action( 'acf/save_post', 'rondo_invalidate_email_lookup_on_person_save', 20 );
 
 /**
  * Reset VOG tracking fields when datum-vog is updated
@@ -931,7 +931,7 @@ add_action( 'acf/save_post', 'stadion_invalidate_email_lookup_on_person_save', 2
  * @param mixed  $original The original value.
  * @return mixed The value (unchanged).
  */
-function stadion_reset_vog_tracking_on_datum_update( $value, $post_id, $field, $original ) {
+function rondo_reset_vog_tracking_on_datum_update( $value, $post_id, $field, $original ) {
 	// Only process if datum-vog is actually changing to a new value
 	if ( $value !== $original && ! empty( $value ) ) {
 		delete_post_meta( $post_id, 'vog_email_sent_date' );
@@ -939,16 +939,16 @@ function stadion_reset_vog_tracking_on_datum_update( $value, $post_id, $field, $
 	}
 	return $value;
 }
-add_filter( 'acf/update_value/name=datum-vog', 'stadion_reset_vog_tracking_on_datum_update', 10, 4 );
+add_filter( 'acf/update_value/name=datum-vog', 'rondo_reset_vog_tracking_on_datum_update', 10, 4 );
 
 /**
  * Custom login page styling
  */
-function stadion_login_styles() {
+function rondo_login_styles() {
 	$site_name   = get_bloginfo( 'name' );
 
 	// Get club configuration for dynamic theming
-	$club_config = new \Stadion\Config\ClubConfig();
+	$club_config = new \Rondo\Config\ClubConfig();
 	$settings    = $club_config->get_all_settings();
 	$club_color  = $settings['accent_color']; // Defaults to #006935
 	$club_name   = $settings['club_name'];
@@ -1158,13 +1158,13 @@ function stadion_login_styles() {
 	</style>
 	<?php
 }
-add_action( 'login_enqueue_scripts', 'stadion_login_styles' );
+add_action( 'login_enqueue_scripts', 'rondo_login_styles' );
 
 /**
  * Add favicon to login page
  */
-function stadion_login_favicon() {
-	$club_config = new \Stadion\Config\ClubConfig();
+function rondo_login_favicon() {
+	$club_config = new \Rondo\Config\ClubConfig();
 	$settings    = $club_config->get_all_settings();
 	$club_color  = esc_attr( $settings['accent_color'] );
 
@@ -1175,28 +1175,28 @@ function stadion_login_favicon() {
 
 	echo '<link rel="icon" type="image/svg+xml" href="' . esc_url( $data_url, array( 'data' ) ) . '">';
 }
-add_action( 'login_head', 'stadion_login_favicon' );
+add_action( 'login_head', 'rondo_login_favicon' );
 
 /**
  * Change login logo URL to homepage
  */
-function stadion_login_logo_url() {
+function rondo_login_logo_url() {
 	return home_url( '/' );
 }
-add_filter( 'login_headerurl', 'stadion_login_logo_url' );
+add_filter( 'login_headerurl', 'rondo_login_logo_url' );
 
 /**
  * Change login logo title
  */
-function stadion_login_logo_title() {
+function rondo_login_logo_title() {
 	return get_bloginfo( 'name' );
 }
-add_filter( 'login_headertext', 'stadion_login_logo_title' );
+add_filter( 'login_headertext', 'rondo_login_logo_title' );
 
 /**
  * Redirect users to homepage after login
  */
-function stadion_login_redirect( $redirect_to, $request, $user ) {
+function rondo_login_redirect( $redirect_to, $request, $user ) {
 	// Only redirect if no specific redirect was requested
 	if ( isset( $_GET['redirect_to'] ) && ! empty( $_GET['redirect_to'] ) ) {
 		return $redirect_to;
@@ -1205,7 +1205,7 @@ function stadion_login_redirect( $redirect_to, $request, $user ) {
 	// Redirect all users to the homepage
 	return home_url( '/' );
 }
-add_filter( 'login_redirect', 'stadion_login_redirect', 10, 3 );
+add_filter( 'login_redirect', 'rondo_login_redirect', 10, 3 );
 
 /**
  * Disable admin color scheme picker for all users
@@ -1221,7 +1221,7 @@ remove_action( 'admin_color_scheme_picker', 'admin_color_scheme_picker' );
  * @param string $domain          Text domain.
  * @return string Modified text.
  */
-function stadion_registration_message_filter( $translated_text, $text, $domain ) {
+function rondo_registration_message_filter( $translated_text, $text, $domain ) {
 	// Only filter on login/registration pages.
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking URL context only.
 	$is_register  = isset( $_GET['action'] ) && 'register' === $_GET['action'];
@@ -1235,28 +1235,28 @@ function stadion_registration_message_filter( $translated_text, $text, $domain )
 	}
 	return $translated_text;
 }
-add_filter( 'gettext', 'stadion_registration_message_filter', 20, 3 );
+add_filter( 'gettext', 'rondo_registration_message_filter', 20, 3 );
 
 /**
- * Change "Register For This Site" to "Register for Stadion"
+ * Change "Register For This Site" to "Register for Rondo Club"
  *
  * @param string $translated_text Translated text.
  * @param string $text            Original text.
  * @param string $domain          Text domain.
  * @return string Modified text.
  */
-function stadion_change_register_notice_text( $translated_text, $text, $domain ) {
+function rondo_change_register_notice_text( $translated_text, $text, $domain ) {
 	if ( 'Register For This Site' === $text ) {
-		return 'Register for Stadion';
+		return 'Register for Rondo Club';
 	}
 	return $translated_text;
 }
-add_filter( 'gettext', 'stadion_change_register_notice_text', 20, 3 );
+add_filter( 'gettext', 'rondo_change_register_notice_text', 20, 3 );
 
 /**
  * Change login page titles
  */
-function stadion_login_page_titles() {
+function rondo_login_page_titles() {
 	?>
 	<script>
 		(function() {
@@ -1276,54 +1276,54 @@ function stadion_login_page_titles() {
 				// Registration page
 				var title = document.querySelector('.login form h1, .login h1, #login h1');
 				if (title) {
-					title.textContent = 'Register for Stadion';
+					title.textContent = 'Register for Rondo Club';
 				}
 				// Also check for any other title elements
 				var formTitle = document.querySelector('.login form .title, .login .title');
 				if (formTitle) {
-					formTitle.textContent = 'Register for Stadion';
+					formTitle.textContent = 'Register for Rondo Club';
 				}
 			} else if (action === 'lostpassword' || action === 'retrievepassword') {
 				// Lost password page
 				var title = document.querySelector('.login form h1, .login h1, #login h1');
 				if (title) {
-					title.textContent = 'Lost your password for Stadion?';
+					title.textContent = 'Lost your password for Rondo Club?';
 				}
 				var formTitle = document.querySelector('.login form .title, .login .title');
 				if (formTitle) {
-					formTitle.textContent = 'Lost your password for Stadion?';
+					formTitle.textContent = 'Lost your password for Rondo Club?';
 				}
 			} else {
 				// Login page (default)
 				var title = document.querySelector('.login form h1, .login h1, #login h1');
 				if (title && !title.textContent.includes('Register') && !title.textContent.includes('Lost')) {
-					title.textContent = 'Log in to Stadion';
+					title.textContent = 'Log in to Rondo Club';
 				}
 				var formTitle = document.querySelector('.login form .title, .login .title');
 				if (formTitle && !formTitle.textContent.includes('Register') && !formTitle.textContent.includes('Lost')) {
-					formTitle.textContent = 'Log in to Stadion';
+					formTitle.textContent = 'Log in to Rondo Club';
 				}
 			}
-			
+
 			// Also check for page title in document title
 			if (action === 'register') {
-				document.title = 'Register for Stadion';
+				document.title = 'Register for Rondo Club';
 			} else if (action === 'lostpassword' || action === 'retrievepassword') {
-				document.title = 'Lost your password for Stadion?';
+				document.title = 'Lost your password for Rondo Club?';
 			} else {
-				document.title = 'Log in to Stadion';
+				document.title = 'Log in to Rondo Club';
 			}
 		})();
 	</script>
 	<?php
 }
-add_action( 'login_footer', 'stadion_login_page_titles' );
+add_action( 'login_footer', 'rondo_login_page_titles' );
 
 /**
  * Debug log rotation - runs daily via WP-Cron
  */
-add_action( 'stadion_rotate_debug_log', 'stadion_rotate_debug_log' );
-function stadion_rotate_debug_log() {
+add_action( 'rondo_rotate_debug_log', 'rondo_rotate_debug_log' );
+function rondo_rotate_debug_log() {
     $log_dir  = WP_CONTENT_DIR;
     $log_file = $log_dir . '/debug.log';
     $date     = date( 'Y-m-d' );
@@ -1350,6 +1350,6 @@ function stadion_rotate_debug_log() {
 }
 
 // Schedule daily rotation if not already scheduled
-if ( ! wp_next_scheduled( 'stadion_rotate_debug_log' ) ) {
-    wp_schedule_event( strtotime( 'tomorrow midnight' ), 'daily', 'stadion_rotate_debug_log' );
+if ( ! wp_next_scheduled( 'rondo_rotate_debug_log' ) ) {
+    wp_schedule_event( strtotime( 'tomorrow midnight' ), 'daily', 'rondo_rotate_debug_log' );
 }
