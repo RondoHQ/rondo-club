@@ -285,27 +285,31 @@ class Reminders {
 	 * Get upcoming reminders
 	 */
 	public function get_upcoming_reminders( $days_ahead = 30 ) {
-		$dates = get_posts(
-			[
-				'post_type'      => 'important_date',
-				'posts_per_page' => -1,
-				'post_status'    => 'publish',
-			]
+		global $wpdb;
+
+		// Query people with birthdate meta
+		$people_with_birthdays = $wpdb->get_results(
+			"SELECT p.ID, p.post_title, pm.meta_value as birthdate
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			WHERE p.post_type = 'person'
+			AND p.post_status = 'publish'
+			AND pm.meta_key = 'birthdate'
+			AND pm.meta_value != ''"
 		);
 
 		$upcoming = [];
 		$today    = new \DateTime( 'today', wp_timezone() );
 		$end_date = ( clone $today )->modify( "+{$days_ahead} days" );
 
-		foreach ( $dates as $date_post ) {
-			$date_value   = get_field( 'date_value', $date_post->ID );
-			$is_recurring = get_field( 'is_recurring', $date_post->ID );
-
-			if ( ! $date_value ) {
+		foreach ( $people_with_birthdays as $person ) {
+			$birthdate = \DateTime::createFromFormat( 'Y-m-d', $person->birthdate, wp_timezone() );
+			if ( ! $birthdate ) {
 				continue;
 			}
 
-			$next_occurrence = $this->calculate_next_occurrence( $date_value, $is_recurring );
+			// Calculate next occurrence for birthday (always recurring)
+			$next_occurrence = $this->calculate_next_occurrence( $person->birthdate, true );
 
 			if ( ! $next_occurrence ) {
 				continue;
@@ -321,28 +325,22 @@ class Reminders {
 				continue;
 			}
 
-			$related_people = get_field( 'related_people', $date_post->ID ) ?: [];
-			$people_data    = [];
-
-			foreach ( $related_people as $person ) {
-				$person_id     = is_object( $person ) ? $person->ID : $person;
-				$people_data[] = [
-					'id'        => $person_id,
-					'name'      => html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ),
-					'thumbnail' => get_the_post_thumbnail_url( $person_id, 'thumbnail' ),
-				];
-			}
-
 			$upcoming[] = [
-				'id'              => $date_post->ID,
-				'title'           => html_entity_decode( $date_post->post_title, ENT_QUOTES, 'UTF-8' ),
-				'date_value'      => $date_value,
+				'id'              => $person->ID,
+				'title'           => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ) . ' - Verjaardag',
+				'date_value'      => $person->birthdate,
 				'next_occurrence' => $next_occurrence->format( 'Y-m-d' ),
 				'days_until'      => (int) $today->diff( $next_occurrence )->days,
-				'is_recurring'    => (bool) $is_recurring,
-				'year_unknown'    => (bool) get_field( 'year_unknown', $date_post->ID ),
-				'date_type'       => wp_get_post_terms( $date_post->ID, 'date_type', [ 'fields' => 'names' ] ),
-				'related_people'  => $people_data,
+				'is_recurring'    => true,
+				'year_unknown'    => false,
+				'date_type'       => [ 'Birthday' ],
+				'related_people'  => [
+					[
+						'id'        => $person->ID,
+						'name'      => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ),
+						'thumbnail' => get_the_post_thumbnail_url( $person->ID, 'thumbnail' ),
+					],
+				],
 			];
 		}
 
@@ -430,29 +428,19 @@ class Reminders {
 		// This is needed for cron jobs that run without a logged-in user
 		global $wpdb;
 
-		$date_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->posts} 
-             WHERE post_type = %s 
-             AND post_status = 'publish'",
-				'important_date'
-			)
+		// Query people with birthdate meta
+		$people_with_birthdays = $wpdb->get_results(
+			"SELECT p.ID, p.post_title, pm.meta_value as birthdate
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			WHERE p.post_type = 'person'
+			AND p.post_status = 'publish'
+			AND pm.meta_key = 'birthdate'
+			AND pm.meta_value != ''"
 		);
 
 		// Get todos for the user
 		$todos = $this->get_user_todos_for_digest( $user_id, $today, $end_of_week );
-
-		if ( empty( $date_ids ) ) {
-			return [
-				'today'        => [],
-				'tomorrow'     => [],
-				'rest_of_week' => [],
-				'todos'        => $todos,
-			];
-		}
-
-		// Get full post objects
-		$dates = array_map( 'get_post', $date_ids );
 
 		$digest = [
 			'today'        => [],
@@ -461,18 +449,20 @@ class Reminders {
 			'todos'        => $todos,
 		];
 
-		foreach ( $dates as $date_post ) {
-			if ( ! $date_post ) {
-				continue;
-			}
-			$date_value   = get_field( 'date_value', $date_post->ID );
-			$is_recurring = get_field( 'is_recurring', $date_post->ID );
-
-			if ( ! $date_value ) {
+		// Process birthdays
+		foreach ( $people_with_birthdays as $person ) {
+			// Check if user has access to this person
+			if ( ! $access_control->user_can_access_post( $person->ID, $user_id ) ) {
 				continue;
 			}
 
-			$next_occurrence = $this->calculate_next_occurrence( $date_value, $is_recurring );
+			$birthdate = \DateTime::createFromFormat( 'Y-m-d', $person->birthdate, wp_timezone() );
+			if ( ! $birthdate ) {
+				continue;
+			}
+
+			// Calculate next occurrence (always recurring for birthdays)
+			$next_occurrence = $this->calculate_next_occurrence( $person->birthdate, true );
 
 			if ( ! $next_occurrence ) {
 				continue;
@@ -483,62 +473,22 @@ class Reminders {
 				continue;
 			}
 
-			// Get related people and check access
-			$related_people  = get_field( 'related_people', $date_post->ID ) ?: [];
-			$people_data     = [];
-			$user_has_access = false;
-
-			// Skip dates with no related people
-			if ( empty( $related_people ) ) {
-				continue;
-			}
-
-			// Ensure it's an array
-			if ( ! is_array( $related_people ) ) {
-				$related_people = [ $related_people ];
-			}
-
-			foreach ( $related_people as $person ) {
-				// Extract person ID - handle different ACF return formats
-				$person_id = null;
-				if ( is_object( $person ) ) {
-					$person_id = $person->ID;
-				} elseif ( is_array( $person ) ) {
-					$person_id = isset( $person['ID'] ) ? $person['ID'] : ( isset( $person['id'] ) ? $person['id'] : $person );
-				} else {
-					$person_id = $person;
-				}
-
-				if ( ! $person_id ) {
-					continue;
-				}
-
-				// Only include if user can access this person
-				if ( $access_control->user_can_access_post( $person_id, $user_id ) ) {
-					$user_has_access = true;
-					$people_data[]   = [
-						'id'        => $person_id,
-						'name'      => html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ),
-						'thumbnail' => get_the_post_thumbnail_url( $person_id, 'thumbnail' ),
-					];
-				}
-			}
-
-			// Skip if user doesn't have access to any related people
-			if ( ! $user_has_access || empty( $people_data ) ) {
-				continue;
-			}
-
 			$date_item = [
-				'id'              => $date_post->ID,
-				'title'           => html_entity_decode( $date_post->post_title, ENT_QUOTES, 'UTF-8' ),
-				'date_value'      => $date_value,
+				'id'              => $person->ID,
+				'title'           => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ) . ' - Verjaardag',
+				'date_value'      => $person->birthdate,
 				'next_occurrence' => $next_occurrence->format( 'Y-m-d' ),
 				'days_until'      => (int) $today->diff( $next_occurrence )->days,
-				'is_recurring'    => (bool) $is_recurring,
-				'year_unknown'    => (bool) get_field( 'year_unknown', $date_post->ID ),
-				'date_type'       => wp_get_post_terms( $date_post->ID, 'date_type', [ 'fields' => 'names' ] ),
-				'related_people'  => $people_data,
+				'is_recurring'    => true,
+				'year_unknown'    => false,
+				'date_type'       => [ 'Birthday' ],
+				'related_people'  => [
+					[
+						'id'        => $person->ID,
+						'name'      => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ),
+						'thumbnail' => get_the_post_thumbnail_url( $person->ID, 'thumbnail' ),
+					],
+				],
 			];
 
 			// Categorize by when it occurs
