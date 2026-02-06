@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-05)
+See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Add workspaces and sharing to enable team collaboration while maintaining the personal, relationship-focused experience that makes Stadion unique.
-**Current focus:** Planning next milestone
+**Current focus:** v19.0 Birthdate Simplification
 
 ## Current Position
 
-Phase: Ready for next milestone
-Plan: Not started
-Status: v18.1.0 - Dark mode contrast fixes complete
-Last activity: 2026-02-06 — Completed quick task 041
+Phase: Defining requirements
+Plan: —
+Status: v19.0 - Birthdate Simplification started
+Last activity: 2026-02-06 — Milestone v19.0 started
 
-Progress: Ready for /gsd:new-milestone
+Progress: Defining requirements
 
 ## Accumulated Context
 

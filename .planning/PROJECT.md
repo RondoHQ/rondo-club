@@ -351,7 +351,14 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(None currently — milestone complete)
+**v19.0 Birthdate Simplification:**
+- [ ] Add birthdate ACF field to person (date field, read-only in UI)
+- [ ] Display birthdate in person header after age
+- [ ] Update dashboard upcoming birthdays widget to query person birthdate meta
+- [ ] Remove Important Dates CPT, taxonomy, and related infrastructure
+- [ ] Remove "Datums" menu item and DatesList page
+- [ ] Remove ImportantDateModal component
+- [ ] Remove important dates card from PersonDetail
 
 ### Out of Scope
 
@@ -525,4 +532,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Integration URLs externalized to config | FreeScout link checks window.stadionConfig first, hides feature if not configured | ✓ Good |
 
 ---
-*Last updated: 2026-02-05 after v17.0 De-AWC milestone complete*
+*Last updated: 2026-02-06 after v19.0 Birthdate Simplification milestone started*
