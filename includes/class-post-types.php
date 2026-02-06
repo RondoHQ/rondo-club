@@ -34,18 +34,18 @@ class PostTypes {
 	 */
 	private function register_person_post_type() {
 		$labels = [
-			'name'               => _x( 'People', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Person', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'People', 'Admin Menu text', 'stadion' ),
-			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Person', 'stadion' ),
-			'edit_item'          => __( 'Edit Person', 'stadion' ),
-			'new_item'           => __( 'New Person', 'stadion' ),
-			'view_item'          => __( 'View Person', 'stadion' ),
-			'search_items'       => __( 'Search People', 'stadion' ),
-			'not_found'          => __( 'No people found', 'stadion' ),
-			'not_found_in_trash' => __( 'No people found in Trash', 'stadion' ),
-			'all_items'          => __( 'All People', 'stadion' ),
+			'name'               => _x( 'People', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Person', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'People', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Person', 'rondo' ),
+			'edit_item'          => __( 'Edit Person', 'rondo' ),
+			'new_item'           => __( 'New Person', 'rondo' ),
+			'view_item'          => __( 'View Person', 'rondo' ),
+			'search_items'       => __( 'Search People', 'rondo' ),
+			'not_found'          => __( 'No people found', 'rondo' ),
+			'not_found_in_trash' => __( 'No people found in Trash', 'rondo' ),
+			'all_items'          => __( 'All People', 'rondo' ),
 		];
 
 		$args = [
@@ -76,18 +76,18 @@ class PostTypes {
 	 */
 	private function register_team_post_type() {
 		$labels = [
-			'name'               => _x( 'Teams', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Team', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'Teams', 'Admin Menu text', 'stadion' ),
-			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Team', 'stadion' ),
-			'edit_item'          => __( 'Edit Team', 'stadion' ),
-			'new_item'           => __( 'New Team', 'stadion' ),
-			'view_item'          => __( 'View Team', 'stadion' ),
-			'search_items'       => __( 'Search Teams', 'stadion' ),
-			'not_found'          => __( 'No teams found', 'stadion' ),
-			'not_found_in_trash' => __( 'No teams found in Trash', 'stadion' ),
-			'all_items'          => __( 'All Teams', 'stadion' ),
+			'name'               => _x( 'Teams', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Team', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Teams', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Team', 'rondo' ),
+			'edit_item'          => __( 'Edit Team', 'rondo' ),
+			'new_item'           => __( 'New Team', 'rondo' ),
+			'view_item'          => __( 'View Team', 'rondo' ),
+			'search_items'       => __( 'Search Teams', 'rondo' ),
+			'not_found'          => __( 'No teams found', 'rondo' ),
+			'not_found_in_trash' => __( 'No teams found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Teams', 'rondo' ),
 		];
 
 		$args = [
@@ -118,18 +118,18 @@ class PostTypes {
 	 */
 	private function register_commissie_post_type() {
 		$labels = [
-			'name'               => _x( 'Commissies', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Commissie', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'Commissies', 'Admin Menu text', 'stadion' ),
-			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Commissie', 'stadion' ),
-			'edit_item'          => __( 'Edit Commissie', 'stadion' ),
-			'new_item'           => __( 'New Commissie', 'stadion' ),
-			'view_item'          => __( 'View Commissie', 'stadion' ),
-			'search_items'       => __( 'Search Commissies', 'stadion' ),
-			'not_found'          => __( 'No commissies found', 'stadion' ),
-			'not_found_in_trash' => __( 'No commissies found in Trash', 'stadion' ),
-			'all_items'          => __( 'All Commissies', 'stadion' ),
+			'name'               => _x( 'Commissies', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Commissie', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Commissies', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Commissie', 'rondo' ),
+			'edit_item'          => __( 'Edit Commissie', 'rondo' ),
+			'new_item'           => __( 'New Commissie', 'rondo' ),
+			'view_item'          => __( 'View Commissie', 'rondo' ),
+			'search_items'       => __( 'Search Commissies', 'rondo' ),
+			'not_found'          => __( 'No commissies found', 'rondo' ),
+			'not_found_in_trash' => __( 'No commissies found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Commissies', 'rondo' ),
 		];
 
 		$args = [
@@ -161,38 +161,38 @@ class PostTypes {
 	 */
 	private function register_todo_statuses() {
 		register_post_status(
-			'stadion_open',
+			'rondo_open',
 			[
-				'label'                     => _x( 'Open', 'Todo status', 'stadion' ),
+				'label'                     => _x( 'Open', 'Todo status', 'rondo' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Open <span class="count">(%s)</span>', 'Open <span class="count">(%s)</span>', 'stadion' ),
+				'label_count'               => _n_noop( 'Open <span class="count">(%s)</span>', 'Open <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
 
 		register_post_status(
-			'stadion_awaiting',
+			'rondo_awaiting',
 			[
-				'label'                     => _x( 'Awaiting Response', 'Todo status', 'stadion' ),
+				'label'                     => _x( 'Awaiting Response', 'Todo status', 'rondo' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Awaiting <span class="count">(%s)</span>', 'Awaiting <span class="count">(%s)</span>', 'stadion' ),
+				'label_count'               => _n_noop( 'Awaiting <span class="count">(%s)</span>', 'Awaiting <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
 
 		register_post_status(
-			'stadion_completed',
+			'rondo_completed',
 			[
-				'label'                     => _x( 'Completed', 'Todo status', 'stadion' ),
+				'label'                     => _x( 'Completed', 'Todo status', 'rondo' ),
 				'public'                    => true,
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Completed <span class="count">(%s)</span>', 'Completed <span class="count">(%s)</span>', 'stadion' ),
+				'label_count'               => _n_noop( 'Completed <span class="count">(%s)</span>', 'Completed <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
 	}
@@ -206,18 +206,18 @@ class PostTypes {
 	 */
 	private function register_todo_post_type() {
 		$labels = [
-			'name'               => _x( 'Todos', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Todo', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'Todos', 'Admin Menu text', 'stadion' ),
-			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Todo', 'stadion' ),
-			'edit_item'          => __( 'Edit Todo', 'stadion' ),
-			'new_item'           => __( 'New Todo', 'stadion' ),
-			'view_item'          => __( 'View Todo', 'stadion' ),
-			'search_items'       => __( 'Search Todos', 'stadion' ),
-			'not_found'          => __( 'No todos found', 'stadion' ),
-			'not_found_in_trash' => __( 'No todos found in Trash', 'stadion' ),
-			'all_items'          => __( 'All Todos', 'stadion' ),
+			'name'               => _x( 'Todos', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Todo', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Todos', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Todo', 'rondo' ),
+			'edit_item'          => __( 'Edit Todo', 'rondo' ),
+			'new_item'           => __( 'New Todo', 'rondo' ),
+			'view_item'          => __( 'View Todo', 'rondo' ),
+			'search_items'       => __( 'Search Todos', 'rondo' ),
+			'not_found'          => __( 'No todos found', 'rondo' ),
+			'not_found_in_trash' => __( 'No todos found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Todos', 'rondo' ),
 		];
 
 		$args = [
@@ -238,7 +238,7 @@ class PostTypes {
 			'supports'           => [ 'title', 'editor', 'author' ],
 		];
 
-		register_post_type( 'stadion_todo', $args );
+		register_post_type( 'rondo_todo', $args );
 	}
 
 	/**
@@ -250,18 +250,18 @@ class PostTypes {
 	 */
 	private function register_calendar_event_post_type() {
 		$labels = [
-			'name'               => _x( 'Calendar Events', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Calendar Event', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'Calendar Events', 'Admin Menu text', 'stadion' ),
-			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Event', 'stadion' ),
-			'edit_item'          => __( 'Edit Event', 'stadion' ),
-			'new_item'           => __( 'New Event', 'stadion' ),
-			'view_item'          => __( 'View Event', 'stadion' ),
-			'search_items'       => __( 'Search Events', 'stadion' ),
-			'not_found'          => __( 'No events found', 'stadion' ),
-			'not_found_in_trash' => __( 'No events found in Trash', 'stadion' ),
-			'all_items'          => __( 'All Events', 'stadion' ),
+			'name'               => _x( 'Calendar Events', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Calendar Event', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Calendar Events', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Event', 'rondo' ),
+			'edit_item'          => __( 'Edit Event', 'rondo' ),
+			'new_item'           => __( 'New Event', 'rondo' ),
+			'view_item'          => __( 'View Event', 'rondo' ),
+			'search_items'       => __( 'Search Events', 'rondo' ),
+			'not_found'          => __( 'No events found', 'rondo' ),
+			'not_found_in_trash' => __( 'No events found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Events', 'rondo' ),
 		];
 
 		$args = [
@@ -291,18 +291,18 @@ class PostTypes {
 	 */
 	private function register_feedback_post_type() {
 		$labels = [
-			'name'               => _x( 'Feedback', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Feedback', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'Feedback', 'Admin Menu text', 'stadion' ),
-			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Feedback', 'stadion' ),
-			'edit_item'          => __( 'Edit Feedback', 'stadion' ),
-			'new_item'           => __( 'New Feedback', 'stadion' ),
-			'view_item'          => __( 'View Feedback', 'stadion' ),
-			'search_items'       => __( 'Search Feedback', 'stadion' ),
-			'not_found'          => __( 'No feedback found', 'stadion' ),
-			'not_found_in_trash' => __( 'No feedback found in Trash', 'stadion' ),
-			'all_items'          => __( 'All Feedback', 'stadion' ),
+			'name'               => _x( 'Feedback', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Feedback', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Feedback', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Feedback', 'rondo' ),
+			'edit_item'          => __( 'Edit Feedback', 'rondo' ),
+			'new_item'           => __( 'New Feedback', 'rondo' ),
+			'view_item'          => __( 'View Feedback', 'rondo' ),
+			'search_items'       => __( 'Search Feedback', 'rondo' ),
+			'not_found'          => __( 'No feedback found', 'rondo' ),
+			'not_found_in_trash' => __( 'No feedback found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Feedback', 'rondo' ),
 		];
 
 		$args = [
@@ -323,7 +323,7 @@ class PostTypes {
 			'supports'           => [ 'title', 'editor', 'author' ],
 		];
 
-		register_post_type( 'stadion_feedback', $args );
+		register_post_type( 'rondo_feedback', $args );
 	}
 
 	/**
@@ -334,18 +334,18 @@ class PostTypes {
 	 */
 	private function register_discipline_case_post_type() {
 		$labels = [
-			'name'               => _x( 'Tuchtzaken', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Tuchtzaak', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'Tuchtzaken', 'Admin Menu text', 'stadion' ),
-			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Tuchtzaak', 'stadion' ),
-			'edit_item'          => __( 'Edit Tuchtzaak', 'stadion' ),
-			'new_item'           => __( 'New Tuchtzaak', 'stadion' ),
-			'view_item'          => __( 'View Tuchtzaak', 'stadion' ),
-			'search_items'       => __( 'Search Tuchtzaken', 'stadion' ),
-			'not_found'          => __( 'No tuchtzaken found', 'stadion' ),
-			'not_found_in_trash' => __( 'No tuchtzaken found in Trash', 'stadion' ),
-			'all_items'          => __( 'All Tuchtzaken', 'stadion' ),
+			'name'               => _x( 'Tuchtzaken', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Tuchtzaak', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Tuchtzaken', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Tuchtzaak', 'rondo' ),
+			'edit_item'          => __( 'Edit Tuchtzaak', 'rondo' ),
+			'new_item'           => __( 'New Tuchtzaak', 'rondo' ),
+			'view_item'          => __( 'View Tuchtzaak', 'rondo' ),
+			'search_items'       => __( 'Search Tuchtzaken', 'rondo' ),
+			'not_found'          => __( 'No tuchtzaken found', 'rondo' ),
+			'not_found_in_trash' => __( 'No tuchtzaken found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Tuchtzaken', 'rondo' ),
 		];
 
 		$args = [

@@ -1,6 +1,6 @@
 <?php
 /**
- * WP-CLI Commands for Stadion
+ * WP-CLI Commands for Rondo
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,7 +27,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Reminders WP-CLI Commands
 	 */
-	class STADION_Reminders_CLI_Command {
+	class RONDO_Reminders_CLI_Command {
 
 		/**
 		 * Trigger daily reminders manually
@@ -111,7 +111,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				// Check if it's the right time for this user (unless --force flag is set or specific user)
 				if ( ! isset( $assoc_args['force'] ) && ! $specific_user_id ) {
-					$preferred_time = get_user_meta( $user_id, 'stadion_notification_time', true );
+					$preferred_time = get_user_meta( $user_id, 'rondo_notification_time', true );
 					if ( empty( $preferred_time ) ) {
 						$preferred_time = '09:00';
 					}
@@ -230,7 +230,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Migration WP-CLI Commands
 	 */
-	class STADION_Migration_CLI_Command {
+	class RONDO_Migration_CLI_Command {
 
 		/**
 		 * Migrate addresses from contact_info to dedicated addresses field
@@ -374,7 +374,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * VCard WP-CLI Commands
 	 */
-	class STADION_VCard_CLI_Command {
+	class RONDO_VCard_CLI_Command {
 
 		/**
 		 * Get the vCard for a person (as CardDAV would serve it)
@@ -530,7 +530,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * CardDAV WP-CLI Commands
 	 */
-	class STADION_CardDAV_CLI_Command {
+	class RONDO_CardDAV_CLI_Command {
 
 		/**
 		 * Reset CardDAV sync token to force a full resync
@@ -564,8 +564,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$users = get_users( [ 'fields' => 'all' ] );
 			}
 
-			$changes        = get_option( 'stadion_carddav_changes', [] );
-			$tokens         = get_option( 'stadion_carddav_sync_tokens', [] );
+			$changes        = get_option( 'rondo_carddav_changes', [] );
+			$tokens         = get_option( 'rondo_carddav_sync_tokens', [] );
 			$now            = time();
 			$total_contacts = 0;
 
@@ -612,8 +612,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::log( sprintf( 'Queued %d contact(s) for resync for user %s (ID: %d)', $count, $user->display_name, $uid ) );
 			}
 
-			update_option( 'stadion_carddav_changes', $changes );
-			update_option( 'stadion_carddav_sync_tokens', $tokens );
+			update_option( 'rondo_carddav_changes', $changes );
+			update_option( 'rondo_carddav_sync_tokens', $tokens );
 
 			WP_CLI::success( sprintf( 'Queued %d contact(s) for resync. Next sync will pull all contacts.', $total_contacts ) );
 			WP_CLI::log( '' );
@@ -627,7 +627,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	 * @deprecated The important_date post type was removed in v19.0.
 	 *             These commands are no longer functional.
 	 */
-	class STADION_Dates_CLI_Command {
+	class RONDO_Dates_CLI_Command {
 
 		/**
 		 * Regenerate all Important Date titles using current naming convention.
@@ -644,12 +644,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Todos WP-CLI Commands
 	 */
-	class STADION_Todos_CLI_Command {
+	class RONDO_Todos_CLI_Command {
 
 		/**
 		 * Migrate todos from comment-based storage to CPT-based storage
 		 *
-		 * This command migrates all stadion_todo comments to the new stadion_todo
+		 * This command migrates all rondo_todo comments to the new rondo_todo
 		 * custom post type, preserving all metadata and relationships.
 		 *
 		 * ## OPTIONS
@@ -673,20 +673,20 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			WP_CLI::log( '' );
 			WP_CLI::log( '╔════════════════════════════════════════════════════════════╗' );
-			WP_CLI::log( '║         Stadion Todo Migration                              ║' );
+			WP_CLI::log( '║         Rondo Todo Migration                              ║' );
 			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
 			WP_CLI::log( '' );
 			WP_CLI::log( 'This migration will:' );
-			WP_CLI::log( '  1. Find all comment-based todos (stadion_todo comment type)' );
-			WP_CLI::log( '  2. Create corresponding stadion_todo CPT posts' );
+			WP_CLI::log( '  1. Find all comment-based todos (rondo_todo comment type)' );
+			WP_CLI::log( '  2. Create corresponding rondo_todo CPT posts' );
 			WP_CLI::log( '  3. Copy all metadata (is_completed, due_date)' );
 			WP_CLI::log( '  4. Delete the original comments after successful migration' );
 			WP_CLI::log( '' );
 
-			// Query all stadion_todo comments
+			// Query all rondo_todo comments
 			$todos = get_comments(
 				[
-					'type'   => 'stadion_todo',
+					'type'   => 'rondo_todo',
 					'status' => 'approve',
 					'number' => 0, // All todos
 				]
@@ -746,9 +746,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					continue;
 				}
 
-				// Create the new stadion_todo CPT post
+				// Create the new rondo_todo CPT post
 				$post_data = [
-					'post_type'   => 'stadion_todo',
+					'post_type'   => 'rondo_todo',
 					'post_title'  => $todo_content,
 					'post_author' => $todo->user_id,
 					'post_date'   => $todo->comment_date,
@@ -776,7 +776,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					update_field( 'due_date', $due_date, $new_post_id );
 				}
 
-				WP_CLI::log( sprintf( '  Created stadion_todo post ID %d', $new_post_id ) );
+				WP_CLI::log( sprintf( '  Created rondo_todo post ID %d', $new_post_id ) );
 
 				// Delete the original comment
 				$deleted = wp_delete_comment( $todo->comment_ID, true );
@@ -839,7 +839,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			WP_CLI::log( '' );
 			WP_CLI::log( '╔════════════════════════════════════════════════════════════╗' );
-			WP_CLI::log( '║         Stadion Todo Persons Migration                      ║' );
+			WP_CLI::log( '║         Rondo Todo Persons Migration                      ║' );
 			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
 			WP_CLI::log( '' );
 			WP_CLI::log( 'This migration will:' );
@@ -848,12 +848,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '  3. Remove old related_person meta' );
 			WP_CLI::log( '' );
 
-			// Query all stadion_todo posts (bypass access control)
+			// Query all rondo_todo posts (bypass access control)
 			global $wpdb;
 			$todo_ids = $wpdb->get_col(
 				"SELECT ID FROM {$wpdb->posts}
-                 WHERE post_type = 'stadion_todo'
-                 AND post_status IN ('stadion_open', 'stadion_awaiting', 'stadion_completed', 'publish')"
+                 WHERE post_type = 'rondo_todo'
+                 AND post_status IN ('rondo_open', 'rondo_awaiting', 'rondo_completed', 'publish')"
 			);
 
 			if ( empty( $todo_ids ) ) {
@@ -929,7 +929,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Calendar Sync WP-CLI Commands
 	 */
-	class STADION_Calendar_CLI_Command {
+	class RONDO_Calendar_CLI_Command {
 
 		/**
 		 * Sync calendar events from connected calendars
@@ -1154,7 +1154,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$user_ids = $wpdb->get_col(
 				"SELECT DISTINCT user_id
                  FROM {$wpdb->usermeta}
-                 WHERE meta_key = '_stadion_calendar_connections'"
+                 WHERE meta_key = '_rondo_calendar_connections'"
 			);
 
 			if ( ! empty( $user_ids ) ) {
@@ -1269,7 +1269,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Google Contacts WP-CLI Commands
 	 */
-	class STADION_Google_Contacts_CLI_Command {
+	class RONDO_Google_Contacts_CLI_Command {
 
 		/**
 		 * Sync Google Contacts for a user
@@ -1287,8 +1287,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp stadion google-contacts sync --user-id=1
-		 *     wp stadion google-contacts sync --user-id=1 --full
+		 *     wp rondo google-contacts sync --user-id=1
+		 *     wp rondo google-contacts sync --user-id=1 --full
 		 *
 		 * @when after_wp_load
 		 */
@@ -1397,7 +1397,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp stadion google-contacts status --user-id=1
+		 *     wp rondo google-contacts status --user-id=1
 		 *
 		 * @when after_wp_load
 		 */
@@ -1480,8 +1480,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		/**
 		 * List unresolved sync conflicts for a user
 		 *
-		 * Shows contacts where data conflicted between Google and Stadion during sync.
-		 * Stadion wins all conflicts but they are logged for review.
+		 * Shows contacts where data conflicted between Google and Rondo during sync.
+		 * Rondo wins all conflicts but they are logged for review.
 		 *
 		 * ## OPTIONS
 		 *
@@ -1490,7 +1490,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp stadion google-contacts conflicts --user-id=1
+		 *     wp rondo google-contacts conflicts --user-id=1
 		 *
 		 * @when after_wp_load
 		 */
@@ -1549,7 +1549,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			if ( empty( $conflicts ) ) {
 				WP_CLI::warning( 'No sync conflicts found.' );
 				WP_CLI::log( '' );
-				WP_CLI::log( 'This is good! It means Stadion and Google Contacts data have not conflicted.' );
+				WP_CLI::log( 'This is good! It means Rondo and Google Contacts data have not conflicted.' );
 				return;
 			}
 
@@ -1569,7 +1569,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI\Utils\format_items( 'table', $table_data, [ 'Person', 'Date', 'Details' ] );
 
 			WP_CLI::log( '' );
-			WP_CLI::log( 'Note: Stadion is the source of truth. Conflicts are auto-resolved in favor of Stadion data.' );
+			WP_CLI::log( 'Note: Rondo is the source of truth. Conflicts are auto-resolved in favor of Rondo data.' );
 			WP_CLI::log( '' );
 		}
 
@@ -1577,7 +1577,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * Unlink all contacts from Google to reset sync state
 		 *
 		 * Removes Google metadata from all contacts owned by the user but preserves
-		 * all Stadion data. Useful to reset sync state for a fresh start.
+		 * all Rondo data. Useful to reset sync state for a fresh start.
 		 *
 		 * ## OPTIONS
 		 *
@@ -1589,8 +1589,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp stadion google-contacts unlink-all --user-id=1
-		 *     wp stadion google-contacts unlink-all --user-id=1 --yes
+		 *     wp rondo google-contacts unlink-all --user-id=1
+		 *     wp rondo google-contacts unlink-all --user-id=1 --yes
 		 *
 		 * @when after_wp_load
 		 */
@@ -1636,7 +1636,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			// Confirm unless --yes flag provided
 			if ( ! isset( $assoc_args['yes'] ) ) {
-				WP_CLI::confirm( 'This will remove all Google sync metadata from these contacts. Stadion data will be preserved. Continue?' );
+				WP_CLI::confirm( 'This will remove all Google sync metadata from these contacts. Rondo data will be preserved. Continue?' );
 			}
 
 			WP_CLI::log( 'Unlinking contacts...' );
@@ -1657,14 +1657,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '' );
 			WP_CLI::success( sprintf( 'Unlinked %d contact(s). Sync token cleared.', $unlinked ) );
 			WP_CLI::log( '' );
-			WP_CLI::log( 'To re-sync, run: wp stadion google-contacts sync --user-id=' . $user_id . ' --full' );
+			WP_CLI::log( 'To re-sync, run: wp rondo google-contacts sync --user-id=' . $user_id . ' --full' );
 		}
 	}
 
 	/**
 	 * Calendar Event WP-CLI Commands
 	 */
-	class STADION_Event_CLI_Command {
+	class RONDO_Event_CLI_Command {
 
 		/**
 		 * Clean up HTML entities in calendar event titles
@@ -1749,7 +1749,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * People WP-CLI Commands
 	 */
-	class STADION_People_CLI_Command {
+	class RONDO_People_CLI_Command {
 
 		/**
 		 * Find and merge duplicate people (same email, different records)
@@ -2081,7 +2081,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			WP_CLI::log( sprintf( 'Processing %d people...', $total ) );
 
-			$volunteer_status = new \Stadion\Core\VolunteerStatus();
+			$volunteer_status = new \Rondo\Core\VolunteerStatus();
 			$progress         = \WP_CLI\Utils\make_progress_bar( 'Backfilling volunteer status', $total );
 
 			foreach ( $person_ids as $person_id ) {
@@ -2204,7 +2204,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Relationships WP-CLI Commands
 	 */
-	class STADION_Relationships_CLI_Command {
+	class RONDO_Relationships_CLI_Command {
 
 		/**
 		 * Sync sibling relationships based on existing parent-child data
@@ -2448,12 +2448,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Tasks WP-CLI Commands
 	 */
-	class STADION_Tasks_CLI_Command {
+	class RONDO_Tasks_CLI_Command {
 
 		/**
 		 * Verify or fix task ownership
 		 *
-		 * Ensures all stadion_todo posts have valid post_author.
+		 * Ensures all rondo_todo posts have valid post_author.
 		 * Tasks with invalid authors can be fixed by inferring from related persons.
 		 *
 		 * ## OPTIONS
@@ -2466,9 +2466,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp stadion tasks verify-ownership --verify
-		 *     wp stadion tasks verify-ownership --dry-run
-		 *     wp stadion tasks verify-ownership
+		 *     wp rondo tasks verify-ownership --verify
+		 *     wp rondo tasks verify-ownership --dry-run
+		 *     wp rondo tasks verify-ownership
 		 *
 		 * @when after_wp_load
 		 */
@@ -2486,11 +2486,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
 			WP_CLI::log( '' );
 
-			// Query all stadion_todo posts, bypass access control
+			// Query all rondo_todo posts, bypass access control
 			$todos = get_posts( [
-				'post_type'        => 'stadion_todo',
+				'post_type'        => 'rondo_todo',
 				'posts_per_page'   => -1,
-				'post_status'      => [ 'stadion_open', 'stadion_awaiting', 'stadion_completed', 'publish' ],
+				'post_status'      => [ 'rondo_open', 'rondo_awaiting', 'rondo_completed', 'publish' ],
 				'suppress_filters' => true,
 			] );
 
@@ -2605,17 +2605,17 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	/**
 	 * Register WP-CLI commands
 	 */
-	WP_CLI::add_command( 'prm people', 'STADION_People_CLI_Command' );
-	WP_CLI::add_command( 'stadion google-contacts', 'STADION_Google_Contacts_CLI_Command' );
-	WP_CLI::add_command( 'prm reminders', 'STADION_Reminders_CLI_Command' );
-	WP_CLI::add_command( 'prm migrate', 'STADION_Migration_CLI_Command' );
-	WP_CLI::add_command( 'stadion migrate-birthdates', [ 'STADION_Migration_CLI_Command', 'migrate_birthdates' ] );
-	WP_CLI::add_command( 'prm vcard', 'STADION_VCard_CLI_Command' );
-	WP_CLI::add_command( 'prm carddav', 'STADION_CardDAV_CLI_Command' );
-	WP_CLI::add_command( 'prm dates', 'STADION_Dates_CLI_Command' );
-	WP_CLI::add_command( 'prm todos', 'STADION_Todos_CLI_Command' );
-	WP_CLI::add_command( 'prm calendar', 'STADION_Calendar_CLI_Command' );
-	WP_CLI::add_command( 'prm event', 'STADION_Event_CLI_Command' );
-	WP_CLI::add_command( 'prm relationships', 'STADION_Relationships_CLI_Command' );
-	WP_CLI::add_command( 'stadion tasks', 'STADION_Tasks_CLI_Command' );
+	WP_CLI::add_command( 'prm people', 'RONDO_People_CLI_Command' );
+	WP_CLI::add_command( 'rondo google-contacts', 'RONDO_Google_Contacts_CLI_Command' );
+	WP_CLI::add_command( 'prm reminders', 'RONDO_Reminders_CLI_Command' );
+	WP_CLI::add_command( 'prm migrate', 'RONDO_Migration_CLI_Command' );
+	WP_CLI::add_command( 'rondo migrate-birthdates', [ 'RONDO_Migration_CLI_Command', 'migrate_birthdates' ] );
+	WP_CLI::add_command( 'prm vcard', 'RONDO_VCard_CLI_Command' );
+	WP_CLI::add_command( 'prm carddav', 'RONDO_CardDAV_CLI_Command' );
+	WP_CLI::add_command( 'prm dates', 'RONDO_Dates_CLI_Command' );
+	WP_CLI::add_command( 'prm todos', 'RONDO_Todos_CLI_Command' );
+	WP_CLI::add_command( 'prm calendar', 'RONDO_Calendar_CLI_Command' );
+	WP_CLI::add_command( 'prm event', 'RONDO_Event_CLI_Command' );
+	WP_CLI::add_command( 'prm relationships', 'RONDO_Relationships_CLI_Command' );
+	WP_CLI::add_command( 'rondo tasks', 'RONDO_Tasks_CLI_Command' );
 }

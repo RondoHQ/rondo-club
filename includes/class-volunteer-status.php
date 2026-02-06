@@ -6,7 +6,7 @@
  * - Position is in a commissie (any role), OR
  * - Position is in a team with a staff role (not a player role)
  *
- * @package Stadion
+ * @package Rondo
  */
 
 namespace Rondo\Core;
@@ -196,7 +196,7 @@ class VolunteerStatus {
 		}
 
 		// Get exempt commissies list
-		$exempt_commissies = get_option( 'stadion_vog_exempt_commissies', [] );
+		$exempt_commissies = get_option( 'rondo_vog_exempt_commissies', [] );
 		if ( ! is_array( $exempt_commissies ) ) {
 			$exempt_commissies = [];
 		}

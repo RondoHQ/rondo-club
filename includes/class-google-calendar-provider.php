@@ -52,7 +52,7 @@ class GoogleProvider {
 		$connection_id = $connection['id'] ?? '';
 
 		// Prevent concurrent syncs for same connection (race condition fix)
-		$lock_key = 'stadion_sync_lock_' . $user_id . '_' . $connection_id;
+		$lock_key = 'rondo_sync_lock_' . $user_id . '_' . $connection_id;
 		if ( get_transient( $lock_key ) ) {
 			// Another sync is in progress, skip this one
 			return [
@@ -85,7 +85,7 @@ class GoogleProvider {
 	 */
 	private static function do_sync( int $user_id, array $connection ): array {
 		// Get valid access token
-		$access_token = \STADION_Google_OAuth::get_access_token( $connection );
+		$access_token = \RONDO_Google_OAuth::get_access_token( $connection );
 		if ( ! $access_token ) {
 			throw new \Exception( 'Authentication required. Please reconnect your Google Calendar.' );
 		}
@@ -118,7 +118,7 @@ class GoogleProvider {
 			}
 		} catch ( \Exception $e ) {
 			// Continue without names if list fails
-			error_log( 'STADION_Google_Calendar_Provider: Failed to fetch calendar names: ' . $e->getMessage() );
+			error_log( 'RONDO_Google_Calendar_Provider: Failed to fetch calendar names: ' . $e->getMessage() );
 		}
 
 		// Aggregate results across all calendars
@@ -216,7 +216,7 @@ class GoogleProvider {
 						}
 					} catch ( \Exception $e ) {
 						// Log error but continue with other events
-						error_log( 'STADION_Google_Calendar_Provider: Failed to upsert event ' . $event->getId() . ': ' . $e->getMessage() );
+						error_log( 'RONDO_Google_Calendar_Provider: Failed to upsert event ' . $event->getId() . ': ' . $e->getMessage() );
 					}
 				}
 
@@ -317,7 +317,7 @@ class GoogleProvider {
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 					error_log(
 						sprintf(
-							'STADION_Google_Calendar_Provider: Deleted event %d (UID: %s) - no longer exists in source calendar',
+							'RONDO_Google_Calendar_Provider: Deleted event %d (UID: %s) - no longer exists in source calendar',
 							$event_id,
 							$event_uid
 						)
@@ -336,12 +336,12 @@ class GoogleProvider {
 	 * @return \Google\Service\Calendar|null Service or null on failure
 	 */
 	private static function get_service( array $connection ): ?\Google\Service\Calendar {
-		$access_token = \STADION_Google_OAuth::get_access_token( $connection );
+		$access_token = \RONDO_Google_OAuth::get_access_token( $connection );
 		if ( ! $access_token ) {
 			return null;
 		}
 
-		$client = \STADION_Google_OAuth::get_client();
+		$client = \RONDO_Google_OAuth::get_client();
 		if ( ! $client ) {
 			return null;
 		}
@@ -443,7 +443,7 @@ class GoogleProvider {
 		update_post_meta( $post_id, '_html_link', esc_url_raw( $event->getHtmlLink() ?? '' ) );
 
 		// Run contact matching
-		$matches = \STADION_Calendar_Matcher::match_attendees( $user_id, $attendees );
+		$matches = \RONDO_Calendar_Matcher::match_attendees( $user_id, $attendees );
 		update_post_meta( $post_id, '_matched_people', wp_json_encode( $matches ) );
 
 		return [
@@ -585,7 +585,7 @@ class GoogleProvider {
 	public static function list_calendars( array $connection ): array {
 		try {
 			// Get valid access token
-			$access_token = \STADION_Google_OAuth::get_access_token( $connection );
+			$access_token = \RONDO_Google_OAuth::get_access_token( $connection );
 			if ( ! $access_token ) {
 				return [];
 			}
@@ -611,7 +611,7 @@ class GoogleProvider {
 
 			return $calendars;
 		} catch ( \Exception $e ) {
-			error_log( 'STADION_Google_Calendar_Provider: Failed to list calendars: ' . $e->getMessage() );
+			error_log( 'RONDO_Google_Calendar_Provider: Failed to list calendars: ' . $e->getMessage() );
 			return [];
 		}
 	}

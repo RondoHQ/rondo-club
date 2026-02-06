@@ -22,7 +22,7 @@ class Api extends Base {
 	public function register_routes() {
 		// Upcoming reminders
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/reminders',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -41,7 +41,7 @@ class Api extends Base {
 
 		// Trigger reminders manually (admin only)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/reminders/trigger',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -52,7 +52,7 @@ class Api extends Base {
 
 		// Check cron status (admin only)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/reminders/cron-status',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -63,7 +63,7 @@ class Api extends Base {
 
 		// Reschedule all user reminder cron jobs (admin only)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/reminders/reschedule-cron',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -74,7 +74,7 @@ class Api extends Base {
 
 		// Get user notification channels
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/notification-channels',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -85,7 +85,7 @@ class Api extends Base {
 
 		// Update user notification channels
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/notification-channels',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -104,7 +104,7 @@ class Api extends Base {
 
 		// Update notification time
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/notification-time',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -124,7 +124,7 @@ class Api extends Base {
 
 		// Update mention notification preference
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/mention-notifications',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -143,7 +143,7 @@ class Api extends Base {
 
 		// Get user theme preferences
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/theme-preferences',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -154,7 +154,7 @@ class Api extends Base {
 
 		// Update user theme preferences
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/theme-preferences',
 			[
 				'methods'             => 'PATCH',
@@ -179,7 +179,7 @@ class Api extends Base {
 
 		// Get user dashboard settings
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/dashboard-settings',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -190,7 +190,7 @@ class Api extends Base {
 
 		// Update user dashboard settings
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/dashboard-settings',
 			[
 				'methods'             => 'PATCH',
@@ -211,7 +211,7 @@ class Api extends Base {
 
 		// Get user's people list preferences
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/list-preferences',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -222,7 +222,7 @@ class Api extends Base {
 
 		// Update user's people list preferences
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/list-preferences',
 			[
 				'methods'             => 'PATCH',
@@ -259,7 +259,7 @@ class Api extends Base {
 
 		// Get user's linked person ID
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/linked-person',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -270,7 +270,7 @@ class Api extends Base {
 
 		// Update user's linked person ID
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/linked-person',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -290,7 +290,7 @@ class Api extends Base {
 
 		// Search across all content
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/search',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -310,7 +310,7 @@ class Api extends Base {
 		// Find person by email (for sync deduplication)
 		// Uses check_authenticated instead of check_user_approved for sync scripts
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/people/find-by-email',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -331,7 +331,7 @@ class Api extends Base {
 
 		// Dashboard summary
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/dashboard',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -342,7 +342,7 @@ class Api extends Base {
 
 		// Version check (public endpoint for cache invalidation)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/version',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -353,7 +353,7 @@ class Api extends Base {
 
 		// Get teams where a person or company is an investor
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/investments/(?P<investor_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -371,7 +371,7 @@ class Api extends Base {
 
 		// Restore default relationship type configurations
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/relationship-types/restore-defaults',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -383,7 +383,7 @@ class Api extends Base {
 		// Current user info
 		// Allow logged-in users (not just approved) so we can check approval status
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/user/me',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -396,7 +396,7 @@ class Api extends Base {
 
 		// User management (admin only)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/users',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -406,7 +406,7 @@ class Api extends Base {
 		);
 
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/users/(?P<user_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -425,7 +425,7 @@ class Api extends Base {
 
 		// User search (for sharing)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/users/search',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -444,7 +444,7 @@ class Api extends Base {
 
 		// Get entity (team or commissie) by ID - unified lookup
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/entity/(?P<id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -463,7 +463,7 @@ class Api extends Base {
 
 		// VOG settings (admin only)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/vog/settings',
 			[
 				[
@@ -504,7 +504,7 @@ class Api extends Base {
 
 		// Bulk send VOG emails
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/vog/bulk-send',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -523,7 +523,7 @@ class Api extends Base {
 
 		// Bulk mark VOG as requested (records current date)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/vog/bulk-mark-requested',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -542,7 +542,7 @@ class Api extends Base {
 
 		// Bulk mark VOG as submitted to Justis
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/vog/bulk-mark-justis',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -561,7 +561,7 @@ class Api extends Base {
 
 		// Membership fee settings (admin only)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/membership-fees/settings',
 			[
 				[
@@ -578,7 +578,7 @@ class Api extends Base {
 							'required'          => true,
 							'type'              => 'string',
 							'validate_callback' => function ( $param, $request, $key ) {
-								$membership_fees = new \Stadion\Fees\MembershipFees();
+								$membership_fees = new \Rondo\Fees\MembershipFees();
 								$valid           = [ $membership_fees->get_season_key(), $membership_fees->get_next_season_key() ];
 								return in_array( $param, $valid, true );
 							},
@@ -626,7 +626,7 @@ class Api extends Base {
 
 		// Get membership fee list
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/fees',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -651,7 +651,7 @@ class Api extends Base {
 
 		// Get single person fee data
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/fees/person/(?P<id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -676,7 +676,7 @@ class Api extends Base {
 
 		// Bulk recalculate fees endpoint
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/fees/recalculate',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -698,7 +698,7 @@ class Api extends Base {
 
 		// Get current season term
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/current-season',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -709,7 +709,7 @@ class Api extends Base {
 
 		// Club configuration (admin write, all-users read)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/config',
 			[
 				[
@@ -824,7 +824,7 @@ class Api extends Base {
 	 */
 	public function restore_relationship_type_defaults( $request ) {
 		// Get the taxonomies class instance
-		$taxonomies = new \STADION_Taxonomies();
+		$taxonomies = new \RONDO_Taxonomies();
 
 		// Call the setup method (make it public or add a public wrapper)
 		if ( method_exists( $taxonomies, 'setup_default_relationship_configurations' ) ) {
@@ -833,7 +833,7 @@ class Api extends Base {
 			return new \WP_REST_Response(
 				[
 					'success' => true,
-					'message' => __( 'Default relationship type configurations have been restored.', 'stadion' ),
+					'message' => __( 'Default relationship type configurations have been restored.', 'rondo' ),
 				],
 				200
 			);
@@ -841,7 +841,7 @@ class Api extends Base {
 
 		return new \WP_Error(
 			'restore_failed',
-			__( 'Failed to restore defaults.', 'stadion' ),
+			__( 'Failed to restore defaults.', 'rondo' ),
 			[ 'status' => 500 ]
 		);
 	}
@@ -851,7 +851,7 @@ class Api extends Base {
 	public function get_upcoming_reminders( $request ) {
 		$days_ahead = (int) $request->get_param( 'days_ahead' );
 
-		$reminders_handler = new \STADION_Reminders();
+		$reminders_handler = new \RONDO_Reminders();
 		$upcoming          = $reminders_handler->get_upcoming_reminders( $days_ahead );
 
 		return rest_ensure_response( $upcoming );
@@ -861,7 +861,7 @@ class Api extends Base {
 	 * Manually trigger reminder emails for today (admin only)
 	 */
 	public function trigger_reminders( $request ) {
-		$reminders_handler = new \STADION_Reminders();
+		$reminders_handler = new \RONDO_Reminders();
 
 		// Get all users who should receive reminders
 		$users_to_notify = $this->get_all_users_to_notify_for_trigger();
@@ -874,7 +874,7 @@ class Api extends Base {
 			$digest_data = $reminders_handler->get_weekly_digest( $user_id );
 
 			// Send via all enabled channels
-			$email_channel = new \STADION_Email_Channel();
+			$email_channel = new \RONDO_Email_Channel();
 
 			if ( $email_channel->is_enabled_for_user( $user_id ) ) {
 				if ( $email_channel->send( $user_id, $digest_data ) ) {
@@ -889,7 +889,7 @@ class Api extends Base {
 			[
 				'success'            => true,
 				'message'            => sprintf(
-					__( 'Processed %1$d user(s), sent %2$d notification(s).', 'stadion' ),
+					__( 'Processed %1$d user(s), sent %2$d notification(s).', 'rondo' ),
 					$users_processed,
 					$notifications_sent
 				),
@@ -905,7 +905,7 @@ class Api extends Base {
 	 * Delegates to the Reminders class which handles birthdate-based notifications.
 	 */
 	private function get_all_users_to_notify_for_trigger() {
-		$reminders = new \STADION_Reminders();
+		$reminders = new \RONDO_Reminders();
 		return $reminders->get_all_users_to_notify();
 	}
 
@@ -913,13 +913,13 @@ class Api extends Base {
 	 * Get cron job status for reminders
 	 */
 	public function get_cron_status( $request ) {
-		$reminders       = new \STADION_Reminders();
+		$reminders       = new \RONDO_Reminders();
 		$users_to_notify = $reminders->get_all_users_to_notify();
 
 		// Count users with scheduled cron jobs
 		$scheduled_users = [];
 		foreach ( $users_to_notify as $user_id ) {
-			$next_run = wp_next_scheduled( 'stadion_user_reminder', [ $user_id ] );
+			$next_run = wp_next_scheduled( 'rondo_user_reminder', [ $user_id ] );
 			if ( $next_run !== false ) {
 				$user              = get_userdata( $user_id );
 				$scheduled_users[] = [
@@ -932,7 +932,7 @@ class Api extends Base {
 		}
 
 		// Check legacy cron (deprecated).
-		$legacy_scheduled = wp_next_scheduled( 'stadion_daily_reminder_check' );
+		$legacy_scheduled = wp_next_scheduled( 'rondo_daily_reminder_check' );
 
 		return rest_ensure_response(
 			[
@@ -951,7 +951,7 @@ class Api extends Base {
 	 * Reschedule all user reminder cron jobs (admin only)
 	 */
 	public function reschedule_all_cron_jobs( $request ) {
-		$reminders = new \STADION_Reminders();
+		$reminders = new \RONDO_Reminders();
 
 		// Reschedule all user cron jobs
 		$scheduled_count = $reminders->schedule_all_user_reminders();
@@ -960,7 +960,7 @@ class Api extends Base {
 			[
 				'success'         => true,
 				'message'         => sprintf(
-					__( 'Successfully rescheduled reminder cron jobs for %d user(s).', 'stadion' ),
+					__( 'Successfully rescheduled reminder cron jobs for %d user(s).', 'rondo' ),
 					$scheduled_count
 				),
 				'users_scheduled' => $scheduled_count,
@@ -974,7 +974,7 @@ class Api extends Base {
 	public function get_notification_channels( $request ) {
 		$user_id = get_current_user_id();
 
-		$channels = get_user_meta( $user_id, 'stadion_notification_channels', true );
+		$channels = get_user_meta( $user_id, 'rondo_notification_channels', true );
 		if ( ! is_array( $channels ) ) {
 			// Default to email only
 			$channels = [ 'email' ];
@@ -984,13 +984,13 @@ class Api extends Base {
 			$channels = [ 'email' ];
 		}
 
-		$notification_time = get_user_meta( $user_id, 'stadion_notification_time', true );
+		$notification_time = get_user_meta( $user_id, 'rondo_notification_time', true );
 		if ( empty( $notification_time ) ) {
 			// Default to 9:00 AM
 			$notification_time = '09:00';
 		}
 
-		$mention_notifications = get_user_meta( $user_id, 'stadion_mention_notifications', true );
+		$mention_notifications = get_user_meta( $user_id, 'rondo_mention_notifications', true );
 		if ( empty( $mention_notifications ) ) {
 			// Default to digest
 			$mention_notifications = 'digest';
@@ -1016,7 +1016,7 @@ class Api extends Base {
 		$valid_channels = [ 'email' ];
 		$channels       = array_intersect( $channels, $valid_channels );
 
-		update_user_meta( $user_id, 'stadion_notification_channels', $channels );
+		update_user_meta( $user_id, 'rondo_notification_channels', $channels );
 
 		return rest_ensure_response(
 			[
@@ -1037,15 +1037,15 @@ class Api extends Base {
 		if ( ! preg_match( '/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $time ) ) {
 			return new \WP_Error(
 				'invalid_time',
-				__( 'Invalid time format. Please use HH:MM format (e.g., 09:00).', 'stadion' ),
+				__( 'Invalid time format. Please use HH:MM format (e.g., 09:00).', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
 
-		update_user_meta( $user_id, 'stadion_notification_time', $time );
+		update_user_meta( $user_id, 'rondo_notification_time', $time );
 
 		// Reschedule user's reminder cron job at the new time
-		$reminders       = new \STADION_Reminders();
+		$reminders       = new \RONDO_Reminders();
 		$schedule_result = $reminders->schedule_user_reminder( $user_id );
 
 		if ( is_wp_error( $schedule_result ) ) {
@@ -1053,7 +1053,7 @@ class Api extends Base {
 				[
 					'success'           => true,
 					'notification_time' => $time,
-					'message'           => __( 'Notification time updated, but failed to reschedule cron job.', 'stadion' ),
+					'message'           => __( 'Notification time updated, but failed to reschedule cron job.', 'rondo' ),
 					'cron_error'        => $schedule_result->get_error_message(),
 				]
 			);
@@ -1063,7 +1063,7 @@ class Api extends Base {
 			[
 				'success'           => true,
 				'notification_time' => $time,
-				'message'           => __( 'Notification time updated and cron job rescheduled successfully.', 'stadion' ),
+				'message'           => __( 'Notification time updated and cron job rescheduled successfully.', 'rondo' ),
 			]
 		);
 	}
@@ -1080,12 +1080,12 @@ class Api extends Base {
 		if ( ! in_array( $preference, $valid_preferences, true ) ) {
 			return new \WP_Error(
 				'invalid_preference',
-				__( 'Invalid mention notification preference.', 'stadion' ),
+				__( 'Invalid mention notification preference.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
 
-		update_user_meta( $user_id, 'stadion_mention_notifications', $preference );
+		update_user_meta( $user_id, 'rondo_mention_notifications', $preference );
 
 		return rest_ensure_response(
 			[
@@ -1101,12 +1101,12 @@ class Api extends Base {
 	public function get_theme_preferences( $request ) {
 		$user_id = get_current_user_id();
 
-		$color_scheme = get_user_meta( $user_id, 'stadion_color_scheme', true );
+		$color_scheme = get_user_meta( $user_id, 'rondo_color_scheme', true );
 		if ( empty( $color_scheme ) ) {
 			$color_scheme = 'system';
 		}
 
-		$accent_color = get_user_meta( $user_id, 'stadion_accent_color', true );
+		$accent_color = get_user_meta( $user_id, 'rondo_accent_color', true );
 		if ( empty( $accent_color ) ) {
 			$accent_color = 'orange';
 		}
@@ -1137,11 +1137,11 @@ class Api extends Base {
 			if ( ! in_array( $color_scheme, $valid_color_schemes, true ) ) {
 				return new \WP_Error(
 					'invalid_color_scheme',
-					__( 'Invalid color scheme. Valid values: light, dark, system.', 'stadion' ),
+					__( 'Invalid color scheme. Valid values: light, dark, system.', 'rondo' ),
 					[ 'status' => 400 ]
 				);
 			}
-			update_user_meta( $user_id, 'stadion_color_scheme', $color_scheme );
+			update_user_meta( $user_id, 'rondo_color_scheme', $color_scheme );
 		}
 
 		// Update accent color if provided and valid
@@ -1149,20 +1149,20 @@ class Api extends Base {
 			if ( ! in_array( $accent_color, $valid_accent_colors, true ) ) {
 				return new \WP_Error(
 					'invalid_accent_color',
-					__( 'Invalid accent color.', 'stadion' ),
+					__( 'Invalid accent color.', 'rondo' ),
 					[ 'status' => 400 ]
 				);
 			}
-			update_user_meta( $user_id, 'stadion_accent_color', $accent_color );
+			update_user_meta( $user_id, 'rondo_accent_color', $accent_color );
 		}
 
 		// Return updated preferences
-		$updated_color_scheme = get_user_meta( $user_id, 'stadion_color_scheme', true );
+		$updated_color_scheme = get_user_meta( $user_id, 'rondo_color_scheme', true );
 		if ( empty( $updated_color_scheme ) ) {
 			$updated_color_scheme = 'system';
 		}
 
-		$updated_accent_color = get_user_meta( $user_id, 'stadion_accent_color', true );
+		$updated_accent_color = get_user_meta( $user_id, 'rondo_accent_color', true );
 		if ( empty( $updated_accent_color ) ) {
 			$updated_accent_color = 'orange';
 		}
@@ -1246,12 +1246,12 @@ class Api extends Base {
 	public function get_dashboard_settings() {
 		$user_id = get_current_user_id();
 
-		$visible_cards = get_user_meta( $user_id, 'stadion_dashboard_visible_cards', true );
+		$visible_cards = get_user_meta( $user_id, 'rondo_dashboard_visible_cards', true );
 		if ( empty( $visible_cards ) || ! is_array( $visible_cards ) ) {
 			$visible_cards = self::DEFAULT_DASHBOARD_ORDER;
 		}
 
-		$card_order = get_user_meta( $user_id, 'stadion_dashboard_card_order', true );
+		$card_order = get_user_meta( $user_id, 'rondo_dashboard_card_order', true );
 		if ( empty( $card_order ) || ! is_array( $card_order ) ) {
 			$card_order = self::DEFAULT_DASHBOARD_ORDER;
 		}
@@ -1280,23 +1280,23 @@ class Api extends Base {
 		if ( $visible_cards !== null ) {
 			// Filter to only valid card IDs
 			$visible_cards = array_values( array_intersect( $visible_cards, self::VALID_DASHBOARD_CARDS ) );
-			update_user_meta( $user_id, 'stadion_dashboard_visible_cards', $visible_cards );
+			update_user_meta( $user_id, 'rondo_dashboard_visible_cards', $visible_cards );
 		}
 
 		// Update card order if provided
 		if ( $card_order !== null ) {
 			// Filter to only valid card IDs and remove duplicates
 			$card_order = array_values( array_unique( array_intersect( $card_order, self::VALID_DASHBOARD_CARDS ) ) );
-			update_user_meta( $user_id, 'stadion_dashboard_card_order', $card_order );
+			update_user_meta( $user_id, 'rondo_dashboard_card_order', $card_order );
 		}
 
 		// Return updated settings
-		$updated_visible = get_user_meta( $user_id, 'stadion_dashboard_visible_cards', true );
+		$updated_visible = get_user_meta( $user_id, 'rondo_dashboard_visible_cards', true );
 		if ( empty( $updated_visible ) || ! is_array( $updated_visible ) ) {
 			$updated_visible = self::DEFAULT_DASHBOARD_ORDER;
 		}
 
-		$updated_order = get_user_meta( $user_id, 'stadion_dashboard_card_order', true );
+		$updated_order = get_user_meta( $user_id, 'rondo_dashboard_card_order', true );
 		if ( empty( $updated_order ) || ! is_array( $updated_order ) ) {
 			$updated_order = self::DEFAULT_DASHBOARD_ORDER;
 		}
@@ -1319,9 +1319,9 @@ class Api extends Base {
 		$user_id = get_current_user_id();
 
 		// Get stored preferences
-		$visible_columns = get_user_meta( $user_id, 'stadion_people_list_preferences', true );
-		$column_order    = get_user_meta( $user_id, 'stadion_people_list_column_order', true );
-		$column_widths   = get_user_meta( $user_id, 'stadion_people_list_column_widths', true );
+		$visible_columns = get_user_meta( $user_id, 'rondo_people_list_preferences', true );
+		$column_order    = get_user_meta( $user_id, 'rondo_people_list_column_order', true );
+		$column_widths   = get_user_meta( $user_id, 'rondo_people_list_column_widths', true );
 
 		// Default visible columns if not set or empty
 		if ( empty( $visible_columns ) || ! is_array( $visible_columns ) ) {
@@ -1362,9 +1362,9 @@ class Api extends Base {
 
 		// Handle reset action
 		if ( $request->get_param( 'reset' ) === true ) {
-			delete_user_meta( $user_id, 'stadion_people_list_preferences' );
-			delete_user_meta( $user_id, 'stadion_people_list_column_order' );
-			delete_user_meta( $user_id, 'stadion_people_list_column_widths' );
+			delete_user_meta( $user_id, 'rondo_people_list_preferences' );
+			delete_user_meta( $user_id, 'rondo_people_list_column_order' );
+			delete_user_meta( $user_id, 'rondo_people_list_column_widths' );
 
 			$available_columns = $this->get_available_columns_metadata();
 
@@ -1387,7 +1387,7 @@ class Api extends Base {
 		if ( $visible_columns !== null ) {
 			// Empty array = reset to defaults (per CONTEXT.md)
 			if ( ! is_array( $visible_columns ) || count( $visible_columns ) === 0 ) {
-				delete_user_meta( $user_id, 'stadion_people_list_preferences' );
+				delete_user_meta( $user_id, 'rondo_people_list_preferences' );
 			} else {
 				// Validate columns against available fields
 				$validated_columns = array_values( array_intersect( $visible_columns, $valid_columns ) );
@@ -1396,7 +1396,7 @@ class Api extends Base {
 				if ( count( $validated_columns ) !== count( $visible_columns ) ) {
 					error_log(
 						sprintf(
-							'Stadion: Filtered %d invalid column IDs from user %d visible_columns preferences',
+							'Rondo: Filtered %d invalid column IDs from user %d visible_columns preferences',
 							count( $visible_columns ) - count( $validated_columns ),
 							$user_id
 						)
@@ -1404,7 +1404,7 @@ class Api extends Base {
 				}
 
 				// Persist validated preferences
-				update_user_meta( $user_id, 'stadion_people_list_preferences', $validated_columns );
+				update_user_meta( $user_id, 'rondo_people_list_preferences', $validated_columns );
 			}
 		}
 
@@ -1413,7 +1413,7 @@ class Api extends Base {
 		if ( $column_order !== null ) {
 			// Empty array = reset to defaults
 			if ( ! is_array( $column_order ) || count( $column_order ) === 0 ) {
-				delete_user_meta( $user_id, 'stadion_people_list_column_order' );
+				delete_user_meta( $user_id, 'rondo_people_list_column_order' );
 			} else {
 				// Validate column IDs (silently filter invalid)
 				$validated_order = array_values( array_intersect( $column_order, $valid_columns ) );
@@ -1422,7 +1422,7 @@ class Api extends Base {
 				if ( count( $validated_order ) !== count( $column_order ) ) {
 					error_log(
 						sprintf(
-							'Stadion: Filtered %d invalid column IDs from user %d column_order preferences',
+							'Rondo: Filtered %d invalid column IDs from user %d column_order preferences',
 							count( $column_order ) - count( $validated_order ),
 							$user_id
 						)
@@ -1431,9 +1431,9 @@ class Api extends Base {
 
 				// Only store if non-empty after validation
 				if ( count( $validated_order ) > 0 ) {
-					update_user_meta( $user_id, 'stadion_people_list_column_order', $validated_order );
+					update_user_meta( $user_id, 'rondo_people_list_column_order', $validated_order );
 				} else {
-					delete_user_meta( $user_id, 'stadion_people_list_column_order' );
+					delete_user_meta( $user_id, 'rondo_people_list_column_order' );
 				}
 			}
 		}
@@ -1446,7 +1446,7 @@ class Api extends Base {
 
 			// Empty object/array = reset to defaults
 			if ( count( $widths_array ) === 0 ) {
-				delete_user_meta( $user_id, 'stadion_people_list_column_widths' );
+				delete_user_meta( $user_id, 'rondo_people_list_column_widths' );
 			} else {
 				// Validate: filter to valid column IDs and ensure values are positive integers
 				$validated_widths = [];
@@ -1460,7 +1460,7 @@ class Api extends Base {
 				if ( count( $validated_widths ) !== count( $widths_array ) ) {
 					error_log(
 						sprintf(
-							'Stadion: Filtered %d invalid entries from user %d column_widths preferences',
+							'Rondo: Filtered %d invalid entries from user %d column_widths preferences',
 							count( $widths_array ) - count( $validated_widths ),
 							$user_id
 						)
@@ -1469,17 +1469,17 @@ class Api extends Base {
 
 				// Only store if non-empty after validation
 				if ( count( $validated_widths ) > 0 ) {
-					update_user_meta( $user_id, 'stadion_people_list_column_widths', $validated_widths );
+					update_user_meta( $user_id, 'rondo_people_list_column_widths', $validated_widths );
 				} else {
-					delete_user_meta( $user_id, 'stadion_people_list_column_widths' );
+					delete_user_meta( $user_id, 'rondo_people_list_column_widths' );
 				}
 			}
 		}
 
 		// Return current state
-		$stored_visible  = get_user_meta( $user_id, 'stadion_people_list_preferences', true );
-		$stored_order    = get_user_meta( $user_id, 'stadion_people_list_column_order', true );
-		$stored_widths   = get_user_meta( $user_id, 'stadion_people_list_column_widths', true );
+		$stored_visible  = get_user_meta( $user_id, 'rondo_people_list_preferences', true );
+		$stored_order    = get_user_meta( $user_id, 'rondo_people_list_column_order', true );
+		$stored_widths   = get_user_meta( $user_id, 'rondo_people_list_column_widths', true );
 
 		// Apply defaults for response
 		if ( empty( $stored_visible ) || ! is_array( $stored_visible ) ) {
@@ -1512,7 +1512,7 @@ class Api extends Base {
 		$core = [ 'email', 'phone', 'team', 'labels', 'modified' ];
 
 		// Custom fields from ACF
-		$manager       = new \Stadion\CustomFields\Manager();
+		$manager       = new \Rondo\CustomFields\Manager();
 		$custom_fields = $manager->get_fields( 'person', false ); // active only
 		$custom_names  = array_column( $custom_fields, 'name' );
 
@@ -1531,7 +1531,7 @@ class Api extends Base {
 		$columns = array_merge( $columns, self::CORE_LIST_COLUMNS );
 
 		// Custom fields from ACF
-		$manager       = new \Stadion\CustomFields\Manager();
+		$manager       = new \Rondo\CustomFields\Manager();
 		$custom_fields = $manager->get_fields( 'person', false ); // active only
 
 		foreach ( $custom_fields as $field ) {
@@ -1555,7 +1555,7 @@ class Api extends Base {
 	 */
 	public function get_linked_person() {
 		$user_id   = get_current_user_id();
-		$person_id = (int) get_user_meta( $user_id, 'stadion_linked_person_id', true );
+		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 
 		$response = [
 			'person_id' => $person_id ?: null,
@@ -1597,12 +1597,12 @@ class Api extends Base {
 
 		// Handle unlinking
 		if ( ! $person_id || $person_id === 0 ) {
-			delete_user_meta( $user_id, 'stadion_linked_person_id' );
+			delete_user_meta( $user_id, 'rondo_linked_person_id' );
 			return rest_ensure_response(
 				[
 					'success'   => true,
 					'person_id' => null,
-					'message'   => __( 'Person link removed.', 'stadion' ),
+					'message'   => __( 'Person link removed.', 'rondo' ),
 				]
 			);
 		}
@@ -1612,7 +1612,7 @@ class Api extends Base {
 		if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' ) {
 			return new \WP_Error(
 				'invalid_person',
-				__( 'Invalid person ID.', 'stadion' ),
+				__( 'Invalid person ID.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -1621,13 +1621,13 @@ class Api extends Base {
 		if ( $person->post_author != $user_id && ! current_user_can( 'manage_options' ) ) {
 			return new \WP_Error(
 				'permission_denied',
-				__( 'You can only link to your own person records.', 'stadion' ),
+				__( 'You can only link to your own person records.', 'rondo' ),
 				[ 'status' => 403 ]
 			);
 		}
 
 		// Save the link
-		update_user_meta( $user_id, 'stadion_linked_person_id', (int) $person_id );
+		update_user_meta( $user_id, 'rondo_linked_person_id', (int) $person_id );
 
 		$first_name = get_field( 'first_name', $person_id ) ?: '';
 		$last_name  = get_field( 'last_name', $person_id ) ?: '';
@@ -1642,7 +1642,7 @@ class Api extends Base {
 					'name'      => trim( $first_name . ' ' . $last_name ),
 					'thumbnail' => $thumbnail ?: null,
 				],
-				'message'   => __( 'Person linked successfully.', 'stadion' ),
+				'message'   => __( 'Person linked successfully.', 'rondo' ),
 			]
 		);
 	}
@@ -1938,7 +1938,7 @@ class Api extends Base {
 	public function get_version( $request ) {
 		// Get build time from manifest file modification time
 		$build_time    = null;
-		$manifest_path = \STADION_THEME_DIR . '/dist/.vite/manifest.json';
+		$manifest_path = \RONDO_THEME_DIR . '/dist/.vite/manifest.json';
 		if ( file_exists( $manifest_path ) ) {
 			$build_time = gmdate( 'c', filemtime( $manifest_path ) );
 		} else {
@@ -1948,7 +1948,7 @@ class Api extends Base {
 
 		return rest_ensure_response(
 			[
-				'version'   => \STADION_THEME_VERSION,
+				'version'   => \RONDO_THEME_VERSION,
 				'buildTime' => $build_time,
 			]
 		);
@@ -1978,7 +1978,7 @@ class Api extends Base {
 		);
 
 		// Upcoming reminders
-		$reminders_handler  = new \STADION_Reminders();
+		$reminders_handler  = new \RONDO_Reminders();
 		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
 
 		// Get open todos count
@@ -2010,7 +2010,7 @@ class Api extends Base {
 	 * Count open (non-completed) todos
 	 *
 	 * Uses prepared SQL query with post_author filter for user isolation.
-	 * Only counts todos with 'stadion_open' status (not awaiting or completed).
+	 * Only counts todos with 'rondo_open' status (not awaiting or completed).
 	 */
 	private function count_open_todos() {
 		global $wpdb;
@@ -2019,8 +2019,8 @@ class Api extends Base {
 			 WHERE post_type = %s
 			 AND post_status = %s
 			 AND post_author = %d",
-			'stadion_todo',
-			'stadion_open',
+			'rondo_todo',
+			'rondo_open',
 			get_current_user_id()
 		) );
 	}
@@ -2102,7 +2102,7 @@ class Api extends Base {
 	 * Count awaiting todos
 	 *
 	 * Uses prepared SQL query with post_author filter for user isolation.
-	 * Only counts todos with 'stadion_awaiting' status.
+	 * Only counts todos with 'rondo_awaiting' status.
 	 */
 	private function count_awaiting_todos() {
 		global $wpdb;
@@ -2111,8 +2111,8 @@ class Api extends Base {
 			 WHERE post_type = %s
 			 AND post_status = %s
 			 AND post_author = %d",
-			'stadion_todo',
-			'stadion_awaiting',
+			'rondo_todo',
+			'rondo_awaiting',
 			get_current_user_id()
 		) );
 	}
@@ -2127,7 +2127,7 @@ class Api extends Base {
 		global $wpdb;
 
 		$user_id        = get_current_user_id();
-		$access_control = new \STADION_Access_Control();
+		$access_control = new \RONDO_Access_Control();
 
 		// Check if user has access (all approved users see all data)
 		if ( ! $access_control->is_user_approved( $user_id ) ) {
@@ -2141,7 +2141,7 @@ class Api extends Base {
              FROM {$wpdb->comments} c
              INNER JOIN {$wpdb->commentmeta} cm ON c.comment_ID = cm.comment_id AND cm.meta_key = 'activity_date'
              INNER JOIN {$wpdb->posts} p ON c.comment_post_ID = p.ID
-             WHERE c.comment_type = 'stadion_activity'
+             WHERE c.comment_type = 'rondo_activity'
              AND c.comment_approved = '1'
              AND p.post_type = 'person'
              AND p.post_status = 'publish'
@@ -2253,13 +2253,13 @@ class Api extends Base {
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
-			return new \WP_Error( 'not_logged_in', __( 'User is not logged in.', 'stadion' ), [ 'status' => 401 ] );
+			return new \WP_Error( 'not_logged_in', __( 'User is not logged in.', 'rondo' ), [ 'status' => 401 ] );
 		}
 
 		$user = get_userdata( $user_id );
 
 		if ( ! $user ) {
-			return new \WP_Error( 'user_not_found', __( 'User not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'user_not_found', __( 'User not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Get avatar URL
@@ -2275,7 +2275,7 @@ class Api extends Base {
 		$admin_url = admin_url();
 
 		// Check approval status
-		$is_approved = \STADION_User_Roles::is_user_approved( $user_id );
+		$is_approved = \RONDO_User_Roles::is_user_approved( $user_id );
 
 		return rest_ensure_response(
 			[
@@ -2298,7 +2298,7 @@ class Api extends Base {
 	 * Get list of users (admin only)
 	 */
 	public function get_users( $request ) {
-		$users = get_users( [ 'role' => \STADION_User_Roles::ROLE_NAME ] );
+		$users = get_users( [ 'role' => \RONDO_User_Roles::ROLE_NAME ] );
 
 		$user_list = [];
 		foreach ( $users as $user ) {
@@ -2306,7 +2306,7 @@ class Api extends Base {
 				'id'          => $user->ID,
 				'name'        => $user->display_name,
 				'email'       => $user->user_email,
-				'is_approved' => \STADION_User_Roles::is_user_approved( $user->ID ),
+				'is_approved' => \RONDO_User_Roles::is_user_approved( $user->ID ),
 				'registered'  => $user->user_registered,
 			];
 		}
@@ -2324,7 +2324,7 @@ class Api extends Base {
 		if ( $user_id === get_current_user_id() ) {
 			return new \WP_Error(
 				'cannot_delete_self',
-				__( 'You cannot delete your own account.', 'stadion' ),
+				__( 'You cannot delete your own account.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -2334,7 +2334,7 @@ class Api extends Base {
 		if ( ! $user ) {
 			return new \WP_Error(
 				'user_not_found',
-				__( 'User not found.', 'stadion' ),
+				__( 'User not found.', 'rondo' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -2349,7 +2349,7 @@ class Api extends Base {
 		if ( ! $result ) {
 			return new \WP_Error(
 				'delete_failed',
-				__( 'Failed to delete user.', 'stadion' ),
+				__( 'Failed to delete user.', 'rondo' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -2357,7 +2357,7 @@ class Api extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'User and all related data deleted.', 'stadion' ),
+				'message' => __( 'User and all related data deleted.', 'rondo' ),
 			]
 		);
 	}
@@ -2394,7 +2394,7 @@ class Api extends Base {
 	 * @return array Array of field names (meta keys) to search.
 	 */
 	private function get_searchable_custom_fields( string $post_type ): array {
-		$manager = new \Stadion\CustomFields\Manager();
+		$manager = new \Rondo\CustomFields\Manager();
 		$fields  = $manager->get_fields( $post_type, false ); // Active only.
 
 		// Searchable field types (text-based content).
@@ -2487,7 +2487,7 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with VOG settings.
 	 */
 	public function get_vog_settings( $request ) {
-		$vog_email = new \Stadion\VOG\VOGEmail();
+		$vog_email = new \Rondo\VOG\VOGEmail();
 		return rest_ensure_response( $vog_email->get_all_settings() );
 	}
 
@@ -2498,7 +2498,7 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with updated VOG settings.
 	 */
 	public function update_vog_settings( $request ) {
-		$vog_email = new \Stadion\VOG\VOGEmail();
+		$vog_email = new \Rondo\VOG\VOGEmail();
 
 		$from_email        = $request->get_param( 'from_email' );
 		$from_name         = $request->get_param( 'from_name' );
@@ -2554,7 +2554,7 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with membership fee settings for both seasons.
 	 */
 	public function get_membership_fee_settings( $request ) {
-		$membership_fees = new \Stadion\Fees\MembershipFees();
+		$membership_fees = new \Rondo\Fees\MembershipFees();
 		$current_season  = $membership_fees->get_season_key();
 		$next_season     = $membership_fees->get_next_season_key();
 
@@ -2581,7 +2581,7 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with updated membership fee settings for both seasons.
 	 */
 	public function update_membership_fee_settings( $request ) {
-		$membership_fees = new \Stadion\Fees\MembershipFees();
+		$membership_fees = new \Rondo\Fees\MembershipFees();
 		$current_season  = $membership_fees->get_season_key();
 		$next_season     = $membership_fees->get_next_season_key();
 
@@ -2635,7 +2635,7 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with club configuration settings.
 	 */
 	public function get_club_config( $request ) {
-		$club_config = new \Stadion\Config\ClubConfig();
+		$club_config = new \Rondo\Config\ClubConfig();
 		return rest_ensure_response( $club_config->get_all_settings() );
 	}
 
@@ -2648,7 +2648,7 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with updated club configuration settings.
 	 */
 	public function update_club_config( $request ) {
-		$club_config = new \Stadion\Config\ClubConfig();
+		$club_config = new \Rondo\Config\ClubConfig();
 
 		// Update club_name if provided
 		$club_name = $request->get_param( 'club_name' );
@@ -2684,7 +2684,7 @@ class Api extends Base {
 	 */
 	public function get_fee_list( $request ) {
 		$forecast = $request->get_param( 'forecast' );
-		$fees     = new \Stadion\Fees\MembershipFees();
+		$fees     = new \Rondo\Fees\MembershipFees();
 
 		// Determine season
 		if ( $forecast ) {
@@ -2815,7 +2815,7 @@ class Api extends Base {
 			return new \WP_Error( 'not_found', 'Person not found', [ 'status' => 404 ] );
 		}
 
-		$fees = new \Stadion\Fees\MembershipFees();
+		$fees = new \Rondo\Fees\MembershipFees();
 
 		if ( $season === null ) {
 			$season = $fees->get_season_key();
@@ -2880,7 +2880,7 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with recalculation status.
 	 */
 	public function recalculate_all_fees( $request ) {
-		$fees   = new \Stadion\Fees\MembershipFees();
+		$fees   = new \Rondo\Fees\MembershipFees();
 		$season = $request->get_param( 'season' );
 
 		if ( $season === null ) {
@@ -2891,8 +2891,8 @@ class Api extends Base {
 		$cleared = $fees->clear_all_fee_caches( $season );
 
 		// Schedule background recalculation
-		if ( ! wp_next_scheduled( 'stadion_recalculate_all_fees', [ $season ] ) ) {
-			wp_schedule_single_event( time() + 10, 'stadion_recalculate_all_fees', [ $season ] );
+		if ( ! wp_next_scheduled( 'rondo_recalculate_all_fees', [ $season ] ) ) {
+			wp_schedule_single_event( time() + 10, 'rondo_recalculate_all_fees', [ $season ] );
 		}
 
 		return rest_ensure_response(
@@ -2917,7 +2917,7 @@ class Api extends Base {
 	 * @return int Number of people recalculated
 	 */
 	private function trigger_vog_recalculation(): int {
-		$volunteer_status = new \Stadion\Core\VolunteerStatus();
+		$volunteer_status = new \Rondo\Core\VolunteerStatus();
 
 		$people = get_posts(
 			[
@@ -2943,7 +2943,7 @@ class Api extends Base {
 	 */
 	public function bulk_send_vog_emails( $request ) {
 		$ids       = $request->get_param( 'ids' );
-		$vog_email = new \Stadion\VOG\VOGEmail();
+		$vog_email = new \Rondo\VOG\VOGEmail();
 
 		$results = [];
 		$sent    = 0;
@@ -3089,7 +3089,7 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with current season data or null.
 	 */
 	public function get_current_season() {
-		$taxonomies     = new \STADION_Taxonomies();
+		$taxonomies     = new \RONDO_Taxonomies();
 		$current_season = $taxonomies->get_current_season();
 
 		if ( ! $current_season ) {

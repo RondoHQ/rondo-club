@@ -4,7 +4,7 @@
  *
  * Handles club-wide configuration settings storage and retrieval using the WordPress Options API.
  *
- * @package Stadion\Config
+ * @package Rondo\Config
  */
 
 namespace Rondo\Config;
@@ -21,17 +21,17 @@ class ClubConfig {
 	/**
 	 * Option key for club name
 	 */
-	const OPTION_CLUB_NAME = 'stadion_club_name';
+	const OPTION_CLUB_NAME = 'rondo_club_name';
 
 	/**
 	 * Option key for accent color
 	 */
-	const OPTION_ACCENT_COLOR = 'stadion_accent_color';
+	const OPTION_ACCENT_COLOR = 'rondo_accent_color';
 
 	/**
 	 * Option key for FreeScout URL
 	 */
-	const OPTION_FREESCOUT_URL = 'stadion_freescout_url';
+	const OPTION_FREESCOUT_URL = 'rondo_freescout_url';
 
 	/**
 	 * Default configuration values

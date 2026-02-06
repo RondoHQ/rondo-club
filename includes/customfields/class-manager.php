@@ -5,7 +5,7 @@
  * Provides programmatic CRUD operations for ACF custom field definitions.
  * Uses ACF's database persistence API to store field groups and fields.
  *
- * @package Stadion\CustomFields
+ * @package Rondo\CustomFields
  */
 
 namespace Rondo\CustomFields;
@@ -31,9 +31,9 @@ class Manager {
 	const SUPPORTED_POST_TYPES = array( 'person', 'team', 'commissie' );
 
 	/**
-	 * Map Stadion field types to ACF field types.
+	 * Map Rondo field types to ACF field types.
 	 *
-	 * Stadion uses simplified type names for the frontend UI,
+	 * Rondo uses simplified type names for the frontend UI,
 	 * while ACF uses different internal type names.
 	 *
 	 * @var array
@@ -249,7 +249,7 @@ class Manager {
 			? sanitize_title( $field_config['name'] )
 			: sanitize_title( $field_config['label'] );
 
-		// Map Stadion type to ACF type.
+		// Map Rondo type to ACF type.
 		$acf_type = $this->map_type_to_acf( $field_config['type'] );
 
 		// Build field array.
@@ -457,7 +457,7 @@ class Manager {
 			$fields = array_values( $fields );
 		}
 
-		// Map ACF types back to Stadion types for API responses.
+		// Map ACF types back to Rondo types for API responses.
 		$fields = array_map(
 			function ( $field ) {
 				$field['type'] = $this->map_type_from_acf( $field['type'] );
@@ -478,7 +478,7 @@ class Manager {
 	public function get_field( string $field_key ) {
 		$field = acf_get_field( $field_key );
 		if ( $field ) {
-			// Map ACF type back to Stadion type for API response.
+			// Map ACF type back to Rondo type for API response.
 			$field['type'] = $this->map_type_from_acf( $field['type'] );
 		}
 		return $field;
@@ -528,9 +528,9 @@ class Manager {
 	}
 
 	/**
-	 * Map a Stadion field type to the corresponding ACF field type.
+	 * Map a Rondo field type to the corresponding ACF field type.
 	 *
-	 * @param string $type The Stadion field type.
+	 * @param string $type The Rondo field type.
 	 * @return string The ACF field type.
 	 */
 	private function map_type_to_acf( string $type ): string {
@@ -538,10 +538,10 @@ class Manager {
 	}
 
 	/**
-	 * Map an ACF field type back to Stadion field type for API responses.
+	 * Map an ACF field type back to Rondo field type for API responses.
 	 *
 	 * @param string $acf_type The ACF field type.
-	 * @return string The Stadion field type.
+	 * @return string The Rondo field type.
 	 */
 	private function map_type_from_acf( string $acf_type ): string {
 		$reverse_map = array_flip( self::TYPE_MAP );

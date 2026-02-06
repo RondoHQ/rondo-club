@@ -34,15 +34,15 @@ class Taxonomies {
 	 */
 	private function register_person_label_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Labels', 'taxonomy general name', 'stadion' ),
-			'singular_name' => _x( 'Label', 'taxonomy singular name', 'stadion' ),
-			'search_items'  => __( 'Search Labels', 'stadion' ),
-			'all_items'     => __( 'All Labels', 'stadion' ),
-			'edit_item'     => __( 'Edit Label', 'stadion' ),
-			'update_item'   => __( 'Update Label', 'stadion' ),
-			'add_new_item'  => __( 'Add New Label', 'stadion' ),
-			'new_item_name' => __( 'New Label Name', 'stadion' ),
-			'menu_name'     => __( 'Labels', 'stadion' ),
+			'name'          => _x( 'Labels', 'taxonomy general name', 'rondo' ),
+			'singular_name' => _x( 'Label', 'taxonomy singular name', 'rondo' ),
+			'search_items'  => __( 'Search Labels', 'rondo' ),
+			'all_items'     => __( 'All Labels', 'rondo' ),
+			'edit_item'     => __( 'Edit Label', 'rondo' ),
+			'update_item'   => __( 'Update Label', 'rondo' ),
+			'add_new_item'  => __( 'Add New Label', 'rondo' ),
+			'new_item_name' => __( 'New Label Name', 'rondo' ),
+			'menu_name'     => __( 'Labels', 'rondo' ),
 		];
 
 		$args = [
@@ -63,15 +63,15 @@ class Taxonomies {
 	 */
 	private function register_team_label_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Team Labels', 'taxonomy general name', 'stadion' ),
-			'singular_name' => _x( 'Team Label', 'taxonomy singular name', 'stadion' ),
-			'search_items'  => __( 'Search Team Labels', 'stadion' ),
-			'all_items'     => __( 'All Team Labels', 'stadion' ),
-			'edit_item'     => __( 'Edit Team Label', 'stadion' ),
-			'update_item'   => __( 'Update Team Label', 'stadion' ),
-			'add_new_item'  => __( 'Add New Team Label', 'stadion' ),
-			'new_item_name' => __( 'New Team Label Name', 'stadion' ),
-			'menu_name'     => __( 'Labels', 'stadion' ),
+			'name'          => _x( 'Team Labels', 'taxonomy general name', 'rondo' ),
+			'singular_name' => _x( 'Team Label', 'taxonomy singular name', 'rondo' ),
+			'search_items'  => __( 'Search Team Labels', 'rondo' ),
+			'all_items'     => __( 'All Team Labels', 'rondo' ),
+			'edit_item'     => __( 'Edit Team Label', 'rondo' ),
+			'update_item'   => __( 'Update Team Label', 'rondo' ),
+			'add_new_item'  => __( 'Add New Team Label', 'rondo' ),
+			'new_item_name' => __( 'New Team Label Name', 'rondo' ),
+			'menu_name'     => __( 'Labels', 'rondo' ),
 		];
 
 		$args = [
@@ -92,15 +92,15 @@ class Taxonomies {
 	 */
 	private function register_commissie_label_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Commissie Labels', 'taxonomy general name', 'stadion' ),
-			'singular_name' => _x( 'Commissie Label', 'taxonomy singular name', 'stadion' ),
-			'search_items'  => __( 'Search Commissie Labels', 'stadion' ),
-			'all_items'     => __( 'All Commissie Labels', 'stadion' ),
-			'edit_item'     => __( 'Edit Commissie Label', 'stadion' ),
-			'update_item'   => __( 'Update Commissie Label', 'stadion' ),
-			'add_new_item'  => __( 'Add New Commissie Label', 'stadion' ),
-			'new_item_name' => __( 'New Commissie Label Name', 'stadion' ),
-			'menu_name'     => __( 'Labels', 'stadion' ),
+			'name'          => _x( 'Commissie Labels', 'taxonomy general name', 'rondo' ),
+			'singular_name' => _x( 'Commissie Label', 'taxonomy singular name', 'rondo' ),
+			'search_items'  => __( 'Search Commissie Labels', 'rondo' ),
+			'all_items'     => __( 'All Commissie Labels', 'rondo' ),
+			'edit_item'     => __( 'Edit Commissie Label', 'rondo' ),
+			'update_item'   => __( 'Update Commissie Label', 'rondo' ),
+			'add_new_item'  => __( 'Add New Commissie Label', 'rondo' ),
+			'new_item_name' => __( 'New Commissie Label Name', 'rondo' ),
+			'menu_name'     => __( 'Labels', 'rondo' ),
 		];
 
 		$args = [
@@ -121,15 +121,15 @@ class Taxonomies {
 	 */
 	private function register_relationship_type_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Relationship Types', 'taxonomy general name', 'stadion' ),
-			'singular_name' => _x( 'Relationship Type', 'taxonomy singular name', 'stadion' ),
-			'search_items'  => __( 'Search Relationship Types', 'stadion' ),
-			'all_items'     => __( 'All Relationship Types', 'stadion' ),
-			'edit_item'     => __( 'Edit Relationship Type', 'stadion' ),
-			'update_item'   => __( 'Update Relationship Type', 'stadion' ),
-			'add_new_item'  => __( 'Add New Relationship Type', 'stadion' ),
-			'new_item_name' => __( 'New Relationship Type Name', 'stadion' ),
-			'menu_name'     => __( 'Relationship Types', 'stadion' ),
+			'name'          => _x( 'Relationship Types', 'taxonomy general name', 'rondo' ),
+			'singular_name' => _x( 'Relationship Type', 'taxonomy singular name', 'rondo' ),
+			'search_items'  => __( 'Search Relationship Types', 'rondo' ),
+			'all_items'     => __( 'All Relationship Types', 'rondo' ),
+			'edit_item'     => __( 'Edit Relationship Type', 'rondo' ),
+			'update_item'   => __( 'Update Relationship Type', 'rondo' ),
+			'add_new_item'  => __( 'Add New Relationship Type', 'rondo' ),
+			'new_item_name' => __( 'New Relationship Type Name', 'rondo' ),
+			'menu_name'     => __( 'Relationship Types', 'rondo' ),
 		];
 
 		$args = [
@@ -154,42 +154,42 @@ class Taxonomies {
 	private function add_default_relationship_types() {
 		$defaults = [
 			// Basic relationships
-			'partner'      => __( 'Partner', 'stadion' ),
-			'spouse'       => __( 'Spouse', 'stadion' ),
-			'friend'       => __( 'Friend', 'stadion' ),
-			'colleague'    => __( 'Colleague', 'stadion' ),
-			'acquaintance' => __( 'Acquaintance', 'stadion' ),
-			'ex'           => __( 'Ex', 'stadion' ),
+			'partner'      => __( 'Partner', 'rondo' ),
+			'spouse'       => __( 'Spouse', 'rondo' ),
+			'friend'       => __( 'Friend', 'rondo' ),
+			'colleague'    => __( 'Colleague', 'rondo' ),
+			'acquaintance' => __( 'Acquaintance', 'rondo' ),
+			'ex'           => __( 'Ex', 'rondo' ),
 
 			// Family - immediate
-			'parent'       => __( 'Parent', 'stadion' ),
-			'child'        => __( 'Child', 'stadion' ),
-			'sibling'      => __( 'Sibling', 'stadion' ),
+			'parent'       => __( 'Parent', 'rondo' ),
+			'child'        => __( 'Child', 'rondo' ),
+			'sibling'      => __( 'Sibling', 'rondo' ),
 
 			// Family - extended
-			'grandparent'  => __( 'Grandparent', 'stadion' ),
-			'grandchild'   => __( 'Grandchild', 'stadion' ),
-			'uncle'        => __( 'Uncle', 'stadion' ),
-			'aunt'         => __( 'Aunt', 'stadion' ),
-			'nephew'       => __( 'Nephew', 'stadion' ),
-			'niece'        => __( 'Niece', 'stadion' ),
-			'cousin'       => __( 'Cousin', 'stadion' ),
+			'grandparent'  => __( 'Grandparent', 'rondo' ),
+			'grandchild'   => __( 'Grandchild', 'rondo' ),
+			'uncle'        => __( 'Uncle', 'rondo' ),
+			'aunt'         => __( 'Aunt', 'rondo' ),
+			'nephew'       => __( 'Nephew', 'rondo' ),
+			'niece'        => __( 'Niece', 'rondo' ),
+			'cousin'       => __( 'Cousin', 'rondo' ),
 
 			// Family - step/in-law
-			'stepparent'   => __( 'Stepparent', 'stadion' ),
-			'stepchild'    => __( 'Stepchild', 'stadion' ),
-			'stepsibling'  => __( 'Stepsibling', 'stadion' ),
-			'inlaw'        => __( 'In-law', 'stadion' ),
+			'stepparent'   => __( 'Stepparent', 'rondo' ),
+			'stepchild'    => __( 'Stepchild', 'rondo' ),
+			'stepsibling'  => __( 'Stepsibling', 'rondo' ),
+			'inlaw'        => __( 'In-law', 'rondo' ),
 
 			// Family - other
-			'godparent'    => __( 'Godparent', 'stadion' ),
-			'godchild'     => __( 'Godchild', 'stadion' ),
+			'godparent'    => __( 'Godparent', 'rondo' ),
+			'godchild'     => __( 'Godchild', 'rondo' ),
 
 			// Professional
-			'boss'         => __( 'Boss', 'stadion' ),
-			'subordinate'  => __( 'Subordinate', 'stadion' ),
-			'mentor'       => __( 'Mentor', 'stadion' ),
-			'mentee'       => __( 'Mentee', 'stadion' ),
+			'boss'         => __( 'Boss', 'rondo' ),
+			'subordinate'  => __( 'Subordinate', 'rondo' ),
+			'mentor'       => __( 'Mentor', 'rondo' ),
+			'mentee'       => __( 'Mentee', 'rondo' ),
 		];
 
 		foreach ( $defaults as $slug => $name ) {
@@ -320,15 +320,15 @@ class Taxonomies {
 	 */
 	private function register_seizoen_taxonomy() {
 		$labels = [
-			'name'          => _x( 'Seizoenen', 'taxonomy general name', 'stadion' ),
-			'singular_name' => _x( 'Seizoen', 'taxonomy singular name', 'stadion' ),
-			'search_items'  => __( 'Search Seizoenen', 'stadion' ),
-			'all_items'     => __( 'All Seizoenen', 'stadion' ),
-			'edit_item'     => __( 'Edit Seizoen', 'stadion' ),
-			'update_item'   => __( 'Update Seizoen', 'stadion' ),
-			'add_new_item'  => __( 'Add New Seizoen', 'stadion' ),
-			'new_item_name' => __( 'New Seizoen Name', 'stadion' ),
-			'menu_name'     => __( 'Seizoenen', 'stadion' ),
+			'name'          => _x( 'Seizoenen', 'taxonomy general name', 'rondo' ),
+			'singular_name' => _x( 'Seizoen', 'taxonomy singular name', 'rondo' ),
+			'search_items'  => __( 'Search Seizoenen', 'rondo' ),
+			'all_items'     => __( 'All Seizoenen', 'rondo' ),
+			'edit_item'     => __( 'Edit Seizoen', 'rondo' ),
+			'update_item'   => __( 'Update Seizoen', 'rondo' ),
+			'add_new_item'  => __( 'Add New Seizoen', 'rondo' ),
+			'new_item_name' => __( 'New Seizoen Name', 'rondo' ),
+			'menu_name'     => __( 'Seizoenen', 'rondo' ),
 		];
 
 		$args = [
@@ -449,7 +449,7 @@ class Taxonomies {
 		);
 
 		if ( ! empty( $existing ) ) {
-			return __( 'Dit dossier-ID bestaat al. Elk dossier moet een uniek ID hebben.', 'stadion' );
+			return __( 'Dit dossier-ID bestaat al. Elk dossier moet een uniek ID hebben.', 'rondo' );
 		}
 
 		return $valid;

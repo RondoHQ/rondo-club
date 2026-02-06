@@ -17,7 +17,7 @@ class Sync {
 	/**
 	 * Cron action name
 	 */
-	const CRON_HOOK = 'stadion_calendar_sync';
+	const CRON_HOOK = 'rondo_calendar_sync';
 
 	/**
 	 * Custom cron schedule interval name
@@ -27,7 +27,7 @@ class Sync {
 	/**
 	 * Transient key for tracking last synced user index
 	 */
-	const USER_INDEX_TRANSIENT = 'stadion_calendar_sync_last_user_index';
+	const USER_INDEX_TRANSIENT = 'rondo_calendar_sync_last_user_index';
 
 	/**
 	 * Constructor
@@ -55,7 +55,7 @@ class Sync {
 	public function add_cron_schedules( $schedules ) {
 		$schedules[ self::CRON_SCHEDULE ] = [
 			'interval' => 900, // 15 minutes in seconds
-			'display'  => __( 'Every 15 Minutes', 'stadion' ),
+			'display'  => __( 'Every 15 Minutes', 'rondo' ),
 		];
 
 		return $schedules;
@@ -121,18 +121,18 @@ class Sync {
 	private function get_users_with_connections() {
 		global $wpdb;
 
-		// Query users who have _stadion_calendar_connections user meta
+		// Query users who have _rondo_calendar_connections user meta
 		$user_ids = $wpdb->get_col(
 			"SELECT DISTINCT user_id
              FROM {$wpdb->usermeta}
-             WHERE meta_key = '_stadion_calendar_connections'"
+             WHERE meta_key = '_rondo_calendar_connections'"
 		);
 
 		// Filter to users who have at least one sync-enabled connection
 		$filtered_users = [];
 
 		foreach ( $user_ids as $user_id ) {
-			$connections = \STADION_Calendar_Connections::get_user_connections( (int) $user_id );
+			$connections = \RONDO_Calendar_Connections::get_user_connections( (int) $user_id );
 
 			foreach ( $connections as $connection ) {
 				if ( ! empty( $connection['sync_enabled'] ) ) {
@@ -151,7 +151,7 @@ class Sync {
 	 * @param int $user_id User ID to sync.
 	 */
 	private function sync_user_connections( $user_id ) {
-		$connections = \STADION_Calendar_Connections::get_user_connections( $user_id );
+		$connections = \RONDO_Calendar_Connections::get_user_connections( $user_id );
 
 		foreach ( $connections as $connection ) {
 			// Skip disabled connections
@@ -177,15 +177,15 @@ class Sync {
 
 				// Route to appropriate provider
 				if ( $provider === 'caldav' ) {
-					$result = \STADION_CalDAV_Provider::sync( $user_id, $connection );
+					$result = \RONDO_CalDAV_Provider::sync( $user_id, $connection );
 				} elseif ( $provider === 'google' ) {
-					$result = \STADION_Google_Calendar_Provider::sync( $user_id, $connection );
+					$result = \RONDO_Google_Calendar_Provider::sync( $user_id, $connection );
 				} else {
 					continue; // Unknown provider
 				}
 
 				// Update last_sync timestamp and clear error
-				\STADION_Calendar_Connections::update_connection(
+				\RONDO_Calendar_Connections::update_connection(
 					$user_id,
 					$connection_id,
 					[
@@ -196,7 +196,7 @@ class Sync {
 
 				error_log(
 					sprintf(
-						'STADION_Calendar_Sync: Synced connection %s for user %d - %d events (%d created, %d updated, %d deleted) [freq: %d min]',
+						'RONDO_Calendar_Sync: Synced connection %s for user %d - %d events (%d created, %d updated, %d deleted) [freq: %d min]',
 						$connection_id,
 						$user_id,
 						$result['total'] ?? 0,
@@ -209,7 +209,7 @@ class Sync {
 
 			} catch ( Exception $e ) {
 				// Update last_error but don't stop other connections
-				\STADION_Calendar_Connections::update_connection(
+				\RONDO_Calendar_Connections::update_connection(
 					$user_id,
 					$connection_id,
 					[
@@ -219,7 +219,7 @@ class Sync {
 
 				error_log(
 					sprintf(
-						'STADION_Calendar_Sync: Error syncing connection %s for user %d: %s',
+						'RONDO_Calendar_Sync: Error syncing connection %s for user %d: %s',
 						$connection_id,
 						$user_id,
 						$e->getMessage()
@@ -368,7 +368,7 @@ class Sync {
 
 			error_log(
 				sprintf(
-					'STADION_Calendar_Sync: Auto-logged event %d as %d activities',
+					'RONDO_Calendar_Sync: Auto-logged event %d as %d activities',
 					$event_id,
 					$activities_created
 				)
@@ -388,7 +388,7 @@ class Sync {
 			return false;
 		}
 
-		$connection = \STADION_Calendar_Connections::get_connection( $user_id, $connection_id );
+		$connection = \RONDO_Calendar_Connections::get_connection( $user_id, $connection_id );
 
 		if ( ! $connection ) {
 			return false;
@@ -469,7 +469,7 @@ class Sync {
 				[
 					'comment_post_ID'  => $person_id,
 					'comment_content'  => $content,
-					'comment_type'     => 'stadion_activity',
+					'comment_type'     => 'rondo_activity',
 					'user_id'          => $user_id,
 					'comment_approved' => 1,
 				]
@@ -508,12 +508,12 @@ class Sync {
 		$user_ids = $wpdb->get_col(
 			"SELECT DISTINCT user_id
              FROM {$wpdb->usermeta}
-             WHERE meta_key = '_stadion_calendar_connections'"
+             WHERE meta_key = '_rondo_calendar_connections'"
 		);
 
 		$total_users = 0;
 		foreach ( $user_ids as $user_id ) {
-			$connections = \STADION_Calendar_Connections::get_user_connections( (int) $user_id );
+			$connections = \RONDO_Calendar_Connections::get_user_connections( (int) $user_id );
 			foreach ( $connections as $connection ) {
 				if ( ! empty( $connection['sync_enabled'] ) ) {
 					++$total_users;
@@ -552,7 +552,7 @@ class Sync {
 				'connections' => [],
 			];
 
-			$connections = \STADION_Calendar_Connections::get_user_connections( $user_id );
+			$connections = \RONDO_Calendar_Connections::get_user_connections( $user_id );
 
 			foreach ( $connections as $connection ) {
 				if ( empty( $connection['sync_enabled'] ) ) {
@@ -566,14 +566,14 @@ class Sync {
 					$connection['user_id'] = $user_id;
 
 					if ( $provider === 'caldav' ) {
-						$result = \STADION_CalDAV_Provider::sync( $user_id, $connection );
+						$result = \RONDO_CalDAV_Provider::sync( $user_id, $connection );
 					} elseif ( $provider === 'google' ) {
-						$result = \STADION_Google_Calendar_Provider::sync( $user_id, $connection );
+						$result = \RONDO_Google_Calendar_Provider::sync( $user_id, $connection );
 					} else {
 						continue;
 					}
 
-					\STADION_Calendar_Connections::update_connection(
+					\RONDO_Calendar_Connections::update_connection(
 						$user_id,
 						$connection_id,
 						[
@@ -592,7 +592,7 @@ class Sync {
 					];
 
 				} catch ( Exception $e ) {
-					\STADION_Calendar_Connections::update_connection(
+					\RONDO_Calendar_Connections::update_connection(
 						$user_id,
 						$connection_id,
 						[

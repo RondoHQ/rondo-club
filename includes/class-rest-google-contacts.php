@@ -59,9 +59,9 @@ class GoogleContacts extends Base {
 	 * Register custom REST routes for Google Contacts domain
 	 */
 	public function register_routes() {
-		// GET /stadion/v1/google-contacts/status - Check connection status
+		// GET /rondo/v1/google-contacts/status - Check connection status
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-contacts/status',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -70,9 +70,9 @@ class GoogleContacts extends Base {
 			]
 		);
 
-		// GET /stadion/v1/google-contacts/auth - Initiate OAuth flow
+		// GET /rondo/v1/google-contacts/auth - Initiate OAuth flow
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-contacts/auth',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -88,9 +88,9 @@ class GoogleContacts extends Base {
 			]
 		);
 
-		// GET /stadion/v1/google-contacts/callback - OAuth callback (public for redirect)
+		// GET /rondo/v1/google-contacts/callback - OAuth callback (public for redirect)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-contacts/callback',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -99,9 +99,9 @@ class GoogleContacts extends Base {
 			]
 		);
 
-		// DELETE /stadion/v1/google-contacts - Disconnect
+		// DELETE /rondo/v1/google-contacts - Disconnect
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-contacts',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -110,9 +110,9 @@ class GoogleContacts extends Base {
 			]
 		);
 
-		// POST /stadion/v1/google-contacts/import - Trigger import
+		// POST /rondo/v1/google-contacts/import - Trigger import
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-contacts/import',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -121,9 +121,9 @@ class GoogleContacts extends Base {
 			]
 		);
 
-		// POST /stadion/v1/google-contacts/export/{id} - Export single contact
+		// POST /rondo/v1/google-contacts/export/{id} - Export single contact
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-contacts/export/(?P<id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -141,9 +141,9 @@ class GoogleContacts extends Base {
 			]
 		);
 
-		// POST /stadion/v1/google-contacts/bulk-export - Export all unlinked contacts.
+		// POST /rondo/v1/google-contacts/bulk-export - Export all unlinked contacts.
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-contacts/bulk-export',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -152,9 +152,9 @@ class GoogleContacts extends Base {
 			]
 		);
 
-		// GET /stadion/v1/google-contacts/unlinked-count - Get count of unlinked contacts.
+		// GET /rondo/v1/google-contacts/unlinked-count - Get count of unlinked contacts.
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-contacts/unlinked-count',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -163,9 +163,9 @@ class GoogleContacts extends Base {
 			]
 		);
 
-		// POST /stadion/v1/google-contacts/sync - Trigger manual sync.
+		// POST /rondo/v1/google-contacts/sync - Trigger manual sync.
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-contacts/sync',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -174,9 +174,9 @@ class GoogleContacts extends Base {
 			]
 		);
 
-		// POST /stadion/v1/google-contacts/sync-frequency - Update sync frequency.
+		// POST /rondo/v1/google-contacts/sync-frequency - Update sync frequency.
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-contacts/sync-frequency',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -239,7 +239,7 @@ class GoogleContacts extends Base {
 		if ( ! GoogleOAuth::is_configured() ) {
 			return new \WP_Error(
 				'not_configured',
-				__( 'Google integration is not configured. Please add GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to wp-config.php.', 'stadion' ),
+				__( 'Google integration is not configured. Please add GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to wp-config.php.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -248,7 +248,7 @@ class GoogleContacts extends Base {
 		if ( GoogleContactsConnection::is_connected( $user_id ) ) {
 			return new \WP_Error(
 				'already_connected',
-				__( 'Google Contacts is already connected. Please disconnect first to reconnect.', 'stadion' ),
+				__( 'Google Contacts is already connected. Please disconnect first to reconnect.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -262,7 +262,7 @@ class GoogleContacts extends Base {
 		if ( empty( $auth_url ) ) {
 			return new \WP_Error(
 				'auth_url_failed',
-				__( 'Failed to generate authorization URL.', 'stadion' ),
+				__( 'Failed to generate authorization URL.', 'rondo' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -375,7 +375,7 @@ class GoogleContacts extends Base {
 		if ( ! GoogleContactsConnection::is_connected( $user_id ) ) {
 			return new \WP_Error(
 				'not_connected',
-				__( 'Google Contacts is not connected.', 'stadion' ),
+				__( 'Google Contacts is not connected.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -386,7 +386,7 @@ class GoogleContacts extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Google Contacts disconnected.', 'stadion' ),
+				'message' => __( 'Google Contacts disconnected.', 'rondo' ),
 			]
 		);
 	}
@@ -407,7 +407,7 @@ class GoogleContacts extends Base {
 		if ( ! GoogleContactsConnection::is_connected( $user_id ) ) {
 			return new \WP_Error(
 				'not_connected',
-				__( 'Google Contacts is not connected. Please connect first.', 'stadion' ),
+				__( 'Google Contacts is not connected. Please connect first.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -423,7 +423,7 @@ class GoogleContacts extends Base {
 					'stats'   => $stats,
 					'message' => sprintf(
 						/* translators: 1: number of contacts imported, 2: number updated, 3: number skipped */
-						__( 'Import complete: %1$d imported, %2$d updated, %3$d skipped', 'stadion' ),
+						__( 'Import complete: %1$d imported, %2$d updated, %3$d skipped', 'rondo' ),
 						$stats['contacts_imported'],
 						$stats['contacts_updated'],
 						$stats['contacts_skipped']
@@ -468,7 +468,7 @@ class GoogleContacts extends Base {
 		if ( ! $connection ) {
 			return new \WP_Error(
 				'not_connected',
-				__( 'Google Contacts is not connected.', 'stadion' ),
+				__( 'Google Contacts is not connected.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -476,7 +476,7 @@ class GoogleContacts extends Base {
 		if ( ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
 			return new \WP_Error(
 				'readonly_access',
-				__( 'Google Contacts is connected with read-only access. Please reconnect with read-write access to export contacts.', 'stadion' ),
+				__( 'Google Contacts is connected with read-only access. Please reconnect with read-write access to export contacts.', 'rondo' ),
 				[ 'status' => 403 ]
 			);
 		}
@@ -486,7 +486,7 @@ class GoogleContacts extends Base {
 		if ( ! $post || $post->post_type !== 'person' ) {
 			return new \WP_Error(
 				'not_found',
-				__( 'Contact not found.', 'stadion' ),
+				__( 'Contact not found.', 'rondo' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -495,7 +495,7 @@ class GoogleContacts extends Base {
 		if ( ! current_user_can( 'manage_options' ) && (int) $post->post_author !== $user_id ) {
 			return new \WP_Error(
 				'forbidden',
-				__( 'You do not have permission to export this contact.', 'stadion' ),
+				__( 'You do not have permission to export this contact.', 'rondo' ),
 				[ 'status' => 403 ]
 			);
 		}
@@ -511,8 +511,8 @@ class GoogleContacts extends Base {
 					'success'           => $result,
 					'google_contact_id' => $google_id,
 					'message'           => $result
-						? __( 'Contact exported to Google successfully.', 'stadion' )
-						: __( 'Export failed. Check error logs for details.', 'stadion' ),
+						? __( 'Contact exported to Google successfully.', 'rondo' )
+						: __( 'Export failed. Check error logs for details.', 'rondo' ),
 				]
 			);
 		} catch ( \Exception $e ) {
@@ -538,7 +538,7 @@ class GoogleContacts extends Base {
 		if ( ! $connection ) {
 			return new \WP_Error(
 				'not_connected',
-				__( 'Google Contacts is not connected.', 'stadion' ),
+				__( 'Google Contacts is not connected.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -546,7 +546,7 @@ class GoogleContacts extends Base {
 		if ( ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
 			return new \WP_Error(
 				'readonly_access',
-				__( 'Google Contacts is connected with read-only access. Please reconnect with read-write access to export contacts.', 'stadion' ),
+				__( 'Google Contacts is connected with read-only access. Please reconnect with read-write access to export contacts.', 'rondo' ),
 				[ 'status' => 403 ]
 			);
 		}
@@ -564,7 +564,7 @@ class GoogleContacts extends Base {
 					'stats'   => $stats,
 					'message' => sprintf(
 						/* translators: 1: exported count, 2: skipped count, 3: failed count, 4: total count */
-						__( 'Bulk export complete: %1$d exported, %2$d skipped, %3$d failed out of %4$d total.', 'stadion' ),
+						__( 'Bulk export complete: %1$d exported, %2$d skipped, %3$d failed out of %4$d total.', 'rondo' ),
 						$stats['exported'],
 						$stats['skipped'],
 						$stats['failed'],
@@ -693,7 +693,7 @@ class GoogleContacts extends Base {
 		if ( ! $connection || empty( $connection['credentials'] ) ) {
 			return new \WP_Error(
 				'not_connected',
-				__( 'Google Contacts is not connected.', 'stadion' ),
+				__( 'Google Contacts is not connected.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -707,7 +707,7 @@ class GoogleContacts extends Base {
 				[
 					'success' => true,
 					'stats'   => $result,
-					'message' => __( 'Sync completed successfully.', 'stadion' ),
+					'message' => __( 'Sync completed successfully.', 'rondo' ),
 				]
 			);
 		} catch ( \Exception $e ) {
@@ -734,7 +734,7 @@ class GoogleContacts extends Base {
 		if ( ! $connection ) {
 			return new \WP_Error(
 				'not_connected',
-				__( 'Google Contacts is not connected.', 'stadion' ),
+				__( 'Google Contacts is not connected.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}

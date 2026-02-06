@@ -17,7 +17,7 @@ class Connections {
 	/**
 	 * User meta key for storing calendar connections
 	 */
-	const META_KEY = '_stadion_calendar_connections';
+	const META_KEY = '_rondo_calendar_connections';
 
 	/**
 	 * Get all calendar connections for a user
@@ -137,7 +137,7 @@ class Connections {
 	 * @return bool True if updated, false if connection not found
 	 */
 	public static function update_credentials( int $user_id, string $connection_id, array $credentials ): bool {
-		$encrypted = \Stadion\Data\CredentialEncryption::encrypt( $credentials );
+		$encrypted = \Rondo\Data\CredentialEncryption::encrypt( $credentials );
 
 		return self::update_connection(
 			$user_id,
