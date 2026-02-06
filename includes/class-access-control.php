@@ -16,7 +16,7 @@ class AccessControl {
 	/**
 	 * Post types that should have access control
 	 */
-	private $controlled_post_types = [ 'person', 'team', 'important_date', 'stadion_todo' ];
+	private $controlled_post_types = [ 'person', 'team', 'stadion_todo' ];
 
 	public function __construct() {
 		// Filter queries to block unapproved users
@@ -25,13 +25,11 @@ class AccessControl {
 		// Filter REST API queries
 		add_filter( 'rest_person_query', [ $this, 'filter_rest_query' ], 10, 2 );
 		add_filter( 'rest_company_query', [ $this, 'filter_rest_query' ], 10, 2 );
-		add_filter( 'rest_important_date_query', [ $this, 'filter_rest_query' ], 10, 2 );
 		add_filter( 'rest_stadion_todo_query', [ $this, 'filter_rest_query' ], 10, 2 );
 
 		// Filter REST API single item access
 		add_filter( 'rest_prepare_person', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_company', [ $this, 'filter_rest_single_access' ], 10, 3 );
-		add_filter( 'rest_prepare_important_date', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_stadion_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
 	}
 

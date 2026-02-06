@@ -26,7 +26,6 @@ class Taxonomies {
 		$this->register_team_label_taxonomy();
 		$this->register_commissie_label_taxonomy();
 		$this->register_relationship_type_taxonomy();
-		$this->register_date_type_taxonomy();
 		$this->register_seizoen_taxonomy();
 	}
 
@@ -147,38 +146,6 @@ class Taxonomies {
 
 		// Add default terms on activation
 		$this->add_default_relationship_types();
-	}
-
-	/**
-	 * Register Date Type Taxonomy
-	 */
-	private function register_date_type_taxonomy() {
-		$labels = [
-			'name'          => _x( 'Date Types', 'taxonomy general name', 'stadion' ),
-			'singular_name' => _x( 'Date Type', 'taxonomy singular name', 'stadion' ),
-			'search_items'  => __( 'Search Date Types', 'stadion' ),
-			'all_items'     => __( 'All Date Types', 'stadion' ),
-			'edit_item'     => __( 'Edit Date Type', 'stadion' ),
-			'update_item'   => __( 'Update Date Type', 'stadion' ),
-			'add_new_item'  => __( 'Add New Date Type', 'stadion' ),
-			'new_item_name' => __( 'New Date Type Name', 'stadion' ),
-			'menu_name'     => __( 'Date Types', 'stadion' ),
-		];
-
-		$args = [
-			'hierarchical'      => true,
-			'labels'            => $labels,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'show_in_rest'      => true,
-			'query_var'         => true,
-			'rewrite'           => [ 'slug' => 'date-type' ],
-		];
-
-		register_taxonomy( 'date_type', [ 'important_date' ], $args );
-
-		// Add default terms on activation
-		$this->add_default_date_types();
 	}
 
 	/**
@@ -341,73 +308,6 @@ class Taxonomies {
 						update_field( 'inverse_relationship_type', $types['aunt'], 'relationship_type_' . $term_id );
 					}
 				}
-			}
-		}
-	}
-
-	/**
-	 * Add default date types
-	 */
-	private function add_default_date_types() {
-		$defaults = [
-			// Core types
-			'birthday'                => __( 'Birthday', 'stadion' ),
-			'memorial'                => __( 'Memorial', 'stadion' ),
-			'first-met'               => __( 'First Met', 'stadion' ),
-
-		// Family & relationships
-			'new-relationship'        => __( 'New Relationship', 'stadion' ),
-			'engagement'              => __( 'Engagement', 'stadion' ),
-			'wedding'                 => __( 'Wedding', 'stadion' ),
-			'marriage'                => __( 'Marriage', 'stadion' ),
-			'expecting-a-baby'        => __( 'Expecting a Baby', 'stadion' ),
-			'new-child'               => __( 'New Child', 'stadion' ),
-			'new-family-member'       => __( 'New Family Member', 'stadion' ),
-			'new-pet'                 => __( 'New Pet', 'stadion' ),
-			'end-of-relationship'     => __( 'End of Relationship', 'stadion' ),
-			'loss-of-a-loved-one'     => __( 'Loss of a Loved One', 'stadion' ),
-
-		// Work & education
-			'new-job'                 => __( 'New Job', 'stadion' ),
-			'retirement'              => __( 'Retirement', 'stadion' ),
-			'new-school'              => __( 'New School', 'stadion' ),
-			'study-abroad'            => __( 'Study Abroad', 'stadion' ),
-			'volunteer-work'          => __( 'Volunteer Work', 'stadion' ),
-			'published-book-or-paper' => __( 'Published Book or Paper', 'stadion' ),
-			'military-service'        => __( 'Military Service', 'stadion' ),
-
-		// Home & living
-			'moved'                   => __( 'Moved', 'stadion' ),
-			'bought-a-home'           => __( 'Bought a Home', 'stadion' ),
-			'home-improvement'        => __( 'Home Improvement', 'stadion' ),
-			'holidays'                => __( 'Holidays', 'stadion' ),
-			'new-vehicle'             => __( 'New Vehicle', 'stadion' ),
-			'new-roommate'            => __( 'New Roommate', 'stadion' ),
-
-		// Health & wellness
-			'overcame-an-illness'     => __( 'Overcame an Illness', 'stadion' ),
-			'quit-a-habit'            => __( 'Quit a Habit', 'stadion' ),
-			'new-eating-habits'       => __( 'New Eating Habits', 'stadion' ),
-			'weight-loss'             => __( 'Weight Loss', 'stadion' ),
-			'surgery'                 => __( 'Surgery', 'stadion' ),
-
-		// Travel & experiences
-			'new-sport'               => __( 'New Sport', 'stadion' ),
-			'new-hobby'               => __( 'New Hobby', 'stadion' ),
-			'new-instrument'          => __( 'New Instrument', 'stadion' ),
-			'new-language'            => __( 'New Language', 'stadion' ),
-			'travel'                  => __( 'Travel', 'stadion' ),
-			'achievement-or-award'    => __( 'Achievement or Award', 'stadion' ),
-			'first-word'              => __( 'First Word', 'stadion' ),
-			'first-kiss'              => __( 'First Kiss', 'stadion' ),
-
-			// Fallback
-			'other'                   => __( 'Other', 'stadion' ),
-		];
-
-		foreach ( $defaults as $slug => $name ) {
-			if ( ! term_exists( $slug, 'date_type' ) ) {
-				wp_insert_term( $name, 'date_type', [ 'slug' => $slug ] );
 			}
 		}
 	}

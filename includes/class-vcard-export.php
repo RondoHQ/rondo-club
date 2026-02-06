@@ -130,46 +130,14 @@ class VCard {
 	}
 
 	/**
-	 * Get birthday from important dates linked to this person
+	 * Get birthday from person record
 	 *
 	 * @param int $person_id Person post ID
 	 * @return string|null Birthday date in Y-m-d format or null
 	 */
 	public static function get_birthday( $person_id ) {
-		// Get the birthday date type term
-		$birthday_term = get_term_by( 'slug', 'birthday', 'date_type' );
-		if ( ! $birthday_term ) {
-			return null;
-		}
-
-		// Query for important dates linked to this person with birthday type
-		$dates = get_posts(
-			[
-				'post_type'      => 'important_date',
-				'posts_per_page' => 1,
-				'meta_query'     => [
-					[
-						'key'     => 'related_people',
-						'value'   => '"' . $person_id . '"',
-						'compare' => 'LIKE',
-					],
-				],
-				'tax_query'      => [
-					[
-						'taxonomy' => 'date_type',
-						'field'    => 'slug',
-						'terms'    => 'birthday',
-					],
-				],
-			]
-		);
-
-		if ( ! empty( $dates ) ) {
-			$date_value = get_field( 'date_value', $dates[0]->ID );
-			return $date_value;
-		}
-
-		return null;
+		$birthdate = get_field( 'birthdate', $person_id );
+		return ! empty( $birthdate ) ? $birthdate : null;
 	}
 
 	/**

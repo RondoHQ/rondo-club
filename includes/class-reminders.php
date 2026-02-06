@@ -645,62 +645,27 @@ class Reminders {
 
 	/**
 	 * Get all users who should receive reminders
-	 * (users who have created people with important dates)
+	 * (users who have created people with birthdate data)
 	 *
 	 * @return array User IDs
 	 */
 	public function get_all_users_to_notify() {
 		// Use direct database query to bypass access control filters
-		// Cron jobs need to see all dates regardless of user
+		// Cron jobs need to see all birthdate reminders regardless of user
 		global $wpdb;
 
-		$date_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->posts} 
-             WHERE post_type = %s 
-             AND post_status = 'publish'",
-				'important_date'
-			)
+		// Get all unique authors of person posts that have a birthdate set
+		$user_ids = $wpdb->get_col(
+			"SELECT DISTINCT p.post_author
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			WHERE p.post_type = 'person'
+			AND p.post_status = 'publish'
+			AND pm.meta_key = 'birthdate'
+			AND pm.meta_value != ''"
 		);
 
-		if ( empty( $date_ids ) ) {
-			return [];
-		}
-
-		// Get full post objects
-		$dates = array_map( 'get_post', $date_ids );
-
-		$user_ids = [];
-
-		foreach ( $dates as $date_post ) {
-			// Get related people using ACF (handles repeater fields correctly)
-			$related_people = get_field( 'related_people', $date_post->ID );
-
-			if ( empty( $related_people ) ) {
-				continue;
-			}
-
-			// Ensure it's an array
-			if ( ! is_array( $related_people ) ) {
-				$related_people = [ $related_people ];
-			}
-
-			// Get user IDs from people post authors
-			foreach ( $related_people as $person ) {
-				$person_id = is_object( $person ) ? $person->ID : ( is_array( $person ) ? $person['ID'] : $person );
-
-				if ( ! $person_id ) {
-					continue;
-				}
-
-				$person_post = get_post( $person_id );
-				if ( $person_post ) {
-					$user_ids[] = (int) $person_post->post_author;
-				}
-			}
-		}
-
-		return array_unique( $user_ids );
+		return array_map( 'intval', $user_ids );
 	}
 
 	/**

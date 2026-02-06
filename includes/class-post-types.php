@@ -22,7 +22,6 @@ class PostTypes {
 		$this->register_person_post_type();
 		$this->register_team_post_type();
 		$this->register_commissie_post_type();
-		$this->register_important_date_post_type();
 		$this->register_todo_statuses();
 		$this->register_todo_post_type();
 		$this->register_calendar_event_post_type();
@@ -152,46 +151,6 @@ class PostTypes {
 		];
 
 		register_post_type( 'commissie', $args );
-	}
-
-	/**
-	 * Register Important Date CPT
-	 */
-	private function register_important_date_post_type() {
-		$labels = [
-			'name'               => _x( 'Important Dates', 'Post type general name', 'stadion' ),
-			'singular_name'      => _x( 'Important Date', 'Post type singular name', 'stadion' ),
-			'menu_name'          => _x( 'Dates', 'Admin Menu text', 'stadion' ),
-			'add_new'            => __( 'Add New', 'stadion' ),
-			'add_new_item'       => __( 'Add New Date', 'stadion' ),
-			'edit_item'          => __( 'Edit Date', 'stadion' ),
-			'new_item'           => __( 'New Date', 'stadion' ),
-			'view_item'          => __( 'View Date', 'stadion' ),
-			'search_items'       => __( 'Search Dates', 'stadion' ),
-			'not_found'          => __( 'No dates found', 'stadion' ),
-			'not_found_in_trash' => __( 'No dates found in Trash', 'stadion' ),
-			'all_items'          => __( 'All Dates', 'stadion' ),
-		];
-
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'important-dates',
-			'query_var'          => false,
-			'rewrite'            => false, // Disable rewrite rules - React Router handles routing
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 7,
-			'menu_icon'          => 'dashicons-calendar-alt',
-			'supports'           => [ 'title', 'editor', 'author' ],
-		];
-
-		register_post_type( 'important_date', $args );
 	}
 
 	/**
