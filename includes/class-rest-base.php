@@ -233,36 +233,4 @@ abstract class Base {
 		];
 	}
 
-	/**
-	 * Format date for response
-	 *
-	 * Returns a representation of an important_date post including related people.
-	 *
-	 * @param WP_Post $post The important_date post object.
-	 * @return array Formatted date data.
-	 */
-	protected function format_date( $post ) {
-		$related_people = get_field( 'related_people', $post->ID ) ?: [];
-		$people_names   = [];
-
-		foreach ( $related_people as $person ) {
-			$person_id      = is_object( $person ) ? $person->ID : $person;
-			$people_names[] = [
-				'id'   => $person_id,
-				'name' => $this->sanitize_text( get_the_title( $person_id ) ),
-			];
-		}
-
-		return [
-			'id'             => $post->ID,
-			'title'          => $this->sanitize_text( $post->post_title ),
-			'custom_label'   => $this->sanitize_text( get_field( 'custom_label', $post->ID ) ),
-			'date_value'     => get_field( 'date_value', $post->ID ),
-			'is_recurring'   => (bool) get_field( 'is_recurring', $post->ID ),
-			'year_unknown'   => (bool) get_field( 'year_unknown', $post->ID ),
-			'date_type'      => wp_get_post_terms( $post->ID, 'date_type', [ 'fields' => 'slugs' ] ),
-			'date_type_names' => wp_get_post_terms( $post->ID, 'date_type', [ 'fields' => 'names' ] ),
-			'related_people' => $people_names,
-		];
-	}
 }

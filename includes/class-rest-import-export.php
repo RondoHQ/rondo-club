@@ -266,17 +266,10 @@ class ImportExport extends Base {
 			$row[3]  = $last_name; // Family Name
 			$row[11] = $acf['nickname'] ?? ''; // Nickname
 
-			// Birthday
-			$dates_request  = new WP_REST_Request( 'GET', "/stadion/v1/people/{$person_id}/dates" );
-			$dates_response = rest_do_request( $dates_request );
-			if ( ! is_wp_error( $dates_response ) && $dates_response->get_status() === 200 ) {
-				$dates = $dates_response->get_data();
-				foreach ( $dates as $date ) {
-					if ( isset( $date['date_type'] ) && 'birthday' === $date['date_type'] && isset( $date['date_value'] ) ) {
-						$row[14] = gmdate( 'Y-m-d', strtotime( $date['date_value'] ) ); // Birthday.
-						break;
-					}
-				}
+			// Birthday - get directly from person's birthdate field
+			$birthdate = $acf['birthdate'] ?? '';
+			if ( ! empty( $birthdate ) ) {
+				$row[14] = gmdate( 'Y-m-d', strtotime( $birthdate ) ); // Birthday.
 			}
 
 			// Contact info
@@ -458,13 +451,11 @@ class ImportExport extends Base {
 			}
 		}
 
-		// Birthday.
-		foreach ( $person_dates as $date ) {
-			if ( isset( $date['date_type'] ) && 'birthday' === $date['date_type'] && isset( $date['date_value'] ) ) {
-				$birthday = gmdate( 'Ymd', strtotime( $date['date_value'] ) );
-				$lines[]  = "BDAY:{$birthday}";
-				break;
-			}
+		// Birthday - get directly from person's birthdate field
+		$birthdate = $acf['birthdate'] ?? '';
+		if ( ! empty( $birthdate ) ) {
+			$birthday = gmdate( 'Ymd', strtotime( $birthdate ) );
+			$lines[]  = "BDAY:{$birthday}";
 		}
 
 		// Photo

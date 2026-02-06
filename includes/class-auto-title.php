@@ -13,13 +13,9 @@ class AutoTitle {
 
 	public function __construct() {
 		add_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
-		add_action( 'acf/save_post', [ $this, 'auto_generate_date_title' ], 20 );
 
 		// Generate title for REST API person creation/update (priority 20 = same as acf/save_post)
 		add_action( 'rest_after_insert_person', [ $this, 'auto_generate_person_title_rest' ], 20, 2 );
-
-		// Generate title for REST API important_date creation/update
-		add_action( 'rest_after_insert_important_date', [ $this, 'auto_generate_date_title_rest' ], 20, 2 );
 
 		// Trigger calendar re-matching after person save (priority 25 = after title generation)
 		// Hook both acf/save_post (admin) and rest_after_insert_person (REST API)
@@ -48,10 +44,6 @@ class AutoTitle {
 
 		// Set temporary title for REST API person creation
 		add_filter( 'rest_pre_insert_person', [ $this, 'set_temporary_title_rest' ], 5, 2 );
-
-		// Sync birthdate to person post_meta when birthday important_date is saved/deleted (priority 20 = after ACF saves fields)
-		add_action( 'save_post_important_date', [ $this, 'sync_birthdate_to_person' ], 20, 3 );
-		add_action( 'before_delete_post', [ $this, 'clear_birthdate_on_delete' ], 10, 2 );
 	}
 
 	/**
@@ -264,160 +256,6 @@ class AutoTitle {
 	}
 
 	/**
-	 * Auto-generate Important Date post title from type + related people
-	 */
-	public function auto_generate_date_title( $post_id ) {
-		// Skip if not an important_date post type
-		if ( get_post_type( $post_id ) !== 'important_date' ) {
-			return;
-		}
-
-		// Skip autosaves and revisions
-		if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
-			return;
-		}
-
-		// Check if user has set a custom title (different from what we'd auto-generate)
-		// This preserves user edits even when custom_label field is not explicitly set
-		$current_title = get_the_title( $post_id );
-		$auto_title    = $this->generate_date_title_from_fields( $post_id );
-		$custom_label  = get_field( 'custom_label', $post_id );
-
-		// If current title differs from auto-generated, user has customized it
-		// Set custom_label so it persists and skip auto-generation
-		if ( ! empty( $current_title ) && $current_title !== $auto_title && empty( $custom_label ) ) {
-			update_field( 'custom_label', $current_title, $post_id );
-			return; // Respect user's custom title
-		}
-
-		// Check for custom label first (existing logic)
-
-		if ( ! empty( $custom_label ) ) {
-			$title = $custom_label;
-		} else {
-			$title = $this->generate_date_title_from_fields( $post_id );
-		}
-
-		// Unhook to prevent infinite loop
-		remove_action( 'acf/save_post', [ $this, 'auto_generate_date_title' ], 20 );
-
-		wp_update_post(
-			[
-				'ID'         => $post_id,
-				'post_title' => $title,
-				'post_name'  => sanitize_title( $title . '-' . $post_id ),
-			]
-		);
-
-		// Re-hook
-		add_action( 'acf/save_post', [ $this, 'auto_generate_date_title' ], 20 );
-	}
-
-	/**
-	 * Auto-generate Important Date post title from REST API request
-	 *
-	 * Called via rest_after_insert_important_date hook when an important date is created/updated via REST API.
-	 * ACF fields are already saved at this point, so we can read them and generate the title.
-	 *
-	 * @param WP_Post         $post    Inserted or updated post object.
-	 * @param WP_REST_Request $request Request object.
-	 */
-	public function auto_generate_date_title_rest( $post, $request ) {
-		$post_id = $post->ID;
-
-		// Check for custom label first
-		$custom_label = get_field( 'custom_label', $post_id );
-
-		if ( ! empty( $custom_label ) ) {
-			$title = $custom_label;
-		} else {
-			$title = $this->generate_date_title_from_fields( $post_id );
-		}
-
-		wp_update_post(
-			[
-				'ID'         => $post_id,
-				'post_title' => $title,
-				'post_name'  => sanitize_title( $title . '-' . $post_id ),
-			]
-		);
-	}
-
-	/**
-	 * Generate date title from type and related people
-	 */
-	private function generate_date_title_from_fields( $post_id ) {
-		// Get date type from taxonomy
-		$date_types = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'names' ] );
-		$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'stadion' );
-
-		// Get related people
-		$people = get_field( 'related_people', $post_id ) ?: [];
-
-		if ( empty( $people ) ) {
-			return sprintf( __( 'Unnamed %s', 'stadion' ), $type_label );
-		}
-
-		// Get full names of related people
-		$names = [];
-		foreach ( $people as $person ) {
-			$person_id = is_object( $person ) ? $person->ID : $person;
-			$full_name = html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' );
-			if ( $full_name && $full_name !== __( 'Unnamed Person', 'stadion' ) ) {
-				$names[] = $full_name;
-			}
-		}
-
-		if ( empty( $names ) ) {
-			return sprintf( __( 'Unnamed %s', 'stadion' ), $type_label );
-		}
-
-		$count = count( $names );
-
-		// Get date type slug to check for wedding
-		$date_type_slugs = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'slugs' ] );
-		$type_slug       = ! empty( $date_type_slugs ) ? $date_type_slugs[0] : '';
-
-		// Special handling for wedding type
-		if ( $type_slug === 'wedding' ) {
-			if ( $count >= 2 ) {
-				// "Wedding of Person1 & Person2"
-				return sprintf(
-					__( 'Wedding of %1$s & %2$s', 'stadion' ),
-					$names[0],
-					$names[1]
-				);
-			} elseif ( $count === 1 ) {
-				// "Wedding of Person1" (fallback if only one person)
-				return sprintf( __( 'Wedding of %s', 'stadion' ), $names[0] );
-			}
-		}
-
-		if ( $count === 1 ) {
-			// "Sarah's Birthday"
-			return sprintf( __( "%1\$s's %2\$s", 'stadion' ), $names[0], $type_label );
-		} elseif ( $count === 2 ) {
-			// "Tom & Lisa's Birthday"
-			return sprintf(
-				__( "%1\$s & %2\$s's %3\$s", 'stadion' ),
-				$names[0],
-				$names[1],
-				$type_label
-			);
-		} else {
-			// "Mike, Sarah +2 Birthday"
-			$first_two = implode( ', ', array_slice( $names, 0, 2 ) );
-			$remaining = $count - 2;
-			return sprintf(
-				__( '%1$s +%2$d %3$s', 'stadion' ),
-				$first_two,
-				$remaining,
-				$type_label
-			);
-		}
-	}
-
-	/**
 	 * Hide the title field for Person CPT (since it's auto-generated)
 	 */
 	public function hide_title_field( $field ) {
@@ -526,86 +364,6 @@ class AutoTitle {
 	 */
 	public function handle_async_calendar_rematch( int $post_id ): void {
 		\Stadion\Calendar\Matcher::on_person_saved( $post_id );
-	}
-
-	/**
-	 * Sync birthdate to related persons when birthday important_date is saved
-	 *
-	 * Stores birthdate in _birthdate meta key on person posts for fast filtering by birth year.
-	 * If year_unknown is true or date_value is empty, clears the _birthdate meta.
-	 *
-	 * @param int     $post_id Post ID of important_date being saved.
-	 * @param WP_Post $post    Post object.
-	 * @param bool    $update  Whether this is an update or new post.
-	 */
-	public function sync_birthdate_to_person( $post_id, $post, $update ) {
-		// Prevent infinite loops
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// Only process published posts
-		if ( $post->post_status !== 'publish' ) {
-			return;
-		}
-
-		// Check if this is a birthday type
-		$date_types = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'slugs' ] );
-		if ( ! in_array( 'birthday', $date_types, true ) ) {
-			return; // Not a birthday, nothing to sync
-		}
-
-		// Get the date value and related people
-		$date_value     = get_field( 'date_value', $post_id );
-		$year_unknown   = get_field( 'year_unknown', $post_id );
-		$related_people = get_field( 'related_people', $post_id );
-
-		if ( empty( $related_people ) || ! is_array( $related_people ) ) {
-			return; // No people to sync to
-		}
-
-		// If year is unknown or date is empty, clear birthdate on all related people
-		if ( $year_unknown || empty( $date_value ) ) {
-			foreach ( $related_people as $person_id ) {
-				delete_post_meta( $person_id, '_birthdate' );
-			}
-			return;
-		}
-
-		// Update birthdate on all related people
-		foreach ( $related_people as $person_id ) {
-			update_post_meta( $person_id, '_birthdate', $date_value );
-		}
-	}
-
-	/**
-	 * Clear birthdate from persons when birthday important_date is deleted
-	 *
-	 * Runs on permanent delete only (not when trashed).
-	 *
-	 * @param int     $post_id Post ID being deleted.
-	 * @param WP_Post $post    Post object.
-	 */
-	public function clear_birthdate_on_delete( $post_id, $post ) {
-		if ( $post->post_type !== 'important_date' ) {
-			return;
-		}
-
-		// Check if this is a birthday type
-		$date_types = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'slugs' ] );
-		if ( ! in_array( 'birthday', $date_types, true ) ) {
-			return;
-		}
-
-		// Clear birthdate from all related people
-		$related_people = get_field( 'related_people', $post_id );
-		if ( empty( $related_people ) || ! is_array( $related_people ) ) {
-			return;
-		}
-
-		foreach ( $related_people as $person_id ) {
-			delete_post_meta( $person_id, '_birthdate' );
-		}
 	}
 
 }

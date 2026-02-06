@@ -103,7 +103,7 @@ class UserRoles {
 			// Basic WordPress capabilities
 			'read'                   => true,
 
-			// Post capabilities (used by person, company, important_date post types)
+			// Post capabilities (used by person, team, and other post types)
 			'edit_posts'             => true,                    // Can create and edit their own posts
 			'publish_posts'          => true,                 // Can publish their own posts
 			'delete_posts'           => true,                  // Can delete their own posts
@@ -143,7 +143,7 @@ class UserRoles {
 	 * This is called by WordPress before the user is actually deleted
 	 */
 	public function delete_user_posts( $user_id ) {
-		$post_types = [ 'person', 'team', 'important_date' ];
+		$post_types = [ 'person', 'team' ];
 
 		foreach ( $post_types as $post_type ) {
 			$posts = get_posts(

@@ -949,65 +949,30 @@ class VCard {
 	}
 
 	/**
-	 * Import birthday as important_date
+	 * Import birthday directly on person record
+	 *
+	 * Stores birthdate in the person's ACF birthdate field.
+	 * Skip if the birthdate string doesn't include a year.
 	 */
 	private function import_birthday( int $post_id, string $date, string $first_name, string $last_name ): void {
-		$full_name = trim( $first_name . ' ' . $last_name );
-
-		// Check if birthday already exists
-		$existing = get_posts(
-			[
-				'post_type'      => 'important_date',
-				'posts_per_page' => 1,
-				'meta_query'     => [
-					[
-						'key'     => 'related_people',
-						'value'   => '"' . $post_id . '"',
-						'compare' => 'LIKE',
-					],
-				],
-				'tax_query'      => [
-					[
-						'taxonomy' => 'date_type',
-						'field'    => 'slug',
-						'terms'    => 'birthday',
-					],
-				],
-			]
-		);
-
-		if ( ! empty( $existing ) ) {
+		// Skip if person already has a birthdate
+		$existing_birthdate = get_field( 'birthdate', $post_id );
+		if ( ! empty( $existing_birthdate ) ) {
 			return;
 		}
 
-		$title = sprintf( __( "%s's Birthday", 'stadion' ), $full_name );
-
-		$date_post_id = wp_insert_post(
-			[
-				'post_type'   => 'important_date',
-				'post_status' => 'publish',
-				'post_title'  => $title,
-				'post_author' => get_current_user_id(),
-			]
-		);
-
-		if ( is_wp_error( $date_post_id ) ) {
+		// Validate we have a full date with year (format should be YYYY-MM-DD)
+		if ( empty( $date ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
 			return;
 		}
 
-		update_field( 'date_value', $date, $date_post_id );
-		update_field( 'is_recurring', true, $date_post_id );
-		update_field( 'related_people', [ $post_id ], $date_post_id );
+		// Skip if year is 0000 (unknown year)
+		if ( str_starts_with( $date, '0000' ) ) {
+			return;
+		}
 
-		// Ensure the birthday term exists
-		$term = term_exists( 'birthday', 'date_type' );
-		if ( ! $term ) {
-			$term = wp_insert_term( 'Birthday', 'date_type', [ 'slug' => 'birthday' ] );
-		}
-		if ( $term && ! is_wp_error( $term ) ) {
-			$term_id = is_array( $term ) ? $term['term_id'] : $term;
-			wp_set_post_terms( $date_post_id, [ (int) $term_id ], 'date_type' );
-		}
+		// Store directly on person
+		update_field( 'birthdate', $date, $post_id );
 
 		++$this->stats['dates_created'];
 	}

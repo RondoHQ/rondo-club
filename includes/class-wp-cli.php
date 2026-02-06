@@ -200,6 +200,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		/**
 		 * Get all users who should receive reminders
 		 *
+		 * Returns users who have created persons with birthdate data.
+		 *
 		 * @return array User IDs
 		 */
 		private function get_all_users_to_notify() {
@@ -207,69 +209,21 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			// WP-CLI runs without a logged-in user, so get_posts() would return nothing
 			global $wpdb;
 
-			$date_ids = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT ID FROM {$wpdb->posts} 
-                 WHERE post_type = %s 
-                 AND post_status = 'publish'",
-					'important_date'
-				)
+			// Get all unique authors of person posts that have a birthdate set
+			$user_ids = $wpdb->get_col(
+				"SELECT DISTINCT p.post_author
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+				WHERE p.post_type = 'person'
+				AND p.post_status = 'publish'
+				AND pm.meta_key = 'birthdate'
+				AND pm.meta_value != ''"
 			);
 
-			WP_CLI::log( sprintf( 'Found %d important date(s) in system.', count( $date_ids ) ) );
+			$user_ids = array_map( 'intval', $user_ids );
+			WP_CLI::log( sprintf( 'Found %d user(s) with persons having birthdates.', count( $user_ids ) ) );
 
-			if ( empty( $date_ids ) ) {
-				return [];
-			}
-
-			// Get full post objects
-			$dates = array_map( 'get_post', $date_ids );
-
-			$user_ids = [];
-
-			foreach ( $dates as $date_post ) {
-				// Get related people using ACF (handles repeater fields correctly)
-				$related_people = get_field( 'related_people', $date_post->ID );
-
-				if ( empty( $related_people ) ) {
-					WP_CLI::debug( sprintf( 'Date "%s" (ID: %d) has no related people.', $date_post->post_title, $date_post->ID ) );
-					continue;
-				}
-
-				// Ensure it's an array
-				if ( ! is_array( $related_people ) ) {
-					$related_people = [ $related_people ];
-				}
-
-				WP_CLI::debug( sprintf( 'Date "%s" (ID: %d) has %d related people.', $date_post->post_title, $date_post->ID, count( $related_people ) ) );
-
-				// Get user IDs from people post authors
-				foreach ( $related_people as $person ) {
-					$person_id = is_object( $person ) ? $person->ID : ( is_array( $person ) ? $person['ID'] : $person );
-
-					if ( ! $person_id ) {
-						WP_CLI::debug( '  Skipping invalid person ID.' );
-						continue;
-					}
-
-					$person_post = get_post( $person_id );
-					if ( ! $person_post ) {
-						WP_CLI::debug( sprintf( '  Person ID %d not found.', $person_id ) );
-						continue;
-					}
-
-					$author_id = (int) $person_post->post_author;
-					if ( $author_id > 0 ) {
-						$user_ids[] = $author_id;
-						WP_CLI::debug( sprintf( '  Added user ID %d (author of person "%s")', $author_id, $person_post->post_title ) );
-					}
-				}
-			}
-
-			$unique_user_ids = array_unique( $user_ids );
-			WP_CLI::log( sprintf( 'Found %d unique user(s) to notify.', count( $unique_user_ids ) ) );
-
-			return $unique_user_ids;
+			return $user_ids;
 		}
 	}
 
@@ -407,143 +361,13 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		/**
 		 * Migrate birthdates from important_dates to person post_meta
 		 *
-		 * Finds all birthday important_dates and copies their date_value
-		 * to the _birthdate meta key on related persons.
-		 *
-		 * This command is idempotent - safe to re-run, it overwrites existing values.
-		 *
-		 * ## OPTIONS
-		 *
-		 * [--dry-run]
-		 * : Preview changes without making them
-		 *
-		 * ## EXAMPLES
-		 *
-		 *     wp stadion migrate-birthdates
-		 *     wp stadion migrate-birthdates --dry-run
+		 * @deprecated The important_date post type was removed in v19.0.
+		 *             Birthdates are now stored directly on person records.
 		 *
 		 * @when after_wp_load
 		 */
 		public function migrate_birthdates( $args, $assoc_args ) {
-			$dry_run = isset( $assoc_args['dry-run'] );
-
-			if ( $dry_run ) {
-				WP_CLI::log( 'DRY RUN MODE - No changes will be made' );
-			}
-
-			WP_CLI::log( '' );
-			WP_CLI::log( '╔════════════════════════════════════════════════════════════╗' );
-			WP_CLI::log( '║         Stadion Birthdate Migration                        ║' );
-			WP_CLI::log( '╚════════════════════════════════════════════════════════════╝' );
-			WP_CLI::log( '' );
-			WP_CLI::log( 'This migration will:' );
-			WP_CLI::log( '  1. Find all birthday important_dates with known years' );
-			WP_CLI::log( '  2. Copy date_value to _birthdate meta on related persons' );
-			WP_CLI::log( '  3. Clear _birthdate on persons with year_unknown birthdays' );
-			WP_CLI::log( '' );
-
-			// Query all birthday important_dates
-			$birthdays = new \WP_Query(
-				[
-					'post_type'        => 'important_date',
-					'post_status'      => 'publish',
-					'posts_per_page'   => -1,
-					'tax_query'        => [
-						[
-							'taxonomy' => 'date_type',
-							'field'    => 'slug',
-							'terms'    => 'birthday',
-						],
-					],
-					'suppress_filters' => true, // Bypass access control for migration
-				]
-			);
-
-			if ( ! $birthdays->have_posts() ) {
-				WP_CLI::success( 'No birthday dates found. Nothing to migrate.' );
-				return;
-			}
-
-			WP_CLI::log( sprintf( 'Found %d birthday date(s) to process.', $birthdays->post_count ) );
-			WP_CLI::log( '' );
-
-			$migrated = 0;
-			$cleared  = 0;
-			$skipped  = 0;
-
-			while ( $birthdays->have_posts() ) {
-				$birthdays->the_post();
-				$birthday_id = get_the_ID();
-
-				$date_value     = get_field( 'date_value', $birthday_id );
-				$year_unknown   = get_field( 'year_unknown', $birthday_id );
-				$related_people = get_field( 'related_people', $birthday_id );
-
-				if ( empty( $related_people ) || ! is_array( $related_people ) ) {
-					WP_CLI::log( sprintf( 'Skipping birthday ID %d: no related people', $birthday_id ) );
-					++$skipped;
-					continue;
-				}
-
-				$person_names = array_map(
-					function ( $id ) {
-						return get_the_title( $id );
-					},
-					$related_people
-				);
-
-				if ( $year_unknown || empty( $date_value ) ) {
-					WP_CLI::log(
-						sprintf(
-							'Birthday ID %d (year unknown): clearing _birthdate for %s',
-							$birthday_id,
-							implode( ', ', $person_names )
-						)
-					);
-
-					if ( ! $dry_run ) {
-						foreach ( $related_people as $person_id ) {
-							delete_post_meta( $person_id, '_birthdate' );
-						}
-					}
-					++$cleared;
-				} else {
-					WP_CLI::log(
-						sprintf(
-							'Birthday ID %d (%s): setting _birthdate for %s',
-							$birthday_id,
-							$date_value,
-							implode( ', ', $person_names )
-						)
-					);
-
-					if ( ! $dry_run ) {
-						foreach ( $related_people as $person_id ) {
-							update_post_meta( $person_id, '_birthdate', $date_value );
-						}
-					}
-					++$migrated;
-				}
-			}
-
-			wp_reset_postdata();
-
-			WP_CLI::log( '' );
-			WP_CLI::log( '────────────────────────────────────────────────────────────────' );
-			WP_CLI::log( 'Migration Summary:' );
-			WP_CLI::log( '────────────────────────────────────────────────────────────────' );
-
-			if ( $dry_run ) {
-				WP_CLI::log( sprintf( '  Would set birthdates: %d', $migrated ) );
-				WP_CLI::log( sprintf( '  Would clear birthdates: %d', $cleared ) );
-				WP_CLI::log( sprintf( '  Would skip: %d', $skipped ) );
-				WP_CLI::success( 'Dry run complete. Run without --dry-run to apply changes.' );
-			} else {
-				WP_CLI::log( sprintf( '  Set birthdates: %d', $migrated ) );
-				WP_CLI::log( sprintf( '  Cleared birthdates: %d', $cleared ) );
-				WP_CLI::log( sprintf( '  Skipped: %d', $skipped ) );
-				WP_CLI::success( 'Migration complete!' );
-			}
+			WP_CLI::error( 'This migration command is obsolete. The important_date post type was removed in v19.0. Birthdates are now stored directly on person records.' );
 		}
 	}
 
@@ -799,162 +623,21 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 	/**
 	 * Important Dates WP-CLI Commands
+	 *
+	 * @deprecated The important_date post type was removed in v19.0.
+	 *             These commands are no longer functional.
 	 */
 	class STADION_Dates_CLI_Command {
 
 		/**
 		 * Regenerate all Important Date titles using current naming convention.
 		 *
-		 * Uses full names instead of first names only.
-		 * Skips dates with custom labels.
-		 *
-		 * ## OPTIONS
-		 *
-		 * [--dry-run]
-		 * : Preview changes without saving.
-		 *
-		 * ## EXAMPLES
-		 *
-		 *     wp prm dates regenerate-titles
-		 *     wp prm dates regenerate-titles --dry-run
+		 * @deprecated The important_date post type was removed in v19.0.
 		 *
 		 * @when after_wp_load
 		 */
 		public function regenerate_titles( $args, $assoc_args ) {
-			$dry_run = isset( $assoc_args['dry-run'] );
-
-			if ( $dry_run ) {
-				WP_CLI::log( 'Dry run mode - no changes will be saved.' );
-			}
-
-			// Query all important_date posts (bypass access control)
-			global $wpdb;
-			$date_ids = $wpdb->get_col(
-				"SELECT ID FROM {$wpdb->posts}
-                 WHERE post_type = 'important_date'
-                 AND post_status IN ('publish', 'draft', 'pending')"
-			);
-
-			if ( empty( $date_ids ) ) {
-				WP_CLI::success( 'No important dates found.' );
-				return;
-			}
-
-			WP_CLI::log( sprintf( 'Found %d important date(s) to process.', count( $date_ids ) ) );
-
-			$updated = 0;
-			$skipped = 0;
-
-			foreach ( $date_ids as $post_id ) {
-				$date_post = get_post( $post_id );
-				if ( ! $date_post ) {
-					continue;
-				}
-
-				// Check if has custom_label - skip if custom
-				$custom_label = get_field( 'custom_label', $post_id );
-				if ( ! empty( $custom_label ) ) {
-					WP_CLI::log( sprintf( '[SKIP] #%d: Has custom label "%s"', $post_id, $custom_label ) );
-					++$skipped;
-					continue;
-				}
-
-				$old_title = $date_post->post_title;
-
-				// Generate new title using same logic as STADION_Auto_Title
-				$new_title = $this->generate_date_title( $post_id );
-
-				if ( $old_title === $new_title ) {
-					WP_CLI::log( sprintf( '[SAME] #%d: "%s"', $post_id, $old_title ) );
-					++$skipped;
-					continue;
-				}
-
-				if ( $dry_run ) {
-					WP_CLI::log( sprintf( '[WOULD UPDATE] #%d: "%s" -> "%s"', $post_id, $old_title, $new_title ) );
-				} else {
-					wp_update_post(
-						[
-							'ID'         => $post_id,
-							'post_title' => $new_title,
-							'post_name'  => sanitize_title( $new_title . '-' . $post_id ),
-						]
-					);
-					WP_CLI::log( sprintf( '[UPDATED] #%d: "%s" -> "%s"', $post_id, $old_title, $new_title ) );
-				}
-				++$updated;
-			}
-
-			if ( $dry_run ) {
-				WP_CLI::success( sprintf( 'Would update %d title(s). Skipped %d.', $updated, $skipped ) );
-			} else {
-				WP_CLI::success( sprintf( 'Updated %d title(s). Skipped %d.', $updated, $skipped ) );
-			}
-		}
-
-		/**
-		 * Generate date title from fields (mirrors STADION_Auto_Title logic)
-		 *
-		 * @param int $post_id Post ID
-		 * @return string Generated title
-		 */
-		private function generate_date_title( $post_id ) {
-			// Get date type from taxonomy
-			$date_types = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'names' ] );
-			$type_label = ! empty( $date_types ) ? $date_types[0] : __( 'Date', 'stadion' );
-
-			// Get related people
-			$people = get_field( 'related_people', $post_id ) ?: [];
-
-			if ( empty( $people ) ) {
-				// translators: %s is the date type label (e.g., "Birthday", "Anniversary").
-				return sprintf( __( 'Unnamed %s', 'stadion' ), $type_label );
-			}
-
-			// Get full names of related people.
-			$names = [];
-			foreach ( $people as $person ) {
-				$person_id = is_object( $person ) ? $person->ID : $person;
-				$full_name = html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' );
-				if ( $full_name && __( 'Unnamed Person', 'stadion' ) !== $full_name ) {
-					$names[] = $full_name;
-				}
-			}
-
-			if ( empty( $names ) ) {
-				// translators: %s is the date type label (e.g., "Birthday", "Anniversary").
-				return sprintf( __( 'Unnamed %s', 'stadion' ), $type_label );
-			}
-
-			$count = count( $names );
-
-			// Get date type slug to check for wedding.
-			$date_type_slugs = wp_get_post_terms( $post_id, 'date_type', [ 'fields' => 'slugs' ] );
-			$type_slug       = ! empty( $date_type_slugs ) ? $date_type_slugs[0] : '';
-
-			// Special handling for wedding type.
-			if ( 'wedding' === $type_slug ) {
-				if ( $count >= 2 ) {
-					// translators: %1$s and %2$s are the names of the people getting married.
-					return sprintf( __( 'Wedding of %1$s & %2$s', 'stadion' ), $names[0], $names[1] );
-				} elseif ( 1 === $count ) {
-					// translators: %s is the name of the person getting married.
-					return sprintf( __( 'Wedding of %s', 'stadion' ), $names[0] );
-				}
-			}
-
-			if ( 1 === $count ) {
-				// translators: %1$s is person name, %2$s is date type (e.g., "John's Birthday").
-				return sprintf( __( "%1\$s's %2\$s", 'stadion' ), $names[0], $type_label );
-			} elseif ( 2 === $count ) {
-				// translators: %1$s and %2$s are person names, %3$s is date type (e.g., "John & Jane's Anniversary").
-				return sprintf( __( "%1\$s & %2\$s's %3\$s", 'stadion' ), $names[0], $names[1], $type_label );
-			} else {
-				$first_two = implode( ', ', array_slice( $names, 0, 2 ) );
-				$remaining = $count - 2;
-				// translators: %1$s is first two names, %2$d is remaining count, %3$s is date type.
-				return sprintf( __( '%1$s +%2$d %3$s', 'stadion' ), $first_two, $remaining, $type_label );
-			}
+			WP_CLI::error( 'This command is obsolete. The important_date post type was removed in v19.0.' );
 		}
 	}
 
@@ -2277,9 +1960,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			// Update any references to the duplicate in other people's relationships
 			$this->update_relationship_references( $duplicate_id, $original_id );
 
-			// Update any important_date records that reference the duplicate
-			$this->update_date_references( $duplicate_id, $original_id );
-
 			// Delete the duplicate
 			wp_delete_post( $duplicate_id, true );
 			WP_CLI::log( sprintf( '  - Deleted duplicate (ID: %d).', $duplicate_id ) );
@@ -2338,43 +2018,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		/**
 		 * Update important_date references from duplicate to original
 		 *
+		 * @deprecated The important_date post type was removed in v19.0.
+		 *             This method is kept for backward compatibility but does nothing.
+		 *
 		 * @param int $duplicate_id The duplicate person ID.
 		 * @param int $original_id  The original person ID.
 		 */
 		private function update_date_references( $duplicate_id, $original_id ) {
-			$dates = get_posts(
-				[
-					'post_type'        => 'important_date',
-					'posts_per_page'   => -1,
-					'post_status'      => 'publish',
-					'suppress_filters' => true,
-				]
-			);
-
-			$updated = 0;
-			foreach ( $dates as $date ) {
-				$related_people = get_field( 'related_people', $date->ID ) ?: [];
-				$changed        = false;
-
-				foreach ( $related_people as $index => $person_id ) {
-					$pid = is_object( $person_id ) ? $person_id->ID : $person_id;
-					if ( (int) $pid === $duplicate_id ) {
-						$related_people[ $index ] = $original_id;
-						$changed                  = true;
-					}
-				}
-
-				if ( $changed ) {
-					// Remove duplicates (in case original was already in the list)
-					$related_people = array_unique( $related_people );
-					update_field( 'related_people', array_values( $related_people ), $date->ID );
-					$updated++;
-				}
-			}
-
-			if ( $updated > 0 ) {
-				WP_CLI::log( sprintf( '  - Updated %d important date reference(s).', $updated ) );
-			}
+			// No-op: important_date post type was removed in v19.0
 		}
 
 		/**

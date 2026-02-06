@@ -369,47 +369,6 @@ class People extends Base {
 	}
 
 	/**
-	 * Get dates related to a person
-	 *
-	 * @param WP_REST_Request $request The REST request object.
-	 * @return WP_REST_Response Response containing formatted dates.
-	 */
-	public function get_dates_by_person( $request ) {
-		$person_id = $request->get_param( 'person_id' );
-
-		// Query dates where this person is in the related_people field
-		// ACF stores post_object arrays as serialized PHP arrays
-		// Try both formats: serialized array and quoted JSON-style (for backward compatibility)
-		// suppress_filters bypasses access control - safe because check_person_access already verified
-		// the user can access this person
-		$dates = get_posts(
-			[
-				'post_type'        => 'important_date',
-				'posts_per_page'   => -1,
-				'post_status'      => 'publish',
-				'suppress_filters' => true,
-				'meta_query'       => [
-					'relation' => 'OR',
-					[
-						'key'     => 'related_people',
-						'value'   => serialize( strval( $person_id ) ),
-						'compare' => 'LIKE',
-					],
-					[
-						'key'     => 'related_people',
-						'value'   => '"' . $person_id . '"',
-						'compare' => 'LIKE',
-					],
-				],
-			]
-		);
-
-		$formatted = array_map( [ $this, 'format_date' ], $dates );
-
-		return rest_ensure_response( $formatted );
-	}
-
-	/**
 	 * Sideload Gravatar image for a person
 	 *
 	 * @param WP_REST_Request $request The REST request object.
@@ -660,55 +619,17 @@ class People extends Base {
 
 		$data = $response->get_data();
 
-		// Get all dates for this person to compute deceased status and birth year
-		// ACF stores post_object arrays as serialized PHP arrays
-		// Try both formats: serialized array and quoted JSON-style (for backward compatibility)
-		// suppress_filters bypasses access control - safe because this filter only runs for
-		// persons the user already has access to (via rest_prepare_person filter)
-		$person_dates = get_posts(
-			[
-				'post_type'        => 'important_date',
-				'posts_per_page'   => -1,
-				'suppress_filters' => true,
-				'meta_query'       => [
-					'relation' => 'OR',
-					[
-						'key'     => 'related_people',
-						'value'   => serialize( strval( $post->ID ) ),
-						'compare' => 'LIKE',
-					],
-					[
-						'key'     => 'related_people',
-						'value'   => '"' . $post->ID . '"',
-						'compare' => 'LIKE',
-					],
-				],
-			]
-		);
-
+		// Deceased status is no longer computed from important_date
+		// (that system was removed in v19.0)
 		$data['is_deceased'] = false;
-		$data['birth_year']  = null;
 
-		foreach ( $person_dates as $date_post ) {
-			$date_types = wp_get_post_terms( $date_post->ID, 'date_type', [ 'fields' => 'slugs' ] );
-
-			// Check for deceased status
-			if ( in_array( 'died', $date_types ) ) {
-				$data['is_deceased'] = true;
-			}
-
-			// Check for birthday and extract year (only if year is known)
-			if ( in_array( 'birthday', $date_types ) ) {
-				$year_unknown = get_field( 'year_unknown', $date_post->ID );
-				if ( ! $year_unknown ) {
-					$date_value = get_field( 'date_value', $date_post->ID );
-					if ( $date_value ) {
-						$year = (int) gmdate( 'Y', strtotime( $date_value ) );
-						if ( $year > 0 ) {
-							$data['birth_year'] = $year;
-						}
-					}
-				}
+		// Get birth year from birthdate field on person
+		$data['birth_year'] = null;
+		$birthdate          = get_field( 'birthdate', $post->ID );
+		if ( $birthdate ) {
+			$year = (int) gmdate( 'Y', strtotime( $birthdate ) );
+			if ( $year > 0 ) {
+				$data['birth_year'] = $year;
 			}
 		}
 

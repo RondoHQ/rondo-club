@@ -768,6 +768,11 @@ class Api extends Base {
 	 * @return \WP_REST_Response Modified response with VOG fields.
 	 */
 	public function add_vog_fields_to_person( $response, $post, $request ) {
+		// Bail early if response is an error (e.g., post is trashed)
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
 		$data = $response->get_data();
 
 		// Ensure acf array exists
@@ -896,59 +901,12 @@ class Api extends Base {
 
 	/**
 	 * Get all users who should receive reminders (for trigger endpoint)
+	 *
+	 * Delegates to the Reminders class which handles birthdate-based notifications.
 	 */
 	private function get_all_users_to_notify_for_trigger() {
-		// Use direct database query to bypass access control filters
-		// Admin trigger endpoint needs to see all dates regardless of user
-		global $wpdb;
-
-		$date_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->posts} 
-             WHERE post_type = %s 
-             AND post_status = 'publish'",
-				'important_date'
-			)
-		);
-
-		if ( empty( $date_ids ) ) {
-			return [];
-		}
-
-		// Get full post objects
-		$dates = array_map( 'get_post', $date_ids );
-
-		$user_ids = [];
-
-		foreach ( $dates as $date_post ) {
-			// Get related people using ACF (handles repeater fields correctly)
-			$related_people = get_field( 'related_people', $date_post->ID );
-
-			if ( empty( $related_people ) ) {
-				continue;
-			}
-
-			// Ensure it's an array
-			if ( ! is_array( $related_people ) ) {
-				$related_people = [ $related_people ];
-			}
-
-			// Get user IDs from people post authors
-			foreach ( $related_people as $person ) {
-				$person_id = is_object( $person ) ? $person->ID : ( is_array( $person ) ? $person['ID'] : $person );
-
-				if ( ! $person_id ) {
-					continue;
-				}
-
-				$person_post = get_post( $person_id );
-				if ( $person_post ) {
-					$user_ids[] = (int) $person_post->post_author;
-				}
-			}
-		}
-
-		return array_unique( $user_ids );
+		$reminders = new \STADION_Reminders();
+		return $reminders->get_all_users_to_notify();
 	}
 
 	/**
@@ -2007,7 +1965,6 @@ class Api extends Base {
 		$total_people     = wp_count_posts( 'person' )->publish;
 		$total_teams      = wp_count_posts( 'team' )->publish;
 		$total_commissies = wp_count_posts( 'commissie' )->publish;
-		$total_dates      = wp_count_posts( 'important_date' )->publish;
 
 		// Recent people
 		$recent_people = get_posts(
@@ -2039,7 +1996,6 @@ class Api extends Base {
 					'total_people'         => $total_people,
 					'total_teams'          => $total_teams,
 					'total_commissies'     => $total_commissies,
-					'total_dates'          => $total_dates,
 					'open_todos_count'     => $open_todos_count,
 					'awaiting_todos_count' => $awaiting_todos_count,
 				],
@@ -2410,7 +2366,7 @@ class Api extends Base {
 	 * Delete all posts belonging to a user
 	 */
 	private function delete_user_posts( $user_id ) {
-		$post_types = [ 'person', 'team', 'important_date' ];
+		$post_types = [ 'person', 'team' ];
 
 		foreach ( $post_types as $post_type ) {
 			$posts = get_posts(

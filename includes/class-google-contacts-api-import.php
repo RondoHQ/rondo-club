@@ -738,11 +738,14 @@ class GoogleContactsAPI {
 	}
 
 	/**
-	 * Import birthday as important_date
+	 * Import birthday directly on person record
+	 *
+	 * Stores birthdate in the person's ACF birthdate field.
+	 * Skip if year is unknown (0 or not provided) since we only store full dates.
 	 *
 	 * @param int    $post_id   Post ID.
 	 * @param object $person    Google Person object.
-	 * @param string $full_name Person's full name for title.
+	 * @param string $full_name Person's full name (unused, kept for backward compatibility).
 	 */
 	private function import_birthday( int $post_id, object $person, string $full_name ): void {
 		$birthdays = $person->getBirthdays() ?: [];
@@ -758,75 +761,22 @@ class GoogleContactsAPI {
 
 		$month = $date->getMonth();
 		$day   = $date->getDay();
-		if ( ! $month || ! $day ) {
+		$year  = $date->getYear();
+
+		// Skip if no month/day or year is unknown (0 or null)
+		if ( ! $month || ! $day || ! $year || $year === 0 ) {
 			return;
 		}
 
-		// Check if birthday already exists
-		$existing = get_posts(
-			[
-				'post_type'      => 'important_date',
-				'posts_per_page' => 1,
-				'post_author'    => $this->user_id,
-				'meta_query'     => [
-					[
-						'key'     => 'related_people',
-						'value'   => '"' . $post_id . '"',
-						'compare' => 'LIKE',
-					],
-				],
-				'tax_query'      => [
-					[
-						'taxonomy' => 'date_type',
-						'field'    => 'slug',
-						'terms'    => 'birthday',
-					],
-				],
-			]
-		);
-
-		if ( ! empty( $existing ) ) {
+		// Skip if person already has a birthdate
+		$existing_birthdate = get_field( 'birthdate', $post_id );
+		if ( ! empty( $existing_birthdate ) ) {
 			return;
 		}
 
-		// Format date - use 0000 if year is unknown
-		$year           = $date->getYear() ?: 0;
+		// Format date and store directly on person
 		$date_formatted = sprintf( '%04d-%02d-%02d', $year, $month, $day );
-
-		// translators: %s is the person's name
-		$title = sprintf( __( "%s's Birthday", 'stadion' ), $full_name );
-
-		$date_post_id = wp_insert_post(
-			[
-				'post_type'   => 'important_date',
-				'post_status' => 'publish',
-				'post_title'  => $title,
-				'post_author' => $this->user_id,
-			]
-		);
-
-		if ( is_wp_error( $date_post_id ) ) {
-			return;
-		}
-
-		update_field( 'date_value', $date_formatted, $date_post_id );
-		update_field( 'is_recurring', true, $date_post_id );
-		update_field( 'related_people', [ $post_id ], $date_post_id );
-
-		// Set year_unknown if year is 0
-		if ( 0 === $year ) {
-			update_field( 'year_unknown', true, $date_post_id );
-		}
-
-		// Ensure the birthday term exists and assign it
-		$term = term_exists( 'birthday', 'date_type' );
-		if ( ! $term ) {
-			$term = wp_insert_term( 'Birthday', 'date_type', [ 'slug' => 'birthday' ] );
-		}
-		if ( $term && ! is_wp_error( $term ) ) {
-			$term_id = is_array( $term ) ? $term['term_id'] : $term;
-			wp_set_post_terms( $date_post_id, [ (int) $term_id ], 'date_type' );
-		}
+		update_field( 'birthdate', $date_formatted, $post_id );
 
 		++$this->stats['dates_created'];
 	}

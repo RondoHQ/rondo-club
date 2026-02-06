@@ -222,45 +222,50 @@ class ICalFeed {
 	}
 
 	/**
-	 * Get all important dates accessible to a user
+	 * Get all birthdate events accessible to a user
+	 *
+	 * Returns birthdays from person records as calendar events.
 	 */
 	private function get_user_dates( $user_id ) {
 		// Temporarily set the current user for access control
 		$old_user = wp_get_current_user();
 		wp_set_current_user( $user_id );
 
-		$args = [
-			'post_type'      => 'important_date',
-			'posts_per_page' => -1,
-			'post_status'    => 'publish',
-		];
+		global $wpdb;
 
-		// Access control filters will automatically apply
-		$posts = get_posts( $args );
+		// Query people with birthdate meta that the user can access
+		$people_with_birthdays = $wpdb->get_results(
+			"SELECT p.ID, p.post_title, p.post_modified_gmt, pm.meta_value as birthdate
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			WHERE p.post_type = 'person'
+			AND p.post_status = 'publish'
+			AND pm.meta_key = 'birthdate'
+			AND pm.meta_value != ''"
+		);
 
 		$dates = [];
-		foreach ( $posts as $post ) {
-			$related_people = get_field( 'related_people', $post->ID ) ?: [];
-			$people_data    = [];
+		$access_control = new \STADION_Access_Control();
 
-			foreach ( $related_people as $person ) {
-				$person_id     = is_object( $person ) ? $person->ID : $person;
-				$people_data[] = [
-					'id'   => $person_id,
-					'name' => html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ),
-				];
+		foreach ( $people_with_birthdays as $person ) {
+			// Check if user has access to this person
+			if ( ! $access_control->user_can_access_post( $person->ID, $user_id ) ) {
+				continue;
 			}
 
-			$date_types = wp_get_post_terms( $post->ID, 'date_type', [ 'fields' => 'names' ] );
-
 			$dates[] = [
-				'id'           => $post->ID,
-				'title'        => html_entity_decode( $post->post_title, ENT_QUOTES, 'UTF-8' ),
-				'date_value'   => get_field( 'date_value', $post->ID ),
-				'is_recurring' => (bool) get_field( 'is_recurring', $post->ID ),
-				'date_type'    => ! empty( $date_types ) ? $date_types[0] : '',
-				'people'       => $people_data,
-				'modified'     => $post->post_modified_gmt,
+				'id'           => $person->ID,
+				'title'        => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ) . ' - Verjaardag',
+				'date_value'   => $person->birthdate,
+				'is_recurring' => true, // Birthdays always recur
+				'date_type'    => 'Birthday',
+				'people'       => [
+					[
+						'id'   => $person->ID,
+						'name' => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ),
+					],
+				],
+				'modified'     => $person->post_modified_gmt,
 			];
 		}
 
@@ -411,7 +416,7 @@ class ICalFeed {
 	}
 
 	/**
-	 * Get important dates for contacts in a workspace
+	 * Get birthday dates for contacts in a workspace
 	 *
 	 * @param int $workspace_id The workspace post ID.
 	 * @return array Array of date data for iCal generation.
@@ -423,102 +428,40 @@ class ICalFeed {
 			return [];
 		}
 
-		// Get all contacts (people) in this workspace
-		$people = get_posts(
-			[
-				'post_type'      => 'person',
-				'posts_per_page' => -1,
-				'post_status'    => 'publish',
-				'tax_query'      => [
-					[
-						'taxonomy' => 'workspace_access',
-						'field'    => 'term_id',
-						'terms'    => $term->term_id,
-					],
-				],
-				'fields'         => 'ids',
-			]
+		global $wpdb;
+
+		// Get all contacts (people) in this workspace with birthdate set
+		$people_with_birthdays = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT p.ID, p.post_title, p.post_modified_gmt, pm.meta_value as birthdate
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+				INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+				WHERE p.post_type = 'person'
+				AND p.post_status = 'publish'
+				AND pm.meta_key = 'birthdate'
+				AND pm.meta_value != ''
+				AND tr.term_taxonomy_id = %d",
+				$term->term_taxonomy_id
+			)
 		);
 
-		if ( empty( $people ) ) {
-			return [];
-		}
-
-		// Get important dates linked to these people
-		$date_posts = get_posts(
-			[
-				'post_type'      => 'important_date',
-				'posts_per_page' => -1,
-				'post_status'    => 'publish',
-				'meta_query'     => [
-					[
-						'key'     => 'related_people',
-						'value'   => $people,
-						'compare' => 'IN',
-					],
-				],
-			]
-		);
-
-		// If no results with standard meta query, try ACF relationship approach
-		if ( empty( $date_posts ) ) {
-			// ACF stores relationship fields differently, so we need to query each person
-			$date_ids = [];
-			foreach ( $people as $person_id ) {
-				$person_dates = get_posts(
-					[
-						'post_type'      => 'important_date',
-						'posts_per_page' => -1,
-						'post_status'    => 'publish',
-						'meta_query'     => [
-							[
-								'key'     => 'related_people',
-								'value'   => '"' . $person_id . '"',
-								'compare' => 'LIKE',
-							],
-						],
-						'fields'         => 'ids',
-					]
-				);
-				$date_ids     = array_merge( $date_ids, $person_dates );
-			}
-
-			if ( ! empty( $date_ids ) ) {
-				$date_posts = get_posts(
-					[
-						'post_type'      => 'important_date',
-						'posts_per_page' => -1,
-						'post_status'    => 'publish',
-						'post__in'       => array_unique( $date_ids ),
-					]
-				);
-			}
-		}
-
-		// Format dates for iCal generation (same format as get_user_dates)
+		// Format dates for iCal generation
 		$dates = [];
-		foreach ( $date_posts as $post ) {
-			$related_people = get_field( 'related_people', $post->ID ) ?: [];
-			$people_data    = [];
-
-			foreach ( $related_people as $person ) {
-				$person_id     = is_object( $person ) ? $person->ID : $person;
-				$people_data[] = [
-					'id'   => $person_id,
-					'name' => html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ),
-				];
-			}
-
-			$date_types = wp_get_post_terms( $post->ID, 'date_type', [ 'fields' => 'names' ] );
-
+		foreach ( $people_with_birthdays as $person ) {
 			$dates[] = [
-				'id'           => $post->ID,
-				'title'        => html_entity_decode( $post->post_title, ENT_QUOTES, 'UTF-8' ),
-				'date_value'   => get_field( 'date_value', $post->ID ),
-				'is_recurring' => (bool) get_field( 'is_recurring', $post->ID ),
-				'date_type'    => ! empty( $date_types ) ? $date_types[0] : '',
-				'people'       => $people_data,
-				'modified'     => $post->post_modified_gmt,
+				'id'           => $person->ID,
+				'title'        => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ) . ' - Verjaardag',
+				'date_value'   => $person->birthdate,
+				'is_recurring' => true, // Birthdays always recur
+				'date_type'    => 'Birthday',
+				'people'       => [
+					[
+						'id'   => $person->ID,
+						'name' => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ),
+					],
+				],
+				'modified'     => $person->post_modified_gmt,
 			];
 		}
 
