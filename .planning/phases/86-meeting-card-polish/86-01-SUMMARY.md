@@ -66,7 +66,7 @@ Each task was committed atomically:
 
 ## Files Created/Modified
 - `src/pages/Dashboard.jsx` - Added time-based status detection and conditional styling to MeetingCard
-- `includes/class-wp-cli.php` - Added STADION_Event_CLI_Command with cleanup_titles method
+- `includes/class-wp-cli.php` - Added RONDO_Event_CLI_Command with cleanup_titles method
 
 ## Decisions Made
 - WP-CLI method uses underscore (`cleanup_titles`) which WP-CLI can access via both `cleanup_titles` and `cleanup-titles`

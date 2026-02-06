@@ -19,9 +19,9 @@ score: 8/8 must-haves verified
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | GET /stadion/v1/config returns club_name, accent_color, and freescout_url with sensible defaults | ✓ VERIFIED | REST endpoint registered at line 702-733 in class-rest-api.php, get_club_config() method returns get_all_settings() with DEFAULTS constant |
-| 2 | POST /stadion/v1/config allows admin to update any subset of settings | ✓ VERIFIED | update_club_config() checks !== null for each param (lines 2660-2676), supports partial updates |
-| 3 | POST /stadion/v1/config returns 403 for non-admin authenticated users | ✓ VERIFIED | Permission callback is check_admin_permission (line 714), implemented in Base class line 58-60 |
+| 1 | GET /rondo/v1/config returns club_name, accent_color, and freescout_url with sensible defaults | ✓ VERIFIED | REST endpoint registered at line 702-733 in class-rest-api.php, get_club_config() method returns get_all_settings() with DEFAULTS constant |
+| 2 | POST /rondo/v1/config allows admin to update any subset of settings | ✓ VERIFIED | update_club_config() checks !== null for each param (lines 2660-2676), supports partial updates |
+| 3 | POST /rondo/v1/config returns 403 for non-admin authenticated users | ✓ VERIFIED | Permission callback is check_admin_permission (line 714), implemented in Base class line 58-60 |
 | 4 | Default accent_color is #006935 when no config saved | ✓ VERIFIED | DEFAULTS constant line 41-45 in class-club-config.php, get_accent_color() validates and falls back to default |
 | 5 | Default club_name is empty string when no config saved | ✓ VERIFIED | DEFAULTS['club_name'] = '' line 42, get_club_name() uses this default line 53 |
 | 6 | Default freescout_url is empty string when no config saved | ✓ VERIFIED | DEFAULTS['freescout_url'] = '' line 44, get_freescout_url() uses this default line 79 |
@@ -51,7 +51,7 @@ score: 8/8 must-haves verified
 **includes/class-rest-api.php (modified, 3114 lines total):**
 - ✓ EXISTS: File modified with new endpoint
 - ✓ SUBSTANTIVE: Route registration 32 lines (702-733), callbacks 36 lines (2644-2679)
-- ✓ WIRED: Hooks to rest_api_init (line 15), instantiated in stadion_init() (line 372)
+- ✓ WIRED: Hooks to rest_api_init (line 15), instantiated in rondo_init() (line 372)
 - ✓ NO STUBS: Full implementation with permission checks and partial update support
 - ✓ INSTANTIATES: Creates ClubConfig in both get_club_config() and update_club_config()
 
@@ -144,7 +144,7 @@ All commits present and match SUMMARY.md claims.
 - ✓ PHPDoc on all methods
 
 **REST Endpoint:**
-- ✓ Route: /stadion/v1/config
+- ✓ Route: /rondo/v1/config
 - ✓ GET method: check_user_approved permission (all authenticated users)
 - ✓ POST method: check_admin_permission (admin only)
 - ✓ POST args: club_name, accent_color, freescout_url (all optional)
@@ -159,7 +159,7 @@ All commits present and match SUMMARY.md claims.
 
 **Class Loading:**
 - ✓ Use statement in functions.php (line 75)
-- ✓ Backward-compatible alias STADION_Club_Config (line 279)
+- ✓ Backward-compatible alias RONDO_Club_Config (line 279)
 - ✓ No constructor hooks needed (service class, used on-demand)
 
 ## Verification Summary
@@ -170,7 +170,7 @@ All commits present and match SUMMARY.md claims.
 
 **Evidence of goal achievement:**
 1. ClubConfig service class exists with proper Options API storage
-2. REST endpoint /stadion/v1/config functional with correct permissions
+2. REST endpoint /rondo/v1/config functional with correct permissions
 3. window.stadionConfig includes all three club configuration values
 4. Page title dynamically reads from club config with fallback
 5. All settings have sensible defaults

@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase creates a custom REST endpoint `/stadion/v1/people/filtered` that handles pagination, filtering (by labels, ownership, modified date), and sorting (by first_name, last_name, modified date) at the database layer using optimized $wpdb queries with JOINs. The current frontend fetches all people (1400+ records) in a loop, which is inefficient and doesn't scale.
+This phase creates a custom REST endpoint `/rondo/v1/people/filtered` that handles pagination, filtering (by labels, ownership, modified date), and sorting (by first_name, last_name, modified date) at the database layer using optimized $wpdb queries with JOINs. The current frontend fetches all people (1400+ records) in a loop, which is inefficient and doesn't scale.
 
 The key challenge is building performant SQL queries that:
 1. JOIN posts and postmeta tables to fetch name fields in a single query (no N+1)
@@ -60,7 +60,7 @@ includes/
 ```
 
 ### Pattern 1: Custom REST Controller with Filtered Endpoint
-**What:** Extend `\Stadion\REST\Base` and register `/stadion/v1/people/filtered` endpoint
+**What:** Extend `\Stadion\REST\Base` and register `/rondo/v1/people/filtered` endpoint
 **When to use:** Always - this is the core implementation
 **Example:**
 ```php
@@ -74,7 +74,7 @@ class People extends Base {
     }
 
     public function register_routes() {
-        register_rest_route('stadion/v1', '/people/filtered', [
+        register_rest_route('rondo/v1', '/people/filtered', [
             'methods'             => \WP_REST_Server::READABLE,
             'callback'            => [$this, 'get_filtered_people'],
             'permission_callback' => [$this, 'check_user_approved'],
@@ -448,7 +448,7 @@ Current `usePeople` hook (src/hooks/usePeople.js line 49-84):
 - Uses TanStack Query for caching
 
 **Required changes:**
-1. Replace loop with single request to `/stadion/v1/people/filtered`
+1. Replace loop with single request to `/rondo/v1/people/filtered`
 2. Add filter/sort parameters to query key
 3. Use `resetQueries()` in mutations (not `invalidateQueries()`)
 
@@ -479,7 +479,7 @@ export function usePeople(filters = {}) {
 ### Existing REST Infrastructure
 - Base class: `\Stadion\REST\Base` (includes/class-rest-base.php)
 - Access control: `\Stadion\Core\AccessControl` (includes/class-access-control.php)
-- REST API namespace: `stadion/v1` (already established)
+- REST API namespace: `rondo/v1` (already established)
 
 **Where to add endpoint:**
 Option 1: Create new `includes/class-rest-people.php` extending `\Stadion\REST\Base`
@@ -591,7 +591,7 @@ ADD KEY type_status_modified (post_type, post_status, post_modified);
 ## Implementation Checklist
 
 - [ ] Create `includes/class-rest-people.php` extending `\Stadion\REST\Base`
-- [ ] Register `/stadion/v1/people/filtered` endpoint with parameter validation
+- [ ] Register `/rondo/v1/people/filtered` endpoint with parameter validation
 - [ ] Implement `get_filtered_people()` callback with access control check
 - [ ] Build base SQL query with LEFT JOINs for first_name, last_name meta
 - [ ] Add conditional WHERE clauses for ownership filter

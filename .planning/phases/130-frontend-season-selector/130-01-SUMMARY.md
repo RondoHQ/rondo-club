@@ -7,7 +7,7 @@ tags: [react, lucide-react, tanstack-query, season-toggle, conditional-rendering
 # Dependency graph
 requires:
   - phase: 129-backend-forecast-calculation
-    provides: GET /stadion/v1/contributie?forecast=true endpoint
+    provides: GET /rondo/v1/contributie?forecast=true endpoint
 provides:
   - Season selector dropdown toggling between current and forecast views
   - Conditional column rendering hiding Nikki/Saldo in forecast mode

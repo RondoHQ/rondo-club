@@ -27,7 +27,7 @@ This research investigates what exists vs what needs to be built for Phase 84. T
 
 ### Backend Data Available
 
-From `/stadion/v1/google-contacts/status` (class-rest-google-contacts.php:183-200):
+From `/rondo/v1/google-contacts/status` (class-rest-google-contacts.php:183-200):
 
 ```php
 $response = [
@@ -226,7 +226,7 @@ Recommended placement: In the contact info section header, as a small external l
 
 **How to avoid:** The `_google_contact_id` is user-specific (each user has their own Google connection). Only expose to the contact owner via `get_callback` permission check.
 
-**Actually:** Since Stadion already has per-user access control at the query level (STADION_Access_Control), users can only see their own contacts. The google_contact_id on a contact they can see is inherently theirs. No additional permission check needed.
+**Actually:** Since Stadion already has per-user access control at the query level (RONDO_Access_Control), users can only see their own contacts. The google_contact_id on a contact they can see is inherently theirs. No additional permission check needed.
 
 ### Pitfall 3: Sync History Memory
 
@@ -361,7 +361,7 @@ GoogleContactsConnection::update_connection($user_id, [
 
 1. **Backend: REST field for google_contact_id** - `register_rest_field` on `person` post type
 2. **Backend: Sync history storage** - Add `sync_history` array to connection, update after sync
-3. **Backend: Return sync_history in status** - Extend `/stadion/v1/google-contacts/status` response
+3. **Backend: Return sync_history in status** - Extend `/rondo/v1/google-contacts/status` response
 4. **Frontend: Error count display** - Add collapsible error details to existing status card
 5. **Frontend: Sync history viewer** - Collapsible section with list of recent syncs
 6. **Frontend: View in Google link** - Small external link on PersonDetail page

@@ -40,7 +40,7 @@ Implement status workflow:
 ### REST API (Phase 2)
 
 #### FEED-04: REST API Endpoints
-Register endpoints under `stadion/v1/feedback`:
+Register endpoints under `rondo/v1/feedback`:
 - `GET /feedback` - List feedback (paginated, filterable)
 - `GET /feedback/{id}` - Get single feedback
 - `POST /feedback` - Create feedback

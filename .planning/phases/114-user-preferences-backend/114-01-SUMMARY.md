@@ -58,8 +58,8 @@ completed: 2026-01-29
 - **Files modified:** 1
 
 ## Accomplishments
-- GET /stadion/v1/user/list-preferences endpoint returns visible_columns and available_columns metadata
-- PATCH /stadion/v1/user/list-preferences endpoint saves preferences with validation
+- GET /rondo/v1/user/list-preferences endpoint returns visible_columns and available_columns metadata
+- PATCH /rondo/v1/user/list-preferences endpoint saves preferences with validation
 - Invalid columns (deleted custom fields) filtered silently to prevent UI breaks
 - Default columns ['team', 'labels', 'modified'] for new users and reset cases
 

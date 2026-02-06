@@ -10,7 +10,7 @@ This phase implements a season selector dropdown UI in the existing ContributieL
 
 The standard approach uses React useState for dropdown state management, passes the forecast parameter through TanStack Query's queryKey to enable automatic cache separation, and conditionally renders table columns based on the selected season mode. The existing useFeeList hook accepts params, making integration straightforward without modifying the API client layer.
 
-Phase 129 (backend) already implemented the `/stadion/v1/fees?forecast=true` endpoint that returns next season calculations with nikki fields excluded, so the frontend implementation is purely UI state management and conditional rendering.
+Phase 129 (backend) already implemented the `/rondo/v1/fees?forecast=true` endpoint that returns next season calculations with nikki fields excluded, so the frontend implementation is purely UI state management and conditional rendering.
 
 **Primary recommendation:** Add controlled select dropdown with useState, pass `{ forecast: true }` through existing useFeeList params, conditionally render columns based on state, and add visual badge indicator for forecast mode using existing Tailwind patterns.
 

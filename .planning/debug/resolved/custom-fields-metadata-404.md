@@ -1,6 +1,6 @@
 ---
 status: resolved
-trigger: "The endpoint /wp-json/stadion/v1/custom-fields/person/metadata returns a 404 error on production"
+trigger: "The endpoint /wp-json/rondo/v1/custom-fields/person/metadata returns a 404 error on production"
 created: 2026-01-20T10:00:00Z
 updated: 2026-01-20T10:15:00Z
 ---
@@ -16,7 +16,7 @@ next_action: Reorder route registrations in class-rest-custom-fields.php
 
 expected: The endpoint should return metadata about custom fields for person post type
 actual: Returns 404 Not Found
-errors: HTTP 404 on GET https://cael.is/wp-json/stadion/v1/custom-fields/person/metadata
+errors: HTTP 404 on GET https://cael.is/wp-json/rondo/v1/custom-fields/person/metadata
 reproduction: Visit the URL directly or trigger it from the frontend
 started: User just noticed while debugging previous meetings issue
 
@@ -31,7 +31,7 @@ started: User just noticed while debugging previous meetings issue
 
 - timestamp: 2026-01-20T10:05:00Z
   checked: frontend API client src/api/client.js
-  found: getCustomFieldsMetadata (line 273) calls /stadion/v1/custom-fields/{postType}/metadata
+  found: getCustomFieldsMetadata (line 273) calls /rondo/v1/custom-fields/{postType}/metadata
   implication: Frontend is calling the correct endpoint, but server routes it to wrong handler
 
 ## Resolution

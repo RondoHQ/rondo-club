@@ -31,7 +31,7 @@ re_verification: false
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `includes/class-wp-cli.php` | STADION_Google_Contacts_CLI_Command class | VERIFIED | Class at lines 1879-2269 (391 lines), fully substantive with 4 methods |
+| `includes/class-wp-cli.php` | RONDO_Google_Contacts_CLI_Command class | VERIFIED | Class at lines 1879-2269 (391 lines), fully substantive with 4 methods |
 | `style.css` | Version 5.0.0 | VERIFIED | `Version: 5.0.0` |
 | `package.json` | Version 5.0.0 | VERIFIED | `"version": "5.0.0"` |
 | `CHANGELOG.md` | v5.0.0 entry with CLI commands | VERIFIED | Entry at lines 21-25 documents all 5 CLI commands |
@@ -45,7 +45,7 @@ re_verification: false
 | class-wp-cli.php | GoogleContactsConnection::get_connection() | status command | WIRED | Line 2025: `GoogleContactsConnection::get_connection($user_id)` |
 | class-wp-cli.php | GoogleContactsConnection::is_connected() | sync command validation | WIRED | Line 1917: `GoogleContactsConnection::is_connected($user_id)` |
 | class-wp-cli.php | GoogleContactsConnection::update_connection() | unlink-all command | WIRED | Line 2262: `GoogleContactsConnection::update_connection($user_id, ['sync_token' => null])` |
-| Command registration | WP_CLI | add_command | WIRED | Line 2274: `WP_CLI::add_command('stadion google-contacts', 'STADION_Google_Contacts_CLI_Command')` |
+| Command registration | WP_CLI | add_command | WIRED | Line 2274: `WP_CLI::add_command('stadion google-contacts', 'RONDO_Google_Contacts_CLI_Command')` |
 
 ### Requirements Coverage
 
@@ -94,7 +94,7 @@ All 5 WP-CLI commands are fully implemented and wired to their underlying servic
 3. **conflicts** - Queries comment meta for sync_conflict activity type and displays table
 4. **unlink-all** - Deletes Google metadata from contacts and clears sync_token
 
-The implementation follows the existing WP-CLI patterns in the codebase (similar to STADION_Calendar_CLI_Command). All commands validate user existence and connection status before executing. Error handling uses `WP_CLI::error()` for failures and `WP_CLI::success()` for completions.
+The implementation follows the existing WP-CLI patterns in the codebase (similar to RONDO_Calendar_CLI_Command). All commands validate user existence and connection status before executing. Error handling uses `WP_CLI::error()` for failures and `WP_CLI::success()` for completions.
 
 Version bumped to 5.0.0 completing the v5.0 Google Contacts Sync milestone. Changelog documents all new CLI commands.
 

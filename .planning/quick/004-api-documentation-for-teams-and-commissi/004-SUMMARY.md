@@ -11,8 +11,8 @@ Create API documentation for Teams and Commissies (Committees) endpoints.
 Created comprehensive documentation covering:
 - All CRUD endpoints (`/wp/v2/teams`)
 - Field reference (title, content, website, contact_info repeater)
-- Logo upload endpoints (`/stadion/v1/teams/{id}/logo/upload`, `/stadion/v1/teams/{id}/logo`)
-- People by team endpoint (`/stadion/v1/teams/{team_id}/people`)
+- Logo upload endpoints (`/rondo/v1/teams/{id}/logo/upload`, `/rondo/v1/teams/{id}/logo`)
+- People by team endpoint (`/rondo/v1/teams/{team_id}/people`)
 - Direct sharing endpoints (shares, add share, remove share)
 - Code examples in JavaScript, PHP, and cURL
 - Authentication methods (Application Password, Session + Nonce)

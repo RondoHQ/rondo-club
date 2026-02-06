@@ -36,14 +36,14 @@ score: 10/10 must-haves verified
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
 | `includes/class-rest-people.php` | Filtered endpoint with $wpdb queries | ✓ VERIFIED | 1045 lines, contains get_filtered_people method (lines 899-1044), route registration (lines 206-277) |
-| `src/api/client.js` | getFilteredPeople method | ✓ VERIFIED | 281 lines, method at line 125, calls /stadion/v1/people/filtered |
+| `src/api/client.js` | getFilteredPeople method | ✓ VERIFIED | 281 lines, method at line 125, calls /rondo/v1/people/filtered |
 | `src/hooks/usePeople.js` | useFilteredPeople hook | ✓ VERIFIED | 506 lines, hook at lines 104-129, uses TanStack Query with peopleKeys.filtered |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|----|----|--------|---------|
-| useFilteredPeople hook | /stadion/v1/people/filtered endpoint | prmApi.getFilteredPeople | ✓ WIRED | Hook calls API method at line 120, API method calls endpoint at line 125 |
+| useFilteredPeople hook | /rondo/v1/people/filtered endpoint | prmApi.getFilteredPeople | ✓ WIRED | Hook calls API method at line 120, API method calls endpoint at line 125 |
 | get_filtered_people | AccessControl::is_user_approved | new AccessControl() | ✓ WIRED | Access control instantiated and checked at lines 921-929 before query execution |
 | get_filtered_people | $wpdb LEFT JOIN | meta key JOINs | ✓ WIRED | first_name and last_name meta JOINed at lines 943-945, used in ORDER BY at lines 977-980 |
 | get_filtered_people | $wpdb INNER JOIN | taxonomy term filter | ✓ WIRED | term_relationships and term_taxonomy JOINed at lines 965-966 when labels filter present |

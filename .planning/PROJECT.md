@@ -1,12 +1,12 @@
-# Stadion Multi-User Transformation
+# Rondo Club Multi-User Transformation
 
 ## What This Is
 
-A major milestone transforming Stadion from a single-user personal CRM into a multi-user collaborative platform. Combines Clay.earth's intimate relationship focus with Twenty CRM's team collaboration features while preserving privacy and personal connection.
+A major milestone transforming Rondo Club from a single-user personal CRM into a multi-user collaborative platform. Combines Clay.earth's intimate relationship focus with Twenty CRM's team collaboration features while preserving privacy and personal connection.
 
 ## Core Value
 
-Add workspaces and sharing to enable team collaboration while maintaining the personal, relationship-focused experience that makes Stadion unique.
+Add workspaces and sharing to enable team collaboration while maintaining the personal, relationship-focused experience that makes Rondo Club unique.
 
 ## Requirements
 
@@ -16,7 +16,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 - Personal CRM with people, teams, dates management — existing
 - WordPress theme with React SPA frontend — existing
-- REST API communication (wp/v2 + stadion/v1 namespaces) — existing
+- REST API communication (wp/v2 + rondo/v1 namespaces) — existing
 - Slack integration for notifications (OAuth, webhooks) — existing
 - CardDAV sync support via Sabre/DAV — existing
 - Import from Google Contacts, Monica CRM, vCard — existing
@@ -52,7 +52,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Card/list view toggle for people screen — v2.1
 - Tabular list view with Name, Team, Workspace columns — v2.1
 - Checkbox multi-selection with Set-based state — v2.1
-- Bulk update REST endpoint `/stadion/v1/people/bulk-update` — v2.1
+- Bulk update REST endpoint `/rondo/v1/people/bulk-update` — v2.1
 - Bulk visibility change modal (Private/Workspace) — v2.1
 - Bulk workspace assignment modal — v2.1
 
@@ -134,7 +134,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Google Calendar OAuth2 integration with google/apiclient library — v4.0
 - CalDAV provider for iCloud, Fastmail, Nextcloud, generic servers — v4.0
 - calendar_event CPT for caching synced events — v4.0
-- STADION_Credential_Encryption class for secure OAuth token storage — v4.0
+- RONDO_Credential_Encryption class for secure OAuth token storage — v4.0
 - Email-first contact matching algorithm with confidence scores — v4.0
 - Calendar settings UI with connection management (/settings/calendars) — v4.0
 - Person profile Meetings tab with upcoming/past meetings — v4.0
@@ -171,7 +171,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Split notification channel classes into separate files (one-class-per-file compliance) — v4.4
 - PSR-4 namespaces added to 38 PHP classes across 9 namespace groups — v4.4
 - Composer autoloading with classmap for includes/ directory — v4.4
-- 38 backward-compatible class aliases (STADION_* → Stadion\*) — v4.4
+- 38 backward-compatible class aliases (RONDO_* → Rondo\*) — v4.4
 - Manual stadion_autoloader() function removed (52 lines) — v4.4
 - PHPCS Generic.Files.OneClassPerFile rule enabled — v4.4
 
@@ -218,7 +218,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Import from Google with field mapping, duplicate detection, photo sideloading — v5.0
 - Export to Google with reverse field mapping and etag conflict handling — v5.0
 - Delta sync using Google syncToken for efficient change detection — v5.0
-- Conflict resolution with Stadion-wins strategy and activity logging — v5.0
+- Conflict resolution with Rondo Club-wins strategy and activity logging — v5.0
 - Settings UI with sync history viewer — v5.0
 - "View in Google Contacts" link on person profiles — v5.0
 - WP-CLI commands: sync, sync --full, status, conflicts, unlink-all — v5.0
@@ -242,10 +242,10 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 **v6.1 Feedback System (shipped 2026-01-21):**
 - stadion_feedback custom post type with ACF fields (type, status, priority, context) — v6.1
-- REST API endpoints under stadion/v1/feedback with CRUD operations — v6.1
+- REST API endpoints under rondo/v1/feedback with CRUD operations — v6.1
 - Application password authentication support for API access — v6.1
 - Frontend feedback page with list view, detail view, and submission form — v6.1
-- Admin management UI in Stadion for status changes and ordering — v6.1
+- Admin management UI in Rondo Club for status changes and ordering — v6.1
 - Settings UI for managing application passwords — v6.1
 - System info capture (browser, version, current page) on opt-in — v6.1
 
@@ -271,7 +271,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Lighthouse PWA score 90+ verified on real devices — v8.0
 
 **v9.0 People List Performance & Customization (shipped 2026-01-29):**
-- Server-side pagination with `/stadion/v1/people/filtered` endpoint (100 per page) — v9.0
+- Server-side pagination with `/rondo/v1/people/filtered` endpoint (100 per page) — v9.0
 - Server-side filtering by labels, ownership, modified date, birth year — v9.0
 - Server-side sorting by name, modified, custom fields with type-appropriate ORDER BY — v9.0
 - Birthdate denormalized to `_birthdate` meta for fast birth year filtering — v9.0
@@ -287,8 +287,8 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Remove "Functie toevoegen" (add function) button from work history — v10.0
 - Make work history items non-editable in UI — v10.0
 - Add `editable_in_ui` setting to custom fields — v10.0
-- Disable creating new teams in Stadion UI — v10.0
-- Disable creating new commissies in Stadion UI — v10.0
+- Disable creating new teams in Rondo Club UI — v10.0
+- Disable creating new commissies in Rondo Club UI — v10.0
 - Keep all edit/add/remove functionality available in REST API — v10.0
 
 **v12.0 Membership Fees (shipped 2026-02-01):**
@@ -342,7 +342,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 **v17.0 De-AWC (shipped 2026-02-05):**
 - ClubConfig service class with Options API storage for club_name, accent_color, freescout_url — v17.0
-- REST API endpoint /stadion/v1/config (admin write, all-users read) — v17.0
+- REST API endpoint /rondo/v1/config (admin write, all-users read) — v17.0
 - Admin-only club configuration UI in Settings with react-colorful color picker — v17.0
 - Renamed awc accent color to club throughout codebase (Tailwind, CSS, React, PHP) — v17.0
 - Dynamic login page and PWA theme-color from club configuration — v17.0
@@ -392,7 +392,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - `includes/class-taxonomies.php` — Taxonomy registration (add workspace_access here)
 
 **Reference Documents:**
-- `Stadion-Multi-User-Project-Plan.md` — Detailed technical design for multi-user phases
+- `Rondo Club-Multi-User-Project-Plan.md` — Detailed technical design for multi-user phases
 - `.planning/milestones/v5.0-google-contacts-sync.md` — Technical design for Google Contacts sync
 - `docs/prd/Custom-Fields-Implementation-Plan.md` — PRD for custom fields (adapted to ACF-native approach)
 
@@ -465,7 +465,7 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Strategic PHPCS exclusions | CardDAV/Sabre naming, short ternary, deprecated functions kept as documented | ✓ Good |
 | WP-CLI multi-class exception | Keep 9 CLI command classes in one file (conditionally loaded, logically grouped) | ✓ Good |
 | Composer classmap alongside PSR-4 | Supports current class-*.php naming during transition to standard PSR-4 | ✓ Good |
-| Backward-compatible class aliases | All STADION_* class names work via class_alias() for existing code | ✓ Good |
+| Backward-compatible class aliases | All RONDO_* class names work via class_alias() for existing code | ✓ Good |
 | Global class backslash prefix | PHP/WP classes (DateTime, WP_Error, etc.) need `\` in namespaced files | ✓ Good |
 | Dark mode contrast pattern | Consistently use gray-300/gray-400 for better contrast (not gray-400/gray-500) | ✓ Good |
 | Solid background for dark mode selected states | Use dark:bg-accent-800 with dark:text-accent-100 (semi-transparent accent-900/30 unreliable) | ✓ Good |
@@ -485,9 +485,9 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Wider modal for two columns | max-w-2xl accommodates two-column layout | ✓ Good |
 | Separate OAuth callback for contacts | Different post-auth behavior vs calendar (redirect to subtab, pending_import flag) | ✓ Good |
 | User-level connection for contacts | Contacts sync is account-wide, unlike calendar which is per-resource | ✓ Good |
-| Fill gaps only on import | Never overwrite existing Stadion data, only fill empty fields | ✓ Good |
-| Three-way conflict comparison | Compare Google vs Stadion vs snapshot to detect actual conflicts | ✓ Good |
-| Stadion wins by default | Source of truth design, deletions in Google only unlink in Stadion | ✓ Good |
+| Fill gaps only on import | Never overwrite existing Rondo Club data, only fill empty fields | ✓ Good |
+| Three-way conflict comparison | Compare Google vs Rondo Club vs snapshot to detect actual conflicts | ✓ Good |
+| Rondo Club wins by default | Source of truth design, deletions in Google only unlink in Rondo Club | ✓ Good |
 | Sync history in connection meta | Last 10 entries, efficient storage without unbounded growth | ✓ Good |
 | ACF-native field storage | Field groups per post type (group_custom_fields_{post_type}), no custom tables | ✓ Good |
 | Field key naming pattern | field_custom_{post_type}_{slug} for consistency and traceability | ✓ Good |

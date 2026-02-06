@@ -68,7 +68,7 @@ human_verification:
 | PeopleList.jsx | useListPreferences | import + hook call | WIRED | Line 12 import, line 609-613 hook invocation, preferences used throughout |
 | PeopleList.jsx | useColumnResize | import + ResizableHeader | WIRED | Line 13 import, lines 184-249 ResizableHeader uses hook at line 196 |
 | PeopleList.jsx | ColumnSettingsModal | import + render | WIRED | Line 14 import, line 1280 render with isOpen and onClose |
-| useListPreferences | /stadion/v1/user/list-preferences | API calls | WIRED | Lines 57 (GET) and 85 (PATCH) via api client |
+| useListPreferences | /rondo/v1/user/list-preferences | API calls | WIRED | Lines 57 (GET) and 85 (PATCH) via api client |
 | ColumnSettingsModal | useListPreferences | import + hook call | WIRED | Line 20 import, line 98 hook invocation, updatePreferences at lines 153 and 164 |
 | ResizableHeader | handleColumnWidthChange | onWidthChange callback | WIRED | Line 306 passes callback, line 202-203 calls it on resize end |
 | handleColumnWidthChange | updateColumnWidths | callback chain | WIRED | Line 720-722 calls updateColumnWidths from hook |

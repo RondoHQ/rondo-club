@@ -31,8 +31,8 @@ score: 5/5 must-haves verified
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
 | `includes/class-google-contacts-api-import.php` | GoogleContactsAPI class with import logic | VERIFIED | 854 lines, 21 methods, namespace Stadion\Import |
-| `includes/class-rest-google-contacts.php` | POST /stadion/v1/google-contacts/import endpoint | VERIFIED | `trigger_import()` method registered, calls `GoogleContactsAPI::import_all()` |
-| `src/api/client.js` | `triggerGoogleContactsImport` API method | VERIFIED | Line 260: `triggerGoogleContactsImport: () => api.post('/stadion/v1/google-contacts/import')` |
+| `includes/class-rest-google-contacts.php` | POST /rondo/v1/google-contacts/import endpoint | VERIFIED | `trigger_import()` method registered, calls `GoogleContactsAPI::import_all()` |
+| `src/api/client.js` | `triggerGoogleContactsImport` API method | VERIFIED | Line 260: `triggerGoogleContactsImport: () => api.post('/rondo/v1/google-contacts/import')` |
 | `src/pages/Settings/Settings.jsx` | Import trigger, progress, results UI | VERIFIED | Auto-import trigger (line 246), progress indicator (line 2157), results display (line 2165-2211), re-import button (line 2138) |
 
 ### Key Link Verification
@@ -102,7 +102,7 @@ Phase 80 "Import from Google" is fully implemented and verified:
 - Team creation/linking in `work_history`
 
 **API:**
-- REST endpoint `POST /stadion/v1/google-contacts/import` triggers import
+- REST endpoint `POST /rondo/v1/google-contacts/import` triggers import
 - Returns detailed stats (imported, updated, skipped, photos, dates, teams)
 - Error handling stores last_error for UI feedback
 

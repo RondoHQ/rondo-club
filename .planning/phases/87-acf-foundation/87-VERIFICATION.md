@@ -76,7 +76,7 @@ Phase 87 has achieved its goal of establishing PHP infrastructure for programmat
 **Key accomplishments verified:**
 1. Manager class with 8 methods for CRUD operations on custom field definitions
 2. ACF database persistence using native `acf_import_field_group()` and `acf_update_field()` APIs
-3. REST API endpoints at `/stadion/v1/custom-fields/{post_type}` with full CRUD
+3. REST API endpoints at `/rondo/v1/custom-fields/{post_type}` with full CRUD
 4. Soft delete strategy preserves stored data by setting `active=0`
 5. Field key auto-generation with uniqueness handling for duplicate labels
 6. 16 integration tests covering all CRUD operations

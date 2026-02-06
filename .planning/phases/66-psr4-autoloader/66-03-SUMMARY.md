@@ -40,7 +40,7 @@ key-files:
 
 key-decisions:
   - "Updated cross-references in 6 files to use fully qualified namespaces"
-  - "STADION_Workspace_Members reference in ICalFeed left unchanged (class not yet namespaced)"
+  - "RONDO_Workspace_Members reference in ICalFeed left unchanged (class not yet namespaced)"
 
 patterns-established:
   - "Import classes use Stadion\\Import namespace"
@@ -91,16 +91,16 @@ Each task was committed atomically:
 - `includes/class-credential-encryption.php` - Stadion\Data\CredentialEncryption
 
 ### Cross-Reference Updates (6 files)
-- `includes/carddav/class-carddav-backend.php` - Updated STADION_VCard_Export to \Stadion\Export\VCard
-- `includes/class-wp-cli.php` - Updated STADION_VCard_Export to \Stadion\Export\VCard
-- `includes/class-rest-calendar.php` - Updated STADION_Credential_Encryption to \Stadion\Data\CredentialEncryption
-- `includes/class-calendar-connections.php` - Updated STADION_Credential_Encryption to \Stadion\Data\CredentialEncryption
-- `includes/class-caldav-provider.php` - Updated STADION_Credential_Encryption to \Stadion\Data\CredentialEncryption
-- `includes/class-google-oauth.php` - Updated STADION_Credential_Encryption to \Stadion\Data\CredentialEncryption
+- `includes/carddav/class-carddav-backend.php` - Updated RONDO_VCard_Export to \Stadion\Export\VCard
+- `includes/class-wp-cli.php` - Updated RONDO_VCard_Export to \Stadion\Export\VCard
+- `includes/class-rest-calendar.php` - Updated RONDO_Credential_Encryption to \Stadion\Data\CredentialEncryption
+- `includes/class-calendar-connections.php` - Updated RONDO_Credential_Encryption to \Stadion\Data\CredentialEncryption
+- `includes/class-caldav-provider.php` - Updated RONDO_Credential_Encryption to \Stadion\Data\CredentialEncryption
+- `includes/class-google-oauth.php` - Updated RONDO_Credential_Encryption to \Stadion\Data\CredentialEncryption
 
 ## Decisions Made
 - Updated cross-references immediately rather than waiting for Plan 04 (class aliases) to ensure code consistency
-- Left STADION_Workspace_Members reference in ICalFeed unchanged since that class is in a future batch
+- Left RONDO_Workspace_Members reference in ICalFeed unchanged since that class is in a future batch
 
 ## Deviations from Plan
 None - plan executed as specified. Cross-reference updates were implicit (necessary for functioning code).

@@ -10,7 +10,7 @@ updated: 2026-01-23T10:00:00Z
 hypothesis: CONFIRMED - The per_page: 100 limit in the people/teams fetch means older records beyond position 100 are never loaded
 test: N/A - Root cause identified
 expecting: N/A
-next_action: Implement fix - change from client-side filtering of 100 records to server-side search using the /stadion/v1/search API endpoint
+next_action: Implement fix - change from client-side filtering of 100 records to server-side search using the /rondo/v1/search API endpoint
 
 ## Symptoms
 
@@ -42,7 +42,7 @@ started: Unknown - user just noticed this
 ## Resolution
 
 root_cause: TeamEditModal fetches at most 100 people/teams client-side and filters locally. WordPress REST API returns posts sorted by date descending (newest first). If there are more than 100 people, older people like ID 21 won't be loaded and can't be found by the local search filter.
-fix: Changed investor search to use server-side search via /stadion/v1/search API when query length >= 2 characters. This searches ALL records in the database using proper LIKE queries with wildcards, not just the first 100 loaded client-side.
+fix: Changed investor search to use server-side search via /rondo/v1/search API when query length >= 2 characters. This searches ALL records in the database using proper LIKE queries with wildcards, not just the first 100 loaded client-side.
 verification: Build succeeded. Deployed to production. User should verify by:
   1. Go to team 3316 (Deeploy)
   2. Click Edit

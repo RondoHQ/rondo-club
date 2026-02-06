@@ -170,7 +170,7 @@ None - plan executed exactly as written.
 ### Backend Verification
 ```bash
 # Check REST API returns both seasons
-curl https://stadion.svawc.nl/wp-json/stadion/v1/membership-fees/settings
+curl https://stadion.svawc.nl/wp-json/rondo/v1/membership-fees/settings
 
 # Response:
 {

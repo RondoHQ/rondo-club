@@ -68,12 +68,12 @@ must_haves:
       status: verified
       details: "Line 297: mutationFn calls prmApi.bulkMarkVOGRequested(ids)"
     - from: "src/api/client.js"
-      to: "/stadion/v1/vog/bulk-send"
+      to: "/rondo/v1/vog/bulk-send"
       via: "axios POST"
       status: verified
       details: "Line 297: api.post with { ids } payload"
     - from: "src/api/client.js"
-      to: "/stadion/v1/vog/bulk-mark-requested"
+      to: "/rondo/v1/vog/bulk-mark-requested"
       via: "axios POST"
       status: verified
       details: "Line 298: api.post with { ids } payload"

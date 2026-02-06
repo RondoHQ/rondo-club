@@ -47,7 +47,7 @@ score: 6/6 must-haves verified
 | src/hooks/useTheme.js | src/index.css | data-accent attribute drives CSS custom properties | ✓ WIRED | Line 295: `root.setAttribute('data-accent', accentColor)` matches index.css selectors |
 | src/pages/Settings/Settings.jsx | src/hooks/useTheme.js | ACCENT_COLORS import includes club | ✓ WIRED | Line 5: imports from useTheme; line 1143: maps ACCENT_COLORS array |
 | src/pages/Settings/Settings.jsx | tailwind.config.js | bg-club-600 and ring-club-600 classes resolve | ✓ WIRED | Settings uses inline styles for club swatch (line 1149: `style={color === 'club' ? { backgroundColor: window.stadionConfig?.accentColor...`); no direct Tailwind club classes needed in accent picker |
-| src/pages/Settings/Settings.jsx | /stadion/v1/config | POST request to save club configuration | ✓ WIRED | Lines 943-947: `prmApi.post('/config', { club_name, accent_color, freescout_url })` |
+| src/pages/Settings/Settings.jsx | /rondo/v1/config | POST request to save club configuration | ✓ WIRED | Lines 943-947: `prmApi.post('/config', { club_name, accent_color, freescout_url })` |
 | src/pages/Settings/Settings.jsx | window.stadionConfig | Update stadionConfig after successful save | ✓ WIRED | Lines 949-951: Updates window.stadionConfig properties after save response |
 | src/pages/Settings/Settings.jsx | document.documentElement.style | Live preview injects CSS custom properties | ✓ WIRED | Lines 916-922: `root.style.setProperty('--color-accent-*', color)` for live preview |
 | functions.php | includes/class-club-config.php | ClubConfig service reads options | ✓ WIRED | Lines 75: use statement; 966: instantiation; 967: get_all_settings() call |

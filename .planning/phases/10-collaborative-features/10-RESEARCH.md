@@ -10,10 +10,10 @@
 Researched the ecosystem for implementing collaborative features in a WordPress/React CRM. The phase requires @mentions in notes with notifications, workspace iCal feeds, activity digests, and per-workspace notification preferences.
 
 **Key findings:**
-- Stadion already has robust notification infrastructure (`STADION_Notification_Channel`, `STADION_Email_Channel`, `STADION_Slack_Channel`)
-- Existing per-user cron scheduling via `STADION_Reminders` can be extended for workspace digests
-- Existing iCal feed (`STADION_ICal_Feed`) uses manual generation - works well, no need for sabre/vobject
-- Notes system (`STADION_Comment_Types`) stores content in `wp_comments` with meta - ideal for adding mention metadata
+- Stadion already has robust notification infrastructure (`RONDO_Notification_Channel`, `RONDO_Email_Channel`, `RONDO_Slack_Channel`)
+- Existing per-user cron scheduling via `RONDO_Reminders` can be extended for workspace digests
+- Existing iCal feed (`RONDO_ICal_Feed`) uses manual generation - works well, no need for sabre/vobject
+- Notes system (`RONDO_Comment_Types`) stores content in `wp_comments` with meta - ideal for adding mention metadata
 - **react-mentions** is the standard library for @mention UI in React textareas
 
 **Primary recommendation:** Extend existing notification and comment infrastructure rather than introducing new systems. Use react-mentions for frontend, store mentioned user IDs in comment meta, trigger notifications via existing channels.
@@ -38,10 +38,10 @@ Researched the ecosystem for implementing collaborative features in a WordPress/
 ### Supporting (Already in Stadion)
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| STADION_Notification_Channel | custom | Abstract notification base | Extend for new notification types |
-| STADION_Email_Channel | custom | Email digest delivery | Reuse for workspace digests |
-| STADION_Slack_Channel | custom | Slack notifications | Extend for @mention alerts |
-| STADION_ICal_Feed | custom | Manual iCal generation | Extend for workspace feeds |
+| RONDO_Notification_Channel | custom | Abstract notification base | Extend for new notification types |
+| RONDO_Email_Channel | custom | Email digest delivery | Reuse for workspace digests |
+| RONDO_Slack_Channel | custom | Slack notifications | Extend for @mention alerts |
+| RONDO_ICal_Feed | custom | Manual iCal generation | Extend for workspace feeds |
 
 ### Alternatives Considered
 | Instead of | Could Use | Tradeoff |
@@ -132,7 +132,7 @@ add_action('stadion_user_mentioned', [$this, 'send_mention_notification'], 10, 3
 ```
 
 ### Pattern 4: Workspace iCal Feed Extension
-**What:** Extend existing STADION_ICal_Feed with workspace scope
+**What:** Extend existing RONDO_ICal_Feed with workspace scope
 **When to use:** Workspace calendar subscriptions
 **Example:**
 ```php
@@ -158,9 +158,9 @@ add_rewrite_rule(
 |---------|-------------|-------------|-----|
 | @mention UI | Custom textarea with regex | react-mentions | Autocomplete, keyboard nav, mobile support |
 | Mention parsing | Custom regex | react-mentions markup serializer | Handles edge cases, escaping, cursor position |
-| iCal format | String concatenation | Existing STADION_ICal_Feed patterns | RFC compliance, escaping, timezone handling |
-| Email HTML | Inline styles manually | Existing STADION_Email_Channel | Already handles formatting, from name/email |
-| Notification routing | Custom notification system | Extend STADION_Notification_Channel | Multi-channel support, user preferences |
+| iCal format | String concatenation | Existing RONDO_ICal_Feed patterns | RFC compliance, escaping, timezone handling |
+| Email HTML | Inline styles manually | Existing RONDO_Email_Channel | Already handles formatting, from name/email |
+| Notification routing | Custom notification system | Extend RONDO_Notification_Channel | Multi-channel support, user preferences |
 | Cron scheduling | Custom scheduling | wp_schedule_event | WordPress handles persistence, deduplication |
 
 **Key insight:** Stadion already has 80% of the notification infrastructure. The @mentions feature is primarily:
@@ -215,7 +215,7 @@ Don't rebuild what exists.
 **What goes wrong:** Workspace digests sent at wrong times for different user timezones
 **Why it happens:** Using workspace-level schedule instead of per-user schedule
 **How to avoid:**
-- Continue using per-user cron (already implemented in STADION_Reminders)
+- Continue using per-user cron (already implemented in RONDO_Reminders)
 - Include workspace activity in user's existing digest
 - Don't create separate workspace-level cron jobs
 **Warning signs:** Users in different timezones getting digests at odd hours
@@ -258,7 +258,7 @@ function MentionableTextarea({ value, onChange }) {
 ### Parse Mentions from Stored Content (PHP)
 ```php
 // Source: Stadion pattern, react-mentions markup format
-class STADION_Mentions {
+class RONDO_Mentions {
     /**
      * Parse user IDs from mention markup
      * Markup format: @[Display Name](user_id)
@@ -292,8 +292,8 @@ class STADION_Mentions {
 
 ### Notification Hook Integration (PHP)
 ```php
-// Source: Existing STADION_Notification_Channel pattern
-class STADION_Mention_Notifications {
+// Source: Existing RONDO_Notification_Channel pattern
+class RONDO_Mention_Notifications {
     public function __construct() {
         add_action('stadion_user_mentioned', [$this, 'queue_mention_notification'], 10, 3);
     }
@@ -320,7 +320,7 @@ class STADION_Mention_Notifications {
 
 ### Workspace iCal Feed Extension (PHP)
 ```php
-// Source: Existing STADION_ICal_Feed pattern
+// Source: Existing RONDO_ICal_Feed pattern
 // Add to register_rewrite_rules()
 add_rewrite_rule(
     '^workspace/(?P<workspace_id>\d+)/calendar/(?P<token>[a-f0-9]+)\.ics$',
@@ -335,7 +335,7 @@ if (get_query_var('stadion_workspace_ical')) {
 
     // Verify token belongs to workspace member
     $user_id = $this->get_user_by_token($token);
-    if (!$user_id || !STADION_Workspace_Members::is_member($workspace_id, $user_id)) {
+    if (!$user_id || !RONDO_Workspace_Members::is_member($workspace_id, $user_id)) {
         status_header(403);
         exit('Access denied');
     }

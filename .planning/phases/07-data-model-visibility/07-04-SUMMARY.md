@@ -2,7 +2,7 @@
 
 ## Overview
 
-Extended STADION_Access_Control to check visibility, workspace membership, and direct shares, enabling contacts to be accessed by workspace members and shared users, not just the author.
+Extended RONDO_Access_Control to check visibility, workspace membership, and direct shares, enabling contacts to be accessed by workspace members and shared users, not just the author.
 
 ## Changes Made
 

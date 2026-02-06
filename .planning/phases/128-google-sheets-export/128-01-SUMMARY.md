@@ -12,7 +12,7 @@
 ## What Was Built
 
 ### Backend: Export Fees Endpoint
-- Added `POST /stadion/v1/google-sheets/export-fees` REST endpoint
+- Added `POST /rondo/v1/google-sheets/export-fees` REST endpoint
 - Endpoint creates new Google Sheets spreadsheet with:
   - Title: "Contributie {season} - {date}"
   - Sheet tab: "Contributie"

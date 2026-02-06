@@ -78,7 +78,7 @@ Each task was committed atomically:
 - `src/pages/People/PersonDetail.jsx` - Slack contacts show label only as link
 - `src/hooks/useVersionCheck.js` - Compare buildTime instead of version
 - `functions.php` - Add buildTime to stadionConfig from manifest mtime
-- `includes/class-rest-api.php` - Return buildTime in /stadion/v1/version endpoint
+- `includes/class-rest-api.php` - Return buildTime in /rondo/v1/version endpoint
 - `vite.config.js` - Add __BUILD_TIME__ define injection
 
 ## Decisions Made

@@ -13,18 +13,18 @@ Create ShareModal component for sharing contacts/teams with specific users, enab
 ## Tasks Completed
 
 ### Task 1: Add share REST endpoints to backend
-Added sharing endpoints to both `STADION_REST_People` and `STADION_REST_Teams` classes:
+Added sharing endpoints to both `RONDO_REST_People` and `RONDO_REST_Teams` classes:
 
 **Routes registered:**
-- `GET /stadion/v1/people/{id}/shares` - Get list of users a person is shared with
-- `POST /stadion/v1/people/{id}/shares` - Share person with a user
-- `DELETE /stadion/v1/people/{id}/shares/{user_id}` - Remove share from a user
-- `GET /stadion/v1/teams/{id}/shares` - Get list of users a team is shared with
-- `POST /stadion/v1/teams/{id}/shares` - Share team with a user
-- `DELETE /stadion/v1/teams/{id}/shares/{user_id}` - Remove share from a user
+- `GET /rondo/v1/people/{id}/shares` - Get list of users a person is shared with
+- `POST /rondo/v1/people/{id}/shares` - Share person with a user
+- `DELETE /rondo/v1/people/{id}/shares/{user_id}` - Remove share from a user
+- `GET /rondo/v1/teams/{id}/shares` - Get list of users a team is shared with
+- `POST /rondo/v1/teams/{id}/shares` - Share team with a user
+- `DELETE /rondo/v1/teams/{id}/shares/{user_id}` - Remove share from a user
 
-**User search endpoint in `STADION_REST_API`:**
-- `GET /stadion/v1/users/search?q={query}` - Search users by name/email (excludes current user)
+**User search endpoint in `RONDO_REST_API`:**
+- `GET /rondo/v1/users/search?q={query}` - Search users by name/email (excludes current user)
 
 **Handler methods added:**
 - `check_post_owner()` - Permission check (must be post author or admin)

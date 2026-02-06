@@ -5,7 +5,7 @@ This plan implemented visibility controls for timeline notes, enabling collabora
 
 ## Tasks Completed
 
-### Task 1: Add visibility field to notes in STADION_Comment_Types
+### Task 1: Add visibility field to notes in RONDO_Comment_Types
 - Added `_note_visibility` comment meta field registration with values 'private' (default) or 'shared'
 - Updated `create_note()` method to accept optional `visibility` parameter, defaults to 'private'
 - Updated `update_note()` method to accept `visibility` parameter

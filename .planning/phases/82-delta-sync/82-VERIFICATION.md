@@ -41,10 +41,10 @@ score: 4/4 must-haves verified
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| `functions.php` | `class-google-contacts-sync.php` | class instantiation | WIRED | `new GoogleContactsSync();` in `stadion_init()` |
+| `functions.php` | `class-google-contacts-sync.php` | class instantiation | WIRED | `new GoogleContactsSync();` in `rondo_init()` |
 | `GoogleContactsSync::sync_user()` | `GoogleContactsAPI::import_delta()` | method call | WIRED | Line 229: `$importer->import_delta()` |
 | `GoogleContactsSync::push_changed_contacts()` | `GoogleContactsExport::export_contact()` | method call | WIRED | Line 382: `$exporter->export_contact($post->ID)` |
-| `Settings.jsx` | `/stadion/v1/google-contacts/sync` | fetch on button click | WIRED | `handleContactsSync` calls `prmApi.triggerContactsSync()` |
+| `Settings.jsx` | `/rondo/v1/google-contacts/sync` | fetch on button click | WIRED | `handleContactsSync` calls `prmApi.triggerContactsSync()` |
 | `trigger_contacts_sync()` | `GoogleContactsSync::sync_user_manual()` | method call | WIRED | Line 680: `$sync->sync_user_manual($user_id)` |
 | WP-Cron | `GoogleContactsSync::run_background_sync()` | hook callback | WIRED | `add_action(self::CRON_HOOK, [$this, 'run_background_sync'])` |
 

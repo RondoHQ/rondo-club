@@ -32,7 +32,7 @@ metrics:
 
 # Phase 111 Plan 01: Backend Filtered Endpoint Summary
 
-**One-liner:** New `/stadion/v1/people/filtered` endpoint with wpdb JOINs for server-side pagination, filtering, and sorting
+**One-liner:** New `/rondo/v1/people/filtered` endpoint with wpdb JOINs for server-side pagination, filtering, and sorting
 
 ## What Was Built
 
@@ -124,7 +124,7 @@ All malicious inputs were rejected **before** query execution.
 
 ### Endpoint Registration
 
-✅ Endpoint appears in `/stadion/v1` route list
+✅ Endpoint appears in `/rondo/v1` route list
 ✅ Proper HTTP methods (GET only)
 ✅ Permission callback active (check_user_approved)
 

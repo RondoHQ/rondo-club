@@ -16,7 +16,7 @@ next_action: Deploy and verify the fix works on production
 
 expected: Person 317's meetings tab should only show meetings where person 317 is an attendee
 actual: A meeting titled "Webflow Pitch Check In" appears on person 317's meetings tab even though person 317 is not in the attendees list for that meeting
-errors: Network 4xx/5xx errors from /stadion/v1/ endpoint when loading the meetings tab
+errors: Network 4xx/5xx errors from /rondo/v1/ endpoint when loading the meetings tab
 reproduction: Go to person 317's detail page, view the meetings tab
 started: Just noticed - first time checking this person's meetings tab
 

@@ -274,10 +274,10 @@ wp_set_post_terms($date_post_id, [$term_id], 'date_type');
 ```
 
 ### REST Endpoints (`includes/class-rest-google-contacts.php`)
-- `GET /stadion/v1/google-contacts/status` - Connection status
-- `GET /stadion/v1/google-contacts/auth` - Initiate OAuth
-- `GET /stadion/v1/google-contacts/callback` - OAuth callback (public)
-- `DELETE /stadion/v1/google-contacts` - Disconnect
+- `GET /rondo/v1/google-contacts/status` - Connection status
+- `GET /rondo/v1/google-contacts/auth` - Initiate OAuth
+- `GET /rondo/v1/google-contacts/callback` - OAuth callback (public)
+- `DELETE /rondo/v1/google-contacts` - Disconnect
 
 ## WordPress Photo Sideloading
 
@@ -479,8 +479,8 @@ class GoogleContactsAPI {
 ### REST Endpoint Extension
 Add to `class-rest-google-contacts.php`:
 ```php
-// POST /stadion/v1/google-contacts/import - Trigger import
-register_rest_route('stadion/v1', '/google-contacts/import', [
+// POST /rondo/v1/google-contacts/import - Trigger import
+register_rest_route('rondo/v1', '/google-contacts/import', [
     'methods' => 'POST',
     'callback' => [$this, 'trigger_import'],
     'permission_callback' => [$this, 'check_user_approved'],

@@ -23,7 +23,7 @@ started: After phase 145-frontend-color-refactor added Club Configuration sectio
 ## Eliminated
 
 - hypothesis: Backend REST route not registered or misconfigured
-  evidence: Route is properly registered at stadion/v1/config with GET and POST methods in class-rest-api.php lines 701-725. Permission callback uses check_admin_permission. Handler update_club_config correctly reads params and calls ClubConfig methods.
+  evidence: Route is properly registered at rondo/v1/config with GET and POST methods in class-rest-api.php lines 701-725. Permission callback uses check_admin_permission. Handler update_club_config correctly reads params and calls ClubConfig methods.
   timestamp: 2026-02-05T00:00:30Z
 
 - hypothesis: ClubConfig service class has a bug

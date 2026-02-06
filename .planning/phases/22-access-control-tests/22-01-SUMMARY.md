@@ -10,7 +10,7 @@ requires:
     provides: PHPUnit infrastructure, StadionTestCase base class, factory helpers
 provides:
   - UserIsolationTest with 18 tests verifying user_can_access_post() and query filtering
-  - Test patterns for STADION_Access_Control class
+  - Test patterns for RONDO_Access_Control class
 affects: [22-02-visibility-tests, 22-03-workspace-tests]
 
 # Tech tracking

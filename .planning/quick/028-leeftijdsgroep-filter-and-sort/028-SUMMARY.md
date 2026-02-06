@@ -39,7 +39,7 @@ Added ability to filter and sort the /people list by "Leeftijdsgroep" (age group
 ### Backend (PHP)
 
 1. **REST API Parameter**
-   - Added `leeftijdsgroep` parameter to `/stadion/v1/people/filtered` endpoint
+   - Added `leeftijdsgroep` parameter to `/rondo/v1/people/filtered` endpoint
    - Uses LEFT JOIN on postmeta with meta_key = 'leeftijdsgroep'
 
 2. **Custom Sort Logic**

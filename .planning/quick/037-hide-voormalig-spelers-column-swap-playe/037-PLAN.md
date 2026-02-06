@@ -22,7 +22,7 @@ must_haves:
       provides: "Optimized get_people_by_company using meta_query"
   key_links:
     - from: "TeamDetail.jsx"
-      to: "/stadion/v1/teams/{id}/people"
+      to: "/rondo/v1/teams/{id}/people"
       via: "prmApi.getTeamPeople"
 ---
 
@@ -86,7 +86,7 @@ Note: ACF repeater sub-fields are stored with pattern `{repeater}_{index}_{subfi
 The rest of the method (filtering current vs former based on dates) remains the same, but now only processes matching people instead of all people.
   </action>
   <verify>
-Test endpoint `/stadion/v1/teams/{team_id}/people` returns same data but faster.
+Test endpoint `/rondo/v1/teams/{team_id}/people` returns same data but faster.
 Check Network tab load time before and after.
   </verify>
   <done>

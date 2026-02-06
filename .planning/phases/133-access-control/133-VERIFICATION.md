@@ -44,7 +44,7 @@ score: 4/4 must-haves verified
 |------|----|----|--------|---------|
 | UserRoles class | administrator role | add_cap('fairplay') | ✓ WIRED | add_cap called in register_role() at line 81, remove_cap in remove_role() at line 92 |
 | REST API | current_user_can check | capability check | ✓ WIRED | current_user_can('fairplay') at line 2307 in get_current_user(), returns boolean in response |
-| App.jsx FairplayRoute | /api/stadion/v1/user/me | useQuery with current-user key | ✓ WIRED | useQuery with queryKey ['current-user'] (line 128), checks user?.can_access_fairplay (line 145) |
+| App.jsx FairplayRoute | /api/rondo/v1/user/me | useQuery with current-user key | ✓ WIRED | useQuery with queryKey ['current-user'] (line 128), checks user?.can_access_fairplay (line 145) |
 | Layout.jsx Sidebar | current-user query | canAccessFairplay boolean | ✓ WIRED | useQuery at lines 66-72, canAccessFairplay derived at line 74, used in filter at line 106 |
 | PersonDetail.jsx | current-user query | canAccessFairplay boolean | ✓ WIRED | useQuery at lines 70-76, canAccessFairplay derived at line 78, used for conditional rendering at lines 1280 and 1792 |
 
@@ -104,7 +104,7 @@ npm run build
 
 **Backend → Frontend data flow:**
 1. ✓ UserRoles adds capability to admin role on theme activation
-2. ✓ REST API exposes capability via /stadion/v1/user/me endpoint
+2. ✓ REST API exposes capability via /rondo/v1/user/me endpoint
 3. ✓ Frontend queries current user via useQuery with ['current-user'] key
 4. ✓ Multiple components derive canAccessFairplay from query result
 5. ✓ Query result cached by React Query (no redundant requests)

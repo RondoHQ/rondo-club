@@ -39,7 +39,7 @@ score: 6/6 must-haves verified
 |------|-----|-----|--------|---------|
 | isForecast state | useFeeList({ forecast: true }) | params object passed to hook | WIRED | Lines 207-209: conditional ternary passes `{ forecast: true }` when isForecast=true |
 | useFeeList hook | prmApi.getFeeList(params) | TanStack Query queryFn | WIRED | Verified in useFees.js lines 22-25: queryFn calls prmApi.getFeeList(params) |
-| prmApi.getFeeList | /stadion/v1/fees endpoint | Axios GET request | WIRED | Verified in client.js: `api.get('/stadion/v1/fees', { params })` |
+| prmApi.getFeeList | /rondo/v1/fees endpoint | Axios GET request | WIRED | Verified in client.js: `api.get('/rondo/v1/fees', { params })` |
 | isForecast state | column visibility | conditional rendering | WIRED | Lines 560-579 (thead), 150-173 (tbody FeeRow), 604-613 (tfoot): `{!isForecast && ...}` pattern throughout |
 | isForecast state | forecast indicator badge | conditional rendering | WIRED | Lines 415-423: `{isForecast && <div>...badge...</div>}` |
 | isForecast state | filter buttons | conditional rendering | WIRED | Lines 432-468: "Nog te ontvangen", "Afwijking", "Geen Nikki" all wrapped in `{!isForecast && ...}` |

@@ -5,21 +5,21 @@
 ### Test Results
 
 **Test Date:** 2026-01-29
-**Endpoint:** `/stadion/v1/people/filtered`
+**Endpoint:** `/rondo/v1/people/filtered`
 
 ### 1. Validation Tests
 
 #### Invalid custom field name
 ```bash
-curl "https://stadion.svawc.nl/wp-json/stadion/v1/people/filtered?orderby=custom_nonexistent"
+curl "https://stadion.svawc.nl/wp-json/rondo/v1/people/filtered?orderby=custom_nonexistent"
 ```
 **Result:** ✅ Returns `rest_invalid_param` error (400)
 
 #### Built-in fields still work
 ```bash
-curl "https://stadion.svawc.nl/wp-json/stadion/v1/people/filtered?orderby=first_name"
-curl "https://stadion.svawc.nl/wp-json/stadion/v1/people/filtered?orderby=last_name"
-curl "https://stadion.svawc.nl/wp-json/stadion/v1/people/filtered?orderby=modified"
+curl "https://stadion.svawc.nl/wp-json/rondo/v1/people/filtered?orderby=first_name"
+curl "https://stadion.svawc.nl/wp-json/rondo/v1/people/filtered?orderby=last_name"
+curl "https://stadion.svawc.nl/wp-json/rondo/v1/people/filtered?orderby=modified"
 ```
 **Expected:** All should work (requires authentication for results)
 
@@ -30,12 +30,12 @@ Test these in browser console after logging in:
 #### Text field sorting (knvb-id)
 ```javascript
 // Ascending
-fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&order=asc&per_page=10')
+fetch('/wp-json/rondo/v1/people/filtered?orderby=custom_knvb-id&order=asc&per_page=10')
   .then(r => r.json())
   .then(d => console.log('ASC:', d.people.map(p => p.first_name)))
 
 // Descending
-fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&order=desc&per_page=10')
+fetch('/wp-json/rondo/v1/people/filtered?orderby=custom_knvb-id&order=desc&per_page=10')
   .then(r => r.json())
   .then(d => console.log('DESC:', d.people.map(p => p.first_name)))
 ```
@@ -43,7 +43,7 @@ fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&order=desc&per
 
 #### Date field sorting (lid-sinds)
 ```javascript
-fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_lid-sinds&order=asc&per_page=10')
+fetch('/wp-json/rondo/v1/people/filtered?orderby=custom_lid-sinds&order=asc&per_page=10')
   .then(r => r.json())
   .then(d => console.log('Total:', d.total, 'People:', d.people.map(p => p.first_name)))
 ```
@@ -51,7 +51,7 @@ fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_lid-sinds&order=asc&pe
 
 #### Boolean field sorting (isparent)
 ```javascript
-fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_isparent&order=asc&per_page=10')
+fetch('/wp-json/rondo/v1/people/filtered?orderby=custom_isparent&order=asc&per_page=10')
   .then(r => r.json())
   .then(d => console.log('Total:', d.total, 'People:', d.people.map(p => p.first_name)))
 ```
@@ -61,7 +61,7 @@ fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_isparent&order=asc&per
 
 #### Pagination with custom sort
 ```javascript
-fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&page=2&per_page=10')
+fetch('/wp-json/rondo/v1/people/filtered?orderby=custom_knvb-id&page=2&per_page=10')
   .then(r => r.json())
   .then(d => console.log('Page:', d.page, 'Total Pages:', d.total_pages))
 ```
@@ -69,7 +69,7 @@ fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&page=2&per_pag
 
 #### Custom sort + label filter
 ```javascript
-fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&labels[]=123')
+fetch('/wp-json/rondo/v1/people/filtered?orderby=custom_knvb-id&labels[]=123')
   .then(r => r.json())
   .then(d => console.log('Total:', d.total))
 ```
@@ -77,7 +77,7 @@ fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&labels[]=123')
 
 #### Custom sort + birth year filter
 ```javascript
-fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&birth_year_from=2010')
+fetch('/wp-json/rondo/v1/people/filtered?orderby=custom_knvb-id&birth_year_from=2010')
   .then(r => r.json())
   .then(d => console.log('Total:', d.total))
 ```
@@ -88,7 +88,7 @@ fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&birth_year_fro
 #### Response time
 ```javascript
 console.time('custom_sort');
-fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&per_page=100')
+fetch('/wp-json/rondo/v1/people/filtered?orderby=custom_knvb-id&per_page=100')
   .then(r => r.json())
   .then(d => {
     console.timeEnd('custom_sort');
@@ -102,7 +102,7 @@ fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&per_page=100')
 #### Built-in sorts still work
 ```javascript
 ['first_name', 'last_name', 'modified'].forEach(field => {
-  fetch(`/wp-json/stadion/v1/people/filtered?orderby=${field}&per_page=5`)
+  fetch(`/wp-json/rondo/v1/people/filtered?orderby=${field}&per_page=5`)
     .then(r => r.json())
     .then(d => console.log(`${field}:`, d.people[0].first_name))
 })
@@ -111,7 +111,7 @@ fetch('/wp-json/stadion/v1/people/filtered?orderby=custom_knvb-id&per_page=100')
 
 #### Existing filters unchanged
 ```javascript
-fetch('/wp-json/stadion/v1/people/filtered?ownership=mine&modified_days=7')
+fetch('/wp-json/rondo/v1/people/filtered?ownership=mine&modified_days=7')
   .then(r => r.json())
   .then(d => console.log('Mine, modified 7 days:', d.total))
 ```

@@ -12,7 +12,7 @@ requires:
     provides: REST API for custom field management
 provides:
   - Field reordering via menu_order property
-  - PUT /stadion/v1/custom-fields/{post_type}/order endpoint
+  - PUT /rondo/v1/custom-fields/{post_type}/order endpoint
   - Unique constraint validation for custom field values
   - reorderCustomFields frontend API method
 affects: [94-02, ui-drag-drop, field-editor]
@@ -62,7 +62,7 @@ completed: 2026-01-20
 
 - Added menu_order and unique to Manager's UPDATABLE_PROPERTIES
 - Created reorder_fields() method for bulk field ordering
-- Added PUT /stadion/v1/custom-fields/{post_type}/order endpoint
+- Added PUT /rondo/v1/custom-fields/{post_type}/order endpoint
 - Created Validation class with ACF validate_value hook for unique constraint
 - Added reorderCustomFields method to frontend API client
 

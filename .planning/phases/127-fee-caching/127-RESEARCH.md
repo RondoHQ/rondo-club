@@ -362,7 +362,7 @@ class FeeCacheInvalidator {
 ```php
 // Source: includes/class-rest-api.php register_routes() pattern
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/fees/recalculate',
     [
         'methods'             => \WP_REST_Server::CREATABLE,

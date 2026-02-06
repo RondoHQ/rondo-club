@@ -27,7 +27,7 @@ key-files:
 
 key-decisions:
   - "Use 'stadion' namespace for CLI commands (not 'prm') per requirements spec"
-  - "Follow existing STADION_Calendar_CLI_Command pattern for consistency"
+  - "Follow existing RONDO_Calendar_CLI_Command pattern for consistency"
 
 patterns-established:
   - "Google Contacts CLI pattern: all commands require --user-id for user context"
@@ -61,18 +61,18 @@ completed: 2026-01-18
 
 Each task was committed atomically:
 
-1. **Task 1: Create STADION_Google_Contacts_CLI_Command class with all 5 commands** - `d1c7dc8` (feat)
+1. **Task 1: Create RONDO_Google_Contacts_CLI_Command class with all 5 commands** - `d1c7dc8` (feat)
 2. **Task 2: Update version, changelog, and deploy** - `eaea033` (feat)
 
 ## Files Created/Modified
-- `includes/class-wp-cli.php` - Added STADION_Google_Contacts_CLI_Command class with sync, status, conflicts, unlink_all methods
+- `includes/class-wp-cli.php` - Added RONDO_Google_Contacts_CLI_Command class with sync, status, conflicts, unlink_all methods
 - `style.css` - Version bump to 5.0.0
 - `package.json` - Version bump to 5.0.0
 - `CHANGELOG.md` - Added v5.0.0 release notes documenting Google Contacts Sync milestone
 
 ## Decisions Made
 - Used `stadion` namespace (not `prm`) for the CLI command per the requirements specification
-- Followed existing STADION_Calendar_CLI_Command pattern for consistency with other CLI commands
+- Followed existing RONDO_Calendar_CLI_Command pattern for consistency with other CLI commands
 - All commands require `--user-id` parameter to specify which user's contacts to manage
 
 ## Deviations from Plan

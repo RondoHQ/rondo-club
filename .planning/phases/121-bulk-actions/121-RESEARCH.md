@@ -185,7 +185,7 @@ function BulkEmailModal({ isOpen, onClose, selectedCount, onSubmit, isLoading })
 ```php
 // Pattern from class-rest-people.php bulk_update_people
 register_rest_route(
-  'stadion/v1',
+  'rondo/v1',
   '/vog/bulk-send',
   [
     'methods'             => \WP_REST_Server::CREATABLE,

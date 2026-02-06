@@ -11,7 +11,7 @@ This research covers the addition of infinite scroll with server-side filtering/
 
 The recommended approach builds on Stadion's existing architecture without new dependencies. All necessary tools are present: TanStack Query v5.17.0 includes `useInfiniteQuery` for pagination, WordPress REST API provides native pagination headers, and `$wpdb` enables custom JOIN queries for ACF field filtering. The key technical shift is moving from client-side operations (fetch all, filter in-memory) to server-side operations (filter/sort in SQL, fetch in pages). User preferences are stored in WordPress user_meta, following Stadion's existing pattern for dashboard settings.
 
-The critical risk is **access control bypass** in custom SQL queries. Stadion's `STADION_Access_Control` class filters data through WordPress's `pre_get_posts` hook, but custom `$wpdb` queries bypass this entirely. All custom endpoints must explicitly apply access control checks before running queries. Secondary risks include SQL injection via unsanitized filter parameters, ACF JOIN performance degradation with 4+ meta filters, and TanStack Query cache invalidation issues with infinite scroll. Each has well-documented mitigation strategies from the research.
+The critical risk is **access control bypass** in custom SQL queries. Stadion's `RONDO_Access_Control` class filters data through WordPress's `pre_get_posts` hook, but custom `$wpdb` queries bypass this entirely. All custom endpoints must explicitly apply access control checks before running queries. Secondary risks include SQL injection via unsanitized filter parameters, ACF JOIN performance degradation with 4+ meta filters, and TanStack Query cache invalidation issues with infinite scroll. Each has well-documented mitigation strategies from the research.
 
 ## Key Findings
 
@@ -61,13 +61,13 @@ Research distinguishes between table stakes (users expect this), differentiators
 
 ### Architecture Approach
 
-Stadion's WordPress/React split architecture is well-suited for this enhancement. The system uses two REST API namespaces: `/wp/v2/*` for standard WordPress endpoints and `/stadion/v1/*` for custom endpoints. The new functionality fits naturally into this pattern by adding `/stadion/v1/people/filtered` for server-side operations and `/stadion/v1/user/list-preferences` for column settings.
+Stadion's WordPress/React split architecture is well-suited for this enhancement. The system uses two REST API namespaces: `/wp/v2/*` for standard WordPress endpoints and `/rondo/v1/*` for custom endpoints. The new functionality fits naturally into this pattern by adding `/rondo/v1/people/filtered` for server-side operations and `/rondo/v1/user/list-preferences` for column settings.
 
 **Major components:**
 
 1. **Custom People Query Builder** (`includes/class-people-query-builder.php`) — Builds efficient `$wpdb` queries with conditional JOINs for ACF fields, applies filters at SQL level, handles pagination with LIMIT/OFFSET, integrates AccessControl checks
-2. **Filtered People REST Endpoint** (`/stadion/v1/people/filtered`) — Receives filter/sort/page params, uses Query Builder for data fetching, transforms results with existing `transformPerson()` pattern, returns paginated response with `{ people: [], pagination: {} }`
-3. **User Preferences REST Endpoints** (`/stadion/v1/user/list-preferences`) — GET returns user's column preferences with defaults, PATCH updates preferences with validation, stores in `wp_usermeta` with key `stadion_people_list_preferences`
+2. **Filtered People REST Endpoint** (`/rondo/v1/people/filtered`) — Receives filter/sort/page params, uses Query Builder for data fetching, transforms results with existing `transformPerson()` pattern, returns paginated response with `{ people: [], pagination: {} }`
+3. **User Preferences REST Endpoints** (`/rondo/v1/user/list-preferences`) — GET returns user's column preferences with defaults, PATCH updates preferences with validation, stores in `wp_usermeta` with key `stadion_people_list_preferences`
 4. **usePeopleInfinite Hook** (`src/hooks/usePeopleInfinite.js`) — Replaces current `usePeople()` for list view, uses `useInfiniteQuery` with `initialPageParam`, `getNextPageParam`, and `maxPages` (v5 requirement), flattens pages for rendering
 5. **useUserPreferences Hook** (`src/hooks/useUserPreferences.js`) — Fetches/updates column preferences with optimistic updates for instant feedback
 
@@ -79,7 +79,7 @@ Stadion's WordPress/React split architecture is well-suited for this enhancement
 
 Research identified 12 pitfalls across three severity levels. The top 5 require explicit prevention strategies.
 
-1. **Access Control Bypass with Custom $wpdb Queries** — Custom SQL queries bypass WordPress's `pre_get_posts` filter, which is how `STADION_Access_Control` enforces user approval checks. Prevention: Always call `$access_control->is_user_approved()` before running queries OR add reusable `get_sql_where_clause()` method to AccessControl class that returns SQL fragment like `"p.ID = 0"` for unapproved users. Test with unapproved user account to verify they see empty list.
+1. **Access Control Bypass with Custom $wpdb Queries** — Custom SQL queries bypass WordPress's `pre_get_posts` filter, which is how `RONDO_Access_Control` enforces user approval checks. Prevention: Always call `$access_control->is_user_approved()` before running queries OR add reusable `get_sql_where_clause()` method to AccessControl class that returns SQL fragment like `"p.ID = 0"` for unapproved users. Test with unapproved user account to verify they see empty list.
 
 2. **SQL Injection via Unsanitized Filter Parameters** — Filter values and ACF field names inserted directly into SQL without proper escaping. Prevention: Always use `$wpdb->prepare()` with correct placeholders (%s, %d), whitelist ACF field names from `acf_get_fields()` configuration, sanitize filter arrays with `array_map('absint')` for IDs and `sanitize_text_field()` for strings. NEVER build dynamic column/table names from user input without whitelist validation first.
 
@@ -99,7 +99,7 @@ Based on research, the work naturally divides into 4 sequential phases. Backend 
 
 **Rationale:** Frontend can't implement infinite scroll or server-side filtering until the backend endpoint exists. This phase builds the data layer that all subsequent phases depend on. Starting here de-risks the entire milestone by proving query performance early.
 
-**Delivers:** Custom `/stadion/v1/people/filtered` endpoint returning paginated, filtered, sorted people data with response format: `{ people: [], pagination: { page, per_page, total_items, total_pages, has_more } }`
+**Delivers:** Custom `/rondo/v1/people/filtered` endpoint returning paginated, filtered, sorted people data with response format: `{ people: [], pagination: { page, per_page, total_items, total_pages, has_more } }`
 
 **Addresses features:**
 - Server-side filtering (labels, birth year, modified date, search) — table stakes feature
@@ -149,7 +149,7 @@ Based on research, the work naturally divides into 4 sequential phases. Backend 
 
 **Rationale:** Column preferences require storage and retrieval endpoints before frontend can implement the UI. Building backend first allows testing preference persistence independently of UI complexity. Pattern follows existing `theme_preferences` endpoint structure.
 
-**Delivers:** `/stadion/v1/user/list-preferences` endpoints (GET/PATCH) storing `visible_columns`, `column_order`, `default_sort` in `wp_usermeta` with key `stadion_people_list_preferences`
+**Delivers:** `/rondo/v1/user/list-preferences` endpoints (GET/PATCH) storing `visible_columns`, `column_order`, `default_sort` in `wp_usermeta` with key `stadion_people_list_preferences`
 
 **Addresses features:**
 - Persistent column preferences — foundation for customization
@@ -193,7 +193,7 @@ Based on research, the work naturally divides into 4 sequential phases. Backend 
 
 ### Phase Ordering Rationale
 
-- **Backend before frontend:** Can't implement infinite scroll without the endpoint. Building `/stadion/v1/people/filtered` first de-risks query performance and access control before frontend integration.
+- **Backend before frontend:** Can't implement infinite scroll without the endpoint. Building `/rondo/v1/people/filtered` first de-risks query performance and access control before frontend integration.
 - **Infinite scroll before preferences:** Proves server-side pagination works with existing UI before adding preferences complexity. Reduces integration surface area.
 - **Preferences backend before UI:** Allows testing storage/retrieval independently. Follows pattern of separating data layer from presentation.
 - **Sequential not parallel:** Each phase depends on previous phase's output. Phase 2 needs Phase 1's endpoint, Phase 4 needs Phase 3's storage.
@@ -221,7 +221,7 @@ Based on research, the work naturally divides into 4 sequential phases. Backend 
 |------|------------|-------|
 | Stack | HIGH | All technologies already present and properly versioned. TanStack Query v5.17.0 confirmed to include `useInfiniteQuery` with `maxPages`. No new dependencies required. |
 | Features | HIGH | Research drew from modern CRM UX patterns (2026 standards), multiple sources agree on table stakes vs. differentiators. Clear distinction between must-have and nice-to-have. |
-| Architecture | HIGH | Proposed architecture fits naturally into existing Stadion patterns. Custom endpoints follow established `/stadion/v1/*` namespace. User preferences match `theme_preferences` pattern. |
+| Architecture | HIGH | Proposed architecture fits naturally into existing Stadion patterns. Custom endpoints follow established `/rondo/v1/*` namespace. User preferences match `theme_preferences` pattern. |
 | Pitfalls | HIGH | All critical pitfalls have documented mitigation strategies. Access control bypass, SQL injection, and JOIN performance are well-understood WordPress issues with proven solutions. |
 
 **Overall confidence:** HIGH
@@ -238,7 +238,7 @@ All four research dimensions returned high-confidence findings with multiple cor
 - **maxPages optimal value:** Research suggests `maxPages: 3-10` but optimal value depends on user behavior patterns. Decision: Start with `maxPages: 10` during Phase 2, monitor memory usage, adjust if needed.
 
 **Architecture decisions to validate during Phase 1:**
-- Confirm `STADION_Access_Control::is_user_approved()` is correct method for custom query filtering
+- Confirm `RONDO_Access_Control::is_user_approved()` is correct method for custom query filtering
 - Verify ACF field names whitelist can be pulled from `acf_get_fields('group_person_fields')`
 - Test `transformPerson()` function works with custom endpoint response structure
 

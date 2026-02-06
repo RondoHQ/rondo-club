@@ -56,7 +56,7 @@ completed: 2026-01-17
 ## Accomplishments
 - Contacts auto-export to Google when saved (for users with readwrite access)
 - Export runs in background via WP-Cron, not blocking save operation
-- REST endpoint for manual export: POST /stadion/v1/google-contacts/export/{id}
+- REST endpoint for manual export: POST /rondo/v1/google-contacts/export/{id}
 - Proper access checks: readwrite mode, ownership validation
 
 ## Task Commits

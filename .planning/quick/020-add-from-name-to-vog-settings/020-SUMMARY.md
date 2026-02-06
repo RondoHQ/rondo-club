@@ -14,7 +14,7 @@ Added the ability to customize the "From name" displayed in VOG emails, compleme
 - Updated `filter_mail_from_name()` to use stored setting instead of hardcoded `get_bloginfo('name')`
 
 ### Backend (`includes/class-rest-api.php`)
-- Added `from_name` parameter to `/stadion/v1/vog/settings` route args
+- Added `from_name` parameter to `/rondo/v1/vog/settings` route args
 - Updated `update_vog_settings()` to handle `from_name` parameter
 
 ### Frontend (`src/pages/Settings/Settings.jsx`)

@@ -8,7 +8,7 @@
 
 Capability-based access control in WordPress + React requires three implementation layers: (1) WordPress capability registration during theme activation, (2) REST API enforcement via permission callbacks, and (3) React UI conditional rendering based on capabilities passed via initial page load config.
 
-The existing codebase already implements a similar pattern for the user approval system (`is_approved`) and admin-only features (`is_admin`), providing proven infrastructure to extend for the `fairplay` capability. WordPress capabilities are persistent role-level permissions that automatically inherit to new administrators when using `get_role()->add_cap()`. Capabilities can be exposed to React via the existing `/stadion/v1/user/me` endpoint and `window.stadionConfig` global, then consumed via custom hooks for consistent access control.
+The existing codebase already implements a similar pattern for the user approval system (`is_approved`) and admin-only features (`is_admin`), providing proven infrastructure to extend for the `fairplay` capability. WordPress capabilities are persistent role-level permissions that automatically inherit to new administrators when using `get_role()->add_cap()`. Capabilities can be exposed to React via the existing `/rondo/v1/user/me` endpoint and `window.stadionConfig` global, then consumed via custom hooks for consistent access control.
 
 **Primary recommendation:** Follow existing patterns - register capability on theme activation, add to `/user/me` response, extend `useAuth` hook with capability check, use conditional rendering for UI elements.
 
@@ -84,7 +84,7 @@ public function register_role() {
 ### Pattern 2: REST API Capability Exposure
 
 **What:** Add capability check to current user endpoint response
-**When to use:** Every API request to `/stadion/v1/user/me`
+**When to use:** Every API request to `/rondo/v1/user/me`
 **Example:**
 ```php
 // In class-rest-api.php, get_current_user() method
@@ -95,7 +95,7 @@ public function get_current_user( $request ) {
     return rest_ensure_response([
         'id' => $user_id,
         'is_admin' => current_user_can('manage_options'),
-        'is_approved' => \STADION_User_Roles::is_user_approved($user_id),
+        'is_approved' => \RONDO_User_Roles::is_user_approved($user_id),
         'can_access_fairplay' => current_user_can('fairplay'), // NEW
         // ... existing fields ...
     ]);
@@ -222,7 +222,7 @@ Problems that look simple but have existing solutions:
 | Problem | Don't Build | Use Instead | Why |
 |---------|-------------|-------------|-----|
 | Pass capability to initial page load | New global variable | Extend `window.stadionConfig` | Already established in functions.php line 542-576 |
-| Fetch user capabilities on every component | New API endpoint | Use `/stadion/v1/user/me` | Already returns user data, cached by TanStack Query |
+| Fetch user capabilities on every component | New API endpoint | Use `/rondo/v1/user/me` | Already returns user data, cached by TanStack Query |
 | Create new permission callback | Custom check function | Use `current_user_can('fairplay')` | WordPress standard, works in all contexts |
 | Route protection wrapper | New component pattern | Follow `ApprovalCheck` pattern | Already proven in App.jsx |
 | Capability persistence | Session storage / state | WordPress database via `add_cap()` | Survives page refresh, theme deactivation |
@@ -294,7 +294,7 @@ const canAccessFairplay = user?.can_access_fairplay ?? false;
 **How to avoid:** Always use `permission_callback` in `register_rest_route()`:
 ```php
 // BAD - manual check in callback
-register_rest_route('stadion/v1', '/discipline-cases', [
+register_rest_route('rondo/v1', '/discipline-cases', [
     'callback' => function($request) {
         if (!current_user_can('fairplay')) {
             return new \WP_Error('forbidden', 'No access', ['status' => 403]);
@@ -305,7 +305,7 @@ register_rest_route('stadion/v1', '/discipline-cases', [
 ]);
 
 // GOOD - let WordPress handle authorization
-register_rest_route('stadion/v1', '/discipline-cases', [
+register_rest_route('rondo/v1', '/discipline-cases', [
     'callback' => function($request) {
         // ... endpoint logic, capability already verified
     },
@@ -374,7 +374,7 @@ class UserRoles {
 
 // In REST API
 'permission_callback' => function() {
-    return current_user_can(\STADION_User_Roles::FAIRPLAY_CAPABILITY);
+    return current_user_can(\RONDO_User_Roles::FAIRPLAY_CAPABILITY);
 }
 ```
 
@@ -450,7 +450,7 @@ public function get_current_user($request) {
         'email' => $user->user_email,
         'avatar_url' => get_avatar_url($user_id, ['size' => 96]),
         'is_admin' => current_user_can('manage_options'),
-        'is_approved' => \STADION_User_Roles::is_user_approved($user_id),
+        'is_approved' => \RONDO_User_Roles::is_user_approved($user_id),
         'can_access_fairplay' => current_user_can('fairplay'), // ADD THIS LINE
         'profile_url' => admin_url('profile.php'),
         'admin_url' => admin_url(),
@@ -467,7 +467,7 @@ public function get_current_user($request) {
 
 // NEW endpoints for discipline cases
 public function register_routes() {
-    register_rest_route('stadion/v1', '/discipline-cases', [
+    register_rest_route('rondo/v1', '/discipline-cases', [
         'methods' => \WP_REST_Server::READABLE,
         'callback' => [$this, 'get_discipline_cases'],
         'permission_callback' => function() {
@@ -475,7 +475,7 @@ public function register_routes() {
         },
     ]);
 
-    register_rest_route('stadion/v1', '/discipline-cases/(?P<id>\d+)', [
+    register_rest_route('rondo/v1', '/discipline-cases/(?P<id>\d+)', [
         'methods' => \WP_REST_Server::READABLE,
         'callback' => [$this, 'get_discipline_case'],
         'permission_callback' => function() {

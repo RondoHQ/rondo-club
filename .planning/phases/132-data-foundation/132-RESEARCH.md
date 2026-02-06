@@ -646,7 +646,7 @@ function get_current_season() {
 Things that couldn't be fully resolved:
 
 1. **Auto-title Generation Logic**
-   - What we know: Existing CPTs use `STADION_Auto_Title` class to generate titles from ACF fields
+   - What we know: Existing CPTs use `RONDO_Auto_Title` class to generate titles from ACF fields
    - What's unclear: Exact title format preference for discipline cases (e.g., "{dossier-id} - {person-name} - {match-date}" or different format)
    - Recommendation: Implement in Phase 133 (Business Logic) after planner defines title template format
 

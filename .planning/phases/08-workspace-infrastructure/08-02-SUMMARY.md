@@ -38,7 +38,7 @@ Created ACF field group with 7 fields:
 
 Added 5 invite management endpoints:
 
-1. **POST /stadion/v1/workspaces/{id}/invites** - Create & send invite
+1. **POST /rondo/v1/workspaces/{id}/invites** - Create & send invite
    - Permission: workspace admin
    - Validates email not already member
    - Prevents duplicate pending invites
@@ -46,26 +46,26 @@ Added 5 invite management endpoints:
    - Sets 7-day expiration
    - Sends HTML invitation email
 
-2. **GET /stadion/v1/workspaces/{id}/invites** - List pending invites
+2. **GET /rondo/v1/workspaces/{id}/invites** - List pending invites
    - Permission: workspace admin
    - Returns array with id, email, role, status, expires_at, invited_by, invited_at
 
-3. **DELETE /stadion/v1/workspaces/{id}/invites/{invite_id}** - Revoke invite
+3. **DELETE /rondo/v1/workspaces/{id}/invites/{invite_id}** - Revoke invite
    - Permission: workspace admin
    - Sets status to 'revoked'
    - Only pending invites can be revoked
 
-4. **GET /stadion/v1/invites/{token}** - Validate invite (PUBLIC)
+4. **GET /rondo/v1/invites/{token}** - Validate invite (PUBLIC)
    - Permission: none (public endpoint)
    - Validates token, status, and expiration
    - Auto-marks as expired if past due
    - Returns workspace name, role, inviter info
 
-5. **POST /stadion/v1/invites/{token}/accept** - Accept invite
+5. **POST /rondo/v1/invites/{token}/accept** - Accept invite
    - Permission: approved user
    - Validates token, status, expiration
    - Enforces email matching (admin override available)
-   - Adds user to workspace via STADION_Workspace_Members::add()
+   - Adds user to workspace via RONDO_Workspace_Members::add()
    - Updates invite status and accepted_by
 
 **Helper Methods:**
@@ -93,7 +93,7 @@ Added 5 invite management endpoints:
 ## Commits
 
 1. `feat(08-02): register workspace_invite CPT` (8e3d9c3)
-2. `feat(08-02): add invite REST endpoints to STADION_REST_Workspaces` (6f6c531)
+2. `feat(08-02): add invite REST endpoints to RONDO_REST_Workspaces` (6f6c531)
 
 ## Deviations from Plan
 
@@ -110,7 +110,7 @@ None - All tasks completed as specified.
 
 ## API Response Examples
 
-**POST /stadion/v1/workspaces/{id}/invites:**
+**POST /rondo/v1/workspaces/{id}/invites:**
 ```json
 {
   "id": 456,
@@ -122,7 +122,7 @@ None - All tasks completed as specified.
 }
 ```
 
-**GET /stadion/v1/invites/{token}:**
+**GET /rondo/v1/invites/{token}:**
 ```json
 {
   "email": "user@example.com",
@@ -134,7 +134,7 @@ None - All tasks completed as specified.
 }
 ```
 
-**POST /stadion/v1/invites/{token}/accept:**
+**POST /rondo/v1/invites/{token}/accept:**
 ```json
 {
   "success": true,

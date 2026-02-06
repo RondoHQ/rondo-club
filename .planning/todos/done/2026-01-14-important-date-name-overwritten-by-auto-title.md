@@ -13,7 +13,7 @@ When editing an important date in the edit modal and changing the name/title, th
 
 ## Solution
 
-TBD - investigate how `STADION_Auto_Title` interacts with the edit modal save. Options:
+TBD - investigate how `RONDO_Auto_Title` interacts with the edit modal save. Options:
 1. Disable auto-title generation when a custom title is explicitly set
 2. Add a flag to indicate user has overridden the title
 3. Only apply auto-title on initial creation, not on updates

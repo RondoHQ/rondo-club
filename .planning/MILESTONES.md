@@ -38,7 +38,7 @@
 **Key accomplishments:**
 
 - ClubConfig backend service with WordPress Options API for club name, accent color, and FreeScout URL
-- REST API endpoint `/stadion/v1/config` with admin write + all-users read permissions
+- REST API endpoint `/rondo/v1/config` with admin write + all-users read permissions
 - Admin-only club configuration UI in Settings with react-colorful color picker and live preview
 - Dynamic color system renaming "awc" to "club" throughout codebase (Tailwind, CSS, React, PHP)
 - Dynamic WordPress login page styling and PWA theme-color from club configuration

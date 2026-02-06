@@ -74,7 +74,7 @@ Apply this to all redirect points in the callback:
 - Line 593 (success redirect)
 - Line 597 (error redirect)
 
-Also verify the connection is actually being created by checking `STADION_Calendar_Connections::add_connection()` is reached and succeeds.
+Also verify the connection is actually being created by checking `RONDO_Calendar_Connections::add_connection()` is reached and succeeds.
   </action>
   <verify>
 - Deploy to production

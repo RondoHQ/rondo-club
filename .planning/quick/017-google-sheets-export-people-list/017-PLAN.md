@@ -20,13 +20,13 @@ must_haves:
   artifacts:
     - path: "includes/class-rest-google-sheets.php"
       provides: "REST endpoint for Google Sheets export"
-      exports: ["POST /stadion/v1/google-sheets/export-people"]
+      exports: ["POST /rondo/v1/google-sheets/export-people"]
     - path: "includes/class-google-oauth.php"
       provides: "Google Sheets scope constant"
       contains: "SHEETS_SCOPE"
   key_links:
     - from: "src/pages/People/PeopleList.jsx"
-      to: "/stadion/v1/google-sheets/export-people"
+      to: "/rondo/v1/google-sheets/export-people"
       via: "fetch on export button click"
       pattern: "google-sheets/export-people"
 ---
@@ -76,7 +76,7 @@ Output: Export button in People list that creates a new Google Sheet and opens i
    - Methods: `get_connection()`, `save_connection()`, `delete_connection()`, `is_connected()`, `get_decrypted_credentials()`, `update_connection()`
    - Simpler than contacts: no sync_token, no sync_frequency - just credentials and connection state
 
-3. Register the new class in `functions.php` in the `stadion_init()` function.
+3. Register the new class in `functions.php` in the `rondo_init()` function.
   </action>
   <verify>
     - `class-google-sheets-connection.php` exists with proper structure
@@ -101,11 +101,11 @@ Output: Export button in People list that creates a new Google Sheet and opens i
    - Namespace: `Stadion\REST`
    - Extend Base class (or implement permission callbacks directly)
    - Register routes:
-     - `GET /stadion/v1/google-sheets/status` - Check if connected with sheets scope
-     - `GET /stadion/v1/google-sheets/auth` - Initiate OAuth for sheets scope
-     - `GET /stadion/v1/google-sheets/callback` - Handle OAuth callback (public)
-     - `DELETE /stadion/v1/google-sheets/disconnect` - Remove sheets connection
-     - `POST /stadion/v1/google-sheets/export-people` - Create sheet from people data
+     - `GET /rondo/v1/google-sheets/status` - Check if connected with sheets scope
+     - `GET /rondo/v1/google-sheets/auth` - Initiate OAuth for sheets scope
+     - `GET /rondo/v1/google-sheets/callback` - Handle OAuth callback (public)
+     - `DELETE /rondo/v1/google-sheets/disconnect` - Remove sheets connection
+     - `POST /rondo/v1/google-sheets/export-people` - Create sheet from people data
 
 2. For `export-people` endpoint:
    - Accept JSON body with: `columns` (array of column IDs), `filters` (current filter params), `title` (optional sheet title)
@@ -118,7 +118,7 @@ Output: Export button in People list that creates a new Google Sheet and opens i
      - Auto-resize columns
    - Return `{ success: true, spreadsheet_url: "https://docs.google.com/spreadsheets/d/..." }`
 
-3. Add class instantiation in `functions.php` `stadion_init()`.
+3. Add class instantiation in `functions.php` `rondo_init()`.
   </action>
   <verify>
     - `php -l includes/class-rest-google-sheets.php` passes
@@ -139,10 +139,10 @@ Output: Export button in People list that creates a new Google Sheet and opens i
   <action>
 1. In `src/api/client.js`:
    - Add to `stadionApi` object:
-     - `getSheetsStatus: () => api.get('/stadion/v1/google-sheets/status')`
-     - `getSheetsAuthUrl: () => api.get('/stadion/v1/google-sheets/auth')`
-     - `disconnectSheets: () => api.delete('/stadion/v1/google-sheets/disconnect')`
-     - `exportPeopleToSheets: (data) => api.post('/stadion/v1/google-sheets/export-people', data)`
+     - `getSheetsStatus: () => api.get('/rondo/v1/google-sheets/status')`
+     - `getSheetsAuthUrl: () => api.get('/rondo/v1/google-sheets/auth')`
+     - `disconnectSheets: () => api.delete('/rondo/v1/google-sheets/disconnect')`
+     - `exportPeopleToSheets: (data) => api.post('/rondo/v1/google-sheets/export-people', data)`
 
 2. In `PeopleList.jsx`:
    - Import `FileSpreadsheet` from lucide-react for the export icon

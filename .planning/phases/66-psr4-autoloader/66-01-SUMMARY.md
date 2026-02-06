@@ -10,12 +10,12 @@ All converted to `Stadion\Core` namespace:
 
 | File | Old Class | New Class |
 |------|-----------|-----------|
-| class-post-types.php | STADION_Post_Types | Stadion\Core\PostTypes |
-| class-taxonomies.php | STADION_Taxonomies | Stadion\Core\Taxonomies |
-| class-access-control.php | STADION_Access_Control | Stadion\Core\AccessControl |
-| class-visibility.php | STADION_Visibility | Stadion\Core\Visibility |
-| class-user-roles.php | STADION_User_Roles | Stadion\Core\UserRoles |
-| class-auto-title.php | STADION_Auto_Title | Stadion\Core\AutoTitle |
+| class-post-types.php | RONDO_Post_Types | Stadion\Core\PostTypes |
+| class-taxonomies.php | RONDO_Taxonomies | Stadion\Core\Taxonomies |
+| class-access-control.php | RONDO_Access_Control | Stadion\Core\AccessControl |
+| class-visibility.php | RONDO_Visibility | Stadion\Core\Visibility |
+| class-user-roles.php | RONDO_User_Roles | Stadion\Core\UserRoles |
+| class-auto-title.php | RONDO_Auto_Title | Stadion\Core\AutoTitle |
 
 ### REST Classes (9 files)
 
@@ -23,20 +23,20 @@ All converted to `Stadion\REST` namespace:
 
 | File | Old Class | New Class |
 |------|-----------|-----------|
-| class-rest-base.php | STADION_REST_Base | Stadion\REST\Base |
-| class-rest-api.php | STADION_REST_API | Stadion\REST\Api |
-| class-rest-people.php | STADION_REST_People | Stadion\REST\People |
-| class-rest-teams.php | STADION_REST_Teams | Stadion\REST\Teams |
-| class-rest-todos.php | STADION_REST_Todos | Stadion\REST\Todos |
-| class-rest-workspaces.php | STADION_REST_Workspaces | Stadion\REST\Workspaces |
-| class-rest-slack.php | STADION_REST_Slack | Stadion\REST\Slack |
-| class-rest-import-export.php | STADION_REST_Import_Export | Stadion\REST\ImportExport |
-| class-rest-calendar.php | STADION_REST_Calendar | Stadion\REST\Calendar |
+| class-rest-base.php | RONDO_REST_Base | Stadion\REST\Base |
+| class-rest-api.php | RONDO_REST_API | Stadion\REST\Api |
+| class-rest-people.php | RONDO_REST_People | Stadion\REST\People |
+| class-rest-teams.php | RONDO_REST_Teams | Stadion\REST\Teams |
+| class-rest-todos.php | RONDO_REST_Todos | Stadion\REST\Todos |
+| class-rest-workspaces.php | RONDO_REST_Workspaces | Stadion\REST\Workspaces |
+| class-rest-slack.php | RONDO_REST_Slack | Stadion\REST\Slack |
+| class-rest-import-export.php | RONDO_REST_Import_Export | Stadion\REST\ImportExport |
+| class-rest-calendar.php | RONDO_REST_Calendar | Stadion\REST\Calendar |
 
 ## Technical Details
 
 - Namespace declarations placed after docblock, before ABSPATH check (PHP requirement)
-- REST classes using `extends Base` instead of `extends STADION_REST_Base` (same namespace)
+- REST classes using `extends Base` instead of `extends RONDO_REST_Base` (same namespace)
 - All 15 files pass PHP syntax validation (`php -l`)
 - No `use` statements added yet - external references still use old class names
 
@@ -49,7 +49,7 @@ All converted to `Stadion\REST` namespace:
 
 The classes now have namespaces but are not yet being loaded via autoloader. The application continues to work because:
 1. functions.php still manually requires the files
-2. External code still uses the old STADION_* class names (will be updated in later plans)
+2. External code still uses the old RONDO_* class names (will be updated in later plans)
 
 ## Next Steps
 

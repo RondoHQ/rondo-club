@@ -10,8 +10,8 @@ requires:
     provides: StadionTestCase base class, test database configuration, factory helpers
 provides:
   - WorkspacePermissionsTest with 23 tests for workspace membership and user approval
-  - Test coverage for STADION_Workspace_Members class
-  - Test coverage for user approval blocking in STADION_Access_Control
+  - Test coverage for RONDO_Workspace_Members class
+  - Test coverage for user approval blocking in RONDO_Access_Control
 affects: [23-rest-api-tests, future-access-control-changes]
 
 # Tech tracking
@@ -43,7 +43,7 @@ completed: 2026-01-13
 
 # Phase 22 Plan 03: WorkspacePermissionsTest Summary
 
-**23 tests covering workspace membership CRUD, role-based permissions, and user approval blocking for STADION_Access_Control**
+**23 tests covering workspace membership CRUD, role-based permissions, and user approval blocking for RONDO_Access_Control**
 
 ## Performance
 

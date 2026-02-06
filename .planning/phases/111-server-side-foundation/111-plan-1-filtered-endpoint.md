@@ -11,7 +11,7 @@ estimated_time: 45 minutes
 
 ## Goal
 
-Create a new REST endpoint `/stadion/v1/people/filtered` that returns paginated, filtered, and sorted people using optimized `$wpdb` queries with JOINs. This endpoint is the foundation for scaling the People list beyond 1400+ contacts.
+Create a new REST endpoint `/rondo/v1/people/filtered` that returns paginated, filtered, and sorted people using optimized `$wpdb` queries with JOINs. This endpoint is the foundation for scaling the People list beyond 1400+ contacts.
 
 ## Context
 
@@ -31,14 +31,14 @@ The current approach fetches all people via `/wp/v2/people` in a loop (100 per r
 <file>includes/class-rest-people.php</file>
 <action>edit</action>
 <description>
-Add a new route registration in the `register_routes()` method for `/stadion/v1/people/filtered` with comprehensive parameter validation.
+Add a new route registration in the `register_routes()` method for `/rondo/v1/people/filtered` with comprehensive parameter validation.
 
 In the `register_routes()` method of `class-rest-people.php`, add a new route registration AFTER the existing route registrations (around line 203). Add this new endpoint:
 
 ```php
 // Filtered people with server-side pagination, filtering, and sorting
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/people/filtered',
     [
         'methods'             => \WP_REST_Server::READABLE,
@@ -298,32 +298,32 @@ Key implementation details:
 After deploying, test the endpoint using curl or browser:
 
 1. Basic request:
-   `GET /wp-json/stadion/v1/people/filtered`
+   `GET /wp-json/rondo/v1/people/filtered`
    Expected: 200 OK, array of up to 100 people, total count, page info
 
 2. Pagination:
-   `GET /wp-json/stadion/v1/people/filtered?page=1&per_page=10`
-   `GET /wp-json/stadion/v1/people/filtered?page=2&per_page=10`
+   `GET /wp-json/rondo/v1/people/filtered?page=1&per_page=10`
+   `GET /wp-json/rondo/v1/people/filtered?page=2&per_page=10`
    Expected: Different sets of people, correct page numbers
 
 3. Label filter:
-   `GET /wp-json/stadion/v1/people/filtered?labels[]=5&labels[]=7`
+   `GET /wp-json/rondo/v1/people/filtered?labels[]=5&labels[]=7`
    Expected: Only people with label ID 5 OR label ID 7
 
 4. Ownership filter:
-   `GET /wp-json/stadion/v1/people/filtered?ownership=mine`
+   `GET /wp-json/rondo/v1/people/filtered?ownership=mine`
    Expected: Only people where post_author = current user
 
 5. Modified date filter:
-   `GET /wp-json/stadion/v1/people/filtered?modified_days=30`
+   `GET /wp-json/rondo/v1/people/filtered?modified_days=30`
    Expected: Only people modified in last 30 days
 
 6. Sorting:
-   `GET /wp-json/stadion/v1/people/filtered?orderby=last_name&order=desc`
+   `GET /wp-json/rondo/v1/people/filtered?orderby=last_name&order=desc`
    Expected: People sorted by last name descending
 
 7. SQL injection attempt:
-   `GET /wp-json/stadion/v1/people/filtered?orderby=first_name;DROP TABLE`
+   `GET /wp-json/rondo/v1/people/filtered?orderby=first_name;DROP TABLE`
    Expected: 400 error (validation failure)
 
 8. Unapproved user test:
@@ -336,7 +336,7 @@ After deploying, test the endpoint using curl or browser:
 
 <verification>
 <checklist>
-- [ ] Endpoint registered at `/stadion/v1/people/filtered`
+- [ ] Endpoint registered at `/rondo/v1/people/filtered`
 - [ ] GET request returns JSON with `people`, `total`, `page`, `total_pages`
 - [ ] `page` and `per_page` parameters work correctly
 - [ ] `labels` filter returns people with ANY matching label

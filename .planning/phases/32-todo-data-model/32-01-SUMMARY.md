@@ -81,7 +81,7 @@ Each task was committed atomically:
 
 - `acf-json/group_todo_fields.json` - Added notes WYSIWYG field, changed related_person to related_persons with multiple:1
 - `includes/class-rest-todos.php` - Updated format_todo, get_person_todos, create_person_todo, update_todo for multi-person and notes
-- `includes/class-wp-cli.php` - Added migrate_persons command to STADION_Todos_CLI_Command class
+- `includes/class-wp-cli.php` - Added migrate_persons command to RONDO_Todos_CLI_Command class
 - `includes/class-comment-types.php` - Updated get_timeline method for multi-person queries and response format
 
 ## Decisions Made

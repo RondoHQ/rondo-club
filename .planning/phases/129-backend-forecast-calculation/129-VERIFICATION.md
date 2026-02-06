@@ -63,8 +63,8 @@ score: 4/4 must-haves verified
 None required - all success criteria verifiable through code analysis.
 
 The implementation can be further tested via API calls:
-- `GET /wp-json/stadion/v1/fees` - should return current season with Nikki fields
-- `GET /wp-json/stadion/v1/fees?forecast=true` - should return next season (2026-2027), 100% pro-rata, no Nikki fields
+- `GET /wp-json/rondo/v1/fees` - should return current season with Nikki fields
+- `GET /wp-json/rondo/v1/fees?forecast=true` - should return next season (2026-2027), 100% pro-rata, no Nikki fields
 
 ### Implementation Details
 

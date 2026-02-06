@@ -9,7 +9,7 @@ requires:
   - phase: 12-list-view-selection
     provides: Selection infrastructure with selectedIds Set
 provides:
-  - Bulk update REST endpoint /stadion/v1/people/bulk-update
+  - Bulk update REST endpoint /rondo/v1/people/bulk-update
   - useBulkUpdatePeople React hook
   - bulkUpdatePeople API client method
 affects: [13-02-bulk-actions-ui]
@@ -56,8 +56,8 @@ completed: 2026-01-13
 
 ## Accomplishments
 
-- Created POST endpoint `/stadion/v1/people/bulk-update` with ownership validation
-- Implemented visibility updates using STADION_Visibility helper
+- Created POST endpoint `/rondo/v1/people/bulk-update` with ownership validation
+- Implemented visibility updates using RONDO_Visibility helper
 - Implemented workspace assignment with post ID to term ID conversion
 - Added useBulkUpdatePeople hook with query invalidation
 

@@ -16,7 +16,7 @@ Extended the iCal feed system to support workspace-scoped calendars, allowing wo
 - Created `handle_workspace_feed()` method with security checks:
   - Token validation via `get_user_by_token()`
   - Workspace existence check (post_type, post_status)
-  - Membership verification via `STADION_Workspace_Members::is_member()`
+  - Membership verification via `RONDO_Workspace_Members::is_member()`
 - Created `get_workspace_important_dates()` method:
   - Queries people with workspace_access taxonomy term
   - Queries important dates linked via related_people ACF field
@@ -61,7 +61,7 @@ The `related_people` field may store data in different formats depending on ACF 
 The implementation handles both formats with a fallback LIKE query for serialized data.
 
 ### API Enhancement
-The `/stadion/v1/user/ical-url` endpoint now returns a `token` field in addition to `url` and `webcal_url`, allowing the frontend to construct workspace calendar URLs without parsing the URL.
+The `/rondo/v1/user/ical-url` endpoint now returns a `token` field in addition to `url` and `webcal_url`, allowing the frontend to construct workspace calendar URLs without parsing the URL.
 
 ## Verification Checklist
 - [x] Workspace query vars registered

@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase establishes the email infrastructure for VOG (Verklaring Omtrent Gedrag) compliance workflows. The codebase already has a proven email sending pattern via `STADION_Email_Channel` that uses `wp_mail()` with configurable from addresses. VOG settings should be stored as site-wide options (not user meta) since they're organization-level configuration shared by all admins.
+This phase establishes the email infrastructure for VOG (Verklaring Omtrent Gedrag) compliance workflows. The codebase already has a proven email sending pattern via `RONDO_Email_Channel` that uses `wp_mail()` with configurable from addresses. VOG settings should be stored as site-wide options (not user meta) since they're organization-level configuration shared by all admins.
 
 The approach follows established patterns: use WordPress Options API for settings storage, add a new Settings tab for VOG configuration, create ACF fields for tracking email-sent dates per person, and build a dedicated VOG email service class for template handling and sending.
 
@@ -75,7 +75,7 @@ $template_new = get_option( 'stadion_vog_template_new', '' );
 **Example:**
 ```php
 // Source: includes/class-email-channel.php lines 82-94
-class STADION_VOG_Email {
+class RONDO_VOG_Email {
     private string $from_email;
 
     public function send( int $person_id, string $template_type ): bool {
@@ -190,7 +190,7 @@ Verified patterns from the existing codebase:
 ```php
 // Source: includes/class-rest-api.php pattern
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/vog/settings',
     [
         [
@@ -235,12 +235,12 @@ export const prmApi = {
   // ... existing methods ...
 
   // VOG Settings
-  getVOGSettings: () => apiClient.get('/stadion/v1/vog/settings'),
-  updateVOGSettings: (settings) => apiClient.post('/stadion/v1/vog/settings', settings),
+  getVOGSettings: () => apiClient.get('/rondo/v1/vog/settings'),
+  updateVOGSettings: (settings) => apiClient.post('/rondo/v1/vog/settings', settings),
 
   // VOG Email sending (for Phase 121)
   sendVOGEmail: (personIds, templateType) =>
-    apiClient.post('/stadion/v1/vog/send', { person_ids: personIds, template_type: templateType }),
+    apiClient.post('/rondo/v1/vog/send', { person_ids: personIds, template_type: templateType }),
 };
 ```
 

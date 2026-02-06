@@ -6,7 +6,7 @@
 
 ## Summary
 
-Research into implementing a column customization UI for the People list, allowing users to show/hide columns, reorder via drag-and-drop, and adjust column widths. The backend API from Phase 114 already exists at `/stadion/v1/user/list-preferences`.
+Research into implementing a column customization UI for the People list, allowing users to show/hide columns, reorder via drag-and-drop, and adjust column widths. The backend API from Phase 114 already exists at `/rondo/v1/user/list-preferences`.
 
 Key findings: The codebase already uses dnd-kit extensively (CustomFields.jsx implements drag-to-reorder for field management with the same library). The People list currently renders columns based on a `show_in_list_view` custom field property, which will be replaced by per-user preferences. Standard approaches exist for column resizing using native CSS with minimal JavaScript event handling. TanStack Query optimistic updates provide instant UI feedback while preferences save to the server.
 
@@ -33,8 +33,8 @@ The implementation pattern is straightforward: settings modal (similar to bulk a
 | PointerEvent API | Column resize drag interactions | Capturing mouse/touch drag on column dividers |
 | CSS position: sticky | Fixed name column | Keep first column visible during horizontal scroll |
 | localStorage | Column width persistence | Store widths locally, sync with user_meta on change |
-| useMutation (TanStack) | Preference updates | PATCH to /stadion/v1/user/list-preferences |
-| useQuery (TanStack) | Load preferences | GET from /stadion/v1/user/list-preferences |
+| useMutation (TanStack) | Preference updates | PATCH to /rondo/v1/user/list-preferences |
+| useQuery (TanStack) | Load preferences | GET from /rondo/v1/user/list-preferences |
 
 ### Alternatives Considered
 
@@ -82,7 +82,7 @@ export function useListPreferences() {
   const { data, isLoading } = useQuery({
     queryKey: ['user', 'list-preferences'],
     queryFn: async () => {
-      const response = await prmApi.get('/stadion/v1/user/list-preferences');
+      const response = await prmApi.get('/rondo/v1/user/list-preferences');
       return response.data;
     },
   });
@@ -90,7 +90,7 @@ export function useListPreferences() {
   // PATCH preferences with optimistic update
   const updateMutation = useMutation({
     mutationFn: async (updates) => {
-      return prmApi.patch('/stadion/v1/user/list-preferences', updates);
+      return prmApi.patch('/rondo/v1/user/list-preferences', updates);
     },
     onMutate: async (updates) => {
       // Cancel outgoing refetches
@@ -518,7 +518,7 @@ const { data: preferences } = useQuery({
 **Implementation:**
 ```javascript
 // Backend returns both
-GET /stadion/v1/user/list-preferences
+GET /rondo/v1/user/list-preferences
 {
   "visible_columns": ["team", "labels", "modified"],
   "column_order": ["team", "labels", "telephone", "modified"], // ALL columns

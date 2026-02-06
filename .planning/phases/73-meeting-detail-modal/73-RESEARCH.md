@@ -328,10 +328,10 @@ For meeting notes (MTG-08) and full attendee list (ADD-01), the API needs:
 
 ### 1. Get/Save Meeting Notes
 ```php
-// GET /stadion/v1/calendar/events/{id}/notes
+// GET /rondo/v1/calendar/events/{id}/notes
 // Returns: { notes: "<html content>" }
 
-// PUT /stadion/v1/calendar/events/{id}/notes
+// PUT /rondo/v1/calendar/events/{id}/notes
 // Body: { notes: "<html content>" }
 // Stores in _meeting_notes post meta
 ```

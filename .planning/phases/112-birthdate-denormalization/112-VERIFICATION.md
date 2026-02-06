@@ -113,7 +113,7 @@ score: 7/7 must-haves verified
 **Why human:** Requires cross-referencing filtered results with actual birthday data
 
 **Steps:**
-1. Access production: `https://stadion.svawc.nl/wp-json/stadion/v1/people/filtered?birth_year_from=1985&birth_year_to=1990`
+1. Access production: `https://stadion.svawc.nl/wp-json/rondo/v1/people/filtered?birth_year_from=1985&birth_year_to=1990`
 2. For a sample of returned people, verify their actual birthdate in admin
 3. Confirm all birthdates fall within 1985-1990 range
 4. Confirm people with birthdays outside range are excluded

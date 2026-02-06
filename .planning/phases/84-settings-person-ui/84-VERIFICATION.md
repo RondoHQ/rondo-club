@@ -43,9 +43,9 @@ re_verification: false
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
 | `class-google-contacts-sync.php` | `GoogleContactsConnection::add_sync_history_entry` | Method call after sync completes | WIRED | Line 455: `GoogleContactsConnection::add_sync_history_entry($user_id, $history_entry)` |
-| `Settings.jsx` | `googleContactsStatus.sync_history` | State from API response | WIRED | Line 197: `setGoogleContactsStatus(response.data)` from `/stadion/v1/google-contacts/status` |
+| `Settings.jsx` | `googleContactsStatus.sync_history` | State from API response | WIRED | Line 197: `setGoogleContactsStatus(response.data)` from `/rondo/v1/google-contacts/status` |
 | `PersonDetail.jsx` | `person.google_contact_id` | usePerson hook from REST API | WIRED | Line 270: `usePerson(id)` returns transformed person with spread operator preserving `google_contact_id` |
-| Frontend | Backend | API calls | WIRED | `getGoogleContactsStatus()` -> `/stadion/v1/google-contacts/status`, `getPerson()` -> `/wp/v2/people/{id}` |
+| Frontend | Backend | API calls | WIRED | `getGoogleContactsStatus()` -> `/rondo/v1/google-contacts/status`, `getPerson()` -> `/wp/v2/people/{id}` |
 
 ### Requirements Coverage
 

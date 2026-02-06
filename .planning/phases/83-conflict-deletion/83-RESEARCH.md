@@ -31,7 +31,7 @@ For deletion handling: Stadion deletions propagate to Google via `before_delete_
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
 | Post Meta | Built-in | Store synced field snapshot | Track last-synced values |
-| STADION_Comment_Types | Existing | Activity type constant | Log conflict resolutions |
+| RONDO_Comment_Types | Existing | Activity type constant | Log conflict resolutions |
 
 ### Alternatives Considered
 | Instead of | Could Use | Tradeoff |

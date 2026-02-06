@@ -18,18 +18,18 @@ All class references updated to use PSR-4 namespaced classes, backward compatibi
 - Moved Composer autoloader load to top of file (before any other code)
 - Added 36 use statements for all namespaced classes
 - Updated all class instantiations to use imported short names:
-  - `new STADION_Post_Types()` -> `new PostTypes()`
-  - `new STADION_Reminders()` -> `new Reminders()`
+  - `new RONDO_Post_Types()` -> `new PostTypes()`
+  - `new RONDO_Reminders()` -> `new Reminders()`
   - etc. for all classes
 - Removed manual `stadion_autoloader()` function and `spl_autoload_register()` call
-- Added 38 backward-compatible class aliases mapping STADION_* to namespaced classes
+- Added 38 backward-compatible class aliases mapping RONDO_* to namespaced classes
 - Removed duplicate Composer autoloader load at end of file
 
 ### includes/class-wp-cli.php
 - Added 9 use statements for classes referenced in WP-CLI commands
 - Updated all class instantiations and static method calls:
-  - `new STADION_Reminders()` -> `new Reminders()`
-  - `STADION_Calendar_Sync::force_sync_all()` -> `Sync::force_sync_all()`
+  - `new RONDO_Reminders()` -> `new Reminders()`
+  - `RONDO_Calendar_Sync::force_sync_all()` -> `Sync::force_sync_all()`
   - `\Stadion\Export\VCard::generate()` -> `VCard::generate()`
   - etc.
 
@@ -50,9 +50,9 @@ All class references updated to use PSR-4 namespaced classes, backward compatibi
 
 1. **Composer classmap**: Added because current file structure uses `class-*.php` naming convention rather than PSR-4 `Namespace/ClassName.php` structure. The classmap ensures autoloading works during the transition period.
 
-2. **Class aliases**: The 38 aliases ensure any code using old `STADION_*` class names continues to work. This provides backward compatibility during the migration.
+2. **Class aliases**: The 38 aliases ensure any code using old `RONDO_*` class names continues to work. This provides backward compatibility during the migration.
 
-3. **WP-CLI classes**: The WP-CLI command classes (e.g., `STADION_Reminders_CLI_Command`) remain in the WP-CLI file with their original names since they're not part of the PSR-4 namespace structure.
+3. **WP-CLI classes**: The WP-CLI command classes (e.g., `RONDO_Reminders_CLI_Command`) remain in the WP-CLI file with their original names since they're not part of the PSR-4 namespace structure.
 
 4. **Import aliases**: Used for classes that appear in multiple namespaces:
    - `Stadion\Import\VCard` as `VCardImport`

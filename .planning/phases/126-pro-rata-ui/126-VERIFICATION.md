@@ -39,15 +39,15 @@ score: 8/8 must-haves verified
 | `includes/class-rest-api.php` | Fee list REST endpoint | ✓ VERIFIED | Contains `/fees` route registration (line 657) and `get_fee_list()` callback (line 2554) with mismatch detection and filter support |
 | `src/components/layout/Layout.jsx` | Navigation entry for Contributie | ✓ VERIFIED | Line 49: Contributie nav entry with Coins icon, positioned correctly |
 | `src/App.jsx` | Route for /contributie | ✓ VERIFIED | Line 30: Lazy import; Line 203: Route definition |
-| `src/api/client.js` | getFeeList API method | ✓ VERIFIED | Line 301: `getFeeList: (params = {}) => api.get('/stadion/v1/fees', { params })` |
+| `src/api/client.js` | getFeeList API method | ✓ VERIFIED | Line 301: `getFeeList: (params = {}) => api.get('/rondo/v1/fees', { params })` |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|----|----|--------|---------|
-| ContributieList.jsx | /stadion/v1/fees | useFeeList hook | ✓ WIRED | Line 173: `useFeeList({ filter: addressFilter })` calls hook which fetches from REST endpoint |
+| ContributieList.jsx | /rondo/v1/fees | useFeeList hook | ✓ WIRED | Line 173: `useFeeList({ filter: addressFilter })` calls hook which fetches from REST endpoint |
 | useFeeList | prmApi.getFeeList | API client | ✓ WIRED | useFees.js line 22: `await prmApi.getFeeList(params)` |
-| prmApi.getFeeList | /stadion/v1/fees | axios GET | ✓ WIRED | client.js line 301: `api.get('/stadion/v1/fees', { params })` |
+| prmApi.getFeeList | /rondo/v1/fees | axios GET | ✓ WIRED | client.js line 301: `api.get('/rondo/v1/fees', { params })` |
 | REST endpoint | MembershipFees->calculate_full_fee | PHP method call | ✓ WIRED | class-rest-api.php line 2581: `$fees->calculate_full_fee($person->ID, $registration_date, $season)` |
 | calculate_full_fee | calculate_fee_with_family_discount | Method call | ✓ WIRED | class-membership-fees.php line 816: `$this->calculate_fee_with_family_discount($person_id, $season)` |
 | calculate_full_fee | get_prorata_percentage | Method call | ✓ WIRED | class-membership-fees.php line 823: `$this->get_prorata_percentage($registration_date)` |

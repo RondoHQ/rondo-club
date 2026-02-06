@@ -45,7 +45,7 @@ metrics:
 - **FAIRPLAY_CAPABILITY constant** in UserRoles class defining capability name
 - **Capability registration** adds `fairplay` to administrator role on theme activation
 - **Capability cleanup** removes `fairplay` from administrator role on theme deactivation
-- **REST API exposure** adds `can_access_fairplay` boolean to `/stadion/v1/user/me` endpoint
+- **REST API exposure** adds `can_access_fairplay` boolean to `/rondo/v1/user/me` endpoint
 
 ### Frontend Access Control
 - **FairplayRoute component** wraps protected routes with access denied page
@@ -150,7 +150,7 @@ None - plan executed exactly as written.
 - Capability will be removed on theme deactivation
 
 ✅ **REST API**
-- `/stadion/v1/user/me` returns `can_access_fairplay: true` for admins
+- `/rondo/v1/user/me` returns `can_access_fairplay: true` for admins
 - Non-admin users would receive `can_access_fairplay: false`
 
 ✅ **Route Protection**

@@ -51,7 +51,7 @@ completed: 2026-01-19
 - **Files modified:** 2
 
 ## Accomplishments
-- New GET `/stadion/v1/custom-fields/{post_type}/metadata` endpoint for non-admin users
+- New GET `/rondo/v1/custom-fields/{post_type}/metadata` endpoint for non-admin users
 - Returns only display-relevant properties: key, name, label, type, instructions, plus type-specific options (choices, ui_on_text/ui_off_text, display_format, return_format, post_type, prepend, append)
 - API client method `prmApi.getCustomFieldsMetadata(postType)` for frontend consumption
 - Admin CRUD endpoints remain unchanged with `manage_options` requirement

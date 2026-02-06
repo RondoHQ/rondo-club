@@ -24,7 +24,7 @@ Update PHPUnit tests to cover the new todo CPT system, verify dashboard integrat
   - Completion filter (excludes/includes completed)
 - Updated `SearchDashboardTest.php` to use CPT-based todos:
   - Changed `createTodo()` helper to create `stadion_todo` posts instead of comments
-  - Added `STADION_REST_Todos` instantiation for route registration
+  - Added `RONDO_REST_Todos` instantiation for route registration
 
 ### Task 3: Run full test suite and verify no regressions
 - **Status:** Completed
@@ -33,7 +33,7 @@ Update PHPUnit tests to cover the new todo CPT system, verify dashboard integrat
 
 ## Key Decisions
 
-1. **Keep existing tests in SearchDashboardTest.php** - Rather than removing the todo tests from SearchDashboardTest.php, we updated them to work with the new CPT system. This maintains test coverage for the `/stadion/v1/todos` endpoint from multiple test classes.
+1. **Keep existing tests in SearchDashboardTest.php** - Rather than removing the todo tests from SearchDashboardTest.php, we updated them to work with the new CPT system. This maintains test coverage for the `/rondo/v1/todos` endpoint from multiple test classes.
 
 2. **Create dedicated TodoCptTest.php** - Added comprehensive tests specifically for the todo CPT in a new test class for clearer team.
 

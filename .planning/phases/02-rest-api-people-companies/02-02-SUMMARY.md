@@ -7,7 +7,7 @@ tags: [rest-api, php, wordpress, inheritance, refactoring]
 # Dependency graph
 requires: [01-rest-api-infrastructure, 02-01-people-endpoints]
 provides:
-  - STADION_REST_Teams class with team-specific REST endpoints
+  - RONDO_REST_Teams class with team-specific REST endpoints
   - Extracted routes: /teams/{id}/people, /teams/{id}/logo, /teams/{id}/logo/upload
   - Complete separation of team domain from monolithic REST API class
 affects: [03-rest-api-integrations]
@@ -22,12 +22,12 @@ key-files:
   modified: [includes/class-rest-api.php, functions.php]
 
 key-decisions:
-  - "STADION_REST_Teams extends STADION_REST_Base for shared permission and formatting methods"
+  - "RONDO_REST_Teams extends RONDO_REST_Base for shared permission and formatting methods"
   - "Registers routes in constructor via rest_api_init hook following established pattern"
-  - "Instantiated after STADION_REST_People in stadion_init() to maintain route registration order"
+  - "Instantiated after RONDO_REST_People in rondo_init() to maintain route registration order"
 
 patterns-established:
-  - "Domain-specific REST classes: extend STADION_REST_Base, register routes via rest_api_init"
+  - "Domain-specific REST classes: extend RONDO_REST_Base, register routes via rest_api_init"
 
 issues-created: []
 
@@ -38,7 +38,7 @@ completed: 2026-01-13
 
 # Phase 2: REST API People & Teams - Plan 02 Summary
 
-**Extract team-related REST API endpoints into dedicated STADION_REST_Teams class**
+**Extract team-related REST API endpoints into dedicated RONDO_REST_Teams class**
 
 ## Performance
 
@@ -50,7 +50,7 @@ completed: 2026-01-13
 
 ## Accomplishments
 
-- Created STADION_REST_Teams class extending STADION_REST_Base with 3 team-specific methods
+- Created RONDO_REST_Teams class extending RONDO_REST_Base with 3 team-specific methods
 - Registered 3 REST routes: /teams/{id}/people, /teams/{id}/logo, /teams/{id}/logo/upload
 - Removed ~247 lines from class-rest-api.php, added 282-line dedicated class
 - Phase 2 (People & Teams extraction) is now complete
@@ -59,8 +59,8 @@ completed: 2026-01-13
 
 Each task was committed atomically:
 
-1. **Task 1: Create STADION_REST_Teams class with routes and methods** - `bdb5061` (feat)
-2. **Task 2: Remove team methods from STADION_REST_API and update autoloader** - `ddea1cc` (refactor)
+1. **Task 1: Create RONDO_REST_Teams class with routes and methods** - `bdb5061` (feat)
+2. **Task 2: Remove team methods from RONDO_REST_API and update autoloader** - `ddea1cc` (refactor)
 
 ## Files Created/Modified
 
@@ -70,8 +70,8 @@ Each task was committed atomically:
 
 ## Decisions Made
 
-- Used STADION_REST_Base permission method (check_team_edit_permission) as callback for logo endpoints
-- Used STADION_REST_Base formatting method (format_person_summary) for employee list response
+- Used RONDO_REST_Base permission method (check_team_edit_permission) as callback for logo endpoints
+- Used RONDO_REST_Base formatting method (format_person_summary) for employee list response
 - Public endpoint for /teams/{id}/people maintained (per existing code) with internal access control
 
 ## Deviations from Plan
@@ -85,8 +85,8 @@ None.
 ## Phase 2 Completion
 
 Phase 2 (REST API People & Teams) is now complete:
-- Plan 02-01: People endpoints extracted to STADION_REST_People
-- Plan 02-02: Team endpoints extracted to STADION_REST_Teams
+- Plan 02-01: People endpoints extracted to RONDO_REST_People
+- Plan 02-02: Team endpoints extracted to RONDO_REST_Teams
 
 The monolithic class-rest-api.php has been reduced by approximately 600 lines across both plans. The domain-specific REST class pattern is fully established and ready for Phase 3 (Integrations extraction).
 

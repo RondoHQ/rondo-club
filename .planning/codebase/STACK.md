@@ -70,9 +70,9 @@
 
 **Environment:**
 - WordPress constants for Slack integration:
-  - `STADION_SLACK_CLIENT_ID`
-  - `STADION_SLACK_CLIENT_SECRET`
-  - `STADION_SLACK_SIGNING_SECRET`
+  - `RONDO_SLACK_CLIENT_ID`
+  - `RONDO_SLACK_CLIENT_SECRET`
+  - `RONDO_SLACK_SIGNING_SECRET`
 - Runtime config passed via `window.stadionConfig` object
 
 **Build:**

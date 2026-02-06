@@ -37,7 +37,7 @@ Plans:
 **Dependencies:** Phase 1
 
 **Requirements:**
-- FEED-04: REST API endpoints (CRUD) under `stadion/v1/feedback`
+- FEED-04: REST API endpoints (CRUD) under `rondo/v1/feedback`
 - FEED-05: Application password authentication support
 - FEED-06: Permission model (own feedback + admin access to all)
 
@@ -47,8 +47,8 @@ Plans:
 - [x] 96-01-PLAN.md — Create Feedback REST API with CRUD endpoints and permissions
 
 **Success Criteria:**
-1. User can create feedback via `POST /wp-json/stadion/v1/feedback` with application password auth
-2. User can list their own feedback via `GET /wp-json/stadion/v1/feedback`
+1. User can create feedback via `POST /wp-json/rondo/v1/feedback` with application password auth
+2. User can list their own feedback via `GET /wp-json/rondo/v1/feedback`
 3. User can update/delete their own feedback via PATCH/DELETE endpoints
 4. Admin can list, update, and delete any feedback
 5. API returns proper error codes for unauthorized access attempts

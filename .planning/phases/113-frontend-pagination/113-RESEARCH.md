@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase implements traditional pagination controls for the People list, switching from client-side "load all then filter" to server-side paginated queries using the `/stadion/v1/people/filtered` endpoint built in Phase 111. The frontend will use `useQuery` (not `useInfiniteQuery`) since we're implementing traditional pagination with page numbers, not infinite scroll.
+This phase implements traditional pagination controls for the People list, switching from client-side "load all then filter" to server-side paginated queries using the `/rondo/v1/people/filtered` endpoint built in Phase 111. The frontend will use `useQuery` (not `useInfiniteQuery`) since we're implementing traditional pagination with page numbers, not infinite scroll.
 
 Key challenges:
 1. Integrating pagination with existing filter UI (labels, ownership, modified date, birth year)
@@ -541,7 +541,7 @@ export function useFilteredPeople(filters = {}) {
 ## Integration Points
 
 ### Backend Integration
-- **Endpoint:** `/stadion/v1/people/filtered` (implemented in Phase 111)
+- **Endpoint:** `/rondo/v1/people/filtered` (implemented in Phase 111)
 - **Additional work needed:** Add custom field sorting support (DATA-09)
 - **Custom Fields Manager:** Use `\Stadion\CustomFields\Manager` to validate sortable fields
 
@@ -668,7 +668,7 @@ const sortableFields = customFields?.filter(f =>
 ## Implementation Checklist
 
 ### Backend (Custom Field Sorting)
-- [ ] Update `/stadion/v1/people/filtered` route args to accept `custom_<field_name>` in orderby
+- [ ] Update `/rondo/v1/people/filtered` route args to accept `custom_<field_name>` in orderby
 - [ ] Validate custom field exists and is active using CustomFields Manager
 - [ ] Restrict sortable types to: text, textarea, number, date, select
 - [ ] Add conditional JOIN for custom field meta when orderby starts with 'custom_'

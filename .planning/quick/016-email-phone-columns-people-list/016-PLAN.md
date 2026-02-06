@@ -51,7 +51,7 @@ Output: Email and phone columns available in column settings, displaying first m
        ```
   </action>
   <verify>
-    Check /wp-json/stadion/v1/user/list-preferences endpoint returns email and phone in available_columns array.
+    Check /wp-json/rondo/v1/user/list-preferences endpoint returns email and phone in available_columns array.
   </verify>
   <done>
     Email and phone columns appear in available_columns with correct labels and type.
@@ -151,7 +151,7 @@ Output: Email and phone columns available in column settings, displaying first m
 </tasks>
 
 <verification>
-1. Backend: GET /wp-json/stadion/v1/user/list-preferences returns email and phone in available_columns
+1. Backend: GET /wp-json/rondo/v1/user/list-preferences returns email and phone in available_columns
 2. Frontend: Column settings modal shows E-mail and Telefoon options
 3. Frontend: Enabling columns displays correct contact values with clickable links
 4. Frontend: Missing contact info shows '-' placeholder
