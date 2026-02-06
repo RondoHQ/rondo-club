@@ -35,8 +35,9 @@ Recent decisions from v17.0:
 
 ### Pending Todos
 
-1 todo(s) in `.planning/todos/pending/`:
+2 todo(s) in `.planning/todos/pending/`:
 - **public-vog-upload-and-validation**: Public VOG Upload and Validation (area: api)
+- **soft-delete-inactive-members**: Soft-delete inactive members instead of hard delete (area: data-model)
 
 ### Blockers/Concerns
 
