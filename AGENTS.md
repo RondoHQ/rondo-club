@@ -4,7 +4,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 ## Project Overview
 
-**Stadion** is a React-powered WordPress theme for sports team management. This theme provides a modern, single-page application interface for managing people, teams (synced from Sportlink), and important dates.
+**Rondo Club** is a React-powered WordPress theme for sports team management. This theme provides a modern, single-page application interface for managing people, teams (synced from Sportlink), and important dates.
 
 **Tech Stack:**
 - Backend: WordPress 6.0+, PHP 8.0+, ACF Pro (required)
@@ -42,16 +42,16 @@ Entry point: `functions.php`
 - Registers activation/deactivation hooks for rewrites and cron via theme activation hooks
 
 **Key classes:**
-- `STADION_Post_Types` - Registers Person, Team, Important Date CPTs
-- `STADION_Taxonomies` - Registers labels and relationship types
-- `STADION_Auto_Title` - Auto-generates post titles
-- `STADION_Access_Control` - Row-level user data filtering at query and REST levels
-- `STADION_User_Roles` - Registers custom "Stadion User" role with minimal permissions
-- `STADION_REST_API` - Custom `/stadion/v1/` endpoints (dashboard, search, timeline, reminders)
-- `STADION_Comment_Types` - Notes and Activities system using comments
-- `STADION_Reminders` - Daily digest reminder system with email notifications
-- `STADION_Notification_Channel` - Abstract base class for notification channels
-- `STADION_Email_Channel` - Email notification implementation
+- `Rondo\Core\PostTypes` - Registers Person, Team, Important Date CPTs
+- `Rondo\Core\Taxonomies` - Registers labels and relationship types
+- `Rondo\Core\AutoTitle` - Auto-generates post titles
+- `Rondo\Core\AccessControl` - Row-level user data filtering at query and REST levels
+- `Rondo\Core\UserRoles` - Registers custom "Rondo User" role with minimal permissions
+- `Rondo\REST\Api` - Custom `/rondo/v1/` endpoints (dashboard, search, timeline, reminders)
+- `Rondo\Collaboration\CommentTypes` - Notes and Activities system using comments
+- `Rondo\Core\Reminders` - Daily digest reminder system with email notifications
+- `Rondo\Notifications\Channel` - Abstract base class for notification channels
+- `Rondo\Notifications\EmailChannel` - Email notification implementation
 
 **ACF field groups** are stored as JSON in `acf-json/` for version control.
 
@@ -72,7 +72,7 @@ Entry point: `src/main.jsx`
 
 **API client uses two namespaces:**
 - `/wp/v2/` - Standard WordPress REST (people, teams, important-dates)
-- `/stadion/v1/` - Custom endpoints (dashboard, search, timeline)
+- `/rondo/v1/` - Custom endpoints (dashboard, search, timeline)
 
 ## Data Model
 
@@ -95,7 +95,7 @@ Entry point: `src/main.jsx`
 
 ## User Roles
 
-- **Stadion User** - Custom role created automatically on theme activation
+- **Rondo User** - Custom role created automatically on theme activation
   - Minimal permissions: can create/edit/delete their own people and teams, upload files
   - Cannot access WordPress admin settings, manage other users, or install plugins/themes
   - Role is automatically removed on theme deactivation (users reassigned to Subscriber)
@@ -125,7 +125,7 @@ This is a single repository containing both backend (PHP) and frontend (React) c
 
 **Adding ACF fields:** Edit in WordPress admin when `WP_DEBUG` is true; changes auto-save to `acf-json/`
 
-**Adding REST endpoints:** Extend `STADION_REST_API` class in `includes/class-rest-api.php`
+**Adding REST endpoints:** Extend `Rondo\REST\Api` class in `includes/class-rest-api.php`
 
 **Adding React pages:** Create component in `src/pages/`, add route in `src/App.jsx`
 

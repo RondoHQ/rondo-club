@@ -1,7 +1,7 @@
 <!-- Member administration CRM for sports clubs, built as a WordPress theme with React SPA frontend -->
-# Stadion
+# Rondo Club
 
-A member administration CRM for sports clubs, built as a React-powered WordPress theme. Tracks contacts, team and committee roles, volunteer status, and VOG compliance — with [Sportlink sync](https://github.com/jdevalk/sportlink-sync), calendar integration, and multi-user support.
+A member administration CRM for sports clubs, built as a React-powered WordPress theme. Tracks contacts, team and committee roles, volunteer status, and VOG compliance — with [Rondo Sync](https://github.com/jdevalk/sportlink-sync), calendar integration, and multi-user support.
 ## Requirements
 
 - WordPress 6.0+
@@ -37,13 +37,13 @@ npm run build
 
 ## Configuration
 
-Stadion uses PHP constants defined in `wp-config.php` for configuration. This is the standard WordPress approach and ensures settings are secure and environment-specific.
+Rondo Club uses PHP constants defined in `wp-config.php` for configuration. This is the standard WordPress approach and ensures settings are secure and environment-specific.
 
 ### Quick Setup with WP-CLI
 
 ```bash
 # Required: Generate and set encryption key
-wp config set STADION_ENCRYPTION_KEY "$(php -r 'echo bin2hex(random_bytes(16));')" --type=constant
+wp config set RONDO_ENCRYPTION_KEY "$(php -r 'echo bin2hex(random_bytes(16));')" --type=constant
 
 # Optional: Google integration (Calendar + Contacts)
 wp config set GOOGLE_OAUTH_CLIENT_ID 'your-client-id.apps.googleusercontent.com' --type=constant
@@ -54,7 +54,7 @@ wp config set GOOGLE_OAUTH_CLIENT_SECRET 'your-client-secret' --type=constant
 
 | Constant | Purpose | Required | Generation/Source |
 |----------|---------|----------|-------------------|
-| `STADION_ENCRYPTION_KEY` | Encryption for OAuth tokens | Yes | `php -r "echo bin2hex(random_bytes(16));"` |
+| `RONDO_ENCRYPTION_KEY` | Encryption for OAuth tokens | Yes | `php -r "echo bin2hex(random_bytes(16));"` |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID (Calendar + Contacts) | Optional | Google Cloud Console |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret | Optional | Google Cloud Console |
 
@@ -69,7 +69,7 @@ php -r "echo bin2hex(random_bytes(16));"
 Add to `wp-config.php`:
 
 ```php
-define('STADION_ENCRYPTION_KEY', 'your-generated-32-byte-key-here');
+define('RONDO_ENCRYPTION_KEY', 'your-generated-32-byte-key-here');
 ```
 
 ### Google Integration (Optional)
@@ -88,8 +88,8 @@ Google OAuth credentials are shared between Calendar sync and Contacts sync.
 5. Create **OAuth 2.0 credentials** (APIs & Services > Credentials)
    - Application type: Web application
    - Authorized redirect URIs:
-     - `https://your-domain.com/wp-json/stadion/v1/calendar/auth/google/callback`
-     - `https://your-domain.com/wp-json/stadion/v1/contacts/auth/google/callback`
+     - `https://your-domain.com/wp-json/rondo/v1/calendar/auth/google/callback`
+     - `https://your-domain.com/wp-json/rondo/v1/contacts/auth/google/callback`
 
 ```php
 define('GOOGLE_OAUTH_CLIENT_ID', 'your-client-id.apps.googleusercontent.com');
@@ -111,11 +111,11 @@ Supported providers:
 ### Example wp-config.php
 
 ```php
-// Stadion Configuration
+// Rondo Club Configuration
 // ====================
 
 // Required: Encryption key (32 bytes)
-define('STADION_ENCRYPTION_KEY', 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4');
+define('RONDO_ENCRYPTION_KEY', 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4');
 
 // Optional: Google Integration (Calendar + Contacts)
 define('GOOGLE_OAUTH_CLIENT_ID', '123456789-abc123def456.apps.googleusercontent.com');
@@ -190,13 +190,13 @@ This generates:
 ### WordPress Integration
 
 The theme automatically:
-- Passes WordPress configuration to React via `window.stadionConfig`
+- Passes WordPress configuration to React via `window.rondoConfig`
 - Handles authentication state
 - Sets up REST API nonces for secure requests
 
 Configuration available in React:
 ```javascript
-window.stadionConfig = {
+window.rondoConfig = {
   apiUrl: '/wp-json/',
   nonce: 'abc123...',
   siteUrl: 'https://example.com',
@@ -231,7 +231,7 @@ The theme uses two API namespaces:
 - Built-in WordPress authentication
 - ACF fields included in responses
 
-### Custom PRM API (`/stadion/v1/`)
+### Custom PRM API (`/rondo/v1/`)
 - Dashboard summary
 - Timeline (notes + activities)
 - Global search

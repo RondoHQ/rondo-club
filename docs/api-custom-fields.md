@@ -6,7 +6,7 @@ This document describes how to use the Stadion REST API to manage custom field d
 
 All endpoints are relative to your WordPress installation:
 ```
-https://your-site.com/wp-json/stadion/v1/
+https://your-site.com/wp-json/rondo/v1/
 ```
 
 ## Authentication & Permissions
@@ -16,7 +16,7 @@ https://your-site.com/wp-json/stadion/v1/
 Admin endpoints require the `manage_options` capability (WordPress administrator role). Use HTTP Basic Authentication with a WordPress Application Password:
 
 ```bash
-curl -X GET "https://your-site.com/wp-json/stadion/v1/custom-fields/person" \
+curl -X GET "https://your-site.com/wp-json/rondo/v1/custom-fields/person" \
   -u "admin:xxxx xxxx xxxx xxxx xxxx xxxx"
 ```
 
@@ -25,7 +25,7 @@ curl -X GET "https://your-site.com/wp-json/stadion/v1/custom-fields/person" \
 The `/metadata` endpoint is available to any logged-in user and provides read-only access to field definitions for display purposes.
 
 ```bash
-curl -X GET "https://your-site.com/wp-json/stadion/v1/custom-fields/person/metadata" \
+curl -X GET "https://your-site.com/wp-json/rondo/v1/custom-fields/person/metadata" \
   -H "X-WP-Nonce: {nonce}"
 ```
 
@@ -184,7 +184,7 @@ curl -X GET "https://your-site.com/wp-json/stadion/v1/custom-fields/person/metad
 
 **Request:**
 ```http
-POST /stadion/v1/custom-fields/person
+POST /rondo/v1/custom-fields/person
 Content-Type: application/json
 Authorization: Basic {credentials}
 ```
@@ -252,7 +252,7 @@ Authorization: Basic {credentials}
 
 **Request:**
 ```http
-GET /stadion/v1/custom-fields/person/linkedin_url
+GET /rondo/v1/custom-fields/person/linkedin_url
 Authorization: Basic {credentials}
 ```
 
@@ -278,7 +278,7 @@ Authorization: Basic {credentials}
 
 **Request:**
 ```http
-PUT /stadion/v1/custom-fields/person/linkedin_url
+PUT /rondo/v1/custom-fields/person/linkedin_url
 Content-Type: application/json
 Authorization: Basic {credentials}
 ```
@@ -303,7 +303,7 @@ Returns the full updated field object.
 
 **Request:**
 ```http
-GET /stadion/v1/custom-fields/person
+GET /rondo/v1/custom-fields/person
 Authorization: Basic {credentials}
 ```
 
@@ -345,7 +345,7 @@ Authorization: Basic {credentials}
 
 **Request:**
 ```http
-DELETE /stadion/v1/custom-fields/person/linkedin_url
+DELETE /rondo/v1/custom-fields/person/linkedin_url
 Authorization: Basic {credentials}
 ```
 
@@ -369,7 +369,7 @@ Authorization: Basic {credentials}
 
 **Request:**
 ```http
-PUT /stadion/v1/custom-fields/person/order
+PUT /rondo/v1/custom-fields/person/order
 Content-Type: application/json
 Authorization: Basic {credentials}
 ```
@@ -396,7 +396,7 @@ This read-only endpoint is available to any logged-in user. It returns only the 
 
 **Request:**
 ```http
-GET /stadion/v1/custom-fields/person/metadata
+GET /rondo/v1/custom-fields/person/metadata
 X-WP-Nonce: {nonce}
 ```
 
@@ -522,7 +522,7 @@ console.log('Created field:', field.name);
 
 ```bash
 # Create a text field
-curl -X POST "https://your-site.com/wp-json/stadion/v1/custom-fields/person" \
+curl -X POST "https://your-site.com/wp-json/rondo/v1/custom-fields/person" \
   -u "admin:xxxx xxxx xxxx xxxx xxxx xxxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -533,7 +533,7 @@ curl -X POST "https://your-site.com/wp-json/stadion/v1/custom-fields/person" \
   }'
 
 # Create a select field
-curl -X POST "https://your-site.com/wp-json/stadion/v1/custom-fields/team" \
+curl -X POST "https://your-site.com/wp-json/rondo/v1/custom-fields/team" \
   -u "admin:xxxx xxxx xxxx xxxx xxxx xxxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -547,7 +547,7 @@ curl -X POST "https://your-site.com/wp-json/stadion/v1/custom-fields/team" \
   }'
 
 # Update a field
-curl -X PUT "https://your-site.com/wp-json/stadion/v1/custom-fields/person/employee_id" \
+curl -X PUT "https://your-site.com/wp-json/rondo/v1/custom-fields/person/employee_id" \
   -u "admin:xxxx xxxx xxxx xxxx xxxx xxxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -555,11 +555,11 @@ curl -X PUT "https://your-site.com/wp-json/stadion/v1/custom-fields/person/emplo
   }'
 
 # Delete (deactivate) a field
-curl -X DELETE "https://your-site.com/wp-json/stadion/v1/custom-fields/person/employee_id" \
+curl -X DELETE "https://your-site.com/wp-json/rondo/v1/custom-fields/person/employee_id" \
   -u "admin:xxxx xxxx xxxx xxxx xxxx xxxx"
 
 # Get field metadata (any logged-in user)
-curl -X GET "https://your-site.com/wp-json/stadion/v1/custom-fields/person/metadata" \
+curl -X GET "https://your-site.com/wp-json/rondo/v1/custom-fields/person/metadata" \
   -H "X-WP-Nonce: {nonce}"
 ```
 

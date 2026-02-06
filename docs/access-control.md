@@ -88,7 +88,7 @@ $query = new WP_Query([
 
 ## User Roles
 
-Stadion creates a custom user role called **"Stadion User"** (`stadion_user`) on theme activation.
+Stadion creates a custom user role called **"Rondo User"** (`stadion_user`) on theme activation.
 
 **Capabilities:**
 
@@ -100,7 +100,7 @@ Stadion creates a custom user role called **"Stadion User"** (`stadion_user`) on
 - `delete_published_posts` - Delete published posts
 - `upload_files` - Upload files (photos, logos)
 
-**What Stadion Users cannot do:**
+**What Rondo Users cannot do:**
 
 - Manage other users
 - Access WordPress admin settings

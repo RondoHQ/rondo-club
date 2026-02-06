@@ -57,12 +57,12 @@ The nonce is available in `window.stadionConfig.nonce` when logged in to Stadion
 | `POST` | `/wp/v2/teams` | Create new team |
 | `PUT` | `/wp/v2/teams/{id}` | Update team |
 | `DELETE` | `/wp/v2/teams/{id}` | Delete team |
-| `POST` | `/stadion/v1/teams/{id}/logo/upload` | Upload team logo |
-| `POST` | `/stadion/v1/teams/{id}/logo` | Set logo from media library |
-| `GET` | `/stadion/v1/teams/{id}/people` | Get people associated with team |
-| `GET` | `/stadion/v1/teams/{id}/shares` | Get users team is shared with |
-| `POST` | `/stadion/v1/teams/{id}/shares` | Share team with user |
-| `DELETE` | `/stadion/v1/teams/{id}/shares/{user_id}` | Remove share |
+| `POST` | `/rondo/v1/teams/{id}/logo/upload` | Upload team logo |
+| `POST` | `/rondo/v1/teams/{id}/logo` | Set logo from media library |
+| `GET` | `/rondo/v1/teams/{id}/people` | Get people associated with team |
+| `GET` | `/rondo/v1/teams/{id}/shares` | Get users team is shared with |
+| `POST` | `/rondo/v1/teams/{id}/shares` | Share team with user |
+| `DELETE` | `/rondo/v1/teams/{id}/shares/{user_id}` | Remove share |
 
 ---
 
@@ -296,7 +296,7 @@ Upload and set a team's logo. The filename is automatically generated from the t
 
 **Request:**
 ```http
-POST /stadion/v1/teams/789/logo/upload
+POST /rondo/v1/teams/789/logo/upload
 Content-Type: multipart/form-data
 X-WP-Nonce: {nonce}
 ```
@@ -323,7 +323,7 @@ Set a team's logo from an existing media library item.
 
 **Request:**
 ```http
-POST /stadion/v1/teams/789/logo
+POST /rondo/v1/teams/789/logo
 Content-Type: application/json
 X-WP-Nonce: {nonce}
 ```
@@ -353,7 +353,7 @@ Get all people who work or worked at a team.
 
 **Request:**
 ```http
-GET /stadion/v1/teams/789/people
+GET /rondo/v1/teams/789/people
 X-WP-Nonce: {nonce}
 ```
 
@@ -391,7 +391,7 @@ X-WP-Nonce: {nonce}
 
 **Request:**
 ```http
-GET /stadion/v1/teams/789/shares
+GET /rondo/v1/teams/789/shares
 X-WP-Nonce: {nonce}
 ```
 
@@ -414,7 +414,7 @@ X-WP-Nonce: {nonce}
 
 **Request:**
 ```http
-POST /stadion/v1/teams/789/shares
+POST /rondo/v1/teams/789/shares
 Content-Type: application/json
 X-WP-Nonce: {nonce}
 ```
@@ -445,7 +445,7 @@ X-WP-Nonce: {nonce}
 
 **Request:**
 ```http
-DELETE /stadion/v1/teams/789/shares/5
+DELETE /rondo/v1/teams/789/shares/5
 X-WP-Nonce: {nonce}
 ```
 
@@ -553,7 +553,7 @@ async function uploadTeamLogo(teamId, file) {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(`${API_BASE}/stadion/v1/teams/${teamId}/logo/upload`, {
+  const response = await fetch(`${API_BASE}/rondo/v1/teams/${teamId}/logo/upload`, {
     method: 'POST',
     headers: {
       'X-WP-Nonce': nonce,
@@ -571,7 +571,7 @@ async function uploadTeamLogo(teamId, file) {
 
 // Get people by team
 async function getPeopleByTeam(teamId) {
-  const response = await fetch(`${API_BASE}/stadion/v1/teams/${teamId}/people`, {
+  const response = await fetch(`${API_BASE}/rondo/v1/teams/${teamId}/people`, {
     headers: {
       'X-WP-Nonce': nonce,
     },
@@ -680,11 +680,11 @@ curl -X PUT "https://your-site.com/wp-json/wp/v2/teams/789" \
   }'
 
 # Get people by team
-curl -X GET "https://your-site.com/wp-json/stadion/v1/teams/789/people" \
+curl -X GET "https://your-site.com/wp-json/rondo/v1/teams/789/people" \
   -u "username:xxxx xxxx xxxx xxxx xxxx xxxx"
 
 # Upload team logo
-curl -X POST "https://your-site.com/wp-json/stadion/v1/teams/789/logo/upload" \
+curl -X POST "https://your-site.com/wp-json/rondo/v1/teams/789/logo/upload" \
   -u "username:xxxx xxxx xxxx xxxx xxxx xxxx" \
   -F "file=@logo.png"
 

@@ -62,7 +62,7 @@ The system will:
 
 ## API Endpoints
 
-### GET `/stadion/v1/membership-fees/settings`
+### GET `/rondo/v1/membership-fees/settings`
 
 Returns settings for both current and next season.
 
@@ -94,7 +94,7 @@ Returns settings for both current and next season.
 }
 ```
 
-### POST `/stadion/v1/membership-fees/settings`
+### POST `/rondo/v1/membership-fees/settings`
 
 Updates settings for a specific season.
 

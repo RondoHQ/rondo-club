@@ -4,7 +4,7 @@ This document describes how to retrieve the list of volunteers who need a new or
 
 ## Endpoint
 
-**GET** `/stadion/v1/people/filtered`
+**GET** `/rondo/v1/people/filtered`
 
 **Permission:** Approved users only (`check_user_approved`)
 
@@ -23,7 +23,7 @@ To retrieve exactly the people shown on the VOG tab, use these parameters:
 ### Example Request
 
 ```
-GET /wp-json/stadion/v1/people/filtered?huidig_vrijwilliger=1&vog_missing=1&vog_older_than_years=3&per_page=100&page=1
+GET /wp-json/rondo/v1/people/filtered?huidig_vrijwilliger=1&vog_missing=1&vog_older_than_years=3&per_page=100&page=1
 ```
 
 The combination of `vog_missing=1` and `vog_older_than_years=3` creates an OR condition:
@@ -96,19 +96,19 @@ These additional filters narrow down the VOG list:
 ### Example: Only New Volunteers Needing VOG
 
 ```
-GET /wp-json/stadion/v1/people/filtered?huidig_vrijwilliger=1&vog_type=nieuw&per_page=100
+GET /wp-json/rondo/v1/people/filtered?huidig_vrijwilliger=1&vog_type=nieuw&per_page=100
 ```
 
 ### Example: Only VOG Renewals
 
 ```
-GET /wp-json/stadion/v1/people/filtered?huidig_vrijwilliger=1&vog_type=vernieuwing&vog_older_than_years=3&per_page=100
+GET /wp-json/rondo/v1/people/filtered?huidig_vrijwilliger=1&vog_type=vernieuwing&vog_older_than_years=3&per_page=100
 ```
 
 ### Example: Not Yet Emailed
 
 ```
-GET /wp-json/stadion/v1/people/filtered?huidig_vrijwilliger=1&vog_missing=1&vog_older_than_years=3&vog_email_status=not_sent&per_page=100
+GET /wp-json/rondo/v1/people/filtered?huidig_vrijwilliger=1&vog_missing=1&vog_older_than_years=3&vog_email_status=not_sent&per_page=100
 ```
 
 ## Sorting
@@ -125,7 +125,7 @@ The VOG tab defaults to sorting by `custom_datum-vog` ascending (oldest/empty VO
 To get just the KNVB IDs from the response, extract `acf.knvb-id` from each person in the `people` array:
 
 ```javascript
-const response = await fetch('/wp-json/stadion/v1/people/filtered?huidig_vrijwilliger=1&vog_missing=1&vog_older_than_years=3&per_page=100');
+const response = await fetch('/wp-json/rondo/v1/people/filtered?huidig_vrijwilliger=1&vog_missing=1&vog_older_than_years=3&per_page=100');
 const data = await response.json();
 
 const knvbIds = data.people

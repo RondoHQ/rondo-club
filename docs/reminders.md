@@ -262,7 +262,7 @@ Users can enable/disable email notifications in Settings.
 
 ### Get Upcoming Reminders
 
-**GET** `/stadion/v1/reminders`
+**GET** `/rondo/v1/reminders`
 
 **Parameters:**
 - `days_ahead` - Days to look ahead (default: 30, max: 365)
@@ -287,7 +287,7 @@ Users can enable/disable email notifications in Settings.
 
 ### Trigger Reminders Manually (Admin Only)
 
-**POST** `/stadion/v1/reminders/trigger`
+**POST** `/rondo/v1/reminders/trigger`
 
 **Response:**
 ```json
@@ -301,7 +301,7 @@ Users can enable/disable email notifications in Settings.
 
 ### Reschedule All Cron Jobs (Admin Only)
 
-**POST** `/stadion/v1/reminders/reschedule-cron`
+**POST** `/rondo/v1/reminders/reschedule-cron`
 
 Reschedules all user reminder cron jobs based on their notification time preferences.
 
@@ -316,7 +316,7 @@ Reschedules all user reminder cron jobs based on their notification time prefere
 
 ### Get Cron Status (Admin Only)
 
-**GET** `/stadion/v1/reminders/cron-status`
+**GET** `/rondo/v1/reminders/cron-status`
 
 Returns status of all user reminder cron jobs.
 
@@ -342,7 +342,7 @@ Returns status of all user reminder cron jobs.
 
 ### Get Notification Channels
 
-**GET** `/stadion/v1/user/notification-channels`
+**GET** `/rondo/v1/user/notification-channels`
 
 **Response:**
 ```json
@@ -355,7 +355,7 @@ Returns status of all user reminder cron jobs.
 
 ### Update Notification Channels
 
-**POST** `/stadion/v1/user/notification-channels`
+**POST** `/rondo/v1/user/notification-channels`
 
 **Body:**
 ```json
@@ -366,7 +366,7 @@ Returns status of all user reminder cron jobs.
 
 ### Update Notification Time
 
-**POST** `/stadion/v1/user/notification-time`
+**POST** `/rondo/v1/user/notification-time`
 
 **Body:**
 ```json

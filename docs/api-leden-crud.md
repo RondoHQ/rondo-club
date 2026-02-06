@@ -57,8 +57,8 @@ The nonce is available in `window.stadionConfig.nonce` when logged in to Stadion
 | `POST` | `/wp/v2/people` | Create new person |
 | `PUT` | `/wp/v2/people/{id}` | Update person |
 | `DELETE` | `/wp/v2/people/{id}` | Delete person |
-| `POST` | `/stadion/v1/people/bulk-update` | Update multiple people |
-| `POST` | `/stadion/v1/people/{id}/photo` | Upload profile photo |
+| `POST` | `/rondo/v1/people/bulk-update` | Update multiple people |
+| `POST` | `/rondo/v1/people/{id}/photo` | Upload profile photo |
 
 ---
 
@@ -425,7 +425,7 @@ Update multiple people at once (e.g., assign to workspace, add labels).
 
 **Request:**
 ```http
-POST /stadion/v1/people/bulk-update
+POST /rondo/v1/people/bulk-update
 Content-Type: application/json
 X-WP-Nonce: {nonce}
 ```
@@ -468,7 +468,7 @@ X-WP-Nonce: {nonce}
 
 **Request:**
 ```http
-POST /stadion/v1/people/456/photo
+POST /rondo/v1/people/456/photo
 Content-Type: multipart/form-data
 X-WP-Nonce: {nonce}
 ```

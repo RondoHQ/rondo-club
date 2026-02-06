@@ -20,7 +20,7 @@ Stadion uses two API namespaces:
 | Namespace | Purpose |
 |-----------|---------|
 | `/wp/v2/` | Standard WordPress REST API for CRUD operations on post types |
-| `/stadion/v1/` | Custom endpoints for dashboard, search, and specialized operations |
+| `/rondo/v1/` | Custom endpoints for dashboard, search, and specialized operations |
 
 ---
 
@@ -58,13 +58,13 @@ These endpoints are provided by WordPress with access control applied:
 
 ---
 
-## Custom Endpoints (`/stadion/v1/`)
+## Custom Endpoints (`/rondo/v1/`)
 
 These endpoints provide specialized functionality beyond basic CRUD operations.
 
 ### Dashboard
 
-**GET** `/stadion/v1/dashboard`
+**GET** `/rondo/v1/dashboard`
 
 Returns summary statistics and recent activity for the dashboard.
 
@@ -106,7 +106,7 @@ Returns summary statistics and recent activity for the dashboard.
 
 ### Version
 
-**GET** `/stadion/v1/version`
+**GET** `/rondo/v1/version`
 
 Returns the current theme version. Used for PWA/mobile app cache invalidation.
 
@@ -125,7 +125,7 @@ This endpoint is called periodically by the frontend to detect when a new versio
 
 ### Global Search
 
-**GET** `/stadion/v1/search`
+**GET** `/rondo/v1/search`
 
 Search across people and teams.
 
@@ -153,7 +153,7 @@ Search across people and teams.
 
 ### Upcoming Reminders
 
-**GET** `/stadion/v1/reminders`
+**GET** `/rondo/v1/reminders`
 
 Get upcoming birthdays for reminders.
 
@@ -186,7 +186,7 @@ Birthdays are generated from the `birthdate` field on person records.
 
 ### People by Team
 
-**GET** `/stadion/v1/teams/{team_id}/people`
+**GET** `/rondo/v1/teams/{team_id}/people`
 
 Get all people who work or worked at a team.
 
@@ -222,7 +222,7 @@ Get all people who work or worked at a team.
 
 ### Current User
 
-**GET** `/stadion/v1/user/me`
+**GET** `/rondo/v1/user/me`
 
 Get information about the currently logged in user.
 
@@ -245,7 +245,7 @@ Get information about the currently logged in user.
 
 ### Person Photo Upload
 
-**POST** `/stadion/v1/people/{person_id}/photo`
+**POST** `/rondo/v1/people/{person_id}/photo`
 
 Upload and set a person's profile photo. The filename is automatically generated from the person's name.
 
@@ -271,7 +271,7 @@ Upload and set a person's profile photo. The filename is automatically generated
 
 ### Gravatar Sideload
 
-**POST** `/stadion/v1/people/{person_id}/gravatar`
+**POST** `/rondo/v1/people/{person_id}/gravatar`
 
 Fetch and set a person's Gravatar as their profile photo.
 
@@ -305,7 +305,7 @@ If no Gravatar exists:
 
 ### Team Logo Upload
 
-**POST** `/stadion/v1/teams/{team_id}/logo/upload`
+**POST** `/rondo/v1/teams/{team_id}/logo/upload`
 
 Upload and set a team's logo. The filename is automatically generated from the team name.
 
@@ -331,7 +331,7 @@ Upload and set a team's logo. The filename is automatically generated from the t
 
 ### Set Team Logo (by Media ID)
 
-**POST** `/stadion/v1/teams/{team_id}/logo`
+**POST** `/rondo/v1/teams/{team_id}/logo`
 
 Set a team's logo from an existing media library item.
 
@@ -358,7 +358,7 @@ Set a team's logo from an existing media library item.
 
 ### Restore Relationship Type Defaults
 
-**POST** `/stadion/v1/relationship-types/restore-defaults`
+**POST** `/rondo/v1/relationship-types/restore-defaults`
 
 Restore default inverse relationship mappings and gender-dependent configurations.
 
@@ -376,7 +376,7 @@ Restore default inverse relationship mappings and gender-dependent configuration
 
 ### Workspaces
 
-**GET** `/stadion/v1/workspaces`
+**GET** `/rondo/v1/workspaces`
 
 List all workspaces the current user is a member of.
 
@@ -397,7 +397,7 @@ List all workspaces the current user is a member of.
 
 ---
 
-**GET** `/stadion/v1/workspaces/{id}`
+**GET** `/rondo/v1/workspaces/{id}`
 
 Get single workspace with members.
 
@@ -422,7 +422,7 @@ Get single workspace with members.
 
 ---
 
-**POST** `/stadion/v1/workspaces`
+**POST** `/rondo/v1/workspaces`
 
 Create a new workspace.
 
@@ -438,7 +438,7 @@ Create a new workspace.
 
 ---
 
-**PUT** `/stadion/v1/workspaces/{id}`
+**PUT** `/rondo/v1/workspaces/{id}`
 
 Update workspace details.
 
@@ -454,7 +454,7 @@ Update workspace details.
 
 ---
 
-**DELETE** `/stadion/v1/workspaces/{id}`
+**DELETE** `/rondo/v1/workspaces/{id}`
 
 Delete a workspace.
 
@@ -464,7 +464,7 @@ Delete a workspace.
 
 ### Workspace Members
 
-**POST** `/stadion/v1/workspaces/{id}/members`
+**POST** `/rondo/v1/workspaces/{id}/members`
 
 Add a member to the workspace.
 
@@ -480,7 +480,7 @@ Add a member to the workspace.
 
 ---
 
-**PUT** `/stadion/v1/workspaces/{id}/members/{user_id}`
+**PUT** `/rondo/v1/workspaces/{id}/members/{user_id}`
 
 Update member role.
 
@@ -495,7 +495,7 @@ Update member role.
 
 ---
 
-**DELETE** `/stadion/v1/workspaces/{id}/members/{user_id}`
+**DELETE** `/rondo/v1/workspaces/{id}/members/{user_id}`
 
 Remove a member from the workspace.
 
@@ -505,7 +505,7 @@ Remove a member from the workspace.
 
 ### Workspace Invites
 
-**GET** `/stadion/v1/workspaces/{id}/invites`
+**GET** `/rondo/v1/workspaces/{id}/invites`
 
 List pending invites for a workspace.
 
@@ -513,7 +513,7 @@ List pending invites for a workspace.
 
 ---
 
-**POST** `/stadion/v1/workspaces/{id}/invites`
+**POST** `/rondo/v1/workspaces/{id}/invites`
 
 Create and send an email invitation.
 
@@ -529,7 +529,7 @@ Create and send an email invitation.
 
 ---
 
-**DELETE** `/stadion/v1/workspaces/{id}/invites/{invite_id}`
+**DELETE** `/rondo/v1/workspaces/{id}/invites/{invite_id}`
 
 Revoke a pending invite.
 
@@ -537,7 +537,7 @@ Revoke a pending invite.
 
 ---
 
-**GET** `/stadion/v1/invites/{token}`
+**GET** `/rondo/v1/invites/{token}`
 
 Validate an invite token (public endpoint).
 
@@ -555,7 +555,7 @@ Validate an invite token (public endpoint).
 
 ---
 
-**POST** `/stadion/v1/invites/{token}/accept`
+**POST** `/rondo/v1/invites/{token}/accept`
 
 Accept an invite and join the workspace.
 
@@ -565,7 +565,7 @@ Accept an invite and join the workspace.
 
 ### Direct Sharing (People)
 
-**GET** `/stadion/v1/people/{id}/shares`
+**GET** `/rondo/v1/people/{id}/shares`
 
 Get list of users a person is shared with.
 
@@ -586,7 +586,7 @@ Get list of users a person is shared with.
 
 ---
 
-**POST** `/stadion/v1/people/{id}/shares`
+**POST** `/rondo/v1/people/{id}/shares`
 
 Share a person with another user.
 
@@ -610,7 +610,7 @@ Share a person with another user.
 
 ---
 
-**DELETE** `/stadion/v1/people/{id}/shares/{user_id}`
+**DELETE** `/rondo/v1/people/{id}/shares/{user_id}`
 
 Remove sharing from a user.
 
@@ -628,7 +628,7 @@ Remove sharing from a user.
 
 ### Direct Sharing (Teams)
 
-**GET** `/stadion/v1/teams/{id}/shares`
+**GET** `/rondo/v1/teams/{id}/shares`
 
 Get list of users a team is shared with.
 
@@ -638,7 +638,7 @@ Get list of users a team is shared with.
 
 ---
 
-**POST** `/stadion/v1/teams/{id}/shares`
+**POST** `/rondo/v1/teams/{id}/shares`
 
 Share a team with another user.
 
@@ -648,7 +648,7 @@ Share a team with another user.
 
 ---
 
-**DELETE** `/stadion/v1/teams/{id}/shares/{user_id}`
+**DELETE** `/rondo/v1/teams/{id}/shares/{user_id}`
 
 Remove sharing from a user.
 
@@ -658,7 +658,7 @@ Remove sharing from a user.
 
 ### User Search
 
-**GET** `/stadion/v1/users/search`
+**GET** `/rondo/v1/users/search`
 
 Search for users to share with.
 
@@ -688,7 +688,7 @@ Note: The current user is automatically excluded from search results.
 
 ### Mention Notifications Preference
 
-**POST** `/stadion/v1/user/mention-notifications`
+**POST** `/rondo/v1/user/mention-notifications`
 
 Update the user's preference for @mention notifications.
 
@@ -714,7 +714,7 @@ Update the user's preference for @mention notifications.
 }
 ```
 
-The preference is also returned by GET `/stadion/v1/user/notification-channels` as part of the response:
+The preference is also returned by GET `/rondo/v1/user/notification-channels` as part of the response:
 ```json
 {
   "channels": ["email"],
@@ -727,7 +727,7 @@ The preference is also returned by GET `/stadion/v1/user/notification-channels` 
 
 ### Workspace Member Search
 
-**GET** `/stadion/v1/workspaces/members/search`
+**GET** `/rondo/v1/workspaces/members/search`
 
 Search for workspace members for @mention autocomplete.
 
