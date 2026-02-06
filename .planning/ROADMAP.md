@@ -13,7 +13,7 @@ Simplify birthdate handling by moving from the Important Dates CPT to a simple p
 ### v19.0 Birthdate Simplification
 
 - [x] **Phase 147: Birthdate Field & Widget** - Add birthdate to person, display in header, update dashboard widget
-- [ ] **Phase 148: Infrastructure Removal** - Delete data and remove Important Dates subsystem
+- [x] **Phase 148: Infrastructure Removal** - Delete data and remove Important Dates subsystem
 
 ## Phase Details
 
@@ -33,18 +33,19 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 148-01-PLAN.md — Delete production data, remove backend PHP code and tests
-- [ ] 148-02-PLAN.md — Remove frontend components, update documentation, deploy
+- [x] 148-01-PLAN.md — Delete production data, remove backend PHP code and tests
+- [x] 148-02-PLAN.md — Remove frontend components, update documentation, deploy
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 147. Birthdate Field & Widget | 1/1 | Complete | 2026-02-06 |
-| 148. Infrastructure Removal | 0/2 | Planned | - |
+| 148. Infrastructure Removal | 2/2 | Complete | 2026-02-06 |
 
 ---
 *Roadmap created: 2026-02-06*
 *Phase 147 planned: 2026-02-06*
 *Phase 147 completed: 2026-02-06*
 *Phase 148 planned: 2026-02-06*
+*Phase 148 completed: 2026-02-06*
