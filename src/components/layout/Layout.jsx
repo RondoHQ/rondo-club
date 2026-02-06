@@ -130,7 +130,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
                     item.indent ? 'pl-8 pr-3' : 'px-3'
                   } ${
                     isActive
-                      ? 'bg-accent-50 text-accent-700 dark:bg-gray-700 dark:text-accent-300'
+                      ? 'bg-accent-50 text-accent-700 dark:bg-gray-700 dark:text-accent-400 dark:border-l-2 dark:border-accent-400'
                       : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
                   }`
                 }
@@ -377,7 +377,7 @@ function SearchModal({ isOpen, onClose }) {
                           key={person.id}
                           onClick={() => handleResultClick('person', person.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-accent-700 dark:text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-gray-700 dark:text-accent-400 dark:ring-1 dark:ring-accent-500' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           {person.thumbnail ? (
@@ -417,7 +417,7 @@ function SearchModal({ isOpen, onClose }) {
                           key={team.id}
                           onClick={() => handleResultClick('team', team.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-accent-700 dark:text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-gray-700 dark:text-accent-400 dark:ring-1 dark:ring-accent-500' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           {team.thumbnail ? (
