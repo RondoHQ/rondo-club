@@ -71,7 +71,6 @@ All approved users share:
 
 - **People** - All contact records
 - **Teams** - All team/company records
-- **Important Dates** - All dates and reminders
 - **Todos** - All todo items
 - **Notes** - Shared notes on contacts (private notes remain private)
 

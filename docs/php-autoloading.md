@@ -48,8 +48,8 @@ The `stadion_init()` function determines which classes to instantiate based on t
 
 These classes are essential for WordPress integration and must be loaded on every request:
 
-- **STADION_Post_Types** - Registers custom post types (person, team, important_date)
-- **STADION_Taxonomies** - Registers taxonomies (labels, relationship types, date types)
+- **STADION_Post_Types** - Registers custom post types (person, team)
+- **STADION_Taxonomies** - Registers taxonomies (labels, relationship types)
 - **STADION_Access_Control** - Row-level security filtering
 
 ### Content Management Classes

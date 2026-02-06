@@ -126,13 +126,13 @@ Each node displays:
 
 ### Deceased Detection
 
-The system checks for a "died" date type in the person's important dates:
+The system checks the `is_deceased` field from the person record:
 
 ```javascript
-const hasDiedDate = personDates.some(d => 
-  d.date_type?.toLowerCase() === 'died'
-);
+const isDeceased = person.is_deceased === true;
 ```
+
+This field is computed server-side and included in the person API response.
 
 ## Interactions
 
