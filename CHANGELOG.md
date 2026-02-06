@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [19.0.1] - 2026-02-06
+
+### Fixed
+- Documentation references to "important dates" updated to reflect birthdate-on-person model
+- Removed stale `/dates` route documentation from frontend architecture
+- CardDAV sync docs now correctly reference "Birthday (from person record)"
+- API docs now correctly describe birth_year as "derived from birthdate field"
+- iCal feed docs now describe birthday subscription feature
+- Daily digest docs now reference "Upcoming birthdays" instead of "important dates"
+
 ## [19.0.0] - 2026-02-06
 
 ### Removed
@@ -24,9 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daily digest reminders now source birthdays from person records
 - FamilyTree and PersonDetail now use person.is_deceased flag from allPeople data
 - Import (vCard/Google Contacts) saves birthday to person.birthdate field instead of creating important_date
-
-### Fixed
-- Updated all documentation to reflect new birthday-only architecture
 
 ## [18.1.1] - 2026-02-06
 
