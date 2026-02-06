@@ -6,7 +6,7 @@ Simplify birthdate handling by moving from the Important Dates CPT to a simple p
 
 ## Milestones
 
-- **v19.0 Birthdate Simplification** - Phases 147-150 (in progress)
+- **v19.0 Birthdate Simplification** - Phases 147-150 (complete)
 
 ## Phases
 
@@ -15,7 +15,7 @@ Simplify birthdate handling by moving from the Important Dates CPT to a simple p
 - [x] **Phase 147: Birthdate Field & Widget** - Add birthdate to person, display in header, update dashboard widget
 - [x] **Phase 148: Infrastructure Removal** - Delete data and remove Important Dates subsystem
 - [x] **Phase 149: Fix vCard Birthday Export** - Update vCard export to read from person.birthdate
-- [ ] **Phase 150: Update Documentation** - Fix stale "important dates" references in docs
+- [x] **Phase 150: Update Documentation** - Fix stale "important dates" references in docs
 
 ## Phase Details
 
@@ -54,7 +54,7 @@ Plans:
 **Plans:** 1 plans
 
 Plans:
-- [ ] 150-01-PLAN.md — Fix stale "important dates" references in 4 docs
+- [x] 150-01-PLAN.md — Fix stale "important dates" references in 4 docs
 
 ## Progress
 
@@ -63,7 +63,7 @@ Plans:
 | 147. Birthdate Field & Widget | 1/1 | Complete | 2026-02-06 |
 | 148. Infrastructure Removal | 2/2 | Complete | 2026-02-06 |
 | 149. Fix vCard Birthday Export | 1/1 | Complete | 2026-02-06 |
-| 150. Update Documentation | 0/1 | In Progress | - |
+| 150. Update Documentation | 1/1 | Complete | 2026-02-06 |
 
 ---
 *Roadmap created: 2026-02-06*
@@ -75,3 +75,4 @@ Plans:
 *Phase 149 planned: 2026-02-06*
 *Phase 149 completed: 2026-02-06*
 *Phase 150 planned: 2026-02-06*
+*Phase 150 completed: 2026-02-06*
