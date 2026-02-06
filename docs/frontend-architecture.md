@@ -28,7 +28,6 @@ src/
 ├── hooks/                # Custom React hooks
 ├── pages/                # Route page components
 │   ├── Teams/
-│   ├── Dates/
 │   ├── People/
 │   ├── Settings/
 │   ├── Todos/
@@ -86,9 +85,6 @@ Main routing component:
 | `/teams/new` | `TeamForm` | Create team |
 | `/teams/:id` | `TeamDetail` | View team |
 | `/teams/:id/edit` | `TeamForm` | Edit team |
-| `/dates` | `DatesList` | Important dates list |
-| `/dates/new` | `DateForm` | Create date |
-| `/dates/:id/edit` | `DateForm` | Edit date |
 | `/settings` | `Settings` | Settings page |
 | `/settings/relationship-types` | `RelationshipTypes` | Manage relationship types |
 | `/settings/import` | `Import` | Import contacts |

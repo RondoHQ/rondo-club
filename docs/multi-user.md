@@ -97,7 +97,7 @@ This information is visible in the UI for accountability.
 
 The daily reminder email includes:
 
-- Upcoming important dates
+- Upcoming birthdays
 - Overdue todos
 - Recent activity on contacts (notes added in last 24 hours)
 
