@@ -45,25 +45,25 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FILT-01 | TBD | Pending |
-| FILT-02 | TBD | Pending |
-| FILT-03 | TBD | Pending |
-| FILT-04 | TBD | Pending |
-| ROLE-01 | TBD | Pending |
-| ROLE-02 | TBD | Pending |
-| ROLE-03 | TBD | Pending |
-| ROLE-04 | TBD | Pending |
-| ROLE-05 | TBD | Pending |
-| ROLE-06 | TBD | Pending |
-| ROLE-07 | TBD | Pending |
-| ROLE-08 | TBD | Pending |
-| SYNC-01 | TBD | Pending |
+| FILT-01 | Phase 151 | Pending |
+| FILT-02 | Phase 151 | Pending |
+| FILT-03 | Phase 151 | Pending |
+| FILT-04 | Phase 151 | Pending |
+| ROLE-01 | Phase 152 | Pending |
+| ROLE-02 | Phase 152 | Pending |
+| ROLE-03 | Phase 152 | Pending |
+| ROLE-04 | Phase 152 | Pending |
+| ROLE-05 | Phase 153 | Pending |
+| ROLE-06 | Phase 153 | Pending |
+| ROLE-07 | Phase 153 | Pending |
+| ROLE-08 | Phase 152 | Pending |
+| SYNC-01 | Phase 154 | Pending |
 
 **Coverage:**
 - v20.0 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-06*
-*Last updated: 2026-02-06 after initial definition*
+*Last updated: 2026-02-06 after roadmap creation*
