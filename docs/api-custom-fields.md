@@ -1,6 +1,6 @@
 # Custom Fields API Documentation
 
-This document describes how to use the Stadion REST API to manage custom field definitions. Custom fields allow administrators to extend person and team records with additional data types.
+This document describes how to use the Rondo Club REST API to manage custom field definitions. Custom fields allow administrators to extend person and team records with additional data types.
 
 ## Base URL
 

@@ -1,6 +1,6 @@
 # Leden (People) API Documentation
 
-This document describes how to use the Stadion REST API to add and update "leden" (people/contacts).
+This document describes how to use the Rondo Club REST API to add and update "leden" (people/contacts).
 
 ## Base URL
 
@@ -34,13 +34,13 @@ curl -X GET "https://your-site.com/wp-json/wp/v2/people" \
 
 ### Method 2: Session + Nonce (Browser Use)
 
-For requests from the Stadion frontend (same browser session), use the REST nonce:
+For requests from the Rondo Club frontend (same browser session), use the REST nonce:
 
 ```
 X-WP-Nonce: {nonce_value}
 ```
 
-The nonce is available in `window.stadionConfig.nonce` when logged in to Stadion.
+The nonce is available in `window.stadionConfig.nonce` when logged in to Rondo Club.
 
 ---
 

@@ -1,6 +1,6 @@
 # Commissies (Committees) API Documentation
 
-This document describes how to use the Stadion REST API to manage commissies (committees).
+This document describes how to use the Rondo Club REST API to manage commissies (committees).
 
 ## Base URL
 
@@ -34,13 +34,13 @@ curl -X GET "https://your-site.com/wp-json/wp/v2/commissies" \
 
 ### Method 2: Session + Nonce (Browser Use)
 
-For requests from the Stadion frontend (same browser session), use the REST nonce:
+For requests from the Rondo Club frontend (same browser session), use the REST nonce:
 
 ```
 X-WP-Nonce: {nonce_value}
 ```
 
-The nonce is available in `window.stadionConfig.nonce` when logged in to Stadion.
+The nonce is available in `window.stadionConfig.nonce` when logged in to Rondo Club.
 
 ---
 

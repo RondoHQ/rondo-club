@@ -2,7 +2,7 @@
 
 ## Overview
 
-Add a feedback system to Stadion that allows users to submit bug reports and feature requests directly from within the application. These submissions will be stored as WordPress posts and exposed via an authenticated REST API using WordPress native application passwords.
+Add a feedback system to Rondo Club that allows users to submit bug reports and feature requests directly from within the application. These submissions will be stored as WordPress posts and exposed via an authenticated REST API using WordPress native application passwords.
 
 ## Problem Statement
 
@@ -15,7 +15,7 @@ Currently, there's no built-in mechanism for users to report bugs or request fea
 
 ## Goals
 
-1. Allow users to submit bugs and feature requests from within Stadion
+1. Allow users to submit bugs and feature requests from within Rondo Club
 2. Store feedback as WordPress custom post types
 3. Expose feedback through REST API endpoints
 4. Support authentication via WordPress application passwords
@@ -54,7 +54,7 @@ Create a new custom post type `stadion_feedback` with the following characterist
 | `status` | Select | Yes | `new`, `acknowledged`, `in_progress`, `resolved`, `wont_fix` |
 | `priority` | Select | No | `low`, `medium`, `high`, `critical` |
 | `browser_info` | Text | No | Auto-captured browser/OS info |
-| `app_version` | Text | No | Auto-captured Stadion version |
+| `app_version` | Text | No | Auto-captured Rondo Club version |
 | `url_context` | Text | No | Page URL where feedback was submitted |
 | `steps_to_reproduce` | Textarea | No | For bugs: reproduction steps |
 | `expected_behavior` | Textarea | No | For bugs: what should happen |
@@ -223,7 +223,7 @@ DELETE /wp-json/rondo/v1/feedback/{id}
 Use WordPress native application passwords for API authentication:
 
 - Users generate application passwords via **Users → Profile → Application Passwords**
-- Or via the Stadion Settings page (add a UI for this)
+- Or via the Rondo Club Settings page (add a UI for this)
 
 #### 5.2 Authentication Methods
 
@@ -488,7 +488,7 @@ curl -X POST \
     "type": "bug",
     "priority": "high",
     "steps_to_reproduce": "1. Connect Google Calendar\n2. Create recurring event\n3. Trigger sync",
-    "expected_behavior": "Event should appear in Stadion",
+    "expected_behavior": "Event should appear in Rondo Club",
     "actual_behavior": "Only first occurrence syncs"
   }' \
   https://your-site.com/wp-json/rondo/v1/feedback

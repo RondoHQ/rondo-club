@@ -4,7 +4,7 @@ This document describes the daily digest reminder system that notifies users abo
 
 ## Overview
 
-Stadion includes an automated reminder system that:
+Rondo Club includes an automated reminder system that:
 - Runs via **per-user WordPress cron jobs** at each user's preferred notification time
 - Sends a **daily digest** email/notification listing:
   - Birthdays **today** + todos due today (including overdue)
@@ -224,7 +224,7 @@ Background maintenance task that runs with reminders:
 
 **Email Format:**
 ```
-Subject: [Stadion] Your Reminders & Todos - June 15, 2025
+Subject: [Rondo Club] Your Reminders & Todos - June 15, 2025
 
 Hello User,
 
@@ -245,7 +245,7 @@ Here are your upcoming birthdays and to-dos for this week:
 ☐ Schedule meeting (June 18, 2025)
   → Friend
 
-Visit Stadion to see more details.
+Visit Rondo Club to see more details.
 
 https://your-site.com
 ```
@@ -441,7 +441,7 @@ wp_mail('test@example.com', 'Test Subject', 'Test message');
 
 ### Cron Not Running
 
-**Server cron requirement:** Stadion requires a real server cron job that triggers WordPress cron every 5 minutes for precise notification timing:
+**Server cron requirement:** Rondo Club requires a real server cron job that triggers WordPress cron every 5 minutes for precise notification timing:
 
 ```bash
 # crontab -e
